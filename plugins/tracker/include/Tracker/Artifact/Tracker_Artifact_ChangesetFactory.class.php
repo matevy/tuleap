@@ -145,10 +145,8 @@ class Tracker_Artifact_ChangesetFactory {
      */
     public function getFullChangesetsForArtifact(Tracker_Artifact $artifact, PFUser $user)
     {
-        $this_project_id        = $artifact->getTracker()->getProject()->getGroupId();
-        $ugroups                = $user->getUgroups($this_project_id, array());
         $changeset_values_cache = $this->changeset_value_dao->searchByArtifactId($artifact->getId());
-        $comments_cache         = $this->changeset_comment_dao->searchLastVersionForArtifact($artifact->getId(), $ugroups, $artifact->getTracker()->userIsAdmin($user));
+        $comments_cache         = $this->changeset_comment_dao->searchLastVersionForArtifact($artifact->getId());
 
         $changesets         = $this->getChangesetsForArtifact($artifact);
         $previous_changeset = null;

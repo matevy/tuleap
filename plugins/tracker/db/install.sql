@@ -287,7 +287,6 @@ CREATE TABLE tracker_changeset_comment(
     body TEXT NOT NULL,
     body_format varchar(16) NOT NULL default 'text',
     old_artifact_history_id INT(11) NULL,
-    use_comment_permissions tinyint(1) NOT NULL default '0',
     INDEX changeset_idx(changeset_id)
 ) ENGINE=InnoDB;
 
