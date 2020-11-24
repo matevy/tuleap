@@ -30,12 +30,26 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
     /**
      * @var array of Tracker_FileInfo
      */
-    protected $files;
+    protected $files = array();
 
     public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed, $files)
     {
         parent::__construct($id, $changeset, $field, $has_changed);
-        $this->files = $files;
+        foreach ($files as $file_info) {
+            if ($file_info->getUseFilePermissions())
+            {
+                $user = $changeset->getUserManager()->getCurrentUser();
+                // Only tracker admin and original submitter (minus anonymous) can view a comment
+                if ($this->changeset->artifact->getTracker()->userIsAdmin($user) || ((int)$file_info->getSubmittedBy() && $user->getId() == $file_info->getSubmittedBy()))
+                {
+                    $this->files[] = $file_info;
+                }
+            }
+            else
+            {
+                $this->files[] = $file_info;
+            }
+        }
     }
 
     /**

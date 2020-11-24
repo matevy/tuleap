@@ -32,6 +32,7 @@ class Tracker_FileInfo
     protected $filename;
     protected $filesize;
     protected $filetype;
+    protected $use_file_permissions;
 
     protected $supported_image_types = array('gif', 'png', 'jpeg', 'jpg');
 
@@ -43,8 +44,9 @@ class Tracker_FileInfo
      * @param string                    $filename
      * @param int $filesize
      * @param string                    $filetype
+     * @param int $use_file_permissions
      */
-    public function __construct($id, $field, $submitted_by, $description, $filename, $filesize, $filetype)
+    public function __construct($id, $field, $submitted_by, $description, $filename, $filesize, $filetype, $use_file_permissions)
     {
         $this->id           = $id;
         $this->field        = $field;
@@ -53,6 +55,7 @@ class Tracker_FileInfo
         $this->filename     = $filename;
         $this->filesize     = $filesize;
         $this->filetype     = $filetype;
+        $this->use_file_permissions = $use_file_permissions;
     }
 
     /**
@@ -173,6 +176,16 @@ class Tracker_FileInfo
     {
         return $this->filetype;
     }
+
+    /**
+     * @return use file permissions
+     */
+    public function getUseFilePermissions()
+    {
+        return $this->use_file_permissions;
+    }
+
+
 
     /**
      * @return int the id of the file
@@ -310,7 +323,7 @@ class Tracker_FileInfo
     public function save()
     {
         $dao = new Tracker_FileInfoDao();
-        $this->id = $dao->create($this->submitted_by, $this->description, $this->filename, $this->filesize, $this->filetype);
+        $this->id = $dao->create($this->submitted_by, $this->description, $this->filename, $this->filesize, $this->filetype, $this->use_file_permissions);
         if ($this->id) {
             return true;
         }

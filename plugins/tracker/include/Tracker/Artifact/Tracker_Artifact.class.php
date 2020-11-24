@@ -1130,7 +1130,8 @@ class Tracker_Artifact implements Recent_Element_Interface, Tracker_Dispatchable
             (int) $submitted_on,
             (bool) $send_notification,
             (string) $comment_format,
-            new \Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping()
+            new \Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping(),
+            false // TODO use_comment_permissions za formo
         );
     }
 

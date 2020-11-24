@@ -82,6 +82,7 @@ class Tracker_Artifact_Changeset_Comment
      * @param string                     $body               The comment (aka follow-up comment)
      * @param string                     $bodyFormat         The comment type (text or html follow-up comment)
      * @param int                        $parent_id          The id of the parent (if comment has been modified)
+     * @param int                        $use_comment_permissions          The 1 if this comment uses permissions
      */
     public function __construct(
         $id,
@@ -92,7 +93,8 @@ class Tracker_Artifact_Changeset_Comment
         $submitted_on,
         $body,
         $bodyFormat,
-        $parent_id
+        $parent_id,
+        $use_comment_permissions
     ) {
         $this->id                 = $id;
         $this->changeset          = $changeset;
@@ -103,7 +105,33 @@ class Tracker_Artifact_Changeset_Comment
         $this->body               = $body;
         $this->bodyFormat         = $bodyFormat;
         $this->parent_id          = $parent_id;
+        $this->use_comment_permissions = $use_comment_permissions;
     }
+
+
+    /**
+     * Say if a user can view a comment
+     *
+     * @param PFUser $user The user. If null, the current logged in user will be used.
+     *
+     * @return bool true if the user can view
+     */
+    public function userCanView(?PFUser $user = null)
+    {
+        if ($this->use_comment_permissions)
+        {
+            if (!$user) {
+                $user = $this->changeset->getUserManager()->getCurrentUser();
+            }
+            // Only tracker admin and original submitter (minus anonymous) can view a comment
+            return $this->changeset->artifact->getTracker()->userIsAdmin($user) || ((int)$this->submitted_by && $user->getId() == $this->submitted_by);
+        }
+        else
+        {
+            return true;
+        }
+    }
+
 
     /**
      * @return string the cleaned body to be included in a text/plain context

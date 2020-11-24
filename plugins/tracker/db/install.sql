@@ -288,6 +288,7 @@ CREATE TABLE tracker_changeset_comment(
     body TEXT NOT NULL,
     body_format varchar(16) NOT NULL default 'text',
     old_artifact_history_id INT(11) NULL,
+    use_comment_permissions tinyint(1) NOT NULL default '0',
     INDEX changeset_idx(changeset_id)
 ) ENGINE=InnoDB;
 
@@ -400,7 +401,8 @@ CREATE TABLE tracker_fileinfo(
     description TEXT NULL,
     filename TEXT NOT NULL,
     filesize BIGINT UNSIGNED NOT NULL,
-    filetype TEXT NOT NULL
+    filetype TEXT NOT NULL,
+    use_file_permissions tinyint(1) NOT NULL default '0'
 ) ENGINE=InnoDB AUTO_INCREMENT=101;
 
 DROP TABLE IF EXISTS tracker_report_config;

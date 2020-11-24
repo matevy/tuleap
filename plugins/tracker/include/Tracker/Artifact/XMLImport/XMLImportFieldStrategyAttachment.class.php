@@ -122,6 +122,7 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyAttachment implements Tra
             'name'                      => (string) $file_xml->filename,
             'type'                      => (string) $file_xml->filetype,
             'description'               => (string) $file_xml->description,
+            'use_file_permissions'      => (string) $file_xml->use_file_permissions,
             'size'                      => (int) $file_xml->filesize,
             'tmp_name'                  => $file_path,
             'error'                     => UPLOAD_ERR_OK,
