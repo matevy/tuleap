@@ -16,14 +16,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201304111018_add_remote_server_key extends ForgeUpgrade_Bucket {
+class b201304111018_add_remote_server_key extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 add column ssh_key to table plugin_git_remote_servers
 EOT;
@@ -34,7 +36,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -43,25 +46,29 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $this->addColumn();
         $this->importFileKeys();
     }
 
-    private function addColumn() {
+    private function addColumn()
+    {
         $sql = 'ALTER TABLE plugin_git_remote_servers
                 ADD COLUMN ssh_key TEXT NULL';
         $this->execDB($sql, 'An error occured while adding plugin_git_remote_servers to ssh_key: ');
     }
 
-    private function execDB($sql, $message) {
+    private function execDB($sql, $message)
+    {
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message.implode(', ', $this->db->dbh->errorInfo()));
         }
     }
 
-    private function importFileKeys() {
+    private function importFileKeys()
+    {
         $update_sql = 'UPDATE plugin_git_remote_servers SET ssh_key = :ssh_key WHERE id = :id';
         $update_stm = $this->db->dbh->prepare($update_sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
@@ -73,11 +80,8 @@ EOT;
                 $this->log->info("Import key for server ".$row['id']."(".$key_path.")");
                 $update_stm->execute(array(
                     ':ssh_key' => file_get_contents($key_path),
-                    ':id' => $row['id'])
-                );
+                    ':id' => $row['id']));
             }
         }
     }
 }
-
-?>

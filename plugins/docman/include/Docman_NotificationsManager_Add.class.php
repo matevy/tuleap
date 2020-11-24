@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -22,15 +22,18 @@
 require_once('Docman_NotificationsManager.class.php');
 require_once('Docman_Path.class.php');
 
-class Docman_NotificationsManager_Add extends Docman_NotificationsManager { 
+class Docman_NotificationsManager_Add extends Docman_NotificationsManager
+{
 
     public const MESSAGE_ADDED = 'added'; // X has been added
-    
-    function _getListeningUsersItemId($params) {
+
+    function _getListeningUsersItemId($params)
+    {
         return $params['parent']->getId();
     }
-    function _buildMessage($event, $params, $user) {
-        switch($event) {
+    function _buildMessage($event, $params, $user)
+    {
+        switch ($event) {
             case 'plugin_docman_event_add':
                 $parent = $this->_item_factory->getItemFromDb($params['item']->getParentId());
                 $this->_addMessage(
@@ -48,17 +51,24 @@ class Docman_NotificationsManager_Add extends Docman_NotificationsManager {
                 break;
         }
     }
-    function _getMessageForUser($user, $message_type, $params) {
+    function _getMessageForUser($user, $message_type, $params)
+    {
         $msg = '';
-        switch($message_type) {
+        switch ($message_type) {
             case self::MESSAGE_ADDED:
                 $monitoredItem = $this->_getMonitoredItemForUser($user, $params['parent']);
-                $msg .= $GLOBALS['Language']->getText('plugin_docman', 'notifications_added_mail_body', array($params['path']->get($params['parent']), 
-                                                              $user->getRealName(),
-                                                              $this->_url,
-                                                              $params['parent']->getId(),
-                                                              $params['item']->getTitle(),
-                                                              $monitoredItem->getId()));
+
+                $msg = sprintf(
+                    dgettext('tuleap-docman', "%s has been modified by %s."),
+                    $params['path']->get($params['parent']),
+                    $user->getRealName()
+                ) ."\n";
+
+                $msg .=$this->getMessageLink($message_type, $params) . "\n\n";
+                $msg .= dgettext('tuleap-docman', "Added:");
+                $msg .= "\n" . $params['item']->getTitle();
+
+                $msg           .= $this->getMonitoringInformation($monitoredItem);
                 break;
             default:
                 $msg .= parent::_getMessageForUser($user, $message_type, $params);
@@ -67,16 +77,16 @@ class Docman_NotificationsManager_Add extends Docman_NotificationsManager {
         return $msg;
     }
 
-    protected function getMessageLink($type, $params) {
-        switch($type) {
+    protected function getMessageLink($type, $params)
+    {
+        switch ($type) {
             case self::MESSAGE_ADDED:
-                $link = $this->_url . '&action=show&id=' . $params['parent']->getId();
+                $link = $this->getUrlProvider()->getShowLinkUrl($params['parent']);
                 break;
             default:
-                $link = $this->_url;
+                $link =  $this->getUrlProvider()->getPluginLinkUrl();
                 break;
         }
         return $link;
     }
 }
-?>

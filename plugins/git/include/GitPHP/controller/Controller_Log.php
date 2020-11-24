@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - present. All Rights Reserved.
  * Copyright (C) 2010 Christopher Han <xiphux@gmail.com>
  *
  * This file is a part of Tuleap.
@@ -33,16 +33,6 @@ use UserManager;
  */
 class Controller_Log extends ControllerBase // @codingStandardsIgnoreLine
 {
-    use \Tuleap\Git\Repository\View\FeatureFlag;
-
-    /**
-     * __construct
-     *
-     * Constructor
-     *
-     * @access public
-     * @return controller
-     */
     public function __construct()
     {
         parent::__construct();
@@ -61,11 +51,7 @@ class Controller_Log extends ControllerBase // @codingStandardsIgnoreLine
      */
     protected function GetTemplate() // @codingStandardsIgnoreLine
     {
-        if ($this->isTuleapBeauGitActivated()) {
-            return 'tuleap/shortlog.tpl';
-        }
-
-        return 'shortlog.tpl';
+        return 'tuleap/shortlog.tpl';
     }
 
     /**
@@ -74,7 +60,7 @@ class Controller_Log extends ControllerBase // @codingStandardsIgnoreLine
      * Gets the name of this controller's action
      *
      * @access public
-     * @param boolean $local true if caller wants the localized action name
+     * @param bool $local true if caller wants the localized action name
      * @return string action name
      */
     public function GetName($local = false) // @codingStandardsIgnoreLine
@@ -131,17 +117,15 @@ class Controller_Log extends ControllerBase // @codingStandardsIgnoreLine
             }
             $this->tpl->assign('revlist', $revlist);
 
-            if ($this->isTuleapBeauGitActivated()) {
-                $commit_metadata_retriever = new CommitMetadataRetriever(
-                    new CommitStatusRetriever(new CommitStatusDAO()),
-                    UserManager::instance()
-                );
-                $builder = new ShortlogPresenterBuilder($commit_metadata_retriever);
-                $this->tpl->assign(
-                    'shortlog_presenter',
-                    $builder->getShortlogPresenter($this->getTuleapGitRepository(), ...$revlist)
-                );
-            }
+            $commit_metadata_retriever = new CommitMetadataRetriever(
+                new CommitStatusRetriever(new CommitStatusDAO()),
+                UserManager::instance()
+            );
+            $builder = new ShortlogPresenterBuilder($commit_metadata_retriever);
+            $this->tpl->assign(
+                'shortlog_presenter',
+                $builder->getShortlogPresenter($this->getTuleapGitRepository(), ...$revlist)
+            );
         }
 
         if (isset($this->params['mark'])) {

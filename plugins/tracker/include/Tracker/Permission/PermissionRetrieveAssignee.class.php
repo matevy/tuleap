@@ -16,18 +16,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Permission_PermissionRetrieveAssignee {
+class Tracker_Permission_PermissionRetrieveAssignee
+{
 
     /**
      * @var UserManager
      */
     private $user_manager;
 
-    public function __construct(UserManager $user_manager) {
+    public function __construct(UserManager $user_manager)
+    {
         $this->user_manager = $user_manager;
     }
 
-    private function getAssigneeIds(Tracker_Artifact $artifact) {
+    private function getAssigneeIds(Tracker_Artifact $artifact)
+    {
         $contributor_field = $artifact->getTracker()->getContributorField();
         if ($contributor_field) {
             $assignee = $artifact->getValue($contributor_field);
@@ -44,7 +47,8 @@ class Tracker_Permission_PermissionRetrieveAssignee {
      * @param Tracker_Artifact $artifact
      * @return PFUser[]
      */
-    public function getAssignees(Tracker_Artifact $artifact) {
+    public function getAssignees(Tracker_Artifact $artifact)
+    {
         $user_collection = array();
         foreach ($this->getAssigneeIds($artifact) as $user_id) {
             $user = $this->user_manager->getUserById($user_id);

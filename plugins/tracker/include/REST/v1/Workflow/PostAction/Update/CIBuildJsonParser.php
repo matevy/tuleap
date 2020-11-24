@@ -22,7 +22,7 @@
 namespace Tuleap\Tracker\REST\v1\Workflow\PostAction\Update;
 
 use Tuleap\REST\I18NRestException;
-use Tuleap\Tracker\Workflow\PostAction\Update\CIBuild;
+use Tuleap\Tracker\Workflow\PostAction\Update\CIBuildValue;
 use Tuleap\Tracker\Workflow\Update\PostAction;
 use Workflow;
 
@@ -35,12 +35,6 @@ class CIBuildJsonParser implements PostActionUpdateJsonParser
 
     public function parse(Workflow $workflow, array $json): PostAction
     {
-        if (isset($json['id']) && !is_int($json['id'])) {
-            throw new I18NRestException(
-                400,
-                dgettext('tuleap-tracker', "Bad id attribute format: int expected.")
-            );
-        }
         if (!isset($json['job_url'])) {
             throw new I18NRestException(
                 400,
@@ -54,15 +48,6 @@ class CIBuildJsonParser implements PostActionUpdateJsonParser
             );
         }
 
-        // In workflow simple mode, we drop and recreate all post actions. Therefore, the $id must be null to recreate them
-        $id = null;
-        if ($workflow->isAdvanced()) {
-            $id = $json['id'] ?? null;
-        }
-
-        return new CIBuild(
-            $id,
-            $json['job_url']
-        );
+        return new CIBuildValue($json['job_url']);
     }
 }

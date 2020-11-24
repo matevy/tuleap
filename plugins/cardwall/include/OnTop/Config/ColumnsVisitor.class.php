@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012. All Rights Reserved.
  *
@@ -20,12 +19,11 @@
  */
 
 
-interface Cardwall_OnTop_Config_ColumnsVisitor {
+interface Cardwall_OnTop_Config_ColumnsVisitor
+{
     /**
-     * 
-     * @Pattern Visitor 
+     *
+     * @Pattern Visitor
      */
     function accept($visitor, $parameter = '');
 }
-
-?>

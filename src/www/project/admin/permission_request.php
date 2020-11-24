@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2004-2011. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,7 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('pre.php');
+require_once __DIR__ . '/../../include/pre.php';
 
 $request = HTTPRequest::instance();
 
@@ -53,86 +53,86 @@ if ($request->isPost() && $request->valid($vFunc)) {
       updating the database
     */
     switch ($request->get('func')) {
-    case 'member_req_notif_group':
-        $vUGroups = new Valid_UInt('ugroups');
-        $vUGroups->required();
-        if ($request->validArray($vUGroups)) {
-            $ugroups = $request->get('ugroups');
-            // Remove ugroups that are empty or contain no project admins
-            $result = ugroup_filter_ugroups_by_project_admin($group_id, $ugroups);
-            $nonAdmins    = $result['non_admins'];
-            $validUgroups = $result['ugroups'];
-            if (empty($validUgroups)) {
-                // If no valid ugroups the default one is project admins ugroup
-                $validUgroups = array($GLOBALS['UGROUP_PROJECT_ADMIN']);
-                $GLOBALS['Response']->addFeedback('error', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_all_invalid'));
-            } else {
-                // If some selected ugroups are not valid display them to the user.
-                $diff = array_diff($ugroups, $validUgroups);
-                if (!empty($diff)) {
-                    $deletedUgroups = array();
-                    foreach ($diff as $ugroupId) {
-                        $deletedUgroups[] = ugroup_get_name_from_id($ugroupId);
-                    }
-                    $GLOBALS['Response']->addFeedback('warning', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_some_invalid', implode(', ', $deletedUgroups)));
-                }
-                // Inform about the number of non admins in the selected ugroups
-                // and indicate that they will not recieve any permission request mail.
-                if ($nonAdmins > 0) {
-                    $GLOBALS['Response']->addFeedback('warning', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_non_admins', $nonAdmins));
-                }
-            }
-            //to retreive the old marked ugroups
-            $darUgroups = $pm->getMembershipRequestNotificationUGroup($group_id);
-            if ($pm->setMembershipRequestNotificationUGroup($group_id, $validUgroups)) {
-                $oldUgroups = array();
-                if ($darUgroups && !$darUgroups->isError() && $darUgroups->rowCount() > 0) {
-                    foreach ($darUgroups as $row) {
-                        $oldUgroups[] = ugroup_get_name_from_id($row['ugroup_id']);
-                    }
+        case 'member_req_notif_group':
+            $vUGroups = new Valid_UInt('ugroups');
+            $vUGroups->required();
+            if ($request->validArray($vUGroups)) {
+                $ugroups = $request->get('ugroups');
+                // Remove ugroups that are empty or contain no project admins
+                $result = ugroup_filter_ugroups_by_project_admin($group_id, $ugroups);
+                $nonAdmins    = $result['non_admins'];
+                $validUgroups = $result['ugroups'];
+                if (empty($validUgroups)) {
+                    // If no valid ugroups the default one is project admins ugroup
+                    $validUgroups = array($GLOBALS['UGROUP_PROJECT_ADMIN']);
+                    $GLOBALS['Response']->addFeedback('error', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_all_invalid'));
                 } else {
-                    $oldUgroups = array(ugroup_get_name_from_id($GLOBALS['UGROUP_PROJECT_ADMIN']));
-                }
-                foreach ($validUgroups as $ugroupId) {
-                    $ugroupName   = ugroup_get_name_from_id($ugroupId);
-                    $newUgroups   = array($ugroupName);
-                    $addedUgroups = array();
-                    if ($ugroupId == $GLOBALS['UGROUP_PROJECT_ADMIN']) {
-                        $addedUgroups[] = util_translate_name_ugroup('project_admin');
-                    } else {
-                        $addedUgroups[] = $ugroupName;
+                    // If some selected ugroups are not valid display them to the user.
+                    $diff = array_diff($ugroups, $validUgroups);
+                    if (!empty($diff)) {
+                        $deletedUgroups = array();
+                        foreach ($diff as $ugroupId) {
+                            $deletedUgroups[] = ugroup_get_name_from_id($ugroupId);
+                        }
+                        $GLOBALS['Response']->addFeedback('warning', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_some_invalid', implode(', ', $deletedUgroups)));
+                    }
+                    // Inform about the number of non admins in the selected ugroups
+                    // and indicate that they will not recieve any permission request mail.
+                    if ($nonAdmins > 0) {
+                        $GLOBALS['Response']->addFeedback('warning', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_non_admins', $nonAdmins));
                     }
                 }
-                //update group history
-                group_add_history('membership_request_updated', implode(',', $oldUgroups).' :: '.implode(',', $newUgroups), $group_id);
-                $GLOBALS['Response']->addFeedback('info', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_msg', implode(', ', $addedUgroups)));
+                //to retreive the old marked ugroups
+                $darUgroups = $pm->getMembershipRequestNotificationUGroup($group_id);
+                if ($pm->setMembershipRequestNotificationUGroup($group_id, $validUgroups)) {
+                    $oldUgroups = array();
+                    if ($darUgroups && !$darUgroups->isError() && $darUgroups->rowCount() > 0) {
+                        foreach ($darUgroups as $row) {
+                            $oldUgroups[] = ugroup_get_name_from_id($row['ugroup_id']);
+                        }
+                    } else {
+                        $oldUgroups = array(ugroup_get_name_from_id($GLOBALS['UGROUP_PROJECT_ADMIN']));
+                    }
+                    foreach ($validUgroups as $ugroupId) {
+                        $ugroupName   = ugroup_get_name_from_id($ugroupId);
+                        $newUgroups   = array($ugroupName);
+                        $addedUgroups = array();
+                        if ($ugroupId == $GLOBALS['UGROUP_PROJECT_ADMIN']) {
+                            $addedUgroups[] = util_translate_name_ugroup('project_admin');
+                        } else {
+                            $addedUgroups[] = $ugroupName;
+                        }
+                    }
+                    //update group history
+                    (new ProjectHistoryDao())->groupAddHistory('membership_request_updated', implode(',', $oldUgroups).' :: '.implode(',', $newUgroups), $group_id);
+                    $GLOBALS['Response']->addFeedback('info', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_msg', implode(', ', $addedUgroups)));
+                }
+            } else {
+                $GLOBALS['Response']->addFeedback('error', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_error'));
             }
-        } else {
-            $GLOBALS['Response']->addFeedback('error', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_error'));
-        }
-        break;
+            break;
 
-    case 'member_req_notif_message':
-        $updatedMessage = true;
-        // Validate the text
-        $vMessage = new Valid_Text('text');
-        $vMessage->required();
-        $message = trim($request->get('text'));
-        $dar = $pm->getMessageToRequesterForAccessProject($group_id);
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
-            $row = $dar->current();
-            if (!strcmp($row['msg_to_requester'], $message)) {
-                $updatedMessage = false;
+        case 'member_req_notif_message':
+            $updatedMessage = true;
+            // Validate the text
+            $vMessage = new Valid_Text('text');
+            $vMessage->required();
+            $message = trim($request->get('text'));
+            $dar = $pm->getMessageToRequesterForAccessProject($group_id);
+            if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+                $row = $dar->current();
+                if (!strcmp($row['msg_to_requester'], $message)) {
+                    $updatedMessage = false;
+                }
             }
-        }
-        if ($request->valid($vMessage) & !empty($message) & $updatedMessage) {
-            if ($pm->setMessageToRequesterForAccessProject($group_id, $message)) {
-                $GLOBALS['Response']->addFeedback('info', $Language->getText('project_admin_index', 'member_request_delegation_msg_info'));
+            if ($request->valid($vMessage) & !empty($message) & $updatedMessage) {
+                if ($pm->setMessageToRequesterForAccessProject($group_id, $message)) {
+                    $GLOBALS['Response']->addFeedback('info', $Language->getText('project_admin_index', 'member_request_delegation_msg_info'));
+                }
+            } else {
+                $GLOBALS['Response']->addFeedback('error', $Language->getText('project_admin_index', 'member_request_delegation_msg_error'));
             }
-        } else {
-            $GLOBALS['Response']->addFeedback('error', $Language->getText('project_admin_index', 'member_request_delegation_msg_error'));
-        }
-        break;
+            break;
     }
 }
 
@@ -186,6 +186,7 @@ if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
 
 
 $ugroupList = array(array('value' => $GLOBALS['UGROUP_PROJECT_ADMIN'], 'text' => util_translate_name_ugroup('project_admin')));
+/** @psalm-suppress DeprecatedFunction */
 $res = ugroup_db_get_existing_ugroups($group_id);
 while ($row = db_fetch_array($res)) {
     $ugroupList[] = array('value' => $row['ugroup_id'], 'text' => $row['name']);
@@ -208,7 +209,7 @@ $message = $GLOBALS['Language']->getText('project_admin_index', 'member_request_
 $dar = $pm->getMessageToRequesterForAccessProject($group_id);
 if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
     $row = $dar->current();
-    if ($row['msg_to_requester'] != "member_request_delegation_msg_to_requester" ) {
+    if ($row['msg_to_requester'] != "member_request_delegation_msg_to_requester") {
         $message = $row['msg_to_requester'];
     }
 }

@@ -18,13 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class TrackerXmlFieldsMapping_InSamePlatform implements TrackerXmlFieldsMapping {
+class TrackerXmlFieldsMapping_InSamePlatform implements TrackerXmlFieldsMapping
+{
 
-    public function getNewValueId($old_value_id) {
+    public function getNewValueId($old_value_id)
+    {
         return $old_value_id;
     }
 
-    public function getNewOpenValueId($old_value_id) {
+    public function getNewOpenValueId($old_value_id)
+    {
         return $old_value_id;
     }
 }

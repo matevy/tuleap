@@ -1,5 +1,22 @@
 <?php
-rcs_id('$Id: themeinfo.php,v 1.34 2005/04/23 11:44:54 rurban Exp $');
+/**
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /*
  * This file defines the default appearance ("theme") of PhpWiki.
@@ -15,9 +32,11 @@ $WikiTheme = new Theme('default');
 
 // This should result in phpwiki-printer.css being used when
 // printing or print-previewing with style "PhpWiki" or "MacOSX" selected.
-$WikiTheme->setDefaultCSS('PhpWiki',
-                       array(''      => 'phpwiki.css',
-                             'print' => 'phpwiki-printer.css'));
+$WikiTheme->setDefaultCSS(
+    'PhpWiki',
+    array(''      => 'phpwiki.css',
+    'print' => 'phpwiki-printer.css')
+);
 
 // This allows one to manually select "Printer" style (when browsing page)
 // to see what the printer style looks like.
@@ -61,9 +80,9 @@ $WikiTheme->setAutosplitWikiWords(false);
 
 /**
  * Layout improvement with dangling links for mostly closed wiki's:
- * If false, only users with edit permissions will be presented the 
+ * If false, only users with edit permissions will be presented the
  * special wikiunknown class with "?" and Tooltip.
- * If true (default), any user will see the ?, but will be presented 
+ * If true (default), any user will see the ?, but will be presented
  * the PrintLoginForm on a click.
  */
 //$WikiTheme->setAnonEditUnknownLinks(false);
@@ -76,7 +95,7 @@ $WikiTheme->setAutosplitWikiWords(false);
  * Do not include the server's zone (%Z), times are converted to the
  * user's time zone.
  *
- * Suggestion for french: 
+ * Suggestion for french:
  *   $WikiTheme->setDateFormat("%A %e %B %Y");
  *   $WikiTheme->setTimeFormat("%H:%M:%S");
  * Suggestion for capable php versions, using the server locale:
@@ -90,28 +109,28 @@ $WikiTheme->setAutosplitWikiWords(false);
  * To suppress times in the "Last edited on" messages, give a
  * give a second argument of false:
  */
-//$WikiTheme->setDateFormat("%B %d, %Y", false); 
+//$WikiTheme->setDateFormat("%B %d, %Y", false);
 
 
 /**
  * Custom UserPreferences:
  * A list of name => _UserPreference class pairs.
- * Rationale: Certain themes should be able to extend the predefined list 
+ * Rationale: Certain themes should be able to extend the predefined list
  * of preferences. Display/editing is done in the theme specific userprefs.tmpl
  * but storage/sanification/update/... must be extended to the Get/SetPreferences methods.
  * See themes/wikilens/themeinfo.php
  */
-//$WikiTheme->customUserPreference(); 
+//$WikiTheme->customUserPreference();
 
 /**
  * Register custom PageList type and define custom PageList classes.
- * Rationale: Certain themes should be able to extend the predefined list 
- * of pagelist types. E.g. certain plugins, like MostPopular might use 
+ * Rationale: Certain themes should be able to extend the predefined list
+ * of pagelist types. E.g. certain plugins, like MostPopular might use
  * info=pagename,hits,rating
  * which displays the rating column whenever the wikilens theme is active.
  * See themes/wikilens/themeinfo.php
  */
-//$WikiTheme->addPageListColumn(); 
+//$WikiTheme->addPageListColumn();
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // (c-file-style: "gnu")
@@ -121,5 +140,4 @@ $WikiTheme->setAutosplitWikiWords(false);
 // c-basic-offset: 4
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
-// End:   
-?>
+// End:

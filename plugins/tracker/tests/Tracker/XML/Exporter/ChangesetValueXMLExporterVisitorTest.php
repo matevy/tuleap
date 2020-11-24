@@ -22,7 +22,8 @@ require_once __DIR__.'/../../../bootstrap.php';
 
 use Tuleap\Tracker\XML\Exporter\ChangesetValue\ChangesetValueComputedXMLExporter;
 
-class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitorTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitorTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValueXMLExporterVisitor */
     private $visitor;
@@ -46,7 +47,8 @@ class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitorTest extends TuleapTe
     private $artlink_changeset_value;
 
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->int_exporter     = mock('Tracker_XML_Exporter_ChangesetValue_ChangesetValueIntegerXMLExporter');
         $this->float_exporter   = mock('Tracker_XML_Exporter_ChangesetValue_ChangesetValueFloatXMLExporter');
@@ -75,7 +77,8 @@ class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitorTest extends TuleapTe
         $this->artlink_changeset_value = new Tracker_Artifact_ChangesetValue_ArtifactLink('*', $changeset, '*', '*', '*', '*');
     }
 
-    public function itCallsTheIntegerExporterAccordinglyToTheTypeOfTheChangesetValue() {
+    public function itCallsTheIntegerExporterAccordinglyToTheTypeOfTheChangesetValue()
+    {
         expect($this->int_exporter)->export()->once();
         expect($this->float_exporter)->export()->never();
         expect($this->artlink_exporter)->export()->never();
@@ -88,7 +91,8 @@ class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitorTest extends TuleapTe
         );
     }
 
-    public function itCallsTheFloatExporterAccordinglyToTheTypeOfTheChangesetValue() {
+    public function itCallsTheFloatExporterAccordinglyToTheTypeOfTheChangesetValue()
+    {
         expect($this->int_exporter)->export()->never();
         expect($this->float_exporter)->export()->Once();
         expect($this->artlink_exporter)->export()->never();
@@ -101,7 +105,8 @@ class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitorTest extends TuleapTe
         );
     }
 
-    public function itCallsTheArtifactLinkExporterAccordinglyToTheTypeOfTheChangesetValue() {
+    public function itCallsTheArtifactLinkExporterAccordinglyToTheTypeOfTheChangesetValue()
+    {
         expect($this->int_exporter)->export()->never();
         expect($this->float_exporter)->export()->never();
         expect($this->artlink_exporter)->export()->once();

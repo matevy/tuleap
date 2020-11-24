@@ -21,16 +21,15 @@
 
 use Tuleap\Chart\ColorsForCharts;
 
-require_once 'common/chart/Chart.class.php';
-
-class Git_LastPushesGraph {
+class Git_LastPushesGraph
+{
     public const MAX_WEEKSNUMBER  = 25;
     public const WEEKS_IN_SECONDS = 604800;
 
     public const NUMBER_OF_REPOSITORIES_BEFORE_GRAPH_LABEL_BREAK_DISPLAY = 15;
 
     /**
-     * @var Boolean
+     * @var bool
      */
     public $displayChart;
 
@@ -40,7 +39,7 @@ class Git_LastPushesGraph {
     public $repoList   = array();
 
     /**
-     * @var Integer
+     * @var int
      */
     public $weeksNumber;
 
@@ -67,12 +66,13 @@ class Git_LastPushesGraph {
     /**
      *
      *
-     * @param Integer $groupId     Project Id
-     * @param Integer $weeksNumber Statistics duration in weeks
+     * @param int $groupId Project Id
+     * @param int $weeksNumber Statistics duration in weeks
      *
      * @return Void
      */
-    public function __construct($groupId, $weeksNumber) {
+    public function __construct($groupId, $weeksNumber)
+    {
         $dao                = new GitDao();
         // TODO: Optionally include presonal forks in repo list
         $allRepositories    = $dao->getProjectRepositoryList($groupId);
@@ -91,7 +91,7 @@ class Git_LastPushesGraph {
         $today              = $_SERVER['REQUEST_TIME'];
         $startPeriod        = strtotime("-$this->weeksNumber weeks");
         $weekInSeconds      = self::WEEKS_IN_SECONDS ;
-        for ($i = $startPeriod+$weekInSeconds ; $i < $today+$weekInSeconds ; $i += $weekInSeconds) {
+        for ($i = $startPeriod+$weekInSeconds; $i < $today+$weekInSeconds; $i += $weekInSeconds) {
             $this->dates[]   = date('M d', $i);
             $this->weekNum[] = intval(date('W', $i));
             $this->year[]    = intval(date('Y', $i));
@@ -103,7 +103,8 @@ class Git_LastPushesGraph {
      *
      * @return Chart
      */
-    private function prepareGraph() {
+    private function prepareGraph()
+    {
         $nbRepo = count($this->repoList);
 
         $columns                 = $this->getNumberOfColumnForLegendWhenMultipleRepositories($nbRepo);
@@ -159,7 +160,8 @@ class Git_LastPushesGraph {
      *
      * @return BarPlot
      */
-    private function displayRepositoryPushesByWeek() {
+    private function displayRepositoryPushesByWeek()
+    {
         $colors_for_charts = new ColorsForCharts();
         $nbRepo   = count($this->repoList);
         $colors   = array_slice($colors_for_charts->getChartColors(), 0, $nbRepo);
@@ -190,7 +192,8 @@ class Git_LastPushesGraph {
      *
      * @return Array
      */
-    private function getRepositoryPushesByWeek(GitRepository $repository) {
+    private function getRepositoryPushesByWeek(GitRepository $repository)
+    {
         $pushes    = array();
         $gitLogDao = new Git_LogDao();
         foreach ($this->weekNum as $key => $w) {
@@ -215,7 +218,8 @@ class Git_LastPushesGraph {
      *
      * @return Void
      */
-    private function displayAccumulatedGraph($bplot, $graph) {
+    private function displayAccumulatedGraph($bplot, $graph)
+    {
         $abplot = new AccBarPlot($bplot);
         $abplot->SetAbsWidth(10);
         $graph->Add($abplot);
@@ -225,7 +229,8 @@ class Git_LastPushesGraph {
     /**
      * Display the graph else an error if no pushes for this period
      */
-    public function display() {
+    public function display()
+    {
         $graph = $this->prepareGraph();
         $bplot = $this->displayRepositoryPushesByWeek();
         if ($this->displayChart) {

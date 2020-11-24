@@ -19,8 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('pre.php');
-require_once('trove.php');
+require_once __DIR__ . '/../include/pre.php';
+require_once __DIR__ . '/../include/trove.php';
 
 if ($GLOBALS['sys_use_trove'] == 0) {
     exit_permission_denied();
@@ -56,8 +56,8 @@ $row_trove_cat = db_fetch_array($res_trove_cat);
 
 $current_category_name = $row_trove_cat['fullpath'];
 
-$folders = explode(" :: ",$row_trove_cat['fullpath']);
-$folders_ids = explode(" :: ",$row_trove_cat['fullpath_ids']);
+$folders = explode(" :: ", $row_trove_cat['fullpath']);
+$folders_ids = explode(" :: ", $row_trove_cat['fullpath_ids']);
 $folders_len = count($folders);
 
 $parent_id = null;
@@ -94,7 +94,7 @@ while ($row_sub = db_fetch_array($res_sub)) {
 }
 
 // MV: Add a None case
-if($folders_len == 1) {
+if ($folders_len == 1) {
     $sql = "SELECT count(DISTINCT g.group_id) AS count
 FROM groups AS g
 LEFT JOIN trove_group_link AS t
@@ -120,7 +120,7 @@ AND trove_cat_root = ". $form_cat;
 // here we print list of root level categories, and use open folder for current
 $root_categories = array();
 $res_rootcat = db_query('SELECT trove_cat_id,fullname FROM trove_cat WHERE '
-	.'parent=0 ORDER BY fullname');
+    .'parent=0 ORDER BY fullname');
 while ($row_rootcat = db_fetch_array($res_rootcat)) {
     $root_categories[] = array(
         'id'       => $row_rootcat['trove_cat_id'],
@@ -137,12 +137,12 @@ if ($special_cat === 'none') {
     $res_root_trov = db_query($qry_root_trov);
 
     $prj_list_categorized = array();
-    while($row_root_trov = db_fetch_array($res_root_trov)) {
+    while ($row_root_trov = db_fetch_array($res_root_trov)) {
         $prj_list_categorized[] = $row_root_trov['group_id'];
     }
 
     $sql_list_categorized='';
-    if(count($prj_list_categorized) > 0) {
+    if (count($prj_list_categorized) > 0) {
         $sql_list_categorized=' AND groups.group_id NOT IN ('.implode(',', $prj_list_categorized).') ';
     }
     $query_projlist = "SELECT SQL_CALC_FOUND_ROWS groups.group_id, "
@@ -161,30 +161,29 @@ if ($special_cat === 'none') {
         . "(groups.status='A') "
         . $sql_list_categorized
         . "GROUP BY groups.group_id ORDER BY groups.group_name ";
-}
-else {
+} else {
 // now do limiting query
 
-$query_projlist = "SELECT SQL_CALC_FOUND_ROWS groups.group_id, "
-	. "groups.group_name, "
-	. "groups.unix_group_name, "
-	. "groups.status, "
-	. "groups.register_time, "
-	. "groups.short_description, "
-	. "project_metric.percentile, "
-	. "project_metric.ranking "
-	. "FROM groups "
-	. "LEFT JOIN project_metric USING (group_id) "
-	. ", trove_group_link "
-	. "WHERE trove_group_link.group_id=groups.group_id AND "
-	. "(" .trove_get_visibility_for_user('groups.access', $current_user). ") AND "
+    $query_projlist = "SELECT SQL_CALC_FOUND_ROWS groups.group_id, "
+    . "groups.group_name, "
+    . "groups.unix_group_name, "
+    . "groups.status, "
+    . "groups.register_time, "
+    . "groups.short_description, "
+    . "project_metric.percentile, "
+    . "project_metric.ranking "
+    . "FROM groups "
+    . "LEFT JOIN project_metric USING (group_id) "
+    . ", trove_group_link "
+    . "WHERE trove_group_link.group_id=groups.group_id AND "
+    . "(" .trove_get_visibility_for_user('groups.access', $current_user). ") AND "
         . "(groups.type=1) AND "
-	. "(groups.status='A') AND "
-	. "trove_group_link.trove_cat_id=$form_cat "
-	. "GROUP BY groups.group_id ORDER BY groups.group_name ";
+    . "(groups.status='A') AND "
+    . "trove_group_link.trove_cat_id=$form_cat "
+    . "GROUP BY groups.group_id ORDER BY groups.group_name ";
 }
 
-$limit  = $TROVE_BROWSELIMIT;
+$limit  = TroveCatFactory::BROWSELIMIT;
 $offset = (int) $request->getValidated('offset', 'uint', 0);
 $query_projlist .= " LIMIT $limit OFFSET $offset ";
 
@@ -216,7 +215,7 @@ if ($special_cat) {
 
 $renderer = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') . '/src/templates/softwaremap');
 
-$GLOBALS['HTML']->header(array('title' => $Language->getText('softwaremap_trove_list','map'), 'main_classes' => array('tlp-framed')));
+$GLOBALS['HTML']->header(array('title' => $Language->getText('softwaremap_trove_list', 'map'), 'main_classes' => array('tlp-framed')));
 
 $renderer->renderToPage(
     'software_map',
@@ -227,7 +226,7 @@ $renderer->renderToPage(
         $root_categories,
         $projects,
         new \Tuleap\Layout\PaginationPresenter(
-            $TROVE_BROWSELIMIT,
+            TroveCatFactory::BROWSELIMIT,
             $offset,
             count($projects),
             $total_nb_projects,

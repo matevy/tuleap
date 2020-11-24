@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class UGroupManager_BaseTest extends TuleapTestCase {
+class UGroupManager_BaseTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         $this->non_existent_ugroup_id = 102;
         $this->integrators_ugroup_id  = 103;
 
@@ -53,64 +55,79 @@ class UGroupManager_BaseTest extends TuleapTestCase {
     }
 }
 
-class UGroupManager_getUGroup_Test extends UGroupManager_BaseTest {
-    public function itReturnsNullIfNoMatch() {
+class UGroupManager_getUGroup_Test extends UGroupManager_BaseTest
+{
+    public function itReturnsNullIfNoMatch()
+    {
         $ugroup = $this->ugroup_manager->getUGroup($this->project, $this->non_existent_ugroup_id);
         $this->assertNull($ugroup);
     }
 
-    public function itReturnsStaticUgroupForAGivenProject() {
+    public function itReturnsStaticUgroupForAGivenProject()
+    {
         $ugroup = $this->ugroup_manager->getUGroup($this->project, $this->integrators_ugroup_id);
         $this->assertEqual('Integrators', $ugroup->getName());
     }
 
-    public function itReturnsDynamicUgroupForAGivenProject() {
+    public function itReturnsDynamicUgroupForAGivenProject()
+    {
         $ugroup = $this->ugroup_manager->getUGroup($this->project, ProjectUGroup::PROJECT_MEMBERS);
         $this->assertEqual('ugroup_project_members_name_key', $ugroup->getName());
     }
 }
 
-class UGroupManager_getUGroups_Test extends UGroupManager_BaseTest {
+class UGroupManager_getUGroups_Test extends UGroupManager_BaseTest
+{
 
-    public function itReturnsAllUgroupsOfAProject() {
+    public function itReturnsAllUgroupsOfAProject()
+    {
         $ugroups = $this->ugroup_manager->getUGroups($this->project);
         $this->assertCount($ugroups, 12);
     }
 
-    public function itExcludesGivenUgroups() {
+    public function itExcludesGivenUgroups()
+    {
         $ugroups = $this->ugroup_manager->getUGroups($this->project, array(ProjectUGroup::NONE, ProjectUGroup::ANONYMOUS));
         $this->assertCount($ugroups, 10);
     }
 }
 
-class UGroupManager_getUGroupByName_Test extends UGroupManager_BaseTest {
+class UGroupManager_getUGroupByName_Test extends UGroupManager_BaseTest
+{
 
-    public function itReturnsAStaticUGroupOfAProject() {
+    public function itReturnsAStaticUGroupOfAProject()
+    {
         $ugroup = $this->ugroup_manager->getUGroupByName($this->project, 'Integrators');
         $this->assertEqual($ugroup->getName(), 'Integrators');
     }
 
-    public function itReturnsASpecialNamedStaticUGroupOfAProject() {
+    public function itReturnsASpecialNamedStaticUGroupOfAProject()
+    {
         $ugroup = $this->ugroup_manager->getUGroupByName($this->project, 'ugroup_supra_name_key');
         $this->assertEqual($ugroup->getName(), 'ugroup_supra_name_key');
     }
 
-    public function itReturnsADynamicUGroupOfAProject() {
+    public function itReturnsADynamicUGroupOfAProject()
+    {
         $ugroup = $this->ugroup_manager->getUGroupByName($this->project, 'ugroup_project_members_name_key');
         $this->assertEqual($ugroup->getName(), 'ugroup_project_members_name_key');
     }
 
-    public function itReturnsNullIfNoDynamicMatch() {
+    public function itReturnsNullIfNoDynamicMatch()
+    {
         $this->assertNull($this->ugroup_manager->getUGroupByName($this->project, 'ugroup_BLA_name_key'));
     }
 
-    public function itReturnsNullIfNoStaticMatch() {
+    public function itReturnsNullIfNoStaticMatch()
+    {
         $this->assertNull($this->ugroup_manager->getUGroupByName($this->project, 'BLA'));
     }
 }
 
-class UGroupManager_getUGroupWithMembers_Test extends TuleapTestCase {
-    public function setUp() {
+class UGroupManager_getUGroupWithMembers_Test extends TuleapTestCase
+{
+    public function setUp()
+    {
         parent::setUp();
 
         $this->ugroup_id = 112;
@@ -119,7 +136,8 @@ class UGroupManager_getUGroupWithMembers_Test extends TuleapTestCase {
         $this->ugroup_manager = partial_mock('UGroupManager', array('getUGroup'));
     }
 
-    public function itReturnsAUGroupWithMembers() {
+    public function itReturnsAUGroupWithMembers()
+    {
         $ugroup = mock('ProjectUGroup');
         stub($this->ugroup_manager)->getUGroup($this->project, $this->ugroup_id)->returns($ugroup);
 
@@ -130,33 +148,51 @@ class UGroupManager_getUGroupWithMembers_Test extends TuleapTestCase {
     }
 }
 
-class UGroupManager_UpdateUgroupBindingDaoTest extends TuleapTestCase {
+class UGroupManager_UpdateUgroupBindingDaoTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->dao            = mock('UGroupDao');
         $this->ugroup_manager = new UGroupManager($this->dao);
     }
 
-    public function itCallsDaoToRemoveABinding() {
+    public function itCallsDaoToRemoveABinding()
+    {
         expect($this->dao)->updateUgroupBinding(12, null)->once();
         $this->ugroup_manager->updateUgroupBinding(12);
     }
 
-    public function itCallsDaoToAddABinding() {
+    public function itCallsDaoToAddABinding()
+    {
         expect($this->dao)->updateUgroupBinding(12, 24)->once();
         $this->ugroup_manager->updateUgroupBinding(12, 24);
     }
 }
 
-class UGroupManager_UpdateUgroupBindingEventTest extends TuleapTestCase {
+class UGroupManager_UpdateUgroupBindingEventTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    /**
+     * @var a|\Mockery\MockInterface|EventManager
+     */
+    private $event_manager;
+    /**
+     * @var ProjectUGroup
+     */
+    private $ugroup_12;
+    /**
+     * @var ProjectUGroup
+     */
+    private $ugroup_24;
+
+    public function setUp()
+    {
         parent::setUp();
         $this->dao            = mock('UGroupDao');
-        $this->event_manager  = mock('EventManager');
+        $this->event_manager  = \Mockery::spy(\EventManager::class);
         $this->ugroup_manager = partial_mock('UGroupManager', array('getById'), array($this->dao, $this->event_manager));
-
 
         $this->ugroup_12 = new ProjectUGroup(array('ugroup_id' => 12));
         $this->ugroup_24 = new ProjectUGroup(array('ugroup_id' => 24));
@@ -164,14 +200,15 @@ class UGroupManager_UpdateUgroupBindingEventTest extends TuleapTestCase {
         stub($this->ugroup_manager)->getById(24)->returns($this->ugroup_24);
     }
 
-    public function itRaiseAnEventWithGroupsWhenOneIsAdded() {
+    public function itRaiseAnEventWithGroupsWhenOneIsAdded()
+    {
         expect($this->event_manager)->processEvent('ugroup_manager_update_ugroup_binding_add', array('ugroup' => $this->ugroup_12, 'source' => $this->ugroup_24))->once();
         $this->ugroup_manager->updateUgroupBinding(12, 24);
     }
 
-    public function itRaiseAnEventWithGroupsWhenOneIsRemoved() {
+    public function itRaiseAnEventWithGroupsWhenOneIsRemoved()
+    {
         expect($this->event_manager)->processEvent('ugroup_manager_update_ugroup_binding_remove', array('ugroup' => $this->ugroup_12))->once();
         $this->ugroup_manager->updateUgroupBinding(12);
     }
 }
-?>

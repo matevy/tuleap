@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import { copy } from "angular";
 import _ from "lodash";
 import AwkwardCreationFields from "./awkward-creation-fields-constant.js";
@@ -27,7 +46,7 @@ function TuleapArtifactFieldValuesService($sce) {
         var values = {};
         var artifact_value;
 
-        _.forEach(tracker.fields, function(field) {
+        tracker.fields.forEach(field => {
             artifact_value = artifact_values[field.field_id];
 
             if (AwkwardCreationFields.includes(field.type)) {
@@ -82,7 +101,7 @@ function TuleapArtifactFieldValuesService($sce) {
                 value_obj = formatForOpenListField(field, artifact_value);
                 break;
             case "file":
-                value_obj = addTemporaryFileToValue(value_obj);
+                value_obj = addPropertiesToFileValueModel(value_obj);
                 value_obj.value = _.pluck(artifact_value.file_descriptions, "id");
                 break;
             case "computed":
@@ -175,12 +194,18 @@ function TuleapArtifactFieldValuesService($sce) {
                 value_obj = defaultForOpenListField(field);
                 break;
             case "file":
-                value_obj = addTemporaryFileToValue(value_obj);
+                value_obj = addPropertiesToFileValueModel(value_obj);
                 value_obj.value = [];
                 break;
             case "computed":
-                value_obj.is_autocomputed = true;
-                value_obj.manual_value = null;
+                default_value = field.default_value;
+                if (default_value === null) {
+                    value_obj.is_autocomputed = true;
+                    value_obj.manual_value = null;
+                } else {
+                    value_obj.is_autocomputed = false;
+                    value_obj.manual_value = parseFloat(default_value.value, 10);
+                }
                 break;
             default:
                 // Do nothing
@@ -189,26 +214,25 @@ function TuleapArtifactFieldValuesService($sce) {
         return value_obj;
     }
 
-    function addTemporaryFileToValue(value_obj) {
+    function addPropertiesToFileValueModel(value_obj) {
         value_obj.temporary_files = [
             {
                 file: {},
                 description: ""
             }
         ];
+        value_obj.images_added_by_text_fields = [];
         return value_obj;
     }
 
     function defaultValueExistsInValues(values, default_value_id) {
-        var found = _.find(values, function(val) {
-            return val.id === default_value_id;
-        });
+        const found = values.find(value => default_value_id === value.id);
         return found !== undefined;
     }
 
     function mapCheckboxValues(field, expected_values) {
-        return _.map(field.values, function(possible_value) {
-            return _.contains(expected_values, possible_value.id) ? possible_value.id : null;
+        return field.values.map(possible_value => {
+            return expected_values.includes(possible_value.id) ? possible_value.id : null;
         });
     }
 }

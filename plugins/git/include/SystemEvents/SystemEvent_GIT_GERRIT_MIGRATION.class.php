@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,9 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/backend/BackendLogger.class.php';
-
-class SystemEvent_GIT_GERRIT_MIGRATION extends SystemEvent {
+class SystemEvent_GIT_GERRIT_MIGRATION extends SystemEvent
+{
 
     public const NAME = "GIT_GERRIT_MIGRATION";
 
@@ -49,7 +47,8 @@ class SystemEvent_GIT_GERRIT_MIGRATION extends SystemEvent {
     /** @var MailBuilder */
     private $mail_builder;
 
-    public function process() {
+    public function process()
+    {
         $repo_id           = (int)$this->getParameter(0);
         $remote_server_id  = (int)$this->getParameter(1);
         $this->dao->switchToGerrit($repo_id, $remote_server_id);
@@ -83,19 +82,21 @@ class SystemEvent_GIT_GERRIT_MIGRATION extends SystemEvent {
         }
     }
 
-    private function logError(GitRepository $repository, $sysevent_prefix, $log_prefix, Exception $e) {
+    private function logError(GitRepository $repository, $sysevent_prefix, $log_prefix, Exception $e)
+    {
         $this->dao->setGerritMigrationError($repository->getId());
         $this->error($sysevent_prefix . $e->getMessage());
         $this->logger->error($log_prefix . $this->verbalizeParameters(null), $e);
         $this->sendErrorNotification($repository);
     }
 
-    private function sendErrorNotification(GitRepository $repository) {
+    private function sendErrorNotification(GitRepository $repository)
+    {
         $user = $this->getRequester();
         if (! $user->isAnonymous()) {
             $factory = new BaseLanguageFactory();
             $language = $factory->getBaseLanguage($user->getLocale());
-            $url = get_server_url() . GIT_BASE_URL . '/?action=repo_management&group_id='.$repository->getProjectId().'&repo_id='.$repository->getId().'&pane=gerrit';
+            $url = HTTPRequest::instance()->getServerUrl() . GIT_BASE_URL . '/?action=repo_management&group_id='.$repository->getProjectId().'&repo_id='.$repository->getId().'&pane=gerrit';
 
             $notification = new Notification(
                 array($user->getEmail()),
@@ -112,7 +113,8 @@ class SystemEvent_GIT_GERRIT_MIGRATION extends SystemEvent {
     /**
      * @return string a human readable representation of parameters
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $txt = '';
 
         $repo_id          = (int)$this->getParameter(0);
@@ -131,19 +133,22 @@ class SystemEvent_GIT_GERRIT_MIGRATION extends SystemEvent {
         return $txt;
     }
 
-    private function getRequester() {
+    private function getRequester()
+    {
         $user_id = (int)$this->getParameter(3);
         return $this->user_manager->getUserById($user_id);
     }
 
-    private function verbalizeAccessRightMigration() {
+    private function verbalizeAccessRightMigration()
+    {
         $migrate_access_rights = $this->getParameter(2);
         if (!$migrate_access_rights) {
             return ', without access rights';
         }
     }
 
-    private function verbalizeRepoId($repo_id, $with_link) {
+    private function verbalizeRepoId($repo_id, $with_link)
+    {
         $txt = '#'. $repo_id;
         if ($with_link) {
             $hp = Codendi_HTMLPurifier::instance();
@@ -155,7 +160,8 @@ class SystemEvent_GIT_GERRIT_MIGRATION extends SystemEvent {
         return $txt;
     }
 
-    private function verbalizeRemoteServerId($remote_server_id, $with_link) {
+    private function verbalizeRemoteServerId($remote_server_id, $with_link)
+    {
         $txt = '#'. $remote_server_id;
         if ($with_link) {
             try {

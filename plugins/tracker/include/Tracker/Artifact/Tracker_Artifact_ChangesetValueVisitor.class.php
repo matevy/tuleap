@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
 use Tuleap\Tracker\Artifact\ChangesetValueComputed;
 
 /**
@@ -24,7 +25,8 @@ use Tuleap\Tracker\Artifact\ChangesetValueComputed;
  *
  * @see http://en.wikipedia.org/wiki/Visitor_pattern
  */
-interface Tracker_Artifact_ChangesetValueVisitor {
+interface Tracker_Artifact_ChangesetValueVisitor
+{
 
     public function visitArtifactLink(Tracker_Artifact_ChangesetValue_ArtifactLink $changeset_value);
     public function visitDate(Tracker_Artifact_ChangesetValue_Date $changeset_value);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,38 +19,50 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Psr\Http\Client\ClientExceptionInterface;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Tuleap\Jenkins\JenkinsCSRFCrumbRetriever;
-
-require_once 'common/Http/Client.class.php';
-require_once 'ClientUnableToLaunchBuildException.class.php';
 
 /**
  * A class to be able to work with the jenkins server
  */
-class Jenkins_Client {
+class Jenkins_Client
+{
 
     public const BUILD_WITH_PARAMETERS_REGEXP = '%(?P<job_url>.*)/buildWithParameters(/|\?).*%';
-
-    /**
-     * @var Http_Client
-     */
-    private $http_curl_client;
 
     /**
      * @var String
      */
     private $token = null;
     /**
+     * @var ClientInterface
+     */
+    private $http_client;
+    /**
+     * @var RequestFactoryInterface
+     */
+    private $request_factory;
+    /**
+     * @var StreamFactoryInterface
+     */
+    private $stream_factory;
+    /**
      * @var JenkinsCSRFCrumbRetriever
      */
     private $csrf_crumb_retriever;
 
-    /**
-     * @param Http_Client $http_curl_client Any instance of Http_Client
-     */
-    public function __construct(Http_Client $http_curl_client, JenkinsCSRFCrumbRetriever $csrf_crumb_retriever)
-    {
-        $this->http_curl_client     = $http_curl_client;
+    public function __construct(
+        ClientInterface $http_client,
+        RequestFactoryInterface $request_factory,
+        StreamFactoryInterface $stream_factory,
+        JenkinsCSRFCrumbRetriever $csrf_crumb_retriever
+    ) {
+        $this->http_client          = $http_client;
+        $this->request_factory      = $request_factory;
+        $this->stream_factory       = $stream_factory;
         $this->csrf_crumb_retriever = $csrf_crumb_retriever;
     }
 
@@ -61,7 +73,8 @@ class Jenkins_Client {
      *
      * @return Jenkins_Client
      */
-    public function setToken($token) {
+    public function setToken($token)
+    {
         $this->token = $token;
         return $this;
     }
@@ -74,23 +87,29 @@ class Jenkins_Client {
         $server_url        = $this->getServerUrl($job_url);
         $csrf_crumb_header = $this->csrf_crumb_retriever->getCSRFCrumbHeader($server_url);
 
-        $options = array(
-            CURLOPT_URL             => $this->getBuildUrl($job_url),
-            CURLOPT_SSL_VERIFYPEER  => true,
-            CURLOPT_POST            => true,
-            CURLOPT_HTTPHEADER      => array($csrf_crumb_header)
-        );
-        
-        if (count($build_parameters) > 0) {
-            $options[CURLOPT_POSTFIELDS] = $this->generateBuildParameters($build_parameters);
+        $request = $this->request_factory->createRequest('POST', $this->getBuildUrl($job_url));
+
+        $crumb_header_split = explode(':', $csrf_crumb_header);
+        if (count($crumb_header_split) === 2) {
+            [$crumb_header_name, $crumb_header_value] = $crumb_header_split;
+            $request = $request->withHeader($crumb_header_name, $crumb_header_value);
         }
 
-        $this->http_curl_client->addOptions($options);
+        if (count($build_parameters) > 0) {
+            $request = $request->withHeader('Content-Type', 'application/x-www-form-urlencoded')
+                ->withBody($this->stream_factory->createStream($this->generateBuildParameters($build_parameters)));
+        }
 
         try {
-            $this->http_curl_client->doRequest();
-        } catch (Http_ClientException $e) {
+            $response = $this->http_client->sendRequest($request);
+        } catch (ClientExceptionInterface $e) {
             throw new Jenkins_ClientUnableToLaunchBuildException('Job: ' . $job_url . '; Message: ' . $e->getMessage());
+        }
+
+        $response_status_code = $response->getStatusCode();
+        if ($response_status_code !== 200 && $response_status_code !== 201) {
+            throw new Jenkins_ClientUnableToLaunchBuildException('Job: ' . $job_url . '; HTTP Status code ' . $response_status_code .
+                ' ' . $response->getReasonPhrase());
         }
     }
 
@@ -125,7 +144,8 @@ class Jenkins_Client {
         return $server_url;
     }
 
-    private function getTokenUrlParameter() {
+    private function getTokenUrlParameter()
+    {
         if ($this->token) {
             return array('token' => $this->token);
         }
@@ -136,7 +156,8 @@ class Jenkins_Client {
      * @param array $build_parameters
      * @return string
      */
-    private function generateBuildParameters(array $build_parameters) {
+    private function generateBuildParameters(array $build_parameters)
+    {
         $parameters = array();
         foreach ($build_parameters as $name => $value) {
             $parameters['parameter'][] = array(

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012. All Rights Reserved.
  *
@@ -22,8 +21,9 @@
 /**
  * An object that can return its ID
  */
-interface Tracker_FormElement_IHaveAnId {
-    
+interface Tracker_FormElement_IHaveAnId
+{
+
     /**
      *  Get the id
      *
@@ -31,6 +31,3 @@ interface Tracker_FormElement_IHaveAnId {
      */
     public function getId();
 }
-
-
-?>

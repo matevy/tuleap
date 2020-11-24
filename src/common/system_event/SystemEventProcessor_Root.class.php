@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2011, 2012, 2013, 2016. All rights reserved.
+ * Copyright Enalean (c) 2011 - Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registrated trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -25,7 +25,8 @@
 use Tuleap\Svn\ApacheConfGenerator;
 use Tuleap\Svn\SvnrootUpdater;
 
-class SystemEventProcessor_Root extends SystemEventProcessor {
+class SystemEventProcessor_Root extends SystemEventProcessor
+{
 
     /**
      * @var SiteCache
@@ -78,7 +79,8 @@ class SystemEventProcessor_Root extends SystemEventProcessor {
         $this->generator            = $generator;
     }
 
-    public function getOwner() {
+    public function getOwner()
+    {
         return SystemEvent::OWNER_ROOT;
     }
 
@@ -113,13 +115,15 @@ class SystemEventProcessor_Root extends SystemEventProcessor {
         $this->triggerApplicationOwnerEventsProcessing();
     }
 
-    protected function triggerApplicationOwnerEventsProcessing() {
+    protected function triggerApplicationOwnerEventsProcessing()
+    {
         $app = new SystemEventProcessor_ApplicationOwner(new SystemEventProcessApplicationOwnerDefaultQueue(), $this->system_event_manager, $this->dao, $this->logger);
-        $command   = ForgeConfig::get('codendi_dir').'/src/utils/php-launcher.sh '.ForgeConfig::get('codendi_dir').'/src/utils/process_system_events.php '.SystemEvent::OWNER_APP;
+        $command = sprintf('/usr/bin/tuleap %s %s', \Tuleap\CLI\Command\ProcessSystemEventsCommand::NAME, SystemEvent::OWNER_APP);
         $this->launchAs($app->getProcessOwner(), $command);
     }
 
-    protected function launchAs($user, $command) {
+    protected function launchAs($user, $command)
+    {
         $return_val = 0;
         $output = array();
         $cmd    = 'su -l '.$user.' -c "'.$command.' 2>&1"';
@@ -132,7 +136,8 @@ class SystemEventProcessor_Root extends SystemEventProcessor {
         }
     }
 
-    public function getProcessOwner() {
+    public function getProcessOwner()
+    {
         return 'root';
     }
 }

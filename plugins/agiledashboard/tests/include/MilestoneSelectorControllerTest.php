@@ -20,9 +20,11 @@
 
 require_once dirname(__FILE__).'/../bootstrap.php';
 
-class Planning_MilestoneSelectorControllerTest extends TuleapTestCase {
+class Planning_MilestoneSelectorControllerTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         ForgeConfig::store();
         ForgeConfig::set('codendi_dir', AGILEDASHBOARD_BASE_DIR .'/../../..');
@@ -37,33 +39,33 @@ class Planning_MilestoneSelectorControllerTest extends TuleapTestCase {
         stub($this->milestone_factory)->getLastMilestoneCreated($this->user, $this->planning_id)->returns($milestone);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         EventManager::clearInstance();
         ForgeConfig::restore();
         parent::tearDown();
     }
 
-    function itRedirectToTheCurrentMilestone() {
+    function itRedirectToTheCurrentMilestone()
+    {
         $GLOBALS['Response']->expectOnce('redirect', array(new PatternExpectation("/aid=$this->current_milestone_artifact_id/")));
         $controller = new Planning_MilestoneSelectorController($this->request, $this->milestone_factory);
         $controller->show();
     }
 
-    function itRedirectToTheCurrentMilestoneCardwallIfAny() {
-        $event_manager = mock('EventManager');
+    function itRedirectToTheCurrentMilestoneCardwallIfAny()
+    {
+        $event_manager = \Mockery::mock(\EventManager::class);
         EventManager::setInstance($event_manager);
 
-        $event_manager->expectOnce(
-            'processEvent',
-            array(
-                AGILEDASHBOARD_EVENT_MILESTONE_SELECTOR_REDIRECT,
-                '*'
-        ));
+        $event_manager->shouldReceive('processEvent')->with(AGILEDASHBOARD_EVENT_MILESTONE_SELECTOR_REDIRECT, \Mockery::any());
+
         $controller = new Planning_MilestoneSelectorController($this->request, $this->milestone_factory);
         $controller->show();
     }
 
-    function itDoesntRedirectIfNoMilestone() {
+    function itDoesntRedirectIfNoMilestone()
+    {
         $milestone_factory = mock('Planning_MilestoneFactory');
         stub($milestone_factory)->getLastMilestoneCreated()->returns(mock('Planning_NoMilestone'));
 
@@ -71,7 +73,4 @@ class Planning_MilestoneSelectorControllerTest extends TuleapTestCase {
         $controller = new Planning_MilestoneSelectorController($this->request, $milestone_factory);
         $controller->show();
     }
-
 }
-
-?>

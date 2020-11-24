@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2019. All Rights Reserved.
+  - Copyright (c) Enalean, 2019 - present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -21,8 +21,8 @@
 <template>
     <button type="button"
             class="tlp-button-primary tlp-button-outline tlp-button-small tlp-dropdown-split-button-main"
-            v-on:click="displayQuickLook()"
-            data-test="quick-look-button"
+            data-test="document-quick-look-button"
+            v-on:click="toggleQuickLook()"
     >
         <i class="fa fa-eye tlp-button-icon"></i>
         <translate>Quick look</translate>
@@ -30,15 +30,15 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import EventBus from "../../../helpers/event-bus.js";
 export default {
     name: "QuickLookButton",
-    computed: {
-        ...mapState(["currently_previewed_item"])
+    props: {
+        item: Object
     },
     methods: {
-        displayQuickLook() {
-            this.$emit("displayQuickLook", this.currently_previewed_item);
+        toggleQuickLook() {
+            EventBus.$emit("toggle-quick-look", { details: { item: this.item } });
         }
     }
 };

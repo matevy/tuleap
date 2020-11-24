@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2013. All Rights Reserved.
  *
@@ -20,10 +19,11 @@
  */
 
 
-class Git_Driver_Gerrit_ProjectCreator_ProjectAlreadyExistsException extends Exception {
+class Git_Driver_Gerrit_ProjectCreator_ProjectAlreadyExistsException extends Exception
+{
 
-    public function __construct($project_name, $server_name) {
+    public function __construct($project_name, $server_name)
+    {
         parent::__construct('Gerrit Project '.$project_name.' already exists on ' . $server_name);
     }
 }
-?>

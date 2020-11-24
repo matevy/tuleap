@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 export default BacklogItemService;
 
 BacklogItemService.$inject = ["Restangular", "BacklogItemFactory"];
@@ -11,15 +9,15 @@ function BacklogItemService(Restangular, BacklogItemFactory) {
     });
 
     var self = this;
-
-    _.extend(self, {
+    Object.assign(self, {
         getBacklogItem: getBacklogItem,
         getProjectBacklogItems: getProjectBacklogItems,
         getMilestoneBacklogItems: getMilestoneBacklogItems,
         getBacklogItemChildren: getBacklogItemChildren,
         reorderBacklogItemChildren: reorderBacklogItemChildren,
         removeAddReorderBacklogItemChildren: removeAddReorderBacklogItemChildren,
-        removeAddBacklogItemChildren: removeAddBacklogItemChildren
+        removeAddBacklogItemChildren: removeAddBacklogItemChildren,
+        removeItemFromExplicitBacklog: removeItemFromExplicitBacklog
     });
 
     function getBacklogItem(backlog_item_id) {
@@ -48,7 +46,7 @@ function BacklogItemService(Restangular, BacklogItemFactory) {
                 offset: offset
             })
             .then(function(response) {
-                _.forEach(response.data, augmentBacklogItem);
+                response.data.forEach(augmentBacklogItem);
 
                 var result = {
                     results: response.data,
@@ -70,7 +68,7 @@ function BacklogItemService(Restangular, BacklogItemFactory) {
                 offset: offset
             })
             .then(function(response) {
-                _.forEach(response.data, augmentBacklogItem);
+                response.data.forEach(augmentBacklogItem);
 
                 var result = {
                     results: response.data,
@@ -92,7 +90,7 @@ function BacklogItemService(Restangular, BacklogItemFactory) {
                 offset: offset
             })
             .then(function(response) {
-                _.forEach(response.data, augmentBacklogItem);
+                response.data.forEach(augmentBacklogItem);
 
                 var result = {
                     results: response.data,
@@ -137,12 +135,10 @@ function BacklogItemService(Restangular, BacklogItemFactory) {
                     direction: compared_to.direction,
                     compared_to: compared_to.item_id
                 },
-                add: _.map(dropped_item_ids, function(dropped_item_id) {
-                    return {
-                        id: dropped_item_id,
-                        remove_from: source_backlog_item_id
-                    };
-                })
+                add: dropped_item_ids.map(dropped_item_id => ({
+                    id: dropped_item_id,
+                    remove_from: source_backlog_item_id
+                }))
             });
     }
 
@@ -155,12 +151,21 @@ function BacklogItemService(Restangular, BacklogItemFactory) {
             .one("backlog_items", dest_backlog_item_id)
             .all("children")
             .patch({
-                add: _.map(dropped_item_ids, function(dropped_item_id) {
-                    return {
-                        id: dropped_item_id,
-                        remove_from: source_backlog_item_id
-                    };
-                })
+                add: dropped_item_ids.map(dropped_item_id => ({
+                    id: dropped_item_id,
+                    remove_from: source_backlog_item_id
+                }))
+            });
+    }
+
+    function removeItemFromExplicitBacklog(project_id, backlog_items) {
+        return rest
+            .one("projects", project_id)
+            .all("backlog")
+            .patch({
+                remove: backlog_items.map(backlog_item => ({
+                    id: backlog_item.id
+                }))
             });
     }
 }

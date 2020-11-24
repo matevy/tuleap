@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class DateParser {
+class DateParser
+{
 
     /**
      * Parse an ISO8601 calendar date
@@ -33,7 +34,8 @@ class DateParser {
      *
      * @return The corresponding timestamp
      */
-    static function parseIso8601 ($isodate) {
+    static function parseIso8601($isodate)
+    {
         if (preg_match("/^(\d{4})-?(\d{2})-?(\d{2})(.*)$/", $isodate, $matches)) {
             list( , $year, $month, $day, $rest) = $matches;
 
@@ -41,7 +43,7 @@ class DateParser {
                 list( , $hour, $minute, $second, , $rest) = $matches;
                 $offsetHour = 0;
                 $offsetMinute = 0;
-                
+
                 $localOffset = date("Z", mktime($hour, $minute, (int)$second, $month, $day, $year));
                 if (preg_match("/^([+-])(\d{2})(:?(\d{2}))$/", $rest, $matches)) {
                     list( , $sign, $offsetHour, , $offsetMinute) = $matches;
@@ -49,15 +51,12 @@ class DateParser {
                         $offsetHour = -$offsetHour;
                         $offsetMinute = -$offsetMinute;
                     }
-                } else if ($rest != 'Z') {
+                } elseif ($rest != 'Z') {
                     $localOffset = 0;
                 }
-
             }
 
             return mktime($hour - $offsetHour, $minute - $offsetMinute, (int)$second, $month, $day, $year) + $localOffset;
         }
     }
 }
-
-?>

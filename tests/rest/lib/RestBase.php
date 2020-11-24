@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -16,7 +16,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 use Guzzle\Http\Client;
@@ -24,7 +23,7 @@ use PHPUnit\Framework\TestCase;
 use Test\Rest\Cache;
 use Test\Rest\RequestWrapper;
 
-class RestBase extends TestCase // phpcs:ignore
+class RestBase extends TestCase // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     protected $base_url = 'https://localhost/api/v1';
     private $setup_url  = 'https://localhost/api/v1';
@@ -51,6 +50,9 @@ class RestBase extends TestCase // phpcs:ignore
     protected $project_pbi_id;
     protected $project_deleted_id;
     protected $project_suspended_id;
+    protected $project_public_with_membership_id;
+    protected $project_future_releases_id;
+    protected $project_services_id;
 
     protected $epic_tracker_id;
     protected $releases_tracker_id;
@@ -60,23 +62,30 @@ class RestBase extends TestCase // phpcs:ignore
     protected $deleted_tracker_id;
     protected $kanban_tracker_id;
 
-    protected $docman_root_id = 2;
-
     protected $project_ids = array();
     protected $tracker_ids = array();
     protected $user_groups_ids = array();
     protected $user_ids = [];
+
+    protected $tracker_representations = [];
 
     protected $release_artifact_ids = array();
     protected $epic_artifact_ids = array();
     protected $story_artifact_ids = array();
     protected $sprint_artifact_ids = array();
 
+    /**
+     * @var Cache
+     */
     protected $cache;
 
-    public function __construct()
+    private $initialized = false;
+    protected function initialize(): void
     {
-        parent::__construct();
+        if ($this->initialized) {
+            return;
+        }
+
         if (isset($_ENV['TULEAP_HOST'])) {
             $this->base_url  = $_ENV['TULEAP_HOST'] . '/api/v1';
             $this->setup_url = $_ENV['TULEAP_HOST'] . '/api/v1';
@@ -94,6 +103,7 @@ class RestBase extends TestCase // phpcs:ignore
         );
         $this->client->setSslVerification(false, false, false);
         $this->setup_client = new Client($this->setup_url);
+        $this->setup_client->setCurlMulti($this->client->getCurlMulti());
         $this->setup_client->setSslVerification(false, false, false);
 
         $this->client->setDefaultOption('headers/Accept', 'application/json');
@@ -103,11 +113,14 @@ class RestBase extends TestCase // phpcs:ignore
         $this->setup_client->setDefaultOption('headers/Content-Type', 'application/json');
 
         $this->rest_request = new RequestWrapper($this->client, $this->cache);
+
+        $this->initialized = true;
     }
 
     public function setUp() : void
     {
         parent::setUp();
+        $this->initialize();
 
         $this->project_ids = $this->cache->getProjectIds();
         if (!$this->project_ids) {
@@ -119,6 +132,8 @@ class RestBase extends TestCase // phpcs:ignore
             $this->initTrackerIds();
         }
 
+        $this->tracker_representations = $this->cache->getTrackerRepresentations();
+
         $this->user_ids = $this->cache->getUserIds();
         if (!$this->user_ids) {
             $this->initUserIds();
@@ -129,13 +144,16 @@ class RestBase extends TestCase // phpcs:ignore
             $this->initUserGroupsId();
         }
 
-        $this->project_private_member_id  = $this->getProjectId(REST_TestDataBuilder::PROJECT_PRIVATE_MEMBER_SHORTNAME);
-        $this->project_private_id         = $this->getProjectId(REST_TestDataBuilder::PROJECT_PRIVATE_SHORTNAME);
-        $this->project_public_id          = $this->getProjectId(REST_TestDataBuilder::PROJECT_PUBLIC_SHORTNAME);
-        $this->project_public_member_id   = $this->getProjectId(REST_TestDataBuilder::PROJECT_PUBLIC_MEMBER_SHORTNAME);
-        $this->project_pbi_id             = $this->getProjectId(REST_TestDataBuilder::PROJECT_PBI_SHORTNAME);
-        $this->project_deleted_id         = $this->getProjectId(REST_TestDataBuilder::PROJECT_DELETED_SHORTNAME);
-        $this->project_suspended_id       = $this->getProjectId(REST_TestDataBuilder::PROJECT_SUSPENDED_SHORTNAME);
+        $this->project_private_member_id         = $this->getProjectId(REST_TestDataBuilder::PROJECT_PRIVATE_MEMBER_SHORTNAME);
+        $this->project_private_id                = $this->getProjectId(REST_TestDataBuilder::PROJECT_PRIVATE_SHORTNAME);
+        $this->project_public_id                 = $this->getProjectId(REST_TestDataBuilder::PROJECT_PUBLIC_SHORTNAME);
+        $this->project_public_member_id          = $this->getProjectId(REST_TestDataBuilder::PROJECT_PUBLIC_MEMBER_SHORTNAME);
+        $this->project_pbi_id                    = $this->getProjectId(REST_TestDataBuilder::PROJECT_PBI_SHORTNAME);
+        $this->project_deleted_id                = $this->getProjectId(REST_TestDataBuilder::PROJECT_DELETED_SHORTNAME);
+        $this->project_suspended_id              = $this->getProjectId(REST_TestDataBuilder::PROJECT_SUSPENDED_SHORTNAME);
+        $this->project_public_with_membership_id = $this->getProjectId(REST_TestDataBuilder::PROJECT_PUBLIC_WITH_MEMBERSHIP_SHORTNAME);
+        $this->project_future_releases_id        = $this->getProjectId(REST_TestDataBuilder::PROJECT_FUTURE_RELEASES);
+        $this->project_services_id               = $this->getProjectId(REST_TestDataBuilder::PROJECT_SERVICES);
 
         $this->getTrackerIdsForProjectPrivateMember();
     }
@@ -144,6 +162,14 @@ class RestBase extends TestCase // phpcs:ignore
     {
         return $this->getResponseByName(
             $user_name,
+            $request
+        );
+    }
+
+    protected function getResponseForReadOnlyUserAdmin($request)
+    {
+        return $this->getResponseByName(
+            REST_TestDataBuilder::TEST_BOT_USER_NAME,
             $request
         );
     }
@@ -223,7 +249,8 @@ class RestBase extends TestCase // phpcs:ignore
             array('limit' => $limit, 'offset' => $offset)
         );
 
-        $tracker_ids = array();
+        $tracker_ids            = array();
+        $tracker_representation = [];
 
         do {
             $response = $this->getResponseByName(
@@ -235,9 +262,12 @@ class RestBase extends TestCase // phpcs:ignore
             $number_of_tracker = (int)(string)$response->getHeader('X-Pagination-Size');
 
             $this->addTrackerIdFromRequestData($trackers, $tracker_ids);
+            $this->addTrackerRepresentationFromRequestData($trackers, $tracker_representation);
 
             $offset += $limit;
         } while ($offset < $number_of_tracker);
+
+        $this->cache->addTrackerRepresentations($tracker_representation);
 
         $this->tracker_ids[$project_id] = $tracker_ids;
         $this->cache->setTrackerIds($this->tracker_ids);
@@ -253,6 +283,15 @@ class RestBase extends TestCase // phpcs:ignore
         }
     }
 
+    private function addTrackerRepresentationFromRequestData(array $trackers, array &$tracker_representation)
+    {
+        foreach ($trackers as $tracker) {
+            $tracker_id = $tracker['id'];
+
+            $tracker_representation[$tracker_id] = $tracker;
+        }
+    }
+
     private function getTrackerIdsForProjectPrivateMember()
     {
         $this->epic_tracker_id         = $this->tracker_ids[$this->project_private_member_id][REST_TestDataBuilder::EPICS_TRACKER_SHORTNAME];
@@ -264,7 +303,6 @@ class RestBase extends TestCase // phpcs:ignore
         // the user story tracker so hopefully it takes the next available ID. This is a weak assumption, a clean way to achieve the test
         // would be to introduce a DELETE trackers/:id route. See tests/rest/_fixtures/01-private-member/project.xml.
         $this->deleted_tracker_id      = $this->user_stories_tracker_id + 1;
-
 
         $this->kanban_tracker_id = $this->tracker_ids[$this->project_private_member_id][REST_TestDataBuilder::KANBAN_TRACKER_SHORTNAME];
     }

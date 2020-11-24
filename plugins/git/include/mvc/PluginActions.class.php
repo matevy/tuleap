@@ -18,43 +18,50 @@
   * along with Codendi. If not, see <http://www.gnu.org/licenses/
   */
 
-class PluginActions {
+class PluginActions
+{
 
     protected $controller;
 
     /** @var Codendi_Request*/
     protected $request;
 
-    public function __construct( $controller ) {
+    public function __construct($controller)
+    {
         $this->controller = $controller;
         $this->user       = $controller->getUser();
         $this->request    = $controller->getRequest();
     }
 
-    public function getController() {
+    public function getController()
+    {
         return $this->controller;
     }
 
-    public function setController(PluginController $controller) {
+    public function setController(PluginController $controller)
+    {
         $this->controller = $controller;
     }
-    
-    public function getData() {
+
+    public function getData()
+    {
         return $this->controller->getData();
     }
 
-    public function addData($data) {
+    public function addData($data)
+    {
         $this->controller->addData($data);
     }
 
-    public function check() {
+    public function check()
+    {
         return true;
     }
 
-    public function process($actionName, $actionParams) {
-        if( $this->check() ) {
+    public function process($actionName, $actionParams)
+    {
+        if ($this->check()) {
             return call_user_func_array(array($this,$actionName), $actionParams);
         }
     }
 }
-?>

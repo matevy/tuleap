@@ -16,16 +16,20 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201407081125_add_missing_column_in_tour_usage_statistics extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201407081125_add_missing_column_in_tour_usage_statistics extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Add column to know when the tour is ended";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE tour_usage_statistics ADD COLUMN the_end TINYINT(1) NOT NULL";
 
         $res = $this->db->dbh->exec($sql);
@@ -34,5 +38,4 @@ class b201407081125_add_missing_column_in_tour_usage_statistics extends ForgeUpg
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while altering tour_usage_statistics table.');
         }
     }
-
 }

@@ -21,7 +21,8 @@
 /**
  * I am a helper to provide a selectbox as a criterion in the tracker report to choose a milestone for a given tracker
  */
-class AgileDashboard_Milestone_MilestoneReportCriterionProvider {
+class AgileDashboard_Milestone_MilestoneReportCriterionProvider
+{
 
     public const FIELD_NAME = 'agiledashboard_milestone';
     public const ANY        = '';
@@ -43,7 +44,8 @@ class AgileDashboard_Milestone_MilestoneReportCriterionProvider {
     /**
      * @return string
      */
-    public function getCriterion(Tracker $backlog_tracker, PFUser $user) {
+    public function getCriterion(Tracker $backlog_tracker, PFUser $user)
+    {
         $options = $this->options_provider->getSelectboxOptions(
             $backlog_tracker,
             $this->milestone_provider->getMilestoneId(),
@@ -58,7 +60,7 @@ class AgileDashboard_Milestone_MilestoneReportCriterionProvider {
         $criterion .= $GLOBALS['Language']->getText('plugin_agiledashboard', 'report_criteria_label');
         $criterion .= '</label>';
         $criterion .= '<select name="additional_criteria['.self::FIELD_NAME.']" id="tracker_report_crit_agiledashboard_milestone">';
-        $criterion .= '<option value="" >'. $GLOBALS['Language']->getText('global','any') .'</option>';
+        $criterion .= '<option value="" >'. $GLOBALS['Language']->getText('global', 'any') .'</option>';
         $criterion .= implode('', $options);
         $criterion .= '</select>';
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,40 +21,35 @@
 /**
  * Cache computation for better performances
  */
-class Tracker_FormElement_Field_ComputedDaoCache {
+class Tracker_FormElement_Field_ComputedDaoCache
+{
     private static $instance;
 
     private $dao;
     private $field_values_at_timestamp = array();
 
-    public function __construct(Tracker_FormElement_Field_ComputedDao $dao) {
+    public function __construct(Tracker_FormElement_Field_ComputedDao $dao)
+    {
         $this->dao = $dao;
     }
 
     /**
      * @return Tracker_FormElement_Field_ComputedDaoCache
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (! self::$instance) {
-            $class = __CLASS__;
+            $class = self::class;
             self::$instance = new $class(new Tracker_FormElement_Field_ComputedDao());
         }
         return self::$instance;
     }
 
-    public function getFieldValuesAtTimestamp($source_id, $target_name, $timestamp)
-    {
-        $index = $source_id.'_'.$target_name.'_'.$timestamp;
-        if (! isset($this->field_values_at_timestamp[$index])) {
-            $this->field_values_at_timestamp[$index] = $this->dao->getFieldValuesAtTimestamp(array($source_id), $target_name, $timestamp, $source_id);
-        }
-        return $this->field_values_at_timestamp[$index];
-    }
-
     /**
      * @return false | int
      */
-    public function getCachedFieldValueAtTimestamp($artifact_id, $field_id, $timestamp) {
+    public function getCachedFieldValueAtTimestamp($artifact_id, $field_id, $timestamp)
+    {
         $row = $this->dao->getCachedFieldValueAtTimestamp($artifact_id, $field_id, $timestamp);
 
         return ($row) ? $row['value'] : false;
@@ -63,7 +58,8 @@ class Tracker_FormElement_Field_ComputedDaoCache {
     /**
      * @return bool
      */
-    public function saveCachedFieldValueAtTimestamp($artifact_id, $field_id, $timestamp, $value) {
+    public function saveCachedFieldValueAtTimestamp($artifact_id, $field_id, $timestamp, $value)
+    {
         return $this->dao->saveCachedFieldValueAtTimestamp($artifact_id, $field_id, $timestamp, $value);
     }
 

@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class SystemEvent_GIT_DUMP_ALL_MIRRORED_REPOSITORIES extends SystemEvent {
+class SystemEvent_GIT_DUMP_ALL_MIRRORED_REPOSITORIES extends SystemEvent
+{
     public const NAME = 'GIT_DUMP_ALL_MIRRORED_REPOSITORIES';
 
     /** @var Git_GitoliteDriver */
@@ -30,7 +31,8 @@ class SystemEvent_GIT_DUMP_ALL_MIRRORED_REPOSITORIES extends SystemEvent {
         $this->gitolite_driver  = $gitolite_driver;
     }
 
-    public function process() {
+    public function process()
+    {
 
         $dump_is_done = $this->gitolite_driver->dumpAllMirroredRepositories();
 
@@ -42,7 +44,8 @@ class SystemEvent_GIT_DUMP_ALL_MIRRORED_REPOSITORIES extends SystemEvent {
         $this->error('Something went wrong while dumping gitolite configuration.');
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return '';
     }
 }

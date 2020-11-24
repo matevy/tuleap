@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+/* global tuleap:readonly codendi:readonly */
 
 !(function($) {
     var themes_list,
@@ -67,7 +69,24 @@
         $(window).resize(updateHeightValue);
 
         initThemeVariantSelection();
+        initApiAccessKeyExpirationDatePicker();
     });
+
+    function initApiAccessKeyExpirationDatePicker() {
+        var field_times = document.querySelectorAll(".access-key-expiration-date-input");
+        if (field_times.length != 0) {
+            [].forEach.call(field_times, function(date_picker) {
+                const dateToday = new Date();
+                $(date_picker).datetimepicker({
+                    language: codendi.locale,
+                    pickTime: false,
+                    pickSeconds: false,
+                    pickDate: true,
+                    startDate: dateToday
+                });
+            });
+        }
+    }
 
     function getResizedImageUrl(url) {
         var tmp_img = document.createElement("img");
@@ -191,8 +210,6 @@
                 return;
             }
         });
-
-        var nb_checked = $('input[type="checkbox"][name="ssh_key_selected[]"]:checked').length;
 
         if (at_least_one_checkbox_is_checked) {
             button.removeAttr("disabled");

@@ -18,18 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter extends Tracker_XML_Exporter_ChangesetValue_ChangesetValueXMLExporter {
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter extends Tracker_XML_Exporter_ChangesetValue_ChangesetValueXMLExporter
+{
 
     /**
      * @var UserXMLExporter
      */
     private $user_xml_exporter;
 
-    public function __construct(UserXMLExporter $user_xml_exporter) {
+    public function __construct(UserXMLExporter $user_xml_exporter)
+    {
         $this->user_xml_exporter = $user_xml_exporter;
     }
 
-    protected function getFieldChangeType() {
+    protected function getFieldChangeType()
+    {
         return 'list';
     }
 
@@ -51,7 +54,7 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter extends 
 
         if (empty($values)) {
             $field_change->addChild('value');
-        } elseif($bind_type === Tracker_FormElement_Field_List_Bind_Users::TYPE) {
+        } elseif ($bind_type === Tracker_FormElement_Field_List_Bind_Users::TYPE) {
             foreach ($values as $value) {
                 $this->user_xml_exporter->exportUserByUserId($value, $field_change, 'value');
             }

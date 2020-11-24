@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -49,13 +49,20 @@ class Tracker_Report_HeaderRenderer
         $this->renderer             = $renderer;
     }
 
-    public function displayHeader(Tracker_IFetchTrackerSwitcher $layout, Codendi_Request $request, PFUser $current_user, Tracker_Report $report, $report_can_be_modified) {
+    public function displayHeader(
+        Tracker_IFetchTrackerSwitcher $layout,
+        Codendi_Request $request,
+        PFUser $current_user,
+        Tracker_Report $report,
+        $report_can_be_modified
+    ) {
         $link_artifact_id = (int)$request->get('link-artifact-id');
         if ($report_can_be_modified) {
             $title            = '';
             $breadcrumbs      = array();
             $params           = array('body_class' => array('in_tracker_report'));
-            $toolbar          = null;
+            $toolbar          = $report->getTracker()->getDefaultToolbar();
+
             $report->getTracker()->displayHeader($layout, $title, $breadcrumbs, $toolbar, $params);
         }
 
@@ -107,7 +114,8 @@ class Tracker_Report_HeaderRenderer
         );
     }
 
-    private function getSaveOrRevert(PFUser $current_user, Tracker_Report $report, array $options_params, $report_can_be_modified) {
+    private function getSaveOrRevert(PFUser $current_user, Tracker_Report $report, array $options_params, $report_can_be_modified)
+    {
         if ($current_user->isAnonymous() || !$report_can_be_modified) {
             return false;
         }
@@ -145,7 +153,8 @@ class Tracker_Report_HeaderRenderer
         );
     }
 
-    private function getClassNameHasChanged(Tracker_Report $report) {
+    private function getClassNameHasChanged(Tracker_Report $report)
+    {
         $is_obsolete = $report->isObsolete();
 
         $classname_has_changed = '';
@@ -162,7 +171,8 @@ class Tracker_Report_HeaderRenderer
         return $classname_has_changed;
     }
 
-    private function getReportOptionsDropdown(PFUser $current_user, Tracker_Report $report, array $options_params, array $reports) {
+    private function getReportOptionsDropdown(PFUser $current_user, Tracker_Report $report, array $options_params, array $reports)
+    {
         return new Templating_Presenter_ButtonDropdowns(
             'tracker_report_options',
             $GLOBALS['Language']->getText('plugin_tracker_report', 'options'),
@@ -170,7 +180,8 @@ class Tracker_Report_HeaderRenderer
         );
     }
 
-    private function getReportOptionsList(PFUser $current_user, Tracker_Report $report, array $options_params, array $reports) {
+    private function getReportOptionsList(PFUser $current_user, Tracker_Report $report, array $options_params, array $reports)
+    {
         $states_list = array();
         $actions_list = array();
 
@@ -184,7 +195,7 @@ class Tracker_Report_HeaderRenderer
             );
         }
 
-        if(count($reports) > 1 && $report->getTracker()->userIsAdmin($current_user)) {
+        if (count($reports) > 1 && $report->getTracker()->userIsAdmin($current_user)) {
             $states_list[] = new Templating_Presenter_ButtonDropdownsOption(
                 'tracker_report_updater_default',
                 $GLOBALS['Language']->getText('plugin_tracker_report', 'default'),
@@ -193,7 +204,7 @@ class Tracker_Report_HeaderRenderer
             );
         }
 
-        if(! $current_user->isAnonymous()) {
+        if (! $current_user->isAnonymous()) {
             $actions_list[] = new Templating_Presenter_ButtonDropdownsOptionWithModal(
                 'tracker_report_updater_duplicate',
                 $GLOBALS['Language']->getText('plugin_tracker_report', 'save_as'),
@@ -220,7 +231,8 @@ class Tracker_Report_HeaderRenderer
         return array_merge($states_list, $actions_list);
     }
 
-    private function displayHeaderInArtifactLinkModal(Tracker_IFetchTrackerSwitcher $layout, Codendi_Request $request, PFUser $current_user, Tracker_Report $report, array $reports, $link_artifact_id) {
+    private function displayHeaderInArtifactLinkModal(Tracker_IFetchTrackerSwitcher $layout, Codendi_Request $request, PFUser $current_user, Tracker_Report $report, array $reports, $link_artifact_id)
+    {
         $project = null;
         $artifact = Tracker_ArtifactFactory::instance()->getArtifactByid($link_artifact_id);
         if ($artifact) {
@@ -238,22 +250,24 @@ class Tracker_Report_HeaderRenderer
         );
     }
 
-    private function getSelectReportUrl(Codendi_Request $request, Tracker_Report $report) {
+    private function getSelectReportUrl(Codendi_Request $request, Tracker_Report $report)
+    {
         $params = array('tracker' => $report->tracker_id);
 
-        if($request->exist('criteria')) {
+        if ($request->exist('criteria')) {
             $params['criteria'] = $request->get('criteria');
         }
 
         return '?'. http_build_query($params);
     }
 
-    private function getReportSelector(Tracker_Report $report, array $reports) {
+    private function getReportSelector(Tracker_Report $report, array $reports)
+    {
         $options = '';
         if (count($reports) > 1) {
             $options = '<select id="tracker_select_report" name="select_report">';
             $optgroup = array('personal' => '', 'public' => '');
-            foreach($reports as $r) {
+            foreach ($reports as $r) {
                 $prefix = '<option value="'. $r->id .'"';
                 $suffix = '>'. $this->purifier->purify($r->name, CODENDI_PURIFIER_CONVERT_HTML)  .'</option>';
                 $selected = $r->id == $report->id ? 'selected="selected"' : '';

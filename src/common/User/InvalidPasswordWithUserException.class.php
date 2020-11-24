@@ -17,16 +17,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class User_InvalidPasswordWithUserException extends User_LoginException {
+class User_InvalidPasswordWithUserException extends User_LoginException
+{
     /** @var PFUser */
     private $user;
 
-    public function __construct(PFUser $user) {
+    public function __construct(PFUser $user)
+    {
         $this->user = $user;
-        parent::__construct($GLOBALS['Language']->getText('include_session','invalid_pwd'));
+        parent::__construct($GLOBALS['Language']->getText('include_session', 'invalid_pwd'));
     }
 
-    public function getUser() {
+    public function getUser()
+    {
         return $this->user;
     }
 }

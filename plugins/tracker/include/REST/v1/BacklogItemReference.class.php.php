@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2014. All rights reserved
+ * Copyright (c) Enalean, 2014-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -19,17 +18,20 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class BacklogItemReference {
+class BacklogItemReference
+{
 
     /**
      * @var object Identification of the backlog item {@required true} {@type array}
+     * @psalm-var array
      * <br>
      * E.g. {"id" : 458}
      *
      */
     public $artifact;
 
-    public function getArtifactId() {
+    public function getArtifactId()
+    {
         return isset($this->artifact['id']) ? $this->artifact['id'] : null;
     }
 }

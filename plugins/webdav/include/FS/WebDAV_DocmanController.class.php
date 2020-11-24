@@ -19,55 +19,63 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once dirname(__FILE__).'/../../../docman/include/Docman_Controller.class.php';
-require_once dirname(__FILE__).'/../../../docman/include/Docman_Actions.class.php';
-
 /**
  * WebDav / Docman interactions aims to be done through the standard MVC pattern.
- * 
+ *
  * WebDav plugin issue a new "WebDav" kind of request to Docman controller.
  * Then Docman controller dispatch to the right action depending of the 'action' request
  * parameter. And finally, we use default docman actions defined ind DocmanActions class.
- * 
+ *
  * Using this pattern, we ensure a perfect alignment between WebDav access code and Docman
  * access code.
  */
-class WebDAV_DocmanController extends Docman_Controller {
+class WebDAV_DocmanController extends Docman_Controller
+{
 
-    public function __construct(DocmanPlugin $plugin, WebDAV_Request $request) {
+    public function __construct(DocmanPlugin $plugin, WebDAV_Request $request)
+    {
         parent::__construct($plugin, $plugin->getPluginPath(), $plugin->getThemePath(), $request);
     }
 
-    public function actionsManagement() {
+    public function actionsManagement()
+    {
         $action = new Docman_Actions($this);
         $action->process($this->action, $this->_actionParams);
     }
 
-    public function viewsManagement() {
+    public function viewsManagement()
+    {
     }
 
-    public function _includeView() {
+    public function _includeView()
+    {
     }
 
-    public function _set_deleteView_errorPerms() {
+    public function _set_deleteView_errorPerms()
+    {
     }
 
-    public function _set_redirectView() {
+    public function _set_redirectView()
+    {
     }
 
-    public function _setView($view) {
+    public function _setView($view)
+    {
     }
 
-    public function _set_moveView_errorPerms() {
+    public function _set_moveView_errorPerms()
+    {
     }
 
-    public function _set_createItemView_errorParentDoesNotExist(&$item, $get_show_view) {
+    public function _set_createItemView_errorParentDoesNotExist(&$item, $get_show_view)
+    {
     }
 
-    public function _set_createItemView_afterCreate($view) {
+    public function _set_createItemView_afterCreate($view)
+    {
     }
 
-    public function _set_doesnot_belong_to_project_error($item, $group) {
+    public function _set_doesnot_belong_to_project_error($item, $group)
+    {
     }
 }
-?>

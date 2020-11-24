@@ -18,16 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/dao/SvnNotificationDao.class.php');
-
-class SvnNotification {
+class SvnNotification
+{
 
     /**
      * Obtain an instance of SvnNotificationDao
      *
      * @return SvnNotificationDao
      */
-    public function _getDao() {
+    public function _getDao()
+    {
         if (!isset($this->_dao)) {
             $this->_dao = new SvnNotificationDao(CodendiDataAccess::instance());
         }
@@ -37,13 +37,14 @@ class SvnNotification {
     /**
      * Set mailing list notification per path
      *
-     * @param Integer $projectId   Project id
+     * @param int $projectId Project id
      * @param String  $mailingList List of mail addresses
      * @param String  $path        svn path
      *
-     * @return Boolean
+     * @return bool
      */
-    function setSvnMailingList($projectId, $mailingList, $path) {
+    function setSvnMailingList($projectId, $mailingList, $path)
+    {
         $dao = $this->_getDao();
         return $dao->setSvnMailingList($projectId, $mailingList, $path);
     }
@@ -51,12 +52,13 @@ class SvnNotification {
     /**
      * Get mailing list notification per path
      *
-     * @param Integer $projectId Project id
+     * @param int $projectId Project id
      * @param String  $path      svn path
      *
      * @return String
      */
-    function getSvnMailingList($projectId, $path) {
+    function getSvnMailingList($projectId, $path)
+    {
         $dao = $this->_getDao();
         $dar = $dao->getSvnMailingList($projectId, $path);
         if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
@@ -70,11 +72,12 @@ class SvnNotification {
     /**
      * Get mailing list notification and path for the whole project
      *
-     * @param Integer $projectId Project id
+     * @param int $projectId Project id
      *
      * @return DataAccessResult
      */
-    function getSvnEventNotificationDetails($projectId) {
+    function getSvnEventNotificationDetails($projectId)
+    {
         $dao = $this->_getDao();
         $dar = $dao->getSvnMailingList($projectId);
         if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
@@ -87,12 +90,13 @@ class SvnNotification {
     /**
      * Remove svn notification details
      *
-     * @param Integer $projectId     Project id
+     * @param int $projectId Project id
      * @param Array   $selectedPaths Contains list of paths to remove.
      *
      * @return void
      */
-    function removeSvnNotification($projectId, $selectedPaths) {
+    function removeSvnNotification($projectId, $selectedPaths)
+    {
         if (is_array($selectedPaths) && !empty($selectedPaths)) {
             $dao = $this->_getDao();
             $paths = array();
@@ -110,7 +114,4 @@ class SvnNotification {
             $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('svn_admin_notification', 'retrieve_paths_fail'));
         }
     }
-
 }
-
-?>

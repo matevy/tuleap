@@ -18,6 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
+use Guzzle\Http\Message\Response;
 use Tuleap\AgileDashboard\REST\DataBuilder;
 use Tuleap\AgileDashboard\REST\TestBase;
 
@@ -26,15 +27,46 @@ require_once dirname(__FILE__).'/bootstrap.php';
 /**
  * @group KanbanTests
  */
-class KanbanTest extends TestBase {
+final class KanbanTest extends TestBase
+{
 
-    public function testOPTIONSKanban() {
+    public function testOPTIONSKanban(): void
+    {
         $response = $this->getResponse($this->client->options('kanban'));
-        $this->assertEquals(array('OPTIONS'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(array('OPTIONS', 'GET', 'PATCH', 'DELETE'), $response->getHeader('Allow')->normalize()->toArray());
     }
 
-    public function testGETKanban() {
+    public function testOPTIONSKanbanWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options('kanban'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+        $this->assertEquals(
+            ['OPTIONS', 'GET', 'PATCH', 'DELETE'],
+            $response->getHeader('Allow')->normalize()->toArray()
+        );
+    }
+
+    public function testGETKanban(): void
+    {
         $response = $this->getResponse($this->client->get('kanban/'. REST_TestDataBuilder::KANBAN_ID));
+
+        $this->assertGETKanban($response);
+    }
+
+    public function testGETKanbanWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get('kanban/' . REST_TestDataBuilder::KANBAN_ID),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETKanban($response);
+    }
+
+    private function assertGETKanban(Response $response): void
+    {
         $kanban   = $response->json();
 
         $this->assertEquals('My first kanban', $kanban['label']);
@@ -46,7 +78,8 @@ class KanbanTest extends TestBase {
         $this->assertNull($kanban['columns'][0]['limit']);
     }
 
-    public function testPATCHKanban() {
+    public function testPATCHKanban()
+    {
         $this->assertThatLabelIsUpdated("Willy's really weary");
         $this->assertThatLabelIsUpdated("My first kanban"); // go back to original value
         $this->assertThatBacklogIsToggled();
@@ -54,7 +87,8 @@ class KanbanTest extends TestBase {
         $this->assertThatColumnIsToggled();
     }
 
-    private function assertThatBacklogIsToggled() {
+    private function assertThatBacklogIsToggled()
+    {
         $initial_state_response = $this->getResponse($this->client->get('kanban/'. REST_TestDataBuilder::KANBAN_ID));
         $initial_state_kanban   = $initial_state_response->json();
         $this->assertFalse($initial_state_kanban['backlog']['is_open']);
@@ -75,7 +109,8 @@ class KanbanTest extends TestBase {
         $this->assertTrue($new_state_kanban['backlog']['is_open']);
     }
 
-    private function assertThatArchiveIsToggled() {
+    private function assertThatArchiveIsToggled()
+    {
         $initial_state_response = $this->getResponse($this->client->get('kanban/'. REST_TestDataBuilder::KANBAN_ID));
         $initial_state_kanban   = $initial_state_response->json();
         $this->assertFalse($initial_state_kanban['archive']['is_open']);
@@ -96,7 +131,8 @@ class KanbanTest extends TestBase {
         $this->assertTrue($new_state_kanban['archive']['is_open']);
     }
 
-    private function assertThatColumnIsToggled() {
+    private function assertThatColumnIsToggled()
+    {
         $initial_state_response = $this->getResponse($this->client->get('kanban/'. REST_TestDataBuilder::KANBAN_ID));
         $initial_state_kanban   = $initial_state_response->json();
         $first_column = $initial_state_kanban['columns'][0];
@@ -122,7 +158,8 @@ class KanbanTest extends TestBase {
         $this->assertFalse($new_state_first_column['is_open']);
     }
 
-    private function assertThatLabelIsUpdated($new_label) {
+    private function assertThatLabelIsUpdated($new_label)
+    {
         $patch_response = $this->getResponse($this->client->patch(
             'kanban/'. REST_TestDataBuilder::KANBAN_ID,
             null,
@@ -138,23 +175,61 @@ class KanbanTest extends TestBase {
         $kanban   = $response->json();
 
         $this->assertEquals($new_label, $kanban['label']);
-
     }
 
-    public function testGETBacklog() {
+    public function testPATCHKanbanWithReadOnlyAdmin()
+    {
+        $patch_response = $this->getResponse(
+            $this->client->patch(
+                'kanban/'. REST_TestDataBuilder::KANBAN_ID,
+                null,
+                json_encode(
+                    array(
+                        'label' => 'SomeNewLabel'
+                    )
+                )
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($patch_response->getStatusCode(), 403);
+    }
+
+    public function testGETBacklog(): void
+    {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID .'/backlog';
 
-        $response = $this->getResponse($this->client->get($url))->json();
+        $response = $this->getResponse($this->client->get($url));
 
-        $this->assertEquals(2, $response['total_size']);
-        $this->assertEquals('Do something', $response['collection'][0]['label']);
-        $this->assertEquals('Do something v2', $response['collection'][1]['label']);
+        $this->assertGETBacklog($response);
+    }
+
+    public function testGETBacklogWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID .'/backlog';
+
+        $response = $this->getResponse(
+            $this->client->get($url),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETBacklog($response);
+    }
+
+    private function assertGETBacklog(Response $response): void
+    {
+        $response_json = $response->json();
+
+        $this->assertEquals(2, $response_json['total_size']);
+        $this->assertEquals('Do something', $response_json['collection'][0]['label']);
+        $this->assertEquals('Do something v2', $response_json['collection'][1]['label']);
     }
 
     /**
      * @depends testGETBacklog
      */
-    public function testPATCHBacklog() {
+    public function testPATCHBacklog(): void
+    {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/backlog';
 
         $response = $this->getResponse($this->client->patch(
@@ -179,22 +254,68 @@ class KanbanTest extends TestBase {
         );
     }
 
-    public function testGETItems() {
+    /**
+     * @depends testGETBacklog
+     */
+    public function testPATCHBacklogWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/backlog';
+
+        $response = $this->getResponse(
+            $this->client->patch(
+                $url,
+                null,
+                json_encode(array(
+                    'order' => array(
+                        'ids'         => array($this->kanban_artifact_ids[1]),
+                        'direction'   => 'after',
+                        'compared_to' => $this->kanban_artifact_ids[2]
+                    )
+                ))
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 403);
+    }
+
+    public function testGETItems(): void
+    {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID .'/items?column_id='. REST_TestDataBuilder::KANBAN_ONGOING_COLUMN_ID;
 
-        $response = $this->getResponse($this->client->get($url))->json();
+        $response = $this->getResponse($this->client->get($url));
 
-        $this->assertEquals(2, $response['total_size']);
-        $this->assertEquals('Doing something', $response['collection'][0]['label']);
-        $this->assertEquals('Doing something v2', $response['collection'][1]['label']);
-        $this->assertArrayHasKey('timeinfo', $response['collection'][0]);
-        $this->assertArrayHasKey('timeinfo', $response['collection'][1]);
+        $this->assertGETItems($response);
+    }
+
+    public function testGETItemsWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID .'/items?column_id='. REST_TestDataBuilder::KANBAN_ONGOING_COLUMN_ID;
+
+        $response = $this->getResponse(
+            $this->client->get($url),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETItems($response);
+    }
+
+    private function assertGETItems(Response $response): void
+    {
+        $response_json = $response->json();
+
+        $this->assertEquals(2, $response_json['total_size']);
+        $this->assertEquals('Doing something', $response_json['collection'][0]['label']);
+        $this->assertEquals('Doing something v2', $response_json['collection'][1]['label']);
+        $this->assertArrayHasKey('timeinfo', $response_json['collection'][0]);
+        $this->assertArrayHasKey('timeinfo', $response_json['collection'][1]);
     }
 
     /**
      * @depends testGETItems
      */
-    public function testPATCHItems() {
+    public function testPATCHItems(): void
+    {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/items?column_id='. REST_TestDataBuilder::KANBAN_ONGOING_COLUMN_ID;
 
         $response = $this->getResponse($this->client->patch(
@@ -219,32 +340,79 @@ class KanbanTest extends TestBase {
         );
     }
 
-    private function getIdsOrderedByPriority($uri) {
+    /**
+     * @depends testGETItems
+     */
+    public function testPATCHItemsWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/items?column_id='. REST_TestDataBuilder::KANBAN_ONGOING_COLUMN_ID;
+
+        $response = $this->getResponse(
+            $this->client->patch(
+                $url,
+                null,
+                json_encode(array(
+                    'order' => array(
+                        'ids'         => array($this->kanban_artifact_ids[3]),
+                        'direction'   => 'after',
+                        'compared_to' => $this->kanban_artifact_ids[4]
+                    )
+                ))
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 403);
+    }
+
+    private function getIdsOrderedByPriority($uri)
+    {
         $response     = $this->getResponse($this->client->get($uri))->json();
         $actual_order = array();
         $collection   = $response['collection'];
 
-        foreach($collection as $kanban_backlog_item) {
+        foreach ($collection as $kanban_backlog_item) {
             $actual_order[] = $kanban_backlog_item['id'];
         }
 
         return $actual_order;
     }
 
-    public function testGETArchive() {
-        $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID .'/archive';
+    public function testGETArchive(): void
+    {
+        $url = 'kanban/' . REST_TestDataBuilder::KANBAN_ID . '/archive';
 
-        $response = $this->getResponse($this->client->get($url))->json();
+        $response = $this->getResponse($this->client->get($url));
 
-        $this->assertEquals(2, $response['total_size']);
-        $this->assertEquals('Something archived', $response['collection'][0]['label']);
-        $this->assertEquals('Something archived v2', $response['collection'][1]['label']);
+        $this->assertGETArchive($response);
+    }
+
+    public function testGETArchiveWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban/' . REST_TestDataBuilder::KANBAN_ID . '/archive';
+
+        $response = $this->getResponse(
+            $this->client->get($url),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETArchive($response);
+    }
+
+    private function assertGETArchive(Response $response): void
+    {
+        $response_json = $response->json();
+
+        $this->assertEquals(2, $response_json['total_size']);
+        $this->assertEquals('Something archived', $response_json['collection'][0]['label']);
+        $this->assertEquals('Something archived v2', $response_json['collection'][1]['label']);
     }
 
     /**
      * @depends testGETArchive
      */
-    public function testPATCHArchive() {
+    public function testPATCHArchive(): void
+    {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/archive';
 
         $response = $this->getResponse($this->client->patch(
@@ -270,9 +438,35 @@ class KanbanTest extends TestBase {
     }
 
     /**
+     * @depends testGETArchive
+     */
+    public function testPATCHArchiveWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/archive';
+
+        $response = $this->getResponse(
+            $this->client->patch(
+                $url,
+                null,
+                json_encode(array(
+                    'order' => array(
+                        'ids'         => array($this->kanban_artifact_ids[5]),
+                        'direction'   => 'after',
+                        'compared_to' => $this->kanban_artifact_ids[6]
+                    )
+                ))
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 403);
+    }
+
+    /**
      * @depends testPATCHArchive
      */
-    public function testPATCHBacklogWithAdd() {
+    public function testPATCHBacklogWithAdd()
+    {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/backlog';
 
         $response = $this->getResponse($this->client->patch(
@@ -299,7 +493,8 @@ class KanbanTest extends TestBase {
     /**
      * @depends testPATCHBacklogWithAdd
      */
-    public function testPATCHColumnWithAddAndOrder() {
+    public function testPATCHColumnWithAddAndOrder()
+    {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/items?column_id='. REST_TestDataBuilder::KANBAN_ONGOING_COLUMN_ID;
 
         $response = $this->getResponse($this->client->patch(
@@ -331,7 +526,8 @@ class KanbanTest extends TestBase {
     /**
      * @depends testPATCHColumnWithAddAndOrder
      */
-    public function testPATCHArchiveWithAddAndOrder() {
+    public function testPATCHArchiveWithAddAndOrder()
+    {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/archive';
 
         $response = $this->getResponse($this->client->patch(
@@ -362,7 +558,8 @@ class KanbanTest extends TestBase {
     /**
      * @depends testPATCHArchiveWithAddAndOrder
      */
-    public function testPOSTKanbanColumn() {
+    public function testPOSTKanbanColumn()
+    {
         $data = json_encode(array(
             'label' => 'objective'
         ));
@@ -383,12 +580,31 @@ class KanbanTest extends TestBase {
         return $kanban['columns'][3]['id'];
     }
 
+    public function testPOSTKanbanColumnWithReadOnlyAdmin(): void
+    {
+        $data = json_encode(array(
+            'label' => 'objective'
+        ));
+
+        $response = $this->getResponse(
+            $this->client->post(
+                'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/columns',
+                null,
+                $data
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 403);
+    }
+
 
 
     /**
      * @depends testPOSTKanbanColumn
      */
-    public function testPUTKanbanColumn($new_column_id) {
+    public function testPUTKanbanColumn($new_column_id)
+    {
         $data = json_encode(array(
             $new_column_id,
             REST_TestDataBuilder::KANBAN_ONGOING_COLUMN_ID,
@@ -416,7 +632,32 @@ class KanbanTest extends TestBase {
     /**
      * @depends testPOSTKanbanColumn
      */
-    public function testDELETEKanbanColumns() {
+    public function testPUTKanbanColumnWithReadOnlyAdmin($new_column_id): void
+    {
+        $data = json_encode(array(
+            $new_column_id,
+            REST_TestDataBuilder::KANBAN_ONGOING_COLUMN_ID,
+            REST_TestDataBuilder::KANBAN_TO_BE_DONE_COLUMN_ID,
+            REST_TestDataBuilder::KANBAN_REVIEW_COLUMN_ID,
+        ));
+
+        $response = $this->getResponse(
+            $this->client->put(
+                'kanban/'. REST_TestDataBuilder::KANBAN_ID.'/columns',
+                null,
+                $data
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 403);
+    }
+
+    /**
+     * @depends testPOSTKanbanColumn
+     */
+    public function testDELETEKanbanColumns()
+    {
         $url = 'kanban_columns/'. REST_TestDataBuilder::KANBAN_REVIEW_COLUMN_ID.'?kanban_id='. REST_TestDataBuilder::KANBAN_ID;
 
         $response = $this->getResponse($this->client->delete($url, null));
@@ -425,17 +666,44 @@ class KanbanTest extends TestBase {
     }
 
     /**
+     * @depends testPOSTKanbanColumn
+     */
+    public function testDELETEKanbanColumnsWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban_columns/'. REST_TestDataBuilder::KANBAN_REVIEW_COLUMN_ID.'?kanban_id='. REST_TestDataBuilder::KANBAN_ID;
+
+        $response = $this->getResponse(
+            $this->client->delete($url, null),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 403);
+    }
+
+    /**
      * @depends testPUTKanbanColumn
      */
-    public function testOPTIONSKanbanItems() {
+    public function testOPTIONSKanbanItems()
+    {
         $response = $this->getResponse($this->client->options('kanban_items'));
+        $this->assertEquals(array('OPTIONS', 'GET', 'POST'), $response->getHeader('Allow')->normalize()->toArray());
+    }
+
+    public function testOPTIONSKanbanItemsWithReadOnlyAdmin()
+    {
+        $response = $this->getResponse(
+            $this->client->options('kanban_items'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
         $this->assertEquals(array('OPTIONS', 'GET', 'POST'), $response->getHeader('Allow')->normalize()->toArray());
     }
 
     /**
      * @depends testPATCHArchiveWithAddAndOrder
      */
-    public function testPOSTKanbanItemsInBacklog() {
+    public function testPOSTKanbanItemsInBacklog(): void
+    {
         $url = 'kanban_items/';
 
         $response = $this->getResponse($this->client->post(
@@ -457,9 +725,34 @@ class KanbanTest extends TestBase {
     }
 
     /**
+     * @depends testPATCHArchiveWithAddAndOrder
+     */
+    public function testPOSTKanbanItemsWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban_items/';
+
+        $response = $this->getResponse(
+            $this->client->post(
+                $url,
+                null,
+                json_encode(array(
+                    "item" => array(
+                        "label" => "New item in backlog",
+                        "kanban_id" => REST_TestDataBuilder::KANBAN_ID
+                    )
+                ))
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 403);
+    }
+
+        /**
      * @depends testPOSTKanbanItemsInBacklog
      */
-    public function testPOSTKanbanItemsInColmun() {
+    public function testPOSTKanbanItemsInColmun()
+    {
         $url = 'kanban_items/';
 
         $response = $this->getResponse($this->client->post(
@@ -481,11 +774,28 @@ class KanbanTest extends TestBase {
         $this->assertEquals($item['in_column'], REST_TestDataBuilder::KANBAN_ONGOING_COLUMN_ID);
     }
 
-    public function testGETKanbanItem() {
+    public function testGETKanbanItem(): void
+    {
         $response = $this->getResponse($this->client->get('kanban_items/' . $this->kanban_artifact_ids[1]));
-        $item = $response->json();
 
+        $this->assertGETKanbanItems($response);
+    }
+
+    public function testGETKanbanItemWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get('kanban_items/' . $this->kanban_artifact_ids[1]),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETKanbanItems($response);
+    }
+
+    private function assertGETKanbanItems(Response $response): void
+    {
         $this->assertEquals($response->getStatusCode(), 200);
+
+        $item = $response->json();
         $this->assertEquals($item['label'], 'Do something');
         $this->assertEquals($item['in_column'], 'backlog');
     }
@@ -493,7 +803,8 @@ class KanbanTest extends TestBase {
     /**
      * @depends testPOSTKanbanItemsInColmun
      */
-    public function testPOSTKanbanItemsInUnknowColmun() {
+    public function testPOSTKanbanItemsInUnknowColmun()
+    {
         $url = 'kanban_items/';
 
         $response = $this->getResponse($this->client->post(
@@ -520,6 +831,16 @@ class KanbanTest extends TestBase {
         $this->assertEquals(array('OPTIONS', 'PUT'), $response->getHeader('Allow')->normalize()->toArray());
     }
 
+    public function testOPTIONSTrackerReportsWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options('kanban/'. REST_TestDataBuilder::KANBAN_ID .'/tracker_reports'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(array('OPTIONS', 'PUT'), $response->getHeader('Allow')->normalize()->toArray());
+    }
+
     public function testPUTTrackerReports()
     {
         $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID .'/tracker_reports';
@@ -533,6 +854,24 @@ class KanbanTest extends TestBase {
         ));
 
         $this->assertEquals($response->getStatusCode(), 200);
+    }
+
+    public function testPUTTrackerReportsWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban/'. REST_TestDataBuilder::KANBAN_ID .'/tracker_reports';
+
+        $response = $this->getResponse(
+            $this->client->put(
+                $url,
+                null,
+                json_encode(array(
+                    "tracker_report_ids" => array($this->tracker_report_id)
+                ))
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), (403));
     }
 
     public function testPUTTrackerReportsWithEmptyArray()
@@ -568,18 +907,33 @@ class KanbanTest extends TestBase {
     }
 
     /**
-     * @depends testPUTTrackerReportsThrowsExceptionOnReportThatDoesNotExist
+     * @depends testDELETEKanbanWithReadOnlyAdmin
      */
-    public function testDELETEKanban() {
+    public function testDELETEKanban()
+    {
         $response = $this->getResponse($this->client->delete('kanban/'. REST_TestDataBuilder::KANBAN_ID));
 
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
     /**
+     * @depends testPUTTrackerReportsThrowsExceptionOnReportThatDoesNotExist
+     */
+    public function testDELETEKanbanWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->delete('kanban/'. REST_TestDataBuilder::KANBAN_ID),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 403);
+    }
+
+    /**
      * @depends testDELETEKanban
      */
-    public function testGETDeletedKanban() {
+    public function testGETDeletedKanban()
+    {
         $response = $this->getResponse($this->client->get('kanban/'. REST_TestDataBuilder::KANBAN_ID));
 
         $this->assertEquals($response->getStatusCode(), 404);
@@ -588,11 +942,12 @@ class KanbanTest extends TestBase {
     public function testGETCumulativeFlowInvalidDate()
     {
         $url = 'kanban/' . DataBuilder::KANBAN_CUMULATIVE_FLOW_ID . '/cumulative_flow?' . http_build_query(
-                array(
+            array(
                     'start_date'             => '2016-09-29',
                     'end_date'               => '2016-09-28',
                     'interval_between_point' => 1
-                ));
+            )
+        );
 
         $response = $this->getResponse($this->client->get($url));
 
@@ -602,32 +957,57 @@ class KanbanTest extends TestBase {
     public function testGETCumulativeFlowTooMuchPointsRequested()
     {
         $url = 'kanban/' . DataBuilder::KANBAN_CUMULATIVE_FLOW_ID . '/cumulative_flow?' . http_build_query(
-                array(
+            array(
                     'start_date'             => '2011-04-19',
                     'end_date'               => '2016-09-29',
                     'interval_between_point' => 1
-                ));
+            )
+        );
 
         $response = $this->getResponse($this->client->get($url));
 
         $this->assertEquals($response->getStatusCode(), 400);
     }
 
-    public function testGETCumulativeFlow()
+    public function testGETCumulativeFlow(): void
     {
         $url = 'kanban/' . DataBuilder::KANBAN_CUMULATIVE_FLOW_ID . '/cumulative_flow?' . http_build_query(
-                array(
+            array(
                     'start_date'             => '2016-09-22',
                     'end_date'               => '2016-09-28',
                     'interval_between_point' => 1
-                ));
+            )
+        );
 
-        $response      = $this->getResponse($this->client->get($url));
-        $item          = $response->json();
+        $response = $this->getResponse($this->client->get($url));
 
+        $this->assertGETCumulativeFlow($response);
+    }
+
+    public function testGETCumulativeFlowWithReadOnlyAdmin(): void
+    {
+        $url = 'kanban/' . DataBuilder::KANBAN_CUMULATIVE_FLOW_ID . '/cumulative_flow?' . http_build_query(
+            array(
+                    'start_date' => '2016-09-22',
+                    'end_date' => '2016-09-28',
+                    'interval_between_point' => 1
+            )
+        );
+
+        $response = $this->getResponse(
+            $this->client->get($url),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETCumulativeFlow($response);
+    }
+
+    private function assertGETCumulativeFlow(Response $response): void
+    {
+        $item = $response->json();
         $this->assertEquals($response->getStatusCode(), 200);
         $columns = $item['columns'];
-        $this->assertEquals(5 , count($columns));
+        $this->assertEquals(5, count($columns));
 
         $archive_column = $columns[0];
         $this->assertEquals('Archive', $archive_column['label']);

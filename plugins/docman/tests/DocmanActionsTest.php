@@ -23,7 +23,7 @@ use Mockery as M;
 
 require_once 'bootstrap.php';
 
-Mock::generatePartial('Docman_Actions','Docman_ActionsTest', array('_getItemFactory',
+Mock::generatePartial('Docman_Actions', 'Docman_ActionsTest', array('_getItemFactory',
                                                                    '_getFileStorage',
                                                                    '_getActionsDeleteVisitor',
                                                                    '_getEventManager',
@@ -50,13 +50,14 @@ Mock::generate('Docman_NotificationsManager');
 
 Mock::generate('BaseLanguage');
 
-Mock::generate('EventManager');
 Mock::generate('UserManager');
 Mock::generate('PFUser');
 
-class DocmanActionsTest extends TuleapTestCase {
+class DocmanActionsTest extends TuleapTestCase
+{
 
-    function testCannotDeleteVersionOnNonFile() {
+    function testCannotDeleteVersionOnNonFile()
+    {
         // Definition acceptance criteria:
         // test is complete if there is an error and the error message is the right one
         $ctrl           = new MockDocman_Controller($this);
@@ -84,13 +85,14 @@ class DocmanActionsTest extends TuleapTestCase {
         $actions->setReturnValue('_getItemFactory', $if);
         $actions->expectOnce('_getItemFactory', array(102));
 
-        $actions->setReturnValue('_getEventManager', new MockEventManager($this));
+        $actions->setReturnValue('_getEventManager', \Mockery::spy(EventManager::class));
 
         // Run test
         $actions->deleteVersion();
     }
 
-    function testCanDeleteVersionOfFile() {
+    function testCanDeleteVersionOfFile()
+    {
         // Definition acceptance criteria:
         // test is complete if there is an info flash message that tells version is deleted
         $ctrl           = new MockDocman_Controller($this);
@@ -128,13 +130,14 @@ class DocmanActionsTest extends TuleapTestCase {
         $vf = M::mock(Docman_VersionFactory::class, ['getAllVersionForItem' => [$v1, $v2]]);
         $actions->setReturnValue('_getVersionFactory', $vf);
 
-        $actions->setReturnValue('_getEventManager', new MockEventManager($this));
+        $actions->setReturnValue('_getEventManager', \Mockery::spy(EventManager::class));
 
         // Run test
         $actions->deleteVersion();
     }
 
-    function testCannotDeleteLastVersion() {
+    function testCannotDeleteLastVersion()
+    {
         // Definition acceptance criteria:
         // test is complete if there is an error and the error message is the right one
         $ctrl           = new MockDocman_Controller($this);
@@ -166,13 +169,14 @@ class DocmanActionsTest extends TuleapTestCase {
         $vf = M::mock(Docman_VersionFactory::class, ['getAllVersionForItem' => [M::mock(Docman_Version::class)]]);
         $actions->setReturnValue('_getVersionFactory', $vf);
 
-        $actions->setReturnValue('_getEventManager', new MockEventManager($this));
+        $actions->setReturnValue('_getEventManager', \Mockery::spy(EventManager::class));
 
         // Run test
         $actions->deleteVersion();
     }
 
-    function testCannotDeleteNonExistantVersion() {
+    function testCannotDeleteNonExistantVersion()
+    {
         // Definition acceptance criteria:
         // test is complete if there is an info flash message that tells version is deleted
         $ctrl           = new MockDocman_Controller($this);
@@ -210,13 +214,14 @@ class DocmanActionsTest extends TuleapTestCase {
         $vf = M::mock(Docman_VersionFactory::class, ['getAllVersionForItem' => [$v1, $v2]]);
         $actions->setReturnValue('_getVersionFactory', $vf);
 
-        $actions->setReturnValue('_getEventManager', new MockEventManager($this));
+        $actions->setReturnValue('_getEventManager', \Mockery::spy(EventManager::class));
 
         // Run test
         $actions->deleteVersion();
     }
 
-    function testRemove_monitoringNothingToDelete() {
+    function testRemove_monitoringNothingToDelete()
+    {
         $notificationsManager                  = new MockDocman_NotificationsManager();
         $controller                            = new MockDocman_Controller();
         $controller->feedback                  = new MockFeedback();
@@ -229,7 +234,8 @@ class DocmanActionsTest extends TuleapTestCase {
         $notificationsManager->expectNever('removeUser');
     }
 
-    function testRemove_monitoringNotifDoesNotExist() {
+    function testRemove_monitoringNotifDoesNotExist()
+    {
         $controller = new MockDocman_Controller();
         $controller->feedback = new MockFeedback();
         $user1 = mock('PFUser');
@@ -260,7 +266,8 @@ class DocmanActionsTest extends TuleapTestCase {
         $notificationsManager->expectNever('removeUser');
     }
 
-    function testRemove_monitoringError() {
+    function testRemove_monitoringError()
+    {
         $controller = new MockDocman_Controller();
         $controller->feedback = new MockFeedback();
         $userManager = new MockUserManager();
@@ -293,7 +300,8 @@ class DocmanActionsTest extends TuleapTestCase {
         $notificationsManager->expectCallCount('removeUser', 3);
     }
 
-    function testRemove_monitoringSuccess() {
+    function testRemove_monitoringSuccess()
+    {
         $controller = new MockDocman_Controller();
         $controller->feedback = new MockFeedback();
         $userManager = new MockUserManager();
@@ -314,7 +322,7 @@ class DocmanActionsTest extends TuleapTestCase {
         $controller->notificationsManager = $notificationsManager;
         $actions = new Docman_ActionsTest();
         $actions->_controler = $controller;
-        $actions->event_manager = new MockEventManager($this);
+        $actions->event_manager = \Mockery::spy(EventManager::class);
         $actions->setReturnValue('_getUserManagerInstance', $userManager);
         $params['listeners_users_to_delete']   = array($user1, $user2, $user3);
         $params['listeners_ugroups_to_delete'] = array();
@@ -324,7 +332,8 @@ class DocmanActionsTest extends TuleapTestCase {
         $notificationsManager->expectCallCount('removeUser', 6);
     }
 
-    function testAdd_monitoringNoOneToAdd() {
+    function testAdd_monitoringNoOneToAdd()
+    {
         $controller                 = new MockDocman_Controller();
         $notificationsManager       = new MockDocman_NotificationsManager();
         $actions                    = new Docman_ActionsTest();
@@ -335,7 +344,8 @@ class DocmanActionsTest extends TuleapTestCase {
         $notificationsManager->expectNever('addUser');
     }
 
-    function testAdd_monitoringNotifAlreadyExist() {
+    function testAdd_monitoringNotifAlreadyExist()
+    {
         $controller = new MockDocman_Controller();
         $controller->feedback = new MockFeedback();
         $notificationsManager = new MockDocman_NotificationsManager();
@@ -360,7 +370,8 @@ class DocmanActionsTest extends TuleapTestCase {
         $notificationsManager->expectNever('addUser');
     }
 
-    function testAdd_monitoringError() {
+    function testAdd_monitoringError()
+    {
         $controller = new MockDocman_Controller();
         $controller->feedback = new MockFeedback();
         $notificationsManager = new MockDocman_NotificationsManager();
@@ -389,7 +400,8 @@ class DocmanActionsTest extends TuleapTestCase {
         $notificationsManager->expectCallCount('addUser', 2);
     }
 
-    function testAdd_monitoringNoUserPermissions() {
+    function testAdd_monitoringNoUserPermissions()
+    {
         $controller = new MockDocman_Controller();
         $controller->feedback = new MockFeedback();
         $notificationsManager = new MockDocman_NotificationsManager();
@@ -399,10 +411,10 @@ class DocmanActionsTest extends TuleapTestCase {
         $actions = new Docman_ActionsTest();
         $actions->_controler = $controller;
         $docmanPermissionsManager = new MockDocman_PermissionsManager();
-        $docmanPermissionsManager->setReturnValueAt(0,'userCanRead', true);
-        $docmanPermissionsManager->setReturnValueAt(1,'userCanRead', false);
+        $docmanPermissionsManager->setReturnValueAt(0, 'userCanRead', true);
+        $docmanPermissionsManager->setReturnValueAt(1, 'userCanRead', false);
         $actions->setReturnValue('_getDocmanPermissionsManagerInstance', $docmanPermissionsManager);
-        $actions->event_manager = new MockEventManager($this);
+        $actions->event_manager = \Mockery::spy(EventManager::class);
         $user1 = mock('PFUser');
         $user1->setReturnValue('getId', 123);
         $user1->setReturnValue('getName', 'Carol');
@@ -421,7 +433,8 @@ class DocmanActionsTest extends TuleapTestCase {
         $notificationsManager->expectCallCount('addUser', 1);
     }
 
-    function testAdd_monitoringSuccess() {
+    function testAdd_monitoringSuccess()
+    {
         $controller = new MockDocman_Controller();
         $controller->feedback = new MockFeedback();
         $user = mock('PFUser');
@@ -435,7 +448,7 @@ class DocmanActionsTest extends TuleapTestCase {
         $controller->notificationsManager = $notificationsManager;
         $actions = new Docman_ActionsTest();
         $actions->_controler = $controller;
-        $actions->event_manager = new MockEventManager($this);
+        $actions->event_manager = \Mockery::spy(EventManager::class);
         $docmanPermissionsManager = new MockDocman_PermissionsManager();
         $docmanPermissionsManager->setReturnValue('userCanRead', true);
         $actions->setReturnValue('_getDocmanPermissionsManagerInstance', $docmanPermissionsManager);

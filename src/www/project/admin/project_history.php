@@ -19,9 +19,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('pre.php');
-require_once('www/project/admin/project_admin_utils.php');
-require_once('www/project/export/project_export_utils.php');
+require_once __DIR__ . '/../../include/pre.php';
+require_once __DIR__ . '/project_admin_utils.php';
+require_once __DIR__ . '/../export/project_export_utils.php';
 $GLOBALS['HTML']->includeCalendarScripts();
 
 
@@ -39,7 +39,7 @@ if ($request->valid($vGroupId)) {
 $eventsList = array('any', 'event_permission', 'event_project', 'event_ug', 'event_user', 'event_others');
 $validEvents = new Valid_WhiteList('events_box', $eventsList);
 $event = $request->getValidated('events_box', $validEvents, null);
-if (!$event ) {
+if (!$event) {
     //Check event value within pagination process
     $validPaginationEvents = new Valid_WhiteList('event', $eventsList);
     $event = $request->getValidated('event', $validPaginationEvents, null);
@@ -108,9 +108,7 @@ if ($request->valid($validBy)) {
 }
 
 $offset = $request->getValidated('offset', 'uint', 0);
-if ( !$offset || $offset < 0 ) {
+if (!$offset || $offset < 0) {
     $offset = 0;
 }
 $limit  = 50;
-
-?>

@@ -23,25 +23,29 @@ require_once('Collection.class.php');
 /**
  * LinkedList
  */
-class LinkedList extends Collection{
-    
-    function __construct($initial_array = '') {
+class LinkedList extends Collection
+{
+
+    function __construct($initial_array = '')
+    {
         parent::__construct($initial_array);
     }
-    
+
     /**
      * add the element add the end of the LinkedList
      */
-    function add($element) {
+    function add($element)
+    {
         $this->elements[] = $element;
     }
-    
+
     /**
      * Compares the specified object with this LinkedList for equality.
      * @param obj the reference object with which to compare.
      * @return true if this object is the same as the obj argument; false otherwise.
      */
-    function equals($obj) {
+    function equals($obj)
+    {
         if (is_a($obj, "Collection") && $this->size() === $obj->size()) {
             //We walk through the two LinkedList to see if both
             //contain same values
@@ -69,4 +73,3 @@ class LinkedList extends Collection{
         return false;
     }
 }
-?>

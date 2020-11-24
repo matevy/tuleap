@@ -21,12 +21,13 @@
 
 use Tuleap\BurningParrotCompatiblePageDetector;
 use Tuleap\CookieManager;
+use Tuleap\Event\Events\HitEvent;
 use Tuleap\Plugin\PluginLoader;
 use Tuleap\Request\CurrentPage;
 use Tuleap\TimezoneRetriever;
 
-if (PHP_VERSION_ID < 70200) {
-    die('Tuleap must be run on a PHP 7.2 (or greater) engine.');
+if (PHP_VERSION_ID < 70300) {
+    die('Tuleap must be run on a PHP 7.3 (or greater) engine.');
 }
 
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -46,7 +47,6 @@ if (isset($GLOBALS['DEBUG_MODE'])) {
     ForgeConfig::loadFromFile(dirname($local_inc).'/development.inc');
 }
 ForgeConfig::loadFromDatabase();
-ForgeConfig::loadFromFile(ForgeConfig::get('rabbitmq_config_file'));
 ForgeConfig::loadFromFile(ForgeConfig::get('redis_config_file'));
 
 bindtextdomain('tuleap-core', ForgeConfig::get('sys_incdir'));
@@ -69,7 +69,7 @@ if (!defined('IS_SCRIPT')) {
 }
 
 //{{{ Sanitize $_REQUEST : remove cookies
-while(count($_REQUEST)) {
+while (count($_REQUEST)) {
     array_pop($_REQUEST);
 }
 
@@ -78,12 +78,12 @@ if (!ini_get('variables_order')) {
 } else {
     $g_pos = strpos(strtolower(ini_get('variables_order')), 'g');
     $p_pos = strpos(strtolower(ini_get('variables_order')), 'p');
-    if ($g_pos === FALSE) {
-        if ($p_pos !== FALSE) {
+    if ($g_pos === false) {
+        if ($p_pos !== false) {
             $_REQUEST = $_POST;
         }
     } else {
-        if ($p_pos === FALSE) {
+        if ($p_pos === false) {
             $_REQUEST = $_GET;
         } else {
             if ($g_pos < $p_pos) {
@@ -96,7 +96,7 @@ if (!ini_get('variables_order')) {
 }
 
 //Cast group_id as int.
-foreach(array(
+foreach (array(
         'group_id',
         'atid',
         'pv',
@@ -126,7 +126,8 @@ $event_manager  = EventManager::instance();
 $plugin_manager = PluginManager::instance();
 $plugin_loader  = new PluginLoader(
     $event_manager,
-    PluginFactory::instance()
+    PluginFactory::instance(),
+    new BackendLogger()
 );
 $cookie_manager = new CookieManager();
 
@@ -172,22 +173,16 @@ $Language = new BaseLanguage($GLOBALS['sys_supported_languages'], $GLOBALS['sys_
 $user_manager = UserManager::instance();
 $current_user = $user_manager->getCurrentUser();
 
-$current_locale = $current_user->getLocale();
-setlocale(LC_CTYPE, "$current_locale.UTF-8");
-setlocale(LC_MESSAGES, "$current_locale.UTF-8");
-setlocale(LC_TIME, "$current_locale.UTF-8");
+(static function () use ($current_user) {
+    (new \Tuleap\Language\LocaleSwitcher())->setLocale($current_user->getLocale());
+})();
 
-$event_manager->processEvent(
-    Event::HIT,
-    array(
-        'is_script' => IS_SCRIPT,
-        'request'  => $request
-    )
-);
+$hit_event = new HitEvent($request, IS_SCRIPT);
+$event_manager->processEvent($hit_event);
 
 /*
 
-	Timezone must come after we have warn plugins of the hit to prevent messups
+    Timezone must come after we have warn plugins of the hit to prevent messups
 
 
 */

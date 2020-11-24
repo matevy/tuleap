@@ -22,40 +22,44 @@
 /**
  * Manage values in changeset for numeric fields
  */
-abstract class Tracker_Artifact_ChangesetValue_Numeric extends Tracker_Artifact_ChangesetValue {
-    
+abstract class Tracker_Artifact_ChangesetValue_Numeric extends Tracker_Artifact_ChangesetValue
+{
+
     /**
      * @var mixed (int or float)
      */
     protected $numeric;
-    
-    public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed, $numeric) {
+
+    public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed, $numeric)
+    {
         parent::__construct($id, $changeset, $field, $has_changed);
         $this->numeric = $numeric;
     }
-    
+
     /**
      * Get the numeric value
      *
      * @return mixed (int or float) the Numeric
      */
-    public function getNumeric() {
+    public function getNumeric()
+    {
         return $this->numeric;
     }
 
     /**
      * Get the string value
      *
-     * @return string
+     * @return string|null
      */
-    public function getValue() {
+    public function getValue()
+    {
         return $this->numeric;
     }
 
     /**
      * Get the diff between this numeric value and the one passed in param
      *
-     * @return string The difference between another $changeset_value, false if no differences
+     * @return string|false The difference between another $changeset_value, false if no differences
      */
     public function diff($changeset_value, $format = 'html', ?PFUser $user = null, $ignore_perms = false)
     {
@@ -63,18 +67,20 @@ abstract class Tracker_Artifact_ChangesetValue_Numeric extends Tracker_Artifact_
         $next_numeric     = $this->getValue();
         if ($previous_numeric !== $next_numeric) {
             if ($previous_numeric === null) {
-                return $GLOBALS['Language']->getText('plugin_tracker_artifact','set_to') . ' ' . $this->format($next_numeric, $format);
+                return sprintf(dgettext('tuleap-tracker', 'set to %s'), $this->format($next_numeric, $format));
             } elseif ($next_numeric === null) {
-                return $GLOBALS['Language']->getText('plugin_tracker_artifact','cleared');
+                return dgettext('tuleap-tracker', 'cleared');
             } else {
-                return $GLOBALS['Language']->getText('plugin_tracker_artifact','changed_from'). ' ' .
-                    $this->format($previous_numeric, $format) . ' ' . $GLOBALS['Language']->getText('plugin_tracker_artifact','to') .
-                    ' ' . $this->format($next_numeric, $format);
+                return sprintf(
+                    dgettext('tuleap-tracker', 'changed from %s to %s'),
+                    $this->format($previous_numeric, $format),
+                    $this->format($next_numeric, $format)
+                );
             }
         }
         return false;
     }
-    
+
      /**
      * Returns the "set to" for field added later
      *
@@ -83,7 +89,7 @@ abstract class Tracker_Artifact_ChangesetValue_Numeric extends Tracker_Artifact_
     public function nodiff($format = 'html')
     {
         if ($this->getNumeric() != 0) {
-            return $GLOBALS['Language']->getText('plugin_tracker_artifact','set_to').' '. $this->format($this->getValue(), $format);
+            return $GLOBALS['Language']->getText('plugin_tracker_artifact', 'set_to').' '. $this->format($this->getValue(), $format);
         }
         return '';
     }

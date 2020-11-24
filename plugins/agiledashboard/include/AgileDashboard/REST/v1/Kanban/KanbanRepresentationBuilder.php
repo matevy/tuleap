@@ -26,7 +26,8 @@ use AgileDashboard_KanbanActionsChecker;
 use AgileDashboard_KanbanUserPreferences;
 use Exception;
 
-class KanbanRepresentationBuilder {
+class KanbanRepresentationBuilder
+{
 
     /**
      * @var AgileDashboard_KanbanUserPreferences
@@ -55,7 +56,8 @@ class KanbanRepresentationBuilder {
     /**
      * @return Tuleap\AgileDashboard\REST\v1\Kanban\KanbanRepresentation
      */
-    public function build(AgileDashboard_Kanban $kanban, PFUser $user) {
+    public function build(AgileDashboard_Kanban $kanban, PFUser $user)
+    {
 
         try {
             $this->kanban_actions_checker->checkUserCanAddInPlace($user, $kanban);

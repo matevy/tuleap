@@ -23,7 +23,8 @@ use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenterFactory;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenter;
 
-class Tracker_FormElement_Field_ArtifactLink_ProcessChildrenTriggersCommandTest extends TuleapTestCase {
+class Tracker_FormElement_Field_ArtifactLink_ProcessChildrenTriggersCommandTest extends TuleapTestCase
+{
 
     protected $field;
     protected $command;
@@ -32,7 +33,8 @@ class Tracker_FormElement_Field_ArtifactLink_ProcessChildrenTriggersCommandTest 
     protected $trigger_rules_manager;
     protected $nature_factory;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->trigger_rules_manager = mock('Tracker_Workflow_Trigger_RulesManager');
         $this->tracker               = mock('Tracker');
@@ -49,7 +51,8 @@ class Tracker_FormElement_Field_ArtifactLink_ProcessChildrenTriggersCommandTest 
         );
     }
 
-    public function itCallsProcessChildrenTriggersWhenThereAreChanges() {
+    public function itCallsProcessChildrenTriggersWhenThereAreChanges()
+    {
         $previous_changeset = mock('Tracker_Artifact_Changeset');
 
         $changeset_value = partial_mock('Tracker_Artifact_ChangesetValue_ArtifactLink', array('getValue', 'getNaturePresenterFactory'));
@@ -78,7 +81,8 @@ class Tracker_FormElement_Field_ArtifactLink_ProcessChildrenTriggersCommandTest 
         $this->command->execute($this->artifact, $this->user, $new_changeset, $previous_changeset);
     }
 
-    public function itCallsNothingWhenThereAreNotAnyChanges() {
+    public function itCallsNothingWhenThereAreNotAnyChanges()
+    {
         $previous_changeset = mock('Tracker_Artifact_Changeset');
         $changeset_value = partial_mock('Tracker_Artifact_ChangesetValue_ArtifactLink', array('getValue', 'getNaturePresenterFactory'));
         stub($changeset_value)->getValue()->returns(
@@ -104,7 +108,8 @@ class Tracker_FormElement_Field_ArtifactLink_ProcessChildrenTriggersCommandTest 
         $this->command->execute($this->artifact, $this->user, $new_changeset, $previous_changeset);
     }
 
-    public function itDoesntFailWhenPreviousChangesetHasNoValue() {
+    public function itDoesntFailWhenPreviousChangesetHasNoValue()
+    {
         $previous_changeset = mock('Tracker_Artifact_Changeset');
         $changeset_value = partial_mock('Tracker_Artifact_ChangesetValue_ArtifactLink', array('getValue', 'getNaturePresenterFactory'));
         stub($changeset_value)->getValue()->returns(null);
@@ -124,7 +129,8 @@ class Tracker_FormElement_Field_ArtifactLink_ProcessChildrenTriggersCommandTest 
         $this->command->execute($this->artifact, $this->user, $new_changeset, $previous_changeset);
     }
 
-    public function itCallsProcessChildrenTriggersWhenNoPreviousChangeset() {
+    public function itCallsProcessChildrenTriggersWhenNoPreviousChangeset()
+    {
         $previous_changeset = null;
 
         $new_changeset = mock('Tracker_Artifact_Changeset');

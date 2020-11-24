@@ -24,105 +24,115 @@ class Tracker_FormElement_Field_List_Bind_StaticValue extends Tracker_FormElemen
 
     /**
      *
-     * @var string 
+     * @var string
      */
     protected $label;
-    
+
     /**
      *
-     * @var string 
+     * @var string
      */
     protected $description;
-    
+
     /**
      *
-     * @var int 
+     * @var int
      */
     protected $rank;
-    
-    public function __construct($id, $label, $description, $rank, $is_hidden) {
+
+    public function __construct($id, $label, $description, $rank, $is_hidden)
+    {
         parent::__construct($id, $is_hidden);
         $this->label       = $label;
         $this->description = $description;
         $this->rank        = $rank;
     }
-    
+
     /**
-     * 
+     *
      * @return string
      */
-    public function __toString() {
+    public function __toString()
+    {
         return $this->label ? $this->label : '';
     }
-    
+
     /**
-     * 
+     *
      * @return int
      */
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
-    
+
     /**
-     * 
+     *
      * @param int $id
      * @return \Tracker_FormElement_Field_List_Bind_StaticValue
      */
-    public function setId($id) {
+    public function setId($id)
+    {
         $this->id = (int) $id;
         return $this;
     }
-    
+
     /**
-     * 
+     *
      * @return string
      */
-    public function getLabel() {
+    public function getLabel()
+    {
         return $this->label;
     }
-    
+
     /**
-     * 
+     *
      * @param string $label
      * @return \Tracker_FormElement_Field_List_Bind_StaticValue
      */
-    public function setLabel($label) {
+    public function setLabel($label)
+    {
         $this->label = (string) $label;
         return $this;
     }
-    
+
     /**
-     * 
+     *
      * @return string
      */
-    public function getDescription() {
+    public function getDescription()
+    {
         return $this->description;
     }
-    
+
     /**
-     * 
+     *
      * @param string $description
      * @return \Tracker_FormElement_Field_List_Bind_StaticValue
      */
-    public function setDescription($description) {
+    public function setDescription($description)
+    {
         $this->description = $description;
         return $this;
     }
 
     /**
-     * 
+     *
      * @return int
      */
-    public function getRank() {
+    public function getRank()
+    {
         return $this->rank;
     }
-    
+
     /**
-     * 
+     *
      * @param int $rank
      * @return \Tracker_FormElement_Field_List_Bind_StaticValue
      */
-    public function setRank($rank) {
+    public function setRank($rank)
+    {
         $this->rank = (int) $rank;
         return $this;
     }

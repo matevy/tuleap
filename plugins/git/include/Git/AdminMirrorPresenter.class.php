@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-abstract class Git_AdminMirrorPresenter extends Git_AdminPresenter {
+abstract class Git_AdminMirrorPresenter extends Git_AdminPresenter
+{
 
     public $manage_mirrors = true;
 
@@ -30,43 +31,53 @@ abstract class Git_AdminMirrorPresenter extends Git_AdminPresenter {
 
     public $see_all = false;
 
-    public function __construct($title, CSRFSynchronizerToken $csrf) {
+    public function __construct($title, CSRFSynchronizerToken $csrf)
+    {
         parent::__construct($title, $csrf);
     }
 
-    public function mirror_section_title() {
+    public function mirror_section_title()
+    {
         return dgettext('tuleap-git', 'Git mirror administration');
     }
 
-    public function url_label() {
+    public function url_label()
+    {
         return dgettext('tuleap-git', 'SSH Host');
     }
 
-    public function hostname_label() {
+    public function hostname_label()
+    {
         return dgettext('tuleap-git', 'Hostname');
     }
 
-    public function owner_label() {
+    public function owner_label()
+    {
         return dgettext('tuleap-git', 'Owner');
     }
 
-    public function ssh_key_label() {
+    public function ssh_key_label()
+    {
         return dgettext('tuleap-git', 'Owner\'s SSH Key');
     }
 
-    public function pwd_label() {
+    public function pwd_label()
+    {
         return dgettext('tuleap-git', 'Owner\'s Password');
     }
 
-    public function identifier() {
+    public function identifier()
+    {
         return dgettext('tuleap-git', 'Identifier');
     }
 
-    public function reserved_hostnames_help() {
+    public function reserved_hostnames_help()
+    {
         return dgettext('tuleap-git', 'Must be unique. The name "projects" and the hostname defined in .gitolite.rc file cannot be used.');
     }
 
-    public function add_mirror() {
+    public function add_mirror()
+    {
         return dgettext('tuleap-git', 'Add mirror');
     }
 
@@ -77,31 +88,31 @@ abstract class Git_AdminMirrorPresenter extends Git_AdminPresenter {
 
     public function btn_edit()
     {
-        return $GLOBALS['Language']->getText('global','btn_edit');
+        return $GLOBALS['Language']->getText('global', 'btn_edit');
     }
 
     public function btn_restrict()
     {
-        return $GLOBALS['Language']->getText('global','btn_restrict');
+        return $GLOBALS['Language']->getText('global', 'btn_restrict');
     }
 
     public function btn_delete()
     {
-        return $GLOBALS['Language']->getText('global','btn_delete');
+        return $GLOBALS['Language']->getText('global', 'btn_delete');
     }
 
     public function btn_cancel()
     {
-        return $GLOBALS['Language']->getText('global','btn_cancel');
+        return $GLOBALS['Language']->getText('global', 'btn_cancel');
     }
 
     public function btn_yes()
     {
-        return $GLOBALS['Language']->getText('global','yes');
+        return $GLOBALS['Language']->getText('global', 'yes');
     }
 
     public function warning()
     {
-        return $GLOBALS['Language']->getText('global','warning');
+        return $GLOBALS['Language']->getText('global', 'warning');
     }
 }

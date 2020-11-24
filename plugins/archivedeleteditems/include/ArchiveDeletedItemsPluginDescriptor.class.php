@@ -16,23 +16,20 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/plugin/PluginDescriptor.class.php');
-
 /**
  * ArchiveDeletedItemsPluginDescriptor
  */
-class ArchiveDeletedItemsPluginDescriptor extends PluginDescriptor {
+class ArchiveDeletedItemsPluginDescriptor extends PluginDescriptor
+{
 
     /**
      * Constructor
      *
      * @return Void
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct(dgettext('tuleap-archivedeleteditems', 'Archive deleted items'), false, dgettext('tuleap-archivedeleteditems', 'This plugin will move files that should be purged (permanently deleted) in a dedicated filesystem for an external archiving (archiving process itself is not managed by this plugin).'));
         $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');
     }
-
 }
-
-?>

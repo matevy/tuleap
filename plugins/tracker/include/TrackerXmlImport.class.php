@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,11 +21,14 @@
 use Tuleap\Tracker\Admin\ArtifactLinksUsageDao;
 use Tuleap\Tracker\Admin\ArtifactLinksUsageUpdater;
 use Tuleap\Tracker\Events\XMLImportArtifactLinkTypeCanBeDisabled;
+use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
+use Tuleap\Tracker\Hierarchy\HierarchyDAO;
+use Tuleap\Tracker\TrackerColor;
 use Tuleap\Tracker\TrackerFromXmlImportCannotBeUpdatedException;
 use Tuleap\Tracker\TrackerXMLFieldMappingFromExistingTracker;
+use Tuleap\Tracker\XML\TrackerXmlImportFeedbackCollector;
 use Tuleap\Tracker\Webhook\WebhookDao;
 use Tuleap\Tracker\Webhook\WebhookFactory;
-use Tuleap\Tracker\Webhook\WebhookXMLImporter;
 use Tuleap\XML\MappingsRegistry;
 use Tuleap\Project\XML\Import\ImportConfig;
 use Tuleap\XML\PHPCast;
@@ -53,7 +56,7 @@ class TrackerXmlImport
     /** @var EventManager */
     private $event_manager;
 
-    /** @var Tracker_Hierarchy_Dao */
+    /** @var HierarchyDAO */
     private $hierarchy_dao;
 
     /** @var Tracker_CannedResponseFactory */
@@ -81,6 +84,11 @@ class TrackerXmlImport
     private $trigger_rulesmanager;
 
     private $xml_fields_mapping = array();
+
+    /**
+     * @var array
+     */
+    private $renderers_xml_mapping = [];
 
     /** @var Tracker_Artifact_XMLImport */
     private $xml_import;
@@ -117,7 +125,7 @@ class TrackerXmlImport
     public function __construct(
         TrackerFactory $tracker_factory,
         EventManager $event_manager,
-        Tracker_Hierarchy_Dao $hierarchy_dao,
+        HierarchyDAO $hierarchy_dao,
         Tracker_CannedResponseFactory $canned_response_factory,
         Tracker_FormElementFactory $formelement_factory,
         Tracker_SemanticFactory $semantic_factory,
@@ -176,7 +184,7 @@ class TrackerXmlImport
         return new TrackerXmlImport(
             $tracker_factory,
             EventManager::instance(),
-            new Tracker_Hierarchy_Dao(),
+            new HierarchyDAO(),
             Tracker_CannedResponseFactory::instance(),
             Tracker_FormElementFactory::instance(),
             Tracker_SemanticFactory::instance(),
@@ -205,7 +213,8 @@ class TrackerXmlImport
      *
      * @return array Array of SimpleXmlElement with each tracker
      */
-    protected function getAllXmlTrackers(SimpleXMLElement $xml_input) {
+    protected function getAllXmlTrackers(SimpleXMLElement $xml_input)
+    {
         $tracker_list = array();
         foreach ($xml_input->trackers->tracker as $xml_tracker) {
             $tracker_list[$this->getXmlTrackerAttribute($xml_tracker, 'id')] = $xml_tracker;
@@ -219,7 +228,8 @@ class TrackerXmlImport
      * @param type $attribute_name
      * @return String | bool the attribute value in String, False if this attribute does not exist
      */
-    private function getXmlTrackerAttribute(SimpleXMLElement $xml_tracker, $attribute_name) {
+    private function getXmlTrackerAttribute(SimpleXMLElement $xml_tracker, $attribute_name)
+    {
         $tracker_attributes = $xml_tracker->attributes();
         if (! $tracker_attributes[$attribute_name]) {
             return false;
@@ -258,6 +268,7 @@ class TrackerXmlImport
         $created_trackers_mapping = array();
         $created_trackers_objects = array();
         $artifacts_id_mapping     = new Tracker_XML_Importer_ArtifactImportedMapping();
+        $url_mapping              = new CreatedFileURLMapping();
 
         $xml_trackers = $this->getAllXmlTrackers($xml_input);
 
@@ -266,6 +277,12 @@ class TrackerXmlImport
             $created_trackers_objects[$xml_tracker_id] = $tracker_created;
             $created_trackers_mapping = array_merge($created_trackers_mapping, array($xml_tracker_id => $tracker_created->getId()));
         }
+
+        foreach ($this->renderers_xml_mapping as $xml_reference => $renderer_xml_mapping) {
+            assert($renderer_xml_mapping instanceof Tracker_Report_Renderer);
+            $registery->addReference($xml_reference, $renderer_xml_mapping);
+        }
+
         $xml_mapping = new TrackerXmlFieldsMapping_FromAnotherPlatform($this->xml_fields_mapping);
 
         $created_artifacts = $this->importBareArtifacts(
@@ -274,7 +291,8 @@ class TrackerXmlImport
             $extraction_path,
             $xml_mapping,
             $artifacts_id_mapping,
-            $configuration);
+            $configuration
+        );
 
         $this->importChangesets(
             $xml_trackers,
@@ -282,6 +300,7 @@ class TrackerXmlImport
             $extraction_path,
             $xml_mapping,
             $artifacts_id_mapping,
+            $url_mapping,
             $created_artifacts,
             $configuration
         );
@@ -340,6 +359,7 @@ class TrackerXmlImport
         }
 
         foreach ($xml_input->natures->nature as $xml_type) {
+            assert($xml_type instanceof SimpleXMLElement);
             $is_used = ! isset($xml_type['is_used']) || PHPCast::toBoolean($xml_type['is_used']) === true;
 
             if (! $is_used) {
@@ -389,7 +409,14 @@ class TrackerXmlImport
             $name = (string) $xml_tracker->name;
             $description = (string) $xml_tracker->description;
             $item_name = (string) $xml_tracker->item_name;
-            $trackers[] = $this->getInstanceFromXML($xml_tracker, $project, $name, $description, $item_name);
+            $trackers[] = $this->getInstanceFromXML(
+                $xml_tracker,
+                $project,
+                $name,
+                $description,
+                $item_name,
+                new TrackerXmlImportFeedbackCollector($this->logger),
+            );
         }
 
         $trackers_name_error = $this->tracker_factory->collectTrackersNameInErrorOnMandatoryCreationInfo(
@@ -400,7 +427,6 @@ class TrackerXmlImport
         $errors = '';
 
         if (! empty($trackers_name_error)) {
-
             $list_trackers_name = implode(', ', $trackers_name_error);
             $errors = $GLOBALS['Language']->getText(
                 'plugin_tracker_common_type',
@@ -414,20 +440,19 @@ class TrackerXmlImport
 
     private function activateArtlinkV2(Project $project, SimpleXMLElement $xml_element)
     {
-        $use_natures = $xml_element{'use-natures'};
-        if($use_natures == 'true') {
+        $use_natures = $xml_element['use-natures'];
+        if ($use_natures == 'true') {
             if ($this->artifact_links_usage_updater->isProjectAllowedToUseArtifactLinkTypes($project)) {
                 $this->logger->info("This project already uses artifact links nature feature.");
             } else {
                 $this->artifact_links_usage_updater->forceUsageOfArtifactLinkTypes($project);
                 $this->logger->info("Artifact links nature feature is now active.");
             }
-
-        } else if($use_natures == 'false') {
+        } elseif ($use_natures == 'false') {
             if ($this->artifact_links_usage_updater->isProjectAllowedToUseArtifactLinkTypes($project)) {
                 $this->artifact_links_usage_updater->forceDeactivationOfArtifactLinkTypes($project);
                 $this->logger->warn("This project used artifact links nature. It is now deactivated!!!");
-            } else{
+            } else {
                 $this->logger->warn("This project will not be able to use artifact links nature feature.");
             }
         } else {
@@ -463,20 +488,14 @@ class TrackerXmlImport
                     $extraction_path,
                     $xml_mapping,
                     $artifacts_id_mapping,
-                    $configuration);
+                    $configuration
+                );
             }
         }
         return $created_artifacts;
     }
 
     /**
-     * @param array $xml_trackers
-     * @param array $created_trackers_objects
-     * @param $extraction_path
-     * @param TrackerXmlFieldsMapping_FromAnotherPlatform $xml_mapping
-     * @param Tracker_XML_Importer_ArtifactImportedMapping $artifacts_id_mapping
-     * @param array $created_artifacts
-     * @param ImportConfig $configuration
      * @throws Tracker_Artifact_Exception_XMLImportException
      */
     private function importChangesets(
@@ -485,6 +504,7 @@ class TrackerXmlImport
         $extraction_path,
         TrackerXmlFieldsMapping_FromAnotherPlatform $xml_mapping,
         Tracker_XML_Importer_ArtifactImportedMapping $artifacts_id_mapping,
+        CreatedFileURLMapping $url_mapping,
         array $created_artifacts,
         ImportConfig $configuration
     ) {
@@ -496,13 +516,16 @@ class TrackerXmlImport
                     $extraction_path,
                     $xml_mapping,
                     $artifacts_id_mapping,
+                    $url_mapping,
                     $created_artifacts[$xml_tracker_id],
-                    $configuration);
+                    $configuration
+                );
             }
         }
     }
 
-    private function importHierarchy(SimpleXMLElement $xml_input, array $created_trackers_list) {
+    private function importHierarchy(SimpleXMLElement $xml_input, array $created_trackers_list)
+    {
         $all_hierarchies = array();
         foreach ($this->getAllXmlTrackers($xml_input) as $xml_tracker) {
             $all_hierarchies = $this->buildTrackersHierarchy($all_hierarchies, $xml_tracker, $created_trackers_list);
@@ -619,7 +642,8 @@ class TrackerXmlImport
      * @return Tracker
      * @throws Tracker_Exception
      */
-    public function createFromXMLFile(Project $project, $filepath) {
+    public function createFromXMLFile(Project $project, $filepath)
+    {
         $xml_security = new XML_Security();
         $tracker_xml = $xml_security->loadFile($filepath);
         if ($tracker_xml !== false) {
@@ -631,7 +655,8 @@ class TrackerXmlImport
         }
     }
 
-    public function getTrackerItemNameFromXMLFile($filepath) {
+    public function getTrackerItemNameFromXMLFile($filepath)
+    {
         $xml_security = new XML_Security();
         $tracker_xml = $xml_security->loadFile($filepath);
         if ($tracker_xml !== false) {
@@ -651,7 +676,8 @@ class TrackerXmlImport
      * @throws TrackerFromXmlException
      * @throws Tracker_Exception
      */
-    public function createFromXMLFileWithInfo(Project $project, $filepath, $name, $description, $item_name) {
+    public function createFromXMLFileWithInfo(Project $project, $filepath, $name, $description, $item_name)
+    {
         $xml_security = new XML_Security();
         $tracker_xml  = $xml_security->loadFile($filepath);
         if ($tracker_xml) {
@@ -673,23 +699,38 @@ class TrackerXmlImport
      * @throws TrackerFromXmlException
      * @throws Tracker_Exception
      */
-    public function createFromXML(SimpleXMLElement $xml_element, Project $project, $name, $description, $itemname) {
+    public function createFromXML(SimpleXMLElement $xml_element, Project $project, $name, $description, $itemname)
+    {
         $tracker = null;
         if ($this->tracker_factory->validMandatoryInfoOnCreate($name, $description, $itemname, $project->getId())) {
-            $this->rng_validator->validate($xml_element, realpath(dirname(TRACKER_BASE_DIR).'/www/resources/tracker.rng'));
-
-            $tracker = $this->getInstanceFromXML($xml_element, $project, $name, $description, $itemname);
+            $this->rng_validator->validate(
+                $xml_element,
+                realpath(dirname(TRACKER_BASE_DIR) . '/www/resources/tracker.rng')
+            );
+            $feedback_collector = new TrackerXmlImportFeedbackCollector($this->logger);
+            $tracker = $this->getInstanceFromXML(
+                $xml_element,
+                $project,
+                $name,
+                $description,
+                $itemname,
+                $feedback_collector
+            );
             //Testing consistency of the imported tracker before updating database
             if ($tracker->testImport()) {
                 if ($tracker_id = $this->tracker_factory->saveObject($tracker)) {
                     $this->addTrackerProperties($tracker_id, $project, $xml_element);
                     $tracker->setId($tracker_id);
                 } else {
-                    throw new TrackerFromXmlException($GLOBALS['Language']->getText('plugin_tracker_admin', 'error_during_creation'));
+                    throw new TrackerFromXmlException(
+                        $GLOBALS['Language']->getText('plugin_tracker_admin', 'error_during_creation')
+                    );
                 }
             } else {
                 throw new TrackerFromXmlException('XML file cannot be imported');
             }
+
+            $this->displayWarnings($feedback_collector);
         }
 
         $this->formelement_factory->clearCaches();
@@ -723,7 +764,15 @@ class TrackerXmlImport
      * @return Tracker Object
      * @throws Tracker_Exception
      */
-    protected function getInstanceFromXML(SimpleXMLElement $xml, Project $project, $name, $description, $itemname) {
+    protected function getInstanceFromXML(SimpleXMLElement $xml, Project $project, $name, $description, $itemname, TrackerXmlImportFeedbackCollector $feedback_collector)
+    {
+        $xml_tracker_color_name = (string) $xml->color;
+        if ($xml_tracker_color_name === '') {
+            $tracker_color = TrackerColor::default();
+        } else {
+            $tracker_color = TrackerColor::fromNotStandardizedName($xml_tracker_color_name);
+        }
+
         // set general settings
         // real id will be set during Database update
         $att = $xml->attributes();
@@ -737,7 +786,7 @@ class TrackerXmlImport
             'browse_instructions' => (string)$xml->browse_instructions,
             'status'              => '',
             'deletion_date'       => '',
-            'color'               => (string)$xml->color
+            'color'               => $tracker_color->getName()
         );
         $row['allow_copy'] = isset($att['allow_copy']) ?
             (int) $att['allow_copy'] : 0;
@@ -760,12 +809,19 @@ class TrackerXmlImport
 
         // set formElements
         foreach ($xml->formElements->formElement as $index => $elem) {
-            $tracker->formElements[] = $this->formelement_factory->getInstanceFromXML(
+            $form_element = $this->formelement_factory->getInstanceFromXML(
                 $tracker,
                 $elem,
                 $this->xml_fields_mapping,
-                $this->user_finder
+                $this->user_finder,
+                $feedback_collector
             );
+
+            if (! $form_element) {
+                continue;
+            }
+
+            $tracker->formElements[] = $form_element;
         }
 
         // set semantics
@@ -796,13 +852,13 @@ class TrackerXmlImport
         if (isset($xml->dependencies)) {
             $list_rules = null;
 
-            if(! isset($xml->rules)) {
+            if (! isset($xml->rules)) {
                 $list_rules = $xml->addChild('rules')->addChild('list_rules');
             } elseif (! isset($xml->rules->list_rules)) {
                 $list_rules = $xml->rules->addChild('list_rules', $xml->dependencies);
             }
 
-            if($list_rules !== null) {
+            if ($list_rules !== null) {
                 foreach ($xml->dependencies->rule as $old_rule) {
                     $source_field_attributes = $old_rule->source_field->attributes();
                     $target_field_attributes = $old_rule->target_field->attributes();
@@ -826,7 +882,12 @@ class TrackerXmlImport
         // set report
         if (isset($xml->reports)) {
             foreach ($xml->reports->report as $report) {
-                $tracker->reports[] = $this->report_factory->getInstanceFromXML($report, $this->xml_fields_mapping, $project->getId());
+                $tracker->reports[] = $this->report_factory->getInstanceFromXML(
+                    $report,
+                    $this->xml_fields_mapping,
+                    $this->renderers_xml_mapping,
+                    $project->getId()
+                );
             }
         }
 
@@ -834,6 +895,13 @@ class TrackerXmlImport
         if (isset($xml->workflow->field_id)) {
             $tracker->workflow= $this->workflow_factory->getInstanceFromXML(
                 $xml->workflow,
+                $this->xml_fields_mapping,
+                $tracker,
+                $project
+            );
+        } elseif (isset($xml->simple_workflow->field_id)) {
+            $tracker->workflow = $this->workflow_factory->getSimpleInstanceFromXML(
+                $xml->simple_workflow,
                 $this->xml_fields_mapping,
                 $tracker,
                 $project
@@ -853,38 +921,38 @@ class TrackerXmlImport
             foreach ($xml->permissions->permission as $permission) {
                 $ugroup_name = (string) $permission['ugroup'];
                 $ugroup_id = $this->getUGroupId($project, $ugroup_name);
-                if(is_null($ugroup_id)) {
+                if (is_null($ugroup_id)) {
                     $this->logger->error("Custom ugroup '$ugroup_name' does not seem to exist for '{$project->getPublicName()}' project.");
                     continue;
                 }
                 $type = (string) $permission['type'];
 
                 switch ((string) $permission['scope']) {
-                case 'tracker':
-                    //tracker permissions
-                    if(!in_array($type, $allowed_tracker_perms)) {
-                        $this->logger->error("Can not import permission of type $type for tracker.");
+                    case 'tracker':
+                        //tracker permissions
+                        if (!in_array($type, $allowed_tracker_perms)) {
+                            $this->logger->error("Can not import permission of type $type for tracker.");
+                            break;
+                        }
+                        $this->logger->debug("Adding '$type' permission to '$ugroup_name' on tracker '{$tracker->getName()}'.");
+                        $tracker->setCachePermission($ugroup_id, $type);
                         break;
-                    }
-                    $this->logger->debug("Adding '$type' permission to '$ugroup_name' on tracker '{$tracker->getName()}'.");
-                    $tracker->setCachePermission($ugroup_id, $type);
-                    break;
-                case 'field':
-                    //field permissions
-                    $REF    = (string) $permission['REF'];
-                    if(!in_array($type, $allowed_field_perms)) {
-                        $this->logger->error("Can not import permission of type $type for field.");
+                    case 'field':
+                        //field permissions
+                        $REF    = (string) $permission['REF'];
+                        if (!in_array($type, $allowed_field_perms)) {
+                            $this->logger->error("Can not import permission of type $type for field.");
+                            break;
+                        }
+                        if (!isset($this->xml_fields_mapping[$REF])) {
+                            $this->logger->error("Unknow ref to field $REF.");
+                            break;
+                        }
+                        $this->logger->debug("Adding '$type' permission to '$ugroup_name' on field '$REF'.");
+                        $this->xml_fields_mapping[$REF]->setCachePermission($ugroup_id, $type);
                         break;
-                    }
-                    if(!isset($this->xml_fields_mapping[$REF])) {
-                        $this->logger->error("Unknow ref to field $REF.");
+                    default:
                         break;
-                    }
-                    $this->logger->debug("Adding '$type' permission to '$ugroup_name' on field '$REF'.");
-                    $this->xml_fields_mapping[$REF]->setCachePermission($ugroup_id, $type);
-                    break;
-                default:
-                    break;
                 }
             }
         }
@@ -892,12 +960,13 @@ class TrackerXmlImport
         return $tracker;
     }
 
-    private function getUGroupId(Project $project, $ugroup_name) {
-        if(isset($GLOBALS['UGROUPS'][$ugroup_name])) {
+    private function getUGroupId(Project $project, $ugroup_name)
+    {
+        if (isset($GLOBALS['UGROUPS'][$ugroup_name])) {
             $ugroup_id = $GLOBALS['UGROUPS'][$ugroup_name];
         } else {
             $ugroup = $this->ugroup_manager->getUGroupByName($project, $ugroup_name);
-            if(is_null($ugroup)) {
+            if (is_null($ugroup)) {
                 $ugroup_id = null;
             } else {
                 $ugroup_id = $ugroup->getId();
@@ -938,7 +1007,8 @@ class TrackerXmlImport
      *
      * Stores in database the hierarchy between created trackers
      */
-    public function storeHierarchyInDB(array $all_hierarchies) {
+    public function storeHierarchyInDB(array $all_hierarchies)
+    {
         foreach ($all_hierarchies as $parent_id => $hierarchy) {
             $this->hierarchy_dao->updateChildren($parent_id, $hierarchy);
         }
@@ -960,5 +1030,14 @@ class TrackerXmlImport
             : $deprecated_stop_notification;
 
         return $notifications_level;
+    }
+
+    private function displayWarnings(TrackerXmlImportFeedbackCollector $feedback_collector)
+    {
+        if (empty($feedback_collector->getWarnings())) {
+            return;
+        }
+
+        $feedback_collector->displayWarnings($this->logger);
     }
 }

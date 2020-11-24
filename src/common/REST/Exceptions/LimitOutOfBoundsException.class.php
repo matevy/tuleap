@@ -19,11 +19,13 @@
 
 namespace Tuleap\REST\Exceptions;
 
-use \Luracast\Restler\RestException;
+use Luracast\Restler\RestException;
 
-class LimitOutOfBoundsException extends RestException {
+class LimitOutOfBoundsException extends RestException
+{
 
-    public function __construct($max_limit) {
+    public function __construct($max_limit)
+    {
         parent::__construct(406, 'Limit is out of bounds [1..'. $max_limit .']');
     }
 }

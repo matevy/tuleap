@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,8 @@
 
 require_once 'bootstrap.php';
 
-class GitPlugin_GetRemoteServersForUserTest extends TuleapTestCase {
+class GitPlugin_GetRemoteServersForUserTest extends TuleapTestCase
+{
 
     /**
      *
@@ -32,85 +33,94 @@ class GitPlugin_GetRemoteServersForUserTest extends TuleapTestCase {
     private $logger;
     private $user;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
+        $this->setUpGlobalsMockery();
 
         $id = 456;
         $mocked_methods = array(
             'getGerritServerFactory'
         );
-        $this->plugin = partial_mock('GitPlugin', $mocked_methods, array($id));
+        $this->plugin = \Mockery::mock(\GitPlugin::class)->makePartial()->shouldAllowMockingProtectedMethods();
 
-        $this->user_account_manager = mock('Git_UserAccountManager');
+        $this->user_account_manager = \Mockery::spy(\Git_UserAccountManager::class);
         $this->plugin->setUserAccountManager($this->user_account_manager);
 
-        $this->gerrit_server_factory = mock('Git_RemoteServer_GerritServerFactory');
-        stub($this->plugin)->getGerritServerFactory()->returns($this->gerrit_server_factory);
+        $this->gerrit_server_factory = \Mockery::spy(\Git_RemoteServer_GerritServerFactory::class);
+        $this->plugin->shouldReceive('getGerritServerFactory')->andReturns($this->gerrit_server_factory);
 
-        $this->logger = mock('BackendLogger');
+        $this->logger = \Mockery::spy(\BackendLogger::class);
         $this->plugin->setLogger($this->logger);
 
-        $this->user = mock('PFUser');
+        $this->user = \Mockery::spy(\PFUser::class);
 
         $_POST['ssh_key_push'] = true;
     }
 
-    public function testItDoesNotPushKeysIfNoUserIsPassed() {
+    public function testItDoesNotPushKeysIfNoUserIsPassed()
+    {
         $params = array(
             'html' => '',
         );
 
-        expect($this->user_account_manager)->pushSSHKeys()->never();
+        $this->user_account_manager->shouldReceive('pushSSHKeys')->never();
         $this->plugin->getRemoteServersForUser($params);
     }
 
-    public function tesItDoesNotPushKeysIfUserIsInvalid() {
+    public function tesItDoesNotPushKeysIfUserIsInvalid()
+    {
         $params = array(
             'user' => 'me',
             'html' => '',
         );
 
-        expect($this->user_account_manager)->pushSSHKeys()->never();
+        $this->user_account_manager->shouldReceive('pushSSHKeys')->never();
         $this->plugin->getRemoteServersForUser($params);
     }
 
-    public function itLogsAnErrorIfSSHKeyPushFails() {
-        $params = array(
-            'user' => $this->user,
-            'html' => '',
-        );
-        
-        $this->user_account_manager->throwOn('pushSSHKeys', new Git_UserSynchronisationException());
-
-        expect($this->logger)->error()->once();
-
-        stub($this->gerrit_server_factory)->getRemoteServersForUser()->returns([]);
-
-        $this->plugin->getRemoteServersForUser($params);
-    }
-
-    public function itAddsResponseFeedbackIfSSHKeyPushFails() {
+    public function itLogsAnErrorIfSSHKeyPushFails()
+    {
         $params = array(
             'user' => $this->user,
             'html' => '',
         );
 
-        $this->user_account_manager->throwOn('pushSSHKeys', new Git_UserSynchronisationException());
+        $this->user_account_manager->shouldReceive('pushSSHKeys')->andThrows(new Git_UserSynchronisationException());
 
-        $response = mock('Response');
+        $this->logger->shouldReceive('error')->once();
+
+        $this->gerrit_server_factory->shouldReceive('getRemoteServersForUser')->andReturns([]);
+
+        $this->plugin->getRemoteServersForUser($params);
+    }
+
+    public function itAddsResponseFeedbackIfSSHKeyPushFails()
+    {
+        $params = array(
+            'user' => $this->user,
+            'html' => '',
+        );
+
+        $this->user_account_manager->shouldReceive('pushSSHKeys')->andThrows(new Git_UserSynchronisationException());
+
+        $response = \Mockery::spy(\Response::class);
         $GLOBALS['Response'] = $response;
-        expect($response)->addFeedback()->once();
+        $response->shouldReceive('addFeedback')->once();
 
-        stub($this->gerrit_server_factory)->getRemoteServersForUser()->returns([]);
+        $this->gerrit_server_factory->shouldReceive('getRemoteServersForUser')->andReturns([]);
 
         $this->plugin->getRemoteServersForUser($params);
     }
 }
 
-class GitPlugin_Post_System_Events extends TuleapTestCase {
+class GitPlugin_Post_System_Events extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
+        $this->setUpGlobalsMockery();
 
         $id = 456;
         $mocked_methods = array(
@@ -118,22 +128,21 @@ class GitPlugin_Post_System_Events extends TuleapTestCase {
             'getGitoliteDriver',
             'getLogger',
         );
-        $this->plugin               = partial_mock('GitPlugin', $mocked_methods, array($id));
-        $this->system_event_manager = mock('Git_SystemEventManager');
-        $this->gitolite_driver      = mock('Git_GitoliteDriver');
+        $this->plugin               = \Mockery::mock(\GitPlugin::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->system_event_manager = \Mockery::spy(\Git_SystemEventManager::class);
+        $this->gitolite_driver      = \Mockery::spy(\Git_GitoliteDriver::class);
 
-        stub($this->plugin)->getGitSystemEventManager()->returns($this->system_event_manager);
-        stub($this->plugin)->getGitoliteDriver()->returns($this->gitolite_driver);
-        stub($this->plugin)->getLogger()->returns(mock('TruncateLevelLogger'));
+        $this->plugin->shouldReceive('getGitSystemEventManager')->andReturns($this->system_event_manager);
+        $this->plugin->shouldReceive('getGitoliteDriver')->andReturns($this->gitolite_driver);
+        $this->plugin->shouldReceive('getLogger')->andReturns(\Mockery::spy(\TruncateLevelLogger::class));
     }
 
-    public function itProcessGrokmirrorManifestUpdateInPostSystemEventsActions() {
-        expect($this->gitolite_driver)
-            ->commit()
+    public function itProcessGrokmirrorManifestUpdateInPostSystemEventsActions()
+    {
+        $this->gitolite_driver->shouldReceive('commit')
             ->once();
 
-        expect($this->gitolite_driver)
-            ->push()
+        $this->gitolite_driver->shouldReceive('push')
             ->once();
 
         $params = array(
@@ -144,13 +153,12 @@ class GitPlugin_Post_System_Events extends TuleapTestCase {
         $this->plugin->post_system_events_actions($params);
     }
 
-    public function itDoesNotProcessPostSystemEventsActionsIfNotGitRelated() {
-        expect($this->gitolite_driver)
-        ->commit()
+    public function itDoesNotProcessPostSystemEventsActionsIfNotGitRelated()
+    {
+        $this->gitolite_driver->shouldReceive('commit')
         ->never();
 
-        expect($this->gitolite_driver)
-        ->push()
+        $this->gitolite_driver->shouldReceive('push')
         ->never();
 
         $params = array(

@@ -101,15 +101,14 @@ Mock::generatePartial(
     )
 );
 
-require_once('common/include/Response.class.php');
 Mock::generate('Response');
 
-require_once('common/language/BaseLanguage.class.php');
 Mock::generate('BaseLanguage');
 
 Mock::generate('Tracker_Artifact_ChangesetValue');
 
-class Tracker_FormElement_FieldTest extends TuleapTestCase {
+class Tracker_FormElement_FieldTest extends TuleapTestCase
+{
 
     private $response;
     private $language;
@@ -131,7 +130,8 @@ class Tracker_FormElement_FieldTest extends TuleapTestCase {
         parent::tearDown();
     }
 
-    function testValidateField() {
+    function testValidateField()
+    {
         // 0 => Field has value in last changeset
         // 1 => Field submitted in the request
         // 2 => User can update
@@ -203,36 +203,36 @@ class Tracker_FormElement_FieldTest extends TuleapTestCase {
             // 4 => Is valid?
             switch ((string)$case[4]) {
             // no need to check
-            case '-':
-                $field->expectNever('isValid');
-                $field->expectNever('setHasErrors');
-                $is_valid = true;
-                break;
+                case '-':
+                    $field->expectNever('isValid');
+                    $field->expectNever('setHasErrors');
+                    $is_valid = true;
+                    break;
             // Error due to required
-            case 'R':
-                $field->expectNever('isValid');
-                $field->expectOnce('setHasErrors', array(true));
-                $GLOBALS['Language']->expectOnce('getText', array('plugin_tracker_common_artifact', 'err_required', $field->getLabel() .' ('. $field->getName() .')'));
-                $GLOBALS['Response']->expectOnce('addFeedback', array('error', '*'));
-                $is_valid = false;
-                break;
+                case 'R':
+                    $field->expectNever('isValid');
+                    $field->expectOnce('setHasErrors', array(true));
+                    $GLOBALS['Language']->expectOnce('getText', array('plugin_tracker_common_artifact', 'err_required', $field->getLabel() .' ('. $field->getName() .')'));
+                    $GLOBALS['Response']->expectOnce('addFeedback', array('error', '*'));
+                    $is_valid = false;
+                    break;
             // Error due to perms
-            case 'P':
-                $field->expectNever('isValid');
-                $field->expectOnce('setHasErrors', array(true));
-                $GLOBALS['Language']->expectOnce('getText', array('plugin_tracker_common_artifact', 'bad_field_permission_update', $field->getLabel()));
-                $GLOBALS['Response']->expectOnce('addFeedback', array('error', '*'));
-                $is_valid = false;
-                break;
+                case 'P':
+                    $field->expectNever('isValid');
+                    $field->expectOnce('setHasErrors', array(true));
+                    $GLOBALS['Language']->expectOnce('getText', array('plugin_tracker_common_artifact', 'bad_field_permission_update', $field->getLabel()));
+                    $GLOBALS['Response']->expectOnce('addFeedback', array('error', '*'));
+                    $is_valid = false;
+                    break;
             // Depends on field->isValid()
-            case 'V':
-                $field->expectOnce('isValid');
-                $field->expectNever('setHasErrors');
-                $field->setReturnValue('isValid', true);
-                $is_valid = true;
-                break;
-            default:
-                break;
+                case 'V':
+                    $field->expectOnce('isValid');
+                    $field->expectNever('setHasErrors');
+                    $field->setReturnValue('isValid', true);
+                    $is_valid = true;
+                    break;
+                default:
+                    break;
             }
 
             $result = $field->validateFieldWithPermissionsAndRequiredStatus($artifact_update, $submitted_value, $last_changeset_value);
@@ -242,7 +242,8 @@ class Tracker_FormElement_FieldTest extends TuleapTestCase {
         }
     }
 
-    function testIsValid_not_required() {
+    function testIsValid_not_required()
+    {
         $this->response->expectNever('addFeedback', array('error', 'Status is required'));
         $artifact = new MockTracker_Artifact();
         $field = new Tracker_FormElement_FieldTestVersion();
@@ -260,7 +261,8 @@ class Tracker_FormElement_FieldTest extends TuleapTestCase {
         $this->assertTrue($field->hasErrors());
     }
 
-    function testIsValid_required() {
+    function testIsValid_required()
+    {
 
         $artifact = new MockTracker_Artifact();
         $field    = new Tracker_FormElement_FieldTestVersion();
@@ -287,9 +289,11 @@ class Tracker_FormElement_FieldTest extends TuleapTestCase {
     }
 }
 
-class Tracker_FormElement_Field_RESTValueTest extends TuleapTestCase {
+class Tracker_FormElement_Field_RESTValueTest extends TuleapTestCase
+{
 
-    public function itReturnsTheValueIndexedByFieldName() {
+    public function itReturnsTheValueIndexedByFieldName()
+    {
         $field_abstract_methods = array(
             'fetchCriteriaValue',
             'fetchChangesetValue',

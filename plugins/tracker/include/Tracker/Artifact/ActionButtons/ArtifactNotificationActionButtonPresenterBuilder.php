@@ -46,13 +46,18 @@ class ArtifactNotificationActionButtonPresenterBuilder
 
     public function getNotificationButton(PFUser $user, Tracker_Artifact $artifact)
     {
+        if ($user->isAnonymous()) {
+            return;
+        }
+
         if ($this->unsubscribers_DAO->doesUserIDHaveUnsubscribedFromTrackerNotifications($user->getId(), $artifact->getTrackerId())) {
             return;
         }
 
         return new ArtifactNotificationsButtonPresenter(
             $this->getUnsubscribeButtonLabel($user, $artifact),
-            $this->getUnsubscribeButtonAlternateText($user, $artifact)
+            $this->getUnsubscribeButtonAlternateText($user, $artifact),
+            $this->getUnsubscribeButtonIcon($user, $artifact)
         );
     }
 
@@ -80,5 +85,14 @@ class ArtifactNotificationActionButtonPresenterBuilder
         }
 
         return $GLOBALS['Language']->getText('plugin_tracker', 'disable_notifications_alternate_text');
+    }
+
+    private function getUnsubscribeButtonIcon(PFUser $user, Tracker_Artifact $artifact)
+    {
+        if ($this->doesUserHaveUnsubscribedFromArtifactNotification($user, $artifact)) {
+            return 'fa-bell-o';
+        }
+
+        return 'fa-bell-slash-o';
     }
 }

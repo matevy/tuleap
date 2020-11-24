@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class AgileDashboard_KanbanDao extends DataAccessObject {
+class AgileDashboard_KanbanDao extends DataAccessObject
+{
 
     public function duplicateKanbans(array $tracker_mapping, array $field_mapping, array $report_mapping)
     {
@@ -52,7 +53,8 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function duplicateColumns($old_kanban_id, $new_kanban_id, array $field_mapping) {
+    private function duplicateColumns($old_kanban_id, $new_kanban_id, array $field_mapping)
+    {
         $value_mapping = array();
         foreach ($field_mapping as $mapping) {
             $value_mapping += $mapping['values'];
@@ -74,14 +76,16 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function convertValueIdToWhenThenStatement(&$new_value_id, $old_value_id) {
+    private function convertValueIdToWhenThenStatement(&$new_value_id, $old_value_id)
+    {
         $new_value_id = $this->da->escapeInt($new_value_id);
         $old_value_id = $this->da->escapeInt($old_value_id);
 
         $new_value_id = "WHEN $old_value_id THEN $new_value_id";
     }
 
-    public function create($kanban_name, $tracker_kanban) {
+    public function create($kanban_name, $tracker_kanban)
+    {
         $tracker_kanban = $this->da->escapeInt($tracker_kanban);
         $kanban_name    = $this->da->quoteSmart($kanban_name);
 
@@ -91,7 +95,8 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
         return $this->updateAndGetLastId($sql);
     }
 
-    public function save($kanban_id, $kanban_name) {
+    public function save($kanban_id, $kanban_name)
+    {
         $kanban_id   = $this->da->escapeInt($kanban_id);
         $kanban_name = $this->da->quoteSmart($kanban_name);
 
@@ -102,7 +107,8 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function delete($kanban_id) {
+    public function delete($kanban_id)
+    {
         $kanban_id   = $this->da->escapeInt($kanban_id);
 
         $this->startTransaction();
@@ -131,7 +137,8 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
         $this->commit();
     }
 
-    public function getKanbanByTrackerId($tracker_kanban) {
+    public function getKanbanByTrackerId($tracker_kanban)
+    {
         $tracker_kanban = $this->da->escapeInt($tracker_kanban);
 
         $sql = "SELECT kanban_config.*, tracker.group_id
@@ -143,7 +150,8 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getKanbanById($kanban_id) {
+    public function getKanbanById($kanban_id)
+    {
         $kanban_id = $this->da->escapeInt($kanban_id);
 
         $sql = "SELECT kanban_config.*, tracker.group_id
@@ -155,7 +163,8 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getTrackersWithKanbanUsageAndHierarchy($project_id) {
+    public function getTrackersWithKanbanUsageAndHierarchy($project_id)
+    {
         $project_id = $this->da->escapeInt($project_id);
 
         $sql = "SELECT tracker.id,
@@ -186,7 +195,8 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getKanbansForProject($project_id) {
+    public function getKanbansForProject($project_id)
+    {
         $project_id = $this->da->escapeInt($project_id);
 
         $sql = "SELECT kanban_config.*, tracker.group_id
@@ -197,5 +207,30 @@ class AgileDashboard_KanbanDao extends DataAccessObject {
                 ORDER BY kanban_config.name ASC";
 
         return $this->retrieve($sql);
+    }
+
+    public function countKanbanCards(): int
+    {
+        $sql = 'SELECT count(*) as nb
+                FROM plugin_agiledashboard_kanban_configuration AS kanban
+                INNER JOIN tracker_artifact
+                  ON kanban.tracker_id = tracker_artifact.tracker_id';
+
+        $res = $this->retrieveFirstRow($sql);
+
+        return (!$res)? 0 : (int)$res['nb'];
+    }
+
+    public function countKanbanCardsAfter(int $timestamp): int
+    {
+        $sql = 'SELECT count(*) as nb
+                FROM plugin_agiledashboard_kanban_configuration AS kanban
+                INNER JOIN tracker_artifact
+                  ON kanban.tracker_id = tracker_artifact.tracker_id
+                AND tracker_artifact.submitted_on > '.$this->da->escapeInt($timestamp);
+
+        $res = $this->retrieveFirstRow($sql);
+
+        return (!$res)? 0 : (int)$res['nb'];
     }
 }

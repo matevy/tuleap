@@ -29,9 +29,11 @@ use Tuleap\Tracker\REST\CompleteTrackerRepresentation;
 /**
  * Basic representation of a planning
  */
-class PlanningRepresentation extends PlanningRepresentationBase {
+class PlanningRepresentation extends PlanningRepresentationBase
+{
 
-    public function build(Planning $planning) {
+    public function build(Planning $planning)
+    {
         $this->id                = JsonCast::toInt($planning->getId());
         $this->uri               = ResourceReference::NO_ROUTE;
         $this->label             = $planning->getName();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,50 +19,97 @@
 
 import Vue from "vue";
 import {
-    addNewEmpty,
-    addNewWiki,
-    addNewFile,
     addNewEmbedded,
+    addNewEmpty,
+    addNewFile,
     addNewLink,
+    addNewWiki,
+    addUserLegacyUIPreferency,
     cancelUpload,
     createNewVersion,
+    deleteEmbeddedFile,
+    deleteEmptyDocument,
+    deleteFile,
+    deleteFolder,
+    deleteLink,
+    deleteLockEmbedded,
+    deleteLockEmpty,
+    deleteLockFile,
+    deleteLockLink,
+    deleteLockWiki,
     deleteUserPreferenciesForFolderInProject,
-    addUserLegacyUIPreferency,
-    deleteUserPreferenciesForUnderConstructionModal,
+    deleteWiki,
+    getDocumentManagerServiceInformation,
     getFolderContent,
     getItem,
-    getProject,
+    getItemsReferencingSameWikiPage,
+    getParents,
+    getPreferenceForEmbeddedDisplay,
     patchUserPreferenciesForFolderInProject,
-    patchEmbeddedFile,
-    patchWiki,
-    patchLink
+    postEmbeddedFile,
+    postLinkVersion,
+    postLockEmbedded,
+    postLockEmpty,
+    postLockFile,
+    postLockLink,
+    postLockWiki,
+    postNewEmbeddedFileVersionFromEmpty,
+    postNewFileVersionFromEmpty,
+    postNewLinkVersionFromEmpty,
+    postWiki,
+    putEmbeddedFileMetadata,
+    putEmbeddedFilePermissions,
+    putEmptyDocumentMetadata,
+    putEmptyDocumentPermissions,
+    putFileMetadata,
+    putFilePermissions,
+    putFolderDocumentMetadata,
+    putFolderPermissions,
+    putLinkMetadata,
+    putLinkPermissions,
+    putWikiMetadata,
+    putWikiPermissions,
+    removeUserPreferenceForEmbeddedDisplay,
+    setNarrowModeForEmbeddedDisplay
 } from "../api/rest-querier.js";
 
 import {
     getErrorMessage,
     handleErrors,
-    handleErrorsForModal,
-    handleErrorsForDocument
+    handleErrorsForDeletionModal,
+    handleErrorsForDocument,
+    handleErrorsForLock,
+    handleErrorsForModal
 } from "./actions-helpers/handle-errors.js";
 import { loadFolderContent } from "./actions-helpers/load-folder-content.js";
 import { loadAscendantHierarchy } from "./actions-helpers/load-ascendant-hierarchy.js";
-import { uploadFile, uploadVersion } from "./actions-helpers/upload-file.js";
+import {
+    uploadFile,
+    uploadVersion,
+    uploadVersionFromEmpty
+} from "./actions-helpers/upload-file.js";
 import { flagItemAsCreated } from "./actions-helpers/flag-item-as-created.js";
+import { adjustItemToContentAfterItemCreationInAFolder } from "./actions-helpers/adjust-item-to-content-after-item-creation-in-folder.js";
+import { buildItemPath } from "./actions-helpers/build-parent-paths.js";
 import {
     TYPE_EMBEDDED,
     TYPE_EMPTY,
     TYPE_FILE,
     TYPE_FOLDER,
+    TYPE_LINK,
     TYPE_WIKI,
-    TYPE_LINK
+    USER_CANNOT_PROPAGATE_DELETION_TO_WIKI_SERVICE
 } from "../constants.js";
 import { addNewFolder } from "../api/rest-querier";
+import { getCustomMetadata } from "../helpers/metadata-helpers/custom-metadata-helper.js";
+import { formatCustomMetadataForFolderUpdate } from "../helpers/metadata-helpers/data-transformatter-helper.js";
+import { getProjectUserGroupsWithoutServiceSpecialUGroups } from "../helpers/permissions/ugroups.js";
 
 export const loadRootFolder = async context => {
     try {
         context.commit("beginLoading");
-        const project = await getProject(context.state.project_id);
-        const root = project.additional_informations.docman.root_item;
+        const service = await getDocumentManagerServiceInformation(context.state.project_id);
+        const root = service.root_item;
 
         context.commit("setCurrentFolder", root);
 
@@ -85,49 +132,72 @@ export const getSubfolderContent = async (context, folder_id) => {
 };
 
 export const createNewItem = async (context, [item, parent, current_folder]) => {
-    async function adjustFileToContentAfterItemCreation(item_id) {
-        const created_item = await getItem(item_id);
-
-        flagItemAsCreated(context, created_item);
-
-        if (!parent.is_expanded && parent.id !== current_folder.id) {
-            context.commit("addDocumentToFoldedFolder", [parent, created_item, false]);
-        }
-        return Promise.resolve(context.commit("addJustCreatedItemToFolderContent", created_item));
-    }
-
     try {
         let should_display_item = true;
         let item_reference;
-        switch (item.type) {
+
+        const item_to_create = JSON.parse(JSON.stringify(item));
+        if (item_to_create.obsolescence_date === "") {
+            item_to_create.obsolescence_date = null;
+        }
+        switch (item_to_create.type) {
             case TYPE_FILE:
                 if (!parent.is_expanded && parent.id !== current_folder.id) {
                     should_display_item = false;
                 }
-                await createNewFile(context, item, parent, should_display_item);
+
+                item_to_create.file_properties = item.file_properties;
+                await createNewFile(context, item_to_create, parent, should_display_item);
                 break;
             case TYPE_FOLDER:
-                item_reference = await addNewFolder(item, parent.id);
+                item_reference = await addNewFolder(item_to_create, parent.id);
 
-                return adjustFileToContentAfterItemCreation(item_reference.id);
+                return adjustItemToContentAfterItemCreationInAFolder(
+                    context,
+                    parent,
+                    current_folder,
+                    item_reference.id
+                );
             case TYPE_EMPTY:
-                item_reference = await addNewEmpty(item, parent.id);
+                item_reference = await addNewEmpty(item_to_create, parent.id);
 
-                return adjustFileToContentAfterItemCreation(item_reference.id);
+                return adjustItemToContentAfterItemCreationInAFolder(
+                    context,
+                    parent,
+                    current_folder,
+                    item_reference.id
+                );
             case TYPE_WIKI:
-                item_reference = await addNewWiki(item, parent.id);
+                item_reference = await addNewWiki(item_to_create, parent.id);
 
-                return adjustFileToContentAfterItemCreation(item_reference.id);
+                return adjustItemToContentAfterItemCreationInAFolder(
+                    context,
+                    parent,
+                    current_folder,
+                    item_reference.id
+                );
             case TYPE_EMBEDDED:
-                item_reference = await addNewEmbedded(item, parent.id);
+                item_reference = await addNewEmbedded(item_to_create, parent.id);
 
-                return adjustFileToContentAfterItemCreation(item_reference.id);
+                return adjustItemToContentAfterItemCreationInAFolder(
+                    context,
+                    parent,
+                    current_folder,
+                    item_reference.id
+                );
             case TYPE_LINK:
-                item_reference = await addNewLink(item, parent.id);
+                item_reference = await addNewLink(item_to_create, parent.id);
 
-                return adjustFileToContentAfterItemCreation(item_reference.id);
+                return adjustItemToContentAfterItemCreationInAFolder(
+                    context,
+                    parent,
+                    current_folder,
+                    item_reference.id
+                );
             default:
-                throw new Error("Item type " + item.type + " is not supported for creation");
+                throw new Error(
+                    "Item type " + item_to_create.type + " is not supported for creation"
+                );
         }
     } catch (exception) {
         return handleErrorsForModal(context, exception);
@@ -141,6 +211,14 @@ export const loadDocumentWithAscendentHierarchy = async (context, item_id) => {
         loadAscendantHierarchy(context, item.parent_id, loading_current_folder_promise);
 
         return item;
+    } catch (exception) {
+        return handleErrorsForDocument(context, exception);
+    }
+};
+
+export const loadDocument = async (context, item_id) => {
+    try {
+        return await getItem(item_id);
     } catch (exception) {
         return handleErrorsForDocument(context, exception);
     }
@@ -213,7 +291,7 @@ export const loadFolder = (context, folder_id) => {
     }
 };
 
-export async function updateFile(context, [item, dropped_file]) {
+export async function createNewFileVersion(context, [item, dropped_file]) {
     try {
         await uploadNewVersion(context, [
             item,
@@ -230,7 +308,7 @@ export async function updateFile(context, [item, dropped_file]) {
     }
 }
 
-export const updateFileFromModal = async (
+export const createNewFileVersionFromModal = async (
     context,
     [item, uploaded_file, version_title, changelog, is_file_locked, approval_table_action]
 ) => {
@@ -249,12 +327,12 @@ export const updateFileFromModal = async (
     }
 };
 
-export const updateEmbeddedFileFromModal = async (
+export const createNewEmbeddedFileVersionFromModal = async (
     context,
     [item, new_html_content, version_title, changelog, is_file_locked, approval_table_action]
 ) => {
     try {
-        await patchEmbeddedFile(
+        await postEmbeddedFile(
             item,
             new_html_content,
             version_title,
@@ -268,24 +346,24 @@ export const updateEmbeddedFileFromModal = async (
     }
 };
 
-export const updateWikiFromModal = async (
+export const createNewWikiVersionFromModal = async (
     context,
     [item, new_wiki_page, version_title, changelog, is_file_locked]
 ) => {
     try {
-        await patchWiki(item, new_wiki_page, version_title, changelog, is_file_locked);
+        await postWiki(item, new_wiki_page, version_title, changelog, is_file_locked);
         Vue.set(item, "updated", true);
     } catch (exception) {
         return handleErrorsForModal(context, exception);
     }
 };
 
-export const updateLinkFromModal = async (
+export const createNewLinkVersionFromModal = async (
     context,
     [item, new_link_url, version_title, changelog, is_file_locked, approval_table_action]
 ) => {
     try {
-        await patchLink(
+        await postLinkVersion(
             item,
             new_link_url,
             version_title,
@@ -340,6 +418,30 @@ async function uploadNewVersion(
     Vue.set(updated_item, "upload_error", null);
     Vue.set(updated_item, "is_uploading_new_version", true);
 
+    uploadVersionAndAssignUploader(item, context, uploaded_file, new_version);
+}
+
+async function uploadNewFileVersionFromEmptyDocument(context, [item, uploaded_file]) {
+    const new_version = await postNewFileVersionFromEmpty(item.id, uploaded_file);
+    if (uploaded_file.size === 0) {
+        return;
+    }
+
+    const updated_item = context.state.folder_content.find(({ id }) => id === item.id);
+
+    context.commit("addFileInUploadsList", updated_item);
+    Vue.set(updated_item, "progress", null);
+    Vue.set(updated_item, "upload_error", null);
+    Vue.set(updated_item, "is_uploading_new_version", true);
+
+    uploadVersionAndAssignUploaderFroEmpty(item, context, uploaded_file, new_version);
+}
+
+function uploadVersionAndAssignUploaderFroEmpty(item, context, uploaded_file, new_version) {
+    item.uploader = uploadVersionFromEmpty(context, uploaded_file, item, new_version);
+}
+
+function uploadVersionAndAssignUploader(item, context, uploaded_file, new_version) {
     item.uploader = uploadVersion(context, uploaded_file, item, new_version);
 }
 
@@ -369,7 +471,7 @@ export const setUserPreferenciesForFolder = (context, [folder_id, should_be_clos
 
 async function createNewFile(
     context,
-    { title, description, file_properties, status, obsolescence_date },
+    { title, description, file_properties, status, obsolescence_date, metadata },
     parent,
     should_display_fake_item
 ) {
@@ -383,7 +485,8 @@ async function createNewFile(
                 file_size: dropped_file.size
             },
             status: status,
-            obsolescence_date: obsolescence_date
+            obsolescence_date: obsolescence_date,
+            metadata: metadata
         },
         parent.id
     );
@@ -398,7 +501,7 @@ async function createNewFile(
     }
     const fake_item = {
         id: new_file.id,
-        title: dropped_file.name,
+        title: title,
         parent_id: parent.id,
         type: TYPE_FILE,
         file_type: dropped_file.type,
@@ -497,15 +600,361 @@ export const setUserPreferenciesForUI = async context => {
     }
 };
 
-export const unsetUnderConstructionUserPreference = async context => {
+export const deleteItem = async (context, [item, additional_options]) => {
     try {
-        return await deleteUserPreferenciesForUnderConstructionModal(
+        switch (item.type) {
+            case TYPE_FILE:
+                await deleteFile(item);
+                break;
+            case TYPE_LINK:
+                await deleteLink(item);
+                break;
+            case TYPE_EMBEDDED:
+                await deleteEmbeddedFile(item);
+                break;
+            case TYPE_WIKI:
+                await deleteWiki(item, additional_options);
+                break;
+            case TYPE_EMPTY:
+                await deleteEmptyDocument(item);
+                break;
+            case TYPE_FOLDER:
+                await deleteFolder(item, additional_options);
+                break;
+        }
+
+        if (
+            context.state.currently_previewed_item &&
+            item.id === context.state.currently_previewed_item.id
+        ) {
+            context.commit("updateCurrentlyPreviewedItem", null);
+        }
+
+        context.commit("clipboard/emptyClipboardAfterItemDeletion", item);
+        context.commit("removeItemFromFolderContent", item);
+        context.commit("showPostDeletionNotification");
+    } catch (exception) {
+        return handleErrorsForDeletionModal(context, exception, item);
+    }
+};
+
+export const getWikisReferencingSameWikiPage = async (context, item) => {
+    try {
+        const wiki_page_referencers = await getItemsReferencingSameWikiPage(
+            item.wiki_properties.page_id
+        );
+
+        return await Promise.all(
+            wiki_page_referencers.map(item =>
+                getParents(item.item_id).then(parents => buildItemPath(item, parents))
+            )
+        );
+    } catch (exception) {
+        return USER_CANNOT_PROPAGATE_DELETION_TO_WIKI_SERVICE;
+    }
+};
+
+export const lockDocument = async (context, item) => {
+    try {
+        switch (item.type) {
+            case TYPE_FILE:
+                await postLockFile(item);
+                break;
+            case TYPE_EMBEDDED:
+                await postLockEmbedded(item);
+                break;
+            case TYPE_WIKI:
+                await postLockWiki(item);
+                break;
+            case TYPE_LINK:
+                await postLockLink(item);
+                break;
+            case TYPE_EMPTY:
+                await postLockEmpty(item);
+                break;
+            default:
+                break;
+        }
+
+        const updated_item = await getItem(item.id);
+        context.commit("replaceLockInfoWithNewVersion", [item, updated_item.lock_info]);
+    } catch (exception) {
+        return handleErrorsForLock(context, exception);
+    }
+};
+
+export const unlockDocument = async (context, item) => {
+    try {
+        switch (item.type) {
+            case TYPE_FILE:
+                await deleteLockFile(item);
+                break;
+            case TYPE_EMBEDDED:
+                await deleteLockEmbedded(item);
+                break;
+            case TYPE_WIKI:
+                await deleteLockWiki(item);
+                break;
+            case TYPE_LINK:
+                await deleteLockLink(item);
+                break;
+            case TYPE_EMPTY:
+                await deleteLockEmpty(item);
+                break;
+            default:
+                break;
+        }
+        const updated_item = await getItem(item.id);
+        context.commit("replaceLockInfoWithNewVersion", [item, updated_item.lock_info]);
+    } catch (exception) {
+        return handleErrorsForLock(context, exception);
+    }
+};
+
+export const displayEmbeddedInNarrowMode = async (context, item) => {
+    try {
+        await setNarrowModeForEmbeddedDisplay(
             context.state.user_id,
-            context.state.project_id
+            context.state.project_id,
+            item.id
+        );
+        context.commit("shouldDisplayEmbeddedInLargeMode", false);
+    } catch (exception) {
+        return handleErrors(context, exception);
+    }
+};
+
+export const displayEmbeddedInLargeMode = async (context, item) => {
+    try {
+        await removeUserPreferenceForEmbeddedDisplay(
+            context.state.user_id,
+            context.state.project_id,
+            item.id
+        );
+        context.commit("shouldDisplayEmbeddedInLargeMode", true);
+    } catch (exception) {
+        return handleErrors(context, exception);
+    }
+};
+
+export const getEmbeddedFileDisplayPreference = async (context, item) => {
+    try {
+        return await getPreferenceForEmbeddedDisplay(
+            context.state.user_id,
+            context.state.project_id,
+            item.id
         );
     } catch (exception) {
         return handleErrors(context, exception);
+    }
+};
+
+export const updateMetadata = async (context, [item, item_to_update, current_folder]) => {
+    const custom_metadata = getCustomMetadata(item_to_update.metadata);
+    let obsolescence_date = item_to_update.obsolescence_date;
+    if (obsolescence_date === "") {
+        obsolescence_date = null;
+    }
+    try {
+        switch (item_to_update.type) {
+            case TYPE_FILE:
+                await putFileMetadata(
+                    item_to_update.id,
+                    item_to_update.title,
+                    item_to_update.description,
+                    item_to_update.owner.id,
+                    item_to_update.status,
+                    obsolescence_date,
+                    custom_metadata
+                );
+                break;
+            case TYPE_EMBEDDED:
+                await putEmbeddedFileMetadata(
+                    item_to_update.id,
+                    item_to_update.title,
+                    item_to_update.description,
+                    item_to_update.owner.id,
+                    item_to_update.status,
+                    obsolescence_date,
+                    custom_metadata
+                );
+                break;
+            case TYPE_LINK:
+                await putLinkMetadata(
+                    item_to_update.id,
+                    item_to_update.title,
+                    item_to_update.description,
+                    item_to_update.owner.id,
+                    item_to_update.status,
+                    obsolescence_date,
+                    custom_metadata
+                );
+                break;
+            case TYPE_WIKI:
+                await putWikiMetadata(
+                    item_to_update.id,
+                    item_to_update.title,
+                    item_to_update.description,
+                    item_to_update.owner.id,
+                    item_to_update.status,
+                    obsolescence_date,
+                    custom_metadata
+                );
+                break;
+            case TYPE_EMPTY:
+                await putEmptyDocumentMetadata(
+                    item_to_update.id,
+                    item_to_update.title,
+                    item_to_update.description,
+                    item_to_update.owner.id,
+                    item_to_update.status,
+                    obsolescence_date,
+                    custom_metadata
+                );
+                break;
+            case TYPE_FOLDER:
+                await putFolderDocumentMetadata(
+                    item_to_update.id,
+                    item_to_update.title,
+                    item_to_update.description,
+                    item_to_update.owner.id,
+                    {
+                        value: item_to_update.status.value,
+                        recursion: item_to_update.status.recursion
+                    },
+                    obsolescence_date,
+                    custom_metadata
+                );
+                break;
+            default:
+                break;
+        }
+        const updated_item = await getItem(item.id);
+
+        if (item.id === current_folder.id) {
+            context.commit("replaceCurrentFolder", updated_item);
+            await context.dispatch("loadFolder", item.id);
+        } else {
+            Vue.set(updated_item, "updated", true);
+            context.commit("removeItemFromFolderContent", updated_item);
+            context.commit("addJustCreatedItemToFolderContent", updated_item);
+            context.commit("updateCurrentItemForQuickLokDisplay", updated_item);
+        }
+    } catch (exception) {
+        await handleErrorsForModal(context, exception);
+    }
+};
+
+export const updateFolderMetadata = async (
+    context,
+    [item, item_to_update, current_folder, metadata_list_to_update, recursion_option]
+) => {
+    formatCustomMetadataForFolderUpdate(item_to_update, metadata_list_to_update, recursion_option);
+    await updateMetadata(context, [item, item_to_update, current_folder]);
+};
+
+export const updatePermissions = async (context, [item, updated_permissions]) => {
+    try {
+        switch (item.type) {
+            case TYPE_FILE:
+                await putFilePermissions(item.id, updated_permissions);
+                break;
+            case TYPE_EMBEDDED:
+                await putEmbeddedFilePermissions(item.id, updated_permissions);
+                break;
+            case TYPE_LINK:
+                await putLinkPermissions(item.id, updated_permissions);
+                break;
+            case TYPE_WIKI:
+                await putWikiPermissions(item.id, updated_permissions);
+                break;
+            case TYPE_EMPTY:
+                await putEmptyDocumentPermissions(item.id, updated_permissions);
+                break;
+            case TYPE_FOLDER:
+                await putFolderPermissions(item.id, updated_permissions);
+                break;
+            default:
+                break;
+        }
+        const updated_item = await getItem(item.id);
+
+        if (item.id === context.state.current_folder.id) {
+            context.commit("replaceCurrentFolder", updated_item);
+            await context.dispatch("loadFolder", item.id);
+        } else {
+            Vue.set(updated_item, "updated", true);
+            context.commit("removeItemFromFolderContent", updated_item);
+            context.commit("addJustCreatedItemToFolderContent", updated_item);
+            context.commit("updateCurrentItemForQuickLokDisplay", updated_item);
+        }
+    } catch (exception) {
+        await handleErrorsForModal(context, exception);
+    }
+};
+
+export const loadProjectUserGroupsIfNeeded = async context => {
+    if (context.state.project_ugroups !== null) {
+        return;
+    }
+
+    const project_ugroups = await getProjectUserGroupsWithoutServiceSpecialUGroups(
+        context.state.project_id
+    );
+
+    context.commit("setProjectUserGroups", project_ugroups);
+};
+
+export const toggleQuickLook = async (context, item_id) => {
+    try {
+        let item = context.state.folder_content.find(({ id }) => id === item_id);
+        if (!item) {
+            context.commit("beginLoadingCurrentlyPreviewedItem");
+            item = await getItem(item_id);
+        }
+
+        context.commit("updateCurrentlyPreviewedItem", item);
+        context.commit("toggleQuickLook", true);
+    } catch (exception) {
+        await handleErrorsForDocument(context, exception);
     } finally {
-        context.commit("removeIsUnderConstruction");
+        context.commit("stopLoadingCurrentlyPreviewedItem");
+    }
+};
+
+export const removeQuickLook = context => {
+    context.commit("updateCurrentlyPreviewedItem", null);
+    context.commit("toggleQuickLook", false);
+};
+
+export const createNewVersionFromEmpty = async (context, [selected_type, item, item_to_update]) => {
+    try {
+        switch (selected_type) {
+            case TYPE_LINK:
+                await postNewLinkVersionFromEmpty(item.id, item_to_update.link_properties.link_url);
+                break;
+            case TYPE_EMBEDDED:
+                await postNewEmbeddedFileVersionFromEmpty(
+                    item.id,
+                    item_to_update.embedded_properties.content
+                );
+                break;
+            case TYPE_FILE:
+                await uploadNewFileVersionFromEmptyDocument(context, [
+                    item,
+                    item_to_update.file_properties.file
+                ]);
+                break;
+            default:
+                await handleErrorsForModal(context, "The wanted type is not supported");
+                break;
+        }
+        const updated_item = await getItem(item.id);
+        Vue.set(updated_item, "updated", true);
+        context.commit("removeItemFromFolderContent", updated_item);
+        context.commit("addJustCreatedItemToFolderContent", updated_item);
+        context.commit("updateCurrentItemForQuickLokDisplay", updated_item);
+    } catch (exception) {
+        await handleErrorsForModal(context, exception);
     }
 };

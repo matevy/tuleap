@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* global codendi:readonly ProtoMultiSelect:readonly $:readonly $$:readonly Ajax:readonly Effect:readonly */
+
 import { createColorPicker } from "./colorpicker/index.js";
 
 document.observe("dom:loaded", function() {
@@ -42,7 +44,7 @@ document.observe("dom:loaded", function() {
         $$(".tracker_admin_static_value_hidden_chk").each(function(checkbox) {
             var img = checkbox.next();
             checkbox.hide();
-            img.setStyle({ cursor: "pointer" }).observe("click", function(evt) {
+            img.setStyle({ cursor: "pointer" }).observe("click", function() {
                 if (checkbox.checked) {
                     //switch to "hidden"
                     checkbox.checked = false;
@@ -95,6 +97,7 @@ document.observe("dom:loaded", function() {
                 });
                 var parameters = {};
                 parameters[button.name] = 1;
+                //eslint-disable-next-line @typescript-eslint/no-unused-vars
                 var req = new Ajax.Request(button.up("form").action, {
                     parameters: parameters,
                     onComplete: function(transport) {
@@ -154,7 +157,7 @@ document.observe("dom:loaded", function() {
                             });
 
                         //Edit list values
-                        var e = new codendi.tracker.bind.Editor(admin_field_properties);
+                        var e = new codendi.tracker.bind.Editor(admin_field_properties); //eslint-disable-line @typescript-eslint/no-unused-vars
 
                         // Restore button icon
                         buttonImg.src = buttonIcon;
@@ -165,10 +168,12 @@ document.observe("dom:loaded", function() {
         });
 
         $$("a.button_disabled[name^=create]").each(function(button_disabled) {
-            button_disabled.observe("click", function(evt) {
-                alert(codendi.locales.tracker_formelement_admin.unique_field);
+            button_disabled.observe("click", function() {
+                alert(codendi.locales.tracker_formelement_admin.unique_field); //eslint-disable-line no-alert
             });
         });
+
+        jQuery("#tracker-admin-new-layout").modal("show"); // eslint-disable-line no-undef
 
         $$(".tracker-admin-field-controls a.edit-field").each(function(a) {
             var selected_element, element;
@@ -205,6 +210,7 @@ document.observe("dom:loaded", function() {
                     admin_field_properties.hide();
                     palette.show();
                 }
+                //eslint-disable-next-line @typescript-eslint/no-unused-vars
                 var r = new Ajax.Request(a.href, {
                     onComplete: function(transport) {
                         //Don't use directly updater since the form is stripped
@@ -228,6 +234,7 @@ document.observe("dom:loaded", function() {
                                     if (element.viewportOffset()[1] < 0) {
                                         element.scrollTo();
                                     }
+                                    //eslint-disable-next-line @typescript-eslint/no-unused-vars
                                     var e = new Effect.Highlight(element, {
                                         queue: "end"
                                     });
@@ -273,7 +280,7 @@ document.observe("dom:loaded", function() {
                         });
 
                         //Edit list values
-                        var e = new codendi.tracker.bind.Editor(selected_element);
+                        var e = new codendi.tracker.bind.Editor(selected_element); //eslint-disable-line @typescript-eslint/no-unused-vars
 
                         //register hide action
                         tracker_register_hide_value();

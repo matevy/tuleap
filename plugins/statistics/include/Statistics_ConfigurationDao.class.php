@@ -22,9 +22,11 @@
 * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
 */
 
-class Statistics_ConfigurationDao extends DataAccessObject {
+class Statistics_ConfigurationDao extends DataAccessObject
+{
 
-    public function isDailyPurgeActivated() {
+    public function isDailyPurgeActivated()
+    {
         $sql = "SELECT daily_purge_is_activated FROM plugin_statistics_configuration";
 
         $row = $this->retrieve($sql)->getRow();
@@ -32,7 +34,8 @@ class Statistics_ConfigurationDao extends DataAccessObject {
         return (bool)$row['daily_purge_is_activated'];
     }
 
-    public function activateDailyPurge() {
+    public function activateDailyPurge()
+    {
         $this->resetDailyPurgeConfiguration();
 
         $sql = "REPLACE INTO plugin_statistics_configuration (daily_purge_is_activated) VALUES (1)";
@@ -40,10 +43,10 @@ class Statistics_ConfigurationDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    private function resetDailyPurgeConfiguration() {
+    private function resetDailyPurgeConfiguration()
+    {
         $sql = "TRUNCATE TABLE plugin_statistics_configuration";
 
         return $this->update($sql);
     }
-
 }

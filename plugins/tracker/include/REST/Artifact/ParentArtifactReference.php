@@ -20,16 +20,18 @@
 
 namespace Tuleap\Tracker\REST\Artifact;
 
-use \Tracker_Artifact;
+use Tracker_Artifact;
 
-class ParentArtifactReference extends ArtifactReference {
+class ParentArtifactReference extends ArtifactReference
+{
 
     /**
      * @var string
      */
     public $title;
 
-    public function build(Tracker_Artifact $artifact, $format = '') {
+    public function build(Tracker_Artifact $artifact, $format = '')
+    {
         parent::build($artifact, $format);
 
         $this->title = $artifact->getCachedTitle();

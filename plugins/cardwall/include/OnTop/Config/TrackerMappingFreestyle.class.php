@@ -19,13 +19,16 @@
  */
 
 
-class Cardwall_OnTop_Config_TrackerMappingFreestyle extends Cardwall_OnTop_Config_TrackerMappingField {
+class Cardwall_OnTop_Config_TrackerMappingFreestyle extends Cardwall_OnTop_Config_TrackerMappingField
+{
 
-    public function accept($visitor) {
+    public function accept($visitor)
+    {
         return $visitor->visitTrackerMappingFreestyle($this);
     }
 
-    public function isCustom() {
+    public function isCustom()
+    {
         return true;
     }
 }

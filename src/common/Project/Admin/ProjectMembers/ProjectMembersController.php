@@ -31,19 +31,29 @@ use ForgeConfig;
 use HTTPRequest;
 use PFUser;
 use Project;
+use ProjectManager;
 use ProjectUGroup;
 use TemplateRendererFactory;
+use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Project\Admin\MembershipDelegationDao;
 use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
+use Tuleap\Project\UGroups\InvalidUGroupException;
 use Tuleap\Project\Admin\ProjectUGroup\MinimalUGroupPresenter;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDetector;
 use Tuleap\Project\UserPermissionsDao;
 use Tuleap\Project\UserRemover;
+use Tuleap\Request\DispatchableWithBurningParrot;
+use Tuleap\Request\DispatchableWithRequest;
+use Tuleap\Request\ForbiddenException;
+use Tuleap\Request\NotFoundException;
+use Tuleap\User\StatusPresenter;
 use UGroupBinding;
 use UGroupManager;
 use UserHelper;
 use UserImport;
 
-class ProjectMembersController
+class ProjectMembersController implements DispatchableWithRequest, DispatchableWithBurningParrot
 {
     /**
      * @var ProjectMembersDAO
@@ -86,35 +96,101 @@ class ProjectMembersController
      * @var MinimalUGroupPresenter[]
      */
     private $ugroup_presenters = [];
+    /**
+     * @var ProjectManager
+     */
+    private $project_manager;
+    /**
+     * @var SynchronizedProjectMembershipDetector
+     */
+    private $synchronized_project_membership_detector;
 
     public function __construct(
         ProjectMembersDAO     $members_dao,
-        CSRFSynchronizerToken $csrf_token,
         UserHelper            $user_helper,
         UGroupBinding         $user_group_bindings,
         UserRemover           $user_remover,
         EventManager          $event_manager,
         UGroupManager         $ugroup_manager,
-        UserImport            $user_importer
+        UserImport            $user_importer,
+        ProjectManager        $project_manager,
+        SynchronizedProjectMembershipDetector $synchronized_project_membership_detector
     ) {
         $this->members_dao         = $members_dao;
-        $this->csrf_token          = $csrf_token;
         $this->user_helper         = $user_helper;
         $this->user_group_bindings = $user_group_bindings;
         $this->user_remover        = $user_remover;
         $this->event_manager       = $event_manager;
         $this->ugroup_manager      = $ugroup_manager;
         $this->user_importer       = $user_importer;
+        $this->project_manager     = $project_manager;
+        $this->synchronized_project_membership_detector = $synchronized_project_membership_detector;
     }
 
-    public function display(HTTPRequest $request)
+    public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
+    {
+        $project_id = $variables['id'];
+        $project = $this->project_manager->getProject($project_id);
+        if (! $project || $project->isError()) {
+            throw new NotFoundException();
+        }
+
+        $this->csrf_token = new CSRFSynchronizerToken('/project/'.(int)$project->getID().'/admin/members');
+
+        $membership_delegation_dao = new MembershipDelegationDao();
+        $user                      = $request->getCurrentUser();
+        if (! $user->isAdmin($project->getID()) && ! $membership_delegation_dao->doesUserHasMembershipDelegation($user->getId(), $project->getID())) {
+            throw new ForbiddenException();
+        }
+
+        if ($project->getStatus() !== Project::STATUS_ACTIVE && ! $user->isSuperUser()) {
+            throw new ForbiddenException();
+        }
+
+        switch ($request->get('action')) {
+            case 'add-user':
+                $this->addUserToProject($request, $project);
+                $this->redirect($project, $layout);
+                break;
+
+            case 'remove-user':
+                $this->removeUserFromProject($request, $project);
+                $this->redirect($project, $layout);
+                break;
+
+            case 'import':
+                $this->csrf_token->check();
+                $this->importMembers($project);
+                $this->redirect($project, $layout);
+                break;
+
+            default:
+                $event = new MembersEditProcessAction(
+                    $request,
+                    $project,
+                    $this->csrf_token
+                );
+
+                $this->event_manager->processEvent($event);
+                if ($event->hasBeenHandled()) {
+                    $this->redirect($project, $layout);
+                } else {
+                    $this->display($request, $layout, $project);
+                }
+                break;
+        }
+    }
+
+    private function redirect(Project $project, BaseLayout $layout)
+    {
+        $layout->redirect('/project/'.urlencode((string)$project->getID()).'/admin/members');
+    }
+
+    private function display(HTTPRequest $request, BaseLayout $layout, Project $project)
     {
         $title   = _('Members');
-        $project = $request->getProject();
 
-        $this->displayHeader($title, $project);
-
-        $project_members_list = $this->getFormattedProjectMembers($request);
+        $project_members_list = $this->getFormattedProjectMembers($project);
         $template_path        = ForgeConfig::get('tuleap_dir') . '/src/templates/project/members';
         $renderer             = TemplateRendererFactory::build()->getRenderer($template_path);
         $user_locale          = $request->getCurrentUser()->getLocale();
@@ -126,6 +202,8 @@ class ProjectMembersController
 
         $this->event_manager->processEvent($additional_modals);
 
+        $this->displayHeader($title, $project, $layout, $additional_modals);
+
         $renderer->renderToPage(
             'project-members',
             new ProjectMembersPresenter(
@@ -134,16 +212,21 @@ class ProjectMembersController
                 $project,
                 $additional_modals,
                 $user_locale,
-                $this->canUserSeeUGroups($request->getCurrentUser(), $project)
+                $this->canUserSeeUGroups($request->getCurrentUser(), $project),
+                $this->synchronized_project_membership_detector->isSynchronizedWithProjectMembers($project)
             )
         );
+
+        TemplateRendererFactory::build()
+            ->getRenderer(__DIR__ . '/../../../../templates/project')
+            ->renderToPage('end-project-admin-content', array());
+        site_project_footer([]);
     }
 
-    public function addUserToProject(HTTPRequest $request)
+    private function addUserToProject(HTTPRequest $request, Project $project)
     {
         $this->csrf_token->check();
 
-        $project        = $request->getProject();
         $form_unix_name = $request->get('new_project_member');
 
         if (! $form_unix_name) {
@@ -156,11 +239,10 @@ class ProjectMembersController
         $this->user_group_bindings->reloadUgroupBindingInProject($project);
     }
 
-    public function removeUserFromProject(HTTPRequest $request)
+    private function removeUserFromProject(HTTPRequest $request, Project $project)
     {
         $this->csrf_token->check();
 
-        $project      = $request->getProject();
         $rm_id        = $request->getValidated(
             'user_id',
             'uint',
@@ -171,25 +253,32 @@ class ProjectMembersController
         $this->user_group_bindings->reloadUgroupBindingInProject($project);
     }
 
-    private function displayHeader($title, Project $project)
+    private function displayHeader($title, Project $project, BaseLayout $layout, ProjectMembersAdditionalModalCollectionPresenter $additional_modal)
     {
         $assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
         $include_assets = new IncludeAssets($assets_path, '/assets');
 
-        $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL('project-admin.js'));
+        $layout->includeFooterJavascriptFile($include_assets->getFileURL('project-admin.js'));
+        if ($additional_modal->hasJavascriptFile()) {
+            $layout->includeFooterJavascriptFile($additional_modal->getJavascriptFile());
+        }
+        if ($additional_modal->hasCssAsset()) {
+            $layout->addCssAsset($additional_modal->getCssAsset());
+        }
 
         $header_displayer = new HeaderNavigationDisplayer();
         $header_displayer->displayBurningParrotNavigation($title, $project, 'members');
     }
 
-    private function getFormattedProjectMembers(HTTPRequest $request)
+    private function getFormattedProjectMembers(Project $project)
     {
-        $project          = $request->getProject();
         $database_results = $this->members_dao->searchProjectMembers($project->getID());
 
         $project_members = array();
 
         foreach ($database_results as $member) {
+            $user = new \PFUser($member);
+            $member['avatar_url']       = $user->getAvatarUrl();
             $member['ugroups']          = $this->getUGroupsPresenters($project, $member);
             $member['profile_page_url'] = "/users/" . urlencode($member['user_name']) .  "/";
             $member['is_project_admin'] = $member['admin_flags'] === UserPermissionsDao::PROJECT_ADMIN_FLAG;
@@ -198,6 +287,8 @@ class ProjectMembersController
                 $member['realname']
             );
 
+
+            $member['status_presenter'] = new StatusPresenter($member['status']);
             $project_members[] = $member;
         }
 
@@ -210,34 +301,26 @@ class ProjectMembersController
 
         if ($member['admin_flags'] === UserPermissionsDao::PROJECT_ADMIN_FLAG) {
             $ugroups[] = new MinimalUGroupPresenter(
-                $this->ugroup_manager->getUGroup($project, ProjectUGroup::PROJECT_ADMIN)
+                $this->ugroup_manager->getProjectAdminsUGroup($project)
             );
         }
 
         if ($member['wiki_flags'] === UserPermissionsDao::WIKI_ADMIN_FLAG && $project->usesWiki()) {
-            $ugroups[] = new MinimalUGroupPresenter(
-                $this->ugroup_manager->getUGroup($project, ProjectUGroup::WIKI_ADMIN)
-            );
+            $this->appendUgroups($ugroups, $project, ProjectUGroup::WIKI_ADMIN);
         }
 
         if ($member['forum_flags'] === UserPermissionsDao::FORUM_ADMIN_FLAG && $project->usesForum()) {
-            $ugroups[] = new MinimalUGroupPresenter(
-                $this->ugroup_manager->getUGroup($project, ProjectUGroup::FORUM_ADMIN)
-            );
+            $this->appendUgroups($ugroups, $project, ProjectUGroup::FORUM_ADMIN);
         }
 
         if (in_array($member['news_flags'], array(UserPermissionsDao::NEWS_WRITER_FLAG, UserPermissionsDao::NEWS_ADMIN_FLAG))
             && $project->usesNews()
         ) {
-            $ugroups[] = new MinimalUGroupPresenter(
-                $this->ugroup_manager->getUGroup($project, ProjectUGroup::NEWS_WRITER)
-            );
+            $this->appendUgroups($ugroups, $project, ProjectUGroup::NEWS_WRITER);
         }
 
         if ($member['news_flags'] === UserPermissionsDao::NEWS_ADMIN_FLAG && $project->usesNews()) {
-            $ugroups[] = new MinimalUGroupPresenter(
-                $this->ugroup_manager->getUGroup($project, ProjectUGroup::NEWS_ADMIN)
-            );
+            $this->appendUgroups($ugroups, $project, ProjectUGroup::NEWS_ADMIN);
         }
 
         if (! $member['ugroups_ids']) {
@@ -252,23 +335,33 @@ class ProjectMembersController
         return $ugroups;
     }
 
+    private function appendUgroups(array &$ugroups, Project $project, int $ugroup_id): void
+    {
+        $ugroup = $this->ugroup_manager->getUGroup($project, $ugroup_id);
+        if ($ugroup) {
+            $ugroups[] = new MinimalUGroupPresenter($ugroup);
+        }
+    }
+
     /**
      * @return MinimalUGroupPresenter
      */
     private function getMinimalUGroupPresenter(Project $project, $ugroup_id)
     {
         if (! isset($this->ugroup_presenters[$ugroup_id])) {
-            $ugroup_presenter = new MinimalUGroupPresenter(
-                $this->ugroup_manager->getUGroup($project, $ugroup_id)
+            $ugroup = $this->ugroup_manager->getUGroup($project, $ugroup_id);
+            if (! $ugroup) {
+                throw new InvalidUGroupException($ugroup_id);
+            }
+            $this->ugroup_presenters[$ugroup_id] = new MinimalUGroupPresenter(
+                $ugroup
             );
-
-            $this->ugroup_presenters[$ugroup_id] = $ugroup_presenter;
         }
 
         return $this->ugroup_presenters[$ugroup_id];
     }
 
-    public function importMembers(HTTPRequest $request)
+    private function importMembers(Project $project)
     {
         $import_file = $_FILES['user_filename']['tmp_name'];
 
@@ -277,11 +370,11 @@ class ProjectMembersController
             return;
         }
 
-        $user_collection = $this->user_importer->parse($import_file);
-
-        $this->user_importer->updateDB($user_collection->getUsers());
-
-        $this->user_group_bindings->reloadUgroupBindingInProject($request->getProject());
+        $user_collection = $this->user_importer->parse($project->getID(), $import_file);
+        if ($user_collection) {
+            $this->user_importer->updateDB($project, $user_collection);
+            $this->user_group_bindings->reloadUgroupBindingInProject($project);
+        }
     }
 
     private function canUserSeeUGroups(PFUser $user, Project $project)

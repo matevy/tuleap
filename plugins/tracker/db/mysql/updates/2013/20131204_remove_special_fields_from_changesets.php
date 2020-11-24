@@ -18,17 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b20131204_remove_special_fields_from_changesets extends ForgeUpgrade_Bucket {
+class b20131204_remove_special_fields_from_changesets extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Remove the values of field subon subby and lud from existing changesets';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "DELETE FROM tracker_changeset_value
                 USING tracker_changeset_value
                 JOIN tracker_field
@@ -45,4 +49,3 @@ class b20131204_remove_special_fields_from_changesets extends ForgeUpgrade_Bucke
         }
     }
 }
-?>

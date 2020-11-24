@@ -134,12 +134,12 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
 
         try {
             $html .= "</p><p>" . sprintf(
-                    dgettext(
-                        'tuleap-cardwall',
-                        '<b>%s</b> field will determine background color.'
-                    ),
-                    $this->getBackgroundColorField()->getLabel()
-                );
+                dgettext(
+                    'tuleap-cardwall',
+                    '<b>%s</b> field will determine background color.'
+                ),
+                $this->getBackgroundColorField()->getLabel()
+            );
         } catch (BackgroundColorSemanticFieldNotFoundException $exception) {
             $html .= "</p><p>" . dgettext('tuleap-cardwall', 'No field is chosen to determine backgorund color');
         }
@@ -152,7 +152,8 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
     /**
      * @return Tracker_FormElement_Field[]
      */
-    public function getFields() {
+    public function getFields()
+    {
         if (! $this->card_fields) {
             $this->loadFieldsFromTracker($this->tracker);
         }
@@ -163,7 +164,8 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
     /**
      * @param Tracker_FormElement_Field[] $fields
      */
-    public function setFields(array $fields) {
+    public function setFields(array $fields)
+    {
         $this->card_fields = $fields;
     }
 
@@ -215,41 +217,46 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
         $this->xml_exporter->exportToXml($root, $xml_mapping, $this);
     }
 
-    public function getDescription() {
-        return $GLOBALS['Language']->getText('plugin_cardwall','semantic_cardFields_description');
+    public function getDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_cardwall', 'semantic_cardFields_description');
     }
 
-    public function getLabel() {
-        return $GLOBALS['Language']->getText('plugin_cardwall','semantic_cardFields_label');
+    public function getLabel()
+    {
+        return $GLOBALS['Language']->getText('plugin_cardwall', 'semantic_cardFields_label');
     }
 
-    public function getShortName() {
+    public function getShortName()
+    {
         return self::NAME;
     }
 
-    public function isUsedInSemantics($field)
+    public function isUsedInSemantics(Tracker_FormElement_Field $field)
     {
         return $this->semantic_field_checker->isUsedInSemantic($field, $this->getFields());
     }
 
-    public function process(Tracker_SemanticManager $semantic_manager, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user) {
-        if ( $request->get('add') && (int) $request->get('field')) {
+    public function process(Tracker_SemanticManager $semantic_manager, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user)
+    {
+        if ($request->get('add') && (int) $request->get('field')) {
             $this->getCSRFToken()->check();
             $this->addField($request->get('field'));
-        } else if ( (int) $request->get('remove') ) {
+        } elseif ((int) $request->get('remove')) {
             $this->getCSRFToken()->check();
             $this->removeField($request->get('remove'));
-        } else if ($request->get('unset-background-color-semantic')) {
+        } elseif ($request->get('unset-background-color-semantic')) {
             $this->getCSRFToken()->check();
             $this->background_field_saver->unsetBackgroundColorSemantic($this->tracker);
-        } else if ($request->get('choose-color-field')) {
+        } elseif ($request->get('choose-color-field')) {
             $this->getCSRFToken()->check();
             $this->background_field_saver->chooseBackgroundColorField($this->tracker, $request->get('choose-color-field'));
         }
         $this->displayAdmin($semantic_manager, $tracker_manager, $request, $current_user);
     }
 
-    private function addField($field_id) {
+    private function addField($field_id)
+    {
         $field = Tracker_FormElementFactory::instance()->getUsedFormElementById($field_id);
 
         if (! $field) {
@@ -259,7 +266,8 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
         $this->getDao()->add($this->tracker->getId(), $field->getId(), 'end');
     }
 
-    private function removeField($field_id) {
+    private function removeField($field_id)
+    {
         $field = Tracker_FormElementFactory::instance()->getUsedFormElementById($field_id);
 
         if (! $field) {
@@ -284,7 +292,8 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
         }
     }
 
-    private function getDao() {
+    private function getDao()
+    {
         if (! $this->dao) {
             $this->dao = new Cardwall_Semantic_Dao_CardFieldsDao();
         }
@@ -346,7 +355,8 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
         return self::$_instances[$tracker->getId()];
     }
 
-    private function loadFieldsFromTracker(Tracker $tracker) {
+    private function loadFieldsFromTracker(Tracker $tracker)
+    {
         $dao                  = $this->getDao();
         $rows                 = $dao->searchByTrackerId($tracker->getId());
         $form_element_factory = Tracker_FormElementFactory::instance();
@@ -363,7 +373,8 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
     /**
      * @return Tracker_FormElement_Field
      */
-    public function instantiateFieldFromRow(array $row) {
+    public function instantiateFieldFromRow(array $row)
+    {
         return Tracker_FormElementFactory::instance()->getFieldById($row['field_id']);
     }
 

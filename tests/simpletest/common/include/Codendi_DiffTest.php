@@ -18,9 +18,8 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/include/Codendi_Diff.class.php');
-
-class Codendi_DiffTest extends TuleapTestCase {
+class Codendi_DiffTest extends TuleapTestCase
+{
 
     public function setUp()
     {
@@ -33,20 +32,25 @@ class Codendi_DiffTest extends TuleapTestCase {
         $this->f = array('Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5');
         $this->g = array('Line 10', 'Line 2', 'Line 3', 'Line 4', 'Line 50');
     }
-    
-    public function testHtmlUnifiedDiffFormatter_NoChanges() {
-        
+
+    public function testHtmlUnifiedDiffFormatter_NoChanges()
+    {
+
         $formatter = new Codendi_HtmlUnifiedDiffFormatter();
-        
-        $this->assertEqual($formatter->format(new Codendi_Diff($this->a, $this->b)), 
-                           '');
+
+        $this->assertEqual(
+            $formatter->format(new Codendi_Diff($this->a, $this->b)),
+            ''
+        );
     }
-    
-    public function testHtmlUnifiedDiffFormatter_LineModified() {
-        
+
+    public function testHtmlUnifiedDiffFormatter_LineModified()
+    {
+
         $formatter = new Codendi_HtmlUnifiedDiffFormatter();
-        $this->assertEqual($formatter->format(new Codendi_Diff($this->b, $this->c)),
-                                '<div class="block">'.
+        $this->assertEqual(
+            $formatter->format(new Codendi_Diff($this->b, $this->c)),
+            '<div class="block">'.
                                     '<div class="difftext">'.
                                         '<div class="context">'.
                                             '<tt class="prefix">&nbsp;</tt>Line 1&nbsp;'.
@@ -62,14 +66,17 @@ class Codendi_DiffTest extends TuleapTestCase {
                                             '<tt class="prefix">+</tt>Line 2 <ins>modified</ins>&nbsp;'.
                                         '</div>'.
                                     '</div>'.
-                                '</div>');
+            '</div>'
+        );
     }
-    
-    public function testHtmlUnifiedDiffFormatter_LineDeleted() {
-        
+
+    public function testHtmlUnifiedDiffFormatter_LineDeleted()
+    {
+
         $formatter = new Codendi_HtmlUnifiedDiffFormatter();
-        $this->assertEqual($formatter->format(new Codendi_Diff($this->b, $this->d)),
-                                '<div class="block">'.
+        $this->assertEqual(
+            $formatter->format(new Codendi_Diff($this->b, $this->d)),
+            '<div class="block">'.
                                     '<div class="difftext">'.
                                         '<div class="context">'.
                                             '<tt class="prefix">&nbsp;</tt>Line 1&nbsp;'.
@@ -80,26 +87,32 @@ class Codendi_DiffTest extends TuleapTestCase {
                                             '<tt class="prefix">-</tt><del>Line 2</del>&nbsp;'.
                                         '</div>'.
                                     '</div>'.
-                                '</div>');
+            '</div>'
+        );
     }
-    
-    public function testHtmlUnifiedDiffFormatter_LineAdded() {
-        
+
+    public function testHtmlUnifiedDiffFormatter_LineAdded()
+    {
+
         $formatter = new Codendi_HtmlUnifiedDiffFormatter();
-        $this->assertEqual($formatter->format(new Codendi_Diff($this->e, $this->d)),
-                                '<div class="block">'.
+        $this->assertEqual(
+            $formatter->format(new Codendi_Diff($this->e, $this->d)),
+            '<div class="block">'.
                                     '<div class="difftext">'.
                                         '<div class="added">'.
                                             '<tt class="prefix">+</tt><ins>Line 1</ins>&nbsp;'.
                                         '</div>'.
                                     '</div>'.
-                                '</div>');
+            '</div>'
+        );
     }
-    
-    public function testHtmlUnifiedDiffFormatter_MultipleDiffs() {
+
+    public function testHtmlUnifiedDiffFormatter_MultipleDiffs()
+    {
         $formatter = new Codendi_HtmlUnifiedDiffFormatter(0);
-        $this->assertEqual($formatter->format(new Codendi_Diff($this->f, $this->g)),
-                                '<div class="block">'.
+        $this->assertEqual(
+            $formatter->format(new Codendi_Diff($this->f, $this->g)),
+            '<div class="block">'.
                                     '<div class="difftext">'.
                                         '<div class="original">'.
                                             '<tt class="prefix">-</tt>Line <del>1</del>&nbsp;</div>'.
@@ -119,6 +132,7 @@ class Codendi_DiffTest extends TuleapTestCase {
                                         '<div class="final">'.
                                             '<tt class="prefix">+</tt>Line <ins>50</ins>&nbsp;</div>'.
                                     '</div>'.
-                                '</div>');
+            '</div>'
+        );
     }
 }

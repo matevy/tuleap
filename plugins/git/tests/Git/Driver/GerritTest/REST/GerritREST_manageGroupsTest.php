@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,12 +18,58 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'GerritREST_Base.php';
+require_once '/usr/share/php/Guzzle/autoload.php';
+require_once __DIR__.'/../../../../bootstrap.php';
 
-class Git_DriverREST_Gerrit_manageGroupsTest extends Git_Driver_GerritREST_base implements Git_Driver_Gerrit_manageGroupsTest {
+class Git_DriverREST_Gerrit_manageGroupsTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    protected $logger;
+    protected $gerrit_server_host = 'http://gerrit.example.com';
+    /** @var Project */
+    protected $project;
+    protected $guzzle_request;
+    protected $project_name = 'fire/fox';
+    /** @var GitRepository */
+    protected $repository;
+    protected $gerrit_server_port = 8080;
+    protected $temporary_file_for_body = "a php resource to a file";
+    /** @var Git_Driver_GerritREST */
+    protected $driver;
+    protected $gerrit_project_name = 'fire/fox/jean-claude/dusse';
+    protected $namespace = 'jean-claude';
+    protected $gerrit_server_user = 'admin-tuleap.example.com';
+    /** @var Git_RemoteServer_GerritServer */
+    protected $gerrit_server;
+    protected $gerrit_server_pass = 'correct horse battery staple';
+    protected $repository_name = 'dusse';
+    protected $guzzle_client;
+
+    public function setUp()
+    {
         parent::setUp();
+
+        $this->gerrit_server = mock('Git_RemoteServer_GerritServer');
+        $this->logger        = mock('BackendLogger');
+
+        stub($this->gerrit_server)->getHost()->returns($this->gerrit_server_host);
+        stub($this->gerrit_server)->getHTTPPassword()->returns($this->gerrit_server_pass);
+        stub($this->gerrit_server)->getLogin()->returns($this->gerrit_server_user);
+        stub($this->gerrit_server)->getHTTPPort()->returns($this->gerrit_server_port);
+        stub($this->gerrit_server)->getBaseUrl()->returns($this->gerrit_server_host . ':' . $this->gerrit_server_port);
+
+        $this->project    = stub('Project')->getUnixName()->returns($this->project_name);
+        $this->repository = aGitRepository()
+            ->withProject($this->project)
+            ->withNamespace($this->namespace)
+            ->withName($this->repository_name)
+            ->build();
+
+        $this->guzzle_client  = mock('Guzzle\Http\Client');
+        $this->guzzle_request = mock('Guzzle\Http\Message\EntityEnclosingRequest');
+
+        $this->driver = new Git_Driver_GerritREST($this->guzzle_client, $this->logger, 'Digest');
+
         $this->gerrit_driver = partial_mock(
             'Git_Driver_GerritREST',
             array('doesTheGroupExist', 'getGroupUUID'),
@@ -31,7 +77,8 @@ class Git_DriverREST_Gerrit_manageGroupsTest extends Git_Driver_GerritREST_base 
         );
     }
 
-    public function itCreatesGroupsIfItNotExistsOnGerrit(){
+    public function itCreatesGroupsIfItNotExistsOnGerrit()
+    {
         stub($this->gerrit_driver)->doesTheGroupExist()->returns(false);
         stub($this->gerrit_driver)->getGroupUUID($this->gerrit_server, 'firefox/project_admins')->returns('aabbccdd');
 
@@ -55,11 +102,11 @@ class Git_DriverREST_Gerrit_manageGroupsTest extends Git_Driver_GerritREST_base 
         )->once();
         stub($this->guzzle_client)->put()->returns($this->guzzle_request);
 
-
         $this->gerrit_driver->createGroup($this->gerrit_server, 'firefox/project_members', 'firefox/project_admins');
     }
 
-    public function itDoesNotCreateGroupIfItAlreadyExistsOnGerrit(){
+    public function itDoesNotCreateGroupIfItAlreadyExistsOnGerrit()
+    {
         stub($this->gerrit_driver)->doesTheGroupExist()->returns(true);
         stub($this->gerrit_driver)->getGroupUUID()->returns('aabbccdd');
 
@@ -67,7 +114,8 @@ class Git_DriverREST_Gerrit_manageGroupsTest extends Git_Driver_GerritREST_base 
 
         $this->gerrit_driver->createGroup($this->gerrit_server, 'firefox/project_members', 'firefox/project_admins');
     }
-    public function itInformsAboutGroupCreation(){
+    public function itInformsAboutGroupCreation()
+    {
         stub($this->gerrit_driver)->doesTheGroupExist()->returns(false);
         stub($this->gerrit_driver)->getGroupUUID()->returns('aabbccdd');
 
@@ -78,9 +126,12 @@ class Git_DriverREST_Gerrit_manageGroupsTest extends Git_Driver_GerritREST_base 
 
         $this->gerrit_driver->createGroup($this->gerrit_server, 'firefox/project_members', 'firefox/project_admins');
     }
-    public function itRaisesAGerritDriverExceptionOnGroupsCreation(){}
+    public function itRaisesAGerritDriverExceptionOnGroupsCreation()
+    {
+    }
 
-    public function itCreatesGroupWithoutOwnerWhenSelfOwnedToAvoidChickenEggIssue(){
+    public function itCreatesGroupWithoutOwnerWhenSelfOwnedToAvoidChickenEggIssue()
+    {
         stub($this->gerrit_driver)->doesTheGroupExist()->returns(false);
         stub($this->gerrit_driver)->getGroupUUID($this->gerrit_server, Git_Driver_GerritREST::DEFAULT_GROUP_OWNER)->returns('aabbccddee');
 
@@ -107,7 +158,8 @@ class Git_DriverREST_Gerrit_manageGroupsTest extends Git_Driver_GerritREST_base 
         $this->gerrit_driver->createGroup($this->gerrit_server, 'firefox/project_admins', 'firefox/project_admins');
     }
 
-    public function itAsksGerritForTheGroupUUID(){
+    public function itAsksGerritForTheGroupUUID()
+    {
         $get_group_response = <<<EOS
 )]}'
 {
@@ -143,7 +195,8 @@ EOS;
         );
     }
 
-    public function itAsksGerritForTheGroupId(){
+    public function itAsksGerritForTheGroupId()
+    {
         $get_group_response = <<<EOS
 )]}'
 {
@@ -179,19 +232,22 @@ EOS;
         );
     }
 
-    public function itReturnsNullIdIfNotFound() {
+    public function itReturnsNullIdIfNotFound()
+    {
         stub($this->guzzle_client)->get()->throws(new Guzzle\Http\Exception\ClientErrorResponseException());
 
         $this->assertNull($this->driver->getGroupId($this->gerrit_server, 'enalean'));
     }
 
-    public function itReturnsNullUUIDIfNotFound() {
+    public function itReturnsNullUUIDIfNotFound()
+    {
         stub($this->guzzle_client)->get()->throws(new Guzzle\Http\Exception\ClientErrorResponseException());
 
         $this->assertNull($this->driver->getGroupUUID($this->gerrit_server, 'enalean'));
     }
 
-    public function itReturnsAllGroups() {
+    public function itReturnsAllGroups()
+    {
         $raiponce = <<<EOS
 )]}'
 {
@@ -236,5 +292,11 @@ EOS;
         );
 
         $this->assertEqual($this->driver->getAllGroups($this->gerrit_server), $expected_result);
+    }
+
+    protected function getGuzzleRequestWithTextResponse($text)
+    {
+        $response = stub('Guzzle\Http\Message\Response')->getBody(true)->returns($text);
+        return stub('Guzzle\Http\Message\EntityEnclosingRequest')->send()->returns($response);
     }
 }

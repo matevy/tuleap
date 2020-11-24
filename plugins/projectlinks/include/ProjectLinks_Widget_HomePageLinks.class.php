@@ -30,43 +30,47 @@ use Tuleap\Layout\IncludeAssets;
 /**
  * Display links from and to a project on the summary page.
  */
-class ProjectLinks_Widget_HomePageLinks extends Widget {
+class ProjectLinks_Widget_HomePageLinks extends Widget
+{
     protected $pluginPath;
     protected $themePath;
 
     /**
      * Constructor
-     * 
+     *
      * @param Plugin $plugin The plugin
      */
-    public function __construct(Plugin $plugin) {
+    public function __construct(Plugin $plugin)
+    {
         parent::__construct('projectlinkshomepage');
         $this->pluginPath = $plugin->getPluginPath();
         $this->themePath  = $plugin->getThemePath();
     }
-    
+
     /**
      * Widget title
-     * 
+     *
      * @see src/common/Widget/Widget#getTitle()
      * @return String
      */
-    public function getTitle() {
+    public function getTitle()
+    {
         return $GLOBALS['Language']->getText('plugin_plinks', 'project_links');
     }
 
     public function getDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_plinks','descriptor_description');
+        return $GLOBALS['Language']->getText('plugin_plinks', 'descriptor_description');
     }
 
     /**
      * Widget content
-     * 
+     *
      * @see src/common/Widget/Widget#getContent()
      * @return String
      */
-    function getContent() {
+    function getContent()
+    {
         $request = HTTPRequest::instance();
         $groupId = $request->get('group_id');
 
@@ -79,8 +83,8 @@ class ProjectLinks_Widget_HomePageLinks extends Widget {
 
     /**
      * Get HTML display of all links from and to given project.
-     * 
-     * @param  Integer $groupId Group id 
+     *
+     * @param int $groupId Group id
      * @return String
      */
     function getAllLinks($groupId)
@@ -103,12 +107,13 @@ class ProjectLinks_Widget_HomePageLinks extends Widget {
 
     /**
      * Build the top list of link for the 2 ways (links and back_links).
-     * 
+     *
      * @param  String $way Either 'links' or 'back_links'
      * @param  String $sql The SQL to get the links
      * @return String
      */
-    function getLinksByLinkType($way, \Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface $dar) {
+    function getLinksByLinkType($way, \Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface $dar)
+    {
         $html = '';
         if ($dar->rowCount() > 0) {
             $linkTypeCmdId   = 'plugin_project_links_type_'.$way;
@@ -118,7 +123,7 @@ class ProjectLinks_Widget_HomePageLinks extends Widget {
 
             $html .= "<li>".$titleSpan;
             $links = $this->getLinks($way, $dar);
-            if($links != '') {
+            if ($links != '') {
                 $html .= "\n";
                 $html .= "  <ul>\n";
                 $html .= $links;
@@ -131,21 +136,22 @@ class ProjectLinks_Widget_HomePageLinks extends Widget {
 
     /**
      * Build the HTML for all the link with the same way (from or to the project)
-     * 
+     *
      * It build either the list of all "forward" links or the list of all
      * "back links"
-     * 
+     *
      * @param  String $way Either 'links' or 'back_links'
      * @param  String $res One row of link
      * @return String
      */
-    function getLinks($way, \Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface $dar) {
+    function getLinks($way, \Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface $dar)
+    {
         $html = '';
         $previousLinkName = '';
         $ulClosed = true;
-        foreach($dar as $row) {
-            if($row['link_name'] != $previousLinkName) {
-                if(!$ulClosed) {
+        foreach ($dar as $row) {
+            if ($row['link_name'] != $previousLinkName) {
+                if (!$ulClosed) {
                     // Do not close the list when the list is not started
                     $html .= "    </ul>\n";
                     $html .= "  </li>\n";
@@ -153,7 +159,7 @@ class ProjectLinks_Widget_HomePageLinks extends Widget {
                 }
                 $spanId  = 'plugin_project_links_name_'.$way.'_'.$row['link_type_id'];
                 $cssClass = Toggler::getClassName($spanId);
-                
+
                 // Link name title
                 $html     .= "  <li class='project-link-list'><span id=\"" . $spanId . "\" class=\"" . $cssClass . "\">" . $row['link_name'] . "</span>\n";
                 $html     .= "    <ul class='project-link-list'>\n";
@@ -167,7 +173,7 @@ class ProjectLinks_Widget_HomePageLinks extends Widget {
             $previousLinkName = $row['link_name'];
         }
 
-        if(!$ulClosed) {
+        if (!$ulClosed) {
             $html .= "    </ul>\n";
             $html .= "  </li>\n";
         }
@@ -177,11 +183,12 @@ class ProjectLinks_Widget_HomePageLinks extends Widget {
 
     /**
      * Build url for one link.
-     * 
+     *
      * @param  array $row One row for a link
      * @return String
      */
-    function getOneLink(array $row) {
+    function getOneLink(array $row)
+    {
         $url = str_replace('$projname', $row['unix_group_name'], $row['uri_plus']);
         $ic = '';
         if ($row['type'] == 2) {
@@ -192,13 +199,14 @@ class ProjectLinks_Widget_HomePageLinks extends Widget {
         $html = '<a href="'.$url.'">'.$ic.$row['group_name'].'</a>';
         return $html;
     }
-    
+
     /**
      * Return ProjectLinksDao
-     * 
+     *
      * @return ProjectLinksDao
      */
-    function getProjectLinksDao() {
+    function getProjectLinksDao()
+    {
         include_once 'ProjectLinksDao.class.php';
         return new ProjectLinksDao(CodendiDataAccess::instance());
     }

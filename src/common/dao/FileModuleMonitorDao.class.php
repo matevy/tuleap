@@ -19,21 +19,25 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class FileModuleMonitorDao extends DataAccessObject {
+class FileModuleMonitorDao extends DataAccessObject
+{
 
-    function whoIsMonitoringPackageByID($group_id, $package_id) {
+    function whoIsMonitoringPackageByID($group_id, $package_id)
+    {
         $_package_id = (int) $package_id;
         $_group_id = (int) $group_id;
-        
-        $sql = sprintf("SELECT u.email,u.user_id,p.name "
+
+        $sql = sprintf(
+            "SELECT u.email,u.user_id,p.name "
               ."FROM user AS u,filemodule_monitor AS fm, frs_package AS p "
-              ."WHERE u.user_id = fm.user_id " 
+              ."WHERE u.user_id = fm.user_id "
               ."AND fm.filemodule_id = p.package_id "
               ."AND fm.filemodule_id = %s "
               ."AND p.group_id = %s "
               ."AND ( u.status='A' OR u.status='R' )",
-              $this->da->quoteSmart($_package_id),
-              $this->da->quoteSmart($_group_id));
+            $this->da->quoteSmart($_package_id),
+            $this->da->quoteSmart($_group_id)
+        );
 
         return $this->retrieve($sql);
     }
@@ -41,11 +45,12 @@ class FileModuleMonitorDao extends DataAccessObject {
     /**
      * Get the list of users publicly monitoring a package
      *
-     * @param Integer $packageId Id of the package
+     * @param int $packageId Id of the package
      *
      * @return DataAccessResult
      */
-    function whoIsPubliclyMonitoringPackage($packageId) {
+    function whoIsPubliclyMonitoringPackage($packageId)
+    {
         $packageId = $this->da->quoteSmart($packageId);
 
         $sql = "SELECT u.user_id
@@ -57,52 +62,56 @@ class FileModuleMonitorDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    function searchById($id) {
+    function searchById($id)
+    {
         $_id = (int) $id;
         return $this->_search(' fm.filemodule_id = '.$this->da->escapeInt($_id), '', ' ORDER BY filemodule_id DESC');
     }
-    
+
 
     /**
      * Check user's monitoring of the given package.
      *
-     * @param Integer $package_id Id of the package
+     * @param int $package_id Id of the package
      * @param PFUser    $user       The user
-     * @param Boolean $publicly   If true check if the user is monitoring publicly
+     * @param bool $publicly If true check if the user is monitoring publicly
      *
      * @return DataAccessResult
      */
-    function searchMonitoringFileByUserAndPackageId($package_id, PFUser $user, $publicly = false) {
+    function searchMonitoringFileByUserAndPackageId($package_id, PFUser $user, $publicly = false)
+    {
         $option = "";
         if ($publicly) {
             $option = "AND anonymous = 0";
         }
         $_package_id = (int) $package_id;
         $_user_id = $user->getID();
-        
+
         return $this->_search(' fm.filemodule_id = '.$this->da->escapeInt($_package_id).' AND fm.user_id ='.$this->da->escapeInt($_user_id).' '.$option, '', ' ORDER BY filemodule_id DESC');
     }
-    
-    function _search($where, $group = '', $order = '', $from = array()) {
+
+    function _search($where, $group = '', $order = '', $from = array())
+    {
         $sql = 'SELECT fm.* '
             .' FROM filemodule_monitor AS fm '
-            .(count($from) > 0 ? ', '.implode(', ', $from) : '') 
-            .(trim($where) != '' ? ' WHERE '.$where.' ' : '') 
+            .(count($from) > 0 ? ', '.implode(', ', $from) : '')
+            .(trim($where) != '' ? ' WHERE '.$where.' ' : '')
             .$group
             .$order;
         return $this->retrieve($sql);
     }
-    
+
     /**
      * Create a row in the table filemodule_monitor
      *
-     * @param Integer $filemodule_id Id of the package
+     * @param int $filemodule_id Id of the package
      * @param PFUser    $user          The user
-     * @param Boolean $anonymous     True if the user i monitoring anonymously
+     * @param bool $anonymous True if the user i monitoring anonymously
      *
      * @return true or id(auto_increment) if there is no error
      */
-    function create($filemodule_id, PFUser $user, $anonymous = true) {
+    function create($filemodule_id, PFUser $user, $anonymous = true)
+    {
 
         $arg      = array();
         $values   = array();
@@ -122,17 +131,18 @@ class FileModuleMonitorDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    
+
      /**
      * Delete entry that match $package_id and $user_id (current user) in filemodule_monitor
      *
-     * @param Integer $filemodule_id Id of the package
+     * @param int $filemodule_id Id of the package
      * @param PFUser    $user       The user
-     * @param Boolean $onlyPublic If true delete only user publicly monitoring the package
+     * @param bool $onlyPublic If true delete only user publicly monitoring the package
      *
      * @return true if there is no error
      */
-    function delete($filemodule_id, PFUser $user, $onlyPublic = false) {
+    function delete($filemodule_id, PFUser $user, $onlyPublic = false)
+    {
         $option = "";
         if ($onlyPublic) {
             $option = "AND anonymous = 0";
@@ -146,5 +156,3 @@ class FileModuleMonitorDao extends DataAccessObject {
         return $deleted;
     }
 }
-
-?>

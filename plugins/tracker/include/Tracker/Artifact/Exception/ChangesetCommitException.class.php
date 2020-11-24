@@ -18,9 +18,11 @@
  * along with Tuleap; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-class Tracker_ChangesetCommitException extends Tracker_Exception {
+class Tracker_ChangesetCommitException extends Tracker_Exception
+{
 
-    public function __construct() {
-        parent::__construct('Error while commiting all the changes');
+    public function __construct(Throwable $throwable)
+    {
+        parent::__construct('Error ('.get_class($throwable).') while commiting all the changes: '.$throwable->getMessage());
     }
 }

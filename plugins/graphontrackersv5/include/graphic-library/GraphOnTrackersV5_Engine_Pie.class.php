@@ -1,5 +1,5 @@
 <?php
-/* 
+/*
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  * Copyright (c) Enalean, 2016. All Rights Reserved.
  *
@@ -21,10 +21,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/chart/Chart_Pie.class.php');
-require_once('common/layout/ColorHelper.class.php');
-
-class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine {
+class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine
+{
 
     var $title;
     var $field_base;
@@ -32,57 +30,59 @@ class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine {
     var $width;
     var $size_pie;
     var $legend;
-    
-    
-    public function validData(){
-        if ((is_array($this->data)) && (array_sum($this->data) > 0)){
+
+
+    public function validData()
+    {
+        if ((is_array($this->data)) && (array_sum($this->data) > 0)) {
             return true;
         } else {
             $GLOBALS['Response']->addFeedback(
                 'error',
-                $GLOBALS['Language']->getText('plugin_graphontrackersv5_engine','no_datas',array($this->title))
+                $GLOBALS['Language']->getText('plugin_graphontrackersv5_engine', 'no_datas', array($this->title))
             );
 
             return false;
         }
     }
-    
+
     /**
      * Builds pie graph
      */
-    function buildGraph() {
-        $this->graph = new Chart_Pie($this->width,$this->height);
+    function buildGraph()
+    {
+        $this->graph = new Chart_Pie($this->width, $this->height);
 
         // title setup
         $this->graph->title->Set($this->title);
-        
+
         if (is_null($this->description)) {
             $this->description = "";
         }
         $this->graph->subtitle->Set($this->description);
-        
+
         $colors = $this->getColors();
-        
+
         if ((is_array($this->data)) && (array_sum($this->data)>0)) {
             $p = new PiePlot($this->data);
-            
+
             $p->setSliceColors($colors);
-            
-            $p->SetCenter(0.4,0.6);
+
+            $p->SetCenter(0.4, 0.6);
             $p->SetLegends($this->legend);
-                      
-                
+
             $p->value->HideZero();
             $p->value->SetFont($this->graph->getFont(), FS_NORMAL, 8);
             $p->value->SetColor($this->graph->getMainColor());
             $p->value->SetMargin(0);
-            
+
             $this->graph->Add($p);
-        }          
+        }
         return $this->graph;
     }
 
-    public function toArray() {
+    public function toArray()
+    {
         return parent::toArray() + array(
             'type'   => 'pie',
             'title'  => $this->title,
@@ -93,4 +93,3 @@ class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine {
         );
     }
 }
-?>

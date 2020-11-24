@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class ProjectCreationTemplatePresenter {
+class ProjectCreationTemplatePresenter
+{
 
     /**
      * @var Project
@@ -32,11 +33,12 @@ class ProjectCreationTemplatePresenter {
     private $text_purifier;
 
     /**
-     * @var integer
+     * @var int
      */
     private $selected_template_id;
 
-    public function __construct(Project $project, $selected_template_id) {
+    public function __construct(Project $project, $selected_template_id)
+    {
         $this->project       = $project;
         $this->text_purifier = Codendi_HTMLPurifier::instance();
         $this->selected_template_id = $selected_template_id;
@@ -46,7 +48,8 @@ class ProjectCreationTemplatePresenter {
      *
      * @return int
      */
-    public function getGroupId() {
+    public function getGroupId()
+    {
         return $this->project->getID();
     }
 
@@ -54,7 +57,8 @@ class ProjectCreationTemplatePresenter {
      *
      * @return string
      */
-    public function getUserGroupName() {
+    public function getUserGroupName()
+    {
         return $this->project->getPublicName();
     }
 
@@ -63,7 +67,8 @@ class ProjectCreationTemplatePresenter {
      * @param string $format A valid php date format
      * @return string
      */
-    public function getFormattedDateRegistered() {
+    public function getFormattedDateRegistered()
+    {
         return date($GLOBALS['Language']->getText('system', 'datefmt_short'), $this->project->getStartDate());
     }
 
@@ -71,7 +76,8 @@ class ProjectCreationTemplatePresenter {
      *
      * @return string
      */
-    public function getUnixGroupName() {
+    public function getUnixGroupName()
+    {
         return $this->project->getUnixName();
     }
 
@@ -79,9 +85,10 @@ class ProjectCreationTemplatePresenter {
      *
      * @return string coma separated list of names of admin users for this template
      */
-    public function getAdminUserNames() {
+    public function getAdminUserNames()
+    {
         $ugroup_manager = new UGroupManager();
-        $admin_ugroup   = $ugroup_manager->getUGroup($this->project, ProjectUGroup::PROJECT_ADMIN);
+        $admin_ugroup   = $ugroup_manager->getProjectAdminsUGroup($this->project);
         $user_helper    = UserHelper::instance();
         $users          = array();
         foreach ($admin_ugroup->getMembers() as $user) {
@@ -94,43 +101,45 @@ class ProjectCreationTemplatePresenter {
      *
      * @return string coma separated list of names
      */
-    public function getServicesUsed() {
+    public function getServicesUsed()
+    {
         return implode(', ', $this->project->getAllUsedServices());
     }
-    
-    public function getServicesUsedTitle() {
+
+    public function getServicesUsedTitle()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'services_used');
     }
     /**
      *
      * @return string
      */
-    public function getPurifiedProjectName() {
+    public function getPurifiedProjectName()
+    {
         return $this->text_purifier->purify(
-                util_unconvert_htmlspecialchars($this->project->getPublicName()),
-                CODENDI_PURIFIER_CONVERT_HTML
-                );
+            util_unconvert_htmlspecialchars($this->project->getPublicName()),
+            CODENDI_PURIFIER_CONVERT_HTML
+        );
     }
 
     /**
      *
      * @return string
      */
-    public function getPurifiedShortDescription() {
+    public function getPurifiedShortDescription()
+    {
         return $this->text_purifier->purify(
-                util_unconvert_htmlspecialchars($this->project->getDescription()),
-                CODENDI_PURIFIER_LIGHT,
-                $this->project->getID()
-                );
+            util_unconvert_htmlspecialchars($this->project->getDescription()),
+            CODENDI_PURIFIER_LIGHT,
+            $this->project->getID()
+        );
     }
 
     /**
      * @return bool
      */
-    public function isSelectedTemplate() {
+    public function isSelectedTemplate()
+    {
         return $this->selected_template_id == $this->project->getID();
     }
 }
-
-
-?>

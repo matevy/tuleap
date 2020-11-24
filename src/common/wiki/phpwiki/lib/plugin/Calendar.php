@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: Calendar.php,v 1.30 2005/04/02 03:05:44 uckelman Exp $');
 /**
  Copyright 1999, 2000, 2001, 2002 $ThePhpWikiProgrammingTeam
@@ -20,8 +21,9 @@ rcs_id('$Id: Calendar.php,v 1.30 2005/04/02 03:05:44 uckelman Exp $');
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-if (!defined('SECONDS_PER_DAY'))
+if (!defined('SECONDS_PER_DAY')) {
     define('SECONDS_PER_DAY', 24 * 3600);
+}
 
 // FIXME: Still needs:
 //
@@ -32,23 +34,25 @@ if (!defined('SECONDS_PER_DAY'))
 // pages back to the calendar page. (Subpage support might make this
 // easier.)
 
-class WikiPlugin_Calendar
-extends WikiPlugin
+class WikiPlugin_Calendar extends WikiPlugin
 {
-    function getName () {
+    function getName()
+    {
         return _("Calendar");
     }
 
-    function getDescription () {
+    function getDescription()
+    {
         return _("Calendar");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.30 $");
+    function getVersion()
+    {
+        return preg_replace("/[Revision: $]/", '', "\$Revision: 1.30 $");
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array('prefix'           => '[pagename]' . SUBPAGE_SEPARATOR,
                      'date_format'      => '%Y-%m-%d',
                      'year'             => '',
@@ -61,23 +65,25 @@ extends WikiPlugin
     }
 
     /**
-     * return links (static only as of action=edit) 
+     * return links (static only as of action=edit)
      *
      * @param string $argstr The plugin argument string.
      * @param string $basepage The pagename the plugin is invoked from.
      * @return array List of pagenames linked to (or false).
      */
-    function getWikiPageLinks ($argstr, $basepage) {
-        if (isset($this->_links)) 
+    function getWikiPageLinks($argstr, $basepage)
+    {
+        if (isset($this->_links)) {
             return $this->_links;
-        else {
-            global $request;	
+        } else {
+            global $request;
             $this->run($request->_dbi, $argstr, $request, $basepage);
             return $this->_links;
         }
     }
 
-    private function header($pagename, $time) {
+    private function header($pagename, $time)
+    {
         $args = &$this->args;
 
         $t = localtime($time - SECONDS_PER_DAY, 1);
@@ -88,32 +94,29 @@ extends WikiPlugin
         $next_url = WikiURL($pagename, array('month' => $t['tm_mon'] + 1,
                                              'year'  => $t['tm_year'] + 1900));
 
-        $prev = HTML::a(array('href'  => $prev_url,
-                              'class' => 'cal-arrow',
-                              'title' => _("Previous Month")),
-                        '<');
-        $next = HTML::a(array('href'  => $next_url,
-                              'class' => 'cal-arrow',
-                              'title' => _("Next Month")),
-                        '>');
+        $prev = HTML::a(array('href'  => $prev_url, 'class' => 'cal-arrow', 'title' => _("Previous Month")), '<');
+        $next = HTML::a(array('href'  => $next_url, 'class' => 'cal-arrow', 'title' => _("Next Month")), '>');
 
+        $row = HTML::tr(
+            HTML::td(array('align' => 'left'), $prev),
+            HTML::td(
+                array('align' => 'center'),
+                HTML::strong(array('class' => 'cal-header'), strftime($args['month_format'], $time))
+            ),
+            HTML::td(array('align' => 'right'), $next)
+        );
 
-        $row = HTML::tr(HTML::td(array('align' => 'left'), $prev),
-                        HTML::td(array('align' => 'center'),
-                                 HTML::strong(array('class' => 'cal-header'),
-                                              strftime($args['month_format'],
-                                                       $time))),
-                        HTML::td(array('align' => 'right'), $next));
-
-        return HTML::tr(HTML::td(array('colspan' => 7,
-                                       'align'   => 'center'),
-                                 HTML::table(array('width' => '100%',
-                                                   'class' => 'cal-header'),
-                                             $row)));
+        return HTML::tr(
+            HTML::td(
+                array('colspan' => 7, 'align'=> 'center'),
+                HTML::table(array('width' => '100%', 'class' => 'cal-header'), $row)
+            )
+        );
     }
 
 
-    private function daynames($start_wday) {
+    private function daynames($start_wday)
+    {
         $time  = mktime(12, 0, 0, 1, 1, 2001);
         $t     = localtime($time, 1);
         $time += (7 + $start_wday - $t['tm_wday']) * SECONDS_PER_DAY;
@@ -125,19 +128,17 @@ extends WikiPlugin
         $row = HTML::tr();
         $row->setattr('class', 'cal-dayname');
         for ($i = 0; $i < 7; $i++) {
-            $row->pushContent(HTML::td(array('class' => 'cal-dayname',
-                                             'align' => 'center'),
-                                       strftime($fs, $time)));
+            $row->pushContent(HTML::td(array('class' => 'cal-dayname', 'align' => 'center'), strftime($fs, $time)));
             $time += SECONDS_PER_DAY;
         }
         return $row;
     }
 
-    private function date($dbi, $time) {
+    private function date($dbi, $time)
+    {
         $args = &$this->args;
 
-        $page_for_date = $args['prefix'] . strftime($args['date_format'],
-                                                    $time);
+        $page_for_date = $args['prefix'] . strftime($args['date_format'], $time);
         $t = localtime($time, 1);
 
         $td = HTML::td(array('align' => 'center'));
@@ -147,70 +148,77 @@ extends WikiPlugin
             $mday = HTML::strong($mday);
             $td->setAttr('class', 'cal-today');
         }
-        else if ($dbi->isWikiPage($page_for_date)) {
+        elseif ($dbi->isWikiPage($page_for_date)) {
             $this->_links[] = $page_for_date;
             $td->setAttr('class', 'cal-day');
         }
 
         if ($dbi->isWikiPage($page_for_date)) {
             $this->_links[] = $page_for_date;
-            $date = HTML::a(array('class' => 'cal-day',
-                                  'href'  => WikiURL($page_for_date),
-                                  'title' => $page_for_date),
-                            HTML::em($mday));
+            $date = HTML::a(
+                array('class' => 'cal-day', 'href' => WikiURL($page_for_date), 'title' => $page_for_date),
+                HTML::em($mday)
+            );
         }
         else {
-            $date = HTML::a(array('class' => 'cal-hide',
-                                  'href'  => WikiURL($page_for_date,
-                                                     array('action' => 'edit')),
-                                  'title' => sprintf(_("Edit %s"),
-                                                     $page_for_date)),
-                            $mday);
+            $date = HTML::a(
+                array(
+                    'class' => 'cal-hide',
+                    'href' => WikiURL($page_for_date, array('action' => 'edit')),
+                    'title' => sprintf(_("Edit %s"), $page_for_date)
+                ),
+                $mday
+            );
         }
         $td->pushContent(HTML::raw('&nbsp;'), $date, HTML::raw('&nbsp;'));
         return $td;
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $this->args = $this->getArgs($argstr, $request);
         $args       = &$this->args;
         $this->_links = array();
 
         $now = localtime(time() + 3600 * $request->getPref('timeOffset'), 1);
-        foreach ( array('month' => $now['tm_mon'] + 1,
-                        'year'  => $now['tm_year'] + 1900)
-                  as $param => $dflt ) {
-
-            if (!($args[$param] = intval($args[$param])))
-                $args[$param]   = $dflt;
+        foreach (array('month' => $now['tm_mon'] + 1, 'year'  => $now['tm_year'] + 1900) as $param => $dflt) {
+            if (!($args[$param] = intval($args[$param]))) {
+                $args[$param] = $dflt;
+            }
         }
 
-        $time = mktime(12, 0, 0,                               // hh, mm, ss,
-                       $args['month'] + $args['month_offset'], // month (1-12)
-                       1,                                      // mday (1-31)
-                       $args['year']);
+        $time = mktime(
+            12,
+            0,
+            0,                               // hh, mm, ss,
+            $args['month'] + $args['month_offset'], // month (1-12)
+            1,                                      // mday (1-31)
+            $args['year']
+        );
 
-        $cal = HTML::table(array('cellspacing' => 0,
-                                 'cellpadding' => 2,
-                                 'class'       => 'cal'),
-                           HTML::thead(
-                                       $this->header($request->getArg('pagename'),
-                                                       $time),
-                                       $this->daynames($args['start_wday'])));
+        $cal = HTML::table(
+            array('cellspacing' => 0, 'cellpadding' => 2, 'class' => 'cal'),
+            HTML::thead(
+                $this->header($request->getArg('pagename'), $time),
+                $this->daynames($args['start_wday'])
+            )
+        );
 
         $t = localtime($time, 1);
 
-        if ($now['tm_year'] == $t['tm_year'] && $now['tm_mon'] == $t['tm_mon'])
+        if ($now['tm_year'] == $t['tm_year'] && $now['tm_mon'] == $t['tm_mon']) {
             $this->_today = $now['tm_mday'];
-        else
+        } else {
             $this->_today = false;
+        }
 
         $tbody = HTML::tbody();
         $row = HTML::tr();
 
         $col = (7 + $t['tm_wday'] - $args['start_wday']) % 7;
-        if ($col > 0)
+        if ($col > 0) {
             $row->pushContent(HTML::td(array('colspan' => $col)));
+        }
         $done = false;
 
         while (!$done) {
@@ -234,8 +242,7 @@ extends WikiPlugin
         $cal->pushContent($tbody);
         return $cal;
     }
-};
-
+}
 // $Log: Calendar.php,v $
 // Revision 1.30  2005/04/02 03:05:44  uckelman
 // Removed & from vars passed by reference (not needed, causes PHP to complain).
@@ -261,4 +268,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

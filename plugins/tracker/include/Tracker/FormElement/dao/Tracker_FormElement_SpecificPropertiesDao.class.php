@@ -21,35 +21,35 @@
 /**
  *  Data Access Object for specific properties of fields
  */
-abstract class Tracker_FormElement_SpecificPropertiesDao extends DataAccessObject {
-    
-    public function searchByFieldId($field_id) {
+abstract class Tracker_FormElement_SpecificPropertiesDao extends DataAccessObject
+{
+
+    public function searchByFieldId($field_id)
+    {
         $field_id  = $this->da->escapeInt($field_id);
         $sql = "SELECT *
                 FROM $this->table_name
                 WHERE field_id = $field_id ";
         return $this->retrieve($sql);
     }
-    
-    public function delete($field_id) {
+
+    public function delete($field_id)
+    {
         $field_id  = $this->da->escapeInt($field_id);
         $sql = "DELETE FROM $this->table_name
                 WHERE field_id = $field_id ";
         return $this->retrieve($sql);
     }
-    
-    public abstract function save($field_id, $row);
-    
+
+    abstract public function save($field_id, $row);
+
     /**
      * Duplicate specific properties of field
      *
      * @param int $from_field_id the field id source
      * @param int $to_field_id   the field id target
      *
-     * @return boolean true if ok, false otherwise
+     * @return bool true if ok, false otherwise
      */
-    public abstract function duplicate($from_field_id, $to_field_id);
+    abstract public function duplicate($from_field_id, $to_field_id);
 }
-
-
-?>

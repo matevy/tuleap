@@ -23,7 +23,7 @@ use Tuleap\Admin\AdminPageRenderer;
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Tracker\ArtifactPendingDeletionPresenter;
 
-require_once('pre.php');
+require_once __DIR__ . '/../../include/pre.php';
 
 // Inherited from old .htaccess (needed for reports, linked artifact view, etc)
 ini_set('max_execution_time', 1800);
@@ -54,7 +54,7 @@ switch ($func) {
         $GLOBALS['Response']->redirect('/tracker/admin/restore.php');
         break;
 
-        case 'delete':
+    case 'delete':
         // Create field factory
         if ($group = $pm->getProject($request->getValidated('group_id', 'GroupId'))) {
             $atid           = $request->getValidated('atid', 'uint');

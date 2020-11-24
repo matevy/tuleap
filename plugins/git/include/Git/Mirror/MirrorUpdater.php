@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class GitRepositoryMirrorUpdater {
+class GitRepositoryMirrorUpdater
+{
 
     /**
      * @var ProjectHistoryDao
@@ -30,16 +31,17 @@ class GitRepositoryMirrorUpdater {
      */
     private $mirror_data_mapper;
 
-    public function __construct(Git_Mirror_MirrorDataMapper $mirror_data_mapper, ProjectHistoryDao $history_dao) {
+    public function __construct(Git_Mirror_MirrorDataMapper $mirror_data_mapper, ProjectHistoryDao $history_dao)
+    {
         $this->mirror_data_mapper = $mirror_data_mapper;
         $this->history_dao        = $history_dao;
     }
 
-    public function updateRepositoryMirrors(GitRepository $repository, array $mirror_ids) {
+    public function updateRepositoryMirrors(GitRepository $repository, array $mirror_ids)
+    {
         if ($this->mirror_data_mapper->doesAllSelectedMirrorIdsExist($mirror_ids)
             && $this->mirror_data_mapper->unmirrorRepository($repository->getId())
             && $this->mirror_data_mapper->mirrorRepositoryTo($repository->getId(), $mirror_ids)) {
-
             $this->history_dao->groupAddHistory(
                 "git_repo_mirroring_update",
                 $repository->getName(),

@@ -19,10 +19,12 @@
  */
 
 use Tracker\Artifact\XMLArtifactSourcePlatformExtractor;
+use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 
 require_once __DIR__.'/../bootstrap.php';
 
-abstract class Tracker_Artifact_XMLImportBaseTest extends TuleapTestCase {
+abstract class Tracker_Artifact_XMLImportBaseTest extends TuleapTestCase
+{
     protected $tracker_id = 12;
 
     /** @var Tracker */
@@ -64,8 +66,13 @@ abstract class Tracker_Artifact_XMLImportBaseTest extends TuleapTestCase {
     protected $extraction_path;
     protected $john_doe;
     protected $config;
+    /**
+     * @var \Mockery\MockInterface|CreatedFileURLMapping
+     */
+    protected $url_mapping;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -104,6 +111,8 @@ abstract class Tracker_Artifact_XMLImportBaseTest extends TuleapTestCase {
 
         $this->rng_validator = \Mockery::spy(\XML_RNGValidator::class);
 
+        $this->url_mapping = \Mockery::mock(CreatedFileURLMapping::class);
+
         $this->importer = new Tracker_Artifact_XMLImport(
             $this->rng_validator,
             $this->artifact_creator,
@@ -122,12 +131,14 @@ abstract class Tracker_Artifact_XMLImportBaseTest extends TuleapTestCase {
     }
 }
 
-class Tracker_Artifact_XMLImport_ZipArchiveTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_ZipArchiveTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     /** @var Tracker_Artifact_XMLImport_XMLImportZipArchive */
     private $archive;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->importer = \Mockery::mock(
@@ -159,7 +170,8 @@ class Tracker_Artifact_XMLImport_ZipArchiveTest extends Tracker_Artifact_XMLImpo
         $this->rng_validator->shouldReceive('validate')->andReturn(true);
     }
 
-    public function itCallsImportFromXMLWithContentFromArchive() {
+    public function itCallsImportFromXMLWithContentFromArchive()
+    {
         expect($this->importer)->importFromXML(
             $this->tracker,
             Mockery::on(function ($element) {
@@ -169,6 +181,7 @@ class Tracker_Artifact_XMLImport_ZipArchiveTest extends Tracker_Artifact_XMLImpo
             Mockery::on(function ($element) {
                 return is_a($element, TrackerXmlFieldsMapping_InSamePlatform::class);
             }),
+            Mockery::type(CreatedFileURLMapping::class),
             Mockery::on(function ($element) {
                 return is_a($element, \Tuleap\Project\XML\Import\ImportConfig::class);
             })
@@ -177,25 +190,29 @@ class Tracker_Artifact_XMLImport_ZipArchiveTest extends Tracker_Artifact_XMLImpo
         $this->importer->importFromArchive($this->tracker, $this->archive);
     }
 
-    public function itAskToArchiveToExtractFiles() {
+    public function itAskToArchiveToExtractFiles()
+    {
         expect($this->archive)->extractFiles()->once();
 
         $this->importer->importFromArchive($this->tracker, $this->archive);
     }
 
-    public function itCleansUp() {
+    public function itCleansUp()
+    {
         expect($this->archive)->cleanUp()->once();
 
         $this->importer->importFromArchive($this->tracker, $this->archive);
     }
 }
 
-class Tracker_Artifact_XMLImport_HappyPathTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_HappyPathTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -220,7 +237,8 @@ class Tracker_Artifact_XMLImport_HappyPathTest extends Tracker_Artifact_XMLImpor
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesArtifactOnTracker() {
+    public function itCreatesArtifactOnTracker()
+    {
         $this->artifact_creator->shouldReceive('createBare')
             ->with($this->tracker, Mockery::any(), Mockery::any())
             ->once()
@@ -231,11 +249,13 @@ class Tracker_Artifact_XMLImport_HappyPathTest extends Tracker_Artifact_XMLImpor
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itCreatesArtifactWithSummaryFieldData() {
+    public function itCreatesArtifactWithSummaryFieldData()
+    {
         $data = array(
             $this->summary_field_id => 'Ça marche'
         );
@@ -252,7 +272,8 @@ class Tracker_Artifact_XMLImport_HappyPathTest extends Tracker_Artifact_XMLImpor
                 $data,
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->once()
             ->andReturn($this->bare_artifact);
@@ -262,11 +283,13 @@ class Tracker_Artifact_XMLImport_HappyPathTest extends Tracker_Artifact_XMLImpor
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itCreatedArtifactWithSubmitter() {
+    public function itCreatedArtifactWithSubmitter()
+    {
         $this->artifact_creator->shouldReceive('createBare')
             ->with($this->tracker, $this->john_doe, Mockery::any())
             ->once()
@@ -277,11 +300,13 @@ class Tracker_Artifact_XMLImport_HappyPathTest extends Tracker_Artifact_XMLImpor
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itCreatesArtifactAtDate() {
+    public function itCreatesArtifactAtDate()
+    {
         $expected_time = strtotime('2014-01-15T10:38:06+01:00');
         $this->artifact_creator->shouldReceive('createBare')
             ->with($this->tracker, Mockery::any(), $expected_time)
@@ -293,16 +318,19 @@ class Tracker_Artifact_XMLImport_HappyPathTest extends Tracker_Artifact_XMLImpor
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 }
 
-class Tracker_Artifact_XMLImport_CommentsTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_CommentsTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -353,18 +381,18 @@ class Tracker_Artifact_XMLImport_CommentsTest extends Tracker_Artifact_XMLImport
     public function itCreatesTheComments()
     {
         $this->artifact_creator->shouldReceive('createFirstChangeset')
-            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false)
+            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false, Mockery::any())
             ->once()
             ->andReturn(\Mockery::spy(\Tracker_Artifact::class));
 
         $this->new_changeset_creator->shouldReceive('create')->times(2);
 
         $this->new_changeset_creator->shouldReceive('create')
-            ->with(Mockery::any(), Mockery::any(), 'Some text', Mockery::any(), Mockery::any(), Mockery::any(), Tracker_Artifact_Changeset_Comment::TEXT_COMMENT)
+            ->with(Mockery::any(), Mockery::any(), 'Some text', Mockery::any(), Mockery::any(), Mockery::any(), Tracker_Artifact_Changeset_Comment::TEXT_COMMENT, Mockery::any())
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
         $this->new_changeset_creator->shouldReceive('create')
-            ->with(Mockery::any(), Mockery::any(), '<p>Some text</p>', Mockery::any(), Mockery::any(), Mockery::any(), Tracker_Artifact_Changeset_Comment::HTML_COMMENT)
+            ->with(Mockery::any(), Mockery::any(), '<p>Some text</p>', Mockery::any(), Mockery::any(), Mockery::any(), Tracker_Artifact_Changeset_Comment::HTML_COMMENT, Mockery::any())
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
         $this->importer->importFromXML(
@@ -372,17 +400,20 @@ class Tracker_Artifact_XMLImport_CommentsTest extends Tracker_Artifact_XMLImport
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 }
 
-class Tracker_Artifact_XMLImport_CommentUpdatesTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_CommentUpdatesTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
     private $changeset;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -426,14 +457,15 @@ class Tracker_Artifact_XMLImport_CommentUpdatesTest extends Tracker_Artifact_XML
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesTheCommentsWithUpdates() {
+    public function itCreatesTheCommentsWithUpdates()
+    {
         $this->artifact_creator->shouldReceive('createFirstChangeset')
-            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false)
+            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false, Mockery::any())
             ->once()
             ->andReturn($this->artifact);
 
         $this->new_changeset_creator->shouldReceive('create')
-            ->with(Mockery::any(), Mockery::any(), 'Some text', Mockery::any(), Mockery::any(), Mockery::any(), Tracker_Artifact_Changeset_Comment::TEXT_COMMENT)
+            ->with(Mockery::any(), Mockery::any(), 'Some text', Mockery::any(), Mockery::any(), Mockery::any(), Tracker_Artifact_Changeset_Comment::TEXT_COMMENT, Mockery::any())
             ->once()
             ->andReturn($this->changeset);
 
@@ -449,16 +481,19 @@ class Tracker_Artifact_XMLImport_CommentUpdatesTest extends Tracker_Artifact_XML
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 }
 
-class Tracker_Artifact_XMLImport_NoFieldTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_NoFieldTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -478,7 +513,8 @@ class Tracker_Artifact_XMLImport_NoFieldTest extends Tracker_Artifact_XMLImportB
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itThrowAnExceptionWhenFieldDoesntExist() {
+    public function itThrowAnExceptionWhenFieldDoesntExist()
+    {
         $artifact = \Mockery::spy(\Tracker_Artifact::class);
         $artifact->shouldReceive('getId')->andReturn(101);
         $artifact->shouldReceive('getTracker')->andReturn(Mockery::spy(Tracker::class));
@@ -492,15 +528,18 @@ class Tracker_Artifact_XMLImport_NoFieldTest extends Tracker_Artifact_XMLImportB
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 }
 
-class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -531,7 +570,8 @@ class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBase
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesChangesetAsAnonymousWhenUserDoesntExists() {
+    public function itCreatesChangesetAsAnonymousWhenUserDoesntExists()
+    {
         $xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="4918">
@@ -543,8 +583,7 @@ class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBase
                   </field_change>
                 </changeset>
               </artifact>
-            </artifacts>'
-        );
+            </artifacts>');
 
         $artifact = \Mockery::spy(\Tracker_Artifact::class);
         $artifact->shouldReceive('getId')->andReturn(101);
@@ -566,11 +605,13 @@ class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBase
             $xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itLooksForUserIdWhenFormatIsId() {
+    public function itLooksForUserIdWhenFormatIsId()
+    {
         $xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="4918">
@@ -608,11 +649,13 @@ class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBase
             $xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itLooksForLdapIdWhenFormatIsLdap() {
+    public function itLooksForLdapIdWhenFormatIsLdap()
+    {
         $xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="4918">
@@ -650,11 +693,13 @@ class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBase
             $xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itLooksForEmailWhenFormatIsEmail() {
+    public function itLooksForEmailWhenFormatIsEmail()
+    {
         $xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="4918">
@@ -666,8 +711,7 @@ class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBase
                   </field_change>
                 </changeset>
               </artifact>
-            </artifacts>'
-        );
+            </artifacts>');
 
         $this->user_manager->shouldReceive('getUserByIdentifier')
             ->with('email:jo@example.com')
@@ -693,16 +737,19 @@ class Tracker_Artifact_XMLImport_UserTest extends Tracker_Artifact_XMLImportBase
             $xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 }
 
-class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -733,7 +780,8 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesTwoChangesets() {
+    public function itCreatesTwoChangesets()
+    {
         $this->artifact_creator->shouldReceive('createBare')->once()->andReturn($this->artifact);
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
@@ -747,11 +795,13 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itCreatesTheNewChangesetWithSummaryValue() {
+    public function itCreatesTheNewChangesetWithSummaryValue()
+    {
         $data = array(
             $this->summary_field_id => '^Wit updates'
         );
@@ -760,12 +810,12 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
             ->once()
-            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false)
+            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false, Mockery::any())
             ->andReturn($this->artifact);
 
         $this->new_changeset_creator->shouldReceive('create')
             ->once()
-            ->with($this->artifact, $data, Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any())
+            ->with($this->artifact, $data, Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any())
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
         $this->importer->importFromXML(
@@ -773,21 +823,23 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itCreatesTheNewChangesetWithSubmitter() {
+    public function itCreatesTheNewChangesetWithSubmitter()
+    {
         $this->artifact_creator->shouldReceive('createBare')->once()->andReturn($this->artifact);
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
             ->once()
-            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false)
+            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false, Mockery::any())
             ->andReturn($this->artifact);
 
         $this->new_changeset_creator->shouldReceive('create')
             ->once()
-            ->with($this->artifact, Mockery::any(), Mockery::any(), $this->john_doe, Mockery::any(), Mockery::any(), Mockery::any())
+            ->with($this->artifact, Mockery::any(), Mockery::any(), $this->john_doe, Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any())
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
         $this->importer->importFromXML(
@@ -795,21 +847,23 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itCreatesTheNewChangesetWithoutNotification() {
+    public function itCreatesTheNewChangesetWithoutNotification()
+    {
         $this->artifact_creator->shouldReceive('createBare')->once()->andReturn($this->artifact);
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
             ->once()
-            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false)
+            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), false, Mockery::any())
             ->andReturn($this->artifact);
 
         $this->new_changeset_creator->shouldReceive('create')
             ->once()
-            ->with($this->artifact, Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any())
+            ->with($this->artifact, Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any())
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
         $this->importer->importFromXML(
@@ -817,11 +871,13 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itCreatesTheChangesetsAccordingToDates() {
+    public function itCreatesTheChangesetsAccordingToDates()
+    {
         $this->artifact_creator->shouldReceive('createBare')
             ->with($this->tracker, Mockery::any(), strtotime('2014-01-15T10:38:06+01:00'))
             ->once()
@@ -829,12 +885,12 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
             ->once()
-            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), strtotime('2014-01-15T10:38:06+01:00'), false)
+            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), strtotime('2014-01-15T10:38:06+01:00'), false, Mockery::any())
             ->andReturn($this->artifact);
 
         $this->new_changeset_creator->shouldReceive('create')
             ->once()
-            ->with($this->artifact, Mockery::any(), Mockery::any(), Mockery::any(), strtotime('2014-01-15T11:03:50+01:00'), Mockery::any(), Mockery::any())
+            ->with($this->artifact, Mockery::any(), Mockery::any(), Mockery::any(), strtotime('2014-01-15T11:03:50+01:00'), Mockery::any(), Mockery::any(), Mockery::any())
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
         $this->importer->importFromXML(
@@ -842,11 +898,13 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itCreatesTheChangesetsInAscendingDatesEvenWhenChangesetsAreMixedInXML() {
+    public function itCreatesTheChangesetsInAscendingDatesEvenWhenChangesetsAreMixedInXML()
+    {
         $this->xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="4918">
@@ -874,12 +932,12 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
             ->once()
-            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), strtotime('2014-01-15T10:38:06+01:00'), false)
+            ->with(Mockery::any(), Mockery::any(), Mockery::any(), Mockery::any(), strtotime('2014-01-15T10:38:06+01:00'), false, Mockery::any())
             ->andReturn($this->artifact);
 
         $this->new_changeset_creator->shouldReceive('create')
             ->once()
-            ->with($this->artifact, Mockery::any(), Mockery::any(), Mockery::any(), strtotime('2014-01-15T11:03:50+01:00'), Mockery::any(), Mockery::any())
+            ->with($this->artifact, Mockery::any(), Mockery::any(), Mockery::any(), strtotime('2014-01-15T11:03:50+01:00'), Mockery::any(), Mockery::any(), Mockery::any())
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
         $this->importer->importFromXML(
@@ -887,11 +945,13 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 
-    public function itKeepsTheOriginalOrderWhenTwoDatesAreEqual() {
+    public function itKeepsTheOriginalOrderWhenTwoDatesAreEqual()
+    {
         $this->xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="4918">
@@ -941,6 +1001,7 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
                 }),
                 Mockery::any(),
                 strtotime('2014-01-15T10:38:06+01:00'),
+                Mockery::any(),
                 Mockery::any()
             )
             ->andReturn($this->artifact);
@@ -957,6 +1018,7 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
                 Mockery::any(),
                 strtotime('2014-01-15T11:03:50+01:00'),
                 Mockery::any(),
+                Mockery::any(),
                 Mockery::any()
             )
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
@@ -970,6 +1032,7 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
                 Mockery::any(),
                 Mockery::any(),
                 strtotime('2014-01-15T11:03:50+01:00'),
+                Mockery::any(),
                 Mockery::any(),
                 Mockery::any()
             )
@@ -985,6 +1048,7 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
                 Mockery::any(),
                 strtotime('2014-01-15T11:51:50+01:00'),
                 Mockery::any(),
+                Mockery::any(),
                 Mockery::any()
             )
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
@@ -994,17 +1058,20 @@ class Tracker_Artifact_XMLImport_MultipleChangesetsTest extends Tracker_Artifact
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 }
 
-class Tracker_Artifact_XMLImport_SeveralArtifactsTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_SeveralArtifactsTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1035,7 +1102,8 @@ class Tracker_Artifact_XMLImport_SeveralArtifactsTest extends Tracker_Artifact_X
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesTwoArtifactsOnTracker() {
+    public function itCreatesTwoArtifactsOnTracker()
+    {
         $artifact = \Mockery::spy(\Tracker_Artifact::class);
         $artifact->shouldReceive('getId')->andReturn(101);
         $artifact->shouldReceive('getTracker')->andReturn(Mockery::spy(Tracker::class));
@@ -1055,16 +1123,19 @@ class Tracker_Artifact_XMLImport_SeveralArtifactsTest extends Tracker_Artifact_X
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
 }
 
-class Tracker_Artifact_XMLImport_OneArtifactWithAttachementTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_OneArtifactWithAttachementTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $file_field_id = 51;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1100,7 +1171,8 @@ class Tracker_Artifact_XMLImport_OneArtifactWithAttachementTest extends Tracker_
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesAChangesetWithSummaryWhenFileFormElementDoesNotExist() {
+    public function itCreatesAChangesetWithSummaryWhenFileFormElementDoesNotExist()
+    {
         $data = array(
             $this->summary_field_id => 'Newly submitted'
         );
@@ -1112,13 +1184,14 @@ class Tracker_Artifact_XMLImport_OneArtifactWithAttachementTest extends Tracker_
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
             ->once()
-            ->with(Mockery::any(), Mockery::any(), $data, Mockery::any(), Mockery::any(), false)
+            ->with(Mockery::any(), Mockery::any(), $data, Mockery::any(), Mockery::any(), false, Mockery::any())
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 
-    public function itCreatesAChangesetWithOneFileElement() {
+    public function itCreatesAChangesetWithOneFileElement()
+    {
         stub($this->artifact_creator)->create()->returns(\Mockery::spy(\Tracker_Artifact::class));
         stub($this->formelement_factory)->getUsedFieldByName($this->tracker_id, 'attachment')->returns(
             aFileField()->withId($this->file_field_id)->build()
@@ -1141,19 +1214,22 @@ class Tracker_Artifact_XMLImport_OneArtifactWithAttachementTest extends Tracker_
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_AttachmentNoLongerExistsTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_AttachmentNoLongerExistsTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $file_field_id = 51;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1188,7 +1264,8 @@ class Tracker_Artifact_XMLImport_AttachmentNoLongerExistsTest extends Tracker_Ar
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itSkipsFieldWithoutValidFile() {
+    public function itSkipsFieldWithoutValidFile()
+    {
         $data = array(
             $this->summary_field_id => 'Newly submitted'
         );
@@ -1204,18 +1281,20 @@ class Tracker_Artifact_XMLImport_AttachmentNoLongerExistsTest extends Tracker_Ar
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
             ->once()
-            ->with(Mockery::any(), Mockery::any(), $data, Mockery::any(), Mockery::any(), false)
+            ->with(Mockery::any(), Mockery::any(), $data, Mockery::any(), Mockery::any(), false, Mockery::any())
             ->andReturn($artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $file_field_id = 51;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1256,7 +1335,8 @@ class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsTest extends
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesAChangesetWithTwoFileElements() {
+    public function itCreatesAChangesetWithTwoFileElements()
+    {
         stub($this->formelement_factory)->getUsedFieldByName($this->tracker_id, 'attachment')->returns(
             aFileField()->withId($this->file_field_id)->build()
         );
@@ -1284,19 +1364,22 @@ class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsTest extends
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsAndChangesetsTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsAndChangesetsTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $file_field_id = 51;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1344,7 +1427,8 @@ class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsAndChangeset
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesChangesetsThatOnlyReferenceConcernedFiles() {
+    public function itCreatesChangesetsThatOnlyReferenceConcernedFiles()
+    {
         stub($this->formelement_factory)->getUsedFieldByName($this->tracker_id, 'attachment')->returns(
             aFileField()->withId($this->file_field_id)->build()
         );
@@ -1370,7 +1454,8 @@ class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsAndChangeset
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($artifact);
 
@@ -1386,22 +1471,25 @@ class Tracker_Artifact_XMLImport_OneArtifactWithMultipleAttachementsAndChangeset
                 Mockery::any(),
                 Mockery::any(),
                 Mockery::any(),
+                Mockery::any(),
                 Mockery::any()
             )
             ->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_CCListTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_CCListTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
     private $cc_field_id = 369;
     private $open_list_field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1433,17 +1521,19 @@ class Tracker_Artifact_XMLImport_CCListTest extends Tracker_Artifact_XMLImportBa
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itDelegatesOpenListComputationToField() {
+    public function itDelegatesOpenListComputationToField()
+    {
         stub($this->artifact_creator)->createBare()->returns($this->artifact);
         stub($this->artifact_creator)->createFirstChangeset()->returns($this->artifact);
 
         $this->open_list_field->shouldReceive('getFieldData')->with('homer')->once();
         $this->open_list_field->shouldReceive('getFieldData')->with('jeanjean')->once();
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 
-    public function itCreatesArtifactWithCCFieldData() {
+    public function itCreatesArtifactWithCCFieldData()
+    {
         $this->open_list_field->shouldReceive('getFieldData')->with('homer')->once()->andReturn('!112');
         $this->open_list_field->shouldReceive('getFieldData')->with('jeanjean')->once()->andReturn('!113');
 
@@ -1459,22 +1549,25 @@ class Tracker_Artifact_XMLImport_CCListTest extends Tracker_Artifact_XMLImportBa
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_PermsOnArtifactTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_PermsOnArtifactTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
     private $perms_field_id = 369;
     private $perms_field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1503,7 +1596,8 @@ class Tracker_Artifact_XMLImport_PermsOnArtifactTest extends Tracker_Artifact_XM
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesArtifactWithPermsFieldData() {
+    public function itCreatesArtifactWithPermsFieldData()
+    {
         $this->artifact->shouldReceive('getId')->andReturn(101);
         $this->artifact->shouldReceive('getTracker')->andReturn(Mockery::spy(Tracker::class));
 
@@ -1520,22 +1614,25 @@ class Tracker_Artifact_XMLImport_PermsOnArtifactTest extends Tracker_Artifact_XM
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_TextTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_TextTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
     private $text_field_id = 369;
     private $text_field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1563,7 +1660,8 @@ class Tracker_Artifact_XMLImport_TextTest extends Tracker_Artifact_XMLImportBase
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesArtifactWithTextData() {
+    public function itCreatesArtifactWithTextData()
+    {
         $this->artifact->shouldReceive('getId')->andReturn(101);
         $this->artifact->shouldReceive('getTracker')->andReturn(Mockery::spy(Tracker::class));
 
@@ -1580,15 +1678,17 @@ class Tracker_Artifact_XMLImport_TextTest extends Tracker_Artifact_XMLImportBase
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_AlphanumericTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_AlphanumericTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
@@ -1602,7 +1702,8 @@ class Tracker_Artifact_XMLImport_AlphanumericTest extends Tracker_Artifact_XMLIm
     private $date_field_id = 978;
     private $date_field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1661,12 +1762,14 @@ class Tracker_Artifact_XMLImport_AlphanumericTest extends Tracker_Artifact_XMLIm
             </artifacts>');
 
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
+        $this->url_mapping = \Mockery::mock(CreatedFileURLMapping::class);
 
         $this->artifact->shouldReceive('getId')->andReturn(101);
         $this->artifact->shouldReceive('getTracker')->andReturn(Mockery::spy(Tracker::class));
     }
 
-    public function itCreatesArtifactWithAlphanumFieldData() {
+    public function itCreatesArtifactWithAlphanumFieldData()
+    {
         stub($this->date_field)->isTimeDisplayed()->returns(false);
 
         $this->artifact_creator->shouldReceive('createBare')->once()->andReturn($this->artifact);
@@ -1684,39 +1787,43 @@ class Tracker_Artifact_XMLImport_AlphanumericTest extends Tracker_Artifact_XMLIm
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 
-     public function itCreatesArtifactWithAlphanumFieldDataAndTimeDisplayedDate() {
+    public function itCreatesArtifactWithAlphanumFieldDataAndTimeDisplayedDate()
+    {
         stub($this->date_field)->isTimeDisplayed()->returns(true);
 
         $this->artifact_creator->shouldReceive('createBare')->once()->andReturn($this->artifact);
 
         $this->artifact_creator->shouldReceive('createFirstChangeset')
-            ->once()
-            ->with(
-                 Mockery::any(),
-                 Mockery::any(),
-                 Mockery::on(function ($data) {
-                     return $data[$this->string_field_id] === 'Import artifact in tracker v5' &&
-                         $data[$this->int_field_id] === '5' &&
-                         $data[$this->float_field_id] === '4.5' &&
-                         $data[$this->date_field_id] === '2014-03-20 10:13';
-                 }),
-                 Mockery::any(),
-                 Mockery::any(),
-                 false
-            )
-            ->andReturn($this->artifact);
+           ->once()
+           ->with(
+               Mockery::any(),
+               Mockery::any(),
+               Mockery::on(function ($data) {
+                    return $data[$this->string_field_id] === 'Import artifact in tracker v5' &&
+                        $data[$this->int_field_id] === '5' &&
+                        $data[$this->float_field_id] === '4.5' &&
+                        $data[$this->date_field_id] === '2014-03-20 10:13';
+               }),
+               Mockery::any(),
+               Mockery::any(),
+               false,
+               Mockery::any()
+           )
+           ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 
-    public function itDoesntConvertEmptyDateInto70sdate() {
+    public function itDoesntConvertEmptyDateInto70sdate()
+    {
         $this->xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="4918">
@@ -1742,15 +1849,17 @@ class Tracker_Artifact_XMLImport_AlphanumericTest extends Tracker_Artifact_XMLIm
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_SelectboxTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_SelectboxTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $status_field;
     private $status_field_id = 234;
@@ -1758,7 +1867,8 @@ class Tracker_Artifact_XMLImport_SelectboxTest extends Tracker_Artifact_XMLImpor
     private $assto_field_id = 456;
     private $open_value_id = 104;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1801,7 +1911,8 @@ class Tracker_Artifact_XMLImport_SelectboxTest extends Tracker_Artifact_XMLImpor
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesArtifactWithSelectboxValue() {
+    public function itCreatesArtifactWithSelectboxValue()
+    {
         $this->artifact->shouldReceive('getId')->andReturn(101);
         $this->artifact->shouldReceive('getTracker')->andReturn(Mockery::spy(Tracker::class));
 
@@ -1818,15 +1929,17 @@ class Tracker_Artifact_XMLImport_SelectboxTest extends Tracker_Artifact_XMLImpor
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_StaticMultiSelectboxTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_StaticMultiSelectboxTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $static_multi_selectbox_field;
     private $static_multi_selectbox_field_id = 456;
@@ -1836,7 +1949,8 @@ class Tracker_Artifact_XMLImport_StaticMultiSelectboxTest extends Tracker_Artifa
     private $database_value_id    = 102;
     private $database_value_label = "Database";
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1875,7 +1989,8 @@ class Tracker_Artifact_XMLImport_StaticMultiSelectboxTest extends Tracker_Artifa
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesArtifactWithAllMultiSelectboxValue() {
+    public function itCreatesArtifactWithAllMultiSelectboxValue()
+    {
         $this->artifact->shouldReceive('getId')->andReturn(101);
         $this->artifact->shouldReceive('getTracker')->andReturn(Mockery::spy(Tracker::class));
 
@@ -1891,15 +2006,17 @@ class Tracker_Artifact_XMLImport_StaticMultiSelectboxTest extends Tracker_Artifa
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_UserMultiSelectboxTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_UserMultiSelectboxTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $user_multi_selectbox_field;
     private $user_multi_selectbox_field_id = 456;
@@ -1907,7 +2024,8 @@ class Tracker_Artifact_XMLImport_UserMultiSelectboxTest extends Tracker_Artifact
     private $user_01_id   = 101;
     private $user_02_id   = 102;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -1942,7 +2060,8 @@ class Tracker_Artifact_XMLImport_UserMultiSelectboxTest extends Tracker_Artifact
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesArtifactWithAllMultiSelectboxValue() {
+    public function itCreatesArtifactWithAllMultiSelectboxValue()
+    {
         $this->artifact->shouldReceive('getId')->andReturn(101);
         $this->artifact->shouldReceive('getTracker')->andReturn(Mockery::spy(Tracker::class));
 
@@ -1958,19 +2077,22 @@ class Tracker_Artifact_XMLImport_UserMultiSelectboxTest extends Tracker_Artifact
                 }),
                 Mockery::any(),
                 Mockery::any(),
-                false
+                false,
+                Mockery::any()
             )
             ->andReturn($this->artifact);
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_ChangesetsCreationFailureTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_ChangesetsCreationFailureTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -2007,7 +2129,8 @@ class Tracker_Artifact_XMLImport_ChangesetsCreationFailureTest extends Tracker_A
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesTheLastChangesetEvenWhenTheIntermediateFails() {
+    public function itCreatesTheLastChangesetEvenWhenTheIntermediateFails()
+    {
         $this->artifact_creator->shouldReceive('createBare')->once()->andReturn($this->artifact);
         $this->artifact_creator->shouldReceive('createFirstChangeset')->once()->andReturn($this->artifact);
 
@@ -2015,10 +2138,11 @@ class Tracker_Artifact_XMLImport_ChangesetsCreationFailureTest extends Tracker_A
         $this->new_changeset_creator->shouldReceive('create')->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
         $this->new_changeset_creator->shouldReceive('create')->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 
-    public function itCreatesTheLastChangesetEvenWhenTheIntermediateThrowsException() {
+    public function itCreatesTheLastChangesetEvenWhenTheIntermediateThrowsException()
+    {
         $this->artifact_creator->shouldReceive('createBare')->once()->andReturn($this->artifact);
         $this->artifact_creator->shouldReceive('createFirstChangeset')->once()->andReturn($this->artifact);
 
@@ -2026,15 +2150,17 @@ class Tracker_Artifact_XMLImport_ChangesetsCreationFailureTest extends Tracker_A
         $this->new_changeset_creator->shouldReceive('create')->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
         $this->new_changeset_creator->shouldReceive('create')->andReturn(\Mockery::spy(\Tracker_Artifact_Changeset::class));
 
-        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $this->xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_ArtifactLinkTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_ArtifactLinkTest extends Tracker_Artifact_XMLImportBaseTest
+{
     private $field_id = 369;
     private $field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->field = \Mockery::spy(\Tracker_FormElement_Field_ArtifactLink::class);
@@ -2046,7 +2172,8 @@ class Tracker_Artifact_XMLImport_ArtifactLinkTest extends Tracker_Artifact_XMLIm
     }
 
 
-    public function itShouldMapTheOldIdToTheNewOne() {
+    public function itShouldMapTheOldIdToTheNewOne()
+    {
         $xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="100">
@@ -2079,10 +2206,11 @@ class Tracker_Artifact_XMLImport_ArtifactLinkTest extends Tracker_Artifact_XMLIm
             $artlink_strategy = \Mockery::mock(\Tracker_Artifact_XMLImport_XMLImportFieldStrategyArtifactLink::class)->makePartial()->shouldAllowMockingProtectedMethods();
             stub($artlink_strategy)->getLastChangeset()->returns(false);
 
-            $this->importer->importFromXML($this->tracker, $xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+            $this->importer->importFromXML($this->tracker, $xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 
-    public function itNotifiesUnexistingArtifacts() {
+    public function itNotifiesUnexistingArtifacts()
+    {
         $xml_element = new SimpleXMLElement('<?xml version="1.0"?>
             <artifacts>
               <artifact id="100">
@@ -2104,8 +2232,7 @@ class Tracker_Artifact_XMLImport_ArtifactLinkTest extends Tracker_Artifact_XMLIm
                   </field_change>
                 </changeset>
               </artifact>
-            </artifacts>'
-        );
+            </artifacts>');
 
         $art1 = \Mockery::spy(\Tracker_Artifact::class);
         stub($art1)->getId()->returns(1);
@@ -2121,16 +2248,18 @@ class Tracker_Artifact_XMLImport_ArtifactLinkTest extends Tracker_Artifact_XMLIm
         stub($artlink_strategy)->getLastChangeset()->returns(false);
 
         expect($this->logger)->error()->count(1);
-        $this->importer->importFromXML($this->tracker, $xml_element, $this->extraction_path, $this->xml_mapping, $this->config);
+        $this->importer->importFromXML($this->tracker, $xml_element, $this->extraction_path, $this->xml_mapping, $this->url_mapping, $this->config);
     }
 }
 
-class Tracker_Artifact_XMLImport_BadDateTest extends Tracker_Artifact_XMLImportBaseTest {
+class Tracker_Artifact_XMLImport_BadDateTest extends Tracker_Artifact_XMLImportBaseTest
+{
 
     private $xml_element;
 
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -2152,7 +2281,8 @@ class Tracker_Artifact_XMLImport_BadDateTest extends Tracker_Artifact_XMLImportB
         $this->xml_mapping = new TrackerXmlFieldsMapping_InSamePlatform();
     }
 
-    public function itCreatesArtifactAtDate() {
+    public function itCreatesArtifactAtDate()
+    {
         expect($this->artifact_creator)->create()->never();
         expect($this->artifact_creator)->createBare()->never();
         expect($this->logger)->error()->once();
@@ -2162,8 +2292,8 @@ class Tracker_Artifact_XMLImport_BadDateTest extends Tracker_Artifact_XMLImportB
             $this->xml_element,
             $this->extraction_path,
             $this->xml_mapping,
+            $this->url_mapping,
             $this->config
         );
     }
-
 }

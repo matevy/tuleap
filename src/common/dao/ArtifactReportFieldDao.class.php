@@ -17,29 +17,35 @@
  * You should have received a copy of the GNU General Public License
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
-class ArtifactReportFieldDao extends DataAccessObject {
-    function __construct($da) {
+class ArtifactReportFieldDao extends DataAccessObject
+{
+    function __construct($da)
+    {
         parent::__construct($da);
         $this->table_name = 'artifact_report_field';
     }
-    
-    function prepareResultRanking($field_name, $report_id, $rank) {
+
+    function prepareResultRanking($field_name, $report_id, $rank)
+    {
         return $this->prepareRanking($field_name, $report_id, $rank, 'field_name', 'report_id', 'place_result');
     }
-    
-    function prepareQueryRanking($field_name, $report_id, $rank) {
+
+    function prepareQueryRanking($field_name, $report_id, $rank)
+    {
         return $this->prepareRanking($field_name, $report_id, $rank, 'field_name', 'report_id', 'place_query');
     }
-    
-    function searchByReportIdAndFieldName($report_id, $field_name) {
+
+    function searchByReportIdAndFieldName($report_id, $field_name)
+    {
         $sql = "SELECT *
                 FROM ". $this->table_name ."
                 WHERE field_name = ". $this->da->quoteSmart($field_name) ."
                   AND report_id  = ". $this->da->escapeInt($report_id);
         return $this->retrieve($sql);
     }
-    
-    function updateResultRanking($field_name, $report_id, $rank) {
+
+    function updateResultRanking($field_name, $report_id, $rank)
+    {
         $rank = $this->prepareResultRanking($field_name, $report_id, $rank);
         $sql = "UPDATE ". $this->table_name ."
                 SET place_result = ". $this->da->escapeInt($rank) ."
@@ -48,28 +54,29 @@ class ArtifactReportFieldDao extends DataAccessObject {
         echo $sql . PHP_EOL;
         return $this->update($sql);
     }
-    
-    function resizeColumns($report_id, $new_sizes) {
+
+    function resizeColumns($report_id, $new_sizes)
+    {
         if (is_array($new_sizes) && count($new_sizes)) {
             $sql = '';
             $set = '';
             $where = '';
             $i = 0;
-            foreach($new_sizes as $field_name => $col_width) {
+            foreach ($new_sizes as $field_name => $col_width) {
                 if (!$sql) {
                     $sql .= " UPDATE ";
                 } else {
                     $sql .= ", ";
                 }
                 $sql .= $this->table_name ." AS R_$i ";
-                
+
                 if (!$set) {
                     $set .= " SET ";
                 } else {
                     $set .= ", ";
                 }
                 $set .= " R_$i.col_width = ". $this->da->escapeInt($col_width);
-                
+
                 if (!$where) {
                     $where .= " WHERE ";
                 } else {
@@ -85,4 +92,3 @@ class ArtifactReportFieldDao extends DataAccessObject {
         return false;
     }
 }
-?>

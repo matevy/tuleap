@@ -19,20 +19,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class StandardPasswordHandler extends PasswordHandler {
-    public function verifyHashPassword($plain_password, $hash_password) {
+class StandardPasswordHandler extends PasswordHandler
+{
+    public function verifyHashPassword($plain_password, $hash_password)
+    {
         return password_verify($plain_password, $hash_password);
     }
 
-    public function computeHashPassword($plain_password) {
+    public function computeHashPassword($plain_password)
+    {
         return password_hash($plain_password, PASSWORD_DEFAULT);
     }
 
-    public function isPasswordNeedRehash($hash_password) {
+    public function isPasswordNeedRehash($hash_password)
+    {
         return password_needs_rehash($hash_password, PASSWORD_DEFAULT);
     }
 
-    public function computeUnixPassword($plain_password) {
+    public function computeUnixPassword($plain_password)
+    {
         $number_generator = new RandomNumberGenerator(self::SALT_SIZE);
         $salt             = $number_generator->getNumber();
         // We use SHA-512 with 5000 rounds to create the Unix Password

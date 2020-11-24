@@ -1,9 +1,9 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2010. All Rights Reserved.
  *
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -23,25 +23,29 @@ require_once('Docman_PermissionsManager.class.php');
 require_once('Docman_ItemFactory.class.php');
 
 
-class Docman_Error_PermissionDenied extends Error_PermissionDenied {
-    
+class Docman_Error_PermissionDenied extends Error_PermissionDenied
+{
+
         /**
      * Constructor of the class
      *
      * @return void
      */
-    function __construct() {
+    function __construct()
+    {
         parent::__construct();
     }
 
-    function getType() {
+    function getType()
+    {
         return 'docman_permission_denied';
     }
-    
-    function getTextBase() {
+
+    function getTextBase()
+    {
         return 'plugin_docman';
     }
-    
+
 
     /**
      * Returns the parameters needed to build interface
@@ -49,7 +53,8 @@ class Docman_Error_PermissionDenied extends Error_PermissionDenied {
      *
      * @return Array
      */
-    function returnBuildInterfaceParam() {
+    function returnBuildInterfaceParam()
+    {
         $param = array();
         $param['name']   = 'msg_docman_access';
         $param['func']   = 'docman_access_request';
@@ -69,7 +74,8 @@ class Docman_Error_PermissionDenied extends Error_PermissionDenied {
      *
      * @return String
      */
-    function urlTransform($url) {
+    function urlTransform($url)
+    {
         $query = $this->urlQueryToArray($url);
         if (!isset($query['action'])) {
             $url = $url.'&action=details&section=permissions';
@@ -96,9 +102,9 @@ class Docman_Error_PermissionDenied extends Error_PermissionDenied {
      *
      * @return String
      */
-    function getRedirectLink($urlData, $language) {
+    function getRedirectLink($urlData, $language)
+    {
         return $this->urlTransform($urlData);
-
     }
 
     /**
@@ -108,10 +114,11 @@ class Docman_Error_PermissionDenied extends Error_PermissionDenied {
      *
      * @return Array
      */
-    function urlQueryToArray($url) {
+    function urlQueryToArray($url)
+    {
         $params = array();
         $query  = explode('&', parse_url($url, PHP_URL_QUERY));
-        foreach($query as $tok) {
+        foreach ($query as $tok) {
             list($var, $val) = explode('=', $tok);
             $params[$var] = urldecode($val);
         }
@@ -126,7 +133,8 @@ class Docman_Error_PermissionDenied extends Error_PermissionDenied {
      *
      * @return Array
      */
-    function extractReceiver($project, $url) {
+    function extractReceiver($project, $url)
+    {
         $query = $this->urlQueryToArray($url);
         if (isset($query['id'])) {
             $id = $query['id'];
@@ -137,17 +145,19 @@ class Docman_Error_PermissionDenied extends Error_PermissionDenied {
                 if (isset($query['group_id'])) {
                     $itemFactory = $this->_getItemFactoryInstance($project->getId());
                     $res = $itemFactory->getRoot($project->getId());
-                    $row = $res->toRow();
-                    $query['id'] = $row['item_id'];
-
-                } else {
-                    array('admins' => array(), 'status' => false);
+                    if ($res !== null) {
+                        $row = $res->toRow();
+                        $query['id'] = $row['item_id'];
+                    }
                 }
             }
         }
 
         $pm = $this->_getPermissionManagerInstance($project->getId());
-        $adminList = $pm->getDocmanManagerUsers($query['id'],$project);
+        $adminList = [];
+        if (isset($query['id'])) {
+            $adminList = $pm->getDocmanManagerUsers($query['id'], $project);
+        }
         if (empty($adminList)) {
             $adminList = $pm->getDocmanAdminUsers($project);
         }
@@ -166,18 +176,18 @@ class Docman_Error_PermissionDenied extends Error_PermissionDenied {
      *
      * @return Docman_PermissionsManager
      */
-    function _getPermissionManagerInstance($groupId) {
+    function _getPermissionManagerInstance($groupId)
+    {
         return Docman_PermissionsManager::instance($groupId);
     }
-    
+
     /**
      * Wrapper for Docman_ItemFactory
      *
      * @return Docman_ItemFactory
      */
-    function _getItemFactoryInstance($groupId) {
+    function _getItemFactoryInstance($groupId)
+    {
         return Docman_ItemFactory::instance($groupId);
     }
-    
 }
-?>

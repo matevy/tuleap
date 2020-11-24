@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Git_Driver_Gerrit_MembershipCommand_AddUser extends Git_Driver_Gerrit_MembershipCommand_User {
+class Git_Driver_Gerrit_MembershipCommand_AddUser extends Git_Driver_Gerrit_MembershipCommand_User
+{
 
-    protected function executeForGerritUser(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $gerrit_user) {
+    protected function executeForGerritUser(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $gerrit_user)
+    {
         $driver = $this->getDriver($server);
         $driver->addUserToGroup(
             $server,
@@ -29,4 +31,3 @@ class Git_Driver_Gerrit_MembershipCommand_AddUser extends Git_Driver_Gerrit_Memb
         );
     }
 }
-?>

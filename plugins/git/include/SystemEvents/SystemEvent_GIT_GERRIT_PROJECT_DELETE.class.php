@@ -21,8 +21,6 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('common/system_event/SystemEvent.class.php');
-
 class SystemEvent_GIT_GERRIT_PROJECT_DELETE extends SystemEvent
 {
     public const NAME = 'GIT_GERRIT_PROJECT_DELETE';
@@ -108,11 +106,10 @@ class SystemEvent_GIT_GERRIT_PROJECT_DELETE extends SystemEvent
     ) {
         try {
             $this->driver_factory->getDriver($server)->deleteProject(
-                    $server,
-                    $project->getUnixName().'/'.$repository->getName()
+                $server,
+                $project->getUnixName().'/'.$repository->getName()
             );
             $backend->setGerritProjectAsDeleted($repository);
-
         } catch (Exception $e) {
             $this->error($e->getMessage().$e->getTraceAsString());
             return false;

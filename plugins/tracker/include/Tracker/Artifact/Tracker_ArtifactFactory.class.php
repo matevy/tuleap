@@ -23,22 +23,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\Http\HttpClientFactory;
-use Tuleap\Http\HTTPFactoryBuilder;
-use Tuleap\Tracker\RecentlyVisited\RecentlyVisitedDao;
-use Tuleap\Tracker\RecentlyVisited\VisitRecorder;
-use Tuleap\Tracker\Webhook\WebhookDao;
-use Tuleap\Tracker\Webhook\WebhookFactory;
-use Tuleap\Tracker\Webhook\WebhookStatusLogger;
-use Tuleap\Webhook\Emitter;
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
+use Tuleap\Tracker\Artifact\Changeset\FieldsToBeSavedInSpecificOrderRetriever;
+use Tuleap\Tracker\Artifact\MyArtifactsCollection;
+use Tuleap\Tracker\Artifact\RecentlyVisited\RecentlyVisitedDao;
+use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
 
-class Tracker_ArtifactFactory {
-    
+class Tracker_ArtifactFactory
+{
+
     protected $artifacts;
     /**
      * A protected constructor; prevents direct creation of object
      */
-    protected function __construct() {
+    protected function __construct()
+    {
         $this->artifacts = array();
     }
 
@@ -46,38 +46,41 @@ class Tracker_ArtifactFactory {
      * Hold an instance of the class
      */
     protected static $instance;
-    
+
     /**
      * The singleton method
      *
      * @return Tracker_ArtifactFactory an instance of this class
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (!isset(self::$instance)) {
-            $c = __CLASS__;
+            $c = self::class;
             self::setInstance(new $c);
         }
         return self::$instance;
     }
-    
+
     /**
      * Allows to inject a fake factory for test. DO NOT USE IT IN PRODUCTION!
-     * 
-     * @param Tracker_ArtifactFactory $factory 
+     *
+     * @param Tracker_ArtifactFactory $factory
      */
-    public static function setInstance(Tracker_ArtifactFactory $factory) {
+    public static function setInstance(Tracker_ArtifactFactory $factory)
+    {
         self::$instance = $factory;
     }
 
     /**
      * Allows clear factory instance for test. DO NOT USE IT IN PRODUCTION!
-     * 
-     * @param Tracker_ArtifactFactory $factory 
+     *
+     * @param Tracker_ArtifactFactory $factory
      */
-    public static function clearInstance() {
+    public static function clearInstance()
+    {
         self::$instance = null;
     }
-    
+
     /**
      * Return the artifact with the id $id, or null if not found
      *
@@ -85,7 +88,8 @@ class Tracker_ArtifactFactory {
      *
      * @return Tracker_Artifact|null the artifact identified by id (null if not found)
      */
-    public function getArtifactById($id) {
+    public function getArtifactById($id)
+    {
         if (!isset($this->artifacts[$id])) {
             $this->artifacts[$id] = null;
             $row = $this->getDao()->searchById($id)->getRow();
@@ -95,13 +99,13 @@ class Tracker_ArtifactFactory {
         }
         return $this->artifacts[$id];
     }
-    
+
     /**
      * Return the artifact corresponding to $id the user can access
-     * 
+     *
      * @param PFUser    $user
-     * @param Integer $id
-     * 
+     * @param int $id
+     *
      * @return Tracker_Artifact|null
      */
     public function getArtifactByIdUserCanView(PFUser $user, $id)
@@ -112,7 +116,7 @@ class Tracker_ArtifactFactory {
         }
         return null;
     }
-    
+
     /**
      * Returns all the artifacts of the tracker racker_id
      *
@@ -120,7 +124,8 @@ class Tracker_ArtifactFactory {
      *
      * @return array of Tracker_Artifact identified by id (array() if not found)
      */
-    public function getArtifactsByTrackerId($tracker_id) {
+    public function getArtifactsByTrackerId($tracker_id)
+    {
         $artifacts = array();
         foreach ($this->getDao()->searchByTrackerId($tracker_id) as $row) {
             $artifacts[$row['id']] = $this->getInstanceFromRow($row);
@@ -135,7 +140,8 @@ class Tracker_ArtifactFactory {
      *
      * @return Tracker_Artifact_PaginatedArtifacts
      */
-    public function getPaginatedArtifactsByTrackerId($tracker_id, $limit, $offset, $reverse_order) {
+    public function getPaginatedArtifactsByTrackerId($tracker_id, $limit, $offset, $reverse_order)
+    {
         $artifacts = array();
         foreach ($this->getDao()->searchPaginatedByTrackerId($tracker_id, $limit, $offset, $reverse_order) as $row) {
             $artifacts[$row['id']] = $this->getInstanceFromRow($row);
@@ -145,12 +151,12 @@ class Tracker_ArtifactFactory {
 
         return new Tracker_Artifact_PaginatedArtifacts($artifacts, $size);
     }
-    
+
     /**
      * Given a list of artifact ids, return corresponding artifact objects if any
-     * 
+     *
      * @param array $artifact_ids
-     * 
+     *
      * @return Tracker_Artifact[]
      */
     public function getArtifactsByArtifactIdList(array $artifact_ids)
@@ -180,7 +186,7 @@ class Tracker_ArtifactFactory {
 
         return $artifacts;
     }
-    
+
     /**
      * Returns all the artifacts of the tracker with id $tracker_id the User $user can read
      *
@@ -189,23 +195,25 @@ class Tracker_ArtifactFactory {
      *
      * @return array of Tracker_Artifact identified by id (array() if not found)
      */
-    public function getArtifactsByTrackerIdUserCanView(PFUser $user, $tracker_id) {
+    public function getArtifactsByTrackerIdUserCanView(PFUser $user, $tracker_id)
+    {
         $artifacts = array();
         foreach ($this->getDao()->searchByTrackerId($tracker_id) as $row) {
             $artifact = $this->getInstanceFromRow($row);
             if ($artifact->userCanView($user)) {
-                $artifacts[$row['id']] = $artifact; 
+                $artifacts[$row['id']] = $artifact;
             }
         }
         return $artifacts;
     }
-    
-    public function getOpenArtifactsByTrackerIdUserCanView(PFUser $user, $tracker_id) {
+
+    public function getOpenArtifactsByTrackerIdUserCanView(PFUser $user, $tracker_id)
+    {
         $artifacts = array();
         foreach ($this->getDao()->searchOpenByTrackerId($tracker_id) as $row) {
             $artifact = $this->getInstanceFromRow($row);
             if ($artifact->userCanView($user)) {
-                $artifacts[$row['id']] = $artifact; 
+                $artifacts[$row['id']] = $artifact;
             }
         }
         return $artifacts;
@@ -219,7 +227,8 @@ class Tracker_ArtifactFactory {
      * @param type $offset
      * @return Tracker_Artifact_PaginatedArtifacts
      */
-    public function getPaginatedPossibleParentArtifactsUserCanView(PFUser $user, $tracker_id, $limit, $offset) {
+    public function getPaginatedPossibleParentArtifactsUserCanView(PFUser $user, $tracker_id, $limit, $offset)
+    {
         $artifacts = array();
         foreach ($this->getDao()->searchOpenByTrackerIdWithTitle($tracker_id, $limit, $offset)->instanciateWith(array($this, 'getInstanceFromRow')) as $artifact) {
             if ($artifact->userCanView($user)) {
@@ -232,7 +241,8 @@ class Tracker_ArtifactFactory {
         return new Tracker_Artifact_PaginatedArtifacts($artifacts, $size);
     }
 
-    public function getClosedArtifactsByTrackerIdUserCanView(PFUser $user, $tracker_id) {
+    public function getClosedArtifactsByTrackerIdUserCanView(PFUser $user, $tracker_id)
+    {
         $artifacts = array();
         foreach ($this->getDao()->searchClosedByTrackerId($tracker_id) as $row) {
             $artifact = $this->getInstanceFromRow($row);
@@ -242,9 +252,9 @@ class Tracker_ArtifactFactory {
         }
         return $artifacts;
     }
-    
+
     /**
-     * Returns the "open" artifacts 
+     * Returns the "open" artifacts
      *  - assigned to user $user_id OR
      *  - submitted by user $user_id OR
      *  - submitted by or assigned to user $user_id.
@@ -252,95 +262,49 @@ class Tracker_ArtifactFactory {
      *  - searchOpenAssignedToUserId,
      *  - searchOpenSubmittedByUserId
      *  - searchOpenSubmittedByOrAssignedToUserId)
-     *
-     * in an array of the form:
-     * array(
-     *    $tracker_id => array(
-     *                      'tracker'   => $tracker (Tracker),
-     *                      'artifacts' => array(
-     *                                          'artifact' => $artifact (Tracker_Artifact),
-     *                                          'title'    => $title (string)
-     *                                     )
-     *                   )
-     * )
-     *
-     * @param int    $user_id  the id of the user
-     * @param string $callback the callback method
-     *
-     * @return array Complex array of artifacts group by trackers (see above)
      */
-    protected function getUserOpenArtifacts($user_id, $callback) {
-        $tf = TrackerFactory::instance();
-        $artifacts = array();
-        foreach ($this->getDao()->$callback($user_id) as $row) {
-            if (!isset($artifacts[$row['tracker_id']])) {
-                $tracker = $tf->getTrackerById($row['tracker_id']);
-                
-                $with_title = false;
-                if ($title_field = Tracker_Semantic_Title::load($tracker)->getField()) {
-                    if ($title_field->userCanRead()) {
-                        $with_title = true;
-                    }
-                }
-                
-                $artifacts[$row['tracker_id']] = array(
-                    'tracker'    => $tracker,
-                    'with_title' => $with_title,
-                    'artifacts'  => array(),
-                );
-            }
-            if (!isset($artifacts[$row['tracker_id']]['artifacts'][$row['id']])) {
-                $artifact = $this->getInstanceFromRow($row);
-                if ($artifact->userCanView()) {
-                    $artifacts[$row['tracker_id']]['artifacts'][$row['id']] = array(
-                        'artifact' => $artifact,
-                        'title'    => $artifacts[$row['tracker_id']]['with_title'] ? $this->getTitleFromRowAsText($row) : '',
-                    );
-                }
+    protected function getUserOpenArtifacts(PFUser $user, string $callback, ?int $offset, ?int $limit): MyArtifactsCollection
+    {
+        $my_artifacts = new MyArtifactsCollection(TrackerFactory::instance());
+        $dar = $this->getDao()->$callback($user, $offset, $limit);
+        $my_artifacts->setTotalNumberOfArtifacts($this->getDao()->foundRows());
+        foreach ($dar as $row) {
+            $tracker_id  = (int) $row['tracker_id'];
+            $artifact_id = (int) $row['id'];
+
+            $tracker = $my_artifacts->setTracker($tracker_id, $user);
+            if (! $my_artifacts->trackerHasArtifactId($tracker, $artifact_id)) {
+                $artifact = $this->getInstanceFromRow($my_artifacts->getRowAccordingToTrackerPermissions($tracker, $row));
+                $my_artifacts->addArtifactForTracker($tracker, $artifact);
             }
         }
-        return $artifacts;
+        return $my_artifacts;
     }
-    
+
     /**
      * Returns the "open" artifacts assigned to user $user_id
-     * in an array of the form: 
-     * @see getUserOpenArtifacts
-     *
-     * @param int $user_id the id of the user
-     *
-     * @return array Complex array of artifacts group by trackers (see above)
      */
-    public function getUserOpenArtifactsAssignedTo($user_id) {
-        return $this->getUserOpenArtifacts($user_id, 'searchOpenAssignedToUserId');
+    public function getUserOpenArtifactsAssignedTo(PFUser $user, ?int $offset = null, ?int $limit = null): MyArtifactsCollection
+    {
+        return $this->getUserOpenArtifacts($user, 'searchOpenAssignedToUserId', $offset, $limit);
     }
-    
+
     /**
      * Returns the "open" artifacts submitted by user $user_id
-     * in an array of the form: 
-     * @see getUserOpenArtifacts
-     * 
-     * @param int $user_id the id of the user
-     *
-     * @return array Complex array of artifacts group by trackers (see above)
      */
-    public function getUserOpenArtifactsSubmittedBy($user_id) {
-        return $this->getUserOpenArtifacts($user_id, 'searchOpenSubmittedByUserId');
+    public function getUserOpenArtifactsSubmittedBy(PFUser $user, ?int $offset = null, ?int $limit = null): MyArtifactsCollection
+    {
+        return $this->getUserOpenArtifacts($user, 'searchOpenSubmittedByUserId', $offset, $limit);
     }
-    
+
     /**
      * Returns the "open" artifacts assigned to or submitted by user $user_id
-     * in an array of the form:
-     * @see getUserOpenArtifacts
-     *
-     * @param int $user_id the id of the user
-     *
-     * @return array Complex array of artifacts group by trackers (see above)
      */
-    public function getUserOpenArtifactsSubmittedByOrAssignedTo($user_id) {
-        return $this->getUserOpenArtifacts($user_id, 'searchOpenSubmittedByOrAssignedToUserId');
+    public function getUserOpenArtifactsSubmittedByOrAssignedTo(PFUser $user, ?int $offset = null, ?int $limit = null): MyArtifactsCollection
+    {
+        return $this->getUserOpenArtifacts($user, 'searchOpenSubmittedByOrAssignedToUserId', $offset, $limit);
     }
-    
+
     /**
      * Buil an instance of artifact
      *
@@ -348,12 +312,13 @@ class Tracker_ArtifactFactory {
      *
      * @return Tracker_Artifact
      */
-    public function getInstanceFromRow($row) {
+    public function getInstanceFromRow($row)
+    {
         $artifact = new Tracker_Artifact(
-            $row['id'], 
-            $row['tracker_id'], 
-            $row['submitted_by'], 
-            $row['submitted_on'], 
+            $row['id'],
+            $row['tracker_id'],
+            $row['submitted_by'],
+            $row['submitted_on'],
             $row['use_artifact_permissions']
         );
         if (isset($row['title'])) {
@@ -361,59 +326,55 @@ class Tracker_ArtifactFactory {
         }
         return $artifact;
     }
-    
+
     protected $dao;
     /**
      * Returns the Tracker_ArtifactDao
      *
      * @return Tracker_ArtifactDao
      */
-    public function getDao() {
+    public function getDao()
+    {
         if (!$this->dao) {
             $this->dao = new Tracker_ArtifactDao();
         }
         return $this->dao;
     }
 
-    public function setDao(Tracker_ArtifactDao $dao) {
+    public function setDao(Tracker_ArtifactDao $dao)
+    {
         $this->dao = $dao;
     }
-    
+
     /**
      * Add an artefact in the tracker
-     * 
+     *
      * @param Tracker $tracker           The tracker this artifact belongs to
      * @param array   $fields_data       The data of the artifact to create
      * @param PFUser    $user              The user that want to create the artifact
-     * @param string  $email             The email if the user is anonymous (null if anonymous)
-     * @param boolean $send_notification true if a notification must be sent, false otherwise
-     * 
-     * @return Tracker_Artifact or false if an error occured
+     * @param string|null  $email             The email if the user is anonymous (null if anonymous)
+     * @param bool $send_notification true if a notification must be sent, false otherwise
+     *
+     * @return Tracker_Artifact|false false if an error occurred
      */
-    public function createArtifact(Tracker $tracker, $fields_data, PFUser $user, $email, $send_notification = true) {
+    public function createArtifact(Tracker $tracker, $fields_data, PFUser $user, $email, $send_notification = true)
+    {
         $formelement_factory = Tracker_FormElementFactory::instance();
         $fields_validator    = new Tracker_Artifact_Changeset_InitialChangesetFieldsValidator($formelement_factory);
         $visit_recorder      = new VisitRecorder(new RecentlyVisitedDao());
-        $webhook_dao         = new WebhookDao();
-        $emitter             = new Emitter(
-            HTTPFactoryBuilder::requestFactory(),
-            HTTPFactoryBuilder::streamFactory(),
-            HttpClientFactory::createAsyncClient(),
-            new WebhookStatusLogger($webhook_dao)
-        );
 
-        $webhook_factory = new WebhookFactory($webhook_dao);
+        $logger = new WrapperLogger(BackendLogger::getDefaultLogger(), self::class);
 
         $changeset_creator = new Tracker_Artifact_Changeset_InitialChangesetCreator(
             $fields_validator,
-            $formelement_factory,
+            new FieldsToBeSavedInSpecificOrderRetriever($formelement_factory),
             new Tracker_Artifact_ChangesetDao(),
             $this,
             EventManager::instance(),
-            $emitter,
-            $webhook_factory
+            new Tracker_Artifact_Changeset_ChangesetDataInitializator($formelement_factory),
+            $logger
         );
-        $creator = new Tracker_ArtifactCreator($this, $fields_validator, $changeset_creator, $visit_recorder);
+        $creator = new Tracker_ArtifactCreator($this, $fields_validator, $changeset_creator, $visit_recorder, $logger, new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()));
 
         if ($user->isAnonymous()) {
             $user->setEmail($email);
@@ -423,26 +384,30 @@ class Tracker_ArtifactFactory {
         return $creator->create($tracker, $fields_data, $user, $submitted_on, $send_notification);
     }
 
-    public function save(Tracker_Artifact $artifact) {
+    public function save(Tracker_Artifact $artifact)
+    {
         return $this->getDao()->save($artifact->getId(), $artifact->getTrackerId(), $artifact->useArtifactPermissions());
     }
 
     /**
      * @return Tracker_Artifact[]
      */
-    public function getLinkedArtifacts(Tracker_Artifact $artifact) {
+    public function getLinkedArtifacts(Tracker_Artifact $artifact)
+    {
         return $this->getDao()->getLinkedArtifacts($artifact->getId())->instanciateWith(array($this, 'getInstanceFromRow'));
     }
 
-    public function getIsChildLinkedArtifactsById(Tracker_Artifact $artifact) {
+    public function getIsChildLinkedArtifactsById(Tracker_Artifact $artifact)
+    {
         return $this->getDao()->searchIsChildLinkedArtifactsById($artifact->getId())->instanciateWith(array($this, 'getInstanceFromRow'));
     }
 
     /**
      * @return Tracker_Artifact[]
      */
-    public function getChildren(Tracker_Artifact $artifact) {
-        if($artifact->getTracker()->isProjectAllowedToUseNature()) {
+    public function getChildren(Tracker_Artifact $artifact)
+    {
+        if ($artifact->getTracker()->isProjectAllowedToUseNature()) {
             return $this->getDao()->getChildrenNatureMode($artifact->getId())->instanciateWith(array($this, 'getInstanceFromRow'));
         } else {
             return $this->getDao()->getChildren($artifact->getId())->instanciateWith(array($this, 'getInstanceFromRow'));
@@ -450,14 +415,16 @@ class Tracker_ArtifactFactory {
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
-    public function hasChildren(Tracker_Artifact $artifact) {
+    public function hasChildren(Tracker_Artifact $artifact)
+    {
         $children_count = $this->getDao()->getChildrenCount(array($artifact->getId()));
         return $children_count[$artifact->getId()] > 0;
     }
 
-    public function getChildrenCount(array $artifact_ids) {
+    public function getChildrenCount(array $artifact_ids)
+    {
         return $this->getDao()->getChildrenCount($artifact_ids);
     }
 
@@ -469,7 +436,8 @@ class Tracker_ArtifactFactory {
      * @param Tracker_Artifact[] $artifacts
      * @return Tracker_Artifact[]
      */
-    public function getChildrenForArtifacts(PFUser $user, array $artifacts) {
+    public function getChildrenForArtifacts(PFUser $user, array $artifacts)
+    {
         $children = array();
         if (count($artifacts) > 1) {
             foreach ($this->getDao()->getChildrenForArtifacts($this->getArtifactIds($artifacts))->instanciateWith(array($this, 'getInstanceFromRow')) as $artifact) {
@@ -481,11 +449,13 @@ class Tracker_ArtifactFactory {
         return $children;
     }
 
-    private function getArtifactIds(array $artifacts) {
+    private function getArtifactIds(array $artifacts)
+    {
         return array_map(array($this, 'getArtifactId'), $artifacts);
     }
 
-    private function getArtifactId(Tracker_Artifact $artifact) {
+    private function getArtifactId(Tracker_Artifact $artifact)
+    {
         return $artifact->getId();
     }
 
@@ -497,7 +467,8 @@ class Tracker_ArtifactFactory {
      * @param Tracker_Artifact[] $artifacts
      * @return Tracker_Artifact[]
      */
-    public function sortByPriority(array $artifacts) {
+    public function sortByPriority(array $artifacts)
+    {
         if (! $artifacts) {
             return $artifacts;
         }
@@ -505,7 +476,7 @@ class Tracker_ArtifactFactory {
         $sorted_artifacts = array();
         $ids              = array_map(array($this, 'getArtifactId'), $artifacts);
 
-        if($ids) {
+        if ($ids) {
             $artifacts        = array_combine($ids, $artifacts);
             $sorted_ids       = $this->getDao()->getIdsSortedByPriority($ids);
             $sorted_artifacts = array_flip($sorted_ids);
@@ -524,7 +495,8 @@ class Tracker_ArtifactFactory {
      * @param int[] $artifact_ids
      * @return Tracker_Artifact[]
      */
-    public function getParents(array $artifact_ids) {
+    public function getParents(array $artifact_ids)
+    {
         if (! $artifact_ids) {
             return array();
         }
@@ -541,7 +513,8 @@ class Tracker_ArtifactFactory {
      *
      * @param Tracker_Artifact[] $artifacts
      */
-    public function setTitles(array $artifacts) {
+    public function setTitles(array $artifacts)
+    {
         $artifact_ids = array();
         $index_map = array();
         foreach ($artifacts as $index_in_source_array => $artifact) {
@@ -570,7 +543,8 @@ class Tracker_ArtifactFactory {
      * @param array $tracker_ids
      * @return array Hash array where keys are artifact IDs
      */
-    public function getArtifactIdsLinkedToTrackers($artifact_ids, $tracker_ids) {
+    public function getArtifactIdsLinkedToTrackers($artifact_ids, $tracker_ids)
+    {
         $filtered_ids = array();
 
         $result = $this->getDao()->getArtifactIdsLinkedToTrackers($artifact_ids, $tracker_ids);

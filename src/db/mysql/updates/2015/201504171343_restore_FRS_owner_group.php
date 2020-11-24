@@ -19,13 +19,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201504171343_restore_FRS_owner_group extends ForgeUpgrade_Bucket {
+class b201504171343_restore_FRS_owner_group extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return "Restore FRS owner group";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->needed_group_name = 'codendiadm';
 
         $codendi_ugroup = posix_getgrnam($this->needed_group_name);
@@ -34,8 +37,9 @@ class b201504171343_restore_FRS_owner_group extends ForgeUpgrade_Bucket {
         $this->needed_access_right = '0755';
     }
 
-    public function up() {
-        include ('/etc/codendi/conf/local.inc');
+    public function up()
+    {
+        include('/etc/codendi/conf/local.inc');
         $project_dirs = new DirectoryIterator($ftp_frs_dir_prefix);
 
         foreach ($project_dirs as $project_dir) {
@@ -48,9 +52,9 @@ class b201504171343_restore_FRS_owner_group extends ForgeUpgrade_Bucket {
         }
     }
 
-    private function checkInProjectFolder(DirectoryIterator $frs_project_dirs) {
+    private function checkInProjectFolder(DirectoryIterator $frs_project_dirs)
+    {
         foreach ($frs_project_dirs as $frs_project_dir) {
-
             if ($this->folderNeedsToBeUpdated($frs_project_dir)) {
                 echo $frs_project_dir->getPathname() . ' needs to be updated' . PHP_EOL;
 
@@ -59,7 +63,8 @@ class b201504171343_restore_FRS_owner_group extends ForgeUpgrade_Bucket {
         }
     }
 
-    private function folderNeedsToBeUpdated(DirectoryIterator $frs_project_dir) {
+    private function folderNeedsToBeUpdated(DirectoryIterator $frs_project_dir)
+    {
         $comparable_folder_rights = $this->getComprarableFolderRights(
             $frs_project_dir->getPerms()
         );
@@ -70,7 +75,8 @@ class b201504171343_restore_FRS_owner_group extends ForgeUpgrade_Bucket {
                $frs_project_dir->getGroup() != $this->codendi_ugroup_id;
     }
 
-    private function getComprarableFolderRights($rights) {
+    private function getComprarableFolderRights($rights)
+    {
         return substr(sprintf('%o', $rights), -4);
     }
 }

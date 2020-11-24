@@ -22,8 +22,8 @@
 * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
 */
 
-require_once 'pre.php';
-require_once __DIR__.'/../include/statisticsPlugin.class.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
+require_once __DIR__ . '/../include/statisticsPlugin.php';
 
 $disk_data_purger = new Statistics_DiskUsagePurger(
     new Statistics_DiskUsageDao(),
@@ -37,7 +37,6 @@ try {
         new Statistics_ConfigurationDao()
     );
     $configuration_manager->activateDailyPurge();
-
 } catch (Statistics_PHPVersionException $e) {
     echo $e->getMessage() . PHP_EOL;
 }

@@ -18,17 +18,16 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/valid/Rule.class.php');
-
-require_once('common/language/BaseLanguage.class.php');
 Mock::generate('BaseLanguage');
 
-class Rule_ProjectFullNameTest extends TuleapTestCase {
+class Rule_ProjectFullNameTest extends TuleapTestCase
+{
 
-    function __construct($name = 'Rule_ProjectFullNameFormat test') {
+    function __construct($name = 'Rule_ProjectFullNameFormat test')
+    {
         parent::__construct($name);
     }
-    
+
     public function setUp()
     {
         parent::setUp();
@@ -37,7 +36,8 @@ class Rule_ProjectFullNameTest extends TuleapTestCase {
         $GLOBALS['Language']->setReturnValue('getText', 'name_too_long', array('include_account','name_too_long', 40));
     }
 
-    function testIsValid() {
+    function testIsValid()
+    {
         $rule = new Rule_ProjectFullName();
         $this->assertTrue($rule->isValid("prj"));
         $this->assertEqual($rule->getErrorMessage(), null);

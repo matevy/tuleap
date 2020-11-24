@@ -19,13 +19,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'pre.php';
+require_once __DIR__ . '/../www/include/pre.php';
 
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDetector;
 use Tuleap\Project\XML\Export;
 
 $posix_user = posix_getpwuid(posix_geteuid());
 $sys_user   = $posix_user['name'];
-if ( $sys_user !== 'root' && $sys_user !== 'codendiadm' ) {
+if ($sys_user !== 'root' && $sys_user !== 'codendiadm') {
     fwrite(STDERR, 'Unsufficient privileges for user '.$sys_user.PHP_EOL);
     exit(1);
 }
@@ -43,7 +45,8 @@ $long_options = array(
     'dir', 'all'
 );
 
-function usage() {
+function usage()
+{
     global $argv;
 
     echo <<< EOT
@@ -117,10 +120,11 @@ try {
         new UGroupManager(),
         $rng_validator,
         new UserXMLExporter(UserManager::instance(), $users_collection),
+        new SynchronizedProjectMembershipDetector(new SynchronizedProjectMembershipDao()),
         new ProjectXMLExporterLogger()
     );
 
-    if (isset ($arguments['dir'])) {
+    if (isset($arguments['dir'])) {
         $archive = new Export\DirectoryArchive($output);
     } else {
         $archive = new Export\ZipArchive($output);
@@ -170,31 +174,37 @@ try {
     exit(1);
 }
 
-class ProjectXMLExport_Archive extends ZipArchive {
+class ProjectXMLExport_Archive extends ZipArchive
+{
 
     private $archive_path;
 
-    public function open($filename, $flags = null) {
+    public function open($filename, $flags = null)
+    {
         $this->archive_path = $filename;
         return mkdir($filename, 0700, true);
     }
 
-    public function close() {
+    public function close()
+    {
         return true;
     }
 
-    public function addEmptyDir($dirname) {
+    public function addEmptyDir($dirname)
+    {
         if (!is_dir($this->archive_path.DIRECTORY_SEPARATOR.$dirname)) {
             return mkdir($this->archive_path.DIRECTORY_SEPARATOR.$dirname, 0700);
         }
         return true;
     }
 
-    public function addFile($filename, $localname = null, $start = 0, $length = 0) {
+    public function addFile($filename, $localname = null, $start = 0, $length = 0)
+    {
         return copy($filename, $this->archive_path.DIRECTORY_SEPARATOR.$localname);
     }
 
-    public function addFromString($localname, $contents) {
+    public function addFromString($localname, $contents)
+    {
         file_put_contents($this->archive_path.DIRECTORY_SEPARATOR.$localname, $contents);
         return true;
     }

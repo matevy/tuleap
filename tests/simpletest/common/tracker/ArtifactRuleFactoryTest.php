@@ -18,15 +18,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('common/tracker/ArtifactRuleFactory.class.php');
 
-require_once('common/dao/ArtifactRuleDao.class.php');
 Mock::generate('ArtifactRuleDao');
 Mock::generate('DataAccessResult');
-class ArtifactRuleFactoryTest extends TuleapTestCase {
+class ArtifactRuleFactoryTest extends TuleapTestCase
+{
 
-    function testGetRuleById() {
-        
+    function testGetRuleById()
+    {
+
         $rules_dar             = new MockDataAccessResult($this);
         $rules_dar->setReturnValue('getRow', array(
             'id'                => 123,
@@ -37,12 +37,12 @@ class ArtifactRuleFactoryTest extends TuleapTestCase {
             'rule_type'         => 4, //RuleValue
             'target_value_id'   => 100
         ));
-        
+
         $rules_dao             = new MockArtifactRuleDao($this);
         $rules_dao->setReturnReference('searchById', $rules_dar, array(123));
-        
+
         $arf = new ArtifactRuleFactory($rules_dao);
-        
+
         $r = $arf->getRuleById(123);
         $this->assertIsA($r, 'ArtifactRule');
         $this->assertIsA($r, 'ArtifactRuleValue');
@@ -51,10 +51,9 @@ class ArtifactRuleFactoryTest extends TuleapTestCase {
         $this->assertEqual($r->target_field, 4);
         $this->assertEqual($r->source_value, 10);
         $this->assertEqual($r->target_value, 100);
-        
+
         $this->assertFalse($arf->getRuleById(124), 'If id is inexistant, then return will be false');
-        
+
         $this->assertReference($arf->getRuleById(123), $r, 'We do not create two different instances for the same id');
     }
 }
-?>

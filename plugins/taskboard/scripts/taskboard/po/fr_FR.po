@@ -1,0 +1,153 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Nicolas Terray <nicolas.terray@enalean.com>\n"
+"Language-Team: \n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.6\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Add new card"
+msgstr "Ajouter une nouvelle carte"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Card label…"
+msgstr "Label de la carte…"
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "Collapse"
+msgstr "Réduire"
+
+msgid "Collapse \"%{ label }\" column"
+msgstr "Réduire la colonne \"%{ label }\""
+
+msgid "Define columns"
+msgstr "Définir les colonnes"
+
+msgid "Expand"
+msgstr "Étendre"
+
+msgid "Expand \"%{ label }\" column"
+msgstr "Agrandir la colonne \"%{ label }\""
+
+msgid "Hello,"
+msgstr "Bonjour,"
+
+msgid "Hide closed items"
+msgstr "Cacher les éléments clos"
+
+msgid "I understand this is under construction"
+msgstr "Je comprends que c'est en cours de construction"
+
+msgid ""
+"If you have any questions or if you want to leave feedback, drop an email to "
+"<a href=\"mailto:feedback-taskboard@enalean.com\">feedback-taskboard@enalean."
+"com</a> or join us on <a href=\"https://chat.tuleap.org\">chat.tuleap.org</"
+"a>."
+msgstr ""
+"Si vous avez des questions ou si vous souhaitez faire un retour "
+"d'information, envoyez un courriel à <a href=\"mailto:feedback-"
+"taskboard@enalean.com\">feedback-taskboard@enalean.com</a> ou joignez-nous "
+"sur <a href=\"https://chat.tuleap.org\">chat.tuleap.org</a>."
+
+msgid "Incompatible usage of color"
+msgstr "Incompatibilité dans le choix de la couleur"
+
+msgid "Initial effort"
+msgstr "Effort estimé"
+
+msgid "It seems an action you tried to perform can't be done"
+msgstr ""
+"Il semble que l'action que vous venez de tenter ne peut pas être réalisée"
+
+msgid "New remaining effort"
+msgstr "Nouvel effort restant"
+
+msgid "Only colors from the new palette can be used."
+msgstr "Seules les couleurs de la nouvelle palette peuvent être utilisées."
+
+msgid "Oops, there's an issue"
+msgstr "Oups, il y a eu un problème"
+
+msgid "Please <a href=\"%s\">adjust configuration</a> to use a suitable color."
+msgstr ""
+"Merci <a href=\"%s\">d'ajuster la configuration</a> afin d'utiliser une "
+"bonne couleur."
+
+msgid "Please edit the card to change the status, or add children if possible."
+msgstr ""
+"Veuillez éditer la carte pour changer son statut, ou ajouter des enfants si "
+"possible."
+
+msgid "Reload the page"
+msgstr "Recharger la page"
+
+msgid "Remaining effort"
+msgstr "Effort restant"
+
+msgid "Save"
+msgstr "Sauver"
+
+msgid "Show error details"
+msgstr "Voir les détails de l'erreur"
+
+msgid ""
+"Thanks for your interest in Tuleap next features. You're about to test a new "
+"feature that is under construction. All the buttons, links, menus, … might "
+"not work. This application <strong>will not work on IE11</strong>."
+msgstr ""
+"Merci pour votre intérêt pour les nouvelles fonctionnalités de Tuleap. Vous "
+"êtes sur le point de tester une fonctionnalité actuellement en cours de "
+"construction. Les boutons, liens, menus, … peuvent ne pas marcher. Cette "
+"application <strong>ne fonctionne pas sur IE11</strong>."
+
+msgid "The column is configured to use a color (%s) from the legacy palette."
+msgstr ""
+"La colonne est configurée pour utiliser une couleur (%s) qui fait partie de "
+"l'ancienne palette."
+
+msgid "This card does not have any status."
+msgstr "Cette carte n'a pas de statut."
+
+msgid ""
+"This card has status <strong>%s</strong> that does not map to current "
+"taskboard columns."
+msgstr ""
+"Cette carte a pour statut <strong>%s</strong> qui ne correspond pas aux "
+"colonnes de ce tableau des tâches."
+
+msgid "This column does not allow to drop this card here."
+msgstr "Cette colonne ne permet pas de déposer cette carte ici."
+
+msgid "This feature is under construction"
+msgstr "Cette fonctionnalité est en cours de construction"
+
+msgid "This taskboard is empty"
+msgstr "Ce tableau des tâches est vide"
+
+msgid "This taskboard is not properly configured"
+msgstr "Ce tableau des tâches n'est pas correctement configuré"
+
+msgid "This taskboard is not ready to be used"
+msgstr "Ce tableau des tâches n'est pas prêt à être utilisé"
+
+msgid "Toggle fullscreen mode"
+msgstr "Basculer le mode plein écran"
+
+msgid "View closed items"
+msgstr "Afficher les éléments clos"
+
+msgid "You have to configure the columns mapping"
+msgstr "Vous devez configurer les colonnes"
+
+msgid "Your project administrator needs to finish the planning configuration"
+msgstr "Votre administrateur de projet doit finir la configuration du planning"

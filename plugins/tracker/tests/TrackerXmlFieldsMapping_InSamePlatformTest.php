@@ -20,7 +20,8 @@
 
 require_once 'bootstrap.php';
 
-class TrackerXmlFieldsMapping_InSamePlatform_StaticTest extends TuleapTestCase {
+class TrackerXmlFieldsMapping_InSamePlatform_StaticTest extends TuleapTestCase
+{
 
     /** @var array */
     private $xml_mapping;
@@ -31,7 +32,8 @@ class TrackerXmlFieldsMapping_InSamePlatform_StaticTest extends TuleapTestCase {
     /** @var TrackerXmlMappingDataExtractor */
     private $xml_fields_mapping;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $static_value_01 = stub('Tracker_FormElement_Field_List_Bind_StaticValue')->getId()->returns(24076);
@@ -56,14 +58,16 @@ class TrackerXmlFieldsMapping_InSamePlatform_StaticTest extends TuleapTestCase {
         $this->xml_fields_mapping = new TrackerXmlFieldsMapping_InSamePlatform($this->xml_mapping);
     }
 
-    public function itGetsNewValueIdForAStaticList() {
+    public function itGetsNewValueIdForAStaticList()
+    {
         $new_value_id = $this->xml_fields_mapping->getNewValueId(24058);
 
         $this->assertEqual(24058, $new_value_id);
     }
 }
 
-class TrackerXmlFieldsMapping_InSamePlatform_UgroupsTest extends TuleapTestCase {
+class TrackerXmlFieldsMapping_InSamePlatform_UgroupsTest extends TuleapTestCase
+{
 
     /** @var array */
     private $xml_mapping;
@@ -74,7 +78,8 @@ class TrackerXmlFieldsMapping_InSamePlatform_UgroupsTest extends TuleapTestCase 
     /** @var TrackerXmlMappingDataExtractor */
     private $xml_fields_mapping;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $ugroup_value_01 = stub('Tracker_FormElement_Field_List_Bind_UgroupsValue')->getId()->returns(300);
@@ -93,7 +98,8 @@ class TrackerXmlFieldsMapping_InSamePlatform_UgroupsTest extends TuleapTestCase 
         $this->xml_fields_mapping = new TrackerXmlFieldsMapping_InSamePlatform($this->xml_mapping);
     }
 
-    public function itGetsNewValueIdForAUgroupList() {
+    public function itGetsNewValueIdForAUgroupList()
+    {
         $new_value_id = $this->xml_fields_mapping->getNewValueId(200);
 
         $this->assertEqual(200, $new_value_id);

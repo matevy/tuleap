@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2017. All rights reserved
+ * Copyright (c) Enalean, 2017-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -34,11 +34,11 @@ class Widget_MyRss extends Widget_Rss
     {
         parent::__construct(
             'myrss',
-            user_getid(),
+            UserManager::instance()->getCurrentUser()->getId(),
             UserDashboardController::LEGACY_DASHBOARD_TYPE
         );
     }
-    
+
     public function getDescription()
     {
         return $GLOBALS['Language']->getText('widget_description_rss', 'description');

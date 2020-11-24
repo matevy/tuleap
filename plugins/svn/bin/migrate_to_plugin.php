@@ -53,8 +53,8 @@ use Tuleap\SVN\Repository\RepositoryRegexpBuilder;
 use Tuleap\SVN\SvnAdmin;
 use Tuleap\SVN\SvnPermissionManager;
 
-require_once 'pre.php';
-require_once __DIR__.'/../include/svnPlugin.class.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
+require_once __DIR__ . '/../include/svnPlugin.php';
 
 function usage()
 {
@@ -98,7 +98,8 @@ $user_name       = $argv[3];
 
 $system_command = new System_Command();
 $logger         = new BackendLogger();
-$svn_admin      = new SvnAdmin($system_command, $logger, Backend::instance('SVN'));
+$backend_svn    = Backend::instance('SVN');
+$svn_admin      = new SvnAdmin($system_command, $logger, $backend_svn);
 $dao            = new Dao();
 
 $repository                  = new Repository("", $repository_name, '', '', $project);
@@ -111,7 +112,8 @@ $access_file_history_creator = new AccessFileHistoryCreator(
     new AccessFileHistoryDao(),
     $access_file_factory,
     $project_history_dao,
-    $project_history_formatter
+    $project_history_formatter,
+    $backend_svn
 );
 
 $repository_creator = new RepositoryCreator(
@@ -164,7 +166,7 @@ $svn_creator = new BareRepositoryCreator(
     $access_file_history_creator,
     $repository_manager,
     $user_manager,
-    Backend::instance(Backend::SVN),
+    $backend_svn,
     Backend::instance(Backend::SYSTEM),
     new RepositoryCopier($system_command),
     new SettingsRetriever(new SVN_Immutable_Tags_DAO(), new SvnNotificationDao(), new SVN_AccessFile_DAO())

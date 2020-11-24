@@ -5,15 +5,18 @@
       "Tuleap\\Tracker\\": ["include/", "include/Tracker/"]
     },
     "classmap": ["include/"],
-    "exclude-from-classmap": ["include/Tracker/Report/Query/Advanced/Grammar/Parser.php"]
+    "exclude-from-classmap": ["include/Tracker/Report/Query/Advanced/Grammar/Parser.php"],
+    "files": [
+        "include/tracker_permissions.php"
+    ]
   },
   "require": {
     "cocur/slugify": "^3.1",
-    "php-mime-mail-parser/php-mime-mail-parser": "^3.0"
+    "php-mime-mail-parser/php-mime-mail-parser": "^5.0"
   },
   "config": {
     "platform": {
-      "php": "7.2",
+      "php": "7.3",
       "ext-mbstring": "0",
       "ext-mailparse": "0"
     }

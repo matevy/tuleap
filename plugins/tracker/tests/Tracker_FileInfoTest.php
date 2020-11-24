@@ -21,7 +21,8 @@
 
 require_once('bootstrap.php');
 
-class Tracker_FileInfo_CommonTest extends TuleapTestCase {
+class Tracker_FileInfo_CommonTest extends TuleapTestCase
+{
     protected $fixture_data_dir;
     protected $working_directory;
     /** @var Tracker_FormElement_Field_File */
@@ -31,7 +32,8 @@ class Tracker_FileInfo_CommonTest extends TuleapTestCase {
     /** @var Tracker_FileInfo */
     protected $file_info_2;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $field_id = 123;
         $this->fixture_data_dir  = dirname(__FILE__) .'/_fixtures/attachments';
@@ -54,17 +56,19 @@ class Tracker_FileInfo_CommonTest extends TuleapTestCase {
         mkdir($this->working_directory);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         parent::tearDown();
         $this->recurseDeleteInDir($this->working_directory);
         rmdir($this->working_directory);
     }
-
 }
 
-class Tracker_FileInfoTest extends Tracker_FileInfo_CommonTest {
+class Tracker_FileInfoTest extends Tracker_FileInfo_CommonTest
+{
 
-    function testProperties() {
+    function testProperties()
+    {
         $this->assertEqual($this->file_info_1->getDescription(), 'Screenshot of the issue');
         $this->assertEqual($this->file_info_1->getSubmittedBy(), 103);
         $this->assertEqual($this->file_info_1->getFilename(), 'screenshot.png');
@@ -73,13 +77,15 @@ class Tracker_FileInfoTest extends Tracker_FileInfo_CommonTest {
         $this->assertEqual($this->file_info_1->getId(), 1);
     }
 
-    function testGetPath() {
+    function testGetPath()
+    {
         $this->assertEqual($this->file_info_1->getPath(), $this->working_directory .'/1');
         $this->assertEqual($this->file_info_1->getThumbnailPath(), $this->working_directory .'/thumbnails/1');
         $this->assertNull($this->file_info_2->getThumbnailPath(), "A file that is not an image doesn't have any thumbnail (for now)");
     }
 
-    function testIsImage() {
+    function testIsImage()
+    {
         $fi = partial_mock(Tracker_FileInfo::class, array('getFiletype'));
         $fi->setReturnValueAt(0, 'getFiletype', 'image/png');
         $fi->setReturnValueAt(1, 'getFiletype', 'image/gif');
@@ -97,7 +103,8 @@ class Tracker_FileInfoTest extends Tracker_FileInfo_CommonTest {
         $this->assertFalse($fi->isImage(), 'text/gif should not be detected as an image');
     }
 
-    function testHumanReadableFilesize() {
+    function testHumanReadableFilesize()
+    {
         $sizes = array(
             array(
                 'filesize' => 0,
@@ -144,7 +151,7 @@ class Tracker_FileInfoTest extends Tracker_FileInfo_CommonTest {
                 'human'    => '977 MB',
             ),
         );
-        foreach($sizes as $s) {
+        foreach ($sizes as $s) {
             $id = $field = $submitted_by = $description = $filename = $filetype = '';
             $f = new Tracker_FileInfo($id, $field, $submitted_by, $description, $filename, $s['filesize'], $filetype);
             $this->assertEqual($f->getHumanReadableFilesize(), $s['human']);
@@ -152,7 +159,8 @@ class Tracker_FileInfoTest extends Tracker_FileInfo_CommonTest {
     }
 }
 
-class Tracker_FileInfo_PostUploadActionsTest extends Tracker_FileInfo_CommonTest {
+class Tracker_FileInfo_PostUploadActionsTest extends Tracker_FileInfo_CommonTest
+{
 
     private $thumbnails_dir;
 
@@ -166,18 +174,19 @@ class Tracker_FileInfo_PostUploadActionsTest extends Tracker_FileInfo_CommonTest
         $this->backend = mock(Backend::class);
         Backend::setInstance(Backend::BACKEND, $this->backend);
 
-        Forgeconfig::store();
+        ForgeConfig::store();
     }
 
     public function tearDown()
     {
         Backend::clearInstances();
-        Forgeconfig::restore();
+        ForgeConfig::restore();
 
         parent::tearDown();
     }
 
-    public function itCreatesThumbnailForPng() {
+    public function itCreatesThumbnailForPng()
+    {
         copy($this->fixture_data_dir.'/logo.png', $this->working_directory.'/66');
 
         $file_info_1 = new Tracker_FileInfo(66, $this->field, 0, '', '', '', 'image/png');
@@ -195,7 +204,8 @@ class Tracker_FileInfo_PostUploadActionsTest extends Tracker_FileInfo_CommonTest
         ));
     }
 
-    public function itCreatesThumbnailForGif() {
+    public function itCreatesThumbnailForGif()
+    {
         copy($this->fixture_data_dir.'/logo.gif', $this->working_directory.'/111');
 
         $file_info_1 = new Tracker_FileInfo(111, $this->field, 0, '', '', '', 'image/gif');
@@ -212,9 +222,10 @@ class Tracker_FileInfo_PostUploadActionsTest extends Tracker_FileInfo_CommonTest
             'channels' => 3,
             'mime' => 'image/gif'
         ));
-     }
+    }
 
-     public function itCreatesThumbnailForJpeg() {
+    public function itCreatesThumbnailForJpeg()
+    {
         copy($this->fixture_data_dir.'/logo.jpg', $this->working_directory.'/421');
 
         $file_info_1 = new Tracker_FileInfo(421, $this->field, 0, '', '', '', 'image/jpg');
@@ -223,15 +234,14 @@ class Tracker_FileInfo_PostUploadActionsTest extends Tracker_FileInfo_CommonTest
 
         $this->assertTrue(file_exists($file_info_1->getThumbnailPath()));
         $this->assertEqual(getimagesize($file_info_1->getThumbnailPath()), array(
-            150,
-            55,
-            IMAGETYPE_JPEG,
-            'width="150" height="55"',
-            'bits' => 8,
-            'channels' => 3,
-            'mime' => 'image/jpeg'
+           150,
+           55,
+           IMAGETYPE_JPEG,
+           'width="150" height="55"',
+           'bits' => 8,
+           'channels' => 3,
+           'mime' => 'image/jpeg'
         ));
-
     }
 
     public function itEnsuresFilesIsOwnedByHttpUser()

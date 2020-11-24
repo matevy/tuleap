@@ -19,19 +19,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201203201103_add_column_group_id extends ForgeUpgrade_Bucket {
+class b201203201103_add_column_group_id extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add column group_id to plugin_agiledashboard_planning table
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE plugin_agiledashboard_planning
                 ADD COLUMN group_id INT( 11 ) UNSIGNED NOT NULL AFTER name";
         $res = $this->db->dbh->exec($sql);
@@ -39,11 +43,11 @@ EOT;
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding column group_id to plugin_agiledashboard_planning: '.implode(', ', $this->db->dbh->errorInfo()));
         }
     }
-    
-    public function postUp() {        
+
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('plugin_agiledashboard_planning', 'group_id')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('An error occured while adding column group_id to plugin_agiledashboard_planning');
         }
     }
 }
-?>

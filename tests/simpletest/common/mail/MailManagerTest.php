@@ -21,22 +21,26 @@
 Mock::generate('PFUser');
 Mock::generate('UserManager');
 
-class MailManagerTest extends TuleapTestCase {
+class MailManagerTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $user_manager = mock('UserManager');
         UserManager::setInstance($user_manager);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         UserManager::clearInstance();
         parent::tearDown();
     }
-    
-    function testGetMailPrefsShouldReturnUsersAccordingToPreferences() {
+
+    function testGetMailPrefsShouldReturnUsersAccordingToPreferences()
+    {
         $mm = TestHelper::getPartialMock('MailManager', array('getUserManager'));
-        
+
         $manuel = mock('PFUser');
         $manuel->setReturnValue('getPreference', 'html', array('user_tracker_mailformat'));
         $manuel->setReturnValue('getStatus', 'A');
@@ -44,98 +48,101 @@ class MailManagerTest extends TuleapTestCase {
         $nicolas = mock('PFUser');
         $nicolas->setReturnValue('getPreference', 'text', array('user_tracker_mailformat'));
         $nicolas->setReturnValue('getStatus', 'A');
-        
+
         $um = new MockUserManager();
         $um->setReturnValue('getAllUsersByEmail', array($manuel), array('manuel@enalean.com'));
         $um->setReturnValue('getAllUsersByEmail', array($nicolas), array('nicolas@enalean.com'));
         $mm->setReturnValue('getUserManager', $um);
-        
-        
+
         $addresses = array('manuel@enalean.com', 'nicolas@enalean.com');
-        
+
         $prefs = $mm->getMailPreferencesByEmail($addresses);
         $this->assertEqual($prefs['html'], array($manuel));
         $this->assertEqual($prefs['text'], array($nicolas));
     }
-    
-    function testGetMailPrefsShouldReturnUserWithTextPref() {
+
+    function testGetMailPrefsShouldReturnUserWithTextPref()
+    {
         $mm = TestHelper::getPartialMock('MailManager', array('getUserManager'));
-        
+
         $manuel = mock('PFUser');
         $manuel->setReturnValue('getPreference', 'text', array('user_tracker_mailformat'));
         $manuel->setReturnValue('getStatus', 'A');
-        
+
         $manuel2 = mock('PFUser');
         $manuel2->setReturnValue('getPreference', 'html', array('user_tracker_mailformat'));
         $manuel2->setReturnValue('getStatus', 'A');
-        
+
         $um = new MockUserManager();
         $um->setReturnValue('getAllUsersByEmail', array($manuel, $manuel2), array('manuel@enalean.com'));
-        
+
         $mm->setReturnValue('getUserManager', $um);
-        
+
         $addresses = array('manuel@enalean.com');
-        
+
         $prefs = $mm->getMailPreferencesByEmail($addresses);
         $this->assertEqual($prefs['text'], array($manuel));
         $this->assertEqual($prefs['html'], array());
     }
-    
-    function testGetMailPrefsShouldReturnUserWithHtmlPref() {
+
+    function testGetMailPrefsShouldReturnUserWithHtmlPref()
+    {
         $mm = TestHelper::getPartialMock('MailManager', array('getUserManager'));
-        
+
         $manuel = mock('PFUser');
         $manuel->setReturnValue('getPreference', false);
         $manuel->setReturnValue('getStatus', 'A');
-        
+
         $manuel2 = mock('PFUser');
         $manuel2->setReturnValue('getPreference', 'html', array('user_tracker_mailformat'));
         $manuel2->setReturnValue('getStatus', 'A');
-        
+
         $um = new MockUserManager();
         $um->setReturnValue('getAllUsersByEmail', array($manuel, $manuel2), array('manuel@enalean.com'));
-        
+
         $mm->setReturnValue('getUserManager', $um);
-        
+
         $addresses = array('manuel@enalean.com');
-        
+
         $prefs = $mm->getMailPreferencesByEmail($addresses);
         $this->assertEqual($prefs['text'], array());
         $this->assertEqual($prefs['html'], array($manuel2));
     }
-    
-    function testGetMailPrefsShouldReturnLastUser() {
+
+    function testGetMailPrefsShouldReturnLastUser()
+    {
         $mm = TestHelper::getPartialMock('MailManager', array('getUserManager'));
-        
+
         $manuel = mock('PFUser');
         $manuel->setReturnValue('getPreference', false);
         $manuel->setReturnValue('getStatus', 'A');
-        
+
         $manuel2 = mock('PFUser');
         $manuel2->setReturnValue('getPreference', false);
         $manuel2->setReturnValue('getStatus', 'A');
-        
+
         $um = new MockUserManager();
         $um->setReturnValue('getAllUsersByEmail', array($manuel, $manuel2), array('manuel@enalean.com'));
-        
+
         $mm->setReturnValue('getUserManager', $um);
-        
+
         $addresses = array('manuel@enalean.com');
-        
+
         $prefs = $mm->getMailPreferencesByEmail($addresses);
         $this->assertEqual($prefs['text'], array());
         $this->assertEqual($prefs['html'], array($manuel2));
     }
-    
-    function testGetMailPrefsShouldReturnHTMLUsersWhithAnonymous() {
+
+    function testGetMailPrefsShouldReturnHTMLUsersWhithAnonymous()
+    {
         $mm = TestHelper::getPartialMock('MailManager', array('getUserManager', 'getConfig'));
-        
+
         $um = new MockUserManager();
         $um->setReturnValue('getAllUsersByEmail', array());
         $mm->setReturnValue('getUserManager', $um);
-        
+
         $mm->setReturnValue('getConfig', 'fr_BE');
-        
+
         $prefs = $mm->getMailPreferencesByEmail(array('manuel@enalean.com'));
         $this->assertEqual($prefs['text'], array());
         $this->assertEqual(count($prefs['html']), 1);
@@ -143,22 +150,25 @@ class MailManagerTest extends TuleapTestCase {
         $this->assertEqual($prefs['html'][0]->isAnonymous(), true);
         $this->assertEqual($prefs['html'][0]->getLanguageID(), 'fr_BE');
     }
-    
-    function testGetMailPrefsByUsersShouldReturnHTMLByDefault() {
+
+    function testGetMailPrefsByUsersShouldReturnHTMLByDefault()
+    {
         $mm   = new MailManager();
         $user = new PFUser(array('id' => 123, 'language_id' => 'en_US'));
         $this->assertEqual($mm->getMailPreferencesByUser($user), Codendi_Mail_Interface::FORMAT_HTML);
     }
-    
-    function testGetMailPrefsByUsersShouldReturnTextWhenUserRequestIt() {
+
+    function testGetMailPrefsByUsersShouldReturnTextWhenUserRequestIt()
+    {
         $mm   = new MailManager();
         $user = mock('PFUser');
         $user->expectOnce('getPreference', array('user_tracker_mailformat'));
         $user->setReturnValue('getPreference', 'text');
         $this->assertEqual($mm->getMailPreferencesByUser($user), Codendi_Mail_Interface::FORMAT_TEXT);
     }
-    
-    function testGetMailPrefsByUsersShouldReturnHTMLWhenPreferenceReturnsFalse() {
+
+    function testGetMailPrefsByUsersShouldReturnHTMLWhenPreferenceReturnsFalse()
+    {
         $mm   = new MailManager();
         $user = mock('PFUser');
         $user->expectOnce('getPreference', array('user_tracker_mailformat'));

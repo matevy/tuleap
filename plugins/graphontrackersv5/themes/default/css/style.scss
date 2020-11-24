@@ -1,0 +1,140 @@
+@import '../../../../../src/www/themes/common/tlp/src/scss/variables/colors/common-colors';
+
+form[name=edit_chart_form] label {
+    font-weight: bold;
+}
+
+.tracker_report_renderer_graphontrackers_charts {
+    margin-top: 40px;
+    clear: both;
+
+    > .widget_report_graph {
+        display: inline-block;
+        padding: 0 20px 20px 0;
+        text-align: right;
+        vertical-align: top;
+
+        > .widget {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.widget_content > .tracker_report_renderer_graphontrackers_charts {
+    margin-top: 0;
+
+    > .widget_report_graph > .widget {
+        > .widget_titlebar {
+            border-bottom-color: #b2b2b2;
+            color: #222222;
+
+            > .plugin_graphontrackersv5_widget_actions {
+                display: none;
+            }
+        }
+
+        > .widget_content {
+            border-top-color: #b2b2b2;
+        }
+    }
+}
+
+.dashboard-widget {
+    .widget_titlebar {
+        color: #747474;
+        text-align: left;
+    }
+
+    .plugin_graphontrackersv5_widget_actions {
+        display: none;
+    }
+}
+
+.plugin_graphontrackersv5_widget_actions {
+    float: right;
+}
+
+.tracker_report_renderer_graphontrackers_graph {
+    text-align: center;
+
+    text {
+        fill: #222222;
+        font-family: 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
+        font-size: .9em;
+    }
+
+    .legend {
+        font-size: inherit;
+
+        > text {
+            fill: #222222;
+            font-style: normal;
+        }
+    }
+
+    /* Render bar charts*/
+    .axis {
+        path,
+        line {
+            stroke: #dddddd;
+            shape-rendering: crispEdges;
+        }
+
+        path {
+            display: none;
+        }
+    }
+
+    .y.axis line {
+        stroke-dasharray: 2, 2;
+        stroke: #bbbbbb;
+    }
+}
+
+@each $color-name, $colors in $tlp-swatch-color-map {
+    .graph-element-#{$color-name} {
+        fill: map-get($colors, 'primary');
+    }
+
+    .cumulative-flowchart-legend-color-#{$color-name} {
+        background-color: map-get($colors, 'primary');
+    }
+}
+
+.cumulative-flowchart-legend {
+    display: flex;
+    height: 60px;
+}
+
+.cumulative-flowchart-legend-list {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin: 0;
+    list-style: none;
+}
+
+.cumulative-flowchart-legend-list-item {
+    display: flex;
+    align-items: center;
+}
+
+.cumulative-flowchart-legend-color {
+    flex: 0 0 auto;
+    width: 12px;
+    height: 12px;
+    min-height: 0;
+    margin: 0 5px 0 0;
+    border-radius: 50%;
+    opacity: .8;
+}
+
+.graphontrackersv5-chart-spinner {
+    min-height: 100px;
+    background: url('/themes/common/images/tuleap-spinner.gif') no-repeat center center;
+}
+
+.tlp-alert-danger.graphontrackersv5-chart-error {
+    margin: 20px 0;
+}

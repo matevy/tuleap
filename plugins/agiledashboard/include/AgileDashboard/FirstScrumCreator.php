@@ -21,7 +21,8 @@
 use Tuleap\Project\XML\Import\ImportConfig;
 use Tuleap\Tracker\XML\Importer\TrackerExtraConfiguration;
 
-class AgileDashboard_FirstScrumCreator {
+class AgileDashboard_FirstScrumCreator
+{
 
     /** @var Project */
     private $project;
@@ -56,7 +57,8 @@ class AgileDashboard_FirstScrumCreator {
         $this->template_path    = AGILEDASHBOARD_RESOURCE_DIR .'/scrum_dashboard_template.xml';
     }
 
-    public function createFirstScrum() {
+    public function createFirstScrum()
+    {
         if ($this->areThereConfiguredPlannings()) {
             return;
         }
@@ -83,11 +85,13 @@ class AgileDashboard_FirstScrumCreator {
         }
     }
 
-    private function areThereConfiguredPlannings() {
+    private function areThereConfiguredPlannings()
+    {
         return count($this->planning_factory->getPlanningTrackerIdsByGroupId($this->project->getId())) > 0;
     }
 
-    private function getAlreadyExistingTracker() {
+    private function getAlreadyExistingTracker()
+    {
         foreach ($this->reserved_names as $itemname) {
             if ($this->tracker_factory->isShortNameExists($itemname, $this->project->getId())) {
                 return $itemname;

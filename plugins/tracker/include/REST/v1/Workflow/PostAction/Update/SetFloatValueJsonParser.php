@@ -39,12 +39,6 @@ class SetFloatValueJsonParser implements PostActionUpdateJsonParser
 
     public function parse(Workflow $workflow, array $json): PostAction
     {
-        if (isset($json['id']) && !is_int($json['id'])) {
-            throw new I18NRestException(
-                400,
-                dgettext('tuleap-tracker', "Bad id attribute format: int expected.")
-            );
-        }
         if (!isset($json['field_id'])) {
             throw new I18NRestException(
                 400,
@@ -70,14 +64,7 @@ class SetFloatValueJsonParser implements PostActionUpdateJsonParser
             );
         }
 
-        // In workflow simple mode, we drop and recreate all post actions. Therefore, the $id must be null to recreate them
-        $id = null;
-        if ($workflow->isAdvanced()) {
-            $id = $json['id'] ?? null;
-        }
-
         return new SetFloatValue(
-            $id,
             $json['field_id'],
             $json['value']
         );

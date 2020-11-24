@@ -22,7 +22,8 @@ namespace Tuleap\Tracker\REST\Artifact;
 
 use Tuleap\REST\JsonCast;
 
-class ArtifactFieldValuePermissionsOnArtifactFullRepresentation {
+class ArtifactFieldValuePermissionsOnArtifactFullRepresentation
+{
     /**
      * @var int ID of the field
      */
@@ -43,7 +44,8 @@ class ArtifactFieldValuePermissionsOnArtifactFullRepresentation {
      */
     public $granted_groups = array();
 
-    public function build($id, $type, $label, array $granted_groups) {
+    public function build($id, $type, $label, array $granted_groups)
+    {
         $this->field_id       = JsonCast::toInt($id);
         $this->type           = $type;
         $this->label          = $label;

@@ -16,13 +16,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'Statistics_Formatter.class.php';
-require_once('www/project/export/project_export_utils.php');
+require_once __DIR__ . '/../../../src/www/project/export/project_export_utils.php';
 
 /**
  * SCM statistics for SVN or CVS
  */
-class Statistics_Formatter_Scm extends Statistics_Formatter {
+class Statistics_Formatter_Scm extends Statistics_Formatter
+{
 
     private $scm;
     protected $dao;
@@ -33,11 +33,12 @@ class Statistics_Formatter_Scm extends Statistics_Formatter {
      * @param String  $scm       'svn' or 'cvs'
      * @param String  $startDate Period start date
      * @param String  $endDate   Period end date
-     * @param Integer $groupId   Project Id
+     * @param int $groupId Project Id
      *
      * @return void
      */
-    function __construct($scm, $startDate, $endDate, $groupId = null) {
+    function __construct($scm, $startDate, $endDate, $groupId = null)
+    {
         $this->scm = $scm;
         parent::__construct($startDate, $endDate, get_csv_separator(), $groupId);
     }
@@ -47,7 +48,8 @@ class Statistics_Formatter_Scm extends Statistics_Formatter {
      *
      * @return Array
      */
-    function calculateReadStats() {
+    function calculateReadStats()
+    {
         $readIndex[]          = $GLOBALS['Language']->getText('plugin_statistics', 'scm_month');
         $totalRead[]          = $GLOBALS['Language']->getText('plugin_statistics', 'scm_'.$this->scm.'_total_read');
         $readProjectsNumber[] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_'.$this->scm.'_read_project');
@@ -73,7 +75,8 @@ class Statistics_Formatter_Scm extends Statistics_Formatter {
      *
      * @return Array
      */
-    function calculateCommitsStats() {
+    function calculateCommitsStats()
+    {
         $commitsIndex[]         = $GLOBALS['Language']->getText('plugin_statistics', 'scm_month');
         $totalCommits[]         = $GLOBALS['Language']->getText('plugin_statistics', 'scm_'.$this->scm.'_total_commit');
         $commitProjectsNumber[] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_'.$this->scm.'_commit_project');
@@ -99,7 +102,8 @@ class Statistics_Formatter_Scm extends Statistics_Formatter {
      *
      * @return Array
      */
-    function topCommitByProject() {
+    function topCommitByProject()
+    {
         $result['project'][] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_top_commit_project');
         $result['commits'][] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_top_commit_project_commits');
         $commitsDar = $this->dao->commitsByProject($this->startDate, $this->endDate);
@@ -119,7 +123,8 @@ class Statistics_Formatter_Scm extends Statistics_Formatter {
      *
      * @return Array
      */
-    function topCommitByUser() {
+    function topCommitByUser()
+    {
         $result['user'][]    = $GLOBALS['Language']->getText('plugin_statistics', 'scm_top_commit_user');
         $result['commits'][] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_top_commit_user_commits');
         $commitsDar = $this->dao->commitsByUser($this->startDate, $this->endDate);
@@ -139,7 +144,8 @@ class Statistics_Formatter_Scm extends Statistics_Formatter {
      *
      * @return Array
      */
-    function repositoriesWithCommit() {
+    function repositoriesWithCommit()
+    {
         $repositories[] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_repo_total');
         $count = 0;
         $dar = $this->dao->repositoriesWithCommit($this->startDate, $this->endDate);
@@ -158,7 +164,8 @@ class Statistics_Formatter_Scm extends Statistics_Formatter {
      *
      * @return String
      */
-    function getStats() {
+    function getStats()
+    {
         $readStats = $this->calculateReadStats();
         $this->addLine($readStats['read_index']);
         $this->addLine($readStats['total_read']);
@@ -182,7 +189,4 @@ class Statistics_Formatter_Scm extends Statistics_Formatter {
 
         return $this->getCsvContent();
     }
-
 }
-
-?>

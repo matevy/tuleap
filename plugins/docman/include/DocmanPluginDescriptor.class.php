@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -19,14 +19,13 @@
  * You should have received a copy of the GNU General Public License
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('common/plugin/PluginDescriptor.class.php');
 
+class DocmanPluginDescriptor extends PluginDescriptor
+{
 
-class DocmanPluginDescriptor extends PluginDescriptor {
-    
-    function __construct() {
+    function __construct()
+    {
         parent::__construct($GLOBALS['Language']->getText('plugin_docman', 'descriptor_name'), false, $GLOBALS['Language']->getText('plugin_docman', 'descriptor_description'));
         $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');
     }
 }
-?>

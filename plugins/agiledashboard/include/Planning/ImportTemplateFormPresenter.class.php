@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,35 +18,41 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Planning_ImportTemplateFormPresenter {
+class Planning_ImportTemplateFormPresenter
+{
 
-    public const TULEAP_TEMPLATE_URL = 'https://tuleap.net/plugins/docman/?group_id=101&action=show&id=438';
+    public const TULEAP_TEMPLATE_URL = AGILEDASHBOARD_BASE_URL . '/resources/scrum_dashboard_template.xml';
 
     public $group_id;
 
 
-    public function __construct($group_id) {
+    public function __construct($group_id)
+    {
         $this->group_id = $group_id;
     }
 
-    public function adminTitle() {
+    public function adminTitle()
+    {
         return $GLOBALS['Language']->getText('plugin_agiledashboard', 'Admin');
     }
 
-    public function importTemplateHeader() {
+    public function importTemplateHeader()
+    {
         return  $GLOBALS['Language']->getText('plugin_agiledashboard', 'import_template');
     }
 
-    public function btnSubmit() {
+    public function btnSubmit()
+    {
         return $GLOBALS['Language']->getText('plugin_agiledashboard', 'btn_import');
     }
 
-    public function importInstructions() {
+    public function importInstructions()
+    {
         return $GLOBALS['Language']->getText('plugin_agiledashboard', 'import_instructions', array(self::TULEAP_TEMPLATE_URL));
     }
 
-    public function importNotes() {
+    public function importNotes()
+    {
         return $GLOBALS['Language']->getText('plugin_agiledashboard', 'import_notes');
     }
 }
-?>

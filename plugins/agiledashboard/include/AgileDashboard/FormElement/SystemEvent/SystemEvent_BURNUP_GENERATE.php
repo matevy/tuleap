@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,10 +24,14 @@ use BackendLogger;
 use DateTime;
 use SystemEvent;
 use TimePeriodWithoutWeekEnd;
+use Tracker_ArtifactFactory;
+use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsCacheDao;
+use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsCalculator;
 use Tuleap\AgileDashboard\FormElement\BurnupCacheDao;
 use Tuleap\AgileDashboard\FormElement\BurnupCacheDateRetriever;
 use Tuleap\AgileDashboard\FormElement\BurnupCalculator;
 use Tuleap\AgileDashboard\FormElement\BurnupDao;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 
 class SystemEvent_BURNUP_GENERATE extends SystemEvent // @codingStandardsIgnoreLine
 {
@@ -56,18 +60,46 @@ class SystemEvent_BURNUP_GENERATE extends SystemEvent // @codingStandardsIgnoreL
      */
     private $date_retriever;
 
+    /**
+     * @var Tracker_ArtifactFactory
+     */
+    private $artifact_factory;
+
+    /**
+     * @var SemanticTimeframeBuilder
+     */
+    private $semantic_timeframe_builder;
+
+    /**
+     * @var CountElementsCalculator
+     */
+    private $burnup_count_elements_calculator;
+
+    /**
+     * @var CountElementsCacheDao
+     */
+    private $count_elements_cache_dao;
+
     public function injectDependencies(
+        Tracker_ArtifactFactory $artifact_factory,
+        SemanticTimeframeBuilder $semantic_timeframe_builder,
         BurnupDao $burnup_dao,
         BurnupCalculator $burnup_calculator,
+        CountElementsCalculator $burnup_count_elements_calculator,
         BurnupCacheDao $cache_dao,
+        CountElementsCacheDao $count_elements_cache_dao,
         BackendLogger $logger,
         BurnupCacheDateRetriever $date_retriever
     ) {
-        $this->burnup_dao        = $burnup_dao;
-        $this->logger            = $logger;
-        $this->burnup_calculator = $burnup_calculator;
-        $this->cache_dao         = $cache_dao;
-        $this->date_retriever    = $date_retriever;
+        $this->artifact_factory                 = $artifact_factory;
+        $this->semantic_timeframe_builder       = $semantic_timeframe_builder;
+        $this->burnup_dao                       = $burnup_dao;
+        $this->logger                           = $logger;
+        $this->burnup_calculator                = $burnup_calculator;
+        $this->burnup_count_elements_calculator = $burnup_count_elements_calculator;
+        $this->cache_dao                        = $cache_dao;
+        $this->count_elements_cache_dao         = $count_elements_cache_dao;
+        $this->date_retriever                   = $date_retriever;
     }
 
     private function getArtifactIdFromParameters()
@@ -84,8 +116,32 @@ class SystemEvent_BURNUP_GENERATE extends SystemEvent // @codingStandardsIgnoreL
 
     public function process()
     {
-        $artifact_id        = $this->getArtifactIdFromParameters();
-        $burnup_information = $this->burnup_dao->getBurnupInformation($artifact_id);
+        $artifact_id = $this->getArtifactIdFromParameters();
+        $artifact = $this->artifact_factory->getArtifactById($artifact_id);
+        if ($artifact === null) {
+            $this->warning("Unable to find artifact ". $artifact_id);
+
+            return false;
+        }
+
+        $burnup_information = null;
+        $semantic_timeframe = $this->semantic_timeframe_builder->getSemantic($artifact->getTracker());
+        $start_date_field   = $semantic_timeframe->getStartDateField();
+        $duration_field     = $semantic_timeframe->getDurationField();
+        $end_date_field     = $semantic_timeframe->getEndDateField();
+        if ($start_date_field !== null && $duration_field !== null) {
+            $burnup_information = $this->burnup_dao->getBurnupInformationBasedOnDuration(
+                $artifact_id,
+                $start_date_field->getId(),
+                $duration_field->getId()
+            );
+        } elseif ($start_date_field !== null && $end_date_field !== null) {
+            $burnup_information = $this->burnup_dao->getBurnupInformationBasedOnEndDate(
+                $artifact_id,
+                $start_date_field->getId(),
+                $end_date_field->getId()
+            );
+        }
 
         $this->logger->debug("Calculating burnup for artifact #" . $artifact_id);
         if (! $burnup_information) {
@@ -96,10 +152,18 @@ class SystemEvent_BURNUP_GENERATE extends SystemEvent // @codingStandardsIgnoreL
             return false;
         }
 
-        $burnup_period = new TimePeriodWithoutWeekEnd(
-            $burnup_information['start_date'],
-            $burnup_information['duration']
-        );
+        if (empty($burnup_information['duration'])) {
+            $burnup_period = TimePeriodWithoutWeekEnd::buildFromEndDate(
+                $burnup_information['start_date'],
+                $burnup_information['end_date'],
+                $this->logger
+            );
+        } else {
+            $burnup_period = TimePeriodWithoutWeekEnd::buildFromDuration(
+                $burnup_information['start_date'],
+                $burnup_information['duration']
+            );
+        }
 
         $yesterday = new DateTime();
         $yesterday->setTime(23, 59, 59);
@@ -121,6 +185,22 @@ class SystemEvent_BURNUP_GENERATE extends SystemEvent // @codingStandardsIgnoreL
                 $worked_day,
                 $total_effort,
                 $team_effort
+            );
+
+            $subelements_cache_info = $this->burnup_count_elements_calculator->getValue(
+                $burnup_information['id'],
+                $worked_day
+            );
+
+            $closed_subelements = $subelements_cache_info->getClosedElements();
+            $total_subelements  = $subelements_cache_info->getTotalElements();
+
+            $this->logger->debug("Caching subelements value $closed_subelements/$total_subelements for artifact #" . $burnup_information['id']);
+            $this->count_elements_cache_dao->saveCachedFieldValueAtTimestampForSubelements(
+                (int) $burnup_information['id'],
+                (int) $worked_day,
+                (int) $total_subelements,
+                (int) $closed_subelements
             );
         }
 

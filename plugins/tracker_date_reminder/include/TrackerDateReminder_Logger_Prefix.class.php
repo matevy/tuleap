@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,26 +18,36 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'TrackerDateReminder_Logger.class.php';
+class TrackerDateReminder_Logger_Prefix extends TrackerDateReminder_Logger
+{
 
-class TrackerDateReminder_Logger_Prefix extends TrackerDateReminder_Logger {
-    
-    public function __construct($logger, $prefix) {
+    /**
+     * @var TrackerDateReminder_Logger
+     */
+    private $logger;
+    /**
+     * @var string
+     */
+    private $prefix;
+
+    public function __construct(TrackerDateReminder_Logger $logger, string $prefix)
+    {
         $this->logger = $logger;
         $this->prefix = $prefix;
     }
-    
-    public function info($message) {
+
+    public function info($message)
+    {
         $this->logger->info($this->prefix.' '.$message);
     }
 
-    public function warn($message) {
+    public function warn($message)
+    {
         $this->logger->warn($this->prefix.' '.$message);
     }
-    
-    public function error($message) {
+
+    public function error($message)
+    {
         $this->logger->error($this->prefix.' '.$message);
     }
 }
-
-?>

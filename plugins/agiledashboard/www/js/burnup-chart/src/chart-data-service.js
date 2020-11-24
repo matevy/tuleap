@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,7 +21,9 @@ import { getFormattedDates } from "charts-builders/chart-dates-service.js";
 
 export { getLastDayData, getDisplayableData };
 
-function getLastDayData(dataset) {
+function getLastDayData(generic_burnup_data) {
+    const dataset = generic_burnup_data.points_with_date;
+
     if (!dataset.length) {
         return {};
     }
@@ -29,9 +31,9 @@ function getLastDayData(dataset) {
     return dataset[dataset.length - 1];
 }
 
-function getDisplayableData(dataset) {
-    const filtered_data = dataset.filter(({ team_effort, total_effort }) => {
-        return team_effort !== null && total_effort !== null;
+function getDisplayableData(generic_burnup_data) {
+    const filtered_data = generic_burnup_data.points_with_date.filter(({ progression, total }) => {
+        return progression !== null && total !== null;
     });
 
     return getFormattedDates(filtered_data);

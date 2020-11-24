@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Project\Banner\BannerDisplay;
+
 class FlamingParrot_ContainerPresenter
 {
     /** @var array */
@@ -32,7 +34,12 @@ class FlamingParrot_ContainerPresenter
     /** @var string */
     private $project_link;
 
-    /** @var boolean */
+    /**
+     * @var ?int
+     */
+    public $project_id;
+
+    /** @var bool */
     public $project_is_public;
 
     /** @var string */
@@ -47,9 +54,9 @@ class FlamingParrot_ContainerPresenter
     /** @var string */
     private $feedback_content;
 
-    private $forge_version;
+    public $version;
 
-    /** @var boolean */
+    /** @var bool */
     private $sidebar_collapsable;
     /**
      * @var bool
@@ -67,6 +74,19 @@ class FlamingParrot_ContainerPresenter
      * @var bool
      */
     public $project_is_private_incl_restricted;
+    /**
+     * @var string
+     */
+    public $purified_banner_message = '';
+
+    /**
+     * @var bool
+     */
+    public $project_banner_is_visible = false;
+    /**
+     * @var int
+     */
+    public $current_user_id;
 
     public function __construct(
         array $breadcrumbs,
@@ -77,20 +97,25 @@ class FlamingParrot_ContainerPresenter
         $project_tabs,
         $feedback,
         $feedback_content,
-        $forge_version,
+        $version,
         $sidebar_collapsable,
+        ?BannerDisplay $banner,
+        PFUser $current_user,
         ?Project $project = null
     ) {
         $this->breadcrumbs         = $breadcrumbs;
         $this->toolbar             = $toolbar;
         $this->project_name        = $project_name;
         $this->project_link        = $project_link;
-        $this->project_is_public   = $project !== null && $project->isPublic();
+        if ($project !== null) {
+            $this->project_is_public = $project->isPublic();
+            $this->project_id        = $project->getID();
+        }
         $this->project_privacy     = $project_privacy;
         $this->project_tabs        = $project_tabs;
         $this->feedback            = $feedback;
         $this->feedback_content    = $feedback_content;
-        $this->forge_version       = $forge_version;
+        $this->version             = $version;
         $this->sidebar_collapsable = $sidebar_collapsable;
 
         $this->are_restricted_users_allowed = ForgeConfig::areRestrictedUsersAllowed();
@@ -100,57 +125,80 @@ class FlamingParrot_ContainerPresenter
             $this->project_is_private                 = $project->getAccess() === Project::ACCESS_PRIVATE_WO_RESTRICTED;
             $this->project_is_private_incl_restricted = $project->getAccess() === Project::ACCESS_PRIVATE;
         }
+
+        if ($banner !== null) {
+            $purifier                      = Codendi_HTMLPurifier::instance();
+            $this->purified_banner_message = $purifier->purify(
+                $banner->getMessage(),
+                Codendi_HTMLPurifier::CONFIG_MINIMAL_FORMATTING_NO_NEWLINE
+            );
+            $this->project_banner_is_visible = $banner->isVisible();
+        }
+        $this->current_user_id = $current_user->getId();
     }
 
-    public function hasBreadcrumbs() {
+    public function hasBreadcrumbs()
+    {
         return count($this->breadcrumbs) > 0;
     }
 
-    public function breadcrumbs() {
+    public function breadcrumbs()
+    {
         return $this->breadcrumbs;
     }
 
-    public function hasToolbar() {
+    public function hasToolbar()
+    {
         return (count($this->toolbar) > 0);
     }
 
-    public function toolbar() {
+    public function toolbar()
+    {
         return implode('</li><li>', $this->toolbar);
     }
 
-    public function hasSidebar() {
+    public function hasSidebar()
+    {
         return isset($this->project_tabs);
     }
 
-    public function is_sidebar_collapsable() {
+    public function is_sidebar_collapsable()
+    {
         return $this->sidebar_collapsable;
     }
 
-    public function sidebar() {
+    public function sidebar()
+    {
         return $this->project_tabs;
     }
 
-    public function powered_by() {
-        return $GLOBALS['Language']->getText('global','powered_by').' '.$this->forge_version;
+    public function has_copyright()
+    {
+        return $GLOBALS['Language']->hasText('global', 'copyright');
     }
 
-    public function copyright() {
-        return $GLOBALS['Language']->getText('global','copyright');
+    public function copyright()
+    {
+        return $GLOBALS['Language']->getOverridableText('global', 'copyright');
     }
 
-    public function projectName() {
+    public function projectName()
+    {
         return util_unconvert_htmlspecialchars($this->project_name);
     }
 
-    public function projectLink() {
+    public function projectLink()
+    {
         return $this->project_link;
     }
 
-    public function project_privacy() {
+    public function project_privacy()
+    {
         return $this->project_privacy;
     }
 
-    public function feedback() {
+    public function feedback()
+    {
         $html  = $this->feedback->htmlContent();
         $html .= $this->feedback_content;
 

@@ -17,6 +17,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\Project\Registration\LimitedToSiteAdministratorsException;
+use Tuleap\Project\Registration\ProjectRegistrationUserPermissionChecker;
+
 Mock::generate('PFUser');
 Mock::generate('UserManager');
 
@@ -25,86 +28,116 @@ Mock::generate('ProjectManager');
 Mock::generate('ProjectCreator');
 Mock::generate('SOAP_RequestLimitator');
 
-class Project_SOAPServerTest extends TuleapTestCase {
-    
-    function testAddProjectShouldFailWhenRequesterIsNotProjectAdmin() {
+class Project_SOAPServerTest extends TuleapTestCase
+{
+
+    /**
+     * @var \Mockery\LegacyMockInterface|\Mockery\MockInterface|ProjectRegistrationUserPermissionChecker
+     */
+    private $permission_checker;
+
+    function testAddProjectShouldFailWhenRequesterIsNotProjectAdmin()
+    {
         $server = $this->GivenASOAPServerWithBadTemplate();
-        
+
         $sessionKey      = '123';
         $adminSessionKey = '456';
         $shortName       = 'toto';
         $publicName      = 'Mon Toto';
         $privacy         = 'public';
         $templateId      = 101;
-        
+
         // We don't care about the exception details
         $this->expectException();
         $server->addProject($sessionKey, $adminSessionKey, $shortName, $publicName, $privacy, $templateId);
     }
-    
+
     /**
      *
      * @return Project_SOAPServer
      */
-    private function GivenASOAPServerWithBadTemplate() {
+    private function GivenASOAPServerWithBadTemplate()
+    {
         $server = $this->GivenASOAPServer();
-        
+
         $this->user->setReturnValue('isMember', false);
-        
+
         $template = new MockProject();
         $template->setReturnValue('isTemplate', false);
-        
+
         $this->pm->setReturnValue('getProject', $template, array(101));
-        
+
         return $server;
     }
 
-    function testAddProjectWithoutAValidAdminSessionKeyShouldNotCreateProject() {
+    function testAddProjectWithoutAValidAdminSessionKeyShouldNotCreateProject()
+    {
         $server = $this->GivenASOAPServerReadyToCreate();
-        
+
         $sessionKey      = '123';
         $adminSessionKey = '789';
         $shortName       = 'toto';
         $publicName      = 'Mon Toto';
         $privacy         = 'public';
         $templateId      = 100;
-        
+
         $this->expectException('SoapFault');
         $server->addProject($sessionKey, $adminSessionKey, $shortName, $publicName, $privacy, $templateId);
     }
 
-    
-    function testAddProjectShouldCreateAProject() {
+    function testAddProjectShouldFaitWhenPermissionIsNotGranted()
+    {
         $server = $this->GivenASOAPServerReadyToCreate();
-        
+
+        $this->permission_checker->shouldReceive('checkUserCreateAProject')->andThrow(new LimitedToSiteAdministratorsException());
+
         $sessionKey      = '123';
         $adminSessionKey = '456';
         $shortName       = 'toto';
         $publicName      = 'Mon Toto';
         $privacy         = 'public';
         $templateId      = 100;
-        
+
+        $this->expectException();
+
         $projectId = $server->addProject($sessionKey, $adminSessionKey, $shortName, $publicName, $privacy, $templateId);
         $this->assertEqual($projectId, 3459);
     }
-    
-    function testAddProjectShouldFailIfQuotaExceeded() {
+
+    function testAddProjectShouldCreateAProject()
+    {
         $server = $this->GivenASOAPServerReadyToCreate();
-        $this->limitator->throwOn('logCallTo', new SOAP_NbRequestsExceedLimit_Exception());
-        
+
         $sessionKey      = '123';
         $adminSessionKey = '456';
         $shortName       = 'toto';
         $publicName      = 'Mon Toto';
         $privacy         = 'public';
         $templateId      = 100;
-        
+
+        $projectId = $server->addProject($sessionKey, $adminSessionKey, $shortName, $publicName, $privacy, $templateId);
+        $this->assertEqual($projectId, 3459);
+    }
+
+    function testAddProjectShouldFailIfQuotaExceeded()
+    {
+        $server = $this->GivenASOAPServerReadyToCreate();
+        $this->limitator->throwOn('logCallTo', new SOAP_NbRequestsExceedLimit_Exception());
+
+        $sessionKey      = '123';
+        $adminSessionKey = '456';
+        $shortName       = 'toto';
+        $publicName      = 'Mon Toto';
+        $privacy         = 'public';
+        $templateId      = 100;
+
         $this->expectException('SoapFault');
         $projectId = $server->addProject($sessionKey, $adminSessionKey, $shortName, $publicName, $privacy, $templateId);
         $this->assertEqual($projectId, 3459);
     }
 
-    function testAddProjectShouldNotFailWhenRequesterIsNotProjectAdminAndHasPermission() {
+    function testAddProjectShouldNotFailWhenRequesterIsNotProjectAdminAndHasPermission()
+    {
         $server = $this->GivenASOAPServerReadyToCreate();
 
         stub($this->forge_ugroup_perm_manager)->doesUserHavePermission()->returns(true);
@@ -119,7 +152,8 @@ class Project_SOAPServerTest extends TuleapTestCase {
         $server->addProject($sessionKey, $adminSessionKey, $shortName, $publicName, $privacy, $templateId);
     }
 
-    function testAddProjectShouldFailWhenRequesterIsNotProjectAdminAndDoesNotHavePermission() {
+    function testAddProjectShouldFailWhenRequesterIsNotProjectAdminAndDoesNotHavePermission()
+    {
         $server = $this->GivenASOAPServerReadyToCreate();
 
         stub($this->forge_ugroup_perm_manager)->doesUserHavePermission()->returns(false);
@@ -134,44 +168,46 @@ class Project_SOAPServerTest extends TuleapTestCase {
         $this->expectException('SoapFault');
         $server->addProject($sessionKey, $adminSessionKey, $shortName, $publicName, $privacy, $templateId);
     }
-    
+
     /**
      *
      * @return Project_SOAPServer
      */
-    private function GivenASOAPServerReadyToCreate() {
+    private function GivenASOAPServerReadyToCreate()
+    {
         $server = $this->GivenASOAPServer();
-        
+
         $another_user = mock('PFUser');
         $another_user->setReturnValue('isLoggedIn', true);
-        
+
         $this->um->setReturnValue('getCurrentUser', $another_user, array('789'));
-        
+
         $template = new MockProject();
         stub($template)->getServices()->returns(array());
         $template->setReturnValue('isTemplate', true);
         $this->pm->setReturnValue('getProject', $template, array(100));
-        
+
         $new_project = new MockProject();
         $new_project->setReturnValue('getID', 3459);
-        $this->pc->setReturnValue('create', $new_project, array('toto', 'Mon Toto', '*'));
+        $this->pc->setReturnValue('create', $new_project, array('toto', 'Mon Toto', '*', '*'));
         stub($this->pm)->activate(true)->returns($new_project);
-        
+
         return $server;
     }
-    
-    private function GivenASOAPServer() {
+
+    private function GivenASOAPServer()
+    {
         $this->user = mock('PFUser');
         $this->user->setReturnValue('isLoggedIn', true);
-        
+
         $admin  = mock('PFUser');
         $admin->setReturnValue('isLoggedIn', true);
         $admin->setReturnValue('isSuperUser', true);
-        
+
         $this->um = new MockUserManager();
         $this->um->setReturnValue('getCurrentUser', $this->user, array('123'));
         $this->um->setReturnValue('getCurrentUser', $admin, array('456'));
-        
+
         $this->pm                        = new MockProjectManager();
         $this->pc                        = new MockProjectCreator();
         $this->guf                       = mock('GenericUserFactory');
@@ -182,26 +218,30 @@ class Project_SOAPServerTest extends TuleapTestCase {
         $this->service_usage_factory     = mock('Project_Service_ServiceUsageFactory');
         $this->service_usage_manager     = mock('Project_Service_ServiceUsageManager');
         $this->forge_ugroup_perm_manager = mock('User_ForgeUserGroupPermissionsManager');
+        $this->permission_checker        = \Mockery::mock(ProjectRegistrationUserPermissionChecker::class);
+        $this->permission_checker->shouldReceive('checkUserCreateAProject')->byDefault();
 
         $server = new Project_SOAPServer(
-                $this->pm,
-                $this->pc,
-                $this->um,
-                $this->guf,
-                $this->limitator,
-                $this->description_factory,
-                $this->description_manager,
-                $this->description_value_factory,
-                $this->service_usage_factory,
-                $this->service_usage_manager,
-                $this->forge_ugroup_perm_manager
+            $this->pm,
+            $this->pc,
+            $this->um,
+            $this->guf,
+            $this->limitator,
+            $this->description_factory,
+            $this->description_manager,
+            $this->description_value_factory,
+            $this->service_usage_factory,
+            $this->service_usage_manager,
+            $this->forge_ugroup_perm_manager,
+            $this->permission_checker
         );
 
         return $server;
     }
 }
 
-class Project_SOAPServer_6737_RequesterShouldBeProjectAdmin extends TuleapTestCase {
+class Project_SOAPServer_6737_RequesterShouldBeProjectAdmin extends TuleapTestCase
+{
 
     private $requester;
     private $requester_hash = '123';
@@ -212,8 +252,13 @@ class Project_SOAPServer_6737_RequesterShouldBeProjectAdmin extends TuleapTestCa
     private $project_manager;
     private $template_id = 100;
     private $project_creator;
+    /**
+     * @var \Mockery\LegacyMockInterface|\Mockery\MockInterface|ProjectRegistrationUserPermissionChecker
+     */
+    private $permission_checker;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->requester = stub('PFUser')->isLoggedIn()->returns(true);
@@ -234,6 +279,8 @@ class Project_SOAPServer_6737_RequesterShouldBeProjectAdmin extends TuleapTestCa
         $this->service_usage_factory     = mock('Project_Service_ServiceUsageFactory');
         $this->service_usage_manager     = mock('Project_Service_ServiceUsageManager');
         $this->forge_ugroup_perm_manager = mock('User_ForgeUserGroupPermissionsManager');
+        $this->permission_checker        = \Mockery::mock(ProjectRegistrationUserPermissionChecker::class);
+        $this->permission_checker->shouldReceive('checkUserCreateAProject')->byDefault();
 
         $template = stub('Project')->isTemplate()->returns(true);
         stub($template)->getServices()->returns(array());
@@ -242,21 +289,23 @@ class Project_SOAPServer_6737_RequesterShouldBeProjectAdmin extends TuleapTestCa
         stub($this->project_creator)->create()->returns(mock('Project'));
 
         $this->server = new Project_SOAPServer(
-                $this->project_manager,
-                $this->project_creator,
-                $this->user_manager,
-                $this->guf,
-                $this->limitator,
-                $this->description_factory,
-                $this->description_manager,
-                $this->description_value_factory,
-                $this->service_usage_factory,
-                $this->service_usage_manager,
-                $this->forge_ugroup_perm_manager
+            $this->project_manager,
+            $this->project_creator,
+            $this->user_manager,
+            $this->guf,
+            $this->limitator,
+            $this->description_factory,
+            $this->description_manager,
+            $this->description_value_factory,
+            $this->service_usage_factory,
+            $this->service_usage_manager,
+            $this->forge_ugroup_perm_manager,
+            $this->permission_checker,
         );
     }
 
-    public function itCallsCreateProjectWhileRequesterIsLoggedIn() {
+    public function itCallsCreateProjectWhileRequesterIsLoggedIn()
+    {
         expect($this->user_manager)->getCurrentUser()->count(3);
         // see if it has project approval permissions
         expect($this->user_manager)->getCurrentUser($this->requester_hash)->at(0);
@@ -276,18 +325,26 @@ class Project_SOAPServer_6737_RequesterShouldBeProjectAdmin extends TuleapTestCa
     }
 }
 
-class Project_SOAPServerObjectTest extends Project_SOAPServer {
-    public function isRequesterAdmin($sessionKey, $project_id) {
+class Project_SOAPServerObjectTest extends Project_SOAPServer
+{
+    public function isRequesterAdmin($sessionKey, $project_id)
+    {
         parent::isRequesterAdmin($sessionKey, $project_id);
     }
 }
 
-class Project_SOAPServerGenericUserTest extends TuleapTestCase {
+class Project_SOAPServerGenericUserTest extends TuleapTestCase
+{
 
     /** @var Project_SOAPServerObjectTest */
     private $server;
+    /**
+     * @var \Mockery\LegacyMockInterface|\Mockery\MockInterface|ProjectRegistrationUserPermissionChecker
+     */
+    private $permission_checker;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->group_id    = 154;
@@ -315,11 +372,13 @@ class Project_SOAPServerGenericUserTest extends TuleapTestCase {
         $service_usage_factory      = mock('Project_Service_ServiceUsageFactory');
         $service_usage_manager      = mock('Project_Service_ServiceUsageManager');
         $forge_ugroup_perm_manager  = mock('User_ForgeUserGroupPermissionsManager');
+        $this->permission_checker        = \Mockery::mock(ProjectRegistrationUserPermissionChecker::class);
+        $this->permission_checker->shouldReceive('checkUserCreateAProject')->byDefault();
 
         $this->server = partial_mock(
-                'Project_SOAPServerObjectTest',
-                array('isRequesterAdmin', 'addProjectMember', 'removeProjectMember'),
-                array(
+            'Project_SOAPServerObjectTest',
+            array('isRequesterAdmin', 'addProjectMember', 'removeProjectMember'),
+            array(
                     $project_manager,
                     $project_creator,
                     $user_manager,
@@ -330,7 +389,8 @@ class Project_SOAPServerGenericUserTest extends TuleapTestCase {
                     $description_value_factory,
                     $service_usage_factory,
                     $service_usage_manager,
-                    $forge_ugroup_perm_manager
+                    $forge_ugroup_perm_manager,
+                    $this->permission_checker,
                 )
         );
 
@@ -340,7 +400,8 @@ class Project_SOAPServerGenericUserTest extends TuleapTestCase {
         stub($user_manager)->getCurrentUser()->returns($this->admin);
     }
 
-    public function itCreatesANewGenericUser() {
+    public function itCreatesANewGenericUser()
+    {
         stub($this->generic_user_factory)->fetch($this->group_id)->returns(null);
 
         expect($this->generic_user_factory)->create($this->group_id, $this->password)->once();
@@ -349,7 +410,8 @@ class Project_SOAPServerGenericUserTest extends TuleapTestCase {
         $this->server->setProjectGenericUser($this->session_key, $this->group_id, $this->password);
     }
 
-    public function itDoesNotRecreateAGenericUserIfItAlreadyExists() {
+    public function itDoesNotRecreateAGenericUserIfItAlreadyExists()
+    {
         stub($this->generic_user_factory)->fetch($this->group_id)->returns($this->user);
 
         expect($this->generic_user_factory)->create($this->group_id, $this->password)->never();
@@ -358,7 +420,8 @@ class Project_SOAPServerGenericUserTest extends TuleapTestCase {
         $this->server->setProjectGenericUser($this->session_key, $this->group_id, $this->password);
     }
 
-    public function itUnsetsGenericUser() {
+    public function itUnsetsGenericUser()
+    {
         stub($this->generic_user_factory)->fetch($this->group_id)->returns($this->user);
 
         expect($this->server)->removeProjectMember()->once();
@@ -366,7 +429,8 @@ class Project_SOAPServerGenericUserTest extends TuleapTestCase {
         $this->server->unsetGenericUser($this->session_key, $this->group_id);
     }
 
-    public function itThrowsASoapFaultWhileUnsetingGenericUserIfItIsNotActivated() {
+    public function itThrowsASoapFaultWhileUnsetingGenericUserIfItIsNotActivated()
+    {
         stub($this->generic_user_factory)->fetch($this->group_id)->returns(null);
 
         $this->expectException();
@@ -375,9 +439,16 @@ class Project_SOAPServerGenericUserTest extends TuleapTestCase {
     }
 }
 
-class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
+class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    /**
+     * @var \Mockery\LegacyMockInterface|\Mockery\MockInterface|ProjectRegistrationUserPermissionChecker
+     */
+    private $permission_checker;
+
+    public function setUp()
+    {
         parent::setUp();
 
         $this->project                    = stub('Project')->getId()->returns(101);
@@ -393,6 +464,8 @@ class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
         $this->service_usage_factory      = mock('Project_Service_ServiceUsageFactory');
         $this->service_usage_manager      = mock('Project_Service_ServiceUsageManager');
         $this->forge_ugroup_perm_manager = mock('User_ForgeUserGroupPermissionsManager');
+        $this->permission_checker        = \Mockery::mock(ProjectRegistrationUserPermissionChecker::class);
+        $this->permission_checker->shouldReceive('checkUserCreateAProject')->byDefault();
 
         $this->server = new Project_SOAPServer(
             $this->project_manager,
@@ -405,7 +478,8 @@ class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
             $this->description_value_factory,
             $this->service_usage_factory,
             $this->service_usage_manager,
-            $this->forge_ugroup_perm_manager
+            $this->forge_ugroup_perm_manager,
+            $this->permission_checker,
         );
 
         $this->user       = stub('PFUser')->isLoggedIn()->returns(true);
@@ -415,7 +489,8 @@ class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
         stub($this->user)->getUserName()->returns('User 01');
     }
 
-    public function itReturnsThePlatformProjectDescriptionFields() {
+    public function itReturnsThePlatformProjectDescriptionFields()
+    {
         $field1 = stub('Project_CustomDescription_CustomDescription')->getId()->returns(145);
         stub($field1)->getName()->returns('champs 1');
         stub($field1)->isRequired()->returns(true);
@@ -448,7 +523,8 @@ class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
         $this->assertEqual($expected, $this->server->getPlateformProjectDescriptionFields($this->session_key));
     }
 
-    public function itThrowsASOAPFaultIfNoDescriptionField() {
+    public function itThrowsASOAPFaultIfNoDescriptionField()
+    {
         stub($this->description_factory)->getCustomDescriptions()->returns(array());
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user);
 
@@ -456,7 +532,8 @@ class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
         $this->server->getPlateformProjectDescriptionFields($this->session_key);
     }
 
-    public function itUpdatesProjectDescriptionFields() {
+    public function itUpdatesProjectDescriptionFields()
+    {
         $field_id_to_update = 104;
         $field_value        = 'new_value_104';
         $group_id           = 101;
@@ -468,7 +545,8 @@ class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
         $this->server->setProjectDescriptionFieldValue($this->session_key, $group_id, $field_id_to_update, $field_value);
     }
 
-    public function itThrowsASOAPFaultIfUserIsNotAdmin() {
+    public function itThrowsASOAPFaultIfUserIsNotAdmin()
+    {
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user);
 
         $field_id_to_update = 104;
@@ -479,7 +557,8 @@ class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
         $this->server->setProjectDescriptionFieldValue($this->session_key, $group_id, $field_id_to_update, $field_value);
     }
 
-    public function itReturnsTheProjectDescriptionFieldsValue() {
+    public function itReturnsTheProjectDescriptionFieldsValue()
+    {
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user);
         stub($this->user_manager)->getUserByUserName('User 01')->returns($this->user);
 
@@ -504,9 +583,16 @@ class Project_SOAPServerProjectDescriptionFieldsTest extends TuleapTestCase {
     }
 }
 
-class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
+class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    /**
+     * @var \Mockery\LegacyMockInterface|\Mockery\MockInterface|ProjectRegistrationUserPermissionChecker
+     */
+    private $permission_checker;
+
+    public function setUp()
+    {
         parent::setUp();
 
         $this->group_id                   = 101;
@@ -523,6 +609,8 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
         $this->service_usage_factory      = mock('Project_Service_ServiceUsageFactory');
         $this->service_usage_manager      = mock('Project_Service_ServiceUsageManager');
         $this->forge_ugroup_perm_manager  = mock('User_ForgeUserGroupPermissionsManager');
+        $this->permission_checker        = \Mockery::mock(ProjectRegistrationUserPermissionChecker::class);
+        $this->permission_checker->shouldReceive('checkUserCreateAProject')->byDefault();
 
         $this->server = new Project_SOAPServer(
             $this->project_manager,
@@ -535,7 +623,8 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
             $this->description_value_factory,
             $this->service_usage_factory,
             $this->service_usage_manager,
-            $this->forge_ugroup_perm_manager
+            $this->forge_ugroup_perm_manager,
+            $this->permission_checker,
         );
 
         $this->user       = stub('PFUser')->isLoggedIn()->returns(true);
@@ -545,14 +634,16 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
         stub($this->user)->getUserName()->returns('User 01');
     }
 
-    public function itThrowsAnExceptionIfTheUserIsNotProjectAdmin() {
+    public function itThrowsAnExceptionIfTheUserIsNotProjectAdmin()
+    {
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user);
 
         $this->expectException();
         $this->server->getProjectServicesUsage($this->session_key, $this->group_id);
     }
 
-    public function itThrowsAnExceptionIfProjectDoesNotExist() {
+    public function itThrowsAnExceptionIfProjectDoesNotExist()
+    {
         $project_manager = stub('ProjectManager')->getProject()->returns(null);
         $server          = new Project_SOAPServer(
             $project_manager,
@@ -565,7 +656,8 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
             $this->description_value_factory,
             $this->service_usage_factory,
             $this->service_usage_manager,
-            $this->forge_ugroup_perm_manager
+            $this->forge_ugroup_perm_manager,
+            $this->permission_checker,
         );
 
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user_admin);
@@ -574,7 +666,8 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
         $server->getProjectServicesUsage($this->session_key, $this->group_id);
     }
 
-    public function itReturnsTheServicesUsage() {
+    public function itReturnsTheServicesUsage()
+    {
         $service_usage1 = stub('Project_Service_ServiceUsage')->getId()->returns(170);
         stub($service_usage1)->getShortName()->returns('git');
         stub($service_usage1)->isUsed()->returns(true);
@@ -607,7 +700,8 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
         $this->assertIdentical($this->server->getProjectServicesUsage($this->session_key, $this->group_id), $expected);
     }
 
-    public function itActivatesAService() {
+    public function itActivatesAService()
+    {
         $service = stub('Project_Service_ServiceUsage')->getId()->returns(179);
 
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user_admin);
@@ -617,7 +711,8 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
         $this->assertTrue($this->server->activateService($this->session_key, $this->group_id, 179));
     }
 
-    public function itThrowsAnExceptionIfTheServiceDoesNotExistDuringActivation() {
+    public function itThrowsAnExceptionIfTheServiceDoesNotExistDuringActivation()
+    {
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user_admin);
         stub($this->service_usage_factory)->getServiceUsage($this->project, 179)->returns(null);
 
@@ -625,7 +720,8 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
         $this->assertTrue($this->server->activateService($this->session_key, $this->group_id, 179));
     }
 
-    public function itDeactivatesAService() {
+    public function itDeactivatesAService()
+    {
         $service = stub('Project_Service_ServiceUsage')->getId()->returns(179);
 
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user_admin);
@@ -635,7 +731,8 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
         $this->assertTrue($this->server->deactivateService($this->session_key, $this->group_id, 179));
     }
 
-    public function itThrowsAnExceptionIfTheServiceDoesNotExistDuringDeactivation() {
+    public function itThrowsAnExceptionIfTheServiceDoesNotExistDuringDeactivation()
+    {
         stub($this->user_manager)->getCurrentUser($this->session_key)->returns($this->user_admin);
         stub($this->service_usage_factory)->getServiceUsage($this->project, 179)->returns(null);
 
@@ -643,4 +740,3 @@ class Project_SOAPServerProjectServicesUsageTest extends TuleapTestCase {
         $this->assertTrue($this->server->deactivateService($this->session_key, $this->group_id, 179));
     }
 }
-?>

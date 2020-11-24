@@ -23,16 +23,18 @@
  *
  */
 
-require_once('common/valid/ValidFactory.class.php');
 Mock::generatePartial('Valid', 'Valid_For_Inheritance', array());
 
-class ValidHelperTest extends TuleapTestCase {
+class ValidHelperTest extends TuleapTestCase
+{
 
-    function UnitTestCase($name = 'ValidFactory test') {
+    function UnitTestCase($name = 'ValidFactory test')
+    {
         $this->UnitTestCase($name);
     }
 
-    function testUInt() {
+    function testUInt()
+    {
         $v = new Valid_UInt();
         $v->disableFeedback();
 
@@ -47,24 +49,26 @@ class ValidHelperTest extends TuleapTestCase {
         $this->assertFalse($v->validate('0.5'));
         $this->assertFalse($v->validate('toto'));
     }
-    
-    function testValidFactory() {
+
+    function testValidFactory()
+    {
         $v = new Valid_For_Inheritance($this);
-        
+
         //Does not work in php4 :(
         //$this->assertReference(ValidFactory::getInstance($v), $v);
         $this->assertIsA(ValidFactory::getInstance($v), 'Valid_For_Inheritance');
-        
+
         $this->assertIsA(ValidFactory::getInstance('string'), 'Valid_String');
         $this->assertIsA(ValidFactory::getInstance('uint'), 'Valid_UInt');
         $this->assertNull(ValidFactory::getInstance('machinbidulechose'));
-        
+
         $key = md5(uniqid(rand(), true));
         $w = ValidFactory::getInstance('string', $key);
         $this->assertEqual($w->getKey(), $key);
     }
 
-    public function itValidatesHTTPURI() {
+    public function itValidatesHTTPURI()
+    {
         $validator = new Valid_HTTPURI();
 
         $this->assertTrue($validator->validate('http://example.com/'));
@@ -76,7 +80,8 @@ class ValidHelperTest extends TuleapTestCase {
         $this->assertFalse($validator->validate('Stringhttp://'));
     }
 
-    public function itValidatesHTTPSURI() {
+    public function itValidatesHTTPSURI()
+    {
         $validator = new Valid_HTTPSURI();
 
         $this->assertTrue($validator->validate('https://example.com/'));

@@ -27,7 +27,8 @@
 use Tuleap\Project\Admin\GetProjectHistoryEntryValue;
 use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
 
-function project_admin_header($params, $current_pane_shortname) {
+function project_admin_header($params, $current_pane_shortname)
+{
     global $group_id;
 
     $params['toptab'] ='admin';
@@ -41,48 +42,16 @@ function project_admin_header($params, $current_pane_shortname) {
 
 /*
 
-	Standard footer to be used on all /project/admin/* pages
+    Standard footer to be used on all /project/admin/* pages
 
 */
 
-function project_admin_footer($params) {
+function project_admin_footer($params)
+{
     TemplateRendererFactory::build()
         ->getRenderer(ForgeConfig::get('tuleap_dir') . '/src/templates/project')
         ->renderToPage('end-project-admin-content', array());
     site_project_footer($params);
-}
-
-/*
-
-	The following functions are for group
-	audit trail
-
-	When changes like adduser/rmuser/change status
-	are made to a group, a row is added to audit trail
-	using group_add_history()
-
-*/
-
-/**
- * @deprecated
- *
- * handle the insertion of history for corresponding  parameters
- * $args is an array containing a list of parameters to use when
- * the message is to be displayed by the history.php script
- * The array is stored as a string at the end of the field_name
- * with the following format:
- * field_name %% [arg1, arg2...]
- *
- * @param String  $fieldName Event category
- * @param String  $oldValue  Event value
- * @param Integer $groupId   Project ID
- * @param Array   $args      list of parameters used for message display
- *
- * @return DataAccessResult
- */
-function group_add_history ($field_name,$old_value,$group_id, $args=false) {
-    $dao = new ProjectHistoryDao(CodendiDataAccess::instance());
-    return $dao->groupAddHistory($field_name,$old_value,$group_id, $args);
 }
 
 /**
@@ -91,39 +60,40 @@ function group_add_history ($field_name,$old_value,$group_id, $args=false) {
  * @param String  $event        Events category used to filter results
  * @param String  $subEventsBox Event used to filter results
  * @param String  $value        Value used to filter results
- * @param Integer $startDate    Start date used to filter results
- * @param Integer $endDate      End date used to filter results
+ * @param int $startDate Start date used to filter results
+ * @param int $endDate End date used to filter results
  * @param String  $by           User name used to filter results
  *
  * @return String
  */
-function build_grouphistory_filter ($event = null, $subEventsBox = null, $value = null, $startDate = null, $endDate = null, $by = null) {
+function build_grouphistory_filter($event = null, $subEventsBox = null, $value = null, $startDate = null, $endDate = null, $by = null)
+{
     $data_access = CodendiDataAccess::instance();
     $filter      = '';
     if (!empty($by)) {
         $user_helper = UserHelper::instance();
         $filter     .= $user_helper->getUserFilter($by);
     }
-    if(!empty($startDate)) {
+    if (!empty($startDate)) {
         list($timestamp,) = util_date_to_unixtime($startDate);
         $filter .= " AND group_history.date > " . $data_access->escapeInt($timestamp);
     }
-    if(!empty($endDate)) {
+    if (!empty($endDate)) {
         list($timestamp,) = util_date_to_unixtime($endDate);
         // Add 23:59:59 to timestamp
         $timestamp = $timestamp + 86399;
         $filter .= " AND group_history.date < " . $data_access->escapeInt($timestamp);
     }
-    if(!empty($value)) {
+    if (!empty($value)) {
         //all_users need specific treatement
-        if(stristr($value, $GLOBALS["Language"]->getText('project_ugroup', 'ugroup_anonymous_users_name_key'))) {
+        if (stristr($value, $GLOBALS["Language"]->getText('project_ugroup', 'ugroup_anonymous_users_name_key'))) {
             $value =  'ugroup_anonymous_users_name_key';
         }
         $filter .= " AND group_history.old_value LIKE " . $data_access->quoteLikeValueSurround($value);
     }
-    if(!empty($event) && strcmp($event, 'any')) {
+    if (!empty($event) && strcmp($event, 'any')) {
         $filter .= " AND ( 0 ";
-        if(!empty($subEventsBox)) {
+        if (!empty($subEventsBox)) {
             foreach ($subEventsBox as $key => $value) {
                 $filter .= " OR group_history.field_name LIKE " . $data_access->quoteLikeValueSuffix($key);
             }
@@ -143,7 +113,8 @@ function build_grouphistory_filter ($event = null, $subEventsBox = null, $value 
  *
  * @return Array
  */
-function get_history_entries() {
+function get_history_entries()
+{
     $subEvents = array('event_permission' => array('perm_reset_for_field',
                                                    'perm_granted_for_field',
                                                    'perm_reset_for_tracker',
@@ -207,14 +178,15 @@ function get_history_entries() {
 /**
  * Display the retrieved reult set
  *
- * @param Integer $group_id Id of the project
+ * @param int $group_id Id of the project
  * @param Array   $res      Contains the retrieved results
- * @param Boolean $export   Switch CSV export mode or HTML display
- * @param unknown_type $i   Line number indicator
+ * @param bool $export Switch CSV export mode or HTML display
+ * @param int $i   Line number indicator
  *
  * @return string html
  */
-function displayProjectHistoryResults($group_id, $res, $export = false, &$i = 1) {
+function displayProjectHistoryResults($group_id, $res, $export = false, &$i = 1)
+{
     global $Language;
     $html = '';
 
@@ -228,17 +200,17 @@ function displayProjectHistoryResults($group_id, $res, $export = false, &$i = 1)
         // If msg_key cannot be found in the localized message
         // catalog then display the msg has is because this is very
         // likely a legacy message (pre-localization version)
-        if (strpos($field," %% ") !== false) {
-            list($msg_key, $args) = explode(" %% ",$field);
+        if (strpos($field, " %% ") !== false) {
+            list($msg_key, $args) = explode(" %% ", $field);
             if ($args) {
-                $arr_args = explode('||',$args);
+                $arr_args = explode('||', $args);
             }
         } else {
             $msg_key=$field;
             $arr_args="";
         }
         $msg = $Language->getText('project_admin_utils', $msg_key, $arr_args);
-        if (!(strpos($msg,"*** Unkown msg") === false)) {
+        if (!(strpos($msg, "*** Unkown msg") === false)) {
             $msg = $field;
         }
 
@@ -251,12 +223,12 @@ function displayProjectHistoryResults($group_id, $res, $export = false, &$i = 1)
             $ugroupList = explode(",", $val);
             $val ='';
             foreach ($ugroupList as $ugroup) {
-                if ($val) {
+                if ($val === '') {
                     $val.=', ';
                 }
                 $val .= util_translate_name_ugroup($ugroup);
             }
-        } else if ($msg_key == "group_type") {
+        } elseif ($msg_key == "group_type") {
             $template = TemplateSingleton::instance();
             $val = $template->getLabel($val);
         }
@@ -267,13 +239,14 @@ function displayProjectHistoryResults($group_id, $res, $export = false, &$i = 1)
         if ($export) {
             $documents_body = array ('event' => $hp->purify($msg, CODENDI_PURIFIER_BASIC, $group_id),
                                      'val'   => $hp->purify($val),
-                                     'date'  => format_date($GLOBALS['Language']->getText('system', 'datefmt'),$row['date']),
+                                     'date'  => format_date($GLOBALS['Language']->getText('system', 'datefmt'), $row['date']),
                                      'by'    => UserHelper::instance()->getDisplayNameFromUserName($row['user_name']));
+            require_once __DIR__ . '/../export/project_export_utils.php';
             $html .= build_csv_record(array('event', 'val', 'date', 'by'), $documents_body)."\n";
         } else {
             $html .= $hp->purify($val, CODENDI_PURIFIER_BASIC);
             $user = UserManager::instance()->getUserByUserName($row['user_name']);
-            $html .= '</TD><TD>'.format_date($GLOBALS['Language']->getText('system', 'datefmt'),$row['date']).
+            $html .= '</TD><TD>'.format_date($GLOBALS['Language']->getText('system', 'datefmt'), $row['date']).
             '</TD><TD>'.UserHelper::instance()->getLinkOnUser($user).'</TD></TR>';
         }
     }
@@ -284,19 +257,20 @@ function displayProjectHistoryResults($group_id, $res, $export = false, &$i = 1)
 /**
  * Nicely html-formatted output of this group's audit trail
  *
- * @param Integer $group_id     Id of the project
- * @param Integer $offset       Offset used for pagination
- * @param Integer $limit        Number of events by page
+ * @param int $group_id Id of the project
+ * @param int $offset Offset used for pagination
+ * @param int $limit Number of events by page
  * @param String  $event        Events category used to filter results
  * @param array|null  $subEventsBox Event used to filter results
  * @param String  $value        Value used to filter results
- * @param Integer $startDate    Start date used to filter results
- * @param Integer $endDate      End date used to filter results
+ * @param int $startDate Start date used to filter results
+ * @param int $endDate End date used to filter results
  * @param String  $by           User name used to filter results
  *
  * @return void
  */
-function show_grouphistory ($group_id, $offset, $limit, $event = null, $subEventsBox = null, $value = null, $startDate = null, $endDate = null, $by = null) {
+function show_grouphistory($group_id, $offset, $limit, $event = null, $subEventsBox = null, $value = null, $startDate = null, $endDate = null, $by = null)
+{
     /*
      show the group_history rows that are relevant to
      this group_id
@@ -318,7 +292,7 @@ function show_grouphistory ($group_id, $offset, $limit, $event = null, $subEvent
 
     //Event select Box
     $events = array(
-        'any'              => $GLOBALS["Language"]->getText('global','any'),
+        'any'              => $GLOBALS["Language"]->getText('global', 'any'),
         'event_permission' => $GLOBALS["Language"]->getText("project_admin_utils", "event_permission"),
         'event_project'    => $GLOBALS["Language"]->getText("project_admin_utils", "event_project"),
         'event_user'       => $GLOBALS["Language"]->getText("project_admin_utils", "event_user"),
@@ -331,10 +305,10 @@ function show_grouphistory ($group_id, $offset, $limit, $event = null, $subEvent
     $select->addMultipleOptions($events, $event);
 
     $title_arr   = array();
-    $title_arr[] = $Language->getText('project_admin_utils','event');
-    $title_arr[] = $Language->getText('project_admin_utils','val');
-    $title_arr[] = $Language->getText('project_admin_utils','date');
-    $title_arr[] = $Language->getText('global','by');
+    $title_arr[] = $Language->getText('project_admin_utils', 'event');
+    $title_arr[] = $Language->getText('project_admin_utils', 'val');
+    $title_arr[] = $Language->getText('project_admin_utils', 'date');
+    $title_arr[] = $Language->getText('global', 'by');
 
     $index = 1;
 
@@ -364,7 +338,7 @@ function show_grouphistory ($group_id, $offset, $limit, $event = null, $subEvent
         $translated_events[$sub_event_category] = $translated_sub_events;
     }
 
-    if(isset($subEventsString)) {
+    if (isset($subEventsString)) {
         $selectedSubEvents = explode(",", $subEventsString);
         foreach ($selectedSubEvents as $element) {
             $subEventsBox[] = $element;
@@ -390,29 +364,30 @@ function show_grouphistory ($group_id, $offset, $limit, $event = null, $subEvent
 /**
  * Export project history to a csv file
  *
- * @param Integer $group_id     Id of the project
+ * @param int $group_id Id of the project
  * @param String  $event        Events category used to filter results
  * @param String  $subEventsBox Event used to filter results
  * @param String  $value        Value used to filter results
- * @param Integer $startDate    Start date used to filter results
- * @param Integer $endDate      End date used to filter results
+ * @param int $startDate Start date used to filter results
+ * @param int $endDate End date used to filter results
  * @param String  $by           User name used to filter results
  *
  * @return void
  */
-function export_grouphistory ($group_id, $event = null, $subEventsBox = null, $value = null, $startDate = null, $endDate = null, $by = null) {
+function export_grouphistory($group_id, $event = null, $subEventsBox = null, $value = null, $startDate = null, $endDate = null, $by = null)
+{
     global $Language;
 
-    header ('Content-Type: text/csv');
-    header ('Content-Disposition: filename=project_history.csv');
+    header('Content-Type: text/csv');
+    header('Content-Disposition: filename=project_history.csv');
 
     $eol = "\n";
 
     $col_list = array('event', 'val', 'date', 'by');
-    $documents_title = array ('event' => $Language->getText('project_admin_utils','event'),
-                              'val'   => $Language->getText('project_admin_utils','val'),
-                              'date'  => $Language->getText('project_admin_utils','date'),
-                              'by'    => $Language->getText('global','by'));
+    $documents_title = array ('event' => $Language->getText('project_admin_utils', 'event'),
+                              'val'   => $Language->getText('project_admin_utils', 'val'),
+                              'date'  => $Language->getText('project_admin_utils', 'date'),
+                              'by'    => $Language->getText('global', 'by'));
     echo build_csv_header($col_list, $documents_title).$eol;
 
     $dao = new ProjectHistoryDao(CodendiDataAccess::instance());
@@ -424,4 +399,3 @@ function export_grouphistory ($group_id, $event = null, $subEventsBox = null, $v
     }
     echo build_csv_header($col_list, array()).$eol;
 }
-?>

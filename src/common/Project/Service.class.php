@@ -1,28 +1,26 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2011 - Present. All rights reserved
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
-* Service
-*/
-class Service {
-
+class Service // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
+{
     public const SUMMARY   = 'summary';
     public const ADMIN     = 'admin';
     public const FORUM     = 'forum';
@@ -38,13 +36,44 @@ class Service {
     public const SCOPE_SYSTEM  = 'system';
     public const SCOPE_PROJECT = 'project';
 
+    private const ICONS = [
+        self::ADMIN     => 'fa-cogs',
+        self::FORUM     => 'fa-users',
+        self::HOMEPAGE  => 'fa-home',
+        self::ML        => 'fa-envelope',
+        self::NEWS      => 'fa-rss',
+        self::CVS       => 'fa-tlp-versioning-cvs',
+        self::WIKI      => 'fa-tlp-wiki',
+        self::TRACKERV3 => 'fa-list-ol',
+    ];
+
+    /**
+     * @var array{
+     *          service_id: int,
+     *          group_id: int,
+     *          label: string,
+     *          description: string,
+     *          short_name: string,
+     *          link: string,
+     *          is_active: int,
+     *          is_used: int,
+     *          scope: string,
+     *          rank: int,
+     *          location: string,
+     *          server_id: ?int,
+     *          is_in_iframe: int,
+     *          is_in_new_tab: bool,
+     *          icon: string
+     *       }
+     */
     public $data;
-    
+
     /**
      * @var Project
      */
     public $project;
-    
+
+
     /**
      * Create an instance of Service
      *
@@ -53,77 +82,101 @@ class Service {
      *
      * @throws ServiceNotAllowedForProjectException if the Service is not allowed for the project (mainly for plugins)
      */
-    public function __construct($project, $data) {
+    public function __construct(Project $project, array $data)
+    {
         if (!$this->isAllowed($project)) {
             throw new ServiceNotAllowedForProjectException();
         }
         $this->project = $project;
         $this->data    = $data;
     }
-    
-    public function getProject() {
+
+    public function getProject(): Project
+    {
         return $this->project;
     }
-    function getGroupId() {
-        return $this->data['group_id'];
+
+    public function getGroupId(): int
+    {
+        return (int) $this->data['group_id'];
     }
-    function getId() {
-        return $this->data['service_id'];
+
+    public function getId(): int
+    {
+        return (int) $this->data['service_id'];
     }
-    function getDescription() {
+
+    public function getDescription(): string
+    {
         return $this->data['description'];
     }
-    function getShortName() {
+
+    public function getShortName(): string
+    {
         return $this->data['short_name'];
     }
-    function getLabel() {
+
+    public function getLabel(): string
+    {
         return $this->data['label'];
     }
-    function getRank() {
-        return $this->data['rank'];
-    }
-    function isUsed() {
-        return $this->data['is_used'];
-    }
-    function isActive() {
-        return $this->data['is_active'];
-    }
-    function isIFrame() {
-    	return $this->data['is_in_iframe'];
-    }
-    function getUrl($url = null) {
-        if (is_null($url)) {
-            $url = $this->data['link'];
-        }
-        return $url;
+
+    public function getRank(): int
+    {
+        return (int) $this->data['rank'];
     }
 
-    public function getScope() {
+    public function isUsed(): bool
+    {
+        return (bool) $this->data['is_used'];
+    }
+
+    public function isActive(): bool
+    {
+        return (bool) $this->data['is_active'];
+    }
+
+    public function isIFrame(): bool
+    {
+        return (bool) $this->data['is_in_iframe'];
+    }
+
+    public function getUrl(?string $url = null): string
+    {
+        if ($url) {
+            return $url;
+        }
+        return $this->data['link'];
+    }
+
+    public function getScope(): string
+    {
         return $this->data['scope'];
     }
-    
+
     /**
-    * @see http://www.ietf.org/rfc/rfc2396.txt Annex B
-    */
-    function isAbsolute($url) {
+     * @see http://www.ietf.org/rfc/rfc2396.txt Annex B
+     */
+    public function isAbsolute(string $url): bool
+    {
         $components = array();
         preg_match('`^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?`i', $url, $components);
-        return isset($components[1]) && $components[1] ? true : false;
+        return (isset($components[1]) && $components[1]);
     }
 
-    function getPublicArea() {
+    public function getPublicArea(): string
+    {
+        return '';
     }
-    function isRequestedPageDistributed(&$request) {
-        return false;
-    }
-    
-    public function displayHeader($title, $breadcrumbs, $toolbar, $params = array()) {
+
+    public function displayHeader(string $title, $breadcrumbs, array $toolbar, array $params = array()): void
+    {
         \Tuleap\Project\ServiceInstrumentation::increment(strtolower($this->getShortName()));
 
         $GLOBALS['HTML']->setRenderedThroughService(true);
         $GLOBALS['HTML']->addBreadcrumbs($breadcrumbs);
 
-        foreach($toolbar as $t) {
+        foreach ($toolbar as $t) {
             $class = isset($t['class']) ? 'class="'. $t['class'] .'"' : '';
             $item_title = isset($t['short_title']) ? $t['short_title'] :$t['title'];
             $GLOBALS['HTML']->addToolbarItem('<a href="'. $t['url'] .'" '. $class .'>'. $item_title .'</a>');
@@ -140,22 +193,24 @@ class Service {
         if ($pv = (int)HTTPRequest::instance()->get('pv')) {
             $params['pv'] = (int)$pv;
         }
-        
+
         $this->displayDuplicateInheritanceWarning();
-        
+
         site_project_header($params);
     }
-    
+
     /**
      * Display a warning if the service configuration is not inherited on project creation
      */
-    public function displayDuplicateInheritanceWarning() {
+    public function displayDuplicateInheritanceWarning(): void
+    {
         if ($this->project->isTemplate() && !$this->isInheritedOnDuplicate()) {
             $GLOBALS['HTML']->addFeedback('warning', $GLOBALS['Language']->getText('global', 'service_conf_not_inherited'));
         }
     }
-    
-    public function displayFooter() {
+
+    public function displayFooter(): void
+    {
         $params = array(
             'group' => $this->project->group_id,
         );
@@ -164,42 +219,35 @@ class Service {
         }
         site_project_footer($params);
     }
-    
-    public function duplicate($to_project_id, $ugroup_mapping) {
+
+    public function duplicate(int $to_project_id, array $ugroup_mapping): void
+    {
     }
-    
-    /**
-     * Say if the service is allowed for the project
-     *
-     * @param Project $project
-     *
-     * @return bool
-     */
-    protected function isAllowed($project) {
+
+    public function isOpenedInNewTab(): bool
+    {
+        return false;
+    }
+
+    protected function isAllowed(Project $project): bool
+    {
         return true;
     }
-    
-     /**
-     * Say if the service is restricted
-     *
-     * @param Project $project
-     *
-     * @return bool
-     */
-    public function isRestricted() {
+
+    public function isRestricted(): bool
+    {
         return false;
     }
 
     /**
      * Return true if service configuration is inherited on clone
-     * 
-     * @return Boolean
      */
-    public function isInheritedOnDuplicate() {
+    public function isInheritedOnDuplicate(): bool
+    {
         return false;
     }
 
-    public function getInternationalizedName()
+    public function getInternationalizedName(): string
     {
         $label      = $this->getLabel();
         $short_name = $this->getShortName();
@@ -207,7 +255,7 @@ class Service {
         return $this->getInternationalizedText($label, "service_{$short_name}_lbl_key");
     }
 
-    public function getInternationalizedDescription()
+    public function getInternationalizedDescription(): string
     {
         $description = $this->getDescription();
         $short_name  = $this->getShortName();
@@ -215,7 +263,7 @@ class Service {
         return $this->getInternationalizedText($description, "service_{$short_name}_desc_key");
     }
 
-    private function getInternationalizedText($text, $key)
+    private function getInternationalizedText($text, $key): string
     {
         if ($text === $key) {
             return $GLOBALS['Language']->getText('project_admin_editservice', $key);
@@ -228,5 +276,27 @@ class Service {
         }
 
         return $text;
+    }
+
+    public function getIcon() : string
+    {
+        $icon_name = $this->getIconName();
+        if ($icon_name !== "") {
+            return $this->getFontAwesomeIcon($icon_name);
+        }
+        throw new RuntimeException('Regular services must provide an icon');
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function getIconName(): string
+    {
+        return self::ICONS[$this->getShortName()] ?? "";
+    }
+
+    private function getFontAwesomeIcon(string $icon) : string
+    {
+        return 'fa fa-fw '.$icon;
     }
 }

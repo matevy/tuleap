@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: SyntaxHighlighter.php,v 1.7 2004/07/08 20:30:07 rurban Exp $');
 /**
  Copyright 2004 $ThePhpWikiProgrammingTeam
@@ -21,17 +22,17 @@ rcs_id('$Id: SyntaxHighlighter.php,v 1.7 2004/07/08 20:30:07 rurban Exp $');
  */
 
 /**
- * The SyntaxHighlighter plugin passes all its arguments through a C++ 
+ * The SyntaxHighlighter plugin passes all its arguments through a C++
  * highlighter called "highlight" (available at http://www.andre-simon.de/).
  *
  * @author: alecthomas
- * 
+ *
  * syntax: See http://www.andre-simon.de/doku/highlight/highlight.html
  * style = ["ansi", "gnu", "kr", "java", "linux"]
- 
+
 <?plugin SyntaxHighlighter syntax=c style=kr
  #include <stdio.h>
- 
+
  int main() {
  printf("Lalala\n");
  }
@@ -46,38 +47,48 @@ Fixes by Reini Urban:
   php version switch
   HIGHLIGHT_DATA_DIR, HIGHLIGHT_EXE
 */
-if (!defined('HIGHLIGHT_EXE'))
-    define('HIGHLIGHT_EXE','highlight');
+if (!defined('HIGHLIGHT_EXE')) {
+    define('HIGHLIGHT_EXE', 'highlight');
+}
 //define('HIGHLIGHT_EXE','/usr/local/bin/highlight');
 //define('HIGHLIGHT_EXE','/home/groups/p/ph/phpwiki/bin/highlight');
 
 // highlight requires two subdirs themes and langDefs somewhere.
-// Best by highlight.conf in $HOME, but the webserver user usually 
+// Best by highlight.conf in $HOME, but the webserver user usually
 // doesn't have a $HOME
-if (!defined('HIGHLIGHT_DATA_DIR'))
-    if (isWindows())
-        define('HIGHLIGHT_DATA_DIR','f:\cygnus\usr\local\share\highlight');
-    else
-        define('HIGHLIGHT_DATA_DIR','/usr/share/highlight');
+if (!defined('HIGHLIGHT_DATA_DIR')) {
+    if (isWindows()) {
+        define('HIGHLIGHT_DATA_DIR', 'f:\cygnus\usr\local\share\highlight');
+    } else {
+        define('HIGHLIGHT_DATA_DIR', '/usr/share/highlight');
+    }
+}
         //define('HIGHLIGHT_DATA_DIR','/home/groups/p/ph/phpwiki/share/highlight');
 
-class WikiPlugin_SyntaxHighlighter
-extends WikiPlugin
+class WikiPlugin_SyntaxHighlighter extends WikiPlugin
 {
-    function getName () {
+    function getName()
+    {
         return _("SyntaxHighlighter");
     }
-    function getDescription () {
+    function getDescription()
+    {
         return _("Source code syntax highlighter (via http://www.andre-simon.de)");
     }
-    function managesValidators() {
+    function managesValidators()
+    {
         return true;
     }
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.7 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.7 $"
+        );
     }
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array(
                      'syntax' => null, // required argument
                      'style'  => null, // optional argument ["ansi", "gnu", "kr", "java", "linux"]
@@ -86,7 +97,8 @@ extends WikiPlugin
                      'wrap'   => 0,
                      );
     }
-    function handle_plugin_args_cruft(&$argstr, &$args) {
+    function handle_plugin_args_cruft(&$argstr, &$args)
+    {
         $this->source = $argstr;
     }
 
@@ -107,24 +119,27 @@ extends WikiPlugin
             fwrite($pipes[0], $input);
             fclose($pipes[0]);
             $buf = "";
-            while(!feof($pipes[1])) {
+            while (!feof($pipes[1])) {
                 $buf .= fgets($pipes[1], 1024);
             }
             fclose($pipes[1]);
             $stderr = '';
-            while(!feof($pipes[2])) {
+            while (!feof($pipes[2])) {
                 $stderr .= fgets($pipes[2], 1024);
             }
             fclose($pipes[2]);
             // It is important that you close any pipes before calling
             // proc_close in order to avoid a deadlock
             $return_value = proc_close($process);
-            if (empty($buf)) printXML($this->error($stderr));
+            if (empty($buf)) {
+                printXML($this->error($stderr));
+            }
             return $buf;
         }
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         extract($this->getArgs($argstr, $request));
         $source = $this->source;
         if (empty($syntax)) {
@@ -152,10 +167,10 @@ extends WikiPlugin
                 return $this->error(fmt("Couldn't start commandline"));
             }
             $pre = HTML::pre(HTML::raw($code));
-            $pre->setAttr('class','tightenable top bottom');
+            $pre->setAttr('class', 'tightenable top bottom');
             $html->pushContent($pre);
             $css = $GLOBALS['WikiTheme']->_CSSlink('', 'highlight.css', '');
-            return HTML($css,$html);
+            return HTML($css, $html);
         } else {
             return $this->error(fmt("empty source"));
         }
@@ -198,4 +213,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

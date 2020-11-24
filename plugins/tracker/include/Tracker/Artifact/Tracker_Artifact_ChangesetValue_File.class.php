@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2015 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,17 +19,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueFileFullRepresentation;
+
 /**
  * Manage values in changeset for files fields
  */
-class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetValue implements Countable, ArrayAccess, Iterator {
+class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetValue implements Countable, ArrayAccess, Iterator
+{
 
     /**
      * @var array of Tracker_FileInfo
      */
     protected $files;
 
-    public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed, $files) {
+    public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed, $files)
+    {
         parent::__construct($id, $changeset, $field, $has_changed);
         $this->files = $files;
     }
@@ -37,7 +41,8 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
     /**
      * @return mixed
      */
-    public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor) {
+    public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor)
+    {
         return $visitor->visitFile($this);
     }
 
@@ -46,18 +51,20 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return int the number of files
      */
-    public function count() {
+    public function count()
+    {
         return count($this->files);
     }
 
     /**
      * spl\ArrayAccess
      *
-     * @param int $offset to retrieve
+     * @param int|string $offset to retrieve
      *
      * @return mixed value at given offset
      */
-    public function offsetGet($offset) {
+    public function offsetGet($offset)
+    {
         return $this->files[$offset];
     }
 
@@ -69,7 +76,8 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return void
      */
-    public function offsetSet($offset, $value) {
+    public function offsetSet($offset, $value)
+    {
         $this->files[$offset] = $value;
     }
 
@@ -78,9 +86,10 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @param int $offset to check
      *
-     * @return boolean wether the offset exists
+     * @return bool wether the offset exists
      */
-    public function offsetExists($offset) {
+    public function offsetExists($offset)
+    {
         return isset($this->files[$offset]);
     }
 
@@ -91,7 +100,8 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return void
      */
-    public function offsetUnset($offset) {
+    public function offsetUnset($offset)
+    {
         unset($this->files[$offset]);
     }
 
@@ -99,7 +109,7 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      * spl\Iterator
      *
      * The internal pointer to traverse the collection
-     * @var integer
+     * @var int
      */
     protected $index;
 
@@ -108,7 +118,8 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return Tracker_FileInfo the current one
      */
-    public function current() {
+    public function current()
+    {
         return $this->files[$this->index];
     }
 
@@ -117,7 +128,8 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return int the current index
      */
-    public function key() {
+    public function key()
+    {
         return $this->index;
     }
 
@@ -128,7 +140,8 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return void
      */
-    public function next() {
+    public function next()
+    {
         $this->index++;
     }
 
@@ -139,16 +152,18 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return Tracker_FileInfo the current one
      */
-    public function rewind() {
+    public function rewind()
+    {
         $this->index = 0;
     }
 
     /**
      * spl\Iterator
      *
-     * @return boolean true if the current pointer is valid
+     * @return bool true if the current pointer is valid
      */
-    public function valid() {
+    public function valid()
+    {
         return isset($this->files[$this->index]);
     }
 
@@ -157,21 +172,23 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return Tracker_FileInfo[]
      */
-    public function getFiles() {
+    public function getFiles()
+    {
         return $this->files;
     }
 
-    public function getRESTValue(PFUser $user) {
+    public function getRESTValue(PFUser $user)
+    {
         return $this->getFullRESTValue($user);
     }
 
-    public function getFullRESTValue(PFUser $user) {
+    public function getFullRESTValue(PFUser $user)
+    {
         $values = array();
         foreach ($this->getFiles() as $file_info) {
             $values[] = $file_info->getRESTValue();
         }
-        $classname_with_namespace = 'Tuleap\Tracker\REST\Artifact\ArtifactFieldValueFileFullRepresentation';
-        $field_value_file_representation = new $classname_with_namespace;
+        $field_value_file_representation = new ArtifactFieldValueFileFullRepresentation();
         $field_value_file_representation->build(
             $this->field->getId(),
             Tracker_FormElementFactory::instance()->getType($this->field),
@@ -186,11 +203,15 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
      *
      * @return mixed The value of this artifact changeset value
      */
-    public function getValue() {
+    public function getValue()
+    {
         // TODO : implement
         return false;
     }
 
+    /**
+     * @return false|string
+     */
     public function mailDiff(
         $changeset_value,
         $artifact_id,
@@ -205,7 +226,7 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
     /**
      * Returns a diff between this changeset value and the one passed in param
      *
-     * @return string The difference between another $changeset_value, false if no differneces
+     * @return string|false The difference between another $changeset_value, false if no differneces
      */
     public function diff($changeset_value, $format = 'html', ?PFUser $user = null, $ignore_perms = false)
     {
@@ -221,7 +242,7 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
                 $removed[] = $fi->getFilename();
             }
             if ($removed = implode(', ', $removed)) {
-                $result .= $removed .' '.$GLOBALS['Language']->getText('plugin_tracker_artifact','removed');
+                $result .= $removed .' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'removed');
             }
 
             $added = $this->fetchAddedFiles(array_diff($this->files, $changeset_value->getFiles()), $format, $is_for_mail);
@@ -267,7 +288,7 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
 
         $result   = '';
         if ($added) {
-            $result .= implode(', ', $added) .' '.$GLOBALS['Language']->getText('plugin_tracker_artifact','added');
+            $result .= implode(', ', $added) .' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'added');
         }
 
         if ($previews && ! $is_for_mail) {

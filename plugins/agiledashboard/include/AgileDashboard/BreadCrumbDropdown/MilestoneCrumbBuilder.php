@@ -24,7 +24,7 @@ use PFUser;
 use Planning_Milestone;
 use Planning_MilestoneFactory;
 use Planning_MilestonePaneFactory;
-use Tuleap\AgileDashboard\Milestone\Criterion\StatusOpen;
+use Tuleap\AgileDashboard\Milestone\Criterion\Status\StatusOpen;
 use Tuleap\AgileDashboard\Milestone\Pane\Details\DetailsPaneInfo;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumb;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbLink;
@@ -176,7 +176,7 @@ class MilestoneCrumbBuilder
         $limit     = 10;
         $offset    = 0;
         do {
-            $paginated_milestones = $this->milestone_factory->getPaginatedSiblingMilestones(
+            $paginated_milestones = $this->milestone_factory->getPaginatedSiblingMilestonesWithStatusCriterion(
                 $user,
                 $milestone,
                 $criterion,

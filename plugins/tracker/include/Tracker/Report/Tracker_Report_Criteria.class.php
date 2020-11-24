@@ -1,24 +1,26 @@
 <?php
 /**
+ * Copyright (c) Enalean 2011 - Present. All rights reserved
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Report_Criteria {
+class Tracker_Report_Criteria
+{
 
     public $id;
     public $report;
@@ -38,7 +40,8 @@ class Tracker_Report_Criteria {
      * @param int $rank the rank
      * @param int $is_advanced use advanced search for this field
      */
-     public function __construct($id, $report, $field, $rank, $is_advanced) {
+    public function __construct($id, $report, $field, $rank, $is_advanced)
+    {
         $this->id          = $id;
         $this->report      = $report;
         $this->field       = $field;
@@ -49,31 +52,38 @@ class Tracker_Report_Criteria {
     /**
      * @param bool $is_advanced
      */
-    public function setIsAdvanced($is_advanced) {
+    public function setIsAdvanced($is_advanced)
+    {
         $this->is_advanced = $is_advanced;
     }
 
-    public function getFrom() {
+    public function getFrom()
+    {
         return $this->field->getCriteriaFrom($this);
     }
 
-    public function getWhere() {
+    public function getWhere()
+    {
         return $this->field->getCriteriaWhere($this);
     }
 
-    public function fetch() {
+    public function fetch()
+    {
         return $this->field->fetchCriteria($this);
     }
 
-    public function fetchWithoutExpandFunctionnality() {
+    public function fetchWithoutExpandFunctionnality()
+    {
         return $this->field->fetchCriteriaWithoutExpandFunctionnality($this);
     }
 
-    public function delete() {
+    public function delete()
+    {
         return $this->field->deleteCriteriaValue($this);
     }
 
-    public function setId($id) {
+    public function setId($id)
+    {
         $this->id = $id;
     }
 
@@ -81,7 +91,8 @@ class Tracker_Report_Criteria {
     /**
      * @param mixed $value
      */
-    public function updateValue($value) {
+    public function updateValue($value)
+    {
         $this->field->updateCriteriaValue($this, $value);
     }
 
@@ -90,7 +101,8 @@ class Tracker_Report_Criteria {
      *
      * @param SimpleXMLElement $root the node to which the Criteria is attached (passed by reference)
      */
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping) {
+    public function exportToXml(SimpleXMLElement $root, $xmlMapping)
+    {
         $root->addAttribute('rank', $this->rank);
         if ($this->is_advanced) {
             $root->addAttribute('is_advanced', $this->is_advanced);
@@ -102,6 +114,9 @@ class Tracker_Report_Criteria {
         }
         $root->addChild('field')->addAttribute('REF', array_search($this->field->id, $xmlMapping));
     }
-}
 
-?>
+    public function getField()
+    {
+        return $this->field;
+    }
+}

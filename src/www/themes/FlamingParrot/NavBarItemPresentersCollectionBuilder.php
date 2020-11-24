@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,7 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class FlamingParrot_NavBarItemPresentersCollectionBuilder {
+use Tuleap\Project\Registration\ProjectRegistrationUserPermissionChecker;
+
+class FlamingParrot_NavBarItemPresentersCollectionBuilder
+{
 
     private static $NO_ID      = false;
     private static $NOT_ACTIVE = false;
@@ -37,22 +40,29 @@ class FlamingParrot_NavBarItemPresentersCollectionBuilder {
 
     /** @var array */
     private $projects;
+    /**
+     * @var ProjectRegistrationUserPermissionChecker
+     */
+    private $registration_user_permission_checker;
 
     public function __construct(
         PFUser $user,
         $request_uri,
         $selected_top_tab,
         array $extra_tabs,
-        array $projects
+        array $projects,
+        ProjectRegistrationUserPermissionChecker $registration_user_permission_checker
     ) {
         $this->user             = $user;
         $this->request_uri      = $request_uri;
         $this->selected_top_tab = $selected_top_tab;
         $this->extra_tabs       = $extra_tabs;
         $this->projects         = $projects;
+        $this->registration_user_permission_checker = $registration_user_permission_checker;
     }
 
-    public function buildNavBarItemPresentersCollection() {
+    public function buildNavBarItemPresentersCollection()
+    {
         $collection = new FlamingParrot_NavBarItemPresentersCollection();
 
         $this->addProjectsItem($collection);
@@ -72,7 +82,8 @@ class FlamingParrot_NavBarItemPresentersCollectionBuilder {
         return $collection;
     }
 
-    private function addAdminItem(FlamingParrot_NavBarItemPresentersCollection $collection) {
+    private function addAdminItem(FlamingParrot_NavBarItemPresentersCollection $collection)
+    {
         if ($this->user->isSuperUser()) {
             $collection->addItem(new FlamingParrot_NavBarItemAdminPresenter(
                 self::$NO_ID,
@@ -83,16 +94,19 @@ class FlamingParrot_NavBarItemPresentersCollectionBuilder {
         }
     }
 
-    private function addProjectsItem(FlamingParrot_NavBarItemPresentersCollection $collection) {
+    private function addProjectsItem(FlamingParrot_NavBarItemPresentersCollection $collection)
+    {
         $collection->addItem(new FlamingParrot_NavBarItemProjectsPresenter(
             'project',
             $this->isNavBarItemActive(array('/softwaremap/', '/projects/', '/project/')),
+            $this->registration_user_permission_checker->isUserAllowedToCreateProjects($this->user),
             $this->user,
             $this->projects
         ));
     }
 
-    private function addMoarItem(FlamingParrot_NavBarItemPresentersCollection $collection) {
+    private function addMoarItem(FlamingParrot_NavBarItemPresentersCollection $collection)
+    {
         $items = array();
         $links = array();
         foreach ($this->extra_tabs as $tab) {
@@ -120,7 +134,8 @@ class FlamingParrot_NavBarItemPresentersCollectionBuilder {
         }
     }
 
-    private function addHelpItem(FlamingParrot_NavBarItemPresentersCollection $collection) {
+    private function addHelpItem(FlamingParrot_NavBarItemPresentersCollection $collection)
+    {
         $item = new FlamingParrot_NavBarItemDropdownPresenter(
             'help',
             $this->isNavBarItemActive(array('/help/', '/contact.php', '/help/api.php'), 'help'),
@@ -161,7 +176,8 @@ class FlamingParrot_NavBarItemPresentersCollectionBuilder {
         $collection->addItem($item);
     }
 
-    private function isNavBarItemActive($paths_to_detect, $toptab = null) {
+    private function isNavBarItemActive($paths_to_detect, $toptab = null)
+    {
         if ($toptab === $this->selected_top_tab) {
             return true;
         }

@@ -21,7 +21,8 @@
 /**
  * I'm responsible of managing propagation of user membership changes (add/remove) to gerrit.
  */
-abstract class Git_Driver_Gerrit_MembershipCommand {
+abstract class Git_Driver_Gerrit_MembershipCommand
+{
     /** @var Git_Driver_Gerrit_MembershipManager */
     protected $membership_manager;
 
@@ -40,13 +41,15 @@ abstract class Git_Driver_Gerrit_MembershipCommand {
         $this->ugroup             = $ugroup;
     }
 
-    public function getUGroup() {
+    public function getUGroup()
+    {
         return $this->ugroup;
     }
 
     abstract public function execute(Git_RemoteServer_GerritServer $server);
 
-    protected function getDriver(Git_RemoteServer_GerritServer $server) {
+    protected function getDriver(Git_RemoteServer_GerritServer $server)
+    {
         return $this->driver_factory->getDriver($server);
     }
 }

@@ -24,7 +24,8 @@
 
 require_once __DIR__ .'/../bootstrap.php';
 
-class Tracker_UgroupMappingBuilderTest extends TuleapTestCase {
+class Tracker_UgroupMappingBuilderTest extends TuleapTestCase
+{
 
     protected $template_tracker;
     protected $target_project;
@@ -37,7 +38,8 @@ class Tracker_UgroupMappingBuilderTest extends TuleapTestCase {
 
     protected $tracker_id                 = 101;
 
-    public function itBuildsAMappingBasedOnTheNames() {
+    public function itBuildsAMappingBasedOnTheNames()
+    {
         $this->template_ugroup_dev     = mockery_stub(\ProjectUGroup::class)->getName()->returns('dev');
         $this->template_ugroup_support = mockery_stub(\ProjectUGroup::class)->getName()->returns('support');
         $this->template_ugroup_staff   = mockery_stub(\ProjectUGroup::class)->getName()->returns('staff');
@@ -68,4 +70,3 @@ class Tracker_UgroupMappingBuilderTest extends TuleapTestCase {
         $this->assertEqual($mapping, array(1001 => 1002));
     }
 }
-?>

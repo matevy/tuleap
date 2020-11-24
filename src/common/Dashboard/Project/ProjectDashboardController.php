@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2017 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -22,21 +22,26 @@ namespace Tuleap\Dashboard\Project;
 
 use Codendi_HTMLPurifier;
 use CSRFSynchronizerToken;
+use EventManager;
 use Exception;
 use Feedback;
 use ForgeConfig;
-use HttpRequest;
+use HTTPRequest;
 use PFUser;
 use Project;
 use ProjectManager;
 use TemplateRendererFactory;
-use Tuleap\Dashboard\DashboardDoesNotExistException;
 use Tuleap\Dashboard\AssetsIncluder;
+use Tuleap\Dashboard\DashboardDoesNotExistException;
 use Tuleap\Dashboard\NameDashboardAlreadyExistsException;
 use Tuleap\Dashboard\NameDashboardDoesNotExistException;
 use Tuleap\Dashboard\Widget\DashboardWidgetPresenterBuilder;
 use Tuleap\Dashboard\Widget\DashboardWidgetRetriever;
 use Tuleap\Dashboard\Widget\OwnerInfo;
+use Tuleap\Event\Events\ProjectProviderEvent;
+use Tuleap\Layout\BaseLayout;
+use Tuleap\Layout\CssAsset;
+use Tuleap\Layout\IncludeAssets;
 use Tuleap\TroveCat\TroveCatLinkDao;
 
 class ProjectDashboardController
@@ -81,6 +86,23 @@ class ProjectDashboardController
      */
     private $assets_includer;
 
+    /**
+     * @var EventManager
+     */
+    private $event_manager;
+    /**
+     * @var BaseLayout
+     */
+    private $layout;
+    /**
+     * @var IncludeAssets
+     */
+    private $javascript_assets;
+    /**
+     * @var CssAsset
+     */
+    private $css_asset;
+
     public function __construct(
         CSRFSynchronizerToken $csrf,
         Project $project,
@@ -90,7 +112,11 @@ class ProjectDashboardController
         DashboardWidgetPresenterBuilder $widget_presenter_builder,
         WidgetDeletor $widget_deletor,
         WidgetMinimizor $widget_minimizor,
-        AssetsIncluder $assets_includer
+        AssetsIncluder $assets_includer,
+        EventManager $event_manager,
+        BaseLayout $layout,
+        IncludeAssets $javascript_assets,
+        CssAsset $css_asset
     ) {
         $this->csrf                     = $csrf;
         $this->project                  = $project;
@@ -101,6 +127,10 @@ class ProjectDashboardController
         $this->widget_deletor           = $widget_deletor;
         $this->widget_minimizor         = $widget_minimizor;
         $this->assets_includer          = $assets_includer;
+        $this->event_manager            = $event_manager;
+        $this->layout                   = $layout;
+        $this->javascript_assets        = $javascript_assets;
+        $this->css_asset                = $css_asset;
     }
 
     /**
@@ -113,13 +143,19 @@ class ProjectDashboardController
         $dashboard_id       = $request->get('dashboard_id');
         $project_dashboards = $this->retriever->getAllProjectDashboards($this->project);
 
+        $should_display_project_created_modal = $request->get("should-display-created-project-modal");
+
+        if ($should_display_project_created_modal) {
+            $this->layout->includeFooterJavascriptFile($this->javascript_assets->getFileURL('project-registration-creation.js'));
+            $this->layout->addCssAsset($this->css_asset);
+        }
+
         if ($dashboard_id && ! $this->doesDashboardIdExist($dashboard_id, $project_dashboards)) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
                 _('The requested dashboard does not exist.')
             );
         }
-
         $project_dashboards_presenter = $this->getProjectDashboardsPresenter(
             $user,
             $project,
@@ -160,6 +196,10 @@ class ProjectDashboardController
         $renderer = TemplateRendererFactory::build()->getRenderer(
             ForgeConfig::get('tuleap_dir') . '/src/templates/dashboard'
         );
+
+        $event = new ProjectProviderEvent($this->project);
+        $this->event_manager->processEvent($event);
+
         $renderer->renderToPage(
             'project',
             new ProjectPagePresenter(
@@ -172,15 +212,13 @@ class ProjectDashboardController
                     $trove_cats
                 ),
                 $project_dashboards_presenter,
-                $this->canUpdateDashboards($user, $project)
+                $this->canUpdateDashboards($user, $project),
+                $should_display_project_created_modal
             )
         );
         $GLOBALS['Response']->footer(array());
     }
 
-    /**
-     * @param HttpRequest $request
-     */
     public function createDashboard(HTTPRequest $request)
     {
         $this->csrf->check();
@@ -227,9 +265,6 @@ class ProjectDashboardController
         $this->redirectToDefaultDashboard();
     }
 
-    /**
-     * @param HttpRequest $request
-     */
     public function editDashboard(HTTPRequest $request)
     {
         $this->csrf->check();
@@ -288,9 +323,6 @@ class ProjectDashboardController
         $this->redirectToDashboard($dashboard_id);
     }
 
-    /**
-     * @param HttpRequest $request
-     */
     public function deleteDashboard(HTTPRequest $request)
     {
         $this->csrf->check();

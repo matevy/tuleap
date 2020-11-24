@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporter */
     private $exporter;
@@ -42,7 +43,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
     /** @var PFUser */
     private $user;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $tracker_factory = mock('TrackerFactory');
         TrackerFactory::setInstance($tracker_factory);
@@ -73,12 +75,14 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         stub($this->changeset_value)->getField()->returns($this->field);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         TrackerFactory::clearInstance();
         parent::tearDown();
     }
 
-    public function itExportsChildren() {
+    public function itExportsChildren()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             $this->anArtifactLinkInfoUserCanView(111, 101, null),
             $this->anArtifactLinkInfoUserCanView(222, 102, null),
@@ -105,7 +109,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         $this->assertEqual((int)$field_change->value[1], 222);
     }
 
-    public function itExportsChildrenNatureMode() {
+    public function itExportsChildrenNatureMode()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             $this->anArtifactLinkInfoUserCanView(111, 101, '_is_child'),
             $this->anArtifactLinkInfoUserCanView(222, 102, '_is_child'),
@@ -133,7 +138,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         $this->assertEqual(count($field_change->value), 2);
     }
 
-    public function itDoesNotExportArtifactsThatAreNotChildren() {
+    public function itDoesNotExportArtifactsThatAreNotChildren()
+    {
         stub($this->changeset_value)->getArtifactIds()->returns(array(
             $this->anArtifactLinkInfoUserCanView(333, 103, null),
         ));
@@ -149,7 +155,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         $this->assertEqual(count($field_change->value), 0);
     }
 
-    public function itDoesNotExportChildrenUserCannotSee() {
+    public function itDoesNotExportChildrenUserCannotSee()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             $this->anArtifactLinkInfoUserCannotView(111, 101, null),
         ));
@@ -171,7 +178,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         $this->assertEqual(count($field_change->value), 0);
     }
 
-    public function itDoesNotExportChildrenUserCannotSeeNatureMode() {
+    public function itDoesNotExportChildrenUserCannotSeeNatureMode()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             $this->anArtifactLinkInfoUserCannotView(111, 101, '_is_child'),
         ));
@@ -193,7 +201,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         $this->assertEqual(count($field_change->value), 0);
     }
 
-    public function itDoesNotFailIfNull() {
+    public function itDoesNotFailIfNull()
+    {
         stub($this->changeset_value)->getArtifactIds()->returns(null);
 
         $this->exporter->export(
@@ -207,7 +216,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         $this->assertEqual(count($field_change->value), 0);
     }
 
-    public function itCollectsChildren() {
+    public function itCollectsChildren()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             $this->anArtifactLinkInfoUserCanView(111, 101, null),
             $this->anArtifactLinkInfoUserCanView(222, 102, null),
@@ -228,7 +238,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         $this->assertEqual($this->collector->getAllChildrenIds(), array(111, 222));
     }
 
-    public function itCollectsChildrenNatureMode() {
+    public function itCollectsChildrenNatureMode()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             $this->anArtifactLinkInfoUserCanView(111, 101, '_is_child'),
             $this->anArtifactLinkInfoUserCanView(222, 102, '_is_child'),
@@ -249,21 +260,24 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporterT
         $this->assertEqual($this->collector->getAllChildrenIds(), array(111, 222));
     }
 
-    private function anArtifactLinkInfoUserCanView($artifact_id, $tracker_id, $nature) {
+    private function anArtifactLinkInfoUserCanView($artifact_id, $tracker_id, $nature)
+    {
         $artifact_link_info = $this->anArtifactLinkInfo($artifact_id, $tracker_id, $nature);
         stub($artifact_link_info)->userCanView($this->user)->returns(true);
 
         return $artifact_link_info;
     }
 
-    private function anArtifactLinkInfoUserCannotView($artifact_id, $tracker_id, $nature) {
+    private function anArtifactLinkInfoUserCannotView($artifact_id, $tracker_id, $nature)
+    {
         $artifact_link_info = $this->anArtifactLinkInfo($artifact_id, $tracker_id, $nature);
         stub($artifact_link_info)->userCanView($this->user)->returns(false);
 
         return $artifact_link_info;
     }
 
-    private function anArtifactLinkInfo($artifact_id, $tracker_id, $nature) {
+    private function anArtifactLinkInfo($artifact_id, $tracker_id, $nature)
+    {
         return Mockery::mock(
             Tracker_ArtifactLinkInfo::class,
             [

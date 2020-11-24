@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class MailBuilderTest extends TuleapTestCase {
+class MailBuilderTest extends TuleapTestCase
+{
 
     /** @var MailBuilder */
     private $builder;
@@ -35,7 +36,8 @@ class MailBuilderTest extends TuleapTestCase {
     /** @var Tuleap\Mail\MailFilter */
     private $mail_filter;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $user_manager = stub('UserManager')->getAllUsersByEmail()->returns(array());
@@ -80,7 +82,8 @@ class MailBuilderTest extends TuleapTestCase {
         $GLOBALS['HTML']               = mock('Layout');
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         UserManager::clearInstance();
         unset($GLOBALS['Language']);
         unset($GLOBALS['sys_default_domain']);
@@ -89,7 +92,8 @@ class MailBuilderTest extends TuleapTestCase {
         parent::tearDown();
     }
 
-    public function itBuildsAndSendsATruncatedEmailIfProjectUsesTruncatedEmail() {
+    public function itBuildsAndSendsATruncatedEmailIfProjectUsesTruncatedEmail()
+    {
         $project = stub('Project')->getTruncatedEmailsUsage()->returns(true);
         stub($this->codendi_mail)->send()->returns(true);
         stub($this->builder)->getMailSender()->returns($this->codendi_mail);
@@ -102,7 +106,8 @@ class MailBuilderTest extends TuleapTestCase {
         $this->assertTrue($sent);
     }
 
-    public function itBuildsAndSendsAClassicEmailIfProjectDoesNotUseTruncatedEmail() {
+    public function itBuildsAndSendsAClassicEmailIfProjectDoesNotUseTruncatedEmail()
+    {
         $project = stub('Project')->getTruncatedEmailsUsage()->returns(false);
         stub($this->codendi_mail)->send()->returns(true);
         stub($this->builder)->getMailSender()->returns($this->codendi_mail);
@@ -115,7 +120,8 @@ class MailBuilderTest extends TuleapTestCase {
         $this->assertTrue($sent);
     }
 
-    public function itDoesNotStopIfAMailIsNotSent() {
+    public function itDoesNotStopIfAMailIsNotSent()
+    {
         $project        = stub('Project')->getTruncatedEmailsUsage()->returns(false);
         $codendi_mail_2 = stub('Codendi_Mail')->send()->returns(true);
         stub($this->codendi_mail)->send()->returns(false);

@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -20,21 +20,24 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class DocmanOneFolderIsWriteable /* implements Visitor */ {
-    
+class DocmanOneFolderIsWriteable /* implements Visitor */
+{
+
     var $docman;
-    function __construct(&$docman) {
+    function __construct(&$docman)
+    {
         $this->docman = $docman;
     }
-    
-    function visitFolder(&$item, $params = array()) {
+
+    function visitFolder(&$item, $params = array())
+    {
         $b = false;
         if ($this->docman->userCanWrite($item->getId())) {
             $b = true;
         } else {
             $items = $item->getAllItems();
             $it = $items->iterator();
-            while(!$b && $it->valid()) {
+            while (!$b && $it->valid()) {
                 $o = $it->current();
                 $b = $o->accept($this);
                 $it->next();
@@ -42,18 +45,21 @@ class DocmanOneFolderIsWriteable /* implements Visitor */ {
         }
         return $b;
     }
-    
-    function visitWiki(&$item, $params = array()) {
+
+    function visitWiki(&$item, $params = array())
+    {
         return false;
     }
-    function visitLink(&$item, $params = array()) {
+    function visitLink(&$item, $params = array())
+    {
         return false;
     }
-    function visitFile(&$item, $params = array()) {
+    function visitFile(&$item, $params = array())
+    {
         return false;
     }
-    function visitEmbeddedFile(&$item, $params = array()) {
+    function visitEmbeddedFile(&$item, $params = array())
+    {
         return false;
     }
 }
-?>

@@ -18,12 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/backend/BackendService.class.php';
-
 /**
  * I restart the service
  */
-class Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceRestarter extends Git_GitoliteHousekeeping_ChainOfResponsibility_Command {
+class Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceRestarter extends Git_GitoliteHousekeeping_ChainOfResponsibility_Command
+{
 
     /** @var Git_GitoliteHousekeeping_GitoliteHousekeepingResponse */
     private $response;
@@ -40,7 +39,8 @@ class Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceRestarter extends Gi
         $this->backend_service  = $backend_service;
     }
 
-    public function execute() {
+    public function execute()
+    {
         $this->response->info('Restarting service');
         $this->backend_service->start();
         $this->response->success();

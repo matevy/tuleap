@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class SystemEvent_GIT_GROKMIRROR_MANIFEST_UPDATE extends SystemEvent {
+class SystemEvent_GIT_GROKMIRROR_MANIFEST_UPDATE extends SystemEvent
+{
     public const NAME = 'GIT_GROKMIRROR_MANIFEST_UPDATE';
 
     /** @var GitRepositoryFactory */
@@ -27,21 +28,25 @@ class SystemEvent_GIT_GROKMIRROR_MANIFEST_UPDATE extends SystemEvent {
     /** @var Git_Mirror_ManifestManager */
     protected $manifest_manager;
 
-    public function injectDependencies(GitRepositoryFactory $repository_factory, Git_Mirror_ManifestManager $manifest_manager) {
+    public function injectDependencies(GitRepositoryFactory $repository_factory, Git_Mirror_ManifestManager $manifest_manager)
+    {
         $this->repository_factory = $repository_factory;
         $this->manifest_manager   = $manifest_manager;
     }
 
-    private function getRepositoryIdFromParameters() {
+    private function getRepositoryIdFromParameters()
+    {
         $parameters = $this->getParametersAsArray();
         return intval($parameters[0]);
     }
 
-    protected function getRepositoryFromParameters() {
+    protected function getRepositoryFromParameters()
+    {
         return $this->repository_factory->getRepositoryById($this->getRepositoryIdFromParameters());
     }
 
-    public function process() {
+    public function process()
+    {
         $repository = $this->getRepositoryFromParameters();
         if (! $repository) {
             $this->warning('Unable to find repository, perhaps it was deleted in the mean time?');
@@ -53,7 +58,8 @@ class SystemEvent_GIT_GROKMIRROR_MANIFEST_UPDATE extends SystemEvent {
         $this->done();
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         if ($with_link) {
             $repository = $this->getRepositoryFromParameters();
             if ($repository) {

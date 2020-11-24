@@ -19,12 +19,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Docman_ReferenceFactory {
+class Docman_ReferenceFactory
+{
 
     /**
      * @return Docman_Reference
      */
-    public function getInstanceFromRowAndProjectId($row, $project_id) {
+    public function getInstanceFromRowAndProjectId($row, $project_id)
+    {
         return new Docman_Reference(
             $row['keyword'],
             $row['description'],

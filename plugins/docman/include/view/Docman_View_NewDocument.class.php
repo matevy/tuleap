@@ -1,36 +1,50 @@
 <?php
-
 /**
-* Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
-*
-*
-*
-* Docman_View_NewFolder
-*/
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
+ * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-require_once('Docman_View_New.class.php');
-require_once('Docman_View_GetFieldsVisitor.class.php');
-require_once(dirname(__FILE__).'/../Docman_Document.class.php');
 
-class Docman_View_NewDocument extends Docman_View_New {
+class Docman_View_NewDocument extends Docman_View_New
+{
 
-    function _getTitle($params) {
+    function _getTitle($params)
+    {
         return $GLOBALS['Language']->getText('plugin_docman', 'new_document');
     }
-    function _getEnctype() {
+    function _getEnctype()
+    {
         return ' enctype="multipart/form-data" ';
     }
-    function _getAction() {
+    function _getAction()
+    {
         return 'createDocument';
     }
-    function _getActionText() {
+    function _getActionText()
+    {
         return $GLOBALS['Language']->getText('plugin_docman', 'new_document_action');
     }
 
-    function _getSpecificProperties($params) {
+    function _getSpecificProperties($params)
+    {
         $html = '';
         $currentItemType = null;
-        if(isset($params['force_item'])) {
+        if (isset($params['force_item'])) {
             $currentItemType = Docman_ItemFactory::getItemTypeForItem($params['force_item']);
         }
         $specifics = array(
@@ -47,13 +61,12 @@ class Docman_View_NewDocument extends Docman_View_New {
                 'checked' => ($currentItemType == PLUGIN_DOCMAN_ITEM_TYPE_LINK)
                 ));
         $wikiAvailable = true;
-        if(isset($params['group_id'])) {
+        if (isset($params['group_id'])) {
             $pm = ProjectManager::instance();
             $go = $pm->getProject($params['group_id']);
             $wikiAvailable = $go->usesWiki();
-
         }
-        if($wikiAvailable) {
+        if ($wikiAvailable) {
             $specifics[] = array(
                 'type'    =>  PLUGIN_DOCMAN_ITEM_TYPE_WIKI,
                 'label'   => $GLOBALS['Language']->getText('plugin_docman', 'new_document_wiki'),
@@ -84,9 +97,9 @@ class Docman_View_NewDocument extends Docman_View_New {
             $html .= '<input type="radio" name="item[item_type]" value="'. $specific['type'] .'" id="item_item_type_'. $specific['type'] .'" '. ($specific['checked']?'checked="checked"':'') .'/>';
             $html .= '<b>'. $specific['label'] .'</b></label></div>';
             $html .= '<div style="padding-left:20px" id="item_item_type_'. $specific['type'] .'_specific_properties">';
-            $fields = $specific['obj']->accept($get_specific_fields, array('request' => &$this->controller->request));
+            $fields = $specific['obj']->accept($get_specific_fields, array('request' => $this->_controller->request));
             $html .= '<table>';
-            foreach($fields as $field) {
+            foreach ($fields as $field) {
                 $html .= '<tr style="vertical-align:top;"><td><label>'. $field->getLabel() .'</label></td><td>'. $field->getField() .'</td></tr>';
             }
             $html .= '</table>';
@@ -95,10 +108,9 @@ class Docman_View_NewDocument extends Docman_View_New {
         return $html;
     }
 
-    function _getNewItem() {
+    function _getNewItem()
+    {
         $i = new Docman_Document();
         return $i;
     }
 }
-
-?>

@@ -18,14 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_XML_Exporter_LocalAbsoluteFilePathXMLExporter implements Tracker_XML_Exporter_FilePathXMLExporter {
+class Tracker_XML_Exporter_LocalAbsoluteFilePathXMLExporter implements Tracker_XML_Exporter_FilePathXMLExporter
+{
 
     /**
      * @param Tracker_FileInfo $file_info
      *
      * @return string
      */
-    public function getPath(Tracker_FileInfo $file_info) {
+    public function getPath(Tracker_FileInfo $file_info)
+    {
         return $file_info->getPath();
     }
 }

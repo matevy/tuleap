@@ -19,9 +19,11 @@
  */
 require_once __DIR__.'/../../bootstrap.php';
 
-class Tracker_DateReminderManagerTest extends TuleapTestCase {
+class Tracker_DateReminderManagerTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->field = mock('Tracker_FormElement_Field_Date');
@@ -34,7 +36,8 @@ class Tracker_DateReminderManagerTest extends TuleapTestCase {
         $this->reminder_manager = new Tracker_DateReminderManager(aTracker()->withId($this->tracker_id)->build());
     }
 
-    public function itFetchArtifactsTwoDaysAgo() {
+    public function itFetchArtifactsTwoDaysAgo()
+    {
         stub($this->reminder)->getDistance()->returns('2');
         stub($this->reminder)->getNotificationType()->returns('1');
 
@@ -44,7 +47,8 @@ class Tracker_DateReminderManagerTest extends TuleapTestCase {
         $this->reminder_manager->getArtifactsByreminder($this->reminder);
     }
 
-    public function itFetchArtifactsFourDaysInTheFuture() {
+    public function itFetchArtifactsFourDaysInTheFuture()
+    {
         stub($this->reminder)->getDistance()->returns('4');
         stub($this->reminder)->getNotificationType()->returns('0');
 
@@ -54,5 +58,3 @@ class Tracker_DateReminderManagerTest extends TuleapTestCase {
         $this->reminder_manager->getArtifactsByreminder($this->reminder);
     }
 }
-
-?>

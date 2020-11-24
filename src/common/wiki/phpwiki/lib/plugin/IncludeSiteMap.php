@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: IncludeSiteMap.php,v 1.2 2004/03/09 12:26:20 rurban Exp $');
 /**
  Copyright 2003,2004 $ThePhpWikiProgrammingTeam
@@ -28,7 +29,7 @@ rcs_id('$Id: IncludeSiteMap.php,v 1.2 2004/03/09 12:26:20 rurban Exp $');
  *
  * This is a quick mod of BackLinks to do the job recursively. If your
  * site is categorized correctly, and all the categories are listed in
- * CategoryCategory, then a RecBackLinks there will produce one BIG(!) 
+ * CategoryCategory, then a RecBackLinks there will produce one BIG(!)
  * contents page for the entire site.
  * The list is as deep as the recursion level ('reclimit').
  *
@@ -45,19 +46,23 @@ rcs_id('$Id: IncludeSiteMap.php,v 1.2 2004/03/09 12:26:20 rurban Exp $');
 require_once('lib/PageList.php');
 require_once('lib/plugin/SiteMap.php');
 
-class WikiPlugin_IncludeSiteMap
-extends WikiPlugin_SiteMap
+class WikiPlugin_IncludeSiteMap extends WikiPlugin_SiteMap
 {
-  function getName () {
-    return _("IncludeSiteMap");
-  }
+    function getName()
+    {
+        return _("IncludeSiteMap");
+    }
 
-  function getDescription () {
-    return sprintf(_("Include recursively all linked pages starting at %s"),
-		   $this->_pagename);
-  }
-  function getDefaultArguments() {
-      return array('exclude'        => '',
+    function getDescription()
+    {
+        return sprintf(
+            _("Include recursively all linked pages starting at %s"),
+            $this->_pagename
+        );
+    }
+    function getDefaultArguments()
+    {
+        return array('exclude'        => '',
                    'include_self'   => 0,
                    'noheader'       => 0,
                    'page'           => '[pagename]',
@@ -71,8 +76,9 @@ extends WikiPlugin_SiteMap
                    );
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
-      return WikiPlugin_SiteMap::run($dbi, $argstr, $request, $basepage);
+    function run($dbi, $argstr, &$request, $basepage)
+    {
+        return WikiPlugin_SiteMap::run($dbi, $argstr, $request, $basepage);
     }
 }
 
@@ -90,4 +96,3 @@ extends WikiPlugin_SiteMap
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

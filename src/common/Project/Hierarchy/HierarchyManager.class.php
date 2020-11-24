@@ -42,7 +42,7 @@ class Project_HierarchyManager
     /**
      * @param int $project_id
      * @param int $parent_project_id
-     * @return Boolean
+     * @return bool
      * @throws Project_HierarchyManagerAlreadyAncestorException
      * @throws Project_HierarchyManagerAncestorIsSelfException
      */
@@ -67,7 +67,7 @@ class Project_HierarchyManager
      * @param int $project_id
      * @param int $parent_project_id
      * @param Project|null $current_parent
-     * @return boolean
+     * @return bool
      */
     private function validateParent($project_id, $parent_project_id)
     {
@@ -84,26 +84,29 @@ class Project_HierarchyManager
     /**
      * @param int $project_id
      * @param int $parent_project_id
-     * @return Boolean
+     * @return bool
      */
-    private function addParentProject($project_id, $parent_project_id) {
+    private function addParentProject($project_id, $parent_project_id)
+    {
         return $this->getDao()->addParentProject($project_id, $parent_project_id);
     }
 
     /**
      * @param int $project_id
      * @param int $parent_project_id
-     * @return Boolean
+     * @return bool
      */
-    private function updateParentProject($project_id, $parent_project_id) {
+    private function updateParentProject($project_id, $parent_project_id)
+    {
         return $this->getDao()->updateParentProject($project_id, $parent_project_id);
     }
 
     /**
      * @param int $project_id
-     * @return Boolean
+     * @return bool
      */
-    public function removeParentProject($project_id) {
+    public function removeParentProject($project_id)
+    {
         return $this->getDao()->removeParentProject($project_id);
     }
 
@@ -111,7 +114,8 @@ class Project_HierarchyManager
      * @param int $project_id
      * @return Project[]
      */
-    public function getChildProjects($project_id) {
+    public function getChildProjects($project_id)
+    {
         $children = array();
         foreach ($this->getDao()->getChildProjects($project_id) as $child) {
             $children[] = $this->project_manager->getProjectFromDbRow($child);
@@ -124,7 +128,8 @@ class Project_HierarchyManager
      * @param int $project_id
      * @return Project | null
      */
-    public function getParentProject($project_id) {
+    public function getParentProject($project_id)
+    {
         $data = $this->getDao()->getParentProject($project_id);
 
         if ($data->count() > 0) {
@@ -143,7 +148,8 @@ class Project_HierarchyManager
      * @param int $project_id
      * @return array Project IDs
      */
-    public function getAllParents($project_id) {
+    public function getAllParents($project_id)
+    {
         $parent_ids = array();
 
         while ($parent_project = $this->getParentProject($project_id)) {
@@ -157,7 +163,8 @@ class Project_HierarchyManager
     /**
      * @return ProjectDao
      */
-    private function getDao() {
+    private function getDao()
+    {
         return $this->dao;
     }
 }

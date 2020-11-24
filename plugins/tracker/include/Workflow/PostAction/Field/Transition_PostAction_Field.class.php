@@ -19,49 +19,54 @@
  */
 
 /**
- * Base class for field post actions. 
+ * Base class for field post actions.
  */
-abstract class Transition_PostAction_Field extends Transition_PostAction {
-    
+abstract class Transition_PostAction_Field extends Transition_PostAction
+{
+
     /**
      * @var Tracker_FormElement_Field The field the post action should modify
      */
     protected $field;
-    
+
     /**
      * Constructor
      *
      * @param Transition                   $transition The transition the post action belongs to
-     * @param Integer                      $id         Id of the post action
+     * @param int $id Id of the post action
      * @param Tracker_FormElement_Field    $field      The field the post action should modify
      */
-    public function __construct(Transition $transition, $id, $field) {
+    public function __construct(Transition $transition, $id, $field)
+    {
         parent::__construct($transition, $id);
         $this->field = $field;
     }
-    
+
     /**
      * @see Transition_PostAction
      */
-    public function getCssClasses() {
+    public function getCssClasses()
+    {
         return 'workflow_action_field '.parent::getCssClasses();
     }
-    
+
     /**
      * Return the field associated to this post action
      *
      * @return Tracker_FormElement_Field
      */
-    public function getField() {
+    public function getField()
+    {
         return $this->field;
     }
-    
+
     /**
      * Return ID of the field updated by the post-action
      *
-     * @return Integer
+     * @return int
      */
-    public function getFieldId() {
+    public function getFieldId()
+    {
         if ($this->field) {
             return $this->field->getId();
         } else {
@@ -74,9 +79,10 @@ abstract class Transition_PostAction_Field extends Transition_PostAction {
      *
      * @param Tracker_FormElement_Field $field
      *
-     * @return boolean
+     * @return bool
      */
-    public function bypassPermissions(Tracker_FormElement_Field $field) {
+    public function bypassPermissions(Tracker_FormElement_Field $field)
+    {
         return $this->getFieldId() == $field->getId() && $this->bypass_permissions;
     }
 
@@ -87,15 +93,16 @@ abstract class Transition_PostAction_Field extends Transition_PostAction {
      *
      * @return int, a field id
      */
-    public function getFieldIdOfPostActionToUpdate($request_field_id) {
+    public function getFieldIdOfPostActionToUpdate($request_field_id)
+    {
         $field_id = $this->getFieldId();
-        
+
         if ($request_field_id != $field_id) {
             $new_field = $this->getFormElementFactory()->getUsedFormElementById($request_field_id);
-            
+
             if ($new_field) {
                 $already_used = $this->getDao()->searchByTransitionIdAndFieldId($this->transition->getId(), $new_field->getId());
-                
+
                 if (count($already_used)) {
                     $this->addFeedback('error', 'workflow_admin', 'postaction_on_field_already_exist', array($new_field->getLabel()));
                 } else {
@@ -106,14 +113,14 @@ abstract class Transition_PostAction_Field extends Transition_PostAction {
         }
         return $field_id;
     }
-    
+
     /**
      * Wrapper for Tracker_FormElementFactory
      *
      * @return Tracker_FormElementFactory
      */
-    protected function getFormElementFactory() {
+    protected function getFormElementFactory()
+    {
         return Tracker_FormElementFactory::instance();
     }
 }
-?>

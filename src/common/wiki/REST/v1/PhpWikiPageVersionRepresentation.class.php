@@ -24,7 +24,8 @@ namespace Tuleap\PhpWiki\REST\v1;
 use Tuleap\REST\v1\PhpWikiPageRepresentation;
 use WikiPageVersion;
 
-class PhpWikiPageVersionRepresentation {
+class PhpWikiPageVersionRepresentation
+{
 
     public const ROUTE = 'versions';
 
@@ -38,7 +39,8 @@ class PhpWikiPageVersionRepresentation {
      */
     public $uri;
 
-    public function build(WikiPageVersion $version) {
+    public function build(WikiPageVersion $version)
+    {
         $this->version_id = $version->getVersionId();
         $this->uri        = PhpWikiPageRepresentation::ROUTE . '/' . $version->getPageId() . '/'.self::ROUTE .'?version_id='.$this->version_id;
     }

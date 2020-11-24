@@ -17,7 +17,8 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class BackendFactory {
+class BackendFactory
+{
 
     /**
      * Return a Backend instance
@@ -26,7 +27,8 @@ class BackendFactory {
      *
      * @return Backend
      */
-    public static function getBackend() {
+    public static function getBackend()
+    {
         $backend = null;
         $params  = array('backend' => &$backend);
         EventManager::instance()->processEvent('backend_factory_get_backend', $params);
@@ -43,7 +45,8 @@ class BackendFactory {
      *
      * @return BackendSystem
      */
-    public static function getSystem() {
+    public static function getSystem()
+    {
         $backend = null;
         $params  = array('backend' => &$backend);
         EventManager::instance()->processEvent('backend_factory_get_system', $params);
@@ -60,7 +63,8 @@ class BackendFactory {
      *
      * @return BackendAliases
      */
-    public static function getAliases() {
+    public static function getAliases()
+    {
         $backend = null;
         $params  = array('backend' => &$backend);
         EventManager::instance()->processEvent('backend_factory_get_aliases', $params);
@@ -77,7 +81,8 @@ class BackendFactory {
      *
      * @return BackendMailingList
      */
-    public static function getMailingList() {
+    public static function getMailingList()
+    {
         $backend = null;
         $params  = array('backend' => &$backend);
         EventManager::instance()->processEvent('backend_factory_get_mailinglist', $params);
@@ -94,7 +99,8 @@ class BackendFactory {
      *
      * @return BackendCVS
      */
-    public static function getCVS() {
+    public static function getCVS()
+    {
         $backend = null;
         $params  = array('backend' => &$backend);
         EventManager::instance()->processEvent('backend_factory_get_cvs', $params);
@@ -111,7 +117,8 @@ class BackendFactory {
      *
      * @return BackendSVN
      */
-    public static function getSVN() {
+    public static function getSVN()
+    {
         $backend = null;
         $params  = array('backend' => &$backend);
         EventManager::instance()->processEvent('backend_factory_get_svn', $params);
@@ -121,5 +128,3 @@ class BackendFactory {
         return $backend;
     }
 }
-
-?>

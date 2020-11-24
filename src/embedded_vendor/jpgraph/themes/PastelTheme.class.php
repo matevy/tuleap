@@ -1,16 +1,16 @@
 <?php
-
 /**
 * Pastel Theme class
 */
-class PastelTheme extends Theme 
+class PastelTheme extends Theme
 {
     private $font_color       = '#0044CC';
     private $background_color = '#DDFFFF';
     private $axis_color       = '#0066CC';
     private $grid_color       = '#3366CC';
 
-    function GetColorList() {
+    function GetColorList()
+    {
         return array(
             '#FFAACC',
             '#AAEECC',
@@ -27,7 +27,8 @@ class PastelTheme extends Theme
         );
     }
 
-    function SetupGraph($graph) {
+    function SetupGraph($graph)
+    {
 
         // graph
         /*
@@ -49,14 +50,14 @@ class PastelTheme extends Theme
         $graph->legend->SetMarkAbsSize(5);
 
         // xaxis
-        $graph->xaxis->title->SetColor($this->font_color);  
-        $graph->xaxis->SetColor($this->axis_color, $this->font_color);    
+        $graph->xaxis->title->SetColor($this->font_color);
+        $graph->xaxis->SetColor($this->axis_color, $this->font_color);
         $graph->xaxis->SetTickSide(SIDE_BOTTOM);
         $graph->xaxis->SetLabelMargin(10);
-                
+
         // yaxis
-        $graph->yaxis->title->SetColor($this->font_color);  
-        $graph->yaxis->SetColor($this->axis_color, $this->font_color);    
+        $graph->yaxis->title->SetColor($this->font_color);
+        $graph->yaxis->SetColor($this->axis_color, $this->font_color);
         $graph->yaxis->SetTickSide(SIDE_LEFT);
         $graph->yaxis->SetLabelMargin(8);
         $graph->yaxis->HideLine();
@@ -67,7 +68,6 @@ class PastelTheme extends Theme
         $graph->ygrid->SetColor($this->grid_color);
         $graph->ygrid->SetLineStyle('dotted');
 
-
         // font
         $graph->title->SetColor($this->font_color);
         $graph->subtitle->SetColor($this->font_color);
@@ -77,7 +77,8 @@ class PastelTheme extends Theme
     }
 
 
-    function SetupPieGraph($graph) {
+    function SetupPieGraph($graph)
+    {
 
         // graph
         $graph->SetFrame(false);
@@ -102,40 +103,36 @@ class PastelTheme extends Theme
     }
 
 
-    function PreStrokeApply($graph) {
+    function PreStrokeApply($graph)
+    {
         if ($graph->legend->HasItems()) {
             $img = $graph->img;
             $graph->SetMargin(
-                $img->raw_left_margin, 
-                $img->raw_right_margin, 
-                $img->raw_top_margin, 
+                $img->raw_left_margin,
+                $img->raw_right_margin,
+                $img->raw_top_margin,
                 is_numeric($img->raw_bottom_margin) ? $img->raw_bottom_margin : $img->height * 0.25
             );
         }
     }
 
-    function ApplyPlot($plot) {
+    function ApplyPlot($plot)
+    {
 
-        switch (get_class($plot))
-        { 
+        switch (get_class($plot)) {
             case 'GroupBarPlot':
-            {
                 foreach ($plot->plots as $_plot) {
                     $this->ApplyPlot($_plot);
                 }
                 break;
-            }
 
             case 'AccBarPlot':
-            {
                 foreach ($plot->plots as $_plot) {
                     $this->ApplyPlot($_plot);
                 }
                 break;
-            }
 
             case 'BarPlot':
-            {
                 $plot->Clear();
 
                 $color = $this->GetNextColor();
@@ -143,37 +140,25 @@ class PastelTheme extends Theme
                 $plot->SetFillColor($color);
                 $plot->SetShadow('red', 3, 4, false);
                 break;
-            }
 
             case 'LinePlot':
-            {
                 $plot->Clear();
                 $plot->SetColor($this->GetNextColor().'@0.4');
                 $plot->SetWeight(2);
 //                $plot->SetBarCenter();
                 break;
-            }
 
             case 'PiePlot':
-            {
                 $plot->SetCenter(0.5, 0.45);
                 $plot->ShowBorder(false);
                 $plot->SetSliceColors($this->GetThemeColors());
                 break;
-            }
 
             case 'PiePlot3D':
-            {
                 $plot->SetSliceColors($this->GetThemeColors());
                 break;
-            }
-    
+
             default:
-            {
-            }
         }
     }
 }
-
-
-?>

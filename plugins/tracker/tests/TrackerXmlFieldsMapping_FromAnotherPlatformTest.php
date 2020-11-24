@@ -20,7 +20,8 @@
 
 require_once 'bootstrap.php';
 
-class TrackerXmlFieldsMapping_FromAnotherPlatform_StaticTest extends TuleapTestCase {
+class TrackerXmlFieldsMapping_FromAnotherPlatform_StaticTest extends TuleapTestCase
+{
 
     /** @var array */
     private $xml_mapping;
@@ -31,7 +32,8 @@ class TrackerXmlFieldsMapping_FromAnotherPlatform_StaticTest extends TuleapTestC
     /** @var TrackerXmlMappingDataExtractor */
     private $xml_fields_mapping;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $static_value_01 = stub('Tracker_FormElement_Field_List_Bind_StaticValue')->getId()->returns(24076);
@@ -56,20 +58,23 @@ class TrackerXmlFieldsMapping_FromAnotherPlatform_StaticTest extends TuleapTestC
         $this->xml_fields_mapping = new TrackerXmlFieldsMapping_FromAnotherPlatform($this->xml_mapping);
     }
 
-    public function itGetsNewValueIdForAStaticList() {
+    public function itGetsNewValueIdForAStaticList()
+    {
         $new_value_id = $this->xml_fields_mapping->getNewValueId(24058);
 
         $this->assertEqual(24076, $new_value_id);
     }
 
-    public function itThrowsAnExceptionIfTheNewValueIsNotFound() {
+    public function itThrowsAnExceptionIfTheNewValueIsNotFound()
+    {
         $this->expectException('TrackerXmlFieldsMapping_ValueNotFoundException');
 
         $this->xml_fields_mapping->getNewValueId(12345);
     }
 }
 
-class TrackerXmlFieldsMapping_FromAnotherPlatform_UgroupsTest extends TuleapTestCase {
+class TrackerXmlFieldsMapping_FromAnotherPlatform_UgroupsTest extends TuleapTestCase
+{
 
     /** @var array */
     private $xml_mapping;
@@ -80,7 +85,8 @@ class TrackerXmlFieldsMapping_FromAnotherPlatform_UgroupsTest extends TuleapTest
     /** @var TrackerXmlMappingDataExtractor */
     private $xml_fields_mapping;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $ugroup_value_01 = stub('Tracker_FormElement_Field_List_Bind_UgroupsValue')->getId()->returns(300);
@@ -99,20 +105,23 @@ class TrackerXmlFieldsMapping_FromAnotherPlatform_UgroupsTest extends TuleapTest
         $this->xml_fields_mapping = new TrackerXmlFieldsMapping_FromAnotherPlatform($this->xml_mapping);
     }
 
-    public function itGetsNewValueIdForAUgroupList() {
+    public function itGetsNewValueIdForAUgroupList()
+    {
         $new_value_id = $this->xml_fields_mapping->getNewValueId(200);
 
         $this->assertEqual(301, $new_value_id);
     }
 
-    public function itThrowsAnExceptionIfTheNewValueIsNotFound() {
+    public function itThrowsAnExceptionIfTheNewValueIsNotFound()
+    {
         $this->expectException('TrackerXmlFieldsMapping_ValueNotFoundException');
 
         $this->xml_fields_mapping->getNewValueId(12345);
     }
 }
 
-class TrackerXmlFieldsMapping_FromAnotherPlatform_OpenList_StaticTest extends TuleapTestCase {
+class TrackerXmlFieldsMapping_FromAnotherPlatform_OpenList_StaticTest extends TuleapTestCase
+{
 
     /** @var array */
     private $xml_mapping;
@@ -123,7 +132,8 @@ class TrackerXmlFieldsMapping_FromAnotherPlatform_OpenList_StaticTest extends Tu
     /** @var TrackerXmlMappingDataExtractor */
     private $xml_fields_mapping;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $static_value_01 = stub('Tracker_FormElement_Field_List_Bind_StaticValue')->getId()->returns(24076);
@@ -140,13 +150,15 @@ class TrackerXmlFieldsMapping_FromAnotherPlatform_OpenList_StaticTest extends Tu
         $this->xml_fields_mapping = new TrackerXmlFieldsMapping_FromAnotherPlatform($this->xml_mapping);
     }
 
-    public function itGetsNewValueIdForAStaticList() {
+    public function itGetsNewValueIdForAStaticList()
+    {
         $new_value_id = $this->xml_fields_mapping->getNewOpenValueId('b24058');
 
         $this->assertEqual('24076', $new_value_id);
     }
 
-    public function itThrowsAnExceptionIfTheNewValueIsNotFound() {
+    public function itThrowsAnExceptionIfTheNewValueIsNotFound()
+    {
         $this->expectException('TrackerXmlFieldsMapping_ValueNotFoundException');
 
         $this->xml_fields_mapping->getNewValueId('12345');

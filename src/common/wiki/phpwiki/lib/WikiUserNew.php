@@ -1,19 +1,20 @@
-<?php //-*-php-*-
+<?php
+//-*-php-*-
 rcs_id('$Id: WikiUserNew.php,v 1.132 2006/03/04 13:19:12 rurban Exp $');
 /* Copyright (C) 2004,2005 $ThePhpWikiProgrammingTeam
  *
  * This file is part of PhpWiki.
- * 
+ *
  * PhpWiki is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * PhpWiki is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with PhpWiki; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -22,30 +23,30 @@ rcs_id('$Id: WikiUserNew.php,v 1.132 2006/03/04 13:19:12 rurban Exp $');
  * This is a complete OOP rewrite of the old WikiUser code with various
  * configurable external authentication methods.
  *
- * There's only one entry point, the function WikiUser which returns 
+ * There's only one entry point, the function WikiUser which returns
  * a WikiUser object, which contains the name, authlevel and user's preferences.
  * This object might get upgraded during the login step and later also.
  * There exist three preferences storage methods: cookie, homepage and db,
  * and multiple password checking methods.
- * See index.php for $USER_AUTH_ORDER[] and USER_AUTH_POLICY if 
+ * See index.php for $USER_AUTH_ORDER[] and USER_AUTH_POLICY if
  * ALLOW_USER_PASSWORDS is defined.
  *
- * Each user object must define the two preferences methods 
- *  getPreferences(), setPreferences(), 
+ * Each user object must define the two preferences methods
+ *  getPreferences(), setPreferences(),
  * and the following 1-4 auth methods
  *  checkPass()  must be defined by all classes,
- *  userExists() only if USER_AUTH_POLICY'=='strict' 
+ *  userExists() only if USER_AUTH_POLICY'=='strict'
  *  mayChangePass()  only if the password is storable.
  *  storePass()  only if the password is storable.
  *
  * WikiUser() given no name, returns an _AnonUser (anonymous user)
- * object, who may or may not have a cookie. 
- * However, if the there's a cookie with the userid or a session, 
+ * object, who may or may not have a cookie.
+ * However, if the there's a cookie with the userid or a session,
  * the user is upgraded to the matching user object.
- * Given a user name, returns a _BogoUser object, who may or may not 
- * have a cookie and/or PersonalPage, one of the various _PassUser objects 
+ * Given a user name, returns a _BogoUser object, who may or may not
+ * have a cookie and/or PersonalPage, one of the various _PassUser objects
  * or an _AdminUser object.
- * BTW: A BogoUser is a userid (loginname) as valid WikiWord, who might 
+ * BTW: A BogoUser is a userid (loginname) as valid WikiWord, who might
  * have stored a password or not. If so, his account is secure, if not
  * anybody can use it, because the username is visible e.g. in RecentChanges.
  *
@@ -53,39 +54,31 @@ rcs_id('$Id: WikiUserNew.php,v 1.132 2006/03/04 13:19:12 rurban Exp $');
  * user's page and any cookies. lib/main.php will query the user object to
  * verify the password as appropriate.
  *
- * @author: Reini Urban (the tricky parts), 
+ * @author: Reini Urban (the tricky parts),
  *          Carsten Klapp (started rolling the ball)
  *
  * Random architectural notes, sorted by date:
  * 2004-01-25 rurban
  * Test it by defining ENABLE_USER_NEW in config/config.ini
  * 1) Now a ForbiddenUser is returned instead of false.
- * 2) Previously ALLOW_ANON_USER = false meant that anon users cannot edit, 
- *    but may browse. Now with ALLOW_ANON_USER = false he may not browse, 
+ * 2) Previously ALLOW_ANON_USER = false meant that anon users cannot edit,
+ *    but may browse. Now with ALLOW_ANON_USER = false he may not browse,
  *    which is needed to disable browse PagePermissions.
- *    I added now ALLOW_ANON_EDIT = true to makes things clear. 
+ *    I added now ALLOW_ANON_EDIT = true to makes things clear.
  *    (which replaces REQUIRE_SIGNIN_BEFORE_EDIT)
  * 2004-02-27 rurban:
- * 3) Removed pear prepare. Performance hog, and using integers as 
+ * 3) Removed pear prepare. Performance hog, and using integers as
  *    handler doesn't help. Do simple sprintf as with adodb. And a prepare
- *    in the object init is no advantage, because in the init loop a lot of 
+ *    in the object init is no advantage, because in the init loop a lot of
  *    objects are tried, but not used.
- * 4) Already gotten prefs are passed to the next object to avoid 
+ * 4) Already gotten prefs are passed to the next object to avoid
  *    duplicate getPreferences() calls.
- * 2004-03-18 rurban
- * 5) Major php-5 problem: $this re-assignment is disallowed by the parser
- *    So we cannot just discrimate with 
- *      if (!check_php_version(5))
- *          $this = $user;
- *    A /php5-patch.php is provided, which patches the src automatically 
- *    for php4 and php5. Default is php4.
- *    Update: not needed anymore. we use eval to fool the load-time syntax checker.
  * 2004-03-24 rurban
  * 6) enforced new cookie policy: prefs don't get stored in cookies
- *    anymore, only in homepage and/or database, but always in the 
+ *    anymore, only in homepage and/or database, but always in the
  *    current session. old pref cookies will get deleted.
  * 2004-04-04 rurban
- * 7) Certain themes should be able to extend the predefined list 
+ * 7) Certain themes should be able to extend the predefined list
  *    of preferences. Display/editing is done in the theme specific userprefs.tmpl,
  *    but storage must be extended to the Get/SetPreferences methods.
  *    <theme>/themeinfo.php must provide CustomUserPreferences:
@@ -101,20 +94,34 @@ define('WIKIAUTH_UNOBTAINABLE', 100);  // Permissions that no user can achieve
 
 //if (!defined('COOKIE_EXPIRATION_DAYS')) define('COOKIE_EXPIRATION_DAYS', 365);
 //if (!defined('COOKIE_DOMAIN'))          define('COOKIE_DOMAIN', '/');
-if (!defined('EDITWIDTH_MIN_COLS'))     define('EDITWIDTH_MIN_COLS',     30);
-if (!defined('EDITWIDTH_MAX_COLS'))     define('EDITWIDTH_MAX_COLS',    150);
-if (!defined('EDITWIDTH_DEFAULT_COLS')) define('EDITWIDTH_DEFAULT_COLS', 80);
+if (!defined('EDITWIDTH_MIN_COLS')) {
+    define('EDITWIDTH_MIN_COLS', 30);
+}
+if (!defined('EDITWIDTH_MAX_COLS')) {
+    define('EDITWIDTH_MAX_COLS', 150);
+}
+if (!defined('EDITWIDTH_DEFAULT_COLS')) {
+    define('EDITWIDTH_DEFAULT_COLS', 80);
+}
 
-if (!defined('EDITHEIGHT_MIN_ROWS'))     define('EDITHEIGHT_MIN_ROWS',      5);
-if (!defined('EDITHEIGHT_MAX_ROWS'))     define('EDITHEIGHT_MAX_ROWS',     80);
-if (!defined('EDITHEIGHT_DEFAULT_ROWS')) define('EDITHEIGHT_DEFAULT_ROWS', 22);
+if (!defined('EDITHEIGHT_MIN_ROWS')) {
+    define('EDITHEIGHT_MIN_ROWS', 5);
+}
+if (!defined('EDITHEIGHT_MAX_ROWS')) {
+    define('EDITHEIGHT_MAX_ROWS', 80);
+}
+if (!defined('EDITHEIGHT_DEFAULT_ROWS')) {
+    define('EDITHEIGHT_DEFAULT_ROWS', 22);
+}
 
 define('TIMEOFFSET_MIN_HOURS', -26);
-define('TIMEOFFSET_MAX_HOURS',  26);
-if (!defined('TIMEOFFSET_DEFAULT_HOURS')) define('TIMEOFFSET_DEFAULT_HOURS', 0);
+define('TIMEOFFSET_MAX_HOURS', 26);
+if (!defined('TIMEOFFSET_DEFAULT_HOURS')) {
+    define('TIMEOFFSET_DEFAULT_HOURS', 0);
+}
 
 /**
- * There are be the following constants in config/config.ini to 
+ * There are be the following constants in config/config.ini to
  * establish login parameters:
  *
  * ALLOW_ANON_USER         default true
@@ -137,73 +144,87 @@ if (!defined('TIMEOFFSET_DEFAULT_HOURS')) define('TIMEOFFSET_DEFAULT_HOURS', 0);
  * any page.
  *
  * There are other possible combinations, but the typical wiki (such
- * as http://PhpWiki.sf.net/phpwiki) would usually just leave all four 
+ * as http://PhpWiki.sf.net/phpwiki) would usually just leave all four
  * enabled.
  *
  */
 
 // The last object in the row is the bad guy...
-if (!is_array($GLOBALS['USER_AUTH_ORDER']))
+if (!is_array($GLOBALS['USER_AUTH_ORDER'])) {
     $GLOBALS['USER_AUTH_ORDER'] = array("Forbidden");
-else
+} else {
     $GLOBALS['USER_AUTH_ORDER'][] = "Forbidden";
+}
 
 // Local convenience functions.
-function _isAnonUserAllowed() {
+function _isAnonUserAllowed()
+{
     return (defined('ALLOW_ANON_USER') && ALLOW_ANON_USER);
 }
-function _isBogoUserAllowed() {
+function _isBogoUserAllowed()
+{
     return (defined('ALLOW_BOGO_LOGIN') && ALLOW_BOGO_LOGIN);
 }
-function _isUserPasswordsAllowed() {
+function _isUserPasswordsAllowed()
+{
     return (defined('ALLOW_USER_PASSWORDS') && ALLOW_USER_PASSWORDS);
 }
 
 // Possibly upgrade userobject functions.
-function _determineAdminUserOrOtherUser($UserName) {
+function _determineAdminUserOrOtherUser($UserName)
+{
     // Sanity check. User name is a condition of the definition of the
     // _AdminUser, _BogoUser and _passuser.
-    if (!$UserName)
+    if (!$UserName) {
         return $GLOBALS['ForbiddenUser'];
+    }
 
     //FIXME: check admin membership later at checkPass. Now we cannot raise the level.
     //$group = &WikiGroup::getGroup($GLOBALS['request']);
-    if ($UserName == ADMIN_USER)
+    if ($UserName == ADMIN_USER) {
         return new _AdminUser($UserName);
+    }
     /* elseif ($group->isMember(GROUP_ADMIN)) { // unneeded code
         return _determineBogoUserOrPassUser($UserName);
     }
     */
-    else
+    else {
         return _determineBogoUserOrPassUser($UserName);
+    }
 }
 
-function _determineBogoUserOrPassUser($UserName) {
+function _determineBogoUserOrPassUser($UserName)
+{
     global $ForbiddenUser;
 
     // Sanity check. User name is a condition of the definition of
     // _BogoUser and _PassUser.
-    if (!$UserName)
+    if (!$UserName) {
         return $ForbiddenUser;
+    }
 
     // Check for password and possibly upgrade user object.
     // $_BogoUser = new _BogoUser($UserName);
     if (_isBogoUserAllowed() and isWikiWord($UserName)) {
         include_once("lib/WikiUser/BogoLogin.php");
         $_BogoUser = new _BogoLoginPassUser($UserName);
-        if ($_BogoUser->userExists() or $GLOBALS['request']->getArg('auth'))
+        if ($_BogoUser->userExists() or $GLOBALS['request']->getArg('auth')) {
             return $_BogoUser;
+        }
     }
     if (_isUserPasswordsAllowed()) {
-    	// PassUsers override BogoUsers if a password is stored
-        if (isset($_BogoUser) and isset($_BogoUser->_prefs) 
-            and $_BogoUser->_prefs->get('passwd'))
+        // PassUsers override BogoUsers if a password is stored
+        if (isset($_BogoUser) and isset($_BogoUser->_prefs)
+            and $_BogoUser->_prefs->get('passwd')) {
             return new _PassUser($UserName, $_BogoUser->_prefs);
-        else { 
-            $_PassUser = new _PassUser($UserName,
-                                       isset($_BogoUser) ? $_BogoUser->_prefs : false);
-            if ($_PassUser->userExists() or $GLOBALS['request']->getArg('auth'))
+        } else {
+            $_PassUser = new _PassUser(
+                $UserName,
+                isset($_BogoUser) ? $_BogoUser->_prefs : false
+            );
+            if ($_PassUser->userExists() or $GLOBALS['request']->getArg('auth')) {
                 return $_PassUser;
+            }
         }
     }
     // No Bogo- or PassUser exists, or
@@ -214,7 +235,7 @@ function _determineBogoUserOrPassUser($UserName) {
 
 /**
  * Primary WikiUser function, called by lib/main.php.
- * 
+ *
  * This determines the user's type and returns an appropriate user
  * object. lib/main.php then querys the resultant object for password
  * validity as necessary.
@@ -222,11 +243,12 @@ function _determineBogoUserOrPassUser($UserName) {
  * If an _AnonUser object is returned, the user may only browse pages
  * (and save prefs in a cookie).
  *
- * To disable access but provide prefs the global $ForbiddenUser class 
+ * To disable access but provide prefs the global $ForbiddenUser class
  * is returned. (was previously false)
- * 
+ *
  */
-function WikiUser ($UserName = '') {
+function WikiUser($UserName = '')
+{
     global $ForbiddenUser;
 
     //Maybe: Check sessionvar for username & save username into
@@ -235,13 +257,11 @@ function WikiUser ($UserName = '') {
         $ForbiddenUser = new _ForbiddenUser($UserName);
         // Found a user name.
         return _determineAdminUserOrOtherUser($UserName);
-    }
-    elseif (!empty($_SESSION['userid'])) {
+    } elseif (!empty($_SESSION['userid'])) {
         // Found a user name.
         $ForbiddenUser = new _ForbiddenUser($_SESSION['userid']);
         return _determineAdminUserOrOtherUser($_SESSION['userid']);
-    }
-    else {
+    } else {
         // Check for autologin pref in cookie and possibly upgrade
         // user object to another type.
         $_AnonUser = new _AnonUser();
@@ -249,11 +269,11 @@ function WikiUser ($UserName = '') {
             // Found a user name.
             $ForbiddenUser = new _ForbiddenUser($UserName);
             return _determineAdminUserOrOtherUser($UserName);
-        }
-        else {
+        } else {
             $ForbiddenUser = new _ForbiddenUser();
-            if (_isAnonUserAllowed())
+            if (_isAnonUserAllowed()) {
                 return $_AnonUser;
+            }
             return $ForbiddenUser; // User must sign in to browse pages.
         }
         return $ForbiddenUser;     // User must sign in with a password.
@@ -268,7 +288,8 @@ function WikiUser ($UserName = '') {
 /**
  * WikiUser.php use the name 'WikiUser'
  */
-function WikiUserClassname() {
+function WikiUserClassname()
+{
     return '_WikiUser';
 }
 
@@ -279,23 +300,26 @@ function WikiUserClassname() {
  * (on php4 it works ok, on php5 it's currently disallowed on the parser level)
  * that's why try it the hard way.
  */
-function UpgradeUser ($olduser, $user) {
-    if (isa($user,'_WikiUser') and isa($olduser,'_WikiUser')) {
+function UpgradeUser($olduser, $user)
+{
+    if (isa($user, '_WikiUser') and isa($olduser, '_WikiUser')) {
         // populate the upgraded class $olduser with the values from the new user object
         //only _auth_level, _current_method, _current_index,
-        if (!empty($user->_level) and 
-            $user->_level > $olduser->_level)
+        if (!empty($user->_level) and
+            $user->_level > $olduser->_level) {
             $olduser->_level = $user->_level;
+        }
         if (!empty($user->_current_index) and
             $user->_current_index > $olduser->_current_index) {
             $olduser->_current_index = $user->_current_index;
             $olduser->_current_method = $user->_current_method;
         }
-        if (!empty($user->_authmethod))
+        if (!empty($user->_authmethod)) {
             $olduser->_authmethod = $user->_authmethod;
+        }
         /*
         foreach (get_object_vars($user) as $k => $v) {
-            if (!empty($v)) $olduser->$k = $v;	
+            if (!empty($v)) $olduser->$k = $v;
         }
         */
         $olduser->hasHomePage(); // revive db handle, because these don't survive sessions
@@ -310,20 +334,24 @@ function UpgradeUser ($olduser, $user) {
  * Probably not needed, since we use the various user objects methods so far.
  * Anyway, here it is, looping through all available objects.
  */
-function UserExists ($UserName) {
+function UserExists($UserName)
+{
     global $request;
-    if (!($user = $request->getUser()))
+    if (!($user = $request->getUser())) {
         $user = WikiUser($UserName);
-    if (!$user) 
+    }
+    if (!$user) {
         return false;
+    }
     if ($user->userExists($UserName)) {
         $request->_user = $user;
         return true;
     }
-    if (isa($user,'_BogoUser'))
-        $user = new _PassUser($UserName,$user->_prefs);
+    if (isa($user, '_BogoUser')) {
+        $user = new _PassUser($UserName, $user->_prefs);
+    }
     $class = $user->nextClass();
-    if ($user = new $class($UserName,$user->_prefs)) {
+    if ($user = new $class($UserName, $user->_prefs)) {
         return $user->userExists($UserName);
     }
     $request->_user = $GLOBALS['ForbiddenUser'];
@@ -331,7 +359,7 @@ function UserExists ($UserName) {
 }
 
 
-/** 
+/**
  * Base WikiUser class.
  */
 class _WikiUser
@@ -342,7 +370,8 @@ class _WikiUser
      var $_HomePagehandle = false;
 
     // constructor
-    function __construct($UserName='', $prefs=false) {
+    function __construct($UserName = '', $prefs = false)
+    {
 
         $this->_userid = $UserName;
         $this->_HomePagehandle = false;
@@ -350,48 +379,57 @@ class _WikiUser
             $this->hasHomePage();
         }
         if (empty($this->_prefs)) {
-            if ($prefs) $this->_prefs = $prefs;
-            else $this->getPreferences();
+            if ($prefs) {
+                $this->_prefs = $prefs;
+            } else {
+                $this->getPreferences();
+            }
         }
     }
 
-    function UserName() {
-        if (!empty($this->_userid))
+    function UserName()
+    {
+        if (!empty($this->_userid)) {
             return $this->_userid;
+        }
     }
 
-    function getPreferences() {
+    function getPreferences()
+    {
         trigger_error("DEBUG: Note: undefined _WikiUser class trying to load prefs." . " "
                       . "New subclasses of _WikiUser must override this function.");
         return false;
     }
 
-    function setPreferences($prefs, $id_only) {
-        trigger_error("DEBUG: Note: undefined _WikiUser class trying to save prefs." 
+    function setPreferences($prefs, $id_only)
+    {
+        trigger_error("DEBUG: Note: undefined _WikiUser class trying to save prefs."
                       . " "
                       . "New subclasses of _WikiUser must override this function.");
         return false;
     }
 
-    function userExists() {
+    function userExists()
+    {
         return $this->hasHomePage();
     }
 
-    function checkPass($submitted_password) {
+    function checkPass($submitted_password)
+    {
         // By definition, an undefined user class cannot sign in.
-        trigger_error("DEBUG: Warning: undefined _WikiUser class trying to sign in." 
+        trigger_error("DEBUG: Warning: undefined _WikiUser class trying to sign in."
                       . " "
                       . "New subclasses of _WikiUser must override this function.");
         return false;
     }
 
     // returns page_handle to user's home page or false if none
-    function hasHomePage() {
+    function hasHomePage()
+    {
         if ($this->_userid) {
             if (!empty($this->_HomePagehandle) and is_object($this->_HomePagehandle)) {
                 return $this->_HomePagehandle->exists();
-            }
-            else {
+            } else {
                 // check db again (maybe someone else created it since
                 // we logged in.)
                 global $request;
@@ -404,55 +442,69 @@ class _WikiUser
     }
 
     // innocent helper: case-insensitive position in _auth_methods
-    function array_position ($string, $array) {
+    function array_position($string, $array)
+    {
         $string = strtolower($string);
         for ($found = 0; $found < count($array); $found++) {
-            if (strtolower($array[$found]) == $string)
+            if (strtolower($array[$found]) == $string) {
                 return $found;
+            }
         }
         return false;
     }
 
-    function nextAuthMethodIndex() {
-        if (empty($this->_auth_methods)) 
+    function nextAuthMethodIndex()
+    {
+        if (empty($this->_auth_methods)) {
             $this->_auth_methods = $GLOBALS['USER_AUTH_ORDER'];
+        }
         if (empty($this->_current_index)) {
-            if (strtolower(get_class($this)) != '_passuser') {
-            	$this->_current_method = substr(get_class($this),1,-8);
-                $this->_current_index = $this->array_position($this->_current_method,
-                                                              $this->_auth_methods);
+            if (strtolower(static::class) != '_passuser') {
+                $this->_current_method = substr(static::class, 1, -8);
+                $this->_current_index = $this->array_position(
+                    $this->_current_method,
+                    $this->_auth_methods
+                );
             } else {
-            	$this->_current_index = -1;
+                $this->_current_index = -1;
             }
         }
         $this->_current_index++;
-        if ($this->_current_index >= count($this->_auth_methods))
+        if ($this->_current_index >= count($this->_auth_methods)) {
             return false;
+        }
         $this->_current_method = $this->_auth_methods[$this->_current_index];
         return $this->_current_index;
     }
 
-    function AuthMethod($index = false) {
-        return $this->_auth_methods[ $index === false 
-                                     ? count($this->_auth_methods)-1 
+    function AuthMethod($index = false)
+    {
+        return $this->_auth_methods[ $index === false
+                                     ? count($this->_auth_methods)-1
                                      : $index];
     }
 
     // upgrade the user object
-    function nextClass() {
+    function nextClass()
+    {
         $method = $this->AuthMethod($this->nextAuthMethodIndex());
         include_once("lib/WikiUser/$method.php");
         return "_".$method."PassUser";
     }
 
     //Fixme: for _HttpAuthPassUser
-    function PrintLoginForm (&$request, $args, $fail_message = false,
-                             $seperate_page = false) {
+    function PrintLoginForm(
+        &$request,
+        $args,
+        $fail_message = false,
+        $seperate_page = false
+    ) {
         include_once('lib/Template.php');
         // Call update_locale in case the system's default language is not 'en'.
         // (We have no user pref for lang at this point yet, no one is logged in.)
-        if ($GLOBALS['LANG'] != DEFAULT_LANGUAGE)
+        if ($GLOBALS['LANG'] != DEFAULT_LANGUAGE) {
             update_locale(DEFAULT_LANGUAGE);
+        }
         $userid = $this->_userid;
         $require_level = 0;
         extract($args); // fixme
@@ -461,15 +513,23 @@ class _WikiUser
 
         $pagename = $request->getArg('pagename');
         $nocache = 1;
-        $login = Template('login',
-                          compact('pagename', 'userid', 'require_level',
-                                  'fail_message', 'pass_required', 'nocache'));
+        $login = Template(
+            'login',
+            compact(
+                'pagename',
+                'userid',
+                'require_level',
+                'fail_message',
+                'pass_required',
+                'nocache'
+            )
+        );
         // check if the html template was already processed
         $seperate_page = $seperate_page ? true : !alreadyTemplateProcessed('html');
         if ($seperate_page) {
             $page = $request->getPage($pagename);
             $revision = $page->getCurrentRevision();
-            return GeneratePage($login,_("Sign In"),$revision);
+            return GeneratePage($login, _("Sign In"), $revision);
         } else {
             return $login->printExpansion();
         }
@@ -477,31 +537,43 @@ class _WikiUser
 
     /** Signed in but not password checked or empty password.
      */
-    function isSignedIn() {
-        return (isa($this,'_BogoUser') or isa($this,'_PassUser'));
+    function isSignedIn()
+    {
+        return (isa($this, '_BogoUser') or isa($this, '_PassUser'));
     }
 
     /** This is password checked for sure.
      */
-    function isAuthenticated() {
+    function isAuthenticated()
+    {
         //return isa($this,'_PassUser');
         //return isa($this,'_BogoUser') || isa($this,'_PassUser');
         return $this->_level >= WIKIAUTH_BOGO;
     }
 
-    function isAdmin () {
-        static $group; 
-        if ($this->_level == WIKIAUTH_ADMIN) return true;
-        if (!$this->isSignedIn()) return false;
-        if (!$this->isAuthenticated()) return false;
+    function isAdmin()
+    {
+        static $group;
+        if ($this->_level == WIKIAUTH_ADMIN) {
+            return true;
+        }
+        if (!$this->isSignedIn()) {
+            return false;
+        }
+        if (!$this->isAuthenticated()) {
+            return false;
+        }
 
-        if (!$group) $group = &$GLOBALS['request']->getGroup();
+        if (!$group) {
+            $group = &$GLOBALS['request']->getGroup();
+        }
         return ($this->_level > WIKIAUTH_BOGO and $group->isMember(GROUP_ADMIN));
     }
 
     /** Name or IP for a signed user. UserName could come from a cookie e.g.
      */
-    function getId () {
+    function getId()
+    {
         return ( $this->UserName()
                  ? $this->UserName()
                  : $GLOBALS['request']->get('REMOTE_ADDR') );
@@ -509,70 +581,76 @@ class _WikiUser
 
     /** Name for an authenticated user. No IP here.
      */
-    function getAuthenticatedId() {
+    function getAuthenticatedId()
+    {
         return ( $this->isAuthenticated()
                  ? $this->_userid
                  : ''); //$GLOBALS['request']->get('REMOTE_ADDR') );
     }
 
-    function hasAuthority ($require_level) {
+    function hasAuthority($require_level)
+    {
         return $this->_level >= $require_level;
     }
 
-    /* This is quite restrictive and not according the login description online. 
+    /* This is quite restrictive and not according the login description online.
        Any word char (A-Za-z0-9_), ".", "@" and "-"
        The backends may loosen this.
     */
-    function isValidName ($userid = false) {
-        if (!$userid) $userid = $this->_userid;
-        return preg_match("/^[\w\.@\-]+$/",$userid) and strlen($userid) < 32;
+    function isValidName($userid = false)
+    {
+        if (!$userid) {
+            $userid = $this->_userid;
+        }
+        return preg_match("/^[\w\.@\-]+$/", $userid) and strlen($userid) < 32;
     }
 
     /**
      * Called on an auth_args POST request, such as login, logout or signin.
      * TODO: Check BogoLogin users with empty password. (self-signed users)
      */
-    function AuthCheck ($postargs) {
+    function AuthCheck($postargs)
+    {
         // Normalize args, and extract.
         $keys = array('userid', 'passwd', 'require_level', 'login', 'logout',
                       'cancel');
-        foreach ($keys as $key)
+        foreach ($keys as $key) {
             $args[$key] = isset($postargs[$key]) ? $postargs[$key] : false;
+        }
         extract($args);
         $require_level = max(0, min(WIKIAUTH_ADMIN, (int)$require_level));
 
         if ($logout) { // Log out
             if (method_exists($GLOBALS['request']->_user, "logout")) { //_HttpAuthPassUser
-          	$GLOBALS['request']->_user->logout();
+                $GLOBALS['request']->_user->logout();
             }
             $user = new _AnonUser();
             $user->_userid = '';
             $user->_level = WIKIAUTH_ANON;
-            return $user; 
-        } elseif ($cancel)
+            return $user;
+        } elseif ($cancel) {
             return false;        // User hit cancel button.
-        elseif (!$login && !$userid)
+        } elseif (!$login && !$userid) {
             return false;       // Nothing to do?
+        }
 
-        if (!$this->isValidName($userid))
-            return _("Invalid username.");;
+        if (!$this->isValidName($userid)) {
+            return _("Invalid username.");
+        };
 
         $authlevel = $this->checkPass($passwd === false ? '' : $passwd);
         if ($authlevel <= 0) { // anon or forbidden
-            if ($passwd)
+            if ($passwd) {
                 return _("Invalid password.");
-            else
+            } else {
                 return _("Invalid password or userid.");
-        } elseif ($authlevel < $require_level) { // auth ok, but not enough 
-            if (!empty($this->_current_method) and strtolower(get_class($this)) == '_passuser') 
-            {
+            }
+        } elseif ($authlevel < $require_level) { // auth ok, but not enough
+            if (!empty($this->_current_method) and strtolower(static::class) == '_passuser') {
                 // upgrade class
                 $class = "_" . $this->_current_method . "PassUser";
                 include_once("lib/WikiUser/".$this->_current_method.".php");
-                $user = new $class($userid,$this->_prefs);
-                if (!check_php_version(5))
-                    eval("\$this = \$user;");
-                // /*PHP5 patch*/$this = $user;
+                $user = new $class($userid, $this->_prefs);
                 $this->_level = $authlevel;
                 return $user;
             }
@@ -583,16 +661,12 @@ class _WikiUser
 
         // Successful login.
         //$user = $GLOBALS['request']->_user;
-        if (!empty($this->_current_method) and 
-            strtolower(get_class($this)) == '_passuser') 
-        {
+        if (!empty($this->_current_method) and
+            strtolower(static::class) == '_passuser') {
             // upgrade class
             $class = "_" . $this->_current_method . "PassUser";
             include_once("lib/WikiUser/".$this->_current_method.".php");
             $user = new $class($userid, $this->_prefs);
-            if (!check_php_version(5))
-                eval("\$this = \$user;");
-            // /*PHP5 patch*/$this = $user;
             $user->_level = $authlevel;
             return $user;
         }
@@ -600,24 +674,24 @@ class _WikiUser
         $this->_level = $authlevel;
         return $this;
     }
-
 }
 
 /**
  * Not authenticated in user, but he may be signed in. Basicly with view access only.
  * prefs are stored in cookies, but only the userid.
  */
-class _AnonUser
-extends _WikiUser
+class _AnonUser extends _WikiUser
 {
-    var $_level = WIKIAUTH_ANON; 	// var in php-5.0.0RC1 deprecated
+    var $_level = WIKIAUTH_ANON;     // var in php-5.0.0RC1 deprecated
 
     /** Anon only gets to load and save prefs in a cookie, that's it.
      */
-    function getPreferences() {
+    function getPreferences()
+    {
 
-        if (empty($this->_prefs))
+        if (empty($this->_prefs)) {
             $this->_prefs = new UserPreferences;
+        }
 
         return $this->_prefs;
     }
@@ -631,7 +705,8 @@ extends _WikiUser
      * user. In that case stricter error checking will be needed
      * when loading the cookie.
      */
-    function setPreferences($prefs, $id_only=false) {
+    function setPreferences($prefs, $id_only = false)
+    {
         if (!is_object($prefs)) {
             if (is_object($this->_prefs)) {
                 $updated = $this->_prefs->updatePrefs($prefs);
@@ -643,28 +718,32 @@ extends _WikiUser
                 $updated = true;
             }
         } else {
-            if (!isset($this->_prefs))
+            if (!isset($this->_prefs)) {
                 $this->_prefs = $prefs;
-            else
+            } else {
                 $updated = $this->_prefs->isChanged($prefs);
+            }
         }
         $packed = $prefs->store();
         $unpacked = $prefs->unpack($packed);
         if (count($unpacked)) {
             foreach (array('_method','_select','_update','_insert') as $param) {
-            	if (!empty($this->_prefs->{$param}))
-            	    $prefs->{$param} = $this->_prefs->{$param};
+                if (!empty($this->_prefs->{$param})) {
+                    $prefs->{$param} = $this->_prefs->{$param};
+                }
             }
             $this->_prefs = $prefs;
         }
         return $updated;
     }
 
-    function userExists() {
+    function userExists()
+    {
         return true;
     }
 
-    function checkPass($submitted_password) {
+    function checkPass($submitted_password)
+    {
         return false;
         // this might happen on a old-style signin button.
 
@@ -675,24 +754,26 @@ extends _WikiUser
                       . "New subclasses of _WikiUser must override this function.");
         return false;
     }
-
 }
 
-/** 
- * Helper class to finish the PassUser auth loop. 
+/**
+ * Helper class to finish the PassUser auth loop.
  * This is added automatically to USER_AUTH_ORDER.
  */
-class _ForbiddenUser
-extends _AnonUser
+class _ForbiddenUser extends _AnonUser
 {
     var $_level = WIKIAUTH_FORBIDDEN;
 
-    function checkPass($submitted_password) {
+    function checkPass($submitted_password)
+    {
         return WIKIAUTH_FORBIDDEN;
     }
 
-    function userExists() {
-        if ($this->_HomePagehandle) return true;
+    function userExists()
+    {
+        if ($this->_HomePagehandle) {
+            return true;
+        }
         return false;
     }
 }
@@ -701,14 +782,14 @@ extends _AnonUser
  * Do NOT extend _BogoUser to other classes, for checkPass()
  * security. (In case of defects in code logic of the new class!)
  * The intermediate step between anon and passuser.
- * We also have the _BogoLoginPassUser class with stricter 
+ * We also have the _BogoLoginPassUser class with stricter
  * password checking, which fits into the auth loop.
  * Note: This class is not called anymore by WikiUser()
  */
-class _BogoUser
-extends _AnonUser
+class _BogoUser extends _AnonUser
 {
-    function userExists() {
+    function userExists()
+    {
         if (isWikiWord($this->_userid)) {
             $this->_level = WIKIAUTH_BOGO;
             return true;
@@ -718,79 +799,91 @@ extends _AnonUser
         }
     }
 
-    function checkPass($submitted_password) {
+    function checkPass($submitted_password)
+    {
         // By definition, BogoUser has an empty password.
         $this->userExists();
         return $this->_level;
     }
 }
 
-class _PassUser
-extends _AnonUser
+class _PassUser extends _AnonUser
 /**
  * Called if ALLOW_USER_PASSWORDS and Anon and Bogo failed.
  *
- * The classes for all subsequent auth methods extend from this class. 
- * This handles the auth method type dispatcher according $USER_AUTH_ORDER, 
+ * The classes for all subsequent auth methods extend from this class.
+ * This handles the auth method type dispatcher according $USER_AUTH_ORDER,
  * the three auth method policies first-only, strict and stacked
- * and the two methods for prefs: homepage or database, 
+ * and the two methods for prefs: homepage or database,
  * if $DBAuthParams['pref_select'] is defined.
  *
  * Default is PersonalPage auth and prefs.
- * 
+ *
  * @author: Reini Urban
  * @tables: pref
  */
 {
-    var $_auth_dbi, $_prefs;
-    var $_current_method, $_current_index;
+    public $_auth_dbi;
+    public $_prefs;
+    public $_current_method;
+    public $_current_index;
 
     // check and prepare the auth and pref methods only once
-    function __construct($UserName='', $prefs=false) {
+    function __construct($UserName = '', $prefs = false)
+    {
         //global $DBAuthParams, $DBParams;
         if ($UserName) {
-            if (!$this->isValidName($UserName))
+            if (!$this->isValidName($UserName)) {
                 return false;
+            }
             $this->_userid = $UserName;
-            if ($this->hasHomePage())
+            if ($this->hasHomePage()) {
                 $this->_HomePagehandle = $GLOBALS['request']->getPage($this->_userid);
+            }
         }
-        $this->_authmethod = substr(get_class($this),1,-8);
-        if ($this->_authmethod == 'a') $this->_authmethod = 'admin';
+        $this->_authmethod = substr(static::class, 1, -8);
+        if ($this->_authmethod == 'a') {
+            $this->_authmethod = 'admin';
+        }
 
         // Check the configured Prefs methods
         $dbi = $this->getAuthDbh();
         $dbh = $GLOBALS['request']->getDbh();
-        if ( $dbi and !isset($this->_prefs->_select) and $dbh->getAuthParam('pref_select')) {
+        if ($dbi and !isset($this->_prefs->_select) and $dbh->getAuthParam('pref_select')) {
             if (!$this->_prefs) {
-            	$this->_prefs = new UserPreferences();
-            	$need_pref = true;
+                $this->_prefs = new UserPreferences();
+                $need_pref = true;
             }
             $this->_prefs->_method = $dbh->getParam('dbtype');
             $this->_prefs->_select = $this->prepare($dbh->getAuthParam('pref_select'), "userid");
             // read-only prefs?
-            if ( !isset($this->_prefs->_update) and $dbh->getAuthParam('pref_update')) {
-                $this->_prefs->_update = $this->prepare($dbh->getAuthParam('pref_update'), 
-                                                        array("userid", "pref_blob"));
+            if (!isset($this->_prefs->_update) and $dbh->getAuthParam('pref_update')) {
+                $this->_prefs->_update = $this->prepare(
+                    $dbh->getAuthParam('pref_update'),
+                    array("userid", "pref_blob")
+                );
             }
         } else {
             if (!$this->_prefs) {
-            	$this->_prefs = new CodendiUserPreferences();
-            	$need_pref = true;
+                $this->_prefs = new CodendiUserPreferences();
+                $need_pref = true;
             }
             $this->_prefs->_method = 'HomePage';
         }
-        
-        if (! $this->_prefs or isset($need_pref) ) {
-            if ($prefs) $this->_prefs = $prefs;
-            else $this->getPreferences();
+
+        if (! $this->_prefs or isset($need_pref)) {
+            if ($prefs) {
+                $this->_prefs = $prefs;
+            } else {
+                $this->getPreferences();
+            }
         }
-        
+
         // Upgrade to the next parent _PassUser class. Avoid recursion.
-        if ( strtolower(get_class($this)) === '_passuser' ) {
+        if (strtolower(static::class) === '_passuser') {
             //auth policy: Check the order of the configured auth methods
             // 1. first-only: Upgrade the class here in the constructor
-            // 2. old:       ignore USER_AUTH_ORDER and try to use all available methods as 
+            // 2. old:       ignore USER_AUTH_ORDER and try to use all available methods as
             ///              in the previous PhpWiki releases (slow)
             // 3. strict:    upgrade the class after checking the user existance in userExists()
             // 4. stacked:   upgrade the class after the password verification in checkPass()
@@ -800,7 +893,7 @@ extends _AnonUser
                 // policy 1: only pre-define one method for all users
                 if (USER_AUTH_POLICY === 'first-only') {
                     $class = $this->nextClass();
-                    return new $class($UserName,$this->_prefs);
+                    return new $class($UserName, $this->_prefs);
                 }
                 // Use the default behaviour from the previous versions:
                 elseif (USER_AUTH_POLICY === 'old') {
@@ -809,116 +902,79 @@ extends _AnonUser
                     // before we have to upgrade it manually.
                     if (!empty($GLOBALS['PHP_AUTH_USER']) or !empty($_SERVER['REMOTE_USER'])) {
                         include_once("lib/WikiUser/HttpAuth.php");
-                        if (check_php_version(5))
-                            return new _HttpAuthPassUser($UserName,$this->_prefs);
-                        else {
-                            $user = new _HttpAuthPassUser($UserName,$this->_prefs);
-                            eval("\$this = \$user;");
-                            // /*PHP5 patch*/$this = $user;
-                            return $user;
-                        }
+                        return new _HttpAuthPassUser($UserName, $this->_prefs);
                     } elseif (in_array('Db', $dbh->getAuthParam('USER_AUTH_ORDER')) and
                               $dbh->getAuthParam('auth_check') and
                               ($dbh->getAuthParam('auth_dsn') or $dbh->getParam('dsn'))) {
-                        if (check_php_version(5))
-                            return new _DbPassUser($UserName,$this->_prefs);
-                        else {
-                            $user = new _DbPassUser($UserName,$this->_prefs);
-                            eval("\$this = \$user;");
-                            // /*PHP5 patch*/$this = $user;
-                            return $user;
-                        }
+                        return new _DbPassUser($UserName, $this->_prefs);
                     } elseif (in_array('LDAP', $dbh->getAuthParam('USER_AUTH_ORDER')) and
-                              defined('LDAP_AUTH_HOST') and defined('LDAP_BASE_DN') and 
+                              defined('LDAP_AUTH_HOST') and defined('LDAP_BASE_DN') and
                               function_exists('ldap_connect')) {
                         include_once("lib/WikiUser/LDAP.php");
-                        if (check_php_version(5))
-                            return new _LDAPPassUser($UserName,$this->_prefs);
-                        else {
-                            $user = new _LDAPPassUser($UserName,$this->_prefs);
-                            eval("\$this = \$user;");
-                            // /*PHP5 patch*/$this = $user;
-                            return $user;
-                        }
+                        return new _LDAPPassUser($UserName, $this->_prefs);
                     } elseif (in_array('IMAP', $dbh->getAuthParam('USER_AUTH_ORDER')) and
                               defined('IMAP_AUTH_HOST') and function_exists('imap_open')) {
                         include_once("lib/WikiUser/IMAP.php");
-                        if (check_php_version(5))
-                            return new _IMAPPassUser($UserName,$this->_prefs);
-                        else {
-                            $user = new _IMAPPassUser($UserName,$this->_prefs);
-                            eval("\$this = \$user;");
-                            // /*PHP5 patch*/$this = $user;
-                            return $user;
-                        }
+                        return new _IMAPPassUser($UserName, $this->_prefs);
                     } elseif (in_array('File', $dbh->getAuthParam('USER_AUTH_ORDER')) and
                               defined('AUTH_USER_FILE') and file_exists(AUTH_USER_FILE)) {
                         include_once("lib/WikiUser/File.php");
-                        if (check_php_version(5))
-                            return new _FilePassUser($UserName, $this->_prefs);
-                        else {
-                            $user = new _FilePassUser($UserName, $this->_prefs);
-                            eval("\$this = \$user;");
-                            // /*PHP5 patch*/$this = $user;
-                            return $user;
-                        }
+                        return new _FilePassUser($UserName, $this->_prefs);
                     } else {
                         include_once("lib/WikiUser/PersonalPage.php");
-                        if (check_php_version(5))
-                            return new _PersonalPagePassUser($UserName,$this->_prefs);
-                        else {
-                            $user = new _PersonalPagePassUser($UserName,$this->_prefs);
-                            eval("\$this = \$user;");
-                            // /*PHP5 patch*/$this = $user;
-                            return $user;
-                        }
+                        return new _PersonalPagePassUser($UserName, $this->_prefs);
                     }
-                }
-                else 
-                    // else use the page methods defined in _PassUser.
+                } else {                     // else use the page methods defined in _PassUser.
                     return $this;
+                }
             }
         }
     }
 
-    function getAuthDbh () {
+    function getAuthDbh()
+    {
         global $request; //, $DBParams, $DBAuthParams;
 
         $dbh = $request->getDbh();
-        // session restauration doesn't re-connect to the database automatically, 
+        // session restauration doesn't re-connect to the database automatically,
         // so dirty it here, to force a reconnect.
         if (isset($this->_auth_dbi)) {
-            if (($dbh->getParam('dbtype') == 'SQL') and empty($this->_auth_dbi->connection))
+            if (($dbh->getParam('dbtype') == 'SQL') and empty($this->_auth_dbi->connection)) {
                 unset($this->_auth_dbi);
-            if (($dbh->getParam('dbtype') == 'ADODB') and empty($this->_auth_dbi->_connectionID))
+            }
+            if (($dbh->getParam('dbtype') == 'ADODB') and empty($this->_auth_dbi->_connectionID)) {
                 unset($this->_auth_dbi);
+            }
         }
         if (empty($this->_auth_dbi)) {
-            if ($dbh->getParam('dbtype') != 'SQL' 
+            if ($dbh->getParam('dbtype') != 'SQL'
                 and $dbh->getParam('dbtype') != 'ADODB'
-                and $dbh->getParam('dbtype') != 'PDO')
+                and $dbh->getParam('dbtype') != 'PDO') {
                 return false;
-            if (empty($GLOBALS['DBAuthParams']))
+            }
+            if (empty($GLOBALS['DBAuthParams'])) {
                 return false;
+            }
             if (!$dbh->getAuthParam('auth_dsn')) {
-                $dbh = $request->getDbh(); // use phpwiki database 
+                $dbh = $request->getDbh(); // use phpwiki database
             } elseif ($dbh->getAuthParam('auth_dsn') == $dbh->getParam('dsn')) {
-                $dbh = $request->getDbh(); // same phpwiki database 
+                $dbh = $request->getDbh(); // same phpwiki database
             } else { // use another external database handle. needs PHP >= 4.1
-                $local_params = array_merge($GLOBALS['DBParams'],$GLOBALS['DBAuthParams']);
+                $local_params = array_merge($GLOBALS['DBParams'], $GLOBALS['DBAuthParams']);
                 $local_params['dsn'] = $local_params['auth_dsn'];
                 $dbh = WikiDB::open($local_params);
-            }       
+            }
             $this->_auth_dbi = $dbh->_backend->_dbh;
         }
         return $this->_auth_dbi;
     }
 
-    function _normalize_stmt_var($var, $oldstyle = false) {
+    function _normalize_stmt_var($var, $oldstyle = false)
+    {
         static $valid_variables = array('userid','password','pref_blob','groupname');
         // old-style: "'$userid'"
         // new-style: '"\$userid"' or just "userid"
-        $new = str_replace(array("'",'"','\$','$'),'',$var);
+        $new = str_replace(array("'",'"','\$','$'), '', $var);
         if (!in_array($new, $valid_variables)) {
             trigger_error("Unknown DBAuthParam statement variable: ". $new, E_USER_ERROR);
             return false;
@@ -927,7 +983,8 @@ extends _AnonUser
     }
 
     // TODO: use it again for the auth and member tables
-    function prepare ($stmt, $variables, $oldstyle = false) {
+    function prepare($stmt, $variables, $oldstyle = false)
+    {
         global $request;
         $dbi = $request->getDbh();
         $this->getAuthDbh();
@@ -936,38 +993,56 @@ extends _AnonUser
         // old-style strings don't survive pear/Config/IniConfig treatment, that's why we changed it.
         $new = array();
         if (is_array($variables)) {
-            for ($i=0; $i < count($variables); $i++) { 
+            for ($i=0; $i < count($variables); $i++) {
                 $var = $this->_normalize_stmt_var($variables[$i], $oldstyle);
-                if (!$var)
-                    trigger_error(sprintf("DbAuthParams: Undefined or empty statement variable %s in %s",
-                                          $variables[$i], $stmt), E_USER_WARNING);
+                if (!$var) {
+                    trigger_error(sprintf(
+                        "DbAuthParams: Undefined or empty statement variable %s in %s",
+                        $variables[$i],
+                        $stmt
+                    ), E_USER_WARNING);
+                }
                 $variables[$i] = $var;
-                if (!$var) $new[] = '';
-                else $new[] = '%s';
+                if (!$var) {
+                    $new[] = '';
+                } else {
+                    $new[] = '%s';
+                }
             }
         } else {
             $var = $this->_normalize_stmt_var($variables, $oldstyle);
-            if (!$var)
-                trigger_error(sprintf("DbAuthParams: Undefined or empty statement variable %s in %s",
-                                      $variables, $stmt), E_USER_WARNING);
+            if (!$var) {
+                trigger_error(sprintf(
+                    "DbAuthParams: Undefined or empty statement variable %s in %s",
+                    $variables,
+                    $stmt
+                ), E_USER_WARNING);
+            }
             $variables = $var;
-            if (!$var) $new = ''; 
-            else $new = '%s'; 
+            if (!$var) {
+                $new = '';
+            } else {
+                $new = '%s';
+            }
         }
         $prefix = $dbi->getParam('prefix');
         // probably prefix table names if in same database
-        if ($prefix and isset($this->_auth_dbi) and isset($dbi->_backend->_dbh) and 
-            ($dbi->getAuthParam('auth_dsn') and $dbi->getParam('dsn') == $dbi->getAuthParam('auth_dsn')))
-        {
+        if ($prefix and isset($this->_auth_dbi) and isset($dbi->_backend->_dbh) and
+            ($dbi->getAuthParam('auth_dsn') and $dbi->getParam('dsn') == $dbi->getAuthParam('auth_dsn'))) {
             if (!stristr($stmt, $prefix)) {
-            	$oldstmt = $stmt;
-                $stmt = str_replace(array(" user "," pref "," member "),
-                                    array(" ".$prefix."user ",
+                $oldstmt = $stmt;
+                $stmt = str_replace(
+                    array(" user "," pref "," member "),
+                    array(" ".$prefix."user ",
                                           " ".$prefix."pref ",
-                                          " ".$prefix."member "), $stmt);
+                    " ".$prefix."member "),
+                    $stmt
+                );
                 //Do it automatically for the lazy admin? Esp. on sf.net it's nice to have
-                trigger_error("Need to prefix the DBAUTH tablename in config/config.ini:\n  $oldstmt \n=> $stmt",
-                              E_USER_WARNING);
+                trigger_error(
+                    "Need to prefix the DBAUTH tablename in config/config.ini:\n  $oldstmt \n=> $stmt",
+                    E_USER_WARNING
+                );
             }
         }
         // Preparate the SELECT statement, for ADODB and PearDB (MDB not).
@@ -975,33 +1050,38 @@ extends _AnonUser
         $new_stmt = str_replace($variables, $new, $stmt);
         if ($new_stmt == $stmt) {
             if ($oldstyle) {
-                trigger_error(sprintf("DbAuthParams: Invalid statement in %s",
-                                  $stmt), E_USER_WARNING);
+                trigger_error(sprintf(
+                    "DbAuthParams: Invalid statement in %s",
+                    $stmt
+                ), E_USER_WARNING);
             } else {
-                trigger_error(sprintf("DbAuthParams: Old statement quoting style in %s",
-                                  $stmt), E_USER_WARNING);
+                trigger_error(sprintf(
+                    "DbAuthParams: Old statement quoting style in %s",
+                    $stmt
+                ), E_USER_WARNING);
                 $new_stmt = $this->prepare($stmt, $variables, 'oldstyle');
             }
         }
         return $new_stmt;
     }
 
-    function getPreferences() {
+    function getPreferences()
+    {
         if (!empty($this->_prefs->_method)) {
             if ($this->_prefs->_method == 'ADODB') {
-            	// FIXME: strange why this should be needed...
-            	include_once("lib/WikiUser/Db.php");
-            	include_once("lib/WikiUser/AdoDb.php");
+                // FIXME: strange why this should be needed...
+                include_once("lib/WikiUser/Db.php");
+                include_once("lib/WikiUser/AdoDb.php");
                 _AdoDbPassUser::_AdoDbPassUser($this->_userid, $this->_prefs);
                 return _AdoDbPassUser::getPreferences();
             } elseif ($this->_prefs->_method == 'SQL') {
-            	include_once("lib/WikiUser/Db.php");
-            	include_once("lib/WikiUser/PearDb.php");
+                include_once("lib/WikiUser/Db.php");
+                include_once("lib/WikiUser/PearDb.php");
                 _PearDbPassUser::_PearDbPassUser($this->_userid, $this->_prefs);
                 return _PearDbPassUser::getPreferences();
             } elseif ($this->_prefs->_method == 'PDO') {
-            	include_once("lib/WikiUser/Db.php");
-            	include_once("lib/WikiUser/PdoDb.php");
+                include_once("lib/WikiUser/Db.php");
+                include_once("lib/WikiUser/PdoDb.php");
                 _PdoDbPassUser::_PdoDbPassUser($this->_userid, $this->_prefs);
                 return _PdoDbPassUser::getPreferences();
             }
@@ -1014,9 +1094,8 @@ extends _AnonUser
         // User may have deleted cookie, retrieve from his
         // PersonalPage if there is one.
         if ($this->_HomePagehandle) {
-            if ($restored_from_page = $this->_prefs->retrieve
-                ($this->_HomePagehandle->get('pref'))) {
-                $updated = $this->_prefs->updatePrefs($restored_from_page,'init');
+            if ($restored_from_page = $this->_prefs->retrieve($this->_HomePagehandle->get('pref'))) {
+                $updated = $this->_prefs->updatePrefs($restored_from_page, 'init');
                 //$this->_prefs = new UserPreferences($restored_from_page);
                 return $this->_prefs;
             }
@@ -1024,24 +1103,23 @@ extends _AnonUser
         return $this->_prefs;
     }
 
-    function setPreferences($prefs, $id_only=false) {
+    function setPreferences($prefs, $id_only = false)
+    {
         if (!empty($this->_prefs->_method)) {
             if ($this->_prefs->_method == 'ADODB') {
-            	// FIXME: strange why this should be needed...
-            	include_once("lib/WikiUser/Db.php");
-            	include_once("lib/WikiUser/AdoDb.php");
+                // FIXME: strange why this should be needed...
+                include_once("lib/WikiUser/Db.php");
+                include_once("lib/WikiUser/AdoDb.php");
                 _AdoDbPassUser::_AdoDbPassUser($this->_userid, $prefs);
                 return _AdoDbPassUser::setPreferences($prefs, $id_only);
-            }
-            elseif ($this->_prefs->_method == 'SQL') {
-            	include_once("lib/WikiUser/Db.php");
-            	include_once("lib/WikiUser/PearDb.php");
+            } elseif ($this->_prefs->_method == 'SQL') {
+                include_once("lib/WikiUser/Db.php");
+                include_once("lib/WikiUser/PearDb.php");
                 _PearDbPassUser::_PearDbPassUser($this->_userid, $prefs);
                 return _PearDbPassUser::setPreferences($prefs, $id_only);
-            }
-            elseif ($this->_prefs->_method == 'PDO') {
-            	include_once("lib/WikiUser/Db.php");
-            	include_once("lib/WikiUser/PdoDb.php");
+            } elseif ($this->_prefs->_method == 'PDO') {
+                include_once("lib/WikiUser/Db.php");
+                include_once("lib/WikiUser/PdoDb.php");
                 _PdoDbPassUser::_PdoDbPassUser($this->_userid, $prefs);
                 return _PdoDbPassUser::setPreferences($prefs, $id_only);
             }
@@ -1061,35 +1139,36 @@ extends _AnonUser
         return $num;
     }
 
-    function mayChangePass() {
+    function mayChangePass()
+    {
         return true;
     }
 
-    //The default method is getting the password from prefs. 
+    //The default method is getting the password from prefs.
     // child methods obtain $stored_password from external auth.
-    function userExists() {
+    function userExists()
+    {
         //if ($this->_HomePagehandle) return true;
         $class = $this->nextClass();
         while ($user = new $class($this->_userid, $this->_prefs)) {
-            if (!check_php_version(5))
-                eval("\$this = \$user;");
-            // /*PHP5 patch*/$this = $user;
-            UpgradeUser($this,$user);
+            UpgradeUser($this, $user);
             if ($user->userExists()) {
                 return true;
             }
             // prevent endless loop. does this work on all PHP's?
             // it just has to set the classname, what it correctly does.
             $class = $user->nextClass();
-            if ($class == "_ForbiddenPassUser")
+            if ($class == "_ForbiddenPassUser") {
                 return false;
+            }
         }
         return false;
     }
 
-    //The default method is getting the password from prefs. 
+    //The default method is getting the password from prefs.
     // child methods obtain $stored_password from external auth.
-    function checkPass($submitted_password) {
+    function checkPass($submitted_password)
+    {
         $stored_password = $this->_prefs->get('passwd');
         if ($this->_checkPass($submitted_password, $stored_password)) {
             $this->_level = WIKIAUTH_USER;
@@ -1104,7 +1183,8 @@ extends _AnonUser
     }
 
 
-    function _checkPassLength($submitted_password) {
+    function _checkPassLength($submitted_password)
+    {
         if (strlen($submitted_password) < PASSWORD_LENGTH_MINIMUM) {
             trigger_error(_("The length of the password is shorter than the system policy allows."));
             return false;
@@ -1120,30 +1200,35 @@ extends _AnonUser
      * @see UserPreferences::set
      *
      * DBPassUser password's have their own crypt definition.
-     * That's why DBPassUser::checkPass() doesn't call this method, if 
-     * the db password method is 'plain', which means that the DB SQL 
-     * statement just returns 1 or 0. To use CRYPT() or PASSWORD() and 
+     * That's why DBPassUser::checkPass() doesn't call this method, if
+     * the db password method is 'plain', which means that the DB SQL
+     * statement just returns 1 or 0. To use CRYPT() or PASSWORD() and
      * don't store plain passwords in the DB.
-     * 
+     *
      * TODO: remove crypt() function check from config.php:396 ??
      */
-    function _checkPass($submitted_password, $stored_password) {
+    function _checkPass($submitted_password, $stored_password)
+    {
         return false;
     }
 
-    function changePass($submitted_password) {
+    function changePass($submitted_password)
+    {
         return false;
     }
 
-    function _tryNextPass($submitted_password) {
+    function _tryNextPass($submitted_password)
+    {
         if (DEBUG & _DEBUG_LOGIN) {
-            $class = strtolower(get_class($this));
-            if (substr($class,-10) == "dbpassuser") $class = "_dbpassuser";
+            $class = strtolower(static::class);
+            if (substr($class, -10) == "dbpassuser") {
+                $class = "_dbpassuser";
+            }
             $GLOBALS['USER_AUTH_ERROR'][$class] = 'wrongpass';
         }
         if (USER_AUTH_POLICY === 'strict') {
             $class = $this->nextClass();
-            if ($user = new $class($this->_userid,$this->_prefs)) {
+            if ($user = new $class($this->_userid, $this->_prefs)) {
                 if ($user->userExists()) {
                     return $user->checkPass($submitted_password);
                 }
@@ -1151,24 +1236,25 @@ extends _AnonUser
         }
         if (USER_AUTH_POLICY === 'stacked' or USER_AUTH_POLICY === 'old') {
             $class = $this->nextClass();
-            if ($user = new $class($this->_userid,$this->_prefs))
+            if ($user = new $class($this->_userid, $this->_prefs)) {
                 return $user->checkPass($submitted_password);
+            }
         }
         return $this->_level;
     }
 
-    function _tryNextUser() {
+    function _tryNextUser()
+    {
         if (DEBUG & _DEBUG_LOGIN) {
-            $class = strtolower(get_class($this));
-            if (substr($class,-10) == "dbpassuser") $class = "_dbpassuser";
+            $class = strtolower(static::class);
+            if (substr($class, -10) == "dbpassuser") {
+                $class = "_dbpassuser";
+            }
             $GLOBALS['USER_AUTH_ERROR'][$class] = 'nosuchuser';
         }
         if (USER_AUTH_POLICY === 'strict') {
             $class = $this->nextClass();
-            while ($user = new $class($this->_userid,$this->_prefs)) {
-                if (!check_php_version(5))
-                    eval("\$this = \$user;");
-                // /*PHP5 patch*/$this = $user;
+            while ($user = new $class($this->_userid, $this->_prefs)) {
                 //$user = UpgradeUser($this, $user);
                 if ($user->userExists()) {
                     return true;
@@ -1178,12 +1264,11 @@ extends _AnonUser
         }
         return false;
     }
-
 }
 
 /**
  * Insert more auth classes here...
- * For example a customized db class for another db connection 
+ * For example a customized db class for another db connection
  * or a socket-based auth server.
  *
  */
@@ -1195,19 +1280,20 @@ extends _AnonUser
  *
  * FIXME: This should be a singleton class. Only ADMIN_USER may be of class AdminUser!
  * Other members of the Administrators group must raise their level otherwise somehow.
- * Currently every member is a AdminUser, which will not work for the various 
+ * Currently every member is a AdminUser, which will not work for the various
  * storage methods.
  */
-class _AdminUser
-extends _PassUser
+class _AdminUser extends _PassUser
 {
-    function mayChangePass() {
+    function mayChangePass()
+    {
         return false;
     }
-    function checkPass($submitted_password) {
-    	if ($this->_userid == ADMIN_USER)
+    function checkPass($submitted_password)
+    {
+        if ($this->_userid == ADMIN_USER) {
             $stored_password = ADMIN_PASSWD;
-        else {
+        } else {
             // Should not happen! Only ADMIN_USER should use this class.
             // return $this->_tryNextPass($submitted_password); // ???
             // TODO: safety check if really member of the ADMIN group?
@@ -1227,10 +1313,11 @@ extends _PassUser
         }
     }
 
-    function storePass($submitted_password) {
-    	if ($this->_userid == ADMIN_USER)
+    function storePass($submitted_password)
+    {
+        if ($this->_userid == ADMIN_USER) {
             return false;
-        else {
+        } else {
             // should not happen! only ADMIN_USER should use this class.
             return parent::storePass($submitted_password);
         }
@@ -1238,9 +1325,9 @@ extends _PassUser
 }
 
 /**
- * Various data classes for the preference types, 
+ * Various data classes for the preference types,
  * to support get, set, sanify (range checking, ...)
- * update() will do the neccessary side-effects if a 
+ * update() will do the neccessary side-effects if a
  * setting gets changed (theme, language, ...)
 */
 
@@ -1248,88 +1335,103 @@ class _UserPreference
 {
     var $default_value;
 
-    function __construct ($default_value) {
+    function __construct($default_value)
+    {
         $this->default_value = $default_value;
     }
 
-    function sanify ($value) {
+    function sanify($value)
+    {
         return (string)$value;
     }
 
-    function get ($name) {
-    	if (isset($this->{$name}))
-	    return $this->{$name};
-    	else 
+    function get($name)
+    {
+        if (isset($this->{$name})) {
+            return $this->{$name};
+        } else {
             return $this->default_value;
+        }
     }
 
-    function getraw ($name) {
-    	if (!empty($this->{$name}))
-	    return $this->{$name};
+    function getraw($name)
+    {
+        if (!empty($this->{$name})) {
+            return $this->{$name};
+        }
     }
 
     // stores the value as $this->$name, and not as $this->value (clever?)
-    function set ($name, $value) {
-    	$return = 0;
-    	$value = $this->sanify($value);
-	if ($this->get($name) != $value) {
-	    $this->update($value);
-	    $return = 1;
-	}
-	if ($value != $this->default_value) {
-	    $this->{$name} = $value;
+    function set($name, $value)
+    {
+        $return = 0;
+        $value = $this->sanify($value);
+        if ($this->get($name) != $value) {
+            $this->update($value);
+            $return = 1;
+        }
+        if ($value != $this->default_value) {
+            $this->{$name} = $value;
         } else {
             unset($this->{$name});
         }
         return $return;
     }
 
-    // default: no side-effects 
-    function update ($value) {
-    	;
+    // default: no side-effects
+    function update($value)
+    {
+        ;
     }
 }
 
-class _UserPreference_numeric
-extends _UserPreference
+class _UserPreference_numeric extends _UserPreference
 {
-    function __construct ($default, $minval = false,
-                                      $maxval = false) {
+    function __construct(
+        $default,
+        $minval = false,
+        $maxval = false
+    ) {
         parent::__construct((double)$default);
         $this->_minval = (double)$minval;
         $this->_maxval = (double)$maxval;
     }
 
-    function sanify ($value) {
+    function sanify($value)
+    {
         $value = (double)$value;
-        if ($this->_minval !== false && $value < $this->_minval)
+        if ($this->_minval !== false && $value < $this->_minval) {
             $value = $this->_minval;
-        if ($this->_maxval !== false && $value > $this->_maxval)
+        }
+        if ($this->_maxval !== false && $value > $this->_maxval) {
             $value = $this->_maxval;
+        }
         return $value;
     }
 }
 
-class _UserPreference_int
-extends _UserPreference_numeric
+class _UserPreference_int extends _UserPreference_numeric
 {
-    function __construct ($default, $minval = false, $maxval = false) {
+    function __construct($default, $minval = false, $maxval = false)
+    {
         parent::__construct((int)$default, (int)$minval, (int)$maxval);
     }
 
-    function sanify ($value) {
+    function sanify($value)
+    {
         return (int)parent::sanify((int)$value);
     }
 }
 
-class _UserPreference_bool
-extends _UserPreference
+class _UserPreference_bool extends _UserPreference
 {
-    function __construct ($default = false) {
+    function __construct($default = false)
+    {
         parent::__construct((bool)$default);
     }
 
-    function sanify ($value) {
+    function sanify($value)
+    {
         if (is_array($value)) {
             /* This allows for constructs like:
              *
@@ -1341,8 +1443,9 @@ extends _UserPreference
              * sent.)
              */
             foreach ($value as $val) {
-                if ($val)
+                if ($val) {
                     return true;
+                }
             }
             return false;
         }
@@ -1350,25 +1453,28 @@ extends _UserPreference
     }
 }
 
-class _UserPreference_language
-extends _UserPreference
+class _UserPreference_language extends _UserPreference
 {
-    function __construct ($default = DEFAULT_LANGUAGE) {
+    function __construct($default = DEFAULT_LANGUAGE)
+    {
         parent::__construct($default);
     }
 
     // FIXME: check for valid locale
-    function sanify ($value) {
+    function sanify($value)
+    {
         // Revert to DEFAULT_LANGUAGE if user does not specify
         // language in UserPreferences or chooses <system language>.
-        if ($value == '' or empty($value))
+        if ($value == '' or empty($value)) {
             $value = DEFAULT_LANGUAGE;
+        }
 
         return (string) $value;
     }
-    
-    function update ($newvalue) {
-        if (! $this->_init ) {
+
+    function update($newvalue)
+    {
+        if (! $this->_init) {
             // invalidate etag to force fresh output
             $GLOBALS['request']->setValidators(array('%mtime' => false));
             update_locale($newvalue ? $newvalue : $GLOBALS['LANG']);
@@ -1376,66 +1482,80 @@ extends _UserPreference
     }
 }
 
-class _UserPreference_theme
-extends _UserPreference
+class _UserPreference_theme extends _UserPreference
 {
-    function __construct ($default = THEME) {
+    function __construct($default = THEME)
+    {
         parent::__construct($default);
     }
 
-    function sanify ($value) {
-        if (!empty($value) and FindFile($this->_themefile($value)))
+    function sanify($value)
+    {
+        if (!empty($value) and FindFile($this->_themefile($value))) {
             return $value;
+        }
         return $this->default_value;
     }
 
-    function update ($newvalue) {
+    function update($newvalue)
+    {
         global $WikiTheme;
         // invalidate etag to force fresh output
-        if (! $this->_init )
+        if (! $this->_init) {
             $GLOBALS['request']->setValidators(array('%mtime' => false));
-        if ($newvalue)
+        }
+        if ($newvalue) {
             include_once($this->_themefile($newvalue));
-        if (empty($WikiTheme))
+        }
+        if (empty($WikiTheme)) {
             include_once($this->_themefile(THEME));
+        }
     }
 
-    function _themefile ($theme) {
+    function _themefile($theme)
+    {
         return "themes/$theme/themeinfo.php";
     }
 }
 
-class _UserPreference_notify
-extends _UserPreference
+class _UserPreference_notify extends _UserPreference
 {
-    function sanify ($value) {
-    	if (!empty($value))
+    function sanify($value)
+    {
+        if (!empty($value)) {
             return $value;
-        else
+        } else {
             return $this->default_value;
+        }
     }
 
     /** update to global user prefs: side-effect on set notify changes
      * use a global_data notify hash:
-     * notify = array('pagematch' => array(userid => ('email' => mail, 
+     * notify = array('pagematch' => array(userid => ('email' => mail,
      *                                                'verified' => 0|1),
      *                                     ...),
      *                ...);
      */
-    function update ($value) {
-    	if (!empty($this->_init)) return;
+    function update($value)
+    {
+        if (!empty($this->_init)) {
+            return;
+        }
         $dbh = $GLOBALS['request']->getDbh();
         $notify = $dbh->get('notify');
-        if (empty($notify))
+        if (empty($notify)) {
             $data = array();
-        else 
+        } else {
             $data = $notify;
+        }
         // expand to existing pages only or store matches?
         // for now we store (glob-style) matches which is easier for the user
         $pages = $this->_page_split($value);
         // Limitation: only current user.
         $user = $GLOBALS['request']->getUser();
-        if (!$user or !method_exists($user,'UserName')) return;
+        if (!$user or !method_exists($user, 'UserName')) {
+            return;
+        }
         // This fails with php5 and a WIKI_ID cookie:
         $userid = $user->UserName();
         $email  = $user->_prefs->get('email');
@@ -1446,17 +1566,19 @@ extends _UserPreference
                 if (isset($data[$page][$userid]) and !in_array($page, $pages)) {
                     unset($data[$page][$userid]);
                 }
-                if (count($data[$page]) == 0)
+                if (count($data[$page]) == 0) {
                     unset($data[$page]);
+                }
             }
         }
         // add the new pages
         if (!empty($pages)) {
             foreach ($pages as $page) {
-                if (!isset($data[$page]))
+                if (!isset($data[$page])) {
                     $data[$page] = array();
+                }
                 if (!isset($data[$page][$userid])) {
-                    // should we really store the verification notice here or 
+                    // should we really store the verification notice here or
                     // check it dynamically at every page->save?
                     if ($verified) {
                         $data[$page][$userid] = array('email' => $email,
@@ -1468,28 +1590,31 @@ extends _UserPreference
             }
         }
         // store users changes
-        $dbh->set('notify',$data);
+        $dbh->set('notify', $data);
     }
 
     /** split the user-given comma or whitespace delimited pagenames
      *  to array
      */
-    function _page_split($value) {
-        return preg_split('/[\s,]+/',$value,-1,PREG_SPLIT_NO_EMPTY);
+    function _page_split($value)
+    {
+        return preg_split('/[\s,]+/', $value, -1, PREG_SPLIT_NO_EMPTY);
     }
 }
 
-class _UserPreference_email
-extends _UserPreference
+class _UserPreference_email extends _UserPreference
 {
-    function sanify($value) {
+    function sanify($value)
+    {
         // check for valid email address
-        if ($this->get('email') == $value and $this->getraw('emailVerified'))
+        if ($this->get('email') == $value and $this->getraw('emailVerified')) {
             return $value;
+        }
         // hack!
-        if ($value == 1 or $value === true)
+        if ($value == 1 or $value === true) {
             return $value;
-        list($ok,$msg) = ValidateMail($value,'noconnect');
+        }
+        list($ok,$msg) = ValidateMail($value, 'noconnect');
         if ($ok) {
             return $value;
         } else {
@@ -1497,23 +1622,34 @@ extends _UserPreference
             return $this->default_value;
         }
     }
-    
+
     /** Side-effect on email changes:
      * Send a verification mail or for now just a notification email.
      * For true verification (value = 2), we'd need a mailserver hook.
      */
-    function update($value) {
-    	if (!empty($this->_init)) return;
+    function update($value)
+    {
+        if (!empty($this->_init)) {
+            return;
+        }
         $verified = $this->getraw('emailVerified');
         // hack!
-        if (($value == 1 or $value === true) and $verified)
+        if (($value == 1 or $value === true) and $verified) {
             return;
+        }
         if (!empty($value) and !$verified) {
             list($ok,$msg) = ValidateMail($value);
-            if ($ok and mail($value,"[".WIKI_NAME ."] "._("Email Verification"),
-                     sprintf(_("Welcome to %s!\nYour email account is verified and\nwill be used to send page change notifications.\nSee %s"),
-                             WIKI_NAME, WikiURL($GLOBALS['request']->getArg('pagename'),'',true))))
-                $this->set('emailVerified',1);
+            if ($ok and mail(
+                $value,
+                "[".WIKI_NAME ."] "._("Email Verification"),
+                sprintf(
+                    _("Welcome to %s!\nYour email account is verified and\nwill be used to send page change notifications.\nSee %s"),
+                    WIKI_NAME,
+                    WikiURL($GLOBALS['request']->getArg('pagename'), '', true)
+                )
+            )) {
+                $this->set('emailVerified', 1);
+            }
         }
     }
 }
@@ -1522,7 +1658,8 @@ extends _UserPreference
     fixed version from http://www.zend.com/zend/spotlight/ev12apr.php
     Note: too strict, Bug #1053681
  */
-function ValidateMail($email, $noconnect=false) {
+function ValidateMail($email, $noconnect = false)
+{
     $HTTP_HOST = $GLOBALS['request']->get('HTTP_HOST');
 
     // if this check is too strict (like invalid mail addresses in a local network only)
@@ -1567,33 +1704,34 @@ function ValidateMail($email, $noconnect=false) {
         $result[1] = sprintf(_("E-Mail address '%s' is not properly formatted"), $email);
         return $result;
     }
-    if ($noconnect)
-      return array(true,sprintf(_("E-Mail address '%s' is properly formatted"), $email));
+    if ($noconnect) {
+        return array(true,sprintf(_("E-Mail address '%s' is properly formatted"), $email));
+    }
 
-    list ( $Username, $Domain ) = preg_split ("/@/D", $email);
+    list ( $Username, $Domain ) = preg_split("/@/D", $email);
     //Todo: getmxrr workaround on windows or manual input field to verify it manually
-    if (!isWindows() and getmxrr($Domain, $MXHost)) { // avoid warning on Windows. 
+    if (!isWindows() and getmxrr($Domain, $MXHost)) { // avoid warning on Windows.
         $ConnectAddress = $MXHost[0];
     } else {
         $ConnectAddress = $Domain;
     }
-    $Connect = @fsockopen ( $ConnectAddress, 25 );
+    $Connect = @fsockopen($ConnectAddress, 25);
     if ($Connect) {
         if (preg_match("/^220/D", $Out = fgets($Connect, 1024))) {
-            fputs ($Connect, "HELO $HTTP_HOST\r\n");
-            $Out = fgets ( $Connect, 1024 );
-            fputs ($Connect, "MAIL FROM: <".$email.">\r\n");
-            $From = fgets ( $Connect, 1024 );
-            fputs ($Connect, "RCPT TO: <".$email.">\r\n");
-            $To = fgets ($Connect, 1024);
-            fputs ($Connect, "QUIT\r\n");
+            fputs($Connect, "HELO $HTTP_HOST\r\n");
+            $Out = fgets($Connect, 1024);
+            fputs($Connect, "MAIL FROM: <".$email.">\r\n");
+            $From = fgets($Connect, 1024);
+            fputs($Connect, "RCPT TO: <".$email.">\r\n");
+            $To = fgets($Connect, 1024);
+            fputs($Connect, "QUIT\r\n");
             fclose($Connect);
-            if (!preg_match ("/^250/D", $From)) {
+            if (!preg_match("/^250/D", $From)) {
                 $result[0]=false;
                 $result[1]="Server rejected address: ". $From;
                 return $result;
             }
-            if (!preg_match ( "/^250/D", $To )) {
+            if (!preg_match("/^250/D", $To)) {
                 $result[0]=false;
                 $result[1]="Server rejected address: ". $To;
                 return $result;
@@ -1602,8 +1740,8 @@ function ValidateMail($email, $noconnect=false) {
             $result[0] = false;
             $result[1] = "No response from server";
             return $result;
-          }
-    }  else {
+        }
+    } else {
         $result[0]=false;
         $result[1]="Can not connect E-Mail server.";
         return $result;
@@ -1611,15 +1749,15 @@ function ValidateMail($email, $noconnect=false) {
     $result[0]=true;
     $result[1]="E-Mail address '$email' appears to be valid.";
     return $result;
-} // end of function 
+} // end of function
 
 
 /**
  * UserPreferences
- * 
+ *
  * This object holds the $request->_prefs subobjects.
  * A simple packed array of non-default values get's stored as cookie,
- * homepage, or database, which are converted to the array of 
+ * homepage, or database, which are converted to the array of
  * ->_prefs objects.
  * We don't store the objects, because otherwise we will
  * not be able to upgrade any subobject. And it's a waste of space also.
@@ -1627,43 +1765,51 @@ function ValidateMail($email, $noconnect=false) {
  */
 class UserPreferences
 {
-    function __construct($saved_prefs = false) {
+    function __construct($saved_prefs = false)
+    {
         // userid stored too, to ensure the prefs are being loaded for
         // the correct (currently signing in) userid if stored in a
         // cookie.
-        // Update: for db prefs we disallow passwd. 
-        // userid is needed for pref reflexion. current pref must know its username, 
+        // Update: for db prefs we disallow passwd.
+        // userid is needed for pref reflexion. current pref must know its username,
         // if some app needs prefs from different users, different from current user.
         $this->_prefs
             = array(
                     'userid'        => new _UserPreference(''),
                     'passwd'        => new _UserPreference(''),
                     'autologin'     => new _UserPreference_bool(),
-                    //'emailVerified' => new _UserPreference_emailVerified(), 
+                    //'emailVerified' => new _UserPreference_emailVerified(),
                     //fixed: store emailVerified as email parameter, 1.3.8
                     'email'         => new _UserPreference_email(''),
                     'notifyPages'   => new _UserPreference_notify(''), // 1.3.8
                     'theme'         => new _UserPreference_theme(THEME),
                     'lang'          => new _UserPreference_language(DEFAULT_LANGUAGE),
-                    'editWidth'     => new _UserPreference_int(EDITWIDTH_DEFAULT_COLS,
-                                                               EDITWIDTH_MIN_COLS,
-                                                               EDITWIDTH_MAX_COLS),
-                    'noLinkIcons'   => new _UserPreference_bool(),    // 1.3.8 
-                    'editHeight'    => new _UserPreference_int(EDITHEIGHT_DEFAULT_ROWS,
-                                                               EDITHEIGHT_MIN_ROWS,
-                                                               EDITHEIGHT_MAX_ROWS),
-                    'timeOffset'    => new _UserPreference_numeric(TIMEOFFSET_DEFAULT_HOURS,
-                                                                   TIMEOFFSET_MIN_HOURS,
-                                                                   TIMEOFFSET_MAX_HOURS),
+                    'editWidth'     => new _UserPreference_int(
+                        EDITWIDTH_DEFAULT_COLS,
+                        EDITWIDTH_MIN_COLS,
+                        EDITWIDTH_MAX_COLS
+                    ),
+                    'noLinkIcons'   => new _UserPreference_bool(),    // 1.3.8
+                    'editHeight'    => new _UserPreference_int(
+                        EDITHEIGHT_DEFAULT_ROWS,
+                        EDITHEIGHT_MIN_ROWS,
+                        EDITHEIGHT_MAX_ROWS
+                    ),
+                    'timeOffset'    => new _UserPreference_numeric(
+                        TIMEOFFSET_DEFAULT_HOURS,
+                        TIMEOFFSET_MIN_HOURS,
+                        TIMEOFFSET_MAX_HOURS
+                    ),
                     'relativeDates' => new _UserPreference_bool(),
                     'googleLink'    => new _UserPreference_bool(), // 1.3.10
                     'doubleClickEdit' => new _UserPreference_bool(), // 1.3.11
                     );
         // add custom theme-specific pref types:
-        // FIXME: on theme changes the wiki_user session pref object will fail. 
+        // FIXME: on theme changes the wiki_user session pref object will fail.
         // We will silently ignore this.
-        if (!empty($customUserPreferenceColumns))
-            $this->_prefs = array_merge($this->_prefs,$customUserPreferenceColumns);
+        if (!empty($customUserPreferenceColumns)) {
+            $this->_prefs = array_merge($this->_prefs, $customUserPreferenceColumns);
+        }
 /*
         if (isset($this->_method) and $this->_method == 'SQL') {
             //unset($this->_prefs['userid']);
@@ -1671,43 +1817,55 @@ class UserPreferences
         }
 */
         if (is_array($saved_prefs)) {
-            foreach ($saved_prefs as $name => $value)
+            foreach ($saved_prefs as $name => $value) {
                 $this->set($name, $value);
+            }
         }
     }
 
-    function _getPref($name) {
-    	if ($name == 'emailVerified')
-    	    $name = 'email';
+    function _getPref($name)
+    {
+        if ($name == 'emailVerified') {
+            $name = 'email';
+        }
         if (!isset($this->_prefs[$name])) {
-            if ($name == 'passwd2') return false;
-            if ($name == 'passwd') return false;
+            if ($name == 'passwd2') {
+                return false;
+            }
+            if ($name == 'passwd') {
+                return false;
+            }
             trigger_error("$name: unknown preference", E_USER_NOTICE);
             return false;
         }
         return $this->_prefs[$name];
     }
-    
+
     // get the value or default_value of the subobject
-    function get($name) {
-    	if ($_pref = $this->_getPref($name))
-    	    if ($name == 'emailVerified')
-    	        return $_pref->getraw($name);
-    	    else
-    	        return $_pref->get($name);
-    	else
-    	    return false;  
+    function get($name)
+    {
+        if ($_pref = $this->_getPref($name)) {
+            if ($name == 'emailVerified') {
+                return $_pref->getraw($name);
+            } else {
+                return $_pref->get($name);
+            }
+        } else {
+            return false;
+        }
     }
 
     // check and set the new value in the subobject
-    function set($name, $value) {
+    function set($name, $value)
+    {
         $pref = $this->_getPref($name);
-        if ($pref === false)
+        if ($pref === false) {
             return false;
+        }
 
         /* do it here or outside? */
-        if ($name == 'passwd' and 
-            defined('PASSWORD_LENGTH_MINIMUM') and 
+        if ($name == 'passwd' and
+            defined('PASSWORD_LENGTH_MINIMUM') and
             strlen($value) <= PASSWORD_LENGTH_MINIMUM ) {
             //TODO: How to notify the user?
             return false;
@@ -1719,11 +1877,13 @@ class UserPreferences
         // Fix Fatal error for undefined value. Thanks to Jim Ford and Joel Schaubert
         if ((!$value and $pref->default_value)
             or ($value and !isset($pref->$value))
-            or ($value and ($pref->$value != $pref->default_value)))
-        {
-            if ($name == 'emailVerified') $newvalue = $value;
-            else $newvalue = $pref->sanify($value);
-	    $pref->set($name, $newvalue);
+            or ($value and ($pref->$value != $pref->default_value))) {
+            if ($name == 'emailVerified') {
+                $newvalue = $value;
+            } else {
+                $newvalue = $pref->sanify($value);
+            }
+            $pref->set($name, $newvalue);
         }
         $this->_prefs[$name] = $pref;
         return true;
@@ -1731,59 +1891,78 @@ class UserPreferences
     /**
      * use init to avoid update on set
      */
-    function updatePrefs($prefs, $init = false) {
+    function updatePrefs($prefs, $init = false)
+    {
         $count = 0;
-        if ($init) $this->_init = $init;
+        if ($init) {
+            $this->_init = $init;
+        }
         if (is_object($prefs)) {
-            $type = 'emailVerified'; $obj = $this->_prefs['email'];
+            $type = 'emailVerified';
+            $obj = $this->_prefs['email'];
             $obj->_init = $init;
             if ($obj->get($type) !== $prefs->get($type)) {
-                if ($obj->set($type,$prefs->get($type)))
+                if ($obj->set($type, $prefs->get($type))) {
                     $count++;
+                }
             }
             foreach (array_keys($this->_prefs) as $type) {
-            	$obj = $this->_prefs[$type];
+                $obj = $this->_prefs[$type];
                 $obj->_init = $init;
                 if ($prefs->get($type) !== $obj->get($type)) {
                     // special systemdefault prefs: (probably not needed)
-                    if ($type == 'theme' and $prefs->get($type) == '' and 
-                        $obj->get($type) == THEME) continue;
-                    if ($type == 'lang' and $prefs->get($type) == '' and 
-                        $obj->get($type) == DEFAULT_LANGUAGE) continue;
-                    if ($this->_prefs[$type]->set($type,$prefs->get($type)))
+                    if ($type == 'theme' and $prefs->get($type) == '' and
+                        $obj->get($type) == THEME) {
+                        continue;
+                    }
+                    if ($type == 'lang' and $prefs->get($type) == '' and
+                        $obj->get($type) == DEFAULT_LANGUAGE) {
+                        continue;
+                    }
+                    if ($this->_prefs[$type]->set($type, $prefs->get($type))) {
                         $count++;
+                    }
                 }
             }
         } elseif (is_array($prefs)) {
             //unset($this->_prefs['userid']);
             /*
-	    if (isset($this->_method) and 
-	         ($this->_method == 'SQL' or $this->_method == 'ADODB')) {
+        if (isset($this->_method) and
+             ($this->_method == 'SQL' or $this->_method == 'ADODB')) {
                 unset($this->_prefs['passwd']);
-	    }
-	    */
-	    // emailVerified at first, the rest later
-            $type = 'emailVerified'; $obj = $this->_prefs['email'];
+        }
+        */
+        // emailVerified at first, the rest later
+            $type = 'emailVerified';
+            $obj = $this->_prefs['email'];
             $obj->_init = $init;
             if (isset($prefs[$type]) and $obj->get($type) !== $prefs[$type]) {
-                if ($obj->set($type,$prefs[$type]))
+                if ($obj->set($type, $prefs[$type])) {
                     $count++;
+                }
             }
             foreach (array_keys($this->_prefs) as $type) {
-            	$obj = $this->_prefs[$type];
+                $obj = $this->_prefs[$type];
                 $obj->_init = $init;
-                if (!isset($prefs[$type]) and isa($obj,"_UserPreference_bool")) 
+                if (!isset($prefs[$type]) and isa($obj, "_UserPreference_bool")) {
                     $prefs[$type] = false;
-                if (isset($prefs[$type]) and isa($obj,"_UserPreference_int"))
+                }
+                if (isset($prefs[$type]) and isa($obj, "_UserPreference_int")) {
                     $prefs[$type] = (int) $prefs[$type];
+                }
                 if (isset($prefs[$type]) and $obj->get($type) != $prefs[$type]) {
                     // special systemdefault prefs:
-                    if ($type == 'theme' and $prefs[$type] == '' and 
-                        $obj->get($type) == THEME) continue;
-                    if ($type == 'lang' and $prefs[$type] == '' and 
-                        $obj->get($type) == DEFAULT_LANGUAGE) continue;
-                    if ($obj->set($type,$prefs[$type]))
+                    if ($type == 'theme' and $prefs[$type] == '' and
+                        $obj->get($type) == THEME) {
+                        continue;
+                    }
+                    if ($type == 'lang' and $prefs[$type] == '' and
+                        $obj->get($type) == DEFAULT_LANGUAGE) {
+                        continue;
+                    }
+                    if ($obj->set($type, $prefs[$type])) {
                         $count++;
+                    }
                 }
             }
         }
@@ -1792,41 +1971,55 @@ class UserPreferences
 
     // For now convert just array of objects => array of values
     // Todo: the specialized subobjects must override this.
-    function store() {
-        return $this->pack([]);
+    function store()
+    {
+        $prefs = [];
+        foreach ($this->_prefs as $name => $object) {
+            if ($value = $object->getraw($name)) {
+                $prefs[$name] = $value;
+            }
+        }
+        return $this->pack($prefs);
     }
 
     // packed string or array of values => array of values
     // Todo: the specialized subobjects must override this.
-    function retrieve($packed) {
-        if (is_string($packed) and (substr($packed, 0, 2) == "a:"))
+    function retrieve($packed)
+    {
+        if (is_string($packed) and (substr($packed, 0, 2) == "a:")) {
             $packed = unserialize($packed);
-        if (!is_array($packed)) return false;
+        }
+        if (!is_array($packed)) {
+            return false;
+        }
         $prefs = array();
         foreach ($packed as $name => $packed_pref) {
             if (is_string($packed_pref) and substr($packed_pref, 0, 2) == "O:") {
                 //legacy: check if it's an old array of objects
-                // Looks like a serialized object. 
+                // Looks like a serialized object.
                 // This might fail if the object definition does not exist anymore.
                 // object with ->$name and ->default_value vars.
                 $pref =  @unserialize($packed_pref);
-                if (empty($pref))
+                if (empty($pref)) {
                     $pref = @unserialize(base64_decode($packed_pref));
+                }
                 $prefs[$name] = $pref->get($name);
             // fix old-style prefs
             } elseif (is_numeric($name) and is_array($packed_pref)) {
-            	if (count($packed_pref) == 1) {
+                if (count($packed_pref) == 1) {
                     $name  = key($packed_pref);
                     $value = current($packed_pref);
-            	    $prefs[$name] = $value;
-            	}
+                    $prefs[$name] = $value;
+                }
             } else {
                 $prefs[$name] = @unserialize($packed_pref);
-                if (empty($prefs[$name]))
+                if (empty($prefs[$name])) {
                     $prefs[$name] = @unserialize(base64_decode($packed_pref));
+                }
                 // patched by frederik@pandora.be
-                if (empty($prefs[$name]))
+                if (empty($prefs[$name])) {
                     $prefs[$name] = $packed_pref;
+                }
             }
         }
         return $prefs;
@@ -1835,34 +2028,41 @@ class UserPreferences
     /**
      * Check if the given prefs object is different from the current prefs object
      */
-    function isChanged($other) {
+    function isChanged($other)
+    {
         foreach ($this->_prefs as $type => $obj) {
-            if ($obj->get($type) !== $other->get($type))
+            if ($obj->get($type) !== $other->get($type)) {
                 return true;
+            }
         }
         return false;
     }
 
-    function defaultPreferences() {
-    	$prefs = array();
-    	foreach ($this->_prefs as $key => $obj) {
-    	    $prefs[$key] = $obj->default_value;
-    	}
-    	return $prefs;
+    function defaultPreferences()
+    {
+        $prefs = array();
+        foreach ($this->_prefs as $key => $obj) {
+            $prefs[$key] = $obj->default_value;
+        }
+        return $prefs;
     }
-    
+
     // array of objects
-    function getAll() {
+    function getAll()
+    {
         return $this->_prefs;
     }
 
-    function pack($nonpacked) {
+    function pack($nonpacked)
+    {
         return serialize($nonpacked);
     }
 
-    function unpack($packed) {
-        if (!$packed)
+    function unpack($packed)
+    {
+        if (!$packed) {
             return false;
+        }
         //$packed = base64_decode($packed);
         if (substr($packed, 0, 2) == "O:") {
             // Looks like a serialized object
@@ -1876,7 +2076,8 @@ class UserPreferences
         return false;
     }
 
-    function hash () {
+    function hash()
+    {
         return wikihash($this->_prefs);
     }
 }
@@ -1890,7 +2091,7 @@ class CookieUserPreferences
 extends UserPreferences
 {
     function CookieUserPreferences ($saved_prefs = false) {
-    	//_AnonUser::_AnonUser('',$saved_prefs);
+        //_AnonUser::_AnonUser('',$saved_prefs);
         UserPreferences::UserPreferences($saved_prefs);
     }
 }
@@ -2324,4 +2525,3 @@ extends UserPreferences
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

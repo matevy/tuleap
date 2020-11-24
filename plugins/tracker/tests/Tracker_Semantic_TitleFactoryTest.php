@@ -20,41 +20,44 @@
  */
 require_once('bootstrap.php');
 
-class Tracker_Semantic_TitleFactoryTest extends TuleapTestCase {
+class Tracker_Semantic_TitleFactoryTest extends TuleapTestCase
+{
 
     /** @var XML_Security */
     private $xml_security;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->xml_security = new XML_Security();
         $this->xml_security->enableExternalLoadOfEntities();
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         $this->xml_security->disableExternalLoadOfEntities();
 
         parent::tearDown();
     }
 
-    public function testImport() {
+    public function testImport()
+    {
         $xml     = simplexml_load_file(dirname(__FILE__) . '/_fixtures/ImportTrackerSemanticTitleTest.xml');
         $tracker = mock('Tracker');
-        
+
         $f1 = stub('Tracker_FormElement_Field_Text')->getId()->returns(111);
         $f2 = stub('Tracker_FormElement_Field_Text')->getId()->returns(112);
         $f3 = stub('Tracker_FormElement_Field_Text')->getId()->returns(113);
-        
+
         $mapping = array(
             'F9'  => $f1,
             'F13' => $f2,
             'F16' => $f3
         );
         $semantic_title = Tracker_Semantic_TitleFactory::instance()->getInstanceFromXML($xml, $mapping, $tracker);
-        
+
         $this->assertEqual($semantic_title->getShortName(), 'title');
         $this->assertEqual($semantic_title->getFieldId(), 112);
     }
-
 }

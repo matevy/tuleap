@@ -19,9 +19,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class AgileDashboard_KanbanItemDao extends DataAccessObject {
+class AgileDashboard_KanbanItemDao extends DataAccessObject
+{
 
-    public function getAllKanbanItemIds($tracker_id) {
+    public function getAllKanbanItemIds($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
 
         $sql = "SELECT id
@@ -35,7 +37,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
     /**
      * Backlog items for a kanban are artifacts that have no value for the semantic status field
      */
-    public function searchPaginatedBacklogItemsByTrackerId($tracker_id, $limit, $offset) {
+    public function searchPaginatedBacklogItemsByTrackerId($tracker_id, $limit, $offset)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $limit      = $this->da->escapeInt($limit);
         $offset     = $this->da->escapeInt($offset);
@@ -59,7 +62,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getKanbanBacklogItemIds($tracker_id) {
+    public function getKanbanBacklogItemIds($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
 
         $sql = "SELECT A.id
@@ -83,7 +87,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
     /**
      * Archived items for a kanban are artifacts that have "closed" value for the semantic status field
      */
-    public function searchPaginatedArchivedItemsByTrackerId($tracker_id, $limit, $offset) {
+    public function searchPaginatedArchivedItemsByTrackerId($tracker_id, $limit, $offset)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $limit      = $this->da->escapeInt($limit);
         $offset     = $this->da->escapeInt($offset);
@@ -109,7 +114,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getKanbanArchiveItemIds($tracker_id) {
+    public function getKanbanArchiveItemIds($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
 
         $sql = "SELECT A.id
@@ -132,7 +138,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchPaginatedItemsInColumn($tracker_id, $column_id, $limit, $offset) {
+    public function searchPaginatedItemsInColumn($tracker_id, $column_id, $limit, $offset)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $column_id  = $this->da->escapeInt($column_id);
         $limit      = $this->da->escapeInt($limit);
@@ -156,7 +163,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getItemsInColumn($tracker_id, $column_id) {
+    public function getItemsInColumn($tracker_id, $column_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $column_id  = $this->da->escapeInt($column_id);
 
@@ -177,7 +185,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getOpenItemIds($tracker_id) {
+    public function getOpenItemIds($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
 
         $sql = "SELECT A.id
@@ -197,7 +206,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchTimeInfoForItem($tracker_id, $item_id) {
+    public function searchTimeInfoForItem($tracker_id, $item_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $item_id    = $this->da->escapeInt($item_id);
 
@@ -238,7 +248,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
      *
      * @return int|null
      */
-    public function getTimeInfoForArchivedItem($item_id) {
+    public function getTimeInfoForArchivedItem($item_id)
+    {
         $item_id = $this->da->escapeInt($item_id);
 
         $sql = "SELECT C.submitted_on
@@ -268,7 +279,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return is_array($row) ? (int)$row['submitted_on'] : null;
     }
 
-    public function isKanbanItemInBacklog($tracker_id, $artifact_id) {
+    public function isKanbanItemInBacklog($tracker_id, $artifact_id)
+    {
         $tracker_id  = $this->da->escapeInt($tracker_id);
         $artifact_id = $this->da->escapeInt($artifact_id);
 
@@ -290,7 +302,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function isKanbanItemInArchive($tracker_id, $artifact_id) {
+    public function isKanbanItemInArchive($tracker_id, $artifact_id)
+    {
         $tracker_id  = $this->da->escapeInt($tracker_id);
         $artifact_id = $this->da->escapeInt($artifact_id);
 
@@ -314,7 +327,8 @@ class AgileDashboard_KanbanItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getColumnIdOfKanbanItem($tracker_id, $artifact_id) {
+    public function getColumnIdOfKanbanItem($tracker_id, $artifact_id)
+    {
         $tracker_id  = $this->da->escapeInt($tracker_id);
         $artifact_id = $this->da->escapeInt($artifact_id);
 

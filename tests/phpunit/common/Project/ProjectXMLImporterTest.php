@@ -25,6 +25,8 @@ declare(strict_types=1);
 use Mockery as M;
 use PHPUnit\Framework\TestCase;
 use Tuleap\Project\DefaultProjectVisibilityRetriever;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdder;
+use Tuleap\Project\XML\XMLFileContentRetriever;
 use Tuleap\Test\Builders\UserTestBuilder;
 use Tuleap\XML\MappingsRegistry;
 use Tuleap\Project\XML\Import;
@@ -43,15 +45,15 @@ class ProjectXMLImporterTest extends TestCase
      * @var M\MockInterface
      */
     private $ugroup_manager;
-    private $xml_file_path;
-    private $xml_file_path_with_ugroups;
+    private $xml_file_path = __DIR__ . '/_fixtures/ProjectXMLImporter/fake_project.xml';
+    private $xml_file_path_with_ugroups = __DIR__ . '/_fixtures/ProjectXMLImporter/fake_project_with_ugroups.xml';
     /**
      * @var M\MockInterface
      */
     private $user_manager;
     private $logger;
-    private $configuration;
 
+    private $configuration;
     /** @var ProjectXMLImporter */
     private $xml_importer;
     /**
@@ -65,11 +67,14 @@ class ProjectXMLImporterTest extends TestCase
     /**
      * @var string
      */
-    private $xml_file_path_with_members;
+    private $xml_file_path_with_members = __DIR__ . '/_fixtures/ProjectXMLImporter/fake_project_with_project_members.xml';
+    /**
+     * @var M\MockInterface|\Tuleap\Project\UGroups\SynchronizedProjectMembershipDao
+     */
+    private $sync_members;
 
     protected function setUp() : void
     {
-        parent::setUp();
         $this->event_manager     = M::spy(EventManager::class);
         $this->project_manager   = M::spy(\ProjectManager::class);
         $this->project           = M::spy(\Project::class, [ 'getID' => 122 ]);
@@ -78,6 +83,7 @@ class ProjectXMLImporterTest extends TestCase
         $this->user_finder       = new XMLImportHelper($this->user_manager);
         $this->logger            = M::spy(\ProjectXMLImporterLogger::class);
         $this->ugroup_duplicator = M::spy(\Tuleap\Project\UgroupDuplicator::class);
+        $this->sync_members      = M::mock(\Tuleap\Project\UGroups\SynchronizedProjectMembershipDao::class);
         $frs_permissions_creator = M::spy(\Tuleap\FRS\FRSPermissionCreator::class);
         $user_removal            = M::spy(\Tuleap\Project\UserRemover::class);
 
@@ -88,10 +94,17 @@ class ProjectXMLImporterTest extends TestCase
             $this->ugroup_duplicator,
             false,
             $frs_permissions_creator,
+            M::spy(\Tuleap\FRS\LicenseAgreement\LicenseAgreementFactory::class),
             M::spy(\Tuleap\Dashboard\Project\ProjectDashboardDuplicator::class),
             M::spy(\Tuleap\Service\ServiceCreator::class),
             M::spy(\Tuleap\Project\Label\LabelDao::class),
-            new DefaultProjectVisibilityRetriever()
+            new DefaultProjectVisibilityRetriever(),
+            M::spy(\Tuleap\Project\UGroups\SynchronizedProjectMembershipDuplicator::class),
+            new \Rule_ProjectName(),
+            new \Rule_ProjectFullName(),
+            Mockery::mock(EventManager::class),
+            Mockery::mock(\Tuleap\Project\Admin\DescriptionFields\FieldUpdator::class),
+            false
         );
 
         $this->xml_importer = new ProjectXMLImporter(
@@ -103,17 +116,15 @@ class ProjectXMLImporterTest extends TestCase
             $this->user_finder,
             M::spy(\ServiceManager::class),
             $this->logger,
-            $this->ugroup_duplicator,
             $frs_permissions_creator,
             $user_removal,
+            M::mock(ProjectMemberAdder::class),
             $project_creator,
             M::spy(\Tuleap\FRS\UploadedLinksUpdater::class),
-            M::spy(\Tuleap\Dashboard\Project\ProjectDashboardXMLImporter::class)
+            M::spy(\Tuleap\Dashboard\Project\ProjectDashboardXMLImporter::class),
+            $this->sync_members,
+            new XMLFileContentRetriever()
         );
-
-        $this->xml_file_path              = __DIR__ . '/_fixtures/ProjectXMLImporter/fake_project.xml';
-        $this->xml_file_path_with_ugroups = __DIR__ . '/_fixtures/ProjectXMLImporter/fake_project_with_ugroups.xml';
-        $this->xml_file_path_with_members = __DIR__ . '/_fixtures/ProjectXMLImporter/fake_project_with_project_members.xml';
 
         $this->configuration = new Import\ImportConfig();
     }
@@ -214,6 +225,25 @@ class ProjectXMLImporterTest extends TestCase
         $ug03->shouldReceive('addUser')->never();
 
         $this->xml_importer->import($this->configuration, 122, $this->xml_file_path_with_ugroups);
+    }
+
+    public function testItImportsUGroups()
+    {
+        $this->project_manager->shouldReceive('getValidProjectByShortNameOrId')->andReturns($this->project);
+
+        $user_01 = UserTestBuilder::aUser()->withLdapId('ldap_01')->withUserName('user_01')->withId(101)->build();
+        $this->user_manager->shouldReceive('getUserByIdentifier')->with('ldapId:ldap_01')->andReturns($user_01);
+
+        $this->ugroup_manager->shouldReceive('getUGroupByName')->with($this->project, 'ug01')->andReturns(false);
+        $this->ugroup_manager->shouldReceive('createEmptyUgroup')->with(122, 'ug01', 'descr01')->andReturns(555);
+
+        $ug01 = M::spy(\ProjectUGroup::class);
+        $this->ugroup_manager->shouldReceive('getById')->with(555)->andReturns($ug01);
+        $ug01->shouldReceive('addUser')->once();
+
+        $this->sync_members->shouldReceive('enable')->with($this->project)->once();
+
+        $this->xml_importer->import($this->configuration, 122, __DIR__ . '/_fixtures/ProjectXMLImporter/fake_project_with_ugroups_synchronized.xml');
     }
 
     public function testItDoesNotStopIfUserIsAlreadyProjectMember()

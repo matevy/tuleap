@@ -18,25 +18,22 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/valid/Rule.class.php');
 Mock::generatePartial('Rule_ProjectName', 'Rule_ProjectNameTestVersion', array('_getBackend'));
 
-require_once('common/language/BaseLanguage.class.php');
 Mock::generate('BaseLanguage');
 
-require_once('common/backend/BackendSystem.class.php');
 Mock::generate('BackendSystem');
 
-require_once('common/backend/BackendSVN.class.php');
 Mock::generate('BackendSVN');
 
-require_once('common/backend/BackendCVS.class.php');
 Mock::generate('BackendCVS');
 
 
-class Rule_ProjectNameTest extends TuleapTestCase {
+class Rule_ProjectNameTest extends TuleapTestCase
+{
 
-    function testNoUnderscore() {
+    function testNoUnderscore()
+    {
         $r = new Rule_ProjectName();
         $this->assertFalse($r->isDNSCompliant("group_test"));
         $this->assertFalse($r->isDNSCompliant("_grouptest"));
@@ -44,7 +41,8 @@ class Rule_ProjectNameTest extends TuleapTestCase {
         $this->assertFalse($r->isDNSCompliant("group_test_1"));
     }
 
-    function testNoSpaces() {
+    function testNoSpaces()
+    {
         $r = new Rule_ProjectName();
         $this->assertFalse($r->noSpaces("group test"));
         $this->assertFalse($r->noSpaces(" grouptest"));
@@ -52,7 +50,8 @@ class Rule_ProjectNameTest extends TuleapTestCase {
         $this->assertFalse($r->noSpaces("group test 1"));
     }
 
-    function testNoDot() {
+    function testNoDot()
+    {
         $r = new Rule_ProjectName();
         $this->assertFalse($r->isValid("group.test"));
         $this->assertFalse($r->isValid(".grouptest"));
@@ -60,7 +59,8 @@ class Rule_ProjectNameTest extends TuleapTestCase {
         $this->assertFalse($r->isValid("group.test.1"));
     }
 
-    function testReservedNames() {
+    function testReservedNames()
+    {
         $r = new Rule_ProjectName();
         $this->assertTrue($r->isReservedName("www"));
         $this->assertTrue($r->isReservedName("www1"));
@@ -95,7 +95,8 @@ class Rule_ProjectNameTest extends TuleapTestCase {
         $this->assertTrue($r->isReservedName("gitolite"));
     }
 
-    function testReservedNamesUpperCase() {
+    function testReservedNamesUpperCase()
+    {
         $r = new Rule_ProjectName();
         $this->assertTrue($r->isReservedName("WWW"));
         $this->assertTrue($r->isReservedName("WWW1"));
@@ -128,77 +129,80 @@ class Rule_ProjectNameTest extends TuleapTestCase {
         $this->assertTrue($r->isReservedName("MIRROR"));
     }
 
-    function testReservedPrefix() {
+    function testReservedPrefix()
+    {
         $r = new Rule_UserName();
         $this->assertTrue($r->isReservedName("forge__"));
         $this->assertFalse($r->isReservedName("forgeron"));
     }
 
-    function testIsNameAvailableSuccess() {
+    function testIsNameAvailableSuccess()
+    {
         $r = new Rule_ProjectNameTestVersion();
-    
+
         $backendSVN = new MockBackendSVN($this);
         $backendSVN->setReturnValue('isNameAvailable', true, array('foobar'));
         $r->setReturnValue('_getBackend', $backendSVN, array('SVN'));
-        
+
         $backendCVS = new MockBackendCVS($this);
         $backendCVS->setReturnValue('isNameAvailable', true, array('foobar'));
         $r->setReturnValue('_getBackend', $backendCVS, array('CVS'));
-       
+
         $backendSystem = new MockBackendSystem($this);
         $backendSystem->setReturnValue('isProjectNameAvailable', true, array('foobar'));
         $r->setReturnValue('_getBackend', $backendSystem, array('System'));
-    
+
         $this->assertTrue($r->isNameAvailable('foobar'));
-    
     }
-    
-    function testIsNameAvailableSVNFailure() {
+
+    function testIsNameAvailableSVNFailure()
+    {
         $r = new Rule_ProjectNameTestVersion();
-    
+
         $backendSVN = new MockBackendSVN($this);
         $backendSVN->setReturnValue('isNameAvailable', false, array('foobar'));
         $r->setReturnValue('_getBackend', $backendSVN, array('SVN'));
-        
+
         $backendCVS = new MockBackendCVS($this);
         $backendCVS->expectNever('isNameAvailable', array('foobar'));
-        
+
         $this->assertFalse($r->isNameAvailable('foobar'));
     }
-    
-    function testIsNameAvailableCVSFailure() {
+
+    function testIsNameAvailableCVSFailure()
+    {
         $r = new Rule_ProjectNameTestVersion();
-    
+
         $backendSVN = new MockBackendSVN($this);
         $backendSVN->setReturnValue('isNameAvailable', true, array('foobar'));
         $r->setReturnValue('_getBackend', $backendSVN, array('SVN'));
-        
+
         $backendCVS = new MockBackendCVS($this);
         $backendCVS->setReturnValue('isNameAvailable', false, array('foobar'));
         $r->setReturnValue('_getBackend', $backendCVS, array('CVS'));
-       
-        
+
         $backendSystem = new MockBackendSystem($this);
         $backendSystem->expectNever('isProjectNameAvailable', array('foobar'));
-        
+
         $this->assertFalse($r->isNameAvailable('foobar'));
     }
-    
-    function testIsNameAvailableSystemFailure() {
+
+    function testIsNameAvailableSystemFailure()
+    {
         $r = new Rule_ProjectNameTestVersion();
-    
+
         $backendSVN = new MockBackendSVN($this);
         $backendSVN->setReturnValue('isNameAvailable', true, array('foobar'));
         $r->setReturnValue('_getBackend', $backendSVN, array('SVN'));
-        
+
         $backendCVS = new MockBackendCVS($this);
         $backendCVS->setReturnValue('isNameAvailable', true, array('foobar'));
         $r->setReturnValue('_getBackend', $backendCVS, array('CVS'));
-       
+
         $backendSystem = new MockBackendSystem($this);
         $backendSystem->setReturnValue('isProjectNameAvailable', false, array('foobar'));
         $r->setReturnValue('_getBackend', $backendSystem, array('System'));
-    
+
         $this->assertFalse($r->isNameAvailable('foobar'));
     }
 }

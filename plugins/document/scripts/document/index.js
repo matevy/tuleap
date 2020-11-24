@@ -23,7 +23,7 @@ import VueDOMPurifyHTML from "vue-dompurify-html";
 
 import french_translations from "./po/fr.po";
 import App from "./components/App.vue";
-import store from "./store/index.js";
+import { createStore } from "./store/index.js";
 import { createRouter } from "./router/index.js";
 import moment from "moment";
 import "moment-timezone";
@@ -56,17 +56,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const user_id = Number.parseInt(document.body.dataset.userId, 10);
     const max_files_dragndrop = Number.parseInt(vue_mount_point.dataset.maxFilesDragndrop, 10);
     const max_size_upload = Number.parseInt(vue_mount_point.dataset.maxSizeUpload, 10);
-    const is_under_construction = Boolean(vue_mount_point.dataset.isUnderConstruction);
     const embedded_are_allowed = Boolean(vue_mount_point.dataset.embeddedAreAllowed);
+    const is_deletion_allowed = Boolean(vue_mount_point.dataset.userCanDeleteItem);
     const is_item_status_metadata_used = Boolean(vue_mount_point.dataset.isItemStatusMetadataUsed);
     const is_obsolescence_date_metadata_used = Boolean(
         vue_mount_point.dataset.isObsolescenceDateMetadataUsed
     );
+    const csrf_token_name = vue_mount_point.dataset.csrfTokenName;
+    const csrf_token = vue_mount_point.dataset.csrfToken;
 
-    moment.tz(user_timezone).locale(user_locale);
+    moment.tz(user_timezone);
+    moment.locale(user_locale);
 
     const AppComponent = Vue.extend(App);
-    const router = createRouter(project_name);
+    const store = createStore(user_id, project_id);
+    const router = createRouter(store, project_name);
 
     new AppComponent({
         store,
@@ -79,10 +83,12 @@ document.addEventListener("DOMContentLoaded", () => {
             date_time_format,
             max_files_dragndrop,
             max_size_upload,
-            is_under_construction,
             embedded_are_allowed,
+            is_deletion_allowed,
             is_item_status_metadata_used,
-            is_obsolescence_date_metadata_used
+            is_obsolescence_date_metadata_used,
+            csrf_token_name,
+            csrf_token
         }
     }).$mount(vue_mount_point);
 });

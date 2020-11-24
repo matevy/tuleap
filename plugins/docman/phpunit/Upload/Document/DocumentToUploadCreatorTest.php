@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,24 +20,38 @@
 
 namespace Tuleap\Docman\Upload\Document;
 
+use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PermissionsManager;
 use PHPUnit\Framework\TestCase;
+use Tuleap\Docman\Permissions\PermissionItemUpdater;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSet;
 use Tuleap\Docman\Upload\UploadCreationConflictException;
 use Tuleap\Docman\Upload\UploadCreationFileMismatchException;
 use Tuleap\Docman\Upload\UploadMaxSizeExceededException;
 use Tuleap\Test\DB\DBTransactionExecutorPassthrough;
 
-class DocumentToUploadCreatorTest extends TestCase
+final class DocumentToUploadCreatorTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
     private $dao;
+    /**
+     * @var PermissionsManager|Mockery\MockInterface
+     */
+    private $permissions_manager;
+    /**
+     * @var Mockery\MockInterface|PermissionItemUpdater
+     */
+    private $permissions_item_updater;
 
     public function setUp() : void
     {
         \ForgeConfig::store();
 
-        $this->dao = \Mockery::mock(DocumentOngoingUploadDAO::class);
+        $this->dao                      = Mockery::mock(DocumentOngoingUploadDAO::class);
+        $this->permissions_manager      = Mockery::mock(PermissionsManager::class);
+        $this->permissions_item_updater = Mockery::mock(PermissionItemUpdater::class);
     }
 
     public function tearDown() : void
@@ -45,14 +59,25 @@ class DocumentToUploadCreatorTest extends TestCase
         \ForgeConfig::restore();
     }
 
-    public function testCreation()
+    /**
+     * @dataProvider permissionsForGroupsDataProvider
+     */
+    public function testCreation(?DocmanItemPermissionsForGroupsSet $permissions_for_groups): void
     {
-        $creator = new DocumentToUploadCreator($this->dao, new DBTransactionExecutorPassthrough());
+        $metadata_creator = Mockery::mock(DocumentMetadataCreator::class);
+        $creator          = new DocumentToUploadCreator(
+            $this->dao,
+            new DBTransactionExecutorPassthrough(),
+            $metadata_creator,
+            $this->permissions_manager,
+            $this->permissions_item_updater
+        );
 
         \ForgeConfig::set(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING, '999999');
-        $parent_item = \Mockery::mock(\Docman_Item::class);
+        $parent_item = Mockery::mock(\Docman_Item::class);
         $parent_item->shouldReceive('getId')->andReturns(11);
-        $user = \Mockery::mock(\PFUser::class);
+        $parent_item->shouldReceive('getGroupId')->andReturns(741);
+        $user = Mockery::mock(\PFUser::class);
         $user->shouldReceive('getId')->andReturns(102);
         $current_time = new \DateTimeImmutable();
 
@@ -60,6 +85,14 @@ class DocumentToUploadCreatorTest extends TestCase
         $this->dao->shouldReceive('saveDocumentOngoingUpload')->once()->andReturns(12);
 
         $obsolescence_date = \DateTimeImmutable::createFromFormat('Y-m-d', '2100-05-19');
+
+        $metadata_creator->shouldReceive('storeItemCustomMetadata')->never();
+
+        if ($permissions_for_groups === null) {
+            $this->permissions_manager->shouldReceive('clonePermissions')->once();
+        } else {
+            $this->permissions_item_updater->shouldReceive('initPermissionsOnNewlyCreatedItem')->once();
+        }
 
         $document_to_upload = $creator->create(
             $parent_item,
@@ -70,7 +103,61 @@ class DocumentToUploadCreatorTest extends TestCase
             'filename',
             123456,
             PLUGIN_DOCMAN_ITEM_STATUS_APPROVED,
-            $obsolescence_date->getTimestamp()
+            $obsolescence_date->getTimestamp(),
+            null,
+            $permissions_for_groups
+        );
+
+        $this->assertSame(12, $document_to_upload->getItemId());
+    }
+
+    public function permissionsForGroupsDataProvider() : array
+    {
+        return [
+            [new DocmanItemPermissionsForGroupsSet([])],
+            [null]
+        ];
+    }
+
+    public function testCreationWithMetadata(): void
+    {
+        $metadata_creator = Mockery::mock(DocumentMetadataCreator::class);
+        $creator          = new DocumentToUploadCreator(
+            $this->dao,
+            new DBTransactionExecutorPassthrough(),
+            $metadata_creator,
+            $this->permissions_manager,
+            $this->permissions_item_updater
+        );
+
+        \ForgeConfig::set(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING, '999999');
+        $parent_item = Mockery::mock(\Docman_Item::class);
+        $parent_item->shouldReceive('getId')->andReturns(11);
+        $parent_item->shouldReceive('getGroupId')->andReturns(741);
+        $user = Mockery::mock(\PFUser::class);
+        $user->shouldReceive('getId')->andReturns(102);
+        $current_time = new \DateTimeImmutable();
+
+        $this->dao->shouldReceive('searchDocumentOngoingUploadByParentIDTitleAndExpirationDate')->andReturns([]);
+        $this->dao->shouldReceive('saveDocumentOngoingUpload')->once()->andReturns(12);
+
+        $obsolescence_date = \DateTimeImmutable::createFromFormat('Y-m-d', '2100-05-19');
+
+        $metadata_creator->shouldReceive('storeItemCustomMetadata')->once();
+        $this->permissions_item_updater->shouldReceive('initPermissionsOnNewlyCreatedItem')->once();
+
+        $document_to_upload = $creator->create(
+            $parent_item,
+            $user,
+            $current_time,
+            'title',
+            'description',
+            'filename',
+            123456,
+            PLUGIN_DOCMAN_ITEM_STATUS_APPROVED,
+            $obsolescence_date->getTimestamp(),
+            ['id' => 1, 'value' => 'abcde'],
+            new DocmanItemPermissionsForGroupsSet([])
         );
 
         $this->assertSame(12, $document_to_upload->getItemId());
@@ -78,12 +165,18 @@ class DocumentToUploadCreatorTest extends TestCase
 
     public function testANewItemIsNotCreatedIfAnUploadIsOngoingWithTheSameFile()
     {
-        $creator = new DocumentToUploadCreator($this->dao, new DBTransactionExecutorPassthrough());
+        $creator = new DocumentToUploadCreator(
+            $this->dao,
+            new DBTransactionExecutorPassthrough(),
+            Mockery::mock(DocumentMetadataCreator::class),
+            $this->permissions_manager,
+            $this->permissions_item_updater
+        );
 
         \ForgeConfig::set(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING, '999999');
-        $parent_item = \Mockery::mock(\Docman_Item::class);
+        $parent_item = Mockery::mock(\Docman_Item::class);
         $parent_item->shouldReceive('getId')->andReturns(11);
-        $user = \Mockery::mock(\PFUser::class);
+        $user = Mockery::mock(\PFUser::class);
         $user->shouldReceive('getId')->andReturns(102);
         $current_time = new \DateTimeImmutable();
 
@@ -102,7 +195,9 @@ class DocumentToUploadCreatorTest extends TestCase
             'filename',
             123456,
             PLUGIN_DOCMAN_ITEM_STATUS_APPROVED,
-            $obsolescence_date->getTimestamp()
+            $obsolescence_date->getTimestamp(),
+            null,
+            new DocmanItemPermissionsForGroupsSet([])
         );
 
         $this->assertSame(12, $document_to_upload->getItemId());
@@ -110,12 +205,18 @@ class DocumentToUploadCreatorTest extends TestCase
 
     public function testCreationIsRejectedWhenAnotherUserIsCreatingTheDocument()
     {
-        $creator = new DocumentToUploadCreator($this->dao, new DBTransactionExecutorPassthrough());
+        $creator = new DocumentToUploadCreator(
+            $this->dao,
+            new DBTransactionExecutorPassthrough(),
+            Mockery::mock(DocumentMetadataCreator::class),
+            $this->permissions_manager,
+            $this->permissions_item_updater
+        );
 
         \ForgeConfig::set(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING, '999999');
-        $parent_item = \Mockery::mock(\Docman_Item::class);
+        $parent_item = Mockery::mock(\Docman_Item::class);
         $parent_item->shouldReceive('getId')->andReturns(11);
-        $user = \Mockery::mock(\PFUser::class);
+        $user = Mockery::mock(\PFUser::class);
         $user->shouldReceive('getId')->andReturns(102);
         $current_time = new \DateTimeImmutable();
 
@@ -136,18 +237,26 @@ class DocumentToUploadCreatorTest extends TestCase
             'filename',
             123456,
             PLUGIN_DOCMAN_ITEM_STATUS_APPROVED,
-            $obsolescence_date->getTimestamp()
+            $obsolescence_date->getTimestamp(),
+            null,
+            new DocmanItemPermissionsForGroupsSet([])
         );
     }
 
     public function testCreationIsRejectedWhenTheUserIsAlreadyCreatingTheDocumentWithAnotherFile()
     {
-        $creator = new DocumentToUploadCreator($this->dao, new DBTransactionExecutorPassthrough());
+        $creator = new DocumentToUploadCreator(
+            $this->dao,
+            new DBTransactionExecutorPassthrough(),
+            Mockery::mock(DocumentMetadataCreator::class),
+            $this->permissions_manager,
+            $this->permissions_item_updater
+        );
 
         \ForgeConfig::set(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING, '999999');
-        $parent_item = \Mockery::mock(\Docman_Item::class);
+        $parent_item = Mockery::mock(\Docman_Item::class);
         $parent_item->shouldReceive('getId')->andReturns(11);
-        $user = \Mockery::mock(\PFUser::class);
+        $user = Mockery::mock(\PFUser::class);
         $user->shouldReceive('getId')->andReturns(102);
         $current_time = new \DateTimeImmutable();
 
@@ -168,17 +277,25 @@ class DocumentToUploadCreatorTest extends TestCase
             'filename2',
             789,
             PLUGIN_DOCMAN_ITEM_STATUS_APPROVED,
-            $obsolescence_date->getTimestamp()
+            $obsolescence_date->getTimestamp(),
+            null,
+            new DocmanItemPermissionsForGroupsSet([])
         );
     }
 
     public function testCreationIsRejectedIfTheFileIsBiggerThanTheConfigurationLimit()
     {
-        $creator = new DocumentToUploadCreator($this->dao, new DBTransactionExecutorPassthrough());
+        $creator = new DocumentToUploadCreator(
+            $this->dao,
+            new DBTransactionExecutorPassthrough(),
+            Mockery::mock(DocumentMetadataCreator::class),
+            $this->permissions_manager,
+            $this->permissions_item_updater
+        );
 
         \ForgeConfig::set(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING, '1');
-        $parent_item = \Mockery::mock(\Docman_Item::class);
-        $user = \Mockery::mock(\PFUser::class);
+        $parent_item = Mockery::mock(\Docman_Item::class);
+        $user = Mockery::mock(\PFUser::class);
         $current_time = new \DateTimeImmutable();
 
         $this->expectException(UploadMaxSizeExceededException::class);
@@ -194,7 +311,9 @@ class DocumentToUploadCreatorTest extends TestCase
             'filename',
             2,
             PLUGIN_DOCMAN_ITEM_STATUS_APPROVED,
-            $obsolescence_date->getTimestamp()
+            $obsolescence_date->getTimestamp(),
+            null,
+            new DocmanItemPermissionsForGroupsSet([])
         );
     }
 }

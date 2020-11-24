@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,20 +19,41 @@
 
 import Vue from "vue";
 import Vuex from "vuex";
+import createPersistedState from "vuex-persistedstate";
+import createMutationsSharer from "vuex-shared-mutations";
+import { expiringLocalStorage } from "./store-persistence/storage.js";
 import * as mutations from "./mutations.js";
 import * as getters from "./getters.js";
 import * as actions from "./actions.js";
 import state from "./state.js";
 import error from "./error/module.js";
+import clipboard from "./clipboard/module.js";
+import metadata from "./metadata/module.js";
 
 Vue.use(Vuex);
 
-export default new Vuex.Store({
-    state,
-    getters,
-    mutations,
-    actions,
-    modules: {
-        error
-    }
-});
+export function createStore(user_id, project_id) {
+    return new Vuex.Store({
+        state,
+        getters,
+        mutations,
+        actions,
+        modules: {
+            error,
+            clipboard,
+            metadata
+        },
+        plugins: [
+            createPersistedState({
+                key: `document_clipboard_${user_id}_${project_id}`,
+                storage: expiringLocalStorage(900),
+                paths: ["clipboard"]
+            }),
+            createMutationsSharer({
+                predicate: mutation => {
+                    return mutation.type.startsWith("clipboard/");
+                }
+            })
+        ]
+    });
+}

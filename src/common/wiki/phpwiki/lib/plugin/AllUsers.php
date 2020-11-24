@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: AllUsers.php,v 1.18 2004/11/23 15:17:19 rurban Exp $');
 /*
  Copyright 2002,2004 $ThePhpWikiProgrammingTeam
@@ -25,35 +26,41 @@ require_once('lib/PageList.php');
 /**
  * Based on AllPages and WikiGroup.
  *
- * We list all users, 
- * either homepage users (prefs stored in a page), 
- * users with db prefs and 
+ * We list all users,
+ * either homepage users (prefs stored in a page),
+ * users with db prefs and
  * externally authenticated users with a db users table, if auth_user_exists is defined.
  */
-class WikiPlugin_AllUsers
-extends WikiPlugin
+class WikiPlugin_AllUsers extends WikiPlugin
 {
-    function getName () {
+    function getName()
+    {
         return _("AllUsers");
     }
 
-    function getDescription() {
+    function getDescription()
+    {
         return _("List all once authenticated users.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.18 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.18 $"
+        );
     }
 
-    function getDefaultArguments() {
-        return array_merge
-            (
-             PageList::supportedArgs(),
-             array('noheader'      => false,
+    function getDefaultArguments()
+    {
+        return array_merge(
+            PageList::supportedArgs(),
+            array('noheader'      => false,
                    'include_empty' => true,
                    'debug'         => false
-                   ));
+            )
+        );
     }
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor,markup or all
@@ -64,31 +71,37 @@ extends WikiPlugin
     //
     // sortby: [+|-] pagename|mtime|hits
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
         extract($args);
-        if ($debug)
+        if ($debug) {
             $timer = new DebugTimer;
+        }
 
         $group = $request->getGroup();
-        if (method_exists($group,'_allUsers')) {
+        if (method_exists($group, '_allUsers')) {
             $allusers = $group->_allUsers();
         } else {
-        	$allusers = array();
+            $allusers = array();
         }
         $args['count'] = count($allusers);
         // deleted pages show up as version 0.
         $pagelist = new PageList($info, $exclude, $args);
-        if (!$noheader)
+        if (!$noheader) {
             $pagelist->setCaption(_("Authenticated users on this wiki (%d total):"));
-        if ($include_empty and empty($info))
+        }
+        if ($include_empty and empty($info)) {
             $pagelist->_addColumn('version');
+        }
         list($offset, $pagesize) = $pagelist->limit($args['limit']);
         if (!$pagesize) {
             $pagelist->addPageList($allusers);
         } else {
             for ($i=$offset; $i < $offset + $pagesize - 1; $i++) {
-            	if ($i >= $args['count']) break;
+                if ($i >= $args['count']) {
+                    break;
+                }
                 $pagelist->addPage($allusers[$i]);
             }
         }
@@ -101,8 +114,10 @@ extends WikiPlugin
         */
 
         if ($debug) {
-            return HTML($pagelist,
-                        HTML::p(fmt("Elapsed time: %s s", $timer->getStats())));
+            return HTML(
+                $pagelist,
+                HTML::p(fmt("Elapsed time: %s s", $timer->getStats()))
+            );
         } else {
             return $pagelist;
         }
@@ -190,4 +205,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

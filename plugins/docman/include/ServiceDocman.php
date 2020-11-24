@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,10 +22,15 @@ namespace Tuleap\Docman;
 
 class ServiceDocman extends \Service
 {
-    public function displayHeader($title, $breadcrumbs, $toolbar, $params = [])
+    public function displayHeader(string $title, $breadcrumbs, array $toolbar, array $params = []): void
     {
         $GLOBALS['HTML']->includeCalendarScripts();
 
         parent::displayHeader($title, [], $toolbar);
+    }
+
+    public function getIconName(): string
+    {
+        return 'fa-folder-open';
     }
 }

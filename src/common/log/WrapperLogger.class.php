@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class WrapperLogger implements Logger {
+class WrapperLogger implements Logger
+{
 
     /**
      * @var Logger
@@ -27,40 +28,49 @@ class WrapperLogger implements Logger {
 
     private $prefix = array();
 
-    public function __construct(Logger $logger, $prefix) {
+    public function __construct(Logger $logger, $prefix)
+    {
         $this->logger   = $logger;
         $this->prefix[] = $prefix;
     }
 
-    public function debug($message) {
+    public function debug($message)
+    {
         $this->logger->debug($this->formatMessage($message));
     }
 
-    public function error($message, ?Exception $exception = null) {
+    public function error($message, ?Exception $exception = null)
+    {
         $this->logger->error($this->formatMessage($message), $exception);
     }
 
-    public function info($message) {
+    public function info($message)
+    {
         $this->logger->info($this->formatMessage($message));
     }
 
-    public function log($message, $level = null) {
+    public function log($message, $level = null)
+    {
         $this->logger->log($this->formatMessage($message), $level);
     }
 
-    public function warn($message, ?Exception $exception = null) {
+    public function warn($message, ?Exception $exception = null)
+    {
         $this->logger->warn($this->formatMessage($message), $exception);
     }
 
-    private function formatMessage($message) {
-        return '['.implode($this->prefix, '][').'] '.$message;
+    private function formatMessage($message)
+    {
+        return '['. implode('][', $this->prefix) .'] '.$message;
     }
 
-    public function push($prefix) {
+    public function push($prefix)
+    {
         $this->prefix[] = $prefix;
     }
 
-    public function pop() {
+    public function pop()
+    {
         array_pop($this->prefix);
     }
 }

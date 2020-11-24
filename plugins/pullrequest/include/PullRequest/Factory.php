@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,11 +20,10 @@
 
 namespace Tuleap\PullRequest;
 
-use \GitRepository;
-use \PFUser;
+use GitRepository;
+use PFUser;
 use Tuleap\PullRequest\Exception\PullRequestNotFoundException;
 use Tuleap\PullRequest\Exception\PullRequestNotCreatedException;
-use Tuleap\PullRequest\Exception\InvalidBuildStatusException;
 use pullrequestPlugin;
 use ReferenceManager;
 
@@ -32,11 +31,11 @@ class Factory
 {
 
     /**
-     * @var PullRequest\Dao
+     * @var Dao
      */
     private $dao;
 
-    /*
+    /**
      * @var ReferenceManager
      */
     private $reference_manager;
@@ -110,8 +109,6 @@ class Factory
             $row['repo_dest_id'],
             $row['branch_dest'],
             $row['sha1_dest'],
-            $row['last_build_date'],
-            $row['last_build_status'],
             $row['status'],
             $row['merge_status']
         );
@@ -194,16 +191,6 @@ class Factory
         $this->dao->updateMergeStatus($pull_request->getId(), $merge_status);
     }
 
-    public function markAsAbandoned($pull_request)
-    {
-        $this->dao->markAsAbandoned($pull_request->getId());
-    }
-
-    public function markAsMerged($pull_request)
-    {
-        $this->dao->markAsMerged($pull_request->getId());
-    }
-
     public function updateTitleAndDescription(PFUser $user, PullRequest $pull_request, $project_id, $new_title, $new_description)
     {
         $pull_request_id = $pull_request->getId();
@@ -226,19 +213,5 @@ class Factory
             $user->getId(),
             pullrequestPlugin::PULLREQUEST_REFERENCE_KEYWORD
         );
-    }
-
-    /**
-     * @deprecated
-     */
-    public function updateLastBuildStatus(PullRequest $pull_request, $status, $date)
-    {
-        if ($status != PullRequest::BUILD_STATUS_FAIL
-            && $status != PullRequest::BUILD_STATUS_SUCCESS
-            && $status != PullRequest::BUILD_STATUS_UNKNOWN) {
-            throw new InvalidBuildStatusException();
-        }
-
-        $this->dao->updateLastBuildStatus($pull_request->getId(), $status, $date);
     }
 }

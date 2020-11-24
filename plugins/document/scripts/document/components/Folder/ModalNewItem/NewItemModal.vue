@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+  - Copyright (c) Enalean, 2018-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -24,33 +24,46 @@
           aria-labelledby="document-new-item-modal"
           v-on:submit="addDocument"
           enctype="multipart/form-data"
+          data-test="document-new-item-modal"
     >
-        <modal-header v-bind:modal-title="modal_title" v-bind:aria-labelled-by="aria_labelled_by"/>
+        <modal-header v-bind:modal-title="modal_title"
+                      v-bind:aria-labelled-by="aria_labelled_by"
+                      v-bind:icon-header-class="'fa-plus'"
+        />
         <modal-feedback/>
-        <div class="tlp-modal-body document-new-item-modal-body" v-if="is_displayed">
+        <div class="tlp-modal-body document-item-modal-body" v-if="is_displayed">
             <type-selector v-model="item.type"/>
 
-            <global-metadata v-bind:item="item" v-bind:parent="parent">
-                <link-properties v-model="item.link_properties" v-bind:item="item"/>
-                <wiki-properties v-model="item.wiki_properties" v-bind:item="item"/>
-                <embedded-properties v-model="item.embedded_properties" v-bind:item="item"/>
-                <file-properties v-model="item.file_properties" v-bind:item="item"/>
-                <status-metadata v-if="is_item_status_metadata_used" v-on:itemStatusSelectEvent="setItemStatus"/>
-                <obsolescence-date-metadata v-if="is_obsolescence_date_metadata_used"
-                                            v-on:documentObsolescenceDateSelectEvent="setObsolescenceDate"
-                />
-            </global-metadata>
+            <document-global-metadata-for-create v-bind:currently-updated-item="item" v-bind:parent="parent">
+                <link-properties v-model="item.link_properties" v-bind:item="item" name="properties"/>
+                <wiki-properties v-model="item.wiki_properties" v-bind:item="item" name="properties"/>
+                <embedded-properties v-model="item.embedded_properties" v-bind:item="item" name="properties"/>
+                <file-properties v-model="item.file_properties" v-bind:item="item" name="properties"/>
+            </document-global-metadata-for-create>
+            <other-information-metadata-for-create
+                v-bind:currently-updated-item="item"
+                v-model="item.obsolescence_date"
+            />
+            <creation-modal-permissions-section
+                v-if="item.permissions_for_groups"
+                v-model="item.permissions_for_groups"
+                v-bind:project_ugroups="project_ugroups"
+            />
         </div>
 
-        <modal-footer v-bind:is-loading="is_loading" v-bind:submit-button-label="submit_button_label" v-bind:aria-labelled-by="aria_labelled_by"/>
+        <modal-footer v-bind:is-loading="is_loading"
+                      v-bind:submit-button-label="submit_button_label"
+                      v-bind:aria-labelled-by="aria_labelled_by"
+                      v-bind:icon-submit-button-class="'fa-plus'"
+        />
     </form>
 </template>
 
 <script>
 import { mapState } from "vuex";
 import { modal as createModal } from "tlp";
-import { ITEM_STATUS_NONE, OBSOLESCENCE_DATE_NONE, TYPE_FILE } from "../../../constants.js";
-import GlobalMetadata from "../Metadata/GlobalMetadata.vue";
+import { TYPE_FILE } from "../../../constants.js";
+import DocumentGlobalMetadataForCreate from "../Metadata/DocumentMetadata/DocumentGlobalMetadataForCreate.vue";
 import LinkProperties from "../Property/LinkProperties.vue";
 import WikiProperties from "../Property/WikiProperties.vue";
 import TypeSelector from "./TypeSelector.vue";
@@ -59,27 +72,71 @@ import ModalFooter from "../ModalCommon/ModalFooter.vue";
 import ModalFeedback from "../ModalCommon/ModalFeedback.vue";
 import EmbeddedProperties from "../Property/EmbeddedProperties.vue";
 import FileProperties from "../Property/FileProperties.vue";
-import StatusMetadata from "../Metadata/StatusMetadata.vue";
-import ObsolescenceDateMetadata from "../Metadata/ObsolescenceDateMetadata.vue";
+import OtherInformationMetadataForCreate from "../Metadata/DocumentMetadata/OtherInformationMetadataForCreate.vue";
+import EventBus from "../../../helpers/event-bus.js";
+import { getCustomMetadata } from "../../../helpers/metadata-helpers/custom-metadata-helper.js";
+import { transformCustomMetadataForItemCreation } from "../../../helpers/metadata-helpers/data-transformatter-helper";
+import { handleErrors } from "../../../store/actions-helpers/handle-errors.js";
+import CreationModalPermissionsSection from "./CreationModalPermissionsSection.vue";
 
 export default {
     name: "NewItemModal",
     components: {
-        ObsolescenceDateMetadata,
+        OtherInformationMetadataForCreate,
+        DocumentGlobalMetadataForCreate,
         FileProperties,
         EmbeddedProperties,
         ModalFooter,
         ModalHeader,
-        GlobalMetadata,
         LinkProperties,
         WikiProperties,
         TypeSelector,
-        ModalFeedback,
-        StatusMetadata
+        CreationModalPermissionsSection,
+        ModalFeedback
     },
     data() {
         return {
-            default_item: {
+            item: {},
+            is_displayed: false,
+            is_loading: false,
+            modal: null,
+            parent: {}
+        };
+    },
+    computed: {
+        ...mapState([
+            "current_folder",
+            "is_obsolescence_date_metadata_used",
+            "is_item_status_metadata_used",
+            "project_id",
+            "project_ugroups"
+        ]),
+        ...mapState("error", ["has_modal_error"]),
+        ...mapState("metadata", ["has_loaded_metadata"]),
+        submit_button_label() {
+            return this.$gettext("Create document");
+        },
+        modal_title() {
+            return this.$gettext("New document");
+        },
+        aria_labelled_by() {
+            return "document-new-item-modal";
+        }
+    },
+    mounted() {
+        this.modal = createModal(this.$el);
+        EventBus.$on("show-new-document-modal", this.show);
+        EventBus.$on("update-multiple-metadata-list-value", this.updateMultipleMetadataListValue);
+        this.modal.addEventListener("tlp-modal-hidden", this.reset);
+    },
+    beforeDestroy() {
+        EventBus.$off("show-new-document-modal", this.show);
+        EventBus.$off("update-multiple-metadata-list-value", this.updateMultipleMetadataListValue);
+        this.modal.removeEventListener("tlp-modal-hidden", this.reset);
+    },
+    methods: {
+        getDefaultItem() {
+            return {
                 title: "",
                 description: "",
                 type: TYPE_FILE,
@@ -95,57 +152,41 @@ export default {
                 embedded_properties: {
                     content: ""
                 },
-                status: ITEM_STATUS_NONE,
-                obsolescence_date: OBSOLESCENCE_DATE_NONE
-            },
-            item: {},
-            is_displayed: false,
-            is_loading: false,
-            modal: null,
-            parent: {}
-        };
-    },
-    computed: {
-        ...mapState([
-            "current_folder",
-            "is_obsolescence_date_metadata_used",
-            "is_item_status_metadata_used"
-        ]),
-        ...mapState("error", ["has_modal_error"]),
-        submit_button_label() {
-            return this.$gettext("Create document");
+                obsolescence_date: "",
+                metadata: null,
+                permissions_for_groups: {
+                    can_read: [],
+                    can_write: [],
+                    can_manage: []
+                }
+            };
         },
-        modal_title() {
-            return this.$gettext("New document");
-        },
-        aria_labelled_by() {
-            return "document-new-item-modal";
-        }
-    },
-    mounted() {
-        this.modal = createModal(this.$el);
-        this.registerEvents();
-    },
-    methods: {
-        registerEvents() {
-            document.addEventListener("show-new-document-modal", this.show);
-            this.$once("hook:beforeDestroy", () => {
-                document.removeEventListener("show-new-document-modal", this.show);
-            });
-            this.modal.addEventListener("tlp-modal-hidden", this.reset);
-        },
-        show(event) {
-            this.item = { ...this.default_item };
+        async show(event) {
+            this.item = this.getDefaultItem();
             this.parent = event.detail.parent;
+            this.addParentMetadataToDefaultItem();
+            this.item.permissions_for_groups = JSON.parse(
+                JSON.stringify(this.parent.permissions_for_groups)
+            );
+
+            if (this.parent.obsolescence_date) {
+                this.item.obsolescence_date = this.parent.obsolescence_date;
+            }
+
             this.is_displayed = true;
             this.modal.show();
+            try {
+                await this.$store.dispatch("loadProjectUserGroupsIfNeeded");
+            } catch (e) {
+                await handleErrors(this.$store, e);
+                this.modal.hide();
+            }
         },
         reset() {
             this.$store.commit("error/resetModalError");
             this.is_displayed = false;
             this.is_loading = false;
-            this.setItemStatus(ITEM_STATUS_NONE);
-            this.setObsolescenceDate(OBSOLESCENCE_DATE_NONE);
+            this.item = this.getDefaultItem();
         },
         async addDocument(event) {
             event.preventDefault();
@@ -157,18 +198,27 @@ export default {
                 this.current_folder
             ]);
 
-            this.setItemStatus(ITEM_STATUS_NONE);
-            this.setObsolescenceDate(OBSOLESCENCE_DATE_NONE);
             this.is_loading = false;
             if (this.has_modal_error === false) {
                 this.modal.hide();
             }
         },
-        setItemStatus(status) {
-            this.item.status = status;
+        addParentMetadataToDefaultItem() {
+            const parent_metadata = getCustomMetadata(this.parent.metadata);
+
+            const formatted_metadata = transformCustomMetadataForItemCreation(parent_metadata);
+            if (formatted_metadata.length > 0) {
+                this.item.metadata = formatted_metadata;
+            }
         },
-        setObsolescenceDate(obsolescence_date) {
-            this.item.obsolescence_date = obsolescence_date;
+        updateMultipleMetadataListValue(event) {
+            if (!this.item.metadata) {
+                return;
+            }
+            const item_metadata = this.item.metadata.find(
+                metadata => metadata.short_name === event.detail.id
+            );
+            item_metadata.list_value = event.detail.value;
         }
     }
 };

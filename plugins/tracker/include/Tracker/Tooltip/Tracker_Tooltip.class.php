@@ -23,19 +23,22 @@ require_once(dirname(__FILE__).'/../Semantic/Tracker_Semantic.class.php');
 require_once(dirname(__FILE__).'/../FormElement/Tracker_FormElementFactory.class.php');
 require_once('dao/Tracker_TooltipDao.class.php');
 
-class Tracker_Tooltip extends Tracker_Semantic {
+class Tracker_Tooltip extends Tracker_Semantic
+{
 
     public $fields = array();
 
-    public function setFields($fields) {
+    public function setFields($fields)
+    {
         $this->fields = $fields;
     }
 
-    public function getFields() {
-        if(empty($this->fields)) {
+    public function getFields()
+    {
+        if (empty($this->fields)) {
             $tf = Tracker_FormElementFactory::instance();
             $this->fields = array();
-            foreach($this->getDao()->searchByTrackerId($this->tracker->id) as $row) {
+            foreach ($this->getDao()->searchByTrackerId($this->tracker->id) as $row) {
                 if ($field = $tf->getUsedFormElementById($row['field_id'])) {
                     $this->fields[$field->id] = $field;
                 }
@@ -44,7 +47,8 @@ class Tracker_Tooltip extends Tracker_Semantic {
         return $this->fields;
     }
 
-    private function getDao() {
+    private function getDao()
+    {
         return new Tracker_TooltipDao();
     }
 
@@ -53,7 +57,8 @@ class Tracker_Tooltip extends Tracker_Semantic {
      *
      * @return bool true if success, false otherwise
      */
-    public function save() {
+    public function save()
+    {
         $dao = $this->getDao();
         foreach ($this->fields as $fld) {
             $dao->add($this->tracker->id, $fld->id, 'end');
@@ -71,7 +76,8 @@ class Tracker_Tooltip extends Tracker_Semantic {
      *
      * @return void
      */
-    public function process(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user) {
+    public function process(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user)
+    {
         if ($request->get('add-field') && (int)$request->get('field')) {
             $this->getCSRFToken()->check();
             //retrieve the field if used
@@ -79,7 +85,7 @@ class Tracker_Tooltip extends Tracker_Semantic {
 
             //store the new field
             $this->getDao()->add($this->tracker->id, $f->id, 'end');
-        } else if ((int)$request->get('remove')) {
+        } elseif ((int)$request->get('remove')) {
             $this->getCSRFToken()->check();
             //retrieve the field if used
             $f = Tracker_FormElementFactory::instance()->getUsedFormElementById($request->get('remove'));
@@ -95,7 +101,8 @@ class Tracker_Tooltip extends Tracker_Semantic {
      *
      * @return string
      */
-    public function getShortName() {
+    public function getShortName()
+    {
         return 'tooltip';
     }
     /**
@@ -103,8 +110,9 @@ class Tracker_Tooltip extends Tracker_Semantic {
      *
      * @return string
      */
-    public function getLabel() {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','tooltip_label');
+    public function getLabel()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'tooltip_label');
     }
 
     /**
@@ -112,8 +120,9 @@ class Tracker_Tooltip extends Tracker_Semantic {
      *
      * @return string
      */
-    public function getDescription() {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','tooltip_description');
+    public function getDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'tooltip_description');
     }
 
 
@@ -125,22 +134,22 @@ class Tracker_Tooltip extends Tracker_Semantic {
      * @param Codendi_Request         $request         The request
      * @param PFUser                    $current_user    The user who made the request
      *
-     * @return string html
+     * @return void
      */
-    public function displayAdmin(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user) {
+    public function displayAdmin(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $sm->displaySemanticHeader($this, $tracker_manager);
-
 
         $html   = '';
         $fields = $this->getFields();
         if (!count($fields)) {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','no_tooltip');
+            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'no_tooltip');
         } else {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','tooltip_fields');
+            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'tooltip_fields');
             $html .= '<blockquote>';
             $html .= '<table>';
-            foreach($fields as $field) {
+            foreach ($fields as $field) {
                 $html .= '<tr><td>';
                 $html .=  $hp->purify($field->getLabel(), CODENDI_PURIFIER_CONVERT_HTML) ;
                 $html .= '</td><td>';
@@ -151,7 +160,7 @@ class Tracker_Tooltip extends Tracker_Semantic {
                 $html .= $GLOBALS['HTML']->getimage(
                     'ic/cross.png',
                     array(
-                        'alt' => $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','tooltip_remove_field')
+                        'alt' => $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'tooltip_remove_field')
                     )
                 );
                 $html .= '</button>';
@@ -162,13 +171,13 @@ class Tracker_Tooltip extends Tracker_Semantic {
             $html .= '</blockquote>';
         }
         $options = '';
-        foreach($this->tracker->getFormElements() as $formElement) {
+        foreach ($this->tracker->getFormElements() as $formElement) {
             $options .= $formElement->fetchAddTooltip($fields);
         }
         if ($options) {
             $html .= '<form action="'. $this->getUrl() .'" method="POST">';
             $html .= $this->getCSRFToken()->fetchHTMLInput();
-            $html .= '<p>'. $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','tooltip_add_field');
+            $html .= '<p>'. $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'tooltip_add_field');
             $html .= '<select name="field">';
             $html .= $options;
             $html .= '</select>';
@@ -176,10 +185,10 @@ class Tracker_Tooltip extends Tracker_Semantic {
             $html .= '</p>';
             $html .= '</form>';
         } else {
-            $html .= '<em>' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','tooltip_no_more_field') . '</em>';
+            $html .= '<em>' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'tooltip_no_more_field') . '</em>';
         }
 
-        $html .= '<p><a href="'.TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId() .'&amp;func=admin-semantic">&laquo; ' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','go_back_overview') . '</a></p>';
+        $html .= '<p><a href="'.TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId() .'&amp;func=admin-semantic">&laquo; ' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'go_back_overview') . '</a></p>';
         echo $html;
         $sm->displaySemanticFooter($this, $tracker_manager);
     }
@@ -187,19 +196,20 @@ class Tracker_Tooltip extends Tracker_Semantic {
     /**
      * Display the basic info about this semantic
      *
-     * @return string html
+     * @return void
      */
-    public function display() {
+    public function display()
+    {
         $html   = '';
         $hp     = Codendi_HTMLPurifier::instance();
         $fields = $this->getFields();
         $html .= '<p>';
         if (!count($fields)) {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','no_tooltip');
+            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'no_tooltip');
         } else {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','tooltip_fields');
+            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'tooltip_fields');
             $html .= '<ul>';
-            foreach($fields as $f) {
+            foreach ($fields as $f) {
                 $html .=  '<li><strong>'. $hp->purify($f->getLabel(), CODENDI_PURIFIER_CONVERT_HTML) .'</strong></li>';
             }
             $html .= '</ul>';
@@ -216,10 +226,11 @@ class Tracker_Tooltip extends Tracker_Semantic {
      *
      * @return void
      */
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping) {
+    public function exportToXml(SimpleXMLElement $root, $xmlMapping)
+    {
         $child = $root->addChild('semantic');
         $child->addAttribute('type', $this->getShortName());
-        foreach($this->getFields() as $field) {
+        foreach ($this->getFields() as $field) {
             $child->addChild('field')->addAttribute('REF', array_search($field->id, $xmlMapping));
         }
     }
@@ -229,9 +240,10 @@ class Tracker_Tooltip extends Tracker_Semantic {
      *
      * @param Tracker_FormElement_Field the field to test if it is used in semantics or not
      *
-     * @return boolean returns true if the field is used in semantics, false otherwise
+     * @return bool returns true if the field is used in semantics, false otherwise
      */
-    public function isUsedInSemantics($field) {
+    public function isUsedInSemantics(Tracker_FormElement_Field $field)
+    {
         $fields = $this->getFields();
         foreach ($fields as $f) {
             if ($f->getId() == $field->getId()) {

@@ -22,7 +22,7 @@
         stylesheet = document.getElementById("tlp-stylesheet");
 
     [].forEach.call(color_switchers, function(color_switcher) {
-        color_switcher.addEventListener("click", function(event) {
+        color_switcher.addEventListener("click", function() {
             if (!this.classList.contains("active")) {
                 var color = this.classList[0].replace("switch-to-", "");
                 var active_color_switcher = document.querySelector(".color-switcher > a.active");
@@ -43,18 +43,17 @@
 
     function loadStylesheet(color) {
         // Directly put in the global scope...
-        var manifest = manifest_framework_file;
+        var manifest = window.manifest_framework_file;
         var new_stylesheet = document.createElement("link");
         new_stylesheet.rel = "stylesheet";
         new_stylesheet.href = "../dist/" + manifest["tlp-" + color + ".css"];
-        var interval = setInterval(function() {
+        new_stylesheet.onload = function() {
             if (new_stylesheet.sheet.cssRules.length) {
-                clearInterval(interval);
                 stylesheet.remove();
                 stylesheet = new_stylesheet;
                 updateAllHexaColors();
             }
-        }, 10);
+        };
         document.head.insertBefore(new_stylesheet, stylesheet.nextSibling);
     }
 
@@ -86,7 +85,7 @@
     }
 
     function hex(x) {
-        return ("0" + parseInt(x).toString(16)).slice(-2);
+        return ("0" + parseInt(x, 10).toString(16)).slice(-2);
     }
 })();
 
@@ -110,7 +109,7 @@ function showAtTopLink(scroll_pos) {
     }
 }
 
-window.addEventListener("scroll", function(e) {
+window.addEventListener("scroll", function() {
     last_known_scroll_position = window.scrollY;
     if (!ticking) {
         window.requestAnimationFrame(function() {
@@ -119,18 +118,4 @@ window.addEventListener("scroll", function(e) {
         });
     }
     ticking = true;
-});
-
-var icons = document.querySelectorAll(".doc-icon-card");
-[].forEach.call(icons, function(icon) {
-    var classname = icon.dataset.tlpTooltip;
-    icon.addEventListener("click", function() {
-        navigator.clipboard.writeText(classname).then(function() {
-            icon.setAttribute("data-tlp-tooltip", "Classname have been copied!");
-
-            setTimeout(function() {
-                icon.setAttribute("data-tlp-tooltip", classname);
-            }, 5000);
-        });
-    });
 });

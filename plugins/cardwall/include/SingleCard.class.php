@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,7 +24,8 @@
  *
  * In other words it's what you need when you only want to have one single card
  */
-class Cardwall_SingleCard {
+class Cardwall_SingleCard
+{
 
     /** @var Cardwall_CardInCellPresenter */
     private $card_in_cell_presenter;
@@ -41,7 +42,7 @@ class Cardwall_SingleCard {
     /** @var int */
     private $column_id;
 
-    /** @var Cardwall_OnTop_Config_TrackerMapping */
+    /** @var Cardwall_OnTop_Config_TrackerMapping | null */
     private $mapping;
 
     /** @var array */
@@ -52,7 +53,7 @@ class Cardwall_SingleCard {
         Cardwall_CardFields $card_fields,
         Cardwall_UserPreferences_UserPreferencesDisplayUser $display_preferences,
         $column_id,
-        Cardwall_OnTop_Config_TrackerMapping $mapping
+        ?Cardwall_OnTop_Config_TrackerMapping $mapping
     ) {
         $this->card_in_cell_presenter = $card_in_cell_presenter;
         $this->artifact               = $card_in_cell_presenter->getArtifact();
@@ -65,26 +66,30 @@ class Cardwall_SingleCard {
     /**
      * @return Cardwall_CardInCellPresenter
      */
-    public function getCardInCellPresenter() {
+    public function getCardInCellPresenter()
+    {
         return $this->card_in_cell_presenter;
     }
 
-    public function getColumnId() {
+    public function getColumnId()
+    {
         return $this->column_id;
     }
 
-    public function getFields() {
+    public function getFields()
+    {
         return $this->card_fields->getFields($this->artifact);
     }
 
     /**
      * Return a field on the card based on the card
      *
-     * @param Integer $id
+     * @param int $id
      *
      * @return Tracker_FormElement_Field
      */
-    public function getFieldById($id) {
+    public function getFieldById($id)
+    {
         if ($this->fields_cache === null) {
             foreach ($this->getFields() as $field) {
                 $this->fields_cache[$field->getId()] = $field;
@@ -99,19 +104,23 @@ class Cardwall_SingleCard {
     /**
      * @return Tracker_Artifact
      */
-    public function getArtifact() {
+    public function getArtifact()
+    {
         return $this->artifact;
     }
 
-    public function getFieldJsonValue(PFUser $user, Tracker_FormElement_Field $field) {
+    public function getFieldJsonValue(PFUser $user, Tracker_FormElement_Field $field)
+    {
         return $field->getJsonValue($user, $this->artifact->getLastChangeset());
     }
 
-    public function getFieldHTMLValue(PFUser $user, Tracker_FormElement_Field $field) {
+    public function getFieldHTMLValue(PFUser $user, Tracker_FormElement_Field $field)
+    {
         return $field->fetchCardValue($this->artifact, $this->display_preferences);
     }
 
-    public function getMapping() {
+    public function getMapping()
+    {
         return $this->mapping;
     }
 }

@@ -19,9 +19,11 @@
  */
 require_once __DIR__.'/../../bootstrap.php';
 
-class Tracker_FormElement_Field_Numeric_GetComputedValueTest extends TuleapTestCase {
+class Tracker_FormElement_Field_Numeric_GetComputedValueTest extends TuleapTestCase
+{
 
-    public function itDelegatesRetrievalOfTheOldValueToTheDaoWhenNoTimestampGiven() {
+    public function itDelegatesRetrievalOfTheOldValueToTheDaoWhenNoTimestampGiven()
+    {
         $user           = aUser()->build();
         $value_dao      = stub('Tracker_FormElement_Field_Value_FloatDao')->getLastValue()->returns(array('value' => '123.45'));
         $artifact       = aMockArtifact()->build();
@@ -33,7 +35,8 @@ class Tracker_FormElement_Field_Numeric_GetComputedValueTest extends TuleapTestC
         $this->assertEqual('123.45', $actual_value);
     }
 
-    public function itDelegatesRetrievalOfTheOldValueToTheDaoWhenGivenATimestamp() {
+    public function itDelegatesRetrievalOfTheOldValueToTheDaoWhenGivenATimestamp()
+    {
         $artifact_id    = 4528;
         $field_id       = 195;
         $user           = aUser()->build();
@@ -51,17 +54,16 @@ class Tracker_FormElement_Field_Numeric_GetComputedValueTest extends TuleapTestC
 
         $this->assertIdentical($value, $field->getComputedValue($user, $artifact, $timestamp));
     }
-    
-    public function itReturnsZeroWhenUserDoesntHavePermissions() {
+
+    public function itReturnsZeroWhenUserDoesntHavePermissions()
+    {
         $user           = aUser()->build();
         $artifact_value = stub('Tracker_Artifact_ChangesetValue_Float')->getValue()->returns(123.45);
         $artifact       = aMockArtifact()->withValue($artifact_value)->build();
         $field          = TestHelper::getPartialMock('Tracker_FormElement_Field_Float', array('userCanRead'));
         stub($field)->userCanRead($user)->returns(false);
-        
+
         $actual_value = $field->getComputedValue($user, $artifact);
         $this->assertEqual(0, $actual_value);
     }
 }
-
-?>

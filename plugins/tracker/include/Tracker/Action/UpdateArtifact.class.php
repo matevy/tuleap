@@ -19,9 +19,11 @@
  */
 
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever;
-use Tuleap\Tracker\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
 
-class Tracker_Action_UpdateArtifact {
+class Tracker_Action_UpdateArtifact
+{
 
     /** @var Tracker_Artifact */
     private $artifact;
@@ -37,21 +39,29 @@ class Tracker_Action_UpdateArtifact {
      */
     private $visit_recorder;
 
+    /**
+     * @var HiddenFieldsetsDetector
+     */
+    private $hidden_fieldsets_detector;
+
     public function __construct(
         Tracker_Artifact $artifact,
         Tracker_FormElementFactory $form_element_factory,
         EventManager $event_manager,
         NatureIsChildLinkRetriever $artifact_retriever,
-        VisitRecorder $visit_recorder
+        VisitRecorder $visit_recorder,
+        HiddenFieldsetsDetector $hidden_fieldsets_detector
     ) {
-        $this->artifact             = $artifact;
-        $this->form_element_factory = $form_element_factory;
-        $this->event_manager        = $event_manager;
-        $this->artifact_retriever   = $artifact_retriever;
-        $this->visit_recorder       = $visit_recorder;
+        $this->artifact                  = $artifact;
+        $this->form_element_factory      = $form_element_factory;
+        $this->event_manager             = $event_manager;
+        $this->artifact_retriever        = $artifact_retriever;
+        $this->visit_recorder            = $visit_recorder;
+        $this->hidden_fieldsets_detector = $hidden_fieldsets_detector;
     }
 
-    public function process(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user) {
+    public function process(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user)
+    {
          //TODO : check permissions on this action?
         $comment_format = $this->artifact->validateCommentFormat($request, 'comment_formatnew');
 
@@ -91,7 +101,8 @@ class Tracker_Action_UpdateArtifact {
                     $this->form_element_factory,
                     $layout,
                     $this->artifact_retriever,
-                    $this->visit_recorder
+                    $this->visit_recorder,
+                    $this->hidden_fieldsets_detector
                 );
                 $render->display($request, $current_user);
             }
@@ -106,14 +117,16 @@ class Tracker_Action_UpdateArtifact {
                     $this->form_element_factory,
                     $layout,
                     $this->artifact_retriever,
-                    $this->visit_recorder
+                    $this->visit_recorder,
+                    $this->hidden_fieldsets_detector
                 );
                 $render->display($request, $current_user);
             }
         }
     }
 
-    protected function getRedirectUrlAfterArtifactUpdate(Codendi_Request $request) {
+    protected function getRedirectUrlAfterArtifactUpdate(Codendi_Request $request)
+    {
         $stay     = $request->get('submit_and_stay');
         $from_aid = $request->get('from_aid');
 
@@ -127,12 +140,13 @@ class Tracker_Action_UpdateArtifact {
         return $redirect;
     }
 
-    private function calculateRedirectParams($stay, $from_aid) {
+    private function calculateRedirectParams($stay, $from_aid)
+    {
         $redirect_params = array();
         if ($stay) {
             $redirect_params['aid']       = $this->artifact->getId();
             $redirect_params['from_aid']  = $from_aid;
-        } else if ($from_aid) {
+        } elseif ($from_aid) {
             $redirect_params['aid']       = $from_aid;
         } else {
             $redirect_params['tracker']   = $this->artifact->tracker_id;
@@ -140,7 +154,8 @@ class Tracker_Action_UpdateArtifact {
         return array_filter($redirect_params);
     }
 
-    private function sendAjaxCardsUpdateInfo(PFUser $current_user) {
+    private function sendAjaxCardsUpdateInfo(PFUser $current_user)
+    {
         $cards_info = $this->getCardUpdateInfo($this->artifact, $current_user);
         $parent     = $this->artifact->getParent($current_user);
         if ($parent) {
@@ -151,7 +166,8 @@ class Tracker_Action_UpdateArtifact {
     }
 
 
-    private function getCardUpdateInfo(Tracker_Artifact $artifact, PFUser $current_user) {
+    private function getCardUpdateInfo(Tracker_Artifact $artifact, PFUser $current_user)
+    {
         $card_info               = array();
         $tracker_id              = $artifact->getTracker()->getId();
         $remaining_effort_field  = $this->form_element_factory->getComputableFieldByNameForUser(
@@ -175,12 +191,12 @@ class Tracker_Action_UpdateArtifact {
         Tracker_FormElement_Field $remaining_effort_field,
         $remaining_effort
     ) {
-       if ($artifact->getTracker()->hasFormElementWithNameAndType($remaining_effort_field->getName(), array('computed'))
+        if ($artifact->getTracker()->hasFormElementWithNameAndType($remaining_effort_field->getName(), array('computed'))
             && $remaining_effort_field->isArtifactValueAutocomputed($artifact)
-       ) {
+        ) {
             $remaining_effort .= " (" . $GLOBALS['Language']->getText('plugin_tracker', 'autocomputed_field') . ")";
-       }
+        }
 
-       return $remaining_effort;
+        return $remaining_effort;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2014 - 2017. All rights reserved.
+ * Copyright Enalean (c) 2014 - Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registrated trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -22,10 +22,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once dirname(__FILE__).'/../../bootstrap.php';
+require_once __DIR__.'/../../bootstrap.php';
 
-class Git_Mirror_ManifestFileGenerator_BaseTest extends TuleapTestCase {
-
+class ManifestFileGeneratorTest extends TuleapTestCase
+{
     protected $current_time;
     protected $manifest_directory;
     protected $fixture_dir;
@@ -42,8 +42,10 @@ class Git_Mirror_ManifestFileGenerator_BaseTest extends TuleapTestCase {
     /** @var Logger */
     protected $logger;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
+        $this->setUpGlobalsMockery();
         $this->current_time       = $_SERVER['REQUEST_TIME'];
         $this->time_in_the_past   = 1414684049;
         $this->fixture_dir        = $this->getTmpDir();
@@ -59,44 +61,46 @@ class Git_Mirror_ManifestFileGenerator_BaseTest extends TuleapTestCase {
             ->withDescription('free and open-source web browser')
             ->build();
 
-        $this->singapour_mirror = new Git_Mirror_Mirror(mock('PFUser'), $this->singapour_mirror_id, 'singapour.com', 'singapour', 'SNP');
+        $this->singapour_mirror = new Git_Mirror_Mirror(\Mockery::spy(\PFUser::class), $this->singapour_mirror_id, 'singapour.com', 'singapour', 'SNP');
         $this->manifest_file_for_singapour = $this->manifest_directory
             . "/manifest_mirror_{$this->singapour_mirror_id}.js.gz";
 
-        $this->logger = mock('Logger');
+        $this->logger = \Mockery::spy(\Logger::class);
 
         $this->generator = new Git_Mirror_ManifestFileGenerator($this->logger, $this->manifest_directory);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         `rm -rf $this->manifest_directory`;
         parent::tearDown();
     }
 
-    protected function getManifestContent($path) {
+    protected function getManifestContent($path)
+    {
         $content = file_get_contents("compress.zlib://$path");
 
         return json_decode($content, true);
     }
 
-    protected function forgeExistingManifestFile($path) {
+    protected function forgeExistingManifestFile($path)
+    {
         file_put_contents(
             "compress.zlib://$path",
             '{"\/linux\/kernel.git":{"owner":null,"description":"Linux4ever","reference":null,"modified":'. $this->time_in_the_past .'}}'
         );
     }
 
-    protected function forgeExistingManifestFileWithGitoliteAdmin($path) {
+    protected function forgeExistingManifestFileWithGitoliteAdmin($path)
+    {
         file_put_contents(
             "compress.zlib://$path",
             '{"\/gitolite-admin.git":{"owner":null,"description":"","reference":null,"modified":'. $this->time_in_the_past .'},"\/linux\/kernel.git":{"owner":null,"description":"Linux4ever","reference":null,"modified":'. $this->time_in_the_past .'}}'
         );
     }
-}
 
-class Git_Mirror_ManifestFileGenerator_removeTest extends Git_Mirror_ManifestFileGenerator_BaseTest {
-
-    public function itDoesNotCreateManifestFileIfItDoesNotExist() {
+    public function itDoesNotCreateManifestFileIfItDoesNotExist()
+    {
         $this->assertFalse(is_file($this->manifest_file_for_singapour));
 
         $this->generator->removeRepositoryFromManifestFile($this->singapour_mirror, $this->kernel_repository->getPath());
@@ -104,7 +108,8 @@ class Git_Mirror_ManifestFileGenerator_removeTest extends Git_Mirror_ManifestFil
         $this->assertFalse(is_file($this->manifest_file_for_singapour));
     }
 
-    public function itRemovesRepositoryIfItIsInTheManifest() {
+    public function itRemovesRepositoryIfItIsInTheManifest()
+    {
         $this->forgeExistingManifestFile($this->manifest_file_for_singapour);
 
         $this->generator->removeRepositoryFromManifestFile($this->singapour_mirror, $this->kernel_repository->getPath());
@@ -113,19 +118,18 @@ class Git_Mirror_ManifestFileGenerator_removeTest extends Git_Mirror_ManifestFil
         $this->assertFalse(isset($content["/linux/kernel.git"]));
     }
 
-    public function itLogsDeletion() {
+    public function itLogsDeletion()
+    {
         $this->forgeExistingManifestFile($this->manifest_file_for_singapour);
 
-        $this->logger->expectCallCount('debug', 2);
-        expect($this->logger)->debug('removing /linux/kernel.git from manifest of mirror singapour.com (id: 1)')->at(0);
+        $this->logger->shouldReceive('debug')->times(2);
+        $this->logger->shouldReceive('debug')->with('removing /linux/kernel.git from manifest of mirror singapour.com (id: 1)')->ordered();
 
         $this->generator->removeRepositoryFromManifestFile($this->singapour_mirror, $this->kernel_repository->getPath());
     }
-}
 
-class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGenerator_BaseTest {
-
-    public function itCreatesManifestFileIfItDoesNotExist() {
+    public function itCreatesManifestFileIfItDoesNotExist()
+    {
         $this->assertFalse(is_file($this->manifest_file_for_singapour));
 
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->kernel_repository);
@@ -133,7 +137,8 @@ class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGe
         $this->assertTrue(is_file($this->manifest_file_for_singapour));
     }
 
-    public function itAddsANewRepoIfManifestDoesNotExist() {
+    public function itAddsANewRepoIfManifestDoesNotExist()
+    {
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->kernel_repository);
 
         $content = $this->getManifestContent($this->manifest_file_for_singapour);
@@ -146,14 +151,16 @@ class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGe
         ));
     }
 
-    public function itLogsAddition() {
-        $this->logger->expectCallCount('debug', 2);
-        expect($this->logger)->debug('adding /linux/kernel.git to manifest of mirror singapour.com (id: 1)')->at(0);
+    public function itLogsAddition()
+    {
+        $this->logger->shouldReceive('debug')->times(2);
+        $this->logger->shouldReceive('debug')->with('adding /linux/kernel.git to manifest of mirror singapour.com (id: 1)')->ordered();
 
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->kernel_repository);
     }
 
-    public function itAddsGitoliteAdminRepositoryIfManifestDoesNotExist() {
+    public function itAddsGitoliteAdminRepositoryIfManifestDoesNotExist()
+    {
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->kernel_repository);
 
         $content = $this->getManifestContent($this->manifest_file_for_singapour);
@@ -166,7 +173,8 @@ class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGe
         ));
     }
 
-    public function itDoesNotUpdateExistingRepositoriesInformationIfManifestAlreadyExists() {
+    public function itDoesNotUpdateExistingRepositoriesInformationIfManifestAlreadyExists()
+    {
         $this->forgeExistingManifestFile($this->manifest_file_for_singapour);
 
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->firefox_repository);
@@ -181,7 +189,8 @@ class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGe
         ));
     }
 
-    public function itAddsANewRepoIfManifestAlreadyExists() {
+    public function itAddsANewRepoIfManifestAlreadyExists()
+    {
         $this->forgeExistingManifestFile($this->manifest_file_for_singapour);
 
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->firefox_repository);
@@ -196,7 +205,8 @@ class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGe
         ));
     }
 
-    public function itUpdatesDateToCurrentDateIfRepoAlreadyInManifest() {
+    public function itUpdatesDateToCurrentDateIfRepoAlreadyInManifest()
+    {
         $this->forgeExistingManifestFile($this->manifest_file_for_singapour);
 
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->kernel_repository);
@@ -211,16 +221,18 @@ class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGe
         ));
     }
 
-    public function itLogsUpdate() {
+    public function itLogsUpdate()
+    {
         $this->forgeExistingManifestFile($this->manifest_file_for_singapour);
 
-        $this->logger->expectCallCount('debug', 2);
-        expect($this->logger)->debug('updating /linux/kernel.git in manifest of mirror singapour.com (id: 1)')->at(0);
+        $this->logger->shouldReceive('debug')->times(2);
+        $this->logger->shouldReceive('debug')->with('updating /linux/kernel.git in manifest of mirror singapour.com (id: 1)')->ordered();
 
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->kernel_repository);
     }
 
-    public function itDoesNotCrashIfFileDoesNotContainJson() {
+    public function itDoesNotCrashIfFileDoesNotContainJson()
+    {
         file_put_contents(
             "compress.zlib://$this->manifest_file_for_singapour",
             'not json file'
@@ -231,7 +243,8 @@ class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGe
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->kernel_repository);
     }
 
-    public function itDoesNotCrashIfFileIsCorrupted() {
+    public function itDoesNotCrashIfFileIsCorrupted()
+    {
         file_put_contents(
             "$this->manifest_file_for_singapour",
             'corrupted file'
@@ -241,11 +254,9 @@ class Git_Mirror_ManifestFileGenerator_addTest extends Git_Mirror_ManifestFileGe
 
         $this->generator->addRepositoryToManifestFile($this->singapour_mirror, $this->kernel_repository);
     }
-}
 
-class Git_Mirror_ManifestFileGenerator_ensureManifestContainsLatestInfoOfRepositoriesTest extends Git_Mirror_ManifestFileGenerator_BaseTest {
-
-    public function itAddsAMissingRepository() {
+    public function itAddsAMissingRepository()
+    {
         $this->forgeExistingManifestFile($this->manifest_file_for_singapour);
 
         $this->generator->ensureManifestContainsLatestInfoOfRepositories(
@@ -263,12 +274,13 @@ class Git_Mirror_ManifestFileGenerator_ensureManifestContainsLatestInfoOfReposit
         ));
     }
 
-    public function itRemovesANotNeededRepository() {
+    public function itRemovesANotNeededRepository()
+    {
         $this->forgeExistingManifestFile($this->manifest_file_for_singapour);
         $content_before = $this->getManifestContent($this->manifest_file_for_singapour);
         $this->assertTrue(isset($content_before["/linux/kernel.git"]));
 
-        expect($this->logger)->debug('removing /linux/kernel.git from manifest of mirror singapour.com (id: 1)')->once();
+        $this->logger->shouldReceive('debug')->with('removing /linux/kernel.git from manifest of mirror singapour.com (id: 1)')->once();
 
         $this->generator->ensureManifestContainsLatestInfoOfRepositories(
             $this->singapour_mirror,
@@ -278,26 +290,9 @@ class Git_Mirror_ManifestFileGenerator_ensureManifestContainsLatestInfoOfReposit
         $content_after = $this->getManifestContent($this->manifest_file_for_singapour);
         $this->assertFalse(isset($content_after["/linux/kernel.git"]));
     }
-}
 
-class Git_Mirror_ManifestFileGenerator_updateCurrentTimeOfRepositoryTest extends Git_Mirror_ManifestFileGenerator_BaseTest {
-
-    public function itUpdatesDateToCurrentDateIfRepoAlreadyInManifest() {
-        $this->forgeExistingManifestFileWithGitoliteAdmin($this->manifest_file_for_singapour);
-
-        $this->generator->updateCurrentTimeOfRepository($this->singapour_mirror, $this->kernel_repository);
-
-        $content = $this->getManifestContent($this->manifest_file_for_singapour);
-
-        $this->assertEqual($content["/linux/kernel.git"], array(
-            "owner"       => null,
-            "description" => "Linux4ever",
-            "reference"   => null,
-            "modified"    => $this->current_time
-        ));
-    }
-
-    public function itDoesNotUpdateCurrentDateOfGitoliteAdmin() {
+    public function itDoesNotUpdateCurrentDateOfGitoliteAdmin()
+    {
         $this->forgeExistingManifestFileWithGitoliteAdmin($this->manifest_file_for_singapour);
 
         $this->generator->updateCurrentTimeOfRepository($this->singapour_mirror, $this->kernel_repository);

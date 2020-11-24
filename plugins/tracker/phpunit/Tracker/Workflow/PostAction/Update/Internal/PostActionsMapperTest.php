@@ -27,10 +27,14 @@ require_once __DIR__ . '/../../../../../bootstrap.php';
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
-use Tuleap\Tracker\Workflow\PostAction\Update\CIBuild;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFields;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsets;
+use Tuleap\Tracker\Workflow\PostAction\Update\CIBuildValue;
+use Tuleap\Tracker\Workflow\PostAction\Update\HiddenFieldsetsValue;
 use Tuleap\Tracker\Workflow\PostAction\Update\SetDateValue;
 use Tuleap\Tracker\Workflow\PostAction\Update\SetFloatValue;
 use Tuleap\Tracker\Workflow\PostAction\Update\SetIntValue;
+use Tuleap\Tracker\Workflow\PostAction\Update\FrozenFieldsValue;
 
 class PostActionsMapperTest extends TestCase
 {
@@ -55,8 +59,8 @@ class PostActionsMapperTest extends TestCase
 
         $this->assertEquals(
             [
-                new CIBuild(null, 'https://example.com/1'),
-                new CIBuild(null, 'https://example.com/2')
+                new CIBuildValue('https://example.com/1'),
+                new CIBuildValue('https://example.com/2')
             ],
             $result
         );
@@ -76,8 +80,8 @@ class PostActionsMapperTest extends TestCase
         $result = $this->mapper->convertToSetDateValueWithNullId($first_date, $second_date);
         $this->assertEquals(
             [
-                new SetDateValue(null, 104, \Transition_PostAction_Field_Date::FILL_CURRENT_TIME),
-                new SetDateValue(null, 108, \Transition_PostAction_Field_Date::CLEAR_DATE)
+                new SetDateValue(104, \Transition_PostAction_Field_Date::FILL_CURRENT_TIME),
+                new SetDateValue(108, \Transition_PostAction_Field_Date::CLEAR_DATE)
             ],
             $result
         );
@@ -97,8 +101,8 @@ class PostActionsMapperTest extends TestCase
         $result = $this->mapper->convertToSetFloatValueWithNullId($first_float, $second_float);
         $this->assertEquals(
             [
-                new SetFloatValue(null, 104, 186.43),
-                new SetFloatValue(null, 108, -83)
+                new SetFloatValue(104, 186.43),
+                new SetFloatValue(108, -83)
             ],
             $result
         );
@@ -118,8 +122,45 @@ class PostActionsMapperTest extends TestCase
         $result = $this->mapper->convertToSetIntValueWithNullId($first_int, $second_int);
         $this->assertEquals(
             [
-                new SetIntValue(null, 104, 42),
-                new SetIntValue(null, 108, -18)
+                new SetIntValue(104, 42),
+                new SetIntValue(108, -18)
+            ],
+            $result
+        );
+    }
+
+    public function testConvertToFrozenFieldsValueValueWithNullId()
+    {
+        $frozen_fields = Mockery::mock(FrozenFields::class);
+        $frozen_fields->shouldReceive('getFieldIds')->andReturn([999]);
+
+        $result = $this->mapper->convertToFrozenFieldValueWithNullId($frozen_fields);
+        $this->assertEquals(
+            [
+                new FrozenFieldsValue([999]),
+            ],
+            $result
+        );
+    }
+
+    public function testConvertToHiddenFieldsetsValueValueWithNullId()
+    {
+        $fieldset_01 = Mockery::mock(\Tracker_FormElement_Container_Fieldset::class);
+        $fieldset_02 = Mockery::mock(\Tracker_FormElement_Container_Fieldset::class);
+
+        $fieldset_01->shouldReceive('getID')->andReturn('648');
+        $fieldset_02->shouldReceive('getID')->andReturn('701');
+
+        $hidden_fieldsets = Mockery::mock(HiddenFieldsets::class);
+        $hidden_fieldsets->shouldReceive('getFieldsets')->andReturn([
+            $fieldset_01,
+            $fieldset_02
+        ]);
+
+        $result = $this->mapper->convertToHiddenFieldsetsValueWithNullId($hidden_fieldsets);
+        $this->assertEquals(
+            [
+                new HiddenFieldsetsValue([648, 701]),
             ],
             $result
         );

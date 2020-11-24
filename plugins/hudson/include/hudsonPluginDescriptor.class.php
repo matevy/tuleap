@@ -17,13 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('common/plugin/PluginDescriptor.class.php');
+class hudsonPluginDescriptor extends PluginDescriptor
+{
 
-class hudsonPluginDescriptor extends PluginDescriptor {
-    
-    function __construct() {
+    function __construct()
+    {
         parent::__construct($GLOBALS['Language']->getText('plugin_hudson', 'descriptor_name'), false, $GLOBALS['Language']->getText('plugin_hudson', 'descriptor_description'));
         $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');
     }
 }
-?>

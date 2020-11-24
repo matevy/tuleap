@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,12 +22,17 @@ declare(strict_types = 1);
 
 namespace Tuleap\Docman\REST\v1\Folders;
 
+use Tuleap\Docman\REST\v1\CopyItem\CanContainACopyRepresentation;
+use Tuleap\Docman\REST\v1\CopyItem\DocmanCopyItemRepresentation;
 use Tuleap\Docman\REST\v1\Metadata\ItemStatusMapper;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSetRepresentation;
 
-class DocmanFolderPOSTRepresentation
+class DocmanFolderPOSTRepresentation implements CanContainACopyRepresentation
 {
+    private const REQUIRED_NON_COPY_PROPERTIES = ['title'];
+
     /**
-     * @var string Item title {@from body} {@required true}
+     * @var string Item title {@from body} {@required false} Mandatory if copy is not set
      */
     public $title;
     /**
@@ -38,5 +43,26 @@ class DocmanFolderPOSTRepresentation
     /**
      * @var string | null Item status {@from body} {@required false} {@choice none,draft,approved,rejected}
      */
-    public $status = ItemStatusMapper::ITEM_STATUS_NONE;
+    public $status;
+
+    /**
+     * @var array | null {@required false} {@type \Tuleap\Docman\REST\v1\Metadata\POSTCustomMetadataRepresentation}
+     */
+    public $metadata;
+
+    /**
+     * @var DocmanItemPermissionsForGroupsSetRepresentation {@required false} {@type \Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSetRepresentation}
+     * @psalm-var DocmanItemPermissionsForGroupsSetRepresentation|null
+     */
+    public $permissions_for_groups;
+
+    /**
+     * @var DocmanCopyItemRepresentation {@required false} {@type \Tuleap\Docman\REST\v1\CopyItem\DocmanCopyItemRepresentation} Mandatory if others parameters are not set
+     */
+    public $copy;
+
+    public static function getNonCopyRequiredObjectProperties() : array
+    {
+        return self::REQUIRED_NON_COPY_PROPERTIES;
+    }
 }

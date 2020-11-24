@@ -23,61 +23,108 @@ declare(strict_types = 1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
+use Codendi_HTMLPurifier;
+use Docman_MetadataFactory;
 use Docman_MetadataListOfValuesElement;
+use Tuleap\REST\JsonCast;
+use UserHelper;
 
 class MetadataRepresentationBuilder
 {
     /**
-     * @var \Docman_MetadataFactory
+     * @var Docman_MetadataFactory
      */
     private $factory;
+    /**
+     * @var Codendi_HTMLPurifier
+     */
+    private $html_purifier;
+    /**
+     * @var UserHelper
+     */
+    private $user_helper;
 
-    public function __construct(\Docman_MetadataFactory $factory)
-    {
-        $this->factory = $factory;
+    public function __construct(
+        Docman_MetadataFactory $factory,
+        Codendi_HTMLPurifier $html_purifier,
+        UserHelper $user_helper
+    ) {
+        $this->factory       = $factory;
+        $this->html_purifier = $html_purifier;
+        $this->user_helper   = $user_helper;
     }
 
     /**
-     * @return MetadataRepresentation[]
+     * @return ItemMetadataRepresentation[]
      * @throws UnknownMetadataException
      */
     public function build(\Docman_Item $item) : array
     {
-        $this->factory->appendItemMetadataListWithoutBasicProperties($item);
+        $this->factory->appendItemMetadataList($item);
 
         $metadata_representations = [];
 
         $item_metadata = $item->getMetadata();
 
         foreach ($item_metadata as $metadata) {
-            $value      = $metadata->getValue();
-            $list_value = null;
-            $date_value = null;
-            if (is_object($value)) {
-                /**
-                 * @var Docman_MetadataListOfValuesElement $metadata_value
-                 */
-                foreach ($value as $metadata_value) {
-                    $list_value[] = new MetadataListValueRepresentation(
-                        (int)$metadata_value->getId(),
-                        $metadata_value->getName()
-                    );
-                }
+            $transformed_values = $this->getMetadataValues($metadata);
 
-                $value = null;
-            }
-
-            $metadata_representations[] = new MetadataRepresentation(
+            $metadata_representations[] = new ItemMetadataRepresentation(
                 $metadata->getName(),
                 $this->getMetadataType((int)$metadata->getType()),
                 $metadata->isMultipleValuesAllowed(),
-                (string) $value,
-                $list_value,
-                $metadata->isRequired()
+                $transformed_values['value'],
+                $transformed_values['post_processed_value'],
+                $transformed_values['list_value'],
+                $metadata->isEmptyAllowed(),
+                $metadata->getLabel()
             );
         }
 
         return $metadata_representations;
+    }
+
+    /**
+     * @return array{value:string|null,post_processed_value:string|null,list_value:MetadataListValueRepresentation[]|null}
+     */
+    private function getMetadataValues(\Docman_Metadata $metadata) : array
+    {
+        $metadata_type = (int) $metadata->getType();
+        $value = $metadata->getValue();
+        if ($metadata_type === PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
+            $list_value = [];
+            foreach ($value as $metadata_value) {
+                assert($metadata_value instanceof Docman_MetadataListOfValuesElement);
+                $list_value[] = new MetadataListValueRepresentation(
+                    (int) $metadata_value->getId(),
+                    $metadata_value->getMetadataValue()
+                );
+            }
+
+            return ['value' => null, 'post_processed_value' => null, 'list_value' => $list_value];
+        }
+
+        if ($metadata_type === PLUGIN_DOCMAN_METADATA_TYPE_DATE) {
+            if ($value !== 0 && $value !== '0') {
+                $date = JsonCast::toDate($value);
+                return ['value' => $date, 'post_processed_value' => $date, 'list_value' => null];
+            }
+            return ['value' => null, 'post_processed_value' => null, 'list_value' => null];
+        }
+
+        if ($metadata->getLabel() === Docman_MetadataFactory::HARDCODED_METADATA_OWNER_LABEL) {
+            return [
+                'value'                => $this->user_helper->getDisplayNameFromUserId($value),
+                'post_processed_value' => $this->user_helper->getLinkOnUserFromUserId($value),
+                'list_value'           => null
+            ];
+        }
+
+        return [
+            'value'                => (string) $value,
+            'post_processed_value' => $this->html_purifier->purifyTextWithReferences($value, $metadata->getGroupId()),
+            'list_value'           => null
+        ];
     }
 
     /**

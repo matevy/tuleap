@@ -21,19 +21,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once 'common/plugin/PluginInfo.class.php';
-require_once 'AdminDelegationPluginDescriptor.class.php';
-
-
 /**
  * AdminDelegationPluginInfo
  */
-class AdminDelegationPluginInfo extends PluginInfo {
-    
-    public function __construct(Plugin $plugin) {
+class AdminDelegationPluginInfo extends PluginInfo
+{
+
+    public function __construct(Plugin $plugin)
+    {
         parent::__construct($plugin);
         $this->setPluginDescriptor(new AdminDelegationPluginDescriptor());
     }
-    
 }
-?>

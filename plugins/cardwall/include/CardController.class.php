@@ -19,9 +19,8 @@
  */
 
 
-require_once 'common/mvc2/PluginController.class.php';
-
-class Cardwall_CardController extends MVC2_PluginController {
+class Cardwall_CardController extends MVC2_PluginController
+{
 
     /** @var Cardwall_SingleCard */
     private $single_card;
@@ -34,7 +33,8 @@ class Cardwall_CardController extends MVC2_PluginController {
         $this->single_card = $single_card;
     }
 
-    public function getCard() {
+    public function getCard()
+    {
         $card_in_cell_presenter = $this->single_card->getCardInCellPresenter();
         $artifact_id            = $card_in_cell_presenter->getArtifact()->getId();
         $card_presenter         = $card_in_cell_presenter->getCardPresenter();
@@ -59,13 +59,13 @@ class Cardwall_CardController extends MVC2_PluginController {
         $GLOBALS['Response']->sendJSON($json_format);
     }
 
-    private function addJsonFieldValues(&$json_format, $field) {
+    private function addJsonFieldValues(&$json_format, $field)
+    {
         $json_format['fields'][$field->getName()] = $this->single_card->getFieldJsonValue($this->request->getCurrentUser(), $field);
     }
 
-    private function addHTMLFieldValues(&$json_format, $field) {
+    private function addHTMLFieldValues(&$json_format, $field)
+    {
         $json_format['html_fields'][$field->getName()] = $this->single_card->getFieldHTMLValue($this->request->getCurrentUser(), $field);
     }
 }
-
-?>

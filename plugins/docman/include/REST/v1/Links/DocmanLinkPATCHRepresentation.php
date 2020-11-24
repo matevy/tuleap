@@ -22,30 +22,28 @@ declare(strict_types = 1);
 
 namespace Tuleap\Docman\REST\v1\Links;
 
-class DocmanLinkPATCHRepresentation
+use Tuleap\Docman\REST\v1\ItemRepresentation;
+use Tuleap\Docman\REST\v1\Metadata\ItemStatusMapper;
+
+class DocmanLinkPATCHRepresentation extends DocmanLinkVersionPOSTRepresentation
 {
     /**
-     * @var string Title of version {@from body} {@required false}
+     * @var string Item title {@from body} {@required true}
      */
-    public $version_title = '';
+    public $title;
 
     /**
-     * @var string Description of changes {@from body} {@required false}
+     * @var string Item description {@from body} {@required false}
      */
-    public $change_log = '';
+    public $description;
 
     /**
-     * @var bool Lock file while updating {@from body} {@required true} {@type bool}
+     * @var string | null Item status {@from body} {@required false} {@choice none,draft,approved,rejected}
      */
-    public $should_lock_file;
+    public $status = ItemStatusMapper::ITEM_STATUS_NONE;
 
     /**
-     * @var string | null action for approval table when an item is updated {@from body} {@required false} {@choice copy,reset,empty}
+     * @var string | null Obsolescence date {@from body} {@required false}
      */
-    public $approval_table_action;
-
-    /**
-     * @var LinkPropertiesPOSTPATCHRepresentation File properties must be set when creating a new file {@from body} {@type \Tuleap\Docman\REST\v1\Links\LinkPropertiesPOSTPATCHRepresentation} {@required true}
-     */
-    public $link_properties;
+    public $obsolescence_date = ItemRepresentation::OBSOLESCENCE_DATE_NONE;
 }

@@ -20,19 +20,23 @@
  */
 
 
-class b201302271529_add_cumulative_flow_chart_table extends ForgeUpgrade_Bucket {
+class b201302271529_add_cumulative_flow_chart_table extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add new table plugin_graphontrackersv5_cumulative_flow_chart to manage a new type of chart.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         if (!$this->db->tableNameExists('plugin_graphontrackersv5_cumulative_flow_chart')) {
             $sql = "CREATE TABLE plugin_graphontrackersv5_cumulative_flow_chart(
   id int(11)  NOT NULL PRIMARY KEY ,
@@ -48,10 +52,10 @@ EOT;
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('plugin_graphontrackersv5_cumulative_flow_chart')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('An error occured while adding table plugin_graphontrackersv5_cumulative_flow_chart');
         }
     }
 }
-?>

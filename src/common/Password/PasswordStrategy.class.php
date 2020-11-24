@@ -29,11 +29,12 @@ use Tuleap\Password\PasswordCompromiseValidator;
 /**
 * PasswordStrategy
 */
-class PasswordStrategy {
-    
+class PasswordStrategy
+{
+
     var $validators;
     var $errors;
-    
+
     /**
     * Constructor
     */
@@ -53,17 +54,18 @@ class PasswordStrategy {
             $this->add($password_compromise_validator);
         }
     }
-    
+
     /**
     * validate
-    * 
+    *
     * validate a password with the help of validators
     *
-    * @param  pwd  
+    * @param  pwd
     */
-    function validate($pwd) {
+    function validate($pwd)
+    {
         $valid = true;
-        foreach($this->validators as $key => $nop) {
+        foreach ($this->validators as $key => $nop) {
             if (!$this->validators[$key]->validate($pwd)) {
                 $valid = false;
                 $this->errors[$key] = $this->validators[$key]->description();
@@ -71,15 +73,14 @@ class PasswordStrategy {
         }
         return $valid;
     }
-    
+
     /**
     * add
-    * 
-    * @param  v  
+    *
+    * @param  v
     */
     public function add($v)
     {
         $this->validators[] = $v;
     }
-    
 }

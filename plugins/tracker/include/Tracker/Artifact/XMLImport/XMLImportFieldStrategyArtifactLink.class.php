@@ -150,7 +150,8 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyArtifactLink implements T
         return $nature;
     }
 
-    private function retrieveSystemNatures(array &$natures) {
+    private function retrieveSystemNatures(array &$natures)
+    {
         $params['natures']   = &$natures;
         $params['natures'][] = Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD;
         EventManager::instance()->processEvent(
@@ -164,9 +165,9 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyArtifactLink implements T
         array $changesets
     ) {
         $removed_artifacts = array();
-        foreach($changesets as $changeset) {
+        foreach ($changesets as $changeset) {
             if (is_a($changeset, "Tracker_Artifact_ChangesetValue_ArtifactLink")) {
-                foreach($changeset->getArtifactIds() as $artifact_id) {
+                foreach ($changeset->getArtifactIds() as $artifact_id) {
                     if (! in_array($artifact_id, $artifact_links)) {
                         $removed_artifacts[$artifact_id] = $artifact_id;
                     }

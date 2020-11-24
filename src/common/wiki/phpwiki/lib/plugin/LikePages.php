@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: LikePages.php,v 1.22 2004/11/23 15:17:19 rurban Exp $');
 /**
  Copyright 1999, 2000, 2001, 2002 $ThePhpWikiProgrammingTeam
@@ -23,60 +24,72 @@ rcs_id('$Id: LikePages.php,v 1.22 2004/11/23 15:17:19 rurban Exp $');
 require_once('lib/TextSearchQuery.php');
 require_once('lib/PageList.php');
 
-class WikiPlugin_LikePages
-extends WikiPlugin
+class WikiPlugin_LikePages extends WikiPlugin
 {
-    function getName() {
+    function getName()
+    {
         return _("LikePages");
     }
 
-    function getDescription() {
-        return sprintf(_("List page names which share an initial or final title word with '%s'."),
-                       '[pagename]');
+    function getDescription()
+    {
+        return sprintf(
+            _("List page names which share an initial or final title word with '%s'."),
+            '[pagename]'
+        );
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.22 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.22 $"
+        );
     }
 
-    function getDefaultArguments() {
-        return array_merge
-            (
-             PageList::supportedArgs(),
-             array('page'     => '[pagename]',
+    function getDefaultArguments()
+    {
+        return array_merge(
+            PageList::supportedArgs(),
+            array('page'     => '[pagename]',
                    'prefix'   => false,
                    'suffix'   => false,
                    'noheader' => false,
-                   ));
+            )
+        );
     }
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor
     // exclude arg allows multiple pagenames exclude=HomePage,RecentChanges
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
         extract($args);
-        if (empty($page) && empty($prefix) && empty($suffix))
+        if (empty($page) && empty($prefix) && empty($suffix)) {
             return '';
+        }
 
         if ($prefix) {
             $suffix = false;
             $descrip = fmt("Page names with prefix '%s'", $prefix);
-        }
-        elseif ($suffix) {
+        } elseif ($suffix) {
             $descrip = fmt("Page names with suffix '%s'", $suffix);
-        }
-        elseif ($page) {
-            $words = preg_split('/[\s:-;.,]+/',
-                                SplitPagename($page));
+        } elseif ($page) {
+            $words = preg_split(
+                '/[\s:-;.,]+/',
+                SplitPagename($page)
+            );
             $words = preg_grep('/\S/', $words);
 
             $prefix = reset($words);
             $suffix = end($words);
 
-            $descrip = fmt("These pages share an initial or final title word with '%s'",
-                           WikiLink($page, 'auto'));
+            $descrip = fmt(
+                "These pages share an initial or final title word with '%s'",
+                WikiLink($page, 'auto')
+            );
         }
 
         // Search for pages containing either the suffix or the prefix.
@@ -90,28 +103,32 @@ extends WikiPlugin
             $match[]  = preg_quote($suffix, '/') . '$';
         }
 
-        if ($search)
+        if ($search) {
             $query = new TextSearchQuery(join(' OR ', $search));
-        else
+        } else {
             $query = new NullTextSearchQuery; // matches nothing
+        }
 
         $match_re = '/' . join('|', $match) . '/';
 
         $pagelist = new PageList($info, $exclude, $args);
-        if (!$noheader)
+        if (!$noheader) {
             $pagelist->setCaption($descrip);
+        }
         $pages = $dbi->titleSearch($query);
         while ($page = $pages->next()) {
             $name = $page->getName();
-            if (!preg_match($match_re, $name))
+            if (!preg_match($match_re, $name)) {
                 continue;
+            }
             $pagelist->addPage($page);
         }
 
         return $pagelist;
     }
 
-    function _quote($str) {
+    function _quote($str)
+    {
         return "'" . str_replace("'", "''", $str) . "'";
     }
 };
@@ -145,4 +162,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

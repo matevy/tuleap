@@ -18,15 +18,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ConfigDao extends DataAccessObject {
+class ConfigDao extends DataAccessObject
+{
 
-    public function searchAll() {
+    public function searchAll()
+    {
         $sql = "SELECT * FROM forgeconfig";
 
         return $this->retrieve($sql);
     }
 
-    public function save($name, $value) {
+    public function save($name, $value)
+    {
         $name  = $this->da->quoteSmart($name);
         $value = $this->da->quoteSmart($value);
 

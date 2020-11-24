@@ -18,6 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
 use Tuleap\TrackerEncryption\Dao\ValueDao;
 
 class Tracker_Key
@@ -47,7 +48,7 @@ class Tracker_Key
     {
         $result = '';
         $array = ($this->dao_pub_key->retrieveKey($this->id_tracker));
-        foreach($array as $key=>$value){
+        foreach ($array as $key => $value) {
             $result = $value['key_content'];
         }
         return $result;
@@ -66,14 +67,14 @@ class Tracker_Key
     public function historizeKey($group_id)
     {
         $dao = new ProjectHistoryDao();
-        $dao->groupAddHistory($GLOBALS['Language']->getText('project_admin_utils', 'Tracker_key'),$this->getKey() ,$group_id, false);
+        $dao->groupAddHistory($GLOBALS['Language']->getText('project_admin_utils', 'Tracker_key'), $this->getKey(), $group_id, false);
     }
 
     /**
      * Verify the validity of a given RSA public key
      * @param $key
      *
-     * @return boolean
+     * @return bool
      */
     public function isValidPublicKey($key)
     {
@@ -84,7 +85,7 @@ class Tracker_Key
             if ($rsa->getSize() < 2048 || $rsa->getSize() > 8192) {
                 return false;
             }
-        return true;
+            return true;
         } else {
             return false;
         }
@@ -107,5 +108,4 @@ class Tracker_Key
         $rsa->loadKey($key);
         return (($rsa->getSize()/8) - (2 * Encryption_Manager::HLEN) - 2);
     }
-
 }

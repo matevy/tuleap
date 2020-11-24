@@ -28,6 +28,7 @@ use FRSReleaseFactory;
 use PermissionsManager;
 use PFUser;
 use ProjectUGroup;
+use Tuleap\Project\Admin\ProjectUGroup\Details\MembersPresenterBuilder;
 
 class ProjectUGroupPresenterBuilder
 {
@@ -85,6 +86,6 @@ class ProjectUGroupPresenterBuilder
         $members     = $this->members_builder->build($ugroup);
         $delegation  = $this->permissions_delegation_builder->build($ugroup);
 
-        return new ProjectUGroupPresenter($ugroup, $delegation, $binding, $members, $csrf, $user);
+        return new ProjectUGroupPresenter($ugroup, $delegation, $binding, $members, $csrf);
     }
 }

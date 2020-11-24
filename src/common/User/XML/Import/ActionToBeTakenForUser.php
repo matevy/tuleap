@@ -19,7 +19,8 @@
  */
 namespace User\XML\Import;
 
-abstract class ActionToBeTakenForUser implements User {
+abstract class ActionToBeTakenForUser implements User
+{
 
     /** @var string */
     protected $username;
@@ -50,29 +51,34 @@ abstract class ActionToBeTakenForUser implements User {
         $this->original_ldap_id = $original_ldap_id;
     }
 
-    public function getUserName() {
+    public function getUserName()
+    {
         return $this->username;
     }
 
-    public function getRealName() {
+    public function getRealName()
+    {
         return $this->realname;
     }
 
-    public function getEmail() {
+    public function getEmail()
+    {
         return $this->email;
     }
 
-    public function getOriginalUserId() {
+    public function getOriginalUserId()
+    {
         return $this->original_user_id;
     }
 
-    public function getOriginalLdapId() {
+    public function getOriginalLdapId()
+    {
         return $this->original_ldap_id;
     }
 
     /** @return array */
-    public abstract function getCSVData();
+    abstract public function getCSVData();
 
     /** @return bool */
-    public abstract function isActionAllowed($action);
+    abstract public function isActionAllowed($action);
 }

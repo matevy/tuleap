@@ -22,9 +22,11 @@ namespace Tuleap\ProFTPd\Xferlog;
 
 use Exception;
 
-class InvalidEntryException extends Exception {
+class InvalidEntryException extends Exception
+{
 
-    public function __construct($line) {
+    public function __construct($line)
+    {
         parent::__construct("Unable to parse the following entry: \"$line\"");
     }
 }

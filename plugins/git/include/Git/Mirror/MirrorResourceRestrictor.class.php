@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Git_MirrorResourceRestrictor {
+class Git_MirrorResourceRestrictor
+{
 
     /**
      * @var Git_RestrictedMirrorDao
@@ -53,28 +54,33 @@ class Git_MirrorResourceRestrictor {
         $this->history_dao              = $history_dao;
     }
 
-    public function isMirrorRestricted(Git_Mirror_Mirror $mirror) {
+    public function isMirrorRestricted(Git_Mirror_Mirror $mirror)
+    {
         return $this->restricted_mirror_dao->isResourceRestricted($mirror->id);
     }
 
-    public function setMirrorRestricted(Git_Mirror_Mirror $mirror) {
+    public function setMirrorRestricted(Git_Mirror_Mirror $mirror)
+    {
         return $this->restricted_mirror_dao->setResourceRestricted($mirror->id);
     }
 
-    public function unsetMirrorRestricted(Git_Mirror_Mirror $mirror) {
+    public function unsetMirrorRestricted(Git_Mirror_Mirror $mirror)
+    {
         return $this->restricted_mirror_dao->unsetResourceRestricted($mirror->id);
     }
 
-    public function allowProjectOnMirror(Git_Mirror_Mirror $mirror, Project $project) {
+    public function allowProjectOnMirror(Git_Mirror_Mirror $mirror, Project $project)
+    {
         return $this->restricted_mirror_dao->allowProjectOnResource($mirror->id, $project->getId());
     }
 
-    public function revokeProjectsFromMirror(Git_Mirror_Mirror $mirror, array $project_ids) {
+    public function revokeProjectsFromMirror(Git_Mirror_Mirror $mirror, array $project_ids)
+    {
         $this->restricted_mirror_dao->revokeProjectsFromResource($mirror->id, $project_ids);
 
         $repositories = $this->mirror_data_mapper->fetchAllProjectRepositoriesForMirror($mirror, $project_ids);
 
-        foreach($repositories as $repository) {
+        foreach ($repositories as $repository) {
             $this->mirror_data_mapper->unmirrorRepository($repository->getId());
             $this->git_system_event_manager->queueRepositoryUpdate($repository);
             $this->history_dao->groupAddHistory(
@@ -87,15 +93,15 @@ class Git_MirrorResourceRestrictor {
         return true;
     }
 
-    public function searchAllowedProjectsOnMirror(Git_Mirror_Mirror $mirror) {
+    public function searchAllowedProjectsOnMirror(Git_Mirror_Mirror $mirror)
+    {
         $rows     = $this->restricted_mirror_dao->searchAllowedProjectsOnResource($mirror->id);
         $projects = array();
 
-        foreach($rows as $row) {
+        foreach ($rows as $row) {
             $projects[] = new Project($row);
         }
 
         return $projects;
     }
-
 }

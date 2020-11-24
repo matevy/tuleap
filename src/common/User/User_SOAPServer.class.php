@@ -21,26 +21,29 @@ use Tuleap\User\SessionNotCreatedException;
 
 require_once 'UserManager.class.php';
 
-class User_SOAPServer {
+class User_SOAPServer
+{
 
     /**
      * @var UserManager
      */
     private $userManager;
 
-    public function __construct(UserManager $userManager) {
+    public function __construct(UserManager $userManager)
+    {
         $this->userManager = $userManager;
     }
-    
+
    /**
     * loginAs allows the siteadmin to log as someone else
     *
     * @param string $admin_session_hash Session hash of an admin user
     * @param string $username
-    * 
+    *
     * @return string a session hash
     */
-    public function loginAs($admin_session_hash, $username) {
+    public function loginAs($admin_session_hash, $username)
+    {
         try {
             $this->continueSession($admin_session_hash);
             return $this->userManager->loginAs($username);
@@ -48,29 +51,27 @@ class User_SOAPServer {
             return new SoapFault('3300', 'Permission denied. You must be site admin to loginAs someonelse');
         } catch (UserNotExistException $e) {
             return new SoapFault('3301', 'User not exist');
-        }catch (UserNotActiveException $e) {
+        } catch (UserNotActiveException $e) {
             return new SoapFault('3302', 'User not active');
         } catch (SessionNotCreatedException $e) {
             return new SoapFault('3303', 'Temporary error creating a session, please try again in a couple of seconds');
         }
     }
-    
+
     /**
      *
      * @see session_continue
-     * 
+     *
      * @param String $sessionKey
-     * 
+     *
      * @return PFUser
      */
-    private function continueSession($sessionKey) {
+    private function continueSession($sessionKey)
+    {
         $user = $this->userManager->getCurrentUser($sessionKey);
         if ($user->isLoggedIn()) {
             return $user;
         }
         throw new SoapFault('3001', 'Invalid session');
     }
-  
 }
-
-?>

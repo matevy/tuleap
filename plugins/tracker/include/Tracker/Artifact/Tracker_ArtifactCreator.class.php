@@ -18,8 +18,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutor;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\Tracker\Artifact\ArtifactInstrumentation;
-use Tuleap\Tracker\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
+use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
 
 /**
  * I create artifact from the request in a Tracker
@@ -41,30 +45,43 @@ class Tracker_ArtifactCreator //phpcs:ignore
      * @var VisitRecorder
      */
     private $visit_recorder;
+    /**
+     * @var Logger
+     */
+    private $logger;
+    /**
+     * @var DBTransactionExecutor
+     */
+    private $db_transaction_executor;
 
     public function __construct(
         Tracker_ArtifactFactory $artifact_factory,
         Tracker_Artifact_Changeset_FieldsValidator $fields_validator,
         Tracker_Artifact_Changeset_InitialChangesetCreatorBase $changeset_creator,
-        VisitRecorder $visit_recorder
+        VisitRecorder $visit_recorder,
+        Logger $logger,
+        DBTransactionExecutor $db_transaction_executor
     ) {
         $this->artifact_dao      = $artifact_factory->getDao();
         $this->artifact_factory  = $artifact_factory;
         $this->fields_validator  = $fields_validator;
         $this->changeset_creator = $changeset_creator;
         $this->visit_recorder    = $visit_recorder;
+        $this->logger            = $logger;
+        $this->db_transaction_executor = $db_transaction_executor;
     }
 
     /**
      * Add an artifact without its first changeset to a tracker
      * The artifact must be completed by writing its first changeset
      *
-     * @return Tracker_Artifact or false if an error occured
+     * @return Tracker_Artifact|false false if an error occurred
      */
-    public function createBare(Tracker $tracker, PFUser $user, $submitted_on) {
+    public function createBare(Tracker $tracker, PFUser $user, $submitted_on)
+    {
         $artifact = $this->getBareArtifact($tracker, $submitted_on, $user->getId(), 0);
         $success = $this->insertArtifact($tracker, $user, $artifact, $submitted_on, 0);
-        if(!$success) {
+        if (!$success) {
             return false;
         }
         return $artifact;
@@ -72,7 +89,7 @@ class Tracker_ArtifactCreator //phpcs:ignore
 
     /**
      * Creates the first changeset for a bare artifact.
-     * @return Tracker_Artifact or false if an error occured
+     * @return Tracker_Artifact|false false if an error occurred
      */
     public function createFirstChangeset(
         Tracker $tracker,
@@ -80,7 +97,8 @@ class Tracker_ArtifactCreator //phpcs:ignore
         array $fields_data,
         PFUser $user,
         $submitted_on,
-        $send_notification
+        $send_notification,
+        CreatedFileURLMapping $url_mapping
     ) {
         if (!$this->fields_validator->validate($artifact, $user, $fields_data)) {
             return;
@@ -91,7 +109,8 @@ class Tracker_ArtifactCreator //phpcs:ignore
             $fields_data,
             $user,
             $submitted_on,
-            $send_notification
+            $send_notification,
+            $url_mapping
         );
     }
 
@@ -104,9 +123,12 @@ class Tracker_ArtifactCreator //phpcs:ignore
         array $fields_data,
         PFUser $user,
         $submitted_on,
-        $send_notification
+        $send_notification,
+        CreatedFileURLMapping $url_mapping
     ) {
-        $changeset_id = $this->changeset_creator->create($artifact, $fields_data, $user, $submitted_on);
+        $changeset_id = $this->db_transaction_executor->execute(function () use ($artifact, $fields_data, $user, $submitted_on, $url_mapping) {
+            return $this->changeset_creator->create($artifact, $fields_data, $user, (int) $submitted_on, $url_mapping);
+        });
         if (! $changeset_id) {
             return;
         }
@@ -129,7 +151,7 @@ class Tracker_ArtifactCreator //phpcs:ignore
     /**
      * Add an artefact in the tracker
      *
-     * @return Tracker_Artifact or false if an error occured
+     * @return Tracker_Artifact|false false if an error occurred
      */
     public function create(
         Tracker $tracker,
@@ -141,6 +163,9 @@ class Tracker_ArtifactCreator //phpcs:ignore
         $artifact = $this->getBareArtifact($tracker, $submitted_on, $user->getId(), 0);
 
         if (!$this->fields_validator->validate($artifact, $user, $fields_data)) {
+            $this->logger->debug(
+                sprintf('Creation of artifact in tracker #%d failed: fields are not valid', $tracker->getId())
+            );
             return false;
         }
 
@@ -148,7 +173,18 @@ class Tracker_ArtifactCreator //phpcs:ignore
             return false;
         }
 
-        if (! $this->createFirstChangesetNoValidation($artifact, $fields_data, $user, $submitted_on, $send_notification)) {
+        $url_mapping = new CreatedFileURLMapping();
+        if (! $this->createFirstChangesetNoValidation(
+            $artifact,
+            $fields_data,
+            $user,
+            $submitted_on,
+            $send_notification,
+            $url_mapping
+        )) {
+            $this->logger->debug(
+                sprintf('Reverting the creation of artifact in tracker #%d failed: changeset creation failed', $tracker->getId())
+            );
             $this->revertBareArtifactInsertion($artifact);
             return false;
         }
@@ -179,6 +215,9 @@ class Tracker_ArtifactCreator //phpcs:ignore
         $use_artifact_permissions = 0;
         $id = $this->artifact_dao->create($tracker->id, $user->getId(), $submitted_on, $use_artifact_permissions);
         if (!$id) {
+            $this->logger->error(
+                sprintf('Insert of an artifact in tracker #%d failed', $tracker->getId())
+            );
             return false;
         }
         ArtifactInstrumentation::increment(ArtifactInstrumentation::TYPE_CREATED);
@@ -223,7 +262,8 @@ class Tracker_ArtifactCreator //phpcs:ignore
         }
     }
 
-    private function getBareArtifact(Tracker $tracker, $submitted_on, $submitted_by, $artifact_id) {
+    private function getBareArtifact(Tracker $tracker, $submitted_on, $submitted_by, $artifact_id)
+    {
         $artifact = $this->artifact_factory->getInstanceFromRow(
             array(
                 'id'                       => $artifact_id,

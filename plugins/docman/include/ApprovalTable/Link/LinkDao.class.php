@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2011 - Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2007
@@ -21,30 +21,34 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Docman_ApprovalTableLinkDao extends Docman_ApprovalTableItemDao {
+class Docman_ApprovalTableLinkDao extends Docman_ApprovalTableItemDao
+{
 
-    public function getTableById($versionId, $fields='*') {
+    public function getTableById($versionId, $fields = '*')
+    {
         $sql = 'SELECT '.$fields.
             ' FROM plugin_docman_approval'.
-            ' WHERE version_id = '.$this->da->escapeInt($versionId);
+            ' WHERE link_version_id = '.$this->da->escapeInt($versionId);
         return $this->retrieve($sql);
     }
 
-    public function getTableByItemId($itemId, $fields='*') {
+    public function getTableByItemId($itemId, $fields = '*')
+    {
         return $this->getLatestTableByItemId($itemId, $fields);
     }
 
-    public function getLatestTableByItemId($itemId, $fields='app.*') {
+    public function getLatestTableByItemId($itemId, $fields = 'app.*')
+    {
         return $this->getApprovalTableItemId($itemId, $fields, ' LIMIT 1', true);
     }
 
-    public function getApprovalTableItemId($itemId, $fields='app.*', $limit='', $tableStatus=false) {
+    public function getApprovalTableItemId($itemId, $fields = 'app.*', $limit = '', $tableStatus = false)
+    {
         $fields .= ', ver.number as version_number';
         $where = ' ver.item_id = '.$this->da->escapeInt($itemId).
             ' AND app.wiki_version_id IS NULL';
-        $join = ' JOIN plugin_docman_link_version ver ON (ver.id = app.version_id)';
+        $join = ' JOIN plugin_docman_link_version ver ON (ver.id = app.link_version_id)';
         $orderBy = ' ORDER BY ver.number DESC ';
-
 
         return $this->getTableWithStatus($tableStatus, $fields, $where, $join, $orderBy, $limit);
     }

@@ -28,7 +28,8 @@ class Tracker_DateReminderDao extends DataAccessObject
      *
      * @return DataAccessResult
      */
-    public function getDateReminders($trackerId, $checkReminders = true) {
+    public function getDateReminders($trackerId, $checkReminders = true)
+    {
         $condition = "";
         $trackerId = $this->da->escapeInt($trackerId);
         if ($checkReminders) {
@@ -63,14 +64,15 @@ class Tracker_DateReminderDao extends DataAccessObject
     /**
      * Insert date reminder roles
      *
-     * @param Integer $reminderId       Id of the reminder
+     * @param int $reminderId Id of the reminder
      * @param Array   $roles            Array of Roles Id role
      *
-     * @return Boolean
+     * @return bool
      */
-    private function insertDateReminderRoles($reminderId, $roles) {
+    private function insertDateReminderRoles($reminderId, $roles)
+    {
         $values = array();
-        foreach($roles as $role) {
+        foreach ($roles as $role) {
             $role = (int)$this->da->escapeInt($role);
             $values[] = " (
                     ".$reminderId.",
@@ -90,17 +92,18 @@ class Tracker_DateReminderDao extends DataAccessObject
     /**
      * Add a date reminder
      *
-     * @param Integer $trackerId        Id of the tracker
-     * @param Integer $fieldId          Id of the date field
+     * @param int $trackerId Id of the tracker
+     * @param int $fieldId Id of the date field
      * @param String  $ugroups          Id of the user groups
      * @param Array   $roles            Array of Roles Id role
-     * @param Integer $notificationType 0 if before, 1 if after the value of the date field
-     * @param Integer $distance         Distance from the value of the date fiels
+     * @param int $notificationType 0 if before, 1 if after the value of the date field
+     * @param int $distance Distance from the value of the date fiels
      *
-     * @return Boolean
-     * @return Integer
+     * @return bool
+     * @return int
      */
-    public function addDateReminder($trackerId, $fieldId, $ugroups, $roles, $notificationType = 0, $distance = 0) {
+    public function addDateReminder($trackerId, $fieldId, $ugroups, $roles, $notificationType = 0, $distance = 0)
+    {
         $trackerId        = $this->da->escapeInt($trackerId);
         $fieldId          = $this->da->escapeInt($fieldId);
         $ugroups          = $this->da->quoteSmart($ugroups);
@@ -132,16 +135,17 @@ class Tracker_DateReminderDao extends DataAccessObject
     /**
      * Update a date reminder
      *
-     * @param Integer $reminderId       Id of the reminder
+     * @param int $reminderId Id of the reminder
      * @param String  $ugroups          Id of the user groups
      * @param Array   $roles            Array of Roles Id role
-     * @param Integer $notificationType 0 if before, 1 if after the value of the date field
-     * @param Integer $distance         Distance from the value of the date fiels
-     * @param Integer $status           0 if disabled, 1 if enabled
+     * @param int $notificationType 0 if before, 1 if after the value of the date field
+     * @param int $distance Distance from the value of the date fiels
+     * @param int $status 0 if disabled, 1 if enabled
      *
-     * @return Boolean
+     * @return bool
      */
-    public function updateDateReminder($reminderId, $ugroups, $roles, $notificationType = 0, $distance = 0, $status = 1) {
+    public function updateDateReminder($reminderId, $ugroups, $roles, $notificationType = 0, $distance = 0, $status = 1)
+    {
         $reminderId       = $this->da->escapeInt($reminderId);
         $ugroups          = $this->da->quoteSmart($ugroups);
         $notificationType = $this->da->escapeInt($notificationType);
@@ -170,11 +174,12 @@ class Tracker_DateReminderDao extends DataAccessObject
     /**
      * Retrieve a date reminder given its id
      *
-     * @param Integer $reminderId Id of the reminder
+     * @param int $reminderId Id of the reminder
      *
      * @return DataAccessResult
      */
-    public function searchById($reminderId) {
+    public function searchById($reminderId)
+    {
         $reminderId = $this->da->escapeInt($reminderId);
         $sql = "SELECT *
                 FROM tracker_reminder
@@ -186,15 +191,16 @@ class Tracker_DateReminderDao extends DataAccessObject
     /**
      * Retrieve duplicated date reminders given their params
      *
-     * @param Integer $trackerId        Id of the tracker
-     * @param Integer $fieldId          Id of the date field
-     * @param Integer $notificationType 0 if before, 1 if after the value of the date field
-     * @param Integer $distance         Distance from the value of the date fiels
-     * @param Integer $reminderId       Id of the reminder if it is an updated one
+     * @param int $trackerId Id of the tracker
+     * @param int $fieldId Id of the date field
+     * @param int $notificationType 0 if before, 1 if after the value of the date field
+     * @param int $distance Distance from the value of the date fiels
+     * @param int $reminderId Id of the reminder if it is an updated one
      *
      * @return DataAccessResult
      */
-    public function findReminders($trackerId, $fieldId, $notificationType, $distance, $reminderId) {
+    public function findReminders($trackerId, $fieldId, $notificationType, $distance, $reminderId)
+    {
         $trackerId        = $this->da->escapeInt($trackerId);
         $fieldId          = $this->da->escapeInt($fieldId);
         $notificationType = $this->da->escapeInt($notificationType);
@@ -219,12 +225,13 @@ class Tracker_DateReminderDao extends DataAccessObject
 
     /**
      * Delete a date reminder given its id
-     * 
+     *
      * @param Array $reminderId Id of the reminder
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
-    public function deleteReminder($reminderId) {
+    public function deleteReminder($reminderId)
+    {
         $reminder = $this->da->escapeInt($reminderId);
         $sql = "DELETE FROM tracker_reminder
                 WHERE reminder_id = $reminder";
@@ -239,11 +246,12 @@ class Tracker_DateReminderDao extends DataAccessObject
     /**
      * Retrieve Tracker roles given its id
      *
-     * @param Integer $reminderId Id of the reminder
+     * @param int $reminderId Id of the reminder
      *
      * @return DataAccessResult
      */
-    public function getRolesByReminderId($reminderId) {
+    public function getRolesByReminderId($reminderId)
+    {
         $reminderId = $this->da->escapeInt($reminderId);
         $sql = "SELECT role_id
                 FROM tracker_reminder_notified_roles
@@ -251,5 +259,3 @@ class Tracker_DateReminderDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 }
-
-?>

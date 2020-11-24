@@ -20,9 +20,11 @@
 
 require_once 'User.class.php';
 
-class Git_Driver_Gerrit_MembershipCommand_RemoveUser extends Git_Driver_Gerrit_MembershipCommand_User {
+class Git_Driver_Gerrit_MembershipCommand_RemoveUser extends Git_Driver_Gerrit_MembershipCommand_User
+{
 
-    protected function executeForGerritUser(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $gerrit_user) {
+    protected function executeForGerritUser(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $gerrit_user)
+    {
         $driver = $this->getDriver($server);
         $driver->removeUserFromGroup(
             $server,
@@ -31,4 +33,3 @@ class Git_Driver_Gerrit_MembershipCommand_RemoveUser extends Git_Driver_Gerrit_M
         );
     }
 }
-?>

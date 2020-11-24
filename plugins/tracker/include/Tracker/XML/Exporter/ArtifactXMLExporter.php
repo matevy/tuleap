@@ -18,14 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_XML_Exporter_ArtifactXMLExporter {
+class Tracker_XML_Exporter_ArtifactXMLExporter
+{
 
     /**
      * @var Tracker_XML_Exporter_ChangesetXMLExporter
      */
     private $changeset_exporter;
 
-    public function __construct(Tracker_XML_Exporter_ChangesetXMLExporter $changeset_exporter) {
+    public function __construct(Tracker_XML_Exporter_ChangesetXMLExporter $changeset_exporter)
+    {
         $this->changeset_exporter = $changeset_exporter;
     }
 

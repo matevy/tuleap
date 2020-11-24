@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,14 +19,7 @@
 
 @import 'scrum/overview';
 @import 'scrum/planning';
-
-#agiledashboard-scrum-milestone-menu {
-    cursor: pointer;
-}
-
-#agiledashboard-scrum-milestone-menu-caret {
-    font-size: 20px;
-}
+@import 'header';
 
 .agiledashboard-milestone-details-items-list-badge {
     margin: 0 5px 0 0;

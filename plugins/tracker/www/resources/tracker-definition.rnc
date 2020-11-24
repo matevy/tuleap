@@ -1,5 +1,6 @@
 include "artifact-definition.rnc"
 include "triggers.rnc"
+include "workflow.rnc"
 
 trackers =
     attribute use-natures { xsd:boolean }?,
@@ -36,7 +37,48 @@ tracker =
         element name { non_empty_string }?,
         element item_name { xsd:string { pattern = "[a-zA-Z0-9_]+" } }?,
         element description { non_empty_string }?,
-        element color { xsd:string }?,
+        element color {
+            "inca-silver" |
+            "chrome-silver" |
+            "firemist-silver" |
+            "red-wine" |
+            "fiesta-red" |
+            "coral-pink" |
+            "teddy-brown" |
+            "clockwork-orange" |
+            "graffiti-yellow" |
+            "army-green" |
+            "neon-green" |
+            "acid-green" |
+            "sherwood-green" |
+            "ocean-turquoise" |
+            "surf-green" |
+            "deep-blue" |
+            "lake-placid-blue" |
+            "daphne-blue" |
+            "plum-crazy" |
+            "ultra-violet" |
+            "lilac-purple" |
+            "panther-pink" |
+            "peggy-pink" |
+            "flamingo-pink" |
+            "inca_silver" |
+            "chrome_silver" |
+            "teddy_brown" |
+            "red_wine" |
+            "fiesta_red" |
+            "clockwork_orange" |
+            "acid_green" |
+            "army_green" |
+            "sherwood_green" |
+            "ocean_turquoise" |
+            "daphne_blue" |
+            "lake_placid_blue" |
+            "deep_blue" |
+            "plum_crazy" |
+            "peggy_pink" |
+            "flamingo_pink"
+        }?,
 
         element submit_instructions { xsd:string }?,
         element browse_instructions { xsd:string }?,
@@ -75,15 +117,7 @@ tracker =
             element report { reportContent }*
         }?,
 
-        element workflow {
-            element field_id {
-                attribute REF { xsd:IDREF }
-            }?,
-            element is_used {xsd:long}?,
-            element transitions {
-                element transition { transitionContent }*
-            }?
-        }*,
+        workflowContent,
 
         element webhooks {
             element webhook {
@@ -108,7 +142,6 @@ tracker =
         element formElements {
             element formElement { formElementContent }*
         }?
-
 
     formElementContent =
         # ID is internal to the XML file
@@ -206,71 +239,6 @@ tracker =
         attribute r { xsd:long },
         attribute g { xsd:long },
         attribute b { xsd:long }
-
-    transitionContent =
-        element from_id {
-            attribute REF { xsd:string }
-        },
-        element to_id {
-            attribute REF { xsd:string }
-        },
-        element postactions {
-            element postaction_field_date {
-                attribute valuetype { xsd:long },
-                element field_id {
-                    attribute REF { xsd:IDREF }
-                }
-            }*,
-            element postaction_field_int {
-                attribute value { xsd:long },
-                element field_id {
-                    attribute REF { xsd:IDREF }
-                }
-            }*,
-            element postaction_field_float {
-                attribute value { xsd:float },
-                element field_id {
-                    attribute REF { xsd:IDREF }
-                }
-            }*,
-            element postaction_ci_build {
-                attribute job_url { xsd:string }
-            }*
-        }?,
-        (
-            (
-                conditionPermissionsContent
-            )
-        |
-            (
-                element conditions {
-                    element condition {
-                        attribute type { "perms" },
-                        conditionPermissionsContent
-                    }?,
-                    element condition {
-                        attribute type { "notempty" },
-                        conditionFieldNotEmptyContent
-                    }?,
-                    element condition {
-                        attribute type { "commentnotempty" },
-                        attribute is_comment_required { "0" | "1" }
-                    }?
-                }?
-            )
-        )
-
-    conditionPermissionsContent =
-        element permissions {
-            element permission {
-                attribute ugroup { xsd:string }
-            }*
-        }
-
-    conditionFieldNotEmptyContent =
-        element field {
-            attribute REF { xsd:IDREF }
-        }+
 
     listRuleContent =
         (
@@ -402,6 +370,26 @@ tracker =
                     attribute REF { xsd:IDREF }
                 }
             )
+        |
+            (
+                attribute type { "timeframe" },
+                element start_date_field {
+                    attribute REF { xsd:IDREF }
+                },
+                (
+                    (
+                        element duration_field {
+                            attribute REF { xsd:IDREF }
+                        }
+                    )
+                |
+                    (
+                        element end_date_field {
+                            attribute REF { xsd:IDREF }
+                        }
+                    )
+                )
+            )
         )
 
 
@@ -441,6 +429,7 @@ tracker =
         }
 
     rendererContent =
+        attribute ID { xsd:ID }?,
         element name { xsd:string },
         element description { xsd:string }?,
         attribute id { xsd:long }?,

@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class Tracker_XML_Updater_FieldChange_FieldChangeDateXMLUpdaterTest extends TuleapTestCase {
+class Tracker_XML_Updater_FieldChange_FieldChangeDateXMLUpdaterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Updater_FieldChange_FieldChangeDateXMLUpdater */
     private $updater;
@@ -27,17 +28,18 @@ class Tracker_XML_Updater_FieldChange_FieldChangeDateXMLUpdaterTest extends Tule
     /** @var SimpleXMLElement */
     private $field_change_xml;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->updater          = new Tracker_XML_Updater_FieldChange_FieldChangeDateXMLUpdater();
         $this->field_change_xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?>'
             . '<field_change field_name="start_date">'
             . '  <value format="ISO8601">2012-01-01T00:00:00+01:00</value>'
-            . '</field_change>'
-        );
+            . '</field_change>');
     }
 
-    public function itUpdatesTheNodeValueWithSubmittedValue() {
+    public function itUpdatesTheNodeValueWithSubmittedValue()
+    {
         $this->updater->update(
             $this->field_change_xml,
             '2014-04-28'

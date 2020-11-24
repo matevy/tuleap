@@ -23,14 +23,12 @@
  *
  */
 
-require_once('common/plugin/PluginInfo.class.php');
-require_once('UserLogPluginDescriptor.class.php');
+class UserLogPluginInfo extends PluginInfo
+{
 
-class UserLogPluginInfo extends PluginInfo {
-
-    public function __construct($plugin) {
+    public function __construct($plugin)
+    {
         parent::__construct($plugin);
         $this->setPluginDescriptor(new UserLogPluginDescriptor());
     }
-
 }

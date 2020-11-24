@@ -4,7 +4,7 @@
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -20,9 +20,6 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('common/plugin/PluginInfo.class.php');
-require_once('common/include/PropertyDescriptor.class.php');
-require_once('DocmanPluginDescriptor.class.php');
 
 class DocmanPluginInfo extends PluginFileInfo
 {

@@ -1,40 +1,56 @@
+/*
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 const gulp = require("gulp");
 const runSequence = require("run-sequence");
-const map = require("lodash.map");
 const readPkg = require("read-pkg");
 const path = require("path");
 const exec = require("child_process").exec;
 const spawn = require("child_process").spawn;
 
 function verifyPackageJsonFile(component_path) {
-    var package_json_path = path.join(component_path, "package.json");
+    const package_json_path = path.join(component_path, "package.json");
 
-    return readPkg(package_json_path)
-        .then(function(pkg) {
-            if (!pkg.name) {
+    return readPkg({ cwd: component_path })
+        .then(package_json => {
+            if (!package_json.name) {
                 throw new Error("package.json file should have a 'name' " + package_json_path);
             }
 
-            if (!pkg.scripts || !pkg.scripts.build) {
+            if (!package_json.scripts || !package_json.scripts.build) {
                 throw new Error(
                     "package.json file should have a 'build' script " + package_json_path
                 );
             }
 
             return {
-                name: pkg.name,
+                name: package_json.name,
                 path: component_path
             };
         })
-        .catch(function() {
+        .catch(() => {
             throw new Error("package.json file could not be found at " + package_json_path);
         });
 }
 
 function findComponentsWithPackageAndBuildScript(component_paths) {
-    var promises = map(component_paths, function(component_path) {
-        return verifyPackageJsonFile(component_path);
-    });
+    const promises = component_paths.map(path => verifyPackageJsonFile(path));
 
     return Promise.all(promises);
 }

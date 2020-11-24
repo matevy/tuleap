@@ -22,20 +22,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/system_event/SystemEvent.class.php');
-
-class SystemEvent_TRACKER_V3_MIGRATION extends SystemEvent {
+class SystemEvent_TRACKER_V3_MIGRATION extends SystemEvent
+{
 
     public const NAME = 'TRACKER_V3_MIGRATION';
 
     /** @var  Tracker_Migration_MigrationManager */
     private $migration_manager;
 
-    public function injectDependencies(Tracker_Migration_MigrationManager $migration_manager) {
+    public function injectDependencies(Tracker_Migration_MigrationManager $migration_manager)
+    {
         $this->migration_manager = $migration_manager;
     }
 
-    public function process() {
+    public function process()
+    {
         $parameters = $this->getParametersAsArray();
 
         if ($this->parametersAreMissing($parameters)) {
@@ -61,7 +62,8 @@ class SystemEvent_TRACKER_V3_MIGRATION extends SystemEvent {
         $this->done();
     }
 
-    private function parametersAreMissing($parameters) {
+    private function parametersAreMissing($parameters)
+    {
         if (empty($parameters[0])) {
             $this->error('Missing argument: shortname');
             return true;
@@ -95,7 +97,8 @@ class SystemEvent_TRACKER_V3_MIGRATION extends SystemEvent {
         return false;
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return $this->parameters;
     }
 }

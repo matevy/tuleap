@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: OldStyleTable.php,v 1.11 2005/09/14 05:56:21 rurban Exp $');
 /**
  Copyright 1999, 2000, 2001, 2002 $ThePhpWikiProgrammingTeam
@@ -40,23 +41,29 @@ rcs_id('$Id: OldStyleTable.php,v 1.11 2005/09/14 05:56:21 rurban Exp $');
  * (which is the default.)
  */
 
-class WikiPlugin_OldStyleTable
-extends WikiPlugin
+class WikiPlugin_OldStyleTable extends WikiPlugin
 {
-    function getName() {
+    function getName()
+    {
         return _("OldStyleTable");
     }
 
-    function getDescription() {
-      return _("Layout tables using the old markup style.");
+    function getDescription()
+    {
+        return _("Layout tables using the old markup style.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.11 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.11 $"
+        );
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array(
                      'caption'     => '',
                      'cellpadding' => '1',
@@ -66,11 +73,13 @@ extends WikiPlugin
                      );
     }
 
-    function handle_plugin_args_cruft($argstr, $args) {
+    function handle_plugin_args_cruft($argstr, $args)
+    {
         return;
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         global $WikiTheme;
         include_once('lib/InlineParser.php');
 
@@ -84,29 +93,35 @@ extends WikiPlugin
         $lines = preg_split('/\s*?\n\s*/', $argstr);
         $table_args = array();
         $default_args = array_keys($default);
-        foreach ($default_args as $arg) { 
-            if ($args[$arg] == '' and $default[$arg] == '')  
-                continue;			// ignore '' arguments
-            if ($arg == 'caption')
+        foreach ($default_args as $arg) {
+            if ($args[$arg] == '' and $default[$arg] == '') {
+                continue;            // ignore '' arguments
+            }
+            if ($arg == 'caption') {
                 $caption = $args[$arg];
-            else
+            } else {
                 $table_args[$arg] = $args[$arg];
+            }
         }
         $table = HTML::table($table_args);
-        if (!empty($caption))
-            $table->pushContent(HTML::caption(array('valign'=>'top'),$caption));
-        if (preg_match("/^\s*(cellpadding|cellspacing|border|caption|summary)/", $lines[0])) 
+        if (!empty($caption)) {
+            $table->pushContent(HTML::caption(array('valign'=>'top'), $caption));
+        }
+        if (preg_match("/^\s*(cellpadding|cellspacing|border|caption|summary)/", $lines[0])) {
             $lines[0] = '';
+        }
         foreach ($lines as $line) {
-            if (!$line)
+            if (!$line) {
                 continue;
-            if (strstr($line,"=")) {
-            	$tmp = explode("=",$line);
-            	if (in_array(trim($tmp[0]),$default_args))
+            }
+            if (strstr($line, "=")) {
+                $tmp = explode("=", $line);
+                if (in_array(trim($tmp[0]), $default_args)) {
                     continue;
+                }
             }
             if ($line[0] != '|') {
-            	// bogus error if argument
+                // bogus error if argument
                 trigger_error(sprintf(_("Line %s does not begin with a '|'."), $line), E_USER_WARNING);
             } else {
                 $table->pushContent($this->_parse_row($line, $basepage));
@@ -116,35 +131,47 @@ extends WikiPlugin
         return $table;
     }
 
-    function _parse_row ($line, $basepage) {
+    function _parse_row($line, $basepage)
+    {
         $brkt_link = "\\[ .*? [^]\s] .*? \\]";
         $cell_content  = "(?: [^[] | ".ESCAPE_CHAR."\\[ | $brkt_link )*?";
-        
-        preg_match_all("/(\\|+) (v*) ([<>^]?) \s* ($cell_content) \s* (?=\\||\$)/x",
-                       $line, $matches, PREG_SET_ORDER);
+
+        preg_match_all(
+            "/(\\|+) (v*) ([<>^]?) \s* ($cell_content) \s* (?=\\||\$)/x",
+            $line,
+            $matches,
+            PREG_SET_ORDER
+        );
 
         $row = HTML::tr();
 
         foreach ($matches as $m) {
             $attr = array();
 
-            if (strlen($m[1]) > 1)
+            if (strlen($m[1]) > 1) {
                 $attr['colspan'] = strlen($m[1]);
-            if (strlen($m[2]) > 0)
+            }
+            if (strlen($m[2]) > 0) {
                 $attr['rowspan'] = strlen($m[2]) + 1;
+            }
 
-            if ($m[3] == '^')
+            if ($m[3] == '^') {
                 $attr['align'] = 'center';
-            else if ($m[3] == '>')
+            } elseif ($m[3] == '>') {
                 $attr['align'] = 'right';
-            else
+            } else {
                 $attr['align'] = 'left';
+            }
 
             // Assume new-style inline markup.
             $content = TransformInline($m[4], 2.0, $basepage);
 
-            $row->pushContent(HTML::td($attr, HTML::raw('&nbsp;'),
-                                       $content, HTML::raw('&nbsp;')));
+            $row->pushContent(HTML::td(
+                $attr,
+                HTML::raw('&nbsp;'),
+                $content,
+                HTML::raw('&nbsp;')
+            ));
         }
         return $row;
     }
@@ -190,4 +217,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

@@ -1,4 +1,5 @@
-<?php //-*-php-*-
+<?php
+//-*-php-*-
 rcs_id('$Id: WikiCallback.php,v 1.3 2004/11/01 10:43:56 rurban Exp $');
 
 /**
@@ -27,16 +28,17 @@ class WikiCallback
      * @return object Returns the appropriate subclass of WikiCallback.
      * @access public
      */
-    function callback ($pearCb) {
-        if (is_string($pearCb))
+    function callback($pearCb)
+    {
+        if (is_string($pearCb)) {
             return new WikiFunctionCb($pearCb);
-        else if (is_array($pearCb)) {
+        } elseif (is_array($pearCb)) {
             list($object, $method) = $handler;
             return new WikiMethodCb($object, $method);
         }
         trigger_error("WikiCallback::new: bad arg", E_USER_ERROR);
     }
-    
+
     /**
      * Call callback.
      *
@@ -45,7 +47,8 @@ class WikiCallback
      * @return mixed The return value of the callback.
      * @access public
      */
-    function call () {
+    function call()
+    {
         return $this->call_array(func_get_args());
     }
 
@@ -57,7 +60,8 @@ class WikiCallback
      * @see call_user_func_array.
      * @access public
      */
-    function call_array ($args) {
+    function call_array($args)
+    {
         trigger_error('pure virtual', E_USER_ERROR);
     }
 
@@ -66,10 +70,11 @@ class WikiCallback
      *
      * @return string The name of the callback function.
      *  (This value is suitable for passing as the callback parameter
-     *   to a number of different Pear functions and methods.) 
+     *   to a number of different Pear functions and methods.)
      * @access public
      */
-    function toPearCb() {
+    function toPearCb()
+    {
         trigger_error('pure virtual', E_USER_ERROR);
     }
 }
@@ -77,8 +82,7 @@ class WikiCallback
 /**
  * Global function callback.
  */
-class WikiFunctionCb
-    extends WikiCallback
+class WikiFunctionCb extends WikiCallback
 {
     /**
      * Constructor
@@ -86,15 +90,18 @@ class WikiFunctionCb
      * @param $functionName string Name of global function to call.
      * @access public
      */
-    function __construct ($functionName) {
+    function __construct($functionName)
+    {
         $this->functionName = $functionName;
     }
 
-    function call_array ($args) {
+    function call_array($args)
+    {
         return call_user_func_array($this->functionName, $args);
     }
 
-    function toPearCb() {
+    function toPearCb()
+    {
         return $this->functionName;
     }
 }
@@ -102,8 +109,7 @@ class WikiFunctionCb
 /**
  * Object Method Callback.
  */
-class WikiMethodCb
-    extends WikiCallback
+class WikiMethodCb extends WikiCallback
 {
     /**
      * Constructor
@@ -112,47 +118,21 @@ class WikiMethodCb
      * @param $methodName string Name of method to call.
      * @access public
      */
-    function __construct(&$object, $methodName) {
+    function __construct(&$object, $methodName)
+    {
         $this->object = &$object;
         $this->methodName = $methodName;
     }
 
-    function call_array ($args) {
+    function call_array($args)
+    {
         $method = &$this->methodName;
-        //$obj = &$this->object;
 
-        // This should work, except PHP's before 4.0.5 (which includes mine)
-        // don't have 'call_user_method_array'.
-        if (check_php_version(4,0,5)) {
-            return call_user_func_array(array(&$this->object, $method), $args);
-        }
-
-        // This should work, but doesn't.  At least in my PHP, the object seems
-        // to get passed by value, rather than reference, so any changes to the
-        // object made by the called method get lost.
-        /*
-        switch (count($args)) {
-        case 0: return call_user_method($method, $obj);
-        case 1: return call_user_method($method, $obj, $args[0]);
-        case 2: return call_user_method($method, $obj, $args[0], $args[1]);
-        case 3: return call_user_method($method, $obj, $args[0], $args[1], $args[2]);
-        case 4: return call_user_method($method, $obj, $args[0], $args[1], $args[2], $args[3]);
-        default: trigger_error("Too many arguments to method callback", E_USER_ERROR);
-        }
-        */
-
-        // This seems to work, at least for me (so far):
-        switch (count($args)) {
-        case 0: return $this->object->$method();
-        case 1: return $this->object->$method($args[0]);
-        case 2: return $this->object->$method($args[0], $args[1]);
-        case 3: return $this->object->$method($args[0], $args[1], $args[2]);
-        case 4: return $this->object->$method($args[0], $args[1], $args[2], $args[3]);
-        default: trigger_error("Too many arguments to method callback", E_USER_ERROR);
-        }
+        return call_user_func_array(array(&$this->object, $method), $args);
     }
 
-    function toPearCb() {
+    function toPearCb()
+    {
         return array($this->object, $this->methodName);
     }
 }
@@ -164,5 +144,4 @@ class WikiMethodCb
 // c-basic-offset: 4
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
-// End:   
-?>
+// End:

@@ -43,7 +43,7 @@ class MattermostNotifier
 
     public function __construct()
     {
-        require_once __DIR__ . '/../../../botmattermost/include/botmattermostPlugin.class.php';
+        require_once __DIR__ . '/../../../botmattermost/include/botmattermostPlugin.php';
         $this->bot_factory = new BotFactory(new BotDao());
         $this->sender      = new Sender(
             new EncoderMessage(),
@@ -62,6 +62,7 @@ class MattermostNotifier
             $message = new Message();
             $message->setText($text);
 
+            /** @psalm-suppress UndefinedDocblockClass $bot */
             $bot = $this->bot_factory->getBotById($bot_id);
             if ($bot) {
                 $this->sender->pushNotification($bot, $message, []);

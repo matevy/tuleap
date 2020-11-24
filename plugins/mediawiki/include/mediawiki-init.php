@@ -1,5 +1,4 @@
 <?php
-
 /**
  *
  * This file is part of FusionForge.
@@ -20,11 +19,11 @@
  */
 
 global $gfplugins;
-require_once $gfplugins.'mediawiki/include/mediawikiPlugin.class.php' ;
+require_once $gfplugins.'mediawiki/include/mediawikiPlugin.php' ;
 
 $MediaWikiPluginObject = new MediaWikiPlugin ;
 
-register_plugin ($MediaWikiPluginObject) ;
+register_plugin($MediaWikiPluginObject) ;
 
 // Local Variables:
 // mode: php

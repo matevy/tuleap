@@ -23,13 +23,16 @@
  *
  * @note I should be called by root user
  */
-class BackendService {
+class BackendService
+{
 
-    public function start() {
+    public function start()
+    {
         (new \Tuleap\System\ServiceControl())->execute('tuleap', 'start');
     }
 
-    public function stop() {
+    public function stop()
+    {
         (new \Tuleap\System\ServiceControl())->execute('tuleap', 'stop');
     }
 }

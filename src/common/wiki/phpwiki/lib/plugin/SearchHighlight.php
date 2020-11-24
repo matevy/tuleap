@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: SearchHighlight.php,v 1.1 2004/09/26 14:58:36 rurban Exp $');
 /*
 Copyright 2004 $ThePhpWikiProgrammingTeam
@@ -27,36 +28,44 @@ require_once("lib/PageList.php");
  * or our own fulltextsearch, the terms they search for are highlighted.
  * See http://wordpress.org/about/shots/1.2/plugins.png
  *
- * Could be hooked from lib/display.php (but then not possible for actionpages) 
+ * Could be hooked from lib/display.php (but then not possible for actionpages)
  * or at request->flush or on a template. (if google referrer, search)
  */
-class WikiPlugin_SearchHighlight
-extends WikiPlugin
+class WikiPlugin_SearchHighlight extends WikiPlugin
 {
-    function getName() {
+    function getName()
+    {
         return _("SearchHighlight");
     }
 
-    function getDescription() {
+    function getDescription()
+    {
         return _("Hilight referred search terms.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.1 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.1 $"
+        );
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array('s'        => false,
                      'case_exact' => false,  //not yet supported
                      'regex'    => false,    //not yet supported
                      );
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
-        if (empty($args['s']))
+        if (empty($args['s'])) {
             return '';
+        }
 
         extract($args);
 
@@ -68,19 +77,23 @@ extends WikiPlugin
         return $this->showhits($page, $hilight_re);
     }
 
-    function showhits($page, $hilight_re) {
+    function showhits($page, $hilight_re)
+    {
         $current = $page->getCurrentRevision();
         $matches = preg_grep("/$hilight_re/i", $current->getContent());
         $html = array();
         foreach ($matches as $line) {
             $line = $this->highlight_line($line, $hilight_re);
-            $html[] = HTML::dd(HTML::small(array('class' => 'search-context'),
-                                           $line));
+            $html[] = HTML::dd(HTML::small(
+                array('class' => 'search-context'),
+                $line
+            ));
         }
         return $html;
     }
 
-    function highlight_line ($line, $hilight_re) {
+    function highlight_line($line, $hilight_re)
+    {
         while (preg_match("/^(.*?)($hilight_re)/i", $line, $m)) {
             $line = substr($line, strlen($m[0]));
             $html[] = $m[1];    // prematch
@@ -101,4 +114,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

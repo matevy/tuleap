@@ -21,7 +21,8 @@
 /**
  * A swimline in the dashboard
  */
-class Cardwall_SwimlineSoloNoMatchingColumns extends Cardwall_Swimline {
+class Cardwall_SwimlineSoloNoMatchingColumns extends Cardwall_Swimline
+{
 
     /**
      * @var Tracker_Artifact
@@ -34,7 +35,8 @@ class Cardwall_SwimlineSoloNoMatchingColumns extends Cardwall_Swimline {
      * @param Tracker_Artifact $artifact
      * @param array $cells
      */
-    public function __construct(Cardwall_CardInCellPresenter $swimline_artifact_presenter, Tracker_Artifact $artifact, array $cells) {
+    public function __construct(Cardwall_CardInCellPresenter $swimline_artifact_presenter, Tracker_Artifact $artifact, array $cells)
+    {
         parent::__construct($swimline_artifact_presenter, $cells);
 
         $this->artifact = $artifact;
@@ -45,7 +47,8 @@ class Cardwall_SwimlineSoloNoMatchingColumns extends Cardwall_Swimline {
      */
     public $is_no_matching_column = true;
 
-    public function getErrorMessage() {
+    public function getErrorMessage()
+    {
         $backlog_item_name = $this->artifact->getTitle();
         $tracker_name      = $this->artifact->getTracker()->getName();
         $uri               = $this->artifact->getUri();
@@ -53,4 +56,3 @@ class Cardwall_SwimlineSoloNoMatchingColumns extends Cardwall_Swimline {
         return $GLOBALS['Language']->getText('plugin_cardwall', 'cells_not_displayed', array($backlog_item_name, $tracker_name, $uri));
     }
 }
-?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,17 +22,8 @@ namespace Tuleap\Tracker\REST\Artifact;
 
 use Tuleap\REST\JsonCast;
 
-class ArtifactFieldValueOpenListRepresentation {
-    /**
-     * @var int ID of the field
-     */
-    public $field_id;
-
-    /**
-     * @var string Label of the field
-     */
-    public $label;
-
+class ArtifactFieldValueOpenListRepresentation extends ArtifactFieldValueRepresentationData
+{
     /**
      * @var mixed
      */
@@ -46,7 +37,8 @@ class ArtifactFieldValueOpenListRepresentation {
 
     public $bind_type;
 
-    public function build($id, $label, $bind_type, array $bind_value_objects, array $bind_value_ids) {
+    public function build($id, $label, $bind_type, array $bind_value_objects, array $bind_value_ids)
+    {
         $this->field_id           = JsonCast::toInt($id);
         $this->label              = $label;
         $this->bind_type          = $bind_type;

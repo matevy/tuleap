@@ -21,18 +21,21 @@
 /**
  * Presenter factory for one step registration project
  */
-class Project_OneStepRegistration_OneStepRegistrationPresenterFactory {
+class Project_OneStepRegistration_OneStepRegistrationPresenterFactory
+{
 
     /**
      * @var Project
      */
     private $project;
 
-    public function __construct(Project $project) {
+    public function __construct(Project $project)
+    {
         $this->project = $project;
     }
 
-    public function create() {
+    public function create()
+    {
         if ($this->projectsMustBeApprovedByAdmin()) {
             $presenter = new Project_OneStepRegistration_OneStepRegistrationApprovalPresenter();
         } else {
@@ -42,7 +45,8 @@ class Project_OneStepRegistration_OneStepRegistrationPresenterFactory {
         return $presenter;
     }
 
-    private function projectsMustBeApprovedByAdmin() {
+    private function projectsMustBeApprovedByAdmin()
+    {
         return ForgeConfig::get(\ProjectManager::CONFIG_PROJECT_APPROVAL, 1) == 1;
     }
 }

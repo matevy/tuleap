@@ -19,10 +19,12 @@
 
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use \Exception;
+use Exception;
 
-class ElementCannotBeSubmilestoneException extends Exception {
-    public function __construct($milestone_id, $sub_milestone_id) {
+class ElementCannotBeSubmilestoneException extends Exception
+{
+    public function __construct($milestone_id, $sub_milestone_id)
+    {
         parent::__construct('Element ' . $sub_milestone_id . ' cannot be submilestone of Milestone ' . $milestone_id . '.');
     }
 }

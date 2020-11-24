@@ -44,13 +44,13 @@ const webpack_config_for_vue = {
         tlp: "tlp"
     },
     resolve: {
-        alias: webpack_configurator.extendAliases(webpack_configurator.tlp_mocks_alias, {
+        alias: {
             "permission-badge": path_to_badge
-        })
+        }
     },
     module: {
         rules: [
-            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_karma),
+            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11),
             webpack_configurator.rule_easygettext_loader,
             webpack_configurator.rule_vue_loader
         ]
@@ -68,7 +68,8 @@ const webpack_config_for_burning_parrot = {
     context: path.resolve(__dirname),
     output: webpack_configurator.configureOutput(assets_dir_path),
     externals: {
-        tlp: "tlp"
+        tlp: "tlp",
+        tuleap: "tuleap"
     },
     module: {
         rules: [

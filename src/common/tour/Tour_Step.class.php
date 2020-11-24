@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tuleap_Tour_Step {
+class Tuleap_Tour_Step
+{
 
     /**
      * @var string
@@ -41,12 +42,13 @@ class Tuleap_Tour_Step {
     public $placement;
 
     /**
-     * @var boolean
+     * @var bool
      */
     public $backdrop;
 
 
-    public function __construct($title, $content, $placement = 'bottom', $element = '', $backdrop = false) {
+    public function __construct($title, $content, $placement = 'bottom', $element = '', $backdrop = false)
+    {
         $this->title     = $title;
         $this->content   = $content;
         $this->element   = $element;
@@ -54,16 +56,18 @@ class Tuleap_Tour_Step {
         $this->backdrop  = $backdrop;
     }
 
-    public function setElement($element) {
+    public function setElement($element)
+    {
         $this->element = $element;
     }
 
-    public function setPlacement($placement) {
+    public function setPlacement($placement)
+    {
         $this->placement = $placement;
     }
 
-    public function setBackdrop($backdrop) {
+    public function setBackdrop($backdrop)
+    {
         $this->backdrop = $backdrop;
     }
-
 }

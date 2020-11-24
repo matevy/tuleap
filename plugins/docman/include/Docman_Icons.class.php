@@ -25,13 +25,16 @@
  * Folder is a transport object (aka container) used to share data between
  * Model/Controler and View layer of the application
  */
-class Docman_Icons {
+class Docman_Icons
+{
     var $images_path;
-    function __construct($images_path) {
+    function __construct($images_path)
+    {
         $this->images_path = $images_path;
     }
 
-    function getActionIcon($action) {
+    function getActionIcon($action)
+    {
         switch ($action) {
             case 'popup':
                 return $this->images_path. 'popup.png';
@@ -53,12 +56,13 @@ class Docman_Icons {
         }
     }
 
-    function getIconForItem(&$item, $params = null) {
+    function getIconForItem(&$item, $params = null)
+    {
         $icon = $this->images_path;
         if (isset($params['icon_width'])) {
                 $icon .= $params['icon_width'] . '/';
         }
-        switch(strtolower(get_class($item))) {
+        switch (strtolower(get_class($item))) {
             case 'docman_folder':
                 $icon .= 'folder';
                 if (isset($params['expanded']) && $params['expanded']) {
@@ -114,7 +118,7 @@ class Docman_Icons {
             case 'application':
                 $icon = 'binary';
                 if (isset($parts[1])) {
-                    switch($parts[1]) {
+                    switch ($parts[1]) {
                         case 'gzip':
                         case 'zip':
                         case 'x-tar':
@@ -184,20 +188,21 @@ class Docman_Icons {
         return $icon;
     }
 
-    function getFolderSpinner() {
+    function getFolderSpinner()
+    {
         return $this->images_path . 'folder-spinner.gif';
     }
-    function getSpinner() {
+    function getSpinner()
+    {
         return $this->images_path . 'spinner.gif';
     }
-    function getIcon($icon) {
+    function getIcon($icon)
+    {
         return $this->images_path . $icon;
     }
 
-    function getThemeIcon($icon) {
+    function getThemeIcon($icon)
+    {
         return util_get_image_theme('ic/'.$icon);
     }
-
 }
-
-?>

@@ -19,7 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_GlobalNotification {
+class Tracker_GlobalNotification
+{
     private $id;
     private $tracker_id;
     private $addresses;
@@ -40,23 +41,28 @@ class Tracker_GlobalNotification {
         $this->check_permissions = $check_permissions;
     }
 
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
-    public function getTrackerId() {
+    public function getTrackerId()
+    {
         return $this->tracker_id;
     }
 
-    public function getAddresses() {
+    public function getAddresses()
+    {
         return $this->addresses;
     }
 
-    public function isAllUpdates() {
+    public function isAllUpdates()
+    {
         return $this->all_updates;
     }
 
-    public function isCheckPermissions() {
+    public function isCheckPermissions()
+    {
         return $this->check_permissions;
     }
 }

@@ -18,14 +18,17 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_NotificationDao extends DataAccessObject {
-    
-    function __construct() {
+class Tracker_NotificationDao extends DataAccessObject
+{
+
+    function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_notification';
     }
-    
-    public function searchNotification($tracker_id, $user_id) {
+
+    public function searchNotification($tracker_id, $user_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $user_id    = $this->da->escapeInt($user_id);
         $sql = "SELECT role_label,event_label,notify 
@@ -38,8 +41,9 @@ class Tracker_NotificationDao extends DataAccessObject {
                   AND e.tracker_id=". db_ei($tracker_id) ;
         return $this->retrieve($sql);
     }
-    
-    public function searchRoles($tracker_id) {
+
+    public function searchRoles($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT *
                 FROM $this->table_name"."_role
@@ -47,8 +51,9 @@ class Tracker_NotificationDao extends DataAccessObject {
                 ORDER BY rank ASC";
         return $this->retrieve($sql);
     }
-    
-    public function searchEvents($tracker_id) {
+
+    public function searchEvents($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT *
                 FROM $this->table_name"."_event
@@ -57,4 +62,3 @@ class Tracker_NotificationDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 }
-?>

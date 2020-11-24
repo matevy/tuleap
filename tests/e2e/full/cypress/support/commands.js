@@ -55,8 +55,8 @@ Cypress.Commands.add("userLogout", () => {
 const cache_service_urls = {};
 Cypress.Commands.add("visitProjectService", (project_unixname, service_label) => {
     if (
-        cache_service_urls.hasOwnProperty(project_unixname) &&
-        cache_service_urls[project_unixname].hasOwnProperty(service_label)
+        Object.prototype.hasOwnProperty.call(cache_service_urls, project_unixname) &&
+        Object.prototype.hasOwnProperty.call(cache_service_urls[project_unixname], service_label)
     ) {
         cy.visit(cache_service_urls[project_unixname][service_label]);
         return;
@@ -92,4 +92,9 @@ Cypress.Commands.add("updatePlatformVisibilityAndAllowRestricted", () => {
     cy.get("[data-test=save-user]").click();
 
     cy.userLogout();
+});
+
+Cypress.Commands.add("getProjectId", project_shortname => {
+    cy.visit(`/projects/${project_shortname}/`);
+    return cy.get("[data-test=project-sidebar]").should("have.attr", "data-project-id");
 });

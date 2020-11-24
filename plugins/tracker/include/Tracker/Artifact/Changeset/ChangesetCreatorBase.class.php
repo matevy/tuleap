@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,17 +18,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
+use Tuleap\Tracker\Artifact\Changeset\ChangesetInstrumentation;
+use Tuleap\Tracker\Artifact\Changeset\FieldsToBeSavedInSpecificOrderRetriever;
+
 /**
  * I am a Template Method to create an initial changeset.
  */
-abstract class Tracker_Artifact_Changeset_ChangesetCreatorBase {
-
-
+abstract class Tracker_Artifact_Changeset_ChangesetCreatorBase
+{
     /** @var Tracker_Artifact_Changeset_FieldsValidator */
     protected $fields_validator;
-
-    /** @var Tracker_FormElementFactory */
-    protected $formelement_factory;
 
     /** @var Tracker_ArtifactFactory */
     protected $artifact_factory;
@@ -38,24 +39,27 @@ abstract class Tracker_Artifact_Changeset_ChangesetCreatorBase {
 
     /** @var EventManager */
     protected $event_manager;
+    /**
+     * @var FieldsToBeSavedInSpecificOrderRetriever
+     */
+    protected $fields_retriever;
 
     public function __construct(
         Tracker_Artifact_Changeset_FieldsValidator $fields_validator,
-        Tracker_FormElementFactory                 $formelement_factory,
-        Tracker_ArtifactFactory                    $artifact_factory,
-        EventManager                               $event_manager
+        FieldsToBeSavedInSpecificOrderRetriever $fields_retriever,
+        Tracker_ArtifactFactory $artifact_factory,
+        EventManager $event_manager,
+        Tracker_Artifact_Changeset_ChangesetDataInitializator $field_initializator
     ) {
         $this->fields_validator    = $fields_validator;
-        $this->formelement_factory = $formelement_factory;
         $this->artifact_factory    = $artifact_factory;
         $this->event_manager       = $event_manager;
-        $this->field_initializator = new Tracker_Artifact_Changeset_ChangesetDataInitializator($this->formelement_factory);
+        $this->field_initializator = $field_initializator;
+        $this->fields_retriever    = $fields_retriever;
     }
 
-    /**
-     * @return bool
-     */
-    protected function isFieldSubmitted(Tracker_FormElement_Field $field, array $fields_data) {
+    protected function isFieldSubmitted(Tracker_FormElement_Field $field, array $fields_data): bool
+    {
         return isset($fields_data[$field->getId()]);
     }
 
@@ -70,15 +74,15 @@ abstract class Tracker_Artifact_Changeset_ChangesetCreatorBase {
         PFUser $submitter,
         Tracker_Artifact_Changeset $new_changeset,
         ?Tracker_Artifact_Changeset $previous_changeset = null
-    ) {
+    ): bool {
         if ($this->artifact_factory->save($artifact)) {
-            $used_fields = $this->formelement_factory->getUsedFields($artifact->getTracker());
-            foreach ($used_fields as $field) {
+            foreach ($this->fields_retriever->getFields($artifact) as $field) {
                 $field->postSaveNewChangeset($artifact, $submitter, $new_changeset, $previous_changeset);
             }
 
             $artifact->getWorkflow()->after($fields_data, $new_changeset, $previous_changeset);
 
+            ChangesetInstrumentation::increment();
             return true;
         }
 

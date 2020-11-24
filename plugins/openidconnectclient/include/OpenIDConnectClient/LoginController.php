@@ -29,10 +29,11 @@ use TemplateRendererFactory;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\OpenIDConnectClient\Login\ConnectorPresenterBuilder;
 use Tuleap\Request\DispatchableWithRequest;
+use Tuleap\Request\DispatchableWithRequestNoAuthz;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
 
-class LoginController implements DispatchableWithRequest
+class LoginController implements DispatchableWithRequestNoAuthz
 {
 
     /**
@@ -61,8 +62,11 @@ class LoginController implements DispatchableWithRequest
         $presenter = $this->connector_presenter_builder->getLoginSpecificPageConnectorPresenter($return_to);
 
         $layout->header(array(
-            'title' => $GLOBALS['Language']->getText('account_login', 'page_title',
-                array(ForgeConfig::get('sys_name'))),
+            'title' => $GLOBALS['Language']->getText(
+                'account_login',
+                'page_title',
+                array(ForgeConfig::get('sys_name'))
+            ),
             'body_class' => array('login-page')
         ));
         $renderer = TemplateRendererFactory::build()->getRenderer(OPENIDCONNECTCLIENT_TEMPLATE_DIR);

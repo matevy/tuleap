@@ -17,15 +17,17 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+.document-modal-title {
+    min-height: 26px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .docman-item-title-update-property {
     display: flex;
     justify-content: space-between;
     margin: 0 0 $tlp-spacing;
-}
-
-.docman-item-wiki-update-property {
-    flex: 1 1 auto;
-    margin: 0 $tlp-half-spacing 0 0;
 }
 
 .docman-item-version-title-update {
@@ -42,7 +44,7 @@
     }
 }
 
-.document-update-button-disabled {
+.document-new-item-version-button-disabled {
     box-shadow: none;
     color: transparentize($tlp-theme-color, .5);
     cursor: not-allowed;

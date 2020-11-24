@@ -19,5 +19,4 @@
  */
 
 define('TIMETRACKING_TEMPLATE_DIR', __DIR__.'/../templates');
-define('TIMETRACKING_BASE_DIR', realpath(__DIR__.'/..'));
 define('TIMETRACKING_BASE_URL', '/plugins/timetracking');

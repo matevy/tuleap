@@ -18,13 +18,13 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/dao/MailingListDao.class.php');
 /**
  *
  * MailingList object
- * 
+ *
  */
-class MailingList {
+class MailingList
+{
 
     protected $id;
     protected $group_id;
@@ -37,7 +37,8 @@ class MailingList {
     protected $_mailinglistdao;
 
 
-    public function __construct($row = null) {
+    public function __construct($row = null)
+    {
         $this->id            = isset($row['group_list_id'])  ? $row['group_list_id'] : 0;
         $this->group_id      = isset($row['group_id'])       ? $row['group_id']      : 0;
         $this->list_name     = isset($row['list_name'])      ? $row['list_name']     : null;
@@ -47,7 +48,8 @@ class MailingList {
         $this->list_admin    = isset($row['list_admin'])     ? $row['list_admin']    : 0;
     }
 
-    protected function _getMailingListDao() {
+    protected function _getMailingListDao()
+    {
         if (!$this->_mailinglistdao) {
             $this->_mailinglistdao = new MailingListDao(CodendiDataAccess::instance());
         }
@@ -55,24 +57,28 @@ class MailingList {
     }
 
 
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
-    public function getListName() {
+    public function getListName()
+    {
         return $this->list_name;
     }
-    public function getListPassword() {
+    public function getListPassword()
+    {
         return $this->password;
     }
-    public function getListAdmin() {
+    public function getListAdmin()
+    {
         return $this->list_admin;
     }
-    public function getDescription() {
+    public function getDescription()
+    {
         return $this->description;
     }
-    public function getIsPublic() {
+    public function getIsPublic()
+    {
         return $this->is_public;
     }
-
 }
-?>

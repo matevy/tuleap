@@ -48,8 +48,12 @@ class ChartConfigurationValueChecker
 
     public function hasStartDate(Tracker_Artifact $artifact, PFUser $user)
     {
-        $start_date_field = $this->configuration_field_retriever->getStartDateField($artifact, $user);
-        $artifact_value   = $artifact->getValue($start_date_field);
+        try {
+            $start_date_field = $this->configuration_field_retriever->getStartDateField($artifact->getTracker(), $user);
+        } catch (Tracker_FormElement_Chart_Field_Exception $e) {
+            return false;
+        }
+        $artifact_value = $artifact->getValue($start_date_field);
 
         if ($artifact_value === null) {
             return false;
@@ -67,11 +71,14 @@ class ChartConfigurationValueChecker
         return $new_changeset->getValue($field) && $new_changeset->getValue($field)->hasChanged();
     }
 
+    /**
+     * @return bool
+     */
     public function areBurndownFieldsCorrectlySet(Tracker_Artifact $artifact, PFUser $user)
     {
         try {
-            return $this->configuration_value_retriever->getDuration($artifact, $user) !== null
-                && $this->configuration_value_retriever->getStartDate($artifact, $user) !== null;
+            $time_period = $this->configuration_value_retriever->getTimePeriod($artifact, $user);
+            return (bool) ($time_period->getStartDate() !== null && $time_period->getDuration() !== null);
         } catch (Tracker_FormElement_Chart_Field_Exception $e) {
             return false;
         }
@@ -82,15 +89,24 @@ class ChartConfigurationValueChecker
         PFUser $user,
         Tracker_Artifact_Changeset $new_changeset
     ) {
-        $start_date_field = $this->configuration_field_retriever->getStartDateField($artifact, $user);
-        $duration_field   = $this->configuration_field_retriever->getDurationField($artifact, $user);
+        $start_date_field = $this->configuration_field_retriever->getStartDateField($artifact->getTracker(), $user);
+        if ($this->hasFieldChanged($new_changeset, $start_date_field)) {
+            return true;
+        }
 
-        return $this->hasFieldChanged($new_changeset, $start_date_field)
-            || $this->hasFieldChanged($new_changeset, $duration_field);
+        if ($this->configuration_field_retriever->doesEndDateFieldExist($artifact->getTracker(), $user)) {
+            return $this->hasFieldChanged(
+                $new_changeset,
+                $this->configuration_field_retriever->getEndDateField($artifact->getTracker(), $user)
+            );
+        }
+
+        $duration_field = $this->configuration_field_retriever->getDurationField($artifact->getTracker(), $user);
+        return $this->hasFieldChanged($new_changeset, $duration_field);
     }
 
     /**
-     * @return Boolean
+     * @return bool
      */
     public function doesUserCanReadRemainingEffort(Tracker_Artifact $artifact, PFUser $user)
     {

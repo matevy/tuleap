@@ -20,7 +20,8 @@
 
 require_once __DIR__.'/../../bootstrap.php';
 
-class FileImporterTest extends \PHPUnit\Framework\TestCase {
+class FileImporterTest extends \PHPUnit\Framework\TestCase
+{
 
     protected function setUp() : void
     {
@@ -48,7 +49,8 @@ class FileImporterTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testParseAndImportLines() {
+    public function testParseAndImportLines()
+    {
         $this->parser
             ->expects($this->exactly(5))
             ->method('extract')
@@ -63,7 +65,8 @@ class FileImporterTest extends \PHPUnit\Framework\TestCase {
         $this->file_importer->import(__DIR__.'/_fixtures/xferlog');
     }
 
-    public function testItIgnoreOldLogs() {
+    public function testItIgnoreOldLogs()
+    {
         $this->dao
             ->expects($this->once())
             ->method('searchLatestEntryTimestamp')

@@ -1,14 +1,13 @@
 <?php
-
-// Copyright 2014-2018 (c) Enalean SAS
+// Copyright 2014-Present (c) Enalean SAS
 // This file is part of Tuleap
 //
 // SourceForge: Breaking Down the Barriers to Open Source Development
 // Copyright 1999-2000 (c) The SourceForge Crew
 // http://sourceforge.net
 
-require_once('pre.php');
-require_once('../mail_utils.php');
+require_once __DIR__ . '/../../include/pre.php';
+require_once __DIR__ . '/../mail_utils.php';
 
 $sys_lists_domain = ForgeConfig::get('sys_lists_domain');
 if ($sys_lists_domain == 'lists.%sys_default_domain%') {
@@ -17,7 +16,6 @@ if ($sys_lists_domain == 'lists.%sys_default_domain%') {
 
 $pm = ProjectManager::instance();
 if ($group_id && user_ismember($group_id, 'A')) {
-
     $list_server = get_list_server_url();
 
     if ($request->existAndNonEmpty('post_changes')) {
@@ -42,11 +40,9 @@ if ($group_id && user_ismember($group_id, 'A')) {
 
             //see if that's a valid email address
             if (validate_email($new_list_name . '@' . $sys_lists_domain)) {
-
                 $result = db_query("SELECT * FROM mail_group_list WHERE lower(list_name)='" . db_es($new_list_name) . "'");
 
                 if (db_numrows($result) > 0) {
-
                     $feedback .= ' ' . $Language->getText('mail_admin_index', 'list_exists_err') . ' ';
                 } else {
                     $group_id = db_ei($group_id);
@@ -54,14 +50,14 @@ if ($group_id && user_ismember($group_id, 'A')) {
                     $description = db_es(htmlspecialchars($request->getValidated('description', 'string', '')));
                     $new_list_name = db_es($new_list_name);
                     $list_password = db_es($list_password);
-                    $user_id = user_getid();
+                    $db_escaped_user_id = db_ei(UserManager::instance()->getCurrentUser()->getId());
                     $sql = "INSERT INTO mail_group_list
                                             (group_id,list_name,is_public,password,list_admin,status,description) VALUES (
                                             $group_id,
                                             '$new_list_name',
                                             $is_public,
                                             '$list_password',
-                                            $user_id,
+                                            $db_escaped_user_id,
                                             1,
                                             '$description')";
 
@@ -80,7 +76,7 @@ if ($group_id && user_ismember($group_id, 'A')) {
                     EventManager::instance()->processEvent('mail_list_create', array('group_list_id' => $group_list_id,));
 
                     // get email addr
-                    $res_email = db_query("SELECT email FROM user WHERE user_id='" . user_getid() . "'");
+                    $res_email = db_query("SELECT email FROM user WHERE user_id='" . $db_escaped_user_id . "'");
                     if (db_numrows($res_email) < 1) {
                         exit_error($Language->getText('mail_admin_index', 'invalid_userid'), $Language->getText('mail_admin_index', 'does_not_compute'));
                     }
@@ -97,7 +93,6 @@ if ($group_id && user_ismember($group_id, 'A')) {
                     $feedback .= " " . $Language->getText('mail_admin_index', 'mail_sent_to', $row_email['email']) . " ";
                 }
             } else {
-
                 $feedback .= ' ' . $Language->getText('mail_admin_index', 'invalid_list_name') . ' ';
             }
         } elseif ($request->existAndNonEmpty('change_status')) {

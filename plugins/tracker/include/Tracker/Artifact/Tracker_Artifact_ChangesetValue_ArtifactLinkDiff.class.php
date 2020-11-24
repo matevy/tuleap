@@ -89,10 +89,13 @@ class Tracker_Artifact_ChangesetValue_ArtifactLinkDiff
         NaturePresenterFactory $nature_factory,
         CollectionOfLinksFormatter $formatter
     ) {
-        if($artifactlinkinfo->getNature() !== "" && $artifactlinkinfo->shouldLinkBeHidden($artifactlinkinfo->getNature())) {
+        if ($artifactlinkinfo->getNature() !== "" && $artifactlinkinfo->shouldLinkBeHidden($artifactlinkinfo->getNature())) {
             return;
         }
         $nature = $nature_factory->getFromShortname($artifactlinkinfo->getNature());
+        if ($nature === null) {
+            return;
+        }
         if (! isset($this->added_by_nature[$nature->shortname])) {
             $this->added_by_nature[$nature->shortname] = new AddedLinkByNatureCollection($nature, $formatter);
         }
@@ -145,7 +148,7 @@ class Tracker_Artifact_ChangesetValue_ArtifactLinkDiff
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function hasChanges()
     {

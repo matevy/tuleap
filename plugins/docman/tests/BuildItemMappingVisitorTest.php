@@ -23,9 +23,11 @@
 
 require_once 'bootstrap.php';
 
-class BuildItemMappingVisitorTest extends TuleapTestCase {
+class BuildItemMappingVisitorTest extends TuleapTestCase
+{
 
-    function testCompareFolderChildrenOk() {
+    function testCompareFolderChildrenOk()
+    {
         // Src (reference)
         $fld140 = new Docman_Folder(array('item_id' => 140, 'title' => 'Project documentation', 'rank' => 0));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'title' => 'Folder 1', 'rank' => -2));
@@ -52,7 +54,8 @@ class BuildItemMappingVisitorTest extends TuleapTestCase {
     /**
      * Same test as above (testCompareFolderChildrenOk) but ranks inversion between item 36 & 40  (here 40 appears befor 36).
      */
-    function testCompareFolderChildrenRankIssue() {
+    function testCompareFolderChildrenRankIssue()
+    {
         // Src (reference)
         $fld140 = new Docman_Folder(array('item_id' => 140, 'title' => 'Project documentation', 'rank' => 0));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'title' => 'Folder 1', 'rank' => -2));
@@ -77,7 +80,8 @@ class BuildItemMappingVisitorTest extends TuleapTestCase {
     /**
      * Test when there are more items in the source tree (reference) than the destination one.
      */
-     function testCompareFolderChildrenMoreSrcThanDst() {
+    function testCompareFolderChildrenMoreSrcThanDst()
+    {
         // Src (reference)
         $fld140 = new Docman_Folder(array('item_id' => 140, 'title' => 'Project documentation', 'rank' => 0));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'title' => 'Folder 1', 'rank' => -2));
@@ -97,16 +101,17 @@ class BuildItemMappingVisitorTest extends TuleapTestCase {
         $itemMappingVisitor = new Docman_BuildItemMappingVisitor(569);
         $nodesOk = $itemMappingVisitor->compareFolderChildren($fld140, $node);
         $this->assertEqual($nodesOk, array(150 => true,
-                                           135 => true));
+                                          135 => true));
         $itemMapping = $itemMappingVisitor->getItemMapping();
         $this->assertEqual($itemMapping, array(150 => 36,
-                                               135 => 40));
-     }
+                                              135 => 40));
+    }
 
     /**
      * Test when there are more items in the destination tree than the source one.
      */
-     function testCompareFolderChildrenMoreDstThanSrc() {
+    function testCompareFolderChildrenMoreDstThanSrc()
+    {
         // Src (reference)
         $fld140 = new Docman_Folder(array('item_id' => 140, 'title' => 'Project documentation', 'rank' => 0));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'title' => 'Folder 1', 'rank' => -2));
@@ -126,11 +131,11 @@ class BuildItemMappingVisitorTest extends TuleapTestCase {
         $itemMappingVisitor = new Docman_BuildItemMappingVisitor(569);
         $nodesOk = $itemMappingVisitor->compareFolderChildren($fld140, $node);
         $this->assertEqual($nodesOk, array(150 => true,
-                                           135 => true));
+                                          135 => true));
         $itemMapping = $itemMappingVisitor->getItemMapping();
         $this->assertEqual($itemMapping, array(150 => 36,
-                                               135 => 40));
-       }
+                                              135 => 40));
+    }
 
     /**
      * Test: We want to find the item id mapping for the tree on the left. We
@@ -155,7 +160,8 @@ class BuildItemMappingVisitorTest extends TuleapTestCase {
      * |   `-- Folder 1.2 (115)
      * `-- Folder 2 (135)
      */
-    function testSimpleTree() {
+    function testSimpleTree()
+    {
         // Nodes definition
         $fld140 = new Docman_Folder(array('item_id' => 140, 'title' => 'Project documentation'));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'title' => 'Folder 1'));
@@ -207,7 +213,6 @@ class BuildItemMappingVisitorTest extends TuleapTestCase {
         $mockDPM->shouldReceive('userCanRead')->andReturns(true);
         $mockUser = \Mockery::spy(PFUser::class);
 
-
         $itemMappingVisitor = \Mockery::mock(Docman_BuildItemMappingVisitor::class)->makePartial()->shouldAllowMockingProtectedMethods();
         // Need to init by hand because of fake constructor.
         $itemMappingVisitor->groupId = 569;
@@ -231,7 +236,8 @@ class BuildItemMappingVisitorTest extends TuleapTestCase {
     /**
      * Same example, item 40 is not readable
      */
-    function testSimpleTreePermissionDenied() {
+    function testSimpleTreePermissionDenied()
+    {
         // Nodes definition
         $fld140 = new Docman_Folder(array('item_id' => 140, 'title' => 'Project documentation'));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'title' => 'Folder 1'));
@@ -316,7 +322,8 @@ class BuildItemMappingVisitorTest extends TuleapTestCase {
      * `-- 135 Folder 1               `-- 40 Folder 1
      *     `-- 173 Folder test             `-- 56 Folder test
      */
-    function testSeveralFoldersWithSameName() {
+    function testSeveralFoldersWithSameName()
+    {
         // Nodes definition
         $fld140 = new Docman_Folder(array('item_id' => 140, 'title' => 'Project documentation', 'rank' => 0));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'title' => 'Folder 1', 'rank' => -2));

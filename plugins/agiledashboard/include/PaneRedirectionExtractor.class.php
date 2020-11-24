@@ -22,7 +22,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class AgileDashboard_PaneRedirectionExtractor {
+class AgileDashboard_PaneRedirectionExtractor
+{
     public const ARTIFACT_ID = 'aid';
     public const PANE        = 'pane';
     public const PLANNING_ID = 'planning_id';
@@ -34,7 +35,8 @@ class AgileDashboard_PaneRedirectionExtractor {
      * @param Project $project
      * @return array || null
      */
-    public function getRedirectToParameters(Codendi_Request $request, Project $project) {
+    public function getRedirectToParameters(Codendi_Request $request, Project $project)
+    {
         $request_parameters = $this->extractParametersFromRequest($request);
 
         if ($request_parameters) {
@@ -49,7 +51,8 @@ class AgileDashboard_PaneRedirectionExtractor {
      * @param Codendi_Request $request
      * @return array || null containing pane, planning_id, artifact_id and action
      */
-    public function extractParametersFromRequest(Codendi_Request $request) {
+    public function extractParametersFromRequest(Codendi_Request $request)
+    {
         $planning = $request->get('planning');
         if (! is_array($planning) || ! count($planning)) {
             return;

@@ -19,12 +19,13 @@
 
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use \Exception;
+use Exception;
 
-class ArtifactIsNotInUnassignedTopBacklogItemsException extends Exception {
+class ArtifactIsNotInUnassignedTopBacklogItemsException extends Exception
+{
 
-    public function __construct($id) {
+    public function __construct($id)
+    {
         parent::__construct('Artifact '. $id .' is not in unassigned top backlog items list');
     }
-
 }

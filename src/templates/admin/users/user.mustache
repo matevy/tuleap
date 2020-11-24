@@ -1,7 +1,7 @@
 <h1 id="siteadmin-user-title">
     <div class="tlp-avatar-large" id="siteadmin-user-avatar">
         {{# has_avatar }}
-            <img src="/users/{{ login }}/avatar.png">
+            <img src="{{ avatar_url }}">
         {{/ has_avatar }}
     </div>
     <span>
@@ -10,6 +10,12 @@
 </h1>
 
 {{> user-change-password }}
+
+{{# user_has_rest_read_only_administration_delegation }}
+    <div class="tlp-alert-warning">
+        {{# gettext }} This user has the global REST read only administration permission and should not browse the application. {{/ gettext }}
+    </div>
+{{/ user_has_rest_read_only_administration_delegation }}
 
 <div id="siteadmin-user">
     <div id="siteadmin-user-details">

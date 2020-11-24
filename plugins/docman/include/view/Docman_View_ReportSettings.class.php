@@ -24,49 +24,53 @@
 
 require_once('Docman_View_Extra.class.php');
 
-class Docman_View_ReportSettings extends Docman_View_Extra {
+class Docman_View_ReportSettings extends Docman_View_Extra
+{
     var $groupId;
     var $defaultUrl;
     var $controller;
 
-    function _title($params) {
+    function _title($params)
+    {
         $request = HTTPRequest::instance();
         $hp = Codendi_HTMLPurifier::instance();
-        if($request->exist('report_id')) {
+        if ($request->exist('report_id')) {
             echo '<h2>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_name').' "'. $hp->purify($params['filter']->getName(), CODENDI_PURIFIER_CONVERT_HTML) .'"</h2>';
         } else {
             echo '<h2>'. $GLOBALS['Language']->getText('plugin_docman', 'report_settings_title') .'</h2>';
         }
     }
 
-    private function init($params) {
+    private function init($params)
+    {
         $this->groupId     =  $params['group_id'];
         $this->defaultUrl  =  $params['default_url'];
         $this->controller  = $params['docman'];
     }
 
-    function _getReportTableContent($reportIter, $isAdmin, &$altRowClass) {
+    function _getReportTableContent($reportIter, $isAdmin, &$altRowClass)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
         $reportIter->rewind();
-        while($reportIter->valid()) {
+        while ($reportIter->valid()) {
             $r = $reportIter->current();
             $trclass = html_get_alt_row_color($altRowClass++);
             $html .=  '<tr class="'.$trclass.'">';
-            
+
             // Name
             $rUrl  = $this->defaultUrl.'&action=report_settings&report_id='.$r->getId();
             $rName = '<a href="'.$rUrl.'">'. $hp->purify($r->getName(), CODENDI_PURIFIER_CONVERT_HTML) .'</a>';
             $html .= '<td align="left">'.$rName.'</td>';
-            
+
             // Scope
             $scopeName = $GLOBALS['Language']->getText('plugin_docman', 'report_scope_'.$r->getScope());
             $html .= '<td align="center">'.$scopeName.'</td>';
-            
+
             // Delete
             $trashLink = $this->defaultUrl.'&action=report_del&report_id='.$r->getId();
-            $trashWarn = $GLOBALS['Language']->getText('plugin_docman', 'report_settings_delete',  $hp->purify(addslashes($r->getName()), CODENDI_PURIFIER_CONVERT_HTML) );
-            $trashAlt  = $GLOBALS['Language']->getText('plugin_docman', 'report_settings_delete_alt',  $hp->purify($r->getName(), CODENDI_PURIFIER_CONVERT_HTML) );
+            $trashWarn = $GLOBALS['Language']->getText('plugin_docman', 'report_settings_delete', $hp->purify(addslashes($r->getName()), CODENDI_PURIFIER_CONVERT_HTML));
+            $trashAlt  = $GLOBALS['Language']->getText('plugin_docman', 'report_settings_delete_alt', $hp->purify($r->getName(), CODENDI_PURIFIER_CONVERT_HTML));
             $delUrl = $this->defaultUrl.'&action=report_del&report_id='.$r->getId();
             $delName = html_trash_link($trashLink, $trashWarn, $trashAlt);
             $html .= '<td align="center">'.$delName.'</td>';
@@ -77,9 +81,10 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
         return $html;
     }
 
-    function _getReportTable() {
+    function _getReportTable()
+    {
         $html = '';
-        
+
         $um   = UserManager::instance();
         $user = $um->getCurrentUser();
         $dpm  = Docman_PermissionsManager::instance($this->groupId);
@@ -92,21 +97,22 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
         $reportFactory = new Docman_ReportFactory($this->groupId);
 
         $altRowClass = 0;
-        if($isAdmin) {
+        if ($isAdmin) {
             $reportIter = $reportFactory->getProjectReportsForGroup();
             $html .= $this->_getReportTableContent($reportIter, $isAdmin, $altRowClass);
         }
-        
+
         $reportIter = $reportFactory->getPersonalReportsForUser($user);
         $html .= $this->_getReportTableContent($reportIter, $isAdmin, $altRowClass);
-        
+
         $html .= "</table>\n";
         return $html;
     }
 
-    function _getReportSettings($reportId) {
+    function _getReportSettings($reportId)
+    {
         $html = '';
-        
+
         $um   = UserManager::instance();
         $user = $um->getCurrentUser();
         $dpm  = Docman_PermissionsManager::instance($this->groupId);
@@ -115,7 +121,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
         $reportFactory = new Docman_ReportFactory($this->groupId);
         $r = $reportFactory->getReportById($reportId);
 
-        if($r != null 
+        if ($r != null
            && $r->getGroupId() == $this->groupId) {
             $txts = array($GLOBALS['Language']->getText('plugin_docman', 'report_scope_I'),
                           $GLOBALS['Language']->getText('plugin_docman', 'report_scope_P'));
@@ -131,7 +137,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
             $html .= '<table>';
 
             // Scope
-            if($dpm->userCanAdmin($user)) {
+            if ($dpm->userCanAdmin($user)) {
                 $html .= '<tr>';
                 $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_scope').'</td>';
                 $html .= '<td>';
@@ -147,10 +153,10 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
             $html .= '<textarea name="description">'.$r->getDescription().'</textarea>';
             $html .= '</td>';
             $html .= '</tr>';
-            
+
             // Title
             $title = "";
-            if($r->getTitle() !== null) {
+            if ($r->getTitle() !== null) {
                 $title = $r->getTitle();
             }
             $html .= '<tr>';
@@ -162,7 +168,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
 
             // Image
             $image = "";
-            if($r->getImage() !== null) {
+            if ($r->getImage() !== null) {
                 $image = $r->getImage();
             }
             $html .= '<tr>';
@@ -199,7 +205,8 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
         return $html;
     }
 
-    function _getImportForm() {
+    function _getImportForm()
+    {
         $GLOBALS['HTML']->includeFooterJavascriptSnippet("new ProjectAutoCompleter('import_search_report_from_group', '".util_get_dir_image_theme()."', false);");
 
         $html = '';
@@ -209,7 +216,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
         $html .= '<input type="hidden" name="action" value="report_import">';
 
         $html .= '<table border="0">';
-        
+
         // Select project
         $html .= '<tr>';
         $html .= '<td valign="top">'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_sel_prj').'</td>';
@@ -226,7 +233,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
         $html .= '<td valign="top">'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_sel_rpt').'('.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_sel_rpt_id').')'.'</td>';
         $html .= '<td>';
         $html .= '<input type="text" name="import_report_id" value="" />';
-        $html .= '</td>';       
+        $html .= '</td>';
         $html .= '</tr>';
 
         $html .= '</table>';
@@ -235,22 +242,20 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
         $html .= '<input type="submit" name="submit" value="'.$GLOBALS['Language']->getText('global', 'btn_create').'">';
         $html .= '</form>';
 
-
-
         return $html;
     }
 
-    function _content($params) {
+    function _content($params)
+    {
         $html = '';
-        
+
         $this->init($params);
-        
+
         $request = HTTPRequest::instance();
-        if($request->exist('report_id')) {
+        if ($request->exist('report_id')) {
             $reportId = (int) $request->get('report_id');
             $html .= $this->_getReportSettings($reportId);
-        }
-        else {
+        } else {
             // Default screen
             // Personal and project report list
             $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_table_title').'</h3>';
@@ -261,7 +266,6 @@ class Docman_View_ReportSettings extends Docman_View_Extra {
             $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_title').'</h3>';
             $html .= '<p>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_intro').'</p>';
             $html .= $this->_getImportForm();
-
         }
 
         echo $html;

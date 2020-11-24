@@ -18,17 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Git_RestrictedMirrorDao extends RestrictedResourceDao {
+class Git_RestrictedMirrorDao extends RestrictedResourceDao
+{
 
-    public function getResourceAllowedProjectsTableName() {
+    public function getResourceAllowedProjectsTableName()
+    {
         return 'plugin_git_restricted_mirrors_allowed_projects';
     }
 
-    public function getResourceFieldName() {
+    public function getResourceFieldName()
+    {
         return 'mirror_id';
     }
 
-    public function isResourceRestricted($mirror_id) {
+    public function isResourceRestricted($mirror_id)
+    {
         $mirror_id = $this->da->escapeInt($mirror_id);
 
         $sql = "SELECT * FROM plugin_git_restricted_mirrors WHERE mirror_id = $mirror_id";
@@ -40,7 +44,8 @@ class Git_RestrictedMirrorDao extends RestrictedResourceDao {
         return false;
     }
 
-    public function setResourceRestricted($mirror_id) {
+    public function setResourceRestricted($mirror_id)
+    {
         $mirror_id = $this->da->escapeInt($mirror_id);
 
         $sql = "REPLACE INTO plugin_git_restricted_mirrors VALUES ($mirror_id)";
@@ -58,7 +63,8 @@ class Git_RestrictedMirrorDao extends RestrictedResourceDao {
         return false;
     }
 
-    public function unsetResourceRestricted($mirror_id) {
+    public function unsetResourceRestricted($mirror_id)
+    {
         $mirror_id = $this->da->escapeInt($mirror_id);
 
         $sql = "DELETE FROM plugin_git_restricted_mirrors WHERE mirror_id = $mirror_id";
@@ -70,7 +76,8 @@ class Git_RestrictedMirrorDao extends RestrictedResourceDao {
         return false;
     }
 
-    public function searchAllowedProjectsOnResource($mirror_id) {
+    public function searchAllowedProjectsOnResource($mirror_id)
+    {
         $mirror_id = $this->da->escapeInt($mirror_id);
 
         $sql = "SELECT *
@@ -80,5 +87,4 @@ class Git_RestrictedMirrorDao extends RestrictedResourceDao {
 
         return $this->retrieve($sql);
     }
-
 }

@@ -83,7 +83,8 @@ class CardsResource
     /**
      * @url OPTIONS
      */
-    public function options() {
+    public function options()
+    {
         Header::allowOptions();
     }
 
@@ -94,10 +95,11 @@ class CardsResource
      *
      * @param string $id Id of the card
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
-    public function optionsId($id) {
+    public function optionsId($id)
+    {
         Header::allowOptionsPut();
     }
 
@@ -123,7 +125,8 @@ class CardsResource
      *
      * @throws RestException 403
      */
-    protected function putId($id, $label, array $values, $column_id = null) {
+    protected function putId($id, $label, array $values, $column_id = null)
+    {
         try {
             $current_user = $this->user_manager->getCurrentUser();
             $single_card  = $this->getSingleCard($current_user, $id);
@@ -146,7 +149,8 @@ class CardsResource
         Header::allowOptionsPut();
     }
 
-    private function getSingleCard(PFUser $user, $id) {
+    private function getSingleCard(PFUser $user, $id)
+    {
         try {
             $this->checkIdIsWellFormed($id);
             list($planning_id, $artifact_id) = explode('_', $id);
@@ -155,7 +159,7 @@ class CardsResource
                 ProjectAuthorization::userCanAccessProject(
                     $user,
                     $single_card->getArtifact()->getTracker()->getProject(),
-                     new URLVerification()
+                    new URLVerification()
                 );
                 return $single_card;
             }
@@ -175,11 +179,12 @@ class CardsResource
      *
      * @param string $id Id of the card (format: planningId_artifactId)
      *
-     * @return boolean
+     * @return bool
      *
-     * @throws 400
+     * @throws RestException 400
      */
-    private function checkIdIsWellFormed($id) {
+    private function checkIdIsWellFormed($id)
+    {
         $regexp = '/^[0-9]+_[0-9]+$/';
 
         if (! preg_match($regexp, $id)) {

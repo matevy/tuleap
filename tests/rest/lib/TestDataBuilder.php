@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,18 +19,21 @@
  *
  */
 
-use Tuleap\Dashboard\Widget\DashboardWidgetDao;
-use Tuleap\CrossTracker\CrossTrackerReportDao;
 use Tuleap\User\ForgeUserGroupPermission\RestProjectManagementPermission;
-use Tuleap\Widget\WidgetFactory;
+use Tuleap\User\ForgeUserGroupPermission\RESTReadOnlyAdmin\RestReadOnlyAdminPermission;
 
 require_once __DIR__.'/../../lib/TestDataBuilder.php';
 
 class REST_TestDataBuilder extends TestDataBuilder  // @codingStandardsIgnoreLine
 {
+    public const STANDARD_PASSWORD       = 'welcome0';
+
     public const TEST_USER_4_NAME        = 'rest_api_tester_4';
-    public const TEST_USER_4_PASS        = 'welcome0';
-    public const TEST_USER_4_STATUS      = 'A';
+
+    public const TEST_BOT_USER_NAME   = 'rest_bot_read_only_admin';
+    public const TEST_BOT_USER_PASS   = 'welcome0';
+    public const TEST_BOT_USER_STATUS = 'A';
+    public const TEST_BOT_USER_MAIL   = 'test_bot_user@example.com';
 
     public const EPICS_TRACKER_SHORTNAME        = 'epic';
     public const RELEASES_TRACKER_SHORTNAME     = 'rel';
@@ -58,7 +61,7 @@ class REST_TestDataBuilder extends TestDataBuilder  // @codingStandardsIgnoreLin
     public const KANBAN_TO_BE_DONE_COLUMN_ID = 230;
     public const KANBAN_ONGOING_COLUMN_ID    = 231;
     public const KANBAN_REVIEW_COLUMN_ID     = 232;
-    public const KANBAN_DONE_VALUE_ID        = 233;
+    public const KANBAN_OTHER_VALUE_COLUMN_ID = 233;
 
     public const PLANNING_ID = 2;
 
@@ -113,26 +116,17 @@ class REST_TestDataBuilder extends TestDataBuilder  // @codingStandardsIgnoreLin
 
     public function generateUsers()
     {
-        $admin_user = $this->user_manager->getUserByUserName(self::ADMIN_USER_NAME);
-        $admin_user->setPassword(self::ADMIN_PASSWORD);
-        $this->user_manager->updateDb($admin_user);
+        $this->initPassword(self::ADMIN_USER_NAME, self::STANDARD_PASSWORD);
 
-        $user_1 = $this->user_manager->getUserByUserName(self::TEST_USER_1_NAME);
-        $user_1->setPassword(self::TEST_USER_1_PASS);
-        $this->user_manager->updateDb($user_1);
+        $this->initPassword(self::TEST_USER_1_NAME, self::STANDARD_PASSWORD);
 
         $user_2 = $this->user_manager->getUserByUserName(self::TEST_USER_2_NAME);
         $user_2->setPassword(self::TEST_USER_2_PASS);
         $user_2->setAuthorizedKeys('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDHk9 toto@marche');
         $this->user_manager->updateDb($user_2);
 
-        $user_3 = $this->user_manager->getUserByUserName(self::TEST_USER_3_NAME);
-        $user_3->setPassword(self::TEST_USER_3_PASS);
-        $this->user_manager->updateDb($user_3);
-
-        $user_4 = $this->user_manager->getUserByUserName(self::TEST_USER_4_NAME);
-        $user_4->setPassword(self::TEST_USER_4_PASS);
-        $this->user_manager->updateDb($user_4);
+        $this->initPassword(self::TEST_USER_3_NAME, self::STANDARD_PASSWORD);
+        $this->initPassword(self::TEST_USER_4_NAME, self::STANDARD_PASSWORD);
 
         $user_5 = $this->user_manager->getUserByUserName(self::TEST_USER_5_NAME);
         $user_5->setPassword(self::TEST_USER_5_PASS);
@@ -142,7 +136,22 @@ class REST_TestDataBuilder extends TestDataBuilder  // @codingStandardsIgnoreLin
         $delegated_rest_project_manager->setPassword(self::TEST_USER_DELEGATED_REST_PROJECT_MANAGER_PASS);
         $this->user_manager->updateDb($delegated_rest_project_manager);
 
+        $bot_rest_read_only_admin = new PFUser();
+        $bot_rest_read_only_admin->setUserName(self::TEST_BOT_USER_NAME);
+        $bot_rest_read_only_admin->setPassword(self::TEST_BOT_USER_PASS);
+        $bot_rest_read_only_admin->setStatus(self::TEST_BOT_USER_STATUS);
+        $bot_rest_read_only_admin->setEmail(self::TEST_BOT_USER_MAIL);
+        $bot_rest_read_only_admin->setLanguage($GLOBALS['Language']);
+        $this->user_manager->createAccount($bot_rest_read_only_admin);
+
         return $this;
+    }
+
+    protected function initPassword(string $username, string $password): void
+    {
+        $user = $this->user_manager->getUserByUserName($username);
+        $user->setPassword($password);
+        $this->user_manager->updateDb($user);
     }
 
     public function delegateForgePermissions()
@@ -172,6 +181,14 @@ class REST_TestDataBuilder extends TestDataBuilder  // @codingStandardsIgnoreLin
             $rest_project_management_delegate,
             $manage_project_through_rest_permission,
             'REST projects managers'
+        );
+
+        $rest_read_only_bot_user         = $this->user_manager->getUserByUserName(self::TEST_BOT_USER_NAME);
+        $rest_read_only_admin_permission = new RestReadOnlyAdminPermission();
+        $this->delegatePermissionToUser(
+            $rest_read_only_bot_user,
+            $rest_read_only_admin_permission,
+            'REST read only administrators'
         );
 
         return $this;

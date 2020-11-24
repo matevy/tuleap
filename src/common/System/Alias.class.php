@@ -23,7 +23,8 @@
  *
  * @see `man alias` for reference.
  */
-class System_Alias {
+class System_Alias
+{
 
     private $value;
     private $name;
@@ -33,16 +34,19 @@ class System_Alias {
      * @param string $name
      * @param string $value
      */
-    public function __construct($name, $value) {
+    public function __construct($name, $value)
+    {
         $this->name = $name;
         $this->value = $value;
     }
 
-    public function getName() {
+    public function getName()
+    {
         return $this->name;
     }
 
-    public function getValue() {
+    public function getValue()
+    {
         return $this->value;
     }
 }

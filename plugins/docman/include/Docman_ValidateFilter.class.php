@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -20,58 +20,66 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Docman_ValidateFilterFactory {
-    function __construct() {
-        
+class Docman_ValidateFilterFactory
+{
+    function __construct()
+    {
     }
 
-    function getFromFilter($filter) {
+    function getFromFilter($filter)
+    {
         $f = null;
-        if(is_a($filter, 'Docman_FilterDate')) {
+        if (is_a($filter, 'Docman_FilterDate')) {
             $f = new Docman_ValidateFilterDate($filter);
         }
         return $f;
     }
-
 }
 
-class Docman_ValidateFilter {
+class Docman_ValidateFilter
+{
     var $filter;
     var $message;
     var $isValid;
-    
-    function __construct($filter) {
+
+    function __construct($filter)
+    {
         $this->filter = $filter;
         $this->message = '';
-        $this->isValid = null; 
+        $this->isValid = null;
     }
 
-    function validate() {
+    function validate()
+    {
         return $this->isValid;
     }
 
-    function getMessage() {
+    function getMessage()
+    {
         return $this->message;
     }
 }
 
-class Docman_ValidateFilterDate extends Docman_ValidateFilter {
+class Docman_ValidateFilterDate extends Docman_ValidateFilter
+{
 
-    function __construct($filter) {
+    function __construct($filter)
+    {
         parent::__construct($filter);
     }
 
-    function validate() {
-        if($this->isValid === null) {
+    function validate()
+    {
+        if ($this->isValid === null) {
             $this->isValid = false;
-            if($this->filter->getValue() == '') {
+            if ($this->filter->getValue() == '') {
                 $this->isValid = true;
-            }
-            elseif(preg_match('/[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}/',
-                              $this->filter->getValue())) {
-                $this->isValid = true;                
-            }
-            else {
+            } elseif (preg_match(
+                '/[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}/',
+                $this->filter->getValue()
+            )) {
+                $this->isValid = true;
+            } else {
                 $today = date("Y-n-j");
                 $this->message = $GLOBALS['Language']->getText('plugin_docman', 'filters_date_message', array($this->filter->md->getName(), $today));
             }
@@ -79,5 +87,3 @@ class Docman_ValidateFilterDate extends Docman_ValidateFilter {
         return $this->isValid;
     }
 }
-
-?>

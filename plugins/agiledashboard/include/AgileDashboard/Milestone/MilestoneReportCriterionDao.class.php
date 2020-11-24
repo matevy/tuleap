@@ -19,9 +19,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class MilestoneReportCriterionDao extends DataAccessObject {
+class MilestoneReportCriterionDao extends DataAccessObject
+{
 
-    public function save($report_id, $milestone_id) {
+    public function save($report_id, $milestone_id)
+    {
         $report_id    = $this->da->escapeInt($report_id);
         $milestone_id = $this->da->escapeInt($milestone_id);
 
@@ -31,7 +33,8 @@ class MilestoneReportCriterionDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function delete($report_id) {
+    public function delete($report_id)
+    {
         $report_id = $this->da->escapeInt($report_id);
 
         $sql = "DELETE FROM plugin_agiledashboard_criteria
@@ -40,7 +43,8 @@ class MilestoneReportCriterionDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function searchByReportId($report_id) {
+    public function searchByReportId($report_id)
+    {
         $report_id = $this->da->escapeInt($report_id);
 
         $sql = "SELECT milestone_id
@@ -50,5 +54,3 @@ class MilestoneReportCriterionDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 }
-
-?>

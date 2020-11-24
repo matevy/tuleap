@@ -25,7 +25,8 @@
 use Tuleap\Git\Gitolite\SSHKey\Dumper;
 use Tuleap\Git\Gitolite\SSHKey\InvalidKeysCollector;
 
-class SystemEvent_GIT_GERRIT_ADMIN_KEY_DUMP extends SystemEvent {
+class SystemEvent_GIT_GERRIT_ADMIN_KEY_DUMP extends SystemEvent
+{
     public const NAME = 'GIT_GERRIT_ADMIN_KEY_DUMP';
 
     /** @var Git_RemoteServer_GerritServerFactory */
@@ -39,19 +40,22 @@ class SystemEvent_GIT_GERRIT_ADMIN_KEY_DUMP extends SystemEvent {
         $this->ssh_key_dumper        = $ssh_key_dumper;
     }
 
-    private function getServerId() {
+    private function getServerId()
+    {
         return intval($this->getParameter(0));
     }
 
-    private function getServer() {
+    private function getServer()
+    {
         try {
             return $this->gerrit_server_factory->getServerById($this->getServerId());
         } catch (Git_RemoteServer_NotFoundException $e) {
-            return new Git_RemoteServer_GerritServer($this->getServerId(), '',  '', '', '',  '', '', false, '', '', '', '');
+            return new Git_RemoteServer_GerritServer($this->getServerId(), '', '', '', '', '', '', false, '', '', '', '');
         }
     }
 
-    public function process() {
+    public function process()
+    {
         $server = $this->getServer();
         $replication_key = new Git_RemoteServer_Gerrit_ReplicationSSHKey();
         $replication_key
@@ -64,7 +68,8 @@ class SystemEvent_GIT_GERRIT_ADMIN_KEY_DUMP extends SystemEvent {
         }
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         if ($with_link) {
             $server = $this->getServer();
             return 'Update SSH replication key of gerrit server '. $server->getBaseUrl() .' (Id: '.$server->getId().')';

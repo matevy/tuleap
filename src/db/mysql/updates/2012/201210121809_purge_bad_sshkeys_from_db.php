@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) STMicroelectronics 2012. All rights reserved
  *
@@ -17,18 +16,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201210121809_purge_bad_sshkeys_from_db extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201210121809_purge_bad_sshkeys_from_db extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return <<<EOT
 Ensure SSH keys uploaded by users are valid.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $update_sql = 'UPDATE user SET authorized_keys = :authorized_keys WHERE user_id = :user_id';
         $update_sth = $this->db->dbh->prepare($update_sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
@@ -57,8 +60,6 @@ EOT;
         }
         if (file_exists($key_file)) {
             unlink($key_file);
-        }    
+        }
     }
 }
-
-?>

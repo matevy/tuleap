@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Tuleap; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
 use Test\Rest\TuleapConfig;
@@ -24,7 +23,7 @@ use Test\Rest\TuleapConfig;
 /**
  * @group UserGroupTests
  */
-class UsersTest extends RestBase // phpcs:ignore
+final class UsersTest extends RestBase // phpcs:ignore
 {
 
     /**
@@ -55,12 +54,29 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->assertFalse(isset($json['status']));
     }
 
-    public function testGETIdAsRegularUser()
+    public function testGETIdAsRegularUser(): void
     {
-        $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME]));
-        $this->assertEquals($response->getStatusCode(), 200);
+        $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->get('users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME]));
+
+        $this->assertGETId($response);
+    }
+
+    public function testGETIdWithReadOnlyAdmin()
+    {
+        $response = $this->getResponse(
+            $this->client->get('users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME]),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETId($response);
+    }
+
+    private function assertGETId(\Guzzle\Http\Message\Response $response): void
+    {
+        $this->assertEquals(200, $response->getStatusCode());
 
         $json = $response->json();
+
         $this->assertEquals($this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME], $json['id']);
         $this->assertEquals('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME], $json['uri']);
         $this->assertEquals(REST_TestDataBuilder::TEST_USER_1_EMAIL, $json['email']);
@@ -109,7 +125,7 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->assertContains('ug_102', $json);
     }
 
-    public function testUserCanUpdateAnotherUserIfSheHasDelegatedPermissions()
+    public function testUserCanUpdateAnotherUserIfSheHasDelegatedPermissions(): void
     {
         $value = json_encode(
             array(
@@ -139,13 +155,46 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
-    public function testSiteAdminCanSeeGroupOfAnyUser()
+    public function testPATCHUserWithReadOnlySiteAdmin(): void
     {
-        $response = $this->getResponseByName(REST_TestDataBuilder::ADMIN_USER_NAME, $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME].'/membership'));
+        $value = json_encode(
+            array(
+                'values' => array(
+                    'status' => "R",
+                )
+            )
+        );
+        $response = $this->getResponse(
+            $this->client->patch('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME], null, $value),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
+    }
+
+    public function testSiteAdminCanSeeGroupOfAnyUser(): void
+    {
+        $response = $this->getResponseByName(REST_TestDataBuilder::ADMIN_USER_NAME, $this->client->get('users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME] . '/membership'));
         $this->assertEquals($response->getStatusCode(), 200);
 
+        $this->assertGETMembershipAsAdmin($response);
+    }
+
+    private function assertGETMembershipAsAdmin(\Guzzle\Http\Message\Response $response): void
+    {
         $json = $response->json();
         $this->assertCount(3, $json);
+    }
+
+    public function testReadOnlySiteAdminCanSeeGroupOfAnyUser(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME].'/membership'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertGETMembershipAsAdmin($response);
     }
 
     public function testInRestrictedForgeThatActiveProjectMemberIsMemberOfStaticUgroup()
@@ -182,19 +231,62 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->tuleap_config->setForgeToAnonymous();
     }
 
-    public function testInRestrictedForgeThatRestrictedNotProjectMemberIsOnlyMemberOfStaticUgroupInPublicInclRestricted()
+    public function testInRestrictedForgeThatRestrictedMemberOfStaticUGroupAlsoBecomesProjectMemberInPrivateProject(): void
     {
         $this->tuleap_config->setForgeToRestricted();
 
         $response = $this->getResponseByName(
             REST_TestDataBuilder::ADMIN_USER_NAME,
-            $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_RESTRICTED_2_NAME].'/membership')
+            $this->client->get(
+                'users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_RESTRICTED_2_NAME] . '/membership'
+            )
+        );
+        $ugroups  = $response->json();
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_restricted_2 should be listed as member of ug_103 ugroup because he is added as project member automatically'
         );
 
-        $ugroups = $response->json();
-        $this->assertNotContains('ug_'. REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID, $ugroups);
-        $this->assertNotContains('ug_'. REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID, $ugroups);
-        $this->assertContains('ug_'. REST_TestDataBuilder::STATIC_PUBLIC_INCL_RESTRICTED_UGROUP_DEVS_ID, $ugroups);
+        $this->tuleap_config->setForgeToAnonymous();
+    }
+
+    public function testInRestrictedForgeThatRestrictedNotProjectMemberIsNotMemberOfStaticUGroupInPublicProject(): void
+    {
+        $this->tuleap_config->setForgeToRestricted();
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->get(
+                'users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_RESTRICTED_2_NAME] . '/membership'
+            )
+        );
+        $ugroups  = $response->json();
+        $this->assertNotContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_restricted_2 should NOT be listed as member of ug_103 ugroup because he is not project member'
+        );
+
+        $this->tuleap_config->setForgeToAnonymous();
+    }
+
+    public function testInRestrictedForgeThatRestrictedIsMemberOfStaticUGroupInPublicInclRestrictedProject(): void
+    {
+        $this->tuleap_config->setForgeToRestricted();
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->get(
+                'users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_RESTRICTED_2_NAME] . '/membership'
+            )
+        );
+        $ugroups  = $response->json();
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PUBLIC_INCL_RESTRICTED_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_restricted_2 should be listed as member of ug_105 ugroup because he is added as project member automatically'
+        );
 
         $this->tuleap_config->setForgeToAnonymous();
     }
@@ -207,7 +299,6 @@ class UsersTest extends RestBase // phpcs:ignore
             REST_TestDataBuilder::ADMIN_USER_NAME,
             $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_4_NAME].'/membership')
         );
-
         $ugroups = $response->json();
         $this->assertNotContains('ug_'. REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID, $ugroups);
         $this->assertNotContains('ug_'. REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID, $ugroups);
@@ -216,19 +307,62 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->tuleap_config->setForgeToAnonymous();
     }
 
-    public function testInRestrictedForgeThatActiveNotProjectMemberIsMemberOfStaticUgroupExceptPrivateProjects()
+    public function testInRestrictedForgeThatActiveMemberOfStaticUGroupAlsoBecomesProjectMemberInPrivateProject(): void
     {
         $this->tuleap_config->setForgeToRestricted();
 
         $response = $this->getResponseByName(
             REST_TestDataBuilder::ADMIN_USER_NAME,
-            $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_5_NAME].'/membership')
+            $this->client->get(
+                'users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_5_NAME] . '/membership'
+            )
+        );
+        $ugroups  = $response->json();
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_tester_5 should be listed as member of ug_103 ugroup because he is added as project member automatically'
         );
 
-        $ugroups = $response->json();
-        $this->assertNotContains('ug_'. REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID, $ugroups);
-        $this->assertContains('ug_'. REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID, $ugroups);
-        $this->assertContains('ug_'. REST_TestDataBuilder::STATIC_PUBLIC_INCL_RESTRICTED_UGROUP_DEVS_ID, $ugroups);
+        $this->tuleap_config->setForgeToAnonymous();
+    }
+
+    public function testInRestrictedForgeThatActiveNotProjectMemberIsMemberOfStaticUGroupInPublicProject(): void
+    {
+        $this->tuleap_config->setForgeToRestricted();
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->get(
+                'users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_5_NAME] . '/membership'
+            )
+        );
+        $ugroups  = $response->json();
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_tester_5 should be listed as member of ug_104 ugroup because the project is public'
+        );
+
+        $this->tuleap_config->setForgeToAnonymous();
+    }
+
+    public function testInRestrictedForgeThatActiveMemberOfStaticUGroupAlsoBecomesProjectMemberInPublicInclRestrictedProject(): void
+    {
+        $this->tuleap_config->setForgeToRestricted();
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->get(
+                'users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_5_NAME] . '/membership'
+            )
+        );
+        $ugroups  = $response->json();
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PUBLIC_INCL_RESTRICTED_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_tester_5 should be listed as member of ug_105 ugroup because he is added as project member automatically'
+        );
 
         $this->tuleap_config->setForgeToAnonymous();
     }
@@ -258,7 +392,7 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->assertNotContains('ug_'. REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID, $ugroups);
     }
 
-    public function testInAnonymousForgeThatActiveNotProjectMemberIsMemberOfStaticUgroupExceptPrivateProjects()
+    public function testInAnonymousForgeThatActiveNotProjectMemberIsMemberOfStaticUgroupInPublicProject(): void
     {
         $response = $this->getResponseByName(
             REST_TestDataBuilder::ADMIN_USER_NAME,
@@ -266,8 +400,27 @@ class UsersTest extends RestBase // phpcs:ignore
         );
 
         $ugroups = $response->json();
-        $this->assertNotContains('ug_'. REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID, $ugroups);
-        $this->assertContains('ug_'. REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID, $ugroups);
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_tester_5 should be listed as member of ug_104 ugroup because the project is public'
+        );
+    }
+
+    public function testInAnonymousForgeThatActiveMemberOfStaticUGroupAlsoBecomesProjectMemberInPrivateProject(): void
+    {
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->get(
+                'users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_5_NAME] . '/membership'
+            )
+        );
+        $ugroups  = $response->json();
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_tester_5 should be listed as member of ug_103 ugroup because he is added as project member automatically'
+        );
     }
 
     public function testInRegularForgeThatActiveProjectMemberIsMemberOfStaticUgroup()
@@ -303,7 +456,7 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->tuleap_config->setForgeToAnonymous();
     }
 
-    public function testInRegularForgeThatActiveNotProjectMemberIsMemberOfStaticUgroupExceptPrivateProjects()
+    public function testInRegularForgeThatActiveNotProjectMemberIsMemberOfStaticUgroupInPublicProject(): void
     {
         $this->tuleap_config->setForgeToRegular();
 
@@ -313,17 +466,56 @@ class UsersTest extends RestBase // phpcs:ignore
         );
 
         $ugroups = $response->json();
-        $this->assertNotContains('ug_'. REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID, $ugroups);
-        $this->assertContains('ug_'. REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID, $ugroups);
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PUBLIC_MEMBER_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_tester_5 should be listed as member of ug_104 ugroup because the project is public'
+        );
 
         $this->tuleap_config->setForgeToAnonymous();
     }
 
-    public function testGetUsersWithMatching()
+    public function testInRegularForgeThatActiveMemberOfStaticUGroupAlsoBecomesProjectMemberInPrivateProject(): void
+    {
+        $this->tuleap_config->setForgeToRegular();
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->get(
+                'users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_5_NAME] . '/membership'
+            )
+        );
+        $ugroups  = $response->json();
+        $this->assertContains(
+            'ug_' . REST_TestDataBuilder::STATIC_PRIVATE_MEMBER_UGROUP_DEVS_ID,
+            $ugroups,
+            'rest_api_tester_5 should be listed as member of ug_103 ugroup because he is added as project member automatically'
+        );
+
+        $this->tuleap_config->setForgeToAnonymous();
+    }
+
+    public function testGetUsersWithMatching(): void
     {
         $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->get('users?query=rest_api_tester&limit=10'));
         $this->assertEquals($response->getStatusCode(), 200);
 
+        $this->assertGETUsersWithMatching($response);
+    }
+
+    public function testGetUsersWithMatchingAsReadOnlySiteAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get('users?query=rest_api_tester&limit=10'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertGETUsersWithMatching($response);
+    }
+
+    private function assertGETUsersWithMatching(\Guzzle\Http\Message\Response $response): void
+    {
         $json = $response->json();
         $this->assertCount(5, $json);
     }
@@ -371,15 +563,26 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->assertEquals($response->getStatusCode(), 400);
     }
 
-    public function testOptionsPreferences()
+    public function testOptionsPreferences(): void
     {
         $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->options('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME].'/preferences'));
 
         $this->assertEquals(array('OPTIONS', 'GET', 'PATCH', 'DELETE'), $response->getHeader('Allow')->normalize()->toArray());
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function testPatchPreferences()
+    public function testOptionsPreferencesWithReadOnlySiteAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME].'/preferences'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(array('OPTIONS', 'GET', 'PATCH', 'DELETE'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testPatchPreferences(): void
     {
         $preference = json_encode(
             array(
@@ -389,7 +592,24 @@ class UsersTest extends RestBase // phpcs:ignore
         );
 
         $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->patch('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME].'/preferences', null, $preference));
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testPatchPreferencesWithReadOnlySiteAdmin(): void
+    {
+        $preference = json_encode(
+            array(
+                'key'   => 'my_preference',
+                'value' => 'my_preference_value'
+            )
+        );
+
+        $response = $this->getResponse(
+            $this->client->patch('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME].'/preferences', null, $preference),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
     }
 
     public function testPatchPreferencesAnotherUser()
@@ -405,12 +625,27 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->assertEquals($response->getStatusCode(), 403);
     }
 
-    public function _testGETPreferences()
+    public function testGETPreferences(): void
     {
-        $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME].'/preferences?key=my_preference'));
+        $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->get('users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME] . '/preferences?key=my_preference'));
 
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
 
+        $this->assertGETPreferences($response);
+    }
+
+    public function testGETPreferencesWithReadOnlySiteAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get('users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME] . '/preferences?key=my_preference'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
+    }
+
+    private function assertGETPreferences(\Guzzle\Http\Message\Response $response): void
+    {
         $json = $response->json();
         $this->assertEquals('my_preference', $json['key']);
         $this->assertEquals('my_preference_value', $json['value']);
@@ -439,6 +674,26 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->assertEquals(false, $json['value']);
     }
 
+    public function testDeletePreferencesWithReadOnlySiteAdmin(): void
+    {
+        $preference = json_encode(
+            array(
+                'key' => 'preference_to_be_deleted',
+                'value' => 'awesome_value'
+            )
+        );
+
+        $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->patch('users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME] . '/preferences', null, $preference));
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $response = $this->getResponse(
+            $this->client->delete('users/' . $this->user_ids[REST_TestDataBuilder::TEST_USER_1_NAME] . '/preferences?key=preference_to_be_deleted'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
+    }
+
     public function testGETPreferencesAnotherUser()
     {
         $response = $this->getResponseByName(
@@ -457,12 +712,32 @@ class UsersTest extends RestBase // phpcs:ignore
         $this->assertEquals(403, $response->getStatusCode());
     }
 
+    public function testGETHistoryWithReadOnlySiteAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME].'/history'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
+    }
+
     public function testPUTHistoryAnotherUser()
     {
         $response = $this->getResponseByName(
             REST_TestDataBuilder::TEST_USER_1_NAME,
             $this->client->put('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME].'/history', null, json_encode(array()))
         );
+        $this->assertEquals(403, $response->getStatusCode());
+    }
+
+    public function testPUTHistoryWithReadOnlySiteAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->put('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME].'/history', null, json_encode(array())),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
         $this->assertEquals(403, $response->getStatusCode());
     }
 
@@ -483,6 +758,16 @@ class UsersTest extends RestBase // phpcs:ignore
             REST_TestDataBuilder::TEST_USER_1_NAME,
             $this->client->put('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME].'/history', null, $history_entries)
         );
+        $this->assertEquals(403, $response->getStatusCode());
+    }
+
+    public function testGETAccessKeysWithReadOnlySiteAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get('users/'.$this->user_ids[REST_TestDataBuilder::TEST_USER_2_NAME].'/access_keys'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
         $this->assertEquals(403, $response->getStatusCode());
     }
 }

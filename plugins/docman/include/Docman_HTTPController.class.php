@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
- * Copyright (c) Enalean, 2017. All rights reserved
+ * Copyright (c) Enalean, 2017-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -21,12 +21,16 @@
 
 use Tuleap\Mail\MailFilter;
 use Tuleap\Mail\MailLogger;
+use Tuleap\Project\ProjectAccessChecker;
+use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
 
 require_once('Docman_Controller.class.php');
 require_once('Docman_Actions.class.php');
-class Docman_HTTPController extends Docman_Controller {
+class Docman_HTTPController extends Docman_Controller
+{
 
-    function __construct(&$plugin, $pluginPath, $themePath, $request = null) {
+    function __construct(&$plugin, $pluginPath, $themePath, $request = null)
+    {
         if (!$request) {
             $request = HTTPRequest::instance();
         }
@@ -34,24 +38,28 @@ class Docman_HTTPController extends Docman_Controller {
     }
 
 
-    /* protected */ function _includeView() {
+    /* protected */ function _includeView()
+    {
         $className = 'Docman_View_'. $this->view;
-        if(file_exists(dirname(__FILE__).'/view/'. $className .'.class.php')) {
+        if (file_exists(dirname(__FILE__).'/view/'. $className .'.class.php')) {
             require_once('view/'. $className .'.class.php');
             return $className;
         }
         return false;
     }
-    /* protected */ function _set_deleteView_errorPerms() {
+    /* protected */ function _set_deleteView_errorPerms()
+    {
         $this->view = 'Details';
     }
-    /* protected */ function _set_redirectView() {
+    /* protected */ function _set_redirectView()
+    {
         if ($redirect_to = Docman_Token::retrieveUrl($this->request->get('token'))) {
             $this->_viewParams['redirect_to'] = $redirect_to;
         }
         $this->view = 'RedirectAfterCrud';
     }
-    /* protected */ function _setView($view) {
+    /* protected */ function _setView($view)
+    {
         if ($view == 'getRootFolder') {
             $this->feedback->log('error', 'Unable to process request');
             $this->_set_redirectView();
@@ -59,20 +67,24 @@ class Docman_HTTPController extends Docman_Controller {
             $this->view = $view;
         }
     }
-    /* protected */ function _set_moveView_errorPerms() {
+    /* protected */ function _set_moveView_errorPerms()
+    {
         $this->view = 'Details';
     }
-    /* protected */ function _set_createItemView_errorParentDoesNotExist(&$item, $get_show_view) {
-    	   $this->view = $item->accept($get_show_view, $this->request->get('report'));
+    /* protected */ function _set_createItemView_errorParentDoesNotExist(&$item, $get_show_view)
+    {
+           $this->view = $item->accept($get_show_view, $this->request->get('report'));
     }
-    /* protected */ function _set_createItemView_afterCreate($view) {
+    /* protected */ function _set_createItemView_afterCreate($view)
+    {
         if ($view == 'createFolder') {
             $this->view = 'NewFolder';
         } else {
             $this->view = 'NewDocument';
         }
     }
-    /* protected */ function _set_doesnot_belong_to_project_error($item, $group) {
+    /* protected */ function _set_doesnot_belong_to_project_error($item, $group)
+    {
         $this->feedback->log('warning', $GLOBALS['Language']->getText('plugin_docman', 'item_does_not_belong', array($item->getId(), util_unconvert_htmlspecialchars($group->getPublicName()))));
         $this->_viewParams['redirect_to'] = str_replace('group_id='. $this->request->get('group_id'), 'group_id='. $item->getGroupId(), $_SERVER['REQUEST_URI']);
         $this->view = 'Redirect';
@@ -82,7 +94,8 @@ class Docman_HTTPController extends Docman_Controller {
      * Get the list of all futur obsolete documents and warn document owner
      * about this obsolescence.
      */
-    function notifyFuturObsoleteDocuments() {
+    function notifyFuturObsoleteDocuments()
+    {
         $pm = ProjectManager::instance();
         $itemFactory = new Docman_ItemFactory(0);
 
@@ -92,7 +105,7 @@ class Docman_HTTPController extends Docman_Controller {
 
         $itemIter = $itemFactory->findFuturObsoleteItems();
         $itemIter->rewind();
-        while($itemIter->valid()) {
+        while ($itemIter->valid()) {
             $item = $itemIter->current();
 
             // Users
@@ -101,15 +114,15 @@ class Docman_HTTPController extends Docman_Controller {
 
             // Project
             $group = $pm->getProject($item->getGroupId());
-            
+
             // Date
-            $obsoDate = util_timestamp_to_userdateformat($item->getObsolescenceDate(), true);
-            
+            $obsoDate = DateHelper::formatForLanguage($GLOBALS['Language'], $item->getObsolescenceDate(), true);
+
             // Urls
-            $baseUrl = get_server_url().$this->pluginPath.'/index.php?group_id='.$item->getGroupId().'&id='.$item->getId();
+            $baseUrl = HTTPRequest::instance()->getServerUrl().$this->pluginPath.'/index.php?group_id='.$item->getGroupId().'&id='.$item->getId();
             $directUrl = $baseUrl .'&action=show';
             $detailUrl = $baseUrl .'&action=details';
-            
+
             $subj = $this->txt('obso_warn_email_subject', array($GLOBALS['sys_name'],
                                                                 $item->getTitle()));
             $body = $this->txt('obso_warn_email_body', array($item->getTitle(),
@@ -123,7 +136,11 @@ class Docman_HTTPController extends Docman_Controller {
                     TemplateRendererFactory::build(),
                     new MailFilter(
                         UserManager::instance(),
-                        new URLVerification(),
+                        new ProjectAccessChecker(
+                            PermissionsOverrider_PermissionsOverriderManager::instance(),
+                            new RestrictedUserCanAccessProjectVerifier(),
+                            EventManager::instance()
+                        ),
                         new MailLogger()
                     )
                 )
@@ -144,5 +161,3 @@ class Docman_HTTPController extends Docman_Controller {
         }
     }
 }
-
-?>

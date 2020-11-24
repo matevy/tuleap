@@ -27,41 +27,45 @@
 * then target field will propose a value.
 *
 */
-class ArtifactRuleValue extends ArtifactRule {
-    
+class ArtifactRuleValue extends ArtifactRule
+{
+
     var $target_value;
-    
-    function __construct($id, $group_artifact_id, $source_field, $source_value, $target_field, $target_value) {
+
+    function __construct($id, $group_artifact_id, $source_field, $source_value, $target_field, $target_value)
+    {
         parent::__construct($id, $group_artifact_id, $source_field, $source_value, $target_field);
         $this->target_value = $target_value;
     }
-    
+
     /**
     * Returns if a rule can be applied to a tuple
-    * 
-    * If parameters are not same tracker, same source field, same source value and 
+    *
+    * If parameters are not same tracker, same source field, same source value and
     * same target field, then returns true.
     * Else if params are same target value then returns true,
     * Else returns false.
     *
-    * @return boolean
+    * @return bool
     */
-    function applyTo($group_artifact_id, $source_field, $source_value, $target_field, $target_value) {
+    function applyTo($group_artifact_id, $source_field, $source_value, $target_field, $target_value)
+    {
         $can_apply_to = $this->canApplyTo($group_artifact_id, $source_field, $source_value, $target_field, $target_value);
         $pass = $can_apply_to && $target_value == $this->target_value;
         return $pass;
     }
-    
-    function canApplyTo($group_artifact_id, $source_field, $source_value, $target_field, $target_value) {
+
+    function canApplyTo($group_artifact_id, $source_field, $source_value, $target_field, $target_value)
+    {
         $match = $group_artifact_id == $this->group_artifact_id &&
-            $source_field == $this->source_field && 
-            $source_value == $this->source_value && 
+            $source_field == $this->source_field &&
+            $source_value == $this->source_value &&
             $target_field == $this->target_field;
         return $match;
     }
-    
-    function getTargetValueId() {
+
+    function getTargetValueId()
+    {
         return $this->target_value;
     }
 }
-?>

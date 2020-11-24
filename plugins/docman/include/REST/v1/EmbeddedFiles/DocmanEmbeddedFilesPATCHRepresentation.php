@@ -22,30 +22,25 @@ declare(strict_types = 1);
 
 namespace Tuleap\Docman\REST\v1\EmbeddedFiles;
 
-class DocmanEmbeddedFilesPATCHRepresentation
+use Tuleap\Docman\REST\v1\ItemRepresentation;
+use Tuleap\Docman\REST\v1\Metadata\ItemStatusMapper;
+
+class DocmanEmbeddedFilesPATCHRepresentation extends DocmanEmbeddedFileVersionPOSTRepresentation
 {
     /**
-     * @var string Title of version {@from body} {@required false}
+     * @var string {@type string} {@required true}
      */
-    public $version_title = '';
-
+    public $title;
     /**
-     * @var string Description of changes {@from body} {@required false}
+     * @var string {@type string} {@required false}
      */
-    public $change_log = '';
-
+    public $description;
     /**
-     * @var bool Lock file while updating {@from body} {@required true} {@type bool}
+     * @var string | null Item status {@from body} {@required false} {@choice none,draft,approved,rejected}
      */
-    public $should_lock_file;
-
+    public $status = ItemStatusMapper::ITEM_STATUS_NONE;
     /**
-     * @var string | null action for approval table when an item is updated {@from body} {@required false} {@choice copy,reset,empty}
+     * @var string | null Obsolescence date {@from body} {@required false}
      */
-    public $approval_table_action;
-
-    /**
-     * @var EmbeddedPropertiesPOSTPATCHRepresentation File properties must be set when creating a new file {@from body} {@type \Tuleap\Docman\REST\v1\EmbeddedFiles\EmbeddedPropertiesPOSTPATCHRepresentation} {@required true}
-     */
-    public $embedded_properties;
+    public $obsolescence_date = ItemRepresentation::OBSOLESCENCE_DATE_NONE;
 }

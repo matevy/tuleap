@@ -16,14 +16,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b20140805_add_admin_options_table extends ForgeUpgrade_Bucket {
+class b20140805_add_admin_options_table extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add plugin_mediawiki_admin_options table
 EOT;
@@ -34,7 +36,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -43,7 +46,8 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE IF NOT EXISTS plugin_mediawiki_admin_options (
                 project_id INT(11) UNSIGNED PRIMARY KEY,
                 enable_compatibility_view BOOLEAN DEFAULT 0
@@ -52,12 +56,11 @@ EOT;
         $this->execDB($sql, 'An error occured while adding plugin_mediawiki_admin_options table: ');
     }
 
-    private function execDB($sql, $message) {
+    private function execDB($sql, $message)
+    {
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message.implode(', ', $this->db->dbh->errorInfo()));
         }
     }
 }
-
-?>

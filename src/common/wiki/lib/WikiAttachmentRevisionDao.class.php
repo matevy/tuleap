@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright STMicroelectronics, 2006
- * Originally written by Manuel VACELET, STMicroelectronics, 2006 
+ * Originally written by Manuel VACELET, STMicroelectronics, 2006
  *
  * This file is a part of Codendi.
  *
@@ -19,46 +19,51 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/dao/include/DataAccessObject.class.php');
-
-class WikiAttachmentRevisionDao extends DataAccessObject {
+class WikiAttachmentRevisionDao extends DataAccessObject
+{
     /**
      * Create a new attachment revision
      *
-     * @return boolean success or failure
+     * @return bool success or failure
      */
-    function create($attachmentId, $ownerId, $date, $revision, $type, $size) {
-        $sql = sprintf('INSERT INTO wiki_attachment_revision SET'
+    function create($attachmentId, $ownerId, $date, $revision, $type, $size)
+    {
+        $sql = sprintf(
+            'INSERT INTO wiki_attachment_revision SET'
                        .'  attachment_id = %d'
                        .', user_id       = %d'
                        .', date          = %d'
                        .', revision      = %d'
                        .', mimetype      = "%s"'
                        .', size          = %d',
-                       $attachmentId,
-                       $ownerId,
-                       $date,
-                       $revision,
-                       $this->da->quoteSmart($type),
-                       $size);
+            $attachmentId,
+            $ownerId,
+            $date,
+            $revision,
+            $this->da->quoteSmart($type),
+            $size
+        );
 
         $inserted = $this->update($sql);
         return $inserted;
     }
 
-    function log($attachmentId, $revision, $groupId, $userId, $date) {
-        $sql = sprintf('INSERT INTO wiki_attachment_log SET'
+    function log($attachmentId, $revision, $groupId, $userId, $date)
+    {
+        $sql = sprintf(
+            'INSERT INTO wiki_attachment_log SET'
                        .'  user_id                     = %d'
                        .', group_id                    = %d'
                        .', wiki_attachment_id          = %d'
                        .', wiki_attachment_revision_id = %d'
                        .', time                        = %d',
-                       $userId,
-                       $groupId,
-                       $attachmentId,
-                       $revision,
-                       $date);
-        
+            $userId,
+            $groupId,
+            $attachmentId,
+            $revision,
+            $date
+        );
+
         $inserted = $this->update($sql);
         return $inserted;
     }
@@ -66,30 +71,31 @@ class WikiAttachmentRevisionDao extends DataAccessObject {
     /**
      * Get one revision
      */
-    function getRevision($attachmentId, $revision) {
-        $sql = sprintf('SELECT * FROM wiki_attachment_revision'
+    function getRevision($attachmentId, $revision)
+    {
+        $sql = sprintf(
+            'SELECT * FROM wiki_attachment_revision'
                        .' WHERE attachment_id=%d'
                        .' AND revision=%d',
-                       $attachmentId,
-                       $revision);
+            $attachmentId,
+            $revision
+        );
 
          return $this->retrieve($sql);
     }
-    
+
     /**
      * Fetch all revisions of a given attachment
      */
-    function getAllRevisions($id) {
-        $sql = sprintf('SELECT * FROM wiki_attachment_revision'
+    function getAllRevisions($id)
+    {
+        $sql = sprintf(
+            'SELECT * FROM wiki_attachment_revision'
                        .' WHERE attachment_id=%d'
                        .' ORDER BY date DESC',
-                       $id);
-        
-        return $this->retrieve($sql);        
+            $id
+        );
+
+        return $this->retrieve($sql);
     }
-
-    
-
 }
-
-?>

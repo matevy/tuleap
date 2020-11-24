@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_XMLImport_XMLImportFieldStrategyOpenList implements Tracker_Artifact_XMLImport_XMLImportFieldStrategy {
+class Tracker_Artifact_XMLImport_XMLImportFieldStrategyOpenList implements Tracker_Artifact_XMLImport_XMLImportFieldStrategy
+{
 
     public const FORMAT_ID       = 'id';
     public const FORMAT_LDAP     = 'ldap';
@@ -69,12 +70,13 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyOpenList implements Track
         return implode(',', $values);
     }
 
-    private function getUserValue(Tracker_FormElement_Field $field, $value) {
+    private function getUserValue(Tracker_FormElement_Field $field, SimpleXMLElement $value)
+    {
         if (isset($value['format']) && (string) $value['format'] === self::FORMAT_ID) {
             return (string) $value;
         }
 
-        if ($this->doesValueConcernUser($value)){
+        if ($this->doesValueConcernUser($value)) {
             $user = $this->user_finder->getUser($value);
 
             if ($user->isAnonymous()) {
@@ -87,15 +89,17 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyOpenList implements Track
         return $field->getFieldData((string) $value);
     }
 
-    private function doesValueConcernUser($value) {
+    private function doesValueConcernUser($value)
+    {
         return isset($value['format']) &&
             ((string) $value['format'] === self::FORMAT_LDAP ||
              (string) $value['format'] === self::FORMAT_USERNAME
             );
     }
 
-    private function getFieldChangeId(Tracker_FormElement_Field $field, $value) {
-        if (isset($value['format']) && (string) $value['format'] === self::FORMAT_ID){
+    private function getFieldChangeId(Tracker_FormElement_Field $field, SimpleXMLElement $value)
+    {
+        if (isset($value['format']) && (string) $value['format'] === self::FORMAT_ID) {
             return $this->xml_fields_mapping->getNewOpenValueId((string) $value);
         }
 

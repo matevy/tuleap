@@ -18,9 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/system_event/SystemEvent.class.php';
-
-class SystemEvent_GIT_REPO_UPDATE extends SystemEvent {
+class SystemEvent_GIT_REPO_UPDATE extends SystemEvent
+{
     public const NAME = 'GIT_REPO_UPDATE';
 
     /** @var GitRepositoryFactory */
@@ -47,7 +46,8 @@ class SystemEvent_GIT_REPO_UPDATE extends SystemEvent {
         $this->system_event_manager = $system_event_manager;
     }
 
-    public static function queueInSystemEventManager(SystemEventManager $system_event_manager, GitRepository $repository) {
+    public static function queueInSystemEventManager(SystemEventManager $system_event_manager, GitRepository $repository)
+    {
         $system_event_manager->createEvent(
             self::NAME,
             $repository->getId(),
@@ -56,16 +56,19 @@ class SystemEvent_GIT_REPO_UPDATE extends SystemEvent {
         );
     }
 
-    private function getRepositoryIdFromParameters() {
+    private function getRepositoryIdFromParameters()
+    {
         $parameters = $this->getParametersAsArray();
         return intval($parameters[0]);
     }
 
-    private function getRepositoryFromParameters() {
+    private function getRepositoryFromParameters()
+    {
         return $this->repository_factory->getRepositoryById($this->getRepositoryIdFromParameters());
     }
 
-    public function process() {
+    public function process()
+    {
         $repository = $this->getRepositoryFromParameters();
         if (! $repository) {
             if ($this->repository_factory->getDeletedRepository($this->getRepositoryIdFromParameters())) {
@@ -87,7 +90,8 @@ class SystemEvent_GIT_REPO_UPDATE extends SystemEvent {
         $this->done();
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         if ($with_link) {
             $repository = $this->getRepositoryFromParameters();
             if ($repository) {

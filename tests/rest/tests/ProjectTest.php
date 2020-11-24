@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2013 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -22,6 +22,8 @@ namespace Tuleap\REST;
 
 use Guzzle\Http\Exception\BadResponseException;
 use REST_TestDataBuilder;
+use Tuleap\Project\Registration\Template\ScrumTemplate;
+use Tuleap\Project\REST\v1\RestProjectCreator;
 
 /**
  * @group ProjectTests
@@ -40,8 +42,8 @@ class ProjectTest extends ProjectBase
     public function testPOSTForRegularUser()
     {
         $post_resource = json_encode([
-            'label' => 'Test Request 9747',
-            'shortname'  => 'test9747',
+            'label' => 'Test Request 9747 regular user',
+            'shortname'  => 'test9747-regular-user',
             'description' => 'Test of Request 9747 for REST API Project Creation',
             'is_public' => true,
             'template_id' => 100
@@ -55,7 +57,7 @@ class ProjectTest extends ProjectBase
                 $post_resource
             )
         );
-        $this->assertEquals($response->getStatusCode(), 403);
+        $this->assertEquals($response->getStatusCode(), 201);
     }
 
     public function testPOSTForAdmin()
@@ -104,6 +106,50 @@ class ProjectTest extends ProjectBase
         $project = $response->json();
         $this->assertArrayHasKey("id", $project);
         $this->assertEquals($response->getStatusCode(), 201);
+    }
+
+    public function testProjectCreationWithAnIncorrectProjectIDFails() : void
+    {
+        $post_resource = json_encode([
+            'label'       => 'Invalid project creation template ID',
+            'shortname'   => 'invalidtemplateid',
+            'description' => 'Invalid project creation template ID',
+            'is_public'   => true,
+            'template_id' => 0
+        ]);
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->post(
+                'projects',
+                null,
+                $post_resource
+            )
+        );
+        $this->assertEquals($response->getStatusCode(), 400);
+    }
+
+    public function testProjectCreationWithXMLTemplate() : void
+    {
+        $post_resource = json_encode([
+            'label'       => 'Created from scrum XML template',
+            'shortname'   => 'from-scrum-template',
+            'description' => 'I create projects',
+            'is_public'   => false,
+            'xml_template_name' => ScrumTemplate::NAME,
+        ]);
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::TEST_USER_5_NAME,
+            $this->client->post(
+                'projects',
+                null,
+                $post_resource
+            )
+        );
+        $this->assertEquals($response->getStatusCode(), 201);
+        $project = $response->json();
+        $this->assertEquals('Created from scrum XML template', $project['label']);
     }
 
     public function testGET()
@@ -180,6 +226,21 @@ class ProjectTest extends ProjectBase
             $json_projects[0]['resources']
         );
 
+        $this->assertContains(
+            [
+                'uri'  => 'projects/'.$this->project_private_member_id.'/docman_service',
+                'type' => 'docman_service',
+            ],
+            $json_projects[0]['resources']
+        );
+        $this->assertContains(
+            [
+                'uri'  => 'projects/'.$this->project_private_member_id.'/docman_metadata',
+                'type' => 'docman_metadata',
+            ],
+            $json_projects[0]['resources']
+        );
+
         $this->assertArrayHasKey('id', $json_projects[0]);
         $this->assertEquals($this->project_private_member_id, $json_projects[0]['id']);
 
@@ -189,6 +250,9 @@ class ProjectTest extends ProjectBase
         $this->assertArrayHasKey('label', $json_projects[0]);
         $this->assertEquals('Private member', $json_projects[0]['label']);
 
+        $this->assertArrayHasKey('access', $json_projects[0]);
+        $this->assertEquals('private', $json_projects[0]['access']);
+
         $this->assertArrayHasKey('is_member_of', $json_projects[0]);
         $this->assertTrue($json_projects[0]['is_member_of']);
 
@@ -196,11 +260,6 @@ class ProjectTest extends ProjectBase
         $this->assertEquals(
             $this->releases_tracker_id,
             $json_projects[0]['additional_informations']['agiledashboard']['root_planning']['milestone_tracker']['id']
-        );
-
-        $this->assertEquals(
-            $this->docman_root_id,
-            $json_projects[0]['additional_informations']['docman']['root_item']['id']
         );
 
         $this->assertEquals($response->getStatusCode(), 200);
@@ -846,14 +905,25 @@ class ProjectTest extends ProjectBase
                 'compared_to' => $first_item['id']
             )
         ));
+
+        $response_patch_with_rest_read_only = $this->getResponse(
+            $this->client->patch(
+                'projects/'.$this->project_private_member_id.'/backlog',
+                null,
+                $request_body
+            ),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response_patch_with_rest_read_only->getStatusCode());
+
         $response_patch = $this->getResponse($this->client->patch(
             'projects/'.$this->project_private_member_id.'/backlog',
             null,
             $request_body
         ));
 
-        $this->assertEquals($response_patch->getStatusCode(), 200);
-
+        $this->assertEquals(200, $response_patch->getStatusCode());
 
         // assert that the two items are in a different order
         $modified_backlog_items = $this->getResponse($this->client->get($uri))->json();
@@ -873,7 +943,7 @@ class ProjectTest extends ProjectBase
                 'compared_to' => $second_modified['id']
             )
         ))));
-        $this->assertEquals($reinvert_patch->getStatusCode(), 200);
+        $this->assertEquals(200, $reinvert_patch->getStatusCode());
 
         // assert that the two tasks are in the order
         $reverted_backlog_items = $this->getResponse($this->client->get($uri))->json();
@@ -916,7 +986,7 @@ class ProjectTest extends ProjectBase
                 )
             )
         ))));
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertEquals(
             array(
@@ -941,7 +1011,7 @@ class ProjectTest extends ProjectBase
                 )
             )
         ))));
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
 
         // Assert Everything is equal to the beginning of the test
         $this->assertEquals(
@@ -1146,5 +1216,74 @@ class ProjectTest extends ProjectBase
         );
 
         $this->assertEquals($response->getStatusCode(), 200);
+    }
+
+    public function testPUTBanner(): void
+    {
+        $payload = json_encode([
+            'message' => 'a banner message'
+        ]);
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->put(
+                'projects/' . $this->project_public_member_id .'/banner',
+                null,
+                $payload
+            )
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testPUTEmptyMessageBannerShouldReturn400(): void
+    {
+        $payload = json_encode([
+            'message' => ''
+        ]);
+
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->put(
+                'projects/' . $this->project_public_member_id .'/banner',
+                null,
+                $payload
+            )
+        );
+
+        $this->assertEquals(400, $response->getStatusCode());
+    }
+
+    /**
+     * @depends testGETBanner
+     */
+    public function testDELETEBanner(): void
+    {
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->delete(
+                'projects/' . $this->project_public_member_id . '/banner'
+            )
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    /**
+     * @depends testPUTBanner
+     */
+    public function testGETBanner(): void
+    {
+        $response = $this->getResponseByName(
+            REST_TestDataBuilder::ADMIN_USER_NAME,
+            $this->client->get(
+                'projects/' . $this->project_public_member_id .'/banner'
+            )
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $response_json = $response->json();
+        $this->assertEquals('a banner message', $response_json['message']);
     }
 }

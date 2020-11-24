@@ -20,7 +20,8 @@
 
 namespace Tuleap\ProFTPd\Xferlog;
 
-class Parser {
+class Parser
+{
 
     /**
      *
@@ -28,7 +29,8 @@ class Parser {
      *
      * @return Entry
      */
-    public function extract($line) {
+    public function extract($line)
+    {
         $pattern = '/^
             (?P<current_time>.*)
             \s

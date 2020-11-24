@@ -20,20 +20,23 @@
 
 require_once 'TreeNode.class.php';
 
-class TreeNode_GetStateVisitor {
-    
+class TreeNode_GetStateVisitor
+{
+
     public const STATE_NODE  = 0;
     public const STATE_LAST  = 1;
     public const STATE_BLANK = 2;
     public const STATE_PIPE  = 3;
-    
+
     private $states = array();
-    
-    public function getState(TreeNode $node) {
+
+    public function getState(TreeNode $node)
+    {
         return $this->states[$node->getId()];
     }
-    
-    private function setState(TreeNode $node, $prefix) {
+
+    private function setState(TreeNode $node, $prefix)
+    {
         $children    = $node->getChildren();
         $nb_children = count($children);
         $i = 0;
@@ -51,39 +54,45 @@ class TreeNode_GetStateVisitor {
         }
     }
 
-    protected function setChildState(TreeNode $child, $state) {
+    protected function setChildState(TreeNode $child, $state)
+    {
         $this->states[$child->getId()] = $state;
     }
 
-    private function getDefaultChildrenPrefix($prefix) {
+    private function getDefaultChildrenPrefix($prefix)
+    {
         $prefix[] = self::STATE_PIPE;
         return $prefix;
     }
-    
-    private function getChildrenPrefixForLastChild($prefix) {
+
+    private function getChildrenPrefixForLastChild($prefix)
+    {
         $prefix[] = self::STATE_BLANK;
         return $prefix;
     }
-    
-    private function getDefaultState($prefix) {
+
+    private function getDefaultState($prefix)
+    {
         $prefix[] = self::STATE_NODE;
         return $prefix;
     }
-    
-    private function getStateWhenChildIsTheLastOne($prefix) {
+
+    private function getStateWhenChildIsTheLastOne($prefix)
+    {
         $prefix[] = self::STATE_LAST;
         return $prefix;
     }
-    
-    private function isLastChildren($i, $nb_children) {
+
+    private function isLastChildren($i, $nb_children)
+    {
         return $i == $nb_children - 1;
     }
-    
-    public function visit(TreeNode $node, $prefix = null) {
+
+    public function visit(TreeNode $node, $prefix = null)
+    {
         if (!$prefix) {
             $prefix = array();
         }
         $this->setState($node, $prefix);
     }
 }
-?>

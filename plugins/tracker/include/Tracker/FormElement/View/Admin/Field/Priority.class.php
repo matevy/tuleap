@@ -19,22 +19,26 @@
  */
 
 
-class Tracker_FormElement_View_Admin_Priority extends Tracker_FormElement_View_Admin {
+class Tracker_FormElement_View_Admin_Priority extends Tracker_FormElement_View_Admin
+{
 
     /**
      * Fetch the "required" part of field admin
      *
      * @return string the HTML for the part of form for required checkbox
      */
-    protected function fetchRequired() {
+    protected function fetchRequired()
+    {
         return '';
     }
 
-    public function fetchAdminSpecificProperties() {
+    public function fetchAdminSpecificProperties()
+    {
         return '';
     }
 
-    protected function fetchCustomHelp() {
+    protected function fetchCustomHelp()
+    {
         $html  = '<span class="tracker-admin-form-element-help">';
         $html .= $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'priority_help');
         $html .= '</span>';
@@ -42,5 +46,3 @@ class Tracker_FormElement_View_Admin_Priority extends Tracker_FormElement_View_A
         return $html;
     }
 }
-
-?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2014 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -42,7 +42,8 @@ class User_ForgeUserGroupManager
     /**
      * @return bool
      */
-    public function deleteForgeUserGroup(User_ForgeUGroup $user_group) {
+    public function deleteForgeUserGroup(User_ForgeUGroup $user_group)
+    {
         if ($this->permission_checker->checkUGroupIsNotTheOnlyOneWithPlatformAdministrationPermission($user_group)) {
             throw new GroupCannotRemoveLastAdministrationPermission();
         }
@@ -50,11 +51,12 @@ class User_ForgeUserGroupManager
     }
 
     /**
-     * @return boolean
+     * @return bool
      * @throws User_UserGroupNotFoundException
      * @throws User_UserGroupNameInvalidException
      */
-    public function updateUserGroup(User_ForgeUgroup $user_group) {
+    public function updateUserGroup(User_ForgeUGroup $user_group)
+    {
         $row = $this->dao->getForgeUGroup($user_group->getId());
         if (! $row) {
             throw new User_UserGroupNotFoundException($user_group->getId());
@@ -71,7 +73,8 @@ class User_ForgeUserGroupManager
         );
     }
 
-    private function userGroupHasModifications(User_ForgeUgroup $user_group, $row) {
+    private function userGroupHasModifications(User_ForgeUGroup $user_group, $row)
+    {
         return $user_group->getName() != $row['name'] ||
             $user_group->getDescription() != $row['description'];
     }

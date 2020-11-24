@@ -1,25 +1,33 @@
 {
-  "name": "TLP",
+  "name": "tlp",
   "version": "0.0.1",
   "description": "Tuleap CSS framework",
   "author": "Enalean",
-  "license": "GPL-2.0",
+  "license": "GPL-2.0-or-later",
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "dom4": "^1.8.3",
-    "flatpickr": "1.9.1",
+    "core-js": "^3.2.0",
+    "dom4": "^2.1.5",
+    "flatpickr": "^4.6.2",
     "jquery": "2.1.0",
     "popper.js": "^1.14.7",
-    "select2": "4.0.3",
-    "whatwg-fetch": "^2.0.3"
+    "regenerator-runtime": "^0.13.3",
+    "select2": "^4.0.10",
+    "whatwg-fetch": "^3.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/select2": "^4.0.48",
+    "codemirror": "^5.48.4",
+    "dompurify": "^2.0.7"
+  },
+  "types": "./src/index.d.ts",
   "config": {
     "bin": "../../../../../node_modules/.bin"
   },
   "scripts": {
     "build": "$npm_package_config_bin/webpack --config webpack.prod.js",
-    "watch": "$npm_package_config_bin/webpack --config webpack.dev.js --watch"
+    "test": "$npm_package_config_bin/jest",
+    "watch": "$npm_package_config_bin/concurrently '$npm_package_config_bin/webpack --config webpack.dev.js --watch' 'CI=true npm test -- --watch'"
   }
 }

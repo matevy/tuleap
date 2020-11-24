@@ -61,18 +61,19 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
         $this->dao             = $dao;
     }
 
-    public function setProjectId($project_id) {
+    public function setProjectId($project_id)
+    {
         $this->project_id = $project_id;
     }
 
     /**
      * Add (by name) new users into a user group.
-     * 
+     *
      * @param Array   $userList List of user identifier (e.g. ldap login)
-     * 
+     *
      * @return void
      */
-    public function addListOfUsersToGroup($userList) 
+    public function addListOfUsersToGroup($userList)
     {
         $ldapUserManager = new LDAP_UserManager($this->getLdap(), LDAP_UserSync::instance());
         $userIds = $ldapUserManager->getUserIdsFromUserList($userList);
@@ -84,10 +85,10 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
     /**
      * Add user to a user group
      *
-     * @param Integer $ugroupId Codendi Group ID
-     * @param Integer $userId   User ID
+     * @param int $ugroupId Codendi Group ID
+     * @param int $userId User ID
      *
-     * @return Boolean
+     * @return bool
      */
     protected function addUserToGroup($ugroupId, $userId)
     {
@@ -97,10 +98,10 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
     /**
      * Remove user from a user group
      *
-     * @param Integer $ugroupId Codendi Group ID
-     * @param Integer $userId   User ID
+     * @param int $ugroupId Codendi Group ID
+     * @param int $userId User ID
      *
-     * @return Boolean
+     * @return bool
      */
     protected function removeUserFromGroup($ugroupId, $userId)
     {
@@ -110,7 +111,7 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
     /**
      * Get the codendi user_group members ids
      *
-     * @param Integer $ugroupId ID of user group
+     * @param int $ugroupId ID of user group
      *
      * @return Array
      */
@@ -124,40 +125,44 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
      *
      * @return DataAccessResult
      */
-    public function getSynchronizedUgroups() {
+    public function getSynchronizedUgroups()
+    {
         return $this->getDao()->getSynchronizedUgroups();
     }
 
     /**
      * Check if a given ugroup is synchronized with an ldap group
      *
-     * @param integer $ugroup_id User group id to check
+     * @param int $ugroup_id User group id to check
      *
-     * @return boolean
+     * @return bool
      */
-    public function isSynchronizedUgroup($ugroup_id) {
+    public function isSynchronizedUgroup($ugroup_id)
+    {
         return $this->getDao()->isSynchronizedUgroup($ugroup_id);
     }
 
     /**
      * Check if a given ugroup is preserving members
      *
-     * @param integer $ugroup_id User group id to check
+     * @param int $ugroup_id User group id to check
      *
-     * @return boolean
+     * @return bool
      */
-    public function isMembersPreserving($ugroup_id) {
+    public function isMembersPreserving($ugroup_id)
+    {
         return $this->getDao()->isMembersPreserving($ugroup_id);
     }
 
     /**
      * Check if the update of members of an ugroup is allowed
      *
-     * @param Integer $ugroup_id User group id
+     * @param int $ugroup_id User group id
      *
-     * @return Boolean
+     * @return bool
      */
-    public function isMembersUpdateAllowed($ugroup_id) {
+    public function isMembersUpdateAllowed($ugroup_id)
+    {
         return $this->getDao()->isMembersUpdateAllowed($ugroup_id);
     }
 
@@ -180,7 +185,7 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
     {
         $dar = $this->getSynchronizedUgroups();
         if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
-        foreach($dar as $row) {
+            foreach ($dar as $row) {
                 $this->setId($row['ugroup_id']);
                 $this->setGroupDn($row['ldap_group_dn']);
                 $this->setProjectId($row['project_id']);

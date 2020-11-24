@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-interface Git_Backend_Interface {
+interface Git_Backend_Interface
+{
     public const GIT_ROOT_PATH = '/var/lib/codendi/gitroot/';
 
     /**
@@ -27,7 +28,7 @@ interface Git_Backend_Interface {
      *
      * @see    plugins/git/include/Git_Backend_Interface::isInitialized()
      * @param  GitRepository $repository
-     * @return Boolean
+     * @return bool
      */
     public function isInitialized(GitRepository $respository);
 
@@ -36,7 +37,7 @@ interface Git_Backend_Interface {
      *
      * @see    plugins/git/include/Git_Backend_Interface::isCreated()
      * @param  GitRepository $repository
-     * @return Boolean
+     * @return bool
      */
     public function isCreated(GitRepository $respository);
 
@@ -57,7 +58,7 @@ interface Git_Backend_Interface {
 
     /**
      * Verify if given name is not already reserved on filesystem
-     * 
+     *
      * @return bool
      */
     public function isNameAvailable($newName);
@@ -77,7 +78,7 @@ interface Git_Backend_Interface {
      * @param PFUser          $user       The user to test
      * @param GitRepository $repository The repository to test
      *
-     * @return Boolean
+     * @return bool
      */
     public function userCanRead($user, $repository);
 
@@ -85,8 +86,8 @@ interface Git_Backend_Interface {
      * Update list of people notified by post-receive-email hook
      *
      * @param GitRepository $repository
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
     public function changeRepositoryMailingList($repository);
 
@@ -94,8 +95,8 @@ interface Git_Backend_Interface {
      * Change post-receive-email hook mail prefix
      *
      * @param GitRepository $repository
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
     public function changeRepositoryMailPrefix($repository);
 
@@ -112,7 +113,7 @@ interface Git_Backend_Interface {
     /**
      * Check if repository can be deleted
      *
-     * @return Boolean
+     * @return bool
      */
     public function canBeDeleted(GitRepository $repository);
 

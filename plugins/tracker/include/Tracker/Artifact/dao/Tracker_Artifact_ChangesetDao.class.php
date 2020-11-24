@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,22 +19,26 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_ChangesetDao extends DataAccessObject {
+class Tracker_Artifact_ChangesetDao extends DataAccessObject
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_changeset';
-    }   
+    }
 
-    public function searchByArtifactId($artifact_id) {
+    public function searchByArtifactId($artifact_id)
+    {
         $artifact_id = $this->da->escapeInt($artifact_id);
         $sql = "SELECT * FROM $this->table_name
                 WHERE artifact_id = $artifact_id
                 ORDER BY id";
         return $this->retrieve($sql);
     }
-    
-    public function searchByArtifactIdAndChangesetId($artifact_id, $changeset_id) {
+
+    public function searchByArtifactIdAndChangesetId($artifact_id, $changeset_id)
+    {
         $artifact_id = $this->da->escapeInt($artifact_id);
         $changeset_id = $this->da->escapeInt($changeset_id);
         $sql = "SELECT * FROM $this->table_name
@@ -43,7 +47,8 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchLastChangesetByArtifactId($artifact_id) {
+    public function searchLastChangesetByArtifactId($artifact_id)
+    {
         $artifact_id = $this->da->escapeInt($artifact_id);
         $sql = "SELECT c.* FROM tracker_changeset c
                 JOIN tracker_artifact AS a on (a.last_changeset_id = c.id)
@@ -52,7 +57,8 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchLastChangesetAndValueForArtifactField($artifact_id, $field_id) {
+    public function searchLastChangesetAndValueForArtifactField($artifact_id, $field_id)
+    {
         $artifact_id = $this->da->escapeInt($artifact_id);
         $field_id = $this->da->escapeInt($field_id);
         $sql = "SELECT cs.id AS id, cs.submitted_by, cs.submitted_on, cs.email, cv.id AS value_id, cv.has_changed
@@ -82,7 +88,8 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject {
         return $this->retrieveFirstRow($sql);
     }
 
-    public function create($artifact_id, $submitted_by, $email, $submitted_on) {
+    public function create($artifact_id, $submitted_by, $email, $submitted_on)
+    {
         $artifact_id  = $this->da->escapeInt($artifact_id);
         $submitted_by = $this->da->escapeInt($submitted_by);
         if (!$submitted_by) {
@@ -100,8 +107,9 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject {
         }
         return $changeset_id;
     }
-    
-    public function delete($changeset_id) {
+
+    public function delete($changeset_id)
+    {
         $changeset_id = $this->da->escapeInt($changeset_id);
         $sql = "DELETE
                 FROM $this->table_name
@@ -112,12 +120,13 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject {
     /**
      * Retrieve the list of artifact id corresponding to a last update date having a specific value
      *
-     * @param Integer $trackerId Tracker id
-     * @param Integer $date      Last update date
+     * @param int $trackerId Tracker id
+     * @param int $date Last update date
      *
      * @return DataAccessResult
      */
-    public function getArtifactsByFieldAndLastUpdateDate($trackerId, $date) {
+    public function getArtifactsByFieldAndLastUpdateDate($trackerId, $date)
+    {
         $trackerId  = $this->da->escapeInt($trackerId);
         $date       = $this->da->escapeInt($date);
         $halfDay    = 60 * 60 * 12;
@@ -135,12 +144,13 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject {
     /**
      * We need both artifact_id and changset_id so we ensure we fetch the changeset of an artifact we are allowed to see
      *
-     * @param Integer $artifact_id
-     * @param Integer $changeset_id
+     * @param int $artifact_id
+     * @param int $changeset_id
      *
      * @return DataAccessResult
      */
-    public function searchChangesetNewerThan($artifact_id, $changeset_id) {
+    public function searchChangesetNewerThan($artifact_id, $changeset_id)
+    {
         $artifact_id  = $this->da->escapeInt($artifact_id);
         $changeset_id = $this->da->escapeInt($changeset_id);
 
@@ -175,5 +185,21 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject {
                     AND changeset1.submitted_on <= $timestamp";
 
         return $this->retrieve($sql);
+    }
+
+    /**
+     * @return int
+     */
+    public function countChangesets()
+    {
+        $sql = 'SELECT COUNT(id) AS nb FROM tracker_changeset';
+
+        $dar = $this->retrieve($sql);
+        if ($dar === false) {
+            return 0;
+        }
+        $row = $dar->getRow();
+
+        return (int) $row['nb'];
     }
 }

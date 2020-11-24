@@ -30,7 +30,8 @@ class GitRepositoryFactory
      */
     private $projectManager;
 
-    public function __construct(GitDao $dao, ProjectManager $projectManager) {
+    public function __construct(GitDao $dao, ProjectManager $projectManager)
+    {
         $this->dao            = $dao;
         $this->projectManager = $projectManager;
     }
@@ -42,7 +43,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository|null the repository or null if not found
      */
-    public function getRepositoryById($id) {
+    public function getRepositoryById($id)
+    {
         if ($id == GitRepositoryGitoliteAdmin::ID) {
             return new GitRepositoryGitoliteAdmin();
         }
@@ -55,7 +57,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository the repository or null if not found
      */
-    public function getRepositoryByIdUserCanSee(PFUser $user, $id) {
+    public function getRepositoryByIdUserCanSee(PFUser $user, $id)
+    {
         if ($id == GitRepositoryGitoliteAdmin::ID) {
             return new GitRepositoryGitoliteAdmin();
         }
@@ -89,7 +92,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository[]
      */
-    public function getAllRepositories(Project $project) {
+    public function getAllRepositories(Project $project)
+    {
         $repositories = array();
         $repository_list = $this->dao->getProjectRepositoryList($project->getID(), false, false);
         foreach ($repository_list as $row) {
@@ -100,7 +104,8 @@ class GitRepositoryFactory
         return $repositories;
     }
 
-    public function getAllRepositoriesUserCanSee(Project $project, PFUser $user) {
+    public function getAllRepositoriesUserCanSee(Project $project, PFUser $user)
+    {
         $repositories = $this->getAllRepositories($project);
         foreach ($repositories as $key => $repository) {
             if (! $repository->userCanRead($user)) {
@@ -113,7 +118,7 @@ class GitRepositoryFactory
 
     /**
      * @param Project $project
-     * @param PFuser $user
+     * @param PFUser $user
      * @param string $scope
      * @param int $owner_id
      * @param string $order_by
@@ -124,7 +129,7 @@ class GitRepositoryFactory
      */
     public function getPaginatedRepositoriesUserCanSee(
         Project $project,
-        PFuser $user,
+        PFUser $user,
         $scope,
         $owner_id,
         $order_by,
@@ -149,7 +154,6 @@ class GitRepositoryFactory
             }
         }
 
-
         return $repositories;
     }
 
@@ -160,7 +164,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository the repository or null if not found
      */
-    public function getDeletedRepository($id) {
+    public function getDeletedRepository($id)
+    {
         $row = $this->dao->searchDeletedRepositoryById($id);
         return $this->getRepositoryFromRow($row);
     }
@@ -172,7 +177,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository the repository or null if not found
      */
-    public function getRepositoryByPath($project_id, $path) {
+    public function getRepositoryByPath($project_id, $path)
+    {
         $row = $this->dao->searchProjectRepositoryByPath($project_id, $path);
         return $this->getRepositoryFromRow($row);
     }
@@ -184,7 +190,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository
      */
-    public function getFromFullPath($full_path) {
+    public function getFromFullPath($full_path)
+    {
         $repo = $this->getByRepositoryRootMatch('gitolite/repositories', $full_path);
         if (!$repo) {
             $repo = $this->getByRepositoryRootMatch('gitroot', $full_path);
@@ -197,7 +204,8 @@ class GitRepositoryFactory
      *
      * @return Array of GitRepository
      */
-    public function getActiveRepositoriesWithRemoteServersForAllProjects() {
+    public function getActiveRepositoriesWithRemoteServersForAllProjects()
+    {
         $repositories = array();
         foreach ($this->dao->getActiveRepositoryPathsWithRemoteServersForAllProjects() as $row) {
             $repository = new GitRepository();
@@ -216,7 +224,8 @@ class GitRepositoryFactory
      * @param PFUser $user
      * @return \GitRepositoryWithPermissions
      */
-    public function getGerritRepositoriesWithPermissionsForUGroupAndProject(Project $project, ProjectUGroup $ugroup, PFUser $user) {
+    public function getGerritRepositoriesWithPermissionsForUGroupAndProject(Project $project, ProjectUGroup $ugroup, PFUser $user)
+    {
         $repositories = array();
         $ugroups      = $user->getUgroups($project->getID(), null);
         $ugroups[]    = $ugroup->getId();
@@ -229,12 +238,12 @@ class GitRepositoryFactory
                 $repositories[$row['repository_id']] = $repo_with_perms;
             }
             $repo_with_perms->addUGroupForPermissionType($row['permission_type'], $row['ugroup_id']);
-
         }
         return $repositories;
     }
 
-    public function getAllGerritRepositoriesFromProject(Project $project, PFUser $user) {
+    public function getAllGerritRepositoriesFromProject(Project $project, PFUser $user)
+    {
         $all_repositories_dar = $this->dao->searchAllGerritRepositoriesOfProject($project->getId());
         $all_repositories     = array();
 
@@ -257,7 +266,6 @@ class GitRepositoryFactory
         }
 
         return $all_repositories;
-
     }
 
     /**
@@ -268,7 +276,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository
      */
-    private function getByRepositoryRootMatch($base_dir, $path) {
+    private function getByRepositoryRootMatch($base_dir, $path)
+    {
         $matches = array();
         if (preg_match('%'.$base_dir.'/([^/]+)/(.*)$%', $path, $matches)) {
             return $this->getByProjectNameAndPath($matches[1], $matches[2]);
@@ -283,7 +292,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository
      */
-    public function getByProjectNameAndPath($projectName, $path) {
+    public function getByProjectNameAndPath($projectName, $path)
+    {
         $project = $this->projectManager->getProjectByUnixName($projectName);
         if ($project) {
             return $this->getRepositoryByPath($project->getID(), $projectName . '/' . $path);
@@ -302,7 +312,8 @@ class GitRepositoryFactory
         return $this->instanciateFromRow($row);
     }
 
-    public function instanciateFromRow(array $row) {
+    public function instanciateFromRow(array $row)
+    {
         $repository = new GitRepository();
         $this->dao->hydrateRepositoryObject($repository, $row);
         return $repository;
@@ -313,7 +324,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository[]
      */
-    public function getAllRepositoriesOfProject(Project $project) {
+    public function getAllRepositoriesOfProject(Project $project)
+    {
         $repositories = [];
 
         $rows = $this->dao->getAllGitoliteRespositories($project->getID());
@@ -346,7 +358,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository[]
      */
-    public function getArchivedRepositoriesToPurge($retention_period) {
+    public function getArchivedRepositoriesToPurge($retention_period)
+    {
         $archived_repositories = array();
         $deleted_repositories  = $this->dao->getDeletedRepositoriesToPurge($retention_period);
         foreach ($deleted_repositories as $deleted_repository) {
@@ -363,7 +376,8 @@ class GitRepositoryFactory
      *
      * @return GitRepository[]
      */
-    public function getDeletedRepositoriesByProjectId($project_id, $retention_period) {
+    public function getDeletedRepositoriesByProjectId($project_id, $retention_period)
+    {
         $repositories         = array();
         $deleted_repositories = $this->dao->getDeletedRepositoriesByProjectId($project_id, $retention_period);
         foreach ($deleted_repositories as $deleted_repository) {
@@ -373,7 +387,8 @@ class GitRepositoryFactory
         return $repositories;
     }
 
-    public function hasGitShellRepositories() {
+    public function hasGitShellRepositories()
+    {
         return $this->dao->hasGitShellRepositories();
     }
 
@@ -381,13 +396,14 @@ class GitRepositoryFactory
      * Returns a default-value-filled repository
      * @return GitRepository
      */
-    public function buildRepository(Project $project, $repository_name, PFUser $creator, Git_Backend_Interface $backend, $description = GitRepository::DEFAULT_DESCRIPTION) {
+    public function buildRepository(Project $project, $repository_name, PFUser $creator, Git_Backend_Interface $backend, $description = GitRepository::DEFAULT_DESCRIPTION)
+    {
         $repository = new GitRepository();
         $repository->setBackend($backend);
         $repository->setDescription($description);
         $repository->setCreator($creator);
         $repository->setProject($project);
-        $repository->setName(preg_replace('/\/+/','/', $repository_name));
+        $repository->setName(preg_replace('/\/+/', '/', $repository_name));
         return $repository;
     }
 }

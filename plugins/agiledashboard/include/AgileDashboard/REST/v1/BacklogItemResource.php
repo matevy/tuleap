@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -26,7 +26,6 @@ use EventManager;
 use Luracast\Restler\RestException;
 use PFUser;
 use Tracker_Artifact;
-use Tracker_Artifact_Exception_CannotRankWithMyself;
 use Tracker_Artifact_PriorityDao;
 use Tracker_Artifact_PriorityHistoryDao;
 use Tracker_Artifact_PriorityManager;
@@ -37,13 +36,15 @@ use Tracker_Semantic_Status;
 use Tracker_Semantic_Title;
 use Tracker_SemanticCollection;
 use Tracker_SemanticManager;
-use Tracker_SlicedArtifactsBuilder;
 use TrackerFactory;
-use Tuleap\AgileDashboard\BacklogItem\RemainingEffortValueRetriever;
+use Tuleap\AgileDashboard\RemainingEffortValueRetriever;
+use Tuleap\AgileDashboard\REST\v1\Rank\ArtifactsRankOrderer;
+use Tuleap\AgileDashboard\REST\v1\Scrum\BacklogItem\InitialEffortSemanticUpdater;
 use Tuleap\Cardwall\BackgroundColor\BackgroundColorBuilder;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\ProjectStatusVerificator;
+use Tuleap\Tracker\Artifact\SlicedArtifactsBuilder;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
 use Tuleap\Tracker\REST\v1\ArtifactLinkUpdater;
 use UserManager;
@@ -73,7 +74,7 @@ class BacklogItemResource extends AuthenticatedResource
     /** @var Tracker_FormElementFactory */
     private $form_element_factory;
 
-    /** @var RemainingEffortValueRetriever */
+    /** @var \Tuleap\AgileDashboard\RemainingEffortValueRetriever */
     private $remaining_effort_value_retriever;
 
     public function __construct()
@@ -88,15 +89,14 @@ class BacklogItemResource extends AuthenticatedResource
             $this->artifact_factory
         );
 
-        $this->tracker_factory      = TrackerFactory::instance();
-        $this->artifactlink_updater = new ArtifactLinkUpdater($priority_manager);
-        $this->resources_patcher    = new ResourcesPatcher(
+        $this->tracker_factory                  = TrackerFactory::instance();
+        $this->artifactlink_updater             = new ArtifactLinkUpdater($priority_manager);
+        $this->resources_patcher                = new ResourcesPatcher(
             $this->artifactlink_updater,
             $this->artifact_factory,
-            $priority_manager,
-            \EventManager::instance()
+            $priority_manager
         );
-        $this->form_element_factory = Tracker_FormElementFactory::instance();
+        $this->form_element_factory             = Tracker_FormElementFactory::instance();
         $this->remaining_effort_value_retriever = new RemainingEffortValueRetriever(
             $this->form_element_factory
         );
@@ -107,7 +107,8 @@ class BacklogItemResource extends AuthenticatedResource
      *
      * @param int $id Id of the BacklogItem
      */
-    public function options($id) {
+    public function options($id)
+    {
         $this->sendAllowHeader();
     }
 
@@ -123,8 +124,8 @@ class BacklogItemResource extends AuthenticatedResource
      *
      * @return array {@type Tuleap\AgileDashboard\REST\v1\BacklogItemRepresentation}
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function get($id)
     {
@@ -154,11 +155,12 @@ class BacklogItemResource extends AuthenticatedResource
         $artifact     = $this->updateArtifactTitleSemantic($current_user, $artifact, $semantics);
         $backlog_item = new AgileDashboard_Milestone_Backlog_BacklogItem($artifact, false);
         $backlog_item = $this->updateBacklogItemStatusSemantic($current_user, $artifact, $backlog_item, $semantics);
-        $backlog_item = $this->updateBacklogItemInitialEffortSemantic(
+
+        $initial_effort_updater = new InitialEffortSemanticUpdater();
+        $backlog_item           = $initial_effort_updater->updateBacklogItemInitialEffortSemantic(
             $current_user,
-            $artifact,
             $backlog_item,
-            $semantics
+            $semantics[AgileDashBoard_Semantic_InitialEffort::NAME]
         );
         $backlog_item = $this->updateBacklogItemRemainingEffort($current_user, $backlog_item);
         $parent_artifact = $artifact->getParent($current_user);
@@ -169,7 +171,8 @@ class BacklogItemResource extends AuthenticatedResource
         return $backlog_item;
     }
 
-    private function updateArtifactTitleSemantic(PFUser $current_user, Tracker_Artifact $artifact, Tracker_SemanticCollection $semantics) {
+    private function updateArtifactTitleSemantic(PFUser $current_user, Tracker_Artifact $artifact, Tracker_SemanticCollection $semantics)
+    {
         $semantic_title = $semantics[Tracker_Semantic_Title::NAME];
         $title_field    = $semantic_title->getField();
 
@@ -189,8 +192,8 @@ class BacklogItemResource extends AuthenticatedResource
         $semantic_status = $semantics[Tracker_Semantic_Status::NAME];
 
         if ($semantic_status && $semantic_status->getField() && $semantic_status->getField()->userCanRead(
-                $current_user
-            )) {
+            $current_user
+        )) {
             $label = $semantic_status->getNormalizedStatusLabel($artifact);
 
             if ($label) {
@@ -201,47 +204,12 @@ class BacklogItemResource extends AuthenticatedResource
         return $backlog_item;
     }
 
-    private function updateBacklogItemInitialEffortSemantic(
-        PFUser $current_user,
-        Tracker_Artifact $artifact,
-        AgileDashboard_Milestone_Backlog_BacklogItem $backlog_item,
-        Tracker_SemanticCollection $semantics
-    ) {
-        $semantic_initial_effort = $semantics[AgileDashBoard_Semantic_InitialEffort::NAME];
-        $initial_effort_field    = $semantic_initial_effort->getField();
-
-        if ($initial_effort_field && $initial_effort_field->userCanRead($current_user)) {
-            $rest_value = $initial_effort_field->getFullRESTValue($current_user, $artifact->getLastChangeset());
-            if ($rest_value) {
-                if (is_a($initial_effort_field, 'Tracker_FormElement_Field_List')) {
-                    $value = $this->getBacklogItemInitialEffortFromList($rest_value);
-                } elseif (is_a($initial_effort_field, 'Tracker_FormElement_Field_Computed')) {
-                    $value = $initial_effort_field->getComputedValue($current_user, $artifact);
-                } else {
-                    $value = $rest_value->value;
-                }
-
-                $backlog_item->setInitialEffort($value);
-            }
-        }
-
-        return $backlog_item;
-    }
-
-    private function getBacklogItemInitialEffortFromList($rest_value) {
-        if (! isset($rest_value->values[0]) && ! isset($rest_value->values[0]['label'])) {
-            return null;
-        }
-
-        return $rest_value->values[0]['label'];
-    }
-
     private function updateBacklogItemRemainingEffort(
         PFUser $current_user,
         AgileDashboard_Milestone_Backlog_BacklogItem $backlog_item
     ) {
         $backlog_item->setRemainingEffort(
-            $this->remaining_effort_value_retriever->getRemainingEffortValue($current_user, $backlog_item)
+            $this->remaining_effort_value_retriever->getRemainingEffortValue($current_user, $backlog_item->getArtifact())
         );
 
         return $backlog_item;
@@ -261,9 +229,9 @@ class BacklogItemResource extends AuthenticatedResource
      *
      * @return array {@type Tuleap\AgileDashboard\REST\v1\BacklogItemRepresentation}
      *
-     * @throws 403
-     * @throws 404
-     * @throws 406
+     * @throws RestException 403
+     * @throws RestException 404
+     * @throws RestException 406
      */
     public function getChildren($id, $limit = 10, $offset = 0)
     {
@@ -284,7 +252,7 @@ class BacklogItemResource extends AuthenticatedResource
         $sliced_children = $this->getSlicedArtifactsBuilder()->getSlicedChildrenArtifactsForUser($artifact, $this->getCurrentUser(), $limit, $offset);
 
         foreach ($sliced_children->getArtifacts() as $child) {
-            $backlog_item                    = $this->getBacklogItem($current_user, $child);
+            $backlog_item                    = $this->getBacklogItem($current_user, $child->getArtifact());
             $backlog_items_representations[] = $backlog_item_representation_factory->createBacklogItemRepresentation($backlog_item);
         }
 
@@ -331,21 +299,21 @@ class BacklogItemResource extends AuthenticatedResource
      *
      * @param int                                                   $id    Id of the Backlog Item
      * @param \Tuleap\AgileDashboard\REST\v1\OrderRepresentation    $order Order of the children {@from body}
-     * @param array                                                 $add   Ids to add to backlog_items content  {@from body}
+     * @param array                                                 $add   Ids to add to backlog_items content  {@from body} {@type \Tuleap\REST\v1\BacklogAddRepresentation}
      *
-     * @throws 400
+     * @throws RestException 400
      * @throws RestException 403
-     * @throws 404
-     * @throws 409
+     * @throws RestException 404
+     * @throws RestException 409
      */
-    protected function patch($id, ?OrderRepresentation $order = null, ?array $add = null) {
+    protected function patch($id, ?OrderRepresentation $order = null, ?array $add = null)
+    {
 
         $artifact = $this->getArtifact($id);
         $user     = $this->getCurrentUser();
+        $project  = $artifact->getTracker()->getProject();
 
-        ProjectStatusVerificator::build()->checkProjectStatusAllowsAllUsersToAccessIt(
-            $artifact->getTracker()->getProject()
-        );
+        ProjectStatusVerificator::build()->checkProjectStatusAllowsAllUsersToAccessIt($project);
 
         try {
             $indexed_children_ids = $this->getChildrenArtifactIds($user, $artifact);
@@ -355,33 +323,34 @@ class BacklogItemResource extends AuthenticatedResource
                 $to_add = $this->resources_patcher->removeArtifactFromSource($user, $add);
                 if (count($to_add)) {
                     $validator = new PatchAddRemoveValidator(
-                       $indexed_children_ids,
-                       new PatchAddBacklogItemsValidator(
-                           $this->artifact_factory,
-                           $this->tracker_factory->getPossibleChildren($artifact->getTracker()),
-                           $id
-                       )
-                   );
-                   $backlog_items_ids = $validator->validate($id, array(), $to_add);
+                        $indexed_children_ids,
+                        new PatchAddBacklogItemsValidator(
+                            $this->artifact_factory,
+                            $this->tracker_factory->getPossibleChildren($artifact->getTracker()),
+                            $id
+                        )
+                    );
+                    $backlog_items_ids = $validator->validate($id, array(), $to_add);
 
-                   $this->artifactlink_updater->updateArtifactLinks(
-                       $user,
-                       $artifact,
-                       $backlog_items_ids,
-                       array(),
-                       \Tracker_FormElement_Field_ArtifactLink::NO_NATURE
-                   );
-                   $indexed_children_ids = array_flip($backlog_items_ids);
+                    $this->artifactlink_updater->updateArtifactLinks(
+                        $user,
+                        $artifact,
+                        $backlog_items_ids,
+                        array(),
+                        \Tracker_FormElement_Field_ArtifactLink::NO_NATURE
+                    );
+                    $indexed_children_ids = array_flip($backlog_items_ids);
                 }
                 $this->resources_patcher->commit();
             }
 
             if ($order) {
-                $order->checkFormat($order);
+                $order->checkFormat();
                 $order_validator = new OrderValidator($indexed_children_ids);
                 $order_validator->validate($order);
 
-                $this->resources_patcher->updateArtifactPriorities($order, $id, null);
+                $orderer = ArtifactsRankOrderer::build();
+                $orderer->reorder($order, $id, $project);
             }
         } catch (IdsFromBodyAreNotUniqueException $exception) {
             throw new RestException(409, $exception->getMessage());
@@ -389,27 +358,27 @@ class BacklogItemResource extends AuthenticatedResource
             throw new RestException(409, $exception->getMessage());
         } catch (ArtifactCannotBeChildrenOfException $exception) {
             throw new RestException(409, $exception->getMessage());
-        } catch (Tracker_Artifact_Exception_CannotRankWithMyself $exception) {
-            throw new RestException(400, $exception->getMessage());
         } catch (\Exception $exception) {
             throw new RestException(400, $exception->getMessage());
         }
     }
 
-    private function getArtifact($id) {
+    private function getArtifact($id)
+    {
         $artifact     = $this->artifact_factory->getArtifactById($id);
         $current_user = $this->getCurrentUser();
 
         if (! $artifact) {
             throw new RestException(404, 'Backlog Item not found');
-        } else if (! $artifact->userCanView($current_user)) {
+        } elseif (! $artifact->userCanView($current_user)) {
             throw new RestException(403, 'You cannot access to this backlog item');
         }
 
         return $artifact;
     }
 
-    private function getChildrenArtifactIds(PFUser $user, Tracker_Artifact $artifact) {
+    private function getChildrenArtifactIds(PFUser $user, Tracker_Artifact $artifact)
+    {
         $linked_artifacts_index = array();
         foreach ($artifact->getChildrenForUser($user) as $artifact) {
             $linked_artifacts_index[$artifact->getId()] = true;
@@ -422,39 +391,47 @@ class BacklogItemResource extends AuthenticatedResource
      *
      * @param int $id Id of the BacklogItem
      *
-     * @throws 404
+     * @throws RestException 404
      */
-    public function optionsChildren($id) {
+    public function optionsChildren($id)
+    {
         $this->sendAllowHeaderForChildren();
     }
 
-    private function getSlicedArtifactsBuilder() {
-        return new Tracker_SlicedArtifactsBuilder(new Tracker_ArtifactDao());
+    private function getSlicedArtifactsBuilder()
+    {
+        return new SlicedArtifactsBuilder(new Tracker_ArtifactDao(), Tracker_ArtifactFactory::instance());
     }
 
-    private function checkContentLimit($limit) {
+    private function checkContentLimit($limit)
+    {
         if (! $this->limitValueIsAcceptable($limit)) {
             throw new RestException(406, 'Maximum value for limit exceeded');
         }
     }
 
-    private function limitValueIsAcceptable($limit) {
+    private function limitValueIsAcceptable($limit)
+    {
         return $limit <= self::MAX_LIMIT;
     }
 
-    private function sendAllowHeader() {
+    private function sendAllowHeader()
+    {
         Header::allowOptionsGet();
     }
 
-    private function sendAllowHeaderForChildren() {
+    private function sendAllowHeaderForChildren()
+    {
         Header::allowOptionsGetPatch();
     }
 
-    private function sendPaginationHeaders($limit, $offset, $size) {
+    private function sendPaginationHeaders($limit, $offset, $size)
+    {
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
     }
 
-    private function getCurrentUser() {
+    private function getCurrentUser()
+    {
         return $this->user_manager->getCurrentUser();
     }
 

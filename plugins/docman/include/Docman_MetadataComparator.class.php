@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2007
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -22,12 +22,14 @@
 
 require_once('Docman_MetadataFactory.class.php');
 
-class Docman_MetadataComparator {
+class Docman_MetadataComparator
+{
     var $docmanIcons;
     var $srcGo;
     var $dstGo;
 
-    function __construct($srcGroupId, $dstGroupId, $themePath) {
+    function __construct($srcGroupId, $dstGroupId, $themePath)
+    {
         $this->docmanIcons = new Docman_Icons($themePath.'/images/ic/');
         $pm = ProjectManager::instance();
         $this->srcGo = $pm->getProject($srcGroupId);
@@ -38,9 +40,10 @@ class Docman_MetadataComparator {
      * For a five object iterator, return an array of object indexed by
      * $func applied on object.
      */
-    function getArrayFromIterator($iter, $func) {
+    function getArrayFromIterator($iter, $func)
+    {
         $a = array();
-        while($iter->valid()) {
+        while ($iter->valid()) {
             $e = $iter->current();
             $a[$e->$func()] = $e;
             $iter->next();
@@ -48,18 +51,19 @@ class Docman_MetadataComparator {
         return $a;
     }
 
-    function checkMdDifferences($srcMd, $dstMd, $loveMap) {
+    function checkMdDifferences($srcMd, $dstMd, $loveMap)
+    {
         $diffArray = array();
-        if(!$dstMd->sameDescription($srcMd)) {
+        if (!$dstMd->sameDescription($srcMd)) {
             $diffArray[] = $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_desc');
         }
-        if(!$dstMd->sameIsEmptyAllowed($srcMd)) {
+        if (!$dstMd->sameIsEmptyAllowed($srcMd)) {
             $diffArray[] = $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_allowempty', array($GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_'.$srcMd->getIsEmptyAllowed())));
         }
-        if(!$dstMd->sameIsMultipleValuesAllowed($srcMd)) {
+        if (!$dstMd->sameIsMultipleValuesAllowed($srcMd)) {
             $diffArray[] = $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_allowmultiplevalue', array($GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_'.$srcMd->getIsMultipleValuesAllowed())));
         }
-        if(!$dstMd->sameUseIt($srcMd)) {
+        if (!$dstMd->sameUseIt($srcMd)) {
             $diffArray[] = $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_useit', array($GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_'.$srcMd->getUseIt())));
         }
         return $diffArray;
@@ -69,10 +73,11 @@ class Docman_MetadataComparator {
      *
      * Same algo used in Docman_View_ItemDetailsSectionPaste::_checkLoveToImport
      */
-    function getLoveCompareTable($srcMd, $dstMd, $mdMap, &$sthToImport) {
+    function getLoveCompareTable($srcMd, $dstMd, $mdMap, &$sthToImport)
+    {
         $html = '';
 
-        if($srcMd->getLabel() == 'status') {
+        if ($srcMd->getLabel() == 'status') {
             // No differences possible with status.
             return $html;
         }
@@ -90,13 +95,13 @@ class Docman_MetadataComparator {
 
         // Keep a trace of matching love
         $matchingLove = array();
-        while($srcLoveIter->valid()) {
+        while ($srcLoveIter->valid()) {
             $srcLove = $srcLoveIter->current();
             $rowStyle = 'missing';
 
             // Compute the differences
             $dstLove = false;
-            if(isset($mdMap['love'][$srcLove->getId()])) {
+            if (isset($mdMap['love'][$srcLove->getId()])) {
                 $dstLove = $dstLoveArray[$mdMap['love'][$srcLove->getId()]];
                 $matchingLove[$dstLove->getId()] = true;
                 $rowStyle = 'equals';
@@ -115,26 +120,26 @@ class Docman_MetadataComparator {
 
             // Presence in destination project
             $html .= "<td align=\"center\">";
-            switch($rowStyle) {
-            case 'equals':
-                $html .= '<img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" />';
-                break;
+            switch ($rowStyle) {
+                case 'equals':
+                    $html .= '<img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" />';
+                    break;
             }
             $html .= "</td>\n";
 
             // Differences
             $html .= "<td class=\"docman_md_".$rowStyle."\">";
-            switch($rowStyle) {
-            case 'missing':
-                $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_status_'.$rowStyle);
+            switch ($rowStyle) {
+                case 'missing':
+                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_status_'.$rowStyle);
             }
             $html .= "</td>\n";
-            
+
             // Action
             $html .= "<td>";
-            switch($rowStyle) {
-            case 'missing':
-                $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_import_love', array($purifier->purify($srcLove->getName())));
+            switch ($rowStyle) {
+                case 'missing':
+                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_import_love', array($purifier->purify($srcLove->getName())));
             }
             $html .= "</td\n>";
 
@@ -145,8 +150,8 @@ class Docman_MetadataComparator {
 
         // Append to the table the list of values elements in the dst project
         // that where not present in the src project.
-        foreach($dstLoveArray as $love) {
-            if(!isset($matchingLove[$love->getId()])) {
+        foreach ($dstLoveArray as $love) {
+            if (!isset($matchingLove[$love->getId()])) {
                 $html .= "<tr>\n";
                 // Name
                 $html .= "<td>&nbsp;</td>\n";
@@ -165,8 +170,9 @@ class Docman_MetadataComparator {
 
         return $html;
     }
-    
-    function getMetadataCompareTable(&$sthToImport) {
+
+    function getMetadataCompareTable(&$sthToImport)
+    {
         $html = '';
 
         // True if there is sth to import in dst project.
@@ -189,7 +195,7 @@ class Docman_MetadataComparator {
 
         // Table
         $html .= "<table border=\"1\">\n";
-        
+
         $html .= "<tr>\n";
         $html .= "<th colspan=\"2\">".$GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_prop')."</th>\n";
         $html .= "<th>".$this->srcGo->getPublicName()."</th>\n";
@@ -203,27 +209,27 @@ class Docman_MetadataComparator {
         // Keep a trace of metadata that matched in the dst metadata list.
         $matchingMd = array();
         $srcMdIter->rewind();
-        while($srcMdIter->valid()) {
+        while ($srcMdIter->valid()) {
             $srcMd = $srcMdIter->current();
             $dstMd = null;
 
             // Compute the differences between the 2 projects
             $dstMdStatus = 'missing';
             $dstMdLabel = '';
-            if($srcMdFactory->isRealMetadata($srcMd->getLabel())) {
-                if(isset($mdMap['md'][$srcMd->getId()])) {
+            if ($srcMdFactory->isRealMetadata($srcMd->getLabel())) {
+                if (isset($mdMap['md'][$srcMd->getId()])) {
                     $dstMdLabel = $srcMdFactory->getLabelFromId($mdMap['md'][$srcMd->getId()]);
                 }
             } else {
                 $dstMdLabel = $srcMd->getLabel();
             }
-            
-            if(isset($dstMdArray[$dstMdLabel])) {
+
+            if (isset($dstMdArray[$dstMdLabel])) {
                 $dstMd = $dstMdArray[$dstMdLabel];
-                if($dstMd !== false) {
+                if ($dstMd !== false) {
                     $matchingMd[$dstMdLabel] = true;
                     $dstMdStatus = 'equivalent';
-                    if($dstMd->equals($srcMd)) {
+                    if ($dstMd->equals($srcMd)) {
                         $dstMdStatus = 'equals';
                     } else {
                         $sthToImport = true;
@@ -259,68 +265,68 @@ class Docman_MetadataComparator {
 
             // Presence in destination project
             $html .= "<td align=\"center\">";
-            switch($dstMdStatus) {
-            case 'equals':
-            case 'equivalent':
-                $html .= '<img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" />';
-                break;
+            switch ($dstMdStatus) {
+                case 'equals':
+                case 'equivalent':
+                    $html .= '<img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" />';
+                    break;
             }
             $html .= "</td>";
 
             // Differences
             $html .= "<td class=\"docman_md_".$dstMdStatus."\">";
-            switch($dstMdStatus) {
-            case 'equivalent':
-            case 'missing':
-            case 'conflict':
-                $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_status_'.$dstMdStatus);
-                break;
+            switch ($dstMdStatus) {
+                case 'equivalent':
+                case 'missing':
+                case 'conflict':
+                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_status_'.$dstMdStatus);
+                    break;
             }
             $html .= "</td>";
 
             // Action
             $html .= "<td>";
-            switch($dstMdStatus) {
-            case 'equals':
-                // Nothing to do
-                break;
-            case 'equivalent':
-                $diffArray = $this->checkMdDifferences($srcMd, $dstMd, $mdMap['love']);
-                $diffStr = '<ul style="padding:0;padding-left:1.5em;margin:0;">';
-                foreach ($diffArray as $diff) {
-                    $diff_purified = $purifier->purify($diff, CODENDI_PURIFIER_FULL);
-                    $diffStr      .= "<li>$diff_purified</li>";
-                }
-                $diffStr .= '</ul>';
+            switch ($dstMdStatus) {
+                case 'equals':
+                    // Nothing to do
+                    break;
+                case 'equivalent':
+                    $diffArray = $this->checkMdDifferences($srcMd, $dstMd, $mdMap['love']);
+                    $diffStr = '<ul style="padding:0;padding-left:1.5em;margin:0;">';
+                    foreach ($diffArray as $diff) {
+                        $diff_purified = $purifier->purify($diff, CODENDI_PURIFIER_FULL);
+                        $diffStr      .= "<li>$diff_purified</li>";
+                    }
+                    $diffStr .= '</ul>';
 
-                $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_update_md', array($purified_property_name, $this->dstGo->getPublicName(), $diffStr));
-                break;
-            case 'missing':
-                $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_import_md', array($purified_property_name));
-                break;
-            case 'conflict':
-                $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_conflict');
-                break;
+                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_update_md', array($purified_property_name, $this->dstGo->getPublicName(), $diffStr));
+                    break;
+                case 'missing':
+                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_import_md', array($purified_property_name));
+                    break;
+                case 'conflict':
+                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_conflict');
+                    break;
             }
             $html .= "</td>";
 
             $html .= "</tr>\n";
 
             // List of values
-            if($srcMd->getType() == PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
-                if($dstMd !== null) {
+            if ($srcMd->getType() == PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
+                if ($dstMd !== null) {
                     $html .= $this->getLoveCompareTable($srcMd, $dstMd, $mdMap, $sthToImport);
                 }
             }
-            
+
             unset($dstMd);
             $srcMdIter->next();
         }
 
         // Append to the table the metadata in the dst project that where not
         // present in the src project.
-        foreach($dstMdArray as $md) {
-            if(!isset($matchingMd[$md->getLabel()])) {
+        foreach ($dstMdArray as $md) {
+            if (!isset($matchingMd[$md->getLabel()])) {
                 $html .= "<tr>\n";
 
                 // Name
@@ -347,11 +353,9 @@ class Docman_MetadataComparator {
                 $html .= "</tr>\n";
             }
         }
-        
+
         $html .= "</table>\n";
 
         return $html;
     }
 }
-
-?>

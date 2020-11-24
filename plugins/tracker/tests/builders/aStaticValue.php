@@ -20,23 +20,27 @@
 
 require_once __DIR__.'/../bootstrap.php';
 
-function aBindStaticValue() {
+function aBindStaticValue()
+{
     return new Test_Tracker_FormElement_List_Bind_StaticValue_Builder('Tracker_FormElement_Field_List_Bind_Static');
 }
 
-class Test_Tracker_FormElement_List_Bind_StaticValue_Builder {
+class Test_Tracker_FormElement_List_Bind_StaticValue_Builder
+{
     private $is_hidden = false;
     private $rank = 0;
     private $description = '';
     private $label = '';
     private $id = 0;
 
-    public function withId($id) {
+    public function withId($id)
+    {
         $this->id = $id;
         return $this;
     }
 
-    public function withLabel($label) {
+    public function withLabel($label)
+    {
         $this->label = $label;
         return $this;
     }
@@ -44,9 +48,8 @@ class Test_Tracker_FormElement_List_Bind_StaticValue_Builder {
     /**
      * @return Tracker_FormElement_Field_List_Bind_Static
      */
-    public function build() {
+    public function build()
+    {
         return new Tracker_FormElement_Field_List_Bind_StaticValue($this->id, $this->label, $this->description, $this->rank, $this->is_hidden);
     }
 }
-
-?>

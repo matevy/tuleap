@@ -19,12 +19,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-require_once('Widget.class.php');
-
 /**
  * Widget_ProjectLatestNews
  */
-class Widget_ProjectLatestNews extends Widget {
+class Widget_ProjectLatestNews extends Widget
+{
 
     var $content;
 
@@ -40,7 +39,7 @@ class Widget_ProjectLatestNews extends Widget {
         $pm      = $this->getProjectManager();
         $project = $pm->getProject($request->get('group_id'));
         if ($project && $this->canBeUsedByProject($project)) {
-            require_once('www/news/news_utils.php');
+            require_once __DIR__ . '/../../www/news/news_utils.php';
             $this->content = news_show_latest($request->get('group_id'), 10, false);
         }
     }
@@ -50,7 +49,8 @@ class Widget_ProjectLatestNews extends Widget {
      *
      * @return String
      */
-    function getTitle() {
+    function getTitle()
+    {
         return $GLOBALS['Language']->getText('include_project_home', 'latest_news');
     }
 
@@ -59,16 +59,18 @@ class Widget_ProjectLatestNews extends Widget {
      *
      * @return String
      */
-    function getContent() {
+    function getContent()
+    {
         return $this->content;
     }
 
     /**
      * Content is available
      *
-     * @return Boolean
+     * @return bool
      */
-    function isAvailable() {
+    function isAvailable()
+    {
         return $this->content ? true : false;
     }
 
@@ -77,9 +79,10 @@ class Widget_ProjectLatestNews extends Widget {
      *
      * @param Project $project The project
      *
-     * @return Boolean
+     * @return bool
      */
-    private function canBeUsedByProject(Project $project) {
+    private function canBeUsedByProject(Project $project)
+    {
         return $project->usesNews();
     }
 
@@ -88,7 +91,8 @@ class Widget_ProjectLatestNews extends Widget {
      *
      * @return String
      */
-    function getDescription() {
+    function getDescription()
+    {
         return $GLOBALS['Language']->getText('widget_description_project_latest_news', 'description');
     }
 
@@ -97,7 +101,8 @@ class Widget_ProjectLatestNews extends Widget {
      *
      * @return HTTPRequest
      */
-    private function getHTTPRequest() {
+    private function getHTTPRequest()
+    {
         return HTTPRequest::instance();
     }
 
@@ -106,8 +111,8 @@ class Widget_ProjectLatestNews extends Widget {
      *
      * @return ProjectManager
      */
-    private function getProjectManager() {
+    private function getProjectManager()
+    {
         return ProjectManager::instance();
     }
-
 }

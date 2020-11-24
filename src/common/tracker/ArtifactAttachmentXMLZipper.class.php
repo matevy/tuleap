@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ArtifactAttachmentXMLZipper implements ArtifactAttachmentXMLExporter {
+class ArtifactAttachmentXMLZipper implements ArtifactAttachmentXMLExporter
+{
 
     /** @var ArtifactXMLNodeHelper */
     private $node_helper;
@@ -26,25 +27,27 @@ class ArtifactAttachmentXMLZipper implements ArtifactAttachmentXMLExporter {
     /** @var ZipArchive */
     private $archive;
 
-    /** @var Boolean */
+    /** @var bool */
     private $skip_files = false;
 
     /** @var ArtifactXMLExporterDao */
     private $dao;
 
-    public function __construct(ArtifactXMLNodeHelper $node_helper, ArtifactXMLExporterDao $dao, ZipArchive $archive, $skip_files) {
+    public function __construct(ArtifactXMLNodeHelper $node_helper, ArtifactXMLExporterDao $dao, ZipArchive $archive, $skip_files)
+    {
         $this->node_helper = $node_helper;
         $this->dao         = $dao;
         $this->archive     = $archive;
         $this->skip_files  = $skip_files;
     }
 
-    public function addFilesToArtifact(DOMElement $artifact_node, $artifact_type_id, $artifact_id) {
+    public function addFilesToArtifact(DOMElement $artifact_node, $artifact_type_id, $artifact_id)
+    {
         $dar = $this->dao->searchFilesForArtifact($artifact_id);
         if (count($dar)) {
             $this->archive->addEmptyDir(ArtifactXMLExporter::ARCHIVE_DATA_DIR);
         }
-        foreach($dar as $row) {
+        foreach ($dar as $row) {
             $xml_file_id     = ArtifactAttachmentFieldXMLExporter::XML_FILE_PREFIX.$row['id'];
             $path_in_archive = $this->getFilePathInArchive($xml_file_id);
             if ($this->skip_files) {
@@ -66,11 +69,13 @@ class ArtifactAttachmentXMLZipper implements ArtifactAttachmentXMLExporter {
         }
     }
 
-    private function getFilePathOnServer($artifact_type_id, $attachment_id) {
+    private function getFilePathOnServer($artifact_type_id, $attachment_id)
+    {
         return ArtifactFile::getPathOnFilesystemByArtifactTypeId($artifact_type_id, $attachment_id);
     }
 
-    private function getFilePathInArchive($xml_file_id) {
+    private function getFilePathInArchive($xml_file_id)
+    {
         return ArtifactXMLExporter::ARCHIVE_DATA_DIR.DIRECTORY_SEPARATOR.'Artifact'.$xml_file_id;
     }
 }

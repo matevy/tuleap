@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012. All Rights Reserved.
  *
@@ -19,19 +18,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/TreeNode/NodeDuplicator.class.php';
-
 /**
  * TreeNode containing a Tracker_CardPresenter
  */
-class Tracker_TreeNode_CardPresenterNode extends NodeDuplicator {
+class Tracker_TreeNode_CardPresenterNode extends NodeDuplicator
+{
 
     /**
      * @var Tracker_CardPresenter
      */
     private $presenter;
-    
-    public function __construct(TreeNode $node, Tracker_CardPresenter $presenter) {
+
+    public function __construct(TreeNode $node, Tracker_CardPresenter $presenter)
+    {
         parent::__construct($node);
         $this->presenter = $presenter;
     }
@@ -39,8 +38,8 @@ class Tracker_TreeNode_CardPresenterNode extends NodeDuplicator {
     /**
      * @return Tracker_CardPresenter
      */
-    public function getCardPresenter() {
+    public function getCardPresenter()
+    {
         return $this->presenter;
     }
 }
-?>

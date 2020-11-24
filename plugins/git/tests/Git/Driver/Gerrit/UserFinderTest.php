@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,9 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once dirname(__FILE__).'/../../../bootstrap.php';
+require_once __DIR__.'/../../../bootstrap.php';
 
-class Git_Driver_Gerrit_UserFinderTest extends TuleapTestCase {
+class UserFinderTest extends TuleapTestCase
+{
 
     /** @var Git_Driver_Gerrit_UserFinder */
     protected $user_finder;
@@ -34,7 +35,8 @@ class Git_Driver_Gerrit_UserFinderTest extends TuleapTestCase {
     /** @var GitRepository **/
     protected $repository;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->permissions_manager = mock('PermissionsManager');
         $this->ugroup_manager      = mock('UGroupManager');
@@ -44,16 +46,15 @@ class Git_Driver_Gerrit_UserFinderTest extends TuleapTestCase {
         stub($this->repository)->getId()->returns(5);
         stub($this->repository)->getProjectId()->returns($this->project_id);
     }
-}
 
-class Git_Driver_Gerrit_UserFinder_areRegisteredUsersAllowedToTest extends Git_Driver_Gerrit_UserFinderTest {
-
-    public function itReturnsFalseForSpecialAdminPerms() {
+    public function itReturnsFalseForSpecialAdminPerms()
+    {
         $allowed = $this->user_finder->areRegisteredUsersAllowedTo(Git::SPECIAL_PERM_ADMIN, $this->repository);
         $this->assertFalse($allowed);
     }
 
-    public function itReturnsFalseIfRegisteredUsersGroupIsNotContainedInTheAllowedOnes() {
+    public function itReturnsFalseIfRegisteredUsersGroupIsNotContainedInTheAllowedOnes()
+    {
         stub($this->permissions_manager)->getAuthorizedUgroups()->returns(array(
             array('ugroup_id' => ProjectUGroup::PROJECT_MEMBERS),
             array('ugroup_id' => ProjectUGroup::PROJECT_ADMIN),
@@ -62,7 +63,8 @@ class Git_Driver_Gerrit_UserFinder_areRegisteredUsersAllowedToTest extends Git_D
         $this->assertFalse($allowed);
     }
 
-    public function itReturnsTrueIfRegisteredUsersGroupIsContainedInTheAllowedOnes() {
+    public function itReturnsTrueIfRegisteredUsersGroupIsContainedInTheAllowedOnes()
+    {
         stub($this->permissions_manager)->getAuthorizedUgroups()->returns(array(
             array('ugroup_id' => ProjectUGroup::PROJECT_MEMBERS),
             array('ugroup_id' => ProjectUGroup::REGISTERED),
@@ -71,7 +73,8 @@ class Git_Driver_Gerrit_UserFinder_areRegisteredUsersAllowedToTest extends Git_D
         $this->assertTrue($allowed);
     }
 
-    public function itReturnsTrueIfAllUsersAreContainedInTheAllowedOnes() {
+    public function itReturnsTrueIfAllUsersAreContainedInTheAllowedOnes()
+    {
         stub($this->permissions_manager)->getAuthorizedUgroups()->returns(array(
             array('ugroup_id' => ProjectUGroup::ANONYMOUS),
         ));
@@ -79,63 +82,3 @@ class Git_Driver_Gerrit_UserFinder_areRegisteredUsersAllowedToTest extends Git_D
         $this->assertTrue($allowed);
     }
 }
-
-class Git_Driver_Gerrit_UserFinder_getUGroupsTest extends TuleapTestCase {
-
-    private $permissions_manager;
-    private $ugroup_manager;
-    private $user_finder;
-
-    public function setUp() {
-        parent::setUp();
-        $this->permissions_manager = mock('PermissionsManager');
-        $this->ugroup_manager      = mock('UGroupManager');
-        $this->user_finder         = new Git_Driver_Gerrit_UserFinder($this->permissions_manager, $this->ugroup_manager);
-
-    }
-
-    public function itAsksPermissionsToPermissionsManager() {
-        $repository_id   = 12;
-        $permission_type = GIT::PERM_READ;
-
-        stub($this->permissions_manager)->getAuthorizedUgroups()->returnsEmptyDar();
-        expect($this->permissions_manager)->getAuthorizedUgroups($repository_id, $permission_type, false)->once();
-
-        $this->user_finder->getUgroups($repository_id, $permission_type);
-    }
-
-    public function itReturnsUGroupIdsFromPermissionsManager() {
-        $ugroup_id_120 = 120;
-        $ugroup_id_115 = 115;
-        stub($this->permissions_manager)->getAuthorizedUgroups()->returnsDar(array('ugroup_id' => $ugroup_id_115), array('ugroup_id' => $ugroup_id_120));
-
-        $ugroups = $this->user_finder->getUgroups('whatever', 'whatever');
-        $this->assertEqual(
-            $ugroups,
-            array(
-                $ugroup_id_115,
-                $ugroup_id_120,
-            )
-        );
-    }
-
-    public function itAlwaysReturnsTheProjectAdminGroupWhenGitAdministratorsAreRequested() {
-        $project_admin_group_id = ProjectUGroup::PROJECT_ADMIN;
-
-        $expected_ugroups = array($project_admin_group_id);
-        $ugroups          = $this->user_finder->getUgroups('whatever', Git::SPECIAL_PERM_ADMIN);
-
-        $this->assertEqual($ugroups, $expected_ugroups);
-    }
-    
-    public function itDoesntJoinWithUGroupTableWhenItFetchesGroupPermissionsInOrderToReturnSomethingWhenWeAreDeletingTheGroup() {
-        stub($this->permissions_manager)->getAuthorizedUgroups()->returnsEmptyDar();
-
-        expect($this->permissions_manager)->getAuthorizedUgroups('*', '*', false)->once();
-
-        $this->user_finder->getUgroups('whatever', 'whatever');
-    }
-}
-
-
-?>

@@ -22,9 +22,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-abstract class Tracker_Artifact_SubmitAbstractRenderer extends Tracker_Artifact_ArtifactRenderer {
+abstract class Tracker_Artifact_SubmitAbstractRenderer extends Tracker_Artifact_ArtifactRenderer
+{
 
-    public function __construct(Tracker $tracker, EventManager $event_manager) {
+    public function __construct(Tracker $tracker, EventManager $event_manager)
+    {
         parent::__construct($tracker, $event_manager);
 
         $this->redirect->query_parameters = array(
@@ -33,23 +35,27 @@ abstract class Tracker_Artifact_SubmitAbstractRenderer extends Tracker_Artifact_
         );
     }
 
-    protected function fetchSubmitInstructions() {
+    protected function fetchSubmitInstructions()
+    {
         if ($this->tracker->submit_instructions) {
             $hp = Codendi_HTMLPurifier::instance();
             return '<p class="submit_instructions">' . $hp->purify($this->tracker->submit_instructions, CODENDI_PURIFIER_FULL) . '</p>';
         }
     }
 
-    protected function fetchFormElements(Codendi_Request $request) {
+    protected function fetchFormElements(Codendi_Request $request)
+    {
         $html = '';
         $html .= '<div class="tracker_artifact">';
-        foreach($this->tracker->getFormElements() as $form_element) {
-            $html .= $form_element->fetchSubmit($request->get('artifact'));
+        foreach ($this->tracker->getFormElements() as $form_element) {
+            $submitted_values = $request->get('artifact');
+            if (! $submitted_values || ! is_array($submitted_values)) {
+                $submitted_values = [];
+            }
+            $html .= $form_element->fetchSubmit($submitted_values);
         }
         $html .= '</div>';
 
         return $html;
     }
 }
-
-?>

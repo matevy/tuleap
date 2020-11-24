@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,9 +24,15 @@ namespace Tuleap\Tracker\REST\v1\Workflow;
 use Tracker;
 use Transition;
 use TransitionFactory;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
+use Tuleap\Tracker\Workflow\SimpleMode\State\State;
+use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
 use Tuleap\Tracker\Workflow\SimpleMode\TransitionReplicator;
-use Tuleap\Tracker\Workflow\SimpleMode\TransitionRetriever;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use Tuleap\Tracker\Workflow\Transition\NoSiblingTransitionException;
+use Tuleap\Tracker\Workflow\Transition\NoTransitionForStateException;
 use Workflow;
 use Workflow_Dao;
 
@@ -45,32 +51,54 @@ class ModeUpdater
      * @var TransitionFactory
      */
     private $transition_factory;
+
     /**
-     * @var TransitionRetriever
+     * @var FrozenFieldsDao
      */
-    private $transition_retriever;
+    private $frozen_fields_dao;
+
+    /**
+     * @var StateFactory
+     */
+    private $state_factory;
+
+    /**
+     * @var TransitionExtractor
+     */
+    private $transition_extractor;
+
+    /**
+     * @var HiddenFieldsetsDao
+     */
+    private $hidden_fieldsets_dao;
 
     public function __construct(
         Workflow_Dao $workflow_dao,
-        TransitionFactory $transition_factory,
-        TransitionRetriever $transition_retriever,
-        TransitionReplicator $transition_replicator
+        TransitionReplicator $transition_replicator,
+        FrozenFieldsDao $frozen_fields_dao,
+        HiddenFieldsetsDao $hidden_fieldsets_dao,
+        StateFactory $state_factory,
+        TransitionExtractor $transition_extractor
     ) {
         $this->workflow_dao          = $workflow_dao;
         $this->transition_replicator = $transition_replicator;
-        $this->transition_factory    = $transition_factory;
-        $this->transition_retriever  = $transition_retriever;
+        $this->frozen_fields_dao     = $frozen_fields_dao;
+        $this->state_factory         = $state_factory;
+        $this->transition_extractor  = $transition_extractor;
+        $this->hidden_fieldsets_dao  = $hidden_fieldsets_dao;
     }
 
     public function switchWorkflowToAdvancedMode(Tracker $tracker) : void
     {
         $workflow    = $tracker->getWorkflow();
-        $workflow_id = $workflow->getId();
+        $workflow_id = (int) $workflow->getId();
 
         if ($workflow->isAdvanced()) {
             return;
         }
 
+        $this->frozen_fields_dao->deleteAllPostActionsForWorkflow($workflow_id);
+        $this->hidden_fieldsets_dao->deleteAllPostActionsForWorkflow($workflow_id);
         $this->workflow_dao->switchWorkflowToAdvancedMode($workflow_id);
     }
 
@@ -89,8 +117,8 @@ class ModeUpdater
             return;
         }
 
-        foreach ($this->getTransitionsOrderedByTo($workflow) as $transitions_for_a_state) {
-            $this->replicatePerState($transitions_for_a_state);
+        foreach ($this->state_factory->getAllStatesForWorkflow($workflow) as $state) {
+            $this->replicatePerState($state);
         }
 
         $this->workflow_dao->switchWorkflowToSimpleMode($workflow_id);
@@ -102,45 +130,12 @@ class ModeUpdater
      * @throws \Tuleap\Tracker\Workflow\PostAction\Update\Internal\UnknownPostActionIdsException
      * @throws \Tuleap\Tracker\Workflow\Transition\Condition\ConditionsUpdateException
      */
-    private function replicatePerState(array $transitions_for_a_state)
+    private function replicatePerState(State $state)
     {
-        $first_transition = $this->getFirstTransition($transitions_for_a_state[0]);
+        $first_transition = $this->transition_extractor->extractReferenceTransitionFromState($state);
 
-        foreach ($transitions_for_a_state as $transition) {
-            if ($first_transition->getId() === $transition->getId()) {
-                continue;
-            }
-
+        foreach ($this->transition_extractor->extractSiblingTransitionsFromState($state, $first_transition) as $transition) {
             $this->transition_replicator->replicate($first_transition, $transition);
         }
-    }
-
-    /**
-     * @return Transition
-     */
-    private function getFirstTransition(Transition $first_transition_in_array) : Transition
-    {
-        try {
-            return $this->transition_retriever->getFirstSiblingTransition($first_transition_in_array);
-        } catch (NoSiblingTransitionException $exception) {
-            return $first_transition_in_array;
-        }
-    }
-
-    /**
-     * @return Transition[]
-     */
-    private function getTransitionsOrderedByTo(Workflow $workflow) : array
-    {
-        $all_transitions         = $this->transition_factory->getTransitions($workflow);
-        $all_ordered_transitions = [];
-
-        foreach ($all_transitions as $transition) {
-            $to_id = $transition->getIdTo();
-
-            $all_ordered_transitions[$to_id][] = $transition;
-        }
-
-        return $all_ordered_transitions;
     }
 }

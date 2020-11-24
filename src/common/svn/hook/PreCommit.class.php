@@ -21,13 +21,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
 use Tuleap\Svn\SHA1CollisionDetector;
 use Tuleap\Svn\SHA1CollisionException;
 
 /**
  * I'm responsible of handling what happens in pre-commit subversion hook
  */
-class SVN_Hook_PreCommit extends SVN_Hook {
+class SVN_Hook_PreCommit extends SVN_Hook
+{
 
     /**
      * @var SVN_Immutable_Tags_Handler
@@ -67,7 +69,8 @@ class SVN_Hook_PreCommit extends SVN_Hook {
      *
      * @throws Exception
      */
-    public function assertCommitMessageIsValid($repository, $commit_message) {
+    public function assertCommitMessageIsValid($repository, $commit_message)
+    {
         if ($this->optionDoesNotAllowEmptyCommitMessage() && $commit_message === '') {
             throw new Exception('Commit message must not be empty');
         }
@@ -76,17 +79,19 @@ class SVN_Hook_PreCommit extends SVN_Hook {
         $this->message_validator->assertCommitMessageIsValid($project, $commit_message);
     }
 
-    private function optionDoesNotAllowEmptyCommitMessage() {
+    private function optionDoesNotAllowEmptyCommitMessage()
+    {
         return ! ForgeConfig::get('sys_allow_empty_svn_commit_message');
     }
 
     /**
      * Check if the commit is done on an allowed path
      * @param String  $repository
-     * @param Integer $transaction
+     * @param int $transaction
      * @throws Exception
      */
-    public function assertCommitToTagIsAllowed($repository, $transaction) {
+    public function assertCommitToTagIsAllowed($repository, $transaction)
+    {
         $project = $this->getProjectFromRepositoryPath($repository);
 
         if ($this->handler->doesProjectUsesImmutableTags($project) &&
@@ -134,11 +139,12 @@ class SVN_Hook_PreCommit extends SVN_Hook {
    /**
      * Check if the commit target is tags
      * @param Project $project
-     * @param Integer $transaction
+     * @param int $transaction
      *
-     * @return Boolean
+     * @return bool
      */
-    private function isCommitAllowed($project, $transaction) {
+    private function isCommitAllowed($project, $transaction)
+    {
         $paths = $this->svn_look->getTransactionPath($project, $transaction);
 
         $this->logger->debug("Checking if commit is done in tag");
@@ -159,9 +165,10 @@ class SVN_Hook_PreCommit extends SVN_Hook {
      * Check if it is an update or delete to tags
      * @param String $path
      *
-     * @return Boolean
+     * @return bool
      */
-    private function isCommitDoneInImmutableTag(Project $project, $path) {
+    private function isCommitDoneInImmutableTag(Project $project, $path)
+    {
         $immutable_paths = explode(PHP_EOL, $this->handler->getImmutableTagsPathForProject($project->getID()));
 
         foreach ($immutable_paths as $immutable_path) {
@@ -173,7 +180,8 @@ class SVN_Hook_PreCommit extends SVN_Hook {
         return false;
     }
 
-    private function isCommitForbidden(Project $project, $immutable_path, $path) {
+    private function isCommitForbidden(Project $project, $immutable_path, $path)
+    {
         $immutable_path_regexp = $this->getWellFormedRegexImmutablePath($immutable_path);
 
         $pattern = "%^(?:
@@ -188,7 +196,8 @@ class SVN_Hook_PreCommit extends SVN_Hook {
         }
     }
 
-    private function isCommitDoneOnWhitelistElement(Project $project, $path) {
+    private function isCommitDoneOnWhitelistElement(Project $project, $path)
+    {
         $whitelist = $this->handler->getAllowedTagsFromWhiteList($project);
         if (! $whitelist) {
             return false;
@@ -210,7 +219,8 @@ class SVN_Hook_PreCommit extends SVN_Hook {
         return preg_match($pattern, $path);
     }
 
-    private function getWellFormedRegexImmutablePath($immutable_path) {
+    private function getWellFormedRegexImmutablePath($immutable_path)
+    {
         $immutable_path = trim($immutable_path, '/');
         $immutable_path = preg_quote($immutable_path);
         $immutable_path = str_replace('\*', '[^/]+', $immutable_path);

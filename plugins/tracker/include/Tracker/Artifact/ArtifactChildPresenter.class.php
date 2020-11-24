@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2016. All rights reserved
+ * Copyright (c) Enalean, 2013-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -23,7 +23,8 @@ use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetrie
 /**
  * Presenter of the child of an artifact
  */
-class Tracker_ArtifactChildPresenter {
+class Tracker_ArtifactChildPresenter
+{
 
     /** @var string */
     public $xref;
@@ -58,7 +59,7 @@ class Tracker_ArtifactChildPresenter {
         Tracker_Semantic_Status $semantic,
         NatureIsChildLinkRetriever $retriever
     ) {
-        $base_url = get_server_url();
+        $base_url = HTTPRequest::instance()->getServerUrl();
 
         $this->xref         = $artifact->getXRef();
         $this->title        = $artifact->getTitle();
@@ -69,7 +70,8 @@ class Tracker_ArtifactChildPresenter {
         $this->has_children = $this->hasChildren($artifact, $retriever);
     }
 
-    private function hasChildren(Tracker_Artifact $artifact, $retriever) {
+    private function hasChildren(Tracker_Artifact $artifact, $retriever)
+    {
         if ($artifact->getTracker()->isProjectAllowedToUseNature()) {
             $artifact_links = $retriever->getChildren($artifact);
             return $artifact_links->count() > 0;

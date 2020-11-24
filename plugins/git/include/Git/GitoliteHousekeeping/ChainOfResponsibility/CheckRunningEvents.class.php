@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,10 +21,21 @@
 /**
  * I am checking that the events are not currently processed
  */
-class Git_GitoliteHousekeeping_ChainOfResponsibility_CheckRunningEvents extends Git_GitoliteHousekeeping_ChainOfResponsibility_Command {
+class Git_GitoliteHousekeeping_ChainOfResponsibility_CheckRunningEvents extends Git_GitoliteHousekeeping_ChainOfResponsibility_Command
+{
 
-    /** @var SystemEventDao */
-    private $system_event_dao;
+    /**
+     * @var SystemEventProcessManager
+     */
+    private $process_manager;
+    /**
+     * @var SystemEventProcess
+     */
+    private $process;
+    /**
+     * @var Git_GitoliteHousekeeping_GitoliteHousekeepingResponse
+     */
+    private $response;
 
     public function __construct(
         Git_GitoliteHousekeeping_GitoliteHousekeepingResponse $response,
@@ -37,7 +48,8 @@ class Git_GitoliteHousekeeping_ChainOfResponsibility_CheckRunningEvents extends 
         $this->response        = $response;
     }
 
-    public function execute() {
+    public function execute()
+    {
         if ($this->process_manager->isAlreadyRunning($this->process)) {
             $this->response->error('There is still an event marked as running. Start again when all events marked as running are done.');
             $this->response->abort();

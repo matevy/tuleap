@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -91,7 +91,7 @@ class StreamFilterTest extends TestCase
         }
     }
 
-    public function testFilterThrowingAnExceptionDuringProcessingIsReplacedByFilterFatalError()
+    public function testFilterThrowingAnExceptionDuringProcessingIsReplacedByFilterFatalError() : void
     {
         $source_resource = fopen('php://memory', 'rb+');
         fwrite($source_resource, 'Test data');

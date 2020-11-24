@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,36 +19,41 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueFullRepresentation;
+
 /**
  * Manage values in changeset for string fields
  */
-class Tracker_Artifact_ChangesetValue_String extends Tracker_Artifact_ChangesetValue_Text {
+class Tracker_Artifact_ChangesetValue_String extends Tracker_Artifact_ChangesetValue_Text
+{
 
     /**
      * @return mixed
      */
-    public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor) {
+    public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor)
+    {
         return $visitor->visitString($this);
     }
 
     /**
      * @see Tracker_Artifact_ChangesetValue_Text::fetchHtmlMailDiff()
      */
-    protected function fetchHtmlMailDiff($formated_diff, $artifact_id, $changeset_id) {
+    protected function fetchHtmlMailDiff($formated_diff, $artifact_id, $changeset_id)
+    {
         return $formated_diff;
     }
 
     /**
      * @see Tracker_Artifact_ChangesetValue_Text::fetchDiffInFollowUp()
      */
-    protected function fetchDiffInFollowUp($formated_diff) {
+    protected function fetchDiffInFollowUp($formated_diff)
+    {
         return '<div class="diff">'. $formated_diff .'</div>';
     }
 
-    protected function getFullRESTRepresentation($value) {
-        $classname_with_namespace = 'Tuleap\Tracker\REST\Artifact\ArtifactFieldValueFullRepresentation';
-
-        $artifact_field_value_full_representation = new $classname_with_namespace;
+    protected function getFullRESTRepresentation($value)
+    {
+        $artifact_field_value_full_representation = new ArtifactFieldValueFullRepresentation();
         $artifact_field_value_full_representation->build(
             $this->field->getId(),
             Tracker_FormElementFactory::instance()->getType($this->field),

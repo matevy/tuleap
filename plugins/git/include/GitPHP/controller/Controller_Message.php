@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - present. All Rights Reserved.
  * Copyright (C) 2010 Christopher Han <xiphux@gmail.com>
  *
  * This file is a part of Tuleap.
@@ -27,16 +27,6 @@ namespace Tuleap\Git\GitPHP;
  */
 class Controller_Message extends ControllerBase // @codingStandardsIgnoreLine
 {
-    use \Tuleap\Git\Repository\View\FeatureFlag;
-
-    /**
-     * __construct
-     *
-     * Constructor
-     *
-     * @access public
-     * @return controller
-     */
     public function __construct()
     {
         try {
@@ -55,10 +45,7 @@ class Controller_Message extends ControllerBase // @codingStandardsIgnoreLine
      */
     protected function GetTemplate() // @codingStandardsIgnoreLine
     {
-        if ($this->isTuleapBeauGitActivated()) {
-            return 'tuleap/message.tpl';
-        }
-        return 'message.tpl';
+        return 'tuleap/message.tpl';
     }
 
     /**
@@ -67,7 +54,7 @@ class Controller_Message extends ControllerBase // @codingStandardsIgnoreLine
      * Gets the name of this controller's action
      *
      * @access public
-     * @param boolean $local true if caller wants the localized action name
+     * @param bool $local true if caller wants the localized action name
      * @return string action name
      */
     public function GetName($local = false) // @codingStandardsIgnoreLine
@@ -132,7 +119,7 @@ class Controller_Message extends ControllerBase // @codingStandardsIgnoreLine
      * Gets the header for an HTTP status code
      *
      * @access private
-     * @param integer $code status code
+     * @param int $code status code
      * @return string header
      */
     private function StatusCodeHeader($code) // @codingStandardsIgnoreLine

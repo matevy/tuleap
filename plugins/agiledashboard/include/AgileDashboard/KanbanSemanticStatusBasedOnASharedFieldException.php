@@ -16,8 +16,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Kanban_SemanticStatusBasedOnASharedFieldException extends Exception {
-    public function __construct() {
+class Kanban_SemanticStatusBasedOnASharedFieldException extends Exception
+{
+    public function __construct()
+    {
         parent::__construct("The list field defined as semantic status is based on a shared field");
     }
 }

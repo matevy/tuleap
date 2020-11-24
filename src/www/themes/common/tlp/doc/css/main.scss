@@ -25,6 +25,7 @@ $nav-margin: 30px;
 @mixin themable(
     $theme-color,
     $tlp-theme-background-color,
+    $tlp-ui-dimmed,
     $tlp-ui-info,
     $tlp-ui-success,
     $tlp-ui-warning,
@@ -142,15 +143,58 @@ $nav-margin: 30px;
         }
     }
 
-    #dropdown-icon-right-example:hover {
-        color: $theme-color;
+    #dropdown-icon-right-example {
+        color: transparentize($tlp-ui-dimmed, .2);
+
+        &:hover {
+            color: $theme-color;
+        }
     }
 
-    .popover-examples-container > i {
-        text-shadow: -5px -5px 0 $tlp-theme-background-color,
-            5px -5px 0 $tlp-theme-background-color,
-            -5px 5px 0 $tlp-theme-background-color,
-            5px 5px 0 $tlp-theme-background-color;
+    .popover-examples-container {
+        &::before {
+            border-color: transparentize($tlp-ui-dimmed, .2);
+        }
+
+        > i {
+            text-shadow: -5px -5px 0 $tlp-theme-background-color,
+                5px -5px 0 $tlp-theme-background-color,
+                -5px 5px 0 $tlp-theme-background-color,
+                5px 5px 0 $tlp-theme-background-color;
+
+            &:not(:hover) {
+                color: transparentize($tlp-ui-dimmed, .2);
+            }
+        }
+    }
+
+    .doc-colors-illustration-helper-modal-body {
+        display: flex;
+        padding: 0;
+    }
+
+    .doc-colors-illustration-helper-modal-target,
+    .doc-colors-illustration-helper-modal-source {
+        margin: 0;
+        padding: 20px;
+        width: 50%;
+    }
+    .doc-colors-illustration-helper-modal-source {
+        border-right: 1px solid $tlp-ui-border-normal;
+    }
+    .doc-colors-illustration-helper-modal-preview {
+        border-top: 1px solid $tlp-ui-border-normal;
+    }
+    #doc-colors-illustration-helper-modal-preview-block {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        border-radius: 3px;
+        background: $tlp-theme-background-color;
+    }
+    #illustration-helper-target {
+        background: $tlp-theme-background-color;
     }
 }
 
@@ -162,6 +206,7 @@ body {
         @include themable(
             $tlp-theme-color,
             $tlp-theme-background-color,
+            $tlp-ui-dimmed,
             $tlp-ui-info,
             $tlp-ui-success,
             $tlp-ui-warning,
@@ -179,6 +224,7 @@ body {
         @include themable(
             $tlp-theme-color,
             $tlp-theme-background-color,
+            $tlp-ui-dimmed,
             $tlp-ui-info,
             $tlp-ui-success,
             $tlp-ui-warning,
@@ -196,6 +242,7 @@ body {
         @include themable(
             $tlp-theme-color,
             $tlp-theme-background-color,
+            $tlp-ui-dimmed,
             $tlp-ui-info,
             $tlp-ui-success,
             $tlp-ui-warning,
@@ -213,6 +260,7 @@ body {
         @include themable(
             $tlp-theme-color,
             $tlp-theme-background-color,
+            $tlp-ui-dimmed,
             $tlp-ui-info,
             $tlp-ui-success,
             $tlp-ui-warning,
@@ -230,6 +278,7 @@ body {
         @include themable(
             $tlp-theme-color,
             $tlp-theme-background-color,
+            $tlp-ui-dimmed,
             $tlp-ui-info,
             $tlp-ui-success,
             $tlp-ui-warning,
@@ -247,6 +296,7 @@ body {
         @include themable(
             $tlp-theme-color,
             $tlp-theme-background-color,
+            $tlp-ui-dimmed,
             $tlp-ui-info,
             $tlp-ui-success,
             $tlp-ui-warning,
@@ -267,3 +317,6 @@ body {
 @import 'nav';
 @import 'sections';
 @import 'javascript-sections';
+@import '../../node_modules/codemirror/lib/codemirror';
+@import '../../node_modules/codemirror/theme/mdn-like';
+@import '../../node_modules/codemirror/addon/scroll/simplescrollbars';

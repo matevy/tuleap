@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_MailGateway_CitationStripper {
+class Tracker_Artifact_MailGateway_CitationStripper
+{
 
     public const TEXT_CITATION_PATTERN = '/(\n>\s+.*)+/';
     public const HTML_CITATION_PATTERN = '%<blockquote[^>]*>.*</blockquote>%';
@@ -39,13 +40,15 @@ class Tracker_Artifact_MailGateway_CitationStripper {
         ),
     );
 
-    public function stripText($mail_content) {
+    public function stripText($mail_content)
+    {
         return $this->stripOutlookTextQuote(
             $this->stripStandardTextQuote($mail_content)
         );
     }
 
-    private function stripStandardTextQuote($mail_content) {
+    private function stripStandardTextQuote($mail_content)
+    {
         return preg_replace(
             self::TEXT_CITATION_PATTERN,
             self::DEFAULT_REPLACEMENT,
@@ -53,14 +56,16 @@ class Tracker_Artifact_MailGateway_CitationStripper {
         );
     }
 
-    private function stripOutlookTextQuote($mail_content) {
+    private function stripOutlookTextQuote($mail_content)
+    {
         return $this->stripOutlook(
             $this->stripOutlook($mail_content, 'en'),
             'fr'
         );
     }
 
-    public function stripHTML($mail_content) {
+    public function stripHTML($mail_content)
+    {
         $doc = new DOMDocument();
         $doc->loadHTML($mail_content);
         $this->removeBlockquoteElements($doc);
@@ -68,7 +73,8 @@ class Tracker_Artifact_MailGateway_CitationStripper {
         return $this->getContentInsideBody($doc);
     }
 
-    private function removeBlockquoteElements(DOMDocument $doc) {
+    private function removeBlockquoteElements(DOMDocument $doc)
+    {
         $xpath = new DOMXPath($doc);
 
         foreach ($xpath->query('//div[@class="gmail_extra"]') as $blockquote) {
@@ -80,11 +86,13 @@ class Tracker_Artifact_MailGateway_CitationStripper {
         }
     }
 
-    private function removeNode(DOMNode $node) {
+    private function removeNode(DOMNode $node)
+    {
         $node->parentNode->removeChild($node);
     }
 
-    private function getContentInsideBody(DOMDocument $doc) {
+    private function getContentInsideBody(DOMDocument $doc)
+    {
         $xml = simplexml_import_dom($doc);
         $content = '';
         foreach ($xml->body->children() as $child) {
@@ -109,8 +117,8 @@ class Tracker_Artifact_MailGateway_CitationStripper {
     private function stripOutlookAccordingToNewLine($body, $lang, $new_line)
     {
         $pos_from    = strpos($body, $new_line . $this->outlook_header[$lang]['from']);
-        $pos_sent    = strpos($body, $new_line . $this->outlook_header[$lang]['sent'],    $pos_from);
-        $pos_to      = strpos($body, $new_line . $this->outlook_header[$lang]['to'],      $pos_sent);
+        $pos_sent    = strpos($body, $new_line . $this->outlook_header[$lang]['sent'], $pos_from);
+        $pos_to      = strpos($body, $new_line . $this->outlook_header[$lang]['to'], $pos_sent);
         $pos_subject = strpos($body, $new_line . $this->outlook_header[$lang]['subject'], $pos_to);
         $pos_body    = strpos($body, $new_line . $new_line, $pos_subject);
 

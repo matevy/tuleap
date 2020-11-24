@@ -22,7 +22,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_Renderer_CreateInPlaceRenderer{
+class Tracker_Artifact_Renderer_CreateInPlaceRenderer
+{
 
     /** @var Tracker */
     private $tracker;
@@ -33,13 +34,15 @@ class Tracker_Artifact_Renderer_CreateInPlaceRenderer{
     /** @var Tracker_ArtifactFactory */
     private $tracker_artifact_factory;
 
-    public function __construct(Tracker $tracker, MustacheRenderer $renderer) {
+    public function __construct(Tracker $tracker, MustacheRenderer $renderer)
+    {
         $this->tracker                  = $tracker;
         $this->renderer                 = $renderer;
         $this->tracker_artifact_factory = Tracker_ArtifactFactory::instance();
     }
 
-    public function display($artifact_link_id, $render_with_javascript) {
+    public function display($artifact_link_id, $render_with_javascript)
+    {
         $artifact_to_link = null;
         $submitted_values = array();
 
@@ -63,7 +66,8 @@ class Tracker_Artifact_Renderer_CreateInPlaceRenderer{
         $this->renderer->renderToPage('create-artifact-modal', $presenter);
     }
 
-    private function isArtifactInParentTracker(Tracker_Artifact $linked_artifact) {
+    private function isArtifactInParentTracker(Tracker_Artifact $linked_artifact)
+    {
         $linked_artifact_tracker_id = $linked_artifact->getTrackerId();
         $parent_tracker             = $this->tracker->getParent();
 

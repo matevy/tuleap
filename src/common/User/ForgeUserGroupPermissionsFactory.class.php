@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2014 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -22,6 +22,7 @@ namespace Tuleap\User;
 
 use EventManager;
 use Tuleap\User\ForgeUserGroupPermission\RestProjectManagementPermission;
+use Tuleap\User\ForgeUserGroupPermission\RESTReadOnlyAdmin\RestReadOnlyAdminPermission;
 use Tuleap\User\ForgeUserGroupPermission\SiteAdministratorPermission;
 use Tuleap\User\ForgeUserGroupPermission\RetrieveSystemEventsInformationApi;
 use Tuleap\User\ForgeUserGroupPermission\UserForgeUGroupPresenter;
@@ -125,7 +126,8 @@ class User_ForgeUserGroupPermissionsFactory // @codingStandardsIgnoreLine
             User_ForgeUserGroupPermission_UserManagement::ID                    => new User_ForgeUserGroupPermission_UserManagement(),
             RetrieveSystemEventsInformationApi::ID                              => new RetrieveSystemEventsInformationApi(),
             SiteAdministratorPermission::ID                                     => new SiteAdministratorPermission(),
-            RestProjectManagementPermission::ID                                 => new RestProjectManagementPermission()
+            RestProjectManagementPermission::ID                                 => new RestProjectManagementPermission(),
+            RestReadOnlyAdminPermission::ID                                     => new RestReadOnlyAdminPermission()
         ];
 
         return $all_permissions;

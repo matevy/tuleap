@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class AgileDashboard_KanbanColumn {
+class AgileDashboard_KanbanColumn
+{
 
     /**
      * @var int
@@ -37,7 +38,7 @@ class AgileDashboard_KanbanColumn {
     private $label;
 
     /**
-     * @var boolean
+     * @var bool
      */
     private $is_open;
 
@@ -52,11 +53,12 @@ class AgileDashboard_KanbanColumn {
     private $limit;
 
      /**
-      * @var boolean
+      * @var bool
       */
     private $is_removable;
 
-    public function __construct($id, $kanban_id, $label, $is_open, $color, $limit, $is_removable) {
+    public function __construct($id, $kanban_id, $label, $is_open, $color, $limit, $is_removable)
+    {
         $this->id           = $id;
         $this->kanban_id    = $kanban_id;
         $this->label        = $label;
@@ -66,32 +68,38 @@ class AgileDashboard_KanbanColumn {
         $this->is_removable = $is_removable;
     }
 
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
-    public function getKanbanId() {
+    public function getKanbanId()
+    {
         return $this->kanban_id;
     }
 
-    public function getLabel() {
+    public function getLabel()
+    {
         return $this->label;
     }
 
-    public function isOpen() {
+    public function isOpen()
+    {
         return $this->is_open;
     }
 
-    public function getColor() {
+    public function getColor()
+    {
         return $this->color;
     }
 
-    public function getLimit() {
+    public function getLimit()
+    {
         return $this->limit;
     }
 
-    public function isRemovable() {
+    public function isRemovable()
+    {
         return $this->is_removable;
     }
-
 }

@@ -19,45 +19,49 @@
  */
 
 
-class Tracker_FormElement_StaticField_RichText extends Tracker_FormElement_StaticField {
-    
-	public $default_properties = array(
+class Tracker_FormElement_StaticField_RichText extends Tracker_FormElement_StaticField
+{
+
+    public $default_properties = array(
         'static_value' => array(
             'value' => '',
             'type'  => 'rich_text',
         ),
     );
-    
+
     /**
      * The static text
      */
     protected $static_rich_text = null;
-    
-    public function getRichText() {
+
+    public function getRichText()
+    {
         if ($row = $this->getDao()->searchByFieldId($this->id)->getRow()) {
-        	$hp = Codendi_HTMLPurifier::instance();
-        	$value = $row['static_value'];
-        	return $hp->purify($value, CODENDI_PURIFIER_FULL);
+            $hp = Codendi_HTMLPurifier::instance();
+            $value = $row['static_value'];
+            return $hp->purify($value, CODENDI_PURIFIER_FULL);
         } else {
             return '';
         }
-    	
     }
-    
-    protected function getDao() {
+
+    protected function getDao()
+    {
         return new Tracker_FormElement_StaticField_RichTextDao();
     }
-    
-    
-    protected function fetchReadOnly() {
+
+
+    protected function fetchReadOnly()
+    {
         $html = '';
         $html .= '<div class="tracker-admin-staticrichtext" id="tracker-admin-formElements_'. $this->id .'" />';
         $html .= $this->getRichText();
         $html .= '</div>';
         return $html;
     }
-    
-    public function fetchAdmin($tracker) {
+
+    public function fetchAdmin($tracker)
+    {
         $html = '';
         $html .= '<div class="tracker-admin-field" id="tracker-admin-formElements_'. $this->id .'">';
         $html .= '<div class="tracker-admin-field-controls">';
@@ -73,51 +77,55 @@ class Tracker_FormElement_StaticField_RichText extends Tracker_FormElement_Stati
         $html .= '</div>';
         return $html;
     }
-    
+
     /**
      * Display the html field in the admin ui
      * @return string html
      */
-    protected function fetchAdminFormElement() {
+    protected function fetchAdminFormElement()
+    {
         $html = '';
         $html .= '<div class="tracker-admin-staticrichtext" id="tracker-admin-formElements_'. $this->id .'" />';
-        $html .= $this->getRichText();;
+        $html .= $this->getRichText();
+        ;
         $html .= '</div>';
         return $html;
     }
-        
+
     /**
      * @return the label of the formElement (mainly used in admin part)
      */
-    public static function getFactoryLabel() {
+    public static function getFactoryLabel()
+    {
         return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'static_rich_text_label');
     }
-    
+
     /**
      * @return the description of the formElement (mainly used in admin part)
      */
-    public static function getFactoryDescription() {
+    public static function getFactoryDescription()
+    {
         return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'static_rich_text_description');
     }
-    
+
     /**
      * @return the path to the icon to use an element
      */
-    public static function getFactoryIconUseIt() {
+    public static function getFactoryIconUseIt()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/edit-drop-cap.png');
     }
-    
+
     /**
      * @return the path to the icon to create an element
      */
-    public static function getFactoryIconCreate() {
+    public static function getFactoryIconCreate()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/edit-drop-cap--plus.png');
     }
 
-    public function getDefaultValue() {
+    public function getDefaultValue()
+    {
         return $this->getRichText();
     }
-    
 }
-
-?>

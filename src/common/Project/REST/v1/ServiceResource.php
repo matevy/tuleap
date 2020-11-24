@@ -36,9 +36,9 @@ use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\I18NRestException;
 use Tuleap\REST\ProjectAuthorization;
-use Tuleap\REST\UserManager;
 use URLVerification;
 use User_LoginException;
+use UserManager;
 
 /**
  * Wrapper for project related REST methods
@@ -88,10 +88,10 @@ class ServiceResource extends AuthenticatedResource
      * @param int                   $id   The id of the service
      * @param ServiceRepresentation $body The service data
      *
-     * @throws 400
-     * @throws 401
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 401
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function putId(int $id, ServiceRepresentation $body): void
     {
@@ -117,8 +117,8 @@ class ServiceResource extends AuthenticatedResource
     }
 
     /**
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
     private function getService(int $id, PFUser $user): Service
     {
@@ -147,7 +147,7 @@ class ServiceResource extends AuthenticatedResource
     private function getUser(): PFUser
     {
         try {
-            return UserManager::build()->getCurrentUser();
+            return UserManager::instance()->getCurrentUser();
         } catch (\Rest_Exception_InvalidTokenException | User_LoginException $exception) {
             throw new I18NRestException(401, $exception->getMessage());
         }
@@ -155,7 +155,7 @@ class ServiceResource extends AuthenticatedResource
 
     private function getServicePOSTDataFromBody(Service $service, ServiceRepresentation $body): ServicePOSTData
     {
-        $builder = new ServicePOSTDataBuilder(\EventManager::instance());
+        $builder = new ServicePOSTDataBuilder(\EventManager::instance(), \ServiceManager::instance());
 
         return $builder->buildFromService($service, $body->is_enabled);
     }

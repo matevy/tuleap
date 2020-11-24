@@ -22,26 +22,33 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
 {
     var $newItem;
 
-    /* protected abstract */ function _getEnctype() {
+    /* protected abstract */ function _getEnctype()
+    {
     }
 
-    /* protected abstract */ function _getAction() {
+    /* protected abstract */ function _getAction()
+    {
     }
 
-    /* protected abstract */ function _getActionText() {
+    /* protected abstract */ function _getActionText()
+    {
     }
 
-    /* protected abstract */ function _getForm() {
+    /* protected abstract */ function _getForm()
+    {
     }
 
-    /* protected */ function _getSpecificProperties($params) {
+    /* protected */ function _getSpecificProperties($params)
+    {
         return '';
     }
 
-    /* protected */ function _getCategories($params) {
+    /* protected */ function _getCategories($params)
+    {
         return '';
     }
-    /* protected */ function _getJSDocmanParameters($params) {
+    /* protected */ function _getJSDocmanParameters($params)
+    {
         $doc_params = array();
         if (isset($params['force_permissions'])) {
             $doc_params['newItem'] = array(
@@ -57,10 +64,11 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
         );
     }
 
-    function _getPropertiesFieldsDisplay($fields) {
+    function _getPropertiesFieldsDisplay($fields)
+    {
         $html = '';
         $html .= '<table>';
-        foreach($fields as $field) {
+        foreach ($fields as $field) {
             $html .= '<tr>';
             $html .= '<td>'.$field->getLabel().'</td>';
             $html .= '<td>'.$field->getField().'</td>';
@@ -70,21 +78,24 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
         return $html;
     }
 
-    function metadataToSkip() {
+    function metadataToSkip()
+    {
         $labels = array('owner'       => 'owner',
                         'create_date' => 'create_date',
                         'update_date' =>'update_date');
         return $labels;
     }
 
-    function _getNewItem() {
+    function _getNewItem()
+    {
         return null;
     }
 
-    function setupNewItem($params) {
+    function setupNewItem($params)
+    {
         $mdFactory = new Docman_MetadataFactory($params['group_id']);
 
-        if(isset($params['force_item'])) {
+        if (isset($params['force_item'])) {
             $this->newItem = $params['force_item'];
         } else {
             $this->newItem = $this->_getNewItem();
@@ -101,14 +112,16 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
         $mdFactory->appendAllListOfValuesToItem($this->newItem);
     }
 
-    function _getPropertiesFields($params) {
+    function _getPropertiesFields($params)
+    {
         $get_fields = new Docman_View_GetFieldsVisitor($this->metadataToSkip());
         $fields = $this->newItem->accept($get_fields, array('form_name'  => $params['form_name'],
                                                             'theme_path' => $params['theme_path']));
         return $fields;
     }
 
-    function _getGeneralProperties($params) {
+    function _getGeneralProperties($params)
+    {
         $html = '';
         $fields = $this->_getPropertiesFields($params);
         $html .= $this->_getPropertiesFieldsDisplay($fields);
@@ -116,7 +129,8 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
         return $html;
     }
 
-    function _getGeneralPropertiesFieldset($params) {
+    function _getGeneralPropertiesFieldset($params)
+    {
         $html = '';
         $html .= '<div class="properties">'."\n";
         $html .= '<h3>'. $GLOBALS['Language']->getText('plugin_docman', 'new_generalproperties') .'</h3>';
@@ -127,18 +141,21 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
         return $html;
     }
 
-    function _getDefaultValuesFieldset($params) {
+    function _getDefaultValuesFieldset($params)
+    {
         return '';
     }
 
-    function _getSpecificPropertiesFieldset($params) {
+    function _getSpecificPropertiesFieldset($params)
+    {
         $html = '';
         $html .= '<h3>'. $GLOBALS['Language']->getText('plugin_docman', 'new_specificproperties') .'</h3>';
         $html .= $this->_getSpecificProperties($params);
         return $html;
     }
 
-    function _getLocationFieldset($params) {
+    function _getLocationFieldset($params)
+    {
         $html = '';
         $html .= '<h3>'. $GLOBALS['Language']->getText('plugin_docman', 'new_location') .'</h3>';
         $itemRanking = new Docman_View_ItemRanking();
@@ -152,7 +169,8 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
         return $html;
     }
 
-    function _getPermissionsFieldset($params) {
+    function _getPermissionsFieldset($params)
+    {
         $html = '';
         $html .= '<h3>Permissions</h3>';
         $html .= '<div id="docman_new_permissions_panel">';
@@ -163,7 +181,8 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
         return $html;
     }
 
-    function _getNewsFieldset($params) {
+    function _getNewsFieldset($params)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
         $user = $this->_controller->getUser();
@@ -186,20 +205,20 @@ abstract class Docman_View_New extends Docman_View_Display /* implements Visitor
             $html .= '<p>'. $GLOBALS['Language']->getText('plugin_docman', 'new_news_letblank') .'</p>';
 
             $html .= '<div>';
-            $html .= '<b><label for="news_summary">'. $GLOBALS['Language']->getText('news_admin_index','subject') .':</label></b><br />';
+            $html .= '<b><label for="news_summary">'. $GLOBALS['Language']->getText('news_admin_index', 'subject') .':</label></b><br />';
             $html .= '<input type="text" name="news[summary]" id="news_summary" value="'.  $hp->purify($default_news_summary, CODENDI_PURIFIER_CONVERT_HTML)  .'" size="44" maxlength="60" /><br />';
             $html .= '</div>';
 
             $html .= '<div>';
-            $html .= '<b><label for="news_details">'. $GLOBALS['Language']->getText('news_admin_index','details') .':</label></b><br />';
+            $html .= '<b><label for="news_details">'. $GLOBALS['Language']->getText('news_admin_index', 'details') .':</label></b><br />';
             $html .= '<textarea name="news[details]" rows="8" cols="50" wrap="soft">'.  $hp->purify($default_news_details, CODENDI_PURIFIER_CONVERT_HTML)  .'</textarea><br />';
             $html .= '</div>';
 
-            $html .= '<table><tr style="vertical-align:top"><td><b>'. $GLOBALS['Language']->getText('news_submit','news_privacy') .'</b></td><td>';
+            $html .= '<table><tr style="vertical-align:top"><td><b>'. $GLOBALS['Language']->getText('news_submit', 'news_privacy') .'</b></td><td>';
             $html .= '<input type="radio" name="news[is_private]" id="news_is_private_no" value="0" '. $default_news_public_check .' />';
-            $html .= '<label class="docman-create-news-option" for="news_is_private_no">'. $GLOBALS['Language']->getText('news_submit','public_news') .'</label><br />';
+            $html .= '<label class="docman-create-news-option" for="news_is_private_no">'. $GLOBALS['Language']->getText('news_submit', 'public_news') .'</label><br />';
             $html .= '<input type="radio" name="news[is_private]" id="news_is_private_yes" value="1" '. $default_news_private_check .' />';
-            $html .= '<label class="docman-create-news-option" for="news_is_private_yes">'. $GLOBALS['Language']->getText('news_submit','private_news') .'</label>';
+            $html .= '<label class="docman-create-news-option" for="news_is_private_yes">'. $GLOBALS['Language']->getText('news_submit', 'private_news') .'</label>';
             $html .= '</td></tr></table>';
 
             $html .= '</div>';

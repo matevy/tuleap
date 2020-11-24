@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -21,7 +21,8 @@
 
 require_once __DIR__.'/../bootstrap.php';
 
-class TransitionFactory_BaseTest extends TuleapTestCase {
+class TransitionFactory_BaseTest extends TuleapTestCase
+{
 
     /** @var TransitionFactory */
     protected $factory;
@@ -29,7 +30,8 @@ class TransitionFactory_BaseTest extends TuleapTestCase {
     /** @var Workflow_Transition_ConditionFactory */
     protected $condition_factory;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->condition_factory  = \Mockery::spy(\Workflow_Transition_ConditionFactory::class);
@@ -44,13 +46,15 @@ class TransitionFactory_BaseTest extends TuleapTestCase {
     }
 }
 
-class TransitionFactory_isFieldUsedInTransitionsTest extends TransitionFactory_BaseTest {
+class TransitionFactory_isFieldUsedInTransitionsTest extends TransitionFactory_BaseTest
+{
 
     private $a_field_not_used_in_transitions;
     private $a_field_used_in_post_actions;
     private $a_field_used_in_conditions;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->a_field_not_used_in_transitions = \Mockery::spy(\Tracker_FormElement_Field_Date::class);
@@ -71,22 +75,27 @@ class TransitionFactory_isFieldUsedInTransitionsTest extends TransitionFactory_B
         stub($this->condition_factory)->isFieldUsedInConditions($this->a_field_used_in_conditions)->returns(true);
     }
 
-    public function itReturnsTrueIfFieldIsUsedInPostActions() {
+    public function itReturnsTrueIfFieldIsUsedInPostActions()
+    {
         $this->assertTrue($this->factory->isFieldUsedInTransitions($this->a_field_used_in_post_actions));
     }
 
-    public function itReturnsTrueIfFieldIsUsedInConditions() {
+    public function itReturnsTrueIfFieldIsUsedInConditions()
+    {
         $this->assertTrue($this->factory->isFieldUsedInTransitions($this->a_field_used_in_conditions));
     }
 
-    public function itReturnsFalseIsNiotUsedInTransitions() {
+    public function itReturnsFalseIsNiotUsedInTransitions()
+    {
         $this->assertFalse($this->factory->isFieldUsedInTransitions($this->a_field_not_used_in_transitions));
     }
 }
 
-class TransitionFactory_duplicateTest extends TransitionFactory_BaseTest {
+class TransitionFactory_duplicateTest extends TransitionFactory_BaseTest
+{
 
-    public function testDuplicate() {
+    public function testDuplicate()
+    {
         $field_value_new = \Mockery::spy(\Tracker_FormElement_Field_List_Value::class);
         $field_value_new->shouldReceive('getId')->andReturns(2066);
         $field_value_analyzed = \Mockery::spy(\Tracker_FormElement_Field_List_Value::class);
@@ -125,57 +134,5 @@ class TransitionFactory_duplicateTest extends TransitionFactory_BaseTest {
         $tf->shouldReceive('getPostActionFactory')->andReturns($tpaf);
 
         $tf->duplicate($values, 1, $transitions, array(), false, false);
-    }
-}
-
-class TransitionFactory_GetInstanceFromXmlTest extends TransitionFactory_BaseTest {
-
-    public function setUp() {
-        parent::setUp();
-        $this->setUpGlobalsMockery();
-        $this->field = aMockField()->build();
-        $this->from_value  = \Mockery::spy(\Tracker_FormElement_Field_List_Value::class);
-        $this->to_value    = \Mockery::spy(\Tracker_FormElement_Field_List_Value::class);
-        $this->xml_mapping = array('F1'     => $this->field,
-                                   'F32-V1' => $this->from_value,
-                                   'F32-V0' => $this->to_value);
-
-        $this->condition_factory->shouldReceive('getAllInstancesFromXML')->once()->andReturn(new Workflow_Transition_ConditionsCollection());
-    }
-
-    public function itReconstitutesPostActions() {
-
-        $xml = new SimpleXMLElement('
-            <transition>
-                <from_id REF="F32-V1"/>
-                <to_id REF="F32-V0"/>
-                <postactions>
-                    <postaction_field_date valuetype="1">
-                        <field_id REF="F1"/>
-                    </postaction_field_date>
-                </postactions>
-            </transition>
-        ');
-
-        expect($this->postaction_factory)->getInstanceFromXML(Mockery::any(), $this->xml_mapping, Mockery::any())->once();
-
-        $this->factory->getInstanceFromXML($xml, $this->xml_mapping, $this->project);
-    }
-
-    public function itReconsititutesPermissions() {
-        $xml = new SimpleXMLElement('
-            <transition>
-                <from_id REF="F32-V1"/>
-                <to_id REF="F32-V0"/>
-                <permissions>
-                    <permission ugroup="UGROUP_PROJECT_MEMBERS"/>
-                    <permission ugroup="UGROUP_PROJECT_ADMIN"/>
-                </permissions>
-            </transition>
-        ');
-
-        $transition = $this->factory->getInstanceFromXML($xml, $this->xml_mapping, $this->project);
-
-        $this->assertIsA($transition->getConditions(), 'Workflow_Transition_ConditionsCollection');
     }
 }

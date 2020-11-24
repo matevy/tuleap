@@ -18,7 +18,10 @@
   -->
 
 <template>
-    <display-embedded-content v-bind:embedded_file="embedded_file" v-if="has_loading_without_error" data-test="embedded_content"/>
+    <display-embedded-content
+        v-if="has_loaded_without_error"
+        data-test="embedded_content"
+    />
     <display-embedded-spinner v-else-if="is_loading" data-test="embedded_spinner"/>
 </template>
 
@@ -38,17 +41,29 @@ export default {
     },
     computed: {
         ...mapGetters("error", ["does_document_have_any_error"]),
-        has_loading_without_error() {
+        has_loaded_without_error() {
             return !this.does_document_have_any_error && !this.is_loading;
         }
     },
-    async mounted() {
+    async beforeMount() {
         this.is_loading = true;
         this.embedded_file = await this.$store.dispatch(
             "loadDocumentWithAscendentHierarchy",
             parseInt(this.$route.params.item_id, 10)
         );
+        this.$store.commit("updateCurrentlyPreviewedItem", this.embedded_file);
+        const preference = await this.$store.dispatch(
+            "getEmbeddedFileDisplayPreference",
+            this.embedded_file
+        );
+        this.$store.commit(
+            "shouldDisplayEmbeddedInLargeMode",
+            preference && preference.value === false
+        );
         this.is_loading = false;
+    },
+    destroyed() {
+        this.$store.commit("updateCurrentlyPreviewedItem", null);
     },
     methods: {
         ...mapActions(["loadDocumentWithAscendentHierarchy"])

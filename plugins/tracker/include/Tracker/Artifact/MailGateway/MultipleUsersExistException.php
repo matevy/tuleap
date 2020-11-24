@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_MailGateway_MultipleUsersExistException extends Tracker_Exception {
+class Tracker_Artifact_MailGateway_MultipleUsersExistException extends Tracker_Exception
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct("Could not authenticate the user, multiple users match");
     }
 }

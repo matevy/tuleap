@@ -3,14 +3,31 @@ msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
-"Last-Translator: Joris MASSON <joris.masson@enalean.com>\n"
+"Last-Translator: Nicolas Terray <nicolas.terray@enalean.com>\n"
 "Language-Team: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.0.6\n"
+
+msgid "\"duration\" field is empty or invalid"
+msgstr "Le champ \"duration\" est vide ou invalide"
+
+msgid "\"duration\" must be greater than 1 to display burndown graph."
+msgstr ""
+"Le champ \"duration\" doit être supérieur à 1 pour pouvoir afficher "
+"correctement le graphique."
+
+msgid "\"end date\" field is empty or invalid"
+msgstr "Le champ \"Date de fin\" est vide ou invalide"
+
+msgid "\"start date\" field is empty or invalid"
+msgstr "Le champ \"start date\" est vide ou invalide"
+
+msgid "%s administration"
+msgstr "Administration de %s"
 
 #, php-format
 msgid "%s has been created"
@@ -41,11 +58,27 @@ msgid "%s tracker"
 msgstr "Tracker %s"
 
 #, php-format
+msgid "%s working day"
+msgid_plural "%s working days"
+msgstr[0] "%s jour ouvrable"
+msgstr[1] "%s jours ouvrables"
+
+#, php-format
 msgid "'%s' is not supported for the operator %s."
 msgstr "'%s' n'est pas supporté pour l'opérateur %s."
 
+msgid ""
+"* denotes user groups that may not have access to the tracker (no <a href="
+"\"%s\">tracker permission</a> set)."
+msgstr ""
+"* il est possible que ces groupes n'aient pas accès au tracker (pas de <a "
+"href=\"%s\">permission sur l'outil de suivi</a> définie)."
+
 msgid "A workflow already exists on the given tracker."
 msgstr "Un workflow est déjà défini pour ce tracker."
+
+msgid "Access permissions"
+msgstr "Droits d'accès"
 
 msgid "Actions"
 msgstr "Actions"
@@ -80,6 +113,9 @@ msgstr "Ajout de %s : %s"
 msgid "Added: %s"
 msgstr "Ajout : %s"
 
+msgid "Administration"
+msgstr "Administration"
+
 msgid ""
 "After artifact edition, all the disabled types used will be cleared without "
 "removing the existing link."
@@ -95,6 +131,11 @@ msgstr "Une erreur s'est produite, le workflow ne peut être réinitialisé."
 
 msgid "An error has occurred, the workflow couldn't be updated."
 msgstr "Une erreur est survenue, le workflow ne peut pas être modifié."
+
+msgid "An error occurred while updating the timeframe semantic"
+msgstr ""
+"Une erreur est survenue lors de la mise à jour de la sémantique plage de "
+"temps"
 
 msgid ""
 "Archive deleted items plugin is enabled. Each deleted artifact will be "
@@ -123,6 +164,9 @@ msgstr "Les liens entre artéfacts typés ont été désactivés."
 
 msgid "Artifact link types has been enabled."
 msgstr "Les liens entre artéfacts typés ont été activés."
+
+msgid "Artifact links"
+msgstr "Liens entre artéfacts"
 
 msgid "Artifact links types"
 msgstr "Liens entre artéfacts typés"
@@ -168,12 +212,13 @@ msgid "Bad field_ids attribute format: array of integer expected."
 msgstr ""
 "L'attribut field_ids a un mauvais format : tableau de numérique attendu."
 
+msgid "Bad fieldset_ids attribute format: array of integer expected."
+msgstr ""
+"L'attribut fieldset_ids a un mauvais format : tableau de numérique attendu."
+
 #, php-format
 msgid "Bad format: '%s'. Array expected"
 msgstr "Mauvais format: '%s'. Tableau attendu"
-
-msgid "Bad id attribute format: int expected."
-msgstr "Mauvais format de l'attribut id : numérique attendu."
 
 msgid "Bad job_url attribute format: string expected."
 msgstr "Mauvais format de l'attribut job_url : chaine de caractères attendu."
@@ -205,15 +250,17 @@ msgid "Burndown is under calculation. It will be available in a few minutes."
 msgstr ""
 "Le burndown est en cours de calcul. Il sera disponible dans quelques minutes."
 
-msgid ""
-"By clicking on \"Fully deactivate the workflow\", the workflow's behaviour "
-"will be fixed."
-msgstr ""
-"En cliquant sur \"Désactiver complètement le workflow\", le comportement de "
-"votre workflow sera corrigé."
+msgid "CSV import"
+msgstr "Import CSV"
+
+msgid "Can submit"
+msgstr "Peut soumettre"
 
 msgid "Cancel"
 msgstr "Annuler"
+
+msgid "Canned responses"
+msgstr "Réponses types"
 
 #, php-format
 msgid "Cannot update conditions of transition with id '%d'"
@@ -234,6 +281,9 @@ msgstr "Changement de nature de %s à %s : %s"
 msgid "Check permissions?"
 msgstr "Vérifier les permissions ?"
 
+msgid "Choose a field..."
+msgstr "Choisissez un champ..."
+
 msgid "Close"
 msgstr "Fermer"
 
@@ -249,6 +299,10 @@ msgstr "Configurer les trackers"
 msgid "Confirm deletion"
 msgstr "Confirmer la suppression"
 
+#, php-format
+msgid "Create a %s"
+msgstr "Créer un(e) %s"
+
 msgid "Default Tuleap notifications"
 msgstr "Notifications par défaut"
 
@@ -262,8 +316,15 @@ msgstr ""
 msgid "Default notifications"
 msgstr "Notifications par défaut"
 
+msgid "Define the field to use to compute artifacts timeframes."
+msgstr ""
+"Définit le champ à utiliser pour calculer les plages de temps des artéfacts."
+
 msgid "Delete"
 msgstr "Supprimer"
+
+msgid "Delete artifacts"
+msgstr "Suppression d'artefacts"
 
 msgid "Destination id does not exist."
 msgstr "L'id destination n'existe pas."
@@ -280,6 +341,9 @@ msgstr ""
 
 msgid "Disable notifications"
 msgstr "Désactiver les notifications"
+
+msgid "Duration"
+msgstr "Durée"
 
 msgid "Edit"
 msgstr "Éditer"
@@ -305,8 +369,14 @@ msgstr ""
 "Activer les notifications pour ce tracker, vous pourrez choisir le modede "
 "notifications"
 
+msgid "End date"
+msgstr "Date de fin"
+
 msgid "Error during parsing expert query"
 msgstr "Erreur pendant l'analyse de la requête experte"
+
+msgid "Field dependencies"
+msgstr "Dépendances entre champs"
 
 msgid "Field not found."
 msgstr "Champ non trouvé."
@@ -314,14 +384,30 @@ msgstr "Champ non trouvé."
 msgid "Field value cannot be empty"
 msgstr "La valeur du champ ne peux pas être vide"
 
+msgid "Fields"
+msgstr "Champs"
+
+msgid "Fields permissions"
+msgstr "Permissions des champs"
+
 msgid "Force notification configuration usage to all users"
 msgstr "Forcer la configuration des notifications à tous les utilisateurs"
 
-msgid "Fully deactivate the workflow"
-msgstr "Désactiver complètement le workflow"
+msgid "General settings"
+msgstr "Options générales"
 
 msgid "Global Rules"
 msgstr "Règles Globales"
+
+msgid "Global rules"
+msgstr "Règles globales"
+
+msgid "Go to the administration of the cross-tracker triggers."
+msgstr ""
+"Se rendre dans l'administration des règles globales sur les déclencheurs."
+
+msgid "Got it"
+msgstr "J'ai compris"
 
 #, php-format
 msgid "Group '%s' couldn't be added."
@@ -329,8 +415,17 @@ msgid_plural "Groups '%s' couldn't be added."
 msgstr[0] "Le groupe '%s' n'a pas pu être ajouté"
 msgstr[1] "Les groupes '%s' n'ont pas pu être ajoutés"
 
+msgid "Hidden fieldsets:"
+msgstr "Groupes de champs cachés:"
+
 msgid "Hierarchy"
 msgstr "Hiérarchie"
+
+msgid "Import / Export"
+msgstr "Import / Export"
+
+msgid "Invalid color tracker name"
+msgstr "Nom de couleur pour l'outil de suivi non valide"
 
 msgid "Last push"
 msgstr "Dernier push"
@@ -350,6 +445,9 @@ msgstr "Historique pour %s"
 msgid "Mail configuration"
 msgstr "Configuration des e-mail"
 
+msgid "Manage Fields Permissions"
+msgstr "Gérer les permissions des champs"
+
 msgid ""
 "Mandatory attribute field_id not found in action with type \"set_field_value"
 "\"."
@@ -363,6 +461,13 @@ msgid ""
 msgstr ""
 "Attribut obligatoire field_ids non trouvé dans une action de type "
 "\"frozen_fields\"."
+
+msgid ""
+"Mandatory attribute fieldset_ids not found in action with type "
+"\"hidden_fieldsets\"."
+msgstr ""
+"Attribut obligatoire fieldset_ids non trouvé dans une action de type "
+"\"hidden_fieldsets\"."
 
 msgid "Mandatory attribute job_url not found in CI build action."
 msgstr "L'attribut obligatoire job_url non trouvé dans une action de build CI."
@@ -379,8 +484,18 @@ msgstr ""
 "Nombre maximum d'artéfacts que les utilisateurs peuvent supprimer ou "
 "déplacer depuis l'API REST sur une période de 24 heures."
 
-msgid "Move artifact"
+msgid "Move this artifact"
 msgstr "Déplacer l'artéfact"
+
+msgid "My notifications"
+msgstr "Mes notifications"
+
+#, php-format
+msgid "New %s"
+msgstr "Ajouter un(e) %s"
+
+msgid "New tracker administration"
+msgstr "Nouvelle administration des outils de suivi"
 
 msgid "No element selected."
 msgstr "Aucun élément sélectionné."
@@ -400,6 +515,9 @@ msgstr "Aucune notification"
 msgid "No semantic defined in this tracker."
 msgstr "Aucune sémantique n'est définie pour cet outil de suivi."
 
+msgid "No user group has access to this tracker"
+msgstr "Aucun groupe ne peut accéder à ce tracker"
+
 msgid "No users have unsubscribed."
 msgstr "Aucun utilisateur ne s'est désabonné."
 
@@ -408,6 +526,9 @@ msgstr "Aucun webhook n'est défini"
 
 msgid "No workflow defined on the given tracker."
 msgstr "Aucun workflow défini pour ce tracker."
+
+msgid "Not allowed to delete a fieldset used in workflow."
+msgstr "Impossible de supprimer un groupe de champs utilisé dans le workflow."
 
 msgid "Notification successfully deleted."
 msgstr "La notification a été supprimée"
@@ -452,6 +573,21 @@ msgstr "Un tracker ou plus n'a pas été trouvé : '%s'"
 msgid "One tracker or more is duplicated in list: %s"
 msgstr "Un tracker ou plus est dupliqué : %s"
 
+msgid "Other groups"
+msgstr "Autre groupes"
+
+msgid "Others"
+msgstr "Autres"
+
+msgid "Permissions"
+msgstr "Permissions"
+
+msgid ""
+"Please note that project administrators and tracker administrators are "
+"granted full access to the tracker."
+msgstr ""
+"Les administrateurs de projet et de tracker ont un accès complet au tracker."
+
 msgid "Please provide a valid limit."
 msgstr "Veuillez fournir une limite valide."
 
@@ -468,6 +604,16 @@ msgstr ""
 msgid "Preview"
 msgstr "Prévisualisation"
 
+msgid ""
+"Project admins can also <a href=\"/project/admin/ugroup.php?group_id=%s"
+"\">create or modify</a> user groups."
+msgstr ""
+"Les administrateurs de projet peuvent aussi <a href=\"/project/admin/ugroup."
+"php?group_id=%s\">créer ou modifier</a> des groupes d'utilisateurs."
+
+msgid "Read only"
+msgstr "Lecture seule"
+
 msgid "Remove"
 msgstr "Enlever"
 
@@ -478,6 +624,9 @@ msgstr "Suppression : %s"
 msgid "Renderer id"
 msgstr "Id du rendu"
 
+msgid "Reset this semantic"
+msgstr "Réinitialiser cette sémantique"
+
 msgid "Return type"
 msgstr "Retour"
 
@@ -486,6 +635,28 @@ msgstr "Sauvegarder"
 
 msgid "Save webhook"
 msgstr "Sauvegarder le webhook"
+
+msgid "Save your modifications"
+msgstr "Sauvegarder vos modifications"
+
+msgid "Semantic timeframe reset successfully"
+msgstr "La sémantique plage de temps a été réinitialisée avec succès"
+
+msgid "Semantic timeframe updated successfully"
+msgstr "La sémantique plage de temps a été mise à jour avec succès"
+
+msgid "Semantics"
+msgstr "Sémantiques"
+
+msgid "Shortcuts"
+msgstr "Raccourcis"
+
+msgid ""
+"Some child trackers don't have a \"remaining_effort\" Integer or Float or "
+"Computed field:"
+msgstr ""
+"Des outils de suivi enfants n'ont pas de champ \"remaining_effort\" de type "
+"Entier, Flottant ou Calculé :"
 
 msgid ""
 "Some selected values was not saved because they are used in another semantic."
@@ -499,6 +670,9 @@ msgstr "Quelque chose s'est mal passé."
 msgid "Source id does not exist."
 msgstr "L'id source n'existe pas."
 
+msgid "Start date"
+msgstr "Date de début"
+
 msgid "Status change notifications"
 msgstr "Notifications lors de la mise à jour du statut"
 
@@ -509,11 +683,17 @@ msgstr ""
 "Notifications lors de la mise à jour du statut (les gens sont notifiés "
 "lorsqu'ils ont soumis, sont assignés, ont commenté ou sont en CC)"
 
+msgid "Structure XML export"
+msgstr "Export XML de la structure"
+
 msgid "Submit"
 msgstr "Valider"
 
 msgid "Submit Changes"
 msgstr "Valider"
+
+msgid "Submit permissions"
+msgstr "Valider les permissions"
 
 msgid "Target URL:"
 msgstr "URL cible :"
@@ -625,8 +805,8 @@ msgstr ""
 
 #, php-format
 msgid ""
-"The field '%u' is used for the workflow cannot be defined in frozen fields "
-"actions."
+"The field '%u' is used for the workflow and cannot be defined in frozen "
+"fields actions."
 msgstr ""
 "Le champ '%u' est utilisé pour définir le workflow et ne peut pas être "
 "choisi en tant que champ figé."
@@ -654,6 +834,19 @@ msgid ""
 msgstr ""
 "La valeur de field_id '%u' ne correspond pas à un champ de type entier "
 "utilisé dans le tracker."
+
+#, php-format
+msgid "The field_id value '%u' is used in a field dependency in the tracker."
+msgstr ""
+"Le field_id '%u' est utilisé dans une dépendance entre champs dans le "
+"tracker."
+
+#, php-format
+msgid ""
+"The fieldset_id value '%u' does not match a fieldset in use in the tracker."
+msgstr ""
+"Le fieldset_id '%u' ne correspond pas à un groupe de champs utilisé dans le "
+"tracker."
 
 #, php-format
 msgid "The file field '%s' cannot be compared to MYSELF()."
@@ -814,6 +1007,9 @@ msgstr ""
 "Le champ liste '%s' ne peut pas être comparé à une chaîne vide avec "
 "l'opérateur NOT IN()."
 
+msgid "The navigation is now done with the tabs at the top of the page."
+msgstr "La navigation est maintenant faite avec des onglets en haut de page."
+
 msgid "The notification could not be deleted."
 msgstr "La notification n’a pas pu être supprimée."
 
@@ -842,13 +1038,21 @@ msgstr ""
 "Le rapport a été trié sur cette colonne. Cette colonne ne permet cependant "
 "pas le tri. Le tri a donc été ignoré. Veuillez choisir une autre colonne."
 
-msgid "The request is not valid."
-msgstr "La requête n'est pas valide."
-
 msgid "The same value cannot be source and destination at the same time."
 msgstr ""
 "La même valeur ne peut pas être à la fois source et destination en même "
 "temps."
+
+msgid ""
+"The semantic status cannot de deleted because tracker notifications is set "
+"to \"Status change notifications\"."
+msgstr ""
+"La sémantique statut ne peut être supprimée car la configuration des "
+"notifications est définie à \"Notifications lors du changement de status\"."
+
+msgid "The start date field and the end date field cannot be the same."
+msgstr ""
+"Le champ date de début et le champ date de fin ne peuvent pas être le même."
 
 msgid "The submitted URL is not valid."
 msgstr "L'URL soumise n'est pas valide."
@@ -865,6 +1069,26 @@ msgstr "Le champ texte '%s' ne peut pas être comparé à NOW()."
 msgid "The text field '%s' cannot be compared to OPEN()."
 msgstr "Le champ texte '%s' ne peut pas être comparé à OPEN()."
 
+msgid "The timeframe of an artifact will be defined by:"
+msgstr "La plage de temps d'un artéfact sera définie par :"
+
+msgid ""
+"The tracker %s is implicated in cross-tracker triggers. You will not be able "
+"to remove this tracker from the hierarchy until the triggers implicating it "
+"are removed."
+msgid_plural ""
+"The trackers %s are implicated in cross-tracker triggers. You will not be "
+"able to remove those trackers from the hierarchy until the triggers "
+"implicating them are removed."
+msgstr[0] ""
+"L'outil de suivi %s est impliqué dans des règles globales sur les "
+"déclencheurs. Il ne sera pas possible de l'enlever de la hiérarchie tant que "
+"des déclencheurs l'impliquent."
+msgstr[1] ""
+"Les outils de suivi %s sont impliqués dans des règles globales sur les "
+"déclencheurs. Il ne sera pas possible de les enlever de la hiérarchie tant "
+"que des déclencheurs les impliquent."
+
 #, php-format
 msgid ""
 "The tracker '%s' cannot be updated because it doesn't exist. Try again "
@@ -873,11 +1097,47 @@ msgstr ""
 "L'outil de suivi '%s' ne peut pas être mis à jour parce qu'il n'existe pas. "
 "Réessayez sans l'option '--update'"
 
+msgid ""
+"The tracker doesn't have a \"capacity\" Integer or Float or Computed field "
+"or you don't have the permission to access it."
+msgstr ""
+"L'outil de suivi n'a pas de champ \"capacity\" de type Entier, Flottant ou "
+"Calculé ou bien vous n'avez pas la permission d'y accéder."
+
+msgid ""
+"The tracker doesn't have a \"duration\" Integer field or you don't have the "
+"permission to access it."
+msgstr ""
+"L'outil de suivi n'a pas de champ \"duration\" de type Entier ou bien vous "
+"n'avez pas la permission d'y accéder."
+
+msgid ""
+"The tracker doesn't have a \"end_date\" Date field or you don't have the "
+"permission to access it."
+msgstr ""
+"L'outil de suivi n'a pas de champ \"end_date\" de type Date ou bien vous "
+"n'avez pas la permission d'y accéder."
+
+msgid ""
+"The tracker doesn't have a \"start_date\" Date field or you don't have the "
+"permission to access it."
+msgstr ""
+"L'outil de suivi n'a pas de champ \"start_date\" de type Date ou bien vous "
+"n'avez pas la permission d'y accéder."
+
 msgid "The tracker hierarchy cannot be defined."
 msgstr "La hiérarchie entre outils de suivi ne peut être définie."
 
 msgid "The transition has not been updated."
 msgstr "La transition n'a pas été mise à jour."
+
+msgid "The transition is not valid."
+msgstr "La transition n'est pas valide."
+
+msgid "The triggers definitions are based on the tracker hierarchy."
+msgstr ""
+"La définition de déclencheurs s'appuie sur la hiérarchie entre outils de "
+"suivi."
 
 msgid "The unsubscribe list has been successfully updated."
 msgstr "La liste des désabonnements ont été mise à jour avec succès."
@@ -890,9 +1150,6 @@ msgid "There must be at least one authorized user group."
 msgstr ""
 "Il doit y avoir au moins un groupe d'utilisateurs autorisé à effectuer la "
 "transition."
-
-msgid "There should not be duplicate 'run_job' ids."
-msgstr "Les ids de type 'run_job' ne doivent pas être en doublons."
 
 msgid "There should not be duplicate field_ids for 'frozen_fields' actions."
 msgstr ""
@@ -921,25 +1178,21 @@ msgstr ""
 "être en doublons."
 
 msgid ""
-"There should not be duplicate ids for 'set_field_value' actions with type "
-"'date'."
+"There should not be duplicate fieldset_ids for 'hidden_fieldsets' actions."
 msgstr ""
-"Les ids d'actions 'set_field_value' avec type 'date' ne doivent pas être en "
-"doublons."
+"Les fieldset_ids d'actions 'hidden_fieldsets' avec type 'int' ne doivent pas "
+"être en doublons."
 
+#, php-format
 msgid ""
-"There should not be duplicate ids for 'set_field_value' actions with type "
-"'float'."
+"This artifact doesn't respect tracker's rules. It will not be imported : "
+"CSV's line %s."
 msgstr ""
-"Les ids d'actions 'set_field_value' avec type 'float' ne doivent pas être en "
-"doublons."
+"Cet artefact ne respecte pas les règles de l'outil de suivi. Il ne sera pas "
+"importé: ligne %s du fichier CSV."
 
-msgid ""
-"There should not be duplicate ids for 'set_field_value' actions with type "
-"'int'."
-msgstr ""
-"Les ids d'actions 'set_field_value' avec type 'int' ne doivent pas être en "
-"doublons."
+msgid "This semantic is not defined yet."
+msgstr "Cette sémantique n'est pas encore définie."
 
 msgid "This template does not use trackers"
 msgstr "Ce patron n'utilise pas les trackers"
@@ -956,24 +1209,25 @@ msgstr "Ce tracker a été supprimé."
 msgid "This transition already exists."
 msgstr "Cette transition existe déjà."
 
-msgid ""
-"This workflow has an incoherent behaviour : pre conditions and post actions "
-"defined in transitions are processed even if the workflow is not activated."
-msgstr ""
-"Ce workflow a un comportement incohérent : les conditions ainsi que les "
-"actions définies dans les transitions sont exécutées bien qu'il soit "
-"désactivé."
-
-msgid "This workflow is already in a functional state. Skipping."
-msgstr "Ce workflow est déjà fonctionnel. Cette modification est donc ignorée."
-
-msgid "This workflow is in simple mode and cannot be displayed in legacy UI."
-msgstr ""
-"Ce workflow est en mode simple et ne peut être affiché dans l'ancienne "
-"interface."
-
 msgid "Time"
 msgstr "Date"
+
+msgid "Timeframe"
+msgstr "Plage de temps"
+
+#, php-format
+msgid ""
+"Timeframe is based on start date field \"%s\" and duration field \"%s\"."
+msgstr ""
+"La plage de temps est définie par le champ date de début \"%s\" et le champ "
+"durée \"%s\"."
+
+#, php-format
+msgid ""
+"Timeframe is based on start date field \"%s\" and end date field \"%s\"."
+msgstr ""
+"La plage de temps est définie par le champ date de début \"%s\" et le champ "
+"date de fin \"%s\"."
 
 msgid "Tracker"
 msgstr "Tracker"
@@ -990,6 +1244,12 @@ msgstr "L'outil de suivi n'existe pas."
 msgid "Tracker global admininistration"
 msgstr "Administration globale des outils de suivi"
 
+msgid "Tracker hierarchy"
+msgstr "Hiérarchie de l'outil de suivi"
+
+msgid "Tracker permissions"
+msgstr "Permissions de l'outil de suivi"
+
 msgid "Tracker renderer"
 msgstr "Rendu d'un tracker"
 
@@ -1002,6 +1262,9 @@ msgstr "Trackers"
 msgid "Transition not found."
 msgstr "Transition non trouvée."
 
+msgid "Transition rules"
+msgstr "Règles de transitions"
+
 #, php-format
 msgid "Transition with id '%d' has no workflow"
 msgstr "La transition avec l'id '%d' n'est rattachée à aucun workflow"
@@ -1009,11 +1272,13 @@ msgstr "La transition avec l'id '%d' n'est rattachée à aucun workflow"
 msgid "Transitions Rules"
 msgstr "Règles de Transitions"
 
-msgid "Transitions are now fully deactivated."
-msgstr "Les transitions sont maintenant complètement désactivées."
-
 msgid "Triggers"
 msgstr "Déclenchements"
+
+#, php-format
+msgid ""
+"Type '%s' does not exist. This field is ignored. (Name : '%s', ID: '%s')."
+msgstr "Type '%s' inexistant. Ce champ sera ignoré. (Nom : '%s', ID: '%s')."
 
 msgid "URL"
 msgstr "URL"
@@ -1033,6 +1298,9 @@ msgid "Unsupported value attribute content: '%s'. Allowed contents are: '%s'"
 msgstr ""
 "Contenu de l'attribut value non supporté: '%s'. Contenus autorisés: '%s'"
 
+msgid "Update"
+msgstr "Mise à jour"
+
 msgid "Use"
 msgstr "Utiliser"
 
@@ -1041,6 +1309,9 @@ msgid "User '%s' couldn't be added."
 msgid_plural "Users '%s' couldn't be added."
 msgstr[0] "L'utilisateur '%s' n'a pas pu être ajouté"
 msgstr[1] "Les utilisateurs '%s' n'ont pas pu être ajoutés"
+
+msgid "User groups"
+msgstr "Groupes d'utilisateurs"
 
 msgid "User, group, email"
 msgstr "Utilisateur, groupe, email"
@@ -1070,6 +1341,17 @@ msgstr[1] ""
 "fait référence. Merci de vous référer à la documentation pour les "
 "comparaisons autorisées."
 
+msgid "We hope this change will be smooth enough!"
+msgstr "Nous espérons que ce changement vous plaira !"
+
+msgid ""
+"We redesigned the tracker administration navigation to improve efficiency "
+"with most commonly used features highlighted."
+msgstr ""
+"Nous avons repensé la navigation dans l'administration des outils de suivi "
+"pour améliorer son efficacité avec les fonctionnalités les plus utilisées "
+"mises en avant."
+
 msgid "Webhook sucessfully created"
 msgstr "Le webhook a été créé"
 
@@ -1081,6 +1363,9 @@ msgstr "Le webhook a été mis à jour"
 
 msgid "Webhooks"
 msgstr "Webhooks"
+
+msgid "Welcome to the new tracker administration menu."
+msgstr "Bienvenue dans le nouveau menu d'administration des outils de suivi."
 
 msgid "Workflow"
 msgstr "Workflow"
@@ -1105,6 +1390,9 @@ msgid "You are about to remove the webhook. Please confirm your action."
 msgstr ""
 "Vous êtes sur le point de supprimer le webhook. Veuillez confirmer la "
 "suppression."
+
+msgid "You are not allowed to access this field."
+msgstr "Vous n'avez pas la permission d'accéder à ce champ."
 
 msgid "You can choose the notification mode you wish for this tracker."
 msgstr ""
@@ -1139,8 +1427,29 @@ msgstr ""
 msgid "You cannot access to this tracker"
 msgstr "Vous n'avez pas accès à ce tracker."
 
+msgid ""
+"You cannot reset this semantic because this tracker has a burnup, burndown "
+"or another chart rendered by an external plugin"
+msgstr ""
+"Vous ne pouvez pas réinitialiser cette sémantique car ce tracker a un "
+"burnup, burndown ou un autre graphique généré par un plugin externe"
+
 msgid "You don't have permissions to see user groups."
 msgstr "Vous n'avez pas la permission de consulter les groupes d'utilisateur."
+
+msgid ""
+"You may <a href=\"%s\">switch to the 'field' view</a> by clicking on a field "
+"label in the table below."
+msgstr ""
+"Vous pouvez <a href=\"%s\">basculer vers l'affichage par champ</a> en "
+"cliquant sur le label d'un champ dans le tableau ci-dessous."
+
+msgid ""
+"You may <a href=\"%s\">switch to the 'group' view</a> by clicking on a field "
+"label in the table below."
+msgstr ""
+"Vous pouvez <a href=\"%s\">basculer vers l'affichage par groupes "
+"d'utilisateurs</a> en cliquant sur leurs noms dans le tableau ci-dessous."
 
 msgid "You must be tracker administrator to access this resource."
 msgstr "Vous devez être administrateur pour accéder à cette ressource."
@@ -1155,6 +1464,18 @@ msgstr ""
 msgid "Your notification settings have been successfully updated"
 msgstr "Vos paramètres de notification ont été mis à jour avec succès"
 
+#, php-format
+msgid "changed from %s to %s"
+msgstr "modifié de %s à %s "
+
+#, php-format
+msgid "changed from %s to autocomputed"
+msgstr "modifié de %s à valeur calculée"
+
+#, php-format
+msgid "changed from autocomputed to %s"
+msgstr "modifié de valeur calculée à %s"
+
 msgid ""
 "changed. (But text is too long, we are unable to compute the differences in "
 "a reasonable amount of time.)"
@@ -1165,8 +1486,25 @@ msgstr ""
 msgid "cleared"
 msgstr "vidé"
 
+#, php-format
+msgid "cleared values: %s"
+msgstr "valeurs retirées : %s"
+
 msgid "field_ids attribute must not be empty."
 msgstr "L'attribut field_ids ne doit pas être vide."
 
+msgid "fieldset_ids attribute must not be empty."
+msgstr "L'attribut fieldset_ids ne doit pas être vide."
+
 msgid "no type"
 msgstr "sans nature"
+
+msgid "or"
+msgstr "ou"
+
+#, php-format
+msgid "set to %s"
+msgstr "à %s"
+
+msgid "« Go back to semantic overview"
+msgstr "« Retour à l'administration de la sémantique"

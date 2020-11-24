@@ -19,9 +19,11 @@
  */
 require_once('bootstrap.php');
 
-class Tracker_FormElement_StaticField_LineBreakTest extends TuleapTestCase {
-    
-    public function testFetchDescription() {
+class Tracker_FormElement_StaticField_LineBreakTest extends TuleapTestCase
+{
+
+    public function testFetchDescription()
+    {
         $expected_message = '';
         $id = 2;
         $tracker_id = 254;
@@ -42,6 +44,4 @@ class Tracker_FormElement_StaticField_LineBreakTest extends TuleapTestCase {
         $this->assertEqual('', $line_break->getDescription());
         $this->assertEqual($expected_message, $line_break->getCannotRemoveMessage());
     }
-
 }
-?>

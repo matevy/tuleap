@@ -18,85 +18,125 @@
   -->
 
 <template>
-    <div class="tlp-framed">
-        <div class="document-header">
-            <document-title-lock-info v-bind:item="embedded_file"
+    <div class="embedded-document-container tlp-framed-vertically">
+        <div class="document-header tlp-framed-horizontally">
+            <document-title-lock-info v-bind:item="currently_previewed_item"
                                       v-bind:is-displaying-in-header="true"
             />
 
-            <h1 class="document-header-title">{{ embedded_title }}</h1>
+            <h1 class="document-header-title">{{ currently_previewed_item.title }}</h1>
 
-            <actions-header v-bind:item="embedded_file"/>
+            <actions-header v-bind:item="currently_previewed_item"/>
 
-            <approval-table-badge v-bind:item="embedded_file" v-bind:is-in-folder-content-row="false"/>
+            <approval-table-badge v-bind:item="currently_previewed_item" v-bind:is-in-folder-content-row="false"/>
+
+            <embedded-file-edition-switcher
+                v-bind:is-in-large-view="is_embedded_in_large_view"
+            />
         </div>
 
-        <section class="tlp-pane">
+        <section class="tlp-pane embedded-document"
+                 v-bind:class="{ 'narrow': !is_embedded_in_large_view }"
+                 data-test="display-embedded-content"
+        >
             <div class="tlp-pane-container">
                 <section class="tlp-pane-section" v-dompurify-html="embedded_content"></section>
             </div>
         </section>
 
-        <update-embedded-file-modal
+        <create-new-embedded-file-version-modal
             v-if="is_modal_shown"
-            v-bind:item="embedded_file"
+            v-bind:item="currently_previewed_item"
             v-on:hidden="hideModal()"
         />
+        <confirm-deletion-modal
+            v-if="show_confirm_deletion_modal"
+            v-bind:item="currently_previewed_item"
+            v-on:delete-modal-closed="hideDeleteItemModal"
+            v-bind:should-redirect-to-parent-after-deletion="true"
+        />
+
+        <update-metadata-modal
+            v-if="show_update_metadata_modal"
+            v-bind:item="currently_previewed_item"
+            v-on:update-metadata-modal-closed="hideUpdateMetadataModal"
+        />
+        <update-permissions-modal v-bind:item="currently_previewed_item"/>
     </div>
 </template>
 
 <script>
-import DropdownButton from "../ActionsDropDown/DropdownButton.vue";
-import DropdownMenu from "../ActionsDropDown/DropdownMenu.vue";
-import UpdateItemButton from "../ActionsButton/UpdateItemButton.vue";
 import ActionsHeader from "./ActionsHeader.vue";
 import DocumentTitleLockInfo from "../LockInfo/DocumentTitleLockInfo.vue";
 import ApprovalTableBadge from "../ApprovalTables/ApprovalTableBadge.vue";
+import EmbeddedFileEditionSwitcher from "./EmbeddedFileEditionSwitcher.vue";
+import UpdateMetadataModal from "../ModalUpdateMetadata/UpdateMetadataModal.vue";
+import UpdatePermissionsModal from "../Permissions/PermissionsUpdateModal.vue";
+import { mapState } from "vuex";
+import EventBus from "../../../helpers/event-bus.js";
+
 export default {
     name: "DisplayEmbeddedContent",
     components: {
+        UpdateMetadataModal,
+        UpdatePermissionsModal,
+        EmbeddedFileEditionSwitcher,
         ApprovalTableBadge,
         DocumentTitleLockInfo,
         ActionsHeader,
-        DropdownMenu,
-        UpdateItemButton,
-        DropdownButton,
-        "update-embedded-file-modal": () =>
-            import(/* webpackChunkName: "document-update-embedded-file-modal" */ "../ModalUpdateItem/UpdateEmbeddedFileModal.vue")
-    },
-    props: {
-        embedded_file: Object
+        "create-new-embedded-file-version-modal": () =>
+            import(/* webpackChunkName: "document-new-embedded-file-version-modal" */ "../ModalCreateNewItemVersion/CreateNewVersionEmbeddedFileModal.vue"),
+        "confirm-deletion-modal": () =>
+            import(/* webpackChunkName: "document-confirm-item-deletion-modal" */ "../ModalDeleteItem/ModalConfirmDeletion.vue"),
+        "update-metadata-modal": () =>
+            import(/* webpackChunkName: "update-metadata-modal" */ "../ModalUpdateMetadata/UpdateMetadataModal.vue")
     },
     data() {
         return {
-            is_modal_shown: false
+            is_modal_shown: false,
+            show_confirm_deletion_modal: false,
+            show_update_metadata_modal: false,
+            is_in_large_view: false
         };
     },
     computed: {
-        embedded_title() {
-            return this.embedded_file.title;
-        },
+        ...mapState(["is_embedded_in_large_view", "currently_previewed_item"]),
         embedded_content() {
-            if (!this.embedded_file.embedded_file_properties) {
+            if (!this.currently_previewed_item.embedded_file_properties) {
                 return "";
             }
 
-            return this.embedded_file.embedded_file_properties.content;
+            return this.currently_previewed_item.embedded_file_properties.content;
         }
     },
-    mounted() {
-        document.addEventListener("show-update-item-modal", this.showUpdateItemModal);
-
-        this.$once("hook:beforeDestroy", () => {
-            document.removeEventListener("show-update-item-modal", this.showUpdateItemModal);
-        });
+    created() {
+        EventBus.$on("show-create-new-item-version-modal", this.showCreateNewItemVersionModal);
+        EventBus.$on("show-confirm-item-deletion-modal", this.showDeleteItemModal);
+        EventBus.$on("show-update-item-metadata-modal", this.showUpdateMetadataModal);
+    },
+    beforeDestroy() {
+        EventBus.$off("show-create-new-item-version-modal", this.showCreateNewItemVersionModal);
+        EventBus.$off("show-confirm-item-deletion-modal", this.showDeleteItemModal);
+        EventBus.$off("show-update-item-metadata-modal", this.showUpdateMetadataModal);
     },
     methods: {
-        showUpdateItemModal() {
+        showCreateNewItemVersionModal() {
             this.is_modal_shown = true;
         },
         hideModal() {
             this.is_modal_shown = false;
+        },
+        showDeleteItemModal() {
+            this.show_confirm_deletion_modal = true;
+        },
+        hideDeleteItemModal() {
+            this.show_confirm_deletion_modal = false;
+        },
+        showUpdateMetadataModal() {
+            this.show_update_metadata_modal = true;
+        },
+        hideUpdateMetadataModal() {
+            this.show_update_metadata_modal = false;
         }
     }
 };

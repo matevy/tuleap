@@ -22,7 +22,8 @@
 
 use Tuleap\Project\UserRemover;
 
-class LDAP_CleanUpManager {
+class LDAP_CleanUpManager
+{
 
     /*
      * @var retentionPeriod int
@@ -47,10 +48,11 @@ class LDAP_CleanUpManager {
      * Clean all suspeneded users whose retention period is outdated
      *
      */
-    public function cleanAll() {
+    public function cleanAll()
+    {
         $directoryCleanUpDao = $this->getLDAPDirectoryCleanUpDao();
         $suspendedUsersList  = $directoryCleanUpDao->getAllSuspendedUsers($_SERVER['REQUEST_TIME']);
-        if(!$suspendedUsersList) {
+        if (!$suspendedUsersList) {
             $this->getBackendLogger()->error("[LDAP Clean Up] Error when getting all suspended users");
         } else {
             foreach ($suspendedUsersList as $currentUserData) {
@@ -66,7 +68,8 @@ class LDAP_CleanUpManager {
      * @param PFUser user
      *
      */
-    public function addUserDeletionForecastDate(PFUser $user) {
+    public function addUserDeletionForecastDate(PFUser $user)
+    {
         $directoryCleanUpDao = $this->getLDAPDirectoryCleanUpDao();
         $deletionDate        = $_SERVER['REQUEST_TIME'] + ($this->retentionPeriod * 24 * 60 * 60);
         $creationResult      = $directoryCleanUpDao->createForecastDeletionDate($user->getId(), $deletionDate);
@@ -83,11 +86,12 @@ class LDAP_CleanUpManager {
      * @param PFUser user
      *
      */
-    private function deleteSuspendedUser(PFUser $user) {
-        if($user->getStatus() == 'S'){
+    private function deleteSuspendedUser(PFUser $user)
+    {
+        if ($user->getStatus() == 'S') {
             $user->setStatus('D');
             $deletionResult = $this->getUserManager()->updateDb($user);
-            if(!$deletionResult) {
+            if (!$deletionResult) {
                 $this->getBackendLogger()->error("[LDAP Clean Up] Error when deleting user ".$user->getUserName());
             } else {
                 $directoryCleanUpDao = $this->getLDAPDirectoryCleanUpDao();
@@ -126,7 +130,8 @@ class LDAP_CleanUpManager {
      *
      * @return Array
      */
-    private function getUserProjects($userId) {
+    private function getUserProjects($userId)
+    {
         $pm = $this->_getProjectManager();
         return $pm->getAllProjectsForUserIncludingTheOnesSheDoesNotHaveAccessTo($userId);
     }
@@ -136,7 +141,8 @@ class LDAP_CleanUpManager {
      *
      * @return ProjectManager
      */
-    private function _getProjectManager() {
+    private function _getProjectManager()
+    {
         return ProjectManager::instance();
     }
 
@@ -145,7 +151,8 @@ class LDAP_CleanUpManager {
      *
      * @return UserManager
      */
-    private function getUserManager() {
+    private function getUserManager()
+    {
         return UserManager::instance();
     }
 
@@ -154,7 +161,8 @@ class LDAP_CleanUpManager {
      *
      * @return LDAP_DirectoryCleanUpDao
      */
-    private function getLDAPDirectoryCleanUpDao() {
+    private function getLDAPDirectoryCleanUpDao()
+    {
         return new LDAP_DirectoryCleanUpDao(CodendiDataAccess::instance());
     }
 
@@ -163,7 +171,8 @@ class LDAP_CleanUpManager {
      *
      * @return BackendLogger
      */
-    private function getBackendLogger() {
+    private function getBackendLogger()
+    {
          return new BackendLogger();
     }
 }

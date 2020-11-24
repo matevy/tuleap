@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,19 +19,19 @@
  */
 
 use Tuleap\Git\Events\AfterRepositoryForked;
+use Tuleap\Git\PathJoinUtil;
 use Tuleap\Git\Permissions\FineGrainedPermissionReplicator;
 use Tuleap\Git\Permissions\HistoryValueFormatter;
 use Tuleap\Git\PostInitGitRepositoryWithDataEvent;
 use Tuleap\Git\Repository\GitRepositoryNameIsInvalidException;
-
-require_once 'PathJoinUtil.php';
 
 /**
  * This class is responsible of management of several repositories.
  *
  * It works in close cooperation with GitRepositoryFactory (to instanciate repo)
  */
-class GitRepositoryManager {
+class GitRepositoryManager
+{
 
     /**
      * @var HistoryValueFormatter
@@ -122,7 +122,8 @@ class GitRepositoryManager {
      *
      * @param Project $project
      */
-    public function deleteProjectRepositories(Project $project) {
+    public function deleteProjectRepositories(Project $project)
+    {
         $repositories = $this->repository_factory->getAllRepositories($project);
         foreach ($repositories as $repository) {
             $repository->forceMarkAsDeleted();
@@ -138,10 +139,12 @@ class GitRepositoryManager {
      * @throws GitRepositoryAlreadyExistsException
      * @throws GitRepositoryNameIsInvalidException
      */
-    private function initRepository(GitRepository $repository, GitRepositoryCreator $creator) {
+    private function initRepository(GitRepository $repository, GitRepositoryCreator $creator)
+    {
         if (!$creator->isNameValid($repository->getName())) {
             throw new GitRepositoryNameIsInvalidException(
-                sprintf(dgettext('tuleap-git', 'Repository name is not well formatted. Allowed characters: %1$s and max length is %2$s, no slashes at the beginning or the end, it also must not finish with ".git".'), $creator->getAllowedCharsInNamePattern(), GitDao::REPO_NAME_MAX_LENGTH));
+                sprintf(dgettext('tuleap-git', 'Repository name is not well formatted. Allowed characters: %1$s and max length is %2$s, no slashes at the beginning or the end, it also must not finish with ".git".'), $creator->getAllowedCharsInNamePattern(), GitDao::REPO_NAME_MAX_LENGTH)
+            );
         }
 
         $this->assertRepositoryNameNotAlreadyUsed($repository);
@@ -230,11 +233,13 @@ class GitRepositoryManager {
         );
     }
 
-    private function forkUniqueRepository(GitRepository $repository, Project $to_project, PFUser $user, $namespace, $scope, array $forkPermissions) {
+    private function forkUniqueRepository(GitRepository $repository, Project $to_project, PFUser $user, $namespace, $scope, array $forkPermissions)
+    {
         $this->doFork($repository, $to_project, $user, $namespace, $scope, $forkPermissions, false);
     }
 
-    public function fork(GitRepository $repository, Project $to_project, PFUser $user, $namespace, $scope, array $forkPermissions) {
+    public function fork(GitRepository $repository, Project $to_project, PFUser $user, $namespace, $scope, array $forkPermissions)
+    {
         $this->doFork($repository, $to_project, $user, $namespace, $scope, $forkPermissions, true);
     }
 
@@ -256,7 +261,7 @@ class GitRepositoryManager {
         $clone->setParent($repository);
         $clone->setNamespace($namespace);
         $clone->setId(null);
-        $path = unixPathJoin(array($to_project->getUnixName(), $namespace, $repository->getName())).'.git';
+        $path = PathJoinUtil::unixPathJoin(array($to_project->getUnixName(), $namespace, $repository->getName())).'.git';
         $clone->setPath($path);
         $clone->setScope($scope);
 
@@ -310,7 +315,8 @@ class GitRepositoryManager {
         }
     }
 
-    private function doForkRepository(GitRepository $repository, GitRepository $clone, array $forkPermissions) {
+    private function doForkRepository(GitRepository $repository, GitRepository $clone, array $forkPermissions)
+    {
         $id = $repository->getBackend()->fork($repository, $clone, $forkPermissions);
         $clone->setId($id);
     }
@@ -339,11 +345,12 @@ class GitRepositoryManager {
      * @param String        $scope           Either GitRepository::REPO_SCOPE_INDIVIDUAL or GitRepository::REPO_SCOPE_PROJECT
      * @param array         $forkPermissions Permissions to be applied for the new repository
      *
-     * @return Boolean
+     * @return bool
      *
      * @throws Exception
      */
-    public function forkRepositories(array $repositories, Project $to_project, PFUser $user, $namespace, $scope, array $forkPermissions) {
+    public function forkRepositories(array $repositories, Project $to_project, PFUser $user, $namespace, $scope, array $forkPermissions)
+    {
         $repos = array_filter($repositories);
         if (count($repos) > 0 && $this->isNamespaceValid($repos[0], $namespace)) {
             return $this->forkAllRepositories($repos, $user, $namespace, $scope, $to_project, $forkPermissions);
@@ -351,7 +358,8 @@ class GitRepositoryManager {
         throw new Exception(dgettext('tuleap-git', 'No repository has been forked.'));
     }
 
-    private function isNamespaceValid(GitRepository $repository, $namespace) {
+    private function isNamespaceValid(GitRepository $repository, $namespace)
+    {
         if ($namespace) {
             $ns_chunk = explode('/', $namespace);
             foreach ($ns_chunk as $chunk) {
@@ -364,12 +372,12 @@ class GitRepositoryManager {
         return true;
     }
 
-    private function forkAllRepositories(array $repos, PFUser $user, $namespace, $scope, Project $project, array $forkPermissions) {
+    private function forkAllRepositories(array $repos, PFUser $user, $namespace, $scope, Project $project, array $forkPermissions)
+    {
         $forked = false;
         foreach ($repos as $repo) {
             try {
                 if ($repo->userCanRead($user)) {
-
                     if (count($repos) === 1) {
                         $this->forkUniqueRepository($repo, $project, $user, $namespace, $scope, $forkPermissions);
                     } else {
@@ -393,9 +401,10 @@ class GitRepositoryManager {
      * @param Project $project
      * @param String  $name
      *
-     * @return Boolean
+     * @return bool
      */
-    public function isRepositoryNameAlreadyUsed(GitRepository $new_repository) {
+    public function isRepositoryNameAlreadyUsed(GitRepository $new_repository)
+    {
         $repositories = $this->repository_factory->getAllRepositories($new_repository->getProject());
         foreach ($repositories as $existing_repo) {
             $new_repo_path      = $new_repository->getPathWithoutLazyLoading();
@@ -412,7 +421,8 @@ class GitRepositoryManager {
         }
     }
 
-    private function nameIsSubPathOfExistingRepository($repository_path, $new_path) {
+    private function nameIsSubPathOfExistingRepository($repository_path, $new_path)
+    {
         $repo_path_without_dot_git = $this->stripFinalDotGit($repository_path);
         if (strpos($new_path, "$repo_path_without_dot_git/") === 0) {
             return true;
@@ -420,7 +430,8 @@ class GitRepositoryManager {
         return false;
     }
 
-    private function nameAlreadyExistsAsPath($repository_path, $new_path) {
+    private function nameAlreadyExistsAsPath($repository_path, $new_path)
+    {
         $new_path = $this->stripFinalDotGit($new_path);
         if (strpos($repository_path, "$new_path/") === 0) {
             return true;
@@ -428,7 +439,8 @@ class GitRepositoryManager {
         return false;
     }
 
-    private function stripFinalDotGit($path) {
+    private function stripFinalDotGit($path)
+    {
         return substr($path, 0, strrpos($path, '.git'));
     }
 
@@ -439,8 +451,9 @@ class GitRepositoryManager {
      * @param Logger $logger
      *
      */
-    public function purgeArchivedRepositories(Logger $logger) {
-        if(!isset($GLOBALS['sys_file_deletion_delay'])) {
+    public function purgeArchivedRepositories(Logger $logger)
+    {
+        if (!isset($GLOBALS['sys_file_deletion_delay'])) {
             $logger->warn("Purge of archived Gitolite repositories is disabled: sys_file_deletion_delay is missing in local.inc file");
             return;
         }
@@ -471,7 +484,8 @@ class GitRepositoryManager {
      *
      * @return GitRepository[]
      */
-    public function getRepositoriesForRestoreByProjectId($project_id) {
+    public function getRepositoriesForRestoreByProjectId($project_id)
+    {
         $archived_repositories = array();
         $retention_period      = intval($GLOBALS['sys_file_deletion_delay']);
         $deleted_repositories  = $this->repository_factory->getDeletedRepositoriesByProjectId($project_id, $retention_period);

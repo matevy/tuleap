@@ -20,8 +20,6 @@
 
 use Tuleap\AgileDashboard\Milestone\Pane\PanePresenterData;
 
-require_once 'common/TreeNode/TreeNodeMapper.class.php';
-
 /**
  * This presenter build the top view of a milestone (milestone title + switch on another milestone).
  * It delegates the display to an AgileDashboardPane for the content
@@ -35,44 +33,25 @@ class AgileDashboard_MilestonePresenter
     private $milestone;
 
     /**
-     * @var PFUser
-     */
-    private $current_user;
-
-    /**
-     * @var Codendi_Request
-     */
-    private $request;
-
-    /**
-     * @var string
-     */
-    private $planning_redirect_to_new;
-
-    /**
      * @var PanePresenterData
      */
     private $presenter_data;
 
     public function __construct(
         Planning_Milestone $milestone,
-        PFUser $current_user,
-        Codendi_Request $request,
-        PanePresenterData $presenter_data,
-        $planning_redirect_to_new
+        PanePresenterData $presenter_data
     ) {
-        $this->milestone                = $milestone;
-        $this->current_user             = $current_user;
-        $this->request                  = $request;
-        $this->presenter_data           = $presenter_data;
-        $this->planning_redirect_to_new = $planning_redirect_to_new;
+        $this->milestone      = $milestone;
+        $this->presenter_data = $presenter_data;
     }
 
-    public function milestoneTitle() {
+    public function milestoneTitle()
+    {
         return $this->milestone->getArtifactTitle();
     }
 
-    public function milestoneId() {
+    public function milestoneId()
+    {
         return $this->milestone->getArtifactId();
     }
 
@@ -81,33 +60,31 @@ class AgileDashboard_MilestonePresenter
         return $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'artifact');
     }
 
-    public function editArtifact() {
+    public function editArtifact()
+    {
         return $GLOBALS['Language']->getText('plugin_agiledashboard', 'edit_item_dropdown', array($this->milestoneTitle()));
     }
 
-    public function editArtifactUrl() {
+    public function editArtifactUrl()
+    {
         return '/plugins/tracker/?aid='.$this->milestone->getArtifactId();
     }
 
-    private function getParentArtifactId() {
-        $ancestors = $this->milestone->getAncestors();
-        if (count($ancestors) > 0) {
-            return $ancestors[0]->getArtifactId();
-        }
-    }
-
-    public function getActivePane() {
+    public function getActivePane()
+    {
         return $this->presenter_data->getActivePane();
     }
 
     /**
      * @return array
      */
-    public function getPaneInfoList() {
+    public function getPaneInfoList()
+    {
         return $this->presenter_data->getListOfPaneInfo();
     }
 
-    public function startDate() {
+    public function startDate()
+    {
         $start_date = $this->milestone->getStartDate();
         if (! $start_date) {
             return null;
@@ -115,7 +92,8 @@ class AgileDashboard_MilestonePresenter
         return $this->formatDate($start_date);
     }
 
-    public function endDate() {
+    public function endDate()
+    {
         $end_date = $this->milestone->getEndDate();
         if (! $end_date) {
             return null;
@@ -123,14 +101,16 @@ class AgileDashboard_MilestonePresenter
         return $this->formatDate($end_date);
     }
 
-    public function displayMilestoneDates() {
+    public function displayMilestoneDates()
+    {
         $start_date = $this->startDate();
         $end_date   = $this->endDate();
 
         return $start_date && $end_date;
     }
 
-    private function formatDate($date) {
+    private function formatDate($date)
+    {
         return date($GLOBALS['Language']->getText('system', 'datefmt_day_and_month'), $date);
     }
 }

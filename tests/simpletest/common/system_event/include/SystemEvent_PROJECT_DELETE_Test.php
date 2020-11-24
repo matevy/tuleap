@@ -20,9 +20,10 @@
 
 use Tuleap\SVN\SVNAuthenticationCacheInvalidator;
 
-Mock::generatePartial('SystemEvent_PROJECT_DELETE',
-                      'SystemEvent_PROJECT_DELETE_TestVersion',
-                      array('getProject',
+Mock::generatePartial(
+    'SystemEvent_PROJECT_DELETE',
+    'SystemEvent_PROJECT_DELETE_TestVersion',
+    array('getProject',
                             'getBackend',
                             'done',
                             'removeProjectMembers',
@@ -34,7 +35,8 @@ Mock::generatePartial('SystemEvent_PROJECT_DELETE',
                             'deleteMembershipRequestNotificationEntries',
                             'deleteProjectMailingLists',
                             'getEventManager',
-                            'cleanupProjectUgroupsBinding'));
+    'cleanupProjectUgroupsBinding')
+);
 
 Mock::generate('BackendSystem');
 Mock::generate('Project');
@@ -43,13 +45,13 @@ Mock::generate('BackendCVS');
 Mock::generate('BackendMailingList');
 Mock::generate('BackendAliases');
 Mock::generate('ArtifactTypeFactory');
-Mock::generate('EventManager');
 Mock::generate('WikiAttachment');
 
 /**
  * Test for project delete system event
  */
-class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
+class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase
+{
 
     public function setUp()
     {
@@ -69,7 +71,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteUsersFail() {
+    public function testProjectDeleteUsersFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -138,8 +141,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not remove project users"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -150,7 +152,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteMembershipRequestNotificationUGroupFail() {
+    public function testProjectDeleteMembershipRequestNotificationUGroupFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -219,8 +222,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not remove membership request notification ugroups or message"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -231,7 +233,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteFRSFail() {
+    public function testProjectDeleteFRSFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -299,8 +302,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not remove FRS items"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -311,9 +313,10 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteTrackersFail() {
+    public function testProjectDeleteTrackersFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
-        $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE,SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
+        $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
 
         // The project
@@ -380,8 +383,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not mark all trackers as deleted"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -392,7 +394,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteProjectHomeFail() {
+    public function testProjectDeleteProjectHomeFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -461,8 +464,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not archive project home"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -473,7 +475,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeletePublicFtpFail() {
+    public function testProjectDeletePublicFtpFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -542,8 +545,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not archive project public ftp"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -554,7 +556,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteWikiAttacmentsFail() {
+    public function testProjectDeleteWikiAttacmentsFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -623,8 +626,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not mark all wiki attachments as deleted"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -635,7 +637,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteCVSFail() {
+    public function testProjectDeleteCVSFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -704,8 +707,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not archive project CVS repository"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -716,7 +718,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteSVNFail() {
+    public function testProjectDeleteSVNFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -785,8 +788,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not archive project SVN repository"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -797,7 +799,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteMailingListFail() {
+    public function testProjectDeleteMailingListFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -866,8 +869,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not archive project mailing lists"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -878,7 +880,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteUgroupBindingFail() {
+    public function testProjectDeleteUgroupBindingFail()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -947,8 +950,7 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectNever('done');
         $evt->expectOnce('error', array("Could not remove ugroups binding"));
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertFalse($evt->process());
@@ -959,7 +961,8 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testProjectDeleteSucceed() {
+    public function testProjectDeleteSucceed()
+    {
         $evt = new SystemEvent_PROJECT_DELETE_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_PROJECT_DELETE, SystemEvent::OWNER_ROOT, '142', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->injectDependencies(\Mockery::spy(SVNAuthenticationCacheInvalidator::class));
@@ -1029,11 +1032,9 @@ class SystemEvent_PROJECT_DELETE_Test extends TuleapTestCase {
         $evt->expectOnce('done');
         $evt->expectNever('error');
 
-        $em = new MockEventManager();
-        $evt->setReturnValue('getEventManager', $em);
+        $evt->setReturnValue('getEventManager', \Mockery::spy(EventManager::class));
 
         // Launch the event
         $this->assertTrue($evt->process());
     }
-
 }

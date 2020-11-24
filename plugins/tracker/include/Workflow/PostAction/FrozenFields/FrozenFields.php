@@ -30,15 +30,17 @@ use Tuleap\Tracker\Workflow\PostAction\Visitor;
 
 class FrozenFields extends Transition_PostAction
 {
-    public const SHORT_NAME = 'frozen';
+    public const SHORT_NAME   = 'frozen_fields';
+    public const XML_TAG_NAME = 'postaction_frozen_fields';
 
-    /** @var int[] */
-    private $field_ids = [];
+    /** @var Tracker_FormElement_Field[] */
+    private $fields = [];
 
-    public function __construct(\Transition $transition, int $id, array $field_ids)
+    public function __construct(\Transition $transition, int $id, array $fields)
     {
         parent::__construct($transition, $id);
-        $this->field_ids = $field_ids;
+
+        $this->fields = $fields;
     }
 
     /** @return string */
@@ -50,7 +52,12 @@ class FrozenFields extends Transition_PostAction
     /** @return int[] */
     public function getFieldIds(): array
     {
-        return $this->field_ids;
+        $ids = [];
+        foreach ($this->fields as $field) {
+            $ids[] = (int) $field->getId();
+        }
+
+        return $ids;
     }
 
     /** @return string */
@@ -96,7 +103,15 @@ class FrozenFields extends Transition_PostAction
      */
     public function exportToXml(SimpleXMLElement $root, $xmlMapping)
     {
-        // Not implemented.
+        if (count($this->getFieldIds()) >0) {
+            $child = $root->addChild(self::XML_TAG_NAME);
+            foreach ($this->getFieldIds() as $field_id) {
+                $field_id = array_search($field_id, $xmlMapping);
+                if ($field_id !== false) {
+                    $child->addChild('field_id')->addAttribute('REF', $field_id);
+                }
+            }
+        }
     }
 
     /**
@@ -104,7 +119,7 @@ class FrozenFields extends Transition_PostAction
      *
      * @param Tracker_FormElement_Field $field
      *
-     * @return boolean
+     * @return bool
      */
     public function bypassPermissions(Tracker_FormElement_Field $field)
     {

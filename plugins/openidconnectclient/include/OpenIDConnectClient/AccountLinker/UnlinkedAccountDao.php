@@ -22,15 +22,18 @@ namespace Tuleap\OpenIDConnectClient\AccountLinker;
 
 use DataAccessObject;
 
-class UnlinkedAccountDao extends DataAccessObject {
+class UnlinkedAccountDao extends DataAccessObject
+{
 
-    public function searchById($id) {
+    public function searchById($id)
+    {
         $id  = $this->getDa()->quoteSmart($id);
         $sql = "SELECT * FROM plugin_openidconnectclient_unlinked_account WHERE id = $id";
         return $this->retrieveFirstRow($sql);
     }
 
-    public function save($id, $provider_id, $user_identifier) {
+    public function save($id, $provider_id, $user_identifier)
+    {
         $id          = $this->getDa()->quoteSmart($id);
         $provider_id = $this->getDa()->escapeInt($provider_id);
         $identifier  = $this->getDa()->quoteSmart($user_identifier);
@@ -40,10 +43,10 @@ class UnlinkedAccountDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function deleteById($id) {
+    public function deleteById($id)
+    {
         $id = $this->getDa()->quoteSmart($id);
         $sql = "DELETE FROM plugin_openidconnectclient_unlinked_account WHERE id = $id";
         return $this->update($sql);
     }
-
 }

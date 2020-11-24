@@ -1,29 +1,31 @@
 <?php
-rcs_id('$Id: ExternalReferrer.php,v 1.3 2004/10/12 14:22:14 rurban Exp $');
-
-/** 
+/**
  * Detect external referrers
  * Currently only search engines, and highlight the searched item.
  *
- * Todo: 
+ * Todo:
  *   store all external referrers in (rotatable) log/db for a RecentReferrers plugin.
  */
 if (!function_exists('isExternalReferrer')) { // better define that in stdlib.php
-  function isExternalReferrer(&$request) {
-    if ($referrer = $request->get('HTTP_REFERER')) {
-    	$home = SCRIPT_NAME; // was SERVER_URL, check sister wiki's: same host but other other script url
-    	if (substr(strtolower($referrer),0,strlen($home)) == strtolower($home)) return false;
-        require_once("lib/ExternalReferrer.php");
-        $se = new SearchEngines();
-        return $se->parseSearchQuery($referrer);
+    function isExternalReferrer(&$request)
+    {
+        if ($referrer = $request->get('HTTP_REFERER')) {
+            $home = SCRIPT_NAME; // was SERVER_URL, check sister wiki's: same host but other other script url
+            if (substr(strtolower($referrer), 0, strlen($home)) == strtolower($home)) {
+                return false;
+            }
+            require_once("lib/ExternalReferrer.php");
+            $se = new SearchEngines();
+            return $se->parseSearchQuery($referrer);
+        }
+        return false;
     }
-    return false;
-  }
 }
 
-class SearchEngines {
+class SearchEngines
+{
 
-    var $searchEngines = 
+    var $searchEngines =
     array(
           "search.sli.sympatico.ca/" => array("engine" => "Sympatico", "query1" => "query=", "query2" => "", "url" => "http://www1.sympatico.ca/"),
           "www.search123.com/cgi-bin/" => array("engine" => "Search123", "query1" => "query=", "query2" => "", "url" => "http://www.search123.com/"),
@@ -64,10 +66,10 @@ class SearchEngines {
           "lycos." => array("engine" => "Lycos", "query1" => "query=", "query2" => "", "url" => "http://www.lycos.com/"),
           "msn." => array("engine" => "MSN", "query1" => "q=", "query2" => "", "url" => "http://search.msn.com/"),
           "dmoz." => array("engine" => "Dmoz", "query1" => "search=", "query2" => "", "url" => "http://www.dmoz.org/"),
-          
+
           );
 
-    /** 
+    /**
      * parseSearchQuery(url)
      * Parses the passed refering url looking for search engine data.  If search info is found,
      * the method determines the name of the search engine, it's URL, and the search keywords
@@ -76,7 +78,8 @@ class SearchEngines {
      * @returns array engine, engine_url, query
      * @public
      */
-    function parseSearchQuery($url) {
+    function parseSearchQuery($url)
+    {
         // test local referrers
         if (DEBUG) {
             $this->searchEngines[SERVER_URL] = array("engine" => "DEBUG", "query1" => "s=", "query2" => "", "url" => SCRIPT_NAME);
@@ -96,12 +99,12 @@ class SearchEngines {
             return false;
         }
         $url = @parse_url(strtolower($url));
-        if (!empty($url["query"]))
+        if (!empty($url["query"])) {
             $url = $url["query"];
+        }
         if ($query1 and @stristr($url, $query1)) {
              $query = @explode($query1, $url);
-        }
-        else if ($query2 and @stristr($url, $query2)) {
+        } elseif ($query2 and @stristr($url, $query2)) {
             $query = explode($query2, $url);
         }
         if (!empty($query)) {
@@ -129,4 +132,3 @@ class SearchEngines {
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

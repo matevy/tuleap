@@ -21,23 +21,25 @@
 
 use Tuleap\Docman\View\DocmanViewURLBuilder;
 
-class Docman_View_Icons extends Docman_View_Browse {
-    
-    /* protected */ function _content($params) {
-        
+class Docman_View_Icons extends Docman_View_Browse
+{
+
+    /* protected */ function _content($params)
+    {
+
         $html = '';
-        
+
         $itemFactory = new Docman_ItemFactory($params['group_id']);
         $itemTree = $itemFactory->getItemSubTree($params['item'], $params['user']);
-        
+
         $items = $itemTree->getAllItems();
         $nb = $items->size();
-        if ($nb) { 
+        if ($nb) {
             $html .= '<table border="0" cellpadding="0" cellspacing="4" width="100%">';
             $folders   = array();
             $documents = array();
             $it = $items->iterator();
-            while($it->valid()) {
+            while ($it->valid()) {
                 $o = $it->current();
                 $this->is_folder = false;
                 $o->accept($this);
@@ -67,9 +69,9 @@ class Docman_View_Icons extends Docman_View_Browse {
                 'show_options'           => ($this->_controller->request->exist('show_options') ? $this->_controller->request->get('show_options') : false),
                 'item'                  => $params['item'],
             );
-            foreach($rows as $row) {
+            foreach ($rows as $row) {
                 $html .= '<tr style="vertical-align:top">';
-                foreach($row as $cell => $nop) {
+                foreach ($row as $cell => $nop) {
                     $html .= '<td width="'. $width .'%">'. $this->_displayItem($row[$cell], $item_parameters) .'</td>';
                 }
                 $html .= '<td width="'. $width .'%">&nbsp;</td>';
@@ -79,35 +81,43 @@ class Docman_View_Icons extends Docman_View_Browse {
         }
         echo $html;
     }
-    
-    function visitFolder(&$item, $params) {
+
+    function visitFolder(&$item, $params)
+    {
         $this->is_folder = true;
     }
-    function visitDocument(&$item, $params) {
+    function visitDocument(&$item, $params)
+    {
     }
-    function visitWiki(&$item, $params = array()) {
+    function visitWiki(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
-    function visitLink(&$item, $params = array()) {
+    function visitLink(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
-    function visitFile(&$item, $params = array()) {
+    function visitFile(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
-    function visitEmbeddedFile(&$item, $params = array()) {
+    function visitEmbeddedFile(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    function visitEmpty(&$item, $params = array()) {
+    function visitEmpty(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
-    
-    function _displayItem(&$item, $params) {
+
+    function _displayItem(&$item, $params)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '<div id="item_'.$item->getId().'" class="'. Docman_View_Browse::getItemClasses($params) .'" style="position:relative;">';
-        
+
         $show_options = isset($params['show_options']) && $params['show_options'] == $item->getId();
-        
+
         $icon_src = $params['docman_icons']->getIconForItem($item, $params);
         $icon = '<img src="'. $icon_src .'" class="docman_item_icon" style="vertical-align:middle; text-decoration:none;" />';
 

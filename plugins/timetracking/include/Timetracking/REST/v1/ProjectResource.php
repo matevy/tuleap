@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2018. All rights reserved.
+ * Copyright Enalean (c) 2018-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -29,24 +29,39 @@ use Project;
 use Tracker_FormElementFactory;
 use Tracker_REST_TrackerRestBuilder;
 use TrackerFactory;
-use Tuleap\REST\UserManager as RestUserManager;
+use TransitionFactory;
 use Tuleap\Timetracking\Admin\AdminDao;
 use Tuleap\Timetracking\Admin\TimetrackingUgroupDao;
 use Tuleap\Timetracking\Admin\TimetrackingUgroupRetriever;
 use Tuleap\Timetracking\Permissions\PermissionsRetriever;
 use Tuleap\Timetracking\Time\TimeDao;
 use Tuleap\Timetracking\Time\TimeRetriever;
+use Tuleap\Tracker\FormElement\Container\Fieldset\HiddenFieldsetChecker;
+use Tuleap\Tracker\FormElement\Container\FieldsExtractor;
+use Tuleap\Tracker\PermissionsFunctionsWrapper;
+use Tuleap\Tracker\REST\FormElementRepresentationsBuilder;
 use Tuleap\Tracker\REST\PermissionsExporter;
+use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
+use Tuleap\Tracker\REST\Tracker\PermissionsRepresentationBuilder;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsRetriever;
+use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
+use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
+use UserManager;
+use Workflow_Transition_ConditionFactory;
 
 class ProjectResource
 {
     public const TIMETRACKING_CRITERION = 'with_time_tracking';
 
-    /** @var \Tuleap\REST\UserManager */
-    private $rest_user_manager;
+    /** @var UserManager */
+    private $user_manager;
 
     /**
      * @var TimeRetriever
@@ -60,30 +75,68 @@ class ProjectResource
 
     public function __construct()
     {
-        $this->rest_user_manager             = RestUserManager::build();
-        $this->permissions_retriever         = new PermissionsRetriever(
+        $this->user_manager          = UserManager::instance();
+        $this->permissions_retriever = new PermissionsRetriever(
             new TimetrackingUgroupRetriever(
                 new TimetrackingUgroupDao()
             )
         );
-        $this->time_retriever                = new TimeRetriever(
+        $this->time_retriever        = new TimeRetriever(
             new TimeDao(),
             $this->permissions_retriever,
             new AdminDao(),
             \ProjectManager::instance()
         );
+
+        $transition_retriever = new TransitionRetriever(
+            new StateFactory(
+                new TransitionFactory(
+                    Workflow_Transition_ConditionFactory::build()
+                ),
+                new SimpleWorkflowDao()
+            ),
+            new TransitionExtractor()
+        );
+
+        $frozen_fields_detector = new FrozenFieldDetector(
+            $transition_retriever,
+            new FrozenFieldsRetriever(
+                new FrozenFieldsDao(),
+                Tracker_FormElementFactory::instance()
+            )
+        );
+
         $this->timetracking_overview_builder = new TimetrackingOverviewRepresentationsBuilder(
             new AdminDao(),
             $this->permissions_retriever,
             TrackerFactory::instance(),
             new Tracker_REST_TrackerRestBuilder(
                 Tracker_FormElementFactory::instance(),
-                new PermissionsExporter(
-                    new FrozenFieldDetector(
-                        new FrozenFieldsRetriever(
-                            new FrozenFieldsDao()
-                        )
+                new FormElementRepresentationsBuilder(
+                    Tracker_FormElementFactory::instance(),
+                    new PermissionsExporter(
+                        $frozen_fields_detector
+                    ),
+                    new HiddenFieldsetChecker(
+                        new HiddenFieldsetsDetector(
+                            $transition_retriever,
+                            new HiddenFieldsetsRetriever(
+                                new HiddenFieldsetsDao(),
+                                Tracker_FormElementFactory::instance()
+                            ),
+                            Tracker_FormElementFactory::instance()
+                        ),
+                        new FieldsExtractor()
+                    ),
+                    new PermissionsForGroupsBuilder(
+                        new \UGroupManager(),
+                        $frozen_fields_detector,
+                        new PermissionsFunctionsWrapper()
                     )
+                ),
+                new PermissionsRepresentationBuilder(
+                    new \UGroupManager(),
+                    new PermissionsFunctionsWrapper()
                 )
             )
         );
@@ -104,7 +157,7 @@ class ProjectResource
     public function getProjects($limit, $offset, array $query)
     {
         $this->checkQuery($query);
-        $current_user = $this->rest_user_manager->getCurrentUser();
+        $current_user = $this->user_manager->getCurrentUser();
 
         return $this->time_retriever->getProjectsWithTimetracking($current_user, $limit, $offset);
     }
@@ -119,7 +172,7 @@ class ProjectResource
      * @return array
      *
      * @throws RestException
-     * @throws 400
+     * @throws RestException 400
      * @throws \Rest_Exception_InvalidTokenException
      * @throws \User_PasswordExpiredException
      * @throws \User_StatusInvalidException
@@ -127,7 +180,7 @@ class ProjectResource
     public function getTrackers($query, $representation, Project $project, $limit, $offset)
     {
         $this->checkQuery($query);
-        $current_user = $this->rest_user_manager->getCurrentUser();
+        $current_user = $this->user_manager->getCurrentUser();
         if ($representation === "minimal") {
             return $this->timetracking_overview_builder->getTrackersMinimalRepresentationsWithTimetracking(
                 $current_user,

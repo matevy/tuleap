@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,7 +23,8 @@ use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 /**
  * A planning milestone (e.g.: Sprint, Release...)
  */
-class Planning_ArtifactMilestone implements Planning_Milestone {
+class Planning_ArtifactMilestone implements Planning_Milestone
+{
 
     /**
      * The project where the milestone is defined
@@ -74,37 +75,28 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
     private $parent_milestones = array();
 
     /**
-     * The duration before hitting the end date of the milestone.
-     *
-     * @var Int
+     * @var TimePeriodWithoutWeekEnd|null
      */
-     private $duration = null;
-
-    /**
-     * The start date of the milestone
-     *
-     * @var String
-     */
-     private $start_date = null;
+    private $time_period = null;
 
     /**
      * The capacity of the milestone
      *
      * @var float
      */
-     private $capacity = null;
+    private $capacity = null;
 
      /**
      * The remaining effort of the milestone
      *
      * @var float
      */
-     private $remaining_effort = null;
+    private $remaining_effort = null;
 
      /**
       * @var bool
       */
-     private $has_useable_burndown_field;
+    private $has_useable_burndown_field;
 
     /**
      * @var ScrumForMonoMilestoneChecker
@@ -129,56 +121,64 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
     /**
      * @return int The project identifier.
      */
-    public function getGroupId() {
+    public function getGroupId()
+    {
         return $this->project->getID();
     }
 
     /**
      * @return Project
      */
-    public function getProject() {
+    public function getProject()
+    {
         return $this->project;
     }
 
     /**
      * @return Tracker_Artifact
      */
-    public function getArtifact() {
+    public function getArtifact()
+    {
         return $this->artifact;
     }
 
     /**
-     * @return Boolean
+     * @return bool
      */
-    public function userCanView(PFUser $user) {
+    public function userCanView(PFUser $user)
+    {
         return $this->artifact->getTracker()->userCanView($user);
     }
 
     /**
      * @return int
      */
-    public function getTrackerId() {
+    public function getTrackerId()
+    {
         return $this->artifact->getTrackerId();
     }
 
     /**
      * @return int
      */
-    public function getArtifactId() {
+    public function getArtifactId()
+    {
         return $this->artifact->getId();
     }
 
     /**
      * @return string
      */
-    public function getArtifactTitle() {
+    public function getArtifactTitle()
+    {
         return $this->artifact->getTitle();
     }
 
     /**
      * @return string
      */
-    public function getXRef() {
+    public function getXRef()
+    {
         return $this->artifact->getXRef();
     }
 
@@ -186,28 +186,32 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
     /**
      * @return Planning
      */
-    public function getPlanning() {
+    public function getPlanning()
+    {
         return $this->planning;
     }
 
     /**
      * @return int
      */
-    public function getPlanningId() {
+    public function getPlanningId()
+    {
         return $this->planning->getId();
     }
 
     /**
      * @return ArtifactNode
      */
-    public function getPlannedArtifacts() {
+    public function getPlannedArtifacts()
+    {
         return $this->planned_artifacts;
     }
 
     /**
      * @param ArtifactNode $node
      */
-    public function setPlannedArtifacts(ArtifactNode $node) {
+    public function setPlannedArtifacts(ArtifactNode $node)
+    {
         $this->planned_artifacts = $node;
     }
 
@@ -216,7 +220,8 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
      * @param PFUser $user
      * @return Tracker_Artifact[]
      */
-    public function getLinkedArtifacts(PFUser $user) {
+    public function getLinkedArtifacts(PFUser $user)
+    {
         $artifacts = $this->artifact->getUniqueLinkedArtifacts($user);
         $root_node = $this->getPlannedArtifacts();
         // TODO get rid of this if, in favor of an empty treenode
@@ -226,7 +231,8 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
         return $artifacts;
     }
 
-    private function addChildrenNodes(ArtifactNode $root_node, &$artifacts, $user) {
+    private function addChildrenNodes(ArtifactNode $root_node, &$artifacts, $user)
+    {
         foreach ($root_node->getChildren() as $node) {
             $artifact    = $node->getObject();
             $artifacts[] = $artifact;
@@ -234,12 +240,14 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
             $this->addChildrenNodes($node, $artifacts, $user);
         }
     }
-    
-    public function hasAncestors() {
+
+    public function hasAncestors()
+    {
         return !empty($this->parent_milestones);
     }
 
-    public function getAncestors() {
+    public function getAncestors()
+    {
         return $this->parent_milestones;
     }
 
@@ -249,72 +257,82 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
         return array_shift($parent_milestones_values);
     }
 
-    public function setAncestors(array $parents) {
+    public function setAncestors(array $parents)
+    {
         $this->parent_milestones = $parents;
     }
 
-    public function setStartDate($start_date) {
-        $this->start_date = $start_date;
-        return $this;
+    public function getStartDate()
+    {
+        if ($this->time_period !== null) {
+            return $this->time_period->getStartDate();
+        }
+
+        return null;
     }
 
-    public function getStartDate() {
-        return $this->start_date;
-    }
-
-    public function setDuration($duration) {
-        $this->duration = $duration;
-        return $this;
-    }
-
-    public function getEndDate() {
-        if (! $this->start_date) {
+    public function getEndDate()
+    {
+        if (! $this->getStartDate()) {
             return null;
         }
 
-        if ($this->duration <= 0) {
+        if ($this->getDuration() === null || $this->getDuration() <= 0) {
             return null;
         }
 
-        return $this->getTimePeriod()->getEndDate();
+        if ($this->time_period !== null) {
+            return (int) $this->time_period->getEndDate();
+        }
+
+        return null;
     }
 
-    private function getTimePeriod() {
-        return new TimePeriodWithoutWeekEnd($this->start_date, $this->duration);
+    public function getDaysSinceStart()
+    {
+        if ($this->time_period !== null) {
+            return $this->time_period->getNumberOfDaysSinceStart();
+        }
+
+        return null;
     }
 
-    public function getDaysSinceStart() {
-        return $this->getTimePeriod()->getNumberOfDaysSinceStart();
+    public function getDaysUntilEnd()
+    {
+        if ($this->time_period !== null) {
+            return $this->time_period->getNumberOfDaysUntilEnd();
+        }
+
+        return null;
     }
 
-    public function getDaysUntilEnd() {
-        return $this->getTimePeriod()->getNumberOfDaysUntilEnd();
-    }
-
-    public function getCapacity() {
+    public function getCapacity()
+    {
         return $this->capacity;
     }
 
-    public function setCapacity($capacity) {
+    public function setCapacity($capacity)
+    {
         $this->capacity = $capacity;
-        return $this;
     }
 
-    public function getRemainingEffort() {
+    public function getRemainingEffort()
+    {
         return $this->remaining_effort;
     }
 
-    public function setRemainingEffort($remaining_effort) {
+    public function setRemainingEffort($remaining_effort)
+    {
         $this->remaining_effort = $remaining_effort;
-        return $this;
     }
 
     /**
      * @param array $artifacts_ids
      * @param PFUser $user
-     * @return Boolean True if nothing went wrong
+     * @return bool True if nothing went wrong
      */
-    public function solveInconsistencies(PFUser $user, array $artifacts_ids) {
+    public function solveInconsistencies(PFUser $user, array $artifacts_ids)
+    {
         $artifact = $this->getArtifact();
 
         return $artifact->linkArtifacts($artifacts_ids, $user);
@@ -323,21 +341,28 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
     /**
      * Get the timestamp of the last modification of the milestone
      *
-     * @return Integer
+     * @return int
      */
-    public function getLastModifiedDate() {
+    public function getLastModifiedDate()
+    {
         return $this->getArtifact()->getLastUpdateDate();
     }
 
     /**
      * @see Planning_Milestone::getDuration()
-     * @return float
+     * @return int|null
      */
-    public function getDuration() {
-        return $this->duration;
+    public function getDuration()
+    {
+        if ($this->time_period !== null) {
+            return $this->time_period->getDuration();
+        }
+
+        return null;
     }
 
-    public function milestoneCanBeSubmilestone(Planning_Milestone $potential_submilestone) {
+    public function milestoneCanBeSubmilestone(Planning_Milestone $potential_submilestone)
+    {
         if ($this->scrum_mono_milestone_checker->isMonoMilestoneEnabled($potential_submilestone->getProject()->getID()) === true) {
             return $this->acceptOnlySameTrackerInMonoMilestoneCofiguration($potential_submilestone);
         }
@@ -358,35 +383,48 @@ class Planning_ArtifactMilestone implements Planning_Milestone {
      * @param PFUser $user
      * @return bool
      */
-    public function hasBurdownField(PFUser $user) {
+    public function hasBurdownField(PFUser $user)
+    {
         $burndown_field = $this->getArtifact()->getABurndownField($user);
 
         return (bool) $burndown_field;
     }
 
     /**
-     * @param boolean $bool
+     * @param bool $bool
      */
-    public function setHasUsableBurndownField($bool) {
+    public function setHasUsableBurndownField($bool)
+    {
         $this->has_useable_burndown_field = $bool;
     }
 
-    public function hasUsableBurndownField() {
+    public function hasUsableBurndownField()
+    {
         return (bool) $this->has_useable_burndown_field;
     }
 
-    public function getBurndownData(PFUser $user) {
+    public function getBurndownData(PFUser $user)
+    {
         if (! $this->hasBurdownField($user)) {
-            return;
+            return null;
         }
 
-        $burndown_field = $this->getArtifact()->getABurndownField($user);
+        if ($this->time_period === null) {
+            return null;
+        }
+
+        $milestone_artifact = $this->getArtifact();
+        $burndown_field     = $milestone_artifact->getABurndownField($user);
 
         return $burndown_field->getBurndownData(
-            $this->getArtifact(),
+            $milestone_artifact,
             $user,
-            $this->getStartDate(),
-            $this->getDuration()
+            $this->time_period
         );
+    }
+
+    public function setTimePeriod(TimePeriodWithoutWeekEnd $time_period)
+    {
+        $this->time_period = $time_period;
     }
 }

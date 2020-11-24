@@ -17,9 +17,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Rest_TokenDao extends DataAccessObject {
+class Rest_TokenDao extends DataAccessObject
+{
 
-    public function addTokenForUserId($user_id, $token, $current_timestamp) {
+    public function addTokenForUserId($user_id, $token, $current_timestamp)
+    {
         $current_timestamp = $this->da->escapeInt($current_timestamp);
         $user_id           = $this->da->escapeInt($user_id);
         $token             = $this->da->quoteSmart($token);
@@ -30,7 +32,8 @@ class Rest_TokenDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function deleteToken($token) {
+    public function deleteToken($token)
+    {
         $token = $this->da->quoteSmart($token);
 
         $sql = "DELETE FROM rest_authentication_token
@@ -40,7 +43,8 @@ class Rest_TokenDao extends DataAccessObject {
     }
 
 
-    public function deleteTokensOlderThan($date_timestamp) {
+    public function deleteTokensOlderThan($date_timestamp)
+    {
         $date_timestamp = $this->da->escapeInt($date_timestamp);
 
         $sql = "DELETE FROM rest_authentication_token
@@ -49,7 +53,8 @@ class Rest_TokenDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function deleteAllTokensForUser($user_id) {
+    public function deleteAllTokensForUser($user_id)
+    {
         $user_id = $this->da->escapeInt($user_id);
 
         $sql = "DELETE FROM rest_authentication_token
@@ -58,7 +63,8 @@ class Rest_TokenDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function getTokensForUserId($user_id) {
+    public function getTokensForUserId($user_id)
+    {
         $user_id = $this->da->escapeInt($user_id);
 
         $sql = "SELECT token, user_id
@@ -66,10 +72,10 @@ class Rest_TokenDao extends DataAccessObject {
                 WHERE user_id = $user_id";
 
         return $this->retrieve($sql);
-
     }
 
-    public function checkTokenExistenceForUserId($user_id, $token) {
+    public function checkTokenExistenceForUserId($user_id, $token)
+    {
         $user_id = $this->da->escapeInt($user_id);
         $token   = $this->da->quoteSmart($token);
 
@@ -82,4 +88,3 @@ class Rest_TokenDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 }
-?>

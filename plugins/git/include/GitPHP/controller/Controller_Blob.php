@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - present. All Rights Reserved.
  * Copyright (C) 2010 Christopher Han <xiphux@gmail.com>
  *
  * This file is a part of Tuleap.
@@ -22,7 +22,6 @@
 namespace Tuleap\Git\GitPHP;
 
 use EventManager;
-use GeSHi;
 use Tuleap\Git\BinaryDetector;
 use Tuleap\Git\Repository\View\LanguageDetectorForPrismJS;
 use Tuleap\Git\GitPHP\Events\DisplayFileContentInGitView;
@@ -34,16 +33,6 @@ use Tuleap\Layout\IncludeAssets;
  */
 class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
 {
-    use \Tuleap\Git\Repository\View\FeatureFlag;
-
-    /**
-     * __construct
-     *
-     * Constructor
-     *
-     * @access public
-     * @return controller
-     */
     public function __construct()
     {
         parent::__construct();
@@ -65,10 +54,7 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
         if (isset($this->params['plain']) && $this->params['plain']) {
             return 'blobplain.tpl';
         }
-        if ($this->isTuleapBeauGitActivated()) {
-            return 'tuleap/blob.tpl';
-        }
-        return 'blob.tpl';
+        return 'tuleap/blob.tpl';
     }
 
     /**
@@ -77,7 +63,7 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
      * Gets the name of this controller's action
      *
      * @access public
-     * @param boolean $local true if caller wants the localized action name
+     * @param bool $local true if caller wants the localized action name
      * @return string action name
      */
     public function GetName($local = false) // @codingStandardsIgnoreLine
@@ -233,28 +219,12 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
 
         $this->tpl->assign('extrascripts', array('blame'));
 
-        if ($this->isTuleapBeauGitActivated()) {
-            $detector = new LanguageDetectorForPrismJS();
-            $this->tpl->assign('language', $detector->getLanguageFromExtension(substr(strrchr($blob->GetName(), '.'), 1)));
-            $this->tpl->assign('bloblines', $blob->GetData(true));
-            $include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets', GIT_BASE_URL . '/assets');
-            $GLOBALS['Response']->includeFooterJavascriptFile(
-                $include_assets->getFileURL('repository-blob.js')
-            );
-            return;
-        }
-
-        $geshi = new GeSHi("", 'php');
-        $lang = $geshi->get_language_name_from_extension(substr(strrchr($blob->GetName(), '.'), 1));
-        $geshi->enable_classes();
-        $geshi->enable_strict_mode(GESHI_MAYBE);
-        $geshi->set_source($blob->GetData());
-        $geshi->set_language($lang);
-        $geshi->set_header_type(GESHI_HEADER_PRE_TABLE);
-        $geshi->enable_line_numbers(GESHI_NORMAL_LINE_NUMBERS);
-        $geshi->set_overall_id('git-repository-blob-file');
-        $this->tpl->assign('geshiout', $geshi->parse_code());
-        $this->tpl->assign('extracss', $geshi->get_stylesheet());
-        $this->tpl->assign('geshi', true);
+        $detector = new LanguageDetectorForPrismJS();
+        $this->tpl->assign('language', $detector->getLanguage($blob->GetName()));
+        $this->tpl->assign('bloblines', $blob->GetData(true));
+        $include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets', GIT_BASE_URL . '/assets');
+        $GLOBALS['Response']->includeFooterJavascriptFile(
+            $include_assets->getFileURL('repository-blob.js')
+        );
     }
 }

@@ -18,14 +18,14 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/dao/include/DataAccessObject.class.php';
-
 /**
  * Class for field condition DAOs.
  */
-class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject {
+class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_workflow_transition_condition_field_notempty';
     }
@@ -64,7 +64,8 @@ class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject {
      *
      * @return DataAccessResult
      */
-    public function searchByTransitionId($transition_id) {
+    public function searchByTransitionId($transition_id)
+    {
         $transition_id = $this->da->escapeInt($transition_id);
 
         $sql = "SELECT *
@@ -75,19 +76,21 @@ class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function deleteByTransitionId($transition_id) {
+    public function deleteByTransitionId($transition_id)
+    {
         $transition_id = $this->da->escapeInt($transition_id);
         $sql = "DELETE
                 FROM $this->table_name
                 WHERE transition_id = $transition_id";
 
-       return $this->update($sql);
+        return $this->update($sql);
     }
 
     /**
      * Duplicate condition
      */
-    function duplicate($from_transition_id, $to_transition_id, $field_mapping) {
+    function duplicate($from_transition_id, $to_transition_id, $field_mapping)
+    {
         $from_transition_id = $this->da->escapeInt($from_transition_id);
         $to_transition_id   = $this->da->escapeInt($to_transition_id);
 
@@ -112,15 +115,22 @@ class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject {
         }
     }
 
-    function addPermission($permission_type, $object_id, $ugroup_id) { // WAT ???
-        $sql=sprintf("INSERT INTO permissions (object_id, permission_type, ugroup_id)".
+    function addPermission($permission_type, $object_id, $ugroup_id)
+    {
+ // WAT ???
+        $sql=sprintf(
+            "INSERT INTO permissions (object_id, permission_type, ugroup_id)".
                      " VALUES ('%s', '%s', '%s')",
-                     $object_id, $permission_type, $ugroup_id);
+            $object_id,
+            $permission_type,
+            $ugroup_id
+        );
         return $this->update($sql);
     }
 
     /** @return bool */
-    public function isFieldUsed($field_id) {
+    public function isFieldUsed($field_id)
+    {
         $sql = "SELECT NULL
                 FROM tracker_workflow_transition_condition_field_notempty
                 WHERE field_id = $field_id
@@ -128,4 +138,3 @@ class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject {
         return count($this->retrieve($sql)) > 0;
     }
 }
-?>

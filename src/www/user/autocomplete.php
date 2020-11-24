@@ -25,14 +25,14 @@
 use Tuleap\User\RequestFromAutocompleter;
 use Tuleap\User\UserAutocompletePostSearchEvent;
 
-require_once('pre.php');
+require_once __DIR__ . '/../include/pre.php';
 
 // Input treatment
 $request = HTTPRequest::instance();
 
 $vUserName = new Valid_String('name');
 $vUserName->required();
-if($request->valid($vUserName)) {
+if ($request->valid($vUserName)) {
     $userName = $request->get('name');
 } else {
     // Finish script, no output
@@ -41,8 +41,8 @@ if($request->valid($vUserName)) {
 
 $codendiUserOnly = false;
 $vCodendiUserOnly = new Valid_UInt('codendi_user_only');
-if($request->valid($vCodendiUserOnly)) {
-    if($request->get('codendi_user_only') == 1) {
+if ($request->valid($vCodendiUserOnly)) {
+    if ($request->get('codendi_user_only') == 1) {
         $codendiUserOnly = true;
     }
 }
@@ -50,7 +50,7 @@ if($request->valid($vCodendiUserOnly)) {
 $display_restricted_user = true;
 $requested_project_id    = $request->get('project_id');
 if ($requested_project_id !== '' && $requested_project_id !== false) {
-    $display_restricted_user = (static function(int $project_id) : bool {
+    $display_restricted_user = (static function (int $project_id) : bool {
         $project = ProjectManager::instance()->getProject($project_id);
 
         if ($project->isError()) {
@@ -58,7 +58,7 @@ if ($requested_project_id !== '' && $requested_project_id !== false) {
         }
 
         return ! ($project->getAccess() === Project::ACCESS_PRIVATE_WO_RESTRICTED && ForgeConfig::areRestrictedUsersAllowed());
-    }) ($requested_project_id);
+    })($requested_project_id);
 }
 
 if (! $display_restricted_user) {
@@ -95,14 +95,17 @@ if (count($userList) < $limit) {
     $sql_limit = (int) ($limit - count($userList));
 
     $dar = $userDao->searchUserNameLike($userName, $sql_limit);
-    while($dar->valid()) {
+    while ($dar->valid()) {
         $row  = $dar->current();
-        $is_user_restricted = (new PFUser($row))->isRestricted();
+        $user = new PFUser($row);
+
+        $is_user_restricted = $user->isRestricted();
         if (! $is_user_restricted || ($is_user_restricted && $display_restricted_user)) {
             $userList[] = array(
                 'display_name' => $row['realname']." (".$row['user_name'].")",
                 'login'        => $row['user_name'],
                 'has_avatar'   => $row['has_avatar'],
+                'avatar_url'   => $user->getAvatarUrl(),
                 'user_id'      => $row['user_id'],
             );
         }
@@ -168,13 +171,14 @@ if ($json_format) {
         $display_name   = $user_info['display_name'];
         $login          = $user_info['login'];
 
-        $json_entries[] = array(
-            'type'       => 'user',
-            'id'         => $display_name,
-            'text'       => $display_name,
-            'avatar_url' => '/users/' . urlencode($login) . '/avatar.png',
-            'has_avatar' => (bool)$user_info['has_avatar']
-        );
+        $json_entries[] = [
+            'type'           => 'user',
+            'id'             => $display_name,
+            'text'           => $display_name,
+            'avatar_url'     => $user_info['avatar_url'],
+            'has_avatar'     => (bool)$user_info['has_avatar'],
+            'tuleap_user_id' => $user_id
+        ];
     }
 
     $output = array(

@@ -20,7 +20,8 @@
 
 require_once dirname(__FILE__). '/../../constants.php';
 
-class Cardwall_OnTop_Config_ValueMappingFactory {
+class Cardwall_OnTop_Config_ValueMappingFactory
+{
 
     /**
      * @var Tracker_FormElementFactory
@@ -43,7 +44,8 @@ class Cardwall_OnTop_Config_ValueMappingFactory {
     /**
      * @return array of Cardwall_OnTop_Config_ValueMapping
      */
-    public function getStatusMappings(Tracker $mapping_tracker, Cardwall_OnTop_Config_ColumnCollection $columns) {
+    public function getStatusMappings(Tracker $mapping_tracker, Cardwall_OnTop_Config_ColumnCollection $columns)
+    {
         $mappings = array();
         $status_values = $this->getStatusValuesIndexedByLabel($mapping_tracker);
         foreach ($columns as $master_column) {
@@ -61,8 +63,9 @@ class Cardwall_OnTop_Config_ValueMappingFactory {
     /**
      * @return array of Cardwall_OnTop_Config_ValueMapping
      */
-    public function getMappings(Tracker $tracker, Tracker $mapping_tracker, Tracker_FormElement_Field $mapping_field) {
-        
+    public function getMappings(Tracker $tracker, Tracker $mapping_tracker, Tracker_FormElement_Field $mapping_field)
+    {
+
         // Why does we return a collection indexed on value_id in the case of freestyle mappings, and a collection
         // indexed on column_id in the case of status mappings @see getStatusMappings?????????
         // Shouldn't we let TrackerMapping do the indexing so that code in TrackerMapping might exploit that?
@@ -73,7 +76,8 @@ class Cardwall_OnTop_Config_ValueMappingFactory {
         return array();
     }
 
-    private function getMappingFieldValuesIndexedByTracker(Tracker $tracker) {
+    private function getMappingFieldValuesIndexedByTracker(Tracker $tracker)
+    {
         $mappings = array();
         foreach ($this->dao->searchMappingFieldValues($tracker->getId()) as $row) {
             $field = $this->element_factory->getFieldById($row['field_id']);
@@ -90,15 +94,15 @@ class Cardwall_OnTop_Config_ValueMappingFactory {
         return $mappings;
     }
 
-    private function getStatusValuesIndexedByLabel(Tracker $mapping_tracker) {
+    private function getStatusValuesIndexedByLabel(Tracker $mapping_tracker)
+    {
         $values = array();
         $field  = $mapping_tracker->getStatusField();
         if ($field) {
-            foreach($field->getVisibleValuesPlusNoneIfAny() as $value) {
+            foreach ($field->getVisibleValuesPlusNoneIfAny() as $value) {
                 $values[$value->getLabel()] = $value;
             }
         }
         return $values;
     }
 }
-?>

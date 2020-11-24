@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean SAS 2011 - 2018 All Rights Reserved.
+ * Copyright (c) Enalean SAS 2011 - Present All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,53 +19,61 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/collection/Map.class.php');
-require_once('PluginDescriptor.class.php');
 /**
  * PluginInfo
  */
-class PluginInfo {
-    
+class PluginInfo
+{
+
     var $plugin;
     var $pluginDescriptor;
     var $propertyDescriptors;
-    
-    public function __construct($plugin) {
+
+    public function __construct($plugin)
+    {
         $this->plugin              = $plugin;
         $this->propertyDescriptors = new Map();
     }
-    
-    function setPluginDescriptor($descriptor) {
+
+    function setPluginDescriptor($descriptor)
+    {
         $this->pluginDescriptor = $descriptor;
     }
 
     /** @return PluginDescriptor */
-    public function getPluginDescriptor() {
+    public function getPluginDescriptor()
+    {
         if (!is_a($this->pluginDescriptor, 'PluginDescriptor')) {
             $this->setPluginDescriptor(new PluginDescriptor('', '', ''));
         }
         return $this->pluginDescriptor;
     }
-    function getPropertyDescriptors() {
+    function getPropertyDescriptors()
+    {
         return $this->propertyDescriptors;
     }
-    
-    function _addPropertyDescriptor($descriptor) {
+
+    function _addPropertyDescriptor($descriptor)
+    {
         $name = $descriptor->getName();
         $this->propertyDescriptors->put($name, $descriptor);
     }
-    function _removePropertyDescriptor($descriptor) {
+    function _removePropertyDescriptor($descriptor)
+    {
         $name = $descriptor->getName();
         return $this->propertyDescriptors->remove($name, $descriptor);
     }
-    
-    function loadProperties() {
+
+    function loadProperties()
+    {
     }
-    
-    function saveProperties() {
+
+    function saveProperties()
+    {
     }
-    
-    function getPropertyDescriptorForName($name) {
+
+    function getPropertyDescriptorForName($name)
+    {
         $n =  $name;
         return $this->propertyDescriptors->get($n);
     }

@@ -20,7 +20,8 @@
 
 require_once __DIR__.'/../../../bootstrap.php';
 
-class Tracker_XML_Exporter_ChangesetXMLExporterTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetXMLExporterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetXMLExporter */
     private $exporter;
@@ -41,7 +42,8 @@ class Tracker_XML_Exporter_ChangesetXMLExporterTest extends TuleapTestCase {
     /** @var UserXMLExporter */
     private $user_xml_exporter;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->user_manager      = \Mockery::spy(\UserManager::class);
@@ -77,7 +79,8 @@ class Tracker_XML_Exporter_ChangesetXMLExporterTest extends TuleapTestCase {
         stub($this->changeset)->getSubmittedBy()->returns(101);
     }
 
-    public function itAppendsChangesetNodeToArtifactNode() {
+    public function itAppendsChangesetNodeToArtifactNode()
+    {
         $this->exporter->exportWithoutComments($this->artifact_xml, $this->changeset);
 
         $this->assertEqual(count($this->artifact_xml->changeset), 1);
@@ -85,14 +88,16 @@ class Tracker_XML_Exporter_ChangesetXMLExporterTest extends TuleapTestCase {
         $this->assertEqual(count($this->artifact_xml->changeset->submitted_on), 1);
     }
 
-    public function itDelegatesTheExportOfValues() {
+    public function itDelegatesTheExportOfValues()
+    {
         expect($this->values_exporter)->exportSnapshot($this->artifact_xml, '*', $this->artifact, $this->values)->once();
         expect($this->comment)->exportToXML()->never();
 
         $this->exporter->exportWithoutComments($this->artifact_xml, $this->changeset);
     }
 
-    public function itExportsTheComments() {
+    public function itExportsTheComments()
+    {
         $user = aUser()->withId(101)->withLdapId('ldap_01')->withUserName('user_01')->build();
         $this->user_manager->shouldReceive('getUserById')->with(101)->andReturn($user);
 
@@ -102,7 +107,8 @@ class Tracker_XML_Exporter_ChangesetXMLExporterTest extends TuleapTestCase {
         $this->exporter->exportFullHistory($this->artifact_xml, $this->changeset);
     }
 
-    public function itExportsAnonUser() {
+    public function itExportsAnonUser()
+    {
         expect($this->user_xml_exporter)->exportUserByMail()->once();
 
         $changeset = mockery_stub(\Tracker_Artifact_Changeset::class)->getValues()->returns(array());
@@ -112,7 +118,8 @@ class Tracker_XML_Exporter_ChangesetXMLExporterTest extends TuleapTestCase {
         $this->exporter->exportFullHistory($this->artifact_xml, $changeset);
     }
 
-    public function itRemovesNullValuesInChangesetValues() {
+    public function itRemovesNullValuesInChangesetValues()
+    {
         $value = \Mockery::spy(\Tracker_Artifact_ChangesetValue::class);
 
         expect($this->values_exporter)->exportChangedFields('*', '*', '*', array(101 => $value))->once();

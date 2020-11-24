@@ -23,13 +23,11 @@
 
 use Tuleap\Chart\ColorsForCharts;
 
-require_once 'Statistics_DiskUsageOutput.class.php';
-require_once 'ProjectQuotaManager.class.php';
-require_once 'common/chart/Chart.class.php';
+class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput
+{
 
-class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput {
-
-    protected function _displayEvolutionData($row) {
+    protected function _displayEvolutionData($row)
+    {
         echo '<td>'.$this->sizeReadable($row['start_size']).'</td>';
         echo '<td>'.$this->sizeReadable($row['end_size']).'</td>';
         echo '<td>'.$this->sizeReadable($row['evolution']).'</td>';
@@ -43,7 +41,8 @@ class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput {
     /**
      * Apply a jpgraph compliant color modifier on color and return a css rgb() rule
      */
-    function applyColorModifier($color) {
+    function applyColorModifier($color)
+    {
         $jpgraphRgb = new RGB();
         $newColor   = $jpgraphRgb->color($color.':1.5');
         // Unset alpha channel
@@ -61,12 +60,13 @@ class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput {
      *
      * @param Date $startDate
      * @param Date $endDate
-     * @param Integer $groupId
-     * @param Boolean $colored
+     * @param int $groupId
+     * @param bool $colored
      *
      */
-    public function getServiceEvolutionForPeriod($startDate , $endDate, $groupId = NULL, $colored = false) {
-        $res = $this->_dum->returnServiceEvolutionForPeriod($startDate , $endDate, $groupId);
+    public function getServiceEvolutionForPeriod($startDate, $endDate, $groupId = null, $colored = false)
+    {
+        $res = $this->_dum->returnServiceEvolutionForPeriod($startDate, $endDate, $groupId);
         if ($res) {
             $services = $this->_dum->getProjectServices();
 
@@ -79,7 +79,7 @@ class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput {
             $totalEndSize   = 0;
             $totalEvolution = 0;
             $i = 0;
-            foreach ($res as $row){
+            foreach ($res as $row) {
                 echo '<tr class="'. util_get_alt_row_color($i++) .'">';
                 echo '<td>';
                 if ($colored) {
@@ -114,10 +114,11 @@ class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput {
      *
      * Displays the disk usage for a given project
      *
-     * @param Integer $groupId Id of the project we want retrieve its disk usage
+     * @param int $groupId Id of the project we want retrieve its disk usage
      *
      */
-    public function getTotalProjectSize($groupId) {
+    public function getTotalProjectSize($groupId)
+    {
         $totalSize = $this->_dum->returnTotalProjectSize($groupId);
 
         $allowedQuota = $this->_dum->getProperty('allowed_quota');

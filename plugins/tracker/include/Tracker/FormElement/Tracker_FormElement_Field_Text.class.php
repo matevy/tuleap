@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,7 +19,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum {
+use Tuleap\Tracker\Artifact\RichTextareaProvider;
+use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
+
+class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum
+{
 
     public $default_properties = array(
         'rows'      => array(
@@ -44,15 +48,17 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      * This hooks is here to delete specific properties,
      * or specific values of the field.
      * (The field itself will be deleted later)
-     * @return boolean true if success
+     * @return bool true if success
      */
-    public function delete() {
+    public function delete()
+    {
         return $this->getDao()->delete($this->id);
     }
 
-    public function getCriteriaFrom($criteria) {
+    public function getCriteriaFrom($criteria)
+    {
         //Only filter query if field is used
-        if($this->isUsed()) {
+        if ($this->isUsed()) {
             //Only filter query if criteria is valuated
             if ($criteria_value = $this->getCriteriaValue($criteria)) {
                 $a = 'A_'. $this->id;
@@ -68,17 +74,20 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
         return '';
     }
 
-    public function getCriteriaWhere($criteria) {
+    public function getCriteriaWhere($criteria)
+    {
         return '';
     }
 
-    public function getQuerySelect() {
+    public function getQuerySelect()
+    {
         $R1 = 'R1_'. $this->id;
         $R2 = 'R2_'. $this->id;
         return "$R2.value AS `". $this->name ."`";
     }
 
-    public function getQueryFrom() {
+    public function getQueryFrom()
+    {
         $R1 = 'R1_'. $this->id;
         $R2 = 'R2_'. $this->id;
 
@@ -87,27 +96,32 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
                 ) ON ($R1.changeset_id = c.id AND $R1.field_id = ". $this->id ." )";
     }
 
-    protected function buildMatchExpression($field_name, $criteria_value) {
+    protected function buildMatchExpression($field_name, $criteria_value)
+    {
         $matches = array();
         $expr = parent::buildMatchExpression($field_name, $criteria_value);
         if (!$expr) {
-
             // else transform into a series of LIKE %word%
             if (is_array($criteria_value)) {
                 $split = preg_split('/\s+/', $criteria_value['value']);
             } else {
                 $split = preg_split('/\s+/', $criteria_value);
             }
-            $words = array();
-            foreach($split as $w) {
-                $words[] = $field_name." LIKE ". $this->getCriteriaDao()->getDa()->quoteLikeValueSurround($w);
+            $words        = array();
+            $criterie_dao = $this->getCriteriaDao();
+            if ($criterie_dao === null) {
+                return '';
+            }
+            foreach ($split as $w) {
+                $words[] = $field_name." LIKE ". $criterie_dao->getDa()->quoteLikeValueSurround($w);
             }
             $expr = join(' AND ', $words);
         }
         return $expr;
     }
 
-    protected function getCriteriaDao() {
+    protected function getCriteriaDao()
+    {
         return new Tracker_Report_Criteria_Text_ValueDao();
     }
 
@@ -116,7 +130,7 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
         return true;
     }
 
-    public function fetchChangesetValue($artifact_id, $changeset_id, $value, $report=null, $from_aid = null)
+    public function fetchChangesetValue($artifact_id, $changeset_id, $value, $report = null, $from_aid = null)
     {
         $tracker = $this->getTracker();
         if ($tracker === null) {
@@ -143,14 +157,17 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
         return $changeset_value;
     }
 
-    public function fetchCSVChangesetValue($artifact_id, $changeset_id, $value, $report) {
+    public function fetchCSVChangesetValue($artifact_id, $changeset_id, $value, $report)
+    {
         return $value;
     }
 
-    protected function getValueDao() {
+    protected function getValueDao()
+    {
         return new Tracker_FormElement_Field_Value_TextDao();
     }
-    protected function getDao() {
+    protected function getDao()
+    {
         return new Tracker_FormElement_Field_TextDao();
     }
 
@@ -158,16 +175,18 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      * Return true if this field is the semantic title field of the tracker,
      * false otherwise if not or if there is no title field defined.
      *
-     * @return boolean true if the field is the 'title' of the tracker
+     * @return bool true if the field is the 'title' of the tracker
      */
-    protected function isSemanticTitle() {
+    protected function isSemanticTitle()
+    {
         $semantic_manager = new Tracker_SemanticManager($this->getTracker());
         $semantics        = $semantic_manager->getSemantics();
         $field            = $semantics['title']->getField();
         return ($field === $this);
     }
 
-    private function getDefaultFormatForUser(PFUser $user) {
+    private function getDefaultFormatForUser(PFUser $user)
+    {
         $user_preference = $user->getPreference(PFUser::EDITION_DEFAULT_FORMAT);
 
         if (! $user_preference || $user_preference === Tracker_Artifact_ChangesetValue_Text::TEXT_CONTENT) {
@@ -183,37 +202,24 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @return string html
      */
-    protected function fetchSubmitValue($submitted_values = array()) {
-        $html  = '';
-        $value = $this->getValueFromSubmitOrDefault($submitted_values);
-        $hp    = Codendi_HTMLPurifier::instance();
-
-        $user   = $this->getCurrentUser();
-        $format = $this->getDefaultFormatForUser($user);
+    protected function fetchSubmitValue(array $submitted_values)
+    {
+        $value  = $this->getValueFromSubmitOrDefault($submitted_values);
+        $format = $this->getDefaultFormatForUser($this->getCurrentUser());
 
         if (isset($value['format'])) {
             $format = $value['format'];
         }
 
-        $html .= '<input type="hidden"
-                         id="artifact['. $this->id .']_body_format"
-                         name="artifact['. $this->id .']_body_format"
-                         value="'.$hp->purify($format).'" />';
-
-        $data_field_default_value = '';
+        $data_attributes = [];
         if ($value === $this->getDefaultValue()) {
-            $data_field_default_value = 'data-field-default-value="1"';
+            $data_attributes[] = [
+                'name'  => 'field-default-value',
+                'value' => '1'
+            ];
         }
 
-        $html .= '<textarea id = field_'.$this->id.' class="user-mention"
-                            name="artifact['. $this->id .'][content]"
-                            rows="'. $this->getProperty('rows') .'"
-                            cols="'. $this->getProperty('cols') .'"
-                            '. ($this->isRequired() ? 'required' : '') ."
-                            $data_field_default_value>";
-        $html .= $hp->purify($value['content'], CODENDI_PURIFIER_CONVERT_HTML);
-        $html .= '</textarea>';
-        return $html;
+        return $this->getRichTextarea(null, $data_attributes, $format, $value['content']);
     }
 
      /**
@@ -222,9 +228,10 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @return string html
      */
-    protected function fetchSubmitValueMasschange() {
+    protected function fetchSubmitValueMasschange()
+    {
         $html = '';
-        $value = $GLOBALS['Language']->getText('global','unchanged');
+        $value = $GLOBALS['Language']->getText('global', 'unchanged');
 
         //check if this field is the title we do not allow to change it
         if ($this->isSemanticTitle()) {
@@ -250,39 +257,67 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @return string
      */
-    protected function fetchArtifactValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null, $submitted_values = array()) {
-        $html    = '';
+    protected function fetchArtifactValue(
+        Tracker_Artifact $artifact,
+        ?Tracker_Artifact_ChangesetValue $value,
+        array $submitted_values
+    ) {
         $content = '';
 
+        /** @var Tracker_Artifact_ChangesetValue_Text $value */
         if ($value) {
-            $format  = $value->getFormat();
+            $format = $value->getFormat();
         } else {
             $default_value = $this->getDefaultValue();
             $format = $default_value['format'];
         }
 
-        if (! empty($submitted_values) && is_array($submitted_values[0]) && isset($submitted_values[0][$this->getId()])) {
-            $content = $submitted_values[0][$this->getId()]['content'];
-            $format  = $submitted_values[0][$this->getId()]['format'] == Tracker_Artifact_ChangesetValue_Text::HTML_CONTENT ? Tracker_Artifact_ChangesetValue_Text::HTML_CONTENT : Tracker_Artifact_ChangesetValue_Text::TEXT_CONTENT;
+        if (isset($submitted_values[$this->getId()])) {
+            $content = $submitted_values[$this->getId()]['content'];
+            $format  = $submitted_values[$this->getId()]['format'] == Tracker_Artifact_ChangesetValue_Text::HTML_CONTENT ? Tracker_Artifact_ChangesetValue_Text::HTML_CONTENT : Tracker_Artifact_ChangesetValue_Text::TEXT_CONTENT;
         } elseif ($value != null) {
             $content = $value->getText();
         }
 
+        return $this->getRichTextarea($artifact, [], $format, $content);
+    }
+
+    /**
+     * @return string
+     */
+    private function getRichTextarea(?Tracker_Artifact $artifact, array $data_attributes, string $format, string $content)
+    {
+        $tracker = $this->getTracker();
+        if (! $tracker) {
+            throw new LogicException(self::class.' # '.$this->getId().' must have a valid tracker');
+        }
+
         $hp = Codendi_HTMLPurifier::instance();
 
-        $html .= '<input type="hidden"
-                         id="artifact['. $this->id .']_body_format"
-                         name="artifact['. $this->id .']_body_format"
-                         value="'.$format.'" />';
-        $html .= '<textarea id = field_'.$this->id.' class="user-mention"
-                            name="artifact['. $this->id .'][content]"
-                            rows="'. $this->getProperty('rows') .'"
-                            cols="'. $this->getProperty('cols') .'"
-                            '. ($this->isRequired() ? 'required' : '') .'
-                            >';
+        $rich_textarea_provider = new RichTextareaProvider(
+            Tracker_FormElementFactory::instance(),
+            TemplateRendererFactory::build(),
+            $this->getFrozenFieldDetector()
+        );
 
-        $html .= $hp->purify($content, CODENDI_PURIFIER_CONVERT_HTML);
-        $html .= '</textarea>';
+        $html = '<input type="hidden"
+             id="artifact[' . $this->id . ']_body_format"
+             name="artifact[' . $this->id . ']_body_format"
+             value="' . $hp->purify($format) . '" />';
+
+        $html .= $rich_textarea_provider->getTextarea(
+            $tracker,
+            $artifact,
+            $this->getCurrentUser(),
+            'field_' . $this->id,
+            'artifact[' . $this->id . '][content]',
+            $this->getProperty('rows'),
+            $this->getProperty('cols'),
+            $content,
+            $this->isRequired(),
+            $data_attributes
+        );
+
         return $html;
     }
 
@@ -291,7 +326,7 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @param Tracker_Artifact                $artifact         The artifact
      * @param PFUser                          $user             The user who will receive the email
-     * @param boolean                         $ignore_perms
+     * @param bool $ignore_perms
      * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
      * @param string                          $format           output format
      *
@@ -327,7 +362,8 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @return string
      */
-    public function fetchArtifactValueReadOnly(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null) {
+    public function fetchArtifactValueReadOnly(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    {
         $text = $value ? $value->getValue() : '';
 
         if ($text === '') {
@@ -337,7 +373,11 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
         return '<div class="textarea-value">' . $text . '</div>';
     }
 
-    public function fetchArtifactValueWithEditionFormIfEditable(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null, $submitted_values = array()) {
+    public function fetchArtifactValueWithEditionFormIfEditable(
+        Tracker_Artifact $artifact,
+        ?Tracker_Artifact_ChangesetValue $value,
+        array $submitted_values
+    ) {
         return $this->fetchArtifactValueReadOnly($artifact, $value) . $this->getHiddenArtifactValueForEdition($artifact, $value, $submitted_values);
     }
 
@@ -347,7 +387,8 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      * @param array $from the value(s) *before*
      * @param array $to   the value(s) *after*
      */
-    public function fetchFollowUp($artifact, $from, $to) {
+    public function fetchFollowUp($artifact, $from, $to)
+    {
         $html = '';
         $html .= 'changed <a href="#show-diff" class="tracker_artifact_showdiff">[diff]</a>';
         $html .= $this->fetchHistory($artifact, $from, $to);
@@ -360,20 +401,24 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      * @param array $to   the value(s) *after*
      * @return string
      */
-    public function fetchHistory($artifact, $from, $to) {
+    public function fetchHistory($artifact, $from, $to)
+    {
         $from_value = $this->getValue($from['value_id']);
         $from_value = isset($from_value['value']) ? $from_value['value'] : '';
         $to_value = $this->getValue($to['value_id']);
         $to_value = isset($to_value['value']) ? $to_value['value'] : '';
 
         $callback = array($this, '_filter_html_callback');
-        $d = new Codendi_Diff(array_map($callback, explode("\n", $from_value)),
-                              array_map($callback, explode("\n", $to_value)));
+        $d = new Codendi_Diff(
+            array_map($callback, explode("\n", $from_value)),
+            array_map($callback, explode("\n", $to_value))
+        );
         $f = new Codendi_HtmlUnifiedDiffFormatter();
         $diff = $f->format($d);
         return $diff ? $diff : '<em>No changes</em>';
     }
-    protected function _filter_html_callback($s) {
+    protected function _filter_html_callback($s)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         return  $hp->purify($s, CODENDI_PURIFIER_CONVERT_HTML);
     }
@@ -382,7 +427,8 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      * Display the html field in the admin ui
      * @return string html
      */
-    protected function fetchAdminFormElement() {
+    protected function fetchAdminFormElement()
+    {
         $hp      = Codendi_HTMLPurifier::instance();
         $html    = '';
         $content = '';
@@ -399,28 +445,32 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
     /**
      * @return the label of the field (mainly used in admin part)
      */
-    public static function getFactoryLabel() {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin','text');
+    public static function getFactoryLabel()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'text');
     }
 
     /**
      * @return the description of the field (mainly used in admin part)
      */
-    public static function getFactoryDescription() {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin','text_description');
+    public static function getFactoryDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'text_description');
     }
 
     /**
      * @return the path to the icon
      */
-    public static function getFactoryIconUseIt() {
+    public static function getFactoryIconUseIt()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/ui-spin.png');
     }
 
     /**
      * @return the path to the icon
      */
-    public static function getFactoryIconCreate() {
+    public static function getFactoryIconCreate()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/ui-spin--plus.png');
     }
 
@@ -431,7 +481,8 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      * @param Tracker_Artifact_ChangesetValue_Text $value The changeset value of this field
      * @return string The html code to display the field value in tooltip
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null) {
+    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    {
         $html = '';
 
         if ($value) {
@@ -444,9 +495,10 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
     /**
      * Tells if the field takes two columns
      * Ugly legacy hack to display fields in columns
-     * @return boolean
+     * @return bool
      */
-    public function takesTwoColumns() {
+    public function takesTwoColumns()
+    {
         return $this->getProperty('cols') > 40;
     }
 
@@ -455,18 +507,19 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @return true if Tracler is ok
      */
-    public function testImport() {
-        if(parent::testImport()){
-            if (get_class($this) == 'Tracker_FormElement_Field_Text') {
-	            if (!(isset($this->default_properties['rows']) && isset($this->default_properties['cols']))) {
-	                var_dump($this, 'Properties must be "rows" and "cols"');
-	                return false;
-	            }
-            } elseif (get_class($this) == 'Tracker_FormElement_Field_String') {
-	            if (!(isset($this->default_properties['maxchars']) && isset($this->default_properties['size']))) {
-	                var_dump($this, 'Properties must be "maxchars" and "size"');
-	                return false;
-	            }
+    public function testImport()
+    {
+        if (parent::testImport()) {
+            if (static::class == 'Tracker_FormElement_Field_Text') {
+                if (!(isset($this->default_properties['rows']) && isset($this->default_properties['cols']))) {
+                    var_dump($this, 'Properties must be "rows" and "cols"');
+                    return false;
+                }
+            } elseif (static::class == 'Tracker_FormElement_Field_String') {
+                if (!(isset($this->default_properties['maxchars']) && isset($this->default_properties['size']))) {
+                    var_dump($this, 'Properties must be "maxchars" and "size"');
+                    return false;
+                }
             }
         }
         return true;
@@ -480,7 +533,8 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @return bool true if the value is considered ok
      */
-    protected function validate(Tracker_Artifact $artifact, $value) {
+    protected function validate(Tracker_Artifact $artifact, $value)
+    {
         $rule = $this->getRuleString();
         $content = $this->getRightContent($value);
         if (!($is_valid = $rule->isValid($content))) {
@@ -489,7 +543,8 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
         return $is_valid;
     }
 
-    protected function getRuleString() {
+    protected function getRuleString()
+    {
         return new Rule_String();
     }
 
@@ -498,11 +553,12 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @param Tracker_Artifact_Changeset $changeset   The changeset (needed in only few cases like 'lud' field)
      * @param int                        $value_id    The id of the value
-     * @param boolean                    $has_changed If the changeset value has changed from the rpevious one
+     * @param bool $has_changed If the changeset value has changed from the rpevious one
      *
      * @return Tracker_Artifact_ChangesetValue or null if not found
      */
-    public function getChangesetValue($changeset, $value_id, $has_changed) {
+    public function getChangesetValue($changeset, $value_id, $has_changed)
+    {
         $changeset_value = null;
         if ($row = $this->getValueDao()->searchById($value_id, $this->id)->getRow()) {
             $changeset_value = new Tracker_Artifact_ChangesetValue_Text($value_id, $changeset, $this, $has_changed, $row['value'], $row['body_format']);
@@ -513,7 +569,8 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
     /**
      * @see Tracker_FormElement_Field::hasChanges()
      */
-    public function hasChanges(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $previous_changesetvalue, $new_value) {
+    public function hasChanges(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $previous_changesetvalue, $new_value)
+    {
         return $previous_changesetvalue->getText() !== (string) $new_value['content'];
     }
 
@@ -522,30 +579,34 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @return mixed
      */
-    public function getFieldDataFromRESTValueByField(array $value, ?Tracker_Artifact $artifact = null) {
+    public function getFieldDataFromRESTValueByField(array $value, ?Tracker_Artifact $artifact = null)
+    {
         if ($this->doesValueUseTheByFieldOutput($value)) {
-           $text_value = $this->formatValueWithTheByFieldOutput($value);
+            $text_value = $this->formatValueWithTheByFieldOutput($value);
 
-           return $this->getRestFieldData($text_value);
+            return $this->getRestFieldData($text_value);
         }
 
         return parent::getFieldDataFromRESTValueByField($value, $artifact);
     }
 
-    private function formatValueWithTheByFieldOutput(array $value) {
+    private function formatValueWithTheByFieldOutput(array $value)
+    {
         return array(
             'content' => $value['value'],
             'format'  => $value['format']
         );
     }
 
-    private function doesValueUseTheByFieldOutput(array $value) {
+    private function doesValueUseTheByFieldOutput(array $value)
+    {
         return array_key_exists('value', $value) &&
                array_key_exists('format', $value) &&
                ! is_array($value['value']);
     }
 
-    public function getRestFieldData($value) {
+    public function getRestFieldData($value)
+    {
         if ($this->isValueAlreadyWellFormatted($value)) {
             return $value;
         }
@@ -556,39 +617,44 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
         return $data;
     }
 
-    private function isValueAlreadyWellFormatted($value) {
+    private function isValueAlreadyWellFormatted($value)
+    {
         return is_array($value) && isset($value['content']) && isset($value['format']);
     }
 
-    /**
-     * Save the value and return the id
-     *
-     * @param Tracker_Artifact                $artifact                The artifact
-     * @param int                             $changeset_value_id      The id of the changeset_value
-     * @param mixed                           $value                   The value submitted by the user
-     * @param Tracker_Artifact_ChangesetValue $previous_changesetvalue The data previously stored in the db
-     *
-     * @return boolean
-     */
-    protected function saveValue($artifact, $changeset_value_id, $value, ?Tracker_Artifact_ChangesetValue $previous_changesetvalue = null) {
+    protected function saveValue(
+        $artifact,
+        $changeset_value_id,
+        $value,
+        ?Tracker_Artifact_ChangesetValue $previous_changesetvalue,
+        CreatedFileURLMapping $url_mapping
+    ) {
         $content     = $this->getRightContent($value);
         $body_format = $this->getRightBodyFormat($artifact, $value);
+
+        if ($body_format === Tracker_Artifact_ChangesetValue_Text::HTML_CONTENT) {
+            $substitutor = new \Tuleap\Tracker\FormElement\Field\File\FileURLSubstitutor();
+            $content     = $substitutor->substituteURLsInHTML($content, $url_mapping);
+        }
 
         return $this->getValueDao()->createWithBodyFormat($changeset_value_id, $content, $body_format) &&
                $this->extractCrossRefs($artifact, $content);
     }
 
-    private function getRightContent($value) {
+    private function getRightContent($value)
+    {
         return is_array($value) ? $value['content'] : $value;
     }
 
-    private function getRightBodyFormat(Tracker_Artifact $artifact, $value) {
+    private function getRightBodyFormat(Tracker_Artifact $artifact, $value)
+    {
         $last_changeset_value = $this->getLastChangesetValue($artifact);
         $old_format           = $last_changeset_value ? $last_changeset_value->getFormat() : null;
         return is_array($value) ? $value['format'] : $old_format;
     }
 
-    protected function extractCrossRefs($artifact, $content) {
+    protected function extractCrossRefs($artifact, $content)
+    {
         return ReferenceManager::instance()->extractCrossRef(
             $content,
             $artifact->getId(),
@@ -604,7 +670,8 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
      *
      * @return mixed The default value for this field, or null if no default value defined
      */
-    public function getDefaultValue() {
+    public function getDefaultValue()
+    {
         $user           = $this->getCurrentUser();
         $default_format = $this->getDefaultFormatForUser($user);
 
@@ -614,11 +681,13 @@ class Tracker_FormElement_Field_Text extends Tracker_FormElement_Field_Alphanum 
         );
     }
 
-    public function isEmpty($value, Tracker_Artifact $artifact) {
+    public function isEmpty($value, Tracker_Artifact $artifact)
+    {
         return trim($this->getRightContent($value)) === '';
     }
 
-    public function accept(Tracker_FormElement_FieldVisitor $visitor) {
+    public function accept(Tracker_FormElement_FieldVisitor $visitor)
+    {
         return $visitor->visitText($this);
     }
 }

@@ -1,0 +1,78 @@
+/**
+ * Copyright (c) Enalean, 2019 - Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+@import '../../../src/www/themes/BurningParrot/css/includes/global-variables';
+@import '../../agiledashboard/www/themes/BurningParrot/css/header';
+@import 'includes/header';
+@import 'includes/body';
+@import 'includes/card-read';
+@import 'includes/card-edit';
+@import 'includes/card-add';
+@import 'includes/error';
+@import 'includes/swimlane-sticky-header';
+@import 'includes/button-bar';
+@import '../scripts/node_modules/dragula/dist/dragula.min.css';
+
+.taskboard-under-construction {
+    color: $tlp-ui-dimmed;
+}
+
+.taskboard-root {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - #{$navbar-height} - #{$breadcrumb-height});
+    margin: $tlp-spacing 0 0;
+}
+
+.has-visible-project-banner .taskboard-root {
+    height: calc(100vh - #{$navbar-height} - #{$breadcrumb-height} - #{$project-banner-base-height});
+}
+
+.taskboard-root-title,
+.taskboard-root-tabs {
+    flex: 0 0 auto;
+}
+
+.taskboard-app {
+    flex-grow: 1;
+}
+
+.taskboard {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.taskboard:fullscreen {
+    overflow: auto;
+    background-color: $tlp-theme-background-color;
+
+    > .taskboard-head {
+        top: 0;
+    }
+
+    > .taskboard-button-bar {
+        margin: $tlp-spacing 0;
+    }
+}
+
+.taskboard-no-text-selection {
+    user-select: none;
+}

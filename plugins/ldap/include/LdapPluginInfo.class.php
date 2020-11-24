@@ -21,9 +21,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once 'common/plugin/PluginFileInfo.class.php';
-require_once 'LdapPluginDescriptor.class.php';
-
 /**
  * Manage plugins info and preferences
  *
@@ -35,11 +32,9 @@ class LdapPluginInfo extends PluginFileInfo
      *
      * @param Plugin $plugin Ldap plugin
      */
-    function __construct(Plugin $plugin) 
+    function __construct(Plugin $plugin)
     {
         parent::__construct($plugin, 'ldap');
         $this->setPluginDescriptor(new LdapPluginDescriptor());
     }
-    
 }
-?>

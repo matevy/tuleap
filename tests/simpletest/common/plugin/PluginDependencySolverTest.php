@@ -18,13 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/plugin/PluginDependencySolver.class.php';
-require_once 'common/plugin/Plugin.class.php';
-require_once 'common/plugin/PluginManager.class.php';
+class PluginDependencySolverTest extends TuleapTestCase
+{
 
-class PluginDependencySolverTest extends TuleapTestCase {
-
-    public function setUp() {
+    public function setUp()
+    {
         $this->tracker_plugin            = stub('Plugin')->getName()->returns('tracker');
         $this->mediawiki_plugin          = stub('Plugin')->getName()->returns('mediawiki');
         $this->fusionforge_compat_plugin = stub('Plugin')->getName()->returns('fusionforge_compat');
@@ -39,7 +37,8 @@ class PluginDependencySolverTest extends TuleapTestCase {
         stub($this->plugin_manager)->getPluginDuringInstall('fusionforge_compat')->returns($this->fusionforge_compat_plugin);
     }
 
-    public function itReturnsTheInstalledDependencies() {
+    public function itReturnsTheInstalledDependencies()
+    {
         $installed_plugin = array($this->mediawiki_plugin, $this->tracker_plugin, $this->fusionforge_compat_plugin);
         stub($this->plugin_manager)->getAllPlugins()->returns($installed_plugin);
         $solver = new PluginDependencySolver($this->plugin_manager);
@@ -50,7 +49,8 @@ class PluginDependencySolverTest extends TuleapTestCase {
         );
     }
 
-    public function itReturnsTheUnmetDependencies() {
+    public function itReturnsTheUnmetDependencies()
+    {
         $installed_plugin = array($this->tracker_plugin);
         stub($this->plugin_manager)->getPluginByName('tracker')->returns($this->tracker_plugin);
         stub($this->plugin_manager)->getAllPlugins()->returns($installed_plugin);
@@ -62,7 +62,8 @@ class PluginDependencySolverTest extends TuleapTestCase {
         );
     }
 
-    public function itReturnsEmptyArrayWhenDependenciesAreMet() {
+    public function itReturnsEmptyArrayWhenDependenciesAreMet()
+    {
         $installed_plugin = array($this->tracker_plugin, $this->fusionforge_compat_plugin);
         stub($this->plugin_manager)->getPluginByName('tracker')->returns($this->tracker_plugin);
         stub($this->plugin_manager)->getPluginByName('fusionforge_compat')->returns($this->fusionforge_compat_plugin);
@@ -75,4 +76,3 @@ class PluginDependencySolverTest extends TuleapTestCase {
         );
     }
 }
-?>

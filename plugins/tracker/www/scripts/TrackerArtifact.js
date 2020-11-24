@@ -20,6 +20,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* global $$:readonly Ajax:readonly $:readonly CKEDITOR:readonly Ajax:readonly Effect:readonly */
+
 var codendi = codendi || {};
 codendi.tracker = codendi.tracker || {};
 codendi.tracker.artifact = {};
@@ -54,6 +56,39 @@ function invertFollowups(followupSection) {
 }
 
 document.observe("dom:loaded", function() {
+    function bindShowHideFieldsets() {
+        $$(".show-fieldsets").each(function(button) {
+            function showFieldsets() {
+                $$(".tracker_artifact_fieldset_hidden").each(function(fieldset) {
+                    fieldset.removeClassName("tracker_artifact_fieldset_hidden");
+                    fieldset.addClassName("tracker_artifact_fieldset_hidden_visible");
+                });
+            }
+
+            button.observe("click", function() {
+                showFieldsets();
+            });
+        });
+
+        $$(".hide-fieldsets").each(function(button) {
+            function hideFieldsets() {
+                $$(".tracker_artifact_fieldset_hidden_visible").each(function(fieldset) {
+                    fieldset.addClassName("tracker_artifact_fieldset_hidden");
+                    fieldset.removeClassName("tracker_artifact_fieldset_hidden_visible");
+                });
+            }
+
+            button.observe("click", function() {
+                hideFieldsets();
+            });
+        });
+    }
+
+    document.addEventListener("EditModalLoaded", function() {
+        bindShowHideFieldsets();
+    });
+    bindShowHideFieldsets();
+
     $$(".tracker_statistics").each(function(div) {
         codendi.Tooltips.push(
             new codendi.Tooltip(
@@ -221,17 +256,19 @@ document.observe("dom:loaded", function() {
                     var button = new Element("button", { class: "btn btn-primary" })
                         .update(codendi.locales.tracker_artifact.edit_followup_ok)
                         .observe("click", function(evt) {
+                            var content;
                             if (
                                 CKEDITOR.instances &&
                                 CKEDITOR.instances["tracker_followup_comment_edit_" + id]
                             ) {
-                                var content = CKEDITOR.instances[
+                                content = CKEDITOR.instances[
                                     "tracker_followup_comment_edit_" + id
                                 ].getData();
                             } else {
-                                var content = $("tracker_followup_comment_edit_" + id).getValue();
+                                content = $("tracker_followup_comment_edit_" + id).getValue();
                             }
                             var format = $("rte_format_selectbox" + id).value;
+                            //eslint-disable-next-line @typescript-eslint/no-unused-vars
                             var req = new Ajax.Request(location.href, {
                                 parameters: {
                                     func: "update-comment",
@@ -247,7 +284,7 @@ document.observe("dom:loaded", function() {
                                     }
                                     edit_panel.remove();
                                     comment_panel.update(transport.responseText).show();
-                                    var e = new Effect.Highlight(comment_panel);
+                                    var e = new Effect.Highlight(comment_panel); //eslint-disable-line @typescript-eslint/no-unused-vars
                                 }
                             });
                             edit.show();
@@ -403,7 +440,7 @@ document.observe("dom:loaded", function() {
     $$(".tracker_artifact_attachment_delete > input[type=checkbox]").each(function(elem) {
         //on load strike (useful when the checkbox is already checked on dom:loaded. (Missing required field for example)
         toggle_tracker_artifact_attachment_delete(elem);
-        elem.observe("click", function(evt) {
+        elem.observe("click", function() {
             toggle_tracker_artifact_attachment_delete(elem);
         });
     });

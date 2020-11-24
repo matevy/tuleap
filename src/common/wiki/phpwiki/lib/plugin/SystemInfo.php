@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: SystemInfo.php,v 1.23 2005/10/03 16:48:09 rurban Exp $');
 /**
  Copyright (C) 1999, 2000, 2001, 2002 $ThePhpWikiProgrammingTeam
@@ -41,23 +42,29 @@ rcs_id('$Id: SystemInfo.php,v 1.23 2005/10/03 16:48:09 rurban Exp $');
  */
 
 require_once "lib/WikiPluginCached.php";
-class WikiPlugin_SystemInfo
-extends WikiPluginCached
+class WikiPlugin_SystemInfo extends WikiPluginCached
 {
-    function getPluginType() {
+    function getPluginType()
+    {
         return PLUGIN_CACHED_HTML;
     }
-    function getName() {
+    function getName()
+    {
         return _("SystemInfo");
     }
 
-    function getDescription() {
+    function getDescription()
+    {
         return _("Provides access to PhpWiki's lower level system information.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.23 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.23 $"
+        );
     }
     /* From lib/WikiPlugin.php:
      * If the plugin can deduce a modification time, or equivalent
@@ -65,13 +72,16 @@ extends WikiPluginCached
      * call $request->appendValidators() with appropriate arguments,
      * and should override this method to return true.
      */
-    function managesValidators() {
+    function managesValidators()
+    {
         return true;
     }
-    function getExpire($dbi, $argarray, $request) {
+    function getExpire($dbi, $argarray, $request)
+    {
         return '+1800'; // 30 minutes
     }
-    function getHtml($dbi, $argarray, $request, $basepage) {
+    function getHtml($dbi, $argarray, $request, $basepage)
+    {
         $loader = new WikiPluginLoader;
         return $loader->expandPI('<?plugin SystemInfo '
                                  . WikiPluginCached::glueArgs($argarray) // all
@@ -84,10 +94,12 @@ extends WikiPluginCached
                      );
     }
     */
-    function cachestats() {
+    function cachestats()
+    {
         global $request;
-        if (! defined('USECACHE') or !USECACHE)
+        if (! defined('USECACHE') or !USECACHE) {
             return _("no cache used");
+        }
         $dbi = $this->_dbi;
         $cache = $dbi->_cache;
         $s  = _("cached pagedata:") . " " . count($cache->_pagedata_cache);
@@ -98,23 +110,34 @@ extends WikiPluginCached
         //$s .= ", cache misses: ?";
         return $s;
     }
-    function ExpireParams() {
+    function ExpireParams()
+    {
         global $ExpireParams;
-        $s  = sprintf(_("Keep up to %d major edits, but keep them no longer than %d days."),
-                      $ExpireParams['major']['keep'],
-                      $ExpireParams['major']['max_age']);
-        $s .= sprintf(_(" Keep up to %d minor edits, but keep them no longer than %d days."),
-                      $ExpireParams['minor']['keep'],
-                      $ExpireParams['minor']['max_age']);
-        $s .= sprintf(_(" Keep the latest contributions of the last %d authors up to %d days."),
-                      $ExpireParams['author']['keep'], $ExpireParams['author']['max_age']);
-        $s .= sprintf(_(" Additionally, try to keep the latest contributions of all authors in the last %d days (even if there are more than %d of them,) but in no case keep more than %d unique author revisions."),
-                      $ExpireParams['author']['min_age'],
-                      $ExpireParams['author']['keep'],
-                      $ExpireParams['author']['max_keep']);
+        $s  = sprintf(
+            _("Keep up to %d major edits, but keep them no longer than %d days."),
+            $ExpireParams['major']['keep'],
+            $ExpireParams['major']['max_age']
+        );
+        $s .= sprintf(
+            _(" Keep up to %d minor edits, but keep them no longer than %d days."),
+            $ExpireParams['minor']['keep'],
+            $ExpireParams['minor']['max_age']
+        );
+        $s .= sprintf(
+            _(" Keep the latest contributions of the last %d authors up to %d days."),
+            $ExpireParams['author']['keep'],
+            $ExpireParams['author']['max_age']
+        );
+        $s .= sprintf(
+            _(" Additionally, try to keep the latest contributions of all authors in the last %d days (even if there are more than %d of them,) but in no case keep more than %d unique author revisions."),
+            $ExpireParams['author']['min_age'],
+            $ExpireParams['author']['keep'],
+            $ExpireParams['author']['max_keep']
+        );
         return $s;
     }
-    function pagestats() {
+    function pagestats()
+    {
         global $request;
         $dbi = $request->getDbh();
         $s  = sprintf(_("%d pages"), $dbi->numPages(true));
@@ -128,7 +151,8 @@ extends WikiPluginCached
     //What kind of link statistics?
     //  total links in, total links out, mean links per page, ...
     //  Any useful numbers similar to a VisualWiki interestmap?
-    function linkstats() {
+    function linkstats()
+    {
         $s  = _("not yet");
         return $s;
     }
@@ -137,13 +161,15 @@ extends WikiPluginCached
     //   calc this from accesslog info?
     // number of anonymous edits?
     //   easy. related to the view/edit rate in accessstats.
-    function userstats() {
+    function userstats()
+    {
         $dbi = $this->_dbi;
         $h = 0;
         $page_iter = $dbi->getAllPages(true);
         while ($page = $page_iter->next()) {
-            if ($page->isUserPage(true)) // check if the admin is there. if not add him to the authusers.
+            if ($page->isUserPage(true)) { // check if the admin is there. if not add him to the authusers.
                 $h++;
+            }
         }
         $s  = sprintf(_("%d homepages"), $h);
         // $s  .= ", " . sprintf(_("%d anonymous users"), $au); // ??
@@ -154,32 +180,38 @@ extends WikiPluginCached
     }
 
     // numeric array
-    function _stats($hits, $treshold = 10.0) {
+    function _stats($hits, $treshold = 10.0)
+    {
         sort($hits);
         reset($hits);
         $n = count($hits);
-        $max = 0; $min = 9999999999999; $sum = 0;
+        $max = 0;
+        $min = 9999999999999;
+        $sum = 0;
         foreach ($hits as $h) {
             $sum += $h;
             $max = max($h, $max);
             $min = min($h, $min);
         }
         $median_i = (int) $n / 2;
-        if (! ($n / 2))
+        if (! ($n / 2)) {
             $median = $hits[$median_i];
-        else
+        } else {
             $median = $hits[$median_i];
+        }
         $treshold = 10;
         $mintreshold = $max * $treshold / 100.0;   // lower than 10% of the hits
         reset($hits);
         $nmin = $hits[0] < $mintreshold ? 1 : 0;
-        while (next($hits) < $mintreshold)
+        while (next($hits) < $mintreshold) {
             $nmin++;
+        }
         $maxtreshold = $max - $mintreshold; // more than 90% of the hits
         end($hits);
         $nmax = 1;
-        while (prev($hits) > $maxtreshold)
+        while (prev($hits) > $maxtreshold) {
             $nmax++;
+        }
         return array('n'     => $n,
                      'sum'   => $sum,
                      'min'   => $min,
@@ -190,7 +222,7 @@ extends WikiPluginCached
                      'treshold'    => $treshold,
                      'nmin'        => $nmin,
                      'mintreshold' => $mintreshold,
-                     'nmax'        => $nmax, 
+                     'nmax'        => $nmax,
                      'maxtreshold' => $maxtreshold);
     }
 
@@ -199,7 +231,8 @@ extends WikiPluginCached
     //  total, max, mean, median, stddev;
     //  %d pages less than 3 hits (<10%)    <10% percent of the leastpopular
     //  %d pages more than 100 hits (>90%)  >90% percent of the mostpopular
-    function hitstats() {
+    function hitstats()
+    {
         $dbi = $this->_dbi;
         $hits = array();
         $page_iter = $dbi->getAllPages(true);
@@ -217,37 +250,54 @@ extends WikiPluginCached
         $s .= ", " . sprintf(_("mean: %2.3f"), $stats['mean']);
         $s .= ", " . sprintf(_("median: %d"), $stats['median']);
         $s .= ", " . sprintf(_("stddev: %2.3f"), $stats['stddev']);
-        $s .= "; " . sprintf(_("%d pages with less than %d hits (<%d%%)."),
-                             $stats['nmin'], $stats['mintreshold'], $treshold);
-        $s .= " " . sprintf(_("%d page(s) with more than %d hits (>%d%%)."),
-                            $stats['nmax'], $stats['maxtreshold'], 100 - $treshold);
+        $s .= "; " . sprintf(
+            _("%d pages with less than %d hits (<%d%%)."),
+            $stats['nmin'],
+            $stats['mintreshold'],
+            $treshold
+        );
+        $s .= " " . sprintf(
+            _("%d page(s) with more than %d hits (>%d%%)."),
+            $stats['nmax'],
+            $stats['maxtreshold'],
+            100 - $treshold
+        );
         return $s;
     }
 
-    function inlineimages () {
+    function inlineimages()
+    {
         return implode(' ', explode('|', INLINE_IMAGES));
     }
-    function wikinameregexp () {
+    function wikinameregexp()
+    {
         return $GLOBALS['WikiNameRegexp'];
     }
-    function allowedprotocols () {
+    function allowedprotocols()
+    {
         return implode(' ', explode('|', ALLOWED_PROTOCOLS));
     }
-    function available_plugins () {
+    function available_plugins()
+    {
         $fileset = new fileSet(FindFile('lib/plugin'), '*.php');
         $list = $fileset->getFiles();
         natcasesort($list);
         reset($list);
         return sprintf(_("Total %d plugins: "), count($list))
-            . implode(', ', array_map(function($f) {return substr($f,0,-4);},
+            . implode(', ', array_map(function ($f) {
+                return substr($f, 0, -4);
+            },
                                       $list));
     }
-    function supported_languages () {
+    function supported_languages()
+    {
         $available_languages = listAvailableLanguages();
         natcasesort($available_languages);
 
-        return sprintf(_("Total of %d languages: "),
-                       count($available_languages))
+        return sprintf(
+            _("Total of %d languages: "),
+            count($available_languages)
+        )
             . implode(', ', $available_languages) . ". "
             . sprintf(_("Current language: '%s'"), $GLOBALS['LANG'])
             . ((DEFAULT_LANGUAGE != $GLOBALS['LANG'])
@@ -255,46 +305,68 @@ extends WikiPluginCached
                : '');
     }
 
-    function supported_themes () {
+    function supported_themes()
+    {
         global $WikiTheme;
         $available_themes = listAvailableThemes();
         natcasesort($available_themes);
         return sprintf(_("Total of %d themes: "), count($available_themes))
-            . implode(', ',$available_themes) . ". "
+            . implode(', ', $available_themes) . ". "
             . sprintf(_("Current theme: '%s'"), $WikiTheme->_name)
             . ((THEME != $WikiTheme->_name)
                ? ". " . sprintf(_("Default theme: '%s'"), THEME)
                : '');
     }
 
-    function call ($arg, &$availableargs) {
-        if (!empty($availableargs[$arg]))
+    function call($arg, &$availableargs)
+    {
+        if (!empty($availableargs[$arg])) {
             return $availableargs[$arg]();
-        elseif (method_exists($this, $arg)) // any defined SystemInfo->method()
+        } elseif (method_exists($this, $arg)) { // any defined SystemInfo->method()
             return call_user_func_array(array(&$this, $arg), '');
-        elseif (defined($arg) && // any defined constant
-                !in_array($arg,array('ADMIN_PASSWD','DBAUTH_AUTH_DSN')))
+        } elseif (defined($arg) && // any defined constant
+                !in_array($arg, array('ADMIN_PASSWD','DBAUTH_AUTH_DSN'))) {
             return constant($arg);
-        else
+        } else {
             return $this->error(sprintf(_("unknown argument '%s' to SystemInfo"), $arg));
+        }
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         // don't parse argstr for name=value pairs. instead we use just 'name'
         //$args = $this->getArgs($argstr, $request);
         $this->_dbi = $dbi;
         $args['seperator'] = ' ';
         $availableargs = // name => callback + 0 args
-            array ('appname' => function() {return 'PhpWiki';},
-                   'version' => function() {return PHPWIKI_VERSION;},
-                   'LANG'    => function() {return $GLOBALS['LANG'];},
-                   'LC_ALL'  => function() {return setlocale(LC_ALL, 0);},
-                   'current_language' => function() {return $GLOBALS['LANG'];},
-                   'system_language' => function() {return DEFAULT_LANGUAGE;},
-                   'current_theme' => function() {return $GLOBALS['Theme']->_name;},
-                   'system_theme'  => function() {return THEME;},
+            array ('appname' => function () {
+                return 'PhpWiki';
+            },
+                   'version' => function () {
+                    return PHPWIKI_VERSION;
+                   },
+                   'LANG'    => function () {
+                    return $GLOBALS['LANG'];
+                   },
+                   'LC_ALL'  => function () {
+                    return setlocale(LC_ALL, 0);
+                   },
+                   'current_language' => function () {
+                    return $GLOBALS['LANG'];
+                   },
+                   'system_language' => function () {
+                    return DEFAULT_LANGUAGE;
+                   },
+                   'current_theme' => function () {
+                    return $GLOBALS['Theme']->_name;
+                   },
+                   'system_theme'  => function () {
+                    return THEME;
+                   },
                    // more here or as method.
-                   '' => function() {return 'dummy';}
+                   '' => function () {
+                    return 'dummy';
+                   }
                    );
         // split the argument string by any number of commas or space
         // characters, which include " ", \r, \t, \n and \f
@@ -321,64 +393,86 @@ extends WikiPluginCached
             $table = HTML::table(array('border' => 1,'cellspacing' => 3,
                                        'cellpadding' => 3));
             foreach ($allargs as $arg => $desc) {
-                if (!$arg)
+                if (!$arg) {
                     continue;
-                if (!$desc)
+                }
+                if (!$desc) {
                     $desc = _($arg);
-                $table->pushContent(HTML::tr(HTML::td(HTML::strong($desc . ':')),
-                                             HTML::td(HTML($this->call($arg, $availableargs)))));
+                }
+                $table->pushContent(HTML::tr(
+                    HTML::td(HTML::strong($desc . ':')),
+                    HTML::td(HTML($this->call($arg, $availableargs)))
+                ));
             }
             return $table;
         } else {
             $output = '';
             foreach ($allargs as $arg) {
                 $o = $this->call($arg, $availableargs);
-                if (is_object($o))
+                if (is_object($o)) {
                     return $o;
-                else
+                } else {
                     $output .= ($o . $args['seperator']);
+                }
             }
             // if more than one arg, remove the trailing seperator
-            if ($output) $output = substr($output, 0,
-                                          - strlen($args['seperator']));
+            if ($output) {
+                $output = substr(
+                    $output,
+                    0,
+                    - strlen($args['seperator'])
+                );
+            }
             return HTML($output);
         }
     }
 }
 
-function median($hits) {
+function median($hits)
+{
     sort($hits);
     reset($hits);
     $n = count($hits);
     $median = (int) $n / 2;
-    if (! ($n % 2)) // proper rounding on even length
+    if (! ($n % 2)) { // proper rounding on even length
         return ($hits[$median] + $hits[$median-1]) * 0.5;
-    else
+    } else {
         return $hits[$median];
+    }
 }
 
-function rsum($a, $b) {
+function rsum($a, $b)
+{
     $a += $b;
     return $a;
 }
-function mean(&$hits, $total = false) {
+function mean(&$hits, $total = false)
+{
     $n = count($hits);
-    if (!$total)
+    if (!$total) {
         $total = array_reduce($hits, 'rsum');
+    }
     return (float) $total / ($n * 1.0);
 }
-function gensym($prefix = "_gensym") {
+function gensym($prefix = "_gensym")
+{
     $i = 0;
-    while (isset($GLOBALS[$prefix . $i]))
+    while (isset($GLOBALS[$prefix . $i])) {
         $i++;
+    }
     return $prefix . $i;
 }
 
-function stddev(&$hits, $total = false) {
+function stddev(&$hits, $total = false)
+{
     $n = count($hits);
-    if (!$total) $total = array_reduce($hits, 'rsum');
+    if (!$total) {
+        $total = array_reduce($hits, 'rsum');
+    }
     $mean = $total / $n;
-    $r = array_map(function ($i) use ($mean) {return ($i-$mean)*($i-$mean);},
+    $r = array_map(function ($i) use ($mean) {
+        return ($i-$mean)*($i-$mean);
+    },
                    $hits);
     return (float)sqrt(mean($r, $total) * ($n / (float)($n -1)));
 }
@@ -466,4 +560,3 @@ function stddev(&$hits, $total = false) {
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

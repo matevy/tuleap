@@ -255,14 +255,10 @@ INSERT INTO frs_filetype VALUES ('8002','html');
 INSERT INTO frs_filetype VALUES ('8003','pdf');
 INSERT INTO frs_filetype VALUES ('9999','Other');
 
-INSERT INTO frs_processor VALUES ('1000','i386','10','100');
 INSERT INTO frs_processor VALUES ('1500','x86_64','15','100');
-INSERT INTO frs_processor VALUES ('2000','PPC','20','100');
-INSERT INTO frs_processor VALUES ('3000','MIPS','30','100');
-INSERT INTO frs_processor VALUES ('4000','Sparc','40','100');
-INSERT INTO frs_processor VALUES ('5000','UltraSparc','50','100');
-INSERT INTO frs_processor VALUES ('6000','IA64','60','100');
-INSERT INTO frs_processor VALUES ('7000','Alpha','70','100');
+INSERT INTO frs_processor VALUES ('2000','ARMv7','20','100');
+INSERT INTO frs_processor VALUES ('3000','ARMv8','30','100');
+INSERT INTO frs_processor VALUES ('4000','RISC-V','40','100');
 INSERT INTO frs_processor VALUES ('8000','Any','80','100');
 INSERT INTO frs_processor VALUES ('9999','Other','90','100');
 
@@ -494,7 +490,7 @@ INSERT INTO reference SET \
     id='15',        \
     keyword='file', \
     description='reference_file_desc_key', \
-    link='/file/confirm_download.php?group_id=$group_id&file_id=$1', \
+    link='', \
     scope='S', \
     service_short_name='file', \
     nature='file';
@@ -589,17 +585,13 @@ INSERT INTO forum_group_list (group_id,forum_name,is_public,description) VALUES 
 
 INSERT INTO system_events_followers (emails, types) VALUES ('admin', 'WARNING,ERROR');
 
-INSERT INTO homepage_headline (language_id, headline) VALUES
-('en_US', 'Tuleap helps teams to deliver awesome applications, better, faster, and easier.
-Here you plan, track, code, and collaborate on software projects.'),
-('fr_FR', 'Avec Tuleap, les équipes livrent les applications plus rapidement, plus efficacement et de meilleure qualité.
-Venez planifier, suivre, développer & collaborer sur vos projets logiciels.');
-
 INSERT INTO forgeconfig (name, value) VALUES ('access_mode', 'anonymous');
 INSERT INTO forgeconfig (name, value) VALUES ('sys_project_approval', '1');
 INSERT INTO forgeconfig (name, value) VALUES ('display_homepage_statistics', '1');
 INSERT INTO forgeconfig (name, value) VALUES ('display_homepage_news', '1');
 INSERT INTO forgeconfig (name, value) VALUES ('default_project_visibility', 'public');
+INSERT INTO forgeconfig (name, value) VALUES ('sys_suspend_inactive_accounts_notification_delay', '0');
+INSERT INTO forgeconfig (name, value) VALUES ('enable_not_mandatory_description', '1');
 
 INSERT INTO password_configuration (breached_password_enabled) VALUES (1);
 

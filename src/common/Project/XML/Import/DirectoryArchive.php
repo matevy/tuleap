@@ -20,31 +20,38 @@
 
 namespace Tuleap\Project\XML\Import;
 
-class DirectoryArchive implements ArchiveInterface {
+class DirectoryArchive implements ArchiveInterface
+{
 
     private $archive_path;
 
-    public function __construct($archive_path) {
+    public function __construct($archive_path)
+    {
         $this->archive_path = $archive_path;
     }
 
-    public function extractFiles() {
+    public function extractFiles()
+    {
         // nothing to do
     }
 
-    public function cleanUp() {
+    public function cleanUp()
+    {
         // nothing to do
     }
 
-    public function getExtractionPath() {
+    public function getExtractionPath()
+    {
         return $this->archive_path;
     }
 
-    public function getProjectXML() {
+    public function getProjectXML()
+    {
         return file_get_contents($this->archive_path . DIRECTORY_SEPARATOR . self::PROJECT_FILE);
     }
 
-    public function getUsersXML() {
+    public function getUsersXML()
+    {
         return file_get_contents($this->archive_path . DIRECTORY_SEPARATOR . self::USER_FILE);
     }
 }

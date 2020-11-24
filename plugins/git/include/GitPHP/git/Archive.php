@@ -1,4 +1,23 @@
 <?php
+/**
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
+ * Copyright (c) 2010 Christopher Han <xiphux@gmail.com>
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 namespace Tuleap\Git\GitPHP;
 
@@ -98,7 +117,7 @@ class Archive
      *
      * @access public
      * @param mixed $gitObject the object
-     * @param integer $format the format for the archive
+     * @param int $format the format for the archive
      * @return mixed git archive
      */
     public function __construct($project, $gitObject, $format = self::COMPRESS_ZIP, $path = '', $prefix = '')
@@ -116,7 +135,7 @@ class Archive
      * Gets the archive format
      *
      * @access public
-     * @return integer archive format
+     * @return int archive format
      */
     public function GetFormat() // @codingStandardsIgnoreLine
     {
@@ -129,7 +148,7 @@ class Archive
      * Sets the archive format
      *
      * @access public
-     * @param integer $format archive format
+     * @param int $format archive format
      */
     public function SetFormat($format) // @codingStandardsIgnoreLine
     {
@@ -338,7 +357,7 @@ class Archive
      * Opens a descriptor for reading archive data
      *
      * @access public
-     * @return boolean true on success
+     * @return bool true on success
      */
     public function Open() // @codingStandardsIgnoreLine
     {
@@ -410,7 +429,7 @@ class Archive
      * Close the archive data descriptor
      *
      * @access public
-     * @return boolean true on success
+     * @return bool true on success
      */
     public function Close() // @codingStandardsIgnoreLine
     {

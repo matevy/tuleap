@@ -22,7 +22,8 @@ namespace Tuleap\Tracker\REST\Artifact;
 
 use Tuleap\REST\JsonCast;
 
-class ArtifactFieldValueArtifactLinksRepresentation {
+class ArtifactFieldValueArtifactLinksRepresentation
+{
     /**
      * @var int ID of the field
      */
@@ -43,7 +44,8 @@ class ArtifactFieldValueArtifactLinksRepresentation {
      */
     public $reverse_links;
 
-    public function build($id, $label, array $values, array $reverse_values) {
+    public function build($id, $label, array $values, array $reverse_values)
+    {
         $this->field_id      = JsonCast::toInt($id);
         $this->label         = $label;
         $this->links         = $values;

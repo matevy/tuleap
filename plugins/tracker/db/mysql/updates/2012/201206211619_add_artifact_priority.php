@@ -19,19 +19,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201206211619_add_artifact_priority extends ForgeUpgrade_Bucket {
+class b201206211619_add_artifact_priority extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add table to store artifact priority
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE tracker_artifact_priority(
                     curr_id int(11) NULL,
                     succ_id int(11) NULL,
@@ -41,11 +45,10 @@ EOT;
         $this->db->createTable('tracker_artifact_priority', $sql);
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('tracker_artifact_priority')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('tracker_artifact_priority table is missing');
         }
     }
-
 }
-?>

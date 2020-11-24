@@ -18,7 +18,8 @@
   * along with Tuleap. If not, see <http://www.gnu.org/licenses/
   */
 
-class Admin_Homepage_Router {
+class Admin_Homepage_Router
+{
 
     /**
      * @var Codendi_Request
@@ -38,7 +39,8 @@ class Admin_Homepage_Router {
         $this->request    = $request;
     }
 
-    public function route() {
+    public function route()
+    {
         if (! $this->request->getCurrentUser()->isSuperUser()) {
             $this->controller->notSiteAdmin($this->request);
         } elseif ($this->request->get('update')) {

@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -22,7 +22,8 @@
 
 require_once('Docman_MetadataFactory.class.php');
 
-class Docman_MetadataSqlQueryChunk {
+class Docman_MetadataSqlQueryChunk
+{
     var $isRealMetadata;
 
     // SQL aliase for field name in metadata_value or item tables
@@ -31,53 +32,57 @@ class Docman_MetadataSqlQueryChunk {
     var $mdv;
     var $mdId;
 
-    function __construct($md) {
+    function __construct($md)
+    {
         $this->mdv = 'mdv_'.$md->getLabel();
         $this->mdId = $md->getId();
 
         $this->isRealMetadata = Docman_MetadataFactory::isRealMetadata($md->getLabel());
 
-        if($this->isRealMetadata) {
-            switch($md->getType()) {
-            case PLUGIN_DOCMAN_METADATA_TYPE_TEXT:
-                $this->field = $this->mdv.'.valueText';
-                break;
-            case PLUGIN_DOCMAN_METADATA_TYPE_STRING:
-                $this->field = $this->mdv.'.valueString';
-                break;
-            case PLUGIN_DOCMAN_METADATA_TYPE_DATE:
-                $this->field = $this->mdv.'.valueDate';
-                break;
-            case PLUGIN_DOCMAN_METADATA_TYPE_LIST:
-                $this->field = $this->mdv.'.valueInt';
-                break;
+        if ($this->isRealMetadata) {
+            switch ($md->getType()) {
+                case PLUGIN_DOCMAN_METADATA_TYPE_TEXT:
+                    $this->field = $this->mdv.'.valueText';
+                    break;
+                case PLUGIN_DOCMAN_METADATA_TYPE_STRING:
+                    $this->field = $this->mdv.'.valueString';
+                    break;
+                case PLUGIN_DOCMAN_METADATA_TYPE_DATE:
+                    $this->field = $this->mdv.'.valueDate';
+                    break;
+                case PLUGIN_DOCMAN_METADATA_TYPE_LIST:
+                    $this->field = $this->mdv.'.valueInt';
+                    break;
+            }
+        } else {
+            switch ($md->getLabel()) {
+                case 'owner':
+                    $this->field = 'i.user_id';
+                    break;
+                default:
+                    $this->field = 'i.'.$md->getLabel();
             }
         }
-        else {
-            switch($md->getLabel()) {
-            case 'owner':
-                $this->field = 'i.user_id';
-                break;
-            default:
-                $this->field = 'i.'.$md->getLabel();
-            }
-        }
     }
 
-    function getFrom() {
-        return '';
-    }
-    
-    function getWhere() {
+    function getFrom()
+    {
         return '';
     }
 
-    function getOrderBy() {
+    function getWhere()
+    {
         return '';
     }
 
-    function _getMdvJoin($label=null) {
-        if($label !== null) {
+    function getOrderBy()
+    {
+        return '';
+    }
+
+    function _getMdvJoin($label = null)
+    {
+        if ($label !== null) {
             $mdv = 'mdv_'.$label;
             $fieldId = substr($label, 6);
         } else {
@@ -90,5 +95,3 @@ class Docman_MetadataSqlQueryChunk {
         return $stmt;
     }
 }
-
-?>

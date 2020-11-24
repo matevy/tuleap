@@ -21,9 +21,11 @@
 require_once dirname(__FILE__) .'/../../../bootstrap.php';
 require_once dirname(__FILE__) .'/../../../../../../tests/simpletest/common/include/builders/aRequest.php';
 
-class Cardwall_OnTop_Config_Command_CreateMappingFieldTest extends TuleapTestCase {
+class Cardwall_OnTop_Config_Command_CreateMappingFieldTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->tracker_id = 666;
@@ -40,10 +42,10 @@ class Cardwall_OnTop_Config_Command_CreateMappingFieldTest extends TuleapTestCas
         $this->command = new Cardwall_OnTop_Config_Command_CreateMappingField($tracker, $this->dao, $tracker_factory);
     }
 
-    public function itCreatesANewMappingField() {
+    public function itCreatesANewMappingField()
+    {
         $request = aRequest()->with('add_mapping_on', '42')->build();
         stub($this->dao)->create($this->tracker_id, 42, null)->once();
         $this->command->execute($request);
     }
 }
-?>

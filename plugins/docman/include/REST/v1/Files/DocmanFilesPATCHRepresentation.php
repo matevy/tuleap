@@ -22,30 +22,29 @@ declare(strict_types = 1);
 
 namespace Tuleap\Docman\REST\v1\Files;
 
-class DocmanFilesPATCHRepresentation
+use Tuleap\Docman\REST\v1\ItemRepresentation;
+use Tuleap\Docman\REST\v1\Metadata\ItemStatusMapper;
+
+class DocmanFilesPATCHRepresentation extends DocmanFileVersionPOSTRepresentation
 {
-    /**
-     * @var string Title of version {@from body} {@required false}
-     */
-    public $version_title = "";
 
     /**
-     * @var string Description of changes {@from body} {@required false}
+     * @var string Item title {@from body} {@required true}
      */
-    public $change_log = '';
+    public $title = '';
 
     /**
-     * @var bool Lock file while updating {@from body} {@required true} {@type bool}
+     * @var string Item description {@from body} {@required false}
      */
-    public $should_lock_file;
+    public $description = '';
 
     /**
-     * @var FilePropertiesPOSTPATCHRepresentation File properties must be set when creating a new file {@from body} {@type \Tuleap\Docman\REST\v1\Files\FilePropertiesPOSTPATCHRepresentation} {@required true}
+     * @var string | null Item status {@from body} {@required false} {@choice none,draft,approved,rejected}
      */
-    public $file_properties;
+    public $status = ItemStatusMapper::ITEM_STATUS_NONE;
 
     /**
-     * @var string | null action for approval table when an item is updated {@from body} {@required false} {@choice copy,reset,empty}
+     * @var string | null Obsolescence date {@from body} {@required false}
      */
-    public $approval_table_action;
+    public $obsolescence_date = ItemRepresentation::OBSOLESCENCE_DATE_NONE;
 }

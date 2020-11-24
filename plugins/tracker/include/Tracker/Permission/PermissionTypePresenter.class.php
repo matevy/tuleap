@@ -18,29 +18,34 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Permission_PermissionTypePresenter {
+class Tracker_Permission_PermissionTypePresenter
+{
 
     private $value;
     private $label;
     private $selected;
 
-    public function __construct($value, $label, $selected) {
+    public function __construct($value, $label, $selected)
+    {
         $this->value    = $value;
         $this->label    = $label;
         $this->selected = $selected;
     }
 
-    public function value() {
+    public function value()
+    {
         return $this->value;
     }
 
-    public function selected() {
+    public function selected()
+    {
         if ($this->selected) {
             return 'selected';
         }
     }
 
-    public function label() {
+    public function label()
+    {
         return $this->label;
     }
 }

@@ -19,18 +19,22 @@
 /**
  * Add generic_user table
  */
-class b201307021504_remove_server extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201307021504_remove_server extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return <<<EOT
 Remove server tables
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         if ($this->db->tableNameExists('server')) {
             $sql = "DROP TABLE server";
             $res = $this->db->dbh->exec($sql);
@@ -40,11 +44,10 @@ EOT;
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if ($this->db->tableNameExists('server')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Table server not deleted');
         }
     }
 }
-
-?>

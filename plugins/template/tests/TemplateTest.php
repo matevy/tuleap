@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class TemplatePluginTest extends TuleapTestCase {
+class TemplatePluginTest extends TuleapTestCase
+{
 
-    function testSomething() {
+    function testSomething()
+    {
         $this->pass();
     }
 }

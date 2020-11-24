@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,13 @@
 
 namespace Tuleap\AgileDashboard\REST\v2;
 
-use \Tuleap\REST\JsonCast;
-use \Tuleap\Project\REST\ProjectReference;
-use \Tuleap\Tracker\REST\Artifact\ArtifactReference;
-use \Tuleap\Tracker\REST\TrackerReference;
+use Tuleap\REST\JsonCast;
+use Tuleap\Project\REST\ProjectReference;
+use Tuleap\Tracker\REST\Artifact\ArtifactReference;
+use Tuleap\Tracker\REST\TrackerReference;
 
-class BacklogItemRepresentation {
+class BacklogItemRepresentation
+{
 
     /**
      * @var Int
@@ -77,7 +78,7 @@ class BacklogItemRepresentation {
     public $project;
 
     /**
-     * @var Boolean
+     * @var bool
      */
     public $has_children;
 
@@ -86,7 +87,13 @@ class BacklogItemRepresentation {
      */
     public $accept;
 
-    public function build(\AgileDashboard_Milestone_Backlog_IBacklogItem $backlog_item, array $card_fields) {
+    /**
+     * @var array
+     */
+    public $card_fields = [];
+
+    public function build(\AgileDashboard_Milestone_Backlog_IBacklogItem $backlog_item, array $card_fields)
+    {
         $this->id             = JsonCast::toInt($backlog_item->id());
         $this->label          = $backlog_item->title();
         $this->status         = $backlog_item->status();
@@ -116,7 +123,8 @@ class BacklogItemRepresentation {
         }
     }
 
-    private function addAllowedSubItemTypes(\AgileDashboard_Milestone_Backlog_IBacklogItem $backlog_item) {
+    private function addAllowedSubItemTypes(\AgileDashboard_Milestone_Backlog_IBacklogItem $backlog_item)
+    {
         $child_trackers = $backlog_item->getArtifact()->getTracker()->getChildren();
 
         $this->accept = array('trackers' => array());

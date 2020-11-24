@@ -38,42 +38,30 @@ class HardcodedMetdataObsolescenceDateChecker
     }
 
     /**
-     * @throws InvalidDateComparisonException
+     * @throws HardCodedMetadataException
      */
-    public function checkDateValidity(int $current_date, int $obsolescence_date, int $item_type): void
+    public function checkDateValidity(int $current_date, int $obsolescence_date): void
     {
-        if ($item_type === PLUGIN_DOCMAN_ITEM_TYPE_FOLDER) {
+        if ($obsolescence_date === (int)ItemRepresentation::OBSOLESCENCE_DATE_NONE) {
             return;
         }
 
         if (($current_date > $obsolescence_date) && $this->isObsolescenceMetadataUsed()) {
-            throw new InvalidDateComparisonException();
+            throw HardCodedMetadataException::invalidDateComparison();
         }
     }
 
     /**
-     * @throws ObsoloscenceDateUsageMismatchException
+     * @throws HardCodedMetadataException
      */
-    public function checkObsolescenceDateUsage(?string $date, int $item_type): void
+    public function checkObsolescenceDateUsageForDocument(?string $date): void
     {
-        if ($item_type === PLUGIN_DOCMAN_ITEM_TYPE_FOLDER) {
+        if ($date === ItemRepresentation::OBSOLESCENCE_DATE_NONE) {
             return;
         }
 
-        if ($date === null) {
-            throw new ObsoloscenceDateUsageMismatchException('The date cannot be null');
-        }
-
-        if ($date === ItemRepresentation::OBSOLESCENCE_DATE_NONE && $this->isObsolescenceMetadataUsed()) {
-            throw new ObsoloscenceDateUsageMismatchException(
-                '"obsolescence_date" parameter is required to create a new document.'
-            );
-        }
-
-        if ($date !== ItemRepresentation::OBSOLESCENCE_DATE_NONE && !$this->isObsolescenceMetadataUsed()) {
-            throw new ObsoloscenceDateUsageMismatchException(
-                'The project does not support obsolescence date, you should not provide it to create a new document.'
-            );
+        if (!$this->isObsolescenceMetadataUsed()) {
+            throw HardCodedMetadataException::obsolescenceDateMetadataIsDisabled();
         }
     }
 

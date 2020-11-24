@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2019. All Rights Reserved.
+  - Copyright (c) Enalean, 2019-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -18,32 +18,31 @@
   -
   -->
 <template>
-    <section class="tlp-pane-container" v-if="currently_previewed_item !== null">
+    <section class="tlp-pane-container">
         <div class="tlp-pane-header document-quick-look-header">
-            <h2 class="tlp-pane-title document-quick-look-title" v-bind:title="item.title">
+            <h2 class="tlp-pane-title document-quick-look-title" v-bind:title="currently_previewed_item.title">
                 <i class="tlp-pane-title-icon fa" v-bind:class="icon_class"></i>
-                {{ item.title }}
+                {{ currently_previewed_item.title }}
             </h2>
             <div class="document-quick-look-close-button" v-on:click="closeQuickLookEvent">
                 ×
             </div>
         </div>
         <section class="tlp-pane-section">
-            <quick-look-item-is-locked-message v-if="item.lock_info !== null"/>
-            <quick-look-document-preview v-bind:icon-class="icon_class" v-bind:item="item"/>
+            <quick-look-item-is-locked-message v-if="currently_previewed_item.lock_info !== null"/>
+            <quick-look-document-preview v-bind:icon-class="icon_class" v-bind:item="currently_previewed_item"/>
             <component
                 v-bind:is="quick_look_component_action"
-                v-bind:item="item"
+                v-bind:item="currently_previewed_item"
             />
         </section>
-        <quick-look-document-metadata v-bind:item="item"/>
-        <section class="tlp-pane-section" v-if="item.description">
+        <quick-look-document-metadata v-bind:item="currently_previewed_item"/>
+        <section class="tlp-pane-section" v-if="currently_previewed_item.description">
             <div class="tlp-property">
                 <label class="tlp-label" for="item-description" v-translate>
                     Description
                 </label>
-                <p id="item-description">
-                    {{ item.description }}
+                <p id="item-description" v-dompurify-html="currently_previewed_item.post_processed_description">
                 </p>
             </div>
         </section>
@@ -77,13 +76,10 @@ export default {
         QuickLookDocumentPreview,
         QuickLookDocumentMetadata
     },
-    props: {
-        item: Object
-    },
     computed: {
         ...mapState(["currently_previewed_item"]),
         icon_class() {
-            switch (this.item.type) {
+            switch (this.currently_previewed_item.type) {
                 case TYPE_FOLDER:
                     return ICON_FOLDER_ICON;
                 case TYPE_LINK:
@@ -93,17 +89,17 @@ export default {
                 case TYPE_EMBEDDED:
                     return ICON_EMBEDDED;
                 case TYPE_FILE:
-                    if (!this.item.file_properties) {
+                    if (!this.currently_previewed_item.file_properties) {
                         return ICON_EMPTY;
                     }
-                    return iconForMimeType(this.item.file_properties.file_type);
+                    return iconForMimeType(this.currently_previewed_item.file_properties.file_type);
                 default:
                     return ICON_EMPTY;
             }
         },
         quick_look_component_action() {
             let name = "";
-            switch (this.item.type) {
+            switch (this.currently_previewed_item.type) {
                 case TYPE_FILE:
                     name = "File";
                     break;
@@ -126,12 +122,9 @@ export default {
             return () => import(/* webpackChunkName: "quick-look-" */ `./QuickLook${name}.vue`);
         }
     },
-    mounted() {
-        this.$store.commit("updateCurrentlyPreviewedItem", this.item);
-    },
     methods: {
         closeQuickLookEvent() {
-            this.$emit("closeQuickLookEvent", false);
+            this.$emit("closeQuickLookEvent");
         }
     }
 };

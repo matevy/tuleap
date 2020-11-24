@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All rights reserved
+ * Copyright (c) Enalean, 2018-Present. All rights reserved
  * Copyright (c) STMicroelectronics 2011. All rights reserved
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -20,7 +20,8 @@
 /**
  *  Data Access Object for Project history
  */
-class ProjectHistoryDao extends DataAccessObject {
+class ProjectHistoryDao extends DataAccessObject
+{
 
     /**
      * Constructor of the class
@@ -29,7 +30,8 @@ class ProjectHistoryDao extends DataAccessObject {
      *
      * @return void
      */
-    public function __construct($da = null) {
+    public function __construct($da = null)
+    {
         parent::__construct($da);
         $this->table_name = 'group_history';
     }
@@ -37,14 +39,15 @@ class ProjectHistoryDao extends DataAccessObject {
     /**
      * Returns an array containing project history elements and their count
      *
-     * @param Integer $offset        OFFSET keyword for the LIMIT clause
-     * @param Integer $limit         Number of results to be returned
-     * @param Integer $groupId       Project ID
+     * @param int $offset OFFSET keyword for the LIMIT clause
+     * @param int $limit Number of results to be returned
+     * @param int $groupId Project ID
      * @param String  $historyFilter Filtering statement
      *
      * @return Array
      */
-    public function groupGetHistory ($offset, $limit, $groupId = false, $historyFilter = null) {
+    public function groupGetHistory($offset, $limit, $groupId = false, $historyFilter = null)
+    {
         $sql='select SQL_CALC_FOUND_ROWS group_history.field_name,
               group_history.old_value,
               group_history.date,
@@ -71,16 +74,17 @@ class ProjectHistoryDao extends DataAccessObject {
      *
      * @param String  $fieldName Event category
      * @param String  $oldValue  Event value
-     * @param Integer $groupId   Project ID
+     * @param int $groupId Project ID
      * @param Array   $args      list of parameters used for message display
      *
      * @return DataAccessResult
      */
-    public function groupAddHistory ($fieldName,$oldValue,$groupId, $args = false) {
+    public function groupAddHistory($fieldName, $oldValue, $groupId, $args = false)
+    {
         if ($args) {
             $fieldName .= " %% ".implode("||", $args);
         }
-        $userId = user_getid();
+        $userId = UserManager::instance()->getCurrentUser()->getId();
         if ($userId == 0) {
             $userId = 100;
         }
@@ -90,5 +94,4 @@ class ProjectHistoryDao extends DataAccessObject {
 
         $this->retrieve($sql);
     }
-
 }

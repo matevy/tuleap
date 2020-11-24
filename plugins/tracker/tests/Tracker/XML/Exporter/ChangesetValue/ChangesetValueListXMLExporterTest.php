@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporterTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter */
     private $exporter;
@@ -36,7 +37,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporterTest exte
     /** @var Tracker_FormElement_Field */
     private $field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->exporter      = new Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter(
             mock('UserXmlExporter')
@@ -53,7 +55,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporterTest exte
         stub($this->changeset_value)->getField()->returns($this->field);
     }
 
-    public function itCreatesFieldChangeNodeWithOneValueInChangesetNode() {
+    public function itCreatesFieldChangeNodeWithOneValueInChangesetNode()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             '101'
         ));
@@ -72,7 +75,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporterTest exte
         $this->assertEqual((string)$field_change->value['format'], 'id');
     }
 
-    public function itCreatesFieldChangeNodeWithMultipleValuesInChangesetNode() {
+    public function itCreatesFieldChangeNodeWithMultipleValuesInChangesetNode()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             '101',
             '102'

@@ -19,19 +19,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201203021527_add_tracker_hierarchy extends ForgeUpgrade_Bucket {
+class b201203021527_add_tracker_hierarchy extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add table to store tracker hierarchy
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE IF NOT EXISTS tracker_hierarchy (
                   parent_id int(11) NOT NULL,
                   child_id int(11) NOT NULL,
@@ -40,11 +44,10 @@ EOT;
         $this->db->createTable('tracker_hierarchy', $sql);
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('tracker_hierarchy')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('tracker_hierarchy table is missing');
         }
     }
-
 }
-?>

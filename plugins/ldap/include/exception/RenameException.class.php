@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class LDAP_Exception_RenameException extends RuntimeException {
+class LDAP_Exception_RenameException extends RuntimeException
+{
 
-    public function __construct($message, $old_dn, $new_dn) {
+    public function __construct($message, $old_dn, $new_dn)
+    {
         parent::__construct("An error occured while renaming LDAP DN ($old_dn, $new_dn): $message");
     }
 }

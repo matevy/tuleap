@@ -21,17 +21,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/mvc/Actions.class.php');
-require_once(dirname(__FILE__).'/../lib/WikiPageWrapper.class.php');
+require_once __DIR__ . '/../lib/WikiPageWrapper.class.php';
 
 class WikiActions extends Actions
 {
-  
+
     public function __construct($controler)
     {
         parent::__construct($controler);
     }
-    
+
     public function add_temp_page()
     {
         /* ADD TEST TO NOT ADD A ALREADY existing PAge */

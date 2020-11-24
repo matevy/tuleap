@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2017. All rights reserved
+ * Copyright (c) Enalean, 2017-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -19,13 +19,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-require_once('Widget.class.php');
-
 /**
 * Widget_ProjectLatestFileReleases
 *
 */
-class Widget_ProjectLatestFileReleases extends Widget {
+class Widget_ProjectLatestFileReleases extends Widget
+{
     var $content;
 
     public function __construct()
@@ -35,17 +34,24 @@ class Widget_ProjectLatestFileReleases extends Widget {
         $pm = ProjectManager::instance();
         $project = $pm->getProject($request->get('group_id'));
         if ($project && $this->canBeUsedByProject($project)) {
-            $this->content = $project->getService(Service::FILE)->getSummaryPageContent();
+            $service = $project->getService(Service::FILE);
+            if ($service !== null) {
+                assert($service instanceof ServiceFile);
+                $this->content = $service->getSummaryPageContent();
+            }
         }
     }
 
-    function getTitle() {
+    function getTitle()
+    {
         return $this->content['title'];
     }
-    function getContent() {
+    function getContent()
+    {
         return $this->content['content'];
     }
-    function isAvailable() {
+    function isAvailable()
+    {
         return isset($this->content['title']);
     }
 
@@ -54,11 +60,12 @@ class Widget_ProjectLatestFileReleases extends Widget {
         return $project->usesFile();
     }
 
-    function getCategory() {
+    function getCategory()
+    {
         return _('Files');
     }
-    function getDescription() {
-        return $GLOBALS['Language']->getText('widget_description_project_latest_file_releases','description');
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('widget_description_project_latest_file_releases', 'description');
     }
 }
-?>

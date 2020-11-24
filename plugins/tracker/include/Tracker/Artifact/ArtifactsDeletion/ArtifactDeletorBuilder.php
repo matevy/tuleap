@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,8 +21,10 @@
 namespace Tuleap\Tracker\Artifact\ArtifactsDeletion;
 
 use BackendLogger;
+use EventManager;
 use ProjectHistoryDao;
 use Tracker_ArtifactDao;
+use Tuleap\Queue\QueueFactory;
 use WrapperLogger;
 
 class ArtifactDeletorBuilder
@@ -32,19 +34,21 @@ class ArtifactDeletorBuilder
      */
     public static function build()
     {
-        $logger = new WrapperLogger(BackendLogger::getDefaultLogger(), __CLASS__);
+        $logger = new WrapperLogger(BackendLogger::getDefaultLogger(), self::class);
 
         $async_artifact_archive_runner = new AsynchronousArtifactsDeletionActionsRunner(
             new PendingArtifactRemovalDao(),
             $logger,
-            \UserManager::instance()
+            \UserManager::instance(),
+            new QueueFactory($logger)
         );
 
         return new ArtifactDeletor(
             new Tracker_ArtifactDao(),
             new ProjectHistoryDao(),
             new PendingArtifactRemovalDao(),
-            $async_artifact_archive_runner
+            $async_artifact_archive_runner,
+            EventManager::instance()
         );
     }
 }

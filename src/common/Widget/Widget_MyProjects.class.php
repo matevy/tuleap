@@ -26,14 +26,19 @@ use Tuleap\Layout\IncludeAssets;
 *
 * PROJECT LIST
 */
-class Widget_MyProjects extends Widget {
+
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
+class Widget_MyProjects extends Widget
+{
+    public const CONFIG_DISABLE_CONTACT = 'widget_myprojects_disable_contact';
 
     public function __construct()
     {
         parent::__construct('myprojects');
     }
 
-    function getTitle() {
+    public function getTitle()
+    {
         return $GLOBALS['Language']->getText('my_index', 'my_projects');
     }
 
@@ -86,10 +91,9 @@ class Widget_MyProjects extends Widget {
             $html .= '<table cellspacing="0" class="tlp-table widget_my_projects">';
             $i     = 0;
             $prevIsPublic = -1;
-            $token = new CSRFSynchronizerToken('massmail_to_project_members.php');
+            $disable_contact = (bool) ForgeConfig::get(self::CONFIG_DISABLE_CONTACT);
             while ($row = db_fetch_array($result)) {
-                if (
-                    $row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED &&
+                if ($row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED &&
                     ForgeConfig::areRestrictedUsersAllowed() &&
                     $user->isRestricted()
                 ) {
@@ -110,9 +114,9 @@ class Widget_MyProjects extends Widget {
                     if (ForgeConfig::areRestrictedUsersAllowed()) {
                         if ($row['access'] === Project::ACCESS_PUBLIC_UNRESTRICTED) {
                             $privacy = 'fa fa-tlp-unlock-plus-r';
-                        } else if ($row['access'] === Project::ACCESS_PRIVATE) {
+                        } elseif ($row['access'] === Project::ACCESS_PRIVATE) {
                             $privacy = 'fa fa-tlp-lock-plus-r';
-                        } else if ($row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED) {
+                        } elseif ($row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED) {
                             $privacy = 'fa fa-lock';
                         } else {
                             $privacy = 'fa fa-unlock';
@@ -139,10 +143,12 @@ class Widget_MyProjects extends Widget {
                 }
                 $html .= '</td>';
 
-                // Mailing tool
-                $html .= '<td class="'.$tdClass.'">';
-                $html .= '<a class="massmail-project-member-link" href="#massmail-project-members" data-project-id="'.$row['group_id'].'" title="'.$GLOBALS['Language']->getText('my_index','send_mail',$row['group_name']).'" data-toggle="modal"><span class="fa fa-envelope-o fa fa-envelope-o"></span></a>';
-                $html .= '</td>';
+                if ($disable_contact === false) {
+                    // Mailing tool
+                    $html .= '<td class="'.$tdClass.'">';
+                    $html .= '<a class="massmail-project-member-link" href="#massmail-project-members" data-project-id="'.$row['group_id'].'" title="'.$GLOBALS['Language']->getText('my_index', 'send_mail', $row['group_name']).'" data-toggle="modal"><span class="fa fa-envelope-o fa fa-envelope-o"></span></a>';
+                    $html .= '</td>';
+                }
 
                 // Remove from project
                 $html .= '<td class="widget_my_projects_remove'.$tdClass.'">';
@@ -186,23 +192,29 @@ class Widget_MyProjects extends Widget {
 
             $html .= '</table>';
 
-            $html .= $this->fetchMassMailForm($token);
+            if ($disable_contact === false) {
+                $token = new CSRFSynchronizerToken('massmail_to_project_members.php');
+                $html .= $this->fetchMassMailForm($token);
+            }
         }
 
         return $html;
     }
 
-    function hasRss() {
+    public function hasRss()
+    {
         return true;
     }
-    function displayRss() {
-        $rss = new RSS(array(
+    public function displayRss()
+    {
+        $server_url = HTTPRequest::instance()->getServerUrl();
+        $rss        = new RSS(array(
             'title'       => 'Codendi - MyProjects',
             'description' => 'My projects',
-            'link'        => get_server_url(),
+            'link'        => $server_url,
             'language'    => 'en-us',
             'copyright'   => 'Copyright Xerox',
-            'pubDate'     => gmdate('D, d M Y G:i:s',time()).' GMT',
+            'pubDate'     => gmdate('D, d M Y G:i:s', time()).' GMT',
         ));
         $result = db_query("SELECT groups.group_name,"
             . "groups.group_id,"
@@ -212,41 +224,43 @@ class Widget_MyProjects extends Widget {
             . "user_group.admin_flags "
             . "FROM groups,user_group "
             . "WHERE groups.group_id=user_group.group_id "
-            . "AND user_group.user_id='". db_ei(user_getid()) ."' "
+            . "AND user_group.user_id='". db_ei(UserManager::instance()->getCurrentUser()->getId()) ."' "
             . "AND groups.status='A' ORDER BY group_name");
         $rows=db_numrows($result);
         if (!$result || $rows < 1) {
             $rss->addItem(array(
                 'title'       => 'Error',
                 'description' => $GLOBALS['Language']->getText('my_index', 'not_member') . db_error(),
-                'link'        => get_server_url()
+                'link'        => $server_url
             ));
         } else {
             for ($i=0; $i<$rows; $i++) {
-                $title = db_result($result,$i,'group_name');
-                if (in_array(db_result($result,$i,'access'), [Project::ACCESS_PRIVATE, Project::ACCESS_PRIVATE_WO_RESTRICTED], true)) {
+                $title = db_result($result, $i, 'group_name');
+                if (in_array(db_result($result, $i, 'access'), [Project::ACCESS_PRIVATE, Project::ACCESS_PRIVATE_WO_RESTRICTED], true)) {
                     $title .= ' (*)';
                 }
 
-                $desc = 'Project: '. get_server_url() .'/project/admin/?group_id='.db_result($result,$i,'group_id') ."<br />\n";
-                if ( db_result($result,$i,'admin_flags') == 'A' ) {
-                    $desc .= 'Admin: '. get_server_url() .'/project/admin/?group_id='.db_result($result,$i,'group_id');
+                $desc = 'Project: '. $server_url .'/project/admin/?group_id='.db_result($result, $i, 'group_id') ."<br />\n";
+                if (db_result($result, $i, 'admin_flags') == 'A') {
+                    $desc .= 'Admin: '. $server_url .'/project/admin/?group_id='.db_result($result, $i, 'group_id');
                 }
 
                 $rss->addItem(array(
                     'title'       => $title,
                     'description' => $desc,
-                    'link'        => get_server_url() .'/projects/'. db_result($result,$i,'unix_group_name')
+                    'link'        => $server_url .'/projects/'. db_result($result, $i, 'unix_group_name')
                 ));
             }
         }
         $rss->display();
     }
-    function getDescription() {
-        return $GLOBALS['Language']->getText('widget_description_my_projects','description');
+    public function getDescription()
+    {
+        return $GLOBALS['Language']->getText('widget_description_my_projects', 'description');
     }
 
-    private function fetchMassMailForm(CSRFSynchronizerToken $token) {
+    private function fetchMassMailForm(CSRFSynchronizerToken $token)
+    {
         $presenter = new MassmailFormPresenter(
             $token,
             $GLOBALS['Language']->getText('my_index', 'massmail_form_title'),

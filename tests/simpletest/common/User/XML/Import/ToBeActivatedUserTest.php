@@ -21,13 +21,16 @@ namespace User\XML\Import;
 
 use TuleapTestCase;
 
-class ToBeActivatedUser_isActionAllowedTest extends TuleapTestCase {
+class ToBeActivatedUser_isActionAllowedTest extends TuleapTestCase
+{
 
     /** @var ToBeActivatedUser */
     protected $user;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
+        $this->setUpGlobalsMockery();
 
         $this->user = new ToBeActivatedUser(
             aUser()->withUserName('cstevens')->build(),
@@ -36,15 +39,18 @@ class ToBeActivatedUser_isActionAllowedTest extends TuleapTestCase {
         );
     }
 
-    public function itReturnsFalseWhenActionIsCreate() {
+    public function itReturnsFalseWhenActionIsCreate()
+    {
         $this->assertFalse($this->user->isActionAllowed('create'));
     }
 
-    public function itReturnsFalseWhenActionIsActivate() {
+    public function itReturnsFalseWhenActionIsActivate()
+    {
         $this->assertTrue($this->user->isActionAllowed('noop'));
     }
 
-    public function itReturnsFalseWhenActionIsMap() {
+    public function itReturnsFalseWhenActionIsMap()
+    {
         $this->assertTrue($this->user->isActionAllowed('map'));
     }
 }

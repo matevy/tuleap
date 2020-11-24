@@ -24,7 +24,8 @@
 class Docman_LockDao extends DataAccessObject
 {
 
-    function searchLockForItem($itemId) {
+    function searchLockForItem($itemId)
+    {
         $sql = 'SELECT *'.
                ' FROM plugin_docman_item_lock'.
                ' WHERE item_id = '.$this->da->quoteSmart($itemId);
@@ -34,11 +35,12 @@ class Docman_LockDao extends DataAccessObject
     /**
      * Search all locks set on items that belongs to the same project than given
      * item id
-     * 
-     * @param Integer $itemId
+     *
+     * @param int $itemId
      * @return DataAccessResult
      */
-    function searchLocksForProjectByItemId($itemId) {
+    function searchLocksForProjectByItemId($itemId)
+    {
         $sql = 'SELECT l.item_id, l.user_id'.
                ' FROM plugin_docman_item_lock l'.
                '   JOIN plugin_docman_item i1 ON (i1.item_id = l.item_id)'.
@@ -49,12 +51,13 @@ class Docman_LockDao extends DataAccessObject
     }
 
     /**
-    * Search all locks set on items that belong to the same given project. 
+    * Search all locks set on items that belong to the same given project.
     *
-    * @param Integer $groupId
-    * @return DataAccessResult
+    * @param int $groupId
+    * @return DataAccessResult|false
     */
-    function searchLocksForProjectByGroupId($groupId) {
+    function searchLocksForProjectByGroupId($groupId)
+    {
         $sql = 'SELECT l.*'.
                ' FROM plugin_docman_item_lock l'.
                '   JOIN plugin_docman_item i ON (l.item_id = i.item_id)'.
@@ -65,12 +68,13 @@ class Docman_LockDao extends DataAccessObject
 
     /**
      * Retreive lock info for several items.
-     * 
+     *
      * @param Array $itemIds
-     * 
-     * @return DataAccessResult
+     *
+     * @return DataAccessResult|false
      */
-    function searchLocksForItemIds(array $itemIds) {
+    function searchLocksForItemIds(array $itemIds)
+    {
         $sql = 'SELECT l.item_id, l.user_id'.
                ' FROM plugin_docman_item_lock l'.
                '   JOIN plugin_docman_item i ON (i.item_id = l.item_id)'.
@@ -78,8 +82,9 @@ class Docman_LockDao extends DataAccessObject
                ' AND '.Docman_ItemDao::getCommonExcludeStmt('i');
         return $this->retrieve($sql);
     }
-    
-    function addLock($itemId, $userId, $date) {
+
+    function addLock($itemId, $userId, $date)
+    {
         $sql = 'INSERT INTO plugin_docman_item_lock'.
                ' (item_id, user_id, lock_date)'.
                ' VALUES '.
@@ -90,10 +95,10 @@ class Docman_LockDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function delLock($itemId) {
+    function delLock($itemId)
+    {
         $sql = 'DELETE FROM plugin_docman_item_lock'.
                ' WHERE item_id = '.$this->da->quoteSmart($itemId);
         return $this->update($sql);
     }
 }
-?>

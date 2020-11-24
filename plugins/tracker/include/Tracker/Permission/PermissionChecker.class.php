@@ -45,7 +45,7 @@ class Tracker_Permission_PermissionChecker
      *
      * @param PFUser $user
      * @param Tracker_Artifact $artifact
-     * @return boolean
+     * @return bool
      */
     public function userCanView(PFUser $user, Tracker_Artifact $artifact)
     {
@@ -71,7 +71,8 @@ class Tracker_Permission_PermissionChecker
         return false;
     }
 
-    private function userCanViewArtifact(PFUser $user, Tracker_Artifact $artifact) {
+    private function userCanViewArtifact(PFUser $user, Tracker_Artifact $artifact)
+    {
         if ($artifact->useArtifactPermissions()) {
             $rows = $artifact->permission_db_authorized_ugroups(Tracker_Artifact::PERMISSION_ACCESS);
 
@@ -109,11 +110,12 @@ class Tracker_Permission_PermissionChecker
         return false;
     }
 
-    private function userHavePermissionOnTracker(PFUser $user, Tracker_Artifact $artifact) {
+    private function userHavePermissionOnTracker(PFUser $user, Tracker_Artifact $artifact)
+    {
         $permissions = $artifact->getTracker()->getAuthorizedUgroupsByPermissionType();
 
-        foreach ($permissions  as $permission_type => $ugroups) {
-            switch($permission_type) {
+        foreach ($permissions as $permission_type => $ugroups) {
+            switch ($permission_type) {
                 case Tracker::PERMISSION_FULL:
                     foreach ($ugroups as $ugroup) {
                         if ($this->userBelongsToGroup($user, $artifact, $ugroup)) {
@@ -132,7 +134,7 @@ class Tracker_Permission_PermissionChecker
                             }
                         }
                     }
-                break;
+                    break;
 
                 case Tracker::PERMISSION_ASSIGNEE:
                     foreach ($ugroups as $ugroup) {
@@ -146,7 +148,7 @@ class Tracker_Permission_PermissionChecker
                             }
                         }
                     }
-                break;
+                    break;
 
                 case Tracker::PERMISSION_SUBMITTER_ONLY:
                     foreach ($ugroups as $ugroup) {
@@ -162,7 +164,8 @@ class Tracker_Permission_PermissionChecker
         return false;
     }
 
-    private function userBelongsToGroup(PFUser $user, Tracker_Artifact $artifact, $ugroup_id) {
+    private function userBelongsToGroup(PFUser $user, Tracker_Artifact $artifact, $ugroup_id)
+    {
         return $user->isMemberOfUGroup($ugroup_id, $artifact->getTracker()->getGroupId());
     }
 }

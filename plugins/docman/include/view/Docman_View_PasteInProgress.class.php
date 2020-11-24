@@ -24,17 +24,20 @@
 
 require_once 'Docman_View_ProjectHeader.class.php';
 
-class Docman_View_PasteInProgress extends Docman_View_ProjectHeader {
-    
-    function _getTitle($params) {
+class Docman_View_PasteInProgress extends Docman_View_ProjectHeader
+{
+
+    function _getTitle($params)
+    {
         $hp = Codendi_HTMLPurifier::instance();
-        return $GLOBALS['Language']->getText('plugin_docman', 'details_paste_inprogress_title', array( 
-            $hp->purify($params['itemToPaste']->getTitle(), CODENDI_PURIFIER_CONVERT_HTML) , 
-            $hp->purify($params['item']->getTitle(), CODENDI_PURIFIER_CONVERT_HTML) 
+        return $GLOBALS['Language']->getText('plugin_docman', 'details_paste_inprogress_title', array(
+            $hp->purify($params['itemToPaste']->getTitle(), CODENDI_PURIFIER_CONVERT_HTML) ,
+            $hp->purify($params['item']->getTitle(), CODENDI_PURIFIER_CONVERT_HTML)
         ));
     }
-    
-    function _content($params) {
+
+    function _content($params)
+    {
         //spinner
         echo '<p id="paste_'.$params['itemToPaste']->getId().'">'.$GLOBALS['Language']->getText('plugin_docman', 'details_paste_inprogress_info');
         $docmanIcons = $this->_getDocmanIcons(null);
@@ -47,7 +50,7 @@ class Docman_View_PasteInProgress extends Docman_View_ProjectHeader {
         // stoped right after the display of service tabs!
         ob_flush();
         flush();
-        
+
         // here the processing
         $actions = new Docman_Actions($this->_controller);
         $actions->doPaste($params['itemToPaste'], $params['item'], $params['rank'], $params['importMd'], $params['srcMode']);
@@ -60,10 +63,11 @@ class Docman_View_PasteInProgress extends Docman_View_ProjectHeader {
 
         $url = $this->_controller->getDefaultUrl().'action=show&id='.$params['item']->getId();
         echo $GLOBALS['Language']->getText('plugin_docman', 'details_paste_complete_redirect', array($url, $url, 5));
-        echo '<script type="text/javascript">setTimeout(function () {location.href="'.$url.'";}, 5000);</script>';   
+        echo '<script type="text/javascript">setTimeout(function () {location.href="'.$url.'";}, 5000);</script>';
     }
 
-    function &_getDocmanIcons($params) {
+    function &_getDocmanIcons($params)
+    {
         $icons = new Docman_Icons($this->_controller->getThemePath().'/images/ic/');
         return $icons;
     }

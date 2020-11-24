@@ -1,9 +1,11 @@
-<?php //-*-php-*-
+<?php
+//-*-php-*-
 rcs_id('$Id: WikiPlugin.php,v 1.61 2005/10/31 17:20:40 rurban Exp $');
 
 class WikiPlugin
 {
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array('description' => $this->getDescription());
     }
 
@@ -25,14 +27,18 @@ class WikiPlugin
      * any page which invokes the plugin uncacheable (by HTTP proxies
      * or browsers).
      */
-    function managesValidators() {
+    function managesValidators()
+    {
         return false;
     }
-    
+
     // FIXME: args?
-    function run ($dbi, $argstr, &$request, $basepage) {
-        trigger_error("WikiPlugin::run: pure virtual function",
-                      E_USER_ERROR);
+    function run($dbi, $argstr, &$request, $basepage)
+    {
+        trigger_error(
+            "WikiPlugin::run: pure virtual function",
+            E_USER_ERROR
+        );
     }
 
     /** Get wiki-pages linked to by plugin invocation.
@@ -56,10 +62,11 @@ class WikiPlugin
      * @param string $basepage The pagename the plugin is invoked from.
      * @return array List of pagenames linked to (or false).
      */
-    function getWikiPageLinks ($argstr, $basepage) {
+    function getWikiPageLinks($argstr, $basepage)
+    {
         return false;
     }
-    
+
     /**
      * Get name of plugin.
      *
@@ -75,73 +82,82 @@ class WikiPlugin
      *
      * @return string plugin name/target.
      */
-    function getName() {
-        return preg_replace('/^.*_/', '',  get_class($this));
+    function getName()
+    {
+        return preg_replace('/^.*_/', '', static::class);
     }
 
-    function getDescription() {
+    function getDescription()
+    {
         return $this->getName();
     }
-    
+
     // plugins should override this with the commented-out code
-    function getVersion() {
+    function getVersion()
+    {
         return _("n/a");
         //return preg_replace("/[Revision: $]/", '',
         //                    "\$Revision: 1.61 $");
     }
 
-    function getArgs($argstr, $request=false, $defaults=false) {
+    function getArgs($argstr, $request = false, $defaults = false)
+    {
         if ($defaults === false) {
             $defaults = $this->getDefaultArguments();
         }
         //Fixme: on POST argstr is empty
         list ($argstr_args, $argstr_defaults) = $this->parseArgStr($argstr);
         $args = array();
-        if (!empty($defaults))
-          foreach ($defaults as $arg => $default_val) {
-            if (isset($argstr_args[$arg])) {
-                $args[$arg] = $argstr_args[$arg];
-            } elseif ( $request and ($argval = $request->getArg($arg)) !== false ) {
-                $args[$arg] = $argval;
-            } elseif (isset($argstr_defaults[$arg])) {
-                $args[$arg] = (string) $argstr_defaults[$arg];
-            } else {
-                $args[$arg] = $default_val;
-            }
-            // expand [arg]
-            if ($request and is_string($args[$arg]) and strstr($args[$arg], "[")) {
-                $args[$arg] = $this->expandArg($args[$arg], $request);
-            }
+        if (!empty($defaults)) {
+            foreach ($defaults as $arg => $default_val) {
+                if (isset($argstr_args[$arg])) {
+                    $args[$arg] = $argstr_args[$arg];
+                } elseif ($request and ($argval = $request->getArg($arg)) !== false) {
+                    $args[$arg] = $argval;
+                } elseif (isset($argstr_defaults[$arg])) {
+                    $args[$arg] = (string) $argstr_defaults[$arg];
+                } else {
+                    $args[$arg] = $default_val;
+                }
+                // expand [arg]
+                if ($request and is_string($args[$arg]) and strstr($args[$arg], "[")) {
+                    $args[$arg] = $this->expandArg($args[$arg], $request);
+                }
 
-            unset($argstr_args[$arg]);
-            unset($argstr_defaults[$arg]);
+                unset($argstr_args[$arg]);
+                unset($argstr_defaults[$arg]);
+            }
         }
 
         foreach (array_merge($argstr_args, $argstr_defaults) as $arg => $val) {
-            if ($request and $request->getArg('pagename') == _("PhpWikiAdministration") 
-                and $arg == 'overwrite') // silence this warning
+            if ($request and $request->getArg('pagename') == _("PhpWikiAdministration")
+                and $arg == 'overwrite') { // silence this warning
                 ;
-            else
-                trigger_error(sprintf(_("Argument '%s' not declared by plugin."),
-                                      $arg), E_USER_NOTICE);
+            } else {
+                trigger_error(sprintf(
+                    _("Argument '%s' not declared by plugin."),
+                    $arg
+                ), E_USER_NOTICE);
+            }
         }
 
         // add special handling of pages and exclude args to accept <! plugin-list !>
         // and split explodePageList($args['exclude']) => array()
         // TODO : handle p[] pagehash
         foreach (array('pages', 'exclude') as $key) {
-            if (!empty($args[$key]) and array_key_exists($key, $defaults))
+            if (!empty($args[$key]) and array_key_exists($key, $defaults)) {
                 $args[$key] = is_string($args[$key])
                     ? explodePageList($args[$key])
                     : $args[$key]; // <! plugin-list !>
+            }
         }
 
         // always override sortby,limit from the REQUEST. ignore defaults if defined as such.
         foreach (array('sortby', 'limit') as $key) {
             if (array_key_exists($key, $defaults)) {
-                if ($val = $GLOBALS['request']->getArg($key))
+                if ($val = $GLOBALS['request']->getArg($key)) {
                     $args[$key] = $val;
-                elseif (!empty($args[$key])) {
+                } elseif (!empty($args[$key])) {
                     $GLOBALS['request']->setArg($key, $args[$key]);
                 }
             }
@@ -151,7 +167,8 @@ class WikiPlugin
 
     // Patch by Dan F:
     // Expand [arg] to $request->getArg("arg") unless preceded by ~
-    function expandArg($argval, &$request) {
+    function expandArg($argval, &$request)
+    {
         // Replace the arg unless it is preceded by a ~
         $ret = preg_replace_callback(
             '/([^~]|^)\[(\w[\w\d]*)\]/',
@@ -164,12 +181,14 @@ class WikiPlugin
         return preg_replace('/~(\[\w[\w\d]*\])/', '$1', $ret);
     }
 
-    function parseArgStr($argstr) {
+    function parseArgStr($argstr)
+    {
         $args = array();
         $defaults = array();
-	if (empty($argstr))
+        if (empty($argstr)) {
             return array($args,$defaults);
-            
+        }
+
         $arg_p = '\w+';
         $op_p = '(?:\|\|)?=';
         $word_p = '\S+';
@@ -188,7 +207,7 @@ class WikiPlugin
             $loader = new WikiPluginLoader();
             $markup = null;
             $basepage = null;
-            $plugin_val = preg_replace(array("/^<!/","/!>$/"),array("<?","?>"),$plugin_val);
+            $plugin_val = preg_replace(array("/^<!/","/!>$/"), array("<?","?>"), $plugin_val);
             $val = $loader->expandPI($plugin_val, $GLOBALS['request'], $markup, $basepage);
             if ($op == '=') {
                 $args[$arg] = $val; // comma delimited pagenames or array()?
@@ -202,19 +221,19 @@ class WikiPlugin
             $argstr = substr($argstr, strlen($m[0]));
 
             // Remove quotes from string values.
-            if ($qq_val)
+            if ($qq_val) {
                 $val = stripslashes($qq_val);
-            elseif ($q_val)
+            } elseif ($q_val) {
                 $val = stripslashes($q_val);
-            elseif ($gt_val)
+            } elseif ($gt_val) {
                 $val = _(stripslashes($gt_val));
-            else
+            } else {
                 $val = $word_val;
+            }
 
             if ($op == '=') {
                 $args[$arg] = $val;
-            }
-            else {
+            } else {
                 // NOTE: This does work for multiple args. Use the
                 // separator character defined in your webserver
                 // configuration, usually & or &amp; (See
@@ -227,63 +246,73 @@ class WikiPlugin
         }
 
         if ($argstr) {
-           $this->handle_plugin_args_cruft($argstr, $args);
+            $this->handle_plugin_args_cruft($argstr, $args);
         }
 
         return array($args, $defaults);
     }
 
     /* A plugin can override this function to define how any remaining text is handled */
-    function handle_plugin_args_cruft($argstr, $args) {
-        trigger_error(sprintf(_("trailing cruft in plugin args: '%s'"),
-                              $argstr), E_USER_NOTICE);
+    function handle_plugin_args_cruft($argstr, $args)
+    {
+        trigger_error(sprintf(
+            _("trailing cruft in plugin args: '%s'"),
+            $argstr
+        ), E_USER_NOTICE);
     }
 
     /* handle plugin-list argument: use run(). */
-    function makeList($plugin_args, $request, $basepage) {
+    function makeList($plugin_args, $request, $basepage)
+    {
         $dbi = $request->getDbh();
         $pagelist = $this->run($dbi, $plugin_args, $request, $basepage);
         $list = array();
         if (is_object($pagelist) and isa($pagelist, 'PageList')) {
             // table or list?
             foreach ($pagelist->_pages as $page) {
-            	$list[] = $page->getName();
+                $list[] = $page->getName();
             }
         }
         return $list;
     }
 
-    function getDefaultLinkArguments() {
+    function getDefaultLinkArguments()
+    {
         return array('targetpage'  => $this->getName(),
                      'linktext'    => $this->getName(),
                      'description' => $this->getDescription(),
                      'class'       => 'wikiaction');
     }
 
-    function makeLink($argstr, $request) {
+    function makeLink($argstr, $request)
+    {
         $defaults = $this->getDefaultArguments();
         $link_defaults = $this->getDefaultLinkArguments();
         $defaults = array_merge($defaults, $link_defaults);
-    
+
         $args = $this->getArgs($argstr, $request, $defaults);
         $plugin = $this->getName();
-    
+
         $query_args = array();
         foreach ($args as $arg => $val) {
-            if (isset($link_defaults[$arg]))
+            if (isset($link_defaults[$arg])) {
                 continue;
-            if ($val != $defaults[$arg])
+            }
+            if ($val != $defaults[$arg]) {
                 $query_args[$arg] = $val;
+            }
         }
-    
+
         $link = Button($query_args, $args['linktext'], $args['targetpage']);
-        if (!empty($args['description']))
+        if (!empty($args['description'])) {
             $link->addTooltip($args['description']);
-    
+        }
+
         return $link;
     }
-    
-    function getDefaultFormArguments() {
+
+    function getDefaultFormArguments()
+    {
         return array('targetpage' => $this->getName(),
                      'buttontext' => $this->getName(),
                      'class'      => 'wikiaction',
@@ -292,61 +321,66 @@ class WikiPlugin
                      'description'=> $this->getDescription(),
                      'formsize'   => 30);
     }
-    
-    function makeForm($argstr, $request) {
+
+    function makeForm($argstr, $request)
+    {
         $form_defaults = $this->getDefaultFormArguments();
-        $defaults = array_merge($form_defaults, 
-                                array('start_debug' => $request->getArg('start_debug')),
-        			$this->getDefaultArguments());
-    
+        $defaults = array_merge(
+            $form_defaults,
+            array('start_debug' => $request->getArg('start_debug')),
+            $this->getDefaultArguments()
+        );
+
         $args = $this->getArgs($argstr, $request, $defaults);
         $plugin = $this->getName();
         $textinput = $args['textinput'];
         assert(!empty($textinput) && isset($args['textinput']));
-    
+
         $form = HTML::form(array('action' => WikiURL($args['targetpage']),
                                  'method' => $args['method'],
                                  'class'  => $args['class'],
                                  'accept-charset' => $GLOBALS['charset']));
-        $form->pushContent(HTML::input(array('type' => 'hidden', 
-                                             'name' => 'group_id', 
+        $form->pushContent(HTML::input(array('type' => 'hidden',
+                                             'name' => 'group_id',
                                              'value' => GROUP_ID)));
-        if (! USE_PATH_INFO ) {
+        if (! USE_PATH_INFO) {
             $pagename = $request->get('pagename');
-            $form->pushContent(HTML::input(array('type' => 'hidden', 
-                                                 'name' => 'pagename', 
+            $form->pushContent(HTML::input(array('type' => 'hidden',
+                                                 'name' => 'pagename',
                                                  'value' => $args['targetpage'])));
         }
         if ($args['targetpage'] != $this->getName()) {
-            $form->pushContent(HTML::input(array('type' => 'hidden', 
-                                                 'name' => 'action', 
+            $form->pushContent(HTML::input(array('type' => 'hidden',
+                                                 'name' => 'action',
                                                  'value' => $this->getName())));
         }
         $contents = HTML::div();
         $contents->setAttr('class', $args['class']);
-    
+
         foreach ($args as $arg => $val) {
-            if (isset($form_defaults[$arg]))
+            if (isset($form_defaults[$arg])) {
                 continue;
-            if ($arg != $textinput && $val == $defaults[$arg])
+            }
+            if ($arg != $textinput && $val == $defaults[$arg]) {
                 continue;
-    
+            }
+
             $i = HTML::input(array('name' => $arg, 'value' => $val));
-    
+
             if ($arg == $textinput) {
                 //if ($inputs[$arg] == 'file')
                 //    $attr['type'] = 'file';
                 //else
                 $i->setAttr('type', 'text');
                 $i->setAttr('size', $args['formsize']);
-                if ($args['description'])
+                if ($args['description']) {
                     $i->addTooltip($args['description']);
-            }
-            else {
+                }
+            } else {
                 $i->setAttr('type', 'hidden');
             }
             $contents->pushContent($i);
-    
+
             // FIXME: hackage
             if ($i->getAttr('type') == 'file') {
                 $form->setAttr('enctype', 'multipart/form-data');
@@ -356,57 +390,78 @@ class WikiPlugin
                                                          'type' => 'hidden')));
             }
         }
-    
-        if (!empty($args['buttontext']))
+
+        if (!empty($args['buttontext'])) {
             $contents->pushContent(HTML::input(array('type' => 'submit',
                                                      'class' => 'button',
                                                      'value' => $args['buttontext'])));
+        }
         $form->pushContent($contents);
         return $form;
     }
 
     // box is used to display a fixed-width, narrow version with common header
-    function box($args=false, $request=false, $basepage=false) {
-        if (!$request) $request = $GLOBALS['request'];
+    function box($args = false, $request = false, $basepage = false)
+    {
+        if (!$request) {
+            $request = $GLOBALS['request'];
+        }
         $dbi = $request->getDbh();
         return $this->makeBox('', $this->run($dbi, $args, $request, $basepage));
     }
 
-    function makeBox($title, $body) {
-        if (!$title) $title = $this->getName();
-        return HTML::div(array('class'=>'box'),
-                         HTML::div(array('class'=>'box-title'), $title),
-                         HTML::div(array('class'=>'box-data'), $body));
-    }
-    
-    function error ($message) {
-        return HTML::div(array('class' => 'errors'),
-                        HTML::strong(fmt("Plugin %s failed.", $this->getName())), ' ',
-                        $message);
+    function makeBox($title, $body)
+    {
+        if (!$title) {
+            $title = $this->getName();
+        }
+        return HTML::div(
+            array('class'=>'box'),
+            HTML::div(array('class'=>'box-title'), $title),
+            HTML::div(array('class'=>'box-data'), $body)
+        );
     }
 
-    function disabled ($message='') {
-        $html[] = HTML::div(array('class' => 'title'),
-                            fmt("Plugin %s disabled.", $this->getName()),
-                            ' ', $message);
+    function error($message)
+    {
+        return HTML::div(
+            array('class' => 'errors'),
+            HTML::strong(fmt("Plugin %s failed.", $this->getName())),
+            ' ',
+            $message
+        );
+    }
+
+    function disabled($message = '')
+    {
+        $html[] = HTML::div(
+            array('class' => 'title'),
+            fmt("Plugin %s disabled.", $this->getName()),
+            ' ',
+            $message
+        );
         $html[] = HTML::pre($this->_pi);
         return HTML::div(array('class' => 'disabled-plugin'), $html);
     }
 
-    // TODO: Not really needed, since our plugins generally initialize their own 
+    // TODO: Not really needed, since our plugins generally initialize their own
     // PageList object, which accepts options['types'].
-    // Register custom PageList types for special plugins, like 
+    // Register custom PageList types for special plugins, like
     // 'hi_content' for WikiAdminSearcheplace, 'renamed_pagename' for WikiAdminRename, ...
-    function addPageListColumn ($array) {
+    function addPageListColumn($array)
+    {
         global $customPageListColumns;
-        if (empty($customPageListColumns)) $customPageListColumns = array();
+        if (empty($customPageListColumns)) {
+            $customPageListColumns = array();
+        }
         foreach ($array as $column => $obj) {
             $customPageListColumns[$column] = $obj;
         }
     }
-    
+
     // provide a sample usage text for automatic edit-toolbar insertion
-    function getUsage() {
+    function getUsage()
+    {
         $args = $this->getDefaultArguments();
         $string = '<'.'?plugin '.$this->getName().' ';
         if ($args) {
@@ -417,7 +472,8 @@ class WikiPlugin
         return $string . '?'.'>';
     }
 
-    function getArgumentsDescription() {
+    function getArgumentsDescription()
+    {
         $arguments = HTML();
         foreach ($this->getDefaultArguments() as $arg => $default) {
             // Work around UserPreferences plugin to avoid error
@@ -426,51 +482,54 @@ class WikiPlugin
                 // This is a bit flawed with UserPreferences object
                 //$default = sprintf("array('%s')",
                 //                   implode("', '", array_keys($default)));
-            }
-            else
-                if (stristr($default, ' '))
+            } elseif (stristr($default, ' ')) {
                     $default = "'$default'";
+            }
             $arguments->pushcontent("$arg=$default", HTML::br());
         }
         return $arguments;
     }
-
 }
 
-class WikiPluginLoader {
+class WikiPluginLoader
+{
     var $_errors;
 
-    function expandPI($pi, &$request, &$markup, $basepage=false) {
-        if (!($ppi = $this->parsePi($pi)))
+    function expandPI($pi, &$request, &$markup, $basepage = false)
+    {
+        if (!($ppi = $this->parsePi($pi))) {
             return false;
+        }
         list($pi_name, $plugin, $plugin_args) = $ppi;
 
         if (!is_object($plugin)) {
-            return new HtmlElement($pi_name == 'plugin-link' ? 'span' : 'p',
-                                   array('class' => 'plugin-error'),
-                                   $this->getErrorDetail());
+            return new HtmlElement(
+                $pi_name == 'plugin-link' ? 'span' : 'p',
+                array('class' => 'plugin-error'),
+                $this->getErrorDetail()
+            );
         }
         switch ($pi_name) {
             case 'plugin':
                 // FIXME: change API for run() (no $dbi needed).
                 $dbi = $request->getDbh();
-                // pass the parsed CachedMarkup context in dbi to the plugin 
+                // pass the parsed CachedMarkup context in dbi to the plugin
                 // to be able to know about itself, or even to change the markup XmlTree (CreateToc)
-                $dbi->_markup = &$markup; 
+                $dbi->_markup = &$markup;
                 // FIXME: could do better here...
                 if (! $plugin->managesValidators()) {
                     // Output of plugin (potentially) depends on
                     // the state of the WikiDB (other than the current
                     // page.)
-                    
+
                     // Lacking other information, we'll assume things
                     // changed last time the wikidb was touched.
-                    
+
                     // As an additional hack, mark the ETag weak, since,
                     // for all we know, the page might depend
                     // on things other than the WikiDB (e.g. PhpWeather,
                     // Calendar...)
-                    
+
                     $timestamp = $dbi->getTimestamp();
                     $request->appendValidators(array('dbi_timestamp' => $timestamp,
                                                      '%mtime' => (int)$timestamp,
@@ -486,39 +545,46 @@ class WikiPluginLoader {
         }
     }
 
-    function getWikiPageLinks($pi, $basepage) {
-        if (!($ppi = $this->parsePi($pi)))
+    function getWikiPageLinks($pi, $basepage)
+    {
+        if (!($ppi = $this->parsePi($pi))) {
             return false;
+        }
         list($pi_name, $plugin, $plugin_args) = $ppi;
-        if (!is_object($plugin))
+        if (!is_object($plugin)) {
             return false;
-        if ($pi_name != 'plugin')
+        }
+        if ($pi_name != 'plugin') {
             return false;
+        }
         return $plugin->getWikiPageLinks($plugin_args, $basepage);
     }
-    
-    function parsePI($pi) {
-        if (!preg_match('/^\s*<\?(plugin(?:-form|-link|-list)?)\s+(\w+)\s*(.*?)\s*\?>\s*$/s', $pi, $m))
+
+    function parsePI($pi)
+    {
+        if (!preg_match('/^\s*<\?(plugin(?:-form|-link|-list)?)\s+(\w+)\s*(.*?)\s*\?>\s*$/s', $pi, $m)) {
             return $this->_error(sprintf("Bad %s", 'PI'));
+        }
 
         list(, $pi_name, $plugin_name, $plugin_args) = $m;
         $plugin = $this->getPlugin($plugin_name, $pi);
 
         return array($pi_name, $plugin, $plugin_args);
     }
-    
-    function getPlugin($plugin_name, $pi=false) {
+
+    function getPlugin($plugin_name, $pi = false)
+    {
         global $ErrorManager;
 
-	//Changes by Sabri LABBENE
-	//Some plugins were removed since we don't use them any more
-	//the following array contains the removed plugins names. References 
-	//to these plugins will never be processed.
+    //Changes by Sabri LABBENE
+    //Some plugins were removed since we don't use them any more
+    //the following array contains the removed plugins names. References
+    //to these plugins will never be processed.
         $removed_plugins = array("RawHtml", "RateIt", "PhpWeather", "AnalyseAccessLogSql", "FoafViewer", "ModeratePage", "Ploticus", "AllUsers");
-	if (in_array($plugin_name, $removed_plugins)){ 
-							return $this->_error(sprintf(_("The '%s' plugin is blocked by administrator. Sorry for the inconvenience"), _($plugin_name)));
-						 }
-	// Note that there seems to be no way to trap parse errors
+        if (in_array($plugin_name, $removed_plugins)) {
+              return $this->_error(sprintf(_("The '%s' plugin is blocked by administrator. Sorry for the inconvenience"), _($plugin_name)));
+        }
+    // Note that there seems to be no way to trap parse errors
         // from this include.  (At least not via set_error_handler().)
         $plugin_source = "lib/plugin/$plugin_name.php";
 
@@ -528,35 +594,45 @@ class WikiPluginLoader {
             // $include_failed = !@include_once("lib/plugin/$plugin_name.php");
             $include_failed = !include_once("lib/plugin/$plugin_name.php");
             $ErrorManager->popErrorHandler();
-            
+
             if (!class_exists($plugin_class)) {
-                if ($include_failed)
-                    return $this->_error(sprintf(_("Include of '%s' failed."),
-                                                 $plugin_source));
+                if ($include_failed) {
+                    return $this->_error(sprintf(
+                        _("Include of '%s' failed."),
+                        $plugin_source
+                    ));
+                }
                 return $this->_error(sprintf(_("%s: no such class"), $plugin_class));
             }
         }
         $ErrorManager->popErrorHandler();
         $plugin = new $plugin_class;
-        if (!is_subclass_of($plugin, "WikiPlugin"))
-            return $this->_error(sprintf(_("%s: not a subclass of WikiPlugin."),
-                                         $plugin_class));
+        if (!is_subclass_of($plugin, "WikiPlugin")) {
+            return $this->_error(sprintf(
+                _("%s: not a subclass of WikiPlugin."),
+                $plugin_class
+            ));
+        }
 
         $plugin->_pi = $pi;
         return $plugin;
     }
 
-    function _plugin_error_filter ($err) {
-        if (preg_match("/Failed opening '.*' for inclusion/", $err->errstr))
+    function _plugin_error_filter($err)
+    {
+        if (preg_match("/Failed opening '.*' for inclusion/", $err->errstr)) {
             return true;        // Ignore this error --- it's expected.
+        }
         return false;
     }
 
-    function getErrorDetail() {
+    function getErrorDetail()
+    {
         return $this->_errors;
     }
 
-    function _error($message) {
+    function _error($message)
+    {
         $this->_errors = $message;
         return false;
     }
@@ -570,4 +646,3 @@ class WikiPluginLoader {
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

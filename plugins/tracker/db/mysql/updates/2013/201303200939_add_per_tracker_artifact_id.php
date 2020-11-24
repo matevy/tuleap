@@ -18,17 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201303200939_add_per_tracker_artifact_id extends ForgeUpgrade_Bucket {
+class b201303200939_add_per_tracker_artifact_id extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'add per tracker artifact id.';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE `tracker_artifact`
 					ADD COLUMN `per_tracker_artifact_id` INT(11) NOT NULL;";
         $result = $this->db->dbh->exec($sql);
@@ -55,11 +59,9 @@ SET per_tracker_artifact_id = numbered_ids.RowNumber;";
 
          $result = $this->db->dbh->exec($sql);
 
-         if ($result === false) {
+        if ($result === false) {
             $error_message = implode(', ', $this->db->dbh->errorInfo());
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($error_message);
         }
     }
-
 }
-?>

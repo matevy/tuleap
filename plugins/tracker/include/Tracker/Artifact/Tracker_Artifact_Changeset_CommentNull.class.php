@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_Changeset_CommentNull extends Tracker_Artifact_Changeset_Comment {
+class Tracker_Artifact_Changeset_CommentNull extends Tracker_Artifact_Changeset_Comment
+{
 
-    public function __construct(Tracker_Artifact_Changeset $changeset) {
+    public function __construct(Tracker_Artifact_Changeset $changeset)
+    {
         parent::__construct(
             0,
             $changeset,

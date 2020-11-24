@@ -17,7 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class SVN_Svnlook_getDirectoryListingTest extends TuleapTestCase {
+class SVN_Svnlook_getDirectoryListingTest extends TuleapTestCase
+{
 
     private $svn_prefix;
     private $svnrepo;
@@ -25,7 +26,8 @@ class SVN_Svnlook_getDirectoryListingTest extends TuleapTestCase {
     private $svnlook;
 
     // Use of construct/destruct to save time (avoid destruction and recreate of svn repo each time)
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->svn_prefix = $this->tempdir();
         $project_name = 'svnrepo';
@@ -38,35 +40,41 @@ class SVN_Svnlook_getDirectoryListingTest extends TuleapTestCase {
     }
 
     // We cannot use parent::getTmpDir() else the svn_prefix folder will be wiped during the teardown
-    private function tempdir() {
+    private function tempdir()
+    {
         return trim(`mktemp -d -p /tmp svn_tests_XXXXXX`);
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         exec("/bin/rm -rf $this->svn_prefix");
     }
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->svnlook = new SVN_Svnlook();
     }
 
-    public function itGetADirectoryContents() {
+    public function itGetADirectoryContents()
+    {
         $tags = $this->svnlook->getDirectoryListing($this->project, '/tags');
         $tags = array_values($tags);
         $tags = sort($tags);
         $this->assertEqual($tags, array('1.0', '2.0'));
     }
 
-    public function itGetsTheTree() {
+    public function itGetsTheTree()
+    {
         $tree = $this->svnlook->getTree($this->project);
 
         $expected = array('/', 'tags/', 'tags/2.0/', 'tags/1.0/');
 
-        $this->assertEqual($expected, $tree);
+        $this->assertEqual(sort($expected), sort($tree));
     }
 
-    public function itGetsHistoryOfAPath() {
+    public function itGetsHistoryOfAPath()
+    {
         $this->assertEqual(
             $this->svnlook->getPathLastHistory($this->project, '/tags'),
             array(
@@ -77,7 +85,8 @@ class SVN_Svnlook_getDirectoryListingTest extends TuleapTestCase {
         );
     }
 
-    public function itGetsTheLogForARevision() {
+    public function itGetsTheLogForARevision()
+    {
         $expected_message = 'this is 1.0';
         $log = $this->svnlook->getInfo($this->project, 1);
         $this->assertCount($log, 4);
@@ -93,4 +102,3 @@ class SVN_Svnlook_getDirectoryListingTest extends TuleapTestCase {
         $this->assertEqual(date('Y-m-d'), date('Y-m-d', $log_timestamp));
     }
 }
-?>

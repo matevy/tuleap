@@ -18,24 +18,27 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_Changeset_ChangesetDataInitializator {
+class Tracker_Artifact_Changeset_ChangesetDataInitializator
+{
 
     /**
      * @var Tracker_FormElementFactory
      */
     private $formelement_factory;
 
-    public function __construct(Tracker_FormElementFactory $formelement_factory) {
+    public function __construct(Tracker_FormElementFactory $formelement_factory)
+    {
         $this->formelement_factory = $formelement_factory;
     }
 
-    public function process(Tracker_Artifact $artifact, array $fields_data) {
+    public function process(Tracker_Artifact $artifact, array $fields_data)
+    {
         $tracker_data = array();
 
         //only when a previous changeset exists
-        if(! $artifact->getLastChangeset() instanceof Tracker_Artifact_Changeset_Null) {
+        if (! $artifact->getLastChangeset() instanceof Tracker_Artifact_Changeset_Null) {
             foreach ($artifact->getLastChangeset()->getValues() as $key => $field) {
-                if ($field instanceof Tracker_Artifact_ChangesetValue_Date || $field instanceof Tracker_Artifact_ChangesetValue_List){
+                if ($field instanceof Tracker_Artifact_ChangesetValue_Date || $field instanceof Tracker_Artifact_ChangesetValue_List) {
                     $tracker_data[$key] = $field->getValue();
                 }
             }

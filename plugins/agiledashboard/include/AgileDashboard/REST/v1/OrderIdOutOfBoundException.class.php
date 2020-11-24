@@ -19,11 +19,13 @@
 
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use \Exception;
+use Exception;
 
-class OrderIdOutOfBoundException extends Exception {
+class OrderIdOutOfBoundException extends Exception
+{
 
-    public function __construct($wrong_id) {
+    public function __construct($wrong_id)
+    {
         parent::__construct('Submitted id ' . $wrong_id . ' is not part of the set to order');
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -55,9 +55,6 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
           $%x';
 
     /** @var string */
-    private $standard_index_pattern = '%^/plugins/git/\?group_id=(?P<project_id>\d+)$%x';
-
-    /** @var string */
     private $uri;
 
     /** @var bool **/
@@ -108,18 +105,21 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
     /**
      * @return GitRepository|null
      */
-    public function getRepository() {
+    public function getRepository()
+    {
         return $this->repository;
     }
 
     /**
      * @return string
      */
-    public function getParameters() {
+    public function getParameters()
+    {
         return isset($this->matches['parameters']) ? $this->matches['parameters'] : '';
     }
 
-    private function setIsFriendly() {
+    private function setIsFriendly()
+    {
         if (! preg_match($this->friendly_url_pattern, $this->uri, $this->matches)) {
             return;
         }
@@ -135,7 +135,8 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
         $this->is_friendly = true;
     }
 
-    private function setIsStandard() {
+    private function setIsStandard()
+    {
         if (! preg_match($this->standard_url_pattern, $this->uri, $this->matches)) {
             return;
         }
@@ -148,7 +149,8 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
         $this->is_standard = true;
     }
 
-    private function setIsSmartHTTP() {
+    private function setIsSmartHTTP()
+    {
         $uri = $this->uri;
         $params_position = strpos($uri, '?');
         if ($params_position !== false) {
@@ -180,11 +182,13 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
         $this->is_smart_http = true;
     }
 
-    public function getPathInfo() {
+    public function getPathInfo()
+    {
         return $this->path_info;
     }
 
-    public function getQueryString() {
+    public function getQueryString()
+    {
         return $this->query_string;
     }
 
@@ -201,7 +205,8 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
     /**
      * @return GitRepository|null
      */
-    private function getRepositoryFromStandardURL() {
+    private function getRepositoryFromStandardURL()
+    {
         $repository_id          = $this->matches['repository_id'];
         $repository_id_is_a_int = preg_match('/^([0-9]+)$/', $repository_id);
 
@@ -219,7 +224,8 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
     /**
      * @return Project
      */
-    private function getProjectFromStandardURL() {
+    private function getProjectFromStandardURL()
+    {
         return $this->project_manager->getProject($this->matches['project_id']);
     }
 
@@ -231,8 +237,6 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
         $action_type = $request->get('a');
         return $request->get('noheader') == 1 ||
             $action_type === 'snapshot' ||
-            $action_type === 'atom' ||
-            $action_type === 'rss' ||
             $action_type === 'commitdiff_plain' ||
             $action_type === 'blob_plain';
     }

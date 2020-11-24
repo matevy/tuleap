@@ -25,14 +25,16 @@
 require_once 'bootstrap.php';
 
 
-class ApprovalTableNotificationCycleTest extends TuleapTestCase {
+class ApprovalTableNotificationCycleTest extends TuleapTestCase
+{
 
     /**
      * first:  approve
      * second: reject
      * last: approve
      */
-    function testGetTableStateReject() {
+    function testGetTableStateReject()
+    {
         $reviewers[0] = \Mockery::spy(Docman_ApprovalReviewer::class);
         $reviewers[0]->shouldReceive('getState')->andReturns(PLUGIN_DOCMAN_APPROVAL_STATE_APPROVED);
 
@@ -58,7 +60,8 @@ class ApprovalTableNotificationCycleTest extends TuleapTestCase {
      * second: notyet
      * last: approve
      */
-    function testGetTableStateNotYet() {
+    function testGetTableStateNotYet()
+    {
         $reviewers[0] = \Mockery::spy(Docman_ApprovalReviewer::class);
         $reviewers[0]->shouldReceive('getState')->andReturns(PLUGIN_DOCMAN_APPROVAL_STATE_APPROVED);
 
@@ -84,7 +87,8 @@ class ApprovalTableNotificationCycleTest extends TuleapTestCase {
      * second: will not review
      * last: approve
      */
-    function testGetTableStateWillNotReview() {
+    function testGetTableStateWillNotReview()
+    {
         $reviewers[0] = \Mockery::spy(Docman_ApprovalReviewer::class);
         $reviewers[0]->shouldReceive('getState')->andReturns(PLUGIN_DOCMAN_APPROVAL_STATE_APPROVED);
 
@@ -116,5 +120,4 @@ class ApprovalTableNotificationCycleTest extends TuleapTestCase {
         $withComments = "";
         $cycle->reviewerApprove($reviewer, $isLastReviewer, $withComments);
     }
-
 }

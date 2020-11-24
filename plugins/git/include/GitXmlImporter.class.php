@@ -162,7 +162,7 @@ class GitXmlImporter
      * @var Project
      * @var SimpleXMLElement
      * @var String
-     * @return boolean
+     * @return bool
      */
     public function import(
         ImportConfig $configuration,
@@ -172,7 +172,7 @@ class GitXmlImporter
         $extraction_path
     ) {
         $xml_git = $xml_input->git;
-        if(!$xml_git) {
+        if (!$xml_git) {
             $this->logger->debug('No git node found into xml.');
             return true;
         }
@@ -180,7 +180,7 @@ class GitXmlImporter
         $nb_repo = count($xml_git->repository);
         $this->logger->debug("Found $nb_repo repository(ies) to import.");
 
-        foreach($xml_git->repository as $repository) {
+        foreach ($xml_git->repository as $repository) {
             $this->importRepository($configuration, $project, $creator, $repository, $extraction_path);
         }
 
@@ -210,6 +210,7 @@ class GitXmlImporter
         $extraction_path
     ) {
         $repository_info = $repository_xmlnode->attributes();
+        assert($repository_info !== null);
         $this->logger->debug("Importing {$repository_info['name']} using {$repository_info['bundle-path']}");
         $description = isset($repository_info['description']) ? (string) $repository_info['description'] : GitRepository::DEFAULT_DESCRIPTION;
         $repository = $this->repository_factory->buildRepository($project, $repository_info['name'], $creator, $this->gitolite_backend, $description);
@@ -346,7 +347,7 @@ class GitXmlImporter
     ) {
         $ugroup_ids = $this->xml_ugroup_retriever->getUgroupIdsForPermissionNode($project, $permission_xmlnode);
 
-        if(!empty($ugroup_ids)) {
+        if (!empty($ugroup_ids)) {
             $this->permission_manager->savePermissions($project, $repository->getId(), $permission_type, $ugroup_ids);
         }
     }
@@ -397,6 +398,7 @@ class GitXmlImporter
             (int)$push_informations['commits_number'],
             $push_informations['refname'],
             $push_informations['operation_type'],
-            $push_informations['refname_type']);
+            $push_informations['refname_type']
+        );
     }
 }

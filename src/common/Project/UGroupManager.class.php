@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2011-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -15,22 +15,26 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Tuleap; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
 use Tuleap\DB\DBFactory;
 use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\Project\Admin\ProjectUGroup\CannotAddRestrictedUserToProjectNotAllowingRestricted;
-use Tuleap\Project\Admin\ProjectUGroup\DynamicUGroupMembersUpdater;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\DynamicUGroupMembersUpdater;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdder;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithoutStatusCheckAndNotifications;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithStatusCheckAndNotifications;
 use Tuleap\Project\UserPermissionsDao;
 use Tuleap\Project\UserRemover;
 use Tuleap\Project\UserRemoverDao;
 use Tuleap\User\UserGroup\NameTranslator;
 
-require_once('www/include/account.php');
+require_once __DIR__ . '/../../www/include/account.php';
 
-class UGroupManager {
+class UGroupManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
+{
+    private const FAKE_PROJECT_ID_FOR_DYNAMIC_GROUPS = 100;
 
     /**
      * @var UGroupDao
@@ -50,27 +54,42 @@ class UGroupManager {
      * @var DynamicUGroupMembersUpdater
      */
     private $dynamic_ugroup_members_updater;
+    /**
+     * @var ProjectMemberAdder|null
+     */
+    private $project_member_adder;
 
     public function __construct(
         ?UGroupDao $dao = null,
         ?EventManager $event_manager = null,
         ?UGroupUserDao $ugroup_user_dao = null,
-        ?DynamicUGroupMembersUpdater $dynamic_ugroup_members_updater = null
+        ?DynamicUGroupMembersUpdater $dynamic_ugroup_members_updater = null,
+        ?ProjectMemberAdder $project_member_adder = null
     ) {
         $this->dao                            = $dao;
         $this->event_manager                  = $event_manager;
         $this->ugroup_user_dao                = $ugroup_user_dao;
         $this->dynamic_ugroup_members_updater = $dynamic_ugroup_members_updater;
+        $this->project_member_adder           = $project_member_adder;
     }
 
     /**
      * @return UGroupUserDao
      */
-    private function getUGroupUserDao(){
-        if(empty($this->ugroup_user_dao)) {
+    private function getUGroupUserDao()
+    {
+        if (empty($this->ugroup_user_dao)) {
             $this->ugroup_user_dao = new UGroupUserDao();
         }
         return $this->ugroup_user_dao;
+    }
+
+    private function getProjectMemberAdder() : ProjectMemberAdder
+    {
+        if (! $this->project_member_adder) {
+            $this->project_member_adder = ProjectMemberAdderWithStatusCheckAndNotifications::build();
+        }
+        return $this->project_member_adder;
     }
 
     /**
@@ -80,7 +99,8 @@ class UGroupManager {
      *
      * @return ProjectUGroup
      */
-    public function getUGroupWithMembers(Project $project, $ugroup_id) {
+    public function getUGroupWithMembers(Project $project, $ugroup_id)
+    {
         $ugroup = $this->getUGroup($project, $ugroup_id);
 
         if (! $ugroup) {
@@ -93,20 +113,42 @@ class UGroupManager {
     }
 
     /**
-     * @return ProjectUGroup of the given project or null if not found
+     * @return ProjectUGroup|null
      */
-    public function getUGroup(Project $project, $ugroup_id) {
+    public function getUGroup(Project $project, $ugroup_id)
+    {
         $project_id = $project->getID();
         if ($ugroup_id <= 100) {
-            $project_id = 100;
+            $project_id = self::FAKE_PROJECT_ID_FOR_DYNAMIC_GROUPS;
         }
-
 
         $row = $this->getDao()->searchByGroupIdAndUGroupId($project_id, $ugroup_id)->getRow();
 
         if ($row) {
             return $this->instanciateGroupForProject($project, $row);
         }
+
+        return null;
+    }
+
+    /**
+     * @param Project $project
+     * @return ProjectUGroup
+     */
+    public function getProjectAdminsUGroup(Project $project)
+    {
+        $row = $this->getDao()->searchByGroupIdAndUGroupId(self::FAKE_PROJECT_ID_FOR_DYNAMIC_GROUPS, ProjectUGroup::PROJECT_ADMIN)->getRow();
+        return $this->instanciateGroupForProject($project, $row);
+    }
+
+    /**
+     * @param Project $project
+     * @return ProjectUGroup
+     */
+    public function getProjectMembersUGroup(Project $project)
+    {
+        $row = $this->getDao()->searchByGroupIdAndUGroupId(self::FAKE_PROJECT_ID_FOR_DYNAMIC_GROUPS, ProjectUGroup::PROJECT_MEMBERS)->getRow();
+        return $this->instanciateGroupForProject($project, $row);
     }
 
     /**
@@ -118,14 +160,18 @@ class UGroupManager {
             $this->dynamic_ugroup_members_updater = new DynamicUGroupMembersUpdater(
                 new UserPermissionsDao(),
                 new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
-                new UGroupBinding($this->getUGroupUserDao(), $this),
+                ProjectMemberAdderWithStatusCheckAndNotifications::build(),
                 $this->getEventManager()
             );
         }
         return $this->dynamic_ugroup_members_updater;
     }
 
-    public function instanciateGroupForProject(Project $project, array $row) {
+    /**
+     * @return ProjectUGroup
+     */
+    public function instanciateGroupForProject(Project $project, array $row)
+    {
         // force group_id as it is set to 100 for dynamic groups
         $row['group_id'] = $project->getID();
         return new ProjectUGroup($row);
@@ -138,7 +184,8 @@ class UGroupManager {
      * @param array $excluded_ugroups_id
      * @return ProjectUGroup[]
      */
-    public function getUGroups(Project $project, array $excluded_ugroups_id = array()) {
+    public function getUGroups(Project $project, array $excluded_ugroups_id = array())
+    {
         $ugroups = array();
         foreach ($this->getDao()->searchDynamicAndStaticByGroupId($project->getId()) as $row) {
             if (in_array($row['ugroup_id'], $excluded_ugroups_id)) {
@@ -182,7 +229,8 @@ class UGroupManager {
     /**
      * @return array of projectUGroup indexed by their id
      */
-    public function getUgroupsById(Project $project){
+    public function getUgroupsById(Project $project)
+    {
         $ugroups = array();
         foreach ($this->getDao()->searchDynamicAndStaticByGroupId($project->getId()) as $row) {
             $ug = $this->instanciateGroupForProject($project, $row);
@@ -194,7 +242,8 @@ class UGroupManager {
     /**
      * @return ProjectUGroup[]
      */
-    public function getStaticUGroups(Project $project) {
+    public function getStaticUGroups(Project $project)
+    {
         $ugroups = array();
         foreach ($this->getDao()->searchStaticByGroupId($project->getId()) as $row) {
             $ugroups[] = $this->instanciateGroupForProject($project, $row);
@@ -205,13 +254,14 @@ class UGroupManager {
     /**
      * @return ProjectUGroup
      */
-    public function getUGroupByName(Project $project, $name) {
+    public function getUGroupByName(Project $project, $name)
+    {
         $row = $this->getDao()->searchByGroupIdAndName($project->getID(), $name)->getRow();
         if (! $row && preg_match('/^ugroup_.*_key$/', $name)) {
-            $row = $this->getDao()->searchByGroupIdAndName(100, $name)->getRow();
+            $row = $this->getDao()->searchByGroupIdAndName(self::FAKE_PROJECT_ID_FOR_DYNAMIC_GROUPS, $name)->getRow();
         }
         if (! $row && in_array($this->getUnormalisedName($name), NameTranslator::$names)) {
-            $row = $this->getDao()->searchByGroupIdAndName(100, $this->getUnormalisedName($name))->getRow();
+            $row = $this->getDao()->searchByGroupIdAndName(self::FAKE_PROJECT_ID_FOR_DYNAMIC_GROUPS, $this->getUnormalisedName($name))->getRow();
         }
         if (! $row && $ugroup = $this->getDynamicUGoupByName($project, $name)) {
             return $ugroup;
@@ -222,13 +272,17 @@ class UGroupManager {
         return null;
     }
 
-    public function getDynamicUGoupIdByName($name) {
+    public function getDynamicUGoupIdByName($name)
+    {
         return array_search($name, ProjectUGroup::$normalized_names);
     }
 
-    public function getDynamicUGoupByName(Project $project, $name) {
+    public function getDynamicUGoupByName(Project $project, $name)
+    {
         $ugroup_id = $this->getDynamicUGoupIdByName($name);
-        if(empty($ugroup_id)) { return null; }
+        if (empty($ugroup_id)) {
+            return null;
+        }
         return new ProjectUGroup(array(
             'ugroup_id' => $ugroup_id,
             'name'      => $name,
@@ -236,11 +290,13 @@ class UGroupManager {
         ));
     }
 
-    private function getUnormalisedName($name) {
+    private function getUnormalisedName($name)
+    {
         return 'ugroup_'.$name.'_name_key';
     }
 
-    public function getLabel($group_id, $ugroup_id) {
+    public function getLabel($group_id, $ugroup_id)
+    {
         $row = $this->getDao()->searchNameByGroupIdAndUGroupId($group_id, $ugroup_id)->getRow();
         if (! $row) {
             return '';
@@ -256,7 +312,8 @@ class UGroupManager {
      *
      * @return ProjectUGroup[]
      */
-    public function getByUserId($user) {
+    public function getByUserId($user)
+    {
         $ugroups = array();
         $dar     = $this->getDao()->searchByUserId($user->getId());
 
@@ -272,11 +329,12 @@ class UGroupManager {
     /**
      * Returns a ProjectUGroup from its Id
      *
-     * @param Integer $ugroupId The UserGroupId
+     * @param int $ugroupId The UserGroupId
      *
      * @return ProjectUGroup
      */
-    public function getById($ugroupId) {
+    public function getById($ugroupId)
+    {
         $dar = $this->getDao()->searchByUGroupId($ugroupId);
         if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
             return new ProjectUGroup($dar->getRow());
@@ -290,7 +348,8 @@ class UGroupManager {
      *
      * @return UGroupDao
      */
-    public function getDao() {
+    public function getDao()
+    {
         if (!$this->dao) {
             $this->dao = new UGroupDao();
         }
@@ -302,7 +361,8 @@ class UGroupManager {
      *
      * @return EventManager
      */
-    private function getEventManager() {
+    private function getEventManager()
+    {
         if (! $this->event_manager) {
             $this->event_manager = EventManager::instance();
         }
@@ -312,12 +372,13 @@ class UGroupManager {
     /**
      * Get Dynamic ugroups members
      *
-     * @param Integer $ugroupId Id of the ugroup
-     * @param Integer $groupId  Id of the project
+     * @param int $ugroupId Id of the ugroup
+     * @param int $groupId Id of the project
      *
      * @return array of User
      */
-    public function getDynamicUGroupsMembers($ugroupId, $groupId) {
+    public function getDynamicUGroupsMembers($ugroupId, $groupId)
+    {
         if ($ugroupId > 100) {
             return array();
         }
@@ -337,9 +398,10 @@ class UGroupManager {
      * @param PFUSer $user
      * @param int $ugroup_id
      * @param int $group_id
-     * @return boolean
+     * @return bool
      */
-    public function isDynamicUGroupMember(PFUSer $user, $ugroup_id, $group_id) {
+    public function isDynamicUGroupMember(PFUSer $user, $ugroup_id, $group_id)
+    {
         $dao = $this->getUGroupUserDao();
 
         return $dao->isDynamicUGroupMember($user->getId(), $ugroup_id, $group_id);
@@ -348,11 +410,12 @@ class UGroupManager {
     /**
      * Check if update users is allowed for a given user group
      *
-     * @param Integer $ugroupId Id of the user group
+     * @param int $ugroupId Id of the user group
      *
-     * @return boolean
+     * @return bool
      */
-    public function isUpdateUsersAllowed($ugroupId) {
+    public function isUpdateUsersAllowed($ugroupId)
+    {
         $ugroupUpdateUsersAllowed = true;
         $this->getEventManager()->processEvent(Event::UGROUP_UPDATE_USERS_ALLOWED, array('ugroup_id' => $ugroupId, 'allowed' => &$ugroupUpdateUsersAllowed));
         return $ugroupUpdateUsersAllowed;
@@ -361,23 +424,25 @@ class UGroupManager {
     /**
      * Wrapper for dao method that checks if the user group is valid
      *
-     * @param Integer $groupId  Id of the project
-     * @param Integer $ugroupId Id of the user goup
+     * @param int $groupId Id of the project
+     * @param int $ugroupId Id of the user goup
      *
-     * @return boolean
+     * @return bool
      */
-    public function checkUGroupValidityByGroupId($groupId, $ugroupId) {
+    public function checkUGroupValidityByGroupId($groupId, $ugroupId)
+    {
         return $this->getDao()->checkUGroupValidityByGroupId($groupId, $ugroupId);
     }
 
     /**
      * Wrapper for dao method that retrieves all Ugroups bound to a given ProjectUGroup
      *
-     * @param Integer $ugroupId Id of the user goup
+     * @param int $ugroupId Id of the user goup
      *
      * @return DataAccessResult
      */
-    public function searchUGroupByBindingSource($ugroupId) {
+    public function searchUGroupByBindingSource($ugroupId)
+    {
         return $this->getDao()->searchUGroupByBindingSource($ugroupId);
     }
 
@@ -392,12 +457,13 @@ class UGroupManager {
     /**
      * Wrapper for dao method that updates binding option for a given ProjectUGroup
      *
-     * @param Integer $ugroup_id Id of the user group
-     * @param Integer $source_ugroup_id Id of the user group we should bind to
+     * @param int $ugroup_id Id of the user group
+     * @param int $source_ugroup_id Id of the user group we should bind to
      *
-     * @return Boolean
+     * @return bool
      */
-    public function updateUgroupBinding($ugroup_id, $source_ugroup_id = null) {
+    public function updateUgroupBinding($ugroup_id, $source_ugroup_id = null)
+    {
         $ugroup = $this->getById($ugroup_id);
         if ($source_ugroup_id === null) {
             $this->getEventManager()->processEvent(
@@ -422,11 +488,12 @@ class UGroupManager {
     /**
      * Wrapper to retrieve the source user group from a given bound ugroup id
      *
-     * @param Integer $ugroupId The source ugroup id
+     * @param int $ugroupId The source ugroup id
      *
      * @return DataAccessResult
      */
-    public function getUgroupBindingSource($ugroupId) {
+    public function getUgroupBindingSource($ugroupId)
+    {
         $dar = $this->getDao()->getUgroupBindingSource($ugroupId);
         if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
             return new ProjectUGroup($dar->getRow());
@@ -440,19 +507,21 @@ class UGroupManager {
      *
      * @return UserGroupDao
      */
-    public function getUserGroupDao() {
+    public function getUserGroupDao()
+    {
         return new UserGroupDao();
     }
 
     /**
      * Return name and id of all ugroups belonging to a specific project
      *
-     * @param Integer $groupId    Id of the project
+     * @param int $groupId Id of the project
      * @param Array   $predefined List of predefined ugroup id
      *
      * @return DataAccessResult
      */
-    public function getExistingUgroups($groupId, $predefined = null) {
+    public function getExistingUgroups($groupId, $predefined = null)
+    {
         $dar = $this->getUserGroupDao()->getExistingUgroups($groupId, $predefined);
         if ($dar && !$dar->isError()) {
             return $dar;
@@ -463,7 +532,8 @@ class UGroupManager {
     /**
      * @throws \Tuleap\Project\Admin\ProjectUGroup\CannotCreateUGroupException
      */
-    public function createEmptyUgroup($project_id, $ugroup_name, $ugroup_description) {
+    public function createEmptyUgroup($project_id, $ugroup_name, $ugroup_description)
+    {
         return ugroup_create($project_id, $ugroup_name, $ugroup_description, "cx_empty");
     }
 
@@ -493,21 +563,24 @@ class UGroupManager {
     /**
      * @return array
      */
-    private function getUgroupMembers(ProjectUGroup $user_group) {
+    private function getUgroupMembers(ProjectUGroup $user_group)
+    {
         $members = array();
 
-        foreach ($user_group->getMembersIncludingSuspended() as $member) {
+        foreach ($user_group->getMembersIncludingSuspendedAndDeleted() as $member) {
             $members[] = $member;
         }
 
         return $members;
     }
 
-    private function getUsersToRemove(array $current_members, array $users_from_references) {
+    private function getUsersToRemove(array $current_members, array $users_from_references)
+    {
         return array_diff($current_members, $users_from_references);
     }
 
-    private function getUsersToAdd(array $current_members, array $users_from_references) {
+    private function getUsersToAdd(array $current_members, array $users_from_references)
+    {
         return array_diff($users_from_references, $current_members);
     }
 
@@ -519,9 +592,7 @@ class UGroupManager {
     {
         switch ((int) $user_group->getId()) {
             case ProjectUGroup::PROJECT_MEMBERS:
-                $send_notifications = true;
-                $check_user_status  = true;
-                account_add_user_obj_to_group($user_group->getProjectId(), $user, $check_user_status, $send_notifications);
+                $this->getProjectMemberAdder()->addProjectMember($user, $user_group->getProject());
                 break;
             case ProjectUGroup::PROJECT_ADMIN:
                 $this->getDynamicUGroupMembersUpdater()->addUser($user_group->getProject(), $user_group, $user);

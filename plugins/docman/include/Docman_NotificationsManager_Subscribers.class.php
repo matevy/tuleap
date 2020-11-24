@@ -1,5 +1,6 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2011 - present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2011. All Rights Reserved.
  *
  * This file is a part of Tuleap.
@@ -21,7 +22,8 @@
 
 require_once('Docman_NotificationsManager.class.php');
 
-class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManager {
+class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManager
+{
 
     public const MESSAGE_ADDED = 'added'; // X has been added to monitoring list
     public const MESSAGE_REMOVED = 'removed'; // X has been removed from monitoring list
@@ -34,7 +36,8 @@ class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManage
      *
      * @return void
      */
-    function somethingHappen($event, $params) {
+    function somethingHappen($event, $params)
+    {
         $um = $this->_getUserManager();
         $users = new ArrayIterator($params['listeners']);
         if ($users) {
@@ -59,20 +62,33 @@ class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManage
     *
     * @return void
     */
-    function _buildMessage($event, $params, $user) {
+    function _buildMessage($event, $params, $user)
+    {
         $type = '';
-        switch($event) {
-        case 'plugin_docman_add_monitoring':
-            $type = self::MESSAGE_ADDED;
-            $subject = $GLOBALS['Language']->getText('plugin_docman', 'notifications_added_to_monitoring_list_subject', array($params['item']->getTitle()));
-            break;
-        case 'plugin_docman_remove_monitoring':
-            $type = self::MESSAGE_REMOVED;
-            $subject = $GLOBALS['Language']->getText('plugin_docman', 'notifications_removed_from_monitoring_list_subject', array($params['item']->getTitle()));
-            break;
-        default:
-            $subject = $params['item']->getTitle();
-            break;
+        switch ($event) {
+            case 'plugin_docman_add_monitoring':
+                $type = self::MESSAGE_ADDED;
+                $subject = sprintf(
+                    dgettext(
+                        'tuleap-docman',
+                        "You were added to '%s' monitoring list"
+                    ),
+                    $params['item']->getTitle()
+                );
+                break;
+            case 'plugin_docman_remove_monitoring':
+                $type = self::MESSAGE_REMOVED;
+                $subject = sprintf(
+                    dgettext(
+                        'tuleap-docman',
+                        "You were removed from '%s' monitoring list"
+                    ),
+                    $params['item']->getTitle()
+                );
+                break;
+            default:
+                $subject = $params['item']->getTitle();
+                break;
         }
         $this->_addMessage(
             $user,
@@ -91,43 +107,49 @@ class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManage
     *
     * @return String
     */
-    function _getMessageForUser($user, $message_type, $params) {
+    function _getMessageForUser($user, $message_type, $params)
+    {
         $msg = '';
         $separator = "\n\n--------------------------------------------------------------------\n";
         $itemUrl = $this->getMessageLink($message_type, $params);
-        switch($message_type) {
-        case self::MESSAGE_ADDED:
-            $msg .= $GLOBALS['Language']->getText('plugin_docman', 'notifications_added_to_monitoring_list')."\n";
-            $msg .= $itemUrl;
-            $msg .= $separator;
-            $msg .= $GLOBALS['Language']->getText('plugin_docman', 'notif_footer_message_link')."\n";
-            break;
-        case self::MESSAGE_REMOVED:
-            $msg .= $GLOBALS['Language']->getText('plugin_docman', 'notifications_removed_from_monitoring_list')."\n";
-            $msg .= $itemUrl;
-            $msg .= $separator;
-            $msg .= $GLOBALS['Language']->getText('plugin_docman', 'notif_footer_message_restore_link')."\n";
-            break;
-        default:
-            $msg .= $GLOBALS['Language']->getText('plugin_docman', 'notif_something_happen')."\n";
-            break;
+        switch ($message_type) {
+            case self::MESSAGE_ADDED:
+                $msg .= dgettext(
+                    'tuleap-docman',
+                    "You are receiving this message because you were added to the monitoring list of this item:"
+                )."\n";
+                $msg .= $itemUrl;
+                $msg .= $separator;
+                $msg .= dgettext('tuleap-docman', 'To stop monitoring, please visit:')."\n";
+                break;
+            case self::MESSAGE_REMOVED:
+                $msg .= dgettext(
+                    'tuleap-docman',
+                    "You are receiving this message because you were removed from the monitoring list of this item:"
+                )."\n";
+                $msg .= $itemUrl;
+                $msg .= $separator;
+                $msg .= dgettext('tuleap-docman', 'To restore monitoring, please visit:')."\n";
+                break;
+            default:
+                $msg .= dgettext('tuleap-docman', 'Something happen!')."\n";
+                break;
         }
-        $msg .= $this->_url .'&action=details&section=notifications&id='. $params['item']->getId();
+        $msg .= $this->getUrlProvider()->getNotificationLinkUrl($params['item']);
         return $msg;
     }
 
-    protected function getMessageLink($type, $params) {
+    protected function getMessageLink($type, $params)
+    {
         switch ($type) {
             case self::MESSAGE_ADDED:
             case self::MESSAGE_REMOVED:
-                $link = $this->_url .'&action=show&id='. $params['item']->getId();
+                $link = $this->getUrlProvider()->getShowLinkUrl($params['item']);
                 break;
             default:
-                $link = $this->_url;
+                $link = $this->getUrlProvider()->getPluginLinkUrl();
                 break;
         }
         return $link;
     }
 }
-
-?>

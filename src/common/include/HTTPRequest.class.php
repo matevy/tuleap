@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2017. All rights reserved
+ * Copyright (c) Enalean, 2012-Present. All rights reserved
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,7 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class HTTPRequest extends Codendi_Request {
+class HTTPRequest extends Codendi_Request
+{
 
     public const HEADER_X_FORWARDED_PROTO = 'HTTP_X_FORWARDED_PROTO';
     public const HEADER_X_FORWARDED_FOR   = 'HTTP_X_FORWARDED_FOR';
@@ -34,10 +35,11 @@ class HTTPRequest extends Codendi_Request {
     /**
      * Constructor
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct($_REQUEST);
     }
-    
+
 
     /**
      * Get the value of $variable in $this->params (server side values).
@@ -46,7 +48,8 @@ class HTTPRequest extends Codendi_Request {
      * @return mixed If the variable exist, the value is returned (string)
      * otherwise return false;
      */
-    public function getFromServer($variable) {
+    public function getFromServer($variable)
+    {
         return $this->_get($variable, $_SERVER);
     }
 
@@ -55,17 +58,19 @@ class HTTPRequest extends Codendi_Request {
      *
      * This method is useful to test if the current request comes from a form.
      *
-     * @return boolean
+     * @return bool
      */
-    public function isPost() {
-        if($_SERVER['REQUEST_METHOD'] == 'POST') {
+    public function isPost()
+    {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             return true;
         } else {
             return false;
         }
     }
 
-    public function getBrowser() {
+    public function getBrowser()
+    {
         if ($this->hasUserAgent() && $this->isBrowserInternetExplorerBefore11()) {
             return new BrowserIEDeprecated($this->getCurrentUser());
         }
@@ -73,7 +78,8 @@ class HTTPRequest extends Codendi_Request {
         return new Browser();
     }
 
-    private function isBrowserInternetExplorerBefore11() {
+    private function isBrowserInternetExplorerBefore11()
+    {
         // MSIE string has been removed in IE11
         // see https://msdn.microsoft.com/en-us/library/bg182625(v=vs.85).aspx
         return strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE') !== false;
@@ -94,9 +100,10 @@ class HTTPRequest extends Codendi_Request {
      *
      * @return HTTPRequest
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (!isset(self::$_instance)) {
-            $c = __CLASS__;
+            $c = self::class;
             self::$_instance = new $c;
         }
         return self::$_instance;
@@ -116,34 +123,16 @@ class HTTPRequest extends Codendi_Request {
      * Validate file upload.
      *
      * @param  Valid_File Validator for files.
-     * @return Boolean
+     * @return bool
      */
-    public function validFile(&$validator) {
-        if(is_a($validator, 'Valid_File')) {
+    public function validFile(&$validator)
+    {
+        if (is_a($validator, 'Valid_File')) {
             $this->_validated_input[$validator->getKey()] = true;
             return $validator->validate($_FILES, $validator->getKey());
         } else {
             return false;
         }
-    }
-
-    /**
-     * Remove slashes in $value. If $value is an array, remove slashes for each
-     * element.
-     *
-     * @access private
-     * @param mixed $value
-     * @return mixed
-     */
-    protected function _stripslashes($value) {
-        if (is_string($value)) {
-            $value = stripslashes($value);
-        } else if (is_array($value)) {
-            foreach($value as $key => $val) {
-                $value[$key] = $this->_stripslashes($val);
-            }
-        }
-        return $value;
     }
 
     /**
@@ -154,9 +143,10 @@ class HTTPRequest extends Codendi_Request {
      * @param string $variable Name of the parameter to get.
      * @param array $array Name of the parameter to get.
      */
-    function _get($variable, $array) {
+    function _get($variable, $array)
+    {
         if ($this->_exist($variable, $array)) {
-            return (get_magic_quotes_gpc() ? $this->_stripslashes($array[$variable]) : $array[$variable]);
+            return $array[$variable];
         } else {
             return false;
         }
@@ -165,7 +155,8 @@ class HTTPRequest extends Codendi_Request {
     /**
      * @return bool
      */
-    private function doWeTerminateWithSecureConnection() {
+    private function doWeTerminateWithSecureConnection()
+    {
         return isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on');
     }
 
@@ -174,27 +165,31 @@ class HTTPRequest extends Codendi_Request {
      *
      * @param array $proxies
      */
-    public function setTrustedProxies(array $proxies) {
-        foreach($proxies as $proxy) {
+    public function setTrustedProxies(array $proxies)
+    {
+        foreach ($proxies as $proxy) {
             $this->trusted_proxied[$proxy] = true;
         }
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
-    public function isSecure() {
+    public function isSecure()
+    {
         if ($this->reverseProxyForwardsOriginalProtocol()) {
             return $this->isOriginalProtocolSecure();
         }
         return $this->doWeTerminateWithSecureConnection();
     }
 
-    private function reverseProxyForwardsOriginalProtocol() {
+    private function reverseProxyForwardsOriginalProtocol()
+    {
         return $this->isFromTrustedProxy() && isset($_SERVER[self::HEADER_X_FORWARDED_PROTO]);
     }
 
-    private function isFromTrustedProxy() {
+    private function isFromTrustedProxy()
+    {
         if (isset($_SERVER[self::HEADER_REMOTE_ADDR])) {
             foreach ($this->trusted_proxied as $proxy => $nop) {
                 if ($this->checkIp4($_SERVER[self::HEADER_REMOTE_ADDR], $proxy)) {
@@ -237,12 +232,14 @@ class HTTPRequest extends Codendi_Request {
         return 0 === substr_compare(sprintf('%032b', ip2long($request_ip)), sprintf('%032b', ip2long($address)), 0, $netmask);
     }
 
-    private function isOriginalProtocolSecure() {
+    private function isOriginalProtocolSecure()
+    {
         return strtolower($_SERVER[self::HEADER_X_FORWARDED_PROTO]) === 'https';
     }
 
 
-    private function getScheme() {
+    private function getScheme()
+    {
         if (ForgeConfig::get('sys_https_host') || $this->isSecure()) {
             return 'https://';
         } else {
@@ -261,7 +258,8 @@ class HTTPRequest extends Codendi_Request {
      *
      * @return String Fully qualified URL
      */
-    public function getServerUrl() {
+    public function getServerUrl()
+    {
         if ($this->reverseProxyForwardsOriginalProtocol()) {
             return $this->getScheme().$_SERVER[self::HEADER_HOST];
         } elseif ($this->isSecure() && ForgeConfig::get('sys_https_host')) {
@@ -280,48 +278,12 @@ class HTTPRequest extends Codendi_Request {
      *
      * @return String
      */
-    public function getIPAddress() {
+    public function getIPAddress()
+    {
         if ($this->isFromTrustedProxy() && isset($_SERVER[self::HEADER_X_FORWARDED_FOR])) {
             return $_SERVER[self::HEADER_X_FORWARDED_FOR];
         } else {
             return $_SERVER[self::HEADER_REMOTE_ADDR];
         }
-    }
-
-    /**
-     * Return PATH_INFO content from the env. variables available in FastCGI mode
-     *
-     * In FastCGI we don't have PATH_INFO set automatically. However this value can be computed based on other
-     * variables in the environment. Useful when running the application with php-fpm
-     *
-     * @return string
-     */
-    public function getPathInfoFromFCGI()
-    {
-        $path = $this->stripQueryString(urldecode($this->getFromServer('REQUEST_URI')));
-        $path = $this->stripScriptNameBase($path, $this->getFromServer('SCRIPT_NAME'));
-        return $this->stripScriptName($path, $this->getFromServer('SCRIPT_NAME'));
-    }
-
-    private function stripQueryString($request_uri)
-    {
-        $query_string_start = strpos($request_uri, '?');
-        return substr($request_uri, 0, $query_string_start);
-    }
-
-    private function stripScriptNameBase($request_uri, $script_name)
-    {
-        $script_name_base_end = strlen(dirname($script_name));
-        return substr($request_uri, $script_name_base_end);
-    }
-
-    private function stripScriptName($request_uri, $script_name)
-    {
-        $script_name       = basename($script_name);
-        $script_name_start = strpos($request_uri, '/'.$script_name);
-        if ($script_name_start !== false) {
-            return substr($request_uri, strlen($script_name) + 1);
-        }
-        return $request_uri;
     }
 }

@@ -23,13 +23,16 @@
  *
  */
 
-class Rule_IntTest extends TuleapTestCase {
+class Rule_IntTest extends TuleapTestCase
+{
 
-    function UnitTestCase($name = 'Rule_Int test') {
+    function UnitTestCase($name = 'Rule_Int test')
+    {
         $this->UnitTestCase($name);
     }
 
-    function testIsInteger() {
+    function testIsInteger()
+    {
         $r = new Rule_Int();
 
         $input = '123';
@@ -49,10 +52,10 @@ class Rule_IntTest extends TuleapTestCase {
 
         $input = '0';
         $this->assertTrue($r->isValid($input));
-
     }
 
-    function testFloatingPoint() {
+    function testFloatingPoint()
+    {
         $r = new Rule_Int();
 
         $input = '123.3';
@@ -61,7 +64,8 @@ class Rule_IntTest extends TuleapTestCase {
         $this->assertFalse($r->isValid($input));
     }
 
-    function testStrings() {
+    function testStrings()
+    {
         $r = new Rule_Int();
 
         $input = '123a';
@@ -78,7 +82,8 @@ class Rule_IntTest extends TuleapTestCase {
         $this->assertFalse($r->isValid($input));
     }
 
-    function testOctal() {
+    function testOctal()
+    {
         $r = new Rule_Int();
 
         $input = '0123';
@@ -89,7 +94,8 @@ class Rule_IntTest extends TuleapTestCase {
         $this->assertFalse($r->isValid($input));
     }
 
-    function testIsBigInt() {
+    function testIsBigInt()
+    {
         $r = new Rule_Int();
 
         // 2^31-1
@@ -107,5 +113,4 @@ class Rule_IntTest extends TuleapTestCase {
             $this->assertTrue($r->isValid('-2147483649'));
         }
     }
-
 }

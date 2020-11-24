@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,11 +19,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// phpcs:ignoreFile
-
 use Tuleap\CookieManager;
 use Tuleap\Dashboard\User\AtUserCreationDefaultWidgetsCreator;
 use Tuleap\Dashboard\Widget\DashboardWidgetDao;
+use Tuleap\User\ForgeUserGroupPermission\RESTReadOnlyAdmin\RestReadOnlyAdminPermission;
 use Tuleap\User\InvalidSessionException;
 use Tuleap\User\SessionManager;
 use Tuleap\User\SessionNotCreatedException;
@@ -31,38 +30,40 @@ use Tuleap\User\UserConnectionUpdateEvent;
 use Tuleap\User\UserRetrieverByLoginNameEvent;
 use Tuleap\Widget\WidgetFactory;
 
-class UserManager
+class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
 
     /**
      * User with id lower than 100 are considered specials (siteadmin, null,
      * etc).
      */
-    const SPECIAL_USERS_LIMIT = 100;
+    public const SPECIAL_USERS_LIMIT = 100;
 
-    var $_users           = array();
-    var $_userid_bynames  = array();
-    var $_userid_byldapid = array();
+    public $_users           = array(); // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
+    public $_userid_bynames  = array(); // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
+    public $_userid_byldapid = array(); // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
-    var $_userdao         = null;
-    var $_currentuser     = null;
+    private $_userdao         = null; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
+    private $_currentuser     = null; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
     /**
      * @var User_PendingUserNotifier
      */
     private $pending_user_notifier;
 
-    public function __construct(User_PendingUserNotifier $pending_user_notifier) {
+    public function __construct(User_PendingUserNotifier $pending_user_notifier)
+    {
         $this->pending_user_notifier = $pending_user_notifier;
     }
 
-    protected static $_instance;
+    protected static $_instance; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
     /**
      * @return UserManager
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (!isset(self::$_instance)) {
-            $userManager = __CLASS__;
+            $userManager = self::class;
             self::$_instance = new $userManager(
                 new User_PendingUserNotifier()
             );
@@ -71,18 +72,21 @@ class UserManager
         return self::$_instance;
     }
 
-    public static function setInstance($instance) {
+    public static function setInstance($instance)
+    {
         self::$_instance = $instance;
     }
 
-    public static function clearInstance() {
+    public static function clearInstance()
+    {
         self::$_instance = null;
     }
 
     /**
      * @return UserDao
      */
-    protected function getDao() {
+    protected function getDao()
+    {
         if (! $this->_userdao) {
             $this->_userdao = new UserDao();
         }
@@ -90,11 +94,13 @@ class UserManager
         return $this->_userdao;
     }
 
-    public function setDao(UserDao $dao) {
+    public function setDao(UserDao $dao)
+    {
         $this->_userdao = $dao;
     }
 
-    public function getUserAnonymous() {
+    public function getUserAnonymous()
+    {
         return $this->getUserbyId(0);
     }
 
@@ -103,7 +109,8 @@ class UserManager
      * @param int the user_id of the user to find
      * @return PFUser|null if the user is not found
      */
-    function getUserById($user_id) {
+    public function getUserById($user_id)
+    {
         if (!isset($this->_users[$user_id])) {
             if (is_numeric($user_id)) {
                 if ($user_id == 0) {
@@ -124,7 +131,8 @@ class UserManager
         return $this->_users[$user_id];
     }
 
-    private function getUserByIdWithoutCache($id) {
+    private function getUserByIdWithoutCache($id)
+    {
         $dar = $this->getDao()->searchByUserId($id);
         if (count($dar)) {
             return $this->getUserInstanceFromRow($dar->getRow());
@@ -159,7 +167,8 @@ class UserManager
      * @param string the user_name of the user to find
      * @return PFUser or null if the user is not found
      */
-    function getUserByUserName($user_name) {
+    public function getUserByUserName($user_name)
+    {
         if (!isset($this->_userid_bynames[$user_name])) {
             $dar = $this->getDao()->searchByUserName($user_name);
             if ($row = $dar->getRow()) {
@@ -177,11 +186,13 @@ class UserManager
         return $user;
     }
 
-    public function _getUserInstanceFromRow($row) {
+    public function _getUserInstanceFromRow($row) // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
+    {
         return $this->getUserInstanceFromRow($row);
     }
 
-    public function getUserInstanceFromRow($row) {
+    public function getUserInstanceFromRow($row)
+    {
         if (isset($row['user_id']) && $row['user_id'] < self::SPECIAL_USERS_LIMIT) {
             $user = null;
             EventManager::instance()->processEvent(Event::USER_MANAGER_GET_USER_INSTANCE, array('row' => $row, 'user' => &$user));
@@ -196,8 +207,9 @@ class UserManager
      * @param  string Ldap identifier
      * @return PFUser or null if the user is not found
      */
-    function getUserByLdapId($ldapId) {
-        if($ldapId == null) {
+    public function getUserByLdapId($ldapId)
+    {
+        if ($ldapId == null) {
             return null;
         }
         if (!isset($this->_userid_byldapid[$ldapId])) {
@@ -224,7 +236,8 @@ class UserManager
      *
      * @return PFUser
      */
-    public function findUser($ident) {
+    public function findUser($ident)
+    {
         $user = null;
         if (! $ident) {
             return $user;
@@ -234,8 +247,8 @@ class UserManager
         $this->_getEventManager()->processEvent('user_manager_find_user', $eParams);
         if (!$user) {
             // No valid user found, try an internal lookup for username
-            if(preg_match('/^(.*) \((.*)\)$/', $ident, $matches)) {
-                if(trim($matches[2]) != '') {
+            if (preg_match('/^(.*) \((.*)\)$/', $ident, $matches)) {
+                if (trim($matches[2]) != '') {
                     $ident = $matches[2];
                 } else {
                     //$user  = $this->getUserByCommonName($matches[1]);
@@ -276,8 +289,9 @@ class UserManager
  *
  * @return Array
  */
-    function getUserIdsList($search) {
-        $userArray = explode(',' , $search);
+    public function getUserIdsList($search)
+    {
+        $userArray = explode(',', $search);
         $users = array();
         foreach ($userArray as $user) {
             $user = $this->findUser($user);
@@ -291,7 +305,8 @@ class UserManager
     /**
      * @return PaginatedUserCollection
      */
-    public function getPaginatedUsersByUsernameOrRealname($words, $exact, $offset, $limit) {
+    public function getPaginatedUsersByUsernameOrRealname($words, $exact, $offset, $limit)
+    {
         $users = array();
         foreach ($this->getDao()->searchGlobalPaginated($words, $exact, $offset, $limit) as $user) {
             $users[] = $this->getUserInstanceFromRow($user);
@@ -313,7 +328,8 @@ class UserManager
         return $this->getUserCollectionByEmails([$email])->getUserByEmail($email);
     }
 
-    public function getAllUsersByEmail($email) {
+    public function getAllUsersByEmail($email)
+    {
         $users = array();
         foreach ($this->getDao()->searchByEmail($email) as $user) {
             $users[] = $this->getUserInstanceFromRow($user);
@@ -346,7 +362,8 @@ class UserManager
      *
      * @return PFUser
      */
-    public function getUserByIdentifier($identifier) {
+    public function getUserByIdentifier($identifier)
+    {
         $user = null;
 
         $em = $this->_getEventManager();
@@ -390,7 +407,8 @@ class UserManager
      *
      * @return PFUser
      */
-    public function getUserByConfirmHash($hash) {
+    public function getUserByConfirmHash($hash)
+    {
         $dar = $this->getDao()->searchByConfirmHash($hash);
         if ($dar->rowCount() !== 1) {
             return null;
@@ -399,8 +417,12 @@ class UserManager
         }
     }
 
-    public function setCurrentUser(PFUser $user) {
+    public function setCurrentUser(PFUser $user)
+    {
         $this->_currentuser = $user;
+        $this->_users[$user->getId()] = $user;
+        $this->_userid_bynames[$user->getUserName()] = $user->getId();
+
         return $user;
     }
 
@@ -410,7 +432,8 @@ class UserManager
      *                             else it will check from the user cookies
      * @return PFUser the user currently logged in (who made the request)
      */
-    function getCurrentUser($session_hash = false) {
+    public function getCurrentUser($session_hash = false)
+    {
         if (!isset($this->_currentuser) || $session_hash !== false) {
             if ($session_hash === false) {
                 $session_hash = $this->getCookieManager()->getCookie('session_hash');
@@ -426,7 +449,7 @@ class UserManager
                 } else {
                     $accessInfo = $this->getUserAccessInfo($this->_currentuser);
                     $now = $_SERVER['REQUEST_TIME'];
-                    $break_time = $now - $accessInfo['last_access_date'];
+                    $break_time = $now - ($accessInfo['last_access_date'] ?? 0);
                     //if the access is not later than 6 hours, it is not necessary to log it
                     if ($break_time > ForgeConfig::get('last_access_resolution')) {
                         $this->_getEventManager()->processEvent(new UserConnectionUpdateEvent($this->_currentuser));
@@ -451,14 +474,16 @@ class UserManager
     /**
      * @return Array of User
      */
-    public function getUsersWithSshKey() {
+    public function getUsersWithSshKey()
+    {
         return $this->getDao()->searchSSHKeys()->instanciateWith(array($this, 'getUserInstanceFromRow'));
     }
 
     /**
      * @return PaginatedUserCollection
      */
-    public function getPaginatedUsersWithSshKey($offset, $limit) {
+    public function getPaginatedUsersWithSshKey($offset, $limit)
+    {
         $users = array();
         foreach ($this->getDao()->searchPaginatedSSHKeys($offset, $limit) as $user) {
             $users[] = $this->getUserInstanceFromRow($user);
@@ -482,7 +507,8 @@ class UserManager
         }
     }
 
-    protected function destroySession() {
+    protected function destroySession()
+    {
         $session = new Codendi_Session();
         $session->destroy();
     }
@@ -494,7 +520,8 @@ class UserManager
      *
      * @return Array
      */
-    function getUserAccessInfo($user) {
+    public function getUserAccessInfo($user)
+    {
         return $this->getDao()->getUserAccessInfo($user->getId());
     }
 
@@ -507,7 +534,8 @@ class UserManager
      * @param $allowpending boolean True if pending users are allowed (for verify.php). Default is false
      * @return PFUser Registered user or anonymous if the authentication failed
      */
-    function login($name, $pwd, $allowpending = false) {
+    public function login($name, $pwd, $allowpending = false)
+    {
         try {
             $password_expiration_checker = new User_PasswordExpirationChecker();
             $password_handler            = PasswordHandlerFactory::getPasswordHandler();
@@ -531,30 +559,25 @@ class UserManager
             $password_expiration_checker->checkPasswordLifetime($user);
             $password_expiration_checker->warnUserAboutPasswordExpiration($user);
             $this->warnUserAboutAuthenticationAttempts($user);
+            $this->warnUserAboutAdminReadOnlyPermission($user);
 
             $this->getDao()->storeLoginSuccess($user->getId(), $_SERVER['REQUEST_TIME']);
 
             \Tuleap\User\LoginInstrumentation::increment('success');
             return $this->setCurrentUser($user);
-
         } catch (User_InvalidPasswordWithUserException $exception) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
             $this->getDao()->storeLoginFailure($name, $_SERVER['REQUEST_TIME']);
-
         } catch (User_InvalidPasswordException $exception) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
-
         } catch (User_PasswordExpiredException $exception) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
             $GLOBALS['Response']->redirect('/account/change_pw.php?user_id=' . $exception->getUser()->getId());
-
         } catch (User_StatusInvalidException $exception) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
-
         } catch (SessionNotCreatedException $exception) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
-
-        } catch(User_LoginException $exception) {
+        } catch (User_LoginException $exception) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
         }
 
@@ -565,11 +588,13 @@ class UserManager
     /**
      * @return PFUser
      */
-    private function createAnonymousUser() {
+    private function createAnonymousUser()
+    {
         return $this->_getUserInstanceFromRow(array('user_id' => 0));
     }
 
-    private function openWebSession(PFUser $user) {
+    private function openWebSession(PFUser $user)
+    {
         $session_manager    = $this->getSessionManager();
         $request            = HTTPRequest::instance();
         $session_identifier = $session_manager->createSession($user, $request, $request->getFromServer('REQUEST_TIME'));
@@ -581,7 +606,8 @@ class UserManager
         );
     }
 
-    private function getExpireTimestamp(PFUser $user) {
+    private function getExpireTimestamp(PFUser $user)
+    {
         // If permanent login configured then cookie expires in one year from now
         $expire = 0;
 
@@ -595,7 +621,8 @@ class UserManager
     /**
      * @return Rest_TokenManager
      */
-    protected function getTokenManager() {
+    protected function getTokenManager()
+    {
         $dao = new Rest_TokenDao();
 
         return new Rest_TokenManager(
@@ -615,7 +642,8 @@ class UserManager
      *
      * @param PFUser $user
      */
-    private function warnUserAboutAuthenticationAttempts(PFUser $user) {
+    private function warnUserAboutAuthenticationAttempts(PFUser $user)
+    {
         $access_info = $this->getUserAccessInfo($user);
         $level = 'info';
         if ($access_info['nb_auth_failure'] > 0) {
@@ -629,6 +657,21 @@ class UserManager
         }
     }
 
+    private function warnUserAboutAdminReadOnlyPermission(PFUser $user): void
+    {
+        $permission = new RestReadOnlyAdminPermission();
+
+        if ($this->getForgeUserGroupPermissionsManager()->doesUserHavePermission($user, new RestReadOnlyAdminPermission())) {
+            $GLOBALS['Response']->addFeedback(
+                Feedback::ERROR,
+                sprintf(
+                    _('You should not browse the platform with this user, you may experience inconsistent behaviour (%s)'),
+                    $permission->getName()
+                )
+            );
+        }
+    }
+
     /**
     * loginAs allows the siteadmin to log as someone else
     *
@@ -636,7 +679,8 @@ class UserManager
     *
     * @return string a session hash
     */
-    function loginAs($name) {
+    public function loginAs($name)
+    {
         if (! $this->getCurrentUser()->isSuperUser()) {
             throw new UserNotAuthorizedException();
         }
@@ -665,7 +709,8 @@ class UserManager
      * @throws UserNotActiveException
      * @throws SessionNotCreatedException
      */
-    public function openSessionForUser(PFUser $user) {
+    public function openSessionForUser(PFUser $user)
+    {
         if (!$user) {
             throw new UserNotExistException();
         }
@@ -692,7 +737,8 @@ class UserManager
      *
      * @return PFUser Registered user or anonymous if nothing match
      */
-    function forceLogin($name) {
+    public function forceLogin($name)
+    {
         if (!IS_SCRIPT) {
             throw new Exception("Can't log in the user when not is script");
         }
@@ -714,9 +760,10 @@ class UserManager
      * isUserLoadedById
      *
      * @param int $user_id
-     * @return boolean true if the user is already loaded
+     * @return bool true if the user is already loaded
      */
-    function isUserLoadedById($user_id) {
+    public function isUserLoadedById($user_id)
+    {
         return isset($this->_users[$user_id]);
     }
 
@@ -724,16 +771,18 @@ class UserManager
      * isUserLoadedByUserName
      *
      * @param string $user_name
-     * @return boolean true if the user is already loaded
+     * @return bool true if the user is already loaded
      */
-    function isUserLoadedByUserName($user_name) {
+    public function isUserLoadedByUserName($user_name)
+    {
         return isset($this->_userid_bynames[$user_name]);
     }
 
     /**
      * @return CookieManager
      */
-    function getCookieManager() {
+    protected function getCookieManager()
+    {
         return new CookieManager();
     }
 
@@ -752,7 +801,8 @@ class UserManager
     /**
      * @return EventManager
      */
-    function _getEventManager() {
+    protected function _getEventManager()  // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
+    {
         return EventManager::instance();
     }
 
@@ -761,7 +811,8 @@ class UserManager
         return ForgeConfig::get('sys_session_lifetime');
     }
 
-    function _getPasswordLifetime() {
+    protected function _getPasswordLifetime() // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
+    {
         return $GLOBALS['sys_password_lifetime'];
     }
 
@@ -769,7 +820,8 @@ class UserManager
      * Update db entry of 'user' table with values in object
      * @param PFUser $user
      */
-    public function updateDb(PFUser $user) {
+    public function updateDb(PFUser $user)
+    {
         if (!$user->isAnonymous()) {
             $old_user = $this->getUserByIdWithoutCache($user->getId());
             $userRow = $user->toRow();
@@ -797,11 +849,13 @@ class UserManager
         return false;
     }
 
-    private function getSSHKeyValidator() {
+    private function getSSHKeyValidator()
+    {
         return new User_SSHKeyValidator($this, $this->_getEventManager());
     }
 
-    public function addSSHKeys(PFUser $user, $new_ssh_keys) {
+    public function addSSHKeys(PFUser $user, $new_ssh_keys)
+    {
         $user_keys = $user->getAuthorizedKeysArray();
         $all_keys  = array_merge(
             $user_keys,
@@ -813,7 +867,8 @@ class UserManager
         $this->updateUserSSHKeys($user, $valid_keys);
     }
 
-    public function deleteSSHKeys(PFUser $user, array $ssh_key_index_to_delete) {
+    public function deleteSSHKeys(PFUser $user, array $ssh_key_index_to_delete)
+    {
         $user_keys_to_keep = $user->getAuthorizedKeysArray();
 
         foreach ($ssh_key_index_to_delete as $ssh_key_index) {
@@ -830,9 +885,10 @@ class UserManager
      * validating keys each time we update a user
      *
      * @param PFUser $user
-     * @param String $keys
+     * @param string[] $keys
      */
-    public function updateUserSSHKeys(PFUser $user, array $keys) {
+    public function updateUserSSHKeys(PFUser $user, array $keys)
+    {
         $original_authorised_keys = $user->getAuthorizedKeysRaw();
 
         $user->setAuthorizedKeys(implode(PFUser::SSH_KEY_SEPARATOR, $keys));
@@ -860,9 +916,10 @@ class UserManager
      *
      * @param PFUser $user A user object to update
      *
-     * @return Boolean
+     * @return bool
      */
-    function assignNextUnixUid($user) {
+    public function assignNextUnixUid($user)
+    {
         $newUid = $this->getDao()->assignNextUnixUid($user->getId());
         if ($newUid !== false) {
             $user->setUnixUid($newUid);
@@ -906,7 +963,7 @@ class UserManager
             $_SERVER['REQUEST_TIME']
         );
         if (!$user_id) {
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('include_exit','error'));
+            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('include_exit', 'error'));
             return 0;
         } else {
             $user->setId($user_id);
@@ -942,7 +999,7 @@ class UserManager
     {
         $factory = new WidgetFactory(
             $this,
-            new User_ForgeUserGroupPermissionsManager(new User_ForgeUserGroupPermissionsDao()),
+            $this->getForgeUserGroupPermissionsManager(),
             EventManager::instance()
         );
 
@@ -956,12 +1013,24 @@ class UserManager
     }
 
     /**
+     * protected for testing purpose
+     * @return User_ForgeUserGroupPermissionsManager
+     */
+    protected function getForgeUserGroupPermissionsManager()
+    {
+        return new User_ForgeUserGroupPermissionsManager(
+            new User_ForgeUserGroupPermissionsDao()
+        );
+    }
+
+    /**
      * Check user account validity against several rules
      * - Account expiry date
      * - Last user access
      * - User not member of a project
      */
-    function checkUserAccountValidity() {
+    public function checkUserAccountValidity()
+    {
         // All rules applies at midnight
         $current_date = format_date('Y-m-d', $_SERVER['REQUEST_TIME']);
         $date_list    = explode("-", $current_date, 3);
@@ -975,34 +1044,38 @@ class UserManager
     /**
      * Change account status to suspended when the account expiry date is passed
      *
-     * @param Integer $time Timestamp of the date when this apply
+     * @param int $time Timestamp of the date when this apply
      *
-     * @return Boolean
+     * @return bool
      */
-    function suspendExpiredAccounts($time) {
+    private function suspendExpiredAccounts($time)
+    {
         return $this->getDao()->suspendExpiredAccounts($time);
     }
 
     /**
      * Suspend accounts that without activity since date defined in configuration
      *
-     * @param Integer $time Timestamp of the date when this apply
+     * @param int $time Timestamp of the date when this apply
      *
-     * @return Boolean
+     * @return bool
      */
-    function suspendInactiveAccounts($time) {
+    public function suspendInactiveAccounts($time)
+    {
         if (isset($GLOBALS['sys_suspend_inactive_accounts_delay']) && $GLOBALS['sys_suspend_inactive_accounts_delay'] > 0) {
             $lastValidAccess = $time - ($GLOBALS['sys_suspend_inactive_accounts_delay'] * 24 * 3600);
             return $this->getDao()->suspendInactiveAccounts($lastValidAccess);
         }
+        return true;
     }
 
     /**
      * Change account status to suspended when user is no more member of any project
-     * @return Boolean
+     * @return bool
      *
      */
-    function suspendUserNotProjectMembers($time) {
+    public function suspendUserNotProjectMembers($time)
+    {
         if (isset($GLOBALS['sys_suspend_non_project_member_delay']) && $GLOBALS['sys_suspend_non_project_member_delay'] > 0) {
             $lastRemove = $time - ($GLOBALS['sys_suspend_non_project_member_delay'] * 24 * 3600);
             return $this->getDao()->suspendUserNotProjectMembers($lastRemove);
@@ -1013,9 +1086,10 @@ class UserManager
      * Update user name in different tables containing the old user name
      * @param PFUser $user
      * @param String $newName
-     * @return Boolean
+     * @return bool
      */
-    public function renameUser($user, $newName) {
+    public function renameUser($user, $newName)
+    {
         $dao = $this->getDao();
         if ($dao->renameUser($user, $newName)) {
             $wiki = new WikiDao(CodendiDataAccess::instance());
@@ -1027,7 +1101,8 @@ class UserManager
         return false;
     }
 
-    public function removeConfirmHash($confirm_hash) {
+    public function removeConfirmHash($confirm_hash)
+    {
         $dao = $this->getDao();
         $dao->removeConfirmHash($confirm_hash);
     }

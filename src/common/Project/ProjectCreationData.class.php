@@ -18,8 +18,9 @@
  */
 
 use Tuleap\Project\DefaultProjectVisibilityRetriever;
+use Tuleap\Project\Registration\Template\TemplateFromProjectForCreation;
 
-class ProjectCreationData
+class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
 
     private $logger;
@@ -34,6 +35,9 @@ class ProjectCreationData
     private $is_test;
     private $is_template;
     private $short_description;
+    /**
+     * @var TemplateFromProjectForCreation
+     */
     private $built_from_template;
     private $trove_data;
     private $inherit_from_template = true;
@@ -55,25 +59,30 @@ class ProjectCreationData
      * This is mostly useful for XML import where "the true" come from XML
      * and not from the predefined template.
      *
-     * @return boolean
+     * @return bool
      */
-    public function projectShouldInheritFromTemplate() {
+    public function projectShouldInheritFromTemplate()
+    {
         return $this->inherit_from_template;
     }
 
-    public function getFullName() {
+    public function getFullName()
+    {
         return $this->full_name;
     }
 
-    public function setFullName($name) {
+    public function setFullName($name)
+    {
         $this->full_name = $name;
     }
 
-    public function getUnixName() {
+    public function getUnixName()
+    {
         return $this->unix_name;
     }
 
-    public function setUnixName($name) {
+    public function setUnixName($name)
+    {
         $this->unix_name = $name;
     }
 
@@ -82,7 +91,8 @@ class ProjectCreationData
         return $this->access;
     }
 
-    public function isTest() {
+    public function isTest()
+    {
         return $this->is_test;
     }
 
@@ -96,24 +106,28 @@ class ProjectCreationData
         $this->is_template = true;
     }
 
-    public function getShortDescription() {
+    public function getShortDescription()
+    {
         return $this->short_description;
     }
 
-    public function getTemplateId() {
+    public function getBuiltFromTemplateProject(): TemplateFromProjectForCreation
+    {
         return $this->built_from_template;
     }
 
-    public function getTroveData() {
+    public function getTroveData()
+    {
         return $this->trove_data;
     }
 
     /**
      * @param $group_desc_id int id of the description field to return
-     * @return the value of the field requested, null if the field isnt set
+     * @return ?string the value of the field requested, null if the field isnt set
      */
-    public function getField($group_desc_id) {
-        if(!isset($this->data_fields['form_' . $group_desc_id])) {
+    public function getField($group_desc_id)
+    {
+        if (!isset($this->data_fields['form_' . $group_desc_id])) {
             return null;
         }
         return $this->data_fields['form_' . $group_desc_id];
@@ -122,9 +136,9 @@ class ProjectCreationData
     /**
      * @return array with:
      *     is_used => boolean telling if the service is used
-     *     server_id => service server id (whatver that is)
      */
-    public function getServiceInfo($service_id) {
+    public function getServiceInfo($service_id)
+    {
         return isset($this->data_services[$service_id]) ?
             $this->data_services[$service_id] :
             null;
@@ -134,37 +148,36 @@ class ProjectCreationData
      * $data['project']['form_unix_name']
      * $data['project']['form_full_name']
      * $data['project']['form_short_description']
-     * $data['project']['built_from_template']
      * $data['project']['is_test']
      * $data['project']['is_public']
      * $data['project']['allow_restricted']
      * $data['project']["form_".$descfieldsinfos[$i]["group_desc_id"]]
      * foreach($data['project']['trove'] as $root => $values);
      * $data['project']['services'][$arr['service_id']]['is_used'];
-     * $data['project']['services'][$arr['service_id']]['server_id'];
      */
     public static function buildFromFormArray(
         DefaultProjectVisibilityRetriever $default_project_visibility_retriever,
+        TemplateFromProjectForCreation $template_from_project_for_creation,
         array $data
     ) {
         $instance = new ProjectCreationData($default_project_visibility_retriever);
-        $instance->fromForm($data);
+        $instance->fromForm($template_from_project_for_creation, $data);
         return $instance;
     }
 
-    private function fromForm(array $data) {
+    private function fromForm(TemplateFromProjectForCreation $template_from_project_for_creation, array $data)
+    {
         $project = isset($data['project']) ? $data['project'] : array();
 
         $this->unix_name           = isset($project['form_unix_name'])         ? $project['form_unix_name']         : null;
         $this->full_name           = isset($project['form_full_name'])         ? $project['form_full_name']         : null;
         $this->short_description   = isset($project['form_short_description']) ? $project['form_short_description'] : null;
-        $this->built_from_template = isset($project['built_from_template'])    ? $project['built_from_template']    : null;
+        $this->built_from_template = $template_from_project_for_creation;
         $this->is_test             = isset($project['is_test'])                ? $project['is_test']                : null;
-        $this->access              = $this->getAccessFromProjectArrayData($project);
-        $this->trove_data          = isset($project['trove'])                  ? $project['trove']                  : array();
+        $this->setAccessFromProjectData($project);
+        $this->trove_data          = isset($project['trove']) ? $project['trove'] : [];
         $this->data_services       = isset($project['services'])               ? $project['services']               : array();
         $this->data_fields         = $project;
-
     }
 
     private function getAccessFromProjectArrayData(array $project)
@@ -185,7 +198,7 @@ class ProjectCreationData
             if ($are_restricted_enabled && $should_project_allow_restricted) {
                 return Project::ACCESS_PUBLIC_UNRESTRICTED;
             }
-            return PROJECT::ACCESS_PUBLIC;
+            return Project::ACCESS_PUBLIC;
         }
 
         if ($are_restricted_enabled && !$should_project_allow_restricted) {
@@ -197,35 +210,28 @@ class ProjectCreationData
 
     public static function buildFromXML(
         SimpleXMLElement $xml,
-        $template_id = 100,
         ?XML_RNGValidator $xml_validator = null,
         ?ServiceManager $service_manager = null,
-        ?ProjectManager $project_manager = null,
         ?Logger $logger = null,
         ?DefaultProjectVisibilityRetriever $default_project_visibility_retriever = null
     ) {
         $default_project_visibility_retriever = $default_project_visibility_retriever ?? new DefaultProjectVisibilityRetriever();
 
         $instance = new ProjectCreationData($default_project_visibility_retriever, $logger);
-        $instance->fromXML($xml, $template_id, $xml_validator, $service_manager, $project_manager);
+        $instance->fromXML($xml, $xml_validator, $service_manager);
         return $instance;
     }
 
     private function fromXML(
         SimpleXMLElement $xml,
-        $template_id,
         ?XML_RNGValidator $xml_validator = null,
-        ?ServiceManager $service_manager = null,
-        ?ProjectManager $project_manager = null)
-    {
-        if(empty($xml_validator)) {
+        ?ServiceManager $service_manager = null
+    ) {
+        if (empty($xml_validator)) {
             $xml_validator = new XML_RNGValidator();
         }
-        if(empty($service_manager)){
+        if (empty($service_manager)) {
             $service_manager = ServiceManager::instance();
-        }
-        if(empty($project_manager)){
-            $project_manager = ProjectManager::instance();
         }
 
         $this->logger->debug("Start import from XML, validate RNG");
@@ -239,12 +245,12 @@ class ProjectCreationData
         $this->unix_name     = (string) $attrs['unix-name'];
         $this->full_name     = (string) $attrs['full-name'];
         $this->short_description   = (string) $attrs['description'];
-        $this->built_from_template = (int) $template_id;
+        $this->built_from_template = TemplateFromProjectForCreation::fromGlobalProjectAdminTemplate();
         $this->is_test       = (bool) false;
         $this->trove_data    = array();
         $this->data_services = array();
         $this->data_fields   = array(
-            'form_101' => $xml->$long_description_tagname
+            'form_101' => (string)$xml->$long_description_tagname
         );
 
         switch ($attrs['access']) {
@@ -271,7 +277,7 @@ class ProjectCreationData
                 $this->access = $this->default_project_visibility_retriever->getDefaultProjectVisibility();
         }
 
-        $this->markUsedServicesFromXML($xml, $template_id, $service_manager, $project_manager);
+        $this->markUsedServicesFromXML($xml, $this->built_from_template->getProject(), $service_manager);
 
         $this->inherit_from_template = isset($attrs['inherit-from-template']) && (bool) $attrs['inherit-from-template'] === true;
         $this->logger->debug("Data gathered from XML");
@@ -283,23 +289,25 @@ class ProjectCreationData
      */
     private function markUsedServicesFromXML(
         SimpleXMLElement $xml,
-        $template_id,
-        ?ServiceManager $service_manager = null,
-        ?ProjectManager $project_manager = null)
-    {
-        $template = $project_manager->getProject($template_id);
+        Project $template,
+        ServiceManager $service_manager
+    ) {
         $services_by_name = array();
-        foreach($service_manager->getListOfAllowedServicesForProject($template) as $service) {
+        foreach ($service_manager->getListOfAllowedServicesForProject($template) as $service) {
             $services_by_name[$service->getShortName()] = $service;
         }
 
-        foreach($xml->services->children() as $service) {
-            if(!($service instanceof SimpleXMLElement)) continue;
-            if($service->getName() !== "service") continue;
+        foreach ($xml->services->children() as $service) {
+            if (!($service instanceof SimpleXMLElement)) {
+                continue;
+            }
+            if ($service->getName() !== "service") {
+                continue;
+            }
             $attrs   = $service->attributes();
             $name    = (string) $attrs['shortname'];
             $enabled = \Tuleap\XML\PHPCast::toBoolean($attrs['enabled']);
-            if(isset($services_by_name[$name])) {
+            if (isset($services_by_name[$name])) {
                 $service_id = $services_by_name[$name]->getId();
                 $this->data_services[$service_id] = array(
                     'is_used' => $enabled
@@ -321,5 +329,19 @@ class ProjectCreationData
             $this->data_services[$service_id]['is_used'] = '1';
         }
     }
-}
 
+    public function setShortDescription($short_description): void
+    {
+        $this->short_description = $short_description;
+    }
+
+    /**
+     * @param array $project
+     *
+     * @return string
+     */
+    public function setAccessFromProjectData(array $project): string
+    {
+        return $this->access = $this->getAccessFromProjectArrayData($project);
+    }
+}

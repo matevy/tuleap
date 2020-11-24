@@ -10,11 +10,18 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.2.3\n"
+
+#, php-format
+msgid "%s Kanban"
+msgstr "Kanban %s"
 
 #, php-format
 msgid "%s top backlog"
 msgstr "%s planification générale"
+
+msgid "Activate count elements mode for burnup chart"
+msgstr "Activer le mode comptage d'éléments pour le burnup"
 
 msgid "Add Kanban to dashboard"
 msgstr "Ajouter Kanban au tableau de bord"
@@ -27,6 +34,9 @@ msgstr "Ajouter à mon tableau de bord"
 
 msgid "Add to project dashboard"
 msgstr "Ajouter au tableau de bord du projet"
+
+msgid "Add to top backlog"
+msgstr "Ajouter à la planification générale"
 
 msgid "Agile Dashboard"
 msgstr "Agile Dashboard"
@@ -74,10 +84,28 @@ msgid "Burnup is under calculation. It will be available in few minutes."
 msgstr ""
 "Le burn-up est en cours de calcul. Il sera disponible dans quelques minutes."
 
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Charts"
+msgstr "Graphiques"
+
+msgid "Charts configuration"
+msgstr "Configuration des graphiques"
+
+msgid "Configuration"
+msgstr "Configuration"
+
+msgid "Continue"
+msgstr "Continuer"
+
 msgid "Define the closed status that are considered Done"
 msgstr ""
 "Définissez les valeurs fermées de la sémantique statut considérées comme "
 "finies"
+
+msgid "Delete"
+msgstr "Supprimer"
 
 msgid ""
 "Displays a board to see the tasks to do, in progress, done etc. Please go on "
@@ -103,6 +131,9 @@ msgstr "Les valeurs finies ont été supprimées avec succès."
 msgid "Done values successfully updated."
 msgstr "Les valeurs finies ont été mises à jour avec succès."
 
+msgid "Explicit top backlog"
+msgstr "Planification générale explicite"
+
 msgid "Filter:"
 msgstr "Filtre :"
 
@@ -118,8 +149,17 @@ msgstr "Élément"
 msgid "Item is not linked to this milestone"
 msgstr "L'élément n'est pas lié à ce jalon"
 
+msgid "Kanban"
+msgstr "Kanban"
+
+msgid "Kanban cards"
+msgstr "Carte de Kanban"
+
 msgid "Make sure to check their configuration."
 msgstr "Merci de vérifier leur configuration."
+
+msgid "Milestones"
+msgstr "Jalons"
 
 msgid "None"
 msgstr "Aucun"
@@ -133,11 +173,23 @@ msgstr[1] "Autres %s"
 msgid "Parent item"
 msgstr "Parent"
 
+msgid "Planning deletion"
+msgstr "Suppression de planning"
+
 msgid "Planning succesfully created."
 msgstr "La planning a été créé."
 
 msgid "Planning succesfully updated."
 msgstr "Le planning a été mis à jour."
+
+msgid "Remove from top backlog"
+msgstr "Supprimer de la planification générale"
+
+msgid "Save"
+msgstr "Sauvegarder"
+
+msgid "Scrum"
+msgstr "Scrum"
 
 msgid "Selected values are invalid because some are not closed values anymore."
 msgstr ""
@@ -169,6 +221,13 @@ msgstr "Statut"
 msgid "Submit"
 msgstr "Valider"
 
+msgid ""
+"The field for semantic status cannot be updated because semantic done is "
+"defined for this tracker."
+msgstr ""
+"Le champ pour la sémantique statut ne peut être mis à jour car la sémantique "
+"fini est définie."
+
 msgid "The request is not valid."
 msgstr "La requête n'est pas valide."
 
@@ -189,18 +248,27 @@ msgstr ""
 "La sémantique statut ne peut être supprimée car la sémantique fini est "
 "définie."
 
-msgid ""
-"The semantic status cannot de deleted because tracker notifications is set "
-"to \"Status change notifications\"."
-msgstr ""
-"La sémantique statut ne peut être supprimée car la notification des tracker "
-"est définie à \"Notifications lors du changement de status \" "
-
 msgid "There is no content <br> you can see"
 msgstr "Il n’y a aucun élément <br> visible"
 
 msgid "There is no item yet"
 msgstr "Il n’y a aucun élément pour l'instant"
+
+msgid ""
+"This is an experimental feature. It's explained <a href=\"https://tuleap.net/"
+"plugins/tracker/?aid=13997\">here</a>. Once activated, you will start with "
+"an empty top backlog."
+msgstr ""
+"Cette fonctionnalité est expérimentale. Elle est expliquée <a href=\"https://"
+"tuleap.net/plugins/tracker/?aid=13997\">ici</a>. Une fois activée, la "
+"planification générale sera vide."
+
+msgid ""
+"This option will display all the burnup charts in the project with elements "
+"progression instead of effort progression."
+msgstr ""
+"Cette option permet d'afficher l'ensemble des graphiques burnup du projet en "
+"montrant la progression des éléments au lieu de la progression de l'effort."
 
 msgid ""
 "This semantic will be used in the <strong>AgileDashboard</strong> service "
@@ -217,6 +285,16 @@ msgstr "Sémantique fini"
 
 msgid "Update of planning assignment may lead to errors in:"
 msgstr "La mise à jour des plannings peut causer des erreurs dans :"
+
+msgid ""
+"You are going to remove the top backlog planning permanently (no possible "
+"rollback). Top backlog will be empty after the deletion of the top level "
+"planning. Please confirm your action."
+msgstr ""
+"Vous aller supprimer le planning de plus haut niveau de backlog de façon "
+"permanent (pas de retour en arrière possible). Le backlog de plus haut "
+"niveau sera vide après la suppresion du planning de plus niveau. Merci de "
+"confirmer votre action."
 
 msgid ""
 "You can't add values in this semantic because all possible values are "

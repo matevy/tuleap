@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tuleap_TourUsageTest extends TuleapTestCase {
+class Tuleap_TourUsageTest extends TuleapTestCase
+{
 
     /** @var PFUser */
     private $user;
@@ -35,7 +36,8 @@ class Tuleap_TourUsageTest extends TuleapTestCase {
     /** @var Tuleap_Tour */
     private $tour;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->stats_dao  = mock('Tuleap_TourUsageStatsDao');
         $this->user       = stub('PFUser')->getId()->returns(123);
@@ -43,13 +45,15 @@ class Tuleap_TourUsageTest extends TuleapTestCase {
         $this->tour       = new Tuleap_TourUsageTest_FakeTour();
     }
 
-    public function itSavesInUserPreferencesThatTheTourIsExecuted() {
+    public function itSavesInUserPreferencesThatTheTourIsExecuted()
+    {
         expect($this->user)->setPreference($this->tour->name, true)->once();
 
         $this->tour_usage->endTour($this->user, $this->tour, $this->current_step);
     }
 
-    public function itStoresUsageStatistics() {
+    public function itStoresUsageStatistics()
+    {
         expect($this->stats_dao)
             ->save(
                 $this->user->getId(),
@@ -62,7 +66,8 @@ class Tuleap_TourUsageTest extends TuleapTestCase {
         $this->tour_usage->endTour($this->user, $this->tour, $this->current_step);
     }
 
-    public function itStoresUsageStatisticsWhenAStepIsShown() {
+    public function itStoresUsageStatisticsWhenAStepIsShown()
+    {
         expect($this->stats_dao)
             ->save(
                 $this->user->getId(),
@@ -76,8 +81,10 @@ class Tuleap_TourUsageTest extends TuleapTestCase {
     }
 }
 
-class Tuleap_TourUsageTest_FakeTour extends Tuleap_Tour {
-    public function __construct() {
+class Tuleap_TourUsageTest_FakeTour extends Tuleap_Tour
+{
+    public function __construct()
+    {
         parent::__construct(
             'le-welcome-tour',
             array(

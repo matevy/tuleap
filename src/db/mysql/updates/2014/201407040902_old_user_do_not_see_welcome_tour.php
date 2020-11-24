@@ -16,16 +16,20 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201407040902_old_user_do_not_see_welcome_tour extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201407040902_old_user_do_not_see_welcome_tour extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Adding user preference in database so old users don't see welcome tour";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "INSERT INTO user_preferences (user_id, preference_name, preference_value)
                 SELECT user_id, 'tuleap-welcome-tour', 1
                 FROM user_access
@@ -37,5 +41,4 @@ class b201407040902_old_user_do_not_see_welcome_tour extends ForgeUpgrade_Bucket
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding user preference.');
         }
     }
-
 }

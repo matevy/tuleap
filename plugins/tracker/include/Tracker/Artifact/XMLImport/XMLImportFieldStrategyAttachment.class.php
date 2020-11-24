@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,7 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_XMLImport_XMLImportFieldStrategyAttachment implements Tracker_Artifact_XMLImport_XMLImportFieldStrategy {
+use Tuleap\Tracker\FormElement\Field\File\IdForXMLImportExportConvertor;
+
+class Tracker_Artifact_XMLImport_XMLImportFieldStrategyAttachment implements Tracker_Artifact_XMLImport_XMLImportFieldStrategy
+{
 
 
     public const FILE_INFO_COPY_OPTION = 'is_migrated';
@@ -32,7 +35,8 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyAttachment implements Tra
     /** @var Tracker_Artifact_XMLImport_CollectionOfFilesToImportInArtifact */
     private $files_importer;
 
-    public function __construct($extraction_path, Tracker_Artifact_XMLImport_CollectionOfFilesToImportInArtifact $files_importer, Logger $logger) {
+    public function __construct($extraction_path, Tracker_Artifact_XMLImport_CollectionOfFilesToImportInArtifact $files_importer, Logger $logger)
+    {
         $this->extraction_path = $extraction_path;
         $this->files_importer  = $files_importer;
         $this->logger          = $logger;
@@ -70,7 +74,7 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyAttachment implements Tra
         foreach ($values as $value) {
             try {
                 $attributes = $value->attributes();
-                $file_id    = (string) $attributes['ref'];
+                $file_id    = (string) ($attributes['ref'] ?? '');
                 $file       = $this->files_importer->getFileXML($file_id);
 
                 if (! $this->files_importer->fileIsAlreadyImported($file_id)) {
@@ -89,7 +93,8 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyAttachment implements Tra
         return $files_infos;
     }
 
-    private function isFieldChangeEmpty(SimpleXMLElement $values) {
+    private function isFieldChangeEmpty(SimpleXMLElement $values)
+    {
         if (count($values) === 1) {
             $value      = $values[0];
             $attributes = $value->attributes();
@@ -100,16 +105,18 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyAttachment implements Tra
         return false;
     }
 
-    private function itCannotImportAnyFiles($values, $files_infos) {
+    private function itCannotImportAnyFiles($values, $files_infos)
+    {
         return count($values) > 0 && count($files_infos) === 0;
     }
 
-    private function getFileInfoForAttachment(SimpleXMLElement $file_xml, PFUser $submitted_by) {
+    private function getFileInfoForAttachment(SimpleXMLElement $file_xml, PFUser $submitted_by)
+    {
         $file_path =  $this->extraction_path .'/'. (string) $file_xml->path;
         if (! is_file($file_path)) {
             throw new Tracker_Artifact_XMLImport_Exception_FileNotFoundException($file_path);
         }
-        return array(
+        $fileinfo = [
             self::FILE_INFO_COPY_OPTION => true,
             'submitted_by'              => $submitted_by,
             'name'                      => (string) $file_xml->filename,
@@ -118,6 +125,20 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyAttachment implements Tra
             'size'                      => (int) $file_xml->filesize,
             'tmp_name'                  => $file_path,
             'error'                     => UPLOAD_ERR_OK,
-        );
+        ];
+
+        try {
+            $attributes = $file_xml->attributes();
+            if ($attributes) {
+                $fileinfo_id = (string) $attributes['id'];
+                $fileinfo['previous_fileinfo_id'] = IdForXMLImportExportConvertor::convertXMLIdToFileInfoId(
+                    $fileinfo_id
+                );
+            }
+        } catch (InvalidArgumentException $exception) {
+            // It seems that we don't know this xml id. Just ignore it.
+        }
+
+        return $fileinfo;
     }
 }

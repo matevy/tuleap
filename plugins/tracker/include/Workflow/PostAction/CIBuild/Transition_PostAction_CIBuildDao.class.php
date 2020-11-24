@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,17 +22,20 @@
 /**
  * Base class for field post action DAOs.
  */
-class Transition_PostAction_CIBuildDao extends DataAccessObject {
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+class Transition_PostAction_CIBuildDao extends DataAccessObject
+{
 
     /**
      * Create a new postaction entry
      *
      * @param int $transition_id The transition the post action belongs to
-     * @param int $job_url       The job url
+     * @param string $job_url       The job url
      *
-     * @return bool true if success false otherwise
+     * @return int|false ID if success false otherwise
      */
-    public function create($transition_id, $job_url) {
+    public function create($transition_id, $job_url)
+    {
         $transition_id = $this->da->escapeInt($transition_id);
         $job_url       = $this->da->quoteSmart($job_url);
 
@@ -43,7 +45,8 @@ class Transition_PostAction_CIBuildDao extends DataAccessObject {
         return $this->updateAndGetLastId($sql);
     }
 
-    public function searchByTransitionId($transition_id) {
+    public function searchByTransitionId($transition_id)
+    {
         $transition_id = $this->da->escapeInt($transition_id);
 
         $sql = "SELECT *
@@ -62,7 +65,8 @@ class Transition_PostAction_CIBuildDao extends DataAccessObject {
      *
      * @return bool true if success false otherwise
      */
-    public function updatePostAction($id, $job_url) {
+    public function updatePostAction($id, $job_url)
+    {
         $id       = $this->da->escapeInt($id);
         $job_url    = $this->da->quoteSmart($job_url);
 
@@ -72,7 +76,8 @@ class Transition_PostAction_CIBuildDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function deletePostAction($id) {
+    public function deletePostAction($id)
+    {
         $id = $this->da->escapeInt($id);
 
         $sql = "DELETE FROM tracker_workflow_transition_postactions_cibuild
@@ -80,7 +85,8 @@ class Transition_PostAction_CIBuildDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function deletePostActionsByWorkflowId($workflow_id) {
+    public function deletePostActionsByWorkflowId($workflow_id)
+    {
         $workflow_id = $this->da->escapeInt($workflow_id);
 
         $sql = "DELETE P
@@ -89,27 +95,14 @@ class Transition_PostAction_CIBuildDao extends DataAccessObject {
                 WHERE T.workflow_id = $workflow_id";
 
         return $this->update($sql);
-
     }
 
-    /**
-     * @param int $transition_id
-     * @param int[] $ids_to_skip
-     * @return bool true if successful. False otherwise
-     */
-    public function deletePostActionByTransitionIfIdNotIn(int $transition_id, array $ids_to_skip)
+    public function deletePostActionByTransition(int $transition_id) : bool
     {
         $escaped_transition_id = $this->da->escapeInt($transition_id);
 
-        $where_clause = "";
-        if (!empty($ids_to_skip)) {
-            $escaped_ids_to_skip = $this->da->escapeIntImplode($ids_to_skip);
-            $where_clause        = "AND id NOT IN ($escaped_ids_to_skip)";
-        }
-
         $sql = "DELETE FROM tracker_workflow_transition_postactions_cibuild
-                WHERE transition_id = $escaped_transition_id
-                $where_clause";
+                WHERE transition_id = $escaped_transition_id";
         return $this->update($sql);
     }
 
@@ -121,7 +114,8 @@ class Transition_PostAction_CIBuildDao extends DataAccessObject {
      *
      * @return bool true if success false otherwise
      */
-    public function duplicate($from_transition_id, $to_transition_id) {
+    public function duplicate($from_transition_id, $to_transition_id)
+    {
         $from_transition_id = $this->da->escapeInt($from_transition_id);
         $to_transition_id   = $this->da->escapeInt($to_transition_id);
 
@@ -132,20 +126,4 @@ class Transition_PostAction_CIBuildDao extends DataAccessObject {
 
         return $this->update($sql);
     }
-
-    /**
-     * @return DataAccessResult|false Found ids or false if query failed
-     */
-    public function findAllIdsByTransitionId(int $transition_id)
-    {
-        $transition_id = $this->da->escapeInt($transition_id);
-
-        $sql = "SELECT id
-                FROM tracker_workflow_transition_postactions_cibuild
-                WHERE transition_id = $transition_id";
-
-        return $this->retrieve($sql);
-    }
 }
-
-?>

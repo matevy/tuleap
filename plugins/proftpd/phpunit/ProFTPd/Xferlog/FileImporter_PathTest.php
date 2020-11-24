@@ -20,7 +20,8 @@
 
 require_once __DIR__.'/../../bootstrap.php';
 
-class FileImporter_PathTest extends \PHPUnit\Framework\TestCase {
+class FileImporter_PathTest extends \PHPUnit\Framework\TestCase
+{
 
     protected function setUp() : void
     {
@@ -47,13 +48,15 @@ class FileImporter_PathTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testItFetchTheProjectNameWhenPathIsRelative() {
+    public function testItFetchTheProjectNameWhenPathIsRelative()
+    {
         $this->project_manager->expects($this->once())->method('getProjectByUnixName')->with($this->equalTo('gpig'))->will($this->returnValue($this->project));
 
         $this->file_importer->import(__DIR__.'/_fixtures/xferlog_relative');
     }
 
-    public function testItStoresRelativeFilePathWhenPathIsRelative() {
+    public function testItStoresRelativeFilePathWhenPathIsRelative()
+    {
         $this->dao
             ->expects($this->once())
             ->method('store')
@@ -62,20 +65,21 @@ class FileImporter_PathTest extends \PHPUnit\Framework\TestCase {
                     return true;
                 }
                 return false;
-            })
-        );
+            }));
 
         $this->file_importer->import(__DIR__.'/_fixtures/xferlog_relative');
     }
 
 
-    public function testItFetchTheProjectNameWhenPathIsAbsolute() {
+    public function testItFetchTheProjectNameWhenPathIsAbsolute()
+    {
         $this->project_manager->expects($this->once())->method('getProjectByUnixName')->with($this->equalTo('gpig'))->will($this->returnValue($this->project));
 
         $this->file_importer->import(__DIR__.'/_fixtures/xferlog_absolute');
     }
 
-    public function testItStoresRelativeFilePathWhenPathIsAbsolute() {
+    public function testItStoresRelativeFilePathWhenPathIsAbsolute()
+    {
         $this->dao
             ->expects($this->once())
             ->method('store')
@@ -84,8 +88,7 @@ class FileImporter_PathTest extends \PHPUnit\Framework\TestCase {
                     return true;
                 }
                 return false;
-            })
-        );
+            }));
 
         $this->file_importer->import(__DIR__.'/_fixtures/xferlog_absolute');
     }

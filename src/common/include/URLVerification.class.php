@@ -37,7 +37,8 @@ use Tuleap\Request\RequestInstrumentation;
  * Check the URL validity (protocol, host name, query) regarding server constraints
  * (anonymous, user status, project privacy, ...) and manage redirection when needed
  */
-class URLVerification {
+class URLVerification
+{
 
     protected $urlChunks = null;
 
@@ -46,7 +47,8 @@ class URLVerification {
      *
      * @return Array
      */
-    function getUrlChunks() {
+    function getUrlChunks()
+    {
         return $this->urlChunks;
     }
 
@@ -55,7 +57,8 @@ class URLVerification {
      *
      * @return PFUser
      */
-    function getCurrentUser() {
+    function getCurrentUser()
+    {
         return UserManager::instance()->getCurrentUser();
     }
 
@@ -64,7 +67,8 @@ class URLVerification {
      *
      * @return EventManager
      */
-    public function getEventManager() {
+    public function getEventManager()
+    {
         return EventManager::instance();
     }
 
@@ -81,7 +85,8 @@ class URLVerification {
     /**
      * @return PermissionsOverrider_PermissionsOverriderManager
      */
-    protected function getPermissionsOverriderManager() {
+    protected function getPermissionsOverriderManager()
+    {
         return PermissionsOverrider_PermissionsOverriderManager::instance();
     }
 
@@ -95,9 +100,10 @@ class URLVerification {
      *
      * @param Array $server
      *
-     * @return Boolean
+     * @return bool
      */
-    function isScriptAllowedForAnonymous($server) {
+    function isScriptAllowedForAnonymous($server)
+    {
         // Defaults
         $allowedAnonymous['/account/login.php']          = true;
         $allowedAnonymous['/account/register.php']       = true;
@@ -131,9 +137,10 @@ class URLVerification {
      *
      * @param array $server
      *
-     * @return Boolean
+     * @return bool
      */
-    function isException($server) {
+    function isException($server)
+    {
         return preg_match('`^(?:/plugins/[^/]+)?/(?:soap|api)/`', $server['SCRIPT_NAME']);
     }
 
@@ -143,9 +150,10 @@ class URLVerification {
      * @param Array $server
      * @param String $host
      *
-     * @return Boolean
+     * @return bool
      */
-    function isValidServerName($server, $host) {
+    function isValidServerName($server, $host)
+    {
 
         return ($server['HTTP_HOST'] == $host);
     }
@@ -154,7 +162,7 @@ class URLVerification {
      * Check if an URI is internal to the application or not. We reject all URLs
      * except /path/to/feature
      *
-     * @return boolean
+     * @return bool
      */
     public function isInternal($uri)
     {
@@ -174,7 +182,8 @@ class URLVerification {
      *
      * @return String
      */
-    function getRedirectionURL(HTTPRequest $request, $server) {
+    function getRedirectionURL(HTTPRequest $request, $server)
+    {
         $chunks   = $this->getUrlChunks($server);
 
         $location = $this->getRedirectLocation($request, $server, $chunks);
@@ -187,14 +196,16 @@ class URLVerification {
         return $location;
     }
 
-    private function getRedirectLocation(HTTPRequest $request, array $server, array $chunks) {
+    private function getRedirectLocation(HTTPRequest $request, array $server, array $chunks)
+    {
         if (isset($chunks['protocol']) || isset($chunks['host'])) {
             return $this->rewriteProtocol($request, $server, $chunks);
         }
         return '';
     }
 
-    private function rewriteProtocol(HTTPRequest $request, array $server, array $chunks) {
+    private function rewriteProtocol(HTTPRequest $request, array $server, array $chunks)
+    {
         if (isset($chunks['protocol'])) {
             $location = $chunks['protocol']."://";
         } else {
@@ -221,7 +232,8 @@ class URLVerification {
      *
      * @return void
      */
-    public function verifyProtocol(HTTPRequest $request) {
+    public function verifyProtocol(HTTPRequest $request)
+    {
         if (! $request->isSecure() && ForgeConfig::get('sys_https_host')) {
             $this->urlChunks['protocol'] = 'https';
             $this->urlChunks['host']     = ForgeConfig::get('sys_https_host');
@@ -235,11 +247,11 @@ class URLVerification {
      *
      * @return void
      */
-    public function verifyRequest($server) {
+    public function verifyRequest($server)
+    {
         $user = $this->getCurrentUser();
 
-        if (
-            $this->getForgeAccess()->doesPlatformRequireLogin() &&
+        if ($this->getForgeAccess()->doesPlatformRequireLogin() &&
             $user->isAnonymous() &&
             ! $this->isScriptAllowedForAnonymous($server)
         ) {
@@ -255,7 +267,8 @@ class URLVerification {
      *
      * @return void
      */
-    function checkRestrictedAccess($server) {
+    function checkRestrictedAccess($server)
+    {
         $user = $this->getCurrentUser();
         if ($user->isRestricted()) {
             $url = $this->getUrl();
@@ -271,7 +284,7 @@ class URLVerification {
      * @param PFUser $user
      * @param Url $url
      * @param String $request_uri
-     * @return Boolean False if user not allowed to see the content
+     * @return bool False if user not allowed to see the content
      */
     protected function restrictedUserCanAccessUrl(PFUser $user, URL $url, string $request_uri, ?Project $project = null)
     {
@@ -364,7 +377,8 @@ class URLVerification {
      *
      * @return void
      */
-    public function assertValidUrl($server, HTTPRequest $request, ?Project $project = null) {
+    public function assertValidUrl($server, HTTPRequest $request, ?Project $project = null)
+    {
         if (!$this->isException($server)) {
             $this->verifyProtocol($request);
             $this->verifyRequest($server);
@@ -395,7 +409,6 @@ class URLVerification {
                 }
 
                 return true;
-
             } catch (Project_AccessRestrictedException $exception) {
                 if (! isset($project)) {
                     $project = null;
@@ -437,43 +450,24 @@ class URLVerification {
      *
      * @param PFUser $user
      * @param Project $project
-     * @return boolean
+     * @return bool
      * @throws Project_AccessProjectNotFoundException
      * @throws Project_AccessDeletedException
      * @throws Project_AccessRestrictedException
      * @throws Project_AccessPrivateException
      * @throws ProjectAccessSuspendedException
      */
-    public function userCanAccessProject(PFUser $user, Project $project) {
+    public function userCanAccessProject(PFUser $user, Project $project)
+    {
         $checker = new ProjectAccessChecker(
             $this->getPermissionsOverriderManager(),
-            new RestrictedUserCanAccessUrlOrProjectVerifier($this->getEventManager(), $this->getUrl(), $_SERVER['REQUEST_URI'])
+            new RestrictedUserCanAccessUrlOrProjectVerifier($this->getEventManager(), $this->getUrl(), $_SERVER['REQUEST_URI']),
+            EventManager::instance()
         );
 
-        try {
-            $checker->checkUserCanAccessProject($user, $project);
-        } catch (Project_AccessPrivateException $exception) {
-            if ($this->userHasBeenDelegatedAccess($user)) {
-                return true;
-            }
-            throw $exception;
-        }
+        $checker->checkUserCanAccessProject($user, $project);
+
         return true;
-    }
-
-    private function userHasBeenDelegatedAccess(PFUser $user) {
-        $can_access    = false;
-        $event_manager = EventManager::instance();
-
-        $event_manager->processEvent(
-            Event::HAS_USER_BEEN_DELEGATED_ACCESS,
-            array(
-                'can_access' => &$can_access,
-                'user'       => $user,
-            )
-        );
-
-        return $can_access;
     }
 
     /**
@@ -481,7 +475,7 @@ class URLVerification {
      *
      * @param PFUser $user
      * @param Project $project
-     * @return boolean
+     * @return bool
      *
      * @throws Project_AccessProjectNotFoundException
      * @throws Project_AccessDeletedException
@@ -490,7 +484,8 @@ class URLVerification {
      * @throws Project_AccessNotAdminException
      * @throws ProjectAccessSuspendedException
      */
-    public function userCanAccessProjectAndIsProjectAdmin(PFUser $user, Project $project) {
+    public function userCanAccessProjectAndIsProjectAdmin(PFUser $user, Project $project)
+    {
         if ($this->userCanAccessProject($user, $project)) {
             if (! $user->isAdmin($project->getId())) {
                 throw new Project_AccessNotAdminException();
@@ -502,7 +497,7 @@ class URLVerification {
     /**
      * @param PFUser $user
      * @param Project $project
-     * @return boolean
+     * @return bool
      *
      * @throws Project_AccessProjectNotFoundException
      * @throws Project_AccessDeletedException
@@ -531,7 +526,8 @@ class URLVerification {
      *
      * @return Void
      */
-    function exitError($title, $text) {
+    function exitError($title, $text)
+    {
         exit_error($title, $text);
     }
 
@@ -540,7 +536,8 @@ class URLVerification {
      *
      * @return ProjectManager
      */
-    function getProjectManager() {
+    function getProjectManager()
+    {
         return ProjectManager::instance();
     }
 
@@ -551,7 +548,8 @@ class URLVerification {
      *
      * @return void
      */
-    function header($location) {
+    function header($location)
+    {
         header('Location: '.$location);
         exit;
     }
@@ -582,5 +580,4 @@ class URLVerification {
             )
         );
     }
-
 }

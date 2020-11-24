@@ -1,6 +1,6 @@
 <?php
 /**
-* Copyright (c) Enalean, 2018. All Rights Reserved.
+* Copyright (c) Enalean, 2018-Present. All Rights Reserved.
 *
 * This file is a part of Tuleap.
 *
@@ -61,7 +61,7 @@ class WorkflowTransitionController implements DispatchableWithRequest, Dispatcha
         $current_user = $request->getCurrentUser();
         if (! $tracker->userIsAdmin($current_user)) {
             $layout->addFeedback(\Feedback::ERROR, $GLOBALS['Language']->getText('plugin_tracker_admin', 'access_denied'));
-            $layout->redirect(TRACKER_BASE_URL . '/?tracker=' . urlencode($tracker->getId()));
+            $layout->redirect(TRACKER_BASE_URL . '/?tracker=' . urlencode((string) $tracker->getId()));
         }
 
         $javascriptAssets = new IncludeAssets(
@@ -76,7 +76,12 @@ class WorkflowTransitionController implements DispatchableWithRequest, Dispatcha
         );
         $layout->addCssAsset(new CssAsset($cssAssets, 'workflow'));
 
-        $tracker->displayAdminItemHeader($this->tracker_manager, 'editworkflow', [], null, ['main_classes' => ['fluid-main']]);
+        $tracker->displayAdminItemHeaderBurningParrot(
+            $this->tracker_manager,
+            'editworkflow',
+            dgettext('tuleap-tracker', 'Transition rules'),
+            ['main_classes' => ['fluid-main']]
+        );
 
         $renderer = TemplateRendererFactory::build()->getRenderer(TRACKER_TEMPLATE_DIR.'/workflow-transitions');
         $presenter = $this->presenter_builder->build($tracker, WorkflowMenuTabPresenterBuilder::TAB_TRANSITIONS);

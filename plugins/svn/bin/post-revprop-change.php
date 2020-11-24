@@ -25,7 +25,7 @@
 
 
 try {
-    require_once 'pre.php';
+    require_once __DIR__ . '/../../../src/www/include/pre.php';
 
     $repository         = $argv[1];
     $revision           = $argv[2];
@@ -34,6 +34,6 @@ try {
 
     exit(0);
 } catch (Exception $exception) {
-    fwrite (STDERR, $exception->getMessage());
+    fwrite(STDERR, $exception->getMessage());
     exit(1);
 }

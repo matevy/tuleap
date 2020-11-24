@@ -18,22 +18,23 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-interface Codendi_Mail_Interface {
+interface Codendi_Mail_Interface
+{
     /**
      * User preference that stores the mail format
      */
     public const PREF_FORMAT = 'user_tracker_mailformat';
-    
+
     /**
      * Send message in HTML
      */
     public const FORMAT_HTML = 'html';
-    
+
     /**
      * Send message in Text
      */
     public const FORMAT_TEXT = 'text';
-    
+
     public function send();
 
     public function setCc($cc);
@@ -51,4 +52,3 @@ interface Codendi_Mail_Interface {
 
     public function addAdditionalHeader($name, $value);
 }
-?>

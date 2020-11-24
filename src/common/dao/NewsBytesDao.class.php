@@ -19,14 +19,17 @@
   * along with Tuleap. If not, see <http://www.gnu.org/licenses/
   */
 
-class NewsBytesDao extends DataAccessObject {
+class NewsBytesDao extends DataAccessObject
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->table_name = 'news_bytes';
     }
 
-    public function searchByForumId($forum_id){
+    public function searchByForumId($forum_id)
+    {
         $forum_id = $this->da->quoteSmart($forum_id);
         $sql = "SELECT group_id
                 FROM $this->table_name

@@ -25,7 +25,8 @@ use Tuleap\Git\Gitolite\SSHKey\ManagementDetector;
 use Tuleap\Git\Gitolite\VersionDetector;
 use Tuleap\Layout\IncludeAssets;
 
-class Git_AdminGitoliteConfig {
+class Git_AdminGitoliteConfig
+{
 
     public const ACTION_UPDATE_CONFIG                      = 'update_config';
     public const ACTION_MIGRATE_SSH_KEY_MANAGEMENT         = 'migrate_to_tuleap_ssh_keys_management';
@@ -88,7 +89,8 @@ class Git_AdminGitoliteConfig {
         $this->version_detector                 = $version_detector;
     }
 
-    public function process(Codendi_Request $request) {
+    public function process(Codendi_Request $request)
+    {
         $action = $request->get('action');
 
         if ($action === false) {
@@ -141,7 +143,8 @@ class Git_AdminGitoliteConfig {
     /**
      * @return Project
      */
-    private function getProject($project_name_from_autocomplete) {
+    private function getProject($project_name_from_autocomplete)
+    {
         return $this->project_manager->getProjectFromAutocompleter($project_name_from_autocomplete);
     }
 
@@ -163,7 +166,7 @@ class Git_AdminGitoliteConfig {
             $this->revokeProjects($request);
         }
 
-        if  ($request->get('allow-project')) {
+        if ($request->get('allow-project')) {
             $this->allowProject($request);
         }
     }
@@ -172,8 +175,7 @@ class Git_AdminGitoliteConfig {
     {
         $project_ids = $request->get('project-ids-to-revoke');
 
-        if (empty($project_ids))
-        {
+        if (empty($project_ids)) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
                 dgettext('tuleap-git', 'No project selected')
@@ -212,7 +214,8 @@ class Git_AdminGitoliteConfig {
         );
     }
 
-    public function display(Codendi_Request $request) {
+    public function display(Codendi_Request $request)
+    {
         $title    = dgettext('tuleap-git', 'Git');
         $template_path = dirname(GIT_BASE_DIR).'/templates';
 

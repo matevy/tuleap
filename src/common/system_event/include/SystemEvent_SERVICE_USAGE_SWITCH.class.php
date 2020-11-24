@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  *
- * 
+ *
  */
 
 
@@ -25,30 +25,33 @@
 * System Event classes
 *
 */
-class SystemEvent_SERVICE_USAGE_SWITCH extends SystemEvent {
-    
+class SystemEvent_SERVICE_USAGE_SWITCH extends SystemEvent
+{
+
     /**
-     * Verbalize the parameters so they are readable and much user friendly in 
+     * Verbalize the parameters so they are readable and much user friendly in
      * notifications
-     * 
-     * @param bool $with_link true if you want links to entities. The returned 
+     *
+     * @param bool $with_link true if you want links to entities. The returned
      * string will be html instead of plain/text
      *
      * @return string
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $txt = '';
         list($group_id, $shortname, $is_used) = $this->getParametersAsArray();
         $txt .= 'project: '. $this->verbalizeProjectId($group_id, $with_link) .', service: '. $shortname .', service is used: '. ($is_used ? 'true' : 'false');
         return $txt;
     }
-    
-    /** 
+
+    /**
      * Process stored event
      */
-    function process() {
+    function process()
+    {
         list($group_id, $shortname, $is_used) = $this->getParametersAsArray();
-        
+
         if ($project = $this->getProject($group_id)) {
             // If 'CVS' was activated, create the repo (if it does not exist) and regenerate cvs_root_allow.
             // if 'CVS' was inactivated... keep the repository, and do nothing.
@@ -60,7 +63,7 @@ class SystemEvent_SERVICE_USAGE_SWITCH extends SystemEvent {
                 }
                 Backend::instance('CVS')->setCVSRootListNeedUpdate();
             }
-            
+
             // Same as for CVS.
             if (($shortname == 'svn')&&($is_used)) {
                 $backendSVN    = Backend::instance('SVN');
@@ -70,13 +73,10 @@ class SystemEvent_SERVICE_USAGE_SWITCH extends SystemEvent {
                 }
                 $backendSVN->setSVNApacheConfNeedUpdate();
             }
-            
+
             $this->done();
             return true;
         }
         return false;
     }
-
 }
-
-?>

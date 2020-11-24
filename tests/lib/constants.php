@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012. All rights reserved
  *
@@ -19,4 +18,3 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 include_once dirname(__FILE__) . '/../../plugins/tracker/include/constants.php';
-?>

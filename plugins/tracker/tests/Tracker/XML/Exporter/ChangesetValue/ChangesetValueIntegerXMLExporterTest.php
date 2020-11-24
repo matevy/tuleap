@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueIntegerXMLExporterTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueIntegerXMLExporterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValue_ChangesetValueIntegerXMLExporter */
     private $exporter;
@@ -36,7 +37,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueIntegerXMLExporterTest e
     /** @var Tracker_FormElement_Field */
     private $field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->field         = aFileField()->withName('story_points')->build();
         $this->exporter      = new Tracker_XML_Exporter_ChangesetValue_ChangesetValueIntegerXMLExporter();
@@ -48,7 +50,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueIntegerXMLExporterTest e
         stub($this->changeset_value)->getField()->returns($this->field);
     }
 
-    public function itCreatesFieldChangeNodeInChangesetNode() {
+    public function itCreatesFieldChangeNodeInChangesetNode()
+    {
         $this->exporter->export(
             $this->artifact_xml,
             $this->changeset_xml,

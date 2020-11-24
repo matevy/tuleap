@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2016 - Present. All rights reserved
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -20,6 +20,8 @@
  */
 
 use Tuleap\Dashboard\User\UserDashboardController;
+use Tuleap\Http\HttpClientFactory;
+use Tuleap\Http\HTTPFactoryBuilder;
 use Tuleap\Hudson\HudsonJobBuilder;
 
 class hudson_Widget_JobTestTrend extends HudsonJobWidget
@@ -92,17 +94,18 @@ class hudson_Widget_JobTestTrend extends HudsonJobWidget
                 try {
                     $used_job          = $jobs[$this->job_id];
                     $this->job         = $this->job_builder->getHudsonJob($used_job);
-                    $http_client       = new Http_Client();
-                    $this->test_result = new HudsonTestResult($this->job->getUrl(), $http_client);
+                    $this->test_result = new HudsonTestResult(
+                        $this->job->getUrl(),
+                        HttpClientFactory::createClient(),
+                        HTTPFactoryBuilder::requestFactory()
+                    );
                 } catch (Exception $e) {
                     $this->test_result = null;
                 }
-
             } else {
                 $this->job = null;
                 $this->test_result = null;
             }
-
         }
     }
 
@@ -113,7 +116,6 @@ class hudson_Widget_JobTestTrend extends HudsonJobWidget
         $purifier = Codendi_HTMLPurifier::instance();
         $html     = '';
         if ($this->job != null && $this->test_result != null) {
-
             $job = $this->job;
 
             $html .= '<div style="padding: 20px;">';
@@ -121,7 +123,6 @@ class hudson_Widget_JobTestTrend extends HudsonJobWidget
             $html .= '<img src="'.$purifier->purify($job->getUrl()).'/test/trend?width=320&height=240" alt="'.$purifier->purify($GLOBALS['Language']->getText('plugin_hudson', 'project_job_testtrend', array($this->job->getName()))).'" title="'.$purifier->purify($GLOBALS['Language']->getText('plugin_hudson', 'project_job_testtrend', array($this->job->getName()))).'" />';
             $html .= '</a>';
             $html .= '</div>';
-
         } else {
             if ($this->job != null) {
                 $html .= $purifier->purify($GLOBALS['Language']->getText('plugin_hudson', 'widget_tests_not_found'));

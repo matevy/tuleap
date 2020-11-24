@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class MediawikiSiteAdminResourceRestrictor {
+class MediawikiSiteAdminResourceRestrictor
+{
 
     public const RESOURCE_ID = 1;
 
@@ -32,16 +33,19 @@ class MediawikiSiteAdminResourceRestrictor {
      */
     private $dao;
 
-    public function __construct(MediawikiSiteAdminResourceRestrictorDao $dao, ProjectManager $project_manager) {
+    public function __construct(MediawikiSiteAdminResourceRestrictorDao $dao, ProjectManager $project_manager)
+    {
         $this->dao = $dao;
         $this->project_manager = $project_manager;
     }
 
-    public function allowProject(Project $project) {
+    public function allowProject(Project $project)
+    {
         return $this->dao->allowProjectOnResource(self::RESOURCE_ID, $project->getId());
     }
 
-    public function searchAllowedProjects() {
+    public function searchAllowedProjects()
+    {
         $project_manager = $this->project_manager;
         return $this->dao->searchAllowedProjectsOnResource(self::RESOURCE_ID)->instanciateWith(function ($row) use ($project_manager) {
             return $project_manager->getProjectFromDbRow($row);

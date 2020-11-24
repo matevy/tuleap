@@ -18,14 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Search_SearchTypePresenter {
+class Search_SearchTypePresenter
+{
     public $search_type;
     public $title;
     public $facets;
     public $has_facets;
     public $url;
 
-    public function __construct($search_type, $title, $facets = array(), $url = '#') {
+    public function __construct($search_type, $title, $facets = array(), $url = '#')
+    {
         $this->search_type = $search_type;
         $this->title       = $title;
         $this->facets      = $facets;

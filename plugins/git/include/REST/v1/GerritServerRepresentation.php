@@ -24,7 +24,8 @@ namespace Tuleap\Git\REST\v1;
 use Git_RemoteServer_GerritServer;
 use Tuleap\REST\JsonCast;
 
-class GerritServerRepresentation {
+class GerritServerRepresentation
+{
 
     public const ROUTE = 'gerrit';
 
@@ -38,8 +39,9 @@ class GerritServerRepresentation {
      */
     public $html_url;
 
-    public function build(Git_RemoteServer_GerritServer $server) {
-       $this->id       = JsonCast::toInt($server->getId());
-       $this->html_url = $server->getBaseUrl();
+    public function build(Git_RemoteServer_GerritServer $server)
+    {
+        $this->id       = JsonCast::toInt($server->getId());
+        $this->html_url = $server->getBaseUrl();
     }
 }

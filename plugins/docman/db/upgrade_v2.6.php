@@ -1,6 +1,24 @@
 <?php
+/**
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-require_once('pre.php');
+require_once __DIR__ . '/../../../src/www/include/pre.php';
 
 // Step 1: fix bug with not deleted items
 // First delete all documents with deleted parents.
@@ -15,7 +33,7 @@ $aff = 0;
 do {
     $affectedRows += $aff;
     $res = db_query($sql);
-} while(($aff = db_affected_rows($res)) > 0);
+} while (($aff = db_affected_rows($res)) > 0);
 //echo "% Affected rows: ".$affectedRows."\n";
 
 // Step 2:
@@ -23,8 +41,7 @@ do {
 // Do it only if there is a default_value column
 $sql = 'SHOW COLUMNS FROM plugin_docman_metadata LIKE "default_value"';
 $res = db_query($sql);
-if(db_numrows($res) > 0) {
-
+if (db_numrows($res) > 0) {
     // Delete current values associated to folders
     echo "Clean metadata values already affected to a folder (old bug).\n";
     $sql = 'DELETE FROM plugin_docman_metadata_value'.
@@ -109,4 +126,3 @@ $res = db_query($sql);
 //echo "% Done\n";
 
 echo "~~ Upgrade completed ~~\n";
-?>

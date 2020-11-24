@@ -19,20 +19,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201202031104_add_shared_field_columns extends ForgeUpgrade_Bucket {
+class b201202031104_add_shared_field_columns extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add new columns to tracker_field and tracker_field_list_bind_static_value to
 manage shared fields.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         if (!$this->db->columnNameExists('tracker_field', 'original_field_id')) {
             $this->updateFieldTable();
         }
@@ -40,8 +44,9 @@ EOT;
             $this->updateFieldListBindStaticValueTable();
         }
     }
-    
-    private function updateFieldTable() {
+
+    private function updateFieldTable()
+    {
         $sql = "ALTER TABLE tracker_field
                 ADD COLUMN original_field_id INT( 11 ) UNSIGNED NOT NULL AFTER notifications";
         $res = $this->db->dbh->exec($sql);
@@ -55,7 +60,8 @@ EOT;
         }
     }
 
-    private function updateFieldListBindStaticValueTable() {
+    private function updateFieldListBindStaticValueTable()
+    {
         $sql = "ALTER TABLE tracker_field_list_bind_static_value
                 ADD COLUMN original_value_id INT(11) NOT NULL AFTER is_hidden";
         $res = $this->db->dbh->exec($sql);
@@ -68,8 +74,9 @@ EOT;
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while initializing original_value_id with some data: '.implode(', ', $this->db->dbh->errorInfo()));
         }
     }
-    
-    public function postUp() {
+
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('tracker_field', 'original_field_id')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('An error occured while adding column original_field_id to tracker_field table');
         }
@@ -78,4 +85,3 @@ EOT;
         }
     }
 }
-?>

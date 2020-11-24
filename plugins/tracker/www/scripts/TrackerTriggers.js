@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2013-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+/* global Class:readonly Ajax:readonly $:readonly $H:readonly $F:readonly $$:readonly codendi:readonly */
 
 var tuleap = tuleap || {};
 tuleap.trackers = tuleap.trackers || {};
@@ -211,6 +213,7 @@ tuleap.trackers.trigger = Class.create({
                     callback();
                 },
                 onFailure: function(response) {
+                    //eslint-disable-next-line no-alert
                     alert(response.responseText);
                 }
             }
@@ -242,6 +245,7 @@ tuleap.trackers.trigger = Class.create({
             condition = $F("trigger_condition_quantity");
 
         if (!target || !triggering_fields) {
+            //eslint-disable-next-line no-alert
             alert(codendi.locales.tracker_trigger.save_missing_data);
             return "";
         }
@@ -329,7 +333,6 @@ tuleap.trackers.trigger.triggering_field = Class.create({
 
     activateDeleteButton: function(trigger) {
         var button = this.container.down(".trigger_triggering_field_remove"),
-            container = this.container,
             self = this;
 
         Event.observe(button, "click", function() {
@@ -466,11 +469,9 @@ tuleap.trackers.trigger.triggering_field = Class.create({
         populateFieldValues(field_values, this.container);
 
         function populateFieldValues(fields, container) {
-            $H(fields).each(function(field) {
-                var option = createOption(
-                    field.value,
-                    "trigger-triggering_field-tracker-field-value"
-                );
+            fields.forEach(function(field) {
+                var option = createOption(field, "trigger-triggering_field-tracker-field-value");
+
                 container
                     .down(".trigger_triggering_field_child_tracker_field_value")
                     .appendChild(option);

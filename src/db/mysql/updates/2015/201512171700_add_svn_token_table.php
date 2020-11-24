@@ -16,17 +16,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201512171700_add_svn_token_table extends ForgeUpgrade_Bucket {
+class b201512171700_add_svn_token_table extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Add table svn_token to store SVN authentification token';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE IF NOT EXISTS svn_token (
                   id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
                   user_id INT(11) NOT NULL,

@@ -32,12 +32,13 @@ use PHPUnit\Framework\TestCase;
 use Project;
 use Project_AccessRestrictedException;
 use ProjectUGroup;
+use Tuleap\GlobalSVNPollution;
 use Tuleap\Project\ProjectAccessChecker;
 use UGroupDao;
 
 class BackendSVNTest extends TestCase
 {
-    use MockeryPHPUnitIntegration;
+    use MockeryPHPUnitIntegration, GlobalSVNPollution;
 
     /**
      * @var MockInterface|BackendSVN
@@ -47,9 +48,9 @@ class BackendSVNTest extends TestCase
     /**
      * @before
      */
-    public function createInstance()
+    public function createInstance() : void
     {
-        $this->backend = Mockery::mock(BackendSVN::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->backend                         = Mockery::mock(BackendSVN::class)->makePartial()->shouldAllowMockingProtectedMethods();
     }
 
     public function testItAddsProjectMembers()
@@ -94,7 +95,6 @@ class BackendSVNTest extends TestCase
             ->shouldReceive('checkUserCanAccessProject')->with($user1, $project)->once();
         $project_access_checker
             ->shouldReceive('checkUserCanAccessProject')->with($user2, $project)->once();
-
 
         $this->backend->shouldReceive('getUGroupDao')->andReturn($dao);
         $this->backend->shouldReceive('getUGroupFromRow')->andReturn($ugroup);

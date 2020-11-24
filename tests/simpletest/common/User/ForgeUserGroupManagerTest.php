@@ -20,7 +20,8 @@
 
 use Tuleap\User\ForgeUserGroupPermission\SiteAdministratorPermissionChecker;
 
-class User_ForgeUserGroupFactory_UpdateUserGroupTest extends TuleapTestCase {
+class User_ForgeUserGroupFactory_UpdateUserGroupTest extends TuleapTestCase
+{
 
     /**
      * @var User_ForgeUserGroupPermissionsDao
@@ -34,27 +35,31 @@ class User_ForgeUserGroupFactory_UpdateUserGroupTest extends TuleapTestCase {
 
     public function setUp()
     {
-        $this->dao = mock('UserGroupDao');
+        parent::setUp();
+        $this->setUpGlobalsMockery();
+        $this->dao = \Mockery::spy(\UserGroupDao::class);
         $this->manager = new User_ForgeUserGroupManager(
             $this->dao,
             mock(SiteAdministratorPermissionChecker::class)
         );
     }
 
-    public function itThrowsExceptionIfUGroupNotFound() {
+    public function itThrowsExceptionIfUGroupNotFound()
+    {
         $this->expectException('User_UserGroupNotFoundException');
 
         $ugroup = new User_ForgeUGroup(45, 'people', 'to eat');
 
-        stub($this->dao)->getForgeUGroup(45)->returns(false);
+        $this->dao->shouldReceive('getForgeUGroup')->with(45)->andReturns(false);
 
         $this->manager->updateUserGroup($ugroup);
     }
 
-    public function itReturnsTrueIfThereAreNoModifications() {
+    public function itReturnsTrueIfThereAreNoModifications()
+    {
         $ugroup = new User_ForgeUGroup(45, 'people', 'to eat');
 
-        stub($this->dao)->getForgeUGroup(45)->returns(array(
+        $this->dao->shouldReceive('getForgeUGroup')->with(45)->andReturns(array(
             'group_id'    => 45,
             'name'        => 'people',
             'description' => 'to eat'
@@ -64,32 +69,34 @@ class User_ForgeUserGroupFactory_UpdateUserGroupTest extends TuleapTestCase {
         $this->assertTrue($update);
     }
 
-    public function itUpdates() {
+    public function itUpdates()
+    {
         $ugroup = new User_ForgeUGroup(45, 'people', 'to eat');
 
-        stub($this->dao)->getForgeUGroup(45)->returns(array(
+        $this->dao->shouldReceive('getForgeUGroup')->with(45)->andReturns(array(
             'group_id'    => 45,
             'name'        => 'fish',
             'description' => 'to talk to'
         ));
 
-        stub($this->dao)->updateForgeUGroup(45, 'people', 'to eat')->once()->returns(true);
+        $this->dao->shouldReceive('updateForgeUGroup')->with(45, 'people', 'to eat')->once()->andReturns(true);
 
         $update = $this->manager->updateUserGroup($ugroup);
         $this->assertTrue($update);
     }
 
-    public function itThrowsAnExceptionIfUGroupNameAlreadyExists() {
+    public function itThrowsAnExceptionIfUGroupNameAlreadyExists()
+    {
         $this->expectException('User_UserGroupNameInvalidException');
         $ugroup = new User_ForgeUGroup(45, 'people', 'to eat');
 
-        stub($this->dao)->getForgeUGroup(45)->returns(array(
+        $this->dao->shouldReceive('getForgeUGroup')->with(45)->andReturns(array(
             'group_id'    => 45,
             'name'        => 'fish',
             'description' => 'to talk to'
         ));
 
-        stub($this->dao)->updateForgeUGroup(45, 'people', 'to eat')->once()->throws(new User_UserGroupNameInvalidException());
+        $this->dao->shouldReceive('updateForgeUGroup')->with(45, 'people', 'to eat')->once()->andThrows(new User_UserGroupNameInvalidException());
 
         $update = $this->manager->updateUserGroup($ugroup);
         $this->assertTrue($update);

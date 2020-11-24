@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: UnfoldSubpages.php,v 1.21 2005/09/11 13:20:07 rurban Exp $');
 /*
  Copyright 2002,2004,2005 $ThePhpWikiProgrammingTeam
@@ -24,10 +25,10 @@ rcs_id('$Id: UnfoldSubpages.php,v 1.21 2005/09/11 13:20:07 rurban Exp $');
  * UnfoldSubpages:  Lists the content of all SubPages of the current page.
  *   This is e.g. useful for the CalendarPlugin, to see all entries at once.
  *   Warning: Better don't use it with non-existant sections!
- *	      The section extractor is currently quite unstable.
+ *          The section extractor is currently quite unstable.
  * Usage:   <?plugin UnfoldSubpages sortby=-mtime words=50 maxpages=5 ?>
  * Author:  Reini Urban <rurban@x-ray.at>
- * 
+ *
  * Todo: follow RedirectTo
  */
 
@@ -35,77 +36,90 @@ require_once("lib/PageList.php");
 require_once("lib/TextSearchQuery.php");
 require_once("lib/plugin/IncludePage.php");
 
-class WikiPlugin_UnfoldSubpages
-extends WikiPlugin_IncludePage
+class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
 {
-    function getName() {
+    function getName()
+    {
         return _("UnfoldSubpages");
     }
 
-    function getDescription () {
+    function getDescription()
+    {
         return _("Includes the content of all SubPages of the current page.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.22 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.22 $"
+        );
     }
 
-    function getDefaultArguments() {
-        return array_merge
-            (
-             PageList::supportedArgs(),
-             array(
+    function getDefaultArguments()
+    {
+        return array_merge(
+            PageList::supportedArgs(),
+            array(
                    'pagename' => '[pagename]', // default: current page
                    //'header'  => '',  // expandable string
                    'quiet'   => false, // print no header
                    'sortby'   => '',    // [+|-]pagename, [+|-]mtime, [+|-]hits
                    'maxpages' => false, // maximum number of pages to include (== limit)
                    'smalltitle' => false, // if set, hide transclusion-title,
-                   			//  just have a small link at the start of 
-            				//  the page.
-                   'words'   => false, 	// maximum number of words
-                                	//  per page to include
-                   'lines'   => false, 	// maximum number of lines
-                                	//  per page to include
-                   'bytes'   => false, 	// maximum number of bytes
-                                	//  per page to include
+                               //  just have a small link at the start of
+                            //  the page.
+                   'words'   => false,     // maximum number of words
+                                    //  per page to include
+                   'lines'   => false,     // maximum number of lines
+                                    //  per page to include
+                   'bytes'   => false,     // maximum number of bytes
+                                    //  per page to include
                    'sections' => false, // maximum number of sections per page to include
-                   'section' => false, 	// this named section per page only
+                   'section' => false,     // this named section per page only
                    'sectionhead' => false // when including a named
-                   			//  section show the heading
-                   ));
+                               //  section show the heading
+            )
+        );
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         static $included_pages = false;
-        if (!$included_pages) $included_pages = array($basepage);
-        
+        if (!$included_pages) {
+            $included_pages = array($basepage);
+        }
+
         $args = $this->getArgs($argstr, $request);
         extract($args);
         $query = new TextSearchQuery($pagename . SUBPAGE_SEPARATOR . '*', true, 'glob');
         $subpages = $dbi->titleSearch($query, $sortby, $limit, $exclude);
         //if ($sortby)
         //    $subpages = $subpages->applyFilters(array('sortby' => $sortby, 'limit' => $limit, 'exclude' => $exclude));
-        //$subpages = explodePageList($pagename . SUBPAGE_SEPARATOR . '*', false, 
+        //$subpages = explodePageList($pagename . SUBPAGE_SEPARATOR . '*', false,
         //                            $sortby, $limit, $exclude);
-	if (is_string($exclude) and !is_array($exclude))
+        if (is_string($exclude) and !is_array($exclude)) {
             $exclude = PageList::explodePageList($exclude, false, false, $limit);
+        }
         $content = HTML();
 
         include_once('lib/BlockParser.php');
-	$i = 0;
+        $i = 0;
         while ($page = $subpages->next()) {
             $cpagename = $page->getName();
-     	    if ($maxpages and ($i++ > $maxpages)) {
+            if ($maxpages and ($i++ > $maxpages)) {
                 return $content;
             }
-            if (in_array($cpagename, $exclude))
-            	continue;
+            if (in_array($cpagename, $exclude)) {
+                continue;
+            }
             // A page cannot include itself. Avoid doublettes.
             if (in_array($cpagename, $included_pages)) {
-                $content->pushContent(HTML::p(sprintf(_("recursive inclusion of page %s ignored"),
-                                                      $cpagename)));
+                $content->pushContent(HTML::p(sprintf(
+                    _("recursive inclusion of page %s ignored"),
+                    $cpagename
+                )));
                 continue;
             }
             // trap any remaining nonexistant subpages
@@ -113,50 +127,68 @@ extends WikiPlugin_IncludePage
                 $r = $page->getCurrentRevision();
                 $c = $r->getContent();   // array of lines
                 // follow redirects
-                if (preg_match('/<'.'\?plugin\s+RedirectTo\s+page=(\w+)\s+\?'.'>/', 
-                               implode("\n", $c), $m)) 
-                {
+                if (preg_match(
+                    '/<'.'\?plugin\s+RedirectTo\s+page=(\w+)\s+\?'.'>/',
+                    implode("\n", $c),
+                    $m
+                )) {
                     // trap recursive redirects
                     if (in_array($m[1], $included_pages)) {
-                    	if (!$quiet)
+                        if (!$quiet) {
                             $content->pushContent(
-                                HTML::p(sprintf(_("recursive inclusion of page %s ignored"),
-                                                $cpagename.' => '.$m[1])));
+                                HTML::p(sprintf(
+                                    _("recursive inclusion of page %s ignored"),
+                                    $cpagename.' => '.$m[1]
+                                ))
+                            );
+                        }
                         continue;
                     }
-	            $cpagename = $m[1];
-	            $page = $dbi->getPage($cpagename);
+                    $cpagename = $m[1];
+                    $page = $dbi->getPage($cpagename);
                     $r = $page->getCurrentRevision();
                     $c = $r->getContent();   // array of lines
                 }
 
                 // moved to IncludePage
-                $ct = $this->extractParts ($c, $cpagename, $args);
+                $ct = $this->extractParts($c, $cpagename, $args);
 
                 array_push($included_pages, $cpagename);
                 if ($smalltitle) {
                     $pname = array_pop(explode(SUBPAGE_SEPARATOR, $cpagename)); // get last subpage name
                     // Use _("%s: %s") instead of .": ". for French punctuation
-                    $ct = TransformText(sprintf(_("%s: %s"), "[$pname|$cpagename]",
-                                                $ct),
-                                        $r->get('markup'), $cpagename);
-                }
-                else {
+                    $ct = TransformText(
+                        sprintf(
+                            _("%s: %s"),
+                            "[$pname|$cpagename]",
+                            $ct
+                        ),
+                        $r->get('markup'),
+                        $cpagename
+                    );
+                } else {
                     $ct = TransformText($ct, $r->get('markup'), $cpagename);
                 }
                 array_pop($included_pages);
                 if (! $smalltitle) {
-                    $content->pushContent(HTML::p(array('class' => $quiet ?
+                    $content->pushContent(HTML::p(
+                        array('class' => $quiet ?
                                                         '' : 'transclusion-title'),
-                                                  fmt("Included from %s:",
-                                                      WikiLink($cpagename))));
+                        fmt(
+                            "Included from %s:",
+                            WikiLink($cpagename)
+                        )
+                    ));
                 }
-                $content->pushContent(HTML(HTML::div(array('class' => $quiet ?
+                $content->pushContent(HTML(HTML::div(
+                    array('class' => $quiet ?
                                                            '' : 'transclusion'),
-                                                     false, $ct)));
+                    false,
+                    $ct
+                )));
             }
         }
-        if (! $cpagename ) {
+        if (! $cpagename) {
             return $this->error(sprintf(_("%s has no subpages defined."), $pagename));
         }
         return $content;
@@ -279,4 +311,3 @@ extends WikiPlugin_IncludePage
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

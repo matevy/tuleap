@@ -20,11 +20,12 @@
 
 namespace Tuleap\ProFTPd\Admin;
 
-use \Backend;
-use \RecursiveIteratorIterator;
-use \RecursiveDirectoryIterator;
+use Backend;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
 
-class ACLUpdater {
+class ACLUpdater
+{
     public const PARENT_DIR  = '..';
     public const CURRENT_DIR = '.';
     public const FILE        = 'file';
@@ -36,7 +37,8 @@ class ACLUpdater {
     /** @var array */
     private $builder_map;
 
-    public function __construct(Backend $backend) {
+    public function __construct(Backend $backend)
+    {
         $this->backend = $backend;
         $this->builder_map = array(
             self::FILE      => new ACLBuilderForFile(),
@@ -44,12 +46,14 @@ class ACLUpdater {
         );
     }
 
-    public function recursivelyApplyACL($path, $http_user, $writers, $readers) {
+    public function recursivelyApplyACL($path, $http_user, $writers, $readers)
+    {
         $this->updateACL($this->builder_map[self::DIRECTORY], $path, $http_user, $writers, $readers);
         $this->applyOnChildren($path, $http_user, $writers, $readers);
     }
 
-    private function applyOnChildren($path, $http_user, $writers, $readers) {
+    private function applyOnChildren($path, $http_user, $writers, $readers)
+    {
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($path),
             RecursiveIteratorIterator::SELF_FIRST
@@ -62,11 +66,13 @@ class ACLUpdater {
         }
     }
 
-    private function getBuilderFromType($file) {
+    private function getBuilderFromType($file)
+    {
         return $this->builder_map[$file->isDir() ? self::DIRECTORY : self::FILE];
     }
 
-    private function updateACL(ACLBuilder $builder, $path, $http_user, $writers, $readers) {
+    private function updateACL(ACLBuilder $builder, $path, $http_user, $writers, $readers)
+    {
         $this->backend->resetacl($path);
         $this->backend->modifyacl(
             $builder->getACL($http_user, $writers, $readers),
@@ -74,7 +80,8 @@ class ACLUpdater {
         );
     }
 
-    private function fileCanBeUpdated($filename) {
+    private function fileCanBeUpdated($filename)
+    {
         return $filename !== self::PARENT_DIR && $filename !== self::CURRENT_DIR;
     }
 }

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2014. All rights reserved
  *
@@ -19,9 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class Encoding_SupportedXmlCharEncoding {
+class Encoding_SupportedXmlCharEncoding
+{
 
-   private static $php_supported_encoding_types = array(
+    private static $php_supported_encoding_types = array(
         'UTF-8',
         'ISO-8859-1',
         'ISO-8859-5',
@@ -31,7 +31,8 @@ class Encoding_SupportedXmlCharEncoding {
    /**
     * @see http://www.w3.org/TR/REC-xml/#charsets
     */
-   public static function getXMLCompatibleString($string) {
+    public static function getXMLCompatibleString($string)
+    {
         $clean   = "";
         $current = null;
 
@@ -41,7 +42,8 @@ class Encoding_SupportedXmlCharEncoding {
 
         $string = self::convertToUTF8($string);
 
-        preg_match('/[^\x20-\xD7FF\xE000-\xFFFD\x10000-x10FFFF\x9\xA\xD]/',
+        preg_match(
+            '/[^\x20-\xD7FF\xE000-\xFFFD\x10000-x10FFFF\x9\xA\xD]/',
             $string,
             $matches
         );
@@ -52,7 +54,7 @@ class Encoding_SupportedXmlCharEncoding {
 
         $length = strlen($string);
         for ($i=0; $i < $length; $i++) {
-            $current = ord($string{$i});
+            $current = ord($string[$i]);
             if ((($current >= 0x20) && ($current <= 0xD7FF)) ||
                 (($current >= 0xE000) && ($current <= 0xFFFD)) ||
                 (($current >= 0x10000) && ($current <= 0x10FFFF)) ||
@@ -61,19 +63,19 @@ class Encoding_SupportedXmlCharEncoding {
                 $current == 0xD
             ) {
                 $clean .= chr($current);
-            }
-            else {
+            } else {
                 $clean .= " ";
             }
         }
 
         return $clean;
-   }
+    }
 
    /**
     * @return UTF-8 string. All unrecognized characters are stripped-out
     */
-    private static function convertToUTF8($string) {
+    private static function convertToUTF8($string)
+    {
         $encoding = mb_detect_encoding($string, implode(',', self::$php_supported_encoding_types));
 
         if ($encoding == 'UTF-8') {
@@ -83,4 +85,3 @@ class Encoding_SupportedXmlCharEncoding {
         return mb_convert_encoding($string, 'UTF-8', $encoding);
     }
 }
-?>

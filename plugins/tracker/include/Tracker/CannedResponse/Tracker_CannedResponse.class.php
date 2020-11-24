@@ -18,13 +18,14 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_CannedResponse {
-    
+class Tracker_CannedResponse
+{
+
     public $id;
     public $tracker;
     public $title;
     public $body;
-    
+
     /**
      * Constructor
      *
@@ -33,40 +34,44 @@ class Tracker_CannedResponse {
      * @param string  $title   The title
      * @param string  $body    The body
      */
-    public function __construct($id, $tracker, $title, $body) {
+    public function __construct($id, $tracker, $title, $body)
+    {
         $this->id      = $id;
         $this->tracker = $tracker;
         $this->title   = $title;
         $this->body    = $body;
     }
-    
+
     /**
      * Returns the title
      *
      * @return string The title
      */
-    public function getTitle() {
+    public function getTitle()
+    {
         return $this->title;
     }
-     
+
      /**
      * Returns the body
      *
      * @return string The body
      */
-    public function getBody() {
+    public function getBody()
+    {
         return $this->body;
     }
-     
+
     /**
      * Transforms CannedResponse into a SimpleXMLElement
-     * 
+     *
      * @param SimpleXMLElement $root the node to which the CannedResponse is attached (passed by reference)
      *
      * @return void
      */
-    public function exportToXml(SimpleXMLElement $root) {
-        // if old ids are important, modify code here 
+    public function exportToXml(SimpleXMLElement $root)
+    {
+        // if old ids are important, modify code here
         if (false) {
             $root->addAttribute('id', $this->id);
             $root->addAttribute('tracker', $this->tracker->id);
@@ -74,6 +79,4 @@ class Tracker_CannedResponse {
         $root->addChild('title', $this->title);
         $root->addChild('body', $this->body);
     }
-    
 }
-?>

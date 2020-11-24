@@ -18,12 +18,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class UserXMLExportedCollectionTest extends TuleapTestCase {
+class UserXMLExportedCollectionTest extends TuleapTestCase
+{
 
     private $collection;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
+        $this->setUpGlobalsMockery();
         ForgeConfig::store();
         ForgeConfig::set('tuleap_dir', __DIR__.'/../../../../../');
 
@@ -52,26 +55,29 @@ class UserXMLExportedCollectionTest extends TuleapTestCase {
         );
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         ForgeConfig::restore();
         parent::tearDown();
     }
 
-    public function itExportsAUser() {
+    public function itExportsAUser()
+    {
         $this->collection->add($this->a_user);
 
         $xml_content = $this->collection->toXML();
         $xml_object  = simplexml_load_string($xml_content);
 
         $this->assertNotNull($xml_object->user);
-        $this->assertEqual((int)$xml_object->user[0]->id,          101);
+        $this->assertEqual((int)$xml_object->user[0]->id, 101);
         $this->assertEqual((string)$xml_object->user[0]->username, 'kshen');
         $this->assertEqual((string)$xml_object->user[0]->realname, 'Kool Shen');
-        $this->assertEqual((string)$xml_object->user[0]->email,    'kshen@hotmail.fr');
-        $this->assertEqual((string)$xml_object->user[0]->ldapid,   'cb9867');
+        $this->assertEqual((string)$xml_object->user[0]->email, 'kshen@hotmail.fr');
+        $this->assertEqual((string)$xml_object->user[0]->ldapid, 'cb9867');
     }
 
-    public function itExportsMoreThanOneUser() {
+    public function itExportsMoreThanOneUser()
+    {
         $this->collection->add($this->a_user);
         $this->collection->add($this->another_user);
 
@@ -81,7 +87,8 @@ class UserXMLExportedCollectionTest extends TuleapTestCase {
         $this->assertCount($xml_object->user, 2);
     }
 
-    public function itDoesNotExportLdapIdIfNoLdap() {
+    public function itDoesNotExportLdapIdIfNoLdap()
+    {
         $this->collection->add($this->another_user);
 
         $xml_content = $this->collection->toXML();
@@ -90,7 +97,8 @@ class UserXMLExportedCollectionTest extends TuleapTestCase {
         $this->assertEqual((string)$xml_object->user[0]->ldapid, '');
     }
 
-    public function itDoesNotExportNone() {
+    public function itDoesNotExportNone()
+    {
         $this->collection->add($this->none);
 
         $xml_content = $this->collection->toXML();

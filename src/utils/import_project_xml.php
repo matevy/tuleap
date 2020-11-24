@@ -19,7 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'pre.php';
+require_once __DIR__ . '/../www/include/pre.php';
 
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -38,7 +38,7 @@ $argv = $_SERVER['argv'];
 foreach ($argv as $index => $value) {
     if ($value === '-n') {
         $console_output->writeln("<fg=yellow;options=bold>Warning : Option '-n' isn't longer supported. Replace by '-s' or '--name'</>");
-        unset ($argv[$index]);
+        unset($argv[$index]);
         $argv[] = '-s';
     }
 }

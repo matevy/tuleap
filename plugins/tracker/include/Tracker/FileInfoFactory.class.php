@@ -19,7 +19,8 @@
  */
 
 
-class Tracker_FileInfoFactory {
+class Tracker_FileInfoFactory
+{
     /**
      * @var Tracker_FileInfoDao
      */
@@ -35,7 +36,8 @@ class Tracker_FileInfoFactory {
      */
     private $artifact_factory;
 
-    public function __construct(Tracker_FileInfoDao $dao, Tracker_FormElementFactory $formelement_factory, Tracker_ArtifactFactory $artifact_factory) {
+    public function __construct(Tracker_FileInfoDao $dao, Tracker_FormElementFactory $formelement_factory, Tracker_ArtifactFactory $artifact_factory)
+    {
         $this->dao                 = $dao;
         $this->formelement_factory = $formelement_factory;
         $this->artifact_factory    = $artifact_factory;
@@ -103,17 +105,13 @@ class Tracker_FileInfoFactory {
     }
 
     /**
-     *
-     * @param type $id
-     *
-     * @return Tracker_Artifact
-     * @throws Tracker_FileInfo_InvalidFileInfoException
-     * @throws Tracker_FileInfo_UnauthorisedException
+     * @return Tracker_Artifact|null
      */
-    public function getArtifactByFileInfoIdInLastChangeset($id) {
+    public function getArtifactByFileInfoIdInLastChangeset(int $id)
+    {
         $row = $this->dao->searchArtifactIdByFileInfoIdInLastChangeset($id)->getRow();
         if (! $row) {
-            return;
+            return null;
         }
 
         return $this->artifact_factory->getArtifactById($row['artifact_id']);
@@ -125,7 +123,8 @@ class Tracker_FileInfoFactory {
      *
      * @return Tracker_Artifact | null
      */
-    public function getArtifactByFileInfoId($id) {
+    public function getArtifactByFileInfoId($id)
+    {
         static $cache = array();
         if (! isset($cache[$id])) {
             $row = $this->dao->searchArtifactIdByFileInfoId($id)->getRow();
@@ -139,7 +138,8 @@ class Tracker_FileInfoFactory {
         return $this->artifact_factory->getArtifactById($cache[$id]);
     }
 
-    public function buildFileInfoData(Tracker_Artifact_Attachment_TemporaryFile $file, $path) {
+    public function buildFileInfoData(Tracker_Artifact_Attachment_TemporaryFile $file, $path)
+    {
         return array(
             'id'           => $file->getTemporaryName(),
             'submitted_by' => $file->getCreatorId(),

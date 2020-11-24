@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2013. All Rights Reserved.
  *
@@ -21,7 +20,8 @@
 
 require_once dirname(__FILE__).'/../../../../bootstrap.php';
 
-class Git_Driver_Gerrit_Template_TemplateProcessorTest extends TuleapTestCase {
+class Git_Driver_Gerrit_Template_TemplateProcessorTest extends TuleapTestCase
+{
 
     /** @var Git_Driver_Gerrit_Template_TemplateProcessor */
     private $template_processor;
@@ -35,14 +35,16 @@ class Git_Driver_Gerrit_Template_TemplateProcessorTest extends TuleapTestCase {
     /** @var string */
     private $project_name = 'someProject';
 
-    public function setUp() {
+    public function setUp()
+    {
 
         $this->template_processor = new Git_Driver_Gerrit_Template_TemplateProcessor();
-        $this->template           = new Git_Driver_Gerrit_Template_Template(1,2,'wathevername','whateverecontent');
+        $this->template           = new Git_Driver_Gerrit_Template_Template(1, 2, 'wathevername', 'whateverecontent');
         $this->project            = stub('Project')->getUnixName()->returns($this->project_name);
     }
 
-    public function itDoesntChangeAnythingIfTemplateHasNoVariable() {
+    public function itDoesntChangeAnythingIfTemplateHasNoVariable()
+    {
         $template_content = "this is some template content without variables";
 
         $this->template->setContent($template_content);
@@ -52,7 +54,8 @@ class Git_Driver_Gerrit_Template_TemplateProcessorTest extends TuleapTestCase {
         $this->assertEqual($this->template->getContent(), $processed);
     }
 
-    public function itReplacesTheProjectNameByTheAppropriateVariable() {
+    public function itReplacesTheProjectNameByTheAppropriateVariable()
+    {
         $template_content = "this %projectname% should be replaced by the project name.
 
             this one %projectname% too!";
@@ -68,7 +71,8 @@ class Git_Driver_Gerrit_Template_TemplateProcessorTest extends TuleapTestCase {
         $this->assertEqual($expected, $processed);
     }
 
-    public function itDoesntReplaceIrrevelantVariables() {
+    public function itDoesntReplaceIrrevelantVariables()
+    {
         $template_content = "this %projectid% should be replaced by the project name.
 
             this one %projectid% too!";
@@ -78,6 +82,5 @@ class Git_Driver_Gerrit_Template_TemplateProcessorTest extends TuleapTestCase {
         $processed = $this->template_processor->processTemplate($this->template, $this->project);
 
         $this->assertEqual($template_content, $processed);
-
     }
 }

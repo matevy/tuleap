@@ -19,9 +19,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class AgileDashboard_KanbanColumnDao extends DataAccessObject {
+class AgileDashboard_KanbanColumnDao extends DataAccessObject
+{
 
-    public function getColumnWipLimit($kanban_id, $column_id) {
+    public function getColumnWipLimit($kanban_id, $column_id)
+    {
         $kanban_id = $this->da->escapeInt($kanban_id);
         $column_id = $this->da->escapeInt($column_id);
 
@@ -33,7 +35,8 @@ class AgileDashboard_KanbanColumnDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function setColumnWipLimit($kanban_id, $column_id, $wip_limit) {
+    public function setColumnWipLimit($kanban_id, $column_id, $wip_limit)
+    {
         $kanban_id = $this->da->escapeInt($kanban_id);
         $column_id = $this->da->escapeInt($column_id);
         $wip_limit = $this->da->escapeInt($wip_limit);
@@ -44,7 +47,8 @@ class AgileDashboard_KanbanColumnDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function deleteColumn($kanban_id, $column_id) {
+    public function deleteColumn($kanban_id, $column_id)
+    {
         $kanban_id = $this->da->escapeInt($kanban_id);
         $column_id = $this->da->escapeInt($column_id);
 
@@ -54,5 +58,4 @@ class AgileDashboard_KanbanColumnDao extends DataAccessObject {
 
         return $this->update($sql);
     }
-
 }

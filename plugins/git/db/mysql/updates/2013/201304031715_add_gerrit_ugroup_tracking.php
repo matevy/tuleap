@@ -16,14 +16,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201304031715_add_gerrit_ugroup_tracking extends ForgeUpgrade_Bucket {
+class b201304031715_add_gerrit_ugroup_tracking extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add table plugin_git_remote_ugroups
 EOT;
@@ -34,7 +36,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -43,7 +46,8 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $table = 'CREATE TABLE plugin_git_remote_ugroups (
                   group_id int(11) NOT NULL,
                   ugroup_id int(11) NOT NULL,
@@ -53,13 +57,12 @@ EOT;
                   )';
         $this->execDB($table, 'An error occured while adding plugin_git_remote_ugroups : ');
     }
-    
-    protected function execDB($sql, $message) {
+
+    protected function execDB($sql, $message)
+    {
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message.implode(', ', $this->db->dbh->errorInfo()));
         }
     }
 }
-
-?>

@@ -20,23 +20,22 @@
 
 <template>
     <div class="tlp-form-element">
-        <div class="tlp-form-element">
-            <label
-                class="tlp-label"
-                for="document-new-item-description"
-                v-translate
-            >
-                Description
-            </label>
-            <textarea
-                class="tlp-textarea"
-                id="document-new-item-description"
-                name="description"
-                v-bind:placeholder="placeholder"
-                v-bind:value="value"
-                v-on:input="$emit('input', $event.target.value)"
-            ></textarea>
-        </div>
+        <label
+            class="tlp-label"
+            for="document-new-item-description"
+            v-translate
+        >
+            Description
+        </label>
+        <textarea
+            class="tlp-textarea"
+            id="document-new-item-description"
+            name="description"
+            v-bind:placeholder="placeholder"
+            v-bind:value="value"
+            v-on:input="$emit('input', $event.target.value)"
+            data-test="document-metadata-description"
+        ></textarea>
     </div>
 </template>
 <script>

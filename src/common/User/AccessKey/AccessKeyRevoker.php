@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -35,5 +35,10 @@ class AccessKeyRevoker
     public function revokeASetOfUserAccessKeys(\PFUser $user, array $access_key_ids)
     {
         $this->dao->deleteByUserIDAndKeyIDs($user->getId(), $access_key_ids);
+    }
+
+    public function revokeExpiredUserAccessKeys(int $timestamp)
+    {
+        $this->dao->deleteByExpirationDate($timestamp);
     }
 }

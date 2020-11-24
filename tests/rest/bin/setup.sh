@@ -42,6 +42,11 @@ setup_tuleap() {
 
 	cp /usr/share/tuleap/src/utils/svn/Tuleap.pm /usr/share/perl5/vendor_perl/Apache/Tuleap.pm
 	install -m 04755 -o root -g root /usr/share/tuleap/src/utils/fileforge.pl /usr/lib/tuleap/bin/fileforge
+
+	install -m 00755 -o codendiadm -g codendiadm /usr/share/tuleap/src/utils/tuleap /usr/bin/tuleap
+	ln -s /usr/share/tuleap/src/tuleap-cfg/tuleap-cfg.php /usr/bin/tuleap-cfg
+
+	install -m 00755 -o codendiadm -g codendiadm -d /var/lib/tuleap/tracker
 }
 
 setup_database() {
@@ -52,10 +57,10 @@ setup_database() {
     MYSQL="mysql -h$MYSQL_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD"
 
     echo "Setup database $MYSQL_DAEMON"
-    if [ "$MYSQL_DAEMON" = "rh-mysql56-mysqld" ]; then
+    if [ "$MYSQL_DAEMON" = "rh-mysql57-mysqld" ]; then
         mkdir -p /tmp/mysql
         chown mysql:mysql /tmp/mysql
-        cp /usr/share/tuleap/tests/rest/etc/mysql-server.cnf /etc/opt/rh/rh-mysql56/my.cnf.d/mysql-server.cnf
+        cp /usr/share/tuleap/tests/rest/etc/mysql-server.cnf /etc/opt/rh/rh-mysql57/my.cnf.d/mysql-server.cnf
     fi
 
     service $MYSQL_DAEMON start
@@ -126,9 +131,11 @@ seed_data() {
     load_project /usr/share/tuleap/tests/rest/_fixtures/11-delegated-rest-project-managers
     load_project /usr/share/tuleap/tests/rest/_fixtures/12-suspended-project
     load_project /usr/share/tuleap/tests/rest/_fixtures/13-project-services
+    load_project /usr/share/tuleap/tests/rest/_fixtures/14-public-sync-project-member
+    load_project /usr/share/tuleap/tests/rest/_fixtures/15-future-releases
 
     echo "Load initial data"
-    "$PHP_CLI" -d include_path=/usr/share/tuleap/src/www/include:/usr/share/tuleap/src /usr/share/tuleap/tests/rest/bin/init_data.php
+    "$PHP_CLI" /usr/share/tuleap/tests/rest/bin/init_data.php
 
     seed_plugin_data
 }
@@ -150,14 +157,10 @@ seed_plugin_data() {
     done
 
     echo "Load plugins initial data"
-    "$PHP_CLI" -d include_path=/usr/share/tuleap/src/www/include:/usr/share/tuleap/src /usr/share/tuleap/tests/rest/bin/init_data_plugins.php
+    "$PHP_CLI" /usr/share/tuleap/tests/rest/bin/init_data_plugins.php
 }
 
 setup_tuleap
-if [ "$FPM_DAEMON" == 'php72-php-fpm' ]; then
-    echo "Deploy PHP FPM 7.2"
-    "$PHP_CLI" /usr/share/tuleap/tools/utils/php72/run.php --modules=nginx,fpm
-fi
 if [ "$FPM_DAEMON" == 'php73-php-fpm' ]; then
     echo "Deploy PHP FPM 7.3"
     "$PHP_CLI" /usr/share/tuleap/tools/utils/php73/run.php --modules=nginx,fpm

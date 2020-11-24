@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2011, 2012, 2013. All rights reserved.
+ * Copyright Enalean (c) 2011 - Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -22,18 +22,24 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'SystemEventProcess.class.php';
-
-class SystemEventProcessApplicationOwnerDefaultQueue implements SystemEventProcess {
+class SystemEventProcessApplicationOwnerDefaultQueue implements SystemEventProcess
+{
 
     /**
-     * @see SystemEventProcess::getPidFile()
+     * @see SystemEventProcess::getLockName()
      */
-    public function getPidFile() {
-        return '/var/tmp/tuleap_process_system_event_'.SystemEvent::OWNER_APP.'.pid';
+    public function getLockName()
+    {
+        return 'tuleap_process_system_event_'.SystemEvent::OWNER_APP;
     }
 
-    public function getQueue() {
+    public function getQueue()
+    {
         return SystemEvent::APP_OWNER_QUEUE;
+    }
+
+    public function getCommandName()
+    {
+        return 'tuleap.php process-system-events '.SystemEvent::OWNER_APP;
     }
 }

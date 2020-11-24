@@ -20,6 +20,7 @@
 
 namespace Tuleap\Tracker\Artifact\ActionButtons;
 
+use PFUser;
 use Tracker_Artifact;
 use Tuleap\Event\Dispatchable;
 
@@ -37,17 +38,28 @@ class AdditionalArtifactActionButtonsFetcher implements Dispatchable
      */
     private $additional_links = [];
 
-    public function __construct(Tracker_Artifact $artifact)
+    /**
+     * @var AdditionalButtonAction[]
+     */
+    private $additional_actions = [];
+
+    /**
+     * @var PFUser
+     */
+    private $user;
+
+    public function __construct(Tracker_Artifact $artifact, PFUser $user)
     {
         $this->artifact = $artifact;
+        $this->user = $user;
     }
 
-    public function getArtifact()
+    public function getArtifact(): Tracker_Artifact
     {
         return $this->artifact;
     }
 
-    public function addLinkPresenter(AdditionalButtonLinkPresenter $link)
+    public function addLinkPresenter(AdditionalButtonLinkPresenter $link): void
     {
         $this->additional_links[] = $link;
     }
@@ -55,8 +67,29 @@ class AdditionalArtifactActionButtonsFetcher implements Dispatchable
     /**
      * @returns AdditionalButtonLinkPresenter[]
      */
-    public function getAdditionalLinks()
+    public function getAdditionalLinks(): array
     {
         return $this->additional_links;
+    }
+
+    /**
+     * @return PFUser
+     */
+    public function getUser(): PFUser
+    {
+        return $this->user;
+    }
+
+    public function addAction(AdditionalButtonAction $action): void
+    {
+        $this->additional_actions[] = $action;
+    }
+
+    /**
+     * @return AdditionalButtonAction[]
+     */
+    public function getAdditionalActions(): array
+    {
+        return $this->additional_actions;
     }
 }

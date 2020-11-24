@@ -19,12 +19,14 @@
  */
 
 
-class LDAP_SyncNotificationManager {
+class LDAP_SyncNotificationManager
+{
 
     private $retentionPeriod;
     private $projectManager;
 
-    function __construct(ProjectManager $projectManager, $retentionPeriod){
+    function __construct(ProjectManager $projectManager, $retentionPeriod)
+    {
         $this->ldapSyncMail    = new LDAP_SyncMail($projectManager);
         $this->retentionPeriod = $retentionPeriod;
         $this->projectManager  = $projectManager;
@@ -37,7 +39,8 @@ class LDAP_SyncNotificationManager {
      *
      * @return void
      */
-    public function processNotification(PFUser $user) {
+    public function processNotification(PFUser $user)
+    {
         $recipients   = '';
         $adminsEmails = $this->ldapSyncMail->getNotificationRecipients($user);
         foreach ($adminsEmails as $unixProjectName => $emailList) {
@@ -51,30 +54,31 @@ class LDAP_SyncNotificationManager {
     /**
      * Prepare the body of the notification mail
      *
-     * @param Integer $unixProjectName  Unix name of the project we want to notify its administrators
+     * @param int $unixProjectName Unix name of the project we want to notify its administrators
      * @param PFUser  $user             Suspended user after LDAP daily synchro
      *
      * @return String
      */
-    private function getBody($unixProjectName, $user) {
+    private function getBody($unixProjectName, $user)
+    {
         $server_url       = HTTPRequest::instance()->getServerUrl();
         $project_url      = $server_url.'/projects/'.urlencode($unixProjectName);
         $project = $this->projectManager->getProjectByUnixName($unixProjectName);
         $publicProjectName = $project->getUnconvertedPublicName();
         $purifiedPublicProjectName = Codendi_HTMLPurifier::instance()->purify($publicProjectName, CODENDI_PURIFIER_LIGHT);
-        return $GLOBALS['Language']->getText('plugin_ldap','ldap_sync_mail_notification_body', array($user->getRealName(), $user->getEmail(), $project_url, $purifiedPublicProjectName, $this->retentionPeriod, ForgeConfig::get('sys_name')));
+        return $GLOBALS['Language']->getText('plugin_ldap', 'ldap_sync_mail_notification_body', array($user->getRealName(), $user->getEmail(), $project_url, $purifiedPublicProjectName, $this->retentionPeriod, ForgeConfig::get('sys_name')));
     }
 
     /**
      * Prepare the subject of the notification mail
      *
-     * @param Integer $projectName Public name of the project we want to notify its administrators
+     * @param int $projectName Public name of the project we want to notify its administrators
      * @param PFUser  $user        Suspended user after LDAP daily synchro
      *
      * @return String
      */
-    private function getSubject($projectName, $user) {
-        return  $GLOBALS['Language']->getText('plugin_ldap','ldap_sync_mail_notification_subject', array($user->getRealName(), $projectName));
+    private function getSubject($projectName, $user)
+    {
+        return  $GLOBALS['Language']->getText('plugin_ldap', 'ldap_sync_mail_notification_subject', array($user->getRealName(), $projectName));
     }
 }
-?>

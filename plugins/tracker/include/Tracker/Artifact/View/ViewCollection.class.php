@@ -21,16 +21,19 @@
 /**
  * First class collection of Tracker_Artifact_View_View
  */
-class Tracker_Artifact_View_ViewCollection {
+class Tracker_Artifact_View_ViewCollection
+{
 
     /** @var Tracker_Artifact_View_View[] */
     private $views = array();
 
-    public function add(Tracker_Artifact_View_View $view) {
+    public function add(Tracker_Artifact_View_View $view)
+    {
         $this->views[$view->getIdentifier()] = $view;
     }
 
-    public function fetchRequestedView(Codendi_Request $request) {
+    public function fetchRequestedView(Codendi_Request $request)
+    {
         $requested_view = $this->getRequestedView($request);
 
         $html  = '';
@@ -43,7 +46,8 @@ class Tracker_Artifact_View_ViewCollection {
     /**
      * @return Tracker_Artifact_View_View
      */
-    private function getRequestedView(Codendi_Request $request) {
+    private function getRequestedView(Codendi_Request $request)
+    {
         if (isset($this->views[$request->get('view')])) {
             return $this->views[$request->get('view')];
         } else {
@@ -56,7 +60,8 @@ class Tracker_Artifact_View_ViewCollection {
      *
      * @return string html
      */
-    private function fetchTabs(Tracker_Artifact_View_View $current_view) {
+    private function fetchTabs(Tracker_Artifact_View_View $current_view)
+    {
         $html  = '';
         $html .= '<ul class="nav nav-tabs tracker-artifact-nav">';
         foreach ($this->views as $view) {
@@ -70,4 +75,3 @@ class Tracker_Artifact_View_ViewCollection {
         return $html;
     }
 }
-?>

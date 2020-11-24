@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2018. All rights reserved
+ * Copyright (c) Enalean, 2017-present. All rights reserved
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -23,19 +23,25 @@
  * URL is a transport object (aka container) used to share data between
  * Model/Controler and View layer of the application
  */
-class Docman_Link extends Docman_Document {
-
+class Docman_Link extends Docman_Document
+{
+    /**
+     * @var Docman_LinkVersion
+     */
     private $current_version;
-    
-    function __construct($data = null) {
+
+    function __construct($data = null)
+    {
         parent::__construct($data);
     }
 
     var $url;
-    function getUrl() { 
-        return $this->url; 
+    function getUrl()
+    {
+        return $this->url;
     }
-    function setUrl($url) { 
+    function setUrl($url)
+    {
         $this->url = $url;
     }
 
@@ -44,11 +50,13 @@ class Docman_Link extends Docman_Document {
         return $GLOBALS['Language']->getText('plugin_docman', 'doc_type_link');
     }
 
-    function initFromRow($row) {
+    function initFromRow($row)
+    {
         parent::initFromRow($row);
         $this->setUrl($row['link_url']);
     }
-    function toRow() {
+    function toRow()
+    {
         $row = parent::toRow();
         $row['link_url'] = $this->getUrl();
         $row['item_type'] = PLUGIN_DOCMAN_ITEM_TYPE_LINK;
@@ -60,11 +68,13 @@ class Docman_Link extends Docman_Document {
         return $visitor->visitLink($this, $params);
     }
 
-    public function setCurrentVersion(Docman_LinkVersion $current_version) {
+    public function setCurrentVersion(Docman_LinkVersion $current_version)
+    {
         $this->current_version = $current_version;
     }
 
-    public function getCurrentVersion() {
+    public function getCurrentVersion()
+    {
         return $this->current_version;
     }
 }

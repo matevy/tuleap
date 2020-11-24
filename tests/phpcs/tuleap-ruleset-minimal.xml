@@ -6,57 +6,31 @@
 >
     <description>Tuleap minimal coding standard.</description>
 
-    <config name="installed_paths" value="../../slevomat/coding-standard,../../phpcompatibility/php-compatibility"/>
-
-    <exclude-pattern>*/vendor/*</exclude-pattern>
-    <exclude-pattern>*/node_modules/*</exclude-pattern>
-
-    <!-- Forbid use of short open tags <? -->
-    <rule ref="Generic.PHP.DisallowShortOpenTag" />
-
-    <!-- Comments -->
-    <!-- Forbid comments starting with # -->
-    <rule ref="PEAR.Commenting.InlineComment"/>
-    <!-- Forbid empty comments -->
-    <rule ref="SlevomatCodingStandard.Commenting.EmptyComment"/>
-    <!-- Forbid useless comments -->
-    <rule ref="SlevomatCodingStandard.Commenting.ForbiddenComments">
-        <properties>
-            <property name="forbiddenCommentPatterns" type="array">
-                <element value="~^(?:(?!private|protected|static)\S+ )?(?:con|de)structor\.\z~i"/>
-                <element value="~^Created by .+\.\z~i"/>
-                <element value="~^(User|Date|Time): \S+\z~i"/>
-                <element value="~^\S+ [gs]etter\.\z~i"/>
-                <element value="~^Class \S+\z~i"/>
-            </property>
-        </properties>
+    <rule ref="PSR2">
+        <exclude name="Generic.Files.LineLength.TooLong"/>
+        <exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
+        <!-- checked by SlevomatCodingStandard.Namespaces.UseSpacing -->
+        <exclude name="PSR2.Namespaces.UseDeclaration.SpaceAfterLastUse"/>
+        <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+        <exclude name="Squiz.Classes.ValidClassName.NotCamelCaps"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
+        <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
+        <exclude name="Squiz.Scope.MethodScope.Missing"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
+        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.VarUsed"/>
+        <exclude name="PSR1.Classes.ClassDeclaration.MultipleClasses"/>
+        <exclude name="PSR2.Classes.ClassDeclaration.CloseBraceSameLine"/>
+        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace"/>
+        <exclude name="PEAR.Functions.ValidDefaultValue.NotAtEnd"/>
     </rule>
-    <!-- report invalid format of inline phpDocs with @var -->
-    <rule ref="SlevomatCodingStandard.Commenting.InlineDocCommentDeclaration"/>
-    <!-- Forbid useless annotations -->
-    <rule ref="SlevomatCodingStandard.Commenting.ForbiddenAnnotations">
+    <!-- Forbid superfluous whitespaces -->
+    <rule ref="Squiz.WhiteSpace.SuperfluousWhitespace">
         <properties>
-            <property name="forbiddenAnnotations" type="array">
-                <element value="@api"/>
-                <element value="@author"/>
-                <element value="@category"/>
-                <element value="@copyright"/>
-                <element value="@created"/>
-                <element value="@license"/>
-                <element value="@package"/>
-                <element value="@since"/>
-                <element value="@subpackage"/>
-                <element value="@version"/>
-            </property>
+            <!-- turned on by PSR2 -> turning back off -->
+            <property name="ignoreBlankLines" value="false"/>
         </properties>
     </rule>
 
-    <!-- Require presence of class constant visibility -->
-    <rule ref="SlevomatCodingStandard.Classes.ClassConstantVisibility"/>
-    <!-- Require ? when default value is null -->
-    <rule ref="SlevomatCodingStandard.TypeHints.NullableTypeForNullDefaultValue"/>
-
-    <!-- Ensure code is compatible with the targeted version of PHP -->
-    <rule ref="PHPCompatibility"/>
-    <config name="testVersion" value="7.2-7.3"/>
+    <rule ref="./non-psr-rules.xml"/>
 </ruleset>

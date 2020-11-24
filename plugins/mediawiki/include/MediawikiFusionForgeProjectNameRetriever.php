@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class MediawikiFusionForgeProjectNameRetriever {
+class MediawikiFusionForgeProjectNameRetriever
+{
 
-    public function getFusionForgeProjectName($fusionforgeprojectname) {
+    public function getFusionForgeProjectName($fusionforgeprojectname)
+    {
         if ($fusionforgeprojectname !== null) {
             return $fusionforgeprojectname;
         }

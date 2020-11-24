@@ -26,8 +26,8 @@ use Tuleap\Admin\Homepage\UserCounterDao;
 use Tuleap\Admin\Homepage\UsersStatisticsPresenter;
 use Tuleap\Layout\IncludeAssets;
 
-require_once('pre.php');
-require_once('www/admin/admin_utils.php');
+require_once __DIR__ . '/../include/pre.php';
+require_once __DIR__ . '/admin_utils.php';
 
 $request = HTTPRequest::instance();
 $request->checkUserIsSuperUser();
@@ -53,7 +53,7 @@ $project_manager = ProjectManager::instance();
 $project_dao = new ProjectDao();
 $projects_by_status = $project_dao->getProjectsGroupByStatus();
 $project_count = [];
-foreach($projects_by_status as $projects) {
+foreach ($projects_by_status as $projects) {
     $project_count[$projects['status']] = $projects['project_nb'];
 }
 
@@ -84,10 +84,9 @@ db_query("SELECT COUNT(DISTINCT(p.user_id)) AS count
 $row = db_fetch_array();
 $mode_lab = $row['count'];
 
-if($GLOBALS['sys_user_approval'] == 1){
+if ($GLOBALS['sys_user_approval'] == 1) {
     $pending_users = $realpending_users;
-
-}else{
+} else {
     $pending_users = $realpending_users + $validated_users ;
 }
 
@@ -120,7 +119,8 @@ if (ForgeConfig::areRestrictedUsersAllowed() && $restricted_users > 0) {
     $statistics_users_graph[] = array( 'key'=> 'restricted', 'label' => $Language->getText('admin_main', 'statusrestricted_user'), 'count' => $restricted_users);
 }
 
-function stats_getactiveusers($since) {
+function stats_getactiveusers($since)
+{
     $time_totest=time()-$since;
 
     $res_count = db_query("SELECT count(*) AS count FROM user_access WHERE last_access_date> $time_totest ");
@@ -145,7 +145,7 @@ $additional_statistics = array(
     )
 );
 EventManager::instance()->processEvent(
-    EVENT::GET_SITEADMIN_HOMEPAGE_USER_STATISTICS,
+    Event::GET_SITEADMIN_HOMEPAGE_USER_STATISTICS,
     array(
         'nb_users_by_status'    => $nb_users_by_status,
         'additional_statistics' => &$additional_statistics

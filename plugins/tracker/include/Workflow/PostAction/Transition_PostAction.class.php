@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011. All Rights Reserved.
+ * Copyright (c) Enalean, 2011-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,8 +20,6 @@
 
 use Tuleap\Tracker\Workflow\PostAction\Visitor;
 
-require_once 'common/include/Codendi_Request.class.php';
-
 /**
  *
  * Post action occuring when transition is run
@@ -35,7 +33,7 @@ abstract class Transition_PostAction
     protected $transition;
 
     /**
-     * @var Integer Id of the post action
+     * @var int Id of the post action
      */
     protected $id;
 
@@ -48,9 +46,10 @@ abstract class Transition_PostAction
      * Constructor
      *
      * @param Transition $transition The transition the post action belongs to
-     * @param Integer    $id         Id of the post action
+     * @param int $id Id of the post action
      */
-    public function __construct(Transition $transition, $id) {
+    public function __construct(Transition $transition, $id)
+    {
         $this->transition = $transition;
         $this->id         = $id;
     }
@@ -58,9 +57,10 @@ abstract class Transition_PostAction
     /**
      * Return ID of the post-action
      *
-     * @return Integer
+     * @return int
      */
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
@@ -69,7 +69,8 @@ abstract class Transition_PostAction
      *
      * @return string
      */
-    public function getCssClasses() {
+    public function getCssClasses()
+    {
         return 'workflow_action '.$this->getCssClass();
     }
 
@@ -78,7 +79,8 @@ abstract class Transition_PostAction
      *
      * @return string
      */
-    public function getCssClass() {
+    public function getCssClass()
+    {
         return 'workflow_action_'.$this->getShortName();
     }
 
@@ -87,7 +89,8 @@ abstract class Transition_PostAction
      *
      * @return Transition
      */
-    public function getTransition() {
+    public function getTransition()
+    {
         return $this->transition;
     }
 
@@ -103,7 +106,8 @@ abstract class Transition_PostAction
      *
      * @return void
      */
-    protected function addFeedback($level, $pagename, $category, $args) {
+    protected function addFeedback($level, $pagename, $category, $args)
+    {
         $feedback = $GLOBALS['Language']->getText($pagename, $category, $args);
         $GLOBALS['Response']->addUniqueFeedback($level, $feedback);
     }
@@ -116,7 +120,8 @@ abstract class Transition_PostAction
      *
      * @return void
      */
-    public function before(array &$fields_data, PFUser $current_user) {
+    public function before(array &$fields_data, PFUser $current_user)
+    {
     }
 
     /**
@@ -125,7 +130,8 @@ abstract class Transition_PostAction
      * @param Tracker_Artifact_Changeset $changeset
      * @return void
      */
-    public function after(Tracker_Artifact_Changeset $changeset) {
+    public function after(Tracker_Artifact_Changeset $changeset)
+    {
     }
 
     /**
@@ -133,28 +139,28 @@ abstract class Transition_PostAction
      *
      * @return string
      */
-    public abstract function getShortName();
+    abstract public function getShortName();
 
     /**
      * Get the label of the post action
      *
      * @return string
      */
-    public static abstract function getLabel();
+    abstract public static function getLabel();
 
     /**
      * Get the html code needed to display the post action in workflow admin
      *
      * @return string html
      */
-    public abstract function fetch();
+    abstract public function fetch();
 
     /**
      * Say if the action is well defined
      *
      * @return bool
      */
-    public abstract function isDefined();
+    abstract public function isDefined();
 
     /**
      * Update/Delete action
@@ -163,7 +169,7 @@ abstract class Transition_PostAction
      *
      * @return void
      */
-    public abstract function process(Codendi_Request $request);
+    abstract public function process(Codendi_Request $request);
 
     /**
      * Export postactions to XML
@@ -173,17 +179,16 @@ abstract class Transition_PostAction
      *
      * @return void
      */
-    public abstract function exportToXml(SimpleXMLElement $root, $xmlMapping);
+    abstract public function exportToXml(SimpleXMLElement $root, $xmlMapping);
 
     /**
      * Get the value of bypass_permissions
      *
      * @param Tracker_FormElement_Field $field
      *
-     * @return boolean
+     * @return bool
      */
-    public abstract function bypassPermissions(Tracker_FormElement_Field $field);
+    abstract public function bypassPermissions(Tracker_FormElement_Field $field);
 
-    public abstract function accept(Visitor $visitor);
+    abstract public function accept(Visitor $visitor);
 }
-?>

@@ -18,13 +18,13 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('common/tracker/ArtifactRuleValueView.class.php');
-require_once('common/tracker/ArtifactRuleValue.class.php');
 Mock::generate('ArtifactRuleValue');
 
-class ArtifactRuleValueViewTest extends TuleapTestCase {
+class ArtifactRuleValueViewTest extends TuleapTestCase
+{
 
-    function testFetch() {
+    function testFetch()
+    {
         $rule = new MockArtifactRuleValue($this);
         $rule->id                = 'id';
         $rule->group_artifact_id = 'group_artifact_id';

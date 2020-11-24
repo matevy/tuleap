@@ -18,26 +18,35 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-if(!defined('CODENDI_DB_NULL')) define('CODENDI_DB_NULL', 0);
-if(!defined('CODENDI_DB_NOT_NULL')) define('CODENDI_DB_NOT_NULL', 1);
+if (!defined('CODENDI_DB_NULL')) {
+    define('CODENDI_DB_NULL', 0);
+}
+if (!defined('CODENDI_DB_NOT_NULL')) {
+    define('CODENDI_DB_NOT_NULL', 1);
+}
 
 /**
  * @deprecated
  */
-function db_query($sql,$print=0) {
+function db_query($sql, $print = 0)
+{
     if ($print) {
         print "<br>Query is: $sql<br>";
     }
+    /** @psalm-suppress DeprecatedFunction */
     return db_query_params($sql, array());
 }
 
 /**
  * @deprecated
  */
-function db_query_params($sql, $params) {
-	$dar = CodendiDataAccess::instance()->query($sql, $params);
+function db_query_params($sql, $params)
+{
+    $dar = CodendiDataAccess::instance()->query($sql, $params);
     $GLOBALS['db_qhandle'] = $dar->getResult();
+    /** @psalm-suppress DeprecatedFunction */
     if (db_numrows($GLOBALS['db_qhandle'])) {
+        /** @psalm-suppress DeprecatedFunction */
         db_reset_result($GLOBALS['db_qhandle']);
     }
     return $GLOBALS['db_qhandle'];
@@ -46,25 +55,28 @@ function db_query_params($sql, $params) {
 /**
  * @deprecated
  */
-function db_numrows($qhandle) {
-	// return only if qhandle exists, otherwise 0
-	if ($qhandle) {
-	    return @CodendiDataAccess::instance()->numRows($qhandle);
-	}
-	return 0;
+function db_numrows($qhandle)
+{
+    // return only if qhandle exists, otherwise 0
+    if ($qhandle) {
+        return @CodendiDataAccess::instance()->numRows($qhandle);
+    }
+    return 0;
 }
 
 /**
  * @deprecated
  */
-function db_free_result($qhandle) {
+function db_free_result($qhandle)
+{
     $qhandle->freeMemory();
 }
 
 /**
  * @deprecated
  */
-function db_result($qhandle,$row,$field) {
+function db_result($qhandle, $row, $field)
+{
     $qhandle->seek($row);
     $row = $qhandle->current();
     if ($field === null) {
@@ -79,47 +91,52 @@ function db_result($qhandle,$row,$field) {
 /**
  * @deprecated
  */
-function db_numfields($lhandle) {
+function db_numfields($lhandle)
+{
     return $lhandle->columnCount();
 }
 
 /**
  * @deprecated
  */
-function db_affected_rows($qhandle) {
+function db_affected_rows($qhandle)
+{
     return @CodendiDataAccess::instance()->affectedRows();
 }
 
 /**
  * @deprecated
  */
-function db_fetch_array($qhandle = 0) {
-	if ($qhandle) {
-	    return CodendiDataAccess::instance()->fetchArray($qhandle);
-	} else {
-		if ($GLOBALS['db_qhandle']) {
-			return CodendiDataAccess::instance()->fetchArray($GLOBALS['db_qhandle']);
-		} else {
-			return (array());
-		}
-	}
+function db_fetch_array($qhandle = 0)
+{
+    if ($qhandle) {
+        return CodendiDataAccess::instance()->fetchArray($qhandle);
+    } else {
+        if ($GLOBALS['db_qhandle']) {
+            return CodendiDataAccess::instance()->fetchArray($GLOBALS['db_qhandle']);
+        } else {
+            return (array());
+        }
+    }
 }
 
 /**
  * @deprecated
  */
-function db_insertid($qhandle) {
-	return CodendiDataAccess::instance()->lastInsertId();
+function db_insertid($qhandle)
+{
+    return CodendiDataAccess::instance()->lastInsertId();
 }
 
 /**
  * Display real error only if we are in Debug mode
  *
  * @deprecated
- * 
- * @return String 
+ *
+ * @return String
  */
-function db_error() {
+function db_error()
+{
     return CodendiDataAccess::instance()->isError();
 }
 
@@ -128,19 +145,21 @@ function db_error() {
  *
  *  Reset is useful for db_fetch_array sometimes you need to start over
  *
- *  @param		string	Query result set handle
- *  @param		int		Row number
+ *  @param        string    Query result set handle
+ *  @param        int        Row number
  *
  * @deprecated
  */
-function db_reset_result($qhandle,$row=0) {
-    return CodendiDataAccess::instance()->dataSeek($qhandle,$row);
+function db_reset_result($qhandle, $row = 0)
+{
+    return CodendiDataAccess::instance()->dataSeek($qhandle, $row);
 }
 
 /**
  * @deprecated
  */
-function db_escape_string($string,$qhandle=false) {
+function db_escape_string($string, $qhandle = false)
+{
     return substr(CodendiDataAccess::instance()->quoteSmart($string), 1, -1);
 }
 
@@ -148,8 +167,10 @@ function db_escape_string($string,$qhandle=false) {
  * Alias for db_escape_string.
  * @deprecated
  */
-function db_es($string,$qhandle=false) {
-    return db_escape_string($string,$qhandle);
+function db_es($string, $qhandle = false)
+{
+    /** @psalm-suppress DeprecatedFunction */
+    return db_escape_string($string, $qhandle);
 }
 
 /**
@@ -168,12 +189,13 @@ function db_es($string,$qhandle=false) {
  *
  * @return string Decimal integer encoded as a string
  */
-function db_escape_int($val, $null = CODENDI_DB_NOT_NULL) {
+function db_escape_int($val, $null = CODENDI_DB_NOT_NULL)
+{
     $match = array();
-    if($null === CODENDI_DB_NULL && $val === '') {
+    if ($null === CODENDI_DB_NULL && $val === '') {
         return 'NULL';
     }
-    if(preg_match('/^([+-]?[1-9][0-9]*|[+-]?0)$/', $val, $match)) {
+    if (preg_match('/^([+-]?[1-9][0-9]*|[+-]?0)$/', $val, $match)) {
         return $match[1];
     }
     return '0';
@@ -187,13 +209,16 @@ function db_escape_int($val, $null = CODENDI_DB_NOT_NULL) {
  * @deprecated
  * @return string Decimal integer encoded as a string
  */
-function db_ei($val, $null = CODENDI_DB_NOT_NULL) {
+function db_ei($val, $null = CODENDI_DB_NOT_NULL)
+{
+    /** @psalm-suppress DeprecatedFunction */
     return db_escape_int($val, $null);
 }
 
 /**
  * @deprecated
  */
-function db_ei_implode($val) {
+function db_ei_implode($val)
+{
     return implode(',', array_map('db_ei', $val));
 }

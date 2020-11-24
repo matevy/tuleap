@@ -20,7 +20,8 @@
 
 use Tuleap\Admin\AdminPageRenderer;
 
-class MediawikiSiteAdminController {
+class MediawikiSiteAdminController
+{
 
     private $project_manager;
     private $resource_restrictor;
@@ -75,7 +76,8 @@ class MediawikiSiteAdminController {
         $GLOBALS['Response']->redirect('/plugins/mediawiki/forge_admin.php?action=site_index');
     }
 
-    public function site_update_allowed_project_list(HTTPRequest $request) {
+    public function site_update_allowed_project_list(HTTPRequest $request)
+    {
         $this->assertSiteAdmin($request);
 
         $token = new CSRFSynchronizerToken('/plugins/mediawiki/forge_admin.php?action=site_update_allowed_project_list');
@@ -103,7 +105,8 @@ class MediawikiSiteAdminController {
         );
     }
 
-    private function allowProject($project_to_add) {
+    private function allowProject($project_to_add)
+    {
         $project = $this->project_manager->getProjectFromAutocompleter($project_to_add);
 
         if ($project && ($project->isActive() || $project->isSystem())) {
@@ -122,14 +125,16 @@ class MediawikiSiteAdminController {
         }
     }
 
-    private function sendUpdateProjectListError() {
+    private function sendUpdateProjectListError()
+    {
         $GLOBALS['Response']->addFeedback(
             Feedback::ERROR,
             $GLOBALS['Language']->getText('plugin_mediawiki', 'allowed_project_update_project_list_error')
         );
     }
 
-    private function assertSiteAdmin(HTTPRequest $request) {
+    private function assertSiteAdmin(HTTPRequest $request)
+    {
         if (! $request->getCurrentUser()->isSuperUser()) {
             $GLOBALS['Response']->redirect('/');
         }

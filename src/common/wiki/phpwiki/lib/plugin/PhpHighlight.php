@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: PhpHighlight.php,v 1.9 2004/04/10 07:25:24 rurban Exp $');
 /**
  Copyright 1999, 2000, 2001, 2002 $ThePhpWikiProgrammingTeam
@@ -52,27 +53,32 @@ rcs_id('$Id: PhpHighlight.php,v 1.9 2004/04/10 07:25:24 rurban Exp $');
  * will swallow "[somearray]"
  */
 
-class WikiPlugin_PhpHighlight
-extends WikiPlugin
+class WikiPlugin_PhpHighlight extends WikiPlugin
 {
     // Four required functions in a WikiPlugin.
 
-    function getName () {
+    function getName()
+    {
         return _("PhpHighlight");
     }
 
-    function getDescription () {
+    function getDescription()
+    {
         return _("PHP syntax highlighting");
-
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.9 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.9 $"
+        );
     }
 
     // Establish default values for each of this plugin's arguments.
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         // TODO: results of ini_get() should be static for multiple
         // invocations of plugin on one WikiPage
         return array('wrap'    => true,
@@ -84,7 +90,8 @@ extends WikiPlugin
                      );
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
 
         extract($this->getArgs($argstr, $request));
         $source = $this->source;
@@ -97,22 +104,19 @@ extends WikiPlugin
              * highlight_string(): */
             $source = "<?php\n" . $source . "\n?>";
         } else {
-            $source = str_replace(array('< ?php', '? >'),
-                                  array('<?php', '?>'), $source);
+            $source = str_replace(
+                array('< ?php', '? >'),
+                array('<?php', '?>'),
+                $source
+            );
         }
 
-        if (!check_php_version(4,2,0)) {
-            ob_start();
-            highlight_string($source);
-            $str = ob_get_contents();
-            ob_end_clean();
-        } else {
-            $str = highlight_string($source, true);
-        }
+        $str = highlight_string($source, true);
 
-        if ($wrap)
+        if ($wrap) {
             /* Remove "<?php\n" and "\n?>" again: */
             $str = str_replace(array('&lt;?php<br />', '?&gt;'), '', $str);
+        }
 
         /**
          * We might have made some empty font tags. (The following
@@ -130,7 +134,8 @@ extends WikiPlugin
         return new RawXml($str);
     }
 
-    function handle_plugin_args_cruft(&$argstr, &$args) {
+    function handle_plugin_args_cruft(&$argstr, &$args)
+    {
         $this->source = $argstr;
     }
 
@@ -138,7 +143,8 @@ extends WikiPlugin
      * Make sure color argument is valid
      * See http://www.w3.org/TR/REC-html40/types.html#h-6.5
      */
-    function sanify_colors($string, $comment, $keyword, $bg, $default, $html) {
+    function sanify_colors($string, $comment, $keyword, $bg, $default, $html)
+    {
         static $html4colors = array("black", "silver", "gray", "white",
                                     "maroon", "red", "purple", "fuchsia",
                                     "green", "lime", "olive", "yellow",
@@ -157,14 +163,17 @@ extends WikiPlugin
                 //trigger_error(sprintf(_("DEBUG color '%s' appears to be an HTML 4 color."), $color), E_USER_NOTICE);
                 // stop checking, ok to go
             } else {
-                trigger_error(sprintf(_("Invalid color: %s"),
-                                      $color), E_USER_NOTICE);
+                trigger_error(sprintf(
+                    _("Invalid color: %s"),
+                    $color
+                ), E_USER_NOTICE);
                 // FIXME: also change color to something valid like "black" or ini_get("highlight.xxx")
             }
         }
     }
 
-    function set_colors($string, $comment, $keyword, $bg, $default, $html) {
+    function set_colors($string, $comment, $keyword, $bg, $default, $html)
+    {
         // set highlight colors
         $this->oldstring = ini_set('highlight.string', $string);
         $this->oldcomment = ini_set('highlight.comment', $comment);
@@ -173,7 +182,8 @@ extends WikiPlugin
         $this->oldhtml = ini_set('highlight.html', $html);
     }
 
-    function restore_colors() {
+    function restore_colors()
+    {
         // restore previous default highlight colors
         ini_set('highlight.string', $this->oldstring);
         ini_set('highlight.comment', $this->oldcomment);
@@ -181,7 +191,6 @@ extends WikiPlugin
         ini_set('highlight.default', $this->olddefault);
         ini_set('highlight.html', $this->oldhtml);
     }
-
 };
 
 // $Log: PhpHighlight.php,v $
@@ -203,4 +212,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

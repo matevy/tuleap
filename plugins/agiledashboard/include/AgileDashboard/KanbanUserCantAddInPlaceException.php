@@ -16,8 +16,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Kanban_UserCantAddInPlaceException extends Exception {
-    public function __construct() {
+class Kanban_UserCantAddInPlaceException extends Exception
+{
+    public function __construct()
+    {
         parent::__construct("User can't add in place");
     }
 }

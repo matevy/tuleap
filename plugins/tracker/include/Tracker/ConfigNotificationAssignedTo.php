@@ -18,21 +18,24 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ConfigNotificationAssignedTo {
+class ConfigNotificationAssignedTo
+{
 
     /**
      * @var ConfigNotificationAssignedToDao
      */
     private $dao;
 
-    public function __construct(ConfigNotificationAssignedToDao $dao) {
+    public function __construct(ConfigNotificationAssignedToDao $dao)
+    {
         $this->dao = $dao;
     }
 
     /**
      * @return bool
      */
-    public function isAssignedToSubjectEnabled(Tracker $tracker) {
+    public function isAssignedToSubjectEnabled(Tracker $tracker)
+    {
         $row = $this->dao->searchConfigurationAssignedTo($tracker->getId())->getRow();
         return $row !== false;
     }

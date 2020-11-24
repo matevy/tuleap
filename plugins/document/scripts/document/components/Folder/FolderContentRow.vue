@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+  - Copyright (c) Enalean, 2018-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -18,9 +18,17 @@
   -->
 
 <template>
-    <tr class="document-tree-item-toggle-quicklook document-tree-item" v-bind:class="row_classes" v-bind:data-item-id="item.id">
-        <td v-bind:colspan="colspan">
-            <div v-bind:class="{ 'document-folder-content-title': item_is_not_being_uploaded, 'document-folder-content-quick-look-and-item-uploading': is_item_uploading_in_quicklook_mode }">
+    <tr
+        class="document-tree-item-toggle-quicklook document-tree-item"
+        v-bind:class="row_classes"
+        v-bind:data-item-id="item.id"
+        v-on:mouseleave="closeActionMenu"
+        v-on:click="toggleQuickLookOnRow"
+    >
+        <td v-bind:colspan="colspan" v-bind:id="`document-folder-content-row-${item.id}`">
+            <div v-bind:class="{ 'document-folder-content-title': item_is_not_being_uploaded, 'document-folder-content-quick-look-and-item-uploading': is_item_uploading_in_quicklook_mode }"
+                 v-bind:id="`document-folder-content-row-div-${item.id}`"
+            >
                 <component
                     v-bind:is="cell_title_component_name"
                     v-bind:item="item"
@@ -32,12 +40,12 @@
                     <div class="tlp-dropdown-split-button">
                         <quick-look-button
                             class="quick-look-button"
-                            v-on:displayQuickLook="$emit('displayQuickLook', item)"
                             data-test="quick-look-button"
+                            v-bind:item="item"
                         />
-                        <dropdown-button v-bind:is-in-quick-look-mode="true" data-test="dropdown-button">
-                            <dropdown-menu-for-item-quick-look v-bind:item="item" data-test="dropdown-menu"/>
-                        </dropdown-button>
+                        <drop-down-button v-bind:is-in-quick-look-mode="true" data-test="dropdown-button">
+                            <drop-down-menu-tree-view v-bind:item="item" data-test="dropdown-menu"/>
+                        </drop-down-button>
                     </div>
                 </div>
                 <upload-progress-bar
@@ -69,12 +77,6 @@
 
 <script>
 import { mapState } from "vuex";
-import UserBadge from "../User/UserBadge.vue";
-import QuickLookButton from "./ActionsQuickLookButton/QuickLookButton.vue";
-import UploadProgressBar from "./ProgressBar/UploadProgressBar.vue";
-import DropdownButton from "./ActionsDropDown/DropdownButton.vue";
-import DropdownMenuForItemQuickLook from "./ActionsDropDown/DropdownMenuForItemQuickLook.vue";
-
 import { TYPE_FILE, TYPE_FOLDER, TYPE_LINK, TYPE_WIKI, TYPE_EMBEDDED } from "../../constants.js";
 import {
     formatDateUsingPreferredUserFormat,
@@ -86,21 +88,27 @@ import {
     isItemUploadingInTreeView,
     isItemInTreeViewWithoutUpload
 } from "../../helpers/uploading-status-helper.js";
+import EventBus from "../../helpers/event-bus.js";
+import UserBadge from "../User/UserBadge.vue";
+import QuickLookButton from "./ActionsQuickLookButton/QuickLookButton.vue";
+import UploadProgressBar from "./ProgressBar/UploadProgressBar.vue";
+import DropDownButton from "./DropDown/DropDownButton.vue";
 import LockProperty from "./Property/LockProperty.vue";
 import DocumentTitleLockInfo from "./LockInfo/DocumentTitleLockInfo.vue";
 import ApprovalTableBadge from "./ApprovalTables/ApprovalTableBadge.vue";
+import DropDownMenuTreeView from "./DropDown/DropDownMenuTreeView.vue";
 
 export default {
     name: "FolderContentRow",
     components: {
+        DropDownMenuTreeView,
         ApprovalTableBadge,
         DocumentTitleLockInfo,
         LockProperty,
-        DropdownMenuForItemQuickLook,
         QuickLookButton,
         UserBadge,
         UploadProgressBar,
-        DropdownButton
+        DropDownButton
     },
     props: {
         item: Object,
@@ -194,11 +202,22 @@ export default {
         const is_under_the_fold = position_from_top > viewport_height;
 
         if (is_under_the_fold) {
-            document.dispatchEvent(
-                new CustomEvent("item-has-been-created-under-the-fold", {
-                    detail: { item: this.item }
-                })
-            );
+            EventBus.$emit("item-has-been-created-under-the-fold", {
+                detail: { item: this.item }
+            });
+        }
+    },
+    methods: {
+        closeActionMenu() {
+            EventBus.$emit("hide-action-menu");
+        },
+        toggleQuickLookOnRow(event) {
+            if (
+                event.target.id === `document-folder-content-row-${this.item.id}` ||
+                event.target.id === `document-folder-content-row-div-${this.item.id}`
+            ) {
+                EventBus.$emit("toggle-quick-look", { details: { item: this.item } });
+            }
         }
     }
 };

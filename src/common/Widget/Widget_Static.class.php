@@ -32,7 +32,8 @@ require_once "Widget.class.php";
  * $w->display();
  * </pre>
  */
-class Widget_Static extends Widget {
+class Widget_Static extends Widget
+{
     /**
      * Title
      * @var String
@@ -68,14 +69,16 @@ class Widget_Static extends Widget {
      *
      * @param String $title Widget title
      */
-    public function __construct($title) {
+    public function __construct($title)
+    {
         $this->title = $title;
     }
 
     /**
      * Output the widget
      */
-    public function display() {
+    public function display()
+    {
         $GLOBALS['HTML']->displayStaticWidget($this);
     }
 
@@ -84,14 +87,16 @@ class Widget_Static extends Widget {
      *
      * @param String $title title
      */
-    public function setTitle($title) {
+    public function setTitle($title)
+    {
         $this->title = $title;
     }
 
     /**
      * Title getter
      */
-    public function getTitle() {
+    public function getTitle()
+    {
         return $this->title;
     }
 
@@ -100,14 +105,16 @@ class Widget_Static extends Widget {
      *
      * @param String $content content
      */
-    public function setContent($content) {
+    public function setContent($content)
+    {
         $this->content = $content;
     }
 
     /**
      * Content getter
      */
-    public function getContent() {
+    public function getContent()
+    {
         return $this->content;
     }
 
@@ -116,21 +123,24 @@ class Widget_Static extends Widget {
      *
      * @param String $rss Rss url
      */
-    public function setRssUrl($rss) {
+    public function setRssUrl($rss)
+    {
         $this->rss = $rss;
     }
 
     /**
      * Rss Url getter
      */
-    public function getRssUrl($a, $b) {
+    public function getRssUrl($a, $b)
+    {
         return $this->rss;
     }
 
     /**
      * Return true if widget has rss
      */
-    public function hasRss() {
+    public function hasRss()
+    {
         return ($this->rss !== "");
     }
 
@@ -154,4 +164,3 @@ class Widget_Static extends Widget {
         return $this->additional_class;
     }
 }
-?>

@@ -19,8 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-require_once('pre.php');
-require_once('proj_email.php');
+require_once __DIR__ . '/../include/pre.php';
+require_once __DIR__ . '/../include/proj_email.php';
 
 $request = HTTPRequest::instance();
 $request->checkUserIsSuperUser();
@@ -30,7 +30,7 @@ $project    = ProjectManager::instance()->getProject($project_id);
 
 if ($project && is_object($project) && !$project->isError()) {
     if (send_new_project_email($project)) {
-        $msg = $GLOBALS['Language']->getText('admin_newprojectmail','success');
+        $msg = $GLOBALS['Language']->getText('admin_newprojectmail', 'success');
         $GLOBALS['Response']->addFeedback(Feedback::INFO, $msg);
     } else {
         $msg = $GLOBALS['Language']->getText('global', 'mail_failed', ForgeConfig::get('sys_email_admin'));

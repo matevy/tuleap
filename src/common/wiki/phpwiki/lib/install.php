@@ -1,4 +1,5 @@
-<?php //-*-php-*-
+<?php
+//-*-php-*-
 rcs_id('$Id: install.php,v 1.4 2005/09/15 05:56:12 rurban Exp $');
 
 /*
@@ -26,29 +27,32 @@ rcs_id('$Id: install.php,v 1.4 2005/09/15 05:56:12 rurban Exp $');
  * So we have no main loop and no request object yet.
  */
 
-function init_install() {
+function init_install()
+{
     // prevent from recursion
     static $already = 0;
     // setup default settings
-    if (!$already)
+    if (!$already) {
         IniConfig(dirname(__FILE__)."/../config/config-dist.ini");
+    }
     $already = 1;
 }
 
-/** 
+/**
  * Display a screen of various settings:
  * 1. convert from older index.php configuration [TODO]
  * 2. database and admin_user setup based on configurator.php
- * 3. dump the current settings to config/config.ini. 
+ * 3. dump the current settings to config/config.ini.
  */
-function run_install($part = '') {
+function run_install($part = '')
+{
     static $already = 0;
     if ($part) {
         $_GET['show'] = $part;
     }
     // setup default settings
     if (!$already and !defined("_PHPWIKI_INSTALL_RUNNING")) {
-    	define("_PHPWIKI_INSTALL_RUNNING", true);
+        define("_PHPWIKI_INSTALL_RUNNING", true);
     }
     $already = 1;
 }
@@ -88,4 +92,3 @@ init_install();
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

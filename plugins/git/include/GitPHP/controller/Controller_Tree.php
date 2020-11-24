@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - present. All Rights Reserved.
  * Copyright (C) 2010 Christopher Han <xiphux@gmail.com>
  *
  * This file is a part of Tuleap.
@@ -26,18 +26,8 @@ use Tuleap\Markdown\ContentInterpretor;
 
 class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
 {
-    use \Tuleap\Git\Repository\View\FeatureFlag;
-
     public const README_FILE_PATTERN = '/^readme\.(markdown|mdown|mkdn|md|mkd|mdwn|mdtxt|mdtext|text)$/i';
 
-    /**
-     * __construct
-     *
-     * Constructor
-     *
-     * @access public
-     * @return controller
-     */
     public function __construct()
     {
         parent::__construct();
@@ -56,10 +46,7 @@ class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
      */
     protected function GetTemplate() // @codingStandardsIgnoreLine
     {
-        if ($this->isTuleapBeauGitActivated()) {
-            return 'tuleap/tree.tpl';
-        }
-        return 'tree.tpl';
+        return 'tuleap/tree.tpl';
     }
 
     /**
@@ -68,7 +55,7 @@ class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
      * Gets the name of this controller's action
      *
      * @access public
-     * @param boolean $local true if caller wants the localized action name
+     * @param bool $local true if caller wants the localized action name
      * @return string action name
      */
     public function GetName($local = false) // @codingStandardsIgnoreLine
@@ -175,9 +162,7 @@ class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
             $tree->SetPath($this->params['file']);
         }
 
-        if ($this->isTuleapBeauGitActivated()) {
-            $this->tpl->assign('tree_presenter', new TreePresenter($tree));
-        }
+        $this->tpl->assign('tree_presenter', new TreePresenter($tree));
         $this->tpl->assign('tree', $tree);
     }
 

@@ -23,8 +23,9 @@ require_once('HTML_Element_Selectbox.class.php');
 /**
  * Define an html selectbox field for rank (at the beiginning, at the end, after XX, after YY, after ZZZ)
  */
-class HTML_Element_Selectbox_Rank extends HTML_Element_Selectbox {
-    
+class HTML_Element_Selectbox_Rank extends HTML_Element_Selectbox
+{
+
     /**
      * @param $label String the label of the field
      * @param $name String  the name of the input
@@ -32,18 +33,19 @@ class HTML_Element_Selectbox_Rank extends HTML_Element_Selectbox {
      * @param $id int The item id
      * @param $siblings array the sibling of the item array('id' => 123, 'name' => 'Item display name', 'rank' => 4)
      */
-    public function __construct($label, $name, $value, $id, $siblings) {
+    public function __construct($label, $name, $value, $id, $siblings)
+    {
         parent::__construct($label, $name, $value);
-        
+
         $this->addOption(new HTML_Element_Option($GLOBALS['Language']->getText('global', 'at_the_beginning'), 'beginning', false));
         $this->addOption(new HTML_Element_Option($GLOBALS['Language']->getText('global', 'at_the_end'), 'end', false));
         $this->addOption(new HTML_Element_Option('--', '--', false));
-        foreach($siblings as $i => $item) {
+        foreach ($siblings as $i => $item) {
             if ($item['id'] != $id) {
                 $this->addOption(
                     new HTML_Element_Option(
                         $GLOBALS['Language']->getText('global', 'after', $item['name']),
-                        $item['rank']+1, 
+                        $item['rank']+1,
                         (isset($siblings[$i + 1]) && $siblings[$i + 1]['id'] == $id)
                     )
                 );
@@ -51,4 +53,3 @@ class HTML_Element_Selectbox_Rank extends HTML_Element_Selectbox {
         }
     }
 }
-?>

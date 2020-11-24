@@ -56,8 +56,7 @@ class Tracker_FormElement_Field_List_BindFactoryTest extends TuleapTestCase
                 <default_values>
                     <value REF="F6-V0" />
                 </default_values>
-            </bind>'
-        );
+            </bind>');
 
         $mapping = array();
 
@@ -108,7 +107,8 @@ class Tracker_FormElement_Field_List_BindFactoryTest extends TuleapTestCase
         $this->assertReference($mapping['F6-V2'], $v3);
     }
 
-    public function testImport_users() {
+    public function testImport_users()
+    {
 
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <bind type="users">
@@ -116,8 +116,7 @@ class Tracker_FormElement_Field_List_BindFactoryTest extends TuleapTestCase
                     <item label="ugroup1"/>
                     <item label="ugroup2"/>
                 </items>
-            </bind>'
-        );
+            </bind>');
 
         $mapping = array();
 
@@ -139,15 +138,15 @@ class Tracker_FormElement_Field_List_BindFactoryTest extends TuleapTestCase
         $this->assertEqual($mapping, array());
     }
 
-    public function testImport_unknown_type() {
+    public function testImport_unknown_type()
+    {
 
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <bind type="unknown">
                 <items>
                     <item ID="bla" label="blabla"/>
                 </items>
-            </bind>'
-        );
+            </bind>');
 
         $mapping = array();
 
@@ -167,16 +166,19 @@ class Tracker_FormElement_Field_List_BindFactoryTest extends TuleapTestCase
         $this->assertEqual($mapping, array());
     }
 
-    function itRaisesAnErrorIfUnkownType() {
+    function itRaisesAnErrorIfUnkownType()
+    {
         $factory = new Tracker_FormElement_Field_List_BindFactory(mock('UGroupManager'));
         $this->expectError('Unknown bind "unknown"');
         $factory->getInstanceFromRow(array('type' => 'unknown', 'field' => 'a_field_object'));
     }
 }
 
-class Tracker_FormElement_Field_List_BindFactoryImportUGroupsTest extends TuleapTestCase {
+class Tracker_FormElement_Field_List_BindFactoryImportUGroupsTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->mapping        = array();
@@ -191,15 +193,15 @@ class Tracker_FormElement_Field_List_BindFactoryImportUGroupsTest extends Tuleap
         $this->setText('Registered users', array('project_ugroup', 'ugroup_registered_users'));
     }
 
-    public function itImportsStaticUgroups() {
+    public function itImportsStaticUgroups()
+    {
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <bind type="ugroups">
                 <items>
                     <item ID="F1-V0" label="Integrators" is_hidden="0" />
                     <item ID="F1-V1" label="Customers" is_hidden="0" />
                 </items>
-            </bind>'
-        );
+            </bind>');
 
         stub($this->ugroup_manager)->getUGroupByName($this->project, 'Integrators')->returns(new ProjectUGroup(array('name' => 'Integrators')));
         stub($this->ugroup_manager)->getUGroupByName($this->project, 'Customers')->returns(new ProjectUGroup(array('name' => 'Customers')));
@@ -211,14 +213,14 @@ class Tracker_FormElement_Field_List_BindFactoryImportUGroupsTest extends Tuleap
         $this->assertEqual($values["F1-V1"]->getLabel(), 'Customers');
     }
 
-    public function itImportsIgnoresStaticUgroupThatDoesntBelongToProject() {
+    public function itImportsIgnoresStaticUgroupThatDoesntBelongToProject()
+    {
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <bind type="ugroups">
                 <items>
                     <item ID="F1-V0" label="NotInProject" is_hidden="0" />
                 </items>
-            </bind>'
-        );
+            </bind>');
 
         stub($this->ugroup_manager)->getUGroupByName($this->project, 'NotInProject')->returns(false);
 
@@ -227,14 +229,14 @@ class Tracker_FormElement_Field_List_BindFactoryImportUGroupsTest extends Tuleap
         $this->assertCount($bind->getAllValues(), 0);
     }
 
-    public function itImportsDynamicUgroups() {
+    public function itImportsDynamicUgroups()
+    {
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <bind type="ugroups">
                 <items>
                     <item ID="F1-V0" label="ugroup_registered_users_name_key" is_hidden="0" />
                 </items>
-            </bind>'
-        );
+            </bind>');
 
         stub($this->ugroup_manager)->getUGroupByName($this->project, 'ugroup_registered_users_name_key')->returns(new ProjectUGroup(array('name' => 'ugroup_registered_users_name_key')));
 
@@ -244,14 +246,14 @@ class Tracker_FormElement_Field_List_BindFactoryImportUGroupsTest extends Tuleap
         $this->assertEqual($values["F1-V0"]->getLabel(), 'Registered users');
     }
 
-    public function itImportsHiddenValues() {
+    public function itImportsHiddenValues()
+    {
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <bind type="ugroups">
                 <items>
                     <item ID="F1-V0" label="ugroup_registered_users_name_key" is_hidden="1" />
                 </items>
-            </bind>'
-        );
+            </bind>');
 
         stub($this->ugroup_manager)->getUGroupByName($this->project, 'ugroup_registered_users_name_key')->returns(new ProjectUGroup(array('name' => 'ugroup_registered_users_name_key')));
 

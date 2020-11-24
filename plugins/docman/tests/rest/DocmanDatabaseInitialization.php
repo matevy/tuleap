@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Tuleap\Docman\rest;
+namespace Tuleap\Docman\Test\rest;
 
 require_once __DIR__ . '/../../../../tests/lib/DatabaseInitialisation.class.php';
 
@@ -37,7 +37,7 @@ class DocmanDatabaseInitialization extends \DatabaseInitialization
 
     private function enableWikiService(\Project $project): void
     {
-        echo 'Enable the Wiki service to test the Docman';
+        echo 'Enable the Wiki service to test the Docman' . PHP_EOL;
 
         $sql = "INSERT INTO tuleap.service (group_id, label, description, short_name, link, is_active, is_used, scope, rank, location, server_id, is_in_iframe)
                 VALUES (?, 'Wiki', 'Wiki', 'wiki', ?, 1, 1, 'system', 105, 'master', NULL, 0)";

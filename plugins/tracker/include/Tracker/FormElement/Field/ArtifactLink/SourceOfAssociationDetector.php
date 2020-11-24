@@ -23,7 +23,8 @@ namespace Tuleap\Tracker\FormElement\Field\ArtifactLink;
 use Tracker_Artifact;
 use Tracker_HierarchyFactory;
 
-class SourceOfAssociationDetector {
+class SourceOfAssociationDetector
+{
 
     /**
      * @var Tracker_HierarchyFactory
@@ -49,9 +50,10 @@ class SourceOfAssociationDetector {
      * @param Tracker_Artifact $artifact_to_check
      * @param Tracker_Artifact $artifact_reference
      *
-     * @return Boolean
+     * @return bool
      */
-    public function isChild(Tracker_Artifact $artifact_to_check, Tracker_Artifact $artifact_reference) {
+    public function isChild(Tracker_Artifact $artifact_to_check, Tracker_Artifact $artifact_reference)
+    {
         $children = $this->hierarchy_factory->getChildren($artifact_to_check->getTrackerId());
 
         return in_array($artifact_reference->getTracker(), $children);

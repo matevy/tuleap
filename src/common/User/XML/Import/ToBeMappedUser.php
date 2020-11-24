@@ -21,7 +21,8 @@ namespace User\XML\Import;
 
 use RuntimeException;
 
-class ToBeMappedUser extends ActionToBeTakenForUser {
+class ToBeMappedUser extends ActionToBeTakenForUser
+{
 
     public const ACTION = 'map';
 
@@ -47,7 +48,8 @@ class ToBeMappedUser extends ActionToBeTakenForUser {
     }
 
     /** @return array */
-    public function getCSVData() {
+    public function getCSVData()
+    {
         $matching = array();
         $actions  = array();
         foreach ($this->matching_users as $user) {
@@ -69,7 +71,8 @@ class ToBeMappedUser extends ActionToBeTakenForUser {
         );
     }
 
-    public function isActionAllowed($action) {
+    public function isActionAllowed($action)
+    {
         return $action === self::ACTION;
     }
 }

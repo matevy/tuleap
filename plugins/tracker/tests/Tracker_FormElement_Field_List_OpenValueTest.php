@@ -19,14 +19,14 @@
  */
 require_once('bootstrap.php');
 
-class Tracker_FormElement_Field_List_OpenValueTest extends TuleapTestCase {
-    
-    public function testJSon() {
+class Tracker_FormElement_Field_List_OpenValueTest extends TuleapTestCase
+{
+
+    public function testJSon()
+    {
         $id          = 123;
         $label       = 'Reopen';
         $value = new Tracker_FormElement_Field_List_OpenValue($id, $label);
         $this->assertEqual(json_encode($value->fetchForOpenListJson()), '{"id":123,"value":"o123","caption":"Reopen","rest_value":"Reopen"}');
     }
-    
 }
-?>

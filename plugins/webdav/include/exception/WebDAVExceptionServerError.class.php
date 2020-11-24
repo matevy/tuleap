@@ -21,17 +21,16 @@
  *
  * This exception is thrown when a problem occurs on the server
  */
-class WebDAVExceptionServerError extends Sabre_DAV_Exception {
+class WebDAVExceptionServerError extends Sabre_DAV_Exception
+{
 
     /**
-     * getHTTPCode 
-     * 
-     * @return int 
+     * getHTTPCode
+     *
+     * @return int
      */
-    public function getHTTPCode() {
+    public function getHTTPCode()
+    {
         return 500;
     }
-
 }
-
-?>

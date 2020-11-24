@@ -23,7 +23,6 @@ use Tuleap\Glyph\GlyphFinder;
 class FlamingParrot_NavBarPresenter
 {
     public $search_label;
-    public $user_history_dropdown;
     public $history;
     public $empty_history;
     public $error_fetch;
@@ -104,8 +103,7 @@ class FlamingParrot_NavBarPresenter
         FlamingParrot_NavBarItemPresentersCollection $navbar_items_collection,
         array $user_actions,
         CSRFSynchronizerToken $logout_csrf,
-        URLRedirect $url_redirect,
-        GlyphFinder $glyph_finder
+        URLRedirect $url_redirect
     ) {
         $this->imgroot                     = $imgroot;
         $this->user                        = $user;
@@ -125,9 +123,9 @@ class FlamingParrot_NavBarPresenter
         $this->url_redirect                = $url_redirect;
 
         $this->logout_label         = $GLOBALS['Language']->getText('include_menu', 'logout');
-        $this->my_account_label     = $GLOBALS['Language']->getText('my_index','account_maintenance');
+        $this->my_account_label     = $GLOBALS['Language']->getText('my_index', 'account_maintenance');
         $this->join_community_title = $GLOBALS['Language']->getText('include_menu', 'join_community');
-        $this->search_label         = $GLOBALS['Language']->getText('include_menu','search');
+        $this->search_label         = $GLOBALS['Language']->getText('include_menu', 'search');
 
         $this->current_user_id = $user->getId();
         $this->history         = _('History');
@@ -136,73 +134,88 @@ class FlamingParrot_NavBarPresenter
         $this->error_fetch     = _('An error occurred while fetching the content of your history');
         $this->error_clear     = _('An error occurred while clearing the content of your history');
         $this->homepage_label  = _('Homepage');
-        $this->project_icon    = $glyph_finder->get('project-small')->getInlineString();
     }
 
-    public function imgroot() {
+    public function imgroot()
+    {
         return $this->imgroot;
     }
 
-    public function user_is_logged_in() {
+    public function user_is_logged_in()
+    {
         return $this->user->isLoggedIn();
     }
 
-    public function user_can_search() {
+    public function user_can_search()
+    {
         return $this->user->isActive();
     }
 
-    public function user_real_name() {
+    public function user_real_name()
+    {
         return $this->user->getRealName();
     }
 
-    public function user_login_name() {
+    public function user_login_name()
+    {
         return "@".$this->user->getUnixName();
     }
 
-    public function has_user_avatar() {
+    public function has_user_avatar()
+    {
         return $this->user->hasAvatar();
     }
 
-    public function user_avatar() {
+    public function user_avatar()
+    {
         return $this->user->getAvatarUrl();
     }
 
-    public function search_form_presenter() {
+    public function search_form_presenter()
+    {
         if ($this->userIsOnPageWithItsOwnSearchForm()) {
             return null;
         }
         return $this->search_form_presenter;
     }
 
-    private function userIsOnPageWithItsOwnSearchForm() {
+    private function userIsOnPageWithItsOwnSearchForm()
+    {
         return $this->getClassnameNavItemActive('/search/');
     }
 
-    public function display_new_user() {
+    public function display_new_user()
+    {
         return $this->display_new_account;
     }
 
-    public function account_options_text() {
-        return $GLOBALS['Language']->getText('account_options','preferences');
+    public function account_options_text()
+    {
+        return $GLOBALS['Language']->getText('account_options', 'preferences');
     }
 
-    public function menu_home_text() {
+    public function menu_home_text()
+    {
         return $GLOBALS['Language']->getText('menu', 'home');
     }
 
-    public function include_menu_login_text() {
-       return $GLOBALS['Language']->getText('include_menu','login');
+    public function include_menu_login_text()
+    {
+        return $GLOBALS['Language']->getText('include_menu', 'login');
     }
 
-    public function include_menu_new_user_text() {
-        return $GLOBALS['Language']->getText('include_menu','new_user');
+    public function include_menu_new_user_text()
+    {
+        return $GLOBALS['Language']->getText('include_menu', 'new_user');
     }
 
-    public function search_placeholder() {
-        return $GLOBALS['Language']->getText('include_menu','search');
+    public function search_placeholder()
+    {
+        return $GLOBALS['Language']->getText('include_menu', 'search');
     }
 
-    private function getClassnameNavItemActive($pathsToDetect, $toptab = null) {
+    private function getClassnameNavItemActive($pathsToDetect, $toptab = null)
+    {
         if ($toptab === $this->selected_top_tab) {
             return 'active';
         } else {

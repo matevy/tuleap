@@ -73,14 +73,18 @@ class SetIntValueUpdaterTest extends TestCase
     public function testUpdateAddsNewSetIntValueActions()
     {
         $transition = TransitionFactory::buildATransitionWithTracker($this->tracker);
-        $this->mockFindAllIdsByTransition($transition, [1]);
 
-        $added_action = new SetIntValue(null, 43, 1);
+        $added_action = new SetIntValue(43, 1);
         $actions      = new PostActionCollection($added_action);
 
         $this->validator
             ->shouldReceive('validate')
             ->with($this->tracker, $added_action);
+
+        $this->set_int_value_repository
+            ->shouldReceive('deleteAllByTransition')
+            ->with($transition)
+            ->andReturns();
 
         $this->set_int_value_repository
             ->shouldReceive('create')
@@ -90,12 +94,11 @@ class SetIntValueUpdaterTest extends TestCase
         $this->updater->updateByTransition($actions, $transition);
     }
 
-    public function testUpdateUpdatesSetIntValueActionsWhichAlreadyExists()
+    public function testUpdateDeleteAndRecreatesSetIntValueActionsWhichAlreadyExists()
     {
         $transition = TransitionFactory::buildATransitionWithTracker($this->tracker);
-        $this->mockFindAllIdsByTransition($transition, [1]);
 
-        $updated_action = new SetIntValue(1, 43, 1);
+        $updated_action = new SetIntValue(43, 1);
         $actions        = new PostActionCollection($updated_action);
 
         $this->validator
@@ -103,8 +106,13 @@ class SetIntValueUpdaterTest extends TestCase
             ->with($this->tracker, $updated_action);
 
         $this->set_int_value_repository
-            ->shouldReceive('update')
-            ->with($updated_action)
+            ->shouldReceive('deleteAllByTransition')
+            ->with($transition)
+            ->andReturns();
+
+        $this->set_int_value_repository
+            ->shouldReceive('create')
+            ->with($transition, $updated_action)
             ->andReturns();
 
         $this->updater->updateByTransition($actions, $transition);
@@ -114,9 +122,7 @@ class SetIntValueUpdaterTest extends TestCase
     {
         $transition = TransitionFactory::buildATransitionWithTracker($this->tracker);
 
-        $this->mockFindAllIdsByTransition($transition, [2, 3]);
-
-        $action  = new SetIntValue(2, 43, 1);
+        $action  = new SetIntValue(43, 1);
         $actions = new PostActionCollection($action);
 
         $this->validator
@@ -124,21 +130,15 @@ class SetIntValueUpdaterTest extends TestCase
             ->with($this->tracker, $action);
 
         $this->set_int_value_repository
-            ->shouldReceive('deleteAllByTransitionIfNotIn')
-            ->with($transition, [$action])
+            ->shouldReceive('deleteAllByTransition')
+            ->with($transition)
+            ->andReturns();
+
+        $this->set_int_value_repository
+            ->shouldReceive('create')
+            ->with($transition, $action)
             ->andReturns();
 
         $this->updater->updateByTransition($actions, $transition);
-    }
-
-    private function mockFindAllIdsByTransition(
-        $transition,
-        array $ids
-    ) {
-        $existing_ids = new PostActionIdCollection(...$ids);
-        $this->set_int_value_repository
-            ->shouldReceive('findAllIdsByTransition')
-            ->withArgs([$transition])
-            ->andReturn($existing_ids);
     }
 }

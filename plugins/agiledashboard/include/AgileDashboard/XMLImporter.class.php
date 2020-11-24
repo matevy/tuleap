@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2013. All rights reserved
  *
@@ -22,7 +21,8 @@
 /**
  * Transforms imported xml into php values
  */
-class AgileDashboard_XMLImporter {
+class AgileDashboard_XMLImporter
+{
 
     /**
      *
@@ -38,8 +38,8 @@ class AgileDashboard_XMLImporter {
      * @return array
      * @throw AgileDashboard_XMLImporterInvalidTrackerMappingsException
      */
-    public function toArray(SimpleXMLElement $xml_object, array $tracker_mappings) {
-        
+    public function toArray(SimpleXMLElement $xml_object, array $tracker_mappings)
+    {
 
         $plannings_node_name = AgileDashboard_XMLExporter::NODE_PLANNINGS;
         $plannings = array();
@@ -65,7 +65,7 @@ class AgileDashboard_XMLImporter {
                 PlanningParameters::BACKLOG_TRACKER_IDS => $this->toArrayBacklogIds($planning, $tracker_mappings)
             );
 
-            foreach($this->toArrayPermissions($planning) as $permission_name => $ugroups) {
+            foreach ($this->toArrayPermissions($planning) as $permission_name => $ugroups) {
                 $planning_parameters[$permission_name] = $ugroups;
             }
 
@@ -75,7 +75,8 @@ class AgileDashboard_XMLImporter {
         return $plannings;
     }
 
-    private function toArrayBacklogIds(SimpleXMLElement $planning_node, array $tracker_mappings) {
+    private function toArrayBacklogIds(SimpleXMLElement $planning_node, array $tracker_mappings)
+    {
         $backlog_tracker_ids = array();
         foreach ($planning_node->{AgileDashboard_XMLExporter::NODE_BACKLOGS}->children() as $backlog) {
             $backlog_tracker_ids[] = $this->getTrackerIdFromMappings(
@@ -86,14 +87,15 @@ class AgileDashboard_XMLImporter {
         return $backlog_tracker_ids;
     }
 
-    private function toArrayPermissions(SimpleXMLElement $planning_node) {
+    private function toArrayPermissions(SimpleXMLElement $planning_node)
+    {
         $permissions = array();
 
         if (! isset($planning_node->permissions)) {
             return $permissions;
         }
 
-        foreach($planning_node->permissions->children() as $permission) {
+        foreach ($planning_node->permissions->children() as $permission) {
             $ugroup = (string) $permission['ugroup'];
             $type   = (string) $permission['type'];
 
@@ -115,7 +117,8 @@ class AgileDashboard_XMLImporter {
      * @param array $tracker_mappings
      * @return int
      */
-    private function getTrackerIdFromMappings($tracker_id, array $tracker_mappings) {
+    private function getTrackerIdFromMappings($tracker_id, array $tracker_mappings)
+    {
         if (! isset($tracker_mappings[$tracker_id])) {
             throw new AgileDashboard_XMLImporterInvalidTrackerMappingsException('Missing data for key: '.$tracker_id);
         }
@@ -123,4 +126,3 @@ class AgileDashboard_XMLImporter {
         return (int) $tracker_mappings[$tracker_id];
     }
 }
-?>

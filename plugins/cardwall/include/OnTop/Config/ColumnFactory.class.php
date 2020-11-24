@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once dirname(__FILE__). '/../../constants.php';
+use Tuleap\Cardwall\Column\ColumnColorRetriever;
 
-class Cardwall_OnTop_Config_ColumnFactory {
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+class Cardwall_OnTop_Config_ColumnFactory
+{
 
     public const DEFAULT_HEADER_COLOR = 'rgb(248,248,248)';
 
@@ -34,7 +36,8 @@ class Cardwall_OnTop_Config_ColumnFactory {
      */
     private $on_top_dao;
 
-    public function __construct(Cardwall_OnTop_ColumnDao $dao, Cardwall_OnTop_Dao $on_top_dao) {
+    public function __construct(Cardwall_OnTop_ColumnDao $dao, Cardwall_OnTop_Dao $on_top_dao)
+    {
         $this->dao        = $dao;
         $this->on_top_dao = $on_top_dao;
     }
@@ -44,7 +47,8 @@ class Cardwall_OnTop_Config_ColumnFactory {
      *
      * @return Cardwall_OnTop_Config_ColumnCollection
      */
-    public function getDashboardColumns(Tracker $tracker) {
+    public function getDashboardColumns(Tracker $tracker)
+    {
         return $this->getColumnsFromDao($tracker);
     }
 
@@ -66,6 +70,17 @@ class Cardwall_OnTop_Config_ColumnFactory {
         return $columns;
     }
 
+    public function getColumnById(int $column_id): ?Cardwall_Column
+    {
+        $dar = $this->dao->searchByColumnId($column_id);
+        if (! $dar) {
+            return null;
+        }
+        $row = $dar->getRow();
+        $header_color = ColumnColorRetriever::getHeaderColorNameOrRGB($row);
+        return new Cardwall_Column($column_id, $row['label'], $header_color);
+    }
+
     private function fillColumnsFor(
         Cardwall_OnTop_Config_ColumnCollection&$columns,
         Tracker_FormElement_Field_List $field,
@@ -78,9 +93,6 @@ class Cardwall_OnTop_Config_ColumnFactory {
         }
     }
 
-    /**
-     * @return Tracker_FormElement_Field_List_Bind[]
-     */
     private function getFieldBindValues(
         Tracker_FormElement_Field_List $field,
         array $filter
@@ -97,7 +109,8 @@ class Cardwall_OnTop_Config_ColumnFactory {
             } else {
                 try {
                     $field_values[] = $field->getBind()->getValue($value_id);
-                } catch (Tracker_FormElement_InvalidFieldValueException $exception) {}
+                } catch (Tracker_FormElement_InvalidFieldValueException $exception) {
+                }
             }
         }
         return $field_values;
@@ -106,39 +119,23 @@ class Cardwall_OnTop_Config_ColumnFactory {
     /**
      * @return Cardwall_OnTop_Config_ColumnCollection
      */
-    private function getColumnsFromDao(Tracker $tracker) {
+    private function getColumnsFromDao(Tracker $tracker)
+    {
         $columns = new Cardwall_OnTop_Config_ColumnFreestyleCollection();
         foreach ($this->dao->searchColumnsByTrackerId($tracker->getId()) as $row) {
-            $header_color = $this->getColumnHeaderColorFromRow($row);
+            $header_color = ColumnColorRetriever::getHeaderColorNameOrRGB($row);
             $columns[]    = new Cardwall_Column($row['id'], $row['label'], $header_color);
         }
         return $columns;
     }
 
-    private function getColumnHeaderColor($value, $decorators) {
+    private function getColumnHeaderColor($value, $decorators)
+    {
         $id           = (int)$value->getId();
         $header_color = self::DEFAULT_HEADER_COLOR;
 
         if (isset($decorators[$id])) {
             $header_color = $decorators[$id]->getCurrentColor();
-        }
-
-        return $header_color;
-    }
-
-    private function getColumnHeaderColorFromRow(array $row)
-    {
-        $header_color = self::DEFAULT_HEADER_COLOR;
-
-        $r              = $row['bg_red'];
-        $g              = $row['bg_green'];
-        $b              = $row['bg_blue'];
-        $tlp_color_name = $row['tlp_color_name'];
-
-        if ($tlp_color_name) {
-            $header_color = $tlp_color_name;
-        } else if ($r !== null && $g !== null && $b !== null) {
-            $header_color = "rgb($r, $g, $b)";
         }
 
         return $header_color;

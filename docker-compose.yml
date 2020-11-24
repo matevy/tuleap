@@ -12,7 +12,7 @@ services:
     - realtime
 
   web:
-    image: enalean/tuleap-aio-dev:c6-php72-nginx
+    image: enalean/tuleap-aio-dev:c6-php73-nginx
     volumes:
       - .:/usr/share/tuleap:cached
       - ../tuleap-plugins:/usr/share/tuleap-plugins:cached
@@ -23,6 +23,7 @@ services:
     depends_on:
     - ldap
     - db
+    - db57
     - realtime
 
   realtime:
@@ -70,12 +71,13 @@ services:
     volumes:
       - db-data:/var/lib/mysql
 
-  rabbitmq:
-    image: rabbitmq:3.6
+  db57:
+    image: mysql:5.7
     env_file:
       - .env
     volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
+      - ./src/etc/tuleap-mysql57-dev.cnf:/etc/mysql/mysql.conf.d/tuleap.cnf:ro,cached
+      - db57-data:/var/lib/mysql
 
   redis:
     image: redis:3.2
@@ -104,7 +106,7 @@ volumes:
   ldap-data:
   gerrit-data:
   db-data:
-  rabbitmq-data:
+  db57-data:
   redis-data:
   realtime-conf:
   realtime-cert:

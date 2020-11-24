@@ -17,9 +17,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once 'common/backend/Backend.class.php';
-require_once 'User.class.php';
-
 /**
  * This class is very sensitive because it stronly interact with secuirty
  * mecanisms and it's designed to be run by root
@@ -34,13 +31,15 @@ require_once 'User.class.php';
  * In other words: do not modify this part if you are not a trained warrior and
  * for reviewers: review carfully and test to destroy the code.
  */
-class User_SSHKeyDumper {
+class User_SSHKeyDumper
+{
     /**
      * @var Backend
      */
     private $backend;
 
-    public function __construct(Backend $backend) {
+    public function __construct(Backend $backend)
+    {
         $this->backend = $backend;
     }
 
@@ -49,9 +48,10 @@ class User_SSHKeyDumper {
      *
      * @param PFUser $user
      *
-     * @return Boolean
+     * @return bool
      */
-    public function writeSSHKeys(PFUser $user) {
+    public function writeSSHKeys(PFUser $user)
+    {
         try {
             if ($user->getUnixStatus() != 'A') {
                 return true;
@@ -79,7 +79,8 @@ class User_SSHKeyDumper {
         }
     }
 
-    protected function changeProcessUidGidToUser(PFUser $user) {
+    protected function changeProcessUidGidToUser(PFUser $user)
+    {
         $user_unix_info = posix_getpwnam($user->getUserName());
         if (empty($user_unix_info['uid']) || empty($user_unix_info['gid'])) {
             throw new RuntimeException("User ".$user->getUserName()." has no uid/gid");
@@ -89,12 +90,14 @@ class User_SSHKeyDumper {
         }
     }
 
-    protected function restoreRootUidGid() {
+    protected function restoreRootUidGid()
+    {
         posix_setegid(0);
         posix_seteuid(0);
     }
 
-    private function createSSHDirForUser(PFUser $user, $ssh_dir) {
+    private function createSSHDirForUser(PFUser $user, $ssh_dir)
+    {
         if (is_link($ssh_dir)) {
             $link_path = readlink($ssh_dir);
             unlink($ssh_dir);
@@ -109,7 +112,8 @@ class User_SSHKeyDumper {
         }
     }
 
-    private function writeSSHFile(PFUser $user, $ssh_dir) {
+    private function writeSSHFile(PFUser $user, $ssh_dir)
+    {
         $authorized_keys_new = "$ssh_dir/authorized_keys_new";
         touch($authorized_keys_new);
         $this->backend->chmod($authorized_keys_new, 0600);
@@ -123,5 +127,3 @@ class User_SSHKeyDumper {
         }
     }
 }
-
-?>

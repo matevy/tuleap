@@ -18,13 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Migration_V3_ReportsDao extends DataAccessObject {
-    public function create($tv3_id, $tv5_id, $group_id) {
+class Tracker_Migration_V3_ReportsDao extends DataAccessObject
+{
+    public function create($tv3_id, $tv5_id, $group_id)
+    {
         $this->insertReport($tv3_id, $tv5_id, $group_id);
         $this->insertReportCriteria($tv5_id);
     }
 
-    private function insertReport($tv3_id, $tv5_id, $group_id) {
+    private function insertReport($tv3_id, $tv5_id, $group_id)
+    {
         $tv3_id   = $this->da->escapeInt($tv3_id);
         $tv5_id   = $this->da->escapeInt($tv5_id);
         $group_id = $this->da->escapeInt($group_id);
@@ -48,7 +51,8 @@ class Tracker_Migration_V3_ReportsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function insertReportCriteria($tv5_id) {
+    private function insertReportCriteria($tv5_id)
+    {
         $tv5_id   = $this->da->escapeInt($tv5_id);
 
         $sql = "INSERT INTO tracker_report_criteria(report_id, field_id, rank, is_advanced)
@@ -76,4 +80,3 @@ class Tracker_Migration_V3_ReportsDao extends DataAccessObject {
         $this->update($sql);
     }
 }
-?>

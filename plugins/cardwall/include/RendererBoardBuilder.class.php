@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Cardwall_RendererBoardBuilder {
+class Cardwall_RendererBoardBuilder
+{
 
     /** @var Cardwall_CardInCellPresenterBuilder */
     private $presenter_builder;
@@ -28,7 +29,8 @@ class Cardwall_RendererBoardBuilder {
 
     private $swimline_factory;
 
-    public function __construct(Cardwall_CardInCellPresenterBuilder $presenter_builder, Tracker_ArtifactFactory $artifact_factory, Cardwall_SwimlineFactory $swimline_factory) {
+    public function __construct(Cardwall_CardInCellPresenterBuilder $presenter_builder, Tracker_ArtifactFactory $artifact_factory, Cardwall_SwimlineFactory $swimline_factory)
+    {
         $this->presenter_builder = $presenter_builder;
         $this->artifact_factory  = $artifact_factory;
         $this->swimline_factory  = $swimline_factory;
@@ -42,18 +44,21 @@ class Cardwall_RendererBoardBuilder {
      * @param Cardwall_MappingCollection $mappings_collection
      * @return \Cardwall_Board
      */
-    public function getBoard(array $artifact_ids, Cardwall_OnTop_Config_ColumnCollection $columns, Cardwall_MappingCollection $mapping_collection) {
+    public function getBoard(array $artifact_ids, Cardwall_OnTop_Config_ColumnCollection $columns, Cardwall_MappingCollection $mapping_collection)
+    {
         return new Cardwall_Board($this->getSwimlines($artifact_ids, $columns), $columns, $mapping_collection);
     }
 
-    private function getSwimlines(array $artifact_ids, Cardwall_OnTop_Config_ColumnCollection $columns) {
+    private function getSwimlines(array $artifact_ids, Cardwall_OnTop_Config_ColumnCollection $columns)
+    {
         return array(new Cardwall_SwimlineTrackerRenderer($this->swimline_factory->getCells(
             $columns,
             $this->getCardsPresenters($artifact_ids)
         )));
     }
 
-    protected function getCardsPresenters(array $artifact_ids) {
+    protected function getCardsPresenters(array $artifact_ids)
+    {
         $cards = array();
         foreach ($artifact_ids as $id) {
             $artifact = $this->artifact_factory->getArtifactById($id);
@@ -62,4 +67,3 @@ class Cardwall_RendererBoardBuilder {
         return $cards;
     }
 }
-?>

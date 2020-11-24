@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+  - Copyright (c) Enalean, 2017-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -41,7 +41,8 @@
                     v-on:click="saveReport()"
                     v-bind:class="{'disabled': is_save_disabled}"
             >
-                <i v-if="is_loading" class="tlp-button-icon fa fa-spinner fa-spin"></i>
+                <i v-if="! is_loading" class="tlp-button-icon fa fa-save"></i>
+                <i v-if="is_loading" class="tlp-button-icon fa fa-circle-o-notch fa-spin"></i>
                 <translate>Save report</translate>
             </button>
         </div>
@@ -101,7 +102,7 @@ export default {
 
                 this.$emit("saved");
             } catch (error) {
-                if (error.hasOwnProperty("response")) {
+                if (Object.prototype.hasOwnProperty.call(error, "response")) {
                     const error_json = await error.response.json();
                     this.$store.commit("setErrorMessage", error_json.error.message);
                 }

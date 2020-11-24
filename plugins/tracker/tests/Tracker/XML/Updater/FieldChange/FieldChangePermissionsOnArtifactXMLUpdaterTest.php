@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class Tracker_XML_Updater_FieldChange_FieldChangePermissionsOnArtifactXMLUpdaterTest extends TuleapTestCase {
+class Tracker_XML_Updater_FieldChange_FieldChangePermissionsOnArtifactXMLUpdaterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Updater_FieldChange_FieldChangePermissionsOnArtifactXMLUpdater */
     private $updater;
@@ -27,18 +28,19 @@ class Tracker_XML_Updater_FieldChange_FieldChangePermissionsOnArtifactXMLUpdater
     /** @var SimpleXMLElement */
     private $field_change_xml;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->updater          = new Tracker_XML_Updater_FieldChange_FieldChangePermissionsOnArtifactXMLUpdater();
         $this->field_change_xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?>'
             . '<field_change field_name="perms" use_perm="1">'
             . '  <ugroup ugroup_id="3"></ugroup>'
             . '  <ugroup ugroup_id="4"></ugroup>'
-            . '</field_change>'
-        );
+            . '</field_change>');
     }
 
-    public function itUpdatesTheUgroupNodesValueWithSubmittedValue() {
+    public function itUpdatesTheUgroupNodesValueWithSubmittedValue()
+    {
         $this->updater->update(
             $this->field_change_xml,
             array(
@@ -54,7 +56,8 @@ class Tracker_XML_Updater_FieldChange_FieldChangePermissionsOnArtifactXMLUpdater
         $this->assertEqual((int)$this->field_change_xml->ugroup[1]['ugroup_id'], 1002);
     }
 
-    public function  itUpdatesTheUsePerm() {
+    public function itUpdatesTheUsePerm()
+    {
         $this->updater->update(
             $this->field_change_xml,
             array(
@@ -67,7 +70,8 @@ class Tracker_XML_Updater_FieldChange_FieldChangePermissionsOnArtifactXMLUpdater
         $this->assertEqual(count($this->field_change_xml->ugroup), 0);
     }
 
-    public function  itUpdatesTheUsePermEvenWhenUGroupsAreNotSubmitted() {
+    public function itUpdatesTheUsePermEvenWhenUGroupsAreNotSubmitted()
+    {
         $this->updater->update(
             $this->field_change_xml,
             array(

@@ -1,6 +1,6 @@
 <?php
 /**
-  * Copyright (c) Enalean, 2015 - 2018. All Rights Reserved.
+  * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
   *
   * This file is a part of Tuleap.
   *
@@ -23,7 +23,8 @@ use Tuleap\layout\HomePage\NewsCollectionBuilder;
 use Tuleap\layout\HomePage\StatisticsCollectionBuilder;
 use Tuleap\Layout\IncludeAssets;
 
-class Admin_Homepage_Controller {
+class Admin_Homepage_Controller
+{
 
     /**
      * @var Response
@@ -97,7 +98,8 @@ class Admin_Homepage_Controller {
         );
     }
 
-    public function update() {
+    public function update()
+    {
         $this->csrf->check();
 
         if ($this->request->get('use_statistics_homepage')) {
@@ -131,38 +133,54 @@ class Admin_Homepage_Controller {
         $this->redirectToIndex();
     }
 
-    public function notSiteAdmin(HTTPRequest $request) {
+    public function notSiteAdmin(HTTPRequest $request)
+    {
         $this->response->redirect($request->getServerUrl());
     }
 
-    private function getTemplateDir() {
+    private function getTemplateDir()
+    {
         return ForgeConfig::get('codendi_dir') .'/src/templates/homepage/';
     }
 
-    private function getHeadlines() {
-        $headlines = array();
+    /**
+     * @return Admin_Homepage_HeadlinePresenter[]
+     */
+    private function getHeadlines() : array
+    {
+        $supported_languages = array_map('trim', explode(',', ForgeConfig::get('sys_supported_languages')));
+        $headlines           = [];
+        foreach ($supported_languages as $supported_language) {
+            $headlines[$supported_language] = new Admin_Homepage_HeadlinePresenter(
+                $supported_language,
+                ''
+            );
+        }
         foreach ($this->dao->searchHeadlines() as $row) {
-            $headlines[] = new Admin_Homepage_HeadlinePresenter(
+            $headlines[$row['language_id']] = new Admin_Homepage_HeadlinePresenter(
                 $row['language_id'],
                 $row['headline']
             );
         }
 
-        return $headlines;
+        return array_values($headlines);
     }
 
-    private function redirectToIndex() {
+    private function redirectToIndex()
+    {
         $this->response->redirect($_SERVER['SCRIPT_NAME']);
     }
 
-    private function removeCustomLogo() {
+    private function removeCustomLogo()
+    {
         $filename = Admin_Homepage_LogoFinder::getCustomPath();
         if (is_file($filename)) {
             unlink($filename);
         }
     }
 
-    private function moveUploadedLogo() {
+    private function moveUploadedLogo()
+    {
         if (! isset($_FILES['logo'])) {
             return;
         }

@@ -21,7 +21,8 @@
 
 use Tuleap\PHPWiki\WikiPage;
 
-class WikiPageVersion {
+class WikiPageVersion
+{
 
     /** @var int */
     private $page_id;
@@ -32,25 +33,30 @@ class WikiPageVersion {
     /** @var string */
     private $content;
 
-    public function __construct($page_id, $version_id, $content) {
+    public function __construct($page_id, $version_id, $content)
+    {
         $this->page_id      = $page_id;
         $this->version_id   = $version_id;
         $this->content      = $content;
     }
 
-    public function getPageId() {
+    public function getPageId()
+    {
         return $this->page_id;
     }
 
-    public function getVersionId() {
+    public function getVersionId()
+    {
         return $this->version_id;
     }
 
-    public function getContent() {
+    public function getContent()
+    {
         return $this->content;
     }
 
-    public function getFormattedContent(WikiPage $page) {
+    public function getFormattedContent(WikiPage $page)
+    {
         $formatter = new WikiPageVersionContentFormatter($page->getGid());
 
         return $formatter->getFormattedContent($page, $this);

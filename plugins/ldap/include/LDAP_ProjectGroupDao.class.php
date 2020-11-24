@@ -45,7 +45,7 @@ class LDAP_ProjectGroupDao extends DataAccessObject
     /**
      * Search one user group by id
      *
-     * @param Integer $groupId Project id
+     * @param int $groupId Project id
      *
      * @return DataAccessResult
      */
@@ -60,11 +60,11 @@ class LDAP_ProjectGroupDao extends DataAccessObject
             return false;
         }
     }
-    
+
     /**
      * Associate one Codendi user group to an LDAP group
      *
-     * @return Boolean
+     * @return bool
      */
     public function linkGroupLdap($project_id, $ldap_dn, $bind, $synchronization)
     {
@@ -78,13 +78,13 @@ class LDAP_ProjectGroupDao extends DataAccessObject
 
         return $this->update($sql);
     }
-    
+
     /**
      * Remove link between project members and a LDAP group
      *
-     * @param Integer $groupId Project id
-     * 
-     * @return Boolean
+     * @param int $groupId Project id
+     *
+     * @return bool
      */
     public function unlinkGroupLdap($groupId)
     {
@@ -92,28 +92,28 @@ class LDAP_ProjectGroupDao extends DataAccessObject
             ' WHERE group_id = '.db_ei($groupId);
         return $this->update($sql);
     }
-    
+
     /**
      * Object oriented wrapper for account_add_user_to_group
      *
-     * @param Integer $groupId Project id
+     * @param int $groupId Project id
      * @param String  $name    User unix name
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
     public function addUserToGroup($groupId, $name)
     {
-        include_once 'account.php';
+        include_once __DIR__ . '/../../../src/www/include/account.php';
         return account_add_user_to_group($groupId, $name);
     }
 
     /**
      * Object oriented wrapper for account_remove_user_from_group
      *
-     * @param Integer $project_id Project id
-     * @param Integer $user_id    User id
-     * 
-     * @return Boolean
+     * @param int $project_id Project id
+     * @param int $user_id User id
+     *
+     * @return bool
      */
     public function removeUserFromGroup($project_id, $user_id)
     {

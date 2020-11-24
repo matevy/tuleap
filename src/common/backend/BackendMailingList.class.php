@@ -21,16 +21,18 @@
  *
  */
 
-class BackendMailingList extends Backend {
+class BackendMailingList extends Backend
+{
 
     protected $_mailinglistdao = null;
 
     /**
      * @return MailingListDao
      */
-    protected function _getMailingListDao() {
+    protected function _getMailingListDao()
+    {
         if (!$this->_mailinglistdao) {
-          $this->_mailinglistdao = new MailingListDao(CodendiDataAccess::instance());
+            $this->_mailinglistdao = new MailingListDao(CodendiDataAccess::instance());
         }
         return $this->_mailinglistdao;
     }
@@ -41,7 +43,8 @@ class BackendMailingList extends Backend {
      * Write configuration in temporary file, and load it with mailman config_list tool
      * @return true on success, false otherwise
      */
-    protected function updateListConfig($list) {
+    protected function updateListConfig($list)
+    {
         // write configuration in temporary file
         $config_file=$GLOBALS['tmp_dir']."/mailman_config_".$list->getId().".in";
 
@@ -69,7 +72,7 @@ class BackendMailingList extends Backend {
 
             if (system(
                 $GLOBALS['mailman_bin_dir']. '/config_list -i ' . escapeshellarg($config_file) . ' ' . escapeshellarg($list->getListName())
-                ) !== false) {
+            ) !== false) {
                 if (unlink($config_file)) {
                     return true;
                 }
@@ -84,13 +87,13 @@ class BackendMailingList extends Backend {
      * then update the list configuration according to list settings
      * @return true on success, false otherwise
      */
-    public function createList($group_list_id) {
+    public function createList($group_list_id)
+    {
 
         $dar = $this->_getMailingListDao()->searchByGroupListId($group_list_id);
 
         if ($row = $dar->getRow()) {
             $list = new MailingList($row);
-
 
             $list_admin=UserManager::instance()->getUserById($list->getListAdmin());
             $list_admin_email = $list_admin->getEmail();
@@ -115,19 +118,19 @@ class BackendMailingList extends Backend {
      * - backup first in temp directory
      * @return true on success, false otherwise
      */
-    public function deleteList($group_list_id) {
+    public function deleteList($group_list_id)
+    {
         $dar = $this->_getMailingListDao()->searchByGroupListId($group_list_id);
 
         if ($row = $dar->getRow()) {
             $list=new MailingList($row);
             $list_dir = $GLOBALS['mailman_list_dir']."/".$list->getListName();
             if ((is_dir($list_dir))&&($list->getIsPublic() == 9)) {
-
                 // Archive first
                 $list_archive_dir = $GLOBALS['mailman_list_dir']."/../archives/private/".$list->getListName(); // Does it work? TODO
                 $backupfile=ForgeConfig::get('sys_project_backup_path')."/".$list->getListName()."-mailman.tgz";
                 system('tar cfz ' . escapeshellarg($backupfile) . ' ' . escapeshellarg($list_dir) . ' ' . escapeshellarg($list_archive_dir));
-                chmod($backupfile,0600);
+                chmod($backupfile, 0600);
 
                 // Delete the mailing list if asked to and the mailing exists (archive deleted as well)
                 system($GLOBALS['mailman_bin_dir']. '/rmlist -a '. escapeshellarg($list->getListName()) .' >/dev/null');
@@ -141,21 +144,25 @@ class BackendMailingList extends Backend {
      * Check if the list exists on the file system
      * @return true if list exists, false otherwise
      */
-    public function listExists($list) {
+    public function listExists($list)
+    {
         // Is this the best test?
         $list_dir = $GLOBALS['mailman_list_dir']."/".$list->getListName();
-        if (! is_dir($list_dir)) return false;
+        if (! is_dir($list_dir)) {
+            return false;
+        }
         return true;
     }
 
     /**
      * Archive all project mailing lists
      *
-     * @param Integer $projectId id of the project
+     * @param int $projectId id of the project
      *
-     * @return Boolean
+     * @return bool
      */
-    public function deleteProjectMailingLists($projectId) {
+    public function deleteProjectMailingLists($projectId)
+    {
         $deleteStatus = true;
         $res = $this->_getMailingListDao()->searchByProject($projectId);
         if ($res && !$res->isError()) {
@@ -171,5 +178,3 @@ class BackendMailingList extends Backend {
         return false;
     }
 }
-
-?>

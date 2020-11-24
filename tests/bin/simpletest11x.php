@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -31,14 +31,6 @@ ini_set('max_execution_time', '0');
 ini_set('memory_limit', '-1');
 ini_set('display_errors', 'on');
 date_default_timezone_set('Europe/Paris');
-
-$basedir      = dirname(dirname(__DIR__));
-$src_path     = $basedir.'/src';
-$include_path = $basedir.'/src/www/include';
-$pear         = '/usr/share/pear';
-ini_set('include_path', implode(':', [$src_path, $include_path, $pear]));
-
-exec('service mysqld start');
 
 require_once __DIR__.'/../../src/etc/local.inc.dist';
 

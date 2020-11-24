@@ -19,20 +19,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Templating_Presenter_ButtonDropdownsOptionDivider extends Templating_Presenter_ButtonDropdownsOption {
+class Templating_Presenter_ButtonDropdownsOptionDivider extends Templating_Presenter_ButtonDropdownsOption
+{
 
-    public function __construct() {
+    public function __construct()
+    {
     }
 
-    public function simple() {
+    public function simple()
+    {
         return false;
     }
 
-    public function submenu() {
+    public function submenu()
+    {
         return false;
     }
 
-    public function divider() {
+    public function divider()
+    {
         return true;
     }
 }

@@ -23,22 +23,26 @@
  * Foreach artifact in a TreeNode tree, make a collection of the semantic status fields and
  * index them by their id
  */
-class Cardwall_FieldsExtractor {
-    
+class Cardwall_FieldsExtractor
+{
+
     /**
      * @var Cardwall_FieldProviders_IProvideFieldGivenAnArtifact
      */
     private $field_provider;
 
-    public function __construct(Cardwall_FieldProviders_IProvideFieldGivenAnArtifact $field_provider) {
+    public function __construct(Cardwall_FieldProviders_IProvideFieldGivenAnArtifact $field_provider)
+    {
         $this->field_provider = $field_provider;
     }
-    public function extractAndIndexFieldsOf(TreeNode $node) {
+    public function extractAndIndexFieldsOf(TreeNode $node)
+    {
         $artifacts = $this->getArtifactsFromSecondLevelAndDown($node);
         return $this->getIndexedStatusFieldsOf($artifacts);
     }
-    
-    private function getArtifactsFromSecondLevelAndDown(TreeNode $root_node) {
+
+    private function getArtifactsFromSecondLevelAndDown(TreeNode $root_node)
+    {
         $leafs = array();
         foreach ($root_node->getChildren() as $child) {
             $leafs = array_merge($leafs, $child->flattenChildren());
@@ -48,16 +52,17 @@ class Cardwall_FieldsExtractor {
             $this->appendIfArtifactNode($artifacts, $node);
         }
         return $artifacts;
-        
     }
 
-    private function appendIfArtifactNode(array &$artifacts, TreeNode $node) {
+    private function appendIfArtifactNode(array &$artifacts, TreeNode $node)
+    {
         if ($node instanceof ArtifactNode) {
             $artifacts[] = $node->getArtifact();
         }
     }
-                
-    private function getIndexedStatusFieldsOf(array $artifacts) {
+
+    private function getIndexedStatusFieldsOf(array $artifacts)
+    {
         $trackers = array();
         foreach ($artifacts as $artifact) {
             $trackers[] = $artifact->getTracker();
@@ -66,14 +71,13 @@ class Cardwall_FieldsExtractor {
         $indexed_status_fields  = $this->indexById($status_fields);
         return $indexed_status_fields;
     }
-    
-    private function indexById(array $fields) {
+
+    private function indexById(array $fields)
+    {
         $indexed_array = array();
         foreach ($fields as $field) {
             $indexed_array[$field->getId()] = $field;
         }
         return $indexed_array;
     }
-
 }
-?>

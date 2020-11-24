@@ -22,7 +22,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-abstract class Cardwall_UserPreferences_UserPreferencesAutostack {
+abstract class Cardwall_UserPreferences_UserPreferencesAutostack
+{
     public const DONT_STACK = 'no_stack';
     public const STACK      = 'auto_stack';
 
@@ -31,35 +32,39 @@ abstract class Cardwall_UserPreferences_UserPreferencesAutostack {
      */
     protected $user;
 
-    public function __construct(PFUser $user) {
+    public function __construct(PFUser $user)
+    {
         $this->user = $user;
     }
 
     abstract public function getName(Cardwall_Column $column);
 
-    public function setColumnPreference(Cardwall_Column $column) {
+    public function setColumnPreference(Cardwall_Column $column)
+    {
         $column->setAutostack($this->isColumnAutoStacked($column))
                ->setAutostackPreference($this->getName($column));
     }
 
-    public function forceColumnAutoStacked(Cardwall_Column $column) {
+    public function forceColumnAutoStacked(Cardwall_Column $column)
+    {
         $preference_name = $this->getName($column);
         $this->user->setPreference($preference_name, self::STACK);
         $column->setAutostack(self::STACK)
                ->setAutostackPreference($preference_name);
     }
 
-    public function columnHasPreference(Cardwall_Column $column) {
+    public function columnHasPreference(Cardwall_Column $column)
+    {
         return ($this->user->getPreference($this->getName($column)) != false);
     }
 
-    private function isColumnAutoStacked(Cardwall_Column $column) {
+    private function isColumnAutoStacked(Cardwall_Column $column)
+    {
         return ($this->getValue($column) == self::STACK);
     }
 
-    private function getValue(Cardwall_Column $column) {
+    private function getValue(Cardwall_Column $column)
+    {
         return $this->user->getPreference($this->getName($column));
     }
 }
-
-?>

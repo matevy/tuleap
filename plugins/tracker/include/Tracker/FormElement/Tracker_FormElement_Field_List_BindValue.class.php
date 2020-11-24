@@ -20,16 +20,18 @@
  */
 
 
-abstract class Tracker_FormElement_Field_List_BindValue extends Tracker_FormElement_Field_List_Value {
+abstract class Tracker_FormElement_Field_List_BindValue extends Tracker_FormElement_Field_List_Value
+{
 
     public const BIND_PREFIX = 'b';
 
-    public function getJsonId() {
+    public function getJsonId()
+    {
         return self::BIND_PREFIX. $this->getId();
     }
 
-    public function getXMLExportLabel() {
+    public function getXMLExportLabel()
+    {
         return $this->getLabel();
     }
-
 }

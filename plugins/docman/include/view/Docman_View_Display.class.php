@@ -42,7 +42,7 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
     /* protected */ function _footer($params)
     {
         $builder   = new DocumentFooterPresenterBuilder(ProjectManager::instance(), EventManager::instance());
-        $presenter = $builder->build($params, $params['group_id'],  $params['item']->toRow(), $params['user']);
+        $presenter = $builder->build($params, $params['group_id'], $params['item']->toRow(), $params['user']);
         $renderer  = TemplateRendererFactory::build()->getRenderer(__DIR__ . "/../../templates");
         $renderer->renderToPage(
             'docman-footer',
@@ -51,7 +51,8 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
         parent::_footer($params);
     }
 
-    function _breadCrumbs($params) {
+    function _breadCrumbs($params)
+    {
         $hp                 = Codendi_HTMLPurifier::instance();
         $item               = $params['item'];
         $current_item       = $item;
@@ -68,14 +69,16 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
             );
         }
         $urlAction = 'show';
-        if(isset($params['action'])) {
-            if($params['action'] == 'search') {
+        if (isset($params['action'])) {
+            if ($params['action'] == 'search') {
                 $urlAction = $params['action'];
             }
         }
         $this->_initSearchAndSortParams($params);
-        $urlParams = array_merge($this->dfltSortParams, 
-                                 $this->dfltSearchParams);
+        $urlParams = array_merge(
+            $this->dfltSortParams,
+            $this->dfltSearchParams
+        );
         $urlParams['action'] = $urlAction;
         $html = '';
         $html .= '<table border="0" width="100%">';
@@ -83,7 +86,7 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
         $html .= '<td align="left">';
         $html .= '<div id="docman_item_title_link_'. $id .'">'. $GLOBALS['Language']->getText('plugin_docman', 'breadcrumbs_location') .' ';
         $parents = array_reverse($parents);
-        foreach($parents as $parent) {
+        foreach ($parents as $parent) {
             $urlParams['id'] = $parent['id'];
             $url             = DocmanViewURLBuilder::buildActionUrl($parent['item'], $params, $urlParams);
             $html           .= '&nbsp;<a href="'.$url.'">'.  $hp->purify($parent['title'], CODENDI_PURIFIER_CONVERT_HTML)  .'</a>&nbsp;/';
@@ -92,20 +95,22 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
         $url = DocmanViewURLBuilder::buildActionUrl($params['item'], $params, $urlParams);
         $html .= '&nbsp;<a href="'.$url.'"><b>'.  $hp->purify($current_item_title, CODENDI_PURIFIER_CONVERT_HTML)  .'</b></a>';
         $html .= $this->getItemMenu($current_item, $params, $bc = true);
-        $this->javascript .= $this->getActionForItem($current_item); 
+        $this->javascript .= $this->getActionForItem($current_item);
         $html .= '</div>';
         $html .= '</td>';
 
         echo $html;
     }
 
-    function _javascript($params) {
+    function _javascript($params)
+    {
         // force docman object to watch click on pen icon
         $this->javascript .= "docman.initShowOptions();\n";
         parent::_javascript($params);
     }
-    
-    function  _mode($params) {
+
+    function _mode($params)
+    {
         $html = '';
          // Close table opened in method 'breadCrumbs'.
         $html .= '</tr>';

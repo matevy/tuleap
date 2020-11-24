@@ -18,13 +18,15 @@
   -->
 
 <template>
-    <tr v-if="display_void_trackers">
+    <tr v-if="display_void_trackers" data-test="timetracking-overview-table-row">
         <td>
             <a v-bind:href="html_url">
                 <span>{{ time.label }}</span>
             </a>
         </td>
-        <td>{{ time.project.label }}</td>
+        <td>
+            <a v-bind:href="link_to_project_homepage">{{ time.project.label }}</a>
+        </td>
         <td class="tlp-table-cell-numeric">
             {{ get_formatted_time(time) }}
         </td>
@@ -41,12 +43,18 @@ export default {
     },
     computed: {
         ...mapState(["are_void_trackers_hidden"]),
-        ...mapGetters(["get_formatted_time"]),
+        ...mapGetters(["get_formatted_time", "is_tracker_total_sum_equals_zero"]),
         html_url() {
             return "/plugins/tracker/?tracker=" + this.time.id;
         },
+        link_to_project_homepage() {
+            return "/projects/" + this.time.project.shortname;
+        },
         display_void_trackers() {
-            return !(this.are_void_trackers_hidden && this.time.minutes === 0);
+            return !(
+                this.are_void_trackers_hidden &&
+                this.is_tracker_total_sum_equals_zero(this.time.time_per_user)
+            );
         }
     }
 };

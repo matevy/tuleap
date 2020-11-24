@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class TuleapRegisterMail {
+class TuleapRegisterMail
+{
 
     /** @var MailPresenterFactory */
     private $mail_presenter_factory;
@@ -29,7 +30,8 @@ class TuleapRegisterMail {
     /** @var string */
     private $template;
 
-    public function __construct(MailPresenterFactory $mail_presenter_factory, TemplateRenderer $renderer, $template) {
+    public function __construct(MailPresenterFactory $mail_presenter_factory, TemplateRenderer $renderer, $template)
+    {
         $this->mail_presenter_factory = $mail_presenter_factory;
         $this->renderer               = $renderer;
         $this->template               = $template;
@@ -45,10 +47,10 @@ class TuleapRegisterMail {
         if ($presenter_role === "user") {
             $subject = $GLOBALS['Language']->getText('include_proj_email', 'account_register', $GLOBALS['sys_name']);
             include($GLOBALS['Language']->getContent('include/new_user_email'));
-        } else if ($presenter_role === "admin") {
+        } elseif ($presenter_role === "admin") {
             $subject = $GLOBALS['Language']->getText('account_register', 'welcome_email_title', $GLOBALS['sys_name']);
             include($GLOBALS['Language']->getContent('account/new_account_email'));
-        } else if ($presenter_role === "admin-notification") {
+        } elseif ($presenter_role === "admin-notification") {
             $redirect_url = $base_url ."/admin/approve_pending_users.php?page=pending";
             $subject = $GLOBALS['Language']->getText('account_register', 'mail_approval_subject', $login);
             $message = $this->createNotificationMessageText($login, $redirect_url);
@@ -84,7 +86,8 @@ class TuleapRegisterMail {
      *
      * @return Codendi_Mail
      */
-    public function getMailProject($subject, $from, $to, $project) {
+    public function getMailProject($subject, $from, $to, $project)
+    {
         $mail     = new Codendi_Mail();
         $cid_logo = $this->addLogoInAttachment($mail);
         $mail->setSubject($subject);
@@ -104,7 +107,8 @@ class TuleapRegisterMail {
      *
      * @return Codendi_Mail
      */
-    public function getMailNotificationProject($subject, $from, $to, $project) {
+    public function getMailNotificationProject($subject, $from, $to, $project)
+    {
         $mail     = new Codendi_Mail();
         $cid_logo = $this->addLogoInAttachment($mail);
         $mail->setSubject($subject);
@@ -124,7 +128,8 @@ class TuleapRegisterMail {
      *
      * @return string
      */
-    private function createNotificationMessageText($login, $redirect_url) {
+    private function createNotificationMessageText($login, $redirect_url)
+    {
         $message = $GLOBALS['Language']->getText('account_register', 'mail_approval_title') . "\n\n"
            . $GLOBALS['Language']->getText('account_register', 'mail_approval_section_one', array($GLOBALS['sys_name'])) . " "
            . $login . $GLOBALS['Language']->getText('account_register', 'mail_approval_section_after_login', array($GLOBALS['sys_name'])). "\n\n"
@@ -136,7 +141,8 @@ class TuleapRegisterMail {
         return $message;
     }
 
-    private function addLogoInAttachment(Codendi_Mail $mail) {
+    private function addLogoInAttachment(Codendi_Mail $mail)
+    {
         $logo_retriever = new LogoRetriever();
         $cid_logo       = '';
         $path_logo      = $logo_retriever->getPath();
@@ -148,5 +154,4 @@ class TuleapRegisterMail {
 
         return $cid_logo;
     }
-
 }

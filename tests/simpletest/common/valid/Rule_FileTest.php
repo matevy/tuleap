@@ -23,13 +23,14 @@
  *
  */
 
-require_once('common/valid/Rule.class.php');
 
 Mock::generatePartial('Rule_File', 'Rule_FileTestVersion', array('geti18nError'));
 
-class Rule_FileTest extends TuleapTestCase {
+class Rule_FileTest extends TuleapTestCase
+{
 
-    function UnitTestCase($name = 'Rule_File test') {
+    function UnitTestCase($name = 'Rule_File test')
+    {
         $this->UnitTestCase($name);
     }
 
@@ -47,14 +48,16 @@ class Rule_FileTest extends TuleapTestCase {
                             'error'    => UPLOAD_ERR_OK);
     }
 
-    function testOk() {
+    function testOk()
+    {
         $r = new Rule_FileTestVersion($this);
         $r->setMaxSize('1000');
         $r->setReturnValue('geti18nError', '');
         $this->assertTrue($r->isValid($this->file));
     }
 
-    function testErrorIniSize() {
+    function testErrorIniSize()
+    {
         $r = new Rule_FileTestVersion($this);
         $r->setMaxSize('1000');
         $r->setReturnValue('geti18nError', UPLOAD_ERR_INI_SIZE);
@@ -64,17 +67,19 @@ class Rule_FileTest extends TuleapTestCase {
         $this->assertPattern('/'.UPLOAD_ERR_INI_SIZE.'/', $r->error);
     }
 
-    function testErrorFormSize() {
+    function testErrorFormSize()
+    {
         $r = new Rule_FileTestVersion($this);
         $r->setMaxSize('1000');
-        $r->setReturnValue('geti18nError',UPLOAD_ERR_FORM_SIZE );
+        $r->setReturnValue('geti18nError', UPLOAD_ERR_FORM_SIZE);
         $r->expectOnce('geti18nError', array('error_upload_size', UPLOAD_ERR_FORM_SIZE));
         $this->file['error'] = UPLOAD_ERR_FORM_SIZE;
         $this->assertFalse($r->isValid($this->file));
         $this->assertPattern('/'.UPLOAD_ERR_FORM_SIZE.'/', $r->error);
     }
 
-    function testErrorPartial() {
+    function testErrorPartial()
+    {
         $r = new Rule_FileTestVersion($this);
         $r->setMaxSize('1000');
         $r->setReturnValue('geti18nError', UPLOAD_ERR_PARTIAL);
@@ -84,7 +89,8 @@ class Rule_FileTest extends TuleapTestCase {
         $this->assertPattern('/'.UPLOAD_ERR_PARTIAL.'/', $r->error);
     }
 
-    function testErrorNoFile() {
+    function testErrorNoFile()
+    {
         $r = new Rule_FileTestVersion($this);
         $r->setMaxSize('1000');
         $r->setReturnValue('geti18nError', UPLOAD_ERR_NO_FILE);
@@ -94,7 +100,8 @@ class Rule_FileTest extends TuleapTestCase {
         $this->assertPattern('/'.UPLOAD_ERR_NO_FILE.'/', $r->error);
     }
 
-    function testErrorMaxSize() {
+    function testErrorMaxSize()
+    {
         $r = new Rule_FileTestVersion($this);
         $r->setMaxSize('5');
         $r->setReturnValue('geti18nError', UPLOAD_ERR_INI_SIZE);
@@ -103,7 +110,8 @@ class Rule_FileTest extends TuleapTestCase {
         $this->assertPattern('/'.UPLOAD_ERR_INI_SIZE.'/', $r->error);
     }
 
-    function testNoName() {
+    function testNoName()
+    {
         $r = new Rule_FileTestVersion($this);
         $r->setMaxSize('1000');
         $r->setReturnValue('geti18nError', '');

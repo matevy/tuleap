@@ -16,16 +16,20 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201407041153_add_tour_usage_statistic_table extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201407041153_add_tour_usage_statistic_table extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Add table to store usage statistics of tours";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE tour_usage_statistics (
             id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             user_id INT(11) NOT NULL,
@@ -41,5 +45,4 @@ class b201407041153_add_tour_usage_statistic_table extends ForgeUpgrade_Bucket {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding tour_usage_statistics table.');
         }
     }
-
 }

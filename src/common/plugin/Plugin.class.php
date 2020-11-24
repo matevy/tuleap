@@ -25,7 +25,8 @@ use Tuleap\Layout\IncludeAssets;
 /**
  * Plugin
  */
-class Plugin implements PFO_Plugin {
+class Plugin implements PFO_Plugin
+{
     /** @var BackendLogger */
     private $backend_logger;
 
@@ -62,7 +63,8 @@ class Plugin implements PFO_Plugin {
      */
     protected $allowedForProject = array();
 
-    public function __construct($id = -1) {
+    public function __construct($id = -1)
+    {
         $this->id            = $id;
         $this->hooks         = new Map();
 
@@ -74,11 +76,13 @@ class Plugin implements PFO_Plugin {
      *
      * @return void
      */
-    public function loaded() {
+    public function loaded()
+    {
     }
 
-    public function isAllowed($group_id) {
-        if(!isset($this->allowedForProject[$group_id])) {
+    public function isAllowed($group_id)
+    {
+        if (!isset($this->allowedForProject[$group_id])) {
             $this->allowedForProject[$group_id] = PluginManager::instance()->isPluginAllowedForProject($this, $group_id);
         }
         return $this->allowedForProject[$group_id];
@@ -98,11 +102,13 @@ class Plugin implements PFO_Plugin {
      * You just need to add $this->addHook(Event::SERVICES_ALLOWED_FOR_PROJECT)
      * to your plugin to automatically manage presence of service in projects
      */
-    public function services_allowed_for_project(array $params) {
+    public function services_allowed_for_project(array $params)
+    {
         $this->addServiceForProject($params['project'], $params['services']);
     }
 
-    protected function addServiceForProject(Project $project, array &$services) {
+    protected function addServiceForProject(Project $project, array &$services)
+    {
         if ($this->is_resricted !== null && $this->is_resricted === false) {
             $services[] = $this->getServiceShortname();
         } elseif ($this->isAllowed($project->getID())) {
@@ -115,18 +121,21 @@ class Plugin implements PFO_Plugin {
         $this->is_resricted = $is_restricted;
     }
 
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
-    public function getPluginInfo() {
+    public function getPluginInfo()
+    {
         if (!is_a($this->pluginInfo, 'PluginInfo')) {
             $this->pluginInfo = new PluginInfo($this);
         }
         return $this->pluginInfo;
     }
 
-    public function getHooksAndCallbacks() {
+    public function getHooksAndCallbacks()
+    {
         return $this->hooks->getValues();
     }
 
@@ -160,7 +169,7 @@ class Plugin implements PFO_Plugin {
                 )
             )
         );
-        $current_plugin = get_class($this);
+        $current_plugin = static::class;
 
         if (method_exists($this, $hook_in_camel_case)) {
             if ($hook_in_camel_case !== $hook && method_exists($this, $hook)) {
@@ -177,23 +186,28 @@ class Plugin implements PFO_Plugin {
         return $hook;
     }
 
-    public function getScope() {
+    public function getScope()
+    {
         return $this->_scope;
     }
 
-    public function setScope($s) {
+    public function setScope($s)
+    {
         $this->_scope = $s;
     }
 
-    public function getPluginEtcRoot() {
+    public function getPluginEtcRoot()
+    {
         return $GLOBALS['sys_custompluginsroot'] . '/' . $this->getName() .'/etc';
     }
 
-    public function getEtcTemplatesPath() {
+    public function getEtcTemplatesPath()
+    {
         return $GLOBALS['sys_custompluginsroot'] . '/' . $this->getName() . '/templates';
     }
 
-    public function _getPluginPath() {
+    public function _getPluginPath()
+    {
         $trace = debug_backtrace();
         trigger_error("Plugin->_getPluginPath() is deprecated. Please use Plugin->getPluginPath() instead in ". $trace[0]['file'] ." at line ". $trace[0]['line'], E_USER_WARNING);
         return $this->getPluginPath();
@@ -206,24 +220,29 @@ class Plugin implements PFO_Plugin {
      *
      * @return String
      */
-    public function getPluginPath() {
+    public function getPluginPath()
+    {
         $pm = $this->_getPluginManager();
-        if (isset($GLOBALS['sys_pluginspath']))
+        if (isset($GLOBALS['sys_pluginspath'])) {
             $path = $GLOBALS['sys_pluginspath'];
-        else $path="";
+        } else {
+            $path="";
+        }
         if ($pm->pluginIsCustom($this)) {
             $path = $GLOBALS['sys_custompluginspath'];
         }
         return $path .'/'. $this->getName();
     }
 
-    public function _getThemePath() {
+    public function _getThemePath()
+    {
         $trace = debug_backtrace();
         trigger_error("Plugin->_getThemePath() is deprecated. Please use Plugin->getThemePath() instead in ". $trace[0]['file'] ." at line ". $trace[0]['line'], E_USER_WARNING);
         return $this->getThemePath();
     }
 
-    public function getThemePath() {
+    public function getThemePath()
+    {
         if (!isset($GLOBALS['sys_user_theme'])) {
             return null;
         }
@@ -253,7 +272,8 @@ class Plugin implements PFO_Plugin {
      *
      * @return String
      */
-    public function getFilesystemPath() {
+    public function getFilesystemPath()
+    {
         if (!$this->filesystem_path) {
             $pm = $this->_getPluginManager();
             if ($pm->pluginIsCustom($this)) {
@@ -277,7 +297,8 @@ class Plugin implements PFO_Plugin {
     /**
      * @return string the short name of the plugin (docman, tracker, …)
      */
-    public function getName() {
+    public function getName()
+    {
         if (! isset($this->name)) {
             $this->name = $this->_getPluginManager()->getNameForPlugin($this);
         }
@@ -289,7 +310,8 @@ class Plugin implements PFO_Plugin {
      *
      * @return PluginManager
      */
-    protected function _getPluginManager() {
+    protected function _getPluginManager()
+    {
         $pm = PluginManager::instance();
         return $pm;
     }
@@ -299,27 +321,31 @@ class Plugin implements PFO_Plugin {
      * Allow you to check required things (DB connection, etc...)
      * and to forbid plugin to be made available if requirements are not met.
      *
-     * @return boolean true if the plugin can be made available, false if not
+     * @return bool true if the plugin can be made available, false if not
      */
-    public function canBeMadeAvailable() {
-    	return true;
+    public function canBeMadeAvailable()
+    {
+        return true;
     }
 
-	/**
+    /**
      * Function called when a plugin is set as available or unavailable
      *
-     * @param boolean $available true if the plugin is available, false if unavailable
+     * @param bool $available true if the plugin is available, false if unavailable
      */
-    public function setAvailable($available) {
+    public function setAvailable($available)
+    {
     }
 
     /**
      * Function executed after plugin installation
      */
-    public function postInstall() {
+    public function postInstall()
+    {
     }
 
-    public function getAdministrationOptions() {
+    public function getAdministrationOptions()
+    {
         return '';
     }
 
@@ -328,22 +354,26 @@ class Plugin implements PFO_Plugin {
      *
      * @return String
      */
-    public function getReadme() {
+    public function getReadme()
+    {
         return $this->getFilesystemPath().'/README';
     }
 
     /**
      * @return array of strings (identifier of plugins this one depends on)
      */
-    public function getDependencies() {
+    public function getDependencies()
+    {
         return array();
     }
 
-    public function setIsCustom($is_custom) {
+    public function setIsCustom($is_custom)
+    {
         $this->is_custom = $is_custom;
     }
 
-    public function isCustom() {
+    public function isCustom()
+    {
         return $this->is_custom;
     }
 
@@ -352,21 +382,24 @@ class Plugin implements PFO_Plugin {
      *
      * @return string
      */
-    public function getServiceShortname() {
+    public function getServiceShortname()
+    {
         return '';
     }
 
     /**
      * @return BackendLogger
      */
-    protected function getBackendLogger() {
+    protected function getBackendLogger()
+    {
         if (! $this->backend_logger) {
             $this->backend_logger = new BackendLogger();
         }
         return $this->backend_logger;
     }
 
-    protected function getMinifiedAssetHTML() {
+    protected function getMinifiedAssetHTML()
+    {
         $include_assets = new IncludeAssets(
             $this->getFilesystemPath() . '/www/assets',
             $this->getPluginPath() . '/assets'
@@ -374,7 +407,8 @@ class Plugin implements PFO_Plugin {
         return $include_assets->getHTMLSnippet($this->getName().'.js');
     }
 
-    public function currentRequestIsForPlugin() {
+    public function currentRequestIsForPlugin()
+    {
         return strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0;
     }
 

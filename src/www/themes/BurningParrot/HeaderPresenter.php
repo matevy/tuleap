@@ -25,6 +25,7 @@ use Feedback;
 use PFUser;
 use ThemeVariantColor;
 use Tuleap\Layout\SidebarPresenter;
+use Tuleap\OpenGraph\OpenGraphPresenter;
 use Tuleap\Theme\BurningParrot\Navbar\Presenter as NavbarPresenter;
 use Tuleap\TimezoneRetriever;
 
@@ -51,7 +52,7 @@ class HeaderPresenter
     /** @var array */
     public $feedbacks;
 
-    /** @var boolean */
+    /** @var bool */
     public $has_feedbacks;
 
     /** @var string */
@@ -59,9 +60,6 @@ class HeaderPresenter
 
     /** @var string */
     public $main_classes;
-
-    /** @var array */
-    public $unicode_icons;
 
     /** @var SidebarPresenter */
     public $sidebar;
@@ -96,6 +94,14 @@ class HeaderPresenter
     public $user_timezone;
     /** @var string */
     public $date_time_format;
+    /**
+     * @var OpenGraphPresenter
+     */
+    public $open_graph;
+    /**
+     * @var bool
+     */
+    public $user_has_accessibility_mode;
 
     public function __construct(
         PFUser $user,
@@ -109,10 +115,10 @@ class HeaderPresenter
         $main_classes,
         $sidebar,
         $current_project_navbar_info_presenter,
-        $unicode_icons,
         array $toolbar,
         array $breadcrumbs,
-        $motd
+        $motd,
+        OpenGraphPresenter $open_graph
     ) {
         $this->date_time_format                      = $GLOBALS['Language']->getText('system', 'datefmt');
         $this->user_timezone                         = TimezoneRetriever::getUserTimezone($user);
@@ -128,11 +134,12 @@ class HeaderPresenter
         $this->main_classes                          = $main_classes;
         $this->sidebar                               = $sidebar;
         $this->current_project_navbar_info_presenter = $current_project_navbar_info_presenter;
-        $this->unicode_icons                         = $unicode_icons;
         $this->toolbar                               = $toolbar;
         $this->motd                                  = $motd;
         $this->has_motd                              = ! empty($motd);
         $this->breadcrumbs                           = $breadcrumbs;
+        $this->open_graph                            = $open_graph;
+        $this->user_has_accessibility_mode           = (bool) $user->getPreference(PFUser::ACCESSIBILITY_MODE);
 
         $this->buildFeedbacks($feedback_logs);
 

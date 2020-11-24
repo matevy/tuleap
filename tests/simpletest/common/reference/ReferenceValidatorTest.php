@@ -20,11 +20,7 @@
 
 namespace Tuleap\reference;
 
-use Tuleap\reference\ReferenceValidator;
-use Tuleap\reference\ReservedKeywordsRetriever;
 use TuleapTestCase;
-
-require_once('common/reference/ReferenceValidator.php');
 
 class ReferenceValidatorTest extends TuleapTestCase
 {
@@ -39,7 +35,7 @@ class ReferenceValidatorTest extends TuleapTestCase
 
         $this->reference_validator = new ReferenceValidator(
             mock('ReferenceDao'),
-            new ReservedKeywordsRetriever(mock('EventManager'))
+            new ReservedKeywordsRetriever(\Mockery::spy(\EventManager::class))
         );
     }
 

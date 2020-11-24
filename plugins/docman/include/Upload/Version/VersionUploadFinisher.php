@@ -24,18 +24,23 @@ namespace Tuleap\Docman\Upload\Version;
 
 use Docman_File;
 use Docman_Item;
+use Docman_LockFactory;
 use ProjectManager;
 use Tuleap\DB\DBTransactionExecutor;
 use Tuleap\Docman\ApprovalTable\ApprovalTableRetriever;
 use Tuleap\Docman\ApprovalTable\ApprovalTableUpdateActionChecker;
 use Tuleap\Docman\ApprovalTable\ApprovalTableUpdater;
-use Tuleap\Docman\Lock\LockUpdater;
 use Tuleap\Docman\REST\v1\DocmanItemsEventAdder;
 use Tuleap\Tus\TusFileInformation;
 use Tuleap\Tus\TusFinisherDataStore;
+use Tuleap\Upload\UploadPathAllocator;
 
 final class VersionUploadFinisher implements TusFinisherDataStore
 {
+    /**
+     * @var Docman_LockFactory
+     */
+    private $lock_factory;
     /**
      * @var DocmanItemsEventAdder
      */
@@ -45,7 +50,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
      */
     private $logger;
     /**
-     * @var VersionUploadPathAllocator
+     * @var UploadPathAllocator
      */
     private $document_upload_path_allocator;
     /**
@@ -64,7 +69,6 @@ final class VersionUploadFinisher implements TusFinisherDataStore
      * @var DocumentOnGoingVersionToUploadDAO
      */
     private $version_to_upload_dao;
-    /**
     /**
      * @var DBTransactionExecutor
      */
@@ -86,10 +90,6 @@ final class VersionUploadFinisher implements TusFinisherDataStore
      */
     private $project_manager;
     /**
-     * @var LockUpdater
-     */
-    private $lock_updater;
-    /**
      * @var ApprovalTableUpdater
      */
     private $approval_table_updater;
@@ -104,7 +104,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
 
     public function __construct(
         \Logger $logger,
-        VersionUploadPathAllocator $document_upload_path_allocator,
+        UploadPathAllocator $document_upload_path_allocator,
         \Docman_ItemFactory $docman_item_factory,
         \Docman_VersionFactory $version_factory,
         \EventManager $event_manager,
@@ -115,7 +115,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
         \UserManager $user_manager,
         DocmanItemsEventAdder $items_event_adder,
         ProjectManager $project_manager,
-        LockUpdater $lock_updater,
+        Docman_LockFactory $lock_factory,
         ApprovalTableUpdater $approval_table_updater,
         ApprovalTableRetriever $approval_table_retriever,
         ApprovalTableUpdateActionChecker $approval_table_action_checker
@@ -132,7 +132,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
         $this->user_manager                   = $user_manager;
         $this->items_event_adder              = $items_event_adder;
         $this->project_manager                = $project_manager;
-        $this->lock_updater                   = $lock_updater;
+        $this->lock_factory                   = $lock_factory;
         $this->approval_table_updater         = $approval_table_updater;
         $this->approval_table_retriever       = $approval_table_retriever;
         $this->approval_table_action_checker = $approval_table_action_checker;
@@ -173,6 +173,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                 }
 
                 $next_version_id = (int) $this->version_factory->getNextVersionNumber($item);
+                $item_id         = (int)$item->getId();
 
                 /*
                  * Some tables of the docman plugin relies on the MyISAM engine so the DB transaction
@@ -182,9 +183,9 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                  */
                 $file_path = $this->docman_file_storage->copy(
                     $uploaded_document_path,
-                    $item->getTitle(),
+                    $upload_row['title'],
                     $item->getGroupId(),
-                    $item->getId(),
+                    $item_id,
                     $next_version_id
                 );
                 if ($file_path === false) {
@@ -194,7 +195,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                 $current_time             = (new \DateTimeImmutable)->getTimestamp();
                 $has_version_been_created = $this->version_factory->create(
                     [
-                        'item_id'   => $item->getId(),
+                        'item_id'   => $item_id,
                         'number'    => $next_version_id,
                         'user_id'   => $upload_row['user_id'],
                         'label'     => $upload_row['version_title'],
@@ -211,19 +212,31 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                 if ($current_user === null) {
                     throw new \RuntimeException('Can not find user ID #' . $upload_row['user_id']);
                 }
-                $this->lock_updater->updateLockInformation($item, (bool)$upload_row['is_file_locked'], $current_user);
+
+                if ((bool)$upload_row['is_file_locked']) {
+                    $this->lock_factory->lock($item, $current_user);
+                } else {
+                    $this->lock_factory->unlock($item, $current_user);
+                }
 
                 if (! $has_version_been_created) {
                     \unlink($file_path);
-                    $item_id = (int) $item->getId();
                     throw new \RuntimeException("Not able to create a new version for item #$item_id from upload #$upload_id");
                 }
 
-                $last_update_date_change = $this->docman_item_factory->update(['id' => $item->getId()]);
+                $last_update_date_change = $this->docman_item_factory->update(
+                    [
+                        'id'                => $item_id,
+                        'title'             => $upload_row['title'],
+                        'description'       => $upload_row['description'],
+                        'obsolescence_date' => $upload_row['obsolescence_date'],
+                        'status'            => $upload_row['status'],
+                        'item_type'         => PLUGIN_DOCMAN_ITEM_TYPE_FILE
+                    ]
+                );
                 if (! $last_update_date_change) {
                     \unlink($file_path);
                     $this->version_factory->deleteSpecificVersion($item, $next_version_id);
-                    $item_id = (int)$item->getId();
                     throw new \RuntimeException("Not able to update last update date for item #$item_id from upload #$upload_id");
                 }
 

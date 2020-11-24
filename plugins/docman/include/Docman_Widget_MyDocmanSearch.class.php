@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) STMicroelectronics, 2004-2009. All rights reserved
- * Copyright (c) Enalean, 2017. All rights reserved
+ * Copyright (c) Enalean, 2017-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -27,12 +27,14 @@ class Docman_Widget_MyDocmanSearch extends Widget
 
     var $pluginPath;
 
-    function __construct($pluginPath) {
+    function __construct($pluginPath)
+    {
         parent::__construct('plugin_docman_mydocman_search');
         $this->_pluginPath = $pluginPath;
     }
 
-    function getTitle() {
+    function getTitle()
+    {
         return $GLOBALS['Language']->getText('plugin_docman', 'my_docman_search');
     }
 
@@ -74,21 +76,19 @@ class Docman_Widget_MyDocmanSearch extends Widget
         $html .= '<input type="submit" class="tlp-button-primary" value="'.$GLOBALS['Language']->getText('plugin_docman', 'widget_my_docman_search_btn').'"/>';
         $html .= '</form>';
 
-        if (($func == 'show_docman') && $docman_id){
+        if (($func == 'show_docman') && $docman_id) {
             $res = $this->returnAllowedGroupId($docman_id, $user);
 
-            if ($res){
+            if ($res) {
                 $dPm = Docman_PermissionsManager::instance($res['group_id']);
                 $itemPerm = $dPm->userCanAccess($user, $docman_id);
 
-                if ($itemPerm){
+                if ($itemPerm) {
                     $html .= '<p><a href="/plugins/docman/?group_id='.$res['group_id'].'&action=details&id='.$docman_id.'&section=properties">Show &quot;'.$res['title'].'&quot; Properties</a></p>';
                     return $html;
                 }
-
             }
-            $html .= '<p>'.$GLOBALS['Language']->getText('plugin_docman','perm_denied').'</p>';
-
+            $html .= '<p>'.$GLOBALS['Language']->getText('plugin_docman', 'perm_denied').'</p>';
         }
 
         return $html;
@@ -106,21 +106,25 @@ class Docman_Widget_MyDocmanSearch extends Widget
      *
      * @param $docman_id int  Document Id
      * @param $user      User User Id
-     * @return group_id
+     * @return array|0
+     * @psalm-return array{group_id: int, title:string}|0
      **/
-    function returnAllowedGroupId($docman_id, $user){
+    function returnAllowedGroupId($docman_id, $user)
+    {
         $sql_group = 'SELECT group_id,title FROM  plugin_docman_item WHERE'.
                          ' item_id = '. db_ei($docman_id);
 
         $res_group = db_query($sql_group);
 
-        if ($res_group && db_numrows($res_group)== 1){
+        if ($res_group && db_numrows($res_group)== 1) {
             $row = db_fetch_array($res_group);
-            $res['group_id'] = $row['group_id'];
-            $res['title'] = $row['title'];
+            $res = [
+                'group_id' => (int) $row['group_id'],
+                'title'    => (string) $row['title']
+            ];
 
             $project = ProjectManager::instance()->getProject($res['group_id']);
-            if ($project->isPublic()){
+            if ($project->isPublic()) {
                 // Check restricted user
                 if (($user->isRestricted() && $user->isMember($res['group_id'])) || !$user->isRestricted()) {
                     return $res;
@@ -134,11 +138,13 @@ class Docman_Widget_MyDocmanSearch extends Widget
         return 0;
     }
 
-    function getCategory() {
+    function getCategory()
+    {
         return dgettext('tuleap-docman', 'Document manager');
     }
 
-    function getDescription() {
-        return $GLOBALS['Language']->getText('plugin_docman','widget_description_my_docman_search');
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_docman', 'widget_description_my_docman_search');
     }
 }

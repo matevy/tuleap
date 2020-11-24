@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,11 +18,17 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Workflow_Action_Triggers_EditTriggers extends Tracker_Workflow_Action_Triggers {
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+class Tracker_Workflow_Action_Triggers_EditTriggers extends Tracker_Workflow_Action
+{
 
     private $template_renderer;
     private $token;
     private $rule_manager;
+    /**
+     * @var string
+     */
+    private $url_query;
 
     public function __construct(
         Tracker $tracker,
@@ -43,20 +49,22 @@ class Tracker_Workflow_Action_Triggers_EditTriggers extends Tracker_Workflow_Act
         $this->rule_manager      = $rule_manager;
     }
 
-    public function process(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user) {
+    public function process(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user)
+    {
         $this->displayPane($layout);
     }
 
-    private function displayPane(Tracker_IDisplayTrackerLayout $layout) {
-        $this->displayHeader($layout);
+    private function displayPane(Tracker_IDisplayTrackerLayout $layout)
+    {
+        $this->displayHeader($layout, $GLOBALS['Language']->getText('workflow_admin', 'title_define_triggers'));
 
         $presenter = new Tracker_Workflow_Action_Triggers_TriggersPresenter(
+            $this->tracker->getId(),
             $this->url_query,
             $this->token
         );
 
         $this->template_renderer->renderToPage('trigger-pane', $presenter);
-
 
         $GLOBALS['HTML']->appendJsonEncodedVariable(
             'tuleap.trackers.trigger.existing',

@@ -16,17 +16,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201501201037_add_show_priority_changes_in_tracker_table extends ForgeUpgrade_Bucket {
+class b201501201037_add_show_priority_changes_in_tracker_table extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Add show_priority_changes column in tracker table';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE tracker ADD COLUMN show_priority_changes TINYINT(1) DEFAULT 0";
         $res = $this->db->dbh->exec($sql);
 
@@ -35,10 +39,10 @@ class b201501201037_add_show_priority_changes_in_tracker_table extends ForgeUpgr
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('tracker', 'show_priority_changes')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding column show_priority_changes to tracker');
         }
     }
-
 }

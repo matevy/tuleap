@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -22,21 +22,25 @@
 /**
  *  Data Access Object for Service
  */
-class ServiceDao extends DataAccessObject
+class ServiceDao extends DataAccessObject // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
     * Return active projects that use a specific service
     * WARNING: this returns all fields of all projects (might be big)
     * @return DataAccessResult
     */
-    function searchActiveUnixGroupByUsedService($service_short_name) {
-        $sql = sprintf("SELECT * FROM groups, service
+    public function searchActiveUnixGroupByUsedService($service_short_name)
+    {
+        $sql = sprintf(
+            "SELECT * FROM groups, service
                 WHERE groups.group_id=service.group_id AND service.short_name=%s AND service.is_used='1' AND groups.status='A'",
-                $this->da->quoteSmart($service_short_name));
+            $this->da->quoteSmart($service_short_name)
+        );
         return $this->retrieve($sql);
     }
 
-    public function searchByProjectIdAndShortNames($project_id, $allowed_shortnames) {
+    public function searchByProjectIdAndShortNames($project_id, $allowed_shortnames)
+    {
         $project_id         = $this->da->escapeInt($project_id);
         $allowed_shortnames = $this->da->quoteSmartImplode(',', $allowed_shortnames);
 
@@ -49,16 +53,17 @@ class ServiceDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    public function isServiceAvailableAtSiteLevelByShortName($name) {
+    public function isServiceAvailableAtSiteLevelByShortName($name)
+    {
         return $this->isServiceActiveInProjectByShortName(100, $name);
     }
 
     public function isServiceActiveInProjectByShortName($project_id, $name)
     {
         $project_id = $this->da->escapeInt($project_id);
-        $name = $this->da->quoteSmart($name);
+        $name       = $this->da->quoteSmart($name);
 
-        $sql  = "SELECT NULL
+        $sql = "SELECT NULL
                  FROM service
                  WHERE group_id = $project_id
                      AND is_active = 1
@@ -117,6 +122,7 @@ class ServiceDao extends DataAccessObject
     public function create(
         $project_id,
         $label,
+        $icon_name,
         $description,
         $short_name,
         $link,
@@ -124,40 +130,79 @@ class ServiceDao extends DataAccessObject
         $is_used,
         $scope,
         $rank,
-        $is_in_iframe
+        $is_in_new_tab
     ) {
-        $project_id   = $this->da->escapeInt($project_id);
-        $label        = $this->da->quoteSmart($label);
-        $description  = $this->da->quoteSmart($description);
-        $short_name   = $this->da->quoteSmart($short_name);
-        $link         = $this->da->quoteSmart($link);
-        $scope        = $this->da->quoteSmart($scope);
-        $rank         = $this->da->escapeInt($rank);
-        $is_active    = $is_active ? 1 : 0;
-        $is_used      = $is_used ? 1 : 0;
-        $is_in_iframe = $is_in_iframe ? 1 : 0;
+        $project_id    = $this->da->escapeInt($project_id);
+        $label         = $this->da->quoteSmart($label);
+        $icon_name     = $this->da->quoteSmart($icon_name);
+        $description   = $this->da->quoteSmart($description);
+        $short_name    = $this->da->quoteSmart($short_name);
+        $link          = $this->da->quoteSmart($link);
+        $scope         = $this->da->quoteSmart($scope);
+        $rank          = $this->da->escapeInt($rank);
+        $is_active     = $is_active ? 1 : 0;
+        $is_used       = $is_used ? 1 : 0;
+        $is_in_iframe  = 0;
+        $is_in_new_tab = $is_in_new_tab ? 1 : 0;
 
-        $sql = "INSERT INTO service (group_id, label, description, short_name, link, is_active, is_used, scope, rank, is_in_iframe)
-                VALUES ($project_id, $label, $description, $short_name, $link, $is_active, $is_used, $scope, $rank, $is_in_iframe)";
+        $sql = "INSERT INTO service (
+                     group_id,
+                     label,
+                     description,
+                     short_name,
+                     link,
+                     is_active,
+                     is_used,
+                     scope,
+                     rank,
+                     is_in_iframe,
+                     is_in_new_tab,
+                     icon
+                 ) VALUES (
+                       $project_id,
+                       $label,
+                       $description,
+                       $short_name,
+                       $link,
+                       $is_active,
+                       $is_used,
+                       $scope,
+                       $rank,
+                       $is_in_iframe,
+                       $is_in_new_tab,
+                       $icon_name
+                   )";
 
         return $this->update($sql) && $this->da->affectedRows() > 0;
     }
 
-    public function saveBasicInformation($service_id, $label, $description, $link, $rank, $is_in_iframe)
-    {
+    public function saveBasicInformation(
+        $service_id,
+        $label,
+        $icon_name,
+        $description,
+        $link,
+        $rank,
+        $is_in_iframe,
+        $is_in_new_tab
+    ) {
         $service_id   = $this->da->escapeInt($service_id);
         $label        = $this->da->quoteSmart($label);
+        $icon_name    = $this->da->quoteSmart($icon_name);
         $description  = $this->da->quoteSmart($description);
         $link         = $this->da->quoteSmart($link);
         $rank         = $this->da->escapeInt($rank);
         $is_in_iframe = $is_in_iframe ? 1 : 0;
+        $is_in_new_tab = $is_in_new_tab ? 1 : 0;
 
         $sql = "UPDATE service
                 SET label = $label,
+                    icon = $icon_name,
                     description = $description,
                     link = $link,
                     rank = $rank,
-                    is_in_iframe = $is_in_iframe
+                    is_in_iframe = $is_in_iframe,
+                    is_in_new_tab = $is_in_new_tab
                 WHERE service_id = $service_id";
 
         return $this->update($sql) && $this->da->affectedRows() > 0;

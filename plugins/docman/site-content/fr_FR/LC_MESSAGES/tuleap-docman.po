@@ -10,14 +10,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.2.3\n"
 
 #, php-format
 msgid ""
 "%s does not have an approval table. The parameter \"approval_table_action\" "
 "must not be present."
 msgstr ""
-"%s n'a pasde table d'approbation. Le paramètre \"approval_table_action\" ne "
+"%s n'a pas de table d'approbation. Le paramètre \"approval_table_action\" ne "
 "doit pas être fourni."
 
 #, php-format
@@ -31,12 +31,22 @@ msgstr ""
 "la création de la version (valeurs possibles : copy,reset,empty)"
 
 #, php-format
+msgid "%s has been modified by %s."
+msgstr "%s a été modifié par %s."
+
+#, php-format
+msgid "%s has been removed by %s."
+msgstr "%s a été supprimé par %s."
+
 msgid ""
-"%s has an approval table, you must provide an option to have approval table "
-"on new version creation."
+"A document with the same title is already being uploaded, you cannot copy "
+"your document here for now"
 msgstr ""
-"%s a une table d'approbation, vous devez renseigner une option pour avoir "
-"une table d'approbation lors de la création de la  nouvelle version"
+"Un document avec le même titre est déjà en cours de téléversement, vous ne "
+"pouvez pas copier votre document ici pour le moment"
+
+msgid "Added:"
+msgstr "Ajouté :"
 
 msgid "An error occurred during the update of the max file size"
 msgstr ""
@@ -53,8 +63,33 @@ msgstr ""
 msgid "Approved"
 msgstr "Approuvé"
 
+#, php-format
+msgid "Can't delete folder %s because it is not empty."
+msgstr "Impossible de supprimer le dossier %s car il n'est pas vide."
+
+msgid ""
+"Cannot delete this item because it contains items you are not allowed to "
+"modify (no 'Write' access, you may even not be able to read them). Please "
+"contact your document manager administrator."
+msgstr ""
+"Impossible de supprimer cet élément car il contient des items que vous ne "
+"pouvez pas modifier (pas d'accès 'Rédacteur', il se peut que vous ne "
+"puissiez pas non plus les lire). Merci de contacter votre administrateur de "
+"gestionnaire de documents."
+
 msgid "Commented"
 msgstr "Commenté"
+
+msgid "Copy from template"
+msgstr "Copier du template"
+
+#, php-format
+msgid "Copy of %s"
+msgstr "Copie de %s"
+
+#, php-format
+msgid "Copy of %s in %s at version %d."
+msgstr "Copie de %s dans %d à la version %d"
 
 msgid "Declined"
 msgstr "Décliné"
@@ -74,6 +109,10 @@ msgstr "Administrateurs du gestionnaire de documents"
 msgid "Document settings"
 msgstr "Paramètres de documents"
 
+msgid "Error while trying to delete the wiki page from wiki service."
+msgstr ""
+"Erreur lors de la suppression de la page wiki à partir du service wiki."
+
 msgid "File upload limits"
 msgstr "Limites de téléversement"
 
@@ -82,13 +121,6 @@ msgstr "Permissions globales"
 
 msgid "Granted groups"
 msgstr "Groupes autorisés"
-
-msgid ""
-"Impossible to update a file which already has an approval table without "
-"approval action."
-msgstr ""
-"Impossible de mettre à jour un fichier ayant déjà une table d'approbation "
-"sans renseigner l'action d'approbation"
 
 msgid "Initial version"
 msgstr "Version initiale"
@@ -106,12 +138,12 @@ msgstr "Taille maximum des fichiers  (en Octets)"
 msgid "Maximum number of files"
 msgstr "Nombre maximum de fichiers"
 
-msgid ""
-"New user interface is under construction and all feature are not available "
-"yet."
-msgstr ""
-"La nouvelle interface est en cours de construction et toutes les "
-"fonctionnalités n'ont pas encore été portées."
+msgid "Moved"
+msgstr "Déplacé"
+
+#, php-format
+msgid "New version of %s wiki page was created by %s."
+msgstr "Une nouvelle version de la page wiki %s a été créee par %s."
 
 msgid "Not yet"
 msgstr "Pas encore"
@@ -125,14 +157,27 @@ msgstr "Permission"
 msgid "Rejected"
 msgstr "Rejecté"
 
+msgid "Removed:"
+msgstr "Supprimé :"
+
 msgid "Save settings"
 msgstr "Enregistrer"
 
 msgid "Settings have been saved successfully"
 msgstr "Les paramètres ont été sauvegardés avec succès"
 
-msgid "Switch to new user interface"
+msgid "Something happen!"
+msgstr "Quelque chose a changé !"
+
+msgid "Switch to the new user interface"
 msgstr "Basculer sur la nouvelle interface utilisateur"
+
+msgid "The \"Status\" property is not activated for this item."
+msgstr "La propriété \"Status\" n'est pas activée pour cette ressource."
+
+msgid "The date format is incorrect. The format must be \"YYYY-MM-DD\""
+msgstr ""
+"Le format de la date est incorrecte. Le format doit être \"YYYY-MM-DD\""
 
 msgid "The file cannot be found."
 msgstr "Le fichier ne peut être trouvé."
@@ -141,6 +186,42 @@ msgstr "Le fichier ne peut être trouvé."
 msgid "The item %d is not a folder."
 msgstr "L'objet %d n'est pas un dossier."
 
+#, php-format
+msgid "The list type property %s can accept only one value."
+msgstr "La propriété de type liste %s accepte une seule valeur"
+
+#, php-format
+msgid "The metadata '%s' short_name must be provided for document creation"
+msgid_plural ""
+"The metadata '%s' short_names must be provided for document creation"
+msgstr[0] ""
+"La metadata avec le short_name '%s' doit être fournie pour créer un document"
+msgstr[1] ""
+"Les metadata avec le short_name '%s' doivent être fournies pour créer un "
+"document"
+
+msgid "The obsolescence date is before the current date"
+msgstr "La date d'obsolescence est antérieur à la date actuelle"
+
+msgid ""
+"The project does not support obsolescence date, you should not provide it to "
+"create or update a new document."
+msgstr ""
+"Le project ne supporte l'obsolescence date, vous ne devriez pas le "
+"renseigner à la création ou à la mise à jour d'un document."
+
+#, php-format
+msgid "The property with short name %s does not exist in project."
+msgstr "La propriété avec le nom %s n'existe pas dans le projet."
+
+#, php-format
+msgid ""
+"The property with short name %s is a value, list_value should be empty and "
+"value should be provided."
+msgstr ""
+"La propriété avec le nom %s est une valeur, list_value devrait être vide et "
+"value devrait être fourni."
+
 msgid "The requested version of this file cannot be found."
 msgstr "La version demandée de ce fichier ne peut être trouvé."
 
@@ -148,11 +229,41 @@ msgstr "La version demandée de ce fichier ne peut être trouvé."
 msgid "The resource %d does not exist."
 msgstr "La ressource %d n'existe pas."
 
+#, php-format
+msgid "The specified owner ID #%d does not match a valid user."
+msgstr ""
+"L'ID #%d spécifié pour le propriétaire ne correspond pas un utilisateur "
+"valide."
+
+#, php-format
+msgid "The status \"%s\" is invalid."
+msgstr "Le statut \"%s\" est invalide."
+
+#, php-format
+msgid "The value '%s' of '%s' is unknown"
+msgid_plural "The values of '%s' for field '%s' are unknown"
+msgstr[0] "La valeur '%s' de '%s' est inconnue"
+msgstr[1] "Les valeurs '%s' de '%s' sont inconnues"
+
+#, php-format
+msgid "The value of '%s' is required"
+msgid_plural "The values of '%s' are required"
+msgstr[0] "La valeur '%s' de '%s' est requise"
+msgstr[1] "Les valeurs '%s' de '%s' sont requises"
+
 msgid "There is already a document being uploaded for this item"
 msgstr "Il y a déjà un document en cours de téléversement pour cet élément"
 
 msgid "There is already a version being uploaded for this document."
 msgstr "Il y a déjà une version en cours de téléversement pour ce document."
+
+msgid ""
+"This approval table has been detected has potentially corrupted, please "
+"reach out to the site administrators if you notice inconsistencies."
+msgstr ""
+"Cette table d'approbation a été détectée comme étant potentiellement "
+"corrompue, veuillez contacter les administrateurs du site si vous remarquez "
+"des incohérences."
 
 msgid "This limit prevents a user to upload a file which size exceed x Bytes."
 msgstr ""
@@ -164,6 +275,12 @@ msgstr ""
 "Cette limite empêche un utilisateur de téléverser plus de x fichiers à la "
 "fois."
 
+msgid "To restore monitoring, please visit:"
+msgstr "Pour restaurer le monitoring, veuillez visiter :"
+
+msgid "To stop monitoring, please visit:"
+msgstr "Pour arrêter le monitoring, veuillez visiter :"
+
 msgid "User, group"
 msgstr "Utilisateur, groupe"
 
@@ -174,8 +291,62 @@ msgstr "Valider"
 msgid "You are not allowed to write on folder with id '%d'"
 msgstr "Vous n'êtes pas autorisés à écrire dans le dossier ayant pour id '%d'"
 
+msgid "You are not allowed to write this item."
+msgstr "Vous n'êtes pas autorisé à modifier cet élément."
+
+msgid "You are receiving this message because you are monitoring this item."
+msgstr "Vous recevez cette notification car vous monitorez cet item."
+
+msgid ""
+"You are receiving this message because you were added to the monitoring list "
+"of this item:"
+msgstr ""
+"Vous recevez cette notification car vous avez été rajouté à la liste des "
+"utilisateurs qui monitorent cet item:"
+
+msgid ""
+"You are receiving this message because you were removed from the monitoring "
+"list of this item:"
+msgstr ""
+"Vous recevez cette notification car vous avez été enlevé de la liste des "
+"utilisateurs qui monitorent cet item:"
+
+msgid "You cannot delete the root folder."
+msgstr "Vous ne pouvez pas supprimer le dossier racine."
+
+#, php-format
+msgid "You do not have sufficient access rights to delete %s."
+msgstr "Vous n'avez pas les droits suffisants pour supprimer %s."
+
 msgid "You should be site administrator to access this page"
 msgstr "Vous devez être administrateur site pour accéder à cette page"
+
+#, php-format
+msgid "You were added to '%s' monitoring list"
+msgstr "Vous avez été ajouté de la liste de monitoring du document '%s'"
+
+#, php-format
+msgid "You were removed from '%s' monitoring list"
+msgstr "Vous avez été enlevé de la liste de monitoring du document '%s'"
+
+#, php-format
+msgid ""
+"from:\n"
+" %s"
+msgstr ""
+"depuis :\n"
+"%s"
+
+msgid "null is not a valid status."
+msgstr "null n'est pas un statut valide."
+
+#, php-format
+msgid ""
+"to:\n"
+" %s"
+msgstr ""
+"vers :\n"
+"%s"
 
 msgid "{{ user_group_name }} has no global permission"
 msgstr "{{ user_group_name }} n'a pas de permissions globales"

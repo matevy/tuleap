@@ -23,8 +23,10 @@ declare(strict_types=1);
 namespace Tuleap\Docman\Upload\Document;
 
 use Tuleap\DB\DBTransactionExecutor;
+use Tuleap\Docman\REST\v1\DocmanItemsEventAdder;
 use Tuleap\Tus\TusFileInformation;
 use Tuleap\Tus\TusFinisherDataStore;
+use Tuleap\Upload\UploadPathAllocator;
 
 final class DocumentUploadFinisher implements TusFinisherDataStore
 {
@@ -33,7 +35,7 @@ final class DocumentUploadFinisher implements TusFinisherDataStore
      */
     private $logger;
     /**
-     * @var DocumentUploadPathAllocator
+     * @var UploadPathAllocator
      */
     private $document_upload_path_allocator;
     /**
@@ -44,10 +46,6 @@ final class DocumentUploadFinisher implements TusFinisherDataStore
      * @var \Docman_VersionFactory
      */
     private $version_factory;
-    /**
-     * @var \PermissionsManager
-     */
-    private $permission_manager;
     /**
      * @var \EventManager
      */
@@ -76,26 +74,34 @@ final class DocumentUploadFinisher implements TusFinisherDataStore
      * @var DBTransactionExecutor
      */
     private $transaction_executor;
+    /**
+     * @var DocmanItemsEventAdder
+     */
+    private $event_adder;
+    /**
+     * @var \ProjectManager
+     */
+    private $project_manager;
 
     public function __construct(
         \Logger $logger,
-        DocumentUploadPathAllocator $document_upload_path_allocator,
+        UploadPathAllocator $document_upload_path_allocator,
         \Docman_ItemFactory $docman_item_factory,
         \Docman_VersionFactory $version_factory,
-        \PermissionsManager $permission_manager,
         \EventManager $event_manager,
         DocumentOngoingUploadDAO $document_ongoing_upload_dao,
         \Docman_ItemDao $docman_item_dao,
         \Docman_FileStorage $docman_file_storage,
         \Docman_MIMETypeDetector $docman_mime_type_detector,
         \UserManager $user_manager,
-        DBTransactionExecutor $transaction_executor
+        DBTransactionExecutor $transaction_executor,
+        DocmanItemsEventAdder $event_adder,
+        \ProjectManager $project_manager
     ) {
         $this->logger                         = $logger;
         $this->document_upload_path_allocator = $document_upload_path_allocator;
         $this->docman_item_factory            = $docman_item_factory;
         $this->version_factory                = $version_factory;
-        $this->permission_manager             = $permission_manager;
         $this->event_manager                  = $event_manager;
         $this->document_ongoing_upload_dao    = $document_ongoing_upload_dao;
         $this->docman_item_dao                = $docman_item_dao;
@@ -103,6 +109,8 @@ final class DocumentUploadFinisher implements TusFinisherDataStore
         $this->docman_mime_type_detector      = $docman_mime_type_detector;
         $this->user_manager                   = $user_manager;
         $this->transaction_executor           = $transaction_executor;
+        $this->event_adder                    = $event_adder;
+        $this->project_manager                = $project_manager;
     }
 
     public function finishUpload(TusFileInformation $file_information) : void
@@ -173,16 +181,6 @@ final class DocumentUploadFinisher implements TusFinisherDataStore
                 \unlink($file_path);
                 throw new \RuntimeException("Not able to create item #$item_id in DB");
             }
-            $has_permissions_been_set = $this->permission_manager->clonePermissions(
-                $document_row['parent_id'],
-                $document_row['item_id'],
-                ['PLUGIN_DOCMAN_READ', 'PLUGIN_DOCMAN_WRITE', 'PLUGIN_DOCMAN_MANAGE']
-            );
-            if (! $has_permissions_been_set) {
-                $this->docman_item_dao->delete($item_id);
-                \unlink($file_path);
-                throw new \RuntimeException('Could not set permissions on item #' . $item_id);
-            }
 
             $has_version_been_created = $this->version_factory->create([
                 'item_id'   => $item_id,
@@ -226,6 +224,9 @@ final class DocumentUploadFinisher implements TusFinisherDataStore
         }
 
         $user = $this->user_manager->getUserById($item->getOwnerId());
+
+        $project = $this->project_manager->getProject($item->getGroupId());
+        $this->event_adder->addNotificationEvents($project);
 
         $this->event_manager->processEvent(
             'plugin_docman_event_add',

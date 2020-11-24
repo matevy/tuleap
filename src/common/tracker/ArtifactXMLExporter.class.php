@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ArtifactXMLExporter {
+class ArtifactXMLExporter
+{
 
     public const ARCHIVE_DATA_DIR = 'data';
 
@@ -34,14 +35,16 @@ class ArtifactXMLExporter {
     /** @var Logger */
     private $logger;
 
-    public function __construct(ArtifactXMLExporterDao $dao, ArtifactAttachmentXMLExporter $attachment_exporter, ArtifactXMLNodeHelper $node_helper, Logger $logger) {
+    public function __construct(ArtifactXMLExporterDao $dao, ArtifactAttachmentXMLExporter $attachment_exporter, ArtifactXMLNodeHelper $node_helper, Logger $logger)
+    {
         $this->dao                  = $dao;
         $this->node_helper          = $node_helper;
         $this->logger               = $logger;
         $this->attachment_exporter  = $attachment_exporter;
     }
 
-    public function exportTrackerData($tracker_id) {
+    public function exportTrackerData($tracker_id)
+    {
         $artifacts_node = $this->node_helper->createElement('artifacts');
         foreach ($this->dao->searchArtifacts($tracker_id) as $row) {
             $artifact_exporter = new ArtifactXMLExporterArtifact($this->dao, $this->attachment_exporter, $this->node_helper, $this->logger);

@@ -22,8 +22,8 @@
 require_once('bootstrap.php');
 
 Mock::generatePartial(
-    'Tracker_CannedResponseFactory', 
-    'Tracker_CannedResponseFactoryTestVersion', 
+    'Tracker_CannedResponseFactory',
+    'Tracker_CannedResponseFactoryTestVersion',
     array(
         'getTrackerFactory',
         'getCannedResponses',
@@ -37,57 +37,62 @@ Mock::generate('Tracker');
 
 Mock::generate('TrackerFactory');
 
-class Tracker_CannedResponseFactoryTest extends TuleapTestCase {
+class Tracker_CannedResponseFactoryTest extends TuleapTestCase
+{
 
     /** @var XML_Security */
     protected $xml_security;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->xml_security = new XML_Security();
         $this->xml_security->enableExternalLoadOfEntities();
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         $this->xml_security->disableExternalLoadOfEntities();
 
         parent::tearDown();
     }
 
     //testing CannedResponse import
-    public function testImport() {
+    public function testImport()
+    {
         $xml = simplexml_load_file(dirname(__FILE__) . '/_fixtures/TestTracker-1.xml');
         $responses = array();
         foreach ($xml->cannedResponses->cannedResponse as $index => $response) {
             $responses[] = Tracker_CannedResponseFactory::instance()->getInstanceFromXML($response);
         }
-        
+
         $this->assertEqual($responses[0]->title, 'new response');
         $this->assertEqual($responses[0]->body, 'this is the message of the new canned response');
-      
     }
-    
-    public function testDuplicateWithNoCannedResponses() {
+
+    public function testDuplicateWithNoCannedResponses()
+    {
         $from_tracker = new MockTracker();
         $tf = new MockTrackerFactory();
         $tf->setReturnReference('getTrackerById', $from_tracker, array(102));
         $canned_responses = array();
-        
+
         $crf = new Tracker_CannedResponseFactoryTestVersion();
         $crf->setReturnReference('getTrackerFactory', $tf);
         $crf->setReturnValue('getCannedResponses', $canned_responses, array($from_tracker));
         $crf->expectNever('create', 'Method create should not be called when there is no canned responses in tracker source');
         $crf->duplicate(102, 502);
     }
-    
-    public function testDuplicateWithCannedResponses() {
+
+    public function testDuplicateWithCannedResponses()
+    {
         $from_tracker = new MockTracker();
         $to_tracker = new MockTracker();
         $tf = new MockTrackerFactory();
         $tf->setReturnReference('getTrackerById', $from_tracker, array(102));
         $tf->setReturnReference('getTrackerById', $to_tracker, array(502));
-        
+
         $cr1 = new MockTracker_CannedResponse();
         $cr1->setReturnValue('getTitle', 'cr1');
         $cr1->setReturnValue('getBody', 'body of cr1');
@@ -98,7 +103,7 @@ class Tracker_CannedResponseFactoryTest extends TuleapTestCase {
         $cr3->setReturnValue('getTitle', 'cr3');
         $cr3->setReturnValue('getBody', 'body of cr3');
         $crs = array($cr1, $cr2, $cr3);
-        
+
         $crf = new Tracker_CannedResponseFactoryTestVersion();
         $crf->setReturnReference('getTrackerFactory', $tf);
         $crf->setReturnValue('getCannedResponses', $crs, array($from_tracker));
@@ -109,4 +114,3 @@ class Tracker_CannedResponseFactoryTest extends TuleapTestCase {
         $crf->duplicate(102, 502);
     }
 }
-?>

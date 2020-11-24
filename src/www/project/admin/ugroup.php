@@ -1,7 +1,7 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2012 - 2017. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,27 +22,30 @@
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
 use Tuleap\Project\Admin\ProjectUGroup\CannotCreateUGroupException;
+use Tuleap\Project\Admin\ProjectUGroup\SynchronizedProjectMembership\ActivationController;
 use Tuleap\Project\Admin\ProjectUGroup\UGroupListPresenterBuilder;
-use Tuleap\User\UserGroup\NameTranslator;
+use Tuleap\Project\Admin\ProjectUGroup\UGroupRouter;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDetector;
 
-require_once('pre.php');
-require_once('www/project/admin/permissions.php');
+require_once __DIR__ . '/../../include/pre.php';
+require_once __DIR__ . '/permissions.php';
 
 $em      = EventManager::instance();
 $request = HTTPRequest::instance();
 
 $group_id = $request->getValidated('group_id', 'GroupId', 0);
 
-$csrf = new CSRFSynchronizerToken('/project/admin/ugroup.php');
+$ugroup_delete_token = new CSRFSynchronizerToken('/project/admin/ugroup.php');
 
 session_require(array('group' => $group_id, 'admin_flags' => 'A'));
 
 if ($request->existAndNonEmpty('func')) {
     $ugroup_id   = $request->getValidated('ugroup_id', 'UInt', 0);
 
-    switch($request->get('func')) {
+    switch ($request->get('func')) {
         case 'delete':
-            $csrf->check();
+            $ugroup_delete_token->check();
             if ($group_id > 100) {
                 ugroup_delete($group_id, $ugroup_id);
             } else {
@@ -58,7 +61,7 @@ if ($request->existAndNonEmpty('func')) {
                 $ugroup_id = ugroup_create($group_id, $name, $desc, $template);
                 $GLOBALS['Response']->redirect(
                     '/project/admin/editugroup.php?group_id=' . urlencode($group_id) .
-                    '&ugroup_id=' . urlencode( $ugroup_id)
+                    '&ugroup_id=' . urlencode($ugroup_id)
                 );
             } catch (CannotCreateUGroupException $exception) {
                 $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
@@ -79,11 +82,19 @@ $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL('proje
 $navigation_displayer = new HeaderNavigationDisplayer();
 $navigation_displayer->displayBurningParrotNavigation($title, $project, 'groups');
 
-$presenter_builder = new UGroupListPresenterBuilder(new UGroupManager());
+$presenter_builder = new UGroupListPresenterBuilder(
+    new UGroupManager(),
+    new SynchronizedProjectMembershipDetector(new SynchronizedProjectMembershipDao())
+);
 
-$templates_dir = ForgeConfig::get('codendi_dir') . '/src/templates/project/admin/';
+$synchronized_membership_token = UGroupRouter::getCSRFTokenSynchronizer();
+
+$templates_dir = ForgeConfig::get('codendi_dir') . '/src/templates/project/admin/user_groups';
 TemplateRendererFactory::build()
     ->getRenderer($templates_dir)
-    ->renderToPage('list-groups', $presenter_builder->build($project, $csrf));
+    ->renderToPage(
+        'list-groups',
+        $presenter_builder->build($project, $ugroup_delete_token, $synchronized_membership_token)
+    );
 
 project_admin_footer(array());

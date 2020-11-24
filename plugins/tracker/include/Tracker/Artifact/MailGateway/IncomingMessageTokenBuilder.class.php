@@ -20,14 +20,16 @@
 
 use Tuleap\Tracker\Artifact\MailGateway\IncomingMail;
 
-class Tracker_Artifact_IncomingMessageTokenBuilder {
+class Tracker_Artifact_IncomingMessageTokenBuilder
+{
 
     /**
      * @var Tracker_Artifact_MailGateway_RecipientFactory
      */
     private $recipient_factory;
 
-    public function __construct(Tracker_Artifact_MailGateway_RecipientFactory $recipient_factory) {
+    public function __construct(Tracker_Artifact_MailGateway_RecipientFactory $recipient_factory)
+    {
         $this->recipient_factory = $recipient_factory;
     }
 
@@ -58,5 +60,4 @@ class Tracker_Artifact_IncomingMessageTokenBuilder {
         );
         return $incoming_message;
     }
-
 }

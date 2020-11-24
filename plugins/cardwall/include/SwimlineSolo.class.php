@@ -21,19 +21,21 @@
 /**
  * A swimline for solo item in the dashboard
  */
-class Cardwall_SwimlineSolo extends Cardwall_Swimline{
+class Cardwall_SwimlineSolo extends Cardwall_Swimline
+{
 
     /**
      * @param string $title
      * @param array  $cells
      */
-    public function __construct($swimline_id, array $cells) {
+    public function __construct($swimline_id, array $cells)
+    {
         $this->swimline_id = $swimline_id;
         $this->cells       = $cells;
     }
 
-    public function getCardPresenter() {
+    public function getCardPresenter()
+    {
         return false;
     }
 }
-?>

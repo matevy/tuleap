@@ -21,8 +21,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* abstract */class Docman_View_ItemDetailsSection {
-    
+/* abstract */class Docman_View_ItemDetailsSection
+{
+
     var $id;
     var $title;
     var $item;
@@ -32,21 +33,25 @@
     protected $url;
     var $hp;
 
-    function __construct($item, string $url, $id, $title) {
+    function __construct($item, string $url, $id, $title)
+    {
         $this->id     = $id;
         $this->title  = $title;
         $this->item   = $item;
         $this->url    = $url;
         $this->hp     = Codendi_HTMLPurifier::instance();
     }
-    
-    function getId() {
+
+    function getId()
+    {
         return $this->id;
     }
-    function getTitle() {
+    function getTitle()
+    {
         return $this->title;
     }
-    function getContent($params = []) {
+    function getContent($params = [])
+    {
         return '';
     }
 }

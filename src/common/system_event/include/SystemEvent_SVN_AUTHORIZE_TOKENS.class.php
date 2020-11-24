@@ -22,16 +22,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class SystemEvent_SVN_AUTHORIZE_TOKENS extends SystemEvent {
+class SystemEvent_SVN_AUTHORIZE_TOKENS extends SystemEvent
+{
 
     /** @var BackendSVN */
     private $backend_svn;
 
-    public function injectDependencies(BackendSVN $backend_svn) {
+    public function injectDependencies(BackendSVN $backend_svn)
+    {
         $this->backend_svn = $backend_svn;
     }
 
-    public function process() {
+    public function process()
+    {
         $group_id = $this->getIdFromParam();
         $project  = $this->getProject($group_id);
         if ($project) {
@@ -51,7 +54,8 @@ class SystemEvent_SVN_AUTHORIZE_TOKENS extends SystemEvent {
      *
      * @return string
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $group_id = $this->getIdFromParam();
         return 'project: '. $this->verbalizeProjectId($group_id, $with_link);
     }

@@ -22,18 +22,21 @@ declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1;
 
+use Codendi_HTMLPurifier;
 use Docman_ItemDao;
 use Docman_ItemFactory;
 use Mockery;
-use Tuleap\DB\Compat\Legacy2018\LegacyDataAccessInterface;
 use Tuleap\Docman\ApprovalTable\ApprovalTableRetriever;
 use Tuleap\Docman\ApprovalTable\ApprovalTableStateMapper;
-use Tuleap\Docman\REST\v1\Metadata\MetadataRepresentation;
+use Tuleap\Docman\REST\v1\Metadata\ItemMetadataRepresentation;
 use Tuleap\Docman\REST\v1\Metadata\MetadataRepresentationBuilder;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsBuilder;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsRepresentation;
+use Tuleap\GlobalLanguageMock;
 
 class ItemRepresentationBuilderTest extends \PHPUnit\Framework\TestCase
 {
-    use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+    use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration, GlobalLanguageMock;
     /**
      * @var Mockery\MockInterface|ApprovalTableRetriever
      */
@@ -74,6 +77,15 @@ class ItemRepresentationBuilderTest extends \PHPUnit\Framework\TestCase
      */
     private $approval_table_state_mapper;
 
+    /**
+     * @var Mockery\MockInterface|DocmanItemPermissionsForGroupsBuilder
+     */
+    private $item_permissions_for_groups_builder;
+    /**
+     * @var Codendi_HTMLPurifier|Mockery\MockInterface
+     */
+    private $html_purifier;
+
     protected function setUp() : void
     {
         parent::setUp();
@@ -85,13 +97,13 @@ class ItemRepresentationBuilderTest extends \PHPUnit\Framework\TestCase
         $this->lock_factory                = Mockery::Mock(\Docman_LockFactory::class);
         $this->approval_table_state_mapper = new ApprovalTableStateMapper();
 
-        \UserManager::setInstance($this->user_manager);
-        \CodendiDataAccess::setInstance(\Mockery::spy(LegacyDataAccessInterface::class));
-        $this->docman_item_factory             = Mockery::Mock(Docman_ItemFactory::class);
-        $this->permissions_manager             = Mockery::Mock(\Docman_PermissionsManager::class);
-        $this->lock_factory                    = Mockery::Mock(\Docman_LockFactory::class);
-        $this->metadata_representation_builder = Mockery::mock(MetadataRepresentationBuilder::class);
-        $this->approval_table_retriever        = Mockery::mock(ApprovalTableRetriever::class);
+        $this->docman_item_factory                 = Mockery::Mock(Docman_ItemFactory::class);
+        $this->permissions_manager                 = Mockery::Mock(\Docman_PermissionsManager::class);
+        $this->lock_factory                        = Mockery::Mock(\Docman_LockFactory::class);
+        $this->metadata_representation_builder     = Mockery::mock(MetadataRepresentationBuilder::class);
+        $this->approval_table_retriever            = Mockery::mock(ApprovalTableRetriever::class);
+        $this->item_permissions_for_groups_builder = Mockery::mock(DocmanItemPermissionsForGroupsBuilder::class);
+        $this->html_purifier                       = Mockery::mock(Codendi_HTMLPurifier::class);
 
         $this->item_representation_builder = new ItemRepresentationBuilder(
             $this->dao,
@@ -101,14 +113,10 @@ class ItemRepresentationBuilderTest extends \PHPUnit\Framework\TestCase
             $this->lock_factory,
             $this->approval_table_state_mapper,
             $this->metadata_representation_builder,
-            $this->approval_table_retriever
+            $this->approval_table_retriever,
+            $this->item_permissions_for_groups_builder,
+            $this->html_purifier
         );
-    }
-
-    protected function tearDown() : void
-    {
-        \UserManager::clearInstance();
-        \CodendiDataAccess::clearInstance();
     }
 
     public function testItBuildsAnItemRepresentationOfAnItem() : void
@@ -127,16 +135,17 @@ class ItemRepresentationBuilderTest extends \PHPUnit\Framework\TestCase
         $current_user->shouldReceive('hasAvatar')->andReturns(false);
         $this->user_manager->shouldReceive('getCurrentUser')->andReturns($current_user);
         $current_user->shouldReceive('getPreference')->with('username_display')->andReturns('toto');
+        $this->html_purifier->shouldReceive('purifyTextWithReferences')->andReturn('description with processed ref');
 
-        $timestamp = "1549461600";
-
-        $metadata_representation = new MetadataRepresentation(
+        $metadata_representation = new ItemMetadataRepresentation(
             "metadata name",
             'date',
             false,
-            $timestamp,
+            '2019-02-06T15:00:00+01:00',
+            '2019-02-06T15:00:00+01:00',
             [],
-            false
+            false,
+            "metadata"
         );
         $this->metadata_representation_builder->shouldReceive('build')->andReturn([$metadata_representation]);
 
@@ -176,6 +185,11 @@ class ItemRepresentationBuilderTest extends \PHPUnit\Framework\TestCase
             ->withArgs([$docman_item])
             ->andReturns(["user_id" => $owner_id, "lock_date" => 1549461600]);
 
+        $permissions_for_groups_representation = new DocmanItemPermissionsForGroupsRepresentation();
+        $this->item_permissions_for_groups_builder->shouldReceive('getRepresentation')
+            ->with($current_user, $docman_item)
+            ->andReturn($permissions_for_groups_representation);
+
         $representation = $this->item_representation_builder->buildItemRepresentation(
             $docman_item,
             $current_user,
@@ -192,6 +206,7 @@ class ItemRepresentationBuilderTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($representation->embedded_file_properties, null);
         $this->assertEquals($representation->link_properties, null);
         $this->assertEquals($representation->wiki_properties, null);
+        $this->assertEquals($representation->permissions_for_groups, $permissions_for_groups_representation);
 
         $this->assertEquals($representation->approval_table->id, 10);
         $this->assertEquals($representation->approval_table->approval_state, 'Not yet');
@@ -199,6 +214,7 @@ class ItemRepresentationBuilderTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($representation->approval_table->approval_request_date, '2019-02-06T15:16:40+01:00');
         $this->assertEquals($representation->approval_table->has_been_approved, false);
         $this->assertEquals($representation->metadata[0]->value, '2019-02-06T15:00:00+01:00');
+        $this->assertEquals($representation->metadata[0]->post_processed_value, '2019-02-06T15:00:00+01:00');
         $this->assertEquals($representation->metadata[0]->name, 'metadata name');
         $this->assertEquals($representation->metadata[0]->type, 'date');
     }

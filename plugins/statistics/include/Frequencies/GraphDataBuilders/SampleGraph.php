@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,6 +23,7 @@ namespace Tuleap\Statistics\Frequencies\GraphDataBuilder;
 use Graph;
 use BarPlot;
 use DateLocale;
+use PlotBand;
 
 /**
  * Display data
@@ -133,7 +134,7 @@ class SampleGraph
      * @param string  $selectedData parameter choosen by user
      * @param string  $filter       the filter
      * @param string  $titlePeriod  the title period
-     * @param boolean $advsrch      true if advanced search
+     * @param bool $advsrch true if advanced search
      * @param int     $year         the selected year
      * @param int     $month        the selected month
      * @param string  $start        the start date
@@ -196,6 +197,8 @@ class SampleGraph
             $this->maxyear  = $endarray[1];
         }
 
+        $nbmonth = 1;
+
         //advanced search display per day
         if ($this->advsrch == 3) {
             $datagraph = array();
@@ -248,7 +251,6 @@ class SampleGraph
             $this->graph->img->SetMargin(60, 120, 20, 40);
         }
 
-        require_once __DIR__ . '/../../../../../src/common/chart/EmptyImageAntiAliasPolyfill.php';
         //management of the axes scales
         if ($this->filter == 'hour') {
             $this->graph->SetScale("linlin");
@@ -312,6 +314,8 @@ class SampleGraph
 
         //manage the Weekend display in the Simple search
         if ($this->advsrch == 0 && $this->filter == 'day') {
+            $ubandarray = [];
+            $abandarray = [];
             foreach ($this->graphValues as $key => $val) {
                 $testday = date("w", mktime(0, 0, 0, $this->month, $key, $this->year));
                 $color3  = "#F4F3F2@0.45";
@@ -321,6 +325,10 @@ class SampleGraph
                     $beginwe = $key;
                     $endwe   = $beginwe + 1;
 
+                    /**
+                     * @psalm-suppress UndefinedConstant VERTICAL and BAND_SOLID might not be present during the inspection
+                     * due to the magic inclusion and loading of the jpgraph library
+                     */
                     $uband = new PlotBand(VERTICAL, BAND_SOLID, $beginwe, $endwe, $color3);
                     $uband->ShowFrame(false);
                     $uband->SetDensity(80);
@@ -329,6 +337,10 @@ class SampleGraph
                     $beginwe = $key;
                     $endwe   = $beginwe + 1;
 
+                    /**
+                     * @psalm-suppress UndefinedConstant VERTICAL and BAND_SOLID might not be present during the inspection
+                     * due to the magic inclusion and loading of the jpgraph library
+                     */
                     $aband = new PlotBand(VERTICAL, BAND_SOLID, $beginwe, $endwe, $color3);
                     $aband->ShowFrame(false);
                     $aband->SetDensity(80);

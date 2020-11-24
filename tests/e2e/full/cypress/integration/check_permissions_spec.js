@@ -21,10 +21,7 @@ describe("Permissions", function() {
     before(() => {
         cy.clearCookie("__Host-TULEAP_session_hash");
         cy.projectMemberLogin();
-        cy.visit("/projects/permissions-project-01/");
-        cy.get("[data-test=project-sidebar]")
-            .should("have.attr", "data-project-id")
-            .as("permission_project_id");
+        cy.getProjectId("permissions-project-01").as("permission_project_id");
     });
 
     beforeEach(() => {
@@ -72,11 +69,12 @@ describe("Permissions", function() {
     });
 
     it("should raise an error when user try to access to plugin Tracker admin page", function() {
-        cy.visit("/plugins/tracker/?func=global-admin&group_id=" + this.permission_project_id);
-
-        cy.get("[data-test=feedback]").contains(
-            "Access denied. You don't have permissions to perform this action."
-        );
+        cy.request({
+            url: "/plugins/tracker/global-admin/" + this.permission_project_id,
+            failOnStatusCode: false
+        }).then(response => {
+            expect(response.status).to.eq(403);
+        });
     });
 
     it("should raise an error when user try to access to plugin Git admin page", function() {

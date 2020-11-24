@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,12 +24,14 @@ use BackendLogger;
 use DateTime;
 use SystemEvent;
 use TimePeriodWithoutWeekEnd;
+use Tracker_ArtifactFactory;
 use Tracker_FormElement_Field_BurndownDao;
 use Tracker_FormElement_Field_ComputedDaoCache;
 use Tuleap\Tracker\FormElement\BurndownCacheDateRetriever;
 use Tuleap\Tracker\FormElement\FieldCalculator;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 
-class SystemEvent_BURNDOWN_GENERATE extends SystemEvent
+class SystemEvent_BURNDOWN_GENERATE extends SystemEvent // phpcs:ignore Squiz.Classes.ValidClassName.NotCamelCaps
 {
     public const NAME = 'SystemEvent_BURNDOWN_GENERATE';
 
@@ -58,6 +60,16 @@ class SystemEvent_BURNDOWN_GENERATE extends SystemEvent
      */
     private $date_retriever;
 
+    /**
+     * @var Tracker_ArtifactFactory
+     */
+    private $artifact_factory;
+
+    /**
+     * @var SemanticTimeframeBuilder
+     */
+    private $semantic_timeframe_builder;
+
     private function getArtifactIdFromParameters()
     {
         $parameters = $this->getParametersAsArray();
@@ -71,35 +83,69 @@ class SystemEvent_BURNDOWN_GENERATE extends SystemEvent
     }
 
     public function injectDependencies(
+        Tracker_ArtifactFactory $artifact_factory,
+        SemanticTimeframeBuilder $semantic_timeframe_builder,
         Tracker_FormElement_Field_BurndownDao $burndown_dao,
         FieldCalculator $field_calculator,
         Tracker_FormElement_Field_ComputedDaoCache $cache_dao,
         BackendLogger $logger,
         BurndownCacheDateRetriever $date_retriever
     ) {
-        $this->burndown_dao     = $burndown_dao;
-        $this->logger           = $logger;
-        $this->field_calculator = $field_calculator;
-        $this->cache_dao        = $cache_dao;
-        $this->date_retriever   = $date_retriever;
+        $this->artifact_factory           = $artifact_factory;
+        $this->semantic_timeframe_builder = $semantic_timeframe_builder;
+        $this->burndown_dao               = $burndown_dao;
+        $this->logger                     = $logger;
+        $this->field_calculator           = $field_calculator;
+        $this->cache_dao                  = $cache_dao;
+        $this->date_retriever             = $date_retriever;
     }
 
     public function process()
     {
         $artifact_id           = $this->getArtifactIdFromParameters();
-        $burndown_informations = $this->burndown_dao->getBurndownInformation($artifact_id);
+        $artifact = $this->artifact_factory->getArtifactById($artifact_id);
+        if ($artifact === null) {
+            $this->warning("Unable to find artifact ". $artifact_id);
+
+            return false;
+        }
+
+        $burndown_informations = null;
+        $semantic_timeframe = $this->semantic_timeframe_builder->getSemantic($artifact->getTracker());
+        $start_date_field   = $semantic_timeframe->getStartDateField();
+        $end_date_field     = $semantic_timeframe->getEndDateField();
+        $duration_field     = $semantic_timeframe->getDurationField();
+        if ($start_date_field !== null && $duration_field !== null) {
+            $burndown_informations = $this->burndown_dao->getBurndownInformationBasedOnDuration(
+                $artifact_id,
+                $start_date_field->getId(),
+                $duration_field->getId()
+            );
+        } elseif ($start_date_field !== null && $end_date_field !== null) {
+            $burndown_informations = $this->burndown_dao->getBurndownInformationBasedOnEndDate(
+                $artifact_id,
+                $start_date_field->getId(),
+                $end_date_field->getId()
+            );
+        }
 
         $this->logger->debug("Calculating burndown for artifact #" . $artifact_id);
         if ($burndown_informations) {
-            $burndown              = new TimePeriodWithoutWeekEnd(
-                $burndown_informations['start_date'],
-                $burndown_informations['duration']
-            );
+            if (empty($burndown_informations['duration'])) {
+                $burndown = TimePeriodWithoutWeekEnd::buildFromEndDate(
+                    $burndown_informations['start_date'],
+                    $burndown_informations['end_date'],
+                    $this->logger
+                );
+            } else {
+                $burndown = TimePeriodWithoutWeekEnd::buildFromDuration(
+                    $burndown_informations['start_date'],
+                    $burndown_informations['duration']
+                );
+            }
 
             $yesterday = new DateTime();
             $yesterday->setTime(0, 0, 0);
-
-
 
             $this->cache_dao->deleteArtifactCacheValue(
                 $burndown_informations['id'],

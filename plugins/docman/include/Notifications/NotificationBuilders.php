@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -27,16 +27,22 @@ use Docman_NotificationsManager_Delete;
 use Docman_NotificationsManager_Move;
 use Docman_NotificationsManager_Subscribers;
 use EventManager;
+use HTTPRequest;
 use MailBuilder;
+use PermissionsOverrider_PermissionsOverriderManager;
 use Project;
 use TemplateRendererFactory;
+use Tuleap\Docman\ExternalLinks\DocmanLinkProvider;
+use Tuleap\Docman\ExternalLinks\ILinkUrlProvider;
+use Tuleap\Docman\ExternalLinks\LegacyLinkProvider;
 use Tuleap\Docman\ResponseFeedbackWrapper;
 use Tuleap\Mail\MailFilter;
 use Tuleap\Mail\MailLogger;
+use Tuleap\Project\ProjectAccessChecker;
+use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
 use UGroupDao;
 use UGroupManager;
 use UGroupUserDao;
-use URLVerification;
 use UserManager;
 
 class NotificationBuilders
@@ -49,20 +55,20 @@ class NotificationBuilders
      * @var Project
      */
     private $project;
-    private $default_url;
+    private $base_url;
 
-    public function __construct(ResponseFeedbackWrapper $feedback, Project $project, $default_url)
+    public function __construct(ResponseFeedbackWrapper $feedback, Project $project, string $base_url)
     {
-        $this->feedback    = $feedback;
-        $this->project     = $project;
-        $this->default_url = $default_url;
+        $this->feedback = $feedback;
+        $this->project  = $project;
+        $this->base_url = $base_url;
     }
 
     public function buildNotificationManager()
     {
         return new Docman_NotificationsManager(
             $this->project,
-            get_server_url() . $this->default_url,
+            $this->getProvider($this->project),
             $this->feedback,
             $this->getMailBuilder(),
             $this->getUsersToNotifyDao(),
@@ -78,7 +84,7 @@ class NotificationBuilders
     {
         return new Docman_NotificationsManager_Add(
             $this->project,
-            get_server_url() . $this->default_url,
+            $this->getProvider($this->project),
             $this->feedback,
             $this->getMailBuilder(),
             $this->getUsersToNotifyDao(),
@@ -94,7 +100,7 @@ class NotificationBuilders
     {
         return new Docman_NotificationsManager_Delete(
             $this->project,
-            get_server_url() . $this->default_url,
+            $this->getProvider($this->project),
             $this->feedback,
             $this->getMailBuilder(),
             $this->getUsersToNotifyDao(),
@@ -110,7 +116,7 @@ class NotificationBuilders
     {
         return new Docman_NotificationsManager_Move(
             $this->project,
-            get_server_url() . $this->default_url,
+            $this->getProvider($this->project),
             $this->feedback,
             $this->getMailBuilder(),
             $this->getUsersToNotifyDao(),
@@ -126,7 +132,7 @@ class NotificationBuilders
     {
         return new Docman_NotificationsManager_Subscribers(
             $this->project,
-            get_server_url() . $this->default_url,
+            $this->getProvider($this->project),
             $this->feedback,
             $this->getMailBuilder(),
             $this->getUsersToNotifyDao(),
@@ -142,7 +148,15 @@ class NotificationBuilders
     {
         return new MailBuilder(
             TemplateRendererFactory::build(),
-            new MailFilter(UserManager::instance(), new URLVerification(), new MailLogger())
+            new MailFilter(
+                UserManager::instance(),
+                new ProjectAccessChecker(
+                    PermissionsOverrider_PermissionsOverriderManager::instance(),
+                    new RestrictedUserCanAccessProjectVerifier(),
+                    EventManager::instance()
+                ),
+                new MailLogger()
+            )
         );
     }
 
@@ -216,5 +230,16 @@ class NotificationBuilders
     public function getItemFactory()
     {
         return new Docman_ItemFactory();
+    }
+
+    private function getProvider(Project $project): ILinkUrlProvider
+    {
+        $provider = new LegacyLinkProvider(
+            HTTPRequest::instance()->getServerUrl(). '/plugins/docman/?group_id=' . urlencode((string) $project->getID())
+        );
+        $link_provider = new DocmanLinkProvider($project, $provider);
+        EventManager::instance()->processEvent($link_provider);
+
+        return $link_provider->getProvider();
     }
 }

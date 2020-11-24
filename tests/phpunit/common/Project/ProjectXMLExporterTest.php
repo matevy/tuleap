@@ -21,6 +21,7 @@
  */
 
 use Mockery as M;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDetector;
 use Tuleap\Test\Builders as B;
 
 final class ProjectXMLExporterTest extends \PHPUnit\Framework\TestCase
@@ -52,6 +53,7 @@ final class ProjectXMLExporterTest extends \PHPUnit\Framework\TestCase
             $this->ugroup_manager,
             $xml_validator,
             $user_xml_exporter,
+            M::mock(SynchronizedProjectMembershipDetector::class, [ 'isSynchronizedWithProjectMembers' => false ]),
             M::spy(ProjectXMLExporterLogger::class)
         );
 
@@ -106,8 +108,8 @@ final class ProjectXMLExporterTest extends \PHPUnit\Framework\TestCase
             ]
         );
 
-        $this->ugroup_manager->shouldReceive('getUGroup')->with($this->project, ProjectUGroup::PROJECT_ADMIN)->andReturns($project_ugroup_dynamic);
-        $this->ugroup_manager->shouldReceive('getUGroup')->with($this->project, ProjectUGroup::PROJECT_MEMBERS)->andReturns($project_ugroup_dynamic);
+        $this->ugroup_manager->shouldReceive('getProjectAdminsUGroup')->with($this->project)->andReturns($project_ugroup_dynamic);
+        $this->ugroup_manager->shouldReceive('getProjectMembersUGroup')->with($this->project)->andReturns($project_ugroup_dynamic);
         $this->ugroup_manager->shouldReceive('getStaticUGroups')->andReturns(array(
             $project_ugroup_members,
             $project_ugroup_members2,
@@ -173,8 +175,8 @@ final class ProjectXMLExporterTest extends \PHPUnit\Framework\TestCase
             ]
         );
 
-        $this->ugroup_manager->shouldReceive('getUGroup')->with($this->project, ProjectUGroup::PROJECT_ADMIN)->andReturns($project_ugroup_project_admins);
-        $this->ugroup_manager->shouldReceive('getUGroup')->with($this->project, ProjectUGroup::PROJECT_MEMBERS)->andReturns($project_ugroup_project_members);
+        $this->ugroup_manager->shouldReceive('getProjectAdminsUGroup')->with($this->project)->andReturns($project_ugroup_project_admins);
+        $this->ugroup_manager->shouldReceive('getProjectMembersUGroup')->with($this->project)->andReturns($project_ugroup_project_members);
 
         $this->ugroup_manager->shouldReceive('getStaticUGroups')->andReturns([]);
 
@@ -231,7 +233,8 @@ final class ProjectXMLExporterTest extends \PHPUnit\Framework\TestCase
         $this->project->shouldReceive('getAccess')->andReturns('public');
         $project_ugroup_dynamic = M::spy(ProjectUGroup::class, [ 'getNormalizedName' => 'ugroup_dynamic' ]);
         $project_ugroup_dynamic->shouldReceive('getMembers')->andReturns(array());
-        $this->ugroup_manager->shouldReceive('getUGroup')->andReturns($project_ugroup_dynamic);
+        $this->ugroup_manager->shouldReceive('getProjectAdminsUGroup')->with($this->project)->andReturns($project_ugroup_dynamic);
+        $this->ugroup_manager->shouldReceive('getProjectMembersUGroup')->with($this->project)->andReturns($project_ugroup_dynamic);
         $this->ugroup_manager->shouldReceive('getStaticUGroups')->andReturns(array());
 
         $xml       = $this->xml_exporter->export($this->project, $this->options, $this->user, $this->archive, $this->export_dir);
@@ -245,7 +248,7 @@ final class ProjectXMLExporterTest extends \PHPUnit\Framework\TestCase
         $this->assertNotNull($xml_objet->services);
         $this->assertEquals((string)$xml_objet->services->service[0]['enabled'], '1');
         $this->assertEquals((string)$xml_objet->services->service[0]['shortname'], 's01');
-        $this->assertEquals((string)$xml_objet->services->service[1]['enabled'], '');
+        $this->assertEquals((string)$xml_objet->services->service[1]['enabled'], '0');
         $this->assertEquals((string)$xml_objet->services->service[1]['shortname'], 's02');
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,9 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'pre.php';
-require_once 'common/mail/Codendi_Mail.class.php';
-require_once 'common/mail/MassmailSender.class.php';
+require_once __DIR__ . '/../include/pre.php';
+
+if ((bool) ForgeConfig::get(Widget_MyProjects::CONFIG_DISABLE_CONTACT) === true) {
+    $GLOBALS['Response']->addFeedback(
+        Feedback::ERROR,
+        _('Massmail to project members is disabled.')
+    );
+    $GLOBALS['Response']->redirect("/my");
+    exit();
+}
 
 $csrf = new CSRFSynchronizerToken('massmail_to_project_members.php');
 $csrf->check('/my/');
@@ -40,9 +47,9 @@ $project_name   = $project->getPublicName();
 $massmail_sender = new MassmailSender();
 $is_sent = $massmail_sender->sendMassmail($project, $user, $subject, $body, $members);
 if ($is_sent) {
-    $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('my_index','mail_sent', array($project_name)));
+    $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('my_index', 'mail_sent', array($project_name)));
 } else {
-    $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('my_index','mail_not_sent', array($project_name)));
+    $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('my_index', 'mail_not_sent', array($project_name)));
 }
 
 $GLOBALS['Response']->redirect("/my");

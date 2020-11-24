@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Workflow_Trigger_RulesBuilderTriggeringFields {
+class Tracker_Workflow_Trigger_RulesBuilderTriggeringFields
+{
 
     /**
      * @var Tracker
@@ -30,18 +31,19 @@ class Tracker_Workflow_Trigger_RulesBuilderTriggeringFields {
      */
     private $fields;
 
-    public function __construct(Tracker $tracker, Iterator $fields) {
+    public function __construct(Tracker $tracker, Iterator $fields)
+    {
         $this->tracker = $tracker;
         $this->fields  = $fields;
     }
 
-    public function getTracker() {
+    public function getTracker()
+    {
         return $this->tracker;
     }
 
-    public function getFields() {
+    public function getFields()
+    {
         return $this->fields;
     }
 }
-
-?>

@@ -18,6 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Tracker\XML\TrackerXmlImportFeedbackCollector;
+
 require_once('bootstrap.php');
 
 Mock::generate('Tracker_Artifact');
@@ -94,7 +97,8 @@ Mock::generate('TransitionFactory');
 Mock::generate('PFUser');
 
 
-class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
+class Tracker_FormElement_Field_ListTest extends TuleapTestCase
+{
 
     private $transition_factory_test;
 
@@ -127,7 +131,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $this->transition_factory_test->clearInstance();
     }
 
-    function testGetChangesetValue() {
+    function testGetChangesetValue()
+    {
         $value_dao = new $this->dao_class();
         $dar = new MockDataAccessResult();
         $dar->setReturnValueAt(0, 'current', array('id' => '123', 'field_id' => '1', 'bindvalue_id' => '1000'));
@@ -148,12 +153,13 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $this->assertIsA($changeset_value, $this->cv_class);
         $this->assertTrue(is_array($changeset_value->getListValues()));
         $this->assertEqual(count($changeset_value->getListValues()), 3);
-        foreach($changeset_value->getListValues() as $bv) {
+        foreach ($changeset_value->getListValues() as $bv) {
             $this->assertIsA($bv, 'Tracker_FormElement_Field_List_BindValue');
         }
     }
 
-    function testGetChangesetValue_doesnt_exist() {
+    function testGetChangesetValue_doesnt_exist()
+    {
         $value_dao = new $this->dao_class();
         $dar = new MockDataAccessResult();
         $dar->setReturnValue('valid', false);
@@ -168,7 +174,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $this->assertEqual(count($changeset_value->getListValues()), 0);
     }
 
-    function testHasChangesNoChanges_reverseorder_MSB() {
+    function testHasChangesNoChanges_reverseorder_MSB()
+    {
         $list_field = new $this->field_class();
         $old_value = array('107', '108');
         $new_value = array('108', '107');
@@ -176,7 +183,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $cv->setReturnReference('getValue', $old_value);
         $this->assertFalse($list_field->hasChanges(mock('Tracker_Artifact'), $cv, $new_value));
     }
-    function testHasChangesNoChanges_same_order_MSB() {
+    function testHasChangesNoChanges_same_order_MSB()
+    {
         $list_field = new $this->field_class();
         $old_value = array('107', '108');
         $new_value = array('107', '108');
@@ -184,7 +192,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $cv->setReturnReference('getValue', $old_value);
         $this->assertFalse($list_field->hasChanges(mock('Tracker_Artifact'), $cv, $new_value));
     }
-    function testHasChangesNoChanges_empty_MSB() {
+    function testHasChangesNoChanges_empty_MSB()
+    {
         $list_field = new $this->field_class();
         $old_value = array();
         $new_value = array();
@@ -192,7 +201,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $cv->setReturnReference('getValue', $old_value);
         $this->assertFalse($list_field->hasChanges(mock('Tracker_Artifact'), $cv, $new_value));
     }
-    function testHasChangesNoChanges_SB() {
+    function testHasChangesNoChanges_SB()
+    {
         $list_field = new $this->field_class();
         $old_value = array('108');
         $new_value = '108';
@@ -200,7 +210,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $cv->setReturnReference('getValue', $old_value);
         $this->assertFalse($list_field->hasChanges(mock('Tracker_Artifact'), $cv, $new_value));
     }
-    function testHasChangesChanges_MSB() {
+    function testHasChangesChanges_MSB()
+    {
         $list_field = new $this->field_class();
         $old_value = array('107', '108');
         $new_value = array('107', '110');
@@ -208,7 +219,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $cv->setReturnReference('getValue', $old_value);
         $this->assertTrue($list_field->hasChanges(mock('Tracker_Artifact'), $cv, $new_value));
     }
-    function testHasChangesChanges_new_MSB() {
+    function testHasChangesChanges_new_MSB()
+    {
         $list_field = new $this->field_class();
         $old_value = array();
         $new_value = array('107', '110');
@@ -216,7 +228,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $cv->setReturnReference('getValue', $old_value);
         $this->assertTrue($list_field->hasChanges(mock('Tracker_Artifact'), $cv, $new_value));
     }
-    function testHasChangesChanges_SB() {
+    function testHasChangesChanges_SB()
+    {
         $list_field = new $this->field_class();
         $old_value = array('107');
         $new_value = '110';
@@ -224,7 +237,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $cv->setReturnReference('getValue', $old_value);
         $this->assertTrue($list_field->hasChanges(mock('Tracker_Artifact'), $cv, $new_value));
     }
-    function testHasChangesChanges_new_SB() {
+    function testHasChangesChanges_new_SB()
+    {
         $list_field = new $this->field_class();
         $old_value = array();
         $new_value = '110';
@@ -233,7 +247,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $this->assertTrue($list_field->hasChanges(mock('Tracker_Artifact'), $cv, $new_value));
     }
 
-    function testIsTransitionExist() {
+    function testIsTransitionExist()
+    {
         $artifact             = new MockTracker_Artifact();
         $changeset            = new MockTracker_Artifact_Changeset();
         $bind                 = new MockTracker_FormElement_Field_List_Bind_Static();
@@ -244,13 +259,13 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
 
         $v1 = new MockTracker_FormElement_Field_List_BindValue();
         $v1->setReturnValue('__toString', '# 123');
-        $v1->setReturnValue('getLabel','label1');
+        $v1->setReturnValue('getLabel', 'label1');
         $v2 = new MockTracker_FormElement_Field_List_BindValue();
         $v2->setReturnValue('__toString', '# 456');
-        $v2->setReturnValue('getLabel','label2');
+        $v2->setReturnValue('getLabel', 'label2');
         $v3 = new MockTracker_FormElement_Field_List_BindValue();
         $v3->setReturnValue('__toString', '# 789');
-        $v3->setReturnValue('getLabel','label3');
+        $v3->setReturnValue('getLabel', 'label3');
         $submitted_value_1 = '123'; // $v1
         $submitted_value_2 = '456'; // $v2
         $submitted_value_3 = '789'; // $v3
@@ -298,7 +313,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $this->assertFalse($field_list->isValid($artifact, null));
     }
 
-    function testTransitionIsValidOnSubmit() {
+    function testTransitionIsValidOnSubmit()
+    {
         $artifact             = new MockTracker_Artifact();
         $changeset            = new MockTracker_Artifact_Changeset_Null();
         $bind                 = new MockTracker_FormElement_Field_List_Bind_Static();
@@ -308,7 +324,7 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
 
         $v1 = new MockTracker_FormElement_Field_List_BindValue();
         $v1->setReturnValue('__toString', '# 123');
-        $v1->setReturnValue('getLabel','label1');
+        $v1->setReturnValue('getLabel', 'label1');
         $submitted_value_1 = '123'; // $v1
         stub($bind)->isExistingValue($submitted_value_1)->returns(true);
 
@@ -337,7 +353,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $this->assertTrue($field_list->isValid($artifact, $submitted_value_1));
     }
 
-    function testTransitionIsInvalidOnSubmit() {
+    function testTransitionIsInvalidOnSubmit()
+    {
         $artifact             = new MockTracker_Artifact();
         $changeset            = new MockTracker_Artifact_Changeset_Null();
         $bind                 = new MockTracker_FormElement_Field_List_Bind_Static();
@@ -347,18 +364,17 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
 
         $v1 = new MockTracker_FormElement_Field_List_BindValue();
         $v1->setReturnValue('__toString', '# 123');
-        $v1->setReturnValue('getLabel','label1');
+        $v1->setReturnValue('getLabel', 'label1');
         $submitted_value_1 = '123'; // $v1
         $v2 = new MockTracker_FormElement_Field_List_BindValue();
         $v2->setReturnValue('__toString', '# 456');
-        $v2->setReturnValue('getLabel','label2');
+        $v2->setReturnValue('getLabel', 'label2');
         $submitted_value_2 = '456'; // $v2
 
         stub($bind)->getAllValues()->returns(array(
                 $submitted_value_1 => null,
                 $submitted_value_2 => null
-            )
-        );
+            ));
 
         $artifact->setReturnReference('getLastChangeset', $changeset);
 
@@ -388,7 +404,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
     }
 
     //testing field import
-    public function testImportFormElement() {
+    public function testImportFormElement()
+    {
 
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <formElement type="mon_type" ID="F0" rank="20" required="1">
@@ -397,26 +414,26 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
                 <description>field_description</description>
                 <bind>
                 </bind>
-            </formElement>'
-        );
+            </formElement>');
 
         $mapping = array();
 
-        $bind        = mock('Tracker_FormElement_Field_List_Bind_Static');
-        $factory     = mock('Tracker_FormElement_Field_List_BindFactory');
-        $user_finder = mock('User\XML\Import\IFindUserFromXMLReference');
+        $bind            = \Mockery::mock(Tracker_FormElement_Field_List_Bind_Static::class);
+        $factory         = \Mockery::mock(Tracker_FormElement_Field_List_BindFactory::class);
+        $user_finder     = \Mockery::mock(User\XML\Import\IFindUserFromXMLReference::class);
+        $feedback_collector = \Mockery::mock(TrackerXmlImportFeedbackCollector::class);
 
         $field = new $this->field_class_for_import();
         stub($field)->getBindFactory()->returns($factory);
 
-        stub($factory)->getInstanceFromXML($xml->bind, '*', $mapping, $user_finder)->returns($bind);
+        $factory->shouldReceive('getInstanceFromXML')->andReturn($bind);
 
-        $field->continueGetInstanceFromXML($xml, $mapping, $user_finder);
-
+        $field->continueGetInstanceFromXML($xml, $mapping, $user_finder, $feedback_collector);
         $this->assertEqual($field->getBind(), $bind);
     }
 
-    public function test_afterSaveObject() {
+    public function test_afterSaveObject()
+    {
         $tracker = new MockTracker();
         $bind    = new MockTracker_FormElement_Field_List_Bind_Static();
         $factory = new MockTracker_FormElement_Field_List_BindFactory();
@@ -437,7 +454,8 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
         $f->afterSaveObject($tracker, false, false);
     }
 
-    public function testIsValidRequired() {
+    public function testIsValidRequired()
+    {
         $artifact   = new MockTracker_Artifact();
         $bind       = new MockTracker_FormElement_Field_List_Bind_Static();
         $field_list = new $this->field_class();
@@ -455,8 +473,7 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
                 $value3 => null,
                 $value4 => null
 
-            )
-        );
+            ));
 
         $field_list->setReturnValue('isNone', true, array($value1));
         $field_list->setReturnValue('isNone', true, array($value2));
@@ -470,9 +487,11 @@ class Tracker_FormElement_Field_ListTest extends TuleapTestCase {
     }
 }
 
-class Tracker_FormElement_Field_List_processGetValuesTest extends TuleapTestCase {
+class Tracker_FormElement_Field_List_processGetValuesTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->layout  = mock('Tracker_IDisplayTrackerLayout');
         $this->user    = mock('PFUser');
@@ -482,25 +501,29 @@ class Tracker_FormElement_Field_List_processGetValuesTest extends TuleapTestCase
         stub($this->list)->getBind()->returns($this->bind);
     }
 
-    public function itDoesNothingIfTheRequestDoesNotContainTheParameter() {
+    public function itDoesNothingIfTheRequestDoesNotContainTheParameter()
+    {
         $request = aRequest()->with('func', 'whatever')->build();
         expect($GLOBALS['Response'])->sendJSON()->never();
         $this->list->process($this->layout, $request, $this->user);
     }
 
-    public function itSendsWhateverBindReturns() {
+    public function itSendsWhateverBindReturns()
+    {
         stub($this->bind)->fetchFormattedForJson()->returns('whatever');
         expect($GLOBALS['Response'])->sendJSON('whatever')->once();
         $this->list->process($this->layout, $this->request, $this->user);
     }
 }
 
-class Tracker_FormElement_Field_ListJsonFormattedTest extends TuleapTestCase {
+class Tracker_FormElement_Field_ListJsonFormattedTest extends TuleapTestCase
+{
 
     private $bind;
     private $list;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->bind     = mock('Tracker_FormElement_Field_List_Bind_Static');
         $this->list     = new Tracker_FormElement_Field_ListTestVersion();
@@ -508,7 +531,8 @@ class Tracker_FormElement_Field_ListJsonFormattedTest extends TuleapTestCase {
         stub($this->list)->getBind()->returns($this->bind);
     }
 
-    public function itHasValuesInAdditionToCommonFormat() {
+    public function itHasValuesInAdditionToCommonFormat()
+    {
         expect($this->bind)->fetchFormattedForJson()->once();
         stub($this->bind)->fetchFormattedForJson()->returns(array());
 
@@ -518,12 +542,14 @@ class Tracker_FormElement_Field_ListJsonFormattedTest extends TuleapTestCase {
     }
 }
 
-class Tracker_FormElement_Field_ListsetCriteriaValueFromRESTTest extends TuleapTestCase {
+class Tracker_FormElement_Field_ListsetCriteriaValueFromRESTTest extends TuleapTestCase
+{
 
     private $bind;
     private $list;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->bind     = mock('Tracker_FormElement_Field_List_Bind_Static');
         $this->list     = new Tracker_FormElement_Field_ListTestVersion();
@@ -532,7 +558,8 @@ class Tracker_FormElement_Field_ListsetCriteriaValueFromRESTTest extends TuleapT
         stub($this->bind)->getAllValues()->returns(array(101 => 101, 102=> 102, 103 => 103));
     }
 
-    public function itThrowsAnExceptionIfValueIsNotUsable() {
+    public function itThrowsAnExceptionIfValueIsNotUsable()
+    {
         $this->expectException('Tracker_Report_InvalidRESTCriterionException');
 
         $criteria             = mock('Tracker_Report_Criteria');
@@ -546,7 +573,8 @@ class Tracker_FormElement_Field_ListsetCriteriaValueFromRESTTest extends TuleapT
         $this->list->setCriteriaValueFromREST($criteria, $rest_criteria_value);
     }
 
-    public function itThrowsAnExceptionIfValueIsNotANumber() {
+    public function itThrowsAnExceptionIfValueIsNotANumber()
+    {
         $this->expectException('Tracker_Report_InvalidRESTCriterionException');
 
         $criteria             = mock('Tracker_Report_Criteria');
@@ -560,7 +588,8 @@ class Tracker_FormElement_Field_ListsetCriteriaValueFromRESTTest extends TuleapT
         $this->list->setCriteriaValueFromREST($criteria, $rest_criteria_value);
     }
 
-    public function itIgnoresInvalidFieldValues() {
+    public function itIgnoresInvalidFieldValues()
+    {
         $criteria             = mock('Tracker_Report_Criteria');
         $criteria->report     = mock('Tracker_Report');
         $criteria->report->id = 1;
@@ -576,7 +605,8 @@ class Tracker_FormElement_Field_ListsetCriteriaValueFromRESTTest extends TuleapT
         $this->assertCount($res, 0);
     }
 
-    public function itAddsACriterion() {
+    public function itAddsACriterion()
+    {
         $criteria             = mock('Tracker_Report_Criteria');
         $criteria->report     = mock('Tracker_Report');
         $criteria->report->id = 1;
@@ -594,7 +624,8 @@ class Tracker_FormElement_Field_ListsetCriteriaValueFromRESTTest extends TuleapT
         $this->assertTrue(in_array(101, $res));
     }
 
-    public function itAddsCriteria() {
+    public function itAddsCriteria()
+    {
         $criteria             = mock('Tracker_Report_Criteria');
         $criteria->report     = mock('Tracker_Report');
         $criteria->report->id = 1;
@@ -628,13 +659,15 @@ class Tracker_FormElement_Field_List_RESTTests extends TuleapTestCase
     }
 }
 
-class Tracker_FormElement_Field_List_Validate_Values extends TuleapTestCase {
+class Tracker_FormElement_Field_List_Validate_Values extends TuleapTestCase
+{
 
     private $artifact;
     private $bind;
     private $list;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->bind     = mock('Tracker_FormElement_Field_List_Bind_Static');
         $this->list     = new Tracker_FormElement_Field_ListTestVersion();
@@ -645,7 +678,8 @@ class Tracker_FormElement_Field_List_Validate_Values extends TuleapTestCase {
         stub($this->bind)->isExistingValue(103)->returns(true);
     }
 
-    public function itAcceptsValidValues() {
+    public function itAcceptsValidValues()
+    {
         $this->assertTrue($this->list->isValid($this->artifact, 101));
         $this->assertTrue($this->list->isValid($this->artifact, Tracker_FormElement_Field_List::NONE_VALUE));
         $this->assertTrue($this->list->isValid($this->artifact, strval(Tracker_FormElement_Field_List::NONE_VALUE)));
@@ -653,10 +687,10 @@ class Tracker_FormElement_Field_List_Validate_Values extends TuleapTestCase {
         $this->assertTrue($this->list->isValid($this->artifact, array(101, 103)));
     }
 
-    public function itDoesNotAcceptIncorrectValues() {
+    public function itDoesNotAcceptIncorrectValues()
+    {
         $this->assertFalse($this->list->isValid($this->artifact, 9999));
         $this->assertFalse($this->list->isValid($this->artifact, array(9998, 9999)));
         $this->assertFalse($this->list->isValid($this->artifact, array(101, 9999)));
-
     }
 }

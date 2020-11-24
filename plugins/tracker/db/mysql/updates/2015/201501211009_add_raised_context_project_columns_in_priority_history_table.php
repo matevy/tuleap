@@ -16,17 +16,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201501211009_add_raised_context_project_columns_in_priority_history_table extends ForgeUpgrade_Bucket {
+class b201501211009_add_raised_context_project_columns_in_priority_history_table extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Add has_been_raised, context and project_id columns in tracker_artifact_priority_history table';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "TRUNCATE TABLE tracker_artifact_priority_history";
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
@@ -58,7 +62,8 @@ class b201501211009_add_raised_context_project_columns_in_priority_history_table
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (! $this->db->columnNameExists('tracker_artifact_priority_history', 'has_been_raised')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding has_been_raised column to tracker_artifact_priority_history table');
         }
@@ -71,5 +76,4 @@ class b201501211009_add_raised_context_project_columns_in_priority_history_table
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding project_id column to tracker_artifact_priority_history table');
         }
     }
-
 }

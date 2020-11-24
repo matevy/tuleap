@@ -1,18 +1,40 @@
 <?php
+/**
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-class b201103281122_add_wiki_attachment_delete_mechanism extends ForgeUpgrade_Bucket {
+class b201103281122_add_wiki_attachment_delete_mechanism extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add the table wiki_attachment_deleted to manage deleted wiki attachment in order to facilitate their restore later
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE wiki_attachment ADD filesystem_name VARCHAR( 255 ) DEFAULT NULL';
         if ($this->db->tableNameExists('wiki_attachment')) {
             $res = $this->db->dbh->exec($sql);
@@ -43,7 +65,8 @@ EOT;
         $this->db->createTable('wiki_attachment_deleted', $sql);
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('wiki_attachment', 'filesystem_name')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Column filesystem_name not created in wiki_attachment');
         }
@@ -55,9 +78,5 @@ EOT;
         if (!$this->db->tableNameExists('wiki_attachment_deleted')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('wiki_attachment_deleted table is missing');
         }
-
     }
-
 }
-
-?>

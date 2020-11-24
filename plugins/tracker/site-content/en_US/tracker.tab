@@ -7,10 +7,6 @@ plugin_tracker	cannot_delete_tracker	You can't delete this tracker because it is
 
 plugin_tracker	service_lbl_key	Trackers
 plugin_tracker	service_desc_key	Project Trackers
-plugin_tracker	admin_tracker_template	Predefined tracker templates
-
-plugin_tracker_homenav	list	Trackers List
-plugin_tracker_homenav	search	Cross Trackers Search
 
 plugin_tracker	submit_no_anonymous	You should be logged in to submit artifacts
 plugin_tracker	submit_at_least_one_field	You can't submit an artifact because you do not have the right to submit all required fields
@@ -31,7 +27,6 @@ plugin_tracker	submit_at_least_one_field	You can't submit an artifact because yo
 # Script: SF/www/tracker/add.php
 #
 plugin_tracker_add	invalid	This tracker is no longer valid.
-plugin_tracker	add_a	Add a $1
 #
 #-----------------------------------------------
 # Script: SF/www/tracker/browse.php
@@ -456,10 +451,7 @@ plugin_tracker_include_type	my	My $1
 plugin_tracker_include_type	open	Open $1
 plugin_tracker_include_type	reporting	Reporting
 plugin_tracker_include_type	admin	Admin
-plugin_tracker_include_type	settings	General Settings
-plugin_tracker_include_type	field_usage	Field Usage
 plugin_tracker_include_type	field_values	Field Values
-plugin_tracker_include_type	canned_resp	Canned Responses
 plugin_tracker_include_type	reports	Tracker Reports
 plugin_tracker_include_type	mail_notif	Email Notification Settings
 plugin_tracker_include_type	pending_removal	Pending Trackers Removals
@@ -478,15 +470,10 @@ plugin_tracker_include_type	instantiate	Instantiate for new projects
 plugin_tracker_include_type	priority_changes	Log priority changes in follow-up comments
 plugin_tracker_include_type	administration	Administration
 plugin_tracker_include_type	mng_field_usage	Manage Field Usage
-plugin_tracker_include_type	define_use	Define what tracker fields you want to use in this tracker.
 plugin_tracker_include_type	mng_field_values	Manage Field Values
 plugin_tracker_include_type	define_values	Define the set of values associated with the fields of your tracker.
-plugin_tracker_include_type	mng_response	Manage Canned Responses
-plugin_tracker_include_type	add_del_resp	Add, update or delete the canned responses.
 plugin_tracker_include_type	mng_reports	Manage Tracker Reports
 plugin_tracker_include_type	define_reports	Define tracker search reports: what search criteria to use and what tracker fields to show in the tracker search reports.
-plugin_tracker_include_type	define_title	Define the title, the description, etc of this tracker.
-plugin_tracker_include_type	define_notif	Manage email notification rules.
 plugin_tracker_include_type	user	User
 plugin_tracker_include_type	perm	Permissions
 plugin_tracker_include_type	del_user	Delete this user?
@@ -610,16 +597,11 @@ plugin_tracker_include_type	all_by	All $1 By $2
 plugin_tracker_include_type	submit_mass_change	Submit
 plugin_tracker_include_type	occurrence	Occurrence
 plugin_tracker_include_type	notify_me	I want to be notified when:
-plugin_tracker_include_type	permissions	Permissions
-plugin_tracker_include_type	manage_permissions	Manage Permissions
 plugin_tracker_include_type	manage_permissions_title	 - Manage Permissions
-plugin_tracker_include_type	define_manage_permissions	Define permissions for the tracker and its fields
 plugin_tracker_include_type	manage_tracker_permissions	Manage Tracker Permissions
 plugin_tracker_include_type	manage_tracker_permissions_title	 - Manage Tracker Permissions
-plugin_tracker_include_type	define_manage_tracker_permissions	Define permissions on the tracker
 plugin_tracker_include_type	manage_fields_tracker_permissions	Manage Fields Permissions
 plugin_tracker_include_type	manage_fields_tracker_permissions_title	 - Manage Fields Permissions
-plugin_tracker_include_type	define_manage_fields_tracker_permissions	Define permissions on the tracker fields
 plugin_tracker_include_type	edit_field_perm	Edit field permissions
 plugin_tracker_include_type	field_dependencies	Field&nbsp;Dependencies
 plugin_tracker_include_type	mng_field_dependencies	Manage Field Dependencies
@@ -888,7 +870,6 @@ plugin_tracker_common_types	event_COMMENT_CHANGE_desc	A followup comment has bee
 #
 plugin_tracker_admin_permissions	fields_no_ugroups	<div><em>No user group has access to this tracker</em></div>
 plugin_tracker_admin_permissions	fields_tracker_intro	Please note that project administrators and tracker administrators are granted full access to the tracker.
-plugin_tracker_admin_permissions	fields_tracker_toggle_field	<div>You may <a href='$1'>switch to the 'field' view</a> by clicking on a field label in the table below.</div>
 plugin_tracker_admin_permissions	fields_tracker_toggle_group	<div>You may <a href='$1'>switch to the 'user group' view</a> by clicking on a group name in the table below.</div>
 plugin_tracker_admin_permissions	ignore_g_anon_read	Ignoring group '$1' because '$2' are allowed to read
 plugin_tracker_admin_permissions	ignore_g_anon_submit	Ignoring group '$1' because '$2' are allowed to submit
@@ -1003,7 +984,6 @@ plugin_tracker	create_new_report	Create a new one
 plugin_tracker	create_new_report_name	name
 plugin_tracker	create_new_report_submit	Create Report
 plugin_tracker	create_new_report_invalid	Invalid name for a report
-plugin_tracker	submit_new_artifact	Submit new artifact
 plugin_tracker	notifications	Notifications
 plugin_tracker	administration	Administration
 plugin_tracker	help	Help
@@ -1216,32 +1196,18 @@ plugin_tracker_admin	access_denied	Access denied. You don't have permissions to 
 
 plugin_tracker_admin	error_during_creation	Oops. Something weird occured. Unable to create the tracker. Please try again.
 
-plugin_tracker_admin	semantic	Semantic
 plugin_tracker_admin	manage_semantic	Manage Semantic
-plugin_tracker_admin	manage_semantic_desc	Define semantic of tracker fields (title, status, contributor, tooltip)
-
-plugin_tracker_admin	workflow	Workflow
-plugin_tracker_admin	manage_workflow	Manage Workflow
-plugin_tracker_admin	manage_workflow_desc	Define tracker worflow
 
 plugin_tracker_admin	csv_import	CSV Import
-plugin_tracker_admin	csv_import_desc	Import artifacts in the tracker from a CSV file
-
-plugin_tracker_admin	export	Export
-plugin_tracker_admin	export_desc	Export the tracker structure
 
 plugin_tracker_admin	hierarchy	Hierarchy
-plugin_tracker_admin	hierarchy_desc	Manage tracker hierarchy
 plugin_tracker_admin	manage_hierarchy_title	Manage hierarchy of tracker
 
 plugin_tracker_admin	manage_dependencies	Manage field dependencies
-plugin_tracker_admin	manage_dependencies_desc	Define how values in one field depend upon other field values.
 
 plugin_tracker_admin	tracker_not_duplicated	Tracker $1 not duplicated
 plugin_tracker_admin	successfully_updated	Tracker successfully updated.
 
-plugin_tracker_admin	clean	Delete artifacts
-plugin_tracker_admin	clean_desc	Permanently purge an artifact from the tracker
 plugin_tracker_admin	clean_info	Allow to permanently delete an artifact. Warning: <strong>There is no way to restore the artifact</strong>. This operation should be an exception.
 plugin_tracker_admin	clean_id	Id of the artifact to delete:
 plugin_tracker_admin	clean_error_noart	Artifact $1 doesn't exist or doesn't belong to current tracker
@@ -1435,7 +1401,6 @@ plugin_tracker_search_index	artifact_title	Artifact Title
 # Script: SF/common/workflow/WorkflowManager.class.php
 #
 workflow_admin	title	Workflow Administration
-workflow_admin	transitions_deactivated	Transition rules don't apply yet
 workflow_admin	same_field	The two fields must be different
 workflow_admin	deleted_rules	Rule(s) successfully deleted
 workflow_admin	updated_rules	Rule(s) successfully updated
@@ -1448,9 +1413,7 @@ workflow_admin	hint_date_rules_definition	Those rules will be applied on each cr
 workflow_admin	hint_triggers_definition	The triggers will be applied on each creation/update of artifacts.
 workflow_admin	add_new_rule	Add a new rule
 workflow_admin	add_new_trigger	Add a new trigger
-workflow_admin	title_define_transitions	Define the transitions
 workflow_admin	tab_global_rules	Global Rules
-workflow_admin	tab_transitions	Transitions
 workflow_admin	tab_triggers	Triggers
 workflow_admin	tab_triggers_cancel	cancel
 workflow_admin	tab_triggers_set_to	set to
@@ -1467,24 +1430,12 @@ workflow_admin	tab_triggers_no_children	There are no child trackers defined for 
 workflow_admin	field	Field on which the transitions will be based:
 workflow_admin	enabled	Enforce transition rules
 workflow_admin	delete	Delete all transitions
-workflow_admin	choose_field	Choose the field on which applies the workflow:
 workflow_admin	updated	Transitions updated
 workflow_admin	not_updated	Nothing to update
-workflow_admin	created	Created
-workflow_admin	deleted	Deleted
-workflow_admin	workflow_enabled	Starting from now, transitions <strong>will be</strong> applied.
-workflow_admin	workflow_disabled	Starting from now, transitions will <strong>not</strong> be applied.
-workflow_admin	delete_workflow	Are you sure you want to delete all transitions?
-workflow_admin	title_define_transition_details	Define rules on transition: from <em>$1</em> to <em>$2</em>
 workflow_admin	label_define_transition_permissions	Groups that may make the transition:
 workflow_admin	label_define_transition_required_field	Field that must not be empty
 workflow_admin	label_define_transition_required_comment	Comment must not be empty.
-workflow_admin	permissions_not_updated	Permissions on transition have not been updated.
-workflow_admin	permissions_updated	Permissions on transition have been updated.
-workflow_admin	empty_fields_not_updated	Empty fields on transition have not been updated.
-workflow_admin	empty_fields_updated	Empty fields on transition have been updated.
 workflow_admin	permissions_transition	Can make the transition
-workflow_admin	new_artifact	New artifact
 workflow_admin	change_value_date_field_to	The date field $1 is set to $2
 workflow_admin	change_value_int_field_to	The integer field $1 is set to $2
 workflow_admin	change_value_float_field_to	The float field $1 is set to $2
@@ -1498,8 +1449,6 @@ workflow_admin	ci_build_help_trigger_field_value	triggerFieldValue: Value (strin
 workflow_admin	post_action_change_value_date_field	Change the value of a date field
 workflow_admin	post_action_change_value_int_field	Change the value of an int field
 workflow_admin	post_action_change_value_float_field	Change the value of a float field
-workflow_admin	under_the_following_condition	Under the following condition:
-workflow_admin	following_action_performed	The following action will be automatically performed:
 workflow_admin	add_new_action	Add a new action:
 workflow_admin	remove_postaction	Remove the action
 workflow_admin	postaction_on_field_already_exist	An action on the field '$1' already exists.
@@ -1549,19 +1498,12 @@ plugin_tracker_widget_myartifacts	no_artifacts	You don't have any </br> artifact
 
 plugin_tracker	must_have_artifact_link_field	The artifact doesn't have an artifact link field or you have not the permission to modify it, please reconfigure your tracker
 plugin_tracker	burndown_missing_start_date_warning	The tracker doesn't have a "start_date" Date field or you don't have the permission to access it.
-plugin_tracker	burndown_missing_duration_warning	The tracker doesn't have a "duration" Integer field or you don't have the permission to access it.
-plugin_tracker	burndown_missing_capacity_warning	The tracker doesn't have a "capacity" Integer or Float or Computed field or you don't have the permission to access it.
-plugin_tracker	burndown_missing_remaining_effort_warning	Some child trackers don't have a "remaining_effort" Integer or Float or Computed field:
-plugin_tracker	burndown_empty_start_date_warning	"start date" field is empty or invalid
-plugin_tracker	burndown_empty_duration_warning	"duration" field is empty or invalid
-plugin_tracker	burndown_duration_too_short	"duration" must be greater than 1 to display burndown graph.
 plugin_tracker	burndown_no_linked_artifacts	There are no artifacts linked or those artifacts have no 'remaining_effort' field.
 plugin_tracker	burndown_email_as_of_today	Please note that the image above is rendered in real time so it represents burndown as of today, not as when the email was sent.
 plugin_tracker	unable_to_render_the_chart	Unable to render the chart
 plugin_tracker	burndown_generate	Force cache regeneration
 plugin_tracker	burndown_cancel	Cancel
 plugin_tracker	force_cache_generation_info	Do you really want to force burndown cache generation? Cache generation will end up on a non availability of burndown for few minutes.
-plugin_tracker	burndown_permission_denied	You are not allowed to access this field.
 plugin_tracker	burndown_cache_generating	Burndown is under calculation. It will be available in few minutes.
 plugin_tracker	unsufficient_permissions_for_ranking	You are not allowed to rank on this planning. Your action was not taken into account. Please reload the page.
 
@@ -1640,7 +1582,7 @@ plugin_tracker_modal_artifact	submit_error	The artifact cannot be created becaus
 plugin_tracker_modal_artifact	parent_artifact	Parent artifact:
 
 plugin_tracker	Description:	Description:
-plugin_tracker	copy_this_artifact	Copy this artifact
+plugin_tracker	copy_this_artifact	Duplicate this artifact
 plugin_tracker	error_create_copy	An error occured while creating a copy of the artifact #$1.
 plugin_tracker	copy_of	Copy of $1
 

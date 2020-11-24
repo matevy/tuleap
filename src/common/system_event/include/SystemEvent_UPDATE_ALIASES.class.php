@@ -18,13 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class SystemEvent_UPDATE_ALIASES extends SystemEvent {
+class SystemEvent_UPDATE_ALIASES extends SystemEvent
+{
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return '';
     }
 
-    public function process() {
+    public function process()
+    {
         $backendAliases = Backend::instance('Aliases');
         $backendAliases->setNeedUpdateMailAliases();
 

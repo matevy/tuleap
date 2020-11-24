@@ -22,6 +22,7 @@ namespace Tuleap\Tracker\Artifact\Changeset\PostCreation;
 
 use ConfigNotificationAssignedTo;
 use ForgeConfig;
+use HTTPRequest;
 use Tracker_Artifact_Changeset;
 use Tracker_Artifact_MailGateway_RecipientFactory;
 use Tuleap\Mail\MailLogger;
@@ -323,7 +324,6 @@ final class EmailNotificationTask implements PostCreationTask
         $mailManager = new \MailManager();
         $format      = $mailManager->getMailPreferencesByUser($user);
 
-
         $htmlBody = '';
         if ($format == \Codendi_Mail_Interface::FORMAT_HTML) {
             $htmlBody .= $this->getBodyHtml($changeset, $is_update, $user, $lang, $ignore_perms);
@@ -346,10 +346,10 @@ final class EmailNotificationTask implements PostCreationTask
     /**
      * Get the text body for notification
      *
-     * @param Boolean $is_update    It is an update, not a new artifact
+     * @param bool $is_update It is an update, not a new artifact
      * @param String  $recipient    The recipient who will receive the notification
      * @param \BaseLanguage $language The language of the message
-     * @param Boolean $ignore_perms indicates if permissions have to be ignored
+     * @param bool $ignore_perms indicates if permissions have to be ignored
      *
      * @return String
      */
@@ -386,10 +386,10 @@ final class EmailNotificationTask implements PostCreationTask
     /**
      * Get the html body for notification
      *
-     * @param Boolean $is_update    It is an update, not a new artifact
+     * @param bool $is_update It is an update, not a new artifact
      * @param String  $recipient    The recipient who will receive the notification
      * @param \BaseLanguage $language The language of the message
-     * @param Boolean $ignore_perms ???
+     * @param bool $ignore_perms ???
      *
      * @return String
      */
@@ -448,7 +448,7 @@ final class EmailNotificationTask implements PostCreationTask
                     </tr>';
             }
 
-            $artifact_link = get_server_url().'/plugins/tracker/?aid='.(int)$art->getId();
+            $artifact_link = HTTPRequest::instance()->getServerUrl() .'/plugins/tracker/?aid='.(int)$art->getId();
 
             $output .=
                 '<tr>

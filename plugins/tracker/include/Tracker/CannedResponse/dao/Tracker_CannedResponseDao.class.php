@@ -18,13 +18,16 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_CannedResponseDao extends DataAccessObject {
-    public function __construct() {
+class Tracker_CannedResponseDao extends DataAccessObject
+{
+    public function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_canned_response';
     }
-    
-    public function searchById($tracker_id, $id) {
+
+    public function searchById($tracker_id, $id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $id = $this->da->escapeInt($id);
         $sql = "SELECT * 
@@ -33,8 +36,9 @@ class Tracker_CannedResponseDao extends DataAccessObject {
                   AND tracker_id = $tracker_id";
         return $this->retrieve($sql);
     }
-    
-    public function searchByTrackerId($tracker_id) {
+
+    public function searchByTrackerId($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT * 
                 FROM $this->table_name
@@ -42,8 +46,9 @@ class Tracker_CannedResponseDao extends DataAccessObject {
                 ORDER BY title ASC";
         return $this->retrieve($sql);
     }
-    
-    public function create($tracker_id, $title, $body) {
+
+    public function create($tracker_id, $title, $body)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $title      = $this->da->quoteSmart($title);
         $body       = $this->da->quoteSmart($body);
@@ -51,8 +56,9 @@ class Tracker_CannedResponseDao extends DataAccessObject {
                 VALUES ($tracker_id, $title, $body)";
         return $this->updateAndGetLastId($sql);
     }
-    
-    public function save($canned) {
+
+    public function save($canned)
+    {
         $id         = $this->da->escapeInt($canned->id);
         $title      = $this->da->quoteSmart($canned->title);
         $body       = $this->da->quoteSmart($canned->body);
@@ -62,12 +68,12 @@ class Tracker_CannedResponseDao extends DataAccessObject {
                 WHERE id = $id";
         return $this->update($sql);
     }
-    
-    public function delete($id) {
+
+    public function delete($id)
+    {
         $id = $this->da->escapeInt($id);
         $sql = "DELETE FROM $this->table_name 
                 WHERE id = $id";
         return $this->update($sql);
     }
 }
-?>

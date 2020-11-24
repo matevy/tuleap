@@ -24,14 +24,17 @@
 require_once('Docman_View_Details.class.php');
 require_once('Docman_View_ItemDetailsSectionApprovalCreate.class.php');
 
-class Docman_View_ApprovalCreate extends Docman_View_Details {
+class Docman_View_ApprovalCreate extends Docman_View_Details
+{
 
-    function _getTitle($params) {
+    function _getTitle($params)
+    {
         $hp = Codendi_HTMLPurifier::instance();
-        return $GLOBALS['Language']->getText('plugin_docman', 'details_approval_create_title',  $hp->purify($params['item']->getTitle(), CODENDI_PURIFIER_CONVERT_HTML) );
+        return $GLOBALS['Language']->getText('plugin_docman', 'details_approval_create_title', $hp->purify($params['item']->getTitle(), CODENDI_PURIFIER_CONVERT_HTML));
     }
 
-    function _content($params, $view = null, $section = null) {
+    function _content($params, $view = null, $section = null)
+    {
         $view = new Docman_View_ItemDetailsSectionApprovalCreate($params['item'], $params['default_url'], $params['theme_path']);
         parent::_content($params, $view, 'approval');
     }

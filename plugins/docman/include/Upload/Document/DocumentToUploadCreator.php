@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,11 @@
 
 namespace Tuleap\Docman\Upload\Document;
 
+use Docman_PermissionsManager;
+use PermissionsManager;
 use Tuleap\DB\DBTransactionExecutor;
+use Tuleap\Docman\Permissions\PermissionItemUpdater;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSet;
 use Tuleap\Docman\Upload\UploadCreationConflictException;
 use Tuleap\Docman\Upload\UploadCreationFileMismatchException;
 use Tuleap\Docman\Upload\UploadMaxSizeExceededException;
@@ -37,11 +41,31 @@ class DocumentToUploadCreator
      * @var DBTransactionExecutor
      */
     private $transaction_executor;
+    /**
+     * @var DocumentMetadataCreator
+     */
+    private $creator;
+    /**
+     * @var PermissionsManager
+     */
+    private $permissions_manager;
+    /**
+     * @var PermissionItemUpdater
+     */
+    private $permission_item_updater;
 
-    public function __construct(DocumentOngoingUploadDAO $dao, DBTransactionExecutor $transaction_executor)
-    {
-        $this->dao                  = $dao;
-        $this->transaction_executor = $transaction_executor;
+    public function __construct(
+        DocumentOngoingUploadDAO $dao,
+        DBTransactionExecutor $transaction_executor,
+        DocumentMetadataCreator $creator,
+        PermissionsManager $permissions_manager,
+        PermissionItemUpdater $permission_item_updater
+    ) {
+        $this->dao                     = $dao;
+        $this->transaction_executor    = $transaction_executor;
+        $this->creator                 = $creator;
+        $this->permissions_manager     = $permissions_manager;
+        $this->permission_item_updater = $permission_item_updater;
     }
 
     public function create(
@@ -53,7 +77,9 @@ class DocumentToUploadCreator
         $filename,
         $filesize,
         int $status,
-        int $obsolescence_date
+        int $obsolescence_date,
+        ?array $formatted_metadata,
+        ?DocmanItemPermissionsForGroupsSet $permissions_for_groups
     ) {
         if ((int) $filesize > (int) \ForgeConfig::get(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING)) {
             throw new UploadMaxSizeExceededException(
@@ -72,7 +98,9 @@ class DocumentToUploadCreator
             $filesize,
             &$item_id,
             $status,
-            $obsolescence_date
+            $obsolescence_date,
+            $formatted_metadata,
+            $permissions_for_groups
         ) {
             $rows = $this->dao->searchDocumentOngoingUploadByParentIDTitleAndExpirationDate(
                 $parent_item->getId(),
@@ -107,6 +135,26 @@ class DocumentToUploadCreator
                 $status,
                 $obsolescence_date
             );
+
+            if ($formatted_metadata) {
+                $this->creator->storeItemCustomMetadata($item_id, $formatted_metadata);
+            }
+
+            if ($permissions_for_groups === null) {
+                $this->permissions_manager->clonePermissions(
+                    $parent_item->getId(),
+                    $item_id,
+                    Docman_PermissionsManager::ITEM_PERMISSION_TYPES
+                );
+            } else {
+                $future_item = new \Docman_Item();
+                $future_item->setId($item_id);
+                $future_item->setGroupId($parent_item->getGroupId());
+                $this->permission_item_updater->initPermissionsOnNewlyCreatedItem(
+                    $future_item,
+                    $permissions_for_groups->toPermissionsPerUGroupIDAndTypeArray()
+                );
+            }
         });
 
         return new DocumentToUpload($item_id);

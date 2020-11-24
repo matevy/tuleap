@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2016 - Present. All rights reserved
  * Copyright 1999-2000 (c) The SourceForge Crew
  *
  * This file is a part of Tuleap.
@@ -26,14 +26,15 @@ use Tuleap\Admin\ProjectPendingPresenter;
 use Tuleap\Project\DescriptionFieldsDao;
 use Tuleap\Project\DescriptionFieldsFactory;
 
-require_once('pre.php');
+require_once __DIR__ . '/../include/pre.php';
 
 $user                             = UserManager::instance()->getCurrentUser();
 $forge_ugroup_permissions_manager = new User_ForgeUserGroupPermissionsManager(
     new User_ForgeUserGroupPermissionsDao()
 );
 $special_access                   = $forge_ugroup_permissions_manager->doesUserHavePermission(
-    $user, new User_ForgeUserGroupPermission_ProjectApproval()
+    $user,
+    new User_ForgeUserGroupPermission_ProjectApproval()
 );
 
 $request = HTTPRequest::instance();
@@ -59,12 +60,11 @@ if ($action == 'activate') {
         $project_manager->activate($project);
     }
     $GLOBALS['Response']->redirect('/admin/approve-pending.php');
-
-} else if ($action == 'delete') {
+} elseif ($action == 'delete') {
     $csrf_token->check();
     $group_id = $request->get('group_id');
     $project  = $project_manager->getProject($group_id);
-    group_add_history('deleted', 'x', $project->getID());
+    (new ProjectHistoryDao())->groupAddHistory('deleted', 'x', $project->getID());
     $project_manager->updateStatus($project, Project::STATUS_DELETED);
 
     $event_manager->processEvent('project_is_deleted', array('group_id' => $group_id));
@@ -80,7 +80,7 @@ $siteadmin = new AdminPageRenderer();
 $presenter = new ProjectPendingPresenter($project_list, $csrf_token);
 
 $siteadmin->renderAPresenter(
-    $GLOBALS['Language']->getText('admin_approve_pending','title'),
+    $GLOBALS['Language']->getText('admin_approve_pending', 'title'),
     ForgeConfig::get('codendi_dir') . '/src/templates/admin/projects/',
     'project-pending',
     $presenter

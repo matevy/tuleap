@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class PaginatedWikiPages {
+class PaginatedWikiPages
+{
     /**
      * @var WikiPage[]
      */
@@ -35,19 +36,22 @@ class PaginatedWikiPages {
      * @param WikiPage[] $pages
      * @param int $total_size
      */
-    public function __construct(array $pages, $total_size) {
+    public function __construct(array $pages, $total_size)
+    {
         $this->pages      = $pages;
         $this->total_size = $total_size;
     }
 
-    public function getTotalSize() {
+    public function getTotalSize()
+    {
         return $this->total_size;
     }
 
     /**
      * @return WikiPage[]
      */
-    public function getPages() {
+    public function getPages()
+    {
         return $this->pages;
     }
 }

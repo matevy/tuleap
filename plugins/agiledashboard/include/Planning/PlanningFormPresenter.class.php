@@ -18,7 +18,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 use Tuleap\AgileDashboard\Planning\Presenters\PlanningWarningPossibleMisconfigurationPresenter;
 
 class Planning_FormPresenter extends PlanningPresenter
@@ -32,7 +31,7 @@ class Planning_FormPresenter extends PlanningPresenter
      * @var int
      */
     public $planning_id;
-    
+
     /**
      * @var int
      */
@@ -42,7 +41,7 @@ class Planning_FormPresenter extends PlanningPresenter
      * @var Planning_TrackerPresenter[]
      */
     public $available_backlog_trackers;
-    
+
     /**
      * @var Planning_TrackerPresenter[]
      */
@@ -80,7 +79,7 @@ class Planning_FormPresenter extends PlanningPresenter
         array $warning_list
     ) {
         parent::__construct($planning);
-        
+
         $this->planning_permissions_manager = $planning_permissions_manager;
         $this->planning_id                  = $planning->getId();
         $this->group_id                     = $planning->getGroupId();
@@ -102,39 +101,48 @@ class Planning_FormPresenter extends PlanningPresenter
         $this->has_warning  = count($warning_list) > 0;
     }
 
-    public function adminTitle() {
+    public function adminTitle()
+    {
         return $GLOBALS['Language']->getText('plugin_agiledashboard', 'Admin');
     }
-    
-    public function createPlanning() {
+
+    public function createPlanning()
+    {
         return  $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_create');
     }
-    
-    public function editPlanning() {
+
+    public function editPlanning()
+    {
         return  $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_editing');
     }
-    
-    public function planningNameFieldLabel() {
+
+    public function planningNameFieldLabel()
+    {
         return  $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_name');
     }
-    
-    public function planningBacklogTitleFieldLabel() {
+
+    public function planningBacklogTitleFieldLabel()
+    {
         return  $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_backlog_title');
     }
-    
-    public function planningPlanTitleFieldLabel() {
+
+    public function planningPlanTitleFieldLabel()
+    {
         return  $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_plan_title');
     }
-    
-    public function planningPriorityChangePermissionFieldLabel() {
+
+    public function planningPriorityChangePermissionFieldLabel()
+    {
         return  $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_priority_change_permission');
     }
 
-    public function priority_change_permission() {
+    public function priority_change_permission()
+    {
         return $this->planning_permissions_manager->getPlanningPermissionForm($this->planning_id, $this->group_id, PlanningPermissionsManager::PERM_PRIORITY_CHANGE, 'planning['.PlanningPermissionsManager::PERM_PRIORITY_CHANGE.']');
     }
 
-    public function btnSubmit() {
+    public function btnSubmit()
+    {
         return $GLOBALS['Language']->getText('global', 'btn_submit');
     }
 }

@@ -19,21 +19,23 @@
 
 namespace Tuleap\Project\REST\v2;
 
-use \ProjectManager;
-use \UserManager;
-use \Project;
-use \EventManager;
-use \Event;
-use \Tuleap\REST\Header;
-use \Tuleap\REST\ProjectAuthorization;
-use \Tuleap\REST\AuthenticatedResource;
-use \URLVerification;
+use Luracast\Restler\RestException;
+use ProjectManager;
+use UserManager;
+use Project;
+use EventManager;
+use Event;
+use Tuleap\REST\Header;
+use Tuleap\REST\ProjectAuthorization;
+use Tuleap\REST\AuthenticatedResource;
+use URLVerification;
 
 /**
  * Wrapper for project related REST methods
  */
 
-class ProjectResource extends AuthenticatedResource {
+class ProjectResource extends AuthenticatedResource
+{
 
     public const MAX_LIMIT = 50;
 
@@ -43,18 +45,20 @@ class ProjectResource extends AuthenticatedResource {
     /** @var ProjectManager */
     private $project_manager;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->user_manager    = UserManager::instance();
         $this->project_manager = ProjectManager::instance();
     }
 
     /**
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @return Project
      */
-    private function getProjectForUser($id) {
+    private function getProjectForUser($id)
+    {
         $project = $this->project_manager->getProject($id);
         $user    = $this->user_manager->getCurrentUser();
 
@@ -76,9 +80,10 @@ class ProjectResource extends AuthenticatedResource {
      *
      * @return array {@type Tuleap\REST\v2\BacklogRepresentationBase}
      *
-     * @throws 406
+     * @throws RestException 406
      */
-    public function getBacklog($id, $limit = 10, $offset = 0) {
+    public function getBacklog($id, $limit = 10, $offset = 0)
+    {
         $this->checkAccess();
 
         $this->checkAgileEndpointsAvailable();
@@ -94,13 +99,15 @@ class ProjectResource extends AuthenticatedResource {
      *
      * @param int $id Id of the project
      */
-    public function optionsBacklog($id) {
+    public function optionsBacklog($id)
+    {
         $this->checkAgileEndpointsAvailable();
         $this->sendAllowHeadersForBacklog();
     }
 
 
-    private function backlogItems($id, $limit, $offset, $event) {
+    private function backlogItems($id, $limit, $offset, $event)
+    {
         $project = $this->getProjectForUser($id);
         $result  = array();
 
@@ -118,15 +125,18 @@ class ProjectResource extends AuthenticatedResource {
         return $result;
     }
 
-    private function sendAllowHeadersForBacklog() {
+    private function sendAllowHeadersForBacklog()
+    {
         Header::allowOptionsGet();
     }
 
-    private function sendPaginationHeaders($limit, $offset, $size) {
+    private function sendPaginationHeaders($limit, $offset, $size)
+    {
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
     }
 
-    private function checkAgileEndpointsAvailable() {
+    private function checkAgileEndpointsAvailable()
+    {
         $available = false;
 
         EventManager::instance()->processEvent(

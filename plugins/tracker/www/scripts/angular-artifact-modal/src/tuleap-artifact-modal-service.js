@@ -21,16 +21,18 @@ import "./tuleap-artifact-modal.tpl.html";
 import TuleapArtifactModalController from "./tuleap-artifact-modal-controller.js";
 
 import _ from "lodash";
-import { setCreationMode, isInCreationMode } from "./modal-creation-mode-state.js";
+import { isInCreationMode, setCreationMode } from "./modal-creation-mode-state.js";
 import {
+    getArtifactWithCompleteTrackerStructure,
     getTracker,
-    getUserPreference,
-    getArtifactWithCompleteTrackerStructure
+    getUserPreference
 } from "./rest/rest-service.js";
 import { updateFileUploadRulesWhenNeeded } from "./tuleap-artifact-modal-fields/file-field/file-upload-rules-state.js";
 import { getArtifactFieldValues } from "./artifact-edition-initializer.js";
 import { buildFormTree } from "./model/form-tree-builder.js";
 import { enforceWorkflowTransitions } from "./model/workflow-field-values-filter.js";
+import { TEXT_FORMAT_TEXT } from "../../constants/fields-constants.js";
+import { store } from "./vuex-store.js";
 
 export default ArtifactModalService;
 
@@ -77,7 +79,7 @@ function ArtifactModalService(
             templateUrl: "tuleap-artifact-modal.tpl.html",
             controller: TuleapArtifactModalController,
             controllerAs: "modal",
-            tlpModalOptions: { keyboard: false },
+            tlpModalOptions: { keyboard: false, destroy_on_hide: true },
             resolve: {
                 modal_model: self.initCreationModalModel(
                     tracker_id,
@@ -107,20 +109,13 @@ function ArtifactModalService(
             templateUrl: "tuleap-artifact-modal.tpl.html",
             controller: TuleapArtifactModalController,
             controllerAs: "modal",
-            tlpModalOptions: { keyboard: false },
+            tlpModalOptions: { keyboard: false, destroy_on_hide: true },
             resolve: {
                 modal_model: self.initEditionModalModel(user_id, tracker_id, artifact_id),
                 displayItemCallback: displayItemCallback ? displayItemCallback : _.noop
             }
         });
     }
-
-    var TEXT_FORMAT_TEXT_ID = "text";
-    var TEXT_FORMAT_HTML_ID = "html";
-    var text_formats = [
-        { id: TEXT_FORMAT_TEXT_ID, label: "Text" },
-        { id: TEXT_FORMAT_HTML_ID, label: "HTML" }
-    ];
 
     function initCreationModalModel(tracker_id, parent_artifact_id, prefill_values) {
         var modal_model = {};
@@ -129,7 +124,6 @@ function ArtifactModalService(
         setCreationMode(creation_mode);
         modal_model.tracker_id = tracker_id;
         modal_model.parent_artifact_id = parent_artifact_id;
-        modal_model.text_formats = text_formats;
 
         var promise = $q
             .when(getTracker(tracker_id))
@@ -160,6 +154,7 @@ function ArtifactModalService(
                 return file_upload_rules_promise;
             })
             .then(function() {
+                initializeVuexStore(modal_model);
                 return modal_model;
             });
 
@@ -174,7 +169,6 @@ function ArtifactModalService(
         modal_model.user_id = user_id;
         modal_model.tracker_id = tracker_id;
         modal_model.artifact_id = artifact_id;
-        modal_model.text_formats = text_formats;
         var transformed_tracker;
 
         var promise = $q
@@ -216,10 +210,15 @@ function ArtifactModalService(
                 return file_upload_rules_promise;
             })
             .then(function() {
+                initializeVuexStore(modal_model);
                 return modal_model;
             });
 
         return promise;
+    }
+
+    function initializeVuexStore(modal_model) {
+        store.commit("saveTrackerFields", modal_model.tracker.fields);
     }
 
     function getFollowupsCommentsOrderUserPreference(user_id, tracker_id, modal_model) {
@@ -235,7 +234,7 @@ function ArtifactModalService(
             .when(getUserPreference(user_id, "user_edition_default_format"))
             .then(function(data) {
                 modal_model.text_fields_format =
-                    data.value !== false ? data.value : TEXT_FORMAT_TEXT_ID;
+                    data.value !== false ? data.value : TEXT_FORMAT_TEXT;
             });
     }
 
@@ -245,15 +244,13 @@ function ArtifactModalService(
         }
         var workflow = getWorkflow(tracker);
 
-        var workflow_field = _.find(tracker.fields, { field_id: workflow.field_id });
+        const workflow_field = tracker.fields.find(field => field.field_id === workflow.field_id);
         if (!workflow_field) {
             return;
         }
 
-        var source_value_id;
-        if (isInCreationMode()) {
-            source_value_id = null;
-        } else {
+        var source_value_id = null;
+        if (!isInCreationMode() && typeof field_values[workflow.field_id] !== "undefined") {
             source_value_id = field_values[workflow.field_id].bind_value_ids[0];
         }
         enforceWorkflowTransitions(source_value_id, workflow_field, workflow);
@@ -297,7 +294,7 @@ function ArtifactModalService(
         var field_values = {};
 
         prefill_values.forEach(function(prefill) {
-            var field = _.find(tracker_fields, { name: prefill.name });
+            const field = tracker_fields.find(field => field.name === prefill.name);
             if (field) {
                 field_values[field.field_id] = Object.assign({}, prefill, {
                     field_id: field.field_id

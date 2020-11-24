@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,14 +19,13 @@
  */
 
 /**
- * Provide a link between a Tracker_Artifact and a Tracker_FormElement_Field 
+ * Provide a link between a Tracker_Artifact and a Tracker_FormElement_Field
  */
-interface Cardwall_FieldProviders_IProvideFieldGivenAnArtifact {
-    
-    /**
-     * @return Tracker_FormElement_Field
-     */
-    function getField(Tracker $tracker);
-}
+interface Cardwall_FieldProviders_IProvideFieldGivenAnArtifact
+{
 
-?>
+    /**
+     * @return Tracker_FormElement_Field_Selectbox | null
+     */
+    public function getField(Tracker $tracker);
+}

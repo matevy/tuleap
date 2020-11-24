@@ -31,12 +31,13 @@ Mock::generate('Docman_FolderFactory');
 Mock::generate('Docman_FileStorage');
 Mock::generate('UserManager');
 Mock::generate('PFUser');
-Mock::generate('EventManager');
 Mock::generate('PermissionsManager');
 Mock::generate('Docman_PermissionsManager');
 Mock::generate('SOAPRequest');
 Mock::generate('Docman_LockFactory');
-Mock::generatePartial('Docman_SOAPActions', 'Docman_SOAPActions_Test',
+Mock::generatePartial(
+    'Docman_SOAPActions',
+    'Docman_SOAPActions_Test',
     array(
         '_getItemFactory',
         '_checkOwnerChange',
@@ -47,12 +48,14 @@ Mock::generatePartial('Docman_SOAPActions', 'Docman_SOAPActions_Test',
         '_getDocmanPermissionsManagerInstance',
         '_getEventManager',
         '_getFileStorage',
-    ));
+    )
+);
 
 /**
  * Unit tests for Docman_SOAPActions
  */
-class Docman_SOAPActionsTest extends TuleapTestCase {
+class Docman_SOAPActionsTest extends TuleapTestCase
+{
     private $MD5Map;
     private $itemFactory;
     private $action;
@@ -112,21 +115,23 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
         $this->action->setReturnValue('_getVersionFactory', $versionFactory);
         $this->action->setReturnValue('_getPermissionsManagerInstance', $this->permissionManager);
         $this->action->setReturnValue('_getDocmanPermissionsManagerInstance', $this->docmanPermissionsManager);
-        $this->action->setReturnValue('_getEventManager', new MockEventManager());
+        $this->action->setReturnValue('_getEventManager', \Mockery::spy(EventManager::class));
         $this->action->setReturnValue('_getFileStorage', $this->fileStorage);
         $this->action->__construct($controller);
     }
 
     public function tearDown()
     {
-        unset($GLOBALS['Language'],
-              $this->itemFactory,
-              $this->fileStorage,
-              $this->MD5Map,
-              $this->permissionManager,
-              $this->docmanPermissionsManager,
-              $this->action,
-              $this->lockFactory);
+        unset(
+            $GLOBALS['Language'],
+            $this->itemFactory,
+            $this->fileStorage,
+            $this->MD5Map,
+            $this->permissionManager,
+            $this->docmanPermissionsManager,
+            $this->action,
+            $this->lockFactory
+        );
 
         parent::tearDown();
     }
@@ -134,7 +139,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * Nominal case: getFileMD5sum is called with a correct file ID
      */
-    public function testGetFileMD5sumNominal() {
+    public function testGetFileMD5sumNominal()
+    {
         $action = $this->action;
 
         $params = array(
@@ -155,7 +161,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * Nominal case: getFileMD5sum is called with a correct file ID for a given version
      */
-    public function testGetFileMD5sumGivenVersionNominal() {
+    public function testGetFileMD5sumGivenVersionNominal()
+    {
         $action = $this->action;
 
         $params = array(
@@ -176,7 +183,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     }
 
 
-    public function testGetFileMD5sumAllVersions() {
+    public function testGetFileMD5sumAllVersions()
+    {
         $action = $this->action;
 
         $params = array(
@@ -194,7 +202,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * Error case: getFileMD5sum with no item ID
      */
-    public function testGetFileMD5sumNoItemError() {
+    public function testGetFileMD5sumNoItemError()
+    {
         $action = $this->action;
 
         $params = array();
@@ -211,7 +220,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * Error case: getFileMD5sum is called with an incorrect ID
      */
-    public function testGetFileMD5sumItemNotFoundError() {
+    public function testGetFileMD5sumItemNotFoundError()
+    {
         $action = $this->action;
 
         $params = array('item_id' => 0);
@@ -229,7 +239,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * update test with item owner changed
      */
-    public function testUpdate() {
+    public function testUpdate()
+    {
         $action = $this->action;
 
         $params = array(
@@ -256,7 +267,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * New version
      */
-    public function test_new_version_update() {
+    public function test_new_version_update()
+    {
         $action = $this->action;
 
         $this->lockFactory->setReturnValue('itemIsLocked', false);
@@ -274,15 +286,16 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
 
         $this->fileStorage->expectOnce('store');
         $this->itemFactory->shouldReceive('update');
-        $action->event_manager->expectAt('1','processEvent', array('send_notifications', '*'));
-        $action->event_manager->expectCallCount('processEvent','1');
+        $action->event_manager->expectAt('1', 'processEvent', array('send_notifications', '*'));
+        $action->event_manager->expectCallCount('processEvent', '1');
         $action->new_version();
     }
 
     /**
      * New version with version date
      */
-    public function test_new_version_no_update() {
+    public function test_new_version_no_update()
+    {
         $action = $this->action;
 
         $params = array(
@@ -300,8 +313,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
 
         $this->fileStorage->expectOnce('store');
         $this->itemFactory->shouldNotReceive('update');
-        $action->event_manager->expectAt('1','processEvent', array('send_notifications', '*'));
-        $action->event_manager->expectCallCount('processEvent','1');
+        $action->event_manager->expectAt('1', 'processEvent', array('send_notifications', '*'));
+        $action->event_manager->expectCallCount('processEvent', '1');
 
         $action->new_version();
     }
@@ -309,7 +322,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * Item creation
      */
-    public function testCreateItem() {
+    public function testCreateItem()
+    {
         $action = $this->action;
 
         $params = array(
@@ -348,7 +362,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * Item creation, without dates
      */
-    public function testCreateItemNoDates() {
+    public function testCreateItemNoDates()
+    {
         $action = $this->action;
 
         $params = array(
@@ -381,7 +396,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * AppendFileChunk test
      */
-    public function testAppendFileChunk() {
+    public function testAppendFileChunk()
+    {
         $action = $this->action;
 
         $params = array('group_id'=> 10, 'item_id'=> 128000, 'chunk_offset' => 10, 'chunk_size' => 64, 'upload_content' => 'abcdef');
@@ -406,7 +422,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
     /**
      * Test: getTreeInfo with no parameters supplied
      */
-    public function testGetTreeInfoError() {
+    public function testGetTreeInfoError()
+    {
         $action = $this->action;
 
         $request = new MockSOAPRequest();
@@ -417,7 +434,8 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
         $action->getTreeInfo();
     }
 
-        public function testGetFileChunk() {
+    public function testGetFileChunk()
+    {
         $action = $this->action;
 
         $params = array('group_id'=> 10, 'item_id'=> 128000, 'chunk_offset' => 10, 'chunk_size' => 64, 'version_number' => 2);
@@ -437,5 +455,4 @@ class Docman_SOAPActionsTest extends TuleapTestCase {
 
         $action->getFileChunk();
     }
-
 }

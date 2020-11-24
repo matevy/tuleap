@@ -23,7 +23,8 @@ namespace User\XML\Import;
 use UserManager;
 use PFUser;
 
-class MappingFileOptimusPrimeTransformer {
+class MappingFileOptimusPrimeTransformer
+{
 
     private static $ALLOWED_ACTIONS = array(
         ToBeActivatedUser::ACTION,
@@ -41,19 +42,22 @@ class MappingFileOptimusPrimeTransformer {
      */
     private $use_lame_password;
 
-    public function __construct(UserManager $user_manager, $use_lame_password = false) {
+    public function __construct(UserManager $user_manager, $use_lame_password = false)
+    {
         $this->user_manager = $user_manager;
         $this->use_lame_password = $use_lame_password;
     }
 
     /** @return User\XML\Import\ReadyToBeImportedUsersCollection */
-    public function transform(UsersToBeImportedCollection $collection_from_archive, $filename) {
+    public function transform(UsersToBeImportedCollection $collection_from_archive, $filename)
+    {
         $csv_lines = $this->parseCSVFile($filename);
         return $this->buildCollectionForImport($collection_from_archive, $csv_lines);
     }
 
     /** @return \User\XML\Import\ReadyToBeImportedUsersCollection */
-    public function transformWithoutMap(UsersToBeImportedCollection $collection_from_archive, $default_action) {
+    public function transformWithoutMap(UsersToBeImportedCollection $collection_from_archive, $default_action)
+    {
         $collection_for_import = new ReadyToBeImportedUsersCollection();
         foreach ($collection_from_archive->toArray() as $username => $to_be_imported_user) {
             if ($to_be_imported_user instanceof AlreadyExistingUser) {
@@ -63,7 +67,7 @@ class MappingFileOptimusPrimeTransformer {
                     $to_be_imported_user->getUserName(),
                     $to_be_imported_user->getOriginalLdapId()
                 );
-            } else if ($to_be_imported_user instanceof ToBeCreatedUser || $to_be_imported_user instanceof ToBeActivatedUser) {
+            } elseif ($to_be_imported_user instanceof ToBeCreatedUser || $to_be_imported_user instanceof ToBeActivatedUser) {
                 $collection_for_import->add(
                     $this->transformUserWithoutMap($collection_from_archive, $username, $default_action, $to_be_imported_user),
                     $to_be_imported_user->getOriginalUserId(),
@@ -90,7 +94,8 @@ class MappingFileOptimusPrimeTransformer {
         return $this->transformUser($collection_from_archive, $username, $action, $to_be_imported_user);
     }
 
-    private function buildCollectionForImport(UsersToBeImportedCollection $collection_from_archive, $csv_lines) {
+    private function buildCollectionForImport(UsersToBeImportedCollection $collection_from_archive, $csv_lines)
+    {
         $collection_for_import = new ReadyToBeImportedUsersCollection();
         foreach ($collection_from_archive->toArray() as $username => $to_be_imported_user) {
             if (isset($csv_lines[$username])) {
@@ -101,7 +106,7 @@ class MappingFileOptimusPrimeTransformer {
                     $to_be_imported_user->getUserName(),
                     $to_be_imported_user->getOriginalLdapId()
                 );
-            } else if ($to_be_imported_user instanceof AlreadyExistingUser) {
+            } elseif ($to_be_imported_user instanceof AlreadyExistingUser) {
                 $collection_for_import->add(
                     $to_be_imported_user,
                     $to_be_imported_user->getOriginalUserId(),
@@ -146,13 +151,15 @@ class MappingFileOptimusPrimeTransformer {
         return $to_be_imported_user;
     }
 
-    private function getWillBeMappedUser($username, $mapped_username, $collection_from_archive) {
+    private function getWillBeMappedUser($username, $mapped_username, $collection_from_archive)
+    {
         $mapped_user = $this->getMappedUser($collection_from_archive, $username, $mapped_username);
 
         return new WillBeMappedUser($username, $mapped_user);
     }
 
-    private function getWillBeCreatedUser($username, $status, ToBeCreatedUser $to_be_imported_user) {
+    private function getWillBeCreatedUser($username, $status, ToBeCreatedUser $to_be_imported_user)
+    {
         if (! $status) {
             $status = PFUser::STATUS_SUSPENDED;
         }
@@ -171,7 +178,8 @@ class MappingFileOptimusPrimeTransformer {
         );
     }
 
-    private function getExistingUser($username) {
+    private function getExistingUser($username)
+    {
         $existing_user = $this->user_manager->getUserByUsername($username);
         if (! $existing_user) {
             throw new InvalidMappingFileException("User with username $username does not exist on the platform");
@@ -180,7 +188,8 @@ class MappingFileOptimusPrimeTransformer {
         return $existing_user;
     }
 
-    private function getMappedUser(UsersToBeImportedCollection $collection, $username, $mapped_username) {
+    private function getMappedUser(UsersToBeImportedCollection $collection, $username, $mapped_username)
+    {
         if (! $mapped_username) {
             throw new InvalidMappingFileException("map action for $username must be filled");
         }
@@ -191,7 +200,8 @@ class MappingFileOptimusPrimeTransformer {
     /**
      * @return array
      */
-    private function parseCSVFile($filename) {
+    private function parseCSVFile($filename)
+    {
         if (! is_readable($filename)) {
             throw new MappingFileDoesNotExistException("$filename does not exist");
         }
@@ -204,7 +214,7 @@ class MappingFileOptimusPrimeTransformer {
         $header = fgetcsv($csv);
         $lines  = array();
 
-        while (($data = fgetcsv($csv)) !== FALSE) {
+        while (($data = fgetcsv($csv)) !== false) {
             $username = $data[0];
             $action   = $data[1];
 

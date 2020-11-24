@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Nicolas Terray, 2006
@@ -25,28 +25,28 @@
 use Tuleap\Docman\Upload\Version\DocumentOnGoingVersionToUploadDAO;
 use Tuleap\Docman\Upload\Version\VersionOngoingUploadRetriever;
 
-require_once('Docman_View_ItemDetailsSectionActions.class.php');
-require_once('Docman_View_ItemDetailsSectionApprovalCreate.class.php');
-require_once('Docman_View_GetSpecificFieldsVisitor.class.php');
+class Docman_View_ItemDetailsSectionNewVersion extends Docman_View_ItemDetailsSectionActions
+{
 
-class Docman_View_ItemDetailsSectionNewVersion extends Docman_View_ItemDetailsSectionActions {
-    
     var $force;
     var $token;
-    function __construct($item, $url, $controller, $force, $token) {
+    function __construct($item, $url, $controller, $force, $token)
+    {
         parent::__construct($item, $url, false, true, $controller);
         $this->force    = $force;
         $this->token = $token;
     }
-    function getContent($params = []) {
+    function getContent($params = [])
+    {
         return $this->item->accept($this);
     }
 
-    function _getApprovalTable() {
+    function _getApprovalTable()
+    {
         $html = '';
 
         $atf = Docman_ApprovalTableFactoriesFactory::getFromItem($this->item);
-        if($atf->tableExistsForItem()) {
+        if ($atf->tableExistsForItem()) {
             $html .= '<dt>'. $GLOBALS['Language']->getText('plugin_docman', 'details_actions_update_apptable') .'</dt><dd>';
             $html .= '<dd>';
             $html .= Docman_View_ItemDetailsSectionApprovalCreate::displayImportLastTable(false);
@@ -56,10 +56,11 @@ class Docman_View_ItemDetailsSectionNewVersion extends Docman_View_ItemDetailsSe
         return $html;
     }
 
-    function _getReleaseLock() {
+    function _getReleaseLock()
+    {
         $content = '';
         $dPm = Docman_PermissionsManager::instance($this->item->getGroupId());
-        if($dPm->getLockFactory()->itemIsLocked($this->item)) {
+        if ($dPm->getLockFactory()->itemIsLocked($this->item)) {
             $content .= '<tr style="vertical-align:top;">';
             $content .= '<td><label>'.$GLOBALS['Language']->getText('plugin_docman', 'details_actions_update_lock').'</label></td>';
             $content .= '<td><input type="checkbox" name="lock_document" value="lock" /></td>';
@@ -68,25 +69,31 @@ class Docman_View_ItemDetailsSectionNewVersion extends Docman_View_ItemDetailsSe
         return $content;
     }
 
-    function visitFolder($item, $params = array()) {
+    function visitFolder($item, $params = array())
+    {
         return "";
     }
-    function visitDocument($item, $params = array()) {
+    function visitDocument($item, $params = array())
+    {
         return "";
     }
-    function visitWiki($item, $params = array()) {
+    function visitWiki($item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    function visitLink($item, $params = array()) {
+    function visitLink($item, $params = array())
+    {
         return $this->visitVersionnedItem($item, $params);
     }
 
-    function visitFile($item, $params = array()) {
+    function visitFile($item, $params = array())
+    {
         return $this->visitVersionnedItem($item, $params);
     }
 
-    private function visitVersionnedItem($item, $params = array()) {
+    private function visitVersionnedItem($item, $params = array())
+    {
         $label = '';
         if (isset($this->_controller->_viewParams['label'])) {
             $label = $this->_controller->_viewParams['label'];
@@ -95,7 +102,6 @@ class Docman_View_ItemDetailsSectionNewVersion extends Docman_View_ItemDetailsSe
         if (isset($this->_controller->_viewParams['changelog'])) {
             $changelog = $this->_controller->_viewParams['changelog'];
         }
-
 
         $retriever = new VersionOngoingUploadRetriever(new DocumentOnGoingVersionToUploadDAO());
 
@@ -114,11 +120,13 @@ class Docman_View_ItemDetailsSectionNewVersion extends Docman_View_ItemDetailsSe
         $content .= '<table>';
         $content .= '<tr style="vertical-align:top"><td>'. $GLOBALS['Language']->getText('plugin_docman', 'details_actions_newversion_label') .'</td><td><input type="text" name="version[label]" value="'.$label.'" /></td></tr>';
         $content .= '<tr style="vertical-align:top"><td>'. $GLOBALS['Language']->getText('plugin_docman', 'details_actions_newversion_changelog') .'</td><td><textarea name="version[changelog]" rows="7" cols="80" data-test="docman_changelog">'.$changelog.'</textarea></td></tr>';
-        $fields = $item->accept(new Docman_View_GetSpecificFieldsVisitor(), array('force_item' => $this->force, 'request' => &$this->controller->request));
-        foreach($fields as $field) {
-            $content .= '<tr style="vertical-align:top;">';
-            $content .= '<td><label>'. $field->getLabel().'</label></td>';
-            $content .= '<td>'. $field->getField() .'</td></tr>';
+        $fields = $item->accept(new Docman_View_GetSpecificFieldsVisitor(), array('force_item' => $this->force, 'request' => $this->_controller->request));
+        if ($fields !== null) {
+            foreach ($fields as $field) {
+                $content .= '<tr style="vertical-align:top;">';
+                $content .= '<td><label>'. $field->getLabel().'</label></td>';
+                $content .= '<td>'. $field->getField() .'</td></tr>';
+            }
         }
         // Release lock
         $content .= $this->_getReleaseLock();
@@ -152,11 +160,13 @@ class Docman_View_ItemDetailsSectionNewVersion extends Docman_View_ItemDetailsSe
         return $content;
     }
 
-    function visitEmbeddedFile($item, $params = array()) {
+    function visitEmbeddedFile($item, $params = array())
+    {
         return $this->visitFile($item, $params);
     }
 
-    function visitEmpty($item, $params = array()) {
+    function visitEmpty($item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 }

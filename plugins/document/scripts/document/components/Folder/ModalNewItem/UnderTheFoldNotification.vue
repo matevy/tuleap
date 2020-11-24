@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018. All Rights Reserved.
+  - Copyright (c) Enalean, 2018-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -18,7 +18,7 @@
   -->
 
 <template>
-    <div class="document-new-item-under-the-fold-notification tlp-alert-success"
+    <div class="document-notification tlp-alert-success"
          v-bind:class="notification_class"
          v-if="is_displayed"
     >
@@ -30,6 +30,7 @@
 
 <script>
 import { TYPE_FOLDER } from "../../../constants.js";
+import EventBus from "../../../helpers/event-bus.js";
 
 export default {
     data() {
@@ -45,16 +46,16 @@ export default {
     computed: {
         notification_class() {
             return {
-                "document-new-item-under-the-fold-notification-fadeout": this.is_fadeout,
-                "document-new-item-under-the-fold-notification-fast-fadeout": this.is_fast_fadeout
+                "document-notification-fadeout": this.is_fadeout,
+                "document-notification-fast-fadeout": this.is_fast_fadeout
             };
         }
     },
     created() {
-        document.addEventListener("item-has-been-created-under-the-fold", this.show);
-        this.$once("hook:beforeDestroy", () => {
-            document.removeEventListener("item-has-been-created-under-the-fold", this.show);
-        });
+        EventBus.$on("item-has-been-created-under-the-fold", this.show);
+    },
+    beforeDestroy() {
+        EventBus.$off("item-has-been-created-under-the-fold", this.show);
     },
     methods: {
         show(event) {

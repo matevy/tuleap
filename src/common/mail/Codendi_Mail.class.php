@@ -27,11 +27,12 @@ use Zend\Mime\Part as MimePart;
 
 /**
  * Class for sending an email using the zend lib.
- * 
+ *
  * It allows to send mails in html format
- * 
+ *
  */
-class Codendi_Mail implements Codendi_Mail_Interface {
+class Codendi_Mail implements Codendi_Mail_Interface
+{
     /**
      * @const Use the common look and feel
      *
@@ -54,7 +55,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
     private $message;
 
     /**
-     * @var Tuleap_Template_Mail 
+     * @var Tuleap_Template_Mail
      */
     protected $look_and_feel_template;
 
@@ -112,13 +113,14 @@ class Codendi_Mail implements Codendi_Mail_Interface {
      *
      * @return Array of user_name and mail
      */
-    private function validateArrayOfUsers(array $users) {
+    private function validateArrayOfUsers(array $users)
+    {
         return $this->recipient_list_builder->getValidRecipientsFromUsers($users);
     }
 
     /**
      * Given a standard email definition, split the name and the email address
-     * 
+     *
      * "name" <email> gives array(email, name).
      * if doesn't match, assume it's only email.
      *
@@ -126,9 +128,10 @@ class Codendi_Mail implements Codendi_Mail_Interface {
      *
      * @return Array
      */
-    function _cleanupMailFormat($mail) {
+    function _cleanupMailFormat($mail)
+    {
         $pattern = '/(.*)<(.*)>/';
-        if (preg_match ($pattern, $mail, $matches)) {
+        if (preg_match($pattern, $mail, $matches)) {
             // Remove extra spaces and quotes
             $name = trim(trim($matches[1]), '"\'');
             return array($matches[2], $name);
@@ -144,7 +147,8 @@ class Codendi_Mail implements Codendi_Mail_Interface {
      *
      * @return string[] of real_name and mail
      */
-    private function validateCommaSeparatedListOfAddresses($comma_separeted_addresses) {
+    private function validateCommaSeparatedListOfAddresses($comma_separeted_addresses)
+    {
         return $this->recipient_list_builder->getValidRecipientsFromAddresses(preg_split('/[;,]/D', $comma_separeted_addresses));
     }
 
@@ -183,7 +187,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
     {
         $this->message->setFrom(array());
     }
-    
+
     public function setSubject($subject)
     {
         $this->message->setSubject($subject);
@@ -197,12 +201,12 @@ class Codendi_Mail implements Codendi_Mail_Interface {
     /**
      *
      * @param String  $to
-     * @param Boolean $raw
+     * @param bool $raw
      */
-    public function setTo($to, $raw=false)
+    public function setTo($to, $raw = false)
     {
         list($to,) = $this->_cleanupMailFormat($to);
-        if(!$raw) {
+        if (!$raw) {
             $to = $this->validateCommaSeparatedListOfAddresses($to);
             if (!empty($to)) {
                 foreach ($to as $row) {
@@ -232,15 +236,15 @@ class Codendi_Mail implements Codendi_Mail_Interface {
     {
         return $this->getRecipientsFromHeader('To');
     }
-    
+
     /**
      *
      * @param String  $bcc
-     * @param Boolean $raw
+     * @param bool $raw
      */
-    public function setBcc($bcc, $raw=false)
+    public function setBcc($bcc, $raw = false)
     {
-        if(!$raw) {
+        if (!$raw) {
             $bcc = $this->validateCommaSeparatedListOfAddresses($bcc);
             if (!empty($bcc)) {
                 foreach ($bcc as $row) {
@@ -248,7 +252,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
                 }
             }
         } else {
-            $this->addBcc($bcc , '');
+            $this->addBcc($bcc, '');
         }
     }
 
@@ -274,11 +278,11 @@ class Codendi_Mail implements Codendi_Mail_Interface {
     /**
      *
      * @param String  $cc
-     * @param Boolean $raw
+     * @param bool $raw
      */
-    public function setCc($cc, $raw=false)
+    public function setCc($cc, $raw = false)
     {
-        if(!$raw) {
+        if (!$raw) {
             $cc = $this->validateCommaSeparatedListOfAddresses($cc);
             if (!empty($cc)) {
                 foreach ($cc as $row) {
@@ -304,7 +308,8 @@ class Codendi_Mail implements Codendi_Mail_Interface {
      *
      * @return String
      */
-    function getCc() {
+    function getCc()
+    {
         return $this->getRecipientsFromHeader('Cc');
     }
 
@@ -318,7 +323,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
 
     /**
      * Returns the text part of the body mail
-     * 
+     *
      * @return String
      */
     public function getBodyText()
@@ -341,7 +346,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
 
         return $text_part;
     }
-        
+
     /**
      * Set hte template to use for look and feel in html mails
      *
@@ -349,28 +354,30 @@ class Codendi_Mail implements Codendi_Mail_Interface {
      *
      * @return void
      */
-    public function setLookAndFeelTemplate(Tuleap_Template_Mail $tpl) {
+    public function setLookAndFeelTemplate(Tuleap_Template_Mail $tpl)
+    {
         $this->look_and_feel_template = $tpl;
     }
-    
+
     /**
      * Get the template to use for look and feel in html mails
      *
      * @return Tuleap_Template_Mail
      */
-    public function getLookAndFeelTemplate() {
+    public function getLookAndFeelTemplate()
+    {
         if (!$this->look_and_feel_template) {
             $this->look_and_feel_template = new Tuleap_Template_Mail();
         }
         return $this->look_and_feel_template;
     }
-    
+
     /**
      * Set the html body part.
      *
-     * The default is to send it through the use of a template to send pretty html 
+     * The default is to send it through the use of a template to send pretty html
      * email in a common format shared across the platform. Some usages require
-     * to not use this template (eg: forumml, ...) it can be discarded with the 
+     * to not use this template (eg: forumml, ...) it can be discarded with the
      * second parameter $use_common_look_and_feel.
      *
      * @param String $message                  html code to send to the user
@@ -390,7 +397,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
 
     /**
      * Returns the Html part of the body mail
-     * 
+     *
      * @return String
      */
     public function getBodyHtml()
@@ -417,7 +424,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
 
         $html_message = new MimeMessage();
         $html_message->addPart($html_code_part);
-        foreach($this->inline_attachments as $attachment) {
+        foreach ($this->inline_attachments as $attachment) {
             $html_message->addPart($attachment);
         }
         $html_part           = new MimePart($html_message->generateMessage());
@@ -430,7 +437,8 @@ class Codendi_Mail implements Codendi_Mail_Interface {
     /**
      * @param String $message
      */
-    function setBody($message) {
+    function setBody($message)
+    {
         $this->setBodyHtml($message);
     }
 
@@ -439,14 +447,15 @@ class Codendi_Mail implements Codendi_Mail_Interface {
      *
      * @return String
      */
-    function getBody() {
+    function getBody()
+    {
         return $this->getBodyHtml();
     }
 
     /**
      *
      * @param array of User $to
-     * 
+     *
      * @return array
      */
     public function setToUser($to)
@@ -463,7 +472,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
     /**
      *
      * @param array of User $bcc
-     * 
+     *
      * @return array;
      */
     public function setBccUser($bcc)
@@ -480,7 +489,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
     /**
      *
      * @param array $cc
-     * 
+     *
      * @return array
      */
     public function setCcUser($cc)
@@ -496,8 +505,8 @@ class Codendi_Mail implements Codendi_Mail_Interface {
 
     /**
      * Send the mail
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
     public function send()
     {
@@ -505,7 +514,7 @@ class Codendi_Mail implements Codendi_Mail_Interface {
 
         $mime_message = new MimeMessage();
         $mime_message->addPart($this->getBodyPart());
-        foreach($this->attachments as $attachment) {
+        foreach ($this->attachments as $attachment) {
             $mime_message->addPart($attachment);
         }
         $this->message->setBody($mime_message);
@@ -568,12 +577,11 @@ class Codendi_Mail implements Codendi_Mail_Interface {
         $this->message->setCc(array());
         $this->message->setBcc(array());
     }
-    
+
     public function addAdditionalHeader($name, $value)
     {
         $header = new Mail\Header\GenericHeader($name, $value);
         $this->message->getHeaders()->addHeader($header);
-
     }
 
     public function addAttachment($data, $mime_type, $filename)

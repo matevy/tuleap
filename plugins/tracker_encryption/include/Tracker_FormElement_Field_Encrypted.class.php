@@ -18,6 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 use Tuleap\Tracker\FormElement\TrackerFormElementExternalField;
 use Tuleap\TrackerEncryption\ChangesetValue;
 use Tuleap\TrackerEncryption\Dao\ValueDao;
@@ -28,7 +29,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     /**
      * @return string html
      */
-    protected function fetchSubmitValue($submitted_values = array())
+    protected function fetchSubmitValue(array $submitted_values)
     {
         $value = $this->getValueFromSubmitOrDefault($submitted_values);
 
@@ -125,8 +126,13 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
         return $tracker_key->getFieldSize($key);
     }
 
-    protected function saveValue($artifact, $changeset_value_id, $value, ?Tracker_Artifact_ChangesetValue $previous_changesetvalue = null)
-    {
+    protected function saveValue(
+        $artifact,
+        $changeset_value_id,
+        $value,
+        ?Tracker_Artifact_ChangesetValue $previous_changesetvalue,
+        CreatedFileURLMapping $id_mapping
+    ) {
         if ($value != "") {
             $dao_pub_key        = new TrackerPublicKeyDao();
             $value_dao          = new ValueDao();
@@ -223,12 +229,11 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
         $submitted_values = array()
     ) {
         $html = '';
-        if (! empty($submitted_values)
-            && is_array($submitted_values[0])
-            && isset($submitted_values[0][$this->getId()])
-            && $submitted_values[0][$this->getId()] !== false
+        if (is_array($submitted_values)
+            && isset($submitted_values[$this->getId()])
+            && $submitted_values[$this->getId()] !== false
         ) {
-            $value = $submitted_values[0][$this->getId()];
+            $value = $submitted_values[$this->getId()];
         } else {
             if ($value != null) {
                 $value = $value->getValue();
@@ -257,8 +262,8 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
 
     protected function getHiddenArtifactValueForEdition(
         Tracker_Artifact $artifact,
-        ?Tracker_Artifact_ChangesetValue $value = null,
-        $submitted_values = array()
+        ?Tracker_Artifact_ChangesetValue $value,
+        array $submitted_values
     ) {
         return '<div class="tracker_hidden_edition_field" data-field-id="' . $this->getId() . '">' .
             $this->fetchArtifactValue($artifact, $value, $submitted_values) . '</div>';
@@ -338,7 +343,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     /**
      * @param Tracker_Artifact_Changeset $changeset
      * @param int $value_id
-     * @param boolean $has_changed
+     * @param bool $has_changed
      *
      * @return Tracker_Artifact_ChangesetValue | null
      */
@@ -365,7 +370,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
         return $value;
     }
 
-    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, $submitted_values = array())
+    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, array $submitted_values)
     {
     }
 

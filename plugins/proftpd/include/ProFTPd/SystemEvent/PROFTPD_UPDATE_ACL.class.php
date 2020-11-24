@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2014. All rights reserved
  *
@@ -27,7 +26,8 @@ use Tuleap\ProFTPd\Admin;
 use ProjectManager;
 use Project;
 
-class PROFTPD_UPDATE_ACL extends \SystemEvent {
+class PROFTPD_UPDATE_ACL extends \SystemEvent
+{
     public const NAME = 'Tuleap\ProFTPd\SystemEvent\PROFTPD_UPDATE_ACL';
 
     /** @var Admin\ACLUpdater */
@@ -42,14 +42,16 @@ class PROFTPD_UPDATE_ACL extends \SystemEvent {
     /** @var ProjectManager */
     private $project_manager;
 
-    public function injectDependencies(Admin\ACLUpdater $acl_updater, Admin\PermissionsManager $permissions_manager, ProjectManager $project_manager, $ftp_directory) {
+    public function injectDependencies(Admin\ACLUpdater $acl_updater, Admin\PermissionsManager $permissions_manager, ProjectManager $project_manager, $ftp_directory)
+    {
         $this->acl_updater             = $acl_updater;
         $this->ftp_directory       = $ftp_directory;
         $this->permissions_manager = $permissions_manager;
         $this->project_manager     = $project_manager;
     }
 
-    public function process() {
+    public function process()
+    {
         $project     = $this->getProjectFromParameters();
         $this->acl_updater->recursivelyApplyACL(
             $this->getDirectoryPath($project),
@@ -60,19 +62,23 @@ class PROFTPD_UPDATE_ACL extends \SystemEvent {
         $this->done();
     }
 
-    private function getWriters(Project $project) {
+    private function getWriters(Project $project)
+    {
         return $this->permissions_manager->getUGroupSystemNameFor($project, Admin\PermissionsManager::PERM_WRITE);
     }
 
-    private function getReaders(Project $project) {
+    private function getReaders(Project $project)
+    {
         return $this->permissions_manager->getUGroupSystemNameFor($project, Admin\PermissionsManager::PERM_READ);
     }
 
-    private function getDirectoryPath(Project $project) {
+    private function getDirectoryPath(Project $project)
+    {
         return realpath($this->ftp_directory . DIRECTORY_SEPARATOR . $project->getUnixName());
     }
 
-    private function getProjectFromParameters() {
+    private function getProjectFromParameters()
+    {
         $project = $this->project_manager->getProjectByUnixName($this->getParameter(0));
         if ($project && ! $project->isError()) {
             return $project;
@@ -80,7 +86,8 @@ class PROFTPD_UPDATE_ACL extends \SystemEvent {
         throw new RuntimeException('Impossible to get a valid project name');
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return $this->parameters;
     }
 }

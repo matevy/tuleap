@@ -21,19 +21,23 @@
 * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
 */
 
-class b201307101021_add_agiledashborad_semantic_initial_effort_table extends ForgeUpgrade_Bucket {
+class b201307101021_add_agiledashborad_semantic_initial_effort_table extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Creating table plugin_agiledashboard_semantic_initial_effort.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE IF NOT EXISTS plugin_agiledashboard_semantic_initial_effort (
                     tracker_id INT(11) NOT NULL PRIMARY KEY,
                     field_id INT(11) NOT NULL,
@@ -42,10 +46,10 @@ EOT;
         $this->db->createTable('plugin_agiledashboard_semantic_initial_effort', $sql);
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (! $this->db->tableNameExists('plugin_agiledashboard_semantic_initial_effort')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('plugin_agiledashboard_semantic_initial_effort table is missing');
         }
     }
 }
-?>

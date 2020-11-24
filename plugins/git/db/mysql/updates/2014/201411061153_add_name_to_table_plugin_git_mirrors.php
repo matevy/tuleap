@@ -18,19 +18,23 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class b201411061153_add_name_to_table_plugin_git_mirrors extends ForgeUpgrade_Bucket {
+class b201411061153_add_name_to_table_plugin_git_mirrors extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Modify plugin_git_mirrors table to add name column.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE plugin_git_mirrors
             ADD COLUMN name VARCHAR(255) NOT NULL";
 

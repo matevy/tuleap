@@ -19,29 +19,35 @@
  */
 require_once __DIR__.'/../bootstrap.php';
 
-function aChangesetValueArtifactLink() {
+function aChangesetValueArtifactLink()
+{
     return new Test_Tracker_ChangesetValue_ArtifactLink_Builder();
 }
 
-function aChangesetValueList() {
+function aChangesetValueList()
+{
     return new Test_Tracker_ChangesetValue_List_Builder();
 }
 
-class Test_Tracker_ChangesetValue_Builder {
+class Test_Tracker_ChangesetValue_Builder
+{
     protected $name;
     protected $id;
     protected $field;
 
-    public function __construct($klass) {
+    public function __construct($klass)
+    {
         $this->name = $klass;
     }
 
-    public function withId($id) {
+    public function withId($id)
+    {
         $this->id = $id;
         return $this;
     }
 
-    public function withField($field) {
+    public function withField($field)
+    {
         $this->field = $field;
         return $this;
     }
@@ -49,23 +55,27 @@ class Test_Tracker_ChangesetValue_Builder {
     /**
      * @return Tracker_Artifact_ChangesetValue
      */
-    public function build() {
+    public function build()
+    {
         $klass  = $this->name;
         $object = new $klass($this->id, mock('Tracker_Artifact_Changeset'), $this->field, null);
         return $object;
     }
 }
 
-class Test_Tracker_ChangesetValue_ArtifactLink_Builder extends Test_Tracker_ChangesetValue_Builder {
+class Test_Tracker_ChangesetValue_ArtifactLink_Builder extends Test_Tracker_ChangesetValue_Builder
+{
     private $artifact_links;
     private $reverse_artifact_links;
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct('Tracker_Artifact_ChangesetValue_ArtifactLink');
         $this->field = anArtifactLinkField()->build();
     }
 
-    public function withArtifactLinks($artifact_links) {
+    public function withArtifactLinks($artifact_links)
+    {
         $this->artifact_links = $artifact_links;
         return $this;
     }
@@ -73,20 +83,24 @@ class Test_Tracker_ChangesetValue_ArtifactLink_Builder extends Test_Tracker_Chan
     /**
      * @return Tracker_Artifact_ChangesetValue_ArtifactLink
      */
-    public function build() {
+    public function build()
+    {
         $object = new Tracker_Artifact_ChangesetValue_ArtifactLink($this->id, mock('Tracker_Artifact_Changeset'), $this->field, null, $this->artifact_links, $this->reverse_artifact_links);
         return $object;
     }
 }
 
-class Test_Tracker_ChangesetValue_List_Builder extends Test_Tracker_ChangesetValue_Builder {
+class Test_Tracker_ChangesetValue_List_Builder extends Test_Tracker_ChangesetValue_Builder
+{
     private $list_values = array();
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct('Tracker_Artifact_ChangesetValue_List');
     }
 
-    public function withValues(array $list_values) {
+    public function withValues(array $list_values)
+    {
         $this->list_values = $list_values;
         return $this;
     }
@@ -94,9 +108,8 @@ class Test_Tracker_ChangesetValue_List_Builder extends Test_Tracker_ChangesetVal
     /**
      * @return Tracker_Artifact_ChangesetValue_List
      */
-    public function build() {
+    public function build()
+    {
         return new Tracker_Artifact_ChangesetValue_List($this->id, mock('Tracker_Artifact_Changeset'), $this->field, null, $this->list_values);
     }
 }
-
-?>

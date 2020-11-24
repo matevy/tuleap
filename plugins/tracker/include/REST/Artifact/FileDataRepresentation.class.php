@@ -20,14 +20,16 @@
 
 namespace Tuleap\Tracker\REST\Artifact;
 
-class FileDataRepresentation {
+class FileDataRepresentation
+{
 
     /**
      * @var string Chunk
      */
     public $data;
 
-    public function build($data) {
+    public function build($data)
+    {
         $this->data = $data;
 
         return $this;

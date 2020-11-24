@@ -16,18 +16,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201303121639_add_owner_to_system_events extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201303121639_add_owner_to_system_events extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return <<<EOT
 Add owner to system events
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE system_event ADD COLUMN owner VARCHAR(255) NOT NULL default 'root' AFTER end_date";
         if ($this->db->tableNameExists('system_event')) {
             $res = $this->db->dbh->exec($sql);
@@ -37,11 +41,10 @@ EOT;
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('system_event', 'owner')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Column owner not created in system_event');
         }
     }
 }
-
-?>

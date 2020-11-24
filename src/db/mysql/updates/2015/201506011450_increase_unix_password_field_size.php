@@ -19,16 +19,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201506011450_increase_unix_password_field_size extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201506011450_increase_unix_password_field_size extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Increase UNIX password field size";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE user MODIFY COLUMN unix_pw VARCHAR(255)';
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {

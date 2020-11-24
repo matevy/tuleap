@@ -18,13 +18,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_XML_Updater_FieldChange_FieldChangeTextXMLUpdater implements Tracker_XML_Updater_FieldChange_FieldChangeXMLUpdater {
+class Tracker_XML_Updater_FieldChange_FieldChangeTextXMLUpdater implements Tracker_XML_Updater_FieldChange_FieldChangeXMLUpdater
+{
 
     /**
      * @param SimpleXMLElement $field_change_xml
      * @param mixed            $submitted_value
      */
-    public function update(SimpleXMLElement $field_change_xml, $submitted_value) {
+    public function update(SimpleXMLElement $field_change_xml, $submitted_value)
+    {
         $field_change_xml->value['format']  = $submitted_value['format'];
         $field_change_xml->value            = $submitted_value['content'];
     }

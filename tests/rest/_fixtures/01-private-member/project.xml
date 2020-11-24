@@ -748,6 +748,10 @@
                 <semantic type="plugin_cardwall_card_fields">
                     <field REF="F41"/>
                 </semantic>
+                <semantic type="timeframe">
+                    <start_date_field REF="F37"/>
+                    <duration_field REF="F39"/>
+                </semantic>
             </semantics>
             <rules>
                 <date_rules/>
@@ -769,12 +773,14 @@
             <workflow/>
             <permissions>
                 <permission scope="tracker" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_ACCESS_FULL"/>
+                <permission scope="tracker" ugroup="developers" type="PLUGIN_TRACKER_ADMIN"/>
                 <permission scope="field" REF="F32" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
                 <permission scope="field" REF="F32" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
                 <permission scope="field" REF="F32" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
                 <permission scope="field" REF="F34" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
                 <permission scope="field" REF="F34" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
                 <permission scope="field" REF="F34" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
+                <permission scope="field" REF="F34" ugroup="static_ugroup_2" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
                 <permission scope="field" REF="F37" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
                 <permission scope="field" REF="F37" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
                 <permission scope="field" REF="F37" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
@@ -1064,6 +1070,10 @@
                 <semantic type="tooltip"/>
                 <semantic type="plugin_cardwall_card_fields">
                     <field REF="F71"/>
+                </semantic>
+                <semantic type="timeframe">
+                    <start_date_field REF="F65"/>
+                    <duration_field REF="F67"/>
                 </semantic>
             </semantics>
             <rules>
@@ -2351,6 +2361,7 @@
                                             <item ID="V900" label="To be done" is_hidden="0"/>
                                             <item ID="V901" label="On going" is_hidden="0"/>
                                             <item ID="V902" label="Review" is_hidden="0"/>
+                                            <item ID="V905" label="Other open value" is_hidden="0"/>
                                             <item ID="V903" label="Done" is_hidden="0"/>
                                             <item ID="V904" label="Canceled" is_hidden="0"/>
                                         </items>
@@ -2540,6 +2551,7 @@
                         <open_value REF="V900"/>
                         <open_value REF="V901"/>
                         <open_value REF="V902"/>
+                        <open_value REF="V905"/>
                     </open_values>
                 </semantic>
                 <semantic type="contributor">

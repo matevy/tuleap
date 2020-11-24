@@ -18,7 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var codendi = codendi || {};
+import {
+    getUploadImageOptions,
+    initiateUploadImage
+} from "../tuleap/ckeditor/get-upload-image-options.js";
+import CKEDITOR from "ckeditor";
+import tuleap from "tuleap";
+
+/* global Prototype:readonly Class:readonly $:readonly */
+
+var codendi = window.codendi || {};
 
 codendi.RTE = Class.create({
     initialize: function(element, options) {
@@ -48,7 +57,8 @@ codendi.RTE = Class.create({
 
     init_rte: function() {
         var replace_options = {
-            resize_enabled: true
+            resize_enabled: true,
+            language: document.body.dataset.userLocale
         };
 
         if (CKEDITOR.instances && CKEDITOR.instances[this.element.id]) {
@@ -130,7 +140,11 @@ codendi.RTE = Class.create({
             replace_options.resize_enabled = false;
         }
 
+        replace_options = Object.assign(replace_options, {
+            ...getUploadImageOptions(this.element)
+        });
         this.rte = CKEDITOR.replace(this.element.id, replace_options);
+        initiateUploadImage(this.rte, replace_options, this.element);
 
         /*CKEDITOR filters HTML tags
               So, if your default text is like <blabla>, this will not be displayed.
@@ -158,7 +172,7 @@ codendi.RTE = Class.create({
             }
         });
 
-        this.rte.on("instanceReady", function(evt) {
+        this.rte.on("instanceReady", function() {
             this.document.getBody().$.contentEditable = true;
             tuleap.mention.init(this.document.getBody().$);
         });
@@ -211,7 +225,9 @@ codendi.RTE = Class.create({
     destroy: function() {
         try {
             this.rte.destroy(false);
-        } catch (e) {}
+        } catch (e) {
+            // ignore
+        }
         this.rte = null;
     },
     getContent: function() {

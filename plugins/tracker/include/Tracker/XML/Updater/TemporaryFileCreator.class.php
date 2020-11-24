@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_XML_Updater_TemporaryFileCreator {
+class Tracker_XML_Updater_TemporaryFileCreator
+{
 
     /** @var string */
     private $copy_directory;
@@ -26,11 +27,13 @@ class Tracker_XML_Updater_TemporaryFileCreator {
     /**
      * @param string $copy_directory
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->copy_directory = $this->getUniqueRandomDirectory();
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         $this->deleteTemporaryDirectory();
     }
 
@@ -39,23 +42,27 @@ class Tracker_XML_Updater_TemporaryFileCreator {
      *
      * @return string path of temporary copy
      */
-    public function createTemporaryFile($path) {
+    public function createTemporaryFile($path)
+    {
         $temporary_file_name = $this->copy_directory .'/'. basename($path);
         copy($path, $temporary_file_name);
 
         return $temporary_file_name;
     }
 
-    public function getTemporaryDirectory() {
+    public function getTemporaryDirectory()
+    {
         return $this->copy_directory;
     }
 
-    private function getUniqueRandomDirectory() {
+    private function getUniqueRandomDirectory()
+    {
         $tmp = ForgeConfig::get('tmp_dir');
         return exec("mktemp -d -p $tmp copy-artifactXXXXXX");
     }
 
-    private function deleteTemporaryDirectory() {
+    private function deleteTemporaryDirectory()
+    {
         if (! $this->copy_directory) {
             return;
         }
@@ -66,7 +73,7 @@ class Tracker_XML_Updater_TemporaryFileCreator {
             ),
             RecursiveIteratorIterator::CHILD_FIRST
         );
-        foreach($recursive_iterator as $path) {
+        foreach ($recursive_iterator as $path) {
             if (in_array($path->getFilename(), array('.', '..'))) {
                 continue;
             }
@@ -79,5 +86,4 @@ class Tracker_XML_Updater_TemporaryFileCreator {
         }
         rmdir($this->copy_directory);
     }
-
 }

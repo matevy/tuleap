@@ -21,13 +21,15 @@ namespace User\XML\Import;
 
 use PFUser;
 
-class EmailDoesNotMatchUser extends ActionToBeTakenForUser {
+class EmailDoesNotMatchUser extends ActionToBeTakenForUser
+{
 
     private static $ACTION = 'map';
 
     private $email_found_in_xml;
 
-    public function __construct(PFUser $user, $email_found_in_xml, $original_user_id, $original_ldap_id) {
+    public function __construct(PFUser $user, $email_found_in_xml, $original_user_id, $original_ldap_id)
+    {
         parent::__construct(
             $user->getUserName(),
             $user->getRealName(),
@@ -40,7 +42,8 @@ class EmailDoesNotMatchUser extends ActionToBeTakenForUser {
     }
 
     /** @return array */
-    public function getCSVData() {
+    public function getCSVData()
+    {
         return array(
             $this->username,
             self::$ACTION .':',
@@ -54,7 +57,8 @@ class EmailDoesNotMatchUser extends ActionToBeTakenForUser {
         );
     }
 
-    public function isActionAllowed($action) {
+    public function isActionAllowed($action)
+    {
         return $action === self::$ACTION;
     }
 }

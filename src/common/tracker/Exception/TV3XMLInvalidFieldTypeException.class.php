@@ -18,8 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Exception_TV3XMLInvalidFieldTypeException extends Exception_TV3XMLException {
-    public function __construct($user_id) {
+class Exception_TV3XMLInvalidFieldTypeException extends Exception_TV3XMLException
+{
+    public function __construct($user_id)
+    {
         parent::__construct('A user id was expected as per field type but called with "'.$user_id.'". This might happen when field type changed over the time (eg. was text field and is now a select box with user).');
     }
 }

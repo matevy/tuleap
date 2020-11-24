@@ -27,7 +27,6 @@ admin_sidebar	configuration_section_title	Global configuration
 admin_sidebar	configuration_nav_global_access_rights	Global access rights
 admin_sidebar	configuration_nav_homepage	Homepage
 admin_sidebar	configuration_nav_categories	Project categories
-admin_sidebar	configuration_nav_project_fields	Custom project fields
 admin_sidebar	configuration_nav_predefined_references	Predefined project references
 admin_sidebar	configuration_nav_tracker_restore	Pending trackers removal
 admin_sidebar	configuration_nav_svn	Manage SVN
@@ -44,7 +43,7 @@ admin_sidebar	collapse_sidebar_label	Collapse sidebar
 #
 admin_main	title		Site administration
 admin_main	header		Administrative functions
-admin_main	forgeupgrade	<h4>ForgeUpgrade was not run!</h4><p>It seems that someone upgraded Tuleap RPMs without running forgeupgrade command. Please check <a href="http://tuleap-documentation.readthedocs.org/en/latest/installation-guide/update.html">upgrade documentation</a>.</p>
+admin_main	forgeupgrade	<h4>ForgeUpgrade was not run!</h4><p>It seems that someone upgraded Tuleap RPMs without running forgeupgrade command. Please check <a href="/doc/en/installation-guide/update.html">upgrade documentation</a>.</p>
 admin_main	header_user	Pending users
 admin_main	display_user	Display users beginning with :
 admin_main	search_user	User
@@ -580,7 +579,6 @@ admin_servers	info_notupdated	Server <em>$1</em> has not been updated
 #-----------------------------------------------
 # Script: src/www/admin/descfields/desc_fields_edit.php
 #
-admin_desc_fields	title	Custom project fields
 admin_desc_fields	header_add	Add field
 admin_desc_fields	desc_name	Name
 admin_desc_fields	desc_description	Description
@@ -603,8 +601,6 @@ admin_desc_fields	update_success	Custom project field has been successfully upda
 admin_desc_fields	remove_success	Custom project field has been successfully deleted.
 admin_desc_fields	edit_btn	Edit
 admin_desc_fields	delete_btn	Delete
-admin_desc_fields	description_fields_header	Custom project fields
-admin_desc_fields	no_description_fields	No custom project fields
 admin_desc_fields	add_modal_title	Add field
 admin_desc_fields	add_modal_cancel	Cancel
 admin_desc_fields	add_modal_submit	Add field
@@ -695,7 +691,7 @@ admin_system_events	people_not_empty	People to be notified cannot be empty
 # Script: SF/www/admin/show_pending_documents.php
 #
 admin_show_pending_documents	pending_doc	Pending deleted documents for project <a href="/project/admin/?group_id=$1">$2</a>
-admin_show_pending_documents	delay_info	As per the configuration (<code>$sys_file_deletion_delay</code>) defined in <code>/etc/codendi/local.inc</code> elements will be <strong>purged</strong> from the filesystem after <strong>$1 days.</strong>
+admin_show_pending_documents	delay_info	As per the configuration (<code>$sys_file_deletion_delay</code>) defined in <code>/etc/tuleap/conf/local.inc</code> elements will be <strong>purged</strong> from the filesystem after <strong>$1 days.</strong>
 
 admin_show_pending_documents	note_intro	Note: there might be some delay (max 30 minutes) between the time the file is deleted and time it becomes restorable.
 admin_show_pending_documents	note_intro_system	When a file is deleted by the user, it becomes restorable after SYSTEM_CHECK

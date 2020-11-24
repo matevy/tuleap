@@ -21,13 +21,15 @@
 
 namespace Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature;
 
-class NatureSelectorPresenter {
+class NatureSelectorPresenter
+{
 
     public $natures;
     public $select_classes;
     public $select_name;
 
-    public function __construct(array $natures, $select_name, $select_classes) {
+    public function __construct(array $natures, $select_name, $select_classes)
+    {
         $this->natures = $natures;
         $this->select_name = $select_name;
         $this->select_classes = $select_classes;

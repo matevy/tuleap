@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Search_AdditionalSearchTabsPresenter {
+class Search_AdditionalSearchTabsPresenter
+{
 
     public $name;
 
@@ -26,10 +27,10 @@ class Search_AdditionalSearchTabsPresenter {
 
     public $type_of_search;
 
-    public function __construct($name, $url, $type_of_search) {
+    public function __construct($name, $url, $type_of_search)
+    {
         $this->name           = $name;
         $this->url            = $url;
         $this->type_of_search = $type_of_search;
     }
-
 }

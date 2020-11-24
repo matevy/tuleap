@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015-2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,8 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-class Tracker_Semantic_Title extends Tracker_Semantic {
+class Tracker_Semantic_Title extends Tracker_Semantic
+{
     public const NAME = 'title';
 
     /**
@@ -34,7 +34,8 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      * @param Tracker                        $tracker    The tracker
      * @param Tracker_FormElement_Field_Text $text_field The field
      */
-    public function __construct(Tracker $tracker, ?Tracker_FormElement_Field_Text $text_field = null) {
+    public function __construct(Tracker $tracker, ?Tracker_FormElement_Field_Text $text_field = null)
+    {
         parent::__construct($tracker);
         $this->text_field = $text_field;
     }
@@ -44,7 +45,8 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return string
      */
-    public function getShortName() {
+    public function getShortName()
+    {
         return self::NAME;
     }
 
@@ -53,8 +55,9 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return string
      */
-    public function getLabel() {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','title_label');
+    public function getLabel()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'title_label');
     }
 
     /**
@@ -62,8 +65,9 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return string
      */
-    public function getDescription() {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','title_description');
+    public function getDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'title_description');
     }
 
     /**
@@ -71,7 +75,8 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return int The Id of the (text) field used for title semantic, or 0 if no field
      */
-    public function getFieldId() {
+    public function getFieldId()
+    {
         if ($this->text_field) {
             return $this->text_field->getId();
         } else {
@@ -84,25 +89,28 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return Tracker_FormElement_Field_Text The (text) field used for title semantic, or null if no field
      */
-    public function getField() {
+    public function getField()
+    {
         return $this->text_field;
     }
 
     /**
      * Display the basic info about this semantic
      *
-     * @return string html
+     * @return void
      */
-    public function display() {
-        echo $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','title_long_desc');
+    public function display()
+    {
+        echo $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'title_long_desc');
         if ($field = Tracker_FormElementFactory::instance()->getUsedFormElementById($this->getFieldId())) {
             $purifier = Codendi_HTMLPurifier::instance();
             echo $GLOBALS['Language']->getText(
-                'plugin_tracker_admin_semantic','title_field',
+                'plugin_tracker_admin_semantic',
+                'title_field',
                 array($purifier->purify($field->getLabel()))
             );
         } else {
-            echo $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','title_no_field');
+            echo $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'title_no_field');
         }
     }
 
@@ -114,20 +122,20 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      * @param Codendi_Request         $request         The request
      * @param PFUser                    $current_user    The user who made the request
      *
-     * @return string html
+     * @return void
      */
-    public function displayAdmin(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user) {
+    public function displayAdmin(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $sm->displaySemanticHeader($this, $tracker_manager);
         $html = '';
 
         if ($text_fields = Tracker_FormElementFactory::instance()->getUsedTextFields($this->tracker)) {
-
             $html .= '<form method="POST" action="'. $this->getUrl() .'">';
             $html .= $this->getCSRFToken()->fetchHTMLInput();
             $select = '<select name="text_field_id">';
-            if ( ! $this->getFieldId()) {
-                $select .= '<option value="-1" selected="selected">' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','choose_a_field') . '</option>';
+            if (! $this->getFieldId()) {
+                $select .= '<option value="-1" selected="selected">' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'choose_a_field') . '</option>';
             }
             foreach ($text_fields as $text_field) {
                 if ($text_field->getId() == $this->getFieldId()) {
@@ -140,25 +148,25 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
             $select .= '</select>';
 
             $unset_btn  = '<button type="submit" class="btn btn-danger" name="delete">';
-            $unset_btn .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','unset') .'</button>';
+            $unset_btn .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'unset') .'</button>';
 
             $submit_btn  = '<button type="submit" class="btn btn-primary" name="update">';
             $submit_btn .= $GLOBALS['Language']->getText('global', 'save_change') .'</button>';
 
             if (!$this->getFieldId()) {
-                $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','title_no_field');
-                $html .= '<p>' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','choose_one_advice') . ' ';
+                $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'title_no_field');
+                $html .= '<p>' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'choose_one_advice') . ' ';
                 $html .= $select .' <br> '. $submit_btn;
                 $html .= '</p>';
             } else {
-                $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','title_field', array($select));
+                $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'title_field', array($select));
                 $html .= $submit_btn .' '. $GLOBALS['Language']->getText('global', 'or') .' '. $unset_btn;
             }
             $html .= '</form>';
         } else {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','title_impossible');
+            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'title_impossible');
         }
-        $html .= '<p><a href="'.TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId() .'&amp;func=admin-semantic">&laquo; ' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','go_back_overview') . '</a></p>';
+        $html .= '<p><a href="'.TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId() .'&amp;func=admin-semantic">&laquo; ' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'go_back_overview') . '</a></p>';
         echo $html;
         $sm->displaySemanticFooter($this, $tracker_manager);
     }
@@ -173,27 +181,28 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return void
      */
-    public function process(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user) {
+    public function process(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user)
+    {
         if ($request->exist('update')) {
             $this->getCSRFToken()->check();
             if ($field = Tracker_FormElementFactory::instance()->getUsedTextFieldById($this->tracker, $request->get('text_field_id'))) {
                 $this->text_field = $field;
                 if ($this->save()) {
-                    $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','title_now', array($field->getLabel())));
+                    $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'title_now', array($field->getLabel())));
                     $GLOBALS['Response']->redirect($this->getUrl());
                 } else {
-                    $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','unable_save_title'));
+                    $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'unable_save_title'));
                 }
             } else {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','bad_field_title'));
+                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'bad_field_title'));
             }
-        } else if ($request->exist('delete')) {
+        } elseif ($request->exist('delete')) {
             $this->getCSRFToken()->check();
             if ($this->delete()) {
-                $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','deleted_title'));
+                $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'deleted_title'));
                 $GLOBALS['Response']->redirect($this->getUrl());
             } else {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic','unable_save_title'));
+                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'unable_save_title'));
             }
         }
         $this->displayAdmin($sm, $tracker_manager, $request, $current_user);
@@ -204,12 +213,14 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return bool true if success, false otherwise
      */
-    public function save() {
+    public function save()
+    {
         $dao = new Tracker_Semantic_TitleDao();
         return $dao->save($this->tracker->getId(), $this->getFieldId());
     }
 
-    public function delete() {
+    public function delete()
+    {
         $dao = new Tracker_Semantic_TitleDao();
         return $dao->delete($this->tracker->getId());
     }
@@ -222,7 +233,8 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return Tracker_Semantic_Title
      */
-    public static function load(Tracker $tracker) {
+    public static function load(Tracker $tracker)
+    {
         if (!isset(self::$_instances[$tracker->getId()])) {
             $field_id = null;
             $dao = new Tracker_Semantic_TitleDao();
@@ -241,14 +253,16 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
     /**
      * Allows to inject a fake factory for test. DO NOT USE IT IN PRODUCTION!
      */
-    public static function setInstance(Tracker_Semantic_Title $semantic_title, Tracker $tracker) {
+    public static function setInstance(Tracker_Semantic_Title $semantic_title, Tracker $tracker)
+    {
         self::$_instances[$tracker->getId()] = $semantic_title;
     }
 
     /**
      * Allows clear factory instance for test. DO NOT USE IT IN PRODUCTION!
      */
-    public static function clearInstances() {
+    public static function clearInstances()
+    {
         self::$_instances = null;
     }
 
@@ -260,27 +274,27 @@ class Tracker_Semantic_Title extends Tracker_Semantic {
      *
      * @return void
      */
-     public function exportToXml(SimpleXMLElement $root, $xmlMapping) {
-         if ($this->getFieldId() && in_array($this->getFieldId(), $xmlMapping)) {
-             $child = $root->addChild('semantic');
-             $child->addAttribute('type', $this->getShortName());
-             $child->addChild('shortname', $this->getShortName());
-             $child->addChild('label', $this->getLabel());
-             $child->addChild('description', $this->getDescription());
-             $child->addChild('field')->addAttribute('REF', array_search($this->getFieldId(), $xmlMapping));
-
-         }
-     }
+    public function exportToXml(SimpleXMLElement $root, $xmlMapping)
+    {
+        if ($this->getFieldId() && in_array($this->getFieldId(), $xmlMapping)) {
+            $child = $root->addChild('semantic');
+            $child->addAttribute('type', $this->getShortName());
+            $child->addChild('shortname', $this->getShortName());
+            $child->addChild('label', $this->getLabel());
+            $child->addChild('description', $this->getDescription());
+            $child->addChild('field')->addAttribute('REF', array_search($this->getFieldId(), $xmlMapping));
+        }
+    }
 
      /**
      * Is the field used in semantics?
      *
      * @param Tracker_FormElement_Field the field to test if it is used in semantics or not
      *
-     * @return boolean returns true if the field is used in semantics, false otherwise
+     * @return bool returns true if the field is used in semantics, false otherwise
      */
-    public function isUsedInSemantics($field) {
+    public function isUsedInSemantics(Tracker_FormElement_Field $field)
+    {
         return $this->getFieldId() == $field->getId();
     }
 }
-?>

@@ -19,16 +19,17 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/dao/include/DataAccessObject.class.php');
+class Tracker_FormElement_Field_List_Bind_Ugroups_ValueDao extends DataAccessObject
+{
 
-class Tracker_FormElement_Field_List_Bind_Ugroups_ValueDao extends DataAccessObject {
-
-    function __construct() {
+    function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_field_list_bind_ugroups_value';
     }
 
-    public function searchById($id) {
+    public function searchById($id)
+    {
         $id  = $this->da->escapeInt($id);
         $sql = "SELECT *
                 FROM $this->table_name
@@ -36,7 +37,8 @@ class Tracker_FormElement_Field_List_Bind_Ugroups_ValueDao extends DataAccessObj
         return $this->retrieve($sql);
     }
 
-    public function searchByFieldId($field_id) {
+    public function searchByFieldId($field_id)
+    {
         $field_id  = $this->da->escapeInt($field_id);
         $sql = "SELECT *
                 FROM $this->table_name
@@ -44,7 +46,8 @@ class Tracker_FormElement_Field_List_Bind_Ugroups_ValueDao extends DataAccessObj
                 ORDER BY id";
         return $this->retrieve($sql);
     }
-    public function duplicate($from_value_id, $to_field_id) {
+    public function duplicate($from_value_id, $to_field_id)
+    {
         $from_value_id  = $this->da->escapeInt($from_value_id);
         $to_field_id    = $this->da->escapeInt($to_field_id);
         $sql = "REPLACE INTO $this->table_name (field_id, ugroup_id, is_hidden)
@@ -64,7 +67,8 @@ class Tracker_FormElement_Field_List_Bind_Ugroups_ValueDao extends DataAccessObj
         return $this->updateAndGetLastId($sql);
     }
 
-    public function create($field_id, $ugroup_id, $is_hidden) {
+    public function create($field_id, $ugroup_id, $is_hidden)
+    {
         $field_id  = $this->da->escapeInt($field_id);
         $ugroup_id = $this->da->escapeInt($ugroup_id);
         $is_hidden = $is_hidden ? 1 : 0;
@@ -74,15 +78,18 @@ class Tracker_FormElement_Field_List_Bind_Ugroups_ValueDao extends DataAccessObj
         return $this->updateAndGetLastId($sql);
     }
 
-    public function hide($id) {
+    public function hide($id)
+    {
         return $this->toggleHidden($id, 1);
     }
 
-    public function show($id) {
+    public function show($id)
+    {
         return $this->toggleHidden($id, 0);
     }
 
-    private function toggleHidden($id, $is_hidden) {
+    private function toggleHidden($id, $is_hidden)
+    {
         $id        = $this->da->escapeInt($id);
         $is_hidden = $is_hidden ? 1 : 0;
 
@@ -92,7 +99,8 @@ class Tracker_FormElement_Field_List_Bind_Ugroups_ValueDao extends DataAccessObj
         return $this->update($sql);
     }
 
-    public function searchChangesetValues($changeset_id, $field_id) {
+    public function searchChangesetValues($changeset_id, $field_id)
+    {
         $changeset_id = $this->da->escapeInt($changeset_id);
         $field_id     = $this->da->escapeInt($field_id);
         $sql = "SELECT f.id, f.ugroup_id, f.is_hidden

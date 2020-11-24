@@ -19,7 +19,6 @@ admin_sidebar	configuration_section_title	Configuration globale
 admin_sidebar	configuration_nav_global_access_rights	Droits d'accès globaux
 admin_sidebar	configuration_nav_homepage	Page d'accueil
 admin_sidebar	configuration_nav_categories	Catégories de projets
-admin_sidebar	configuration_nav_project_fields	Champs de projets personnalisés
 admin_sidebar	configuration_nav_predefined_references	Références de projets prédéfinis
 admin_sidebar	configuration_nav_tracker_restore	Outils de suivi en attente
 admin_sidebar	configuration_nav_svn	Gérer SVN
@@ -36,7 +35,7 @@ admin_sidebar	collapse_sidebar_label	Réduire la barre latérale
 #
 admin_main	title		Administration du site
 admin_main	header		Fonctions d'administration
-admin_main	forgeupgrade	<h4>ForgeUpgrade n'a pas été exécuté!</h4><p>Il semble que les paquets RPMs de Tuleap ont été mis à jour mais que forgeupgrade n'as pas été exécuté. Merci de vous référer à <a href="http://tuleap-documentation.readthedocs.org/en/latest/installation-guide/update.html">la documentation sur la procédure de mise à jour</a>.</p>
+admin_main	forgeupgrade	<h4>ForgeUpgrade n'a pas été exécuté!</h4><p>Il semble que les paquets RPMs de Tuleap ont été mis à jour mais que forgeupgrade n'as pas été exécuté. Merci de vous référer à <a href="/doc/fr/installation-guide/update.html">la documentation sur la procédure de mise à jour</a>.</p>
 admin_main	header_user	Utilisateurs en attente
 admin_main	display_user	Afficher les utilisateurs commençant par :
 admin_main	search_user	Utilisateur
@@ -595,8 +594,6 @@ admin_desc_fields	update_success	Le champ a été modifié avec succès.
 admin_desc_fields	remove_success	Le champ a été supprimé avec succès.
 admin_desc_fields	edit_btn	Éditer
 admin_desc_fields	delete_btn	Supprimer
-admin_desc_fields	description_fields_header	Champs de projet personnalisés
-admin_desc_fields	no_description_fields	Aucun champ de projet personnalisé
 admin_desc_fields	add_modal_title	Ajouter un champ
 admin_desc_fields	add_modal_cancel	Annuler
 admin_desc_fields	add_modal_submit	Ajouter
@@ -687,7 +684,7 @@ admin_system_events	people_not_empty	La liste des personnes à alerter ne peut p
 # Script: SF/www/admin/show_pending_documents.php
 #
 admin_show_pending_documents	pending_doc	Les supprimés documents en suspens pour le projet <a href="/project/admin/?group_id=$1"> $2 </a>
-admin_show_pending_documents	delay_info	Comme défini dans la configuration <code>/etc/codendi/local.inc</code> par la variable <code>$sys_file_deletion_delay</code>, les éléments seront <strong>définitivement purgés</strong> du système de fichier après <strong>$1 jour.</strong>
+admin_show_pending_documents	delay_info	Comme défini dans la configuration <code>/etc/tuleap/conf/local.inc</code> par la variable <code>$sys_file_deletion_delay</code>, les éléments seront <strong>définitivement purgés</strong> du système de fichier après <strong>$1 jour.</strong>
 
 admin_show_pending_documents	note_intro	Info : il peut exister un délai (30 minutes maximum) entre le temps où un fichier a été supprimé et le temps où il peut devenir restaurable.
 admin_show_pending_documents	note_intro_system	Lorsqu'un fichier est supprimé par l'utilisateur, il devient restaurable après le SYSTEM_CHECK

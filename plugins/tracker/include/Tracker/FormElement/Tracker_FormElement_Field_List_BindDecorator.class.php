@@ -18,6 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
 use Tuleap\REST\JsonCast;
 use Tuleap\Tracker\Colorpicker\ColorpickerMountPointPresenter;
 
@@ -73,10 +74,11 @@ class Tracker_FormElement_Field_List_BindDecorator
      * considered and should probably be avoided
      *
      * @param string $value The value to decorate Don't forget to html-purify.
-     * @param boolean $full false if you want only the decoration
+     * @param bool $full false if you want only the decoration
      * @return string html
      */
-    public function decorate($value, $full = true) {
+    public function decorate($value, $full = true)
+    {
         $html = '';
         if ($full) {
             $html .= '<span style="white-space:nowrap;">';
@@ -124,10 +126,11 @@ class Tracker_FormElement_Field_List_BindDecorator
     /**
      * Display the color and allow the user to edit it
      * @param string $value The value to decorate Don't forget to html-purify.
-     * @param boolean $full false if you want only the decoration
+     * @param bool $full false if you want only the decoration
      * @return string html
      */
-    public function decorateEdit($is_used_in_semantics) {
+    public function decorateEdit($is_used_in_semantics)
+    {
         $html  = '';
         $color = $this->getCurrentColor();
         $id    = 'decorator_'. $this->field_id .'_'. $this->value_id;
@@ -159,11 +162,12 @@ class Tracker_FormElement_Field_List_BindDecorator
     /**
      * Display the transparent color and allow the user to edit it
      * @param string $value The value to decorate Don't forget to html-purify.
-     * @param boolean $full false if you want only the decoration
-     * @param boolean $is_used_in_semantic True if the field is used in a semantic
+     * @param bool $full false if you want only the decoration
+     * @param bool $is_used_in_semantic True if the field is used in a semantic
      * @return string html
      */
-    public static function noDecoratorEdit($field_id, $value_id, $is_used_in_semantics) {
+    public static function noDecoratorEdit($field_id, $value_id, $is_used_in_semantics)
+    {
         $html = '';
         $id   = 'decorator_'. $field_id .'_'. $value_id;
 
@@ -171,11 +175,12 @@ class Tracker_FormElement_Field_List_BindDecorator
         return $html;
     }
 
-    protected static function fetchSquareColor($id, $title, $classname, $r, $g, $b, $img = 'blank16x16.png') {
+    protected static function fetchSquareColor($id, $title, $classname, $r, $g, $b, $img = 'blank16x16.png')
+    {
         $html = '';
         $bgcolor = '';
 
-        if ($r !== null && $g !== null && $b !== null ) {
+        if ($r !== null && $g !== null && $b !== null) {
             $r = (int) $r;
             $g = (int) $g;
             $b = (int) $b;
@@ -201,7 +206,8 @@ class Tracker_FormElement_Field_List_BindDecorator
     /**
      * @return string the internal structure of  the decorator as JSON
      */
-    function toJSON() {
+    function toJSON()
+    {
         return json_encode(
             array(
                 'field_id' => $this->field_id,
@@ -216,7 +222,8 @@ class Tracker_FormElement_Field_List_BindDecorator
     /**
      * Save a decorator
      */
-    public static function save($field_id, $value_id, $color) {
+    public static function save($field_id, $value_id, $color)
+    {
         $dao = new Tracker_FormElement_Field_List_BindDecoratorDao();
 
         if (! self::isHexaColor($color)) {
@@ -242,7 +249,8 @@ class Tracker_FormElement_Field_List_BindDecorator
     /**
      * Delete a decorator
      */
-    public static function delete($field_id, $value_id) {
+    public static function delete($field_id, $value_id)
+    {
         $dao = new Tracker_FormElement_Field_List_BindDecoratorDao();
         $dao->delete($field_id, $value_id);
     }
@@ -270,8 +278,9 @@ class Tracker_FormElement_Field_List_BindDecorator
     /**
      * @return string rgb(234, 254, 123) or $default if not defined
      */
-    public function css($default = 'transparent') {
-        if ($this->r !== null && $this->g !== null && $this->b !== null ) {
+    public function css($default = 'transparent')
+    {
+        if ($this->r !== null && $this->g !== null && $this->b !== null) {
             return 'rgb('. (int)$this->r .', '. (int)$this->g .', '. (int)$this->b .');';
         }
         return $default;
@@ -280,8 +289,9 @@ class Tracker_FormElement_Field_List_BindDecorator
     /**
      * @return bool
      */
-    public function isDark() {
-        if ($this->r !== null && $this->g !== null && $this->b !== null ) {
+    public function isDark()
+    {
+        if ($this->r !== null && $this->g !== null && $this->b !== null) {
             return (0.3 * $this->r + 0.59 * $this->g + 0.11 * $this->b) < 128;
         }
         return false;

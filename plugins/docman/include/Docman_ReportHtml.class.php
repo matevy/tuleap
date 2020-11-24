@@ -4,7 +4,7 @@
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2007
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -39,20 +39,22 @@ class Docman_ReportHtml
         $this->hp         = Codendi_HTMLPurifier::instance();
     }
 
-    function getSelectOption($value, $text, $selected=null) {
+    function getSelectOption($value, $text, $selected = null)
+    {
         $html = '';
         $html .= '<option value="'.$value.'"';
-        if($value == $selected) {
+        if ($value == $selected) {
             $html .= ' selected="selected"';
         }
         $html .= '>'.$this->hp->purify($text)."</option>\n";
         return $html;
     }
 
-    function getSelectOptionFromReportIterator($reportIter, $current=null) {
+    function getSelectOptionFromReportIterator($reportIter, $current = null)
+    {
         $html = '';
         $reportIter->rewind();
-        while($reportIter->valid()) {
+        while ($reportIter->valid()) {
             $r = $reportIter->current();
             $html .= $this->getSelectOption($r->getId(), $r->getName(), $current);
             $reportIter->next();
@@ -60,7 +62,8 @@ class Docman_ReportHtml
         return $html;
     }
 
-    function getReportSelector($item) {
+    function getReportSelector($item)
+    {
         $html = '';
 
         $reportFactory = new Docman_ReportFactory($this->report->getGroupId());
@@ -73,7 +76,7 @@ class Docman_ReportHtml
         // Project wide report
         $html .= $this->getSelectOption('-1', $GLOBALS['Language']->getText('plugin_docman', 'report_saved_prjreports'), $current);
         $reportIter = $reportFactory->getProjectReportsForGroup();
-        while($reportIter->valid()) {
+        while ($reportIter->valid()) {
             $r = $reportIter->current();
             $html .= $this->getSelectOption($r->getId(), $r->getName(), $current);
             $reportIter->next();
@@ -83,7 +86,7 @@ class Docman_ReportHtml
         $html .= $this->getSelectOption('-1', $GLOBALS['Language']->getText('plugin_docman', 'report_saved_persoreports'), $current);
         $user = $this->getCurrentUser();
         $reportIter = $reportFactory->getPersonalReportsForUser($user);
-        while($reportIter->valid()) {
+        while ($reportIter->valid()) {
             $r = $reportIter->current();
             $html .= $this->getSelectOption($r->getId(), $r->getName(), $current);
             $reportIter->next();
@@ -99,24 +102,26 @@ class Docman_ReportHtml
         return $html;
     }
 
-    function _getFilterDisplayBox($filter, $params, $trashLinkBase, &$displayedFilters) {
+    function _getFilterDisplayBox($filter, $params, $trashLinkBase, &$displayedFilters)
+    {
         $html = '';
         $htmlFilter = Docman_HtmlFilterFactory::getFromFilter($filter);
-        if($htmlFilter !== null) {
+        if ($htmlFilter !== null) {
             $displayedFilters[] = $filter->md->getLabel();
             $html .= $htmlFilter->toHtml('plugin_docman_filters', $trashLinkBase);
         }
         return $html;
     }
 
-    function getSelectedFilters($params, &$displayedFilters) {
+    function getSelectedFilters($params, &$displayedFilters)
+    {
         $html = '';
 
         $html .= '<table class="docman_form" data-test="docman_form_table">';
         $fi = $this->report->getFilterIterator();
         $trashLinkBase = $this->view->_buildSearchUrl($params, array('del_filter' => ''));
 
-        if($fi->count() == 0) {
+        if ($fi->count() == 0) {
             $html .= '<div style="text-align:center; font-style:italic;">';
             $filterFactory = new Docman_FilterFactory($this->report->getGroupId());
             $f = $filterFactory->getFakeGlobalSearchFilter();
@@ -126,7 +131,7 @@ class Docman_ReportHtml
 
         // Display filters fields
         $fi->rewind();
-        while($fi->valid()) {
+        while ($fi->valid()) {
             $f = $fi->current();
             $html .= $this->_getFilterDisplayBox($f, $params, $trashLinkBase, $displayedFilters);
             $fi->next();
@@ -134,7 +139,7 @@ class Docman_ReportHtml
 
         $ci = $this->report->getColumnIterator();
         $ci->rewind();
-        while($ci->valid()) {
+        while ($ci->valid()) {
             $c = $ci->current();
             $html .= $c->getSortSelectorHtml();
             $ci->next();
@@ -144,7 +149,8 @@ class Docman_ReportHtml
         return $html;
     }
 
-    function getFiltersOptions($params, $displayedFilters) {
+    function getFiltersOptions($params, $displayedFilters)
+    {
         $html = '';
 
         $html .= '<div id="docman_report_options">';
@@ -159,9 +165,9 @@ class Docman_ReportHtml
         $mdFactory = new Docman_MetadataFactory($this->report->getGroupId());
         $mdIter = $mdFactory->getMetadataForGroup(true);
         $mdIter->rewind();
-        while($mdIter->valid()) {
+        while ($mdIter->valid()) {
             $md = $mdIter->current();
-            if(!in_array($md->getLabel(), $displayedFilters)) {
+            if (!in_array($md->getLabel(), $displayedFilters)) {
                 $html .= $this->getSelectOption($md->getLabel(), $md->getName(), '');
             }
             $mdIter->next();
@@ -170,16 +176,16 @@ class Docman_ReportHtml
         // Special filters
         $gsmd = $this->report->getGlobalSearchMetadata();
         $itmd = $this->report->getItemTypeSearchMetadata();
-        
+
         $showGlobalSearch = !in_array($gsmd->getLabel(), $displayedFilters);
         $showItemTypeSearch = !in_array($itmd->getLabel(), $displayedFilters);
         if ($showGlobalSearch || $showItemTypeSearch) {
             $html .= $this->getSelectOption('--', '--');
-            
+
             if ($showGlobalSearch) {
                 $html .= $this->getSelectOption($gsmd->getLabel(), $gsmd->getName(), '');
             }
-                    
+
             if ($showItemTypeSearch) {
                 $html .= $this->getSelectOption($itmd->getLabel(), $itmd->getName(), '');
             }
@@ -187,25 +193,24 @@ class Docman_ReportHtml
 
         $html .= '</select>';
 
-        
         // Advanced search
-        if($this->report->advancedSearch) {
+        if ($this->report->advancedSearch) {
             $html .= '<input type="hidden" name="advsearch" value="1" />';
             $advSearchToggle = 0;
         } else {
             $advSearchToggle = 1;
-        }        
+        }
         $advSearchUrl = $this->view->_buildSearchUrl($params, array('advsearch' => $advSearchToggle));
         $html .= '&nbsp;';
         $html .= $GLOBALS['Language']->getText('plugin_docman', 'filters_advsearch_'.$advSearchToggle, array($advSearchUrl));
 
         $html .= '</div><!-- docman_report_options-->';
 
-
         return $html;
     }
 
-    function getReportOptions() {
+    function getReportOptions()
+    {
         $html = '';
 
         $user = $this->getCurrentUser();
@@ -221,9 +226,9 @@ class Docman_ReportHtml
 
         $reportFactory = new Docman_ReportFactory($this->report->getGroupId());
         // For docman admin, project reports
-        if($dpm->userCanAdmin($user)) {
+        if ($dpm->userCanAdmin($user)) {
             $reportIter = $reportFactory->getProjectReportsForGroup();
-            if($reportIter->count() > 0) {
+            if ($reportIter->count() > 0) {
                 $html .= $this->getSelectOption('--', $GLOBALS['Language']->getText('plugin_docman', 'report_save_P_reports'));
             }
             $html .= $this->getSelectOptionFromReportIterator($reportIter);
@@ -231,7 +236,7 @@ class Docman_ReportHtml
 
         // For everyone, personal reports
         $reportIter = $reportFactory->getPersonalReportsForUser($user);
-        if($reportIter->count() > 0) {
+        if ($reportIter->count() > 0) {
             $html .= $this->getSelectOption('--', $GLOBALS['Language']->getText('plugin_docman', 'report_save_I_reports'));
         }
         $html .= $this->getSelectOptionFromReportIterator($reportIter);
@@ -239,7 +244,7 @@ class Docman_ReportHtml
         // New report
         $html .= $this->getSelectOption('--', '--');
         $html .= $this->getSelectOption('newi', $GLOBALS['Language']->getText('plugin_docman', 'report_save_new_report_i'));
-        if($dpm->userCanAdmin($user)) {
+        if ($dpm->userCanAdmin($user)) {
             $html .= $this->getSelectOption('newp', $GLOBALS['Language']->getText('plugin_docman', 'report_save_new_report_p'));
         }
         $html .= '</select>';
@@ -255,29 +260,30 @@ class Docman_ReportHtml
         $html .= '<a href="'.$settingsUrl.'">'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_my').'</a>';
 
         $html .= '</div><!-- docman_report_save-->';
-        
+
         return $html;
     }
 
     /**
      * Entry point
      */
-    public function toHtml($params) {
+    public function toHtml($params)
+    {
         $html = '';
-        
+
         $html .= $this->getReportSelector($params['item']);
-        
+
         $toggleIc = '<img src="'.util_get_image_theme("ic/toggle_minus.png").'" id="docman_toggle_filters" data-test="docman_report_search">';
         $toggle   = '<a href="#" title="'.$GLOBALS['Language']->getText('plugin_docman', 'report_toggle_tooltip').'">'.$toggleIc.'</a>';
         $title    = $GLOBALS['Language']->getText('plugin_docman', 'filters');
-       
+
         $hidden_fields = '';
         $hidden_fields .= '<input type="hidden" name="group_id" value="'.$this->report->getGroupId().'" />';
         $hidden_fields .= '<input type="hidden" name="id" value="'.$params['item']->getId().'" />';
         $hidden_fields .= '<input type="hidden" name="action" value="search" />';
-        
+
         $global_txt = $this->hp->purify($params['docman']->request->get('global_txt'));
-        
+
         $html .= "<div id=\"docman_filters_title\">\n";
         $html .= '<form method="get" action="?" id="plugin_docman_report_form_global">';
         $html .= $toggle;
@@ -294,12 +300,7 @@ class Docman_ReportHtml
         $html .= '</form>';
         $html .= "</div>\n";
 
-
-
-
         $html .= "<div id=\"docman_filters_fieldset\">\n";
-
-
 
         $html .= '<div style="float: left;">';
         $html .= '<form name="plugin_docman_filters" method="get" action="?" id="plugin_docman_report_form" >';
@@ -317,7 +318,6 @@ class Docman_ReportHtml
         $html .= '</form>';
         $html .= "</div> <!-- left -->\n";
 
-
         $html .= '<div style="float: right;">';
         //Retrieve the minimum length allowed when searching pattern
         $dao = Docman_ReportFactory::getDao();
@@ -325,31 +325,30 @@ class Docman_ReportHtml
         $html .= '<div class="docman_help">'.$GLOBALS['Language']->getText('plugin_docman', 'search_help', array($minLen)).'</div>';
         $html .= '</div>';
 
-
         $html .= '<div style="clear: both;"></div>';
 
         $html .= "</div> <!-- docman_filters_fieldset -->\n";
-
 
         $html .= "\n<!-- filter list -->\n";
 
         return $html;
     }
 
-    function getReportImage() {
+    function getReportImage()
+    {
         $html = '';
-        if($this->report->getImage() !== null) {
+        if ($this->report->getImage() !== null) {
             $itemId = $this->report->getImage();
-            if($itemId > 0) {
+            if ($itemId > 0) {
                 // Get Item
                 $itemFactory = new Docman_ItemFactory($this->report->getGroupId());
                 $item = $itemFactory->getItemFromDb($itemId);
-                if($item !== null) {
+                if ($item !== null) {
                     // Check perms
                     $dPm = Docman_PermissionsManager::instance($item->getGroupId());
                     $user = $this->getCurrentUser();
                     $html .= "<div style=\"text-align:center\">\n";
-                    if($dPm->userCanRead($user, $item->getId())) {
+                    if ($dPm->userCanRead($user, $item->getId())) {
                         $html .= '<img src="'.$this->defaultUrl.'&id='.$itemId.'" >';
                     } else {
                         $html .= $GLOBALS['Language']->getText('plugin_docman', 'report_image_not_readable');
@@ -365,7 +364,7 @@ class Docman_ReportHtml
     {
         $html = '';
 
-        if($this->report->getDescription() !== null) {
+        if ($this->report->getDescription() !== null) {
             $html .= $this->hp->purify($this->report->getDescription(), CODENDI_PURIFIER_BASIC, $this->report->getGroupId());
         }
         $html .= $this->getReportImage();

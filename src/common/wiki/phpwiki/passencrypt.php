@@ -1,4 +1,23 @@
-<?php echo "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"; ?>
+<?php
+/**
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+echo "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"; ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -33,40 +52,44 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Seed the random number generator.
  *
  * better_srand() ensures the randomizer is seeded only once.
- * 
+ *
  * How random do you want it? See:
  * http://www.php.net/manual/en/function.srand.php
  * http://www.php.net/manual/en/function.mt-srand.php
  */
-function better_srand($seed = '') {
-    static $wascalled = FALSE;
+function better_srand($seed = '')
+{
+    static $wascalled = false;
     if (!$wascalled) {
         if ($seed === '') {
             list($usec, $sec) = explode(" ", microtime());
-            if ($usec > 0.1) 
+            if ($usec > 0.1) {
                 $seed = (double) $usec * $sec;
-            else // once in a while use the combined LCG entropy
+            } else { // once in a while use the combined LCG entropy
                 $seed = (double) 1000000 * substr(uniqid("", true), 13);
+            }
         }
         if (function_exists('mt_srand')) {
             mt_srand($seed); // mersenne twister
         } else {
-            srand($seed);    
+            srand($seed);
         }
-        $wascalled = TRUE;
+        $wascalled = true;
     }
 }
 
-function rand_ascii($length = 1) {
+function rand_ascii($length = 1)
+{
     better_srand();
     $s = "";
     for ($i = 1; $i <= $length; $i++) {
         // return only typeable 7 bit ascii, avoid quotes
-        if (function_exists('mt_rand'))
+        if (function_exists('mt_rand')) {
             // the usually bad glibc srand()
-            $s .= chr(mt_rand(40, 126)); 
-        else
+            $s .= chr(mt_rand(40, 126));
+        } else {
             $s .= chr(rand(40, 126));
+        }
     }
     return $s;
 }
@@ -76,24 +99,28 @@ function rand_ascii($length = 1) {
 // suitable for user passwords.
 // Sequence of random ASCII numbers, letters and some special chars.
 // Note: There exist other algorithms for easy-to-remember passwords.
-function random_good_password ($minlength = 5, $maxlength = 8) {
+function random_good_password($minlength = 5, $maxlength = 8)
+{
     $newpass = '';
     // assume ASCII ordering (not valid on EBCDIC systems!)
     $valid_chars = "!#%&+-.0123456789=@ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
     $start = ord($valid_chars);
     $end   = ord(substr($valid_chars, -1));
     better_srand();
-    if (function_exists('mt_rand')) // mersenne twister
+    if (function_exists('mt_rand')) { // mersenne twister
         $length = mt_rand($minlength, $maxlength);
-    else        // the usually bad glibc rand()
+    } else { // the usually bad glibc rand()
         $length = rand($minlength, $maxlength);
+    }
     while ($length > 0) {
-        if (function_exists('mt_rand'))
+        if (function_exists('mt_rand')) {
             $newchar = mt_rand($start, $end);
-        else
+        } else {
             $newchar = rand($start, $end);
-        if (! strrpos($valid_chars, $newchar) )
+        }
+        if (! strrpos($valid_chars, $newchar)) {
             continue; // skip holes
+        }
         $newpass .= sprintf("%c", $newchar);
         $length--;
     }
@@ -106,8 +133,9 @@ function random_good_password ($minlength = 5, $maxlength = 8) {
   * for easier coding.
   */
 foreach (array('SERVER','GET','POST','ENV') as $k) {
-    if (!isset($GLOBALS['HTTP_'.$k.'_VARS']) and isset($GLOBALS['_'.$k]))
+    if (!isset($GLOBALS['HTTP_'.$k.'_VARS']) and isset($GLOBALS['_'.$k])) {
         $GLOBALS['HTTP_'.$k.'_VARS'] = $GLOBALS['_'.$k];
+    }
 }
 unset($k);
 
@@ -127,27 +155,31 @@ if (($posted['password'] != "")
      * http://www.php.net/manual/en/function.crypt.php
      */
     // Use the maximum salt length the system can handle.
-    $salt_length = max(CRYPT_SALT_LENGTH,
-                        2 * CRYPT_STD_DES,
-                        9 * CRYPT_EXT_DES,
-                       12 * CRYPT_MD5,
-                       16 * CRYPT_BLOWFISH);
+    $salt_length = max(
+        CRYPT_SALT_LENGTH,
+        2 * CRYPT_STD_DES,
+        9 * CRYPT_EXT_DES,
+        12 * CRYPT_MD5,
+        16 * CRYPT_BLOWFISH
+    );
     // Generate the encrypted password.
     $encrypted_password = crypt($password, rand_ascii($salt_length));
     $debug = $_GET['debug'];
-    if ($debug)
+    if ($debug) {
         echo "The password was encrypted using a salt length of: $salt_length<br />\n";
+    }
     echo "<p>The encrypted password is:<br />\n<br />&nbsp;&nbsp;&nbsp;\n<tt><strong>",
          htmlentities($encrypted_password),"</strong></tt></p>\n";
     echo "<hr />\n";
-}
-else if ($posted['password'] != "") {
+} elseif ($posted['password'] != "") {
     echo "The passwords did not match. Please try again.<br />\n";
 }
-if (empty($REQUEST_URI))
+if (empty($REQUEST_URI)) {
     $REQUEST_URI = $_ENV['REQUEST_URI'];
-if (empty($REQUEST_URI))
+}
+if (empty($REQUEST_URI)) {
     $REQUEST_URI = $_SERVER['REQUEST_URI'];
+}
 ?>
 
 <form action="<?php echo $REQUEST_URI ?>" method="post">

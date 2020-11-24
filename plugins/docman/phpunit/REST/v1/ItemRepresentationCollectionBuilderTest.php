@@ -22,6 +22,7 @@
 
 namespace Tuleap\Docman\REST\v1;
 
+use Codendi_HTMLPurifier;
 use Docman_Item;
 use Docman_ItemFactory;
 use Docman_PermissionsManager;
@@ -29,13 +30,17 @@ use Mockery;
 use PFUser;
 use Tuleap\Docman\Item\PaginatedDocmanItemCollection;
 use Tuleap\Docman\REST\v1\Files\FilePropertiesRepresentation;
-use Tuleap\Docman\REST\v1\Metadata\MetadataRepresentation;
+use Tuleap\Docman\REST\v1\Metadata\ItemMetadataRepresentation;
 use Tuleap\User\REST\MinimalUserRepresentation;
 use UserManager;
 
 class ItemRepresentationCollectionBuilderTest extends \PHPUnit\Framework\TestCase
 {
     use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+    /**
+     * @var \EventManager|Mockery\LegacyMockInterface|Mockery\MockInterface
+     */
+    private $event_manager;
     /**
      * @var ItemRepresentationBuilder
      */
@@ -84,10 +89,13 @@ class ItemRepresentationCollectionBuilderTest extends \PHPUnit\Framework\TestCas
         $this->item_representation_builder            = Mockery::mock(ItemRepresentationBuilder::class);
         $this->item_version_factory                   = Mockery::mock(\Docman_VersionFactory::class);
         $this->link_version_factory                   = Mockery::mock(\Docman_LinkVersionFactory::class);
+        $this->event_manager = Mockery::mock(\EventManager::class);
         $this->item_representation_visitor            = new ItemRepresentationVisitor(
             $this->item_representation_builder,
             $this->item_version_factory,
-            $this->link_version_factory
+            $this->link_version_factory,
+            $this->item_factory,
+            $this->event_manager
         );
         $this->dao                                    = Mockery::mock(\Docman_ItemDao::class);
         $this->item_representation_collection_builder = new ItemRepresentationCollectionBuilder(
@@ -98,13 +106,15 @@ class ItemRepresentationCollectionBuilderTest extends \PHPUnit\Framework\TestCas
         );
     }
 
-    public function testItReturnsRepresentationOfItemUserCanSee()
+    public function testItReturnsRepresentationOfItemUserCanSee() : void
     {
         $item = Mockery::mock(Docman_Item::class);
         $item->shouldReceive('getId')->andReturn(3);
         $item->shouldReceive('getGroupId')->andReturn(101);
-        $user = Mockery::mock(PFUser::class);
-
+        $user          = Mockery::mock(PFUser::class);
+        $html_purifier = Mockery::mock(Codendi_HTMLPurifier::class);
+        $html_purifier->shouldReceive('purifyTextWithReferences')->atLeast()->once()
+            ->andReturn('description with processed ref');
 
         $dar_item_1 = [
             'item_id'     => 1,
@@ -161,23 +171,32 @@ class ItemRepresentationCollectionBuilderTest extends \PHPUnit\Framework\TestCas
         $representation1     = new ItemRepresentation();
         $representation1->build(
             $docman_item1,
+            $html_purifier,
             $user_representation,
             true,
             ItemRepresentation::TYPE_FOLDER,
             false,
             true,
             [
-                new MetadataRepresentation(
+                new ItemMetadataRepresentation(
                     'name',
                     PLUGIN_DOCMAN_METADATA_TYPE_STRING,
                     false,
                     'value',
+                    'processed value',
                     [],
-                    true
+                    true,
+                    "name"
                 )
             ],
             false,
             false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             null
         );
 
@@ -205,26 +224,33 @@ class ItemRepresentationCollectionBuilderTest extends \PHPUnit\Framework\TestCas
         $representation2 = new ItemRepresentation();
         $representation2->build(
             $docman_item3,
+            $html_purifier,
             $user_representation,
             true,
             ItemRepresentation::TYPE_FILE,
             false,
             false,
             [
-                new MetadataRepresentation(
+                new ItemMetadataRepresentation(
                     'name',
                     PLUGIN_DOCMAN_METADATA_TYPE_STRING,
                     false,
                     'value',
+                    'processed value',
                     [],
-                    true
+                    true,
+                    'name'
                 )
             ],
             false,
             false,
             null,
             null,
-            $file_properties
+            null,
+            $file_properties,
+            null,
+            null,
+            null
         );
 
         $this->item_representation_builder->shouldReceive('buildItemRepresentation')
@@ -251,7 +277,7 @@ class ItemRepresentationCollectionBuilderTest extends \PHPUnit\Framework\TestCas
         $this->assertEquals($expected_representation, $representation);
     }
 
-    public function testItReturnsRepresentationOfParentsItems()
+    public function testItReturnsRepresentationOfParentsItems() : void
     {
         $dar_folder_1    = [
             'item_id'     => 2,
@@ -291,49 +317,73 @@ class ItemRepresentationCollectionBuilderTest extends \PHPUnit\Framework\TestCas
         $this->item_factory->shouldReceive('getItemFromDb')->withArgs([$item->getParentId()])->andReturn($docman_folder2);
         $this->item_factory->shouldReceive('getItemFromDb')->withArgs([$docman_folder2->getParentId()])->andReturn($docman_folder1);
 
+        $html_purifier = Mockery::mock(Codendi_HTMLPurifier::class);
+        $html_purifier->shouldReceive('purifyTextWithReferences')->atLeast()->once()
+            ->andReturn('description with processed ref');
+
         $project         = Mockery::mock(\Project::class);
         $project->shouldReceive('getID')->andReturn(101);
         $representation1 = new ItemRepresentation();
         $representation1->build(
             $docman_folder1,
+            $html_purifier,
             $user_representation,
             true,
             ItemRepresentation::TYPE_FOLDER,
             false,
             false,
             [
-                new MetadataRepresentation(
+                new ItemMetadataRepresentation(
                     'name',
                     PLUGIN_DOCMAN_METADATA_TYPE_STRING,
                     false,
                     'value',
+                    'processed value',
                     [],
-                    true
+                    true,
+                    "name"
                 )
             ],
             false,
-            false
+            false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
         );
         $representation2 = new ItemRepresentation();
         $representation2->build(
             $docman_folder2,
+            $html_purifier,
             $user_representation,
             true,
             ItemRepresentation::TYPE_FOLDER,
             false,
             false,
             [
-                new MetadataRepresentation(
+                new ItemMetadataRepresentation(
                     'name',
                     PLUGIN_DOCMAN_METADATA_TYPE_STRING,
                     false,
                     'value',
+                    'processed value',
                     [],
-                    true
+                    true,
+                    'name'
                 )
             ],
             false,
-            false
+            false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
         );
 
         $this->item_representation_builder->shouldReceive('buildItemRepresentation')

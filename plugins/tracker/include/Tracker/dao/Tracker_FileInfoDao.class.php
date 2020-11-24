@@ -22,11 +22,11 @@
  *  Data Access Object for Tracker_FileInfo
  */
 
-require_once('common/dao/include/DataAccessObject.class.php');
+class Tracker_FileInfoDao extends DataAccessObject
+{
 
-class Tracker_FileInfoDao extends DataAccessObject {
-
-    function __construct() {
+    function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_fileinfo';
     }
@@ -35,7 +35,8 @@ class Tracker_FileInfoDao extends DataAccessObject {
     * Searches Tracker_FileInfo by Id
     * @return DataAccessResult
     */
-    function searchById($id) {
+    function searchById($id)
+    {
         $id = $this->da->escapeInt($id);
         $sql = "SELECT *
                 FROM $this->table_name
@@ -43,7 +44,8 @@ class Tracker_FileInfoDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchFieldIdByFileInfoId($id) {
+    public function searchFieldIdByFileInfoId($id)
+    {
         $id = $this->da->escapeInt($id);
         $sql = "SELECT DISTINCT cv.field_id AS field_id
                 FROM tracker_changeset_value AS cv
@@ -57,7 +59,8 @@ class Tracker_FileInfoDao extends DataAccessObject {
         return false;
     }
 
-    public function create($submitted_by, $description, $filename, $filesize, $filetype) {
+    public function create($submitted_by, $description, $filename, $filesize, $filetype)
+    {
         $submitted_by = $this->da->escapeInt($submitted_by);
         $description  = $this->da->quoteSmart($description);
         $filename     = $this->da->quoteSmart($filename);
@@ -68,13 +71,15 @@ class Tracker_FileInfoDao extends DataAccessObject {
         return $this->updateAndGetLastId($sql);
     }
 
-    public function delete($id) {
+    public function delete($id)
+    {
         $id  = $this->da->quoteSmart($id);
         $sql = "DELETE FROM $this->table_name WHERE id = $id";
         return $this->update($sql);
     }
 
-    public function searchArtifactIdByFileInfoIdInLastChangeset($id) {
+    public function searchArtifactIdByFileInfoIdInLastChangeset($id)
+    {
         $id = $this->da->escapeInt($id);
         $sql = "SELECT DISTINCT c.artifact_id as artifact_id, cv.field_id as field_id
                 FROM tracker_changeset_value AS cv
@@ -85,7 +90,8 @@ class Tracker_FileInfoDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchArtifactIdByFileInfoId($id) {
+    public function searchArtifactIdByFileInfoId($id)
+    {
         $id = $this->da->escapeInt($id);
         $sql = "SELECT DISTINCT c.artifact_id as artifact_id, cv.field_id as field_id
                 FROM tracker_changeset_value AS cv
@@ -96,4 +102,3 @@ class Tracker_FileInfoDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 }
-?>

@@ -18,11 +18,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 require_once dirname(__FILE__) .'/../../bootstrap.php';
-require_once 'common/include/Codendi_Request.class.php';
 
-class Cardwall_OnTop_Config_UpdaterTest extends TuleapTestCase {
+class Cardwall_OnTop_Config_UpdaterTest extends TuleapTestCase
+{
 
-    public function itScheduleExecuteOnCommands() {
+    public function itScheduleExecuteOnCommands()
+    {
         $request  = mock('Codendi_Request');
         $c1       = mock('Cardwall_OnTop_Config_Command');
         $c2       = mock('Cardwall_OnTop_Config_Command');
@@ -36,4 +37,3 @@ class Cardwall_OnTop_Config_UpdaterTest extends TuleapTestCase {
         $updater->process($request);
     }
 }
-?>

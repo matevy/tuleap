@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - present. All Rights Reserved.
  * Copyright (C) 2010 Christopher Han <xiphux@gmail.com>
  *
  * This file is a part of Tuleap.
@@ -21,7 +21,6 @@
 
 namespace Tuleap\Git\GitPHP;
 
-use GeSHi;
 use Tuleap\Git\Repository\View\LanguageDetectorForPrismJS;
 use Tuleap\Layout\IncludeAssets;
 
@@ -31,16 +30,6 @@ use Tuleap\Layout\IncludeAssets;
  */
 class Controller_Blame extends ControllerBase // @codingStandardsIgnoreLine
 {
-    use \Tuleap\Git\Repository\View\FeatureFlag;
-
-    /**
-     * __construct
-     *
-     * Constructor
-     *
-     * @access public
-     * @return controller
-     */
     public function __construct()
     {
         parent::__construct();
@@ -59,13 +48,7 @@ class Controller_Blame extends ControllerBase // @codingStandardsIgnoreLine
      */
     protected function GetTemplate() // @codingStandardsIgnoreLine
     {
-        if (isset($this->params['js']) && $this->params['js']) {
-            return 'blamedata.tpl';
-        }
-        if ($this->isTuleapBeauGitActivated()) {
-            return 'tuleap/blame.tpl';
-        }
-        return 'blame.tpl';
+        return 'tuleap/blame.tpl';
     }
 
     /**
@@ -74,7 +57,7 @@ class Controller_Blame extends ControllerBase // @codingStandardsIgnoreLine
      * Gets the name of this controller's action
      *
      * @access public
-     * @param boolean $local true if caller wants the localized action name
+     * @param bool $local true if caller wants the localized action name
      * @return string action name
      */
     public function GetName($local = false) // @codingStandardsIgnoreLine
@@ -140,7 +123,6 @@ class Controller_Blame extends ControllerBase // @codingStandardsIgnoreLine
         $blob->SetCommit($commit);
         $this->tpl->assign('blob', $blob);
 
-        $blame = $blob->GetBlame();
         $this->tpl->assign('blame', $blob->GetBlame());
 
         if (isset($this->params['js']) && $this->params['js']) {
@@ -161,41 +143,12 @@ class Controller_Blame extends ControllerBase // @codingStandardsIgnoreLine
         $this->tpl->assign('pathtree', array_reverse($pathtree));
         $this->tpl->assign('tree', $commit->GetTree());
 
-        if ($this->isTuleapBeauGitActivated()) {
-            $detector = new LanguageDetectorForPrismJS();
-            $this->tpl->assign('language', $detector->getLanguageFromExtension(substr(strrchr($blob->GetName(), '.'), 1)));
-            $this->tpl->assign('bloblines', $blob->GetData(true));
-            $include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets', GIT_BASE_URL . '/assets');
-            $GLOBALS['Response']->includeFooterJavascriptFile(
-                $include_assets->getFileURL('repository-blob.js')
-            );
-            return;
-        }
-
-        $geshi = new GeSHi("", 'php');
-        $lang = $geshi->get_language_name_from_extension(substr(strrchr($blob->GetName(), '.'), 1));
-        $geshi->enable_classes();
-        $geshi->enable_strict_mode(GESHI_MAYBE);
-        $geshi->set_source($blob->GetData());
-        $geshi->set_language($lang);
-        $geshi->set_header_type(GESHI_HEADER_PRE_TABLE);
-        $geshi->enable_line_numbers(GESHI_NORMAL_LINE_NUMBERS);
-        $geshi->set_overall_id('git-repository-blame-file');
-        $output = $geshi->parse_code();
-
-        $bodystart = strpos($output, '<td');
-        $bodyend   = strrpos($output, '</tr>');
-
-        if (($bodystart !== false) && ($bodyend !== false)) {
-            $geshihead = substr($output, 0, $bodystart);
-            $geshifoot = substr($output, $bodyend);
-            $geshibody = substr($output, $bodystart, $bodyend);
-
-            $this->tpl->assign('geshihead', $geshihead);
-            $this->tpl->assign('geshibody', $geshibody);
-            $this->tpl->assign('geshifoot', $geshifoot);
-            $this->tpl->assign('extracss', $geshi->get_stylesheet());
-            $this->tpl->assign('geshi', true);
-        }
+        $detector = new LanguageDetectorForPrismJS();
+        $this->tpl->assign('language', $detector->getLanguage($blob->GetName()));
+        $this->tpl->assign('bloblines', $blob->GetData(true));
+        $include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets', GIT_BASE_URL . '/assets');
+        $GLOBALS['Response']->includeFooterJavascriptFile(
+            $include_assets->getFileURL('repository-blob.js')
+        );
     }
 }

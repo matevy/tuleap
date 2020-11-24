@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -25,7 +25,10 @@ use Backend;
 use EventManager;
 use ForgeConfig;
 use Logger;
+use RuntimeException;
 use Symfony\Component\VarExporter\VarExporter;
+use Webimpress\SafeWriter\Exception\ExceptionInterface;
+use Webimpress\SafeWriter\FileWriter;
 
 class PluginLoader
 {
@@ -35,21 +38,28 @@ class PluginLoader
      * @var EventManager
      */
     private $event_manager;
+
     /**
      * @var \PluginFactory
      */
     private $plugin_factory;
 
-    public function __construct(EventManager $event_manager, \PluginFactory $plugin_factory)
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    public function __construct(EventManager $event_manager, \PluginFactory $plugin_factory, Logger $logger)
     {
         $this->event_manager  = $event_manager;
         $this->plugin_factory = $plugin_factory;
+        $this->logger = $logger;
     }
 
     public function loadPlugins()
     {
         $proxy = $this->getFromCache();
-        if ($proxy === false) {
+        if ($proxy === null) {
             $proxy = $this->getHooksOfAvailablePlugins();
             $this->storeInCache($proxy);
         }
@@ -60,7 +70,7 @@ class PluginLoader
                     $event_name,
                     function ($event, $params) use ($proxy, $listener) {
                         $plugin = $proxy->getPlugin($listener->plugin_id);
-                        $this->event_manager->dispatch($listener->event, $plugin, $listener->callback, $listener->recall_event, $params);
+                        $this->event_manager->eventManagerDispatch($listener->event, $plugin, $listener->callback, $listener->recall_event, $params);
                     }
                 );
             }
@@ -79,26 +89,34 @@ class PluginLoader
         return ForgeConfig::get('codendi_cache_dir') . '/' . self::HOOK_CACHE_KEY;
     }
 
-    /**
-     * @return bool|SerializedPluginProxy
-     */
-    private function getFromCache()
+    private function getFromCache() : ?SerializedPluginProxy
     {
-        if (file_exists(self::getHooksCacheFile())) {
-            $cache = include self::getHooksCacheFile();
-            return new SerializedPluginProxy($cache);
+        if (! file_exists(self::getHooksCacheFile())) {
+            return null;
         }
-        return false;
+        ob_start();
+        $cache = include self::getHooksCacheFile();
+        ob_end_clean();
+        if (! $cache instanceof EventPluginCache) {
+            return null;
+        }
+        return new SerializedPluginProxy($cache);
     }
 
-    private function storeInCache(SerializedPluginProxy $proxy)
+    private function storeInCache(SerializedPluginProxy $proxy) : void
     {
+        self::invalidateCache();
         $this->serializeInFile(self::getHooksCacheFile(), $proxy->getSerializablePluginCache());
     }
 
-    private function serializeInFile($path, $var)
+    private function serializeInFile(string $path, EventPluginCache $var) : void
     {
-        file_put_contents($path, '<?php'.PHP_EOL.'return '.VarExporter::export($var).';');
+        $content = '<?php'.PHP_EOL.'return '.VarExporter::export($var).';';
+        try {
+            FileWriter::writeFile($path, $content);
+        } catch (ExceptionInterface $exception) {
+            $this->logger->error("Unable to store tuleap hooks content:" . $exception->getMessage());
+        }
     }
 
     private function getHooksOfAvailablePlugins()

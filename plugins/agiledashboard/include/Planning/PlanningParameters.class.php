@@ -21,7 +21,8 @@
 /**
  * User-editable parameters of the planning.
  */
-class PlanningParameters {
+class PlanningParameters
+{
 
     public const NAME                = 'name';
     public const BACKLOG_TITLE       = 'backlog_title';
@@ -36,7 +37,8 @@ class PlanningParameters {
     public $planning_tracker_id;
     public $priority_change_permission;
 
-    public static function fromArray(array $array) {
+    public static function fromArray(array $array)
+    {
         $parameters  = new PlanningParameters();
         $backlog_ids = PlanningParameters::get($array, self::BACKLOG_TRACKER_IDS);
 
@@ -50,7 +52,8 @@ class PlanningParameters {
         return $parameters;
     }
 
-    private static function get($array, $key) {
+    private static function get($array, $key)
+    {
         return array_key_exists($key, $array) ? $array[$key] : '';
     }
 }

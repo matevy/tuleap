@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,20 +18,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter extends Tracker_XML_Exporter_ChangesetValue_ChangesetValueXMLExporter {
+use Tuleap\Tracker\FormElement\Field\File\IdForXMLImportExportConvertor;
 
-    public const ID_PREFIX = 'fileinfo_';
-
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter extends Tracker_XML_Exporter_ChangesetValue_ChangesetValueXMLExporter
+{
     /**
      * @var Tracker_XML_Exporter_FilePathXMLExporter
      */
     private $path_exporter;
 
-    public function __construct(Tracker_XML_Exporter_FilePathXMLExporter $path_exporter) {
+    public function __construct(Tracker_XML_Exporter_FilePathXMLExporter $path_exporter)
+    {
         $this->path_exporter = $path_exporter;
     }
 
-    protected function getFieldChangeType() {
+    protected function getFieldChangeType()
+    {
         return 'file';
     }
 
@@ -41,11 +43,6 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter extends 
         Tracker_Artifact $artifact,
         Tracker_Artifact_ChangesetValue $changeset_value
     ) {
-
-        if (! $this->isCurrentChangesetTheLastChangeset($artifact, $changeset_value)) {
-            return;
-        }
-
         $field_change = $this->createFieldChangeNodeInChangesetNode(
             $changeset_value,
             $changeset_xml
@@ -65,6 +62,10 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter extends 
             $field_change
         );
 
+        if (! $this->isCurrentChangesetTheLastChangeset($artifact, $changeset_value)) {
+            return;
+        }
+
         array_walk(
             $files,
             array($this, 'appendFileToArtifactNode'),
@@ -81,7 +82,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter extends 
         $node->addAttribute('ref', $this->getFileInfoIdForXML($file_info));
     }
 
-    private function appendEmptyValueToFieldChangeNode(SimpleXMLElement $field_xml) {
+    private function appendEmptyValueToFieldChangeNode(SimpleXMLElement $field_xml)
+    {
         $field_xml->addChild('value');
     }
 
@@ -94,15 +96,16 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter extends 
         $cdata_factory = new XML_SimpleXMLCDATAFactory();
 
         $node = $artifact_xml->addChild('file');
-        $node->addAttribute('id',      $this->getFileInfoIdForXML($file_info));
+        $node->addAttribute('id', $this->getFileInfoIdForXML($file_info));
         $cdata_factory->insert($node, 'filename', $file_info->getFilename());
-        $node->addChild('path',        $this->path_exporter->getPath($file_info));
-        $node->addChild('filesize',    $file_info->getFilesize());
-        $node->addChild('filetype',    $file_info->getFiletype());
+        $node->addChild('path', $this->path_exporter->getPath($file_info));
+        $node->addChild('filesize', $file_info->getFilesize());
+        $node->addChild('filetype', $file_info->getFiletype());
         $cdata_factory->insert($node, 'description', $file_info->getDescription());
     }
 
-    private function getFileInfoIdForXML(Tracker_FileInfo $file_info) {
-        return self::ID_PREFIX . $file_info->getId();
+    private function getFileInfoIdForXML(Tracker_FileInfo $file_info)
+    {
+        return IdForXMLImportExportConvertor::convertFileInfoIdToXMLId((int) $file_info->getId());
     }
 }

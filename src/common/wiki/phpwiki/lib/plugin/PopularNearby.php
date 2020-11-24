@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: PopularNearby.php,v 1.5 2004/11/23 15:17:19 rurban Exp $');
 /*
  Copyright 2004 $ThePhpWikiProgrammingTeam
@@ -20,7 +21,7 @@ rcs_id('$Id: PopularNearby.php,v 1.5 2004/11/23 15:17:19 rurban Exp $');
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/** Re-implement the classic phpwiki-1.2 feature of the 
+/** Re-implement the classic phpwiki-1.2 feature of the
  *  popular nearby pages, specific to the from/to links:
  *    5 best incoming links: xx, xx, xx, ...
  *    5 best outgoing links: xx, xx, xx, ...
@@ -33,27 +34,33 @@ rcs_id('$Id: PopularNearby.php,v 1.5 2004/11/23 15:17:19 rurban Exp $');
 * <small><?plugin PopularNearby mode=nearby ?></small>
 
 */
- 
+
 
 require_once('lib/PageList.php');
 
-class WikiPlugin_PopularNearby
-extends WikiPlugin
+class WikiPlugin_PopularNearby extends WikiPlugin
 {
-    function getName () {
+    function getName()
+    {
         return _("PopularNearby");
     }
 
-    function getDescription () {
+    function getDescription()
+    {
         return _("List the most popular pages nearby.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.5 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.5 $"
+        );
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array('pagename' => '[pagename]',
                      'mode'     => 'nearby', // or 'incoming' or 'outgoing'
                      //'exclude'  => false,  // not yet
@@ -61,37 +68,46 @@ extends WikiPlugin
                      'noheader' => 0,
                     );
     }
-    
-    function run($dbi, $argstr, &$request, $basepage) {
-    	$args = $this->getArgs($argstr, $request);
+
+    function run($dbi, $argstr, &$request, $basepage)
+    {
+        $args = $this->getArgs($argstr, $request);
         extract($args);
         $header = '';
         $page = $dbi->getPage($pagename);
         switch ($mode) {
-        case 'incoming': // not the hits, but the number of links
-            if (! $noheader )
-                $header = sprintf(_("%d best incoming links: "),$limit); 
-            $links = $this->sortedLinks($page->getLinks("reversed"),"reversed",$limit);
-            break;
-        case 'outgoing': // not the hits, but the number of links
-            if (! $noheader )
-                $header = sprintf(_("%d best outgoing links: "),$limit); 
-            $links = $this->sortedLinks($page->getLinks(),false,$limit);
-            break;
-        case 'nearby':  // all linksfrom and linksto, sorted by hits 
-            if (! $noheader )
-                $header = sprintf(_("%d most popular nearby: "),$limit); 
-            $inlinks = $page->getLinks();
-            $outlinks = $page->getLinks('reversed');
-            // array_merge doesn't sort out duplicate page objects here.
-            $links = $this->sortedLinks(array_merge($inlinks->asArray(),
-                                                    $outlinks->asArray()),
-                                        false, $limit);
-            break;
+            case 'incoming': // not the hits, but the number of links
+                if (! $noheader) {
+                    $header = sprintf(_("%d best incoming links: "), $limit);
+                }
+                $links = $this->sortedLinks($page->getLinks("reversed"), "reversed", $limit);
+                break;
+            case 'outgoing': // not the hits, but the number of links
+                if (! $noheader) {
+                    $header = sprintf(_("%d best outgoing links: "), $limit);
+                }
+                $links = $this->sortedLinks($page->getLinks(), false, $limit);
+                break;
+            case 'nearby':  // all linksfrom and linksto, sorted by hits
+                if (! $noheader) {
+                    $header = sprintf(_("%d most popular nearby: "), $limit);
+                }
+                $inlinks = $page->getLinks();
+                $outlinks = $page->getLinks('reversed');
+                // array_merge doesn't sort out duplicate page objects here.
+                $links = $this->sortedLinks(
+                    array_merge(
+                        $inlinks->asArray(),
+                        $outlinks->asArray()
+                    ),
+                    false,
+                    $limit
+                );
+                break;
         }
         $html = HTML($header);
         for ($i=0; $i<count($links); $i++) {
-            $html->pushContent($links[$i]['format'],$i<count($links)-1?', ':'');
+            $html->pushContent($links[$i]['format'], $i<count($links)-1?', ':'');
         }
         return $html;
     }
@@ -106,52 +122,67 @@ extends WikiPlugin
      *
      * @param $pages array of WikiDB_Page's or a Page_iterator
      * @param $direction boolean: true if incoming links
-     * 
+     *
      * @return Array of sorted links
      */
-    function sortedLinks($pages, $direction=false, $limit=5) {
-    	$links = array();
+    function sortedLinks($pages, $direction = false, $limit = 5)
+    {
+        $links = array();
         if (is_array($pages)) {
             $already = array(); // need special duplicate check
             foreach ($pages as $page) {
-                if (isset($already[$page->_pagename])) continue;
-                else $already[$page->_pagename] = 1;
+                if (isset($already[$page->_pagename])) {
+                    continue;
+                } else {
+                    $already[$page->_pagename] = 1;
+                }
                 // just the number of hits
                 $hits = $page->get('hits');
-                if (!$hits) continue;
+                if (!$hits) {
+                    continue;
+                }
                 $links[] = array('hits' => $hits,
                                  'pagename' => $page->_pagename,
-                                 'format' => HTML(WikiLink($page->_pagename),' (' . $hits . ')'));
+                                 'format' => HTML(WikiLink($page->_pagename), ' (' . $hits . ')'));
             }
         } else {
             while ($page = $pages->next()) {
-                // different score algorithm: 
+                // different score algorithm:
                 //   the number of links to/from the page
                 $l = $page->getLinks(!$direction);
                 $score = $l->count();
-                if (!$score) continue;
+                if (!$score) {
+                    continue;
+                }
                 $name = $page->_pagename;
                 $links[] = array('hits' => $score,
                                  'pagename' => $name,
-                                 'format' => HTML(WikiLink($name),' (' . $score . ')'));
+                                 'format' => HTML(WikiLink($name), ' (' . $score . ')'));
             }
             $pages->free();
         }
-        if (count($links) > $limit)
+        if (count($links) > $limit) {
             array_splice($links, $limit);
+        }
         return $this->sortByHits($links);
     }
 
-    function sortByHits($links) {
-        if (!$links) return array();
-        usort($links,'cmp_by_hits'); // php-4.0.6 cannot use methods
+    function sortByHits($links)
+    {
+        if (!$links) {
+            return array();
+        }
+        usort($links, 'cmp_by_hits'); // php-4.0.6 cannot use methods
         reset($links);
         return $links;
     }
 };
 
-function cmp_by_hits($a, $b) {
-     if ($a['hits'] == $b['hits']) return 0;
+function cmp_by_hits($a, $b)
+{
+    if ($a['hits'] == $b['hits']) {
+        return 0;
+    }
      return $a['hits'] < $b['hits'] ? 1 : -1;
 }
 
@@ -185,4 +216,3 @@ function cmp_by_hits($a, $b) {
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

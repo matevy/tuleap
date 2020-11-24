@@ -29,7 +29,8 @@ use Exception;
 use AgileDashboard_KanbanUserPreferences;
 use AgileDashboard_KanbanActionsChecker;
 
-class KanbanRepresentation {
+class KanbanRepresentation
+{
 
     public const ROUTE         = 'kanban';
     public const BACKLOG_ROUTE = 'backlog';
@@ -133,7 +134,6 @@ class KanbanRepresentation {
     ) {
         $columns = $column_factory->getAllKanbanColumnsForAKanban($kanban, $user);
 
-
         foreach ($columns as $column) {
             try {
                 $kanban_actions_checker->checkUserCanDeleteColumn($user, $kanban, $column);
@@ -156,7 +156,8 @@ class KanbanRepresentation {
         }
     }
 
-    private function getTracker(AgileDashboard_Kanban $kanban) {
+    private function getTracker(AgileDashboard_Kanban $kanban)
+    {
         return TrackerFactory::instance()->getTrackerById($kanban->getTrackerId());
     }
 }

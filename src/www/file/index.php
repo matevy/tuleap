@@ -21,14 +21,12 @@
 
 // Redirect to showfiles.php when no script name is given.
 // Avoid listing content of the directory!
-require_once('pre.php');
-require_once('common/include/HTTPRequest.class.php');
-require_once('common/valid/ValidFactory.class.php');
+require_once __DIR__ . '/../include/pre.php';
 
 $request  = HTTPRequest::instance();
 $vGroupId = new Valid_GroupId();
 $vGroupId->required();
-if($request->valid($vGroupId)) {
+if ($request->valid($vGroupId)) {
     $group_id = $request->get('group_id');
     $GLOBALS['Response']->redirect('/file/showfiles.php?group_id='.$group_id);
 } else {

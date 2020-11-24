@@ -21,9 +21,11 @@
 require_once dirname(__FILE__) .'/../../../bootstrap.php';
 require_once dirname(__FILE__) .'/../../../../../../tests/simpletest/common/include/builders/aRequest.php';
 
-class Cardwall_OnTop_Config_Command_DeleteMappingFieldsTest extends TuleapTestCase {
+class Cardwall_OnTop_Config_Command_DeleteMappingFieldsTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->tracker_id = 666;
@@ -54,7 +56,8 @@ class Cardwall_OnTop_Config_Command_DeleteMappingFieldsTest extends TuleapTestCa
         $this->command   = new Cardwall_OnTop_Config_Command_DeleteMappingFields($tracker, $this->dao, $this->value_dao, $tracker_factory, $existing_mappings);
     }
 
-    public function itDeletesOnlyCustomMappings() {
+    public function itDeletesOnlyCustomMappings()
+    {
         $request = aRequest()->with('custom_mapping', array('13' => '1', '42' => 0, '69' => 0))->build();
         stub($this->dao)->delete($this->tracker_id, 69)->at(0)->returns(true);
         stub($this->dao)->delete()->count(1);
@@ -63,4 +66,3 @@ class Cardwall_OnTop_Config_Command_DeleteMappingFieldsTest extends TuleapTestCa
         $this->command->execute($request);
     }
 }
-?>

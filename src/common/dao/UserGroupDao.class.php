@@ -20,12 +20,14 @@
 
 require_once('include/DataAccessObject.class.php');
 
-class UserGroupDao extends DataAccessObject {
+class UserGroupDao extends DataAccessObject
+{
     /**
     * Searches User-Group by UserId
     * @return DataAccessResult
     */
-    function searchByUserId($user_id) {
+    function searchByUserId($user_id)
+    {
         $user_id = $this->da->escapeInt($user_id);
         $sql = "SELECT *
                 FROM user_group
@@ -37,7 +39,8 @@ class UserGroupDao extends DataAccessObject {
     * Searches User-Group by UserId
     * @return DataAccessResult
     */
-    function searchActiveGroupsByUserId($user_id) {
+    function searchActiveGroupsByUserId($user_id)
+    {
         $user_id = $this->da->escapeInt($user_id);
         $sql = "SELECT *
                 FROM user_group INNER JOIN groups USING(group_id)
@@ -64,12 +67,13 @@ class UserGroupDao extends DataAccessObject {
     /**
      * return users count, members of given project
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
-     * @return Integer
+     * @return int
      *
      */
-    function returnUsersNumberByGroupId($groupId) {
+    function returnUsersNumberByGroupId($groupId)
+    {
         $groupId = $this->da->escapeInt($groupId);
         $sql = 'SELECT count(*) as numrows
                 FROM user_group
@@ -81,11 +85,12 @@ class UserGroupDao extends DataAccessObject {
     /**
      * Return project admins of given project
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
-     * @return Data Access Result
+     * @return DataAccessResult
      */
-    function returnProjectAdminsByGroupId($groupId) {
+    function returnProjectAdminsByGroupId($groupId)
+    {
         $sql = 'SELECT u.email as email  FROM user u
                     JOIN user_group ug
                     USING(user_id)
@@ -111,18 +116,20 @@ class UserGroupDao extends DataAccessObject {
     /**
      * Remove users from a given project
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
-     * @return Boolean
+     * @return bool
      */
-    function removeProjectMembers($groupId) {
+    function removeProjectMembers($groupId)
+    {
         $groupId = $this->da->escapeInt($groupId);
         $sql     = "DELETE FROM user_group".
                    " WHERE group_id = ".$groupId;
         return $this->update($sql);
     }
 
-    public function updateUserGroupFlags($user_id, $group_id, $flag) {
+    public function updateUserGroupFlags($user_id, $group_id, $flag)
+    {
         if ($flag == '') {
             return false;
         }
@@ -142,12 +149,13 @@ class UserGroupDao extends DataAccessObject {
     /**
      * Return name and id of all ugroups belonging to a specific project
      *
-     * @param Integer $groupId    Id of the project
+     * @param int $groupId Id of the project
      * @param Array   $predefined List of predefined ugroup id
      *
-     * @return DataAccessResult
+     * @return DataAccessResult|false
      */
-    public function getExistingUgroups($groupId, $predefined = null) {
+    public function getExistingUgroups($groupId, $predefined = null)
+    {
         $extra = '';
         if ($predefined !== null && is_array($predefined)) {
             $predefined = implode(',', $predefined);
@@ -161,14 +169,16 @@ class UserGroupDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getAllForgeUGroups() {
+    public function getAllForgeUGroups()
+    {
         $sql = "SELECT ugroup.* FROM ugroup
                 WHERE ugroup.group_id IS NULL";
 
         return $this->retrieve($sql);
     }
 
-    public function getForgeUGroup($user_group_id) {
+    public function getForgeUGroup($user_group_id)
+    {
         $user_group_id = $this->da->escapeInt($user_group_id);
 
         $sql = "SELECT ugroup.* FROM ugroup
@@ -182,7 +192,8 @@ class UserGroupDao extends DataAccessObject {
     * @return bool
     * @throws User_UserGroupNameInvalidException
     */
-    public function updateForgeUGroup($user_group_id, $name, $description) {
+    public function updateForgeUGroup($user_group_id, $name, $description)
+    {
         if (! $this->isUserGroupNameValid($name, $user_group_id)) {
             throw new User_UserGroupNameInvalidException($name);
         }
@@ -204,7 +215,8 @@ class UserGroupDao extends DataAccessObject {
      * @return int
      * @throws User_UserGroupNameInvalidException
      */
-    public function createForgeUGroup($name, $description) {
+    public function createForgeUGroup($name, $description)
+    {
         if (! $this->isUserGroupNameValid($name, null)) {
             throw new User_UserGroupNameInvalidException($name);
         }
@@ -220,7 +232,8 @@ class UserGroupDao extends DataAccessObject {
         return $this->updateAndGetLastId($sql);
     }
 
-    private function isUserGroupNameValid($name, $user_group_id) {
+    private function isUserGroupNameValid($name, $user_group_id)
+    {
         if (! $name) {
             return false;
         }
@@ -242,9 +255,10 @@ class UserGroupDao extends DataAccessObject {
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
-    public function deleteForgeUGroup($user_group_id) {
+    public function deleteForgeUGroup($user_group_id)
+    {
         $user_group_id = $this->da->escapeInt($user_group_id);
 
         $this->startTransaction();
@@ -252,15 +266,15 @@ class UserGroupDao extends DataAccessObject {
         $sql = "DELETE FROM ugroup_user
                 WHERE ugroup_id = $user_group_id";
 
-        if(! $this->update($sql)) {
-           $this->rollback();
-           return false;
+        if (! $this->update($sql)) {
+            $this->rollback();
+            return false;
         }
 
         $sql = "DELETE FROM ugroup_forge_permission
                 WHERE ugroup_id = $user_group_id";
 
-        if(! $this->update($sql)) {
+        if (! $this->update($sql)) {
             $this->rollback();
             return false;
         }
@@ -269,7 +283,7 @@ class UserGroupDao extends DataAccessObject {
                 WHERE ugroup_id = $user_group_id
                 AND ugroup.group_id IS NULL";
 
-        if(! $this->update($sql)) {
+        if (! $this->update($sql)) {
             $this->rollback();
             return false;
         }
@@ -278,10 +292,12 @@ class UserGroupDao extends DataAccessObject {
         return true;
     }
 
-    public function getDynamicForgeUserGroupByName($name) {
+    public function getDynamicForgeUserGroupByName($name)
+    {
         $name = $this->da->quoteSmart($name);
 
         $sql = "SELECT * FROM ugroup WHERE name = $name";
-        return $this->retrieveFirstRow($sql);;
+        return $this->retrieveFirstRow($sql);
+        ;
     }
 }

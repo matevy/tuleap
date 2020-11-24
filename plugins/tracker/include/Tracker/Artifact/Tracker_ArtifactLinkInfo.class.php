@@ -26,20 +26,21 @@ class Tracker_ArtifactLinkInfo
     protected $group_id;
     protected $tracker_id;
     protected $last_changeset_id;
-    private   $nature;
+    private $nature;
     /**
      * @var Tracker_Artifact
      */
-    private   $artifact;
+    private $artifact;
 
     /**
-     * @param integer $artifact_id
+     * @param int $artifact_id
      * @param string  $keyword
-     * @param integer $group_id
-     * @param integer $last_changeset_id
+     * @param int $group_id
+     * @param int $last_changeset_id
      * @param string $nature
      */
-    public function __construct($artifact_id, $keyword, $group_id, $tracker_id, $last_changeset_id, $nature) {
+    public function __construct($artifact_id, $keyword, $group_id, $tracker_id, $last_changeset_id, $nature)
+    {
         $this->artifact_id       = $artifact_id;
         $this->keyword           = $keyword;
         $this->group_id          = $group_id;
@@ -73,28 +74,32 @@ class Tracker_ArtifactLinkInfo
     /**
      * @return int the id of the artifact link
      */
-    public function getArtifactId() {
+    public function getArtifactId()
+    {
         return $this->artifact_id;
     }
 
     /**
      * @return string the keyword of the artifact link
      */
-    public function getKeyword() {
+    public function getKeyword()
+    {
         return $this->keyword;
     }
 
     /**
      * @return int the group_id of the artifact link
      */
-    public function getGroupId() {
+    public function getGroupId()
+    {
         return $this->group_id;
     }
 
     /**
      * @return int the tracker_id of the artifact link
      */
-    public function getTrackerId() {
+    public function getTrackerId()
+    {
         return $this->tracker_id;
     }
 
@@ -103,14 +108,16 @@ class Tracker_ArtifactLinkInfo
      *
      * @return Tracker The tracker this artifact belongs to
      */
-    public function getTracker() {
+    public function getTracker()
+    {
         return TrackerFactory::instance()->getTrackerByid($this->tracker_id);
     }
 
     /**
      * @return int the last changeset_id of the artifact link
      */
-    public function getLastChangesetId() {
+    public function getLastChangesetId()
+    {
         return $this->last_changeset_id;
     }
 
@@ -124,8 +131,9 @@ class Tracker_ArtifactLinkInfo
         return '<a class="cross-reference" href="' . $this->getUrl() . '">' . Codendi_HTMLPurifier::instance()->purify($this->getLabel()) . '</a>';
     }
 
-    public function getUrl() {
-        return get_server_url() . '/goto?'. http_build_query(
+    public function getUrl()
+    {
+        return HTTPRequest::instance()->getServerUrl() . '/goto?'. http_build_query(
             array(
                 'key'      => $this->getKeyword(),
                 'val'      => $this->getArtifactId(),
@@ -139,30 +147,34 @@ class Tracker_ArtifactLinkInfo
      *
      * @return string the raw value of this artifact link
      */
-    public function getLabel() {
+    public function getLabel()
+    {
         return $this->getKeyword() . ' #' . $this->getArtifactId();
     }
 
-    public function getNature() {
+    public function getNature()
+    {
         return $this->nature;
     }
 
-    public function setNature($nature) {
+    public function setNature($nature)
+    {
         $this->nature = $nature;
     }
 
     /**
      * Returns true is the current user can see the artifact
      *
-     * @return boolean
+     * @return bool
      */
-    public function userCanView(PFUser $user) {
+    public function userCanView(PFUser $user)
+    {
         $artifact = $this->getArtifact();
 
-        return $artifact->userCanView($user);
+        return $artifact !== null && $artifact->userCanView($user);
     }
 
-    public function getArtifact() : Tracker_Artifact
+    public function getArtifact() : ?Tracker_Artifact
     {
         if (! $this->artifact) {
             $this->artifact = Tracker_ArtifactFactory::instance()->getArtifactById($this->artifact_id);
@@ -177,7 +189,8 @@ class Tracker_ArtifactLinkInfo
         return $this;
     }
 
-    public function __toString() {
+    public function __toString()
+    {
         return $this->getLabel();
     }
 

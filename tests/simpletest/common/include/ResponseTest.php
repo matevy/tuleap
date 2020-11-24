@@ -18,11 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/include/Response.class.php';
+class ResponseTest extends TuleapTestCase
+{
 
-class ResponseTest extends TuleapTestCase {
-
-    public function itSendsJSON() {
+    public function itSendsJSON()
+    {
         $response = partial_mock('Response', array('setContentType'));
         stub($response)->setContentType('application/json')->once();
 
@@ -32,5 +32,3 @@ class ResponseTest extends TuleapTestCase {
         $this->assertEqual($output, '["toto"]');
     }
 }
-
-?>

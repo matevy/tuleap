@@ -21,97 +21,108 @@
 require_once 'IProvideDataAccessResult.class.php';
 
 /**
- * Null object alternative for DataAccessResult 
- * 
+ * Null object alternative for DataAccessResult
+ *
  * Use it when you feel returning something empty without teadious if/else code
  * in calling method
  * @deprecated See \Tuleap\DB\DataAccessObject
  */
-class DataAccessResultEmpty implements IProvideDataAccessResult {
+class DataAccessResultEmpty implements IProvideDataAccessResult
+{
 
     /**
      * @see IProvideDataAccessResult
      * @deprecated
-     * @return Boolean
+     * @return bool
      */
-    public function getRow() {
+    public function getRow()
+    {
         return false;
     }
 
     /**
      * @see IProvideDataAccessResult
      * @deprecated
-     * @return Integer
+     * @return int
      */
-    public function rowCount() {
+    public function rowCount()
+    {
         return 0;
     }
 
     /**
      * @see IProvideDataAccessResult
      * @deprecated
-     * @return Boolean
+     * @return bool
      */
-    public function isError() {
-        return false;
-    }
-    
-    /**
-     * @see IProvideDataAccessResult
-     * @deprecated
-     * @return Boolean
-     */
-    public function current() {
-        return false;
-    }
-    
-    /**
-     * @see IProvideDataAccessResult
-     * @deprecated
-     * @return void
-     */
-    public function next() {
-    }
-    
-    /**
-     * @see IProvideDataAccessResult
-     * @deprecated
-     * @return Boolean
-     */
-    public function valid() {
-        return false;
-    }
-    
-    /**
-     * @see IProvideDataAccessResult
-     * @deprecated
-     * @return void
-     */
-    public function rewind() {
-    }
-    
-    /**
-     * @see IProvideDataAccessResult
-     * @deprecated
-     * @return Boolean
-     */
-    public function key() {
+    public function isError()
+    {
         return false;
     }
 
     /**
      * @see IProvideDataAccessResult
      * @deprecated
-     * @return Integer
+     * @return bool
      */
-    public function count() {
+    public function current()
+    {
+        return false;
+    }
+
+    /**
+     * @see IProvideDataAccessResult
+     * @deprecated
+     * @return void
+     */
+    public function next()
+    {
+    }
+
+    /**
+     * @see IProvideDataAccessResult
+     * @deprecated
+     * @return bool
+     */
+    public function valid()
+    {
+        return false;
+    }
+
+    /**
+     * @see IProvideDataAccessResult
+     * @deprecated
+     * @return void
+     */
+    public function rewind()
+    {
+    }
+
+    /**
+     * @see IProvideDataAccessResult
+     * @deprecated
+     * @return bool
+     */
+    public function key()
+    {
+        return false;
+    }
+
+    /**
+     * @see IProvideDataAccessResult
+     * @deprecated
+     * @return int
+     */
+    public function count()
+    {
         return 0;
     }
 
     /**
      * @deprecated
      */
-    public function instanciateWith() {
+    public function instanciateWith()
+    {
         return $this;
     }
 }

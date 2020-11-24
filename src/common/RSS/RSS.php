@@ -19,19 +19,23 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class RSS {
+class RSS
+{
     var $channel;
     var $items;
-    function __construct($channel) {
+    function __construct($channel)
+    {
         $this->channel = $channel;
         $this->items   = array();
     }
 
-    function addItem($item) {
+    function addItem($item)
+    {
         $this->items[] = $item;
     }
 
-    function display() {
+    function display()
+    {
         $channel_elements   = array('title', 'description', 'link', 'language', 'rating', 'image', 'textinput', 'copyright', 'pubDate', 'lastBuildDate', 'docs', 'managingEditor', 'webMaster', 'skipHours', 'skipDays');
         $image_elements     = array('title', 'description', 'link', 'url', 'width', 'height');
         $textinput_elements = array('title', 'description', 'link', 'name');
@@ -40,12 +44,12 @@ class RSS {
         echo '<?xml version="1.0"  encoding="UTF-8" ?>'. "\n";
         echo '<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">';
         echo '<channel>';
-        foreach($channel_elements as $channel_element) {
+        foreach ($channel_elements as $channel_element) {
             if (isset($this->channel[$channel_element])) {
                 echo '<'. $channel_element .'>';
                 $special = $channel_element.'_elements';
                 if (isset($$special)) {
-                    foreach($$special as $element) {
+                    foreach ($$special as $element) {
                         if (isset($this->channel[$channel_element][$element])) {
                             echo '<'. $element .'>';
                             echo $this->channel[$channel_element][$element];
@@ -58,9 +62,9 @@ class RSS {
                 echo '</'. $channel_element .'>';
             }
         }
-        foreach($this->items as $item) {
+        foreach ($this->items as $item) {
             echo '<item>';
-            foreach($item_elements as $item_element) {
+            foreach ($item_elements as $item_element) {
                 if (isset($item[$item_element])) {
                     echo '<'. $item_element .'>';
                     echo $item[$item_element];
@@ -73,4 +77,3 @@ class RSS {
         echo '</rss>';
     }
 }
-?>

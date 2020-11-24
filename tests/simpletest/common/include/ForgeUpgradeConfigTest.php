@@ -19,11 +19,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ForgeUpgradeConfigTest extends TuleapTestCase {
+class ForgeUpgradeConfigTest extends TuleapTestCase
+{
     private $fixtures;
     private $command;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->fixtures = $this->getTmpDir();
         $source      = escapeshellarg(dirname(__FILE__).'/_fixtures');
@@ -32,13 +34,15 @@ class ForgeUpgradeConfigTest extends TuleapTestCase {
         $this->command = mock('System_Command');
     }
 
-    public function testPluginPathIsInConfig() {
+    public function testPluginPathIsInConfig()
+    {
         $fuc = new ForgeUpgradeConfig($this->command, $this->fixtures.'/forgeupgrade-config-docman.ini');
         $this->assertTrue($fuc->existsInPath('/usr/share/tuleap/plugins/docman'));
         $this->assertFalse($fuc->existsInPath('/usr/share/tuleap/plugins/git'));
     }
 
-    public function testAddPathInFile() {
+    public function testAddPathInFile()
+    {
         copy($this->fixtures.'/forgeupgrade-config-docman.ini', $this->fixtures.'/forgeupgrade-addpath.ini');
 
         $fuc = new ForgeUpgradeConfig($this->command, $this->fixtures.'/forgeupgrade-addpath.ini');
@@ -54,7 +58,8 @@ class ForgeUpgradeConfigTest extends TuleapTestCase {
         unlink($this->fixtures.'/forgeupgrade-addpath.ini');
     }
 
-    public function testRemovePathAtTheEndOfFile() {
+    public function testRemovePathAtTheEndOfFile()
+    {
         copy($this->fixtures.'/forgeupgrade-config-docman.ini', $this->fixtures.'/forgeupgrade-addpath.ini');
 
         $fuc = new ForgeUpgradeConfig($this->command, $this->fixtures.'/forgeupgrade-addpath.ini');
@@ -70,7 +75,8 @@ class ForgeUpgradeConfigTest extends TuleapTestCase {
         unlink($this->fixtures.'/forgeupgrade-addpath.ini');
     }
 
-    public function testRemovePathInTheMiddleOfFile() {
+    public function testRemovePathInTheMiddleOfFile()
+    {
         $configFile = $this->fixtures.'/forgeupgrade-addpath.ini';
         copy($this->fixtures.'/forgeupgrade-config-docman.ini', $configFile);
 
@@ -88,43 +94,50 @@ class ForgeUpgradeConfigTest extends TuleapTestCase {
     }
 }
 
-class ForgeUpgradeConfig_InstallPluginTest extends TuleapTestCase {
+class ForgeUpgradeConfig_InstallPluginTest extends TuleapTestCase
+{
     private $command;
     private $forgeupgrade_config;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->command = mock('System_Command');
         $this->forgeupgrade_config = new ForgeUpgradeConfig($this->command, dirname(__FILE__).'/_fixtures/forgeupgrade-config-docman.ini');
     }
 
-    public function itRecordsOnlyThePathOfThePlugin() {
+    public function itRecordsOnlyThePathOfThePlugin()
+    {
         expect($this->command)->exec("/usr/lib/forgeupgrade/bin/forgeupgrade --dbdriver='/usr/share/tuleap/src/forgeupgrade/ForgeUpgrade_Db_Driver_Codendi.php' --path='/usr/share/tuleap/plugins/agiledashboard' record-only")->once();
 
         $this->forgeupgrade_config->recordOnlyPath('/usr/share/tuleap/plugins/agiledashboard');
     }
 }
 
-class ForgeUpgradeConfig_IsSystemUpToDateTest extends TuleapTestCase {
+class ForgeUpgradeConfig_IsSystemUpToDateTest extends TuleapTestCase
+{
     private $command;
     private $forgeupgrade_config;
     private $config_file;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->command             = mock('System_Command');
         $this->config_file         = dirname(__FILE__).'/_fixtures/forgeupgrade-config-docman.ini';
         $this->forgeupgrade_config = new ForgeUpgradeConfig($this->command, $this->config_file);
     }
 
-    public function itCallsForgeUpgrade() {
+    public function itCallsForgeUpgrade()
+    {
         expect($this->command)->exec("/usr/lib/forgeupgrade/bin/forgeupgrade --config='{$this->config_file}' 'check-update'")->once();
         stub($this->command)->exec()->returns(array());
 
         $this->forgeupgrade_config->isSystemUpToDate();
     }
 
-    public function itReturnsTrueWhenForgeUpgradeTellsThatSystemIsUpToDate() {
+    public function itReturnsTrueWhenForgeUpgradeTellsThatSystemIsUpToDate()
+    {
         stub($this->command)->exec()->returns(
             array(
                 '[32mINFO - System up-to-date',
@@ -135,7 +148,8 @@ class ForgeUpgradeConfig_IsSystemUpToDateTest extends TuleapTestCase {
         $this->assertTrue($this->forgeupgrade_config->isSystemUpToDate());
     }
 
-    public function itReturnsFalseWhenForgeUpgradeTellsThereArePendingBuckets() {
+    public function itReturnsFalseWhenForgeUpgradeTellsThereArePendingBuckets()
+    {
         stub($this->command)->exec()->returns(
             array(
                 '/usr/share/tuleap/plugins/tracker/db/mysql/updates/2015/201510131648_add_emailgateway_column_to_tracker.php',

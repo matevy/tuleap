@@ -22,13 +22,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class GraphOnTrackersV5_Burndown_DataBuilder extends ChartDataBuilderV5 {
+class GraphOnTrackersV5_Burndown_DataBuilder extends ChartDataBuilderV5
+{
     /**
      * build burndown chart properties
      *
      * @param Burndown_Engine $engine object
      */
-    public function buildProperties($engine) {
+    public function buildProperties($engine)
+    {
         parent::buildProperties($engine);
 
         $form_element_factory = Tracker_FormElementFactory::instance();
@@ -61,7 +63,8 @@ class GraphOnTrackersV5_Burndown_DataBuilder extends ChartDataBuilderV5 {
         return new GraphOnTrackersV5_Burndown_Data(db_query($sql), $artifact_ids, $time_period);
     }
 
-    protected function isValidEffortField($effort_field, $type) {
+    protected function isValidEffortField($effort_field, $type)
+    {
         return $effort_field && $effort_field->userCanRead(UserManager::instance()->getCurrentUser());
     }
 
@@ -70,9 +73,8 @@ class GraphOnTrackersV5_Burndown_DataBuilder extends ChartDataBuilderV5 {
      *
      * @var array
      */
-    protected function isValidType($type) {
+    protected function isValidType($type)
+    {
         return in_array($type, array('int', 'float'));
     }
-
 }
-?>

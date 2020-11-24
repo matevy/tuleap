@@ -19,18 +19,21 @@
  */
 
 /**
- *  Data Access Object for Tracker_FormElement_Field 
+ *  Data Access Object for Tracker_FormElement_Field
  */
-class Tracker_FormElement_Field_DateDao extends Tracker_FormElement_SpecificPropertiesDao {
-    
-    function __construct() {
+class Tracker_FormElement_Field_DateDao extends Tracker_FormElement_SpecificPropertiesDao
+{
+
+    function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_field_date';
     }
-    
-    public function save($field_id, $row) {
+
+    public function save($field_id, $row)
+    {
         $field_id  = $this->da->escapeInt($field_id);
-        
+
         if (isset($row['default_value'])) {
             if (is_numeric($row['default_value'])) {
                 $default_value = $this->da->escapeInt($row['default_value']);
@@ -40,7 +43,7 @@ class Tracker_FormElement_Field_DateDao extends Tracker_FormElement_SpecificProp
         } else {
             $default_value = "NULL";
         }
-        
+
         if (isset($row['default_value_type'])) {
             $default_value_type = $this->da->escapeInt($row['default_value_type']);
         } else {
@@ -54,19 +57,20 @@ class Tracker_FormElement_Field_DateDao extends Tracker_FormElement_SpecificProp
 
         return $this->update($sql);
     }
-    
+
     /**
      * Duplicate specific properties of field
      *
      * @param int $from_field_id the field id source
      * @param int $to_field_id   the field id target
      *
-     * @return boolean true if ok, false otherwise
+     * @return bool true if ok, false otherwise
      */
-    public function duplicate($from_field_id, $to_field_id) {
+    public function duplicate($from_field_id, $to_field_id)
+    {
         $from_field_id  = $this->da->escapeInt($from_field_id);
         $to_field_id  = $this->da->escapeInt($to_field_id);
-        
+
         $sql = "REPLACE INTO $this->table_name (field_id, default_value, default_value_type, display_time)
                 SELECT $to_field_id, default_value, default_value_type, display_time
                 FROM $this->table_name 

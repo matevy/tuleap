@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: _BackendInfo.php,v 1.24 2005/01/29 19:47:43 rurban Exp $');
 /**
  Copyright 1999, 2000, 2001, 2002 $ThePhpWikiProgrammingTeam
@@ -21,37 +22,46 @@ rcs_id('$Id: _BackendInfo.php,v 1.24 2005/01/29 19:47:43 rurban Exp $');
  */
 
 require_once('lib/Template.php');
-class WikiPlugin__BackendInfo
-extends WikiPlugin
+class WikiPlugin__BackendInfo extends WikiPlugin
 {
-    function getName () {
+    function getName()
+    {
         return _("DebugInfo");
     }
 
-    function getDescription () {
+    function getDescription()
+    {
         return sprintf(_("Get debugging information for %s."), '[pagename]');
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.24 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.24 $"
+        );
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array('page' => '[pagename]');
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
         extract($args);
-        if (empty($page))
+        if (empty($page)) {
             return '';
+        }
 
         $backend = &$dbi->_backend;
 
-        $html = HTML(HTML::h3(fmt("Querying backend directly for '%s'",
-                                  $page)));
-
+        $html = HTML(HTML::h3(fmt(
+            "Querying backend directly for '%s'",
+            $page
+        )));
 
         $table = HTML::table(array('border' => 1,
                                    'cellpadding' => 2,
@@ -60,22 +70,20 @@ extends WikiPlugin
         if (!$pagedata) {
             // FIXME: invalid HTML
             $html->pushContent(HTML::p(fmt("No pagedata for %s", $page)));
-        }
-        else {
+        } else {
             $this->_fixupData($pagedata);
             $table->pushContent($this->_showhash("get_pagedata('$page')", $pagedata));
         }
 
-        for ($version = $backend->get_latest_version($page);
-             $version;
-             $version = $backend->get_previous_version($page, $version))
-            {
+        for ($version = $backend->get_latest_version($page); $version; $version = $backend->get_previous_version($page, $version)) {
                 $vdata = $backend->get_versiondata($page, $version, true);
                 $this->_fixupData($vdata);
                 $table->pushContent(HTML::tr(HTML::td(array('colspan' => 2))));
-                $table->pushContent($this->_showhash("get_versiondata('$page',$version)",
-                                                     $vdata));
-            }
+                $table->pushContent($this->_showhash(
+                    "get_versiondata('$page',$version)",
+                    $vdata
+                ));
+        }
 
         $html->pushContent($table);
         return $html;
@@ -84,13 +92,14 @@ extends WikiPlugin
     /**
      * Really should have a _fixupPagedata and _fixupVersiondata, but this works.
      */
-    function _fixupData(&$data) {
+    function _fixupData(&$data)
+    {
         global $request;
         $user = $request->getUser();
 
         foreach ($data as $key => $val) {
             if (is_integer($key)) {
-            	;
+                ;
             } elseif ($key == 'passwd' and !$user->isAdmin()) {
                 $data[$key] = $val ? _("<not displayed>") : _("<empty>");
             } elseif ($key and $key == '_cached_html') {
@@ -99,57 +108,72 @@ extends WikiPlugin
                 print_r($val);
                 $data[$key] = HTML::pre(ob_get_contents());
                 ob_end_clean();
-            }
-            elseif (is_bool($val)) {
-            	$data[$key] = $val ? "<true>" : "<false>";
-            }
-            elseif (is_string($val) && (substr($val, 0, 2) == 'a:')) {
+            } elseif (is_bool($val)) {
+                $data[$key] = $val ? "<true>" : "<false>";
+            } elseif (is_string($val) && (substr($val, 0, 2) == 'a:')) {
                 // how to indent this table?
                 $val = unserialize($val);
                 $this->_fixupData($val);
-                $data[$key] = HTML::table(array('border' => 1,
+                $data[$key] = HTML::table(
+                    array('border' => 1,
                                                 'cellpadding' => 2,
                                                 'cellspacing' => 0),
-                                          $this->_showhash(false, $val));
-            }
-            elseif (is_array($val)) {
+                    $this->_showhash(false, $val)
+                );
+            } elseif (is_array($val)) {
                 // how to indent this table?
                 $this->_fixupData($val);
-                $data[$key] = HTML::table(array('border' => 1,
+                $data[$key] = HTML::table(
+                    array('border' => 1,
                                                 'cellpadding' => 2,
                                                 'cellspacing' => 0),
-                                          $this->_showhash(false, $val));
-            }
-            elseif ($key and $key == '%content') {
-                if ($val === true)
+                    $this->_showhash(false, $val)
+                );
+            } elseif ($key and $key == '%content') {
+                if ($val === true) {
                     $val = '<true>';
-                elseif (strlen($val) > 40)
-                    $val = substr($val,0,40) . " ...";
+                } elseif (strlen($val) > 40) {
+                    $val = substr($val, 0, 40) . " ...";
+                }
                 $data[$key] = $val;
             }
         }
         unset($data['%pagedata']); // problem in backend
     }
-            
-    function _showhash ($heading, $hash, $pagename = '') {
+
+    function _showhash($heading, $hash, $pagename = '')
+    {
         $rows = array();
-        if ($heading)
-            $rows[] = HTML::tr(array('bgcolor' => '#ffcccc',
+        if ($heading) {
+            $rows[] = HTML::tr(
+                array('bgcolor' => '#ffcccc',
                                      'style' => 'color:#000000'),
-                               HTML::td(array('colspan' => 2,
+                HTML::td(
+                    array('colspan' => 2,
                                               'style' => 'color:#000000'),
-                                        $heading));
+                    $heading
+                )
+            );
+        }
         ksort($hash);
         foreach ($hash as $key => $val) {
-            $rows[] = HTML::tr(HTML::td(array('align' => 'right',
+            $rows[] = HTML::tr(
+                HTML::td(
+                    array('align' => 'right',
                                               'bgcolor' => '#cccccc',
                                               'style' => 'color:#000000'),
-                                        HTML(HTML::raw('&nbsp;'), $key,
-                                             HTML::raw('&nbsp;'))),
-                               HTML::td(array('bgcolor' => '#ffffff',
+                    HTML(
+                        HTML::raw('&nbsp;'),
+                        $key,
+                        HTML::raw('&nbsp;')
+                    )
+                ),
+                HTML::td(
+                    array('bgcolor' => '#ffffff',
                                               'style' => 'color:#000000'),
-                                        $val ? $val : HTML::raw('&nbsp;'))
-                               );
+                    $val ? $val : HTML::raw('&nbsp;')
+                )
+            );
         }
         return $rows;
     }
@@ -180,4 +204,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

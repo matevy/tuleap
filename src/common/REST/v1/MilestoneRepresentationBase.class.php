@@ -22,7 +22,8 @@ namespace Tuleap\REST\v1;
 /**
  * Representation of a milestone
  */
-class MilestoneRepresentationBase {
+class MilestoneRepresentationBase
+{
 
     public const ROUTE      = 'milestones';
     public const ALL_FIELDS = 'all';
@@ -32,6 +33,11 @@ class MilestoneRepresentationBase {
      * @var int
      */
     public $id;
+
+    /**
+     * @var string
+     */
+    public $description;
 
     /**
      * @var String
@@ -154,7 +160,7 @@ class MilestoneRepresentationBase {
     public $status_count;
 
     /**
-     * @var boolean
+     * @var bool
      */
     public $has_user_priority_change_permission;
 
@@ -162,11 +168,12 @@ class MilestoneRepresentationBase {
      * @var array
      */
     public $resources = array(
-        'milestones' => null,
-        'backlog'    => null,
-        'content'    => null,
-        'cardwall'   => null,
-        'burndown'   => null,
-        'siblings'   => null,
+        'milestones'       => null,
+        'backlog'          => null,
+        'content'          => null,
+        'cardwall'         => null,
+        'burndown'         => null,
+        'siblings'         => null,
+        'additional_panes' => [],
     );
 }

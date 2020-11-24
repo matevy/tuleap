@@ -20,7 +20,8 @@
 
 require_once __DIR__.'/../../bootstrap.php';
 
-class Tracker_REST_Artifact_ArtifactValidator_Test extends TuleapTestCase {
+class Tracker_REST_Artifact_ArtifactValidator_Test extends TuleapTestCase
+{
 
     private $field_int;
     private $field_float;
@@ -30,7 +31,8 @@ class Tracker_REST_Artifact_ArtifactValidator_Test extends TuleapTestCase {
     private $validator;
     private $tracker;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->tracker = aTracker()->withId(101)->build();
@@ -110,7 +112,8 @@ class Tracker_REST_Artifact_ArtifactValidator_Test extends TuleapTestCase {
         $this->validator = new Tracker_REST_Artifact_ArtifactValidator($this->form_element_factory);
     }
 
-    public function itGeneratesFieldDataFromRestValuesByField() {
+    public function itGeneratesFieldDataFromRestValuesByField()
+    {
         $values = array(
             'integer' => array(
                'value' => 42
@@ -149,7 +152,8 @@ class Tracker_REST_Artifact_ArtifactValidator_Test extends TuleapTestCase {
         $this->assertEqual($fields_data, $expected);
     }
 
-    public function itThrowsAnExceptionIfFieldIsNotUsedInTracker() {
+    public function itThrowsAnExceptionIfFieldIsNotUsedInTracker()
+    {
         $values = array(
             'integerV2'   => 42,
             'floatibulle' => 3.14,

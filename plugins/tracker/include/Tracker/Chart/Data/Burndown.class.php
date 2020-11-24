@@ -30,7 +30,7 @@ class Tracker_Chart_Data_Burndown
      */
     private $remaining_efforts_at_date;
     /**
-     * @var TimePeriod
+     * @var TimePeriodWithoutWeekEnd
      */
     private $time_period;
 
@@ -52,10 +52,11 @@ class Tracker_Chart_Data_Burndown
     /**
      * Add a remaining effort at a given day offset
      *
-     * @param Integer $day_offset
+     * @param int $day_offset
      * @param Float   $remaining_effort
      */
-    public function addEffortAt($day_offset, $remaining_effort) {
+    public function addEffortAt($day_offset, $remaining_effort)
+    {
         $this->remaining_effort[$day_offset] = $remaining_effort;
     }
 
@@ -107,7 +108,8 @@ class Tracker_Chart_Data_Burndown
      *
      * @return Array
      */
-    public function getHumanReadableDates() {
+    public function getHumanReadableDates()
+    {
         return $this->time_period->getHumanReadableDates();
     }
 
@@ -116,11 +118,12 @@ class Tracker_Chart_Data_Burndown
      *
      * @return Array
      */
-    public function getIdealEffort() {
+    public function getIdealEffort()
+    {
         $start_effort = $this->getFirstEffort();
         $x_axis = 0;
 
-        foreach($this->time_period->getDayOffsets() as $day_offset) {
+        foreach ($this->time_period->getDayOffsets() as $day_offset) {
             $this->ideal_effort[$x_axis] = $this->getIdealEffortAtDay($x_axis, $start_effort);
             $x_axis++;
         }
@@ -130,14 +133,16 @@ class Tracker_Chart_Data_Burndown
     /**
      * @return BurndownRepresentation
      */
-    public function getRESTRepresentation() {
+    public function getRESTRepresentation()
+    {
         $burndown = new BurndownRepresentation();
         return $burndown->build(
             $this
         );
     }
 
-    public function getJsonRepresentation() {
+    public function getJsonRepresentation()
+    {
         $values = array(
             'duration' => $this->getDuration(),
             'capacity' => $this->getCapacityValueInJson(),
@@ -147,7 +152,8 @@ class Tracker_Chart_Data_Burndown
         return json_encode($values);
     }
 
-    private function getCapacityValueInJson() {
+    private function getCapacityValueInJson()
+    {
         return isset($this->capacity) ? $this->capacity : 'null';
     }
 
@@ -160,7 +166,8 @@ class Tracker_Chart_Data_Burndown
         return $this->removeNullRemainingEffort($this->getRemainingEffort());
     }
 
-    private function removeNullRemainingEffort($remaining_efforts) {
+    private function removeNullRemainingEffort($remaining_efforts)
+    {
         $remaining_effort_without_null_values = array();
 
         foreach ($remaining_efforts as $remaining_effort) {
@@ -172,36 +179,39 @@ class Tracker_Chart_Data_Burndown
         return $remaining_effort_without_null_values;
     }
 
-    private function getIdealEffortAtDay($i, $start_effort) {
+    private function getIdealEffortAtDay($i, $start_effort)
+    {
         if ($start_effort !== null) {
             return floatval(($this->getDuration() - $i) * ($start_effort / $this->getDuration()));
         }
         return 0;
     }
 
-    private function getDuration() {
+    private function getDuration()
+    {
         return $this->time_period->getDuration();
     }
 
     /**
-     * @return  TimePeriod
+     * @return TimePeriodWithoutWeekEnd
      */
     public function getTimePeriod()
     {
         return $this->time_period;
     }
 
-    private function getFirstEffort() {
-        if($this->capacity !== null && $this->capacity > 0) {
+    private function getFirstEffort()
+    {
+        if ($this->capacity !== null && $this->capacity > 0) {
             return $this->capacity;
         }
 
-        foreach($this->remaining_effort as $effort) {
+        foreach ($this->remaining_effort as $effort) {
             if ($effort !== null) {
                 return $effort;
             }
         }
-        
+
         return null;
     }
 

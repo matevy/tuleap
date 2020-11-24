@@ -21,8 +21,9 @@
 
 use Tuleap\System\ApacheServiceControl;
 use Tuleap\System\ServiceControl;
+use TuleapCfg\Command\ProcessFactory;
 
-require_once 'pre.php';
+require_once __DIR__ . '/../../www/include/pre.php';
 
 $logger = new WrapperLogger(
     BackendLogger::getDefaultLogger(),
@@ -30,7 +31,7 @@ $logger = new WrapperLogger(
 );
 
 $logger->info("Restart apache");
-(new ApacheServiceControl(new ServiceControl()))->reload();
+(new ApacheServiceControl(new ServiceControl(), new ProcessFactory()))->reload();
 $logger->info("Restart apache completed");
 
 $event_manager->processEvent(new \Tuleap\Httpd\PostRotateEvent($logger));

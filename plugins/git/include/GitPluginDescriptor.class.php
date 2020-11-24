@@ -1,5 +1,4 @@
 <?php
-
 /**
   * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
   *
@@ -25,11 +24,12 @@
 /**
  * GitPluginDescriptor
  */
-class GitPluginDescriptor extends PluginDescriptor {
-    
-    function __construct() {
+class GitPluginDescriptor extends PluginDescriptor
+{
+
+    function __construct()
+    {
         parent::__construct(dgettext('tuleap-git', 'Git'), false, dgettext('tuleap-git', 'Plugin which provides Git support for Tuleap'));
         $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');
     }
 }
-?>

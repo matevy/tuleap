@@ -18,10 +18,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class CrossReferenceManager {
+class CrossReferenceManager
+{
     private $dao;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->dao = new CrossReferenceDao();
     }
 
@@ -30,15 +32,14 @@ class CrossReferenceManager {
      *
      * To be used when entity is deleted
      *
-     * @param Integer $id
+     * @param int $id
      * @param String  $nature
-     * @param Integer $group_id
+     * @param int $group_id
      *
-     * @return Boolean
+     * @return bool
      */
-    public function deleteEntity($id, $nature, $group_id) {
+    public function deleteEntity($id, $nature, $group_id)
+    {
         return $this->dao->deleteEntity($id, $nature, $group_id);
     }
 }
-
-?>

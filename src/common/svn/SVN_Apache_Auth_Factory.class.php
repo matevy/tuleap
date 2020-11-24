@@ -16,12 +16,14 @@
  * along with Tuleap; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 use Tuleap\SvnCore\Cache\Parameters;
 
 /**
  * Manage load of the right SVN_Apache authentication module for given project
  */
-class SVN_Apache_Auth_Factory {
+class SVN_Apache_Auth_Factory
+{
     /**
      * @var EventManager
      */

@@ -21,7 +21,7 @@
 use Tuleap\Tracker\Artifact\ArtifactsDeletion\ArtifactDeletorBuilder;
 use Tuleap\User\PasswordVerifier;
 
-require_once 'pre.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
 
 if ($argc !== 5) {
     fwrite(STDERR, "Usage: {$argv[0]} user_name tracker_id first_artifact_id last_artifact_id". PHP_EOL);
@@ -29,7 +29,7 @@ if ($argc !== 5) {
 }
 
 $sys_user = getenv("USER");
-if ( $sys_user !== 'root' && $sys_user !== 'codendiadm' ) {
+if ($sys_user !== 'root' && $sys_user !== 'codendiadm') {
     fwrite(STDERR, 'Unsufficient privileges for user '.$sys_user.PHP_EOL);
     exit(1);
 }
@@ -43,7 +43,7 @@ $password          = null;
 if (!isset($password)) {
     echo "Password for $user_name: ";
 
-    if ( PHP_OS != 'WINNT') {
+    if (PHP_OS != 'WINNT') {
         shell_exec('stty -echo');
         $password = fgets(STDIN);
         shell_exec('stty echo');

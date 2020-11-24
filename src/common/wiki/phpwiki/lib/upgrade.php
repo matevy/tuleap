@@ -1,4 +1,5 @@
-<?php //-*-php-*-
+<?php
+//-*-php-*-
 rcs_id('$Id: upgrade.php,v 1.47 2005/02/27 19:13:27 rurban Exp $');
 /*
  Copyright 2004,2005 $ThePhpWikiProgrammingTeam
@@ -21,26 +22,26 @@ rcs_id('$Id: upgrade.php,v 1.47 2005/02/27 19:13:27 rurban Exp $');
  */
 
 /**
- * Upgrade the WikiDB and config settings after installing a new 
+ * Upgrade the WikiDB and config settings after installing a new
  * PhpWiki upgrade.
- * Status: experimental, no queries for verification yet, 
+ * Status: experimental, no queries for verification yet,
  *         no merge conflict resolution (patch?), just overwrite.
  *
- * Installation on an existing PhpWiki database needs some 
+ * Installation on an existing PhpWiki database needs some
  * additional worksteps. Each step will require multiple pages.
  *
  * This is the plan:
- *  1. Check for new or changed database schema and update it 
+ *  1. Check for new or changed database schema and update it
  *     according to some predefined upgrade tables. (medium, complete)
- *  2. Check for new or changed (localized) pgsrc/ pages and ask 
- *     for upgrading these. Check timestamps, upgrade silently or 
+ *  2. Check for new or changed (localized) pgsrc/ pages and ask
+ *     for upgrading these. Check timestamps, upgrade silently or
  *     show diffs if existing. Overwrite or merge (easy, complete)
  *  3. Check for new or changed or deprecated index.php/config.ini settings
  *     and help in upgrading these. (hard)
  *  3a Convert old-style index.php into config/config.ini. (easy)
  *  4. Check for changed plugin invocation arguments. (hard)
  *  5. Check for changed theme variables. (hard)
- *  6. Convert the single-request upgrade to a class-based multi-page 
+ *  6. Convert the single-request upgrade to a class-based multi-page
  *     version. (hard)
 
  * Done: overwrite=1 link on edit conflicts at first occurence "Overwrite all".
@@ -52,8 +53,9 @@ require_once("lib/loadsave.php");
 /**
  * TODO: check for the pgsrc_version number, not the revision mtime only
  */
-function doPgsrcUpdate(&$request,$pagename,$path,$filename,$checkonly=false) {
-    $dbi = $request->getDbh(); 
+function doPgsrcUpdate(&$request, $pagename, $path, $filename, $checkonly = false)
+{
+    $dbi = $request->getDbh();
     $page = $dbi->getPage($pagename);
     if ($page->exists()) {
         // check mtime: update automatically if pgsrc is newer
@@ -66,17 +68,20 @@ function doPgsrcUpdate(&$request,$pagename,$path,$filename,$checkonly=false) {
             $pageinfo = $parts[0];
             $stat  = stat($path."/".$filename);
             $new_mtime = @$pageinfo['versiondata']['mtime'];
-            if (!$new_mtime)
+            if (!$new_mtime) {
                 $new_mtime = @$pageinfo['versiondata']['lastmodified'];
-            if (!$new_mtime)
+            }
+            if (!$new_mtime) {
                 $new_mtime = @$pageinfo['pagedata']['date'];
-            if (!$new_mtime)
+            }
+            if (!$new_mtime) {
                 $new_mtime = $stat[9];
+            }
             if ($new_mtime > $page_mtime) {
                 echo "$path/$pagename: ",_("newer than the existing page."),
                     _(" replace "),"($new_mtime &gt; $page_mtime)","<br />\n";
-                if(!$checkonly) {
-                    LoadAny($request,$path."/".$filename);
+                if (!$checkonly) {
+                    LoadAny($request, $path."/".$filename);
                 }
                 echo "<br />\n";
             } else {
@@ -88,9 +93,9 @@ function doPgsrcUpdate(&$request,$pagename,$path,$filename,$checkonly=false) {
                     _(" skipped"),".<br />\n";
         }
     } else {
-        echo sprintf(_("%s does not exist"),$pagename),"<br />\n";
-        if(!$checkonly) {
-            LoadAny($request,$path."/".$filename);
+        echo sprintf(_("%s does not exist"), $pagename),"<br />\n";
+        if (!$checkonly) {
+            LoadAny($request, $path."/".$filename);
         }
         echo "<br />\n";
     }
@@ -98,62 +103,95 @@ function doPgsrcUpdate(&$request,$pagename,$path,$filename,$checkonly=false) {
 
 /** Need the english filename (required precondition: urlencode == urldecode).
  *  Returns the plugin name.
- */ 
-function isActionPage($filename) {
-    static $special = array("DebugInfo" 	=> "_BackendInfo",
+ */
+function isActionPage($filename)
+{
+    static $special = array("DebugInfo"     => "_BackendInfo",
                             "PhpWikiRecentChanges" => "RssFeed",
-                            "ProjectSummary"  	=> "RssFeed",
-                            "RecentReleases"  	=> "RssFeed",
+                            "ProjectSummary"      => "RssFeed",
+                            "RecentReleases"      => "RssFeed",
                             "InterWikiMap"      => "InterWikiMap",
                             );
-    $base = preg_replace("/\..{1,4}$/","",basename($filename));
-    if (isset($special[$base])) return $special[$base];
-    if (FindFile("lib/plugin/".$base.".php",true)) return $base;
-    else return false;
+    $base = preg_replace("/\..{1,4}$/", "", basename($filename));
+    if (isset($special[$base])) {
+        return $special[$base];
+    }
+    if (FindFile("lib/plugin/".$base.".php", true)) {
+        return $base;
+    } else {
+        return false;
+    }
 }
 
-function CheckActionPageUpdate(&$request, $checkonly=false)  {
+function CheckActionPageUpdate(&$request, $checkonly = false)
+{
     echo "<h3>",_("check for necessary ActionPage updates"),"</h3>\n";
-    $dbi = $request->getDbh(); 
+    $dbi = $request->getDbh();
     $path = FindFile('codendipgsrc');
     $pgsrc = new fileSet($path);
     // most actionpages have the same name as the plugin
     $loc_path = FindLocalizedFile('pgsrc');
     foreach ($pgsrc->getFiles() as $filename) {
-        if (substr($filename,-1,1) == '~') continue;
+        if (substr($filename, -1, 1) == '~') {
+            continue;
+        }
         $pagename = urldecode($filename);
         if (isActionPage($filename)) {
             $translation = gettext($pagename);
-            if ($translation == $pagename)
-                doPgsrcUpdate($request, $pagename, $path, $filename, 
-                        $checkonly);
-            elseif (FindLocalizedFile('pgsrc/'.urlencode($translation),1))
-                doPgsrcUpdate($request, $translation, $loc_path, 
-                              urlencode($translation), $checkonly);
-            else
-                doPgsrcUpdate($request, $pagename, $path, $filename, 
-                        $checkonly);
+            if ($translation == $pagename) {
+                doPgsrcUpdate(
+                    $request,
+                    $pagename,
+                    $path,
+                    $filename,
+                    $checkonly
+                );
+            } elseif (FindLocalizedFile('pgsrc/'.urlencode($translation), 1)) {
+                doPgsrcUpdate(
+                    $request,
+                    $translation,
+                    $loc_path,
+                    urlencode($translation),
+                    $checkonly
+                );
+            } else {
+                doPgsrcUpdate(
+                    $request,
+                    $pagename,
+                    $path,
+                    $filename,
+                    $checkonly
+                );
+            }
         }
     }
 }
 
 // see loadsave.php for saving new pages.
-function CheckPgsrcUpdate(&$request, $checkonly=false) {
+function CheckPgsrcUpdate(&$request, $checkonly = false)
+{
     echo "<h3>",_("check for necessary pgsrc updates"),"</h3>\n";
-    $dbi = $request->getDbh(); 
+    $dbi = $request->getDbh();
     $path = FindLocalizedFile(WIKI_PGSRC);
     $pgsrc = new fileSet($path);
     // fixme: verification, ...
     $isHomePage = false;
     foreach ($pgsrc->getFiles() as $filename) {
-        if (substr($filename,-1,1) == '~') continue;
+        if (substr($filename, -1, 1) == '~') {
+            continue;
+        }
         $pagename = urldecode($filename);
         // don't ever update the HomePage
-        if (defined(HOME_PAGE))
-            if ($pagename == HOME_PAGE) $isHomePage = true;
-        else
-            if ($pagename == _("HomePage")) $isHomePage = true;
-        if ($pagename == "HomePage") $isHomePage = true;
+        if (defined(HOME_PAGE)) {
+            if ($pagename == HOME_PAGE) {
+                $isHomePage = true;
+            } elseif ($pagename == _("HomePage")) {
+                $isHomePage = true;
+            }
+        }
+        if ($pagename == "HomePage") {
+            $isHomePage = true;
+        }
         if ($isHomePage) {
             echo "$path/$pagename: ",_("always skip the HomePage."),
                 _(" skipped"),".<br />\n";
@@ -161,20 +199,22 @@ function CheckPgsrcUpdate(&$request, $checkonly=false) {
             continue;
         }
         if (!isActionPage($filename)) {
-            doPgsrcUpdate($request,$pagename,$path,$filename,$checkonly);
+            doPgsrcUpdate($request, $pagename, $path, $filename, $checkonly);
         }
     }
     return;
 }
 
-function fixConfigIni($match, $new) {
+function fixConfigIni($match, $new)
+{
     $file = FindFile("config/config.ini");
     $found = false;
     if (is_writable($file)) {
-        $in = fopen($file,"rb");
-        $out = fopen($tmp = tempnam(FindFile("uploads"),"cfg"),"wb");
-        if (isWindows())
-            $tmp = str_replace("/","\\",$tmp);
+        $in = fopen($file, "rb");
+        $out = fopen($tmp = tempnam(FindFile("uploads"), "cfg"), "wb");
+        if (isWindows()) {
+            $tmp = str_replace("/", "\\", $tmp);
+        }
         while ($s = fgets($in)) {
             if (preg_match($match, $s)) {
                 $s = $new . (isWindows() ? "\r\n" : "\n");
@@ -190,10 +230,10 @@ function fixConfigIni($match, $new) {
             unlink($out);
         } else {
             @unlink("$file.bak");
-            @rename($file,"$file.bak");
-            if (rename($tmp, $file))
+            @rename($file, "$file.bak");
+            if (rename($tmp, $file)) {
                 echo " <b>",_("FIXED"),"</b>";
-            else {
+            } else {
                 echo " <b>",_("FAILED"),"</b>: ";
                 sprintf(_("couldn't move %s to %s"), $tmp, $file);
                 return false;
@@ -207,14 +247,15 @@ function fixConfigIni($match, $new) {
     }
 }
 
-function CheckConfigUpdate(&$request) {
+function CheckConfigUpdate(&$request)
+{
     echo "<h3>",_("check for necessary config updates"),"</h3>\n";
     echo _("check for old CACHE_CONTROL = NONE")," ... ";
     if (defined('CACHE_CONTROL') and CACHE_CONTROL == '') {
         echo "<br />&nbsp;&nbsp;",
             _("CACHE_CONTROL is set to 'NONE', and must be changed to 'NO_CACHE'"),
             " ...";
-        fixConfigIni("/^\s*CACHE_CONTROL\s*=\s*NONE/","CACHE_CONTROL = NO_CACHE");
+        fixConfigIni("/^\s*CACHE_CONTROL\s*=\s*NONE/", "CACHE_CONTROL = NO_CACHE");
     } else {
         echo _("OK");
     }
@@ -224,7 +265,7 @@ function CheckConfigUpdate(&$request) {
         echo "<br />&nbsp;&nbsp;",
             _("GROUP_METHOD is set to NONE, and must be changed to \"NONE\""),
             " ...";
-        fixConfigIni("/^\s*GROUP_METHOD\s*=\s*NONE/","GROUP_METHOD = \"NONE\"");
+        fixConfigIni("/^\s*GROUP_METHOD\s*=\s*NONE/", "GROUP_METHOD = \"NONE\"");
     } else {
         echo _("OK");
     }
@@ -248,22 +289,25 @@ class Upgrade_CheckDatabaseUpdate extends Upgrade {
 }
 */
 
-// TODO: At which step are we? 
+// TODO: At which step are we?
 // validate and do it again or go on with next step.
 
 /** entry function from lib/main.php
  */
-function DoUpgrade($request) {
-	
+function DoUpgrade($request)
+{
 
     if (!$request->_user->isAdmin()) {
         $request->_notAuthorized(WIKIAUTH_ADMIN);
         $request->finish(
-                         HTML::div(array('class' => 'disabled-plugin'),
-                                   fmt("Upgrade disabled: user != isAdmin")));
+            HTML::div(
+                array('class' => 'disabled-plugin'),
+                fmt("Upgrade disabled: user != isAdmin")
+            )
+        );
         return;
     }
-    
+
     //print("<br>This action is blocked by administrator. Sorry for the inconvenience !<br>");
     exit("<br>This action is blocked by administrator. Sorry for the inconvenience !<br>");
 }
@@ -459,4 +503,3 @@ function DoUpgrade($request) {
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

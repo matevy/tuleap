@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -28,27 +28,19 @@ const webpack_config = {
     },
     context: path.resolve(__dirname),
     output: webpack_configurator.configureOutput(assets_dir_path),
-    resolve: {
-        alias: {
-            "tlp-mocks": path.resolve(
-                __dirname,
-                "../../../../src/www/themes/common/tlp/mocks/index.js"
-            )
-        }
-    },
     externals: {
         tlp: "tlp"
     },
     module: {
         rules: [
-            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_karma),
+            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11),
             webpack_configurator.rule_easygettext_loader,
             webpack_configurator.rule_vue_loader
         ]
     },
     plugins: [webpack_configurator.getManifestPlugin(), webpack_configurator.getVueLoaderPlugin()],
     resolveLoader: {
-        alias: webpack_configurator.extendAliases({}, webpack_configurator.easygettext_loader_alias)
+        alias: webpack_configurator.easygettext_loader_alias
     }
 };
 

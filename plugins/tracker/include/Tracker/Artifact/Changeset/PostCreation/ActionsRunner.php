@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -37,6 +37,7 @@ use Tuleap\Queue\QueueFactory;
 use Tuleap\Queue\Worker;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfig;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfigDao;
+use Tuleap\Tracker\Notifications\InvolvedNotificationDao;
 use Tuleap\Tracker\Notifications\RecipientsManager;
 use Tuleap\Tracker\Notifications\ConfigNotificationEmailCustomSender;
 use Tuleap\Tracker\Notifications\ConfigNotificationEmailCustomSenderDao;
@@ -62,6 +63,10 @@ class ActionsRunner
      */
     private $actions_runner_dao;
     /**
+     * @var QueueFactory
+     */
+    private $queue_factory;
+    /**
      * @var PostCreationTask[]
      */
     private $post_creation_tasks;
@@ -69,10 +74,12 @@ class ActionsRunner
     public function __construct(
         Logger $logger,
         ActionsRunnerDao $actions_runner_dao,
+        QueueFactory $queue_factory,
         PostCreationTask ...$post_creation_tasks
     ) {
-        $this->logger              = new WrapperLogger($logger, __CLASS__);
+        $this->logger              = new WrapperLogger($logger, self::class);
         $this->actions_runner_dao  = $actions_runner_dao;
+        $this->queue_factory       = $queue_factory;
         $this->post_creation_tasks = $post_creation_tasks;
     }
 
@@ -83,6 +90,7 @@ class ActionsRunner
         return new ActionsRunner(
             $logger,
             new ActionsRunnerDao(),
+            new QueueFactory($logger),
             new ClearArtifactChangesetCacheTask(),
             new EmailNotificationTask(
                 new MailLogger(),
@@ -94,7 +102,8 @@ class ActionsRunner
                     new UserNotificationSettingsRetriever(
                         new Tracker_GlobalNotificationDao(),
                         new UnsubscribersNotificationDAO(),
-                        new UserNotificationOnlyStatusChangeDAO()
+                        new UserNotificationOnlyStatusChangeDAO(),
+                        new InvolvedNotificationDao()
                     ),
                     new UserNotificationOnlyStatusChangeDAO()
                 ),
@@ -171,7 +180,7 @@ class ActionsRunner
     {
         try {
             $this->actions_runner_dao->addNewPostCreationEvent($changeset->getId());
-            $queue = QueueFactory::getPersistentQueue($this->logger, Worker::EVENT_QUEUE_NAME, QueueFactory::REDIS);
+            $queue = $this->queue_factory->getPersistentQueue(Worker::EVENT_QUEUE_NAME, QueueFactory::REDIS);
             $queue->pushSinglePersistentMessage(
                 AsynchronousActionsRunner::TOPIC,
                 [

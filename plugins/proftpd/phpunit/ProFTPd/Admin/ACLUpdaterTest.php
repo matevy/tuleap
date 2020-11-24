@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2014-2018. All rights reserved
+ * Copyright (c) Enalean, 2014-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -21,7 +20,8 @@
 
 require_once dirname(__FILE__).'/../../bootstrap.php';
 
-class ACLUpdaterTest extends PHPUnit\Framework\TestCase {
+class ACLUpdaterTest extends PHPUnit\Framework\TestCase
+{
 
     private $backend;
 
@@ -40,10 +40,11 @@ class ACLUpdaterTest extends PHPUnit\Framework\TestCase {
         $this->readers     = 'gpig-ftp_readers';
     }
 
-    public function testAllDirectoriesHaveDefaultAndEffectiveACLAndAllFilesOnlyHaveEffectiveACL() {
+    public function testAllDirectoriesHaveDefaultAndEffectiveACLAndAllFilesOnlyHaveEffectiveACL()
+    {
         $root_path = $this->path;
 
-        $this->backend->expects($this->any())->method('resetacl')->will($this->returnCallback( function ($path) use ($root_path) {
+        $this->backend->expects($this->any())->method('resetacl')->will($this->returnCallback(function ($path) use ($root_path) {
             switch ($path) {
                 case $root_path:
                 case $root_path.'/SomeFile':
@@ -55,18 +56,20 @@ class ACLUpdaterTest extends PHPUnit\Framework\TestCase {
             }
         }));
 
-        $this->backend->expects($this->any())->method('modifyacl')->will($this->returnCallback( function ($acl, $path) use ($root_path) {
+        $this->backend->expects($this->any())->method('modifyacl')->will($this->returnCallback(function ($acl, $path) use ($root_path) {
             switch ($path) {
                 case $root_path:
                 case $root_path.'/SomeDirectory':
                     if ($acl == 'd:u:httpuser:rwx,d:g:gpig-ftp_writers:rwx,d:g:gpig-ftp_readers:rx,u:httpuser:rwx,g:gpig-ftp_writers:rwx,g:gpig-ftp_readers:rx') {
                         break;
                     }
+                    // Fall-through seems to be intentional for the test...
                 case $root_path.'/SomeFile':
                 case $root_path.'/SomeDirectory/AnotherFile':
                     if ($acl == 'u:httpuser:rw,g:gpig-ftp_writers:rw,g:gpig-ftp_readers:r') {
                         break;
                     }
+                    // Fall-through seems to be intentional for the test...
                 default:
                     throw new Exception('invalid value for modifyacl '.$path.' '.$acl);
             }
@@ -76,25 +79,29 @@ class ACLUpdaterTest extends PHPUnit\Framework\TestCase {
         $this->addToAssertionCount(1);
     }
 
-    public function testItSetsAclOn4Elements() {
+    public function testItSetsAclOn4Elements()
+    {
         $this->backend->expects($this->exactly(4))->method('resetacl');
         $this->backend->expects($this->exactly(4))->method('modifyacl');
         $this->acl_updater->recursivelyApplyACL($this->path, $this->http_user, $this->writers, $this->readers);
     }
 
-    public function testItSetsACLOnDirectoryWhenNoReaders() {
+    public function testItSetsACLOnDirectoryWhenNoReaders()
+    {
         $this->backend->expects($this->at(1))->method('modifyacl')->with('d:u:httpuser:rwx,d:g:gpig-ftp_writers:rwx,u:httpuser:rwx,g:gpig-ftp_writers:rwx', $this->path);
 
         $this->acl_updater->recursivelyApplyACL($this->path, $this->http_user, $this->writers, '');
     }
 
-    public function testItSetsACLOnDirectoryWhenNoWriters() {
+    public function testItSetsACLOnDirectoryWhenNoWriters()
+    {
         $this->backend->expects($this->at(1))->method('modifyacl')->with('d:u:httpuser:rwx,d:g:gpig-ftp_readers:rx,u:httpuser:rwx,g:gpig-ftp_readers:rx', $this->path);
 
         $this->acl_updater->recursivelyApplyACL($this->path, $this->http_user, '', $this->readers);
     }
 
-    public function testItSetsACLOnDirectoryWhenNoReadersNorWriters() {
+    public function testItSetsACLOnDirectoryWhenNoReadersNorWriters()
+    {
         $this->backend->expects($this->at(1))->method('modifyacl')->with('d:u:httpuser:rwx,u:httpuser:rwx', $this->path);
 
         $this->acl_updater->recursivelyApplyACL($this->path, $this->http_user, '', '');

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2016. All Rights Reserved.
  *
@@ -23,7 +22,8 @@ use Tracker;
 use Tuleap\RealTime\MessageRightsPresenter;
 use Tracker_Permission_PermissionsSerializer;
 
-class KanbanRightsPresenter implements MessageRightsPresenter {
+class KanbanRightsPresenter implements MessageRightsPresenter
+{
 
     public $submitter_id;
     public $submitter_can_view;
@@ -34,8 +34,7 @@ class KanbanRightsPresenter implements MessageRightsPresenter {
     public function __construct(
         Tracker $tracker,
         Tracker_Permission_PermissionsSerializer $permission_serializer
-    )
-    {
+    ) {
         $this->submitter_id       = null;
         $this->submitter_can_view = false;
         $this->submitter_only     = array();

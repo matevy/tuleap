@@ -18,12 +18,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class TestPresenter {
-    public function title() {
+class TestPresenter
+{
+    public function title()
+    {
         return 'Tuleap';
     }
-    
-    public function getTreeItems() {
+
+    public function getTreeItems()
+    {
         return array(
             array('name' => 'T1', 'children' => array(
                 array('name' => 'T2', 'children' => array(
@@ -33,17 +36,19 @@ class TestPresenter {
             ))
         );
     }
-    
+
     public $content = 'An open ALM solution.';
-    
-    public $__ = array(__CLASS__, '_l10n');
-    
-    public function _l10n($key) {
+
+    public $__ = array(self::class, '_l10n');
+
+    public function _l10n($key)
+    {
         return $GLOBALS['Language']->getText('module', $key);
     }
 }
 
-abstract class TemplateRendererTestBase extends TuleapTestCase {
+abstract class TemplateRendererTestBase extends TuleapTestCase
+{
     public function setUp()
     {
         parent::setUp();
@@ -66,34 +71,41 @@ abstract class TemplateRendererTestBase extends TuleapTestCase {
     }
 
     abstract protected function getRenderer();
-    
-    function assertOutputContains($content) {
+
+    function assertOutputContains($content)
+    {
         $this->assertPattern("/".$content."/", $this->output);
     }
-    
-    function assertOutputDoesntContain($content) {
+
+    function assertOutputDoesntContain($content)
+    {
         $this->assertNoPattern("/".$content."/", $this->output);
     }
-    
-    function testSimpleValue() {
+
+    function testSimpleValue()
+    {
         $this->assertOutputContains($this->presenter->title());
     }
-    
-    function testFunction() {
+
+    function testFunction()
+    {
         $this->assertOutputContains($this->presenter->content);
     }
-    
-    function testCanBuildANestedList() {
+
+    function testCanBuildANestedList()
+    {
         //dont know how to assert the nestedness in a proper way, so lets just assert that it contains all elements
         //atleast we know that the recursion is working
-        $this->assertPattern("/T1.*T2.*T3.*T4/", $this->strip($this->output)); 
+        $this->assertPattern("/T1.*T2.*T3.*T4/", $this->strip($this->output));
     }
 
-    public function strip($string) {
+    public function strip($string)
+    {
         return "\n".preg_replace("/[ \t\n]+/", ' ', $string)."\n";
     }
-    
-    function testShouldTranslateStringsUsingLanguage() {
+
+    function testShouldTranslateStringsUsingLanguage()
+    {
         $this->assertOutputContains($this->expected_l10_string);
         $this->assertOutputDoesntContain('i18n_text');
     }

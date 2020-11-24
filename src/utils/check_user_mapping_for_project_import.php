@@ -19,13 +19,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'pre.php';
+require_once __DIR__ . '/../www/include/pre.php';
 
 use Tuleap\Project\XML\Import;
 
 $posix_user = posix_getpwuid(posix_geteuid());
 $sys_user   = $posix_user['name'];
-if ( $sys_user !== 'root' && $sys_user !== 'codendiadm' ) {
+if ($sys_user !== 'root' && $sys_user !== 'codendiadm') {
     fwrite(STDERR, 'Unsufficient privileges for user '.$sys_user.PHP_EOL);
     exit(1);
 }
@@ -35,7 +35,8 @@ $usage_options .= 'u:'; // give me a user
 $usage_options .= 'i:'; // give me the archive path to import
 $usage_options .= 'm:'; // give me the path of the mapping file
 
-function usage() {
+function usage()
+{
     global $argv;
 
     echo <<< EOT

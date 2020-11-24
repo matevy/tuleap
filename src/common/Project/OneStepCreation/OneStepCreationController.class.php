@@ -19,23 +19,15 @@
  */
 
 use Tuleap\Project\DefaultProjectVisibilityRetriever;
-use Tuleap\Project\Label\LabelDao;
-use Tuleap\Project\UgroupDuplicator;
-use Tuleap\FRS\FRSPermissionCreator;
-use Tuleap\FRS\FRSPermissionDao;
-use Tuleap\Dashboard\Project\ProjectDashboardDuplicator;
-use Tuleap\Dashboard\Project\ProjectDashboardDao;
-use Tuleap\Dashboard\Widget\DashboardWidgetDao;
-use Tuleap\Dashboard\Project\ProjectDashboardRetriever;
-use Tuleap\Dashboard\Widget\DashboardWidgetRetriever;
-use Tuleap\Service\ServiceCreator;
-use Tuleap\Widget\WidgetFactory;
+use Tuleap\Project\ProjectDescriptionUsageRetriever;
+use Tuleap\Project\Registration\ProjectRegistrationUserPermissionChecker;
+use Tuleap\Project\Registration\RegistrationForbiddenException;
 
 /**
  * Base controller for one step creation project
  */
-class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller {
-
+class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+{
     /**
      * @var ProjectManager
      */
@@ -60,6 +52,10 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
      * @var CSRFSynchronizerToken
      */
     private $csrf_token;
+    /**
+     * @var ProjectRegistrationUserPermissionChecker
+     */
+    private $permission_checker;
 
     public function __construct(
         Codendi_Request $request,
@@ -67,7 +63,8 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
         DefaultProjectVisibilityRetriever $default_project_visibility_retriever,
         Project_CustomDescription_CustomDescriptionFactory $custom_description_factory,
         TroveCatFactory $trove_cat_factory,
-        CSRFSynchronizerToken $csrf_token
+        CSRFSynchronizerToken $csrf_token,
+        ProjectRegistrationUserPermissionChecker $permission_checker
     ) {
         parent::__construct('project', $request);
         $this->project_manager              = $project_manager;
@@ -76,7 +73,6 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
 
         $this->creation_request = new Project_OneStepCreation_OneStepCreationRequest(
             $request,
-            $project_manager,
             $default_project_visibility_retriever
         );
         $this->csrf_token       = $csrf_token;
@@ -86,20 +82,24 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
             $this->required_custom_descriptions,
             $project_manager,
             $this->trove_cats,
-            $csrf_token->fetchHTMLInput()
+            $csrf_token->fetchHTMLInput(),
+            ProjectDescriptionUsageRetriever::isDescriptionMandatory()
         );
 
         $this->default_project_visibility_retriever = $default_project_visibility_retriever;
+        $this->permission_checker = $permission_checker;
     }
 
     /**
      * Display the create project form
      */
-    public function index() {
-        $GLOBALS['HTML']->header(array('title'=> $GLOBALS['Language']->getText('register_index','project_registration')));
-        if ($this->project_manager->userCanCreateProject($this->request->getCurrentUser())) {
+    public function index()
+    {
+        try {
+            $GLOBALS['HTML']->header(array('title'=> $GLOBALS['Language']->getText('register_index', 'project_registration')));
+            $this->permission_checker->checkUserCreateAProject($this->request->getCurrentUser());
             $this->render('register', $this->presenter);
-        } else {
+        } catch (RegistrationForbiddenException $exception) {
             $this->render('register-disabled', []);
         }
         $GLOBALS['HTML']->footer(array());
@@ -109,25 +109,31 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
     /**
      * Create the project if request is valid
      */
-    public function create() {
-        if ($this->project_manager->userCanCreateProject($this->request->getCurrentUser())) {
+    public function create()
+    {
+        try {
+            $this->permission_checker->checkUserCreateAProject($this->request->getCurrentUser());
             $this->csrf_token->check();
             $this->validate();
             $project = $this->doCreate();
             $this->notifySiteAdmin($project);
             $this->postCreate($project);
-        } else {
-            $GLOBALS['HTML']->header(array('title'=> $GLOBALS['Language']->getText('register_index','project_registration')));
+        } catch (RegistrationForbiddenException $exception) {
+            $GLOBALS['HTML']->header(array('title'=> $GLOBALS['Language']->getText('register_index', 'project_registration')));
             $this->render('register-disabled', []);
             $GLOBALS['HTML']->footer(array());
         }
     }
 
-    private function validate() {
+    private function validate()
+    {
         $validator = new Project_OneStepCreation_OneStepCreationValidator(
             $this->creation_request,
             $this->required_custom_descriptions,
-            $this->trove_cats
+            $this->trove_cats,
+            $this->project_manager,
+            new Rule_ProjectFullName(),
+            new Rule_ProjectName()
         );
 
         if (! $validator->validateAndGenerateErrors()) {
@@ -135,58 +141,16 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
         }
     }
 
-    private function doCreate() {
-        $send_notifications = true;
-        $ugroup_user_dao    = new UGroupUserDao();
-        $ugroup_manager     = new UGroupManager();
-        $ugroup_duplicator  = new UgroupDuplicator(
-            new UGroupDao(),
-            $ugroup_manager,
-            new UGroupBinding($ugroup_user_dao, $ugroup_manager),
-            $ugroup_user_dao,
-            EventManager::instance()
-        );
-
-        $user_manager   = UserManager::instance();
-        $widget_factory = new WidgetFactory(
-            $user_manager,
-            new User_ForgeUserGroupPermissionsManager(new User_ForgeUserGroupPermissionsDao()),
-            EventManager::instance()
-        );
-
-        $widget_dao        = new DashboardWidgetDao($widget_factory);
-        $project_dao       = new ProjectDashboardDao($widget_dao);
-        $project_retriever = new ProjectDashboardRetriever($project_dao);
-        $widget_retriever  = new DashboardWidgetRetriever($widget_dao);
-        $duplicator        = new ProjectDashboardDuplicator(
-            $project_dao,
-            $project_retriever,
-            $widget_dao,
-            $widget_retriever,
-            $widget_factory
-        );
-
-        $force_activation = false;
-
-        $projectCreator = new ProjectCreator(
-            $this->project_manager,
-            ReferenceManager::instance(),
-            $user_manager,
-            $ugroup_duplicator,
-            $send_notifications,
-            new FRSPermissionCreator(
-                new FRSPermissionDao(),
-                new UGroupDao()
-            ),
-            $duplicator,
-            new ServiceCreator(),
-            new LabelDao(),
-            $this->default_project_visibility_retriever,
-            $force_activation
-        );
+    private function doCreate()
+    {
+        $projectCreator = ProjectCreator::buildSelfRegularValidation();
 
         $data         = $this->creation_request->getProjectValues();
-        $creationData = ProjectCreationData::buildFromFormArray($this->default_project_visibility_retriever, $data);
+        $creationData = ProjectCreationData::buildFromFormArray(
+            $this->default_project_visibility_retriever,
+            $data['project']['built_from_template'],
+            $data
+        );
 
         try {
             return $projectCreator->build($creationData);
@@ -196,7 +160,8 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
         }
     }
 
-    private function notifySiteAdmin(Project $project) {
+    private function notifySiteAdmin(Project $project)
+    {
         $subject = $GLOBALS['Language']->getText('register_project_one_step', 'complete_mail_subject', array($project->getPublicName()));
         $presenter = new MailPresenterFactory();
         $renderer  = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') .'/src/templates/mail/');
@@ -208,7 +173,8 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
         }
     }
 
-    private function postCreate(Project $project) {
+    private function postCreate(Project $project)
+    {
         $one_step_registration_factory = new Project_OneStepRegistration_OneStepRegistrationPresenterFactory($project);
         $GLOBALS['HTML']->header(array('title'=> $GLOBALS['Language']->getText('register_confirmation', 'registration_complete')));
         $this->render('confirmation', $one_step_registration_factory->create());

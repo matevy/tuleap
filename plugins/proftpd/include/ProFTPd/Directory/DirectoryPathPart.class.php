@@ -24,7 +24,8 @@ namespace Tuleap\ProFTPd\Directory;
 /**
  * This class is a representation of an item into a SFTP directory
  */
-class DirectoryPathPart {
+class DirectoryPathPart
+{
 
     /**
      * The directory or file name
@@ -44,9 +45,9 @@ class DirectoryPathPart {
      * @param string $path_part_name
      * @param string $path_to_part
      */
-    public function __construct($path_part_name, $path_to_part) {
+    public function __construct($path_part_name, $path_to_part)
+    {
         $this->path_part_name = $path_part_name;
         $this->path_to_part   = $path_to_part;
     }
 }
-?>

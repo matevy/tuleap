@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -22,7 +22,8 @@
 /**
  * UserHelper
  */
-class UserHelper {
+class UserHelper
+{
 
     public const PREFERENCES_NAME_AND_LOGIN = 0;
     public const PREFERENCES_LOGIN_AND_NAME = 1;
@@ -33,26 +34,33 @@ class UserHelper {
     var $_cache_by_id;
     var $_cache_by_username;
     var $_userdao;
-    
+    /**
+     * @var \Tuleap\InstanceBaseURLBuilder
+     */
+    private $instance_base_url_builder;
+
     /**
      * Constructor
      * @todo make it protected (singleton powaaa)
      */
-    public function __construct() {
-        $this->_username_display = $this->_getCurrentUserUsernameDisplayPreference();
-        $this->_cache_by_id = array();
-        $this->_cache_by_username = array();
-        $this->_userdao = $this->_getuserDao();
+    public function __construct()
+    {
+        $this->_username_display         = $this->_getCurrentUserUsernameDisplayPreference();
+        $this->_cache_by_id              = array();
+        $this->_cache_by_username        = array();
+        $this->_userdao                  = $this->_getuserDao();
+        $this->instance_base_url_builder = new \Tuleap\InstanceBaseURLBuilder();
     }
-    
+
     protected static $_instance;
     /**
-     * 
+     *
      * @return UserHelper
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (!isset(self::$_instance)) {
-            $c = __CLASS__;
+            $c = self::class;
             self::$_instance = new $c;
         }
         return self::$_instance;
@@ -67,18 +75,20 @@ class UserHelper {
     {
         self::$_instance = null;
     }
-    
-    function _getCurrentUserUsernameDisplayPreference() {
+
+    function _getCurrentUserUsernameDisplayPreference()
+    {
         return $this->_getUserManager()->getCurrentUser()->getPreference("username_display");
     }
-    function _getUserManager() {
+    function _getUserManager()
+    {
         return UserManager::instance();
     }
     /**
      * getDisplayName
-     * 
+     *
      * Get user name from Codendi login, according to the user prefs: Codendi login or Real name
-     * 
+     *
      * Username display preference:
      *  1: user_name (realname)
      *  2: user_name
@@ -88,48 +98,50 @@ class UserHelper {
      * @param  user_name  string
      * @param  realname  string
      */
-    function getDisplayName($user_name, $realname) {
+    function getDisplayName($user_name, $realname)
+    {
         $name = '';
-        switch($this->_username_display) {
-        case self::PREFERENCES_LOGIN_AND_NAME:
-            $name = "$user_name ($realname)";
-            break;
-        case self::PREFERENCES_LOGIN:
-            $name = $user_name;
-            break;
-        case self::PREFERENCES_REAL_NAME:
-            $name = $realname;
-            break;
-        default:
-            $name = "$realname ($user_name)";
-            break;
+        switch ($this->_username_display) {
+            case self::PREFERENCES_LOGIN_AND_NAME:
+                $name = "$user_name ($realname)";
+                break;
+            case self::PREFERENCES_LOGIN:
+                $name = $user_name;
+                break;
+            case self::PREFERENCES_REAL_NAME:
+                $name = $realname;
+                break;
+            default:
+                $name = "$realname ($user_name)";
+                break;
         }
         return $name;
     }
-    
+
     /**
      * getDisplayNameSQLQuery
-     * 
+     *
      * Get SQL statement for extracting display name from the "user" table, according to the user prefs
-     * 
+     *
      * Username display preference: see getDisplayName()
      *
      */
-    function getDisplayNameSQLQuery() {
+    function getDisplayNameSQLQuery()
+    {
         $name = '';
-        switch($this->_username_display) {
-        case self::PREFERENCES_LOGIN_AND_NAME:
-            $name = "CONCAT(user.user_name,' (',user.realname,')') AS full_name";
-            break;
-        case self::PREFERENCES_LOGIN:
-            $name = 'user.user_name AS full_name';
-            break;
-        case self::PREFERENCES_REAL_NAME:
-            $name = 'user.realname AS full_name';
-            break;
-        default:
-            $name = "CONCAT(user.realname,' (',user.user_name,')') AS full_name";
-            break;
+        switch ($this->_username_display) {
+            case self::PREFERENCES_LOGIN_AND_NAME:
+                $name = "CONCAT(user.user_name,' (',user.realname,')') AS full_name";
+                break;
+            case self::PREFERENCES_LOGIN:
+                $name = 'user.user_name AS full_name';
+                break;
+            case self::PREFERENCES_REAL_NAME:
+                $name = 'user.realname AS full_name';
+                break;
+            default:
+                $name = "CONCAT(user.realname,' (',user.user_name,')') AS full_name";
+                break;
         }
         return $name;
     }
@@ -141,7 +153,8 @@ class UserHelper {
      *
      * @return string
      */
-    function getUserFilter($by) {
+    function getUserFilter($by)
+    {
         $filter       = '';
         $user_manager = $this->_getUserManager();
         $usersIds     = $user_manager->getUserIdsList($by);
@@ -157,43 +170,45 @@ class UserHelper {
 
     /**
      * getDisplayNameSQLOrder
-     * 
+     *
      * Get SQL statement for sorting display name from the "user" table, according to the user prefs
-     * 
+     *
      * Username display preference: see getDisplayName()
      *
      */
-    function getDisplayNameSQLOrder() {
+    function getDisplayNameSQLOrder()
+    {
         $order = '';
-        switch($this->_username_display) {
-        case self::PREFERENCES_LOGIN_AND_NAME:
-            $order = "user.user_name";
-            break;
-        case self::PREFERENCES_LOGIN:
-            $order = 'user.user_name';
-            break;
-        case self::PREFERENCES_REAL_NAME:
-            $order = 'user.realname';
-            break;
-        default:
-            $order = "user.realname";
-            break;
+        switch ($this->_username_display) {
+            case self::PREFERENCES_LOGIN_AND_NAME:
+                $order = "user.user_name";
+                break;
+            case self::PREFERENCES_LOGIN:
+                $order = 'user.user_name';
+                break;
+            case self::PREFERENCES_REAL_NAME:
+                $order = 'user.realname';
+                break;
+            default:
+                $order = "user.realname";
+                break;
         }
         return $order;
     }
-    
+
     /**
      * getDisplayNameFromUser
-     * 
+     *
      * Get user name from Codendi login, according to the user prefs: Codendi login or Real name
      *
      * @param PFUser the user to display
      *
-     * @return the display name of the user $user or null if $user is null
+     * @return ?string the display name of the user $user or null if $user is null
      *
      * @see getDisplayName
      */
-    function getDisplayNameFromUser($user) {
+    function getDisplayNameFromUser($user)
+    {
         if ($user == null) {
             return null;
         } elseif ($user->isNone()) {
@@ -202,16 +217,18 @@ class UserHelper {
             return $this->getDisplayName($user->getUserName(), $user->getRealName());
         }
     }
-    
+
     /**
      * getDisplayNameFromUserId
-     * 
+     *
      * Get user name from Codendi login, according to the user prefs: Codendi login or Real name
      *
      * @param int the user_id of the user to display
      * @see getDisplayName
+     * @return string
      */
-    function getDisplayNameFromUserId($user_id) {
+    function getDisplayNameFromUserId($user_id)
+    {
         $um = $this->_getUserManager();
         if ($um->isUserLoadedById($user_id)) {
             $user = $um->getUserById($user_id);
@@ -229,16 +246,17 @@ class UserHelper {
         }
         return $display;
     }
-    
+
     /**
      * getDisplayNameFromUserName
-     * 
+     *
      * Get user name from Codendi login, according to the user prefs: Codendi login or Real name
      *
      * @param string the user_name of the user to display
      * @see getDisplayName
      */
-    function getDisplayNameFromUserName($user_name) {
+    function getDisplayNameFromUserName($user_name)
+    {
         if ($this->_isUserNameNone($user_name)) {
             return $user_name;
         } else {
@@ -264,15 +282,16 @@ class UserHelper {
 
     /**
      * Get a link on user profile with name according to user prefs.
-     * 
-     * @param Integer $user_id User id
-     * 
-     * @return String
+     *
+     * @param int $user_id User id
+     *
+     * @return string
      */
-    public function getLinkOnUserFromUserId($user_id) {
+    public function getLinkOnUserFromUserId($user_id)
+    {
         return $this->getLinkOnUser($this->_getUserManager()->getUserById($user_id));
     }
-    
+
     /**
      * Get a link on user profile with name according to user prefs.
      *
@@ -280,9 +299,10 @@ class UserHelper {
      *
      * @return String
      */
-    public function getLinkOnUser(PFUser $user) {
+    public function getLinkOnUser(PFUser $user)
+    {
         $hp = Codendi_HTMLPurifier::instance();
-        if($user && !$user->isNone()) {
+        if ($user && !$user->isNone()) {
             return '<a href="'.$this->getUserUrl($user).'">'.$hp->purify($this->getDisplayNameFromUser($user), CODENDI_PURIFIER_CONVERT_HTML).'</a>';
         } else {
             $username = $user ? $user->getName() : '';
@@ -290,26 +310,32 @@ class UserHelper {
         }
     }
 
-    public function getUserUrl(PFUser $user) {
+    public function getUserUrl(PFUser $user)
+    {
         return "/users/".urlencode($user->getName());
+    }
+
+    public function getAbsoluteUserURL(PFUser $user): string
+    {
+        return $this->instance_base_url_builder->build() . $this->getUserUrl($user);
     }
 
     /**
      * _isUserNameNone
      *
-     * @param  user_name  
+     * @param  user_name
      */
-    function _isUserNameNone($user_name) {
+    function _isUserNameNone($user_name)
+    {
         return $user_name == $GLOBALS['Language']->getText('global', 'none');
     }
-    
+
     /**
      * Returns the user dao
      */
-    function _getUserDao() {
+    function _getUserDao()
+    {
         $dao = new UserDao(CodendiDataAccess::instance());
         return $dao;
     }
 }
-
-?>

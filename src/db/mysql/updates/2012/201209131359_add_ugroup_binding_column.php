@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) STMicroelectronics 2012. All rights reserved
  *
@@ -17,18 +16,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201209131359_add_ugroup_binding_column extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201209131359_add_ugroup_binding_column extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return <<<EOT
 Add source_id column on ugroup table.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE ugroup ADD COLUMN source_id INT(11) DEFAULT NULL';
         if ($this->db->tableNameExists('ugroup')) {
             $res = $this->db->dbh->exec($sql);
@@ -38,11 +41,10 @@ EOT;
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('ugroup', 'source_id')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Column source_id not created in ugroup');
         }
     }
 }
-
-?>

@@ -14,9 +14,9 @@
     "codemirror": "^5.40.0",
     "mustache": "^2.3.2",
     "sprintf-js": "^1.1.1",
-    "vue": "^2.5.17",
-    "vue-gettext": "^2.1.0",
-    "vuex": "^3.0.1"
+    "vue": "^2.6.10",
+    "vue-gettext": "^2.1.6",
+    "vuex": "^3.1.2"
   },
   "devDependencies": {
     "angular-mocks": "^1.7.3",
@@ -26,12 +26,8 @@
     "bin": "../../../../node_modules/.bin/"
   },
   "scripts": {
-    "karma-angular": "$npm_package_config_bin/karma start ./karma.conf.js",
-    "karma-create-pr": "$npm_package_config_bin/karma start ./create-pullrequest-button/karma.conf.js",
     "build": "rm -rf ../../../../src/www/assets/pullrequest/scripts/ && NODE_ENV=production $npm_package_config_bin/webpack --mode=production",
-    "coverage": "rm -rf ./coverage && export NODE_ENV=coverage; npm run karma-angular && npm run karma-create-pr && $npm_package_config_bin/http-server -os -a 0.0.0.0 -p 9000 coverage/",
-    "test": "export NODE_ENV=test; npm run karma-angular && npm run karma-create-pr",
-    "watch": "NODE_ENV=watch $npm_package_config_bin/concurrently --raw --kill-others '$npm_package_config_bin/webpack --watch --mode=development' 'npm run karma-angular' 'npm run karma-create-pr'",
-    "extract-gettext-cli": "$npm_package_config_bin/gettext-extract --attribute v-translate $(find create-pullrequest-button/ -type f -name '*.vue')"
+    "test": "$npm_package_config_bin/jest",
+    "watch": "NODE_ENV=watch $npm_package_config_bin/concurrently --raw --kill-others '$npm_package_config_bin/webpack --watch --mode=development' 'CI=true npm test -- --watch'"
   }
 }

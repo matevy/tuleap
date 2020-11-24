@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -96,7 +96,7 @@ use Tuleap\REST\ProjectStatusVerificator;
 use Tuleap\REST\v1\GitRepositoryRepresentationBase;
 use UserManager;
 
-include_once('www/project/admin/permissions.php');
+include_once __DIR__ . '/../../../../../src/www/project/admin/permissions.php';
 
 class RepositoryResource extends AuthenticatedResource
 {
@@ -185,7 +185,7 @@ class RepositoryResource extends AuthenticatedResource
         );
 
         $git_plugin  = \PluginFactory::instance()->getPluginByName('git');
-        $url_manager = new \Git_GitRepositoryUrlManager($git_plugin);
+        $url_manager = new \Git_GitRepositoryUrlManager($git_plugin, new \Tuleap\InstanceBaseURLBuilder());
 
         $this->representation_builder = new RepositoryRepresentationBuilder(
             $this->git_permission_manager,
@@ -327,7 +327,10 @@ class RepositoryResource extends AuthenticatedResource
 
         $status_retriever   = new CommitStatusRetriever(new CommitStatusDAO);
         $metadata_retriever = new CommitMetadataRetriever($status_retriever, $this->user_manager);
-        $url_manager        = new Git_GitRepositoryUrlManager(PluginFactory::instance()->getPluginByName('git'));
+        $url_manager        = new Git_GitRepositoryUrlManager(
+            PluginFactory::instance()->getPluginByName('git'),
+            new \Tuleap\InstanceBaseURLBuilder()
+        );
 
         $this->commit_representation_builder = new GitCommitRepresentationBuilder($metadata_retriever, $url_manager);
     }
@@ -339,10 +342,11 @@ class RepositoryResource extends AuthenticatedResource
      *
      * @param string $id Id of the repository
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
-    public function optionsId($id) {
+    public function optionsId($id)
+    {
         $this->sendAllowHeaders();
     }
 
@@ -352,10 +356,11 @@ class RepositoryResource extends AuthenticatedResource
      * @param int $id Id of the repository
      * @return GitRepositoryRepresentation | null
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
-    public function get($id) {
+    public function get($id)
+    {
         $this->checkAccess();
 
         $user       = $this->getCurrentUser();
@@ -371,9 +376,10 @@ class RepositoryResource extends AuthenticatedResource
      *
      * @param int $id Id of the repository
      *
-     * @throws 404
+     * @throws RestException 404
      */
-    public function optionsPullRequests($id) {
+    public function optionsPullRequests($id)
+    {
         $this->checkPullRequestEndpointsAvailable();
         $this->sendAllowHeaders();
     }
@@ -404,8 +410,8 @@ class RepositoryResource extends AuthenticatedResource
      *
      * @return Tuleap\PullRequest\REST\v1\RepositoryPullRequestRepresentation
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function getPullRequests($id, $query = '', $limit = self::MAX_LIMIT, $offset = 0)
     {
@@ -435,10 +441,10 @@ class RepositoryResource extends AuthenticatedResource
      * @param $name       {@type string} {@from body} Repository name
      *
      * @status 201
-     * @throws 400
-     * @throws 401
-     * @throws 404
-     * @throws 500
+     * @throws RestException 400
+     * @throws RestException 401
+     * @throws RestException 404
+     * @throws RestException 500
      */
     public function post($project_id, $name)
     {
@@ -473,7 +479,6 @@ class RepositoryResource extends AuthenticatedResource
             throw new RestException(500, $e->getMessage());
         }
 
-
         return $this->get($repository->getId());
     }
 
@@ -483,85 +488,6 @@ class RepositoryResource extends AuthenticatedResource
     public function options()
     {
         Header::allowOptionsPost();
-    }
-
-    /**
-     * <b>This endpoint is deprecated, the route {id}/statuses/{commit_reference} must be used instead.</b>
-     *
-     * @url POST {id}/build_status
-     *
-     * @access hybrid
-     *
-     * @deprecated
-     *
-     * @param int                       $id            Git repository id
-     * @param BuildStatusPOSTRepresentation $build_data BuildStatus {@from body} {@type Tuleap\Git\REST\v1\BuildStatusPOSTRepresentation}
-     *
-     * @status 201
-     * @throws 403
-     * @throws 404
-     * @throws 400
-     */
-    public function postBuildStatus($id, BuildStatusPOSTRepresentation $build_status_data)
-    {
-        Header::allowOptionsPost();
-
-        $whitelisted_repositories = array_map(
-            'trim',
-            explode(',',
-                \ForgeConfig::get('rest_git_build_status_whitelisted_repositories_id', '')
-            )
-        );
-        if (! in_array($id, $whitelisted_repositories)) {
-            throw new RestException(
-                410,
-                'This endpoint is no more available, you must migrate to the POST {id}/statuses/{commit_reference} endpoint'
-            );
-        }
-
-        if (! $build_status_data->isStatusValid()) {
-            throw new RestException(400, $build_status_data->status . ' is not a valid status.');
-        }
-
-        $repository = $this->repository_factory->getRepositoryById($id);
-
-        ProjectStatusVerificator::build()->checkProjectStatusAllowsAllUsersToAccessIt(
-            $repository->getProject()
-        );
-
-        if (! $repository) {
-            throw new RestException(404, 'Repository not found.');
-        }
-
-        $repo_ci_token = $this->ci_token_manager->getToken($repository);
-        if ($repo_ci_token === null || ! \hash_equals($build_status_data->token, $repo_ci_token)) {
-            throw new RestException(403, 'Invalid token');
-        }
-
-        $git_exec = new Git_Exec($repository->getFullPath(), $repository->getFullPath());
-
-        if (! $git_exec->doesObjectExists($build_status_data->commit_reference)) {
-            throw new RestException(404, $build_status_data->commit_reference . ' does not reference a commit.');
-        }
-
-        if ($git_exec->getObjectType($build_status_data->commit_reference) !== 'commit') {
-            throw new RestException(400, $build_status_data->commit_reference . ' does not reference a commit.');
-        }
-
-        $branch_ref = 'refs/heads/' . $build_status_data->branch;
-        if (! in_array($branch_ref, $git_exec->getAllBranches())) {
-            throw new RestException(400, $build_status_data->branch . ' is not a branch.');
-        }
-
-        EventManager::instance()->processEvent(
-            REST_GIT_BUILD_STATUS,
-            array(
-                'repository'       => $repository,
-                'branch'           => $build_status_data->branch,
-                'commit_reference' => $build_status_data->commit_reference,
-                'status'           => $build_status_data->status
-            )
-        );
     }
 
     /**
@@ -588,9 +514,9 @@ class RepositoryResource extends AuthenticatedResource
      * @param string $token            {@from body}
      *
      * @status 201
-     * @throws 403
-     * @throws 404
-     * @throws 400
+     * @throws RestException 403
+     * @throws RestException 404
+     * @throws RestException 400
      */
     public function postCommitStatus($id_or_path, $commit_reference, $state, $token)
     {
@@ -667,13 +593,13 @@ class RepositoryResource extends AuthenticatedResource
      * @param GitRepositoryGerritMigratePATCHRepresentation $migrate_to_gerrit {@from body}{@required false}
      * @param string $disconnect_from_gerrit {@from body}{@required false} {@choice delete,read-only,noop}
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      */
     protected function patchId(
         $id,
-        ?GitRepositoryGerritMigratePATCHRepresentation $migrate_to_gerrit = null ,
+        ?GitRepositoryGerritMigratePATCHRepresentation $migrate_to_gerrit = null,
         $disconnect_from_gerrit = null
     ) {
         $this->checkAccess();
@@ -700,7 +626,6 @@ class RepositoryResource extends AuthenticatedResource
         if ($disconnect_from_gerrit) {
             $this->disconnect($repository, $disconnect_from_gerrit);
         }
-
 
         $this->sendAllowHeaders();
     }
@@ -735,9 +660,9 @@ class RepositoryResource extends AuthenticatedResource
      * @return GitFileContentRepresentation
      *
      * @status 200
-     * @throws 401
-     * @throws 403
-     * @throws 404
+     * @throws RestException 401
+     * @throws RestException 403
+     * @throws RestException 404
      *
      */
     public function getFileContent($id, $path_to_file, $ref = 'master')
@@ -788,10 +713,10 @@ class RepositoryResource extends AuthenticatedResource
      * @return array {@type \Tuleap\Git\REST\v1\GitBranchRepresentation}
      *
      * @status 200
-     * @throws 401
-     * @throws 403
-     * @throws 404
-     * @throws 406
+     * @throws RestException 401
+     * @throws RestException 403
+     * @throws RestException 404
+     * @throws RestException 406
      */
     public function getBranches($id, $offset = 0, $limit = self::MAX_LIMIT)
     {
@@ -869,10 +794,10 @@ class RepositoryResource extends AuthenticatedResource
      * @return array {@type \Tuleap\Git\REST\v1\GitTagRepresentation}
      *
      * @status 200
-     * @throws 401
-     * @throws 403
-     * @throws 404
-     * @throws 406
+     * @throws RestException 401
+     * @throws RestException 403
+     * @throws RestException 404
+     * @throws RestException 406
      */
     public function getTags($id, $offset = 0, $limit = self::MAX_LIMIT)
     {
@@ -941,7 +866,8 @@ class RepositoryResource extends AuthenticatedResource
         return $provider->GetProject();
     }
 
-    private function disconnect(GitRepository $repository, $disconnect_from_gerrit) {
+    private function disconnect(GitRepository $repository, $disconnect_from_gerrit)
+    {
         try {
             $this->migration_handler->disconnect($repository, $disconnect_from_gerrit);
         } catch (DeletePluginNotInstalledException $e) {
@@ -980,11 +906,13 @@ class RepositoryResource extends AuthenticatedResource
         }
     }
 
-    private function getCurrentUser() {
+    private function getCurrentUser()
+    {
         return UserManager::instance()->getCurrentUser();
     }
 
-    private function getRepository(PFUser $user, $id) {
+    private function getRepository(PFUser $user, $id)
+    {
         try {
             $repository = $this->repository_factory->getRepositoryByIdUserCanSee($user, $id);
         } catch (GitRepoNotReadableException $exception) {
@@ -998,7 +926,8 @@ class RepositoryResource extends AuthenticatedResource
         return $repository;
     }
 
-    private function getPaginatedPullRequests(GitRepository $repository, $query, $limit, $offset) {
+    private function getPaginatedPullRequests(GitRepository $repository, $query, $limit, $offset)
+    {
         $result = null;
 
         EventManager::instance()->processEvent(
@@ -1016,7 +945,8 @@ class RepositoryResource extends AuthenticatedResource
         return $result;
     }
 
-    private function checkPullRequestEndpointsAvailable() {
+    private function checkPullRequestEndpointsAvailable()
+    {
         $available = false;
 
         EventManager::instance()->processEvent(
@@ -1031,15 +961,18 @@ class RepositoryResource extends AuthenticatedResource
         }
     }
 
-    private function sendAllowHeaders() {
+    private function sendAllowHeaders()
+    {
         Header::allowOptionsGetPatch();
     }
 
-    private function sendPaginationHeaders($limit, $offset, $size) {
+    private function sendPaginationHeaders($limit, $offset, $size)
+    {
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
     }
 
-    private function checkLimit($limit) {
+    private function checkLimit($limit)
+    {
         if ($limit > self::MAX_LIMIT) {
             throw new RestException(406, 'Maximum value for limit exceeded');
         }

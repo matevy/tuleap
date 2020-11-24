@@ -1,26 +1,31 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Semantic\Timeframe\ArtifactTimeframeHelper;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
+use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
 
-abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Field_Alphanum implements Tracker_FormElement_IComputeValues {
+abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Field_Alphanum implements Tracker_FormElement_IComputeValues
+{
 
     public $default_properties = array(
         'maxchars'      => array(
@@ -61,7 +66,8 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @return mixed
      */
-    private function getComputedValueAt(Tracker_Artifact $artifact, $timestamp) {
+    private function getComputedValueAt(Tracker_Artifact $artifact, $timestamp)
+    {
         $row = $this->getValueDao()->getValueAt($artifact->getId(), $this->getId(), $timestamp);
         return $row['value'];
     }
@@ -72,7 +78,8 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @return mixed
      */
-    private function getCurrentComputedValue(Tracker_Artifact $artifact) {
+    private function getCurrentComputedValue(Tracker_Artifact $artifact)
+    {
         $row = $this->getValueDao()->getLastValue($artifact->getId(), $this->getId());
         if ($row) {
             return $row['value'];
@@ -80,7 +87,8 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
         return 0;
     }
 
-    public function getQuerySelect() {
+    public function getQuerySelect()
+    {
         $R1 = 'R1_'. $this->id;
         $R2 = 'R2_'. $this->id;
         return "$R2.value AS `". $this->name ."`";
@@ -113,7 +121,8 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *               - selectbox: count group by
      *               - multiselectbox: all (else it breaks other computations)
      */
-    public function getQuerySelectAggregate($functions) {
+    public function getQuerySelectAggregate($functions)
+    {
         $R1  = 'R1_'. $this->id;
         $R2  = 'R2_'. $this->id;
         $same     = array();
@@ -140,11 +149,13 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
     /**
      * @return array the available aggreagate functions for this field. empty array if none or irrelevant.
      */
-    public function getAggregateFunctions() {
+    public function getAggregateFunctions()
+    {
         return array('AVG', 'COUNT', 'COUNT_GRBY', 'MAX', 'MIN', 'STD', 'SUM');
     }
 
-    protected function buildMatchExpression($field_name, $criteria_value) {
+    protected function buildMatchExpression($field_name, $criteria_value)
+    {
         $expr = parent::buildMatchExpression($field_name, $criteria_value);
         if (!$expr) {
             $matches = array();
@@ -152,18 +163,15 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
                 // It's < or >,  = and a number then use as is
                 $matches[2] = (string)($this->cast($matches[2]));
                 $expr = $field_name.' '.$matches[1].' '.$matches[2];
-
-            } else if (preg_match("/^($this->pattern)$/", $criteria_value, $matches)) {
+            } elseif (preg_match("/^($this->pattern)$/", $criteria_value, $matches)) {
                 // It's a number so use  equality
                 $matches[1] = $this->cast($matches[1]);
                 $expr = $field_name.' = '.$matches[1];
-
-            } else if (preg_match("/^($this->pattern)\s*-\s*($this->pattern)$/", $criteria_value, $matches)) {
+            } elseif (preg_match("/^($this->pattern)\s*-\s*($this->pattern)$/", $criteria_value, $matches)) {
                 // it's a range number1-number2
                 $matches[1] = (string)($this->cast($matches[1]));
                 $matches[2] = (string)($this->cast($matches[2]));
                 $expr = $field_name.' >= '.$matches[1].' AND '.$field_name.' <= '. $matches[2];
-
             } else {
                 // Invalid syntax - no condition
                 $expr = '1';
@@ -173,7 +181,8 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
     }
 
     protected $pattern = '[+\-]*[0-9]+';
-    protected function cast($value) {
+    protected function cast($value)
+    {
         return (int)$value;
     }
 
@@ -183,7 +192,8 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @return string html
      */
-    protected function fetchSubmitValue($submitted_values = array()) {
+    protected function fetchSubmitValue(array $submitted_values)
+    {
         $html  = '';
         $value = $this->getValueFromSubmitOrDefault($submitted_values);
         $hp    = Codendi_HTMLPurifier::instance();
@@ -201,9 +211,10 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @return string html
      */
-    protected function fetchSubmitValueMasschange() {
+    protected function fetchSubmitValueMasschange()
+    {
         $html = '';
-        $value = $GLOBALS['Language']->getText('global','unchanged');
+        $value = $GLOBALS['Language']->getText('global', 'unchanged');
         $hp = Codendi_HTMLPurifier::instance();
         $html .= '<input type="text"
                          size="'. $this->getProperty('size') .'"
@@ -222,10 +233,14 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @return string
      */
-    protected function fetchArtifactValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null, $submitted_values = array()) {
+    protected function fetchArtifactValue(
+        Tracker_Artifact $artifact,
+        ?Tracker_Artifact_ChangesetValue $value,
+        array $submitted_values
+    ) {
         $html = '';
-        if (! empty($submitted_values) && is_array($submitted_values[0]) && isset($submitted_values[0][$this->getId()])) {
-            $value = $submitted_values[0][$this->getId()];
+        if (isset($submitted_values[$this->getId()])) {
+            $value = $submitted_values[$this->getId()];
         } else {
             if ($value !=null) {
                 $value = $value->getValue();
@@ -245,10 +260,10 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @param Tracker_Artifact                $artifact         The artifact
      * @param PFUser                          $user             The user who will receive the email
-     * @param boolean                         $ignore_perms
+     * @param bool $ignore_perms
      * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
      * @param string                          $format           mail format
-     * @param boolean                         $ignore_perms
+     * @param bool $ignore_perms
      *
      * @return string
      */
@@ -259,11 +274,11 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
         ?Tracker_Artifact_ChangesetValue $value = null,
         $format = 'text'
     ) {
-        if ( empty($value) || !$value->getNumeric()) {
+        if (empty($value) || !$value->getNumeric()) {
             return '-';
         }
         $output = '';
-        switch($format) {
+        switch ($format) {
             case 'html':
                 $output = $this->fetchArtifactValueReadOnly($artifact, $value);
                 break;
@@ -284,30 +299,53 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @return string
      */
-    public function fetchArtifactValueReadOnly(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null) {
-        if ( empty($value) || ! $value->getValue()) {
+    public function fetchArtifactValueReadOnly(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    {
+        if ($value === null) {
             return $this->getNoValueLabel();
         }
+
+        $numeric_value = $value->getValue();
+        if ($numeric_value === null) {
+            return $this->getNoValueLabel();
+        }
+
         $hp = Codendi_HTMLPurifier::instance();
-        return $hp->purify( "{$value->getValue()}", CODENDI_PURIFIER_CONVERT_HTML);
+
+        $html_value = $hp->purify($numeric_value, CODENDI_PURIFIER_CONVERT_HTML);
+
+        $user              = $this->getCurrentUser();
+        $time_frame_helper = $this->getArtifactTimeframeHelper();
+
+        if ($time_frame_helper->artifactHelpShouldBeShownToUser($user, $this)) {
+            $html_value = $html_value . '<span class="artifact-timeframe-helper"> (' . $time_frame_helper->getEndDateArtifactHelperForReadOnlyView($user, $artifact) . ')</span>';
+        }
+
+        return $html_value;
     }
 
-    public function fetchArtifactValueWithEditionFormIfEditable(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null, $submitted_values = array()) {
+    public function fetchArtifactValueWithEditionFormIfEditable(
+        Tracker_Artifact $artifact,
+        ?Tracker_Artifact_ChangesetValue $value,
+        array $submitted_values
+    ) {
         return $this->fetchArtifactValueReadOnly($artifact, $value) . $this->getHiddenArtifactValueForEdition($artifact, $value, $submitted_values);
     }
 
     /**
      * @see Tracker_FormElement_Field::hasChanges()
      */
-    public function hasChanges(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $old_value, $new_value) {
-       return $old_value->getNumeric() !== $new_value;
+    public function hasChanges(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $old_value, $new_value)
+    {
+        return $old_value->getNumeric() !== $new_value;
     }
 
     /**
      * Display the html field in the admin ui
      * @return string html
      */
-    protected function fetchAdminFormElement() {
+    protected function fetchAdminFormElement()
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
         $value = '';
@@ -327,12 +365,13 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      * @param array $from the value(s) *before*
      * @param array $to   the value(s) *after*
      */
-    public function fetchFollowUp($artifact, $from, $to) {
+    public function fetchFollowUp($artifact, $from, $to)
+    {
         $html = '';
         if (!$from || !($from_value = $from->getNumeric())) {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_artifact','set_to').' ';
+            $html .= $GLOBALS['Language']->getText('plugin_tracker_artifact', 'set_to').' ';
         } else {
-            $html .= ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact','changed_from').' '. $from_value .'  '.$GLOBALS['Language']->getText('plugin_tracker_artifact','to').' ';
+            $html .= ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'changed_from').' '. $from_value .'  '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'to').' ';
         }
         $html .= $to->getNumeric();
         return $html;
@@ -346,7 +385,8 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @return bool true if the value is considered ok
      */
-    protected function validate(Tracker_Artifact $artifact, $value) {
+    protected function validate(Tracker_Artifact $artifact, $value)
+    {
         return $this->validateValue($value);
     }
 
@@ -357,7 +397,8 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
      *
      * @return bool true if the value is considered ok
      */
-    public function validateValue($value) {
+    public function validateValue($value)
+    {
         if ($value !== null && ! is_string($value) &&  ! is_int($value) && ! is_float($value)) {
             $GLOBALS['Response']->addFeedback('error', $this->getValidatorErrorMessage());
             return false;
@@ -371,15 +412,16 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
     /**
      * @return string the i18n error message to display if the value submitted by the user is not valid
      */
-    protected abstract function getValidatorErrorMessage();
+    abstract protected function getValidatorErrorMessage();
 
     /**
      * Verifies the consistency of the imported Tracker
      *
      * @return true if Tracler is ok
      */
-    public function testImport() {
-        if(parent::testImport()){
+    public function testImport()
+    {
+        if (parent::testImport()) {
             if (!($this->default_properties['maxchars'] && $this->default_properties['size'])) {
                 var_dump($this, 'Properties must be "maxchars" and "size"');
                 return false;
@@ -388,7 +430,23 @@ abstract class Tracker_FormElement_Field_Numeric extends Tracker_FormElement_Fie
         return true;
     }
 
-    public function getCachedValue(PFUser $user, Tracker_Artifact $artifact, $timestamp = null) {
+    public function getCachedValue(PFUser $user, Tracker_Artifact $artifact, $timestamp = null)
+    {
         return $this->getComputedValue($user, $artifact, $timestamp);
+    }
+
+    protected function getArtifactTimeframeHelper() : ArtifactTimeframeHelper
+    {
+        $form_element_factory       = Tracker_FormElementFactory::instance();
+        $semantic_timeframe_builder = new SemanticTimeframeBuilder(new SemanticTimeframeDao(), $form_element_factory);
+
+        return new ArtifactTimeframeHelper(
+            $semantic_timeframe_builder,
+            new TimeframeBuilder(
+                $form_element_factory,
+                $semantic_timeframe_builder,
+                new \BackendLogger()
+            )
+        );
     }
 }

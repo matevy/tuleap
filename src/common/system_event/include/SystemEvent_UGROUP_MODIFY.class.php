@@ -24,17 +24,19 @@
 *
 * UGROUP_MODIFY = one static ugroup of the project has been modified
 */
-class SystemEvent_UGROUP_MODIFY extends SystemEvent {
+class SystemEvent_UGROUP_MODIFY extends SystemEvent
+{
     /**
      * Verbalize the parameters so they are readable and much user friendly in
      * notifications
      *
-     * @param bool $with_link true if you want links to entities. The returned 
+     * @param bool $with_link true if you want links to entities. The returned
      * string will be html instead of plain/text
      *
      * @return string
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $txt             = '';
         $ugroup_name     = '';
         $ugroup_old_name = '';
@@ -51,13 +53,14 @@ class SystemEvent_UGROUP_MODIFY extends SystemEvent {
 
         return $txt;
     }
-    
-    /** 
+
+    /**
      * Process stored event
      *
-     * @return Boolean
+     * @return bool
      */
-    function process() {
+    function process()
+    {
         $ugroup_name = null;
         $ugroup_old_name = null;
         // Check parameters
@@ -93,7 +96,8 @@ class SystemEvent_UGROUP_MODIFY extends SystemEvent {
     /**
      * @return bool
      */
-    private function processSVNAccessFile($project_id, $ugroup_name, $ugroup_old_name) {
+    private function processSVNAccessFile($project_id, $ugroup_name, $ugroup_old_name)
+    {
         if ($project = $this->getProject($project_id)) {
             if ($project->usesSVN()) {
                 $backendSVN = $this->getBackend('SVN');
@@ -110,12 +114,13 @@ class SystemEvent_UGROUP_MODIFY extends SystemEvent {
      *
      * @protected for testing purpose
      *
-     * @param Integer $ugroup_id Id of the deleted user group
-     * @param Integer $group_id  Id of the project
+     * @param int $ugroup_id Id of the deleted user group
+     * @param int $group_id Id of the project
      *
-     * @return Boolean
+     * @return bool
      */
-    protected function processUgroupBinding($ugroup_id, $group_id) {
+    protected function processUgroupBinding($ugroup_id, $group_id)
+    {
         $ugroup_binding               = $this->getUgroupBinding();
         $ugroups_successfully_updated = true;
         if (!$ugroup_binding->checkUGroupValidity($group_id, $ugroup_id)) {
@@ -154,11 +159,11 @@ class SystemEvent_UGROUP_MODIFY extends SystemEvent {
      *
      * @return UGroupBinding
      */
-    protected function getUgroupBinding() {
+    protected function getUgroupBinding()
+    {
         $ugroupUserDao = new UGroupUserDao();
         $ugroupManager = new UGroupManager(new UGroupDao());
         $uGroupBinding = new UGroupBinding($ugroupUserDao, $ugroupManager);
         return $uGroupBinding;
     }
-
 }

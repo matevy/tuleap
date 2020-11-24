@@ -21,11 +21,9 @@
 use Tuleap\Tracker\Artifact\ChangesetValueComputed;
 use Tuleap\Tracker\DAO\ComputedDao;
 use Tuleap\Tracker\FormElement\ComputedFieldCalculator;
+use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 use Tuleap\Tracker\FormElement\FieldCalculator;
 use Tuleap\Tracker\REST\Artifact\ArtifactFieldComputedValueFullRepresentation;
-use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
-use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
-use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
 
 class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float //phpcs:ignore
 {
@@ -41,6 +39,11 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         'fast_compute' => array(
             'value' => null,
             'type'  => 'upgrade_button',
+        ),
+        'default_value' => array(
+            'value' => '',
+            'type'  => 'string',
+            'size'  => 40,
         ),
     );
 
@@ -271,6 +274,13 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
 
     public function exportPropertiesToXML(&$root)
     {
+        $default_value = $this->getDefaultValue();
+        if ($default_value === null) {
+            return;
+        }
+
+        $child_properties = $root->addChild('properties');
+        $child_properties->addAttribute('default_value', (string) $default_value[self::FIELD_VALUE_MANUAL]);
     }
 
     /**
@@ -312,8 +322,8 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
 
     public function fetchArtifactValueWithEditionFormIfEditable(
         Tracker_Artifact $artifact,
-        ?Tracker_Artifact_ChangesetValue $value = null,
-        $submitted_values = array()
+        ?Tracker_Artifact_ChangesetValue $value,
+        array $submitted_values
     ) {
         return $this->fetchArtifactValueReadOnly($artifact, $value).
             $this->getHiddenArtifactValueForEdition($artifact, $value, $submitted_values);
@@ -321,8 +331,8 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
 
     protected function getHiddenArtifactValueForEdition(
         Tracker_Artifact $artifact,
-        ?Tracker_Artifact_ChangesetValue $value = null,
-        $submitted_values = array()
+        ?Tracker_Artifact_ChangesetValue $value,
+        array $submitted_values
     ) {
 
         $purifier       = Codendi_HTMLPurifier::instance();
@@ -365,8 +375,8 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
 
     protected function fetchArtifactValue(
         Tracker_Artifact $artifact,
-        ?Tracker_Artifact_ChangesetValue $value = null,
-        $submitted_values = array()
+        ?Tracker_Artifact_ChangesetValue $value,
+        array $submitted_values
     ) {
         $displayed_value = null;
         $is_autocomputed = true;
@@ -375,8 +385,8 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
             $is_autocomputed = ! $value->isManualValue();
         }
 
-        if (isset($submitted_values[0][$this->getId()][self::FIELD_VALUE_MANUAL])) {
-            $displayed_value = $submitted_values[0][$this->getId()][self::FIELD_VALUE_MANUAL];
+        if (isset($submitted_values[$this->getId()][self::FIELD_VALUE_MANUAL])) {
+            $displayed_value = $submitted_values[$this->getId()][self::FIELD_VALUE_MANUAL];
         }
 
         return $this->fetchComputedInputs($displayed_value, $is_autocomputed);
@@ -416,19 +426,29 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
 
         $computed_value = $this->getComputedValueWithNoStopOnManualValue($artifact);
         if ($computed_value === null) {
-            $computed_value = $this->getFieldEmptyMessage();
+            $html_computed_value = '<span class="auto-computed">'. $purifier->purify($this->getFieldEmptyMessage()) .'</span>';
+        } else {
+            $html_computed_value = $purifier->purify($computed_value);
         }
 
-
-        $html_computed_value = '<span class="auto-computed">'. $purifier->purify($computed_value) .' (' .
+        $html_computed_complete_value = $html_computed_value .'<span class="auto-computed"> (' .
             $GLOBALS['Language']->getText('plugin_tracker', 'autocomputed_field').')</span>';
 
         if ($value === null) {
-            $value = $html_computed_value;
+            $value = $html_computed_complete_value;
         }
 
-        return '<div class="auto-computed-label">'. $value. '</div>'.
-            '<div class="back-to-autocompute">'.$html_computed_value.'</div>';
+        $user              = $this->getCurrentUser();
+        $time_frame_helper = $this->getArtifactTimeframeHelper();
+
+        if ($time_frame_helper->artifactHelpShouldBeShownToUser($user, $this)) {
+            $value = $value . '<span class="artifact-timeframe-helper"> (' . $time_frame_helper->getEndDateArtifactHelperForReadOnlyView($user, $artifact) . ')</span>';
+        }
+
+        $html = '<div class="auto-computed-label">'. $value. '</div>'.
+            '<div class="back-to-autocompute">'.$html_computed_complete_value.'</div>';
+
+        return $html;
     }
 
     /**
@@ -436,7 +456,7 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
      *
      * @param Tracker_Artifact                $artifact         The artifact
      * @param PFUser                          $user             The user who will receive the email
-     * @param boolean                         $ignore_perms
+     * @param bool $ignore_perms
      * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
      * @param string                          $format           output format
      *
@@ -459,10 +479,11 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
      * Fetch the html code to display the field value in tooltip
      *
      * @param Tracker_Artifact $artifact
-     * @param Tracker_Artifact_ChangesetValue_Integer $value The changeset value of this field
+     * @param Tracker_Artifact_ChangesetValue $value The changeset value of this field
      * @return string The html code to display the field value in tooltip
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null) {
+    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    {
         $current_user = UserManager::instance()->getCurrentUser();
         $changeset    = $artifact->getLastChangesetWithFieldValue($this);
         $value        = $this->getComputedValue($current_user, $changeset->getArtifact(), $changeset->getSubmittedOn());
@@ -480,7 +501,8 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         return $this->getComputedValue($current_user, $changeset->getArtifact(), $changeset->getSubmittedOn());
     }
 
-    public function getRESTValue(PFUser $user, Tracker_Artifact_Changeset $changeset) {
+    public function getRESTValue(PFUser $user, Tracker_Artifact_Changeset $changeset)
+    {
         return $this->getFullRESTValue($user, $changeset);
     }
 
@@ -543,7 +565,14 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
     public function fetchAdminFormElement()
     {
         $html  = '<div class="input-append">';
-        $html .= $this->fetchComputedInputs('', true);
+
+        $default_value          = $this->getDefaultValue();
+        $default_value_in_input = '';
+        if ($default_value !== null) {
+            $default_value_in_input = (string) $default_value[self::FIELD_VALUE_MANUAL];
+        }
+
+        $html .= $this->fetchComputedInputs($default_value_in_input, true);
         $html .= $this->fetchBackToAutocomputedButton(true);
         $html .= $this->fetchComputedValueWithLabel($this->getFieldEmptyMessage());
         $html .= "</div>";
@@ -554,54 +583,71 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
     /**
      * @return the label of the field (mainly used in admin part)
      */
-    public static function getFactoryLabel() {
+    public static function getFactoryLabel()
+    {
         return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'aggregate_label');
     }
 
     /**
      * @return the description of the field (mainly used in admin part)
      */
-    public static function getFactoryDescription() {
+    public static function getFactoryDescription()
+    {
         return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'aggregate_description');
     }
 
     /**
      * @return the path to the icon
      */
-    public static function getFactoryIconUseIt() {
+    public static function getFactoryIconUseIt()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/sum.png');
     }
 
     /**
      * @return the path to the icon
      */
-    public static function getFactoryIconCreate() {
+    public static function getFactoryIconCreate()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/sum.png');
     }
 
-    protected function getDao() {
+    protected function getDao(): Tracker_FormElement_Field_ComputedDao
+    {
         return new Tracker_FormElement_Field_ComputedDao();
     }
 
-    public function getCriteriaFrom($criteria) {
+    public function getCriteriaFrom($criteria)
+    {
+        return '';
     }
 
-    public function getCriteriaWhere($criteria) {
+    public function getCriteriaWhere($criteria)
+    {
+        return '';
     }
 
-    public function getQuerySelect() {
+    public function getQuerySelect()
+    {
+        return '';
     }
 
-    public function getQueryFrom() {
+    public function getQueryFrom()
+    {
+        return '';
     }
 
-    public function fetchCriteriaValue($criteria) {
+    public function fetchCriteriaValue($criteria)
+    {
+        return '';
     }
 
-    public function fetchRawValue($value) {
+    public function fetchRawValue($value)
+    {
     }
 
-    protected function getCriteriaDao() {
+    protected function getCriteriaDao()
+    {
     }
 
     public function getAggregateFunctions()
@@ -609,36 +655,63 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         return [];
     }
 
+    public function fetchSubmitForOverlay(array $submitted_values)
+    {
+        return $this->buildFieldForSubmission(
+            'tracker-formelement-edit-for-modal',
+            'auto-computed-for-modal'
+        );
+    }
+
     /**
      * Fetch the element for the submit new artifact form
      *
      * @return string html
      */
-    public function fetchSubmit($submitted_values = array())
+    public function fetchSubmit(array $submitted_values)
+    {
+        return $this->buildFieldForSubmission(
+            'tracker-formelement-edit-for-submit',
+            'auto-computed-for-submit'
+        );
+    }
+
+    private function buildFieldForSubmission(string $submit_class, string $auto_computed_class)
     {
         if (! $this->userCanSubmit()) {
             return '';
+        }
+
+        $default_value = $this->getDefaultValue();
+        $extra_class   = '';
+        if ($default_value !== null) {
+            $extra_class = "in-edition with-default-value";
         }
 
         $purifier = Codendi_HTMLPurifier::instance();
         $required = $this->required ? ' <span class="highlight">*</span>' : '';
 
         $html = '<div>';
-        $html .= '<div class="tracker_artifact_field tracker_artifact_field-computed editable">';
+        $html .= '<div class="tracker_artifact_field tracker_artifact_field-computed editable '.$extra_class.'">';
 
-        if ($this->userCanRead()) {
-            if ($this->userCanUpdate()) {
-                $title = $purifier->purify($GLOBALS['Language']->getText('plugin_tracker_artifact', 'edit_field', array($this->getLabel())));
-                $html .= '<button type="button" title="' . $title . '" class="tracker_formelement_edit tracker-formelement-edit-for-submit">' . $purifier->purify($this->getLabel())  . $required . '</button>';
-                $html .= '<label for="tracker_artifact_'. $this->id .'" title="'. $purifier->purify($this->description) .
-                    '" class="tracker_formelement_label">'. $purifier->purify($this->getLabel())  . $required .'</label>';
-            }
-        }
-        $html .= '<span class="auto-computed auto-computed-for-submit">'. $this->getNoValueLabel() .' (' .
+        $title = $purifier->purify($GLOBALS['Language']->getText('plugin_tracker_artifact', 'edit_field', array($this->getLabel())));
+        $html .= '<button type="button" title="' . $title . '" class="tracker_formelement_edit '.$submit_class.'">' . $purifier->purify($this->getLabel())  . $required . '</button>';
+        $html .= '<label for="tracker_artifact_'. $this->id .'" title="'. $purifier->purify($this->description) .
+            '" class="tracker_formelement_label">'. $purifier->purify($this->getLabel())  . $required .'</label>';
+
+        $html .= '<span class="auto-computed '.$auto_computed_class.'">'. $this->getNoValueLabel() .' (' .
             $GLOBALS['Language']->getText('plugin_tracker', 'autocomputed_field').')</span>';
 
         $html .= '<div class="input-append add-field" data-field-id="'. $this->getId() .'">';
-        $html .= $this->fetchComputedInputs('', true);
+
+        $default_value_in_input = '';
+        $is_autocomputed        = true;
+        if ($default_value !== null) {
+            $default_value_in_input = (string) $default_value[self::FIELD_VALUE_MANUAL];
+            $is_autocomputed = false;
+        }
+
+        $html .= $this->fetchComputedInputs($default_value_in_input, $is_autocomputed);
         $html .= $this->fetchBackToAutocomputedButton(false);
         $html .= $this->fetchComputedValueWithLabel(
             $GLOBALS['Language']->getText('plugin_tracker_formelement_exception', 'no_value_for_field')
@@ -647,6 +720,37 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         $html .= '</div></div></div>';
 
         return $html;
+    }
+
+    /**
+     * Returns the default value for this field, or null if no default value defined
+     *
+     * @return mixed The default value for this field, or null if no default value defined
+     */
+    public function getDefaultValue()
+    {
+        $property = $this->getProperty('default_value');
+        if ($property === null) {
+            return null;
+        }
+
+        return [
+            self::FIELD_VALUE_IS_AUTOCOMPUTED => false,
+            self::FIELD_VALUE_MANUAL => (float) $property
+        ];
+    }
+
+    public function getDefaultRESTValue()
+    {
+        $property = $this->getProperty('default_value');
+        if ($property === null) {
+            return null;
+        }
+
+        return [
+            'type'  => self::FIELD_VALUE_MANUAL,
+            'value' => (float) $property
+        ];
     }
 
     public function fetchSubmitMasschange()
@@ -684,13 +788,13 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
 
     protected function fetchSubmitValueMasschange()
     {
-        $unchanged = $GLOBALS['Language']->getText('global','unchanged');
+        $unchanged = $GLOBALS['Language']->getText('global', 'unchanged');
         $html      = $this->fetchComputedInputs($unchanged, false);
         $html     .= $this->fetchBackToAutocomputedButton(false);
         return $html;
     }
 
-    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, $submitted_values = array())
+    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, array $submitted_values)
     {
         $purifier       = Codendi_HTMLPurifier::instance();
         $computed_value = $this->getComputedValueWithNoStopOnManualValue($artifact);
@@ -716,8 +820,8 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
                 $class              = '';
             }
 
-            if (isset($submitted_values[0][$this->getId()][self::FIELD_VALUE_MANUAL])) {
-                $computed_value     = $submitted_values[0][$this->getId()][self::FIELD_VALUE_MANUAL];
+            if (isset($submitted_values[$this->getId()][self::FIELD_VALUE_MANUAL])) {
+                $computed_value     = $submitted_values[$this->getId()][self::FIELD_VALUE_MANUAL];
                 $autocomputed_label = '';
                 $class              = '';
             }
@@ -751,11 +855,14 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         return $html;
     }
 
-    protected function getValueDao() {
+    protected function getValueDao()
+    {
         return new ComputedDao();
     }
 
-    public function fetchFollowUp($artifact, $from, $to) {
+    public function fetchFollowUp($artifact, $from, $to)
+    {
+        return '';
     }
 
     public function isArtifactValueAutocomputed(Tracker_Artifact $artifact)
@@ -814,7 +921,8 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         return $html;
     }
 
-    public function fetchRawValueFromChangeset($changeset) {
+    public function fetchRawValueFromChangeset($changeset)
+    {
     }
 
     public function getChangesetValue($changeset, $value_id, $has_changed)
@@ -854,13 +962,18 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         return UserManager::instance()->getCurrentUser();
     }
 
-    protected function saveValue($artifact, $changeset_value_id, $value, ?Tracker_Artifact_ChangesetValue $previous_changesetvalue = null) {
+    protected function saveValue(
+        $artifact,
+        $changeset_value_id,
+        $value,
+        ?Tracker_Artifact_ChangesetValue $previous_changesetvalue,
+        CreatedFileURLMapping $url_mapping
+    ) {
         $user = $this->getCurrentUser();
         if (! $this->userCanUpdate($user)) {
             return true;
         }
         $new_value = $this->getStorableValue($value);
-
 
         return $this->getValueDao()->create($changeset_value_id, $new_value);
     }
@@ -919,10 +1032,12 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         return  (float) $previous_changeset_value->getNumeric() !== (float) $new_value;
     }
 
-    public function getRESTAvailableValues() {
+    public function getRESTAvailableValues()
+    {
     }
 
-    public function testImport() {
+    public function testImport()
+    {
         return true;
     }
 
@@ -931,21 +1046,27 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
         return $this->validateValue($value);
     }
 
-    public function accept(Tracker_FormElement_FieldVisitor $visitor) {
+    public function accept(Tracker_FormElement_FieldVisitor $visitor)
+    {
         return $visitor->visitComputed($this);
     }
 
     /**
      * @return int | null if no value found
      */
-    public function getCachedValue(PFUser $user, Tracker_Artifact $artifact, $timestamp = null) {
+    public function getCachedValue(PFUser $user, Tracker_Artifact $artifact, $timestamp = null)
+    {
         $dao   = Tracker_FormElement_Field_ComputedDaoCache::instance();
         $value = $dao->getCachedFieldValueAtTimestamp($artifact->getId(), $this->getId(), $timestamp);
 
+        if ($value === false) {
+            return null;
+        }
         return $value;
     }
 
-    public function canBeUsedAsReportCriterion() {
+    public function canBeUsedAsReportCriterion()
+    {
         return false;
     }
 
@@ -969,7 +1090,7 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
 
             $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_common_artifact', 'err_required', $this->getLabel(). ' ('. $this->getName() .')'));
             return false;
-        } else if ($hasPermission) {
+        } elseif ($hasPermission) {
             if (! isset($submitted_value[self::FIELD_VALUE_IS_AUTOCOMPUTED])
                 && ! isset($submitted_value[self::FIELD_VALUE_MANUAL])
             ) {
@@ -1007,15 +1128,5 @@ class Tracker_FormElement_Field_Computed extends Tracker_FormElement_Field_Float
     private function isAnEmptyValue($value)
     {
         return ! is_array($value) && $value === null;
-    }
-
-    /**
-     * @return FrozenFieldDetector
-     */
-    private function getFrozenFieldDetector()
-    {
-        return new FrozenFieldDetector(
-            new FrozenFieldsRetriever(new FrozenFieldsDao())
-        );
     }
 }

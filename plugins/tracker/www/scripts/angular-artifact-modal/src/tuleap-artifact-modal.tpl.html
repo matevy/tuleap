@@ -1,5 +1,5 @@
 <script type="text/ng-template" id="field-fieldset.tpl.html">
-<div class="tlp-pane tlp-pane-collapsable" ng-class="{ 'tlp-pane-collapsed': field.collapsed }">
+<div class="tlp-pane tlp-pane-collapsable" ng-class="{ 'tlp-pane-collapsed': field.collapsed, 'tlp-pane-hidden': field.is_hidden }">
     <div class="tlp-pane-container">
         <div class="tlp-pane-header" ng-click="modal.toggleFieldset(field)">
             <h1 class="tlp-pane-title">
@@ -195,38 +195,13 @@
 </script>
 
 <script type="text/ng-template" id="field-text.tpl.html">
-<div class="tlp-form-element">
-    <div class="tuleap-artifact-modal-label-with-format">
-        <label for="{{ 'tracker_field_'+field.field_id }}"
-            class="tlp-label"
-        >
-            {{ field.label }}
-            <i ng-if="field.required" class="fa fa-asterisk"></i>
-        </label>
-        <select ng-model="modal.values[field.field_id].value.format"
-            ng-options="format.id as format.label for format in modal.text_formats"
-            ng-disabled="modal.isDisabled(field)"
-            id="{{ 'tracker_field_format_'+field.field_id }}"
-            class="tlp-select tlp-select-small"
-        ></select>
-    </div>
-
-    <textarea ng-if="modal.values[field.field_id].value.format === 'text'"
-        rows="5"
-        ng-model="modal.values[field.field_id].value.content"
-        ng-required="{{ field.required }}"
-        ng-disabled="modal.isDisabled(field)"
-        class="tlp-textarea"
-        id="{{ 'tracker_field_'+field.field_id }}"
-    ></textarea>
-    <ng-ckeditor
-            id="{{ 'tracker_field_'+field.field_id }}"
-            ng-if="modal.values[field.field_id].value.format === 'html'"
-            ng-model="modal.values[field.field_id].value.content"
-            ng-config="modal.initCkeditorConfig(field)"
-            required="{{ field.required }}"
-    ></ng-ckeditor>
-</div>
+<vue-component
+    name="TextField"
+    v-props-field="field"
+    v-props-value="modal.values[field.field_id].value"
+    v-on-input="modal.setFieldValue(field.field_id)"
+    v-on-upload-image="modal.addToFilesAddedByTextField"
+></vue-component>
 </script>
 
 <script type="text/ng-template" id="field-art_link.tpl.html">
@@ -409,6 +384,23 @@
 
     <div class="tlp-modal-body tuleap-artifact-modal-body">
         <div class="tuleap-artifact-modal-artifact">
+            <div class="tuleap-artifact-modal-show-hide-fieldsets" ng-if="modal.hasHiddenFieldsets()">
+                <label class="tlp-label">{{ 'Hidden fieldsets:' | translate }}</label>
+                <div class="tlp-button-bar">
+                    <div class="tlp-button-bar-item">
+                        <input type="radio" id="button-bar-left" name="button-bar-radio" class="tlp-button-bar-checkbox" ng-click="modal.showHiddenFieldsets(true)">
+                        <label for="button-bar-left" class="tlp-button-secondary tlp-button-outline">
+                            <i class="fa fa-eye"></i>
+                        </label>
+                    </div>
+                    <div class="tlp-button-bar-item">
+                        <input type="radio" id="button-bar-center" name="button-bar-radio" class="tlp-button-bar-checkbox" ng-click="modal.showHiddenFieldsets(false)"checked>
+                        <label for="button-bar-center" class="tlp-button-secondary tlp-button-outline">
+                            <i class="fa fa-eye-slash"></i>
+                        </label>
+                    </div>
+                </div>
+            </div>
             <div class="tlp-alert-danger" ng-if="modal.hasRestError()">
                 {{ 'Error:' | translate }} {{ modal.getRestErrorMessage() }}
             </div>
@@ -461,31 +453,13 @@
                 <div ng-if="! modal.followups_comments.loading_comments && modal.followups_comments.content.length === 0" class="tuleap-artifact-modal-followups-comments-empty" translate>No follow-ups</div>
             </div>
 
-            <div class="tuleap-artifact-modal-followups-add-form" ng-if="modal.isFollowupCommentFormDisplayed()">
-                <div class="tuleap-artifact-modal-label-with-format">
-                    <label class="tlp-label" for="followup_comment">
-                        {{ 'Comment' | translate }}
-                    </label>
-
-                    <select id="followup-comment-format"
-                        ng-model="modal.followup_comment.format"
-                        ng-options="format.id as format.label for format in modal.text_formats"
-                        class="tlp-select tlp-select-small"
-                    ></select>
-                </div>
-                <textarea id="followup_comment"
-                    ng-if="modal.followup_comment.format === 'text'"
-                    ng-model="modal.followup_comment.body"
-                    class="tlp-textarea"
-                    placeholder="{{ 'Add a new comment' | translate }}"
-                    rows="3"
-                ></textarea>
-                <ng-ckeditor
-                    ng-if="modal.followup_comment.format === 'html'"
-                    ng-model="modal.followup_comment.body"
-                    ng-config="modal.initCkeditorConfig()"
-                ></ng-ckeditor>
-            </div>
+            <vue-component
+                name="FollowupEditor"
+                ng-if="modal.isFollowupCommentFormDisplayed()"
+                v-props-value="modal.new_followup_comment"
+                v-on-input="modal.setFollowupComment"
+                v-on-upload-image="modal.addToFilesAddedByTextField"
+            ></vue-component>
         </div>
     </div>
 
@@ -505,6 +479,7 @@
             type="submit"
             class="tlp-button-primary tlp-modal-action"
             value="{{ 'Save changes' | translate }}"
+            ng-disabled="modal.isUploadingInCKEditor()"
         >
     </div>
 </form>

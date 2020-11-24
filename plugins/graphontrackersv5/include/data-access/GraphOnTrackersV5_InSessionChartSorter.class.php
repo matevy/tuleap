@@ -17,7 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-class GraphOnTrackersV5_InSessionChartSorter {
+class GraphOnTrackersV5_InSessionChartSorter
+{
     public const FREEZE__DONT_MOVE = '--';
     public const BEGINNING         = 'beginning';
     public const END               = 'end';
@@ -27,11 +28,13 @@ class GraphOnTrackersV5_InSessionChartSorter {
      */
     private $session;
 
-    public function __construct(Tracker_Report_Session $session) {
+    public function __construct(Tracker_Report_Session $session)
+    {
         $this->session = $session;
     }
 
-    public function sortChartInSession(array $charts, GraphOnTrackersV5_Chart $edited_chart, $wanted_position) {
+    public function sortChartInSession(array $charts, GraphOnTrackersV5_Chart $edited_chart, $wanted_position)
+    {
         $this->moveElementInCollection($charts, $edited_chart, $wanted_position);
 
         $rank = 0;
@@ -43,7 +46,8 @@ class GraphOnTrackersV5_InSessionChartSorter {
         }
     }
 
-    private function moveElementInCollection(array &$charts, GraphOnTrackersV5_Chart $edited_chart, $wanted_position) {
+    private function moveElementInCollection(array &$charts, GraphOnTrackersV5_Chart $edited_chart, $wanted_position)
+    {
         if ($wanted_position === self::FREEZE__DONT_MOVE) {
             return;
         }

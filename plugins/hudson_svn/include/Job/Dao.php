@@ -23,12 +23,14 @@ namespace Tuleap\HudsonSvn\Job;
 use DataAccessObject;
 use Project;
 
-class Dao extends DataAccessObject {
+class Dao extends DataAccessObject
+{
 
     /**
-     * @return Boolean
+     * @return bool
      */
-    public function saveTrigger($job_id, $repository_id, $path) {
+    public function saveTrigger($job_id, $repository_id, $path)
+    {
         $job_id        = $this->da->escapeInt($job_id);
         $repository_id = $this->da->escapeInt($repository_id);
         $path          = $this->da->quoteSmart($path);
@@ -39,7 +41,8 @@ class Dao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function deleteTrigger($job_id) {
+    public function deleteTrigger($job_id)
+    {
         $job_id = $this->da->escapeInt($job_id);
 
         $sql = "DELETE FROM plugin_hudson_svn_job
@@ -48,7 +51,8 @@ class Dao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function getJobIds(Project $project) {
+    public function getJobIds(Project $project)
+    {
         $project_id = $this->da->escapeInt($project->getID());
 
         $sql = "SELECT plugin_hudson_svn_job.job_id AS id
@@ -60,7 +64,8 @@ class Dao extends DataAccessObject {
         return $this->retrieveIds($sql);
     }
 
-    public function getJob($job_id) {
+    public function getJob($job_id)
+    {
         $job_id = $this->da->escapeInt($job_id);
 
         $sql = "SELECT *
@@ -70,7 +75,8 @@ class Dao extends DataAccessObject {
         return $this->retrieveFirstRow($sql);
     }
 
-    public function getJobByRepositoryId($repository_id) {
+    public function getJobByRepositoryId($repository_id)
+    {
         $repository_id = $this->da->escapeInt($repository_id);
 
         $sql = "SELECT job.*, hudson.job_url, hudson.token
@@ -81,5 +87,4 @@ class Dao extends DataAccessObject {
 
         return $this->retrieve($sql);
     }
-
 }

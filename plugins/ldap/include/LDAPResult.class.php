@@ -29,34 +29,36 @@
  *
  * @see LDAPResult
  */
-class LDAPResultIterator implements SeekableIterator, Countable {
+class LDAPResultIterator implements SeekableIterator, Countable
+{
 
     var $list;
     var $key;
     var $valid;
     protected $ldapParams;
-    
+
     /**
      * Constructor
      */
-    function __construct($info, $ldapParams) {
+    function __construct($info, $ldapParams)
+    {
         $this->list  = $info;
         $this->key   = 0;
         $this->valid = ($this->count() > 0);
         $this->ldapParams = $ldapParams;
     }
 
-    
+
     /**
      * Return the number of entries in a result set.
      *
      * @return int
      */
-    function count() {
-        if($this->list && array_key_exists('count', $this->list)){
+    function count()
+    {
+        if ($this->list && array_key_exists('count', $this->list)) {
             return $this->list['count'];
-        }
-        else {
+        } else {
             return 0;
         }
     }
@@ -67,23 +69,25 @@ class LDAPResultIterator implements SeekableIterator, Countable {
      *
      * @return int
      */
-    function isEmpty() {
+    function isEmpty()
+    {
         return empty($this->list);
     }
 
-    
+
     /**
      * Move key to the position given in parameter.
      *
      * @param $pos int
      */
-    function seek($pos) {
+    function seek($pos)
+    {
         $this->key = $pos;
         $this->valid = true;
-        if($this->key >= $this->count()) {
+        if ($this->key >= $this->count()) {
             $this->valid = false;
         }
-        if($this->key < 0) {
+        if ($this->key < 0) {
             $this->valid = false;
         }
     }
@@ -94,35 +98,37 @@ class LDAPResultIterator implements SeekableIterator, Countable {
      *
      * @param $pos int
      */
-    function get($pos) {
+    function get($pos)
+    {
         $this->seek($pos);
-        if($this->valid) {
+        if ($this->valid) {
             return $this->current();
-        }
-        else {
+        } else {
             return false;
         }
     }
 
-    
+
     /**
      * Return true if result set is not empty.
      *
-     * @return boolean
+     * @return bool
      */
-    function exist() {
+    function exist()
+    {
         return !$this->isEmpty();
     }
 
-    
+
     /**
      * Return the current element.
      *
      * Standard function implemented from Iterator interface
-     * 
+     *
      * @return LDAPResult
      */
-    function current() {
+    function current()
+    {
         return new LDAPResult($this->list[$this->key], $this->ldapParams);
     }
 
@@ -131,10 +137,11 @@ class LDAPResultIterator implements SeekableIterator, Countable {
      * Return the key of the current element.
      *
      * Standard function implemented from Iterator interface
-     * 
+     *
      * @return int
      */
-    function key() {
+    function key()
+    {
         return $this->key;
     }
 
@@ -144,8 +151,9 @@ class LDAPResultIterator implements SeekableIterator, Countable {
      *
      * Standard function implemented from Iterator interface
      */
-    function next() {
-        $this->valid = (++$this->key < $this->count());        
+    function next()
+    {
+        $this->valid = (++$this->key < $this->count());
     }
 
 
@@ -154,7 +162,8 @@ class LDAPResultIterator implements SeekableIterator, Countable {
      *
      * Standard function implemented from Iterator interface
      */
-    function rewind() {
+    function rewind()
+    {
         $this->valid = true;
         $this->key   = 0;
     }
@@ -164,10 +173,11 @@ class LDAPResultIterator implements SeekableIterator, Countable {
      * Check if there is a current element after calls to rewind() or next().
      *
      * Standard function implemented from Iterator interface
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    function valid() {
+    function valid()
+    {
         return $this->valid;
     }
 }
@@ -184,25 +194,29 @@ class LDAPResultIterator implements SeekableIterator, Countable {
  *     echo "$field: ".$lr->get($field);
  * }
  * </pre>
- * 
+ *
  * @see LDAPResultIterator
  */
-class LDAPResult implements Iterator, Countable {
+class LDAPResult implements Iterator, Countable
+{
     protected $ldapParams;
     protected $info;
     protected $index;
 
-    function __construct($info, $ldapParams) {
+    function __construct($info, $ldapParams)
+    {
         $this->ldapParams = $ldapParams;
         $this->info  = $info;
         $this->index = 0;
     }
 
-    function getEmail() {
+    function getEmail()
+    {
         return $this->get($this->ldapParams['mail']);
     }
 
-    function getCommonName() {
+    function getCommonName()
+    {
         return $this->get($this->ldapParams['cn']);
     }
 
@@ -238,21 +252,25 @@ class LDAPResult implements Iterator, Countable {
         return $this->getGroupCommonName();
     }
 
-    function getLogin() {
+    function getLogin()
+    {
         return $this->get($this->ldapParams['uid']);
     }
 
-    function getEdUid() {
+    function getEdUid()
+    {
         return $this->get($this->ldapParams['eduid']);
     }
 
-    function getDn() {
+    function getDn()
+    {
         return $this->info['dn'];
     }
 
-    function getGroupMembers() {
+    function getGroupMembers()
+    {
         $memberAttr = strtolower($this->ldapParams['grp_member']);
-        if(isset($this->info[$memberAttr])) {
+        if (isset($this->info[$memberAttr])) {
             $members = $this->info[$memberAttr];
             // Remove count from the info to be able to iterate on result
             unset($members['count']);
@@ -261,19 +279,20 @@ class LDAPResult implements Iterator, Countable {
             return array();
         }
     }
-        
+
     /**
      * Returns the first entry for a given field
-     * 
+     *
      * An LDAP Directory can store several values for each field (for instance
      * server common names gives $this->info['cn'][0], $this->info['cn'][1], ...
-     * This method only returns the first entry. 
-     * 
+     * This method only returns the first entry.
+     *
      * @param String $arg Entry to get
-     * 
+     *
      * @return String
      */
-    function get($arg) {
+    function get($arg)
+    {
         $v = $this->getAll($arg);
         if ($v) {
             return $v[0];
@@ -288,46 +307,53 @@ class LDAPResult implements Iterator, Countable {
      *
      * @return Array
      */
-    function getAll($arg) {
+    function getAll($arg)
+    {
         $arg = strtolower($arg);
-        if(isset($this->info[$arg])) {
+        if (isset($this->info[$arg])) {
             return $this->info[$arg];
         } else {
             return null;
         }
     }
-    
-    function isEmpty() {
+
+    function isEmpty()
+    {
         return empty($this->info);
     }
 
-    function exist() {
+    function exist()
+    {
         return !$this->isEmpty();
     }
 
-    function count() {
+    function count()
+    {
         return $this->info['count'];
     }
-    
-    function valid() {
+
+    function valid()
+    {
         return $this->index < $this->info['count'];
     }
-    
-    function next() {
+
+    function next()
+    {
         $this->index++;
     }
-    
-    function rewind() {
+
+    function rewind()
+    {
         $this->index = 0;
     }
-    
-    function current() {
+
+    function current()
+    {
         return $this->info[$this->index];
     }
-    
-    function key() {
+
+    function key()
+    {
         return $this->index;
     }
 }
-
-?>

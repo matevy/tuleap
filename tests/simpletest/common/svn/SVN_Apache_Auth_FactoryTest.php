@@ -18,12 +18,17 @@
  */
 
 
-class SVN_Apache_ModFromPlugin extends SVN_Apache {
-    protected function getProjectAuthentication($row) {}
+class SVN_Apache_ModFromPlugin extends SVN_Apache
+{
+    protected function getProjectAuthentication($row)
+    {
+    }
 }
 
-class SVN_Apache_Auth_FactoryTestEventManager extends EventManager {
-    public function processEvent($event_name, $params = []) {
+class SVN_Apache_Auth_FactoryTestEventManager extends EventManager
+{
+    public function processEvent($event_name, $params = [])
+    {
         $project_row = array();
 
         $params['svn_apache_auth'] = new SVN_Apache_ModFromPlugin($project_row);
@@ -38,8 +43,9 @@ class SVN_Apache_Auth_FactoryTest extends TuleapTestCase
     private $project_info;
     private $mod_from_plugin;
 
-    public function setUp() {
-        $this->event_manager                    = mock('EventManager');
+    public function setUp()
+    {
+        $this->event_manager                    = \Mockery::mock(\EventManager::class);
         $this->event_manager_with_plugin_answer = new SVN_Apache_Auth_FactoryTestEventManager();
         $this->cache_parameters                 = mock('Tuleap\SvnCore\Cache\Parameters');
 
@@ -59,6 +65,7 @@ class SVN_Apache_Auth_FactoryTest extends TuleapTestCase
 
     public function itReturnsModPerlByDefault()
     {
+        $this->event_manager->shouldReceive('processEvent');
         $this->assertIsA($this->factory->get($this->project_info), 'SVN_Apache_ModPerl');
     }
 

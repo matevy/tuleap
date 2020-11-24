@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015 - 2017. All rights reserved
+ * Copyright (c) Enalean, 2015 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -20,17 +20,18 @@
 
 namespace Tracker;
 
-use REST_TestDataBuilder;
-use TrackerDataBuilder;
+use SimpleXMLElement;
 use RestBase;
-use \Guzzle\Http\Client;
+use Guzzle\Http\Client;
+use Tuleap\Tracker\Tests\REST\TrackerBase;
 
-require_once dirname(__FILE__).'/../bootstrap.php';
+require_once __DIR__ .'/../bootstrap.php';
 
 /**
  * @group TrackerTests
  */
-class ArtifactTest extends RestBase {
+class ArtifactTest extends TrackerBase
+{
 
     protected $project_id;
     protected $tracker_id;
@@ -47,24 +48,12 @@ class ArtifactTest extends RestBase {
      */
     private $xml_client;
 
-    public function __construct()
-    {
-        parent::__construct();
-
-        $this->xml_client   = new Client($this->base_url);
-        $this->xml_client->setSslVerification(false, false, false);
-
-        $this->xml_client->setDefaultOption('headers/Accept', 'application/xml');
-        $this->xml_client->setDefaultOption('headers/Content-Type', 'application/xml; charset=UTF8');
-    }
-
     public function setUp() : void
     {
         parent::setUp();
 
         $this->getReleaseArtifactIds();
 
-        $this->project_id = $this->getProjectId('rest-xml-api');
         $tracker          = $this->getTracker();
         $this->tracker_id = $tracker['id'];
 
@@ -80,6 +69,16 @@ class ArtifactTest extends RestBase {
         }
 
         $this->getReleaseTrackerInformation();
+
+        if ($this->xml_client === null) {
+            $this->xml_client = new Client($this->base_url);
+            $this->xml_client->setSslVerification(false, false, false);
+
+            $this->xml_client->setDefaultOption('headers/Accept', 'application/xml');
+            $this->xml_client->setDefaultOption('headers/Content-Type', 'application/xml; charset=UTF8');
+
+            $this->xml_client->setCurlMulti($this->client->getCurlMulti());
+        }
     }
 
     private function getReleaseTrackerInformation()
@@ -91,7 +90,7 @@ class ArtifactTest extends RestBase {
             return;
         }
 
-        $release_tracker = $this->getResponse($this->client->get("trackers/$this->releases_tracker_id"))->json();
+        $release_tracker = $this->tracker_representations[$this->releases_tracker_id];
         foreach ($release_tracker['fields'] as $field) {
             if ($field['name'] === 'name') {
                 $this->release_name_field_id = $field['field_id'];
@@ -106,12 +105,13 @@ class ArtifactTest extends RestBase {
         }
     }
 
-    private function getTracker() {
-        $response = $this->getResponse($this->client->get('projects/'. $this->project_id . '/trackers'))->json();
-        return $response[0];
+    private function getTracker()
+    {
+        return $this->tracker_representations[$this->rest_xml_api_tracker_id];
     }
 
-    public function testGetArtifact() {
+    public function testGetArtifact()
+    {
         $response = $this->getResponse($this->xml_client->get('artifacts/'.$this->release_artifact_ids[1]));
         $this->assertEquals($response->getStatusCode(), 200);
 
@@ -156,7 +156,8 @@ class ArtifactTest extends RestBase {
         $this->assertEquals($new_value, (string) $artifact_xml->values->item[0]->value);
     }
 
-    public function testPOSTArtifactInXMLTracker() {
+    public function testPOSTArtifactInXMLTracker()
+    {
         $xml = "<request><tracker><id>".$this->tracker_id."</id></tracker><values><item><field_id>".$this->slogan_field_id."</field_id><value>slogan</value></item><item><field_id>".$this->desc_field_id."</field_id><value>desc</value></item><item><field_id>".$this->status_field_id."</field_id><bind_value_ids><item>".$this->status_value_id."</item></bind_value_ids></item></values></request>";
 
         $response = $this->getResponse($this->xml_client->post('artifacts', null, $xml));
@@ -173,71 +174,95 @@ class ArtifactTest extends RestBase {
     /**
      * @depends testPOSTArtifactInXMLTracker
      */
-    public function testGetArtifactInXMLTracker($artifact_id) {
+    public function testGetArtifactInXMLTracker($artifact_id)
+    {
         $response = $this->getResponse($this->xml_client->get('artifacts/'.$artifact_id));
         $this->assertEquals($response->getStatusCode(), 200);
 
         $artifact_xml = $response->xml();
 
         $this->assertEquals((int) $artifact_xml->id, $artifact_id);
-        $this->assertEquals((int) $artifact_xml->project->id, $this->project_id);
+        $this->assertEquals((int) $artifact_xml->project->id, $this->rest_xml_api_project_id);
 
         $this->assertGreaterThan(0, count($artifact_xml->values->children()));
-        $this->assertEquals(0, count($artifact_xml->values_by_field->children()));
+        $this->assertCount(0, $artifact_xml->values_by_field->children());
 
-        $this->assertEquals((string) $artifact_xml->values->item[0]->label, 'Slogan');
-        $this->assertEquals((string) $artifact_xml->values->item[0]->value, 'slogan');
-        $this->assertEquals((string) $artifact_xml->values->item[5]->label, 'Status');
-        $this->assertEquals((string) $artifact_xml->values->item[5]->values->item->label, 'SM New');
-        $this->assertEquals((int) $artifact_xml->values->item[5]->bind_value_ids, $this->status_value_id);
+        $this->verifySloganAndStatusFieldPresenceAndValue($artifact_xml->values->item);
     }
 
     /**
      * @depends testPOSTArtifactInXMLTracker
      */
-    public function testGetArtifactInXMLTrackerWithValuesByField($artifact_id) {
+    public function testGetArtifactInXMLTrackerWithValuesByField($artifact_id)
+    {
         $response = $this->getResponse($this->xml_client->get('artifacts/'.$artifact_id.'?values_format=by_field'));
         $this->assertEquals($response->getStatusCode(), 200);
 
         $artifact_xml = $response->xml();
 
         $this->assertEquals((int) $artifact_xml->id, $artifact_id);
-        $this->assertEquals((int) $artifact_xml->project->id, $this->project_id);
+        $this->assertEquals((int) $artifact_xml->project->id, $this->rest_xml_api_project_id);
 
         $this->assertEquals(0, count($artifact_xml->values->children()));
         $this->assertGreaterThan(0, count($artifact_xml->values_by_field->children()));
 
         $this->assertEquals((string) $artifact_xml->values_by_field->slogan->value, 'slogan');
-   }
+    }
 
     /**
      * @depends testPOSTArtifactInXMLTracker
      */
-    public function testGetArtifactInXMLTrackerInBothFormat($artifact_id) {
+    public function testGetArtifactInXMLTrackerInBothFormat($artifact_id)
+    {
         $response = $this->getResponse($this->xml_client->get('artifacts/'.$artifact_id.'?values_format=all'));
         $this->assertEquals($response->getStatusCode(), 200);
 
         $artifact_xml = $response->xml();
 
         $this->assertEquals((int) $artifact_xml->id, $artifact_id);
-        $this->assertEquals((int) $artifact_xml->project->id, $this->project_id);
+        $this->assertEquals((int) $artifact_xml->project->id, $this->rest_xml_api_project_id);
 
         $this->assertGreaterThan(0, count($artifact_xml->values->children()));
         $this->assertGreaterThan(0, count($artifact_xml->values_by_field->children()));
 
-        $this->assertEquals((string) $artifact_xml->values->item[0]->label, 'Slogan');
-        $this->assertEquals((string) $artifact_xml->values->item[0]->value, 'slogan');
-        $this->assertEquals((string) $artifact_xml->values->item[5]->label, 'Status');
-        $this->assertEquals((string) $artifact_xml->values->item[5]->values->item->label, 'SM New');
-        $this->assertEquals((int) $artifact_xml->values->item[5]->bind_value_ids, $this->status_value_id);
+        $this->verifySloganAndStatusFieldPresenceAndValue($artifact_xml->values->item);
 
         $this->assertEquals((string) $artifact_xml->values_by_field->slogan->value, 'slogan');
+    }
+
+    private function verifySloganAndStatusFieldPresenceAndValue(SimpleXMLElement $items) : void
+    {
+        $this->assertTrue(
+            (static function (SimpleXMLElement $items) : bool {
+                foreach ($items as $item) {
+                    if ((string) $item->label === 'Slogan' && (string) $item->value === 'slogan') {
+                        return true;
+                    }
+                }
+                return false;
+            })($items),
+            'Slogan field not found or with an incorrect value'
+        );
+        $this->assertTrue(
+            (function (SimpleXMLElement $items) : bool {
+                foreach ($items as $item) {
+                    if ((string) $item->label === 'Status' &&
+                        (string) $item->values->item->label === 'SM New' &&
+                        (int) $item->bind_value_ids === $this->status_value_id) {
+                        return true;
+                    }
+                }
+                return false;
+            })($items),
+            'Status field not found or with an incorrect value'
+        );
     }
 
     /**
      * @depends testGetArtifactInXMLTrackerInBothFormat
      */
-    public function testPOSTArtifactInXMLTrackerWithValuesByField() {
+    public function testPOSTArtifactInXMLTrackerWithValuesByField()
+    {
         $xml = "<request><tracker><id>".$this->tracker_id."</id></tracker><values_by_field><slogan><value>Sloganv2</value></slogan><epic_desc><value><content>Descv2</content><format>html</format></value></epic_desc></values_by_field></request>";
 
         $response = $this->getResponse($this->xml_client->post('artifacts', null, $xml));
@@ -254,14 +279,15 @@ class ArtifactTest extends RestBase {
     /**
      * @depends testPOSTArtifactInXMLTrackerWithValuesByField
      */
-    public function testGetArtifactCreatedWithValueByFieldInXMLTracker($artifact_id) {
+    public function testGetArtifactCreatedWithValueByFieldInXMLTracker($artifact_id)
+    {
         $response = $this->getResponse($this->xml_client->get('artifacts/'.$artifact_id.'?values_format=by_field'));
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
 
         $artifact_xml = $response->xml();
 
         $this->assertEquals((int) $artifact_xml->id, $artifact_id);
-        $this->assertEquals((int) $artifact_xml->project->id, $this->project_id);
+        $this->assertEquals((int) $artifact_xml->project->id, $this->rest_xml_api_project_id);
 
         $this->assertEquals(0, count($artifact_xml->values->children()));
         $this->assertGreaterThan(0, count($artifact_xml->values_by_field->children()));
@@ -269,5 +295,5 @@ class ArtifactTest extends RestBase {
         $this->assertEquals((string) $artifact_xml->values_by_field->slogan->value, 'Sloganv2');
         $this->assertEquals((string) $artifact_xml->values_by_field->epic_desc->format, 'html');
         $this->assertEquals((string) $artifact_xml->values_by_field->epic_desc->value, 'Descv2');
-   }
+    }
 }

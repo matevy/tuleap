@@ -22,26 +22,29 @@
 /**
  * Utility class for creating and merging trees
  */
-class Trees {
-    
+class Trees
+{
+
     /**
      * Returns a tree of nodes build using a list of nodes: (node_id => array of children_id) (recursive)
      */
-    private static function nodeListToTreeRec($listOfNodes, $nodeId) {
+    private static function nodeListToTreeRec($listOfNodes, $nodeId)
+    {
         $children = null;
         if (array_key_exists($nodeId, $listOfNodes)) {
             foreach ($listOfNodes[$nodeId] as $child) {
                 $children[$child] = self::nodeListToTreeRec($listOfNodes, $child);
             }
         }
-    
+
         return $children;
     }
-    
+
     /**
      * Find the root of a tree in a list of nodes
      */
-    private static function findRoot($listOfNodes) {
+    private static function findRoot($listOfNodes)
+    {
         foreach ($listOfNodes as $rootCandidate => $children) {
             $isRoot = true;
             foreach ($listOfNodes as $currentNode) {
@@ -56,25 +59,27 @@ class Trees {
         }
         return null;
     }
-    
+
     /**
      * Returns a tree of nodes build using a list of nodes: (node_id => array of children_id)
      */
-    public static function nodeListToTree($listOfNodes) {
+    public static function nodeListToTree($listOfNodes)
+    {
         $root = self::findRoot($listOfNodes);
         if ($root === null) {
             return null;
         } else {
-            return array($root => self::nodeListToTreeRec($listOfNodes, $root));            
+            return array($root => self::nodeListToTreeRec($listOfNodes, $root));
         }
     }
-    
+
     /**
      * Megre two trees and tag the nodes with the information: IN_FIRST, IN_SECOND, IN_BOTH (recursive)
      */
-    private static function mergeTagRec($array1, $array2) {
+    private static function mergeTagRec($array1, $array2)
+    {
         $res = null;
-    
+
         if ($array1 != null) {
             foreach ($array1 as $k => $v) {
                 if ($k != 'children') {
@@ -82,7 +87,7 @@ class Trees {
                 }
             }
         }
-        
+
         if ($array2 != null) {
             foreach ($array2 as $k => $v) {
                 if ($k != 'children') {
@@ -90,7 +95,7 @@ class Trees {
                 }
             }
         }
-    
+
         if ($array1 != null && isset($array1['children'])) {
             foreach ($array1['children'] as $name1 => $node1) {
                 if (isset($array2['children']) && array_key_exists($name1, $array2['children'])) {
@@ -102,7 +107,7 @@ class Trees {
                 }
             }
         }
-    
+
         if ($array2 != null && isset($array2['children'])) {
             foreach ($array2['children'] as $name2 => $node2) {
                 if (!isset($res['children'][$name2])) {
@@ -111,14 +116,15 @@ class Trees {
                 }
             }
         }
-    
+
         return $res;
     }
-    
+
     /**
      * Set recursively the given tag to all nodes of the tree
      */
-    private static function tagTree(&$tree, $tag) {
+    private static function tagTree(&$tree, $tag)
+    {
         $tree['tag'] = $tag;
         if (isset($tree['children'])) {
             foreach ($tree['children'] as $name => $node) {
@@ -126,18 +132,19 @@ class Trees {
             }
         }
     }
-    
+
     /**
      * Merge two trees and tag the nodes with the information: IN_FIRST, IN_SECOND, IN_BOTH
      */
-    public static function mergeTag(array $array1, array $array2) {
+    public static function mergeTag(array $array1, array $array2)
+    {
         $array1_keys = array_keys($array1);
         $root1 = array_pop($array1_keys);
         $array2_keys = array_keys($array2);
         $root2 = array_pop($array2_keys);
-    
+
         $res['(root)'] =  self::mergeTagRec($array1[$root1], $array2[$root2]);
-        
+
         return $res;
     }
 }

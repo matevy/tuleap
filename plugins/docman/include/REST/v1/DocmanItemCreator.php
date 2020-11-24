@@ -25,19 +25,22 @@ use Docman_Item;
 use Luracast\Restler\RestException;
 use PFUser;
 use Project;
+use Tuleap\Docman\Metadata\CustomMetadataException;
 use Tuleap\Docman\REST\v1\EmbeddedFiles\DocmanEmbeddedPOSTRepresentation;
+use Tuleap\Docman\REST\v1\Empties\DocmanEmptyPOSTRepresentation;
 use Tuleap\Docman\REST\v1\Files\CreatedItemFilePropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Files\EmptyFileToUploadFinisher;
 use Tuleap\Docman\REST\v1\Files\FilePropertiesPOSTPATCHRepresentation;
-use Tuleap\Docman\REST\v1\Folders\DocmanEmptyPOSTRepresentation;
 use Tuleap\Docman\REST\v1\Folders\DocmanFolderPOSTRepresentation;
 use Tuleap\Docman\REST\v1\Links\DocmanLinkPOSTRepresentation;
 use Tuleap\Docman\REST\v1\Links\DocmanLinksValidityChecker;
+use Tuleap\Docman\REST\v1\Metadata\CustomMetadataRepresentationRetriever;
 use Tuleap\Docman\REST\v1\Metadata\HardcodedMetadataObsolescenceDateRetriever;
-use Tuleap\Docman\REST\v1\Metadata\HardcodedMetadataUsageChecker;
-use Tuleap\Docman\REST\v1\Metadata\HardcodedMetdataObsolescenceDateChecker;
 use Tuleap\Docman\REST\v1\Metadata\ItemStatusMapper;
-use Tuleap\Docman\REST\v1\Metadata\StatusNotFoundException;
+use Tuleap\Docman\REST\v1\Metadata\MetadataToCreate;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSet;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSetFactory;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSetRepresentation;
 use Tuleap\Docman\REST\v1\Wiki\DocmanWikiPOSTRepresentation;
 use Tuleap\Docman\Upload\Document\DocumentOngoingUploadRetriever;
 use Tuleap\Docman\Upload\Document\DocumentToUploadCreator;
@@ -47,11 +50,6 @@ use Tuleap\Docman\Upload\UploadMaxSizeExceededException;
 
 class DocmanItemCreator
 {
-    public const ITEM_TYPE_ID = [
-        ItemRepresentation::TYPE_EMPTY => PLUGIN_DOCMAN_ITEM_TYPE_EMPTY,
-        ItemRepresentation::TYPE_WIKI  => PLUGIN_DOCMAN_ITEM_TYPE_WIKI,
-    ];
-
     /**
      * @var \Docman_ItemFactory
      */
@@ -81,17 +79,21 @@ class DocmanItemCreator
      */
     private $status_mapper;
     /**
-     * @var HardcodedMetadataUsageChecker
-     */
-    private $metadata_usage_checker;
-    /**
-     * @var HardcodedMetdataObsolescenceDateChecker
-     */
-    private $obsolescence_date_checker;
-    /**
      * @var HardcodedMetadataObsolescenceDateRetriever
      */
     private $date_retriever;
+    /**
+     * @var CustomMetadataRepresentationRetriever
+     */
+    private $custom_checker;
+    /**
+     * @var \Docman_MetadataValueDao
+     */
+    private $metadata_value_dao;
+    /**
+     * @var DocmanItemPermissionsForGroupsSetFactory
+     */
+    private $permissions_for_groups_set_factory;
 
     public function __construct(
         \Docman_ItemFactory $item_factory,
@@ -101,20 +103,22 @@ class DocmanItemCreator
         EmptyFileToUploadFinisher $empty_file_to_upload_finisher,
         DocmanLinksValidityChecker $links_validity_checker,
         ItemStatusMapper $status_mapper,
-        HardcodedMetadataUsageChecker $metadata_usage_checker,
-        HardcodedMetdataObsolescenceDateChecker $obsolescence_date_checker,
-        HardcodedMetadataObsolescenceDateRetriever $date_retriever
+        HardcodedMetadataObsolescenceDateRetriever $date_retriever,
+        CustomMetadataRepresentationRetriever $custom_checker,
+        \Docman_MetadataValueDao $metadata_value_dao,
+        DocmanItemPermissionsForGroupsSetFactory $permissions_for_groups_set_factory
     ) {
-        $this->item_factory                      = $item_factory;
-        $this->document_ongoing_upload_retriever = $document_ongoing_upload_retriever;
-        $this->document_to_upload_creator        = $document_to_upload_creator;
-        $this->creator_visitor                   = $creator_visitor;
-        $this->empty_file_to_upload_finisher     = $empty_file_to_upload_finisher;
-        $this->links_validity_checker            = $links_validity_checker;
-        $this->status_mapper                     = $status_mapper;
-        $this->metadata_usage_checker            = $metadata_usage_checker;
-        $this->obsolescence_date_checker         = $obsolescence_date_checker;
-        $this->date_retriever                    = $date_retriever;
+        $this->item_factory                       = $item_factory;
+        $this->document_ongoing_upload_retriever  = $document_ongoing_upload_retriever;
+        $this->document_to_upload_creator         = $document_to_upload_creator;
+        $this->creator_visitor                    = $creator_visitor;
+        $this->empty_file_to_upload_finisher      = $empty_file_to_upload_finisher;
+        $this->links_validity_checker             = $links_validity_checker;
+        $this->status_mapper                      = $status_mapper;
+        $this->date_retriever                     = $date_retriever;
+        $this->custom_checker                     = $custom_checker;
+        $this->metadata_value_dao                 = $metadata_value_dao;
+        $this->permissions_for_groups_set_factory = $permissions_for_groups_set_factory;
     }
 
     /**
@@ -141,25 +145,8 @@ class DocmanItemCreator
     }
 
     /**
-     * @param                    $item_type_id
-     * @param \DateTimeImmutable $current_time
-     * @param Docman_Item        $parent_item
-     * @param PFUser             $user
-     * @param Project            $project
-     * @param                    $title
-     * @param                    $description
-     * @param string             $status
-     * @param string             $obsolescence_date
-     * @param                    $wiki_page
-     * @param                    $link_url
-     * @param                    $content
-     *
      * @return CreatedItemRepresentation
-     * @throws Metadata\InvalidDateComparisonException
-     * @throws Metadata\InvalidDateTimeFormatException
-     * @throws Metadata\ItemStatusUsageMismatchException
-     * @throws Metadata\ObsoloscenceDateUsageMismatchException
-     * @throws StatusNotFoundException
+     * @throws Metadata\HardCodedMetadataException
      * @throws \Tuleap\Docman\CannotInstantiateItemWeHaveJustCreatedInDBException
      */
     private function createDocument(
@@ -170,27 +157,25 @@ class DocmanItemCreator
         Project $project,
         $title,
         $description,
+        MetadataToCreate $metadata_to_create,
         ?string $status,
         ?string $obsolescence_date,
+        ?DocmanItemPermissionsForGroupsSet $permissions_for_groups,
         $wiki_page,
         $link_url,
         $content
     ) {
 
-        $this->metadata_usage_checker->checkStatusIsNotSetWhenStatusMetadataIsNotAllowed($status);
-        $status_id = $this->status_mapper->getItemStatusIdFromItemStatusString($status);
+        $status_id = $this->status_mapper->getItemStatusWithParentInheritance($parent_item, $status);
 
-        $this->obsolescence_date_checker->checkObsolescenceDateUsage($obsolescence_date, $item_type_id);
-        $obsolescence_date_time_stamp = $this->date_retriever->getTimeStampOfDate(
-            $obsolescence_date,
-            $item_type_id
-        );
-        $this->obsolescence_date_checker->checkDateValidity(
-            $current_time->getTimestamp(),
-            $obsolescence_date_time_stamp,
-            $item_type_id
-        );
-
+        if ($item_type_id !== PLUGIN_DOCMAN_ITEM_TYPE_FOLDER) {
+            $obsolescence_date_time_stamp = $this->date_retriever->getTimeStampOfDateWithoutPeriodValidity(
+                $obsolescence_date,
+                $current_time
+            );
+        } else {
+            $obsolescence_date_time_stamp = (int)ItemRepresentation::OBSOLESCENCE_DATE_NONE;
+        }
         $item = $this->item_factory->createWithoutOrdering(
             $title,
             $description,
@@ -204,12 +189,18 @@ class DocmanItemCreator
         );
 
         $params = [
-            'group_id'      => $project->getID(),
-            'parent'        => $parent_item,
-            'item'          => $item,
-            'user'          => $user,
-            'creation_time' => $current_time
+            'group_id'               => $project->getID(),
+            'parent'                 => $parent_item,
+            'item'                   => $item,
+            'user'                   => $user,
+            'creation_time'          => $current_time,
+            'formatted_metadata'     => $metadata_to_create->getMetadataListValues(),
+            'permissions_for_groups' => $permissions_for_groups
         ];
+
+        if ($metadata_to_create->isInheritedFromParent()) {
+            $this->metadata_value_dao->inheritMetadataFromParent((int)$item->getId(), (int) $parent_item->getId());
+        }
 
         if ($item_type_id === PLUGIN_DOCMAN_ITEM_TYPE_EMBEDDEDFILE) {
             $params['content'] = $content;
@@ -223,12 +214,8 @@ class DocmanItemCreator
     }
 
     /**
+     * @throws Metadata\HardCodedMetadataException
      * @throws RestException
-     * @throws Metadata\ItemStatusUsageMismatchException
-     * @throws StatusNotFoundException
-     * @throws Metadata\ObsoloscenceDateUsageMismatchException
-     * @throws Metadata\InvalidDateTimeFormatException
-     * @throws Metadata\InvalidDateComparisonException
      */
     public function createFileDocument(
         Docman_Item $parent_item,
@@ -238,24 +225,19 @@ class DocmanItemCreator
         ?string $status,
         ?string $obsolescence_date,
         \DateTimeImmutable $current_time,
-        FilePropertiesPOSTPATCHRepresentation $file_properties
-    ) {
+        FilePropertiesPOSTPATCHRepresentation $file_properties,
+        MetadataToCreate $metadata_to_create,
+        ?DocmanItemPermissionsForGroupsSetRepresentation $permissions_for_groups_representation
+    ) : CreatedItemRepresentation {
         if ($this->item_factory->doesTitleCorrespondToExistingDocument($title, $parent_item->getId())) {
             throw new RestException(400, "A file with same title already exists in the given folder.");
         }
 
-        $this->metadata_usage_checker->checkStatusIsNotSetWhenStatusMetadataIsNotAllowed($status);
-        $status_id = $this->status_mapper->getItemStatusIdFromItemStatusString($status);
+        $status_id = $this->status_mapper->getItemStatusWithParentInheritance($parent_item, $status);
 
-        $this->obsolescence_date_checker->checkObsolescenceDateUsage($obsolescence_date, PLUGIN_DOCMAN_ITEM_TYPE_FILE);
-        $obsolescence_date_time_stamp = $this->date_retriever->getTimeStampOfDate(
+        $obsolescence_date_time_stamp = $this->date_retriever->getTimeStampOfDateWithoutPeriodValidity(
             $obsolescence_date,
-            PLUGIN_DOCMAN_ITEM_TYPE_FILE
-        );
-        $this->obsolescence_date_checker->checkDateValidity(
-            $current_time->getTimestamp(),
-            $obsolescence_date_time_stamp,
-            PLUGIN_DOCMAN_ITEM_TYPE_FILE
+            $current_time
         );
 
         try {
@@ -268,8 +250,14 @@ class DocmanItemCreator
                 $file_properties->file_name,
                 $file_properties->file_size,
                 $status_id,
-                $obsolescence_date_time_stamp
+                $obsolescence_date_time_stamp,
+                $metadata_to_create->getMetadataListValues(),
+                $this->getPermissionsForGroupsSet($parent_item, $permissions_for_groups_representation)
             );
+
+            if ($metadata_to_create->isInheritedFromParent()) {
+                $this->metadata_value_dao->inheritMetadataFromParent((int)$document_to_upload->getItemId(), (int) $parent_item->getId());
+            }
 
             if ($file_properties->file_size === 0) {
                 $this->empty_file_to_upload_finisher->createEmptyFile($document_to_upload, $file_properties->file_name);
@@ -296,20 +284,10 @@ class DocmanItemCreator
     }
 
     /**
-     * @param Docman_Item                    $parent_item
-     * @param PFUser                         $user
-     * @param DocmanFolderPOSTRepresentation $representation
-     * @param \DateTimeImmutable             $current_time
-     * @param Project                        $project
-     *
-     * @return CreatedItemRepresentation
-     * @throws Metadata\InvalidDateComparisonException
-     * @throws Metadata\InvalidDateTimeFormatException
-     * @throws Metadata\ItemStatusUsageMismatchException
-     * @throws Metadata\ObsoloscenceDateUsageMismatchException
+     * @throws Metadata\HardCodedMetadataException
      * @throws RestException
-     * @throws StatusNotFoundException
      * @throws \Tuleap\Docman\CannotInstantiateItemWeHaveJustCreatedInDBException
+     * @throws CustomMetadataException
      */
     public function createFolder(
         Docman_Item $parent_item,
@@ -323,11 +301,9 @@ class DocmanItemCreator
             throw new RestException(400, "A folder with same title already exists in the given folder.");
         }
 
-        $this->checkDocumentIsNotBeingUploaded(
+        $metadata_to_create = $this->custom_checker->checkAndRetrieveFormattedRepresentation(
             $parent_item,
-            PLUGIN_DOCMAN_ITEM_TYPE_FOLDER,
-            $representation->title,
-            $current_time
+            $representation->metadata
         );
 
         return $this->createDocument(
@@ -338,8 +314,10 @@ class DocmanItemCreator
             $project,
             $representation->title,
             $representation->description,
+            $metadata_to_create,
             $representation->status,
             ItemRepresentation::OBSOLESCENCE_DATE_NONE,
+            $this->getPermissionsForGroupsSet($parent_item, $representation->permissions_for_groups),
             null,
             null,
             null
@@ -347,20 +325,10 @@ class DocmanItemCreator
     }
 
     /**
-     * @param Docman_Item                   $parent_item
-     * @param PFUser                        $user
-     * @param DocmanEmptyPOSTRepresentation $representation
-     * @param \DateTimeImmutable            $current_time
-     * @param Project                       $project
-     *
-     * @return CreatedItemRepresentation
-     * @throws Metadata\InvalidDateComparisonException
-     * @throws Metadata\InvalidDateTimeFormatException
-     * @throws Metadata\ItemStatusUsageMismatchException
-     * @throws Metadata\ObsoloscenceDateUsageMismatchException
+     * @throws Metadata\HardCodedMetadataException
      * @throws RestException
-     * @throws StatusNotFoundException
      * @throws \Tuleap\Docman\CannotInstantiateItemWeHaveJustCreatedInDBException
+     * @throws CustomMetadataException
      */
     public function createEmpty(
         Docman_Item $parent_item,
@@ -373,6 +341,11 @@ class DocmanItemCreator
             throw new RestException(400, "A document with same title already exists in the given folder.");
         }
 
+        $metadata_to_create = $this->custom_checker->checkAndRetrieveFormattedRepresentation(
+            $parent_item,
+            $representation->metadata
+        );
+
         $this->checkDocumentIsNotBeingUploaded(
             $parent_item,
             PLUGIN_DOCMAN_ITEM_TYPE_EMPTY,
@@ -388,8 +361,10 @@ class DocmanItemCreator
             $project,
             $representation->title,
             $representation->description,
+            $metadata_to_create,
             $representation->status,
             $representation->obsolescence_date,
+            $this->getPermissionsForGroupsSet($parent_item, $representation->permissions_for_groups),
             null,
             null,
             null
@@ -397,20 +372,10 @@ class DocmanItemCreator
     }
 
     /**
-     * @param Docman_Item                  $parent_item
-     * @param PFUser                       $user
-     * @param DocmanWikiPOSTRepresentation $representation
-     * @param \DateTimeImmutable           $current_time
-     * @param Project                      $project
-     *
-     * @return CreatedItemRepresentation
-     * @throws Metadata\InvalidDateComparisonException
-     * @throws Metadata\InvalidDateTimeFormatException
-     * @throws Metadata\ItemStatusUsageMismatchException
-     * @throws Metadata\ObsoloscenceDateUsageMismatchException
+     * @throws Metadata\HardCodedMetadataException
      * @throws RestException
-     * @throws StatusNotFoundException
      * @throws \Tuleap\Docman\CannotInstantiateItemWeHaveJustCreatedInDBException
+     * @throws CustomMetadataException
      */
     public function createWiki(
         Docman_Item $parent_item,
@@ -422,6 +387,11 @@ class DocmanItemCreator
         if ($this->item_factory->doesTitleCorrespondToExistingDocument($representation->title, $parent_item->getId())) {
             throw new RestException(400, "A document with same title already exists in the given folder.");
         }
+
+        $metadata_to_create = $this->custom_checker->checkAndRetrieveFormattedRepresentation(
+            $parent_item,
+            $representation->metadata
+        );
 
         if (! $project->usesWiki()) {
             throw new RestException(
@@ -445,8 +415,10 @@ class DocmanItemCreator
             $project,
             $representation->title,
             $representation->description,
+            $metadata_to_create,
             $representation->status,
             $representation->obsolescence_date,
+            $this->getPermissionsForGroupsSet($parent_item, $representation->permissions_for_groups),
             $representation->wiki_properties->page_name,
             null,
             null
@@ -454,20 +426,11 @@ class DocmanItemCreator
     }
 
     /**
-     * @param Docman_Item                      $parent_item
-     * @param PFUser                           $user
-     * @param DocmanEmbeddedPOSTRepresentation $representation
-     * @param \DateTimeImmutable               $current_time
-     * @param Project                          $project
-     *
      * @return CreatedItemRepresentation
-     * @throws Metadata\InvalidDateComparisonException
-     * @throws Metadata\InvalidDateTimeFormatException
-     * @throws Metadata\ItemStatusUsageMismatchException
-     * @throws Metadata\ObsoloscenceDateUsageMismatchException
+     * @throws Metadata\HardCodedMetadataException
      * @throws RestException
-     * @throws StatusNotFoundException
      * @throws \Tuleap\Docman\CannotInstantiateItemWeHaveJustCreatedInDBException
+     * @throws CustomMetadataException
      */
     public function createEmbedded(
         Docman_Item $parent_item,
@@ -479,6 +442,11 @@ class DocmanItemCreator
         if ($this->item_factory->doesTitleCorrespondToExistingDocument($representation->title, $parent_item->getId())) {
             throw new RestException(400, "A document with same title already exists in the given folder.");
         }
+
+        $metadata_to_create = $this->custom_checker->checkAndRetrieveFormattedRepresentation(
+            $parent_item,
+            $representation->metadata
+        );
 
         $this->checkDocumentIsNotBeingUploaded(
             $parent_item,
@@ -495,8 +463,10 @@ class DocmanItemCreator
             $project,
             $representation->title,
             $representation->description,
+            $metadata_to_create,
             $representation->status,
             $representation->obsolescence_date,
+            $this->getPermissionsForGroupsSet($parent_item, $representation->permissions_for_groups),
             null,
             null,
             $representation->embedded_properties->content
@@ -504,20 +474,11 @@ class DocmanItemCreator
     }
 
     /**
-     * @param Docman_Item                  $parent_item
-     * @param PFUser                       $user
-     * @param DocmanLinkPOSTRepresentation $representation
-     * @param \DateTimeImmutable           $current_time
-     * @param Project                      $project
-     *
      * @return CreatedItemRepresentation
-     * @throws Metadata\InvalidDateComparisonException
-     * @throws Metadata\InvalidDateTimeFormatException
-     * @throws Metadata\ItemStatusUsageMismatchException
-     * @throws Metadata\ObsoloscenceDateUsageMismatchException
+     * @throws Metadata\HardCodedMetadataException
      * @throws RestException
-     * @throws StatusNotFoundException
      * @throws \Tuleap\Docman\CannotInstantiateItemWeHaveJustCreatedInDBException
+     * @throws CustomMetadataException
      */
     public function createLink(
         Docman_Item $parent_item,
@@ -529,6 +490,11 @@ class DocmanItemCreator
         if ($this->item_factory->doesTitleCorrespondToExistingDocument($representation->title, $parent_item->getId())) {
             throw new RestException(400, "A document with same title already exists in the given folder.");
         }
+
+        $metadata_to_create = $this->custom_checker->checkAndRetrieveFormattedRepresentation(
+            $parent_item,
+            $representation->metadata
+        );
 
         $link_url = $representation->link_properties->link_url;
         $this->links_validity_checker->checkLinkValidity($link_url);
@@ -548,11 +514,29 @@ class DocmanItemCreator
             $project,
             $representation->title,
             $representation->description,
+            $metadata_to_create,
             $representation->status,
             $representation->obsolescence_date,
+            $this->getPermissionsForGroupsSet($parent_item, $representation->permissions_for_groups),
             null,
             $link_url,
             null
+        );
+    }
+
+    /**
+     * @throws RestException
+     */
+    private function getPermissionsForGroupsSet(
+        Docman_Item $parent_item,
+        ?DocmanItemPermissionsForGroupsSetRepresentation $representation
+    ) : ?DocmanItemPermissionsForGroupsSet {
+        if ($representation === null) {
+            return null;
+        }
+        return $this->permissions_for_groups_set_factory->fromRepresentation(
+            $parent_item,
+            $representation
         );
     }
 }

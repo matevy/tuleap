@@ -25,7 +25,6 @@ use Tuleap\admin\ProjectCreation\ProjectVisibility\ProjectVisibilityConfigManage
 use Tuleap\Project\UserRemover;
 use Tuleap\SVN\SVNAuthenticationCacheInvalidator;
 
-
 /**
 * System Event classes
 *
@@ -64,7 +63,8 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
      *
      * @return string
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $txt = '';
         list($group_id, $project_is_private) = $this->getParametersAsArray();
         $txt .= 'project: '. $this->verbalizeProjectId($group_id, $with_link) .', project is private: '. ($project_is_private ? 'true' : 'false');
@@ -98,7 +98,7 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
                 $this->error("Could not set svn privacy for project $group_id");
                 return false;
             }
-            if (!$backendSVN->updateSVNAccess($group_id, $project->getSVNRootPath()) ) {
+            if (!$backendSVN->updateSVNAccess($group_id, $project->getSVNRootPath())) {
                 $this->error("Could not update svn access file for project $group_id");
                 return false;
             }
@@ -113,7 +113,7 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
         }
 
         //allows to link plugins to this system event
-        $this->callSystemEventListeners( __CLASS__ );
+        $this->callSystemEventListeners(self::class);
 
         $this->done();
 
@@ -145,15 +145,15 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
 
     private function notifyProjectMembers(Project $project)
     {
-        foreach($project->getMembers() as $member) {
+        foreach ($project->getMembers() as $member) {
             $this->notifyUser($project, $member);
         }
     }
 
-    private function notifyUser(Project $project, PFUser $user)
+    private function notifyUser(Project $project, PFUser $user) : void
     {
         $user_language = $user->getLanguage();
-        $purifier = Codendi_HTMLPurifier::instance();
+        $purifier      = Codendi_HTMLPurifier::instance();
 
         $title = $user_language->getText(
             'project_privacy',
@@ -163,14 +163,12 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
 
         $body = $this->getBody($project, $user_language);
 
-        $body_text = $purifier->purify($body, CODENDI_PURIFIER_STRIP_HTML);
-
         $mail = new Codendi_Mail();
         $mail->setFrom(ForgeConfig::get('sys_noreply'));
         $mail->setTo($user->getEmail());
-        $mail->setSubject($purifier->purify($title, CODENDI_PURIFIER_STRIP_HTML));
-        $mail->setBodyHtml($body_text);
-        $mail->setBodyText($body_text);
+        $mail->setSubject($title);
+        $mail->setBodyHtml($purifier->purify($body));
+        $mail->setBodyText($body);
 
         $mail->send();
     }
@@ -204,7 +202,6 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
                         'email_visibility_change_body_private_unrestricted',
                         $project->getUnconvertedPublicName()
                     );
-
             }
         } else {
             return $user_language->getText(

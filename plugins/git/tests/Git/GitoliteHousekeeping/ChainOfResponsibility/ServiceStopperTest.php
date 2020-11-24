@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,29 +18,33 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once dirname(__FILE__).'/../../../bootstrap.php';
-require_once 'common/backend/BackendService.class.php';
+require_once __DIR__.'/../../../bootstrap.php';
 
-class Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceStopperTest extends TuleapTestCase {
+class Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceStopperTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
-        $this->response         = mock('Git_GitoliteHousekeeping_GitoliteHousekeepingResponse');
-        $this->backend_service  = mock('BackendService');
+        $this->setUpGlobalsMockery();
+        $this->response         = \Mockery::spy(\Git_GitoliteHousekeeping_GitoliteHousekeepingResponse::class);
+        $this->backend_service  = \Mockery::spy(\BackendService::class);
 
         $this->command = new Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceStopper($this->response, $this->backend_service);
     }
 
-    public function itStopsTheService() {
-        expect($this->response)->info('Stopping service')->once();
-        expect($this->backend_service)->stop()->once();
+    public function itStopsTheService()
+    {
+        $this->response->shouldReceive('info')->with('Stopping service')->once();
+        $this->backend_service->shouldReceive('stop')->once();
 
         $this->command->execute();
     }
 
-    public function itExecutesTheNextCommand() {
-        $next = mock('Git_GitoliteHousekeeping_ChainOfResponsibility_Command');
-        expect($next)->execute()->once();
+    public function itExecutesTheNextCommand()
+    {
+        $next = \Mockery::spy(\Git_GitoliteHousekeeping_ChainOfResponsibility_Command::class);
+        $next->shouldReceive('execute')->once();
 
         $this->command->setNextCommand($next);
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -28,7 +28,8 @@ use Tuleap\OpenIDConnectClient\Provider\ProviderManager;
 use Tuleap\OpenIDConnectClient\Provider\ProviderNotFoundException;
 use UserManager;
 
-class Controller {
+class Controller
+{
 
     /**
      * @var UserManager
@@ -95,16 +96,19 @@ class Controller {
                 sprintf(dgettext('tuleap-openidconnectclient', 'An error occurred while removing the link with %1$s.'), $provider->getName()),
                 Feedback::ERROR
             );
-
         }
     }
 
-    private function redirectToAccountPage($message, $feedback_type) {
+    /**
+     * @psalm-return never-return
+     */
+    private function redirectToAccountPage($message, $feedback_type): void
+    {
         $GLOBALS['Response']->addFeedback(
             $feedback_type,
             $message
         );
         $GLOBALS['Response']->redirect('/account/');
+        exit();
     }
-
 }

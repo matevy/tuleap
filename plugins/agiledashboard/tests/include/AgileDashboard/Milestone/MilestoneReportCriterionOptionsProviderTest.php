@@ -19,9 +19,11 @@
  */
 require_once __DIR__.'/../../../bootstrap.php';
 
-class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProviderTest extends TuleapTestCase {
+class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProviderTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         /*
@@ -29,7 +31,6 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProviderTest exten
           Release  ----,-- Story
             Sprint ---'      Task
         */
-
 
         $this->user                    = aUser()->build();
         $this->release_tracker_id      = 101;
@@ -48,7 +49,6 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProviderTest exten
         $this->sprint_artifact_1231 = mockery_stub(\Tracker_Artifact::class)->getId()->returns(1231);
         $this->sprint_artifact_1232 = mockery_stub(\Tracker_Artifact::class)->getId()->returns(1232);
         $this->sprint_artifact_1241 = mockery_stub(\Tracker_Artifact::class)->getId()->returns(1241);
-
 
         $release_planning = mockery_stub(\Planning::class)->getPlanningTracker()->returns($this->release_tracker);
         $sprint_planning  = mockery_stub(\Planning::class)->getPlanningTracker()->returns($this->sprint_tracker);
@@ -78,7 +78,6 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProviderTest exten
         stub($this->artifact_factory)->getArtifactById(1231)->returns($this->sprint_artifact_1231);
         stub($this->artifact_factory)->getArtifactById(1232)->returns($this->sprint_artifact_1232);
         stub($this->artifact_factory)->getArtifactById(1241)->returns($this->sprint_artifact_1241);
-
 
         $this->dao = \Mockery::spy(\AgileDashboard_Milestone_MilestoneDao::class);
         $this->dar_01 = array(
@@ -113,7 +112,8 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProviderTest exten
         );
     }
 
-    public function itReturnsEmptyArrayWhenNoNearestPlanningTracker() {
+    public function itReturnsEmptyArrayWhenNoNearestPlanningTracker()
+    {
         stub($this->nearest_planning_tracker_provider)->getNearestPlanningTracker($this->task_tracker, $this->hierarchy_factory)->returns(null);
 
         stub($this->dao)->getAllMilestoneByTrackers(array($this->release_tracker_id, $this->sprint_tracker_id))->never();
@@ -121,7 +121,8 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProviderTest exten
         $this->assertEqual($this->provider->getSelectboxOptions($this->task_tracker, '*', $this->user), array());
     }
 
-    public function itDoesNotSearchOnProductTrackerSinceThereIsNoPlanning() {
+    public function itDoesNotSearchOnProductTrackerSinceThereIsNoPlanning()
+    {
         stub($this->nearest_planning_tracker_provider)->getNearestPlanningTracker($this->task_tracker, $this->hierarchy_factory)->returns($this->sprint_tracker);
 
         stub($this->release_tracker)->userCanView($this->user)->returns(true);

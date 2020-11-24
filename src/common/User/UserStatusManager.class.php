@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class User_UserStatusManager {
+class User_UserStatusManager
+{
 
     /**
      * Ensure user can use the platform
@@ -28,7 +29,8 @@ class User_UserStatusManager {
      * @throws User_StatusInvalidException
      * @throws User_StatusPendingException
      */
-    public function checkStatus(PFUser $user) {
+    public function checkStatus(PFUser $user)
+    {
         if (! $this->isFinalStatus($user)) {
             switch ($user->getStatus()) {
                 case PFUser::STATUS_VALIDATED:
@@ -54,7 +56,8 @@ class User_UserStatusManager {
      * @throws User_StatusInvalidException
      * @throws User_StatusPendingException
      */
-    public function checkStatusOnVerifyPage(PFUser $user) {
+    public function checkStatusOnVerifyPage(PFUser $user)
+    {
         if (! $this->isFinalStatus($user)) {
             switch ($user->getStatus()) {
                 case PFUser::STATUS_VALIDATED:
@@ -64,6 +67,7 @@ class User_UserStatusManager {
                     if (ForgeConfig::get('sys_user_approval') == 0) {
                         break;
                     }
+                    // User should not have a pending status if approval is not required
                 default:
                     throw new User_StatusInvalidException();
             }
@@ -74,12 +78,13 @@ class User_UserStatusManager {
      * Check user status validity
      *
      * @param PFUser $user
-     * @param Boolean $allowpending
-     * @return Boolean
+     * @param bool $allowpending
+     * @return bool
      * @throws User_StatusDeletedException
      * @throws User_StatusSuspendedException
      */
-    private function isFinalStatus(PFUser $user) {
+    private function isFinalStatus(PFUser $user)
+    {
         $status = $user->getStatus();
         switch ($status) {
             case PFUser::STATUS_ACTIVE:
@@ -95,5 +100,3 @@ class User_UserStatusManager {
         }
     }
 }
-
-

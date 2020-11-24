@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - present. All Rights Reserved.
  * Copyright (C) 2010 Christopher Han <xiphux@gmail.com>
  *
  * This file is a part of Tuleap.
@@ -33,20 +33,10 @@ use UserManager;
  */
 class Controller_Search extends ControllerBase // @codingStandardsIgnoreLine
 {
-    use \Tuleap\Git\Repository\View\FeatureFlag;
-
     public const SEARCH_COMMIT    = 'commit';
     public const SEARCH_AUTHOR    = 'author';
     public const SEARCH_COMMITTER = 'committer';
 
-    /**
-     * __construct
-     *
-     * Constructor
-     *
-     * @access public
-     * @return controller
-     */
     public function __construct()
     {
         if (! Config::GetInstance()->GetValue('search', true)) {
@@ -70,10 +60,7 @@ class Controller_Search extends ControllerBase // @codingStandardsIgnoreLine
      */
     protected function GetTemplate() // @codingStandardsIgnoreLine
     {
-        if ($this->isTuleapBeauGitActivated()) {
-            return 'tuleap/shortlog.tpl';
-        }
-        return 'search.tpl';
+        return 'tuleap/shortlog.tpl';
     }
 
     /**
@@ -82,7 +69,7 @@ class Controller_Search extends ControllerBase // @codingStandardsIgnoreLine
      * Gets the name of this controller's action
      *
      * @access public
-     * @param boolean $local true if caller wants the localized action name
+     * @param bool $local true if caller wants the localized action name
      * @return string action name
      */
     public function GetName($local = false) // @codingStandardsIgnoreLine
@@ -157,35 +144,25 @@ class Controller_Search extends ControllerBase // @codingStandardsIgnoreLine
         }
 
         if (count($results) < 1) {
-            if ($this->isTuleapBeauGitActivated()) {
-                $this->tpl->assign('hasemptysearchresults', true);
-            } else {
-                throw new MessageException(sprintf(dgettext("gitphp", 'No matches for "%1$s"'), $this->params['search']), false);
-            }
+            $this->tpl->assign('hasemptysearchresults', true);
         }
 
         if (count($results) > 100) {
-            if ($this->isTuleapBeauGitActivated()) {
-                $this->tpl->assign('hasmorerevs', true);
-            } else {
-                $this->tpl->assign('hasmore', true);
-            }
+            $this->tpl->assign('hasmorerevs', true);
             $results = array_slice($results, 0, 100, true);
         }
         $this->tpl->assign('results', $results);
 
         $this->tpl->assign('page', $this->params['page']);
 
-        if ($this->isTuleapBeauGitActivated()) {
-            $commit_metadata_retriever = new CommitMetadataRetriever(
-                new CommitStatusRetriever(new CommitStatusDAO()),
-                UserManager::instance()
-            );
-            $builder = new ShortlogPresenterBuilder($commit_metadata_retriever);
-            $this->tpl->assign(
-                'shortlog_presenter',
-                $builder->getShortlogPresenter($this->getTuleapGitRepository(), ...$results)
-            );
-        }
+        $commit_metadata_retriever = new CommitMetadataRetriever(
+            new CommitStatusRetriever(new CommitStatusDAO()),
+            UserManager::instance()
+        );
+        $builder = new ShortlogPresenterBuilder($commit_metadata_retriever);
+        $this->tpl->assign(
+            'shortlog_presenter',
+            $builder->getShortlogPresenter($this->getTuleapGitRepository(), ...$results)
+        );
     }
 }

@@ -18,16 +18,18 @@
  */
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use \Planning;
-use \Tuleap\REST\JsonCast;
-use \Tuleap\REST\v1\PlanningReferenceBase;
+use Planning;
+use Tuleap\REST\JsonCast;
+use Tuleap\REST\v1\PlanningReferenceBase;
 
 /**
  * Basic reference of a planning
  */
-class PlanningReference extends PlanningReferenceBase {
+class PlanningReference extends PlanningReferenceBase
+{
 
-    public function build(Planning $planning) {
+    public function build(Planning $planning)
+    {
         $this->id  = JsonCast::toInt($planning->getId());
         $this->uri = PlanningRepresentation::ROUTE . '/' . $this->id;
     }

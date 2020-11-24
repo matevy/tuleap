@@ -20,6 +20,7 @@
 namespace Tuleap\AgileDashboard\REST\v1;
 
 use AgileDashboard_MilestonesCardwallRepresentation;
+use EventManager;
 use Planning_Milestone;
 use PlanningFactory;
 use TrackerFactory;
@@ -35,7 +36,8 @@ use Tuleap\Tracker\REST\TrackerReference;
 /**
  * Representation of a milestone
  */
-class MilestoneRepresentation extends MilestoneRepresentationBase {
+class MilestoneRepresentation extends MilestoneRepresentationBase
+{
 
     public function build(
         Planning_Milestone $milestone,
@@ -65,6 +67,8 @@ class MilestoneRepresentation extends MilestoneRepresentationBase {
 
         $this->artifact = new ArtifactReference();
         $this->artifact->build($milestone->getArtifact());
+
+        $this->description = (string) $milestone->getArtifact()->getDescription();
 
         $this->start_date = null;
         if ($milestone->getStartDate()) {
@@ -138,15 +142,22 @@ class MilestoneRepresentation extends MilestoneRepresentationBase {
         $this->resources['siblings'] = [
             'uri' => $this->uri . '/siblings'
         ];
+
+        $event = new AdditionalPanesForMilestoneEvent($milestone);
+        EventManager::instance()->processEvent($event);
+
+        $this->resources['additional_panes'] = $event->getPaneInfoRepresentations();
     }
 
-    private function getContentTrackersRepresentation(Planning_Milestone $milestone) {
+    private function getContentTrackersRepresentation(Planning_Milestone $milestone)
+    {
         return $this->getTrackersRepresentation(
             $milestone->getPlanning()->getBacklogTrackers()
         );
     }
 
-    private function getTrackersRepresentation(array $trackers) {
+    private function getTrackersRepresentation(array $trackers)
+    {
         $trackers_representation = array();
         foreach ($trackers as $tracker) {
             $tracker_reference = new TrackerReference();
@@ -156,14 +167,16 @@ class MilestoneRepresentation extends MilestoneRepresentationBase {
         return $trackers_representation;
     }
 
-    public function enableCardwall() {
+    public function enableCardwall()
+    {
         $this->cardwall_uri = $this->uri . '/'. AgileDashboard_MilestonesCardwallRepresentation::ROUTE;
         $this->resources['cardwall'] = array(
             'uri' => $this->cardwall_uri
         );
     }
 
-    public function enableBurndown() {
+    public function enableBurndown()
+    {
         $this->burndown_uri = $this->uri . '/'. BurndownRepresentation::ROUTE;
         $this->resources['burndown'] = array(
             'uri' => $this->burndown_uri

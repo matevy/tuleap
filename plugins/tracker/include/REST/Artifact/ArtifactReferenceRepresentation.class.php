@@ -20,11 +20,11 @@
 
 namespace Tuleap\Tracker\REST\Artifact;
 
-use Tuleap\Tracker\REST\Artifact\ArtifactRepresentation;
 use Tuleap\REST\JsonCast;
 use Exception;
 
-class ArtifactReferenceRepresentation {
+class ArtifactReferenceRepresentation
+{
     /**
      * @var int ID of the artifact
      */
@@ -35,7 +35,8 @@ class ArtifactReferenceRepresentation {
      */
     public $uri;
 
-    public function build($reference) {
+    public function build($reference)
+    {
         if ($reference instanceof Tracker_Artifact) {
             $this->id = JsonCast::toInt($reference->getId());
         } elseif (is_int($reference)) {

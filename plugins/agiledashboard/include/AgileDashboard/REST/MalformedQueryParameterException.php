@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2019 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,13 +18,32 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\AgileDashboard\REST;
 
 use Exception;
 
-class MalformedQueryParameterException extends Exception {
+class MalformedQueryParameterException extends Exception
+{
 
-    public function __construct() {
-        parent::__construct('Query is malformed. Expecting {"status":"open"} or {"status":"closed"}.');
+    private function __construct(string $message)
+    {
+        parent::__construct($message);
+    }
+
+    public static function invalidQueryParameter(): self
+    {
+        return new self('Query is malformed. Expecting {"period":"future"} or {"period":"current"} or {"status":"open"} or {"status":"closed"}.');
+    }
+
+    public static function invalidQueryStatusParameter(): self
+    {
+        return new self('Query is malformed. Expecting {"status":"open"} or {"status":"closed"}.');
+    }
+
+    public static function invalidQueryPeriodParameter(): self
+    {
+        return new self('Query is malformed. Expecting {"period":"future"} or {"period":"current"}.');
     }
 }

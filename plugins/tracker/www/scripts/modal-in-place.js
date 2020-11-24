@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2014 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+/* global codendi:readonly CKEDITOR:readonly jQuery:readonly */
 
 var tuleap = tuleap || {};
 tuleap.tracker = tuleap.tracker || {};
@@ -131,7 +133,7 @@ tuleap.textarea = tuleap.textarea || {};
         loadCreateArtifactModal: function(tracker_id, artifact_link_id, callback) {
             var self = this;
 
-            if (typeof callback == "undefined") {
+            if (typeof callback === "undefined") {
                 callback = this.defaultCallback;
             }
 
@@ -148,7 +150,7 @@ tuleap.textarea = tuleap.textarea || {};
                 .done(function(data) {
                     tuleap.modal.hideLoad();
                     self.showArtifactCreationForm(data, tracker_id, artifact_link_id, callback);
-                    codendi.tracker.runTrackerFieldDependencies();
+                    tuleap.tracker.runTrackerFieldDependencies();
 
                     $(".tuleap-modal-main-panel form textarea").each(function() {
                         var element = $(this).get(0); //transform to prototype
@@ -160,14 +162,13 @@ tuleap.textarea = tuleap.textarea || {};
                         var $field_id = $(this)
                             .find(".add-field")
                             .data("field-id");
-                        var field_computed_manual_value = document.getElementsByName(
-                            "artifact[" + $field_id + "][manual_value]"
-                        );
-                        var field_computed_is_autocomputed = document.getElementsByName(
-                            "artifact[" + $field_id + "][is_autocomputed]"
-                        );
 
-                        self.displayAutocomputed($element);
+                        if ($element.hasClass("with-default-value")) {
+                            self.displayInEdition($element);
+                        } else {
+                            self.displayAutocomputed($element);
+                        }
+
                         $element.find(".tracker_formelement_edit").on("click", function() {
                             self.displayInEdition($element);
                             $element.off("click");
@@ -182,10 +183,7 @@ tuleap.textarea = tuleap.textarea || {};
                 })
                 .fail(function() {
                     tuleap.modal.hideLoad();
-                    codendi.feedback.log(
-                        "error",
-                        codendi.locales["tracker_modal_errors"].bad_request
-                    );
+                    codendi.feedback.log("error", codendi.locales.tracker_modal_errors.bad_request);
                 });
         },
 
@@ -205,7 +203,10 @@ tuleap.textarea = tuleap.textarea || {};
                 .done(function(data) {
                     tuleap.modal.hideLoad();
                     self.showArtifactEditForm(data, artifact_id, update_callback);
-                    codendi.tracker.runTrackerFieldDependencies();
+                    tuleap.tracker.runTrackerFieldDependencies();
+
+                    var modalLoadedEvent = new Event("EditModalLoaded");
+                    document.dispatchEvent(modalLoadedEvent);
 
                     $(".tuleap-modal-main-panel form textarea").each(function() {
                         var element = $(this).get(0); //transform to prototype
@@ -253,15 +254,12 @@ tuleap.textarea = tuleap.textarea || {};
                 })
                 .fail(function() {
                     tuleap.modal.hideLoad();
-                    codendi.feedback.log(
-                        "error",
-                        codendi.locales["tracker_modal_errors"].bad_request
-                    );
+                    codendi.feedback.log("error", codendi.locales.tracker_modal_errors.bad_request);
                 });
         },
 
         initModalInteraction: function(modal) {
-            tuleap_modal = modal.getDOMElement();
+            const tuleap_modal = modal.getDOMElement();
             codendi.Tooltip.load(tuleap_modal, true);
             codendi.Toggler.init(tuleap_modal);
             tuleap.dateTimePicker.init();
@@ -307,7 +305,7 @@ tuleap.textarea = tuleap.textarea || {};
 
             self.initModalInteraction(modal);
 
-            $("#tuleap-modal-submit").click(function(event) {
+            $("#tuleap-modal-submit").click(function() {
                 self.updateRichTextAreas();
                 $("#artifact-form-errors").hide();
 
@@ -391,13 +389,13 @@ tuleap.textarea = tuleap.textarea || {};
         },
 
         updateRichTextAreas: function() {
-            for (instance in CKEDITOR.instances) {
+            for (let instance in CKEDITOR.instances) {
                 CKEDITOR.instances[instance].updateElement();
             }
         },
 
         destroyRichTextAreaInstances: function() {
-            for (instance in CKEDITOR.instances) {
+            for (let instance in CKEDITOR.instances) {
                 CKEDITOR.instances[instance].destroy();
             }
         },

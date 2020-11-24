@@ -35,17 +35,21 @@ Mock::generate('DataAccessResult');
 
 Mock::generate('Tracker_Artifact');
 
-require_once('common/valid/Rule.class.php');
 Mock::generate('Rule_String');
 
 class Tracker_FormElement_Field_TextTestVersion_Expose_ProtectedMethod extends Tracker_FormElement_Field_TextTestVersion
 {
-    public function buildMatchExpression($a, $b) { return parent::buildMatchExpression($a, $b); }
+    public function buildMatchExpression($a, $b)
+    {
+        return parent::buildMatchExpression($a, $b);
+    }
 }
 
-class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
+class Tracker_FormElement_Field_TextTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->user = mock('PFUser');
@@ -54,18 +58,21 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         UserManager::setInstance($user_manager);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         UserManager::clearInstance();
 
         parent::tearDown();
     }
 
-    public function testNoDefaultValue() {
+    public function testNoDefaultValue()
+    {
         $str_field = new Tracker_FormElement_Field_TextTestVersion();
         $this->assertFalse($str_field->hasDefaultValue());
     }
 
-    public function testDefaultValue() {
+    public function testDefaultValue()
+    {
         stub($this->user)->getPreference(PFUser::EDITION_DEFAULT_FORMAT)->returns('text');
 
         $str_field = new Tracker_FormElement_Field_TextTestVersion();
@@ -78,7 +85,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         ));
     }
 
-    public function testGetChangesetValue() {
+    public function testGetChangesetValue()
+    {
         $value_dao = new MockTracker_FormElement_Field_Value_TextDao();
         $dar = new MockDataAccessResult();
         $dar->setReturnValueAt(0, 'getRow', array('id' => 123, 'field_id' => 1, 'value' => 'My Text', 'body_format' => 'text'));
@@ -91,7 +99,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         $this->assertIsA($text_field->getChangesetValue(mock('Tracker_Artifact_Changeset'), 123, false), 'Tracker_Artifact_ChangesetValue_Text');
     }
 
-    public function testGetChangesetValue_doesnt_exist() {
+    public function testGetChangesetValue_doesnt_exist()
+    {
         $value_dao = new MockTracker_FormElement_Field_Value_TextDao();
         $dar = new MockDataAccessResult();
         $dar->setReturnValue('getRow', false);
@@ -103,7 +112,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         $this->assertNull($text_field->getChangesetValue(null, 123, false));
     }
 
-    public function testSpecialCharactersInCSVExport() {
+    public function testSpecialCharactersInCSVExport()
+    {
         $whatever_report = mock('Tracker_Report');
         $text_field      = new Tracker_FormElement_Field_TextTestVersion();
         $this->assertEqual("Une chaine sans accent", $text_field->fetchCSVChangesetValue(null, null, "Une chaine sans accent", $whatever_report));
@@ -114,7 +124,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         $this->assertEqual("This thing & that thing", $text_field->fetchCSVChangesetValue(null, null, "This thing & that thing", $whatever_report));
     }
 
-    public function testIsValid() {
+    public function testIsValid()
+    {
         $artifact = new MockTracker_Artifact();
 
         $rule_string = new MockRule_String();
@@ -126,7 +137,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         $this->assertTrue($text->isValid($artifact, "Du texte"));
     }
 
-    public function testHasChanges() {
+    public function testHasChanges()
+    {
         $value = new MockTracker_Artifact_ChangesetValue_Text();
         $value->setReturnValue('getText', 'v1');
 
@@ -135,7 +147,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         $this->assertTrue($text->hasChanges(mock('Tracker_Artifact'), $value, array('content' => 'v2')));
     }
 
-    public function testIsValidRequiredField() {
+    public function testIsValidRequiredField()
+    {
         $rule_string = new MockRule_String();
         $rule_string->expectCallCount('isValid', 3);
 
@@ -151,7 +164,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         $this->assertFalse($f->isValidRegardingRequiredProperty($a, null));
     }
 
-    public function testIsValidNotRequiredField() {
+    public function testIsValidNotRequiredField()
+    {
         $rule_string = new MockRule_String();
         $rule_string->expectCallCount('isValid', 5);
 
@@ -192,7 +206,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
         $f->isValid($a, $value_5);
     }
 
-    public function testGetFieldData() {
+    public function testGetFieldData()
+    {
         $f = new Tracker_FormElement_Field_TextTestVersion();
         $this->assertEqual('this is a text value', $f->getFieldData('this is a text value'));
     }
@@ -217,7 +232,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
     /**
      * @see https://tuleap.net/plugins/tracker?aid=6435
      */
-    public function itIsEmptyWhenThereIsNoContent() {
+    public function itIsEmptyWhenThereIsNoContent()
+    {
         $artifact = new MockTracker_Artifact();
         $field    = aTextField()->build();
         $this->assertTrue($field->isEmpty(
@@ -232,7 +248,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
     /**
      * @see https://tuleap.net/plugins/tracker?aid=6435
      */
-    public function itIsEmptyWhenThereIsOnlyWhitespaces() {
+    public function itIsEmptyWhenThereIsOnlyWhitespaces()
+    {
         $artifact = new MockTracker_Artifact();
         $field    = aTextField()->build();
         $this->assertTrue($field->isEmpty(
@@ -247,7 +264,8 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
     /**
      * @see https://tuleap.net/plugins/tracker?aid=6435
      */
-    public function itIsNotEmptyWhenThereIsContent() {
+    public function itIsNotEmptyWhenThereIsContent()
+    {
         $artifact = new MockTracker_Artifact();
         $field    = aTextField()->build();
         $this->assertFalse($field->isEmpty(
@@ -274,9 +292,11 @@ class Tracker_FormElement_Field_TextTest extends TuleapTestCase {
     }
 }
 
-class Tracker_FormElement_Field_Text_RESTTests extends TuleapTestCase {
+class Tracker_FormElement_Field_Text_RESTTests extends TuleapTestCase
+{
 
-    public function itReturnsTheValueIndexedByFieldName() {
+    public function itReturnsTheValueIndexedByFieldName()
+    {
         $field = aTextField()->build();
         $value = array(
             "field_id" => 873,
@@ -293,16 +313,19 @@ class Tracker_FormElement_Field_Text_RESTTests extends TuleapTestCase {
     }
 }
 
-class Tracker_FormElement_Field_Text_Changes extends TuleapTestCase {
+class Tracker_FormElement_Field_Text_Changes extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->field = aTextField()->build();
         $this->previous_value = stub('Tracker_Artifact_ChangesetValue_Text')->getText()->returns('1');
     }
 
-    public function itReturnsTrueIfThereIsAChange() {
+    public function itReturnsTrueIfThereIsAChange()
+    {
         $new_value = array(
             'content' => '1.0',
             'format'  => 'text'
@@ -311,7 +334,8 @@ class Tracker_FormElement_Field_Text_Changes extends TuleapTestCase {
         $this->assertTrue($this->field->hasChanges(mock('Tracker_Artifact'), $this->previous_value, $new_value));
     }
 
-    public function itReturnsFalseIfThereIsNoChange() {
+    public function itReturnsFalseIfThereIsNoChange()
+    {
         $new_value = array(
             'content' => '1',
             'format'  => 'text'
@@ -320,7 +344,8 @@ class Tracker_FormElement_Field_Text_Changes extends TuleapTestCase {
         $this->assertFalse($this->field->hasChanges(mock('Tracker_Artifact'), $this->previous_value, $new_value));
     }
 
-    public function itReturnsFalseIfOnlyTheFormatChanged() {
+    public function itReturnsFalseIfOnlyTheFormatChanged()
+    {
         $new_value = array(
             'content' => '1',
             'format'  => 'html'

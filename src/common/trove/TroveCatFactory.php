@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,21 +18,25 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class TroveCatFactory {
+class TroveCatFactory
+{
+    public const BROWSELIMIT = 20;
 
     /**
      * @var TroveCatDao
      */
     private $dao;
 
-    public function __construct(TroveCatDao $dao) {
+    public function __construct(TroveCatDao $dao)
+    {
         $this->dao = $dao;
     }
 
     /**
      * @return TroveCat[]
      */
-    public function getMandatoryParentCategoriesUnderRoot() {
+    public function getMandatoryParentCategoriesUnderRoot()
+    {
         $results    = $this->dao->getMandatoryParentCategoriesUnderRoot();
         $trove_cats = array();
 
@@ -47,7 +51,8 @@ class TroveCatFactory {
     /**
      * @return TroveCat[]
      */
-    public function getMandatoryParentCategoriesUnderRootOnlyWhenCategoryHasChildren() {
+    public function getMandatoryParentCategoriesUnderRootOnlyWhenCategoryHasChildren()
+    {
         $results    = $this->dao->getMandatoryParentCategoriesUnderRoot();
         $trove_cats = array();
 
@@ -62,13 +67,46 @@ class TroveCatFactory {
     }
 
     /**
+     * @psalm-return array<int, TroveCat>
+     */
+    public function getTree(): array
+    {
+        $trove_cats = [];
+        foreach ($this->dao->getParentCategoriesUnderRoot() as $row) {
+            $trove_cat = $this->getTroveCatWithChildrenRecursively($row);
+            $trove_cats[(int) $trove_cat->getId()] = $trove_cat;
+        }
+        return $trove_cats;
+    }
+
+    private function getTroveCatWithChildrenRecursively(array $row): TroveCat
+    {
+        $trove_cat = $this->getInstanceFromRow($row);
+        foreach ($this->dao->getCategoryChildren($row['trove_cat_id']) as $child_row) {
+            $trove_cat->addChildren($this->getTroveCatWithChildrenRecursively($child_row));
+        }
+        return $trove_cat;
+    }
+
+    public function getTopCategoriesWithNbMaxCategories()
+    {
+        return $this->dao->getTopCategories();
+    }
+
+    public function removeProjectTopCategoryValue(Project $project, int $root_id): void
+    {
+        $this->dao->removeProjectTopCategoryValue($project->getID(), $root_id);
+    }
+
+    /**
      * @return TroveCat
      */
-    private function getTroveCatWithChildrens(array $row) {
+    private function getTroveCatWithChildrens(array $row)
+    {
         $trove_cat_id = $row['trove_cat_id'];
         $trove_cat    = $this->getInstanceFromRow($row);
 
-        foreach($this->dao->getCategoryChildrenToDisplayDuringProjectCreation($trove_cat_id) as $row_child) {
+        foreach ($this->dao->getCategoryChildrenToDisplayDuringProjectCreation($trove_cat_id) as $row_child) {
             $child = $this->getInstanceFromRow($row_child);
             $trove_cat->addChildren($child);
         }
@@ -78,11 +116,12 @@ class TroveCatFactory {
     /**
      * @return TroveCat
      */
-    private function getInstanceFromRow(array $row) {
+    private function getInstanceFromRow(array $row)
+    {
         return new TroveCat(
-           $row['trove_cat_id'],
-           $row['shortname'],
-           $row['fullname']
+            $row['trove_cat_id'],
+            $row['shortname'],
+            $row['fullname']
         );
     }
 }

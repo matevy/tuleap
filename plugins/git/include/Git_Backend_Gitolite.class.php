@@ -23,7 +23,8 @@ use Tuleap\Event\Events\ArchiveDeletedItemEvent;
 use Tuleap\Event\Events\ArchiveDeletedItemFileProvider;
 use Tuleap\Git\Gitolite\GitoliteAccessURLGenerator;
 
-class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backend_Interface {
+class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backend_Interface
+{
 
     /**
      * @var Logger
@@ -39,7 +40,7 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      * @var GitDao
      */
     protected $dao;
-    
+
     /**
      * @var PermissionsManager
      */
@@ -72,13 +73,15 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      * @see plugins/git/include/Git_Backend_Interface::createReference()
      * @param GitRepository $repository
      */
-    public function createReference($repository) {
+    public function createReference($repository)
+    {
     }
 
     /**
      * @return bool
      */
-    public function updateRepoConf($repository) {
+    public function updateRepoConf($repository)
+    {
         return $this->driver->dumpProjectRepoConf($repository->getProject());
     }
 
@@ -87,9 +90,10 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @see    plugins/git/include/Git_Backend_Interface::isInitialized()
      * @param  GitRepository $repository
-     * @return Boolean
+     * @return bool
      */
-    public function isInitialized(GitRepository $repository) {
+    public function isInitialized(GitRepository $repository)
+    {
         $init = $this->driver->isInitialized($this->getGitRootPath().'/'.$repository->getPath());
         if ($init) {
             $this->getDao()->initialize($repository->getId());
@@ -104,7 +108,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      * @param GitRepository $repository
      * @return bool
      */
-    public function isCreated(GitRepository $repository) {
+    public function isCreated(GitRepository $repository)
+    {
         return $this->driver->isRepositoryCreated($this->getGitRootPath().'/'.$repository->getPath());
     }
 
@@ -114,7 +119,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      * @param  GitRepository $repository
      * @return array
      */
-    public function getAccessURL(GitRepository $repository) {
+    public function getAccessURL(GitRepository $repository)
+    {
         $transports = array();
         $ssh_transport = $this->gitolite_access_URL_generator->getSSHURL($repository);
         if ($ssh_transport) {
@@ -132,23 +138,26 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @return String
      */
-    public function getGitRootPath() {
+    public function getGitRootPath()
+    {
         return $GLOBALS['sys_data_dir'] .'/gitolite/repositories/';
     }
 
     /**
      * Wrapper for GitDao
-     * 
+     *
      * @return GitDao
      */
-    protected function getDao() {
+    protected function getDao()
+    {
         if (!$this->dao) {
             $this->dao = new GitDao();
         }
         return $this->dao;
     }
-    
-    public function setDao($dao) {
+
+    public function setDao($dao)
+    {
         $this->dao = $dao;
     }
 
@@ -157,10 +166,11 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @return bool
      */
-    public function isNameAvailable($newName) {
+    public function isNameAvailable($newName)
+    {
         return ! file_exists($this->getGitRootPath() .'/'. $newName);
     }
-    
+
     /**
      * Save the permissions of the repository
      *
@@ -169,7 +179,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @return bool true if success, false otherwise
      */
-    public function savePermissions(GitRepository $repository, $perms) {
+    public function savePermissions(GitRepository $repository, $perms)
+    {
         $project_creator_status = new Git_Driver_Gerrit_ProjectCreatorStatus(
             new Git_Driver_Gerrit_ProjectCreatorStatusDao()
         );
@@ -186,7 +197,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
         return $ok;
     }
 
-    private function savePermission(GitRepository $repository, $type, array $perms) {
+    private function savePermission(GitRepository $repository, $type, array $perms)
+    {
         try {
             if (isset($perms[$type]) && is_array($perms[$type])) {
                 $override_collection = PermissionsManager::instance()->savePermissionsWithoutHistory(
@@ -212,15 +224,16 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @return bool true if success, false otherwise
      */
-    public function deletePermissions($repository) {
-        
+    public function deletePermissions($repository)
+    {
+
         $group_id = $repository->getProjectId();
         $object_id = $repository->getId();
         return permission_clear_all($group_id, Git::PERM_READ, $object_id)
             && permission_clear_all($group_id, Git::PERM_WRITE, $object_id)
             && permission_clear_all($group_id, Git::PERM_WPLUS, $object_id);
     }
-    
+
 
     /**
      * Test is user can read the content of this repository and metadata
@@ -228,9 +241,10 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      * @param PFUser          $user       The user to test
      * @param GitRepository $repository The repository to test
      *
-     * @return Boolean
+     * @return bool
      */
-    public function userCanRead($user, $repository) {
+    public function userCanRead($user, $repository)
+    {
 
         if ($user->isMember($repository->getProjectId(), 'A')) {
             return true;
@@ -255,7 +269,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @return bool
      */
-    public function save($repository) {
+    public function save($repository)
+    {
         return $this->getDao()->save($repository);
     }
 
@@ -264,7 +279,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @param GitRepository $repository
      */
-    public function changeRepositoryMailingList($repository) {
+    public function changeRepositoryMailingList($repository)
+    {
         return true;
     }
 
@@ -273,9 +289,10 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @param GitRepository $repository
      *
-     * @return Boolean
+     * @return bool
      */
-    public function changeRepositoryMailPrefix($repository) {
+    public function changeRepositoryMailPrefix($repository)
+    {
         return $this->changeRepositoryMailingList($repository);
     }
 
@@ -287,11 +304,12 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @return true if success, false otherwise
      */
-    public function renameProject(Project $project, $newName) {
+    public function renameProject(Project $project, $newName)
+    {
         if (is_dir($this->driver->getRepositoriesPath() .'/'. $project->getUnixName())) {
             $backend = $this->getBackend();
             $ok = rename(
-                $this->driver->getRepositoriesPath() .'/'. $project->getUnixName(), 
+                $this->driver->getRepositoriesPath() .'/'. $project->getUnixName(),
                 $this->driver->getRepositoriesPath() .'/'. $newName
             );
             if ($ok) {
@@ -310,7 +328,7 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
 
     /**
      * Trigger rename of gitolite repositories in configuration files
-     * 
+     *
      * All the rename process is owned by 'root' user but gitolite modification has to be
      * modified as 'codendiadm' because the config is localy edited and then pushed in 'gitolite'
      * user repo. In order to make this work, the ~/.ssh/config is modified (otherwise git would
@@ -322,10 +340,11 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      * @param String $oldName The old name of the project
      * @param String $newName The new name of the project
      * @throws Exception
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
-    protected function glRenameProject($oldName, $newName) {
+    protected function glRenameProject($oldName, $newName)
+    {
         $retVal = 0;
         $output = array();
         $mvCmd  = $GLOBALS['codendi_dir'].'/src/utils/php-launcher.sh '.$GLOBALS['codendi_dir'].'/plugins/git/bin/gl-rename-project.php '.escapeshellarg($oldName).' '.escapeshellarg($newName);
@@ -339,15 +358,18 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
         }
     }
 
-    public function canBeDeleted(GitRepository $repository) {
+    public function canBeDeleted(GitRepository $repository)
+    {
         return true;
     }
 
-    public function markAsDeleted(GitRepository $repository) {
+    public function markAsDeleted(GitRepository $repository)
+    {
         $this->getDao()->delete($repository);
     }
 
-    public function delete(GitRepository $repository) {
+    public function delete(GitRepository $repository)
+    {
         $this->updateRepoConf($repository);
         $this->logger->debug('Backuping '. $repository->getPath());
         $backup_dir = $this->getGitPlugin()->getConfigurationParameter('git_backup_dir');
@@ -357,7 +379,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
         $this->getDriver()->delete($repository->getFullPath());
     }
 
-    public function deleteArchivedRepository(GitRepository $repository) {
+    public function deleteArchivedRepository(GitRepository $repository)
+    {
         $this->logger->debug('Delete backup '. $repository->getBackupPath());
         $this->getDriver()->deleteBackup(
             $repository,
@@ -370,9 +393,10 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @param GitRepository $repository
      *
-     * @return Boolean
+     * @return bool
      */
-    public function archiveBeforePurge(GitRepository $repository) {
+    public function archiveBeforePurge(GitRepository $repository)
+    {
         $backup= $this->getGitPlugin()->getConfigurationParameter('git_backup_dir');
 
         if (dirname($backup)) {
@@ -393,14 +417,16 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
         return false;
     }
 
-    private function getEventManager() {
+    private function getEventManager()
+    {
         return EventManager::instance();
     }
 
     /**
-     * @throws GitRepositoryAlreadyExistsException 
+     * @throws GitRepositoryAlreadyExistsException
      */
-    public function fork(GitRepository $old, GitRepository $new, array $forkPermissions) {
+    public function fork(GitRepository $old, GitRepository $new, array $forkPermissions)
+    {
         $new_project = $new->getProject();
         if ($this->getDao()->isRepositoryExisting($new_project->getId(), $new->getPath())) {
             throw new GitRepositoryAlreadyExistsException('Respository already exists');
@@ -429,26 +455,29 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
     }
 
 
-    public function clonePermissions(GitRepository $old, GitRepository $new) {
+    public function clonePermissions(GitRepository $old, GitRepository $new)
+    {
         $pm = $this->getPermissionsManager();
-        
+
         if ($this->inSameProject($old, $new)) {
             $pm->duplicateWithStatic($old->getId(), $new->getId(), Git::allPermissionTypes());
-        }
-        else {
+        } else {
             $pm->duplicateWithoutStatic($old->getId(), $new->getId(), Git::allPermissionTypes());
         }
     }
-    
-    private function inSameProject(GitRepository $repository1, GitRepository $repository2) {
+
+    private function inSameProject(GitRepository $repository1, GitRepository $repository2)
+    {
         return ($repository1->getProject()->getId() == $repository2->getProject()->getId());
     }
-    
-    public function setPermissionsManager(PermissionsManager $permissionsManager) {
+
+    public function setPermissionsManager(PermissionsManager $permissionsManager)
+    {
         $this->permissionsManager = $permissionsManager;
     }
-    
-    public function getPermissionsManager() {
+
+    public function getPermissionsManager()
+    {
         if (!$this->permissionsManager) {
             $this->permissionsManager = PermissionsManager::instance();
         }
@@ -462,7 +491,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @return GitRepository
      */
-    function loadRepositoryFromId($repositoryId) {
+    function loadRepositoryFromId($repositoryId)
+    {
         $repository = new GitRepository();
         $repository->setId($repositoryId);
         $repository->load();
@@ -474,24 +504,28 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @param Git_GitoliteDriver $driver The driver
      */
-    public function setDriver($driver) {
+    public function setDriver($driver)
+    {
         $this->driver = $driver;
     }
-    
+
     /**
      * Wrapper for Backend object
      *
      * @return Backend
      */
-    protected function getBackend() {
+    protected function getBackend()
+    {
         return Backend::instance();
     }
-    
-    public function getDriver() {
+
+    public function getDriver()
+    {
         return $this->driver;
     }
 
-    protected function getGitPlugin() {
+    protected function getGitPlugin()
+    {
         if (!$this->gitPlugin) {
             $plugin_manager  = PluginManager::instance();
             $this->gitPlugin = $plugin_manager->getPluginByName('git');
@@ -504,15 +538,18 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      *
      * @param GitPlugin $gitPlugin
      */
-    public function setGitPlugin(GitPlugin $gitPlugin) {
+    public function setGitPlugin(GitPlugin $gitPlugin)
+    {
         $this->gitPlugin = $gitPlugin;
     }
 
-    public function disconnectFromGerrit(GitRepository $repository) {
+    public function disconnectFromGerrit(GitRepository $repository)
+    {
         $this->getDao()->disconnectFromGerrit($repository->getId());
     }
 
-    public function setGerritProjectAsDeleted(GitRepository $repository) {
+    public function setGerritProjectAsDeleted(GitRepository $repository)
+    {
         $this->getDao()->setGerritProjectAsDeleted($repository->getId());
     }
 
@@ -521,11 +558,12 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      * @param array $repositor_ids
      * @return array
      */
-    public function searchOtherRepositoriesInSameProjectFromRepositoryList(GitRepository $repository, $repositor_ids) {
+    public function searchOtherRepositoriesInSameProjectFromRepositoryList(GitRepository $repository, $repositor_ids)
+    {
         $project_repositories = array();
 
         $result = $this->getDao()->searchRepositoriesInSameProjectFromRepositoryList($repositor_ids, $repository->getProjectId());
-        if(! $result) {
+        if (! $result) {
             return $project_repositories;
         }
 
@@ -547,7 +585,8 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
      * @param GitRepository $repository
      *
      */
-    public function restoreArchivedRepository(GitRepository $repository) {
+    public function restoreArchivedRepository(GitRepository $repository)
+    {
         $this->logger->info('[Gitolite]Restoring repository : '.$repository->getName());
         $backup_directory = realpath($this->getGitPlugin()->getConfigurationParameter('git_backup_dir').'/');
         return $this->getDriver()->restoreRepository(
@@ -557,4 +596,3 @@ class Git_Backend_Gitolite extends GitRepositoryCreatorImpl implements Git_Backe
         );
     }
 }
-?>

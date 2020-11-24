@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2014. All rights reserved
  *
@@ -25,7 +24,8 @@ use Tuleap\ProFTPd\Admin\ACLUpdater;
 use RuntimeException;
 use Backend;
 
-class PROFTPD_DIRECTORY_CREATE extends \SystemEvent {
+class PROFTPD_DIRECTORY_CREATE extends \SystemEvent
+{
     public const NAME = 'Tuleap\ProFTPd\SystemEvent\PROFTPD_DIRECTORY_CREATE';
 
     /** @var Backend */
@@ -37,22 +37,25 @@ class PROFTPD_DIRECTORY_CREATE extends \SystemEvent {
     /** @var string */
     private $ftp_directory;
 
-    public function injectDependencies(Backend $backend, ACLUpdater $acl_updater, $ftp_directory) {
+    public function injectDependencies(Backend $backend, ACLUpdater $acl_updater, $ftp_directory)
+    {
         $this->backend       = $backend;
         $this->acl_updater   = $acl_updater;
         $this->ftp_directory = $ftp_directory;
     }
 
-    public function process() {
+    public function process()
+    {
         $project_name    = $this->getProjectName();
-        $repository_path = $this->makeRepository($this->ftp_directory,  $project_name);
+        $repository_path = $this->makeRepository($this->ftp_directory, $project_name);
         $this->setPermissions($repository_path, $project_name);
         $this->setfacl($repository_path);
 
         $this->done();
     }
 
-    private function getProjectName() {
+    private function getProjectName()
+    {
         $project_name = $this->getParameter(0);
         if ($project_name) {
             return $project_name;
@@ -60,25 +63,29 @@ class PROFTPD_DIRECTORY_CREATE extends \SystemEvent {
         throw new RuntimeException('Impossible to get a valid project name');
     }
 
-    private function makeRepository($ftp_directory, $group_name) {
+    private function makeRepository($ftp_directory, $group_name)
+    {
         $new_repository_path = $ftp_directory . DIRECTORY_SEPARATOR . $group_name;
-        if(! file_exists($new_repository_path)) {
-            if(! mkdir($new_repository_path)) {
+        if (! file_exists($new_repository_path)) {
+            if (! mkdir($new_repository_path)) {
                 throw new RuntimeException("Cannot create directory $new_repository_path");
             }
         }
         return $new_repository_path;
     }
 
-    private function setPermissions($path, $group_name) {
+    private function setPermissions($path, $group_name)
+    {
         $this->backend->changeOwnerGroupMode($path, "dummy", $group_name, 00700);
     }
 
-    private function setfacl($path) {
+    private function setfacl($path)
+    {
         $this->acl_updater->recursivelyApplyACL($path, $GLOBALS['sys_http_user'], '', '');
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return $this->parameters;
     }
 }

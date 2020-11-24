@@ -58,7 +58,7 @@ class RepositoryDisplayController
         $this->event_manager       = $event_manager;
     }
 
-    public function displayRepository(ServiceSvn $service, HTTPRequest $request)
+    public function displayRepository(ServiceSvn $service, HTTPRequest $request, array $url_variables)
     {
         try {
             $repository = $this->repository_manager->getByIdAndProject($request->get('repo_id'), $request->getProject());
@@ -78,22 +78,46 @@ class RepositoryDisplayController
 
             $service->renderInPageWithBodyClass(
                 $request,
-                $GLOBALS['Language']->getText('plugin_svn', 'descriptor_name'),
+                dgettext('tuleap-svn', 'SVN with multiple repositories'),
                 'explorer/repository_display',
                 new RepositoryDisplayPresenter(
                     $repository,
                     $request,
-                    $this->proxy->getContent($request),
+                    $this->proxy->getContent($request, $this->fixPathInfo($url_variables)),
                     $this->permissions_manager,
                     $username
                 ),
                 $this->proxy->getBodyClass()
             );
         } catch (CannotFindRepositoryException $e) {
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_svn', 'repository_not_found'));
+            $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-svn', 'Repository not found.'));
             $GLOBALS['Response']->redirect(
                 SVN_BASE_URL.'/?'. http_build_query(array('group_id' => $request->getProject()->getID()))
             );
         }
+    }
+
+    private function fixPathInfo(array $variables) : string
+    {
+        if (isset($variables['path']) && $variables['path'] !== '') {
+            return $this->addTrailingSlash($this->addLeadingSlash($variables['path']));
+        }
+        return '/';
+    }
+
+    private function addLeadingSlash(string $path) : string
+    {
+        if ($path[0] !== '/') {
+            return '/'.$path;
+        }
+        return $path;
+    }
+
+    private function addTrailingSlash(string $path) : string
+    {
+        if (strrpos($path, "/") !== (strlen($path) - 1)) {
+            return $path.'/';
+        }
+        return $path;
     }
 }

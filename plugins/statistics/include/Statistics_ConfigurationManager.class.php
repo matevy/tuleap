@@ -22,7 +22,8 @@
 * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
 */
 
-class Statistics_ConfigurationManager {
+class Statistics_ConfigurationManager
+{
 
     /**
      * @var Statistics_ConfigurationDao
@@ -30,16 +31,18 @@ class Statistics_ConfigurationManager {
     private $configuration_dao;
 
 
-    public function __construct(Statistics_ConfigurationDao $configuration_dao) {
+    public function __construct(Statistics_ConfigurationDao $configuration_dao)
+    {
         $this->configuration_dao = $configuration_dao;
     }
 
-    public function isDailyPurgeActivated() {
+    public function isDailyPurgeActivated()
+    {
         return $this->configuration_dao->isDailyPurgeActivated();
     }
 
-    public function activateDailyPurge() {
+    public function activateDailyPurge()
+    {
         return $this->configuration_dao->activateDailyPurge();
     }
-
 }

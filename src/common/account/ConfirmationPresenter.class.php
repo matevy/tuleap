@@ -17,7 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Account_ConfirmationPresenter {
+class Account_ConfirmationPresenter
+{
 
     public $title;
     public $content;
@@ -32,15 +33,15 @@ class Account_ConfirmationPresenter {
     public $email_presenter;
 
     public function __construct(
-            $title,
-            $content,
-            $thanks,
-            $is_thanks,
-            $redirect_url,
-            $redirect_content,
-            $displayed_image,
-            $image_url,
-            $email_presenter
+        $title,
+        $content,
+        $thanks,
+        $is_thanks,
+        $redirect_url,
+        $redirect_content,
+        $displayed_image,
+        $image_url,
+        $email_presenter
     ) {
         $this->title            = $title;
         $this->content          = $content;

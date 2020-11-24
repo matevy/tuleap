@@ -40,6 +40,7 @@ $vKey->required();
 $vVal = new Valid_String('val');
 $vVal->required();
 if ((!$request->valid($vKey)) ||(!$request->valid($vVal))) {
+    $GLOBALS['Response']->sendStatusCode(400);
     exit_error(
         $GLOBALS['Language']->getText('global', 'error'),
         $GLOBALS['Language']->getText('include_exit', 'missing_param_err')
@@ -102,6 +103,7 @@ if ($ref) {
     }
     $ref->replaceLink($args, $project_name);
 } else {
+    $GLOBALS['Response']->sendStatusCode(404);
     exit_error(
         $GLOBALS['Language']->getText('global', 'error'),
         $GLOBALS['Language']->getText('include_exit', 'missing_param_err')
@@ -126,7 +128,7 @@ if ($request->isAjax()) {
                     $art_field_fact = new ArtifactFieldFactory($at);
                     $ah = new ArtifactHtml($at, $aid);
                     $uh = new UserHelper();
-                    
+
                     $values = array();
                     foreach (array('summary', 'submitted_by', 'status_id') as $field_name) {
                         $field = $art_field_fact->getFieldFromName($field_name);
@@ -136,26 +138,26 @@ if ($request->isAjax()) {
                             } else {
                                 $field_value = $ah->getValue($field_name);
                             }
-                            
+
                             $field_html = new ArtifactFieldHtml($field);
-                            
+
                             if ($field->getName() == 'submitted_by') {
                                 $value = $html_purifier->purify($uh->getDisplayNameFromUserId($field_value));
-                                
+
                                 $open_date = $art_field_fact->getFieldFromName($field_name);
                                 if ($field->userCanRead($group_id, $atid)) {
-                                    $value .= $html_purifier->purify(', '. util_time_ago_in_words($ah->getValue('open_date')));
+                                    $value .= $html_purifier->purify(', '. DateHelper::timeAgoInWords($ah->getValue('open_date')));
                                 }
                             } else {
                                 $value = $field_html->display($at->getID(), $field_value, false, false, true);
                             }
-                            
+
                             $html = $ah->_getFieldLabelAndValueForUser($group_id, $atid, $field, $user_id, true);
                             $values[] = '<tr><td>'. $field_html->labelDisplay() .'</td><td>'. $value .'</td></tr>';
                         }
                     }
                 }
-                
+
                 if ($values && count($values)) {
                     echo '<table>';
                     echo implode('', $values);
@@ -164,7 +166,7 @@ if ($request->isAjax()) {
             }
             break;
         case 'svn':
-            require_once('www/svn/svn_data.php');
+            require_once __DIR__.'/../www/svn/svn_data.php';
             $group_id = $request->get('group_id');
             $rev_id = $request->get('val');
             $result = svn_data_get_revision_detail($group_id, 0, $rev_id);
@@ -186,7 +188,7 @@ if ($request->isAjax()) {
             echo '</table>';
             break;
         case 'cvs':
-            require_once('www/cvs/commit_utils.php');
+            require_once __DIR__.'/../www/cvs/commit_utils.php';
             $commit_id = $request->get('val');
             $result =  cvs_get_revision_detail($commit_id);
             if (db_numrows($result) < 1) {
@@ -207,8 +209,6 @@ if ($request->isAjax()) {
             }
             break;
         case 'file':
-            require_once('common/frs/FRSReleaseFactory.class.php');
-            require_once('common/frs/FRSPackageFactory.class.php');
             $group_id = $request->get('group_id');
             switch ($ref->getNature()) {
                 case ReferenceManager::REFERENCE_NATURE_RELEASE:
@@ -221,7 +221,6 @@ if ($request->isAjax()) {
                     }
                     break;
                 case ReferenceManager::REFERENCE_NATURE_FILE:
-                    require_once('common/frs/FRSFileFactory.class.php');
                     $ff = new FRSFileFactory();
                     $file_id = $request->get('val');
                     $file = $ff->getFRSFileFromDb($file_id);

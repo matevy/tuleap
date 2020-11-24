@@ -1,25 +1,45 @@
 <?php
-rcs_id('$Id: themeinfo.php,v 1.24 2005/08/06 13:26:25 rurban Exp $');
+/**
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /*
  * This file defines the Sidebar appearance ("theme") of PhpWiki,
  * which can be used as parent class for all sidebar themes. See blog.
- * This use the dynamic jscalendar, which doesn't need extra requests 
+ * This use the dynamic jscalendar, which doesn't need extra requests
  * per month/year change.
  */
 
 require_once('lib/Theme.php');
 require_once('lib/WikiPlugin.php');
 
-class Theme_Sidebar extends Theme {
+class Theme_Sidebar extends Theme
+{
 
-    function __construct ($theme_name='Sidebar') {
+    function __construct($theme_name = 'Sidebar')
+    {
         parent::__construct($theme_name);
 
         $this->calendarInit(true);
     }
 
-    function findTemplate ($name) {
+    function findTemplate($name)
+    {
         // hack for navbar.tmpl to hide the buttonseparator
         if ($name == "navbar") {
             $this->setButtonSeparator(HTML::Raw("<br />\n&nbsp;&middot;&nbsp;"));
@@ -30,54 +50,66 @@ class Theme_Sidebar extends Theme {
         return parent::findTemplate($name);
     }
 
-    function calendarLink($date = false) {
-        return $this->calendarBase() . SUBPAGE_SEPARATOR . 
+    function calendarLink($date = false)
+    {
+        return $this->calendarBase() . SUBPAGE_SEPARATOR .
                strftime("%Y-%m-%d", $date ? $date : time());
     }
 
-    function calendarBase() {
+    function calendarBase()
+    {
         static $UserCalPageTitle = false;
         global $request;
 
-        if (!$UserCalPageTitle) 
-            $UserCalPageTitle = $request->_user->getId() . 
+        if (!$UserCalPageTitle) {
+            $UserCalPageTitle = $request->_user->getId() .
                                 SUBPAGE_SEPARATOR . _("Calendar");
-        if (!$UserCalPageTitle)
-            $UserCalPageTitle = (BLOG_EMPTY_DEFAULT_PREFIX ? '' 
+        }
+        if (!$UserCalPageTitle) {
+            $UserCalPageTitle = (BLOG_EMPTY_DEFAULT_PREFIX ? ''
                                  : ($request->_user->getId() . SUBPAGE_SEPARATOR)) . "Blog";
+        }
         return $UserCalPageTitle;
     }
 
-    function calendarInit($force = false) {
+    function calendarInit($force = false)
+    {
         $dbi = $GLOBALS['request']->getDbh();
         // display flat calender dhtml in the sidebar
         if ($force or $dbi->isWikiPage($this->calendarBase())) {
             $jslang = @$GLOBALS['LANG'];
-            $this->addMoreHeaders
-                (
-                 $this->_CSSlink(0, 
-                                 $this->_findFile('jscalendar/calendar-phpwiki.css'), 'all'));
-            $this->addMoreHeaders
-                (JavaScript('',
-                            array('src' => $this->_findData('jscalendar/calendar'.(DEBUG?'':'_stripped').'.js'))));
-            if (!($langfile = $this->_findData("jscalendar/lang/calendar-$jslang.js")))
+            $this->addMoreHeaders(
+                $this->_CSSlink(
+                    0,
+                    $this->_findFile('jscalendar/calendar-phpwiki.css'),
+                    'all'
+                )
+            );
+            $this->addMoreHeaders(JavaScript(
+                '',
+                array('src' => $this->_findData('jscalendar/calendar'.(DEBUG?'':'_stripped').'.js'))
+            ));
+            if (!($langfile = $this->_findData("jscalendar/lang/calendar-$jslang.js"))) {
                 $langfile = $this->_findData("jscalendar/lang/calendar-en.js");
-            $this->addMoreHeaders(JavaScript('',array('src' => $langfile)));
-            $this->addMoreHeaders
-                (JavaScript('',
-                            array('src' => 
-                                  $this->_findData('jscalendar/calendar-setup'.(DEBUG?'':'_stripped').'.js'))));
+            }
+            $this->addMoreHeaders(JavaScript('', array('src' => $langfile)));
+            $this->addMoreHeaders(JavaScript(
+                '',
+                array('src' =>
+                $this->_findData('jscalendar/calendar-setup'.(DEBUG?'':'_stripped').'.js'))
+            ));
 
             // Get existing date entries for the current user
             require_once("lib/TextSearchQuery.php");
             $iter = $dbi->titleSearch(new TextSearchQuery("^".$this->calendarBase().SUBPAGE_SEPARATOR, true, "auto"));
             $existing = array();
             while ($page = $iter->next()) {
-                if ($page->exists())
+                if ($page->exists()) {
                     $existing[] = basename($page->_pagename);
+                }
             }
             if (!empty($existing)) {
-                $js_exist = '{"'.join('":1,"',$existing).'":1}';
+                $js_exist = '{"'.join('":1,"', $existing).'":1}';
                 //var SPECIAL_DAYS = {"2004-05-11":1,"2004-05-12":1,"2004-06-01":1}
                 $this->addMoreHeaders(JavaScript('
 // This table holds the existing calender entries for the current user
@@ -101,8 +133,7 @@ function dateStatusFunc(date, y, m, d) {
     if (dateExists(date, y, m, d)) return "existing";
     else return false;
 }'));
-            }
-            else {
+            } else {
                 $this->addMoreHeaders(JavaScript('
 function dateStatusFunc(date, y, m, d) { return false;}'));
             }
@@ -156,9 +187,9 @@ $WikiTheme->setLinkIcon('*', 'url');
 $WikiTheme->setAutosplitWikiWords(true);
 
 /**
- * If true (default) show create '?' buttons on not existing pages, even if the 
+ * If true (default) show create '?' buttons on not existing pages, even if the
  * user is not signed in.
- * If false, anon users get no links and it looks cleaner, but then they 
+ * If false, anon users get no links and it looks cleaner, but then they
  * cannot easily fix missing pages.
  */
 $WikiTheme->setAnonEditUnknownLinks(false);
@@ -182,5 +213,4 @@ $WikiTheme->setAnonEditUnknownLinks(false);
 // c-basic-offset: 4
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
-// End:   
-?>
+// End:

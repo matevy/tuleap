@@ -28,14 +28,16 @@
  * Then the selector on story artifact creation will propose only
  * epics associated to S->release
  */
-class Planning_ArtifactParentsSelector {
+class Planning_ArtifactParentsSelector
+{
 
     /**
      * @var array of Planning_ArtifactParentsSelector_Command
      */
     private $commands;
 
-    public function __construct(Tracker_ArtifactFactory $artifact_factory, PlanningFactory $planning_factory, Planning_MilestoneFactory $milestone_factory, Tracker_HierarchyFactory $hierarchy_factory) {
+    public function __construct(Tracker_ArtifactFactory $artifact_factory, PlanningFactory $planning_factory, Planning_MilestoneFactory $milestone_factory, Tracker_HierarchyFactory $hierarchy_factory)
+    {
         $this->commands = array(
             new Planning_ArtifactParentsSelector_SameTrackerCommand($artifact_factory, $planning_factory, $milestone_factory, $hierarchy_factory),
             new Planning_ArtifactParentsSelector_NearestMilestoneWithBacklogTrackerCommand($artifact_factory, $planning_factory, $milestone_factory, $hierarchy_factory),
@@ -47,7 +49,8 @@ class Planning_ArtifactParentsSelector {
     /**
      * @return array of Tracker_Artifact
      */
-    public function getPossibleParents(Tracker $parent_tracker, Tracker_Artifact $source_artifact, PFUser $user) {
+    public function getPossibleParents(Tracker $parent_tracker, Tracker_Artifact $source_artifact, PFUser $user)
+    {
         foreach ($this->commands as $command) {
             $artifacts = $command->getPossibleParents($parent_tracker, $source_artifact, $user);
             if ($artifacts) {
@@ -57,4 +60,3 @@ class Planning_ArtifactParentsSelector {
         return array();
     }
 }
-?>

@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,9 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use \Tuleap\REST\JsonCast;
+use Tuleap\REST\JsonCast;
 
-class AgileDashboard_CardRepresentation {
+class AgileDashboard_CardRepresentation
+{
 
     public const ROUTE = 'cards';
 
@@ -60,7 +60,8 @@ class AgileDashboard_CardRepresentation {
      */
     public $values = array();
 
-    public function build(Cardwall_CardInCellPresenter $card, $column_id, $planning_id, PFUser $user) {
+    public function build(Cardwall_CardInCellPresenter $card, $column_id, $planning_id, PFUser $user)
+    {
         $this->id           = $planning_id . '_' . $card->getId();
         $this->label        = $card->getArtifact()->getTitle();
         $this->uri          = self::ROUTE . '/' . $this->id;
@@ -74,23 +75,35 @@ class AgileDashboard_CardRepresentation {
             $this->accent_color = ColorHelper::CssRGBToHexa($card->getCardPresenter()->getAccentColor());
         }
         $this->column_id    = JsonCast::toInt($column_id);
-        if($this->column_id) {
-            $this->allowed_column_ids = array_map(function ($value) { return JsonCast::toInt($value); }, $card->getDropIntoIds());
+        if ($this->column_id) {
+            $this->allowed_column_ids = array_filter(
+                array_map(
+                    static function ($value) {
+                        return JsonCast::toInt($value);
+                    },
+                    $card->getDropIntoIds()
+                )
+            );
         } else {
             $this->allowed_column_ids = array();
         }
 
-        $this->values = $this->mapAndFilter($card->getCardPresenter()->getFields(), $this->getFieldsValuesFilter($user, $artifact->getLastChangeset()));
+        $last_changeset = $artifact->getLastChangeset();
+        if ($last_changeset !== null) {
+            $this->values = $this->mapAndFilter($card->getCardPresenter()->getFields(), $this->getFieldsValuesFilter($user, $last_changeset));
+        }
     }
 
-    private function getProjectReference(Project $project) {
+    private function getProjectReference(Project $project)
+    {
         $project_reference = new Tuleap\Project\REST\ProjectReference();
         $project_reference->build($project);
 
         return $project_reference;
     }
 
-    private function getArtifactReference(Tracker_Artifact $artifact) {
+    private function getArtifactReference(Tracker_Artifact $artifact)
+    {
         $artifact_reference = new \Tuleap\Tracker\REST\Artifact\ArtifactReference();
         $artifact_reference->build($artifact);
 
@@ -105,7 +118,8 @@ class AgileDashboard_CardRepresentation {
      * @param Closure $function
      * @return array
      */
-    private function mapAndFilter(array $collection, Closure $function) {
+    private function mapAndFilter(array $collection, Closure $function)
+    {
         return array_values(
             array_filter(
                 array_map(
@@ -116,7 +130,8 @@ class AgileDashboard_CardRepresentation {
         );
     }
 
-    private function getFieldsValuesFilter(PFUser $user, Tracker_Artifact_Changeset $changeset) {
+    private function getFieldsValuesFilter(PFUser $user, Tracker_Artifact_Changeset $changeset)
+    {
         return function (Cardwall_CardFieldPresenter $field_presenter) use ($user, $changeset) {
             if ($field_presenter->getTrackerField()->userCanRead($user)) {
                 return $field_presenter->getTrackerField()->getRESTValue($user, $changeset);
@@ -125,10 +140,10 @@ class AgileDashboard_CardRepresentation {
         };
     }
 
-    private function getCardStatus(Cardwall_CardInCellPresenter $card) {
+    private function getCardStatus(Cardwall_CardInCellPresenter $card)
+    {
         $semantic = Tracker_Semantic_Status::load($card->getArtifact()->getTracker());
 
         return $semantic->getNormalizedStatusLabel($card->getArtifact());
     }
-
 }

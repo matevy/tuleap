@@ -18,21 +18,25 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Report_Renderer_Table_FunctionsAggregatesDao extends DataAccessObject {
-    function __construct() {
+class Tracker_Report_Renderer_Table_FunctionsAggregatesDao extends DataAccessObject
+{
+    function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_report_renderer_table_functions_aggregates';
     }
-    
-    function searchByRendererId($renderer_id) {
+
+    function searchByRendererId($renderer_id)
+    {
         $renderer_id  = $this->da->escapeInt($renderer_id);
         $sql = "SELECT *
                 FROM $this->table_name
                 WHERE renderer_id = $renderer_id ";
         return $this->retrieve($sql);
     }
-    
-    function create($renderer_id, $field_id, $aggregate) {
+
+    function create($renderer_id, $field_id, $aggregate)
+    {
         $allowed = array('SUM', 'AVG', 'STD', 'COUNT', 'COUNT_GRBY', 'MIN', 'MAX');
         if (in_array($aggregate, $allowed)) {
             $renderer_id = $this->da->escapeInt($renderer_id);
@@ -44,30 +48,34 @@ class Tracker_Report_Renderer_Table_FunctionsAggregatesDao extends DataAccessObj
         }
         return false;
     }
-    
-    function remove($renderer_id, $field_id, $aggregate) {
+
+    function remove($renderer_id, $field_id, $aggregate)
+    {
         $renderer_id = $this->da->escapeInt($renderer_id);
         $field_id    = $this->da->escapeInt($field_id);
         $aggregate   = $this->da->quoteSmart($aggregate);
-        
+
         $sql = "DELETE FROM $this->table_name 
                 WHERE renderer_id = $renderer_id
                   AND field_id = $field_id
                   AND aggregate = $aggregate";
         return $this->update($sql);
     }
-    
-    function deleteByRendererId($renderer_id) {
+
+    function deleteByRendererId($renderer_id)
+    {
         $sql = "DELETE FROM $this->table_name WHERE renderer_id = ". $this->da->escapeInt($renderer_id);
         return $this->update($sql);
     }
-    
-    function deleteByFieldId($field_id) {
+
+    function deleteByFieldId($field_id)
+    {
         $sql = "DELETE FROM $this->table_name WHERE field_id = ". $this->da->escapeInt($field_id);
         return $this->update($sql);
     }
-    
-    function duplicate($from_renderer_id, $to_renderer_id, $field_mapping) {
+
+    function duplicate($from_renderer_id, $to_renderer_id, $field_mapping)
+    {
         $from_renderer_id = $this->da->escapeInt($from_renderer_id);
         $to_renderer_id   = $this->da->escapeInt($to_renderer_id);
         $sql = "INSERT INTO $this->table_name(renderer_id, field_id, aggregate)
@@ -75,8 +83,8 @@ class Tracker_Report_Renderer_Table_FunctionsAggregatesDao extends DataAccessObj
                 FROM $this->table_name
                 WHERE renderer_id = $from_renderer_id";
         $this->update($sql);
-        
-        foreach($field_mapping as $mapping) {
+
+        foreach ($field_mapping as $mapping) {
             $from  = $this->da->escapeInt($mapping['from']);
             $to    = $this->da->escapeInt($mapping['to']);
             $sql = "UPDATE $this->table_name 
@@ -87,4 +95,3 @@ class Tracker_Report_Renderer_Table_FunctionsAggregatesDao extends DataAccessObj
         }
     }
 }
-?>

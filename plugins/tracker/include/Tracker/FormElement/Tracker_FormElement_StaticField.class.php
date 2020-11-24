@@ -28,16 +28,18 @@
  * Static Fields are not real fields, as they don't have a specific value for each artifact.
  * The value can be updated, but is the same for every artifact.
  */
-abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
+abstract class Tracker_FormElement_StaticField extends Tracker_FormElement
+{
 
-	/**
+    /**
      * getLabel - the label of this Tracker_FormElement_Line_Break
      * The tracker label can be internationalized.
      * To do this, fill the name field with the ad-hoc format.
      *
      * @return string label, the name if the name is not internationalized, or the localized text if so
      */
-    function getLabel() {
+    function getLabel()
+    {
         global $Language;
         if ($this->isLabelMustBeLocalized()) {
             return $Language->getText('plugin_tracker_common_staticfield', $this->label);
@@ -52,7 +54,8 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return true if the static field name must be localized, false otherwise.
      */
-    function isLabelMustBeLocalized() {
+    function isLabelMustBeLocalized()
+    {
         $pattern = "/staticfield_(.*)_lbl_key/";
         return preg_match($pattern, $this->label);
     }
@@ -64,7 +67,8 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return string description, the description text if the description is not internationalized, or the localized text if so
      */
-    function getDescriptionText() {
+    function getDescriptionText()
+    {
         global $Language;
         if ($this->isDescriptionMustBeLocalized()) {
             return $Language->getText('plugin_tracker_common_staticfield', $this->description);
@@ -79,22 +83,26 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return true if the static field description must be localized, false otherwise.
      */
-    function isDescriptionMustBeLocalized() {
+    function isDescriptionMustBeLocalized()
+    {
         $pattern = "/staticfield_(.*)_desc_key/";
         return preg_match($pattern, $this->description);
     }
 
 
-	// TODO : remove these functions (no need for that kind of "fields"
-    public function fetchAddCriteria($used, $prefix = '') {
+    // TODO : remove these functions (no need for that kind of "fields"
+    public function fetchAddCriteria($used, $prefix = '')
+    {
         return null;
     }
 
-    public function fetchAddColumn($used, $prefix = '') {
+    public function fetchAddColumn($used, $prefix = '')
+    {
         return null;
     }
 
-    public function fetchAddTooltip($used, $prefix = '') {
+    public function fetchAddTooltip($used, $prefix = '')
+    {
         return null;
     }
 
@@ -105,7 +113,11 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return string html
      */
-    public function fetchArtifact(Tracker_Artifact $artifact) {
+    public function fetchArtifact(
+        Tracker_Artifact $artifact,
+        array $submitted_values,
+        array $additional_classes
+    ) {
         return $this->fetchReadOnly();
     }
 
@@ -114,12 +126,14 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      * @param Tracker_Artifact $artifact
      * @return string html
      */
-    public function fetchArtifactForOverlay(Tracker_Artifact $artifact) {
-        return $this->fetchArtifact($artifact);
+    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, array $submitted_values)
+    {
+        return $this->fetchArtifact($artifact, $submitted_values, []);
     }
 
-    public function fetchSubmitForOverlay($submitted_values) {
-        return $this->fetchSubmit();
+    public function fetchSubmitForOverlay(array $submitted_values)
+    {
+        return $this->fetchSubmit($submitted_values);
     }
 
     /**
@@ -129,7 +143,8 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return string html
      */
-    public function fetchArtifactReadOnly(Tracker_Artifact $artifact) {
+    public function fetchArtifactReadOnly(Tracker_Artifact $artifact, array $submitted_values)
+    {
         return $this->fetchReadOnly();
     }
 
@@ -138,7 +153,8 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return string html
      */
-    public function fetchSubmit() {
+    public function fetchSubmit(array $submitted_values)
+    {
         return $this->fetchReadOnly();
     }
 
@@ -147,7 +163,8 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return string html
      */
-    public function fetchSubmitMasschange() {
+    public function fetchSubmitMasschange()
+    {
         return $this->fetchReadOnly();
     }
     /**
@@ -155,7 +172,8 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return bool
      */
-    public function isUpdateable() {
+    public function isUpdateable()
+    {
         return false;
     }
 
@@ -164,7 +182,8 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return bool
      */
-    public function isSubmitable() {
+    public function isSubmitable()
+    {
         return false;
     }
 
@@ -174,11 +193,13 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return string returns null if the field can be unused, a message otherwise
      */
-    public function getCannotRemoveMessage() {
+    public function getCannotRemoveMessage()
+    {
         return '';
     }
 
-    public function canBeRemovedFromUsage() {
+    public function canBeRemovedFromUsage()
+    {
         return true;
     }
 
@@ -189,16 +210,17 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return bool
      */
-    public function userCanRead(?PFUser $user = null) {
+    public function userCanRead(?PFUser $user = null)
+    {
         return true;
     }
 
-    protected abstract function fetchReadOnly();
+    abstract protected function fetchReadOnly();
 
     /**
      * @see Tracker_FormElement::fetchArtifactCopyMode
      */
-    public function fetchArtifactCopyMode(Tracker_Artifact $artifact, $submitted_values = array())
+    public function fetchArtifactCopyMode(Tracker_Artifact $artifact, array $submitted_values)
     {
         return $this->fetchArtifactReadOnly($artifact, $submitted_values);
     }
@@ -208,7 +230,8 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @param Tracker_FormElement_Visitor $visitor
      */
-    public function accept(Tracker_FormElement_Visitor $visitor) {
+    public function accept(Tracker_FormElement_Visitor $visitor)
+    {
         $visitor->visit($this);
     }
 
@@ -217,19 +240,23 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement {
      *
      * @return mixed The values or null if there are no specific available values
      */
-    public function getRESTAvailableValues() {
+    public function getRESTAvailableValues()
+    {
         return null;
     }
 
-    public function isCollapsed() {
+    public function isCollapsed()
+    {
         return false;
     }
 
-    public function getDefaultValue() {
+    public function getDefaultValue()
+    {
         return null;
     }
 
-    public function getDefaultRESTValue() {
+    public function getDefaultRESTValue()
+    {
         return $this->getDefaultValue();
     }
 }

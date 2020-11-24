@@ -18,17 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201304230915_create_burndown_field_table extends ForgeUpgrade_Bucket {
+class b201304230915_create_burndown_field_table extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Add burndown build table.';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE IF NOT EXISTS tracker_field_burndown (
                     field_id int(11) UNSIGNED NOT NULL PRIMARY KEY,
                     include_weekends tinyint(1) NOT NULL
@@ -40,17 +44,18 @@ class b201304230915_create_burndown_field_table extends ForgeUpgrade_Bucket {
         $this->executeQuery($sql);
     }
 
-    private function executeQuery($sql) {
+    private function executeQuery($sql)
+    {
         $res = $this->db->dbh->query($sql);
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while populating tracker_field_burndown: '.implode(', ', $this->db->dbh->errorInfo()));
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('tracker_field_burndown')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('tracker_field_burndown');
         }
     }
 }
-?>

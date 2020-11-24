@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,13 @@
  */
 
 namespace Tuleap\Project\REST;
-use \ProjectUGroup;
-use Tuleap\User\UserGroup\NameTranslator;
-use \User_ForgeUGroup;
-use \Exception;
 
-class UserGroupRepresentation {
+use ProjectUGroup;
+use Tuleap\User\UserGroup\NameTranslator;
+use Exception;
+
+class UserGroupRepresentation
+{
 
     public const ROUTE = 'user_groups';
 
@@ -31,7 +32,7 @@ class UserGroupRepresentation {
     public const COMPLEX_REST_ID_PATTERN = '/^(\d+)_(\d+)$/';
 
     /**
-     * @var int
+     * @var string
      */
     public $id;
 
@@ -54,27 +55,35 @@ class UserGroupRepresentation {
      * @var String
      */
     public $short_name;
+    /**
+     * @var string
+     */
+    public $key;
 
-    public function build($project_id, ProjectUGroup $ugroup) {
+    public function build(int $project_id, ProjectUGroup $ugroup): self
+    {
         $this->id         = self::getRESTIdForProject($project_id, $ugroup->getId());
-        $this->uri        = UserGroupRepresentation::ROUTE . '/' . $this->id ;
+        $this->uri        = self::ROUTE . '/' . $this->id ;
         $this->label      = NameTranslator::getUserGroupDisplayName($ugroup->getName());
         $this->key        = $ugroup->getName();
         $this->users_uri  = self::ROUTE . '/'. $this->id .'/users';
         $this->short_name = $ugroup->getNormalizedName();
+        return $this;
     }
 
-    static function getRESTIdForProject($project_id, $user_group_id) {
+    public static function getRESTIdForProject(int $project_id, int $user_group_id) : string
+    {
         if ($user_group_id > ProjectUGroup::DYNAMIC_UPPER_BOUNDARY
-            || in_array($user_group_id, ProjectUGroup::$forge_user_groups)
+            || in_array($user_group_id, ProjectUGroup::SYSTEM_USER_GROUPS, true)
         ) {
-            return $user_group_id;
+            return (string) $user_group_id;
         }
 
         return $project_id.'_'.$user_group_id;
     }
 
-    static function getProjectAndUserGroupFromRESTId($identifier) {
+    public static function getProjectAndUserGroupFromRESTId($identifier)
+    {
         if (preg_match(self::SIMPLE_REST_ID_PATTERN, $identifier)) {
             return array(
                 'project_id'    => null,
@@ -90,18 +99,24 @@ class UserGroupRepresentation {
         }
     }
 
-    static public function checkRESTIdIsAppropriate($identifier) {
+    public static function checkRESTIdIsAppropriate(string $identifier)
+    {
         if (preg_match(self::SIMPLE_REST_ID_PATTERN, $identifier, $simple_id)) {
-            $id = $simple_id[0];
+            $id = (int) $simple_id[0];
             if ($id > ProjectUGroup::DYNAMIC_UPPER_BOUNDARY
-                || in_array($id, ProjectUGroup::$forge_user_groups)
+                || in_array($id, ProjectUGroup::SYSTEM_USER_GROUPS, true)
             ) {
                 return;
             }
 
             throw new Exception("Invalid ID for user group ('".$simple_id[0]."'), format must be: projectId_ugroupId");
-        } elseif (preg_match(self::COMPLEX_REST_ID_PATTERN, $identifier, $complex_id)) {
-            return;
+        }
+
+        if (preg_match(self::COMPLEX_REST_ID_PATTERN, $identifier, $complex_id)) {
+            $id = (int) $complex_id[2];
+            if (! in_array($id, ProjectUGroup::SYSTEM_USER_GROUPS, true)) {
+                return;
+            }
         }
 
         throw new Exception('Invalid ID format('.$identifier.')');

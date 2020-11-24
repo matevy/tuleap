@@ -22,11 +22,11 @@ use Tuleap\Git\GitRepositoryDeletionEvent;
 use Tuleap\Git\Notifications\UgroupsToNotifyDao;
 use Tuleap\Git\Notifications\UsersToNotifyDao;
 
-require_once('common/system_event/SystemEvent.class.php');
 /**
  * Description of SystemEvent_GIT_REPO_DELETE
  */
-class SystemEvent_GIT_REPO_DELETE extends SystemEvent {
+class SystemEvent_GIT_REPO_DELETE extends SystemEvent
+{
     public const NAME = 'GIT_REPO_DELETE';
 
     /** @var EventManager */
@@ -63,11 +63,12 @@ class SystemEvent_GIT_REPO_DELETE extends SystemEvent {
         $this->event_manager         = $event_manager;
     }
 
-    public function process() {
+    public function process()
+    {
         $parameters   = $this->getParametersAsArray();
         //project id
         $projectId    = 0;
-        if ( !empty($parameters[0]) ) {
+        if (!empty($parameters[0])) {
             $projectId = (int) $parameters[0];
         } else {
             $this->error('Missing argument project id');
@@ -75,7 +76,7 @@ class SystemEvent_GIT_REPO_DELETE extends SystemEvent {
         }
         //repo id
         $repositoryId = 0;
-        if ( !empty($parameters[1]) ) {
+        if (!empty($parameters[1])) {
             $repositoryId = (int) $parameters[1];
         } else {
             $this->error('Missing argument repository id');
@@ -91,7 +92,8 @@ class SystemEvent_GIT_REPO_DELETE extends SystemEvent {
         return $this->deleteRepo($repository, $projectId, $parameters);
     }
 
-    private function deleteRepo(GitRepository $repository) {
+    private function deleteRepo(GitRepository $repository)
+    {
         $path = $repository->getPath();
 
         try {
@@ -109,8 +111,8 @@ class SystemEvent_GIT_REPO_DELETE extends SystemEvent {
         return true;
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return $this->parameters;
     }
-
 }

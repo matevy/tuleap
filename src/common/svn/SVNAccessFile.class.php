@@ -17,7 +17,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'www/svn/svn_utils.php';
+require_once __DIR__ . '/../../www/svn/svn_utils.php';
 
 /**
  * Manage the edition of .SVNAccessFile
@@ -25,7 +25,8 @@ require_once 'www/svn/svn_utils.php';
  * When updating .SVNAccessFile this class verifies ugroup permission lines.
  * It comments lines with invalid synatx, non existant or empty ugroups.
  */
-class SVNAccessFile {
+class SVNAccessFile
+{
 
     /**
      * Value in $groups when the group is (re)defined by user
@@ -55,20 +56,21 @@ class SVNAccessFile {
      * @var String
      */
     private $ugroupOldName = null;
-    
+
     private $platformBlock = '';
-    
+
     /**
      * Detect if a line is correctly formatted and
      * corresponds to a defined group
      *
      * @param Array   $groups  List of already defined groups
      * @param String  $line    Line to validate
-     * @param Boolean $verbose Show feedback or not
+     * @param bool $verbose Show feedback or not
      *
-     * @return Boolean
+     * @return bool
      */
-    public function isGroupDefined($groups, $line, $verbose = false) {
+    public function isGroupDefined($groups, $line, $verbose = false)
+    {
         preg_match($this->getGroupMatcher(self::GROUPNAME_PATTERN), $line, $matches);
         if (!empty($matches)) {
             $match = $matches[1];
@@ -111,11 +113,12 @@ class SVNAccessFile {
      *
      * @param Array   $groups  List of already defined groups
      * @param String  $line    Line to validate
-     * @param Boolean $verbose Show feedback or not
+     * @param bool $verbose Show feedback or not
      *
      * @return String
      */
-    public function validateUGroupLine($groups, $line, $verbose = null) {
+    public function validateUGroupLine($groups, $line, $verbose = null)
+    {
         $trimmedLine = ltrim($line);
         if (!empty($this->ugroupNewName) && preg_match($this->getGroupMatcher($this->ugroupOldName), $trimmedLine)) {
             return $this->renameGroup($groups, $line);
@@ -151,14 +154,15 @@ class SVNAccessFile {
 
     /**
      * Comments the line corresponding to groups that are not defined
-     * 
+     *
      * @param Array   $groups  List of already defined groups
      * @param String  $line    Line to validate
-     * @param Boolean $verbose Show feedback or not
-     * 
+     * @param bool $verbose Show feedback or not
+     *
      * @return String
      */
-    public function commentInvalidLine($groups, $line, $verbose = false) {
+    public function commentInvalidLine($groups, $line, $verbose = false)
+    {
         $trimmedLine = ltrim($line);
         if ($trimmedLine && substr($trimmedLine, 0, 1) == '@' && !$this->isGroupDefined($groups, $trimmedLine, $verbose)) {
             return "# ".$line;
@@ -172,19 +176,22 @@ class SVNAccessFile {
      *
      * @param Project $project  Project of the svn repository
      * @param String  $contents Text to validate
-     * @param Boolean $verbose  Show feedback or not
+     * @param bool $verbose Show feedback or not
      *
      * @return String
      */
-    public function parseGroupLines(Project $project, $contents, $verbose = false) {
-       return $this->parseGroup($project->getSVNRootPath(), $contents, $verbose);
+    public function parseGroupLines(Project $project, $contents, $verbose = false)
+    {
+        return $this->parseGroup($project->getSVNRootPath(), $contents, $verbose);
     }
 
-    public function parseGroupLinesByRepositories($svn_dir, $contents, $verbose = false) {
-       return $this->parseGroup($svn_dir, $contents, $verbose);
+    public function parseGroupLinesByRepositories($svn_dir, $contents, $verbose = false)
+    {
+        return $this->parseGroup($svn_dir, $contents, $verbose);
     }
 
-    private function parseGroup($svn_dir, $contents, $verbose = false) {
+    private function parseGroup($svn_dir, $contents, $verbose = false)
+    {
         $defaultLines = explode("\n", $this->getPlatformBlock($svn_dir));
         $groups = array();
         $currentSection = -1;
@@ -199,11 +206,11 @@ class SVNAccessFile {
         foreach ($lines as $line) {
             $currentSection = $this->getCurrentSection($line, $currentSection);
             switch ($currentSection) {
-                case 'groups' :
+                case 'groups':
                     $groups = $this->accumulateDefinedGroups($groups, $line, false);
                     $validContents .= $line.PHP_EOL;
                     break;
-                default :
+                default:
                     $validContents .= $this->validateUGroupLine($groups, $line, $verbose).PHP_EOL;
                     break;
             }
@@ -219,17 +226,18 @@ class SVNAccessFile {
      *
      * @param Array   $groups         Groups accumulated until the current line
      * @param String  $line           Current line
-     * @param Boolean $defaultSection Distinguish list of groups retrieved from default [groups] section
-     *                                and those retrieved from extra [groups] section.
+     * @param bool $defaultSection Distinguish list of groups retrieved from default [groups] section
+ * and those retrieved from extra [groups] section.
      *
      * @return Array
      */
-    public function accumulateDefinedGroups($groups, $line, $defaultSection = false) {
+    public function accumulateDefinedGroups($groups, $line, $defaultSection = false)
+    {
         $trimmedLine = ltrim($line);
         if ($trimmedLine != '') {
             preg_match('/^'.self::GROUPNAME_PATTERN.'\s*=/', $trimmedLine, $matches);
             if (!empty($matches)) {
-                if (!$defaultSection){
+                if (!$defaultSection) {
                     $groups[$matches[1]] = self::UGROUP_REDEFINED;
                 } else {
                     $groups[$matches[1]] = self::UGROUP_DEFAULT;
@@ -247,7 +255,8 @@ class SVNAccessFile {
      *
      * @return String
      */
-    public function getCurrentSection($line, $currentSection) {
+    public function getCurrentSection($line, $currentSection)
+    {
         $trimmedLine = ltrim($line);
         if (strcasecmp(substr($trimmedLine, 0, 8), '[groups]') === 0) {
             $currentSection = 'groups';
@@ -265,7 +274,8 @@ class SVNAccessFile {
      *
      * @return void
      */
-    public function setRenamedGroup($ugroupNewName, $ugroupOldName) {
+    public function setRenamedGroup($ugroupNewName, $ugroupOldName)
+    {
         $this->ugroupNewName = $ugroupNewName;
         $this->ugroupOldName = $ugroupOldName;
     }
@@ -277,7 +287,8 @@ class SVNAccessFile {
      *
      * @return String
      */
-    protected function getGroupMatcher($groupPattern) {
+    protected function getGroupMatcher($groupPattern)
+    {
         return '/^@'.$groupPattern.'\s*=/i';
     }
 
@@ -288,19 +299,21 @@ class SVNAccessFile {
      *
      * @return String
      */
-    protected function getPlatformBlock($project_svnroot) {
+    protected function getPlatformBlock($project_svnroot)
+    {
         if (!$this->platformBlock) {
             $this->platformBlock = svn_utils_read_svn_access_file_defaults($project_svnroot, true);
         }
         return $this->platformBlock;
     }
-    
+
     /**
      * Define the platform default groups & root perms
      *
      * @param String $block Default SVN block
      */
-    public function setPlatformBlock($block) {
+    public function setPlatformBlock($block)
+    {
         $this->platformBlock = $block;
     }
 }

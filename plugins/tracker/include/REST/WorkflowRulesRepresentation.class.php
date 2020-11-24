@@ -22,7 +22,8 @@ namespace Tuleap\Tracker\REST;
 
 use Tuleap\REST\JsonCast;
 
-class WorkflowRulesRepresentation {
+class WorkflowRulesRepresentation
+{
 
     /**
      * @var array {@type Tuleap\Tracker\REST\WorkflowRuleDateRepresentation}
@@ -34,7 +35,8 @@ class WorkflowRulesRepresentation {
      */
     public $lists;
 
-    public function build(array $dates, array $lists) {
+    public function build(array $dates, array $lists)
+    {
         $this->dates = $dates;
         $this->lists = $lists;
     }

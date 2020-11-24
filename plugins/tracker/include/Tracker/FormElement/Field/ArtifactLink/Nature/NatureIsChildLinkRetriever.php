@@ -28,7 +28,8 @@ use Tracker_Artifact;
 use Tracker_ArtifactFactory;
 use Tracker_FormElement_Field_Value_ArtifactLinkDao;
 
-class NatureIsChildLinkRetriever {
+class NatureIsChildLinkRetriever
+{
 
     /**
      * @var Tracker_FormElement_Field_Value_ArtifactLinkDao
@@ -49,7 +50,8 @@ class NatureIsChildLinkRetriever {
     }
 
     /** @return ParentOfArtifactCollection */
-    public function getParentsHierarchy(Tracker_Artifact $artifact) {
+    public function getParentsHierarchy(Tracker_Artifact $artifact)
+    {
         $collection = new ParentOfArtifactCollection();
         $this->addParentsOfArtifactToCollection($artifact, $collection, array());
 
@@ -79,7 +81,8 @@ class NatureIsChildLinkRetriever {
     }
 
     /** @return Tracker_Artifact[] */
-    public function getChildren(Tracker_Artifact $artifact) {
+    public function getChildren(Tracker_Artifact $artifact)
+    {
         return $this->factory->getIsChildLinkedArtifactsById($artifact);
     }
 

@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class BackendCVS extends Backend {
+class BackendCVS extends Backend
+{
 
     protected $CVSRootListNeedUpdate;
     protected $UseCVSNT;
@@ -28,7 +29,8 @@ class BackendCVS extends Backend {
      *
      * @return ServiceDao
      */
-    function _getServiceDao() {
+    function _getServiceDao()
+    {
         return new ServiceDao(CodendiDataAccess::instance());
     }
 
@@ -36,9 +38,10 @@ class BackendCVS extends Backend {
     /**
      * Return true if server uses CVS NT, or false if it uses GNU CVS
      *
-     * @return Boolean
+     * @return bool
      */
-    function useCVSNT() {
+    function useCVSNT()
+    {
         if (isset($this->UseCVSNT)) {
             return $this->UseCVSNT;
         }
@@ -57,7 +60,8 @@ class BackendCVS extends Backend {
      *
      * @return true is repository already exists, false otherwise
      */
-    function repositoryExists($project) {
+    function repositoryExists($project)
+    {
         $unix_group_name=$project->getUnixName(false); // May contain upper-case letters
         $cvs_dir=$GLOBALS['cvs_prefix']."/".$unix_group_name;
         if (is_dir($cvs_dir)) {
@@ -71,11 +75,12 @@ class BackendCVS extends Backend {
      * Create project CVS repository
      * If the directory already exists, nothing is done.
      *
-     * @param Integer $group_id project id for wic CVS repository will be created
+     * @param int $group_id project id for wic CVS repository will be created
      *
      * @return true if repo is successfully created, false otherwise
      */
-    public function createProjectCVS($group_id) {
+    public function createProjectCVS($group_id)
+    {
         $project = $this->getProjectManager()->getProject($group_id);
         if (!$project) {
             return false;
@@ -128,8 +133,8 @@ class BackendCVS extends Backend {
             $output_turn_off = $this->system("echo '' > $cvs_dir/CVSROOT/writers", $return_code_turn_off);
 
             if ($return_code_turn_off > 0) {
-               $this->log("Echo in /CVSROOT/writers returns: $output_turn_off", Backend::LOG_ERROR);
-               return false;
+                $this->log("Echo in /CVSROOT/writers returns: $output_turn_off", Backend::LOG_ERROR);
+                return false;
             }
 
             if (! $this->useCVSNT()) {
@@ -195,23 +200,25 @@ class BackendCVS extends Backend {
         return true;
     }
 
-    protected function recursiveSgidOnDirectories($root) {
+    protected function recursiveSgidOnDirectories($root)
+    {
         $this->system('find '.$root.' -type d -exec chmod g+rws {} \;');
     }
-    
+
     /**
      * Create lock dir if missing
      *
      * @param Project $project project for wich the lock dir will be created
      *
-     * @return Boolean
+     * @return bool
      */
-    public function createLockDirIfMissing($project) {
+    public function createLockDirIfMissing($project)
+    {
         // Lockdir does not exist? (Re)create it.
         if (!$this->useCVSNT()) {
             $lockdir=$GLOBALS['cvslock_prefix']."/".$project->getUnixName(false);
             if (! is_dir($lockdir)) {
-                if (!mkdir("$lockdir",02777)) {
+                if (!mkdir("$lockdir", 02777)) {
                     $this->log("Can't create project CVS lock dir: $lockdir", Backend::LOG_ERROR);
                     return false;
                 }
@@ -226,9 +233,10 @@ class BackendCVS extends Backend {
      *
      * @param Project $project project for wich post-commit hooks will be updated
      *
-     * @return Boolean
+     * @return bool
      */
-    public function updatePostCommit($project) {
+    public function updatePostCommit($project)
+    {
         $unix_group_name=$project->getUnixName(false); // May contain upper-case letters
         $cvs_dir=$GLOBALS['cvs_prefix']."/".$unix_group_name;
         if ($project->isCVSTracked()) {
@@ -252,7 +260,6 @@ class BackendCVS extends Backend {
                     $no_filter_file_extension
                 );
             }
-
 
             // hook for commit tracking in cvs commitinfo file
             $filename = "$cvs_dir/CVSROOT/commitinfo";
@@ -293,11 +300,12 @@ class BackendCVS extends Backend {
      * in the CVS passwd file. The pserver protocol will fallback
      * on /etc/passwd (or NSS) for user authentication
      *
-     * @param Integer $group_id Project id for which committers will be updated
+     * @param int $group_id Project id for which committers will be updated
      *
-     * @return Boolean
+     * @return bool
      */
-    public function updateCVSwriters($group_id) {
+    public function updateCVSwriters($group_id)
+    {
         $project = $this->getProjectManager()->getProject($group_id);
         if (! $project) {
             return false;
@@ -321,9 +329,10 @@ class BackendCVS extends Backend {
      *
      * @param PFUser $user member to add as committer
      *
-     * @return Boolean
+     * @return bool
      */
-    public function updateCVSWritersForGivenMember($user) {
+    public function updateCVSWritersForGivenMember($user)
+    {
         $projects = $user->getProjects();
         if (isset($projects)) {
             $pm = $this->getProjectManager();
@@ -343,11 +352,12 @@ class BackendCVS extends Backend {
     /**
      * Update CVS Watch Mode
      *
-     * @param Integer $group_id Project id for wich watch mode will be updated
+     * @param int $group_id Project id for wich watch mode will be updated
      *
-     * @return Boolean
+     * @return bool
      */
-    public function updateCVSWatchMode($group_id) {
+    public function updateCVSWatchMode($group_id)
+    {
         $project=$this->getProjectManager()->getProject($group_id);
         if (!$project) {
             $this->log("Project not found: $group_id", Backend::LOG_ERROR);
@@ -402,11 +412,12 @@ class BackendCVS extends Backend {
      *
      * @param String  $cvs_dir         CVS root directory
      * @param String  $unix_group_name name of the project
-     * @param Integer $watch_mode      defines the watch mode
+     * @param int $watch_mode defines the watch mode
      *
-     * @return Boolean
+     * @return bool
      */
-    function CVSWatch($cvs_dir, $unix_group_name, $watch_mode) {
+    function CVSWatch($cvs_dir, $unix_group_name, $watch_mode)
+    {
         $sandbox_dir =  $GLOBALS['tmp_dir']."/".$unix_group_name.".cvs_watch_sandbox";
         if (is_dir($sandbox_dir)) {
             return false;
@@ -430,7 +441,8 @@ class BackendCVS extends Backend {
      *
      * @return void
      */
-    function _RcsCheckout($file, &$output='') {
+    function _RcsCheckout($file, &$output = '')
+    {
         $rcode = 0;
         $output = $this->system("co -q -l $file", $rcode);
         return $rcode;
@@ -443,7 +455,8 @@ class BackendCVS extends Backend {
      *
      * @return void
      */
-    function _RcsCommit($file, &$output='') {
+    function _RcsCommit($file, &$output = '')
+    {
         $rcode  = 0;
         $output = $this->system("/usr/bin/rcs -q -l $file; ci -q -m\"Codendi modification\" $file; co -q $file", $rcode);
         return $rcode;
@@ -452,11 +465,12 @@ class BackendCVS extends Backend {
     /**
      * Archive CVS repository: stores a tgz in temp dir, and remove the directory
      *
-     * @param Integer $group_id id of the project for which CVS repository will be archived
+     * @param int $group_id id of the project for which CVS repository will be archived
      *
-     * @return Boolean
+     * @return bool
      */
-    public function archiveProjectCVS($group_id) {
+    public function archiveProjectCVS($group_id)
+    {
         $project=$this->getProjectManager()->getProject($group_id);
         if (!$project) {
             return false;
@@ -476,9 +490,10 @@ class BackendCVS extends Backend {
     /**
      * Update the "cvs_root_allow" file that contains the list of authorised CVS repositories
      *
-     * @return Boolean
+     * @return bool
      */
-    public function CVSRootListUpdate() {
+    public function CVSRootListUpdate()
+    {
         $cvs_root_allow_array = array();
         $projlist = array();
         $repolist = array();
@@ -488,7 +503,6 @@ class BackendCVS extends Backend {
         foreach ($dar as $row) {
             $repolist[]="/cvsroot/".$row['unix_group_name'];
         }
-
 
         if ($this->useCVSNT()) {
             $config_file=$GLOBALS['cvsnt_config_file'];
@@ -544,16 +558,18 @@ class BackendCVS extends Backend {
      *
      * @return void
      */
-    public function setCVSRootListNeedUpdate() {
+    public function setCVSRootListNeedUpdate()
+    {
         $this->CVSRootListNeedUpdate=true;
     }
 
     /**
      * Check if CVS root need update
      *
-     * @return Boolean
+     * @return bool
      */
-    public function getCVSRootListNeedUpdate() {
+    public function getCVSRootListNeedUpdate()
+    {
         return $this->CVSRootListNeedUpdate;
     }
 
@@ -561,11 +577,12 @@ class BackendCVS extends Backend {
      * Make the cvs repository of the project private or public
      *
      * @param Project $project    project for which project privacy is set
-     * @param boolean $is_private true if the repository is private
+     * @param bool $is_private true if the repository is private
      *
-     * @return boolean true if success
+     * @return bool true if success
      */
-    public function setCVSPrivacy($project, $is_private) {
+    public function setCVSPrivacy($project, $is_private)
+    {
         $perms = $is_private ? 02770 : 02775;
         $cvsroot = $GLOBALS['cvs_prefix'] . '/' . $project->getUnixName(false);
         return is_dir($cvsroot) && $this->chmod($cvsroot, $perms);
@@ -577,9 +594,10 @@ class BackendCVS extends Backend {
      *
      * @param Project $project The project to work on
      *
-     * @return boolean true if success
+     * @return bool true if success
      */
-    public function checkCVSMode($project) {
+    public function checkCVSMode($project)
+    {
         $unix_group_name =  $project->getUnixName(false);
         $cvsroot = $GLOBALS['cvs_prefix'] . '/' . $unix_group_name;
         $is_private = !$project->isPublic() || $project->isCVSPrivate();
@@ -599,7 +617,7 @@ class BackendCVS extends Backend {
                 // Get file stat
                 $stat = stat("$cvsroot/$file");
                 if ($stat) {
-                    if ( ($stat['uid'] != $this->getHTTPUserUID()) || ($stat['gid'] != $project->getUnixGID()) ) {
+                    if (($stat['uid'] != $this->getHTTPUserUID()) || ($stat['gid'] != $project->getUnixGID())) {
                         $need_owner_update = true;
                     }
                 }
@@ -615,18 +633,20 @@ class BackendCVS extends Backend {
 
         return true;
     }
-   
-    public function changeRepoOwnership($repo_path, $unix_group_name) {
+
+    public function changeRepoOwnership($repo_path, $unix_group_name)
+    {
             return $this->system("chown -R {$this->getHTTPUser()}:{$unix_group_name} $repo_path");
     }
-    
+
     /**
      * Deleting files older than 2 hours in /var/run/log_accum that contain 'files'
      * (they have not been deleted due to commit abort)
      *
      * @return void
      */
-    public function cleanup() {
+    public function cleanup()
+    {
         // TODO: test!
         $filelist = shell_exec("/usr/bin/find ".$GLOBALS['cvs_hook_tmp_dir'].' -name "*.files.*" -amin +120;');
         $files = explode("\n", $filelist);
@@ -645,7 +665,8 @@ class BackendCVS extends Backend {
      *
      * @return false if repository or file  or link already exists, true otherwise
      */
-    function isNameAvailable($name) {
+    function isNameAvailable($name)
+    {
         $path = $GLOBALS['cvs_prefix']."/".$name;
         return  (!$this->fileExists($path));
     }
@@ -657,9 +678,10 @@ class BackendCVS extends Backend {
      * @param Project $project Project to rename
      * @param String  $newName New name
      *
-     * @return Boolean
+     * @return bool
      */
-    public function renameCVSRepository($project, $newName) {
+    public function renameCVSRepository($project, $newName)
+    {
         if (rename($GLOBALS['cvs_prefix'].'/'.$project->getUnixName(false), $GLOBALS['cvs_prefix'].'/'.$newName)) {
             $this->renameLockDir($project, $newName);
             $this->renameLogInfoFile($project, $newName);
@@ -675,9 +697,10 @@ class BackendCVS extends Backend {
      * @param Project $project Project to rename
      * @param String  $newName New name
      *
-     * @return Boolean
+     * @return bool
      */
-    public function renameLockDir($project, $newName) {
+    public function renameLockDir($project, $newName)
+    {
         $oldLockDir = $GLOBALS['cvslock_prefix'].'/'.$project->getUnixName(false);
         $newLockDir = $GLOBALS['cvslock_prefix'].'/'.$newName;
         if (is_dir($oldLockDir)) {
@@ -700,9 +723,10 @@ class BackendCVS extends Backend {
      * @param Project $project Project to rename
      * @param String  $newName New name
      *
-     * @return Boolean
+     * @return bool
      */
-    public function renameLogInfoFile($project, $newName) {
+    public function renameLogInfoFile($project, $newName)
+    {
         $filename = $GLOBALS['cvs_prefix'].'/'.$newName.'/CVSROOT/loginfo';
         $this->_RcsCheckout($filename);
         $file = file_get_contents($filename);
@@ -719,9 +743,10 @@ class BackendCVS extends Backend {
      * @param Project $project Project to rename
      * @param String  $newName New name
      *
-     * @return Boolean
+     * @return bool
      */
-    public function renameCommitInfoFile($project, $newName) {
+    public function renameCommitInfoFile($project, $newName)
+    {
         $filename = $GLOBALS['cvs_prefix'].'/'.$newName.'/CVSROOT/commitinfo';
         $this->_RcsCheckout($filename);
         $file = file_get_contents($filename);

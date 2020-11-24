@@ -19,16 +19,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/dao/include/DataAccessObject.class.php');
 
-class Tracker_Semantic_TitleDao extends DataAccessObject {
+class Tracker_Semantic_TitleDao extends DataAccessObject
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_semantic_title';
     }
 
-    public function searchByTrackerId($tracker_id) {
+    public function searchByTrackerId($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT *
                 FROM $this->table_name
@@ -36,7 +38,8 @@ class Tracker_Semantic_TitleDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function save($tracker_id, $field_id) {
+    public function save($tracker_id, $field_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $field_id   = $this->da->escapeInt($field_id);
         $sql = "REPLACE INTO $this->table_name (tracker_id, field_id)
@@ -44,7 +47,8 @@ class Tracker_Semantic_TitleDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function delete($tracker_id) {
+    public function delete($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
 
         $sql = "DELETE FROM $this->table_name WHERE tracker_id = $tracker_id";

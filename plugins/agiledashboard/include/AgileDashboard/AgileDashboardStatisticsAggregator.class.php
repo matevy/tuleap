@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class AgileDashboardStatisticsAggregator {
+class AgileDashboardStatisticsAggregator
+{
     public const CARD_DRAG_AND_DROP     = 'ad_kanban_card_drag_drop';
     public const EXPAND_COLLAPSE_COLUMN = 'ad_kanban_expand_collapse_column';
     public const WIP_MODIFICATION       = 'ad_kanban_wip_modification';
@@ -31,11 +32,13 @@ class AgileDashboardStatisticsAggregator {
      */
     private $event_manager;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->event_manager = EventManager::instance();
     }
 
-    private function addHit($project_id, $type) {
+    private function addHit($project_id, $type)
+    {
         $params = array(
             'project_id'     => $project_id,
             'statistic_name' => $type
@@ -43,27 +46,33 @@ class AgileDashboardStatisticsAggregator {
         $this->event_manager->processEvent('aggregate_statistics', $params);
     }
 
-    public function addCardDragAndDropHit($project_id) {
+    public function addCardDragAndDropHit($project_id)
+    {
         $this->addHit($project_id, self::CARD_DRAG_AND_DROP);
     }
 
-    public function addExpandCollapseColumnHit($project_id) {
+    public function addExpandCollapseColumnHit($project_id)
+    {
         $this->addHit($project_id, self::EXPAND_COLLAPSE_COLUMN);
     }
 
-    public function addWIPModificationHit($project_id) {
+    public function addWIPModificationHit($project_id)
+    {
         $this->addHit($project_id, self::WIP_MODIFICATION);
     }
 
-    public function addKanbanRenamingHit($project_id) {
+    public function addKanbanRenamingHit($project_id)
+    {
         $this->addHit($project_id, self::KANBAN_RENAMING);
     }
 
-    public function addKanbanAddInPlaceHit($project_id) {
+    public function addKanbanAddInPlaceHit($project_id)
+    {
         $this->addHit($project_id, self::KANBAN_ADD_IN_PLACE);
     }
 
-    public function getStatisticsLabels() {
+    public function getStatisticsLabels()
+    {
         $res[self::CARD_DRAG_AND_DROP]     = 'Kanban card drag & drop';
         $res[self::EXPAND_COLLAPSE_COLUMN] = 'Kanban expanded or collapsed column';
         $res[self::WIP_MODIFICATION]       = 'Kanban WIP modification';
@@ -73,7 +82,8 @@ class AgileDashboardStatisticsAggregator {
         return $res;
     }
 
-    public function getStatistics($statistic_name, $date_start, $date_end) {
+    public function getStatistics($statistic_name, $date_start, $date_end)
+    {
         $statistics_data = array();
         $params = array(
             'statistic_name' => $statistic_name,

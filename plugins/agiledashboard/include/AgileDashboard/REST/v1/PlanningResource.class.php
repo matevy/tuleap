@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,24 +19,30 @@
  */
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use \PlanningFactory;
-use \Luracast\Restler\RestException;
-use \Planning;
+use PlanningFactory;
+use Luracast\Restler\RestException;
+use Planning;
+use Tracker_FormElementFactory;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneDao;
-use \Tuleap\REST\Header;
-use \Tuleap\REST\ProjectAuthorization;
-use \Tuleap\REST\AuthenticatedResource;
+use Tuleap\AgileDashboard\Planning\MilestoneBurndownFieldChecker;
+use Tuleap\REST\Header;
+use Tuleap\REST\ProjectAuthorization;
+use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\ProjectStatusVerificator;
-use \UserManager;
-use \AgileDashboard_Milestone_MilestoneStatusCounter;
-use \AgileDashboard_BacklogItemDao;
-use \Tracker_ArtifactDao;
-use \URLVerification;
-use \PlanningPermissionsManager;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
+use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
+use UserManager;
+use AgileDashboard_Milestone_MilestoneStatusCounter;
+use AgileDashboard_BacklogItemDao;
+use Tracker_ArtifactDao;
+use URLVerification;
+use PlanningPermissionsManager;
 use AgileDashboard_Milestone_MilestoneDao;
 
-class PlanningResource extends AuthenticatedResource {
+class PlanningResource extends AuthenticatedResource
+{
 
     public const MAX_LIMIT = 100;
 
@@ -45,13 +51,14 @@ class PlanningResource extends AuthenticatedResource {
 
     public function __construct()
     {
-        $artifact_factory = \Tracker_ArtifactFactory::instance();
-        $status_counter   = new AgileDashboard_Milestone_MilestoneStatusCounter(
+        $artifact_factory        = \Tracker_ArtifactFactory::instance();
+        $status_counter          = new AgileDashboard_Milestone_MilestoneStatusCounter(
             new AgileDashboard_BacklogItemDao(),
             new Tracker_ArtifactDao(),
             $artifact_factory
         );
-        $planning_factory = PlanningFactory::build();
+        $planning_factory        = PlanningFactory::build();
+        $form_element_factory    = Tracker_FormElementFactory::instance();
         $this->milestone_factory = new \Planning_MilestoneFactory(
             $planning_factory,
             $artifact_factory,
@@ -60,7 +67,13 @@ class PlanningResource extends AuthenticatedResource {
             $status_counter,
             new PlanningPermissionsManager(),
             new AgileDashboard_Milestone_MilestoneDao(),
-            new ScrumForMonoMilestoneChecker(new ScrumForMonoMilestoneDao(), $planning_factory)
+            new ScrumForMonoMilestoneChecker(new ScrumForMonoMilestoneDao(), $planning_factory),
+            new TimeframeBuilder(
+                $form_element_factory,
+                new SemanticTimeframeBuilder(new SemanticTimeframeDao(), $form_element_factory),
+                new \BackendLogger()
+            ),
+            new MilestoneBurndownFieldChecker($form_element_factory)
         );
     }
 
@@ -78,10 +91,11 @@ class PlanningResource extends AuthenticatedResource {
      *
      * @return array {@type Tuleap\AgileDashboard\REST\v1\MilestoneRepresentation}
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
-    public function getMilestones($id, $limit = 10, $offset = 0) {
+    public function getMilestones($id, $limit = 10, $offset = 0)
+    {
         $this->checkAccess();
         if (! $this->limitValueIsAcceptable($limit)) {
              throw new RestException(406, 'Maximum value for limit exceeded');
@@ -93,25 +107,28 @@ class PlanningResource extends AuthenticatedResource {
     /**
      * @url OPTIONS
      */
-    public function options() {
+    public function options()
+    {
         $this->sendAllowHeaders();
     }
 
     /**
      * @url OPTIONS {id}/milestones
      */
-    public function optionsForMilestones($id) {
+    public function optionsForMilestones($id)
+    {
         $this->sendAllowHeadersForMilestones();
     }
 
     /**
-     * @param integer $id
+     * @param int $id
      *
      * @return Planning
      * @throws RestException 403
      * @throws RestException 404
      */
-    private function getPlanning($id) {
+    private function getPlanning($id)
+    {
         $planning = PlanningFactory::build()->getPlanning($id);
         $user     = $this->getCurrentUser();
 
@@ -135,15 +152,18 @@ class PlanningResource extends AuthenticatedResource {
         return $planning;
     }
 
-    private function limitValueIsAcceptable($limit) {
+    private function limitValueIsAcceptable($limit)
+    {
         return $limit <= self::MAX_LIMIT;
     }
 
-    private function getCurrentUser() {
+    private function getCurrentUser()
+    {
         return UserManager::instance()->getCurrentUser();
     }
 
-    private function getMilestonesByPlanning(Planning $planning, $limit, $offset) {
+    private function getMilestonesByPlanning(Planning $planning, $limit, $offset)
+    {
         $all_milestones = array();
         $milestones = $this->milestone_factory->getAllBareMilestones($this->getCurrentUser(), $planning);
         foreach ($milestones as $milestone) {
@@ -155,15 +175,18 @@ class PlanningResource extends AuthenticatedResource {
         return $milestones_representations;
     }
 
-    private function sendPaginationHeaders($limit, $offset, $size) {
+    private function sendPaginationHeaders($limit, $offset, $size)
+    {
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
     }
 
-    private function sendAllowHeaders() {
+    private function sendAllowHeaders()
+    {
         Header::allowOptions();
     }
 
-    private function sendAllowHeadersForMilestones() {
+    private function sendAllowHeadersForMilestones()
+    {
         Header::allowOptionsGet();
     }
 }

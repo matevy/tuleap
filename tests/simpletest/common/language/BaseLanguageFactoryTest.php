@@ -18,9 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/language/BaseLanguageFactory.class.php';
-
-class BaseLanguageFactoryTest extends TuleapTestCase {
+class BaseLanguageFactoryTest extends TuleapTestCase
+{
 
     public function setUp()
     {
@@ -35,7 +34,7 @@ class BaseLanguageFactoryTest extends TuleapTestCase {
         $GLOBALS['sys_custom_incdir'] = $this->getTmpDir();
         $GLOBALS['sys_incdir']        = $this->getTmpDir();
     }
-    
+
     public function tearDown()
     {
         ForgeConfig::restore();
@@ -45,50 +44,55 @@ class BaseLanguageFactoryTest extends TuleapTestCase {
         unset($GLOBALS['sys_custom_incdir']);
         parent::tearDown();
     }
-    
-    public function testFactoryShouldReturnABaseLanguageAccordingToTheLocale() {
+
+    public function testFactoryShouldReturnABaseLanguageAccordingToTheLocale()
+    {
         $us = new BaseLanguage($this->supportedLanguages, 'en_US');
         $fr = new BaseLanguage($this->supportedLanguages, 'fr_FR');
         $factory = new BaseLanguageFactory();
         $factory->cacheBaseLanguage($us);
         $factory->cacheBaseLanguage($fr);
-        
+
         $this->assertEqual($us, $factory->getBaseLanguage('en_US'));
         $this->assertEqual($fr, $factory->getBaseLanguage('fr_FR'));
         $this->assertNotEqual($factory->getBaseLanguage('en_US'), $factory->getBaseLanguage('fr_FR'));
     }
-    
-    public function testItInstantiatesMissingLanguages() {
+
+    public function testItInstantiatesMissingLanguages()
+    {
         $us = new BaseLanguage($this->supportedLanguages, 'en_US');
         $us->loadLanguage('en_US');
         $fr = new BaseLanguage($this->supportedLanguages, 'fr_FR');
         $fr->loadLanguage('fr_FR');
         $factory = new BaseLanguageFactory();
-        
+
         $this->assertEqual($us, $factory->getBaseLanguage('en_US'));
         $this->assertEqual($fr, $factory->getBaseLanguage('fr_FR'));
         $this->assertNotEqual($factory->getBaseLanguage('en_US'), $factory->getBaseLanguage('fr_FR'));
         $this->assertTrue($factory->getBaseLanguage('en_US') === $factory->getBaseLanguage('en_US'), 'the language should be cached');
     }
-    
-    public function testFactoryShouldSetADefaultLanguageForUnknownLocales() {
+
+    public function testFactoryShouldSetADefaultLanguageForUnknownLocales()
+    {
         $default_language = new BaseLanguage($this->supportedLanguages, ForgeConfig::get('sys_lang'));
         $default_language->loadLanguage(ForgeConfig::get('sys_lang'));
         $factory = new BaseLanguageFactory();
-        
+
         $this->assertEqual($default_language, $factory->getBaseLanguage('unknown_locale'));
     }
-    
-    public function testBecauseOfTheLazyLoadingOfLangTheLangDependedOnTheCurrentUser() {
+
+    public function testBecauseOfTheLazyLoadingOfLangTheLangDependedOnTheCurrentUser()
+    {
         $factory = new BaseLanguageFactory();
 
         $fr = $factory->getBaseLanguage('fr_FR');
         $this->assertEqual('fr_FR', $fr->lang);
-        
+
         $us = $factory->getBaseLanguage('en_US');
         $this->assertEqual('en_US', $us->lang);
     }
-    public function testDoesnMessUpGlobalState() {
+    public function testDoesnMessUpGlobalState()
+    {
         $factory = new BaseLanguageFactory();
 
         $currentlocale = setlocale(LC_ALL, '0');

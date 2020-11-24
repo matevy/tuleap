@@ -19,11 +19,13 @@
 
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use \Exception;
+use Exception;
 
-class SubMilestoneAlreadyHasAParentException extends Exception {
+class SubMilestoneAlreadyHasAParentException extends Exception
+{
 
-    public function __construct($milestone_id) {
+    public function __construct($milestone_id)
+    {
         parent::__construct('SubMilestone ' . $milestone_id . ' already assigned to a Milestone.');
     }
 }

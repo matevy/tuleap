@@ -19,7 +19,8 @@
 
 namespace Tuleap\JWT\REST;
 
-class JWTRepresentation {
+class JWTRepresentation
+{
     public const ROUTE = 'jwt';
 
     /**
@@ -27,7 +28,8 @@ class JWTRepresentation {
      */
     public $token;
 
-    public function build($token) {
+    public function build($token)
+    {
         $this->token   = $token;
     }
 }

@@ -19,7 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* abstract */ class Docman_View_View {
+/* abstract */ class Docman_View_View
+{
     var $dfltSortParams = array();
     var $dfltSearchParams = array();
 
@@ -38,13 +39,15 @@
      */
     var $hp;
 
-    function __construct(&$controller) {
+    function __construct(&$controller)
+    {
         $this->_controller = $controller;
         $this->hp = Codendi_HTMLPurifier::instance();
         $this->javascript = "";
     }
-    
-    function display($params = array()) {
+
+    function display($params = array())
+    {
         $this->_header($params);
         $this->_scripts($params);
         $this->_feedback($params);
@@ -56,44 +59,57 @@
         $this->_javascript($params);
         $this->_footer($params);
     }
-    /* protected */ function _header($params) {
+    /* protected */ function _header($params)
+    {
     }
-    /* protected */ function _scripts($params) {
+    /* protected */ function _scripts($params)
+    {
     }
-    /* protected */ function _feedback($params) {
+    /* protected */ function _feedback($params)
+    {
     }
-    /* protected */ function _title($params) {
+    /* protected */ function _title($params)
+    {
     }
-    /* protected */ function _breadCrumbs($params) {
+    /* protected */ function _breadCrumbs($params)
+    {
     }
-    /* protected */ function _mode($params) {
+    /* protected */ function _mode($params)
+    {
     }
-    /* protected */ function _filter($params) {
+    /* protected */ function _filter($params)
+    {
     }
-    /* protected */ function _content($params) {
+    /* protected */ function _content($params)
+    {
     }
-    /* protected */ function _javascript($params) {
-        if($this->javascript != "") {
-           echo "<script type=\"text/javascript\">\n".
+    /* protected */ function _javascript($params)
+    {
+        if ($this->javascript != "") {
+            echo "<script type=\"text/javascript\">\n".
             "//<!--\n".
             $this->javascript.
             "//-->\n".
             "</script>\n";
         }
     }
-    /* protected */ function _footer($params) {
+    /* protected */ function _footer($params)
+    {
     }
-    
-    
-    function &_getVersionFactory($params) {
+
+
+    function &_getVersionFactory($params)
+    {
         $vf = new Docman_VersionFactory();
         return $vf;
     }
-    function &_getDocmanIcons($params) {
+    function &_getDocmanIcons($params)
+    {
         $icons = new Docman_Icons($params['theme_path'] .'/images/ic/');
         return $icons;
     }
-    function &_getItemFactory($params) {
+    function &_getItemFactory($params)
+    {
         $f = new Docman_ItemFactory();
         return $f;
     }
@@ -102,25 +118,28 @@
      * This method build the paramater list of the current url for filters and
      * sort.
      */
-    function _initSearchAndSortParams($params) {
-        if(!count($this->dfltSortParams)) {
+    function _initSearchAndSortParams($params)
+    {
+        if (!count($this->dfltSortParams)) {
             $this->dfltSortParams = array();
             $this->dfltSearchParams = array();
 
-            if(isset($params['filter']) && $params['filter'] !== null) {
+            if (isset($params['filter']) && $params['filter'] !== null) {
                 // Report paramters
                 $this->dfltSearchParams = $params['filter']->getUrlParameters();
 
                 // Filters paramters
                 $fi = $params['filter']->getFilterIterator();
-                if($fi !== null) {
+                if ($fi !== null) {
                     $fi->rewind();
-                    while($fi->valid()) {
+                    while ($fi->valid()) {
                         $f = $fi->current();
-                        
-                        if($f !== null) {
-                            $this->dfltSearchParams = array_merge($this->dfltSearchParams,
-                                                                  $f->getUrlParameters());
+
+                        if ($f !== null) {
+                            $this->dfltSearchParams = array_merge(
+                                $this->dfltSearchParams,
+                                $f->getUrlParameters()
+                            );
                         }
 
                         $fi->next();
@@ -129,16 +148,16 @@
 
                 // Columns (sort) paramters
                 $ci = $params['filter']->getColumnIterator();
-                if($ci !== null) {
+                if ($ci !== null) {
                     $ci->rewind();
-                    while($ci->valid()) {
+                    while ($ci->valid()) {
                         $c = $ci->current();
                         // The second part of the test aims to avoid to add
                         // sort_update_date=0 in the URL as it's the default
                         // sort (no need to define it)
-                        if($c !== null && !($c->md !== null && $c->md->getLabel() == 'update_date' && $c->sort == PLUGIN_DOCMAN_SORT_DESC)) {
+                        if ($c !== null && !($c->md !== null && $c->md->getLabel() == 'update_date' && $c->sort == PLUGIN_DOCMAN_SORT_DESC)) {
                             $sort = $c->getSort();
-                            if($sort !== null) {
+                            if ($sort !== null) {
                                 $this->dfltSortParams[$c->getSortParameter()] = $sort;
                             }
                         }
@@ -149,19 +168,21 @@
         }
     }
 
-    function getSearchParams($params) {
+    function getSearchParams($params)
+    {
         $this->_initSearchAndSortParams($params);
         return $this->dfltSearchParams;
     }
-    
-    function getSortParams($params) {
+
+    function getSortParams($params)
+    {
         $this->_initSearchAndSortParams($params);
         return $this->dfltSortParams;
     }
 
     /**
      * Get the JS action for the item/user couple
-     * 
+     *
      * @param Docman_Item $item
      */
     public function getActionForItem(Docman_Item $item)

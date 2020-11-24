@@ -19,9 +19,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Tracker_Semantic_DescriptionDao extends DataAccessObject {
+class Tracker_Semantic_DescriptionDao extends DataAccessObject
+{
 
-    public function searchByTrackerId($tracker_id) {
+    public function searchByTrackerId($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT *
                 FROM tracker_semantic_description
@@ -29,7 +31,8 @@ class Tracker_Semantic_DescriptionDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function save($tracker_id, $field_id) {
+    public function save($tracker_id, $field_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $field_id   = $this->da->escapeInt($field_id);
         $sql = "REPLACE INTO tracker_semantic_description (tracker_id, field_id)
@@ -37,7 +40,8 @@ class Tracker_Semantic_DescriptionDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function delete($tracker_id) {
+    public function delete($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
 
         $sql = "DELETE FROM tracker_semantic_description WHERE tracker_id = $tracker_id";

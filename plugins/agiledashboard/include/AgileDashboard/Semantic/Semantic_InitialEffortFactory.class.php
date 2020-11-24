@@ -22,7 +22,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class AgileDashboard_Semantic_InitialEffortFactory implements Tracker_Semantic_IRetrieveSemantic {
+use Tuleap\Tracker\Semantic\IDuplicateSemantic;
+use Tuleap\Tracker\Semantic\IBuildSemanticFromXML;
+
+class AgileDashboard_Semantic_InitialEffortFactory implements IBuildSemanticFromXML, IDuplicateSemantic
+{
 
     /**
      * Hold an instance of the class
@@ -34,9 +38,10 @@ class AgileDashboard_Semantic_InitialEffortFactory implements Tracker_Semantic_I
      *
      * @return AgileDashboard_Semantic_InitialEffortFactory an instance of the factory
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (!isset(self::$instance)) {
-            $class_name = __CLASS__;
+            $class_name = self::class;
             self::$instance = new $class_name;
         }
         return self::$instance;
@@ -50,20 +55,14 @@ class AgileDashboard_Semantic_InitialEffortFactory implements Tracker_Semantic_I
         return AgileDashBoard_Semantic_InitialEffort::load($tracker);
     }
 
-    /**
-     * Creates a AgileDashBoard_Semantic_InitialEffort Object
-     *
-     * @param SimpleXMLElement $xml         containing the structure of the imported semantic initial effort
-     * @param array            &$xmlMapping containig the newly created formElements idexed by their XML IDs
-     * @param Tracker          $tracker     to which the semantic is attached
-     *
-     * @return AgileDashBoard_Semantic_InitialEffort The semantic object
-     */
-    public function getInstanceFromXML($xml, &$xmlMapping, $tracker) {
+    public function getInstanceFromXML(SimpleXMLElement $xml, array $xml_mapping, Tracker $tracker): ?Tracker_Semantic
+    {
         $xml_field = $xml->field;
         $xml_field_attributes = $xml_field->attributes();
-        $field = $xmlMapping[(string)$xml_field_attributes['REF']];
-
+        if (! isset($xml_mapping[(string)$xml_field_attributes['REF']])) {
+            return null;
+        }
+        $field = $xml_mapping[(string)$xml_field_attributes['REF']];
         return new AgileDashBoard_Semantic_InitialEffort($tracker, $field);
     }
 
@@ -72,7 +71,8 @@ class AgileDashboard_Semantic_InitialEffortFactory implements Tracker_Semantic_I
      *
      * @return AgileDashboard_Semantic_Dao_InitialEffort The dao
      */
-    public function getDao() {
+    public function getDao()
+    {
         return new AgileDashboard_Semantic_Dao_InitialEffort();
     }
 
@@ -85,7 +85,8 @@ class AgileDashboard_Semantic_InitialEffortFactory implements Tracker_Semantic_I
      *
      * @return void
      */
-    public function duplicate($from_tracker_id, $to_tracker_id, $field_mapping) {
+    public function duplicate($from_tracker_id, $to_tracker_id, array $field_mapping)
+    {
         $row = $this->getDao()->searchByTrackerId($from_tracker_id)->getRow();
         if ($row) {
             $from_title_field_id = $row['field_id'];

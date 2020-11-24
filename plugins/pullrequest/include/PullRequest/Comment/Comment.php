@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,9 @@
 
 namespace Tuleap\PullRequest\Comment;
 
-class Comment
+use Tuleap\PullRequest\Timeline\TimelineEvent;
+
+class Comment implements TimelineEvent
 {
 
     /** @var int */
@@ -63,7 +65,7 @@ class Comment
         return $this->user_id;
     }
 
-    public function getPostDate()
+    public function getPostDate(): int
     {
         return $this->post_date;
     }

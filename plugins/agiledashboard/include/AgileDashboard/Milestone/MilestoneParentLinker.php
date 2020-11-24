@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class MilestoneParentLinker {
+class MilestoneParentLinker
+{
 
     /**
      * @var AgileDashboard_Milestone_Backlog_BacklogFactory
@@ -38,7 +39,8 @@ class MilestoneParentLinker {
         $this->backlog_factory   = $backlog_factory;
     }
 
-    public function linkToMilestoneParent(Planning_Milestone $milestone, PFUser $user, Tracker_Artifact $artifact_added) {
+    public function linkToMilestoneParent(Planning_Milestone $milestone, PFUser $user, Tracker_Artifact $artifact_added)
+    {
         $this->milestone_factory->addMilestoneAncestors($user, $milestone);
 
         $parent_milestone = $milestone->getParent();
@@ -54,21 +56,23 @@ class MilestoneParentLinker {
         }
 
         if (! $this->isParentLinkedToParentMilestone(
-                $artifact_added,
-                $parent_milestone_artifact,
-                $user)
+            $artifact_added,
+            $parent_milestone_artifact,
+            $user
+        )
         ) {
             $parent_milestone_artifact->linkArtifact($artifact_added->getId(), $user);
             $this->linkToMilestoneParent($parent_milestone, $user, $artifact_added);
         }
     }
 
-    private function getBacklogTrackers(Planning_Milestone $milestone) {
+    private function getBacklogTrackers(Planning_Milestone $milestone)
+    {
         return $this->backlog_factory->getBacklog($milestone)->getDescendantTrackers();
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     private function parentMilestoneHasItemTrackerInItsBacklogTracker(
         Planning_Milestone $parent_milestone,

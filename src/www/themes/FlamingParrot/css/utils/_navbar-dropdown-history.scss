@@ -1,11 +1,8 @@
 $nav-dropdown-content-border-radius: 3px;
 $history-dropdown-spacing: 20px;
-$history-dropdown-half-spacing: $history-dropdown-spacing / 2;
 $history-dropdown-ui-border-light: #f3f3f3;
 $history-dropdown-ui-dimmed: #747474;
 $history-dropdown-item-text-color: #333333;
-
-@import 'badge-colors';
 
 .nav-dropdown-content-title {
     padding: 10px;
@@ -101,7 +98,7 @@ $history-dropdown-item-text-color: #333333;
     position: relative;
     flex: 1 0 auto;
     align-items: center;
-    padding: $history-dropdown-spacing;
+    padding: 10px 10px 10px $history-dropdown-spacing;
     border-bottom: 1px solid $history-dropdown-ui-border-light;
     color: $history-dropdown-item-text-color;
     text-decoration: none;
@@ -110,173 +107,145 @@ $history-dropdown-item-text-color: #333333;
         border-bottom: 0;
     }
 
+    &:focus-within,
     &:hover {
         background-color: transparentize($main, .9);
         cursor: pointer;
 
-        .history-item-content-description-info {
-            transform: translateY(-10px);
-            transition: transform 50ms 500ms;
-        }
+        &.history-item-with-quicklinks {
+            > .history-item-project {
+                display: none;
+            }
 
-        .history-item-content-description-links {
-            transform: translateY(-5px);
-            transition: transform 50ms 500ms, opacity 50ms 500ms;
-            opacity: 1;
-            pointer-events: auto;
+            > .history-item-links {
+                display: flex;
+            }
         }
     }
 }
 
-.history-item-icon {
-    margin: 0 $history-dropdown-half-spacing 0 0;
-    line-height: 12px;
-}
-
-.history-item-content {
-    display: flex;
-    flex-grow: 1;
-    align-items: center;
-}
-
-.history-item-content-description {
-    flex-grow: 1;
-    margin: 0 $history-dropdown-spacing 0 0;
-}
-
-.history-item-content-description-info {
+.history-item-description {
     display: flex;
     align-items: center;
+    flex-grow: 1;
+    margin: 10px $history-dropdown-spacing 10px 0;
 }
 
-.history-item-content-description-info-badge {
-    @extend %badge-colors;
-
+.history-item-description-badge {
     margin: 0 5px 0 0;
-    text-shadow: none;
 }
 
-.history-item-content-description-info-title {
+.history-item-description-icon {
+    margin: 0 5px 0 0;
+    font-size: 20px;
+    line-height: 23px;
+}
+
+.history-item-description-title {
     max-width: 200px;
+    overflow: hidden;
     font-size: 14px;
     line-height: 18px;
     text-overflow: ellipsis;
     white-space: nowrap;
-    overflow: hidden;
 }
 
-.history-item-content-description-links {
-    position: absolute;
-    transition: transform 50ms, opacity 50ms;
-    opacity: 0;
-    pointer-events: none;
+.history-item-links {
+    display: none;
+    font-size: 16px;
+    line-height: 18px;
 }
 
-.history-item-content-description-link {
-    margin: 0 10px 0 0;
-    color: $main;
-    font-size: 12px;
+.history-item-links-link {
+    display: flex;
+    padding: 10px;
+    transition: color 100ms ease-in-out;
+    color: $history-dropdown-ui-dimmed;
 
     &:hover {
-        text-decoration: underline;
-
-        .history-item-content-description-link-icon {
-            text-decoration: none;
-        }
+        transition: color 100ms ease-in-out;
+        color: $main;
     }
 }
 
-.history-item-content-description-link-icon {
-    margin: 0 3px 0 0;
-}
-
-.history-item-content-project {
+.history-item-project {
+    margin: 0 10px 0 0;
     max-width: 150px;
     color: $history-dropdown-ui-dimmed;
     text-align: right;
     text-decoration: none;
     text-overflow: ellipsis;
     white-space: nowrap;
-    overflow: hidden;
-
-    &:hover > .history-item-content-project-name {
-        text-decoration: underline;
-    }
-
-    > .tuleap-svg-project-small {
-        flex: 0 0 auto;
-        margin: 0 5px 0 0;
-        fill: $history-dropdown-ui-dimmed;
-    }
-}
-
-.history-item-content-project-name {
     font-size: 12px;
     line-height: 16px;
+    overflow: hidden;
+}
+
+.history-item-project-icon {
+    margin: 0 3px 0 0;
     white-space: normal;
 }
 
-// scss-lint:disable NameFormat
-.history-item-icon-inca-silver > svg {
-    fill: transparentize($inca_silver, .7);
+.history-item.inca-silver > .history-item-description > .history-item-description-icon {
+    color: $inca_silver;
 }
 
-.history-item-icon-chrome-silver > svg {
-    fill: transparentize($chrome_silver, .7);
+.history-item.chrome-silver > .history-item-description > .history-item-description-icon {
+    color: $chrome_silver;
 }
 
-.history-item-icon-fiesta-red > svg {
-    fill: transparentize($fiesta_red, .7);
+.history-item.fiesta-red > .history-item-description > .history-item-description-icon {
+    color: $fiesta_red;
 }
 
-.history-item-icon-teddy-brown > svg {
-    fill: transparentize($teddy_brown, .7);
+.history-item.teddy-brown > .history-item-description > .history-item-description-icon {
+    color: $teddy_brown;
 }
 
-.history-item-icon-clockwork-orange > svg {
-    fill: transparentize($clockwork_orange, .7);
+.history-item.clockwork-orange > .history-item-description > .history-item-description-icon {
+    color: $clockwork_orange;
 }
 
-.history-item-icon-red-wine > svg {
-    fill: transparentize($red_wine, .7);
+.history-item.red-wine > .history-item-description > .history-item-description-icon {
+    color: $red_wine;
 }
 
-.history-item-icon-acid-green > svg {
-    fill: transparentize($acid_green, .7);
+.history-item.acid-green > .history-item-description > .history-item-description-icon {
+    color: $acid_green;
 }
 
-.history-item-icon-army-green > svg {
-    fill: transparentize($army_green, .7);
+.history-item.army-green > .history-item-description > .history-item-description-icon {
+    color: $army_green;
 }
 
-.history-item-icon-sherwood-green > svg {
-    fill: transparentize($sherwood_green, .7);
+.history-item.sherwood-green > .history-item-description > .history-item-description-icon {
+    color: $sherwood_green;
 }
 
-.history-item-icon-ocean-turquoise > svg {
-    fill: transparentize($ocean_turquoise, .7);
+.history-item.ocean-turquoise > .history-item-description > .history-item-description-icon {
+    color: $ocean_turquoise;
 }
 
-.history-item-icon-daphne-blue > svg {
-    fill: transparentize($daphne_blue, .7);
+.history-item.daphne-blue > .history-item-description > .history-item-description-icon {
+    color: $daphne_blue;
 }
 
-.history-item-icon-lake-placid-blue > svg {
-    fill: transparentize($lake_placid_blue, .7);
+.history-item.lake-placid-blue > .history-item-description > .history-item-description-icon {
+    color: $lake_placid_blue;
 }
 
-.history-item-icon-deep-blue > svg {
-    fill: transparentize($deep_blue, .7);
+.history-item.deep-blue > .history-item-description > .history-item-description-icon {
+    color: $deep_blue;
 }
 
-.history-item-icon-plum-crazy > svg {
-    fill: transparentize($plum_crazy, .7);
+.history-item.plum-crazy > .history-item-description > .history-item-description-icon {
+    color: $plum_crazy;
 }
 
-.history-item-icon-peggy-pink > svg {
-    fill: transparentize($peggy_pink, .7);
+.history-item.peggy-pink > .history-item-description > .history-item-description-icon {
+    color: $peggy_pink;
 }
 
-.history-item-icon-flamingo-pink > svg {
-    fill: transparentize($flamingo_pink, .7);
+.history-item.flamingo-pink > .history-item-description > .history-item-description-icon {
+    color: $flamingo_pink;
 }

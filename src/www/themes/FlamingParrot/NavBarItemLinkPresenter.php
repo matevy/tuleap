@@ -18,14 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class FlamingParrot_NavBarItemLinkPresenter extends FlamingParrot_NavBarItemPresenter {
+class FlamingParrot_NavBarItemLinkPresenter extends FlamingParrot_NavBarItemPresenter
+{
 
     public $is_link = true;
 
     public $href;
     public $label;
 
-    public function __construct($id, $is_active, $href, $label) {
+    public function __construct($id, $is_active, $href, $label)
+    {
         parent::__construct($id, $is_active);
         $this->href  = $href;
         $this->label = $label;

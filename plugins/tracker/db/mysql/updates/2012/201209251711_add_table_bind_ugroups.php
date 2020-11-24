@@ -18,17 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201209251711_add_table_bind_ugroups extends ForgeUpgrade_Bucket {
+class b201209251711_add_table_bind_ugroups extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Add a new table to store bind ugroups';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE tracker_field_list_bind_ugroups_value(
                     id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     field_id INT(11) NOT NULL,
@@ -39,7 +43,8 @@ class b201209251711_add_table_bind_ugroups extends ForgeUpgrade_Bucket {
         $this->createTable('tracker_field_list_bind_ugroups_value', $sql);
     }
 
-    private function createTable($name, $sql) {
+    private function createTable($name, $sql)
+    {
         $result = $this->db->createTable($name, $sql);
 
         if ($result === false) {
@@ -48,4 +53,3 @@ class b201209251711_add_table_bind_ugroups extends ForgeUpgrade_Bucket {
         }
     }
 }
-?>

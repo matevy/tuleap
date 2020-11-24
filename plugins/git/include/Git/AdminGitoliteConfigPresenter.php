@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Git_AdminGitoliteConfigPresenter  extends Git_AdminPresenter
+class Git_AdminGitoliteConfigPresenter extends Git_AdminPresenter
 {
 
     public $manage_gitolite_config = true;
@@ -32,7 +32,7 @@ class Git_AdminGitoliteConfigPresenter  extends Git_AdminPresenter
     private $authorized_projects;
 
     /**
-     * @var Boolean
+     * @var bool
      */
     private $show_big_objects_config;
 

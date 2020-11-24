@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012. All Rights Reserved.
  *
@@ -19,14 +18,14 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/TreeNode/TreeNode.class.php';
-
 /**
  * A TreeNode that holds an Tracker_Artifact
  */
-class ArtifactNode extends TreeNode {
+class ArtifactNode extends TreeNode
+{
 
-    public function __construct(Tracker_Artifact $artifact, ?array $data = null) {
+    public function __construct(Tracker_Artifact $artifact, ?array $data = null)
+    {
         parent::__construct($data, $artifact->getId());
         $this->setObject($artifact);
     }
@@ -34,10 +33,8 @@ class ArtifactNode extends TreeNode {
     /**
      * @return Tracker_Artifact
      */
-    public function getArtifact() {
+    public function getArtifact()
+    {
         return $this->getObject();
     }
-
 }
-
-?>

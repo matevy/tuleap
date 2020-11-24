@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: TitleSearch.php,v 1.28 2005/09/10 21:33:08 rurban Exp $');
 /**
  Copyright 1999,2000,2001,2002,2004,2005 $ThePhpWikiProgrammingTeam
@@ -24,59 +25,67 @@ require_once('lib/TextSearchQuery.php');
 require_once('lib/PageList.php');
 
 /**
- * Display results of pagename search. 
+ * Display results of pagename search.
  * Provides no own input box, just <?plugin-form TitleSearch ?> is enough.
  * Fancier Inputforms can be made using WikiForm Rich, to support regex and case_exact args.
  *
- * If only one pages is found and auto_redirect is true, this page is displayed immediatly, 
+ * If only one pages is found and auto_redirect is true, this page is displayed immediatly,
  * otherwise the found pagelist is displayed.
- * The workhorse TextSearchQuery converts the query string from google-style words 
+ * The workhorse TextSearchQuery converts the query string from google-style words
  * to the required DB backend expression.
  *   (word and word) OR word, -word, "two words"
- * regex=auto tries to detect simple glob-style wildcards and expressions, 
+ * regex=auto tries to detect simple glob-style wildcards and expressions,
  * like xx*, *xx, ^xx, xx$, ^word$.
  */
-class WikiPlugin_TitleSearch
-extends WikiPlugin
+class WikiPlugin_TitleSearch extends WikiPlugin
 {
-    function getName () {
+    function getName()
+    {
         return _("TitleSearch");
     }
 
-    function getDescription () {
+    function getDescription()
+    {
         return _("Search the titles of all pages in this wiki.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.28 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.28 $"
+        );
     }
 
-    function getDefaultArguments() {
-        return array_merge
-            (
-             PageList::supportedArgs(), // paging and more.
-             array('s'             => false,
+    function getDefaultArguments()
+    {
+        return array_merge(
+            PageList::supportedArgs(), // paging and more.
+            array('s'             => false,
                    'auto_redirect' => false,
                    'noheader'      => false,
                    'exclude'       => false,
                    'info'          => false,
                    'case_exact'    => false,
-                   'regex'     	   => 'auto',
-                   'format'    	   => false,
-                   ));
+                   'regex'            => 'auto',
+                   'format'           => false,
+            )
+        );
     }
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor
     // exclude arg allows multiple pagenames exclude=Php*,RecentChanges
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
-        if (empty($args['s']))
+        if (empty($args['s'])) {
             return '';
+        }
 
         $query = new TextSearchQuery($args['s'], $args['case_exact'], $args['regex']);
-        $pages = $dbi->titleSearch($query,$args['sortby'],$args['limit'],$args['exclude']);
+        $pages = $dbi->titleSearch($query, $args['sortby'], $args['limit'], $args['exclude']);
 
         $pagelist = new PageList($args['info'], $args['exclude'], $args);
         while ($page = $pages->next()) {
@@ -98,14 +107,17 @@ extends WikiPlugin
         // when a search returns no results
         if (!$args['noheader']) {
             $s = $args['s'];
-            if (!$pagelist->getTotal() and !$query->_regex)
+            if (!$pagelist->getTotal() and !$query->_regex) {
                 $s = WikiLink($args['s'], 'auto');
+            }
             $pagelist->setCaption(fmt("Title search results for '%s'", $s));
         }
 
         if ($args['auto_redirect'] && ($pagelist->getTotal() == 1)) {
-            return HTML($request->redirect(WikiURL($last_name, false, 'absurl'), false),
-                        $pagelist);
+            return HTML(
+                $request->redirect(WikiURL($last_name, false, 'absurl'), false),
+                $pagelist
+            );
         }
 
         return $pagelist;
@@ -172,4 +184,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

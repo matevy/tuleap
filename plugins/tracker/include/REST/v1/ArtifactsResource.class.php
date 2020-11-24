@@ -25,6 +25,8 @@ use FeedbackDao;
 use Log_NoopLogger;
 use Luracast\Restler\RestException;
 use PFUser;
+use Project_AccessException;
+use Project_AccessProjectNotFoundException;
 use Tracker_Artifact;
 use Tracker_Artifact_Attachment_AlreadyLinkedToAnotherArtifactException;
 use Tracker_Artifact_Attachment_FileNotFoundException;
@@ -48,6 +50,9 @@ use Tracker_XML_Exporter_ArtifactXMLExporterBuilder;
 use Tracker_XML_Exporter_LocalAbsoluteFilePathXMLExporter;
 use Tracker_XML_Exporter_NullChildrenCollector;
 use TrackerFactory;
+use TransitionFactory;
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\JsonDecoder;
@@ -76,29 +81,43 @@ use Tuleap\Tracker\Exception\MoveArtifactNotDoneException;
 use Tuleap\Tracker\Exception\MoveArtifactSemanticsException;
 use Tuleap\Tracker\Exception\MoveArtifactTargetProjectNotActiveException;
 use Tuleap\Tracker\Exception\SemanticTitleNotDefinedException;
+use Tuleap\Tracker\FormElement\Container\Fieldset\HiddenFieldsetChecker;
+use Tuleap\Tracker\FormElement\Container\FieldsExtractor;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
 use Tuleap\Tracker\FormElement\Field\ListFields\FieldValueMatcher;
+use Tuleap\Tracker\PermissionsFunctionsWrapper;
 use Tuleap\Tracker\REST\Artifact\ArtifactReference;
 use Tuleap\Tracker\REST\Artifact\ArtifactRepresentationBuilder;
 use Tuleap\Tracker\REST\Artifact\MovedArtifactValueBuilder;
 use Tuleap\Tracker\REST\ChangesetCommentRepresentation;
-use Tuleap\Tracker\REST\CompleteTrackerRepresentation;
+use Tuleap\Tracker\REST\FormElementRepresentationsBuilder;
 use Tuleap\Tracker\REST\MinimalTrackerRepresentation;
 use Tuleap\Tracker\REST\PermissionsExporter;
+use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
+use Tuleap\Tracker\REST\Tracker\PermissionsRepresentationBuilder;
 use Tuleap\Tracker\REST\TrackerReference;
 use Tuleap\Tracker\REST\v1\Event\ArtifactPartialUpdate;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsRetriever;
+use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
+use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use Tuleap\Tracker\XML\Updater\MoveChangesetXMLUpdater;
 use UserManager;
 use UserXMLExportedCollection;
 use UserXMLExporter;
+use Workflow_Transition_ConditionFactory;
 use XML_RNGValidator;
 use XML_SimpleXMLCDATAFactory;
 use XMLImportHelper;
 
-class ArtifactsResource extends AuthenticatedResource {
+class ArtifactsResource extends AuthenticatedResource
+{
     public const MAX_LIMIT          = 50;
     public const DEFAULT_LIMIT      = 10;
     public const DEFAULT_OFFSET     = 0;
@@ -195,14 +214,51 @@ class ArtifactsResource extends AuthenticatedResource {
             new FeedbackDao()
         );
 
+        $transition_retriever = new TransitionRetriever(
+            new StateFactory(
+                new TransitionFactory(
+                    Workflow_Transition_ConditionFactory::build()
+                ),
+                new SimpleWorkflowDao()
+            ),
+            new TransitionExtractor()
+        );
+
+        $frozen_fields_detector = new FrozenFieldDetector(
+            $transition_retriever,
+            new FrozenFieldsRetriever(
+                new FrozenFieldsDao(),
+                Tracker_FormElementFactory::instance()
+            )
+        );
+
         $this->tracker_rest_builder = new \Tracker_REST_TrackerRestBuilder(
             $this->formelement_factory,
-            new PermissionsExporter(
-                new FrozenFieldDetector(
-                    new FrozenFieldsRetriever(
-                        new FrozenFieldsDao()
-                    )
+            new FormElementRepresentationsBuilder(
+                $this->formelement_factory,
+                new PermissionsExporter(
+                    $frozen_fields_detector
+                ),
+                new HiddenFieldsetChecker(
+                    new HiddenFieldsetsDetector(
+                        $transition_retriever,
+                        new HiddenFieldsetsRetriever(
+                            new HiddenFieldsetsDao(),
+                            Tracker_FormElementFactory::instance()
+                        ),
+                        Tracker_FormElementFactory::instance()
+                    ),
+                    new FieldsExtractor()
+                ),
+                new PermissionsForGroupsBuilder(
+                    new \UGroupManager(),
+                    $frozen_fields_detector,
+                    new PermissionsFunctionsWrapper()
                 )
+            ),
+            new PermissionsRepresentationBuilder(
+                new \UGroupManager(),
+                new PermissionsFunctionsWrapper()
             )
         );
     }
@@ -228,7 +284,7 @@ class ArtifactsResource extends AuthenticatedResource {
      *
      * @throws RestException 403
      */
-    public function getArtifacts($query, $limit = self::MAX_ARTIFACT_BATCH,  $offset = self::DEFAULT_OFFSET)
+    public function getArtifacts($query, $limit = self::MAX_ARTIFACT_BATCH, $offset = self::DEFAULT_OFFSET)
     {
         $this->checkAccess();
 
@@ -338,7 +394,8 @@ class ArtifactsResource extends AuthenticatedResource {
      *
      * @throws RestException 403
      */
-    public function getId($id, $values_format = self::VALUES_DEFAULT, $tracker_structure_format = self::DEFAULT_TRACKER_STRUCTURE) {
+    public function getId($id, $values_format = self::VALUES_DEFAULT, $tracker_structure_format = self::DEFAULT_TRACKER_STRUCTURE)
+    {
         $this->checkAccess();
 
         $user     = $this->user_manager->getCurrentUser();
@@ -354,9 +411,8 @@ class ArtifactsResource extends AuthenticatedResource {
         $this->sendETagHeader($artifact);
 
         if ($tracker_structure_format === self::COMPLETE_TRACKER_STRUCTURE) {
-            $tracker_representation = $this->tracker_rest_builder->getTrackerRepresentationWithWorkflowComputedPermissions(
+            $tracker_representation = $this->tracker_rest_builder->getTrackerRepresentationInArtifactContext(
                 $user,
-                $artifact->getTracker(),
                 $artifact
             );
         } else {
@@ -440,7 +496,7 @@ class ArtifactsResource extends AuthenticatedResource {
         $id,
         $direction,
         $nature = self::EMPTY_TYPE,
-        $limit  = 10,
+        $limit = 10,
         $offset = self::DEFAULT_OFFSET
     ) {
         $this->checkAccess();
@@ -465,8 +521,20 @@ class ArtifactsResource extends AuthenticatedResource {
         $this->sendAllowHeadersForLinkedArtifacts();
         Header::sendPaginationHeaders($limit, $offset, $linked_artifacts->getTotalSize(), self::MAX_LIMIT);
 
+        $artifact_representations = [];
+        foreach ($linked_artifacts->getArtifacts() as $linked_artifact) {
+            $tracker_representation = new MinimalTrackerRepresentation();
+            $tracker_representation->build($linked_artifact->getTracker());
+
+            $artifact_representations[] = $this->builder->getArtifactRepresentationWithFieldValuesInBothFormat(
+                $user,
+                $linked_artifact,
+                $tracker_representation
+            );
+        }
+
         return array(
-            self::VALUES_FORMAT_COLLECTION => $linked_artifacts->getArtifacts()
+            self::VALUES_FORMAT_COLLECTION => $artifact_representations
         );
     }
 
@@ -485,7 +553,8 @@ class ArtifactsResource extends AuthenticatedResource {
      *
      * @param int $id Id of the artifact
      */
-    public function optionsArtifactChangesets($id) {
+    public function optionsArtifactChangesets($id)
+    {
         $this->sendAllowHeadersForChangesets();
     }
 
@@ -509,9 +578,9 @@ class ArtifactsResource extends AuthenticatedResource {
     public function getArtifactChangesets(
         $id,
         $fields = Changeset::FIELDS_ALL,
-        $limit  = 10,
+        $limit = 10,
         $offset = self::DEFAULT_OFFSET,
-        $order  = self::ORDER_ASC
+        $order = self::ORDER_ASC
     ) {
         $this->checkAccess();
         $user     = $this->user_manager->getCurrentUser();
@@ -535,7 +604,8 @@ class ArtifactsResource extends AuthenticatedResource {
      *
      * @param int $id Id of the artifact
      */
-    public function optionsId($id) {
+    public function optionsId($id)
+    {
         $this->sendAllowHeadersForArtifact();
     }
 
@@ -564,7 +634,8 @@ class ArtifactsResource extends AuthenticatedResource {
      *
      * @throws RestException 403
      */
-    protected function putId($id, array $values, ?ChangesetCommentRepresentation $comment = null) {
+    protected function putId($id, array $values, ?ChangesetCommentRepresentation $comment = null)
+    {
         $user     = $this->user_manager->getCurrentUser();
         $artifact = $this->getArtifactById($user, $id);
 
@@ -604,7 +675,8 @@ class ArtifactsResource extends AuthenticatedResource {
     /**
      * @url OPTIONS
      */
-    public function options() {
+    public function options()
+    {
         Header::allowOptionsGetPost();
     }
 
@@ -760,10 +832,10 @@ class ArtifactsResource extends AuthenticatedResource {
      *
      * @url DELETE {id}
      *
-     * @throws 401 Unauthorized
-     * @throws 403 Forbidden
-     * @throws 404 Artifact Not found
-     * @throws 429 Too Many Requests (rate limit exceeded)
+     * @throws RestException 401 Unauthorized
+     * @throws RestException 403 Forbidden
+     * @throws RestException 404 Artifact Not found
+     * @throws RestException 429 Too Many Requests (rate limit exceeded)
      *
      * @access hybrid
      * @param int $id Id of the artifact
@@ -884,19 +956,19 @@ class ArtifactsResource extends AuthenticatedResource {
      *
      * @return ArtifactPatchResponseRepresentation
      *
-     * @throws 400
-     * @throws 403
-     * @throws 426
-     * @throws 404 Artifact Not found
-     * @throws 500
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 426
+     * @throws RestException 404 Artifact Not found
+     * @throws RestException 500
      */
     protected function patchArtifact($id, ArtifactPatchRepresentation $patch)
     {
         $this->checkAccess();
 
+        $user  = $this->user_manager->getCurrentUser();
+        $limit = $this->artifacts_deletion_config->getArtifactsDeletionLimit();
         try {
-            $user                = $this->user_manager->getCurrentUser();
-            $limit               = $this->artifacts_deletion_config->getArtifactsDeletionLimit();
             $remaining_deletions = $this->getRemainingNumberOfDeletion($user);
 
             $artifact = $this->getArtifactById($user, $id);
@@ -967,7 +1039,7 @@ class ArtifactsResource extends AuthenticatedResource {
         } catch (MoveArtifactTargetProjectNotActiveException $exception) {
             throw new RestException(400, $exception->getMessage());
         } finally {
-            Header::sendRateLimitHeaders($limit, $remaining_deletions);
+            Header::sendRateLimitHeaders($limit, $remaining_deletions ?? 0);
             $this->sendAllowHeadersForArtifact();
         }
     }
@@ -1035,7 +1107,8 @@ class ArtifactsResource extends AuthenticatedResource {
                 $description_semantic_checker,
                 $status_semantic_checker,
                 $contributor_semantic_checker
-            )
+            ),
+            new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
         );
     }
 
@@ -1060,7 +1133,8 @@ class ArtifactsResource extends AuthenticatedResource {
      * @throws Project_AccessException 403
      * @throws RestException 404
      */
-    private function getArtifactById(PFUser $user, $id) {
+    private function getArtifactById(PFUser $user, $id)
+    {
         $artifact = $this->artifact_factory->getArtifactById($id);
         if ($artifact) {
             if (! $artifact->userCanView($user)) {
@@ -1073,31 +1147,38 @@ class ArtifactsResource extends AuthenticatedResource {
         throw new RestException(404);
     }
 
-    private function sendAllowHeadersForChangesets() {
+    private function sendAllowHeadersForChangesets()
+    {
         Header::allowOptionsGet();
     }
 
-    private function sendAllowHeadersForLinkNatures() {
+    private function sendAllowHeadersForLinkNatures()
+    {
         Header::allowOptionsGet();
     }
 
-    private function sendAllowHeadersForLinkedArtifacts() {
+    private function sendAllowHeadersForLinkedArtifacts()
+    {
         Header::allowOptionsGet();
     }
 
-    private function sendAllowHeadersForArtifact() {
+    private function sendAllowHeadersForArtifact()
+    {
         Header::allowOptionsGetPutDeletePatch();
     }
 
-    private function sendLastModifiedHeader(Tracker_Artifact $artifact) {
+    private function sendLastModifiedHeader(Tracker_Artifact $artifact)
+    {
         Header::lastModified($artifact->getLastUpdateDate());
     }
 
-    private function sendETagHeader(Tracker_Artifact $artifact) {
+    private function sendETagHeader(Tracker_Artifact $artifact)
+    {
         Header::eTag($artifact->getVersionIdentifier());
     }
 
-    private function sendLocationHeader($uri) {
+    private function sendLocationHeader($uri)
+    {
         $uri_with_api_version = '/api/v1/' . $uri;
 
         Header::Location($uri_with_api_version);
@@ -1113,8 +1194,7 @@ class ArtifactsResource extends AuthenticatedResource {
         array $values,
         array $values_by_field,
         $from_artifact
-    )
-    {
+    ) {
         $nb_sources_to_create_artifact = 0;
         if (!empty($values)) {
             $nb_sources_to_create_artifact++;

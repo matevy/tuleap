@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,7 +23,9 @@ namespace Tuleap\FRS\REST\v1;
 use FRSPackageFactory;
 use FRSReleaseFactory;
 use Luracast\Restler\RestException;
+use PermissionsManager;
 use ProjectManager;
+use Tuleap\FRS\FRSPermissionManager;
 use Tuleap\FRS\Link\Dao;
 use Tuleap\FRS\Link\Retriever;
 use Tuleap\FRS\UploadedLinksDao;
@@ -31,6 +33,7 @@ use Tuleap\FRS\UploadedLinksRetriever;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\ProjectStatusVerificator;
+use UGroupManager;
 use UserManager;
 
 class PackageResource extends AuthenticatedResource
@@ -43,7 +46,23 @@ class PackageResource extends AuthenticatedResource
     private $package_factory;
     private $project_manager;
     private $retriever;
+
+    /**
+     * @var UserManager
+     */
     private $user_manager;
+    /**
+     * @var FRSReleaseFactory
+     */
+    private $release_factory;
+    /**
+     * @var PackageRepresentationBuilder
+     */
+    private $package_representation_builder;
+    /**
+     * @var ReleasePermissionsForGroupsBuilder
+     */
+    private $release_permissions_for_groups_builder;
 
     public function __construct()
     {
@@ -53,6 +72,16 @@ class PackageResource extends AuthenticatedResource
         $this->retriever               = new Retriever(new Dao());
         $this->user_manager            = UserManager::instance();
         $this->uploaded_link_retriever = new UploadedLinksRetriever(new UploadedLinksDao(), $this->user_manager);
+        $this->package_representation_builder = new PackageRepresentationBuilder(
+            \PermissionsManager::instance(),
+            new \UGroupManager(),
+            FRSPermissionManager::build()
+        );
+        $this->release_permissions_for_groups_builder = new ReleasePermissionsForGroupsBuilder(
+            FRSPermissionManager::build(),
+            PermissionsManager::instance(),
+            new UGroupManager()
+        );
     }
 
     /**
@@ -69,10 +98,10 @@ class PackageResource extends AuthenticatedResource
      * @param string $label      Label of the package {@from body}
      *
      * @return \Tuleap\FRS\REST\v1\PackageRepresentation
-     * @throws 400 BadRequest Given project does not exist
-     * @throws 403 Forbidden User doesn't have permission to create a package
-     * @throws 409 Conflict Package with the same label already exists in this project
-     * @throws 500 Error Unable to create the package
+     * @throws RestException 400 BadRequest Given project does not exist
+     * @throws RestException 403 Forbidden User doesn't have permission to create a package
+     * @throws RestException 409 Conflict Package with the same label already exists in this project
+     * @throws RestException 500 Error Unable to create the package
      */
     protected function post($project_id, $label)
     {
@@ -100,10 +129,7 @@ class PackageResource extends AuthenticatedResource
 
         $this->sendOptionsHeaders();
 
-        return $this->getPackageRepresentation(
-            $this->getPackage($new_package_id),
-            $project
-        );
+        return $this->package_representation_builder->getPackageForUser($this->user_manager->getCurrentUser(), $this->getPackage($new_package_id), $project);
     }
 
     /**
@@ -138,7 +164,7 @@ class PackageResource extends AuthenticatedResource
 
         $this->sendOptionsHeadersForGetId();
 
-        return $this->getPackageRepresentation($package, $project);
+        return $this->package_representation_builder->getPackageForUser($this->user_manager->getCurrentUser(), $package, $project);
     }
 
     /**
@@ -186,7 +212,7 @@ class PackageResource extends AuthenticatedResource
         $releases = array();
         foreach ($paginated_releases->getReleases() as $release) {
             $representation = new ReleaseRepresentation();
-            $representation->build($release, $this->retriever, $current_user, $this->uploaded_link_retriever);
+            $representation->build($release, $this->retriever, $current_user, $this->uploaded_link_retriever, $this->release_permissions_for_groups_builder);
 
             $releases[] = $representation;
         }
@@ -264,20 +290,6 @@ class PackageResource extends AuthenticatedResource
         }
 
         return $project;
-    }
-
-    /**
-     * @param $package
-     * @param $project
-     * @return PackageRepresentation
-     */
-    private function getPackageRepresentation($package, $project)
-    {
-        $representation = new PackageRepresentation();
-        $representation->build($package);
-        $representation->setProject($project);
-
-        return $representation;
     }
 
     private function sendOptionsHeaders()

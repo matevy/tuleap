@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * phpcs:ignoreFile
  */
 
 use Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface;
@@ -25,6 +23,10 @@ use Tuleap\FRS\FRSPermissionCreator;
 use Tuleap\FRS\FRSPermissionDao;
 use Tuleap\Http\HttpClientFactory;
 use Tuleap\Http\HTTPFactoryBuilder;
+use Tuleap\Project\ProjectAccessChecker;
+use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipProjectVisibilityToggler;
 use Tuleap\Project\Webhook\Log\StatusLogger as WebhookStatusLogger;
 use Tuleap\Project\Webhook\Log\WebhookLoggerDao;
 use Tuleap\Project\Webhook\ProjectCreatedPayload;
@@ -32,49 +34,69 @@ use Tuleap\Project\Webhook\WebhookDao;
 use Tuleap\Project\Webhook\Retriever;
 use Tuleap\Webhook\Emitter;
 
-class ProjectManager
+class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
-    const CONFIG_PROJECT_APPROVAL                            = 'sys_project_approval';
-    const CONFIG_NB_PROJECTS_WAITING_FOR_VALIDATION          = 'nb_projects_waiting_for_validation';
-    const CONFIG_NB_PROJECTS_WAITING_FOR_VALIDATION_PER_USER = 'nb_projects_waiting_for_validation_per_user';
+    public const CONFIG_PROJECTS_CAN_BE_CREATED                     = 'sys_use_project_registration';
+    public const CONFIG_PROJECT_APPROVAL                            = 'sys_project_approval';
+    public const CONFIG_NB_PROJECTS_WAITING_FOR_VALIDATION          = 'nb_projects_waiting_for_validation';
+    public const CONFIG_NB_PROJECTS_WAITING_FOR_VALIDATION_PER_USER = 'nb_projects_waiting_for_validation_per_user';
+    public const CONFIG_RESTRICTED_USERS_CAN_CREATE_PROJECTS        = 'restricted_users_can_create_projects';
 
     /**
      * The Projects dao used to fetch data
      */
-    protected $_dao;
+    protected $_dao; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
     /**
      * stores the fetched projects
      */
-    protected $_cached_projects;
+    protected $_cached_projects; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
     /**
      * Hold an instance of the class
      */
-    private static $_instance;
+    private static $_instance; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
     /**
      * @var Project_HierarchyManager
      */
     private $hierarchy_manager;
+    /**
+     * @var ProjectAccessChecker
+     */
+    private $project_access_checker;
+    /**
+     * @var ProjectHistoryDao
+     */
+    private $project_history_dao;
 
     /**
      * A private constructor; prevents direct creation of object
      */
-    private function __construct(ProjectDao $dao = null) {
-        $this->_dao = $dao;
-    //    $this->_dao = $this->getDao();
-        $this->_cached_projects = array();
+    private function __construct(
+        ProjectAccessChecker $project_access_checker,
+        ProjectHistoryDao $project_history_dao,
+        ?ProjectDao $dao = null
+    ) {
+        $this->_dao                   = $dao;
+        $this->_cached_projects       = array();
+        $this->project_history_dao    = $project_history_dao;
+        $this->project_access_checker = $project_access_checker;
     }
 
     /**
      * ProjectManager is a singleton
      * @return ProjectManager
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (!isset(self::$_instance)) {
-            $c = __CLASS__;
-            self::$_instance = new $c;
+            $project_access_checker = new ProjectAccessChecker(
+                PermissionsOverrider_PermissionsOverriderManager::instance(),
+                new RestrictedUserCanAccessProjectVerifier(),
+                EventManager::instance()
+            );
+            self::$_instance = new self($project_access_checker, new ProjectHistoryDao());
         }
         return self::$_instance;
     }
@@ -82,25 +104,32 @@ class ProjectManager
     /**
      * ProjectManager is a singleton need this to test
      */
-    public static function setInstance($instance) {
+    public static function setInstance($instance)
+    {
         self::$_instance = $instance;
     }
     /**
      * ProjectManager is a singleton need this to clean after tests
      * @return ProjectManager
      */
-    public static function clearInstance() {
+    public static function clearInstance()
+    {
         self::$_instance = null;
     }
 
-    public static function testInstance(ProjectDao $dao) {
-        return new ProjectManager($dao);
+    public static function testInstance(
+        ProjectAccessChecker $project_access_checker,
+        ProjectHistoryDao $project_history_dao,
+        ProjectDao $dao
+    ) {
+        return new self($project_access_checker, $project_history_dao, $dao);
     }
 
     /**
      * @return ProjectDao
      */
-    public function _getDao() {
+    public function _getDao() // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
+    {
         if (!isset($this->_dao)) {
             $this->_dao = new ProjectDao(CodendiDataAccess::instance());
         }
@@ -111,7 +140,8 @@ class ProjectManager
      * @param $group_id int The id of the project to look for
      * @return Project
      */
-    public function getProject($group_id) {
+    public function getProject($group_id)
+    {
         if (!isset($this->_cached_projects[$group_id])) {
             $p = $this->createProjectInstance($group_id);
             $this->_cached_projects[$group_id] = $p;
@@ -125,7 +155,8 @@ class ProjectManager
      *
      * @throws Project_NotFoundException
      */
-    public function getValidProject($group_id) {
+    public function getValidProject($group_id)
+    {
         return $this->assertProjectIsValid(
             $this->getProject($group_id)
         );
@@ -137,7 +168,8 @@ class ProjectManager
      *
      * @throws Project_NotFoundException
      */
-    public function getValidProjectByShortNameOrId($project) {
+    public function getValidProjectByShortNameOrId($project)
+    {
         try {
             return $this->assertProjectIsValid(
                 $this->getProjectByCaseInsensitiveUnixName($project)
@@ -147,8 +179,9 @@ class ProjectManager
         }
     }
 
-    private function assertProjectIsValid($project) {
-        if ($project && ! $project->isError() && ! $project->isDeleted())  {
+    private function assertProjectIsValid($project)
+    {
+        if ($project && ! $project->isError() && ! $project->isDeleted()) {
             return $project;
         }
 
@@ -162,7 +195,8 @@ class ProjectManager
      *
      * @return Project
      */
-    public function getProjectFromDbRow(array $row) {
+    public function getProjectFromDbRow(array $row)
+    {
         return $this->getAndCacheProject($row);
     }
 
@@ -170,7 +204,8 @@ class ProjectManager
      * @param $group_id int The id of the project to look for
      * @return Project
      */
-    protected function createProjectInstance($group_id_or_row) {
+    protected function createProjectInstance($group_id_or_row)
+    {
         if (is_array($group_id_or_row)) {
             return new Project($group_id_or_row);
         } else {
@@ -182,14 +217,16 @@ class ProjectManager
     /**
      * Clear the cache for project $group_id
      */
-    public function clear($group_id) {
+    public function clear($group_id)
+    {
         unset($this->_cached_projects[$group_id]);
     }
 
-    public function getProjectsByStatus($status) {
+    public function getProjectsByStatus($status)
+    {
         $projects = array();
         $dao = new ProjectDao(CodendiDataAccess::instance());
-        foreach($dao->searchByStatus($status) as $row) {
+        foreach ($dao->searchByStatus($status) as $row) {
             $projects[$row['group_id']] = $this->getAndCacheProject($row);
         }
         return $projects;
@@ -201,15 +238,14 @@ class ProjectManager
      */
     public function countProjectsByStatus($status)
     {
-        $dar = $this->_getDao()->searchByStatus($status);
-
-        return (int) $this->_getDao()->foundRows();
+        return $this->_getDao()->countByStatus($status);
     }
 
     /**
      * @return Project[]
      */
-    public function getAllProjectsButDeleted() {
+    public function getAllProjectsButDeleted()
+    {
 
         $projects_active     = $this->getProjectsByStatus(Project::STATUS_ACTIVE);
         $projects_pending    = $this->getProjectsByStatus(Project::STATUS_PENDING);
@@ -221,7 +257,8 @@ class ProjectManager
     /**
      * @return Project[]
      */
-    public function getAllPrivateProjects() {
+    public function getAllPrivateProjects()
+    {
         $private_projects = array();
         foreach ($this->_getDao()->searchByPublicStatus(false) as $row) {
             $private_projects[] = $this->getAndCacheProject($row);
@@ -246,21 +283,25 @@ class ProjectManager
      * Look for project with name like given one
      *
      * @param String  $name
-     * @param Integer $limit
-     * @param Integer $nbFound
+     * @param int $limit
+     * @param int $nbFound
      * @param PFUser    $user
-     * @param Boolean $isMember
-     * @param Boolean $isAdmin
-     * @param Boolean $isPrivate Display private projects if true
+     * @param bool $isMember
+     * @param bool $isAdmin
+     * @param bool $isPrivate Display private projects if true
      *
      * @return Array of Project
      */
-    public function searchProjectsNameLike($name, $limit, &$nbFound, $user=null, $isMember=false, $isAdmin=false, $isPrivate = false, $offset = 0) {
+    public function searchProjectsNameLike($name, $limit, &$nbFound, $user = null, $isMember = false, $isAdmin = false, $isPrivate = false, $offset = 0)
+    {
+        if ($user === null) {
+            return [];
+        }
         $projects = array();
         $dao = new ProjectDao(CodendiDataAccess::instance());
         $dar = $dao->searchProjectsNameLike($name, $limit, $user->getId(), $isMember, $isAdmin, $isPrivate, $offset);
         $nbFound = $dao->foundRows();
-        foreach($dar as $row) {
+        foreach ($dar as $row) {
             $projects[] = $this->getAndCacheProject($row);
         }
         return $projects;
@@ -276,18 +317,17 @@ class ProjectManager
      *
      * @return Project
      */
-    public function getProjectFromAutocompleter($name) {
+    public function getProjectFromAutocompleter($name)
+    {
         $matches = array();
         $dao = new ProjectDao(CodendiDataAccess::instance());
         if (preg_match('/^(.*) \((.*)\)$/', $name, $matches)) {
             // Autocompleter "normal" form: Public Name (unix_name); {
             $dar = $dao->searchByUnixGroupName($matches[2]);
-        }
-        elseif (is_numeric($name)) {
+        } elseif (is_numeric($name)) {
             // Only group_id (for codex guru or psychopath, more or less the same thing anyway)
             $dar = $dao->searchById($name);
-        }
-        else {
+        } else {
             // Give it a try with only the given name
             $dar = $dao->searchByCaseInsensitiveUnixGroupName($name);
         }
@@ -305,7 +345,8 @@ class ProjectManager
      *
      * @return Project
      */
-    protected function getAndCacheProject($row) {
+    protected function getAndCacheProject($row)
+    {
         if (!isset($this->_cached_projects[$row['group_id']])) {
             $p = $this->createProjectInstance($row);
             $this->_cached_projects[$row['group_id']] = $p;
@@ -320,7 +361,8 @@ class ProjectManager
      *
      * @return Project
      */
-    public function getProjectByUnixName($name) {
+    public function getProjectByUnixName($name)
+    {
         $p = null;
         $dar = $this->_getDao()->searchByUnixGroupName($name);
         if ($dar && !$dar->isError() && $dar->rowCount() === 1) {
@@ -329,7 +371,8 @@ class ProjectManager
         return $p;
     }
 
-    public function getProjectByCaseInsensitiveUnixName($name) {
+    public function getProjectByCaseInsensitiveUnixName($name)
+    {
         $dar = $this->_getDao()->searchByCaseInsensitiveUnixGroupName($name);
         if ($dar && !$dar->isError() && $dar->rowCount() === 1) {
             return $this->createProjectInstance($dar->getRow());
@@ -342,7 +385,7 @@ class ProjectManager
      *
      * @param Project $project
      *
-     * @return Boolean
+     * @return bool
      */
     public function activate(Project $project)
     {
@@ -358,11 +401,11 @@ class ProjectManager
     public function activateWithoutNotifications(Project $project)
     {
         if ($this->_getDao()->updateStatus($project->getId(), 'A')) {
-            include_once 'proj_email.php';
+            include_once __DIR__ . '/../../www/include/proj_email.php';
 
             $this->removeProjectFromCache($project);
 
-            group_add_history('approved', 'x', $project->getId());
+            $this->project_history_dao->groupAddHistory('approved', 'x', $project->getId());
 
             $em = $this->getEventManager();
             $em->processEvent('approve_pending_project', array('group_id' => $project->getId()));
@@ -413,9 +456,10 @@ class ProjectManager
      * @param Project $project
      * @param String  $new_name
      *
-     * @return Boolean
+     * @return bool
      */
-    public function renameProject($project, $new_name){
+    public function renameProject($project, $new_name)
+    {
         //Remove the project from the cache, because it will be modified
         $this->clear($project->getId());
         $dao = $this->_getDao();
@@ -444,28 +488,32 @@ class ProjectManager
      * @param int $project_id
      * @param string $plugin_name
      * @param string $new_link
-     * @return boolean
+     * @return bool
      */
-    public function renameProjectPluginServiceLink($project_id, $plugin_name, $new_link) {
+    public function renameProjectPluginServiceLink($project_id, $plugin_name, $new_link)
+    {
         return $this->_getDao()->renameProjectPluginServiceLink($project_id, $plugin_name, $new_link);
     }
 
     /**
      * Return true if project id is cached
      *
-     * @param Integer $group_id
+     * @param int $group_id
      *
-     * @return Boolean
+     * @return bool
      */
-    public function isCached($group_id) {
+    public function isCached($group_id)
+    {
         return (isset($this->_cached_projects[$group_id]));
     }
 
-    public function clearProjectFromCache($project_id) {
+    public function clearProjectFromCache($project_id)
+    {
         unset($this->_cached_projects[$project_id]);
     }
 
-    public function setAccess(Project $project, $access_level) {
+    public function setAccess(Project $project, $access_level)
+    {
         $project_id = (int) $project->getID();
         $old_access = $project->getAccess();
 
@@ -491,7 +539,7 @@ class ProjectManager
                 return;
         }
 
-        group_add_history('access', $access_level, $project_id);
+        $this->project_history_dao->groupAddHistory('access', $access_level, $project_id);
         $this->getEventManager()->processEvent('project_is_private', array(
             'group_id'           => $project_id,
             'project_is_private' => $is_private,
@@ -506,21 +554,31 @@ class ProjectManager
         if ($is_private) {
             $this->updateForumVisibilityToPrivate($project_id);
         }
+        $this->getSynchronizedProjectMembershipProjectVisibilityToggler()->enableAccordingToVisibility($project, $old_access, $access_level);
     }
 
     private function getFrsPermissionsCreator()
     {
         return new FRSPermissionCreator(
             new FRSPermissionDao(),
-            new UGroupDao()
+            new UGroupDao(),
+            $this->project_history_dao
         );
     }
 
-    public function setTruncatedEmailsUsage(Project $project, $usage) {
+    private function getSynchronizedProjectMembershipProjectVisibilityToggler()
+    {
+        return new SynchronizedProjectMembershipProjectVisibilityToggler(
+            new SynchronizedProjectMembershipDao()
+        );
+    }
+
+    public function setTruncatedEmailsUsage(Project $project, $usage)
+    {
         $project_id = $project->getID();
         $this->_getDao()->setTruncatedEmailsUsage($project_id, $usage);
 
-        group_add_history('truncated_emails', $usage, $project_id);
+        $this->project_history_dao->groupAddHistory('truncated_emails', $usage, $project_id);
     }
 
     public function disableAllowRestrictedForAll()
@@ -532,12 +590,13 @@ class ProjectManager
     /**
      * Filled the ugroups to be notified when admin action is needed
      *
-     * @param Integer $groupId
+     * @param int $groupId
      * @param Array   $ugroups
      *
-     * @return Boolean
+     * @return bool
      */
-    public function setMembershipRequestNotificationUGroup($groupId, $ugroups) {
+    public function setMembershipRequestNotificationUGroup($groupId, $ugroups)
+    {
         $dao = $this->_getDao();
         return $dao->setMembershipRequestNotificationUGroup($groupId, $ugroups);
     }
@@ -546,11 +605,12 @@ class ProjectManager
      * Returns the ugroups to be notified when admin action is needed
      * If no ugroup is assigned, it returns the ugroup project admin
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
-     * @return DataAceesResult
+     * @return DataAccessResult
      */
-    public function getMembershipRequestNotificationUGroup($groupId) {
+    public function getMembershipRequestNotificationUGroup($groupId)
+    {
         $dao = $this->_getDao();
         return $dao->getMembershipRequestNotificationUGroup($groupId);
     }
@@ -558,11 +618,12 @@ class ProjectManager
     /**
      * Deletes the ugroups & the message related to a given group
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
-     * @return Boolean
+     * @return bool
      */
-    public function deleteMembershipRequestNotificationEntries($groupId) {
+    public function deleteMembershipRequestNotificationEntries($groupId)
+    {
         $dao = $this->_getDao();
         if ($dao->deleteMembershipRequestNotificationUGroup($groupId)) {
             return $dao->deleteMembershipRequestNotificationMessage($groupId);
@@ -574,11 +635,12 @@ class ProjectManager
     /**
      * Returns the message to be displayed to requester asking access for a given project
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
      * @return DataAccessResult
      */
-    public function getMessageToRequesterForAccessProject($groupId) {
+    public function getMessageToRequesterForAccessProject($groupId)
+    {
         $dao = $this->_getDao();
         return $dao->getMessageToRequesterForAccessProject($groupId);
     }
@@ -586,11 +648,12 @@ class ProjectManager
     /**
      * Defines the message to be displayed to requester asking access for a given project
      *
-     * @param Integer $groupId
+     * @param int $groupId
      * @param String  $message
      *
      */
-    public function setMessageToRequesterForAccessProject($groupId, $message) {
+    public function setMessageToRequesterForAccessProject($groupId, $message)
+    {
         $dao = $this->_getDao();
         return $dao->setMessageToRequesterForAccessProject($groupId, $message);
     }
@@ -598,11 +661,12 @@ class ProjectManager
     /**
      * Return the sql request retreiving project admins of given project
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
-     * @return Data Access Result
+     * @return DataAccessResult
      */
-    function returnProjectAdminsByGroupId($groupId) {
+    public function returnProjectAdminsByGroupId($groupId)
+    {
         $dao = new UserGroupDao(CodendiDataAccess::instance());
         return $dao->returnProjectAdminsByGroupId($groupId);
     }
@@ -612,9 +676,10 @@ class ProjectManager
      *
      * @param Project $project Affected project
      *
-     * @return Boolean
+     * @return bool
      */
-    public function removeProjectMembers($project) {
+    public function removeProjectMembers($project)
+    {
         if (!$project || !is_object($project) || $project->isError()) {
             exit_no_group();
         }
@@ -625,27 +690,28 @@ class ProjectManager
     /**
      * Get the project from its id for SOAP
      *
-     * @param Integer $groupId    Id of the project
+     * @param int|string $groupId Id of the project
      * @param String  $method     Name of the callback method
      * @param bool $byUnixName Optional, Search the project by its unix name instead of its id
      *
      * @return Project or SoapFault
      */
-    function getGroupByIdForSoap($groupId, $method, $byUnixName = false) {
+    public function getGroupByIdForSoap($groupId, $method, $byUnixName = false)
+    {
         if ($byUnixName) {
-            $group = $this->getProjectByUnixName($groupId);
+            $group = $this->getProjectByUnixName((string) $groupId);
         } else {
             $group = $this->getProject($groupId);
         }
         if (!$group || !is_object($group)) {
-            throw new SoapFault(get_group_fault, $groupId.' : '.$GLOBALS['Language']->getText('include_group', 'g_not_found'), $method);
+            throw new SoapFault('GET_GROUP_FAULT', $groupId.' : '.$GLOBALS['Language']->getText('include_group', 'g_not_found'), $method);
         } elseif ($group->isError()) {
-            throw new SoapFault(get_group_fault, $group->getErrorMessage(), $method);
+            throw new SoapFault('GET_GROUP_FAULT', $group->getErrorMessage(), $method);
         } elseif (!$group->isActive()) {
-            throw new SoapFault(get_group_fault, $group->getUnixName().' : '.$GLOBALS['Language']->getText('include_exit', 'project_status_'.$group->getStatus()), $method);
+            throw new SoapFault('GET_GROUP_FAULT', $group->getUnixName().' : '.$GLOBALS['Language']->getText('include_exit', 'project_status_'.$group->getStatus()), $method);
         }
         if (!$this->checkRestrictedAccess($group, $this->_getUserManager()->getCurrentUser())) {
-            throw new SoapFault(get_group_fault, 'Restricted user: permission denied.', $method);
+            throw new SoapFault('GET_GROUP_FAULT', 'Restricted user: permission denied.', $method);
         }
         return $group;
     }
@@ -653,11 +719,12 @@ class ProjectManager
     /**
      * Assert given groupid is valid, otherwise throw exception
      *
-     * @param Integer $groupId    Id of the project
+     * @param int $groupId Id of the project
      * @param String  $method     Name of the callback method
-     * @param Boolean $byUnixName Optional, Search the project by its unix name instead of its id
+     * @param bool $byUnixName Optional, Search the project by its unix name instead of its id
      */
-    public function checkGroupIdForSoap($groupId, $method, $byUnixName = false) {
+    public function checkGroupIdForSoap($groupId, $method, $byUnixName = false)
+    {
         $this->getGroupByIdForSoap($groupId, $method, $byUnixName);
     }
 
@@ -668,7 +735,7 @@ class ProjectManager
      * @param Project $group Affected project
      * @param         $user
      *
-     * @return boolean true if the current session user has access to this project, false otherwise
+     * @return bool true if the current session user has access to this project, false otherwise
      */
     public function checkRestrictedAccess($group, $user)
     {
@@ -698,12 +765,13 @@ class ProjectManager
     /**
      * Set SVN header
      *
-     * @param Integer $projectId
+     * @param int $projectId
      * @param String  $mailingHeader
      *
-     * @return Boolean
+     * @return bool
      */
-    function setSvnHeader($projectId, $mailingHeader) {
+    public function setSvnHeader($projectId, $mailingHeader)
+    {
         $dao = $this->_getDao();
         return $dao->setSvnHeader($projectId, $mailingHeader);
     }
@@ -713,7 +781,8 @@ class ProjectManager
      *
      * @return UserManager
      */
-    function _getUserManager() {
+    protected function _getUserManager() // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
+    {
         return UserManager::instance();
     }
 
@@ -722,21 +791,23 @@ class ProjectManager
      *
      * @return EventManager
      */
-    protected function getEventManager() {
+    protected function getEventManager()
+    {
         return EventManager::instance();
     }
 
     /**
      * Return all projects matching given parameters
      *
-     * @param Integer $offset    Offset
-     * @param Integer $limit     Limit of the search
+     * @param int $offset Offset
+     * @param int $limit Limit of the search
      * @param String  $status    Status of the projects to search
      * @param String  $groupName Name to search
      *
      * @return Array ('projects' => DataAccessResult, 'numrows' => int)
      */
-    public function getAllProjectsRows($offset, $limit, $status = false, $groupName = false) {
+    public function getAllProjectsRows($offset, $limit, $status = false, $groupName = false)
+    {
         $dao = $this->_getDao();
         return $dao->returnAllProjects($offset, $limit, $status, $groupName);
     }
@@ -744,7 +815,8 @@ class ProjectManager
     /**
      * @return Project[]
      */
-    public function getSiteTemplates() {
+    public function getSiteTemplates()
+    {
         $projects = [];
         foreach ($this->_getDao()->searchSiteTemplates() as $row) {
             $projects[] = $this->getProjectFromDbRow($row);
@@ -789,8 +861,7 @@ class ProjectManager
     {
         $projects = [];
         foreach ($projects_results as $row) {
-            if (
-                $row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED &&
+            if ($row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED &&
                 ForgeConfig::areRestrictedUsersAllowed() &&
                 $user->isRestricted()
             ) {
@@ -851,14 +922,14 @@ class ProjectManager
     {
         $projects = array();
         foreach ($result as $row) {
-            if (
-                $row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED &&
-                ForgeConfig::areRestrictedUsersAllowed() &&
-                $user->isRestricted()
-            ) {
+            $project = $this->getProjectFromDbRow($row);
+            try {
+                $this->project_access_checker->checkUserCanAccessProject($user, $project);
+            } catch (Project_AccessException $e) {
                 continue;
             }
-            $projects[] = $this->getProjectFromDbRow($row);
+
+            $projects[] = $project;
         }
 
         return new Tuleap\Project\PaginatedProjects($projects, $total_size);
@@ -867,12 +938,12 @@ class ProjectManager
     /**
      * @param int $group_id
      * @param int $parent_group_id
-     * @return Boolean
-     * @throws Project_HierarchyManagerNoChangeException
+     * @return bool
      * @throws Project_HierarchyManagerAlreadyAncestorException
      * @throws Project_HierarchyManagerAncestorIsSelfException
      */
-    public function setParentProject($group_id, $parent_group_id) {
+    public function setParentProject($group_id, $parent_group_id)
+    {
         $event_manager = EventManager::instance();
         $result        = $this->getHierarchyManager()->setParentProject($group_id, $parent_group_id);
 
@@ -888,9 +959,10 @@ class ProjectManager
 
     /**
      * @param int $group_id
-     * @return Boolean
+     * @return bool
      */
-    public function removeParentProject($group_id) {
+    public function removeParentProject($group_id)
+    {
         $event_manager = EventManager::instance();
         $result        = $this->getHierarchyManager()->removeParentProject($group_id);
 
@@ -907,7 +979,8 @@ class ProjectManager
      * @param int $group_id
      * @return Project|null
      */
-    public function getParentProject($group_id) {
+    public function getParentProject($group_id)
+    {
         return $this->getHierarchyManager()->getParentProject($group_id);
     }
 
@@ -915,7 +988,8 @@ class ProjectManager
      * Get all parents of a project
      * @return Project[]
      */
-    public function getAllParentsProjects($group_id) {
+    public function getAllParentsProjects($group_id)
+    {
         $projects   = array();
         $parent_ids = $this->getHierarchyManager()->getAllParents($group_id);
 
@@ -931,14 +1005,16 @@ class ProjectManager
      * @param int $group_id
      * @return Project[]
      */
-    public function getChildProjects($group_id) {
+    public function getChildProjects($group_id)
+    {
         return $this->getHierarchyManager()->getChildProjects($group_id);
     }
 
     /**
      * @return Project_HierarchyManager
      */
-    private function getHierarchyManager() {
+    private function getHierarchyManager()
+    {
         if (! $this->hierarchy_manager) {
             $this->hierarchy_manager = new Project_HierarchyManager(
                 $this,
@@ -966,9 +1042,12 @@ class ProjectManager
      *      user_name => (string),
      *      realname => (string))
      */
-    public function getProjectMembers($project_id) {
+    public function getProjectMembers($project_id)
+    {
         $dar = $this->_getDao()->getProjectMembers($project_id);
-        if(!$dar) return array();
+        if (!$dar) {
+            return array();
+        }
 
         $result = array();
         while ($row = $dar->getRow()) {
@@ -982,35 +1061,6 @@ class ProjectManager
     {
             $forum_dao = new ForumDao(CodendiDataAccess::instance());
             return $forum_dao->updatePublicForumToPrivate($group_id);
-    }
-
-    public function userCanCreateProject(PFUser $requester)
-    {
-        if (ForgeConfig::get(self::CONFIG_PROJECT_APPROVAL, 1) == 1) {
-            return $this->numberOfProjectsWaitingForValidationBelowThreshold() &&
-                $this->numberOfProjectsWaitingForValidationPerUserBelowThreshold($requester);
-        }
-        return true;
-    }
-
-    private function numberOfProjectsWaitingForValidationBelowThreshold()
-    {
-        $max_nb_projects_waiting_for_validation = (int) ForgeConfig::get(self::CONFIG_NB_PROJECTS_WAITING_FOR_VALIDATION, -1);
-        if ($max_nb_projects_waiting_for_validation < 0) {
-            return true;
-        }
-        $current_nb_projects_waiting_for_validation = $this->countProjectsByStatus(Project::STATUS_PENDING);
-        return $current_nb_projects_waiting_for_validation < $max_nb_projects_waiting_for_validation;
-    }
-
-    private function numberOfProjectsWaitingForValidationPerUserBelowThreshold(PFUser $requester)
-    {
-        $max_per_user = (int) ForgeConfig::get(self::CONFIG_NB_PROJECTS_WAITING_FOR_VALIDATION_PER_USER, -1);
-        if ($max_per_user < 0) {
-            return true;
-        }
-        $current_per_user = $this->_getDao()->countByStatusAndUser($requester->getId(), Project::STATUS_PENDING);
-        return $current_per_user < $max_per_user;
     }
 
     public function countRegisteredProjectsBefore($timestamp)

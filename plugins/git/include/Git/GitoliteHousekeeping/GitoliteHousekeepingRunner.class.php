@@ -21,7 +21,8 @@
 /**
  * I process the clean up of the gitolite admin working copy
  */
-class Git_GitoliteHousekeeping_GitoliteHousekeepingRunner {
+class Git_GitoliteHousekeeping_GitoliteHousekeepingRunner
+{
 
     /** @var Git_GitoliteHousekeeping_GitoliteHousekeepingDao */
     private $housekeeping_dao;
@@ -53,12 +54,14 @@ class Git_GitoliteHousekeeping_GitoliteHousekeepingRunner {
         $this->remote_admin_repository = $remote_admin_repository;
     }
 
-    public function run() {
+    public function run()
+    {
         $this->getChain()->execute();
     }
 
     /** @return Git_GitoliteHousekeeping_ChainOfResponsibility_Command */
-    public function getChain() {
+    public function getChain()
+    {
         $commands = array(
             new Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceStopper($this->response, $this->backend_service),
             new Git_GitoliteHousekeeping_ChainOfResponsibility_CheckRunningEvents($this->response, $this->process_manager, $this->process),

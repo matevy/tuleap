@@ -18,13 +18,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Workflow_Trigger_TriggerRuleCollection implements Iterator, Countable, Tracker_IProvideJsonFormatOfMyself {
+class Tracker_Workflow_Trigger_TriggerRuleCollection implements Iterator, Countable, Tracker_IProvideJsonFormatOfMyself
+{
     /**
      * @var Tracker_Workflow_Trigger_TriggerRule[]
      */
     private $trigger_rules = array();
 
-    public function fetchFormattedForJson() {
+    public function fetchFormattedForJson()
+    {
         $json = array();
         foreach ($this->trigger_rules as $rule) {
             $json[] = $rule->fetchFormattedForJson();
@@ -32,36 +34,41 @@ class Tracker_Workflow_Trigger_TriggerRuleCollection implements Iterator, Counta
         return $json;
     }
 
-    public function push(Tracker_Workflow_Trigger_TriggerRule $row) {
+    public function push(Tracker_Workflow_Trigger_TriggerRule $row)
+    {
         $this->trigger_rules[] = $row;
     }
 
     /**
      * @return Tracker_Workflow_Trigger_TriggerRule
      */
-    public function current() {
+    public function current()
+    {
         return current($this->trigger_rules);
     }
 
-    public function key() {
+    public function key()
+    {
         return key($this->trigger_rules);
     }
 
-    public function next() {
+    public function next()
+    {
         return next($this->trigger_rules);
     }
 
-    public function rewind() {
+    public function rewind()
+    {
         reset($this->trigger_rules);
     }
 
-    public function valid() {
+    public function valid()
+    {
         return current($this->trigger_rules) !== false;
     }
 
-    public function count() {
+    public function count()
+    {
         return count($this->trigger_rules);
     }
 }
-
-?>

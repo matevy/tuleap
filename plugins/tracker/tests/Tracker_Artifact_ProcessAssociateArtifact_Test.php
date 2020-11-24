@@ -20,9 +20,11 @@
 
 require_once('bootstrap.php');
 
-class Tracker_Artifact_ProcessAssociateArtifact_Test extends TuleapTestCase {
+class Tracker_Artifact_ProcessAssociateArtifact_Test extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->user = \Mockery::spy(PFUser::class);
@@ -31,7 +33,8 @@ class Tracker_Artifact_ProcessAssociateArtifact_Test extends TuleapTestCase {
             'linked-artifact-id' => 987));
     }
 
-    public function itCreatesANewChangesetWithdrawingAnExistingAssociation() {
+    public function itCreatesANewChangesetWithdrawingAnExistingAssociation()
+    {
         $this->request = new Codendi_Request(array(
             'func'               => 'unassociate-artifact-to',
             'linked-artifact-id' => 987));
@@ -63,7 +66,8 @@ class Tracker_Artifact_ProcessAssociateArtifact_Test extends TuleapTestCase {
         $artifact->process(mock('TrackerManager'), $this->request, $this->user);
     }
 
-    public function itCreatesANewChangesetWithANewAssociation() {
+    public function itCreatesANewChangesetWithANewAssociation()
+    {
         $artifact = \Mockery::mock(Tracker_Artifact::class)->makePartial()->shouldAllowMockingProtectedMethods();
 
         $artifact->shouldReceive('getLastChangeset')->andReturns(null);
@@ -112,7 +116,8 @@ class Tracker_Artifact_ProcessAssociateArtifact_Test extends TuleapTestCase {
         $artifact->process(mock('TrackerManager'), $this->request, $this->user);
     }
 
-    public function itReturnsAnErrorCodeWhenItHasNoArtifactLinkField() {
+    public function itReturnsAnErrorCodeWhenItHasNoArtifactLinkField()
+    {
         $tracker  = aTracker()->withId(456)->withProjectId(120)->build();
 
         $artifact = $this->GivenAnArtifact($tracker);
@@ -128,7 +133,8 @@ class Tracker_Artifact_ProcessAssociateArtifact_Test extends TuleapTestCase {
         $artifact->process(mock('TrackerManager'), $this->request, $this->user);
     }
 
-    private function GivenAnArtifact($tracker) {
+    private function GivenAnArtifact($tracker)
+    {
         $artifact = \Mockery::mock(Tracker_Artifact::class)->makePartial()->shouldAllowMockingProtectedMethods();
 
         $user_manager = mockery_stub(UserManager::class)->getCurrentUser()->returns(aUser()->withId(120)->build());

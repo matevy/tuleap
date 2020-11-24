@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,18 +18,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_REST_FieldDateRepresentation extends Tracker_REST_FieldRepresentation {
+use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsRepresentation;
+
+class Tracker_REST_FormElement_FieldDateRepresentation extends Tracker_REST_FormElementRepresentation
+{
 
     /**
      * @var bool
      */
     public $is_time_displayed;
 
-    public function build(Tracker_FormElement $field, $type, array $permissions) {
-        parent::build($field, $type, $permissions);
+    public function build(Tracker_FormElement $form_element, $type, array $permissions, ?PermissionsForGroupsRepresentation $permissions_for_groups)
+    {
+        parent::build($form_element, $type, $permissions, $permissions_for_groups);
 
-        if ($field instanceof Tracker_FormElement_Field_Date) {
-            $this->is_time_displayed = $field->isTimeDisplayed();
+        if ($form_element instanceof Tracker_FormElement_Field_Date) {
+            $this->is_time_displayed = $form_element->isTimeDisplayed();
         }
     }
 }

@@ -1,10 +1,11 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: backend.php,v 1.26 2005/11/14 22:24:33 rurban Exp $');
 
 /*
   Pagedata
 
-   maintained by WikiPage 
+   maintained by WikiPage
     //:latestversion
     //:deleted (*)     (Set if latest content is empty.)
     //:pagename (*)
@@ -27,11 +28,11 @@ rcs_id('$Id: backend.php,v 1.26 2005/11/14 22:24:33 rurban Exp $');
     //version
     //created (*)
     //%superceded
-	
+
     //:serial
 
      (types are scalars: strings, ints, bools)
-*/     
+*/
 
 /**
  * A WikiDB_backend handles the storage and retrieval of data for a WikiDB.
@@ -65,10 +66,11 @@ class WikiDB_backend
      *  <dt> locked  <dd> If the page is locked.
      *  <dt> hits    <dd> The page hit count.
      *  <dt> created <dd> Unix time of page creation. (FIXME: Deprecated: I
-     *                    don't think we need this...) 
+     *                    don't think we need this...)
      * </dl>
      */
-    function get_pagedata($pagename) {
+    function get_pagedata($pagename)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
 
@@ -81,7 +83,7 @@ class WikiDB_backend
      *
      * For example:
      * <pre>
-     *   $backend->update_pagedata($pagename, array('locked' => 1)); 
+     *   $backend->update_pagedata($pagename, array('locked' => 1));
      * </pre>
      * will set the value of 'locked' to 1 for the specified page, but it
      * will not affect the value of 'hits' (or whatever other meta-data
@@ -89,16 +91,17 @@ class WikiDB_backend
      *
      * To delete a particular piece of meta-data, set it's value to false.
      * <pre>
-     *   $backend->update_pagedata($pagename, array('locked' => false)); 
+     *   $backend->update_pagedata($pagename, array('locked' => false));
      * </pre>
      *
      * @param $pagename string Page name.
      * @param $newdata hash New meta-data.
      */
-    function update_pagedata($pagename, $newdata) {
+    function update_pagedata($pagename, $newdata)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
-    
+
 
     /**
      * Get the current version number for a page.
@@ -107,10 +110,11 @@ class WikiDB_backend
      * @return int The latest version number for the page.  Returns zero if
      *  no versions of a page exist.
      */
-    function get_latest_version($pagename) {
+    function get_latest_version($pagename)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
-    
+
     /**
      * Get preceding version number.
      *
@@ -119,10 +123,11 @@ class WikiDB_backend
      * @return int The version number of the version in the database which
      *  immediately preceeds $version.
      */
-    function get_previous_version($pagename, $version) {
+    function get_previous_version($pagename, $version)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
-    
+
     /**
      * Get revision meta-data and content.
      *
@@ -148,7 +153,8 @@ class WikiDB_backend
      * For description of other version meta-data see WikiDB_PageRevision::get().
      * @see WikiDB_PageRevision::get
      */
-    function get_versiondata($pagename, $version, $want_content = false) {
+    function get_versiondata($pagename, $version, $want_content = false)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
 
@@ -161,7 +167,8 @@ class WikiDB_backend
      * i.e save_page('') and DELETE nonempty id
      * Can be undone and is seen in RecentChanges.
      */
-    function delete_page($pagename) {
+    function delete_page($pagename)
+    {
         $mtime = time();
         $user = $GLOBALS['request']->_user;
         $vdata = array('author' => $user->getId(),
@@ -174,9 +181,9 @@ class WikiDB_backend
         $this->set_links($pagename, false); // links are purged.
         // SQL needs to invalidate the non_empty id
         if (! WIKIDB_NOCACHE_MARKUP) {
-            // need the hits, perms and LOCKED, otherwise you can reset the perm 
+            // need the hits, perms and LOCKED, otherwise you can reset the perm
             // by action=remove and re-create it with default perms
-            $pagedata = $this->get_pagedata($pagename); 
+            $pagedata = $this->get_pagedata($pagename);
             unset($pagedata['_cached_html']);
             $this->update_pagedata($pagename, $pagedata);
         }
@@ -187,7 +194,8 @@ class WikiDB_backend
      * Delete page (and all it's revisions) from the database.
      *
      */
-    function purge_page($pagename) {
+    function purge_page($pagename)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
 
@@ -203,7 +211,8 @@ class WikiDB_backend
      * @param $pagename string Page name.
      * @param $version integer Version to delete.
      */
-    function delete_versiondata($pagename, $version) {
+    function delete_versiondata($pagename, $version)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
 
@@ -219,7 +228,8 @@ class WikiDB_backend
      *
      * @see get_versiondata
      */
-    function set_versiondata($pagename, $version, $data) {
+    function set_versiondata($pagename, $version, $data)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
 
@@ -235,21 +245,23 @@ class WikiDB_backend
      * @param $newdata hash New revision metadata.
      * @see set_versiondata, get_versiondata
      */
-    function update_versiondata($pagename, $version, $newdata) {
+    function update_versiondata($pagename, $version, $newdata)
+    {
         $data = $this->get_versiondata($pagename, $version, true);
         if (!$data) {
             assert($data);
             return;
         }
         foreach ($newdata as $key => $val) {
-            if (empty($val))
+            if (empty($val)) {
                 unset($data[$key]);
-            else
+            } else {
                 $data[$key] = $val;
+            }
         }
         $this->set_versiondata($pagename, $version, $data);
     }
-    
+
     /**
      * Set links for page.
      *
@@ -257,10 +269,11 @@ class WikiDB_backend
      *
      * @param $links array List of page(names) which page links to.
      */
-    function set_links($pagename, $links) {
+    function set_links($pagename, $links)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
-        
+
     /**
      * Find pages which link to or are linked from a page.
      *
@@ -270,8 +283,14 @@ class WikiDB_backend
      * FIXME: array or iterator?
      * @return object A WikiDB_backend_iterator.
      */
-    function get_links($pagename, $reversed, $include_empty=false,
-                       $sortby=false, $limit=false, $exclude=false) {
+    function get_links(
+        $pagename,
+        $reversed,
+        $include_empty = false,
+        $sortby = false,
+        $limit = false,
+        $exclude = false
+    ) {
         //FIXME: implement simple (but slow) link finder.
         die("FIXME get_links");
     }
@@ -282,11 +301,12 @@ class WikiDB_backend
      * @param $pagename string The page name.
      * @return object A WikiDB_backend_iterator.
      */
-    function get_all_revisions($pagename) {
+    function get_all_revisions($pagename)
+    {
         include_once('lib/WikiDB/backend/dumb/AllRevisionsIter.php');
         return new WikiDB_backend_dumb_AllRevisionsIter($this, $pagename);
     }
-    
+
     /**
      * Get all pages in the database.
      *
@@ -306,10 +326,11 @@ class WikiDB_backend
      *
      * @return object A WikiDB_backend_iterator.
      */
-    function get_all_pages($include_defaulted, $orderby=false, $limit=false, $exclude=false) {
+    function get_all_pages($include_defaulted, $orderby = false, $limit = false, $exclude = false)
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
-        
+
     /**
      * Title or full text search.
      *
@@ -318,7 +339,7 @@ class WikiDB_backend
      *
      * @access protected
      *
-     * @param $search object A TextSearchQuery object describing the parsed query string, 
+     * @param $search object A TextSearchQuery object describing the parsed query string,
      *                       with efficient methods for SQL and PCRE match.
      *
      * @param $fullsearch boolean If true, a full text search is performed,
@@ -328,7 +349,8 @@ class WikiDB_backend
      *
      * @see WikiDB::titleSearch
      */
-    function text_search($search, $fulltext=false, $sortby=false, $limit=false, $exclude=false) {
+    function text_search($search, $fulltext = false, $sortby = false, $limit = false, $exclude = false)
+    {
         // This is method implements a simple linear search
         // through all the pages in the database.
         //
@@ -337,9 +359,14 @@ class WikiDB_backend
         include_once('lib/WikiDB/backend/dumb/TextSearchIter.php');
         // ignore $limit
         $pages = $this->get_all_pages(false, $sortby, false, $exclude);
-        return new WikiDB_backend_dumb_TextSearchIter($this, $pages, $search, $fulltext, 
-                                                      array('limit' => $limit, 
-                                                            'exclude' => $exclude));
+        return new WikiDB_backend_dumb_TextSearchIter(
+            $this,
+            $pages,
+            $search,
+            $fulltext,
+            array('limit' => $limit,
+            'exclude' => $exclude)
+        );
     }
 
     /**
@@ -352,7 +379,8 @@ class WikiDB_backend
      * @param $limit integer  No more than this many pages
      * @return object A WikiDB_backend_iterator.
      */
-    function most_popular($limit, $sortby='-hits') {
+    function most_popular($limit, $sortby = '-hits')
+    {
         // This is method fetches all pages, then
         // sorts them by hit count.
         // (Not very efficient.)
@@ -373,7 +401,8 @@ class WikiDB_backend
      * @return object A WikiDB_backend_iterator.
      * @see WikiDB::mostRecent
      */
-    function most_recent($params) {
+    function most_recent($params)
+    {
         // This method is very inefficient and searches through
         // all pages for the most recent changes.
         //
@@ -384,9 +413,10 @@ class WikiDB_backend
         return new WikiDB_backend_dumb_MostRecentIter($this, $pages, $params);
     }
 
-    function wanted_pages($exclude_from='', $exclude='', $sortby=false, $limit=false) {
+    function wanted_pages($exclude_from = '', $exclude = '', $sortby = false, $limit = false)
+    {
         include_once('lib/WikiDB/backend/dumb/WantedPagesIter.php');
-        $allpages = $this->get_all_pages(true,false,false,$exclude_from);
+        $allpages = $this->get_all_pages(true, false, false, $exclude_from);
         return new WikiDB_backend_dumb_WantedPagesIter($this, $allpages, $exclude, $sortby, $limit);
     }
 
@@ -402,7 +432,8 @@ class WikiDB_backend
      *
      *     All backends <em>should</em> support write locking.
      */
-    function lock($write_lock = true) {
+    function lock($write_lock = true)
+    {
     }
 
     /**
@@ -412,14 +443,16 @@ class WikiDB_backend
      *  unlock() is called as many times as lock() has been.  If $force is
      *  set to true, the the database is unconditionally unlocked.
      */
-    function unlock($force = false) {
+    function unlock($force = false)
+    {
     }
 
 
     /**
      * Close database.
      */
-    function close () {
+    function close()
+    {
     }
 
     /**
@@ -427,7 +460,8 @@ class WikiDB_backend
      *
      * This should flush all unwritten data to the filesystem.
      */
-    function sync() {
+    function sync()
+    {
     }
 
     /**
@@ -439,9 +473,10 @@ class WikiDB_backend
      *   trigger_error("Message goes here.", E_USER_WARNING);
      * </pre>
      *
-     * @return boolean True iff database is in a consistent state.
+     * @return bool True iff database is in a consistent state.
      */
-    function check() {
+    function check()
+    {
     }
 
     /**
@@ -450,16 +485,19 @@ class WikiDB_backend
      * This should put the database into a consistent state.
      * (I.e. rebuild indexes, etc...)
      *
-     * @return boolean True iff successful.
+     * @return bool True iff successful.
      */
-    function rebuild() {
+    function rebuild()
+    {
     }
 
-    function _parse_searchwords($search) {
+    function _parse_searchwords($search)
+    {
         $search = strtolower(trim($search));
-        if (!$search)
+        if (!$search) {
             return array(array(),array());
-        
+        }
+
         $words = preg_split('/\s+/', $search);
         $exclude = array();
         foreach ($words as $key => $word) {
@@ -472,20 +510,22 @@ class WikiDB_backend
         return array($words, $exclude);
     }
 
-    /** 
+    /**
      * Split the given limit parameter into offset,limit. (offset is optional. default: 0)
-     * Duplicate the PageList function here to avoid loading the whole PageList.php 
-     * Usage: 
+     * Duplicate the PageList function here to avoid loading the whole PageList.php
+     * Usage:
      *   list($offset,$count) = $this->limit($args['limit']);
      */
-    function limit($limit) {
-        if (strstr($limit, ','))
+    function limit($limit)
+    {
+        if (strstr($limit, ',')) {
             return preg_split('/,/D', $limit);
-        else
+        } else {
             return array(0, $limit);
+        }
     }
-    
-    /** 
+
+    /**
      * Handle sortby requests for the DB iterator and table header links.
      * Prefix the column with + or - like "+pagename","-mtime", ...
      * supported actions: 'flip_order' "mtime" => "+mtime" => "-mtime" ...
@@ -493,65 +533,83 @@ class WikiDB_backend
      * In PageList all columns are sortable. (patch by DanFr)
      * Here with the backend only some, the rest is delayed to PageList.
      * (some kind of DumbIter)
-     * Duplicate the PageList function here to avoid loading the whole 
+     * Duplicate the PageList function here to avoid loading the whole
      * PageList.php, and it forces the backend specific sortable_columns()
      */
-    function sortby ($column, $action, $sortable_columns=false) {
-        if (empty($column)) return '';
+    function sortby($column, $action, $sortable_columns = false)
+    {
+        if (empty($column)) {
+            return '';
+        }
         //support multiple comma-delimited sortby args: "+hits,+pagename"
         if (strstr($column, ',')) {
             $result = array();
             foreach (explode(',', $column) as $col) {
-                if (empty($this))
+                if (empty($this)) {
                     $result[] = WikiDB_backend::sortby($col, $action);
-                else
+                } else {
                     $result[] = $this->sortby($col, $action);
+                }
             }
-            return join(",",$result);
+            return join(",", $result);
         }
-        if (substr($column,0,1) == '+') {
-            $order = '+'; $column = substr($column,1);
-        } elseif (substr($column,0,1) == '-') {
-            $order = '-'; $column = substr($column,1);
+        if (substr($column, 0, 1) == '+') {
+            $order = '+';
+            $column = substr($column, 1);
+        } elseif (substr($column, 0, 1) == '-') {
+            $order = '-';
+            $column = substr($column, 1);
         }
         // default order: +pagename, -mtime, -hits
-        if (empty($order))
-            if (in_array($column,array('mtime','hits')))
+        if (empty($order)) {
+            if (in_array($column, array('mtime','hits'))) {
                 $order = '-';
-            else
+            } else {
                 $order = '+';
+            }
+        }
         if ($action == 'flip_order') {
             return ($order == '+' ? '-' : '+') . $column;
         } elseif ($action == 'init') {
             $this->_sortby[$column] = $order;
             return $order . $column;
         } elseif ($action == 'check') {
-            return (!empty($this->_sortby[$column]) or 
-                    ($GLOBALS['request']->getArg('sortby') and 
-                     strstr($GLOBALS['request']->getArg('sortby'),$column)));
+            return (!empty($this->_sortby[$column]) or
+                    ($GLOBALS['request']->getArg('sortby') and
+                     strstr($GLOBALS['request']->getArg('sortby'), $column)));
         } elseif ($action == 'db') {
             // native sort possible?
-            if (!empty($this) and !$sortable_columns)
+            if (!empty($this) and !$sortable_columns) {
                 $sortable_columns = $this->sortable_columns();
-            if (in_array($column, $sortable_columns))
+            }
+            if (in_array($column, $sortable_columns)) {
                 // asc or desc: +pagename, -pagename
                 return $column . ($order == '+' ? ' ASC' : ' DESC');
-            else 
+            } else {
                 return '';
+            }
         }
         return '';
     }
 
-    function sortable_columns() {
+    function sortable_columns()
+    {
         return array('pagename'/*,'mtime','author_id','author'*/);
     }
 
-    // adds surrounding quotes 
-    function quote ($s) { return "'".$s."'"; }
+    // adds surrounding quotes
+    function quote($s)
+    {
+        return "'".$s."'";
+    }
     // no surrounding quotes because we know it's a string
-    function qstr ($s)  { return $s; }
+    function qstr($s)
+    {
+        return $s;
+    }
 
-    function isSQL () {
+    function isSQL()
+    {
         return in_array(DATABASE_TYPE, array('SQL','ADODB','PDO'));
     }
 };
@@ -581,18 +639,21 @@ class WikiDB_backend_iterator
      * If this is a version iterator, the 'pagename', 'version', <strong>and</strong> 'versiondata'
      * entries are mandatory.  ('pagedata' is optional.)
      */
-    function next() {
+    function next()
+    {
         trigger_error("virtual", E_USER_ERROR);
     }
 
-    function count() {
+    function count()
+    {
         return count($this->_pages);
     }
 
     /**
      * Release resources held by this iterator.
      */
-    function free() {
+    function free()
+    {
     }
 };
 
@@ -601,40 +662,61 @@ class WikiDB_backend_iterator
  */
 class WikiDB_backend_search
 {
-    function __construct($search, &$dbh) {
+    function __construct($search, &$dbh)
+    {
         $this->_dbh = $dbh;
         $this->_case_exact =  $search->_case_exact;
         $this->_stoplist   = $search->_stoplist;
         $this->_stoplisted = array();
     }
-    function _quote($word) {
+    function _quote($word)
+    {
         return preg_quote($word, "/");
     }
     //TODO: use word anchors
-    function EXACT($word) { return "^".$this->_quote($word)."$"; }
-    function STARTS_WITH($word) { return "^".$this->_quote($word); }
-    function ENDS_WITH($word) { return $this->_quote($word)."$"; }
-    function WORD($word) { return $this->_quote($word); }
-    function REGEX($word) { return $word; }
+    function EXACT($word)
+    {
+        return "^".$this->_quote($word)."$";
+    }
+    function STARTS_WITH($word)
+    {
+        return "^".$this->_quote($word);
+    }
+    function ENDS_WITH($word)
+    {
+        return $this->_quote($word)."$";
+    }
+    function WORD($word)
+    {
+        return $this->_quote($word);
+    }
+    function REGEX($word)
+    {
+        return $word;
+    }
     //TESTME
-    function _pagename_match_clause($node) {
+    function _pagename_match_clause($node)
+    {
         $method = $node->op;
         $word = $this->$method($node->word);
         return "preg_match(\"/\".$word.\"/\"".($this->_case_exact ? "i":"").")";
     }
     /* Eliminate stoplist words.
        Keep a list of Stoplisted words to inform the poor user. */
-    function isStoplisted ($node) {
-    	// check only on WORD or EXACT fulltext search
-    	if ($node->op != 'WORD' and $node->op != 'EXACT')
-    	    return false;
+    function isStoplisted($node)
+    {
+        // check only on WORD or EXACT fulltext search
+        if ($node->op != 'WORD' and $node->op != 'EXACT') {
+            return false;
+        }
         if (preg_match("/^".$this->_stoplist."$/i", $node->word)) {
             array_push($this->_stoplisted, $node->word);
             return true;
         }
         return false;
     }
-    function getStoplisted($word) {
+    function getStoplisted($word)
+    {
         return $this->_stoplisted;
     }
 }
@@ -644,27 +726,31 @@ class WikiDB_backend_search
  */
 class WikiDB_backend_search_sql extends WikiDB_backend_search
 {
-    function _pagename_match_clause($node) {
+    function _pagename_match_clause($node)
+    {
         // word already quoted by TextSearchQuery_node_word::_sql_quote()
         $word = $node->sql();
-        if ($word == '%') // ALL shortcut
+        if ($word == '%') { // ALL shortcut
             return "1=1";
-        else
-            return ($this->_case_exact 
+        } else {
+            return ($this->_case_exact
                     ? "pagename LIKE '$word'"
                     : "LOWER(pagename) LIKE '$word'");
+        }
     }
-    function _fulltext_match_clause($node) {
+    function _fulltext_match_clause($node)
+    {
         // force word-style %word% for fulltext search
         $word = '%' . $node->_sql_quote($node->word) . '%';
         // eliminate stoplist words
-        if ($this->isStoplisted($node))
+        if ($this->isStoplisted($node)) {
             return "1=1";  // and (pagename or 1) => and 1
-        else
+        } else {
             return $this->_pagename_match_clause($node)
                 // probably convert this MATCH AGAINST or SUBSTR/POSITION without wildcards
-                . ($this->_case_exact ? " OR content LIKE '$word'" 
+                . ($this->_case_exact ? " OR content LIKE '$word'"
                                       : " OR LOWER(content) LIKE '$word'");
+        }
     }
 }
 
@@ -676,4 +762,3 @@ class WikiDB_backend_search_sql extends WikiDB_backend_search
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

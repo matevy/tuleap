@@ -20,21 +20,23 @@
  */
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use \TuleapTestCase;
-use \Planning_Milestone;
-use \PFUser;
-use \AgileDashboard_Milestone_Backlog_Backlog;
-use \AgileDashboard_BacklogItemPresenter;
-use \AgileDashboard_Milestone_Backlog_BacklogItemPresenterCollection;
+use TuleapTestCase;
+use Planning_Milestone;
+use PFUser;
+use AgileDashboard_Milestone_Backlog_Backlog;
+use AgileDashboard_BacklogItemPresenter;
+use AgileDashboard_Milestone_Backlog_BacklogItemPresenterCollection;
 
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class MilestoneResourceValidatorTest extends TuleapTestCase {
+class MilestoneResourceValidatorTest extends TuleapTestCase
+{
 
     /** @var MilestoneResourceValidator */
     private $milestone_resource_validator;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -79,7 +81,8 @@ class MilestoneResourceValidatorTest extends TuleapTestCase {
         );
     }
 
-    public function itReturnsTrueIfEverythingIsOk() {
+    public function itReturnsTrueIfEverythingIsOk()
+    {
         $this->unplanned_collection->push($this->unplanned_item);
         $this->todo_collection->push($this->todo_item);
 
@@ -96,7 +99,8 @@ class MilestoneResourceValidatorTest extends TuleapTestCase {
         $this->assertTrue($validation);
     }
 
-    public function itThrowsAnExceptionIfArtifactIdIsPassedSeveralTime() {
+    public function itThrowsAnExceptionIfArtifactIdIsPassedSeveralTime()
+    {
         $this->expectException('Tuleap\AgileDashboard\REST\v1\IdsFromBodyAreNotUniqueException');
 
         $ids = array(102, 174, 102);
@@ -104,7 +108,8 @@ class MilestoneResourceValidatorTest extends TuleapTestCase {
         $this->milestone_resource_validator->validateArtifactsFromBodyContent($ids, $this->milestone, $this->user);
     }
 
-    public function itThrowsAnExceptionIfArtifactIdDoesNotExist() {
+    public function itThrowsAnExceptionIfArtifactIdDoesNotExist()
+    {
         $this->expectException('Tuleap\AgileDashboard\REST\v1\ArtifactDoesNotExistException');
 
         stub($this->planning_factory)->getBacklogTrackersIds($this->milestone->getPlanning()->getId())->returns(array(1,2,3));
@@ -112,7 +117,8 @@ class MilestoneResourceValidatorTest extends TuleapTestCase {
         $this->milestone_resource_validator->validateArtifactsFromBodyContent($this->ids, $this->milestone, $this->user);
     }
 
-    public function itThrowsAnExceptionIfArtifactIsNotInBacklogTracker() {
+    public function itThrowsAnExceptionIfArtifactIsNotInBacklogTracker()
+    {
         $this->expectException('Tuleap\AgileDashboard\REST\v1\ArtifactIsNotInBacklogTrackerException');
 
         stub($this->planning_factory)->getBacklogTrackersIds($this->milestone->getPlanning()->getId())->returns(array(1,2,3));
@@ -122,7 +128,8 @@ class MilestoneResourceValidatorTest extends TuleapTestCase {
         $this->milestone_resource_validator->validateArtifactsFromBodyContent($this->ids, $this->milestone, $this->user);
     }
 
-    public function itThrowsAnExceptionIfArtifactIsClosedOrAlreadyPlannedInAnotherMilestone() {
+    public function itThrowsAnExceptionIfArtifactIsClosedOrAlreadyPlannedInAnotherMilestone()
+    {
         $this->expectException('Tuleap\AgileDashboard\REST\v1\ArtifactIsClosedOrAlreadyPlannedInAnotherMilestone');
 
         $this->unplanned_collection->push($this->unplanned_item);
@@ -135,7 +142,8 @@ class MilestoneResourceValidatorTest extends TuleapTestCase {
     }
 }
 
-class MilestoneResourceValidator_PatchAddRemoveTest extends TuleapTestCase {
+class MilestoneResourceValidator_PatchAddRemoveTest extends TuleapTestCase
+{
 
     /** @var MilestoneResourceValidator */
     private $milestone_resource_validator;
@@ -143,7 +151,8 @@ class MilestoneResourceValidator_PatchAddRemoveTest extends TuleapTestCase {
     private $artifact;
     private $milestone;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -160,35 +169,41 @@ class MilestoneResourceValidator_PatchAddRemoveTest extends TuleapTestCase {
         $this->milestone_resource_validator = \Mockery::mock(\Tuleap\AgileDashboard\REST\v1\MilestoneResourceValidator::class)->makePartial()->shouldAllowMockingProtectedMethods();
     }
 
-    public function itAllowsToRemoveFromContentWhenRemovedIdsArePartOfLinkedArtifacts() {
+    public function itAllowsToRemoveFromContentWhenRemovedIdsArePartOfLinkedArtifacts()
+    {
         $this->milestone_resource_validator->getValidatedArtifactsIdsToAddOrRemoveFromContent($this->user, $this->milestone, array(112, 113), null);
     }
 
-    public function itForbidsToRemoveFromContentWhenRemovedIdsArePartOfLinkedArtifacts() {
+    public function itForbidsToRemoveFromContentWhenRemovedIdsArePartOfLinkedArtifacts()
+    {
         $this->expectException('Tuleap\AgileDashboard\REST\v1\ArtifactIsNotInMilestoneContentException');
         $this->milestone_resource_validator->getValidatedArtifactsIdsToAddOrRemoveFromContent($this->user, $this->milestone, array(566, 113), null);
     }
 
-    public function itReturnsTheValidIds() {
+    public function itReturnsTheValidIds()
+    {
         $this->assertEqual(
             $this->milestone_resource_validator->getValidatedArtifactsIdsToAddOrRemoveFromContent($this->user, $this->milestone, array(112, 113), null),
             array(114, 115)
         );
     }
 
-    public function itAllowsToAddArtifactsThatAreValidForContent() {
+    public function itAllowsToAddArtifactsThatAreValidForContent()
+    {
         expect($this->milestone_resource_validator)->validateArtifactsFromBodyContentWithClosedItems(array(210), $this->milestone, $this->user)->once();
 
         $this->milestone_resource_validator->getValidatedArtifactsIdsToAddOrRemoveFromContent($this->user, $this->milestone, null, array(210));
     }
 
-    public function itDoesntAddWhenArrayIsEmpty() {
+    public function itDoesntAddWhenArrayIsEmpty()
+    {
         expect($this->milestone_resource_validator)->validateArtifactsFromBodyContentWithClosedItems()->never();
 
         $this->milestone_resource_validator->getValidatedArtifactsIdsToAddOrRemoveFromContent($this->user, $this->milestone, null, null);
     }
 
-    public function itForbidsToAddArtifactsThatAreNotValidForContent() {
+    public function itForbidsToAddArtifactsThatAreNotValidForContent()
+    {
         stub($this->milestone_resource_validator)->validateArtifactsFromBodyContentWithClosedItems(
             array(210),
             $this->milestone,
@@ -200,7 +215,8 @@ class MilestoneResourceValidator_PatchAddRemoveTest extends TuleapTestCase {
         $this->milestone_resource_validator->getValidatedArtifactsIdsToAddOrRemoveFromContent($this->user, $this->milestone, null, array(210));
     }
 
-    public function itReturnsTheAddedIdsPlusTheExistingOne() {
+    public function itReturnsTheAddedIdsPlusTheExistingOne()
+    {
         $this->milestone_resource_validator->shouldReceive('validateArtifactsFromBodyContentWithClosedItems')->andReturn(null);
 
         $this->assertEqual(
@@ -209,7 +225,8 @@ class MilestoneResourceValidator_PatchAddRemoveTest extends TuleapTestCase {
         );
     }
 
-    public function itAllowsToAddAndRemoveInSameTime() {
+    public function itAllowsToAddAndRemoveInSameTime()
+    {
         $this->milestone_resource_validator->shouldReceive('validateArtifactsFromBodyContentWithClosedItems')->andReturn(null);
 
         $this->assertEqual(
@@ -218,7 +235,8 @@ class MilestoneResourceValidator_PatchAddRemoveTest extends TuleapTestCase {
         );
     }
 
-    public function itSkipsWhenAnElementIsAddedAndRemovedAtSameTime() {
+    public function itSkipsWhenAnElementIsAddedAndRemovedAtSameTime()
+    {
         $this->milestone_resource_validator->shouldReceive('validateArtifactsFromBodyContentWithClosedItems')->andReturn(null);
 
         $this->assertEqual(
@@ -227,7 +245,8 @@ class MilestoneResourceValidator_PatchAddRemoveTest extends TuleapTestCase {
         );
     }
 
-    public function itDoesntAddAnElementAlreadyInContent() {
+    public function itDoesntAddAnElementAlreadyInContent()
+    {
         $this->milestone_resource_validator->shouldReceive('validateArtifactsFromBodyContentWithClosedItems')->andReturn(null);
 
         $this->assertEqual(

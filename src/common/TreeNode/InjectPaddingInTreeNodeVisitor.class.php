@@ -20,7 +20,8 @@
 
 require_once 'GetStateVisitor.class.php';
 
-class TreeNode_InjectPaddingInTreeNodeVisitor extends TreeNode_GetStateVisitor {
+class TreeNode_InjectPaddingInTreeNodeVisitor extends TreeNode_GetStateVisitor
+{
 
     private static $state_classes = array(
         TreeNode_GetStateVisitor::STATE_BLANK => 'tree-blank',
@@ -30,22 +31,25 @@ class TreeNode_InjectPaddingInTreeNodeVisitor extends TreeNode_GetStateVisitor {
     );
 
     /**
-     * @var boolean
+     * @var bool
      */
     private $collapsable;
 
-    public function __construct($collapsable = false) {
+    public function __construct($collapsable = false)
+    {
         $this->collapsable = $collapsable;
     }
 
-    protected function setChildState(TreeNode $child, $state) {
+    protected function setChildState(TreeNode $child, $state)
+    {
         parent::setChildState($child, $state);
         $data = $child->getData();
         $data['tree-padding'] = $this->convertStateToDivs($child, $state);
         $child->setData($data);
     }
 
-    private function convertStateToDivs(TreeNode $node, $state) {
+    private function convertStateToDivs(TreeNode $node, $state)
+    {
         $html = '';
         $template = '<div class="%s" %s>&nbsp;</div>';
         foreach ($state as $state_id) {
@@ -60,4 +64,3 @@ class TreeNode_InjectPaddingInTreeNodeVisitor extends TreeNode_GetStateVisitor {
         return $html;
     }
 }
-?>

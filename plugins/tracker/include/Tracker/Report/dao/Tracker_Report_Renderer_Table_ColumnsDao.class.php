@@ -18,9 +18,11 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject {
+class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject
+{
 
-    function searchByRendererId($renderer_id) {
+    function searchByRendererId($renderer_id)
+    {
         $renderer_id  = $this->da->escapeInt($renderer_id);
         $sql = "SELECT col.*
                 FROM tracker_report_renderer_table_columns AS col
@@ -30,7 +32,8 @@ class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    function create($renderer_id, $field_id, $width, $rank, $artlink_nature, $artlink_nature_format) {
+    function create($renderer_id, $field_id, $width, $rank, $artlink_nature, $artlink_nature_format)
+    {
         $renderer_id           = $this->da->escapeInt($renderer_id);
         $field_id              = $this->da->escapeInt($field_id);
         $width                 = $this->da->escapeInt($width);
@@ -47,7 +50,8 @@ class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    function remove($renderer_id, $field_id) {
+    function remove($renderer_id, $field_id)
+    {
         $renderer_id = $this->da->escapeInt($renderer_id);
         $field_id    = $this->da->escapeInt($field_id);
 
@@ -57,12 +61,14 @@ class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    function delete($renderer_id) {
+    function delete($renderer_id)
+    {
         $sql = "DELETE FROM tracker_report_renderer_table_columns WHERE renderer_id = ". $this->da->escapeInt($renderer_id);
         return $this->update($sql);
     }
 
-    function updateRanking($renderer_id, $field_id, $new_rank) {
+    function updateRanking($renderer_id, $field_id, $new_rank)
+    {
         $renderer_id = $this->da->escapeInt($renderer_id);
         $field_id    = $this->da->escapeInt($field_id);
         $rank        = (int)$this->prepareRanking($field_id, $renderer_id, $new_rank, 'field_id', 'renderer_id');
@@ -74,7 +80,8 @@ class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    function updateWidth($renderer_id, $field_id, $width) {
+    function updateWidth($renderer_id, $field_id, $width)
+    {
         $renderer_id = $this->da->escapeInt($renderer_id);
         $field_id    = $this->da->escapeInt($field_id);
         $width       = $this->da->escapeInt($width);
@@ -86,7 +93,8 @@ class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    function duplicate($from_renderer_id, $to_renderer_id, $field_mapping) {
+    function duplicate($from_renderer_id, $to_renderer_id, $field_mapping)
+    {
         $from_renderer_id = $this->da->escapeInt($from_renderer_id);
         $to_renderer_id   = $this->da->escapeInt($to_renderer_id);
         $sql = "INSERT INTO tracker_report_renderer_table_columns(renderer_id, field_id, width, rank, artlink_nature, artlink_nature_format)
@@ -95,7 +103,7 @@ class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject {
                 WHERE renderer_id = $from_renderer_id";
         $this->update($sql);
 
-        foreach($field_mapping as $mapping) {
+        foreach ($field_mapping as $mapping) {
             $from  = $this->da->escapeInt($mapping['from']);
             $to    = $this->da->escapeInt($mapping['to']);
             $sql = "UPDATE tracker_report_renderer_table_columns
@@ -106,4 +114,3 @@ class Tracker_Report_Renderer_Table_ColumnsDao extends DataAccessObject {
         }
     }
 }
-?>

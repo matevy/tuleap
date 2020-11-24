@@ -19,12 +19,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class BackendCommandException extends Exception {
+class BackendCommandException extends Exception
+{
     private $command;
     private $output;
     private $return_value;
 
-    public function __construct($command, $output, $return_value) {
+    public function __construct($command, $output, $return_value)
+    {
         $this->command      = $command;
         $this->output       = $output;
         $this->return_value = $return_value;
@@ -32,15 +34,18 @@ class BackendCommandException extends Exception {
         parent::__construct($message, $return_value);
     }
 
-    public function getCommand() {
+    public function getCommand()
+    {
         return $this->command;
     }
 
-    public function getOutput() {
+    public function getOutput()
+    {
         return $this->output;
     }
 
-    public function getReturnValue() {
+    public function getReturnValue()
+    {
         return $this->return_value;
     }
 }

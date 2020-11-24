@@ -27,7 +27,8 @@
  *
  * The display of a folder (its children) would be great
  */
-class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
+class Docman_Widget_Embedded extends Widget implements \Tuleap\Docman\Item\ItemVisitor
+{
 
     /**
      * The title given by the user to the widget
@@ -51,7 +52,8 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
      * @param string $owner_type the type of the owner
      * @param string $plugin_path the path of the plugin to build urls
      */
-    public function __construct($id, $owner_id, $owner_type, $plugin_path) {
+    public function __construct($id, $owner_id, $owner_type, $plugin_path)
+    {
         parent::__construct($id);
         $this->setOwner($owner_id, $owner_type);
         $this->plugin_path = $plugin_path;
@@ -62,7 +64,8 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
      * Else it is the title given by the user
      * @return string
      */
-    public function getTitle() {
+    public function getTitle()
+    {
         return $this->plugin_docman_widget_embedded_title ?:
                $GLOBALS['Language']->getText('plugin_docman', 'widget_title_embedded');
     }
@@ -71,7 +74,8 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
      * Compute the content of the widget
      * @return string html
      */
-    public function getContent() {
+    public function getContent()
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $content = '';
         if ($this->plugin_docman_widget_embedded_item_id) {
@@ -88,9 +92,10 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
     /**
      * Says if the content of the widget can be displayed through an ajax call
      * If true, then the dashboard will be rendered faster but the page will be a little bit crappy until full load.
-     * @return boolean
+     * @return bool
      */
-    public function isAjax() {
+    public function isAjax()
+    {
         return true;
     }
 
@@ -173,7 +178,8 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
      * Lazy load the content
      * @param int $id the id of the content
      */
-    public function loadContent($id) {
+    public function loadContent($id)
+    {
         $sql = "SELECT * FROM plugin_docman_widget_embedded WHERE owner_id = ". $this->owner_id ." AND owner_type = '". $this->owner_type ."' AND id = ". $id;
         $res = db_query($sql);
         if ($res && db_numrows($res)) {
@@ -189,7 +195,8 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
      * @param Codendi_Request $request
      * @return int the id of the new content
      */
-    public function create(Codendi_Request $request) {
+    public function create(Codendi_Request $request)
+    {
         $content_id = false;
         $vItem_id = new Valid_String('item_id');
         $vItem_id->setErrorMessage("Unable to add the widget. Please give an item id.");
@@ -213,22 +220,23 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
     /**
      * Update the preferences
      * @param Codendi_Request $request
-     * @return boolean true if something has been updated
+     * @return bool true if something has been updated
      */
-    function updatePreferences(Codendi_Request $request) {
+    function updatePreferences(Codendi_Request $request)
+    {
         $done = false;
         $vContentId = new Valid_UInt('content_id');
         $vContentId->required();
         if (($plugin_docman_widget_embedded = $request->get('plugin_docman_widget_embedded')) && $request->valid($vContentId)) {
             $vItem_id = new Valid_String('item_id');
-            if($request->validInArray('plugin_docman_widget_embedded', $vItem_id)) {
+            if ($request->validInArray('plugin_docman_widget_embedded', $vItem_id)) {
                 $item_id = " item_id   = ". db_ei($plugin_docman_widget_embedded['item_id']) ." ";
             } else {
                 $item_id = ' item_id = item_id ';
             }
 
             $vTitle = new Valid_String('title');
-            if($request->validInArray('plugin_docman_widget_embedded', $vTitle)) {
+            if ($request->validInArray('plugin_docman_widget_embedded', $vTitle)) {
                 $title = " title = '". db_escape_string($plugin_docman_widget_embedded['title']) ."' ";
             } else {
                 $title = ' title = title ';
@@ -250,7 +258,8 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
      * We must delete its content.
      * @param int $id the id of the content
      */
-    public function destroy($id) {
+    public function destroy($id)
+    {
         $sql = 'DELETE FROM plugin_docman_widget_embedded WHERE id = '. $id .' AND owner_id = '. $this->owner_id ." AND owner_type = '". $this->owner_type ."'";
         db_query($sql);
     }
@@ -258,9 +267,10 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
     /**
      * Says if the widget allows (or not) more than one instance on the same dashboard
      * It's up to the widget to decide if it is relevant.
-     * @return boolean
+     * @return bool
      */
-    function isUnique() {
+    function isUnique()
+    {
         return false;
     }
 
@@ -269,7 +279,8 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
      * Here are some exemple of categories used by Codendi: forum, frs, scm, trackers + plugin's ones
      * @return string
      */
-    function getCategory() {
+    function getCategory()
+    {
         return dgettext('tuleap-docman', 'Document manager');
     }
 
@@ -278,7 +289,8 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
      * @param int $item_id the id of the item to retrieve
      * @return Docman_Item
      */
-    protected function getItem($item_id) {
+    protected function getItem($item_id)
+    {
         $item = null;
         $dao = new Docman_ItemDao(CodendiDataAccess::instance());
         if ($row = $dao->searchByid($item_id)->getRow()) {
@@ -293,29 +305,35 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
     }
 
 
-    function visitFolder($item, $params = array()) {
+    public function visitFolder(Docman_Folder $item, $params = array())
+    {
         // do nothing
         return '';
     }
 
-    function visitDocument($item, $params = array()) {
+    function visitDocument($item, $params = array())
+    {
         // do nothing
         return '';
     }
 
-    function visitWiki($item, $params = array()) {
+    public function visitWiki(Docman_Wiki $item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    function visitLink($item, $params = array()) {
+    public function visitLink(Docman_Link $item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    function visitFile($item, $params = array()) {
+    public function visitFile(Docman_File $item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    function visitEmbeddedFile($item, $params = array()) {
+    public function visitEmbeddedFile(Docman_EmbeddedFile $item, $params = array())
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
         $version = $item->getCurrentVersion();
@@ -342,12 +360,18 @@ class Docman_Widget_Embedded extends Widget /* implements Visitor */ {
         return $html;
     }
 
-    function visitEmpty($item, $params = array()) {
+    public function visitEmpty(Docman_Empty $item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    function getDescription() {
-        return $GLOBALS['Language']->getText('plugin_docman','widget_description_embedded');
+    public function visitItem(Docman_Item $item, array $params = [])
+    {
+        return '';
     }
 
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_docman', 'widget_description_embedded');
+    }
 }

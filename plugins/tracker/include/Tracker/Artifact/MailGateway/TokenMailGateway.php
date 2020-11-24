@@ -18,13 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_MailGateway_TokenMailGateway extends Tracker_Artifact_MailGateway_MailGateway {
+class Tracker_Artifact_MailGateway_TokenMailGateway extends Tracker_Artifact_MailGateway_MailGateway
+{
 
-    protected function canCreateArtifact(Tracker $tracker) {
+    protected function canCreateArtifact(Tracker $tracker)
+    {
         return false;
     }
 
-    protected function canUpdateArtifact(Tracker $tracker) {
+    protected function canUpdateArtifact(Tracker $tracker)
+    {
         return $this->tracker_artifactbyemail->canUpdateArtifactInTokenMode($tracker);
     }
 }

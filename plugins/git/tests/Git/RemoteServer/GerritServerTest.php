@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,11 +18,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once dirname(__FILE__).'/../../bootstrap.php';
+require_once __DIR__.'/../../bootstrap.php';
 
-class Git_RemoteServer_GerritServerTest extends TuleapTestCase {
+class GerritServerTest extends TuleapTestCase
+{
 
-    public function itDoesNotNeedToCustomizeSSHConfigOfCodendiadmOrRoot() {
+    public function itDoesNotNeedToCustomizeSSHConfigOfCodendiadmOrRoot()
+    {
         $id                   = 1;
         $host                 = 'le_host';
         $http_port            = 'le_http_port';
@@ -55,7 +57,8 @@ class Git_RemoteServer_GerritServerTest extends TuleapTestCase {
         $this->assertEqual($expected, $server->getCloneSSHUrl("le_project"));
     }
 
-    public function itPrunesDefaultHTTPPortForAdminUrl() {
+    public function itPrunesDefaultHTTPPortForAdminUrl()
+    {
         $id                   = 1;
         $host                 = 'le_host';
         $http_port            = '80';
@@ -87,7 +90,8 @@ class Git_RemoteServer_GerritServerTest extends TuleapTestCase {
         $this->assertEqual($server->getProjectAdminUrl('gerrit_project_name'), 'http://le_host/#/admin/projects/gerrit_project_name');
     }
 
-    public function itUseTheCustomHTTPPortForAdminUrl() {
+    public function itUseTheCustomHTTPPortForAdminUrl()
+    {
         $id                   = 1;
         $host                 = 'le_host';
         $http_port            = '8080';
@@ -118,7 +122,8 @@ class Git_RemoteServer_GerritServerTest extends TuleapTestCase {
         $this->assertEqual($server->getProjectAdminUrl('gerrit_project_name'), 'http://le_host:8080/#/admin/projects/gerrit_project_name');
     }
 
-    public function itGivesTheUrlToProjectRequests() {
+    public function itGivesTheUrlToProjectRequests()
+    {
         $id                   = 1;
         $host                 = 'le_host';
         $http_port            = '8080';
@@ -150,7 +155,8 @@ class Git_RemoteServer_GerritServerTest extends TuleapTestCase {
         $this->assertEqual($server->getProjectUrl('gerrit_project_name'), 'http://le_host:8080/#/q/project:gerrit_project_name,n,z');
     }
 
-     public function itGivesTheUrlWithHTTPSToProjectRequestsIfWeUseSSL() {
+    public function itGivesTheUrlWithHTTPSToProjectRequestsIfWeUseSSL()
+    {
         $id                   = 1;
         $host                 = 'le_host';
         $http_port            = '8080';
@@ -181,7 +187,8 @@ class Git_RemoteServer_GerritServerTest extends TuleapTestCase {
         $this->assertEqual($server->getProjectUrl('gerrit_project_name'), 'https://le_host:8080/#/q/project:gerrit_project_name,n,z');
     }
 
-    public function itGivesTheReplicationKeyToProjectRequests() {
+    public function itGivesTheReplicationKeyToProjectRequests()
+    {
         $id                   = 1;
         $host                 = 'le_host';
         $http_port            = '8080';
@@ -212,13 +219,9 @@ class Git_RemoteServer_GerritServerTest extends TuleapTestCase {
 
         $this->assertEqual($server->getReplicationKey('gerrit_project_name'), $replication_key);
     }
-}
 
-class Git_RemoteServer_GerritServer_EndUserCloneUrlTest extends TuleapTestCase {
-
-    public function setUp() {
-        parent::setUp();
-
+    public function itGivesTheCloneUrlForTheEndUserWhoWantToCloneRepository()
+    {
         $id                   = 1;
         $host                 = 'le_host';
         $http_port            = '8080';
@@ -232,7 +235,7 @@ class Git_RemoteServer_GerritServer_EndUserCloneUrlTest extends TuleapTestCase {
         $auth_type            = 'Digest';
         $replication_password = '';
 
-        $this->server = new Git_RemoteServer_GerritServer(
+        $server = new Git_RemoteServer_GerritServer(
             $id,
             $host,
             $ssh_port,
@@ -247,10 +250,7 @@ class Git_RemoteServer_GerritServer_EndUserCloneUrlTest extends TuleapTestCase {
             $auth_type
         );
 
-    }
-
-    public function itGivesTheCloneUrlForTheEndUserWhoWantToCloneRepository() {
-        $user = stub('Git_Driver_Gerrit_User')->getSshUserName()->returns('blurp');
-        $this->assertEqual($this->server->getEndUserCloneUrl('gerrit_project_name', $user), 'ssh://blurp@le_host:29418/gerrit_project_name.git');
+        $user = \Mockery::spy(\Git_Driver_Gerrit_User::class)->shouldReceive('getSshUserName')->andReturns('blurp')->getMock();
+        $this->assertEqual($server->getEndUserCloneUrl('gerrit_project_name', $user), 'ssh://blurp@le_host:29418/gerrit_project_name.git');
     }
 }

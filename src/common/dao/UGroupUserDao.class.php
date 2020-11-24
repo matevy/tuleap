@@ -23,12 +23,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('www/project/admin/ugroup_utils.php');
+require_once __DIR__. '/../../www/project/admin/ugroup_utils.php';
 
 /**
  *  Data Access Object for ProjectUGroup
  */
-class UGroupUserDao extends DataAccessObject {
+class UGroupUserDao extends DataAccessObject
+{
 
     /**
     * Searches ProjectUGroup members by UGroupId
@@ -36,11 +37,12 @@ class UGroupUserDao extends DataAccessObject {
     * Return all Active or Restricted ugroup members
     * Only return active & restricted to keep it coherent with Group::getMembersUserNames
     *
-    * @param Integer $ugroup_id Id of the ugroup
+    * @param int $ugroup_id Id of the ugroup
     *
     * @return DataAccessResult
     */
-    function searchUserByStaticUGroupId($ugroup_id) {
+    function searchUserByStaticUGroupId($ugroup_id)
+    {
         $ugroup_id = $this->da->escapeInt($ugroup_id);
         $sql_order = UserHelper::instance()->getDisplayNameSQLOrder();
 
@@ -53,13 +55,14 @@ class UGroupUserDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchUserByStaticUGroupIdIncludingSuspended($ugroup_id) {
+    public function searchUserByStaticUGroupIdIncludingSuspendedAndDeleted($ugroup_id)
+    {
         $ugroup_id = $this->da->escapeInt($ugroup_id);
 
         $sql = "SELECT *
                 FROM ugroup_user INNER JOIN user USING(user_id)
                 WHERE ugroup_id = $ugroup_id
-                AND user.status IN ('A', 'R', 'S')
+                AND user.status IN ('A', 'R', 'S', 'D')
                 ORDER BY user_name";
 
         return $this->retrieve($sql);
@@ -71,13 +74,14 @@ class UGroupUserDao extends DataAccessObject {
      * Return all Active or Restricted ugroup members
      * Only return active & restricted to keep it coherent with Group::getMembersUserNames
      *
-     * @param Integer $ugroup_id Id of the ugroup
-     * @param Integer $limit
-     * @param Integer $offset
+     * @param int $ugroup_id Id of the ugroup
+     * @param int $limit
+     * @param int $offset
      *
      * @return DataAccessResult
      */
-    public function searchUsersByStaticUGroupIdPaginated($ugroup_id, $limit, $offset) {
+    public function searchUsersByStaticUGroupIdPaginated($ugroup_id, $limit, $offset)
+    {
         $ugroup_id = $this->da->escapeInt($ugroup_id);
         $limit     = $this->da->escapeInt($limit);
         $offset    = $this->da->escapeInt($offset);
@@ -95,11 +99,12 @@ class UGroupUserDao extends DataAccessObject {
     /**
      * Count ProjectUGroup members by UGroupId
      *
-     * @param Integer $ugroup_id Id of the ugroup
+     * @param int $ugroup_id Id of the ugroup
      *
      * @return DataAccessResult
      */
-    function countUserByStaticUGroupId($ugroup_id) {
+    function countUserByStaticUGroupId($ugroup_id)
+    {
         $ugroup_id = $this->da->escapeInt($ugroup_id);
 
         $sql = "SELECT count(*) AS count_users
@@ -114,12 +119,13 @@ class UGroupUserDao extends DataAccessObject {
     /**
      * Return project admins of given static group
      *
-     * @param integer $groupId Id of the project
+     * @param int $groupId Id of the project
      * @param array   $ugroups List of ugroups
      *
      * @return DataAccessResult|false
      */
-    function returnProjectAdminsByStaticUGroupId($groupId, $ugroups) {
+    function returnProjectAdminsByStaticUGroupId($groupId, $ugroups)
+    {
         $sql = 'SELECT u.email as email FROM user u
                     JOIN ugroup_user uu 
                     USING(user_id)
@@ -136,12 +142,13 @@ class UGroupUserDao extends DataAccessObject {
     /**
      * Get uGroup members for both dynamic & sttic uGroups
      *
-     * @param Integer $ugroupId Id of the uGroup
-     * @param Integer $groupId  Id of the project
+     * @param int $ugroupId Id of the uGroup
+     * @param int $groupId Id of the project
      *
      * @return DataAccessResult
      */
-    public function searchUserByDynamicUGroupId($ugroupId, $groupId) {
+    public function searchUserByDynamicUGroupId($ugroupId, $groupId)
+    {
         $sql = ugroup_db_get_dynamic_members($ugroupId, false, $groupId, true);
         if (! $sql) {
             return new DataAccessResultEmpty();
@@ -149,8 +156,9 @@ class UGroupUserDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchUserByDynamicUGroupIdIncludingSuspended($ugroupId, $groupId) {
-        $sql = ugroup_db_get_dynamic_members($ugroupId, false, $groupId, false, null, true);
+    public function searchUserByDynamicUGroupIdIncludingSuspendedAndDeleted($ugroupId, $groupId)
+    {
+        $sql = ugroup_db_get_dynamic_members($ugroupId, false, $groupId, false, null, true, true);
 
         if (! $sql) {
             return new DataAccessResultEmpty();
@@ -162,14 +170,15 @@ class UGroupUserDao extends DataAccessObject {
     /**
      * Get uGroup members for both dynamic & static uGroups
      *
-     * @param Integer $ugroupId Id of the uGroup
-     * @param Integer $groupId  Id of the project
-     * @param Integer $limit
-     * @param Integer $offset
+     * @param int $ugroupId Id of the uGroup
+     * @param int $groupId Id of the project
+     * @param int $limit
+     * @param int $offset
      *
      * @return DataAccessResult | false
      */
-    public function searchUsersByDynamicUGroupIdPaginated($ugroupId, $groupId, $limit, $offset) {
+    public function searchUsersByDynamicUGroupIdPaginated($ugroupId, $groupId, $limit, $offset)
+    {
         $ugroupId = $this->da->escapeInt($ugroupId);
         $groupId  = $this->da->escapeInt($groupId);
         $limit    = $this->da->escapeInt($limit);
@@ -192,19 +201,21 @@ class UGroupUserDao extends DataAccessObject {
      * @param int $group_id
      * @return bool
      */
-    public function isDynamicUGroupMember($user_id, $ugroup_id, $group_id) {
+    public function isDynamicUGroupMember($user_id, $ugroup_id, $group_id)
+    {
         return ugroup_user_is_member($user_id, $ugroup_id, $group_id);
     }
 
     /**
      * Clone a given user group from another one
      *
-     * @param integer $source_ugroup_id Id of the user group from which we will copy users
-     * @param integer $target_ugroup_id Id of the target user group
+     * @param int $source_ugroup_id Id of the user group from which we will copy users
+     * @param int $target_ugroup_id Id of the target user group
      *
-     * @return boolean
+     * @return bool
      */
-    public function cloneUgroup($source_ugroup_id, $target_ugroup_id) {
+    public function cloneUgroup($source_ugroup_id, $target_ugroup_id)
+    {
         $source_ugroup_id = $this->da->escapeInt($source_ugroup_id);
         $target_ugroup_id = $this->da->escapeInt($target_ugroup_id);
 
@@ -246,11 +257,12 @@ class UGroupUserDao extends DataAccessObject {
     /**
      * Remove all users of an ugroup
      *
-     * @param Integer $ugroupId Id of the user group
+     * @param int $ugroupId Id of the user group
      *
-     * @return Boolean
+     * @return bool
      */
-    public function resetUgroupUserList($ugroupId) {
+    public function resetUgroupUserList($ugroupId)
+    {
         $ugroupId = $this->da->escapeInt($ugroupId);
         $sql      = "DELETE FROM ugroup_user WHERE ugroup_id = $ugroupId";
         return $this->update($sql);

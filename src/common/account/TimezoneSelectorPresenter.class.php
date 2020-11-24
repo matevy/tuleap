@@ -17,12 +17,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Account_TimezoneSelectorPresenter {
+class Account_TimezoneSelectorPresenter
+{
 
     /**
      * @param string $current_timezone falsy if no current timezone
      */
-    public function __construct($current_timezone) {
+    public function __construct($current_timezone)
+    {
         $this->has_one_selected = $current_timezone != false;
         $this->placeholder      = $GLOBALS['Language']->getText('account_options', 'timezone');
 

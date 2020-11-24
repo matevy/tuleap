@@ -17,15 +17,18 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
- 
+
 require_once('include/DataAccessObject.class.php');
 
-class GenericUserDao extends DataAccessObject {
-    public function __construct($da = null) {
+class GenericUserDao extends DataAccessObject
+{
+    public function __construct($da = null)
+    {
         parent::__construct($da);
     }
 
-    public function save($group_id, $user_id) {
+    public function save($group_id, $user_id)
+    {
         $group_id = $this->da->escapeInt($group_id);
         $user_id  = $this->da->escapeInt($user_id);
 
@@ -34,13 +37,12 @@ class GenericUserDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function fetch($group_id) {
+    public function fetch($group_id)
+    {
         $group_id = $this->da->escapeInt($group_id);
 
         $sql = "SELECT * FROM generic_user WHERE group_id = $group_id";
 
         return $this->retrieve($sql);
     }
-    
 }
-?>

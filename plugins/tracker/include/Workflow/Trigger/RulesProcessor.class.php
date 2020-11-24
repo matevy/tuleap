@@ -23,7 +23,8 @@ use Tuleap\Tracker\Workflow\WorkflowBackendLogger;
 /**
  * Apply the Rule target if all rules conditions are met after artifact change
  */
-class Tracker_Workflow_Trigger_RulesProcessor {
+class Tracker_Workflow_Trigger_RulesProcessor // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+{
 
     /** @var Tracker_Workflow_WorkflowUser */
     private $workflow_user;
@@ -31,7 +32,13 @@ class Tracker_Workflow_Trigger_RulesProcessor {
     /** @var WorkflowBackendLogger */
     private $logger;
 
-    public function __construct(Tracker_Workflow_WorkflowUser $workflow_user, WorkflowBackendLogger $logger) {
+    /**
+     * @var array<int, true>
+     */
+    private $artifacts_visited_in_processing = [];
+
+    public function __construct(Tracker_Workflow_WorkflowUser $workflow_user, WorkflowBackendLogger $logger)
+    {
         $this->workflow_user = $workflow_user;
         $this->logger        = $logger;
     }
@@ -42,11 +49,26 @@ class Tracker_Workflow_Trigger_RulesProcessor {
      * @param Tracker_Artifact $artifact
      * @param Tracker_Workflow_Trigger_TriggerRule $rule
      */
-    public function process(Tracker_Artifact $artifact, Tracker_Workflow_Trigger_TriggerRule $rule) {
+    public function process(Tracker_Artifact $artifact, Tracker_Workflow_Trigger_TriggerRule $rule)
+    {
         $this->logger->start(__METHOD__, $artifact->getXRef(), $rule->getId());
 
         $parent = $artifact->getParentWithoutPermissionChecking();
-        if ($parent && ! $this->parentAlreadyHasTargetValue($parent, $rule)) {
+
+        if ($parent === null) {
+            $this->logger->end(__METHOD__, $artifact->getId(), $rule->getId());
+            return;
+        }
+
+        if (isset($this->artifacts_visited_in_processing[$artifact->getId()])) {
+            unset($this->artifacts_visited_in_processing[$artifact->getId()]);
+            $this->logger->error('Cycle detected in the hierarchy while processing trigger rules for artifact #' . $artifact->getId());
+            $this->logger->end(__METHOD__, $artifact->getId(), $rule->getId());
+            return;
+        }
+        $this->artifacts_visited_in_processing[$artifact->getId()] = true;
+
+        if (! $this->parentAlreadyHasTargetValue($parent, $rule)) {
             $this->logger->debug('Parent '. $parent->getXRef() .' does not have target value…');
             $processor_strategy = $this->getRuleStrategy($artifact, $rule);
             if ($processor_strategy->allPrecondtionsAreMet()) {
@@ -55,10 +77,22 @@ class Tracker_Workflow_Trigger_RulesProcessor {
             }
         }
 
+        unset($this->artifacts_visited_in_processing[$artifact->getId()]);
         $this->logger->end(__METHOD__, $artifact->getId(), $rule->getId());
     }
 
-    private function updateParent(Tracker_Artifact $parent, Tracker_Artifact $child, Tracker_Workflow_Trigger_TriggerRule $rule) {
+    private function updateParent(Tracker_Artifact $parent, Tracker_Artifact $child, Tracker_Workflow_Trigger_TriggerRule $rule) : void
+    {
+        $rule_parent_target_tracker_id = $rule->getTargetTracker()->getId();
+        if ($parent->getTrackerId() !== $rule_parent_target_tracker_id) {
+            $this->logger->error(
+                'Rule #' . $rule->getId() . ' tries to update the parent artifact #' . $parent->getId() .
+                ' but this artifact is not in parent tracker #' . $rule_parent_target_tracker_id . '. This is likely due to' .
+                ' an inconsistency in the tracker hierarchy and the defined rules.'
+            );
+            return;
+        }
+
         $target = $rule->getTarget();
         try {
             $comment = '<p>'.$GLOBALS['Language']->getText('workflow_trigger_rules_processor', 'parent_update', array(
@@ -84,11 +118,13 @@ class Tracker_Workflow_Trigger_RulesProcessor {
         }
     }
 
-    private function parentAlreadyHasTargetValue(Tracker_Artifact $parent, Tracker_Workflow_Trigger_TriggerRule $rule) {
+    private function parentAlreadyHasTargetValue(Tracker_Artifact $parent, Tracker_Workflow_Trigger_TriggerRule $rule)
+    {
         return $rule->getTarget()->isSetForArtifact($parent);
     }
 
-    private function getRuleStrategy(Tracker_Artifact $artifact, Tracker_Workflow_Trigger_TriggerRule $rule) {
+    private function getRuleStrategy(Tracker_Artifact $artifact, Tracker_Workflow_Trigger_TriggerRule $rule)
+    {
         if ($rule->getCondition() == Tracker_Workflow_Trigger_RulesBuilderData::CONDITION_AT_LEAST_ONE) {
             return new Tracker_Workflow_Trigger_RulesProcessor_AtLeastOneStrategy();
         } else {
@@ -96,5 +132,3 @@ class Tracker_Workflow_Trigger_RulesProcessor {
         }
     }
 }
-
-?>

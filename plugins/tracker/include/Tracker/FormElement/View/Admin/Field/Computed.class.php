@@ -1,6 +1,6 @@
 <?php
-/*
- * Copyright (C) Enalean, 2016. All Rights Reserved
+/**
+ * Copyright (C) Enalean, 2016 - Present. All Rights Reserved
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,10 +18,12 @@
 
 namespace Tuleap\Tracker\FormElement\View\Admin\Field;
 
-use \Tracker_FormElement_View_Admin_Field;
+use Tracker_FormElement_View_Admin_Field;
 
 class Computed extends Tracker_FormElement_View_Admin_Field
 {
+    private const DEFAULT_VALUE_KEY = 'default_value';
+
     protected function fetchAdminSpecificProperty($key, $property)
     {
         $html = '';
@@ -56,6 +58,10 @@ class Computed extends Tracker_FormElement_View_Admin_Field
                 $html .= '</div>';
                 break;
             case 'string':
+                if ($key === self::DEFAULT_VALUE_KEY) {
+                    $html .= parent::fetchAdminSpecificProperty($key, $property);
+                }
+
                 if ($this->isMigrated()) {
                     break;
                 }

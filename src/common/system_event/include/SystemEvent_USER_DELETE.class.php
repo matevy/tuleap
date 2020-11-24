@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  *
- * 
+ *
  */
 
 
@@ -26,27 +26,30 @@
 * System Event classes
 *
 */
-class SystemEvent_USER_DELETE extends SystemEvent {
-    
+class SystemEvent_USER_DELETE extends SystemEvent
+{
+
     /**
-     * Verbalize the parameters so they are readable and much user friendly in 
+     * Verbalize the parameters so they are readable and much user friendly in
      * notifications
-     * 
-     * @param bool $with_link true if you want links to entities. The returned 
+     *
+     * @param bool $with_link true if you want links to entities. The returned
      * string will be html instead of plain/text
      *
      * @return string
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $txt = '';
         $txt .= 'user: '. $this->verbalizeUserId($this->getIdFromParam($this->parameters), $with_link);
         return $txt;
     }
-    
-    /** 
+
+    /**
      * Process stored event
      */
-    function process() {
+    function process()
+    {
         // Check parameters
         $user_id=$this->getIdFromParam($this->parameters);
 
@@ -63,7 +66,4 @@ class SystemEvent_USER_DELETE extends SystemEvent {
         $this->done();
         return true;
     }
-
 }
-
-?>

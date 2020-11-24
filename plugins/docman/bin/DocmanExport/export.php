@@ -26,10 +26,9 @@
  * How to compare 2 dumps:
  * diff -u -I "[ ]*<date>.*</date>" -I "[ ]*<create_date>.*</create_date>" -I "[ ]*<update_date>.*</update_date>" -I "[ ]*<owner>.*</owner>" -I "[ ]*<author>.*</author>" file1.xml file2.xml
  */
-set_include_path(get_include_path() .PATH_SEPARATOR. dirname(__FILE__).'/../../../../src' .PATH_SEPARATOR. dirname(__FILE__).'/../../../../src/www/include');
-require 'pre.php';
-require 'XMLExport.class.php';
-require 'Docman_ExportException.class.php';
+require_once __DIR__ . '/../../../../src/www/include/pre.php';
+require __DIR__ . '/XMLExport.class.php';
+require __DIR__ . '/Docman_ExportException.class.php';
 
 
 $consoleLogger = new Log_ConsoleLogger();
@@ -41,18 +40,19 @@ if ($sys_user !== 'root' && $sys_user !== ForgeConfig::get('sys_http_user')) {
     return false;
 }
 
-function usage() {
+function usage()
+{
     $consoleLogger = new Log_ConsoleLogger();
     $consoleLogger->error("Usage: export.php groupId targetname");
 }
 
-if(!isset($argv[2])) {
+if (!isset($argv[2])) {
     $consoleLogger->error("No target directory specified");
     usage();
     return false;
 }
 
-if(is_file($argv[2])) {
+if (is_file($argv[2])) {
     $consoleLogger->error("Target directoy already exists");
     return false;
 }
@@ -66,7 +66,7 @@ try {
     $XMLExport->setPackagePath($argv[2]);
     $XMLExport->setArchiveName(basename($argv[2]));
     $XMLExport->dumpPackage();
-}catch (Exception $exception) {
+} catch (Exception $exception) {
     $consoleLogger->error("Export failed : ".$exception->getMessage());
     return false;
 }

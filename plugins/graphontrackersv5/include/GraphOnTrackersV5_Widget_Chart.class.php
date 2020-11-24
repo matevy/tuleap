@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2011 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -30,7 +30,8 @@ require_once('data-access/GraphOnTrackersV5_ChartFactory.class.php');
 *
 * Tracker Chart
 */
-abstract class GraphOnTrackersV5_Widget_Chart extends Widget {
+abstract class GraphOnTrackersV5_Widget_Chart extends Widget
+{
     var $chart_title;
     var $chart_id;
 
@@ -40,11 +41,13 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget {
         $this->setOwner($owner_id, $owner_type);
     }
 
-    function getTitle() {
+    function getTitle()
+    {
         return $this->chart_title ?: 'Tracker Chart';
     }
 
-    public function getContent() {
+    public function getContent()
+    {
         $chart = GraphOnTrackersV5_ChartFactory::instance()->getChart(
             null,
             $this->chart_id,
@@ -60,7 +63,8 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget {
         return $content;
     }
 
-    public function isAjax() {
+    public function isAjax()
+    {
         return false;
     }
 
@@ -142,7 +146,8 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget {
         $res = db_query($sql);
         return db_insertid($res);
     }
-    function loadContent($id) {
+    function loadContent($id)
+    {
         $sql = "SELECT * FROM plugin_graphontrackersv5_widget_chart WHERE owner_id = ". $this->owner_id ." AND owner_type = '". $this->owner_type ."' AND id = ". $id;
         $res = db_query($sql);
         if ($res && db_numrows($res)) {
@@ -152,12 +157,13 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget {
             $this->content_id = $id;
         }
     }
-    function create(Codendi_Request $request) {
+    function create(Codendi_Request $request)
+    {
         $content_id = false;
         $vId = new Valid_UInt('chart_id');
         $vId->setErrorMessage("Can't add empty chart id");
         $vId->required();
-        if($request->validInArray('chart', $vId)) {
+        if ($request->validInArray('chart', $vId)) {
             $chart = $request->get('chart');
             $sql = 'INSERT INTO plugin_graphontrackersv5_widget_chart (owner_id, owner_type, title, chart_id) VALUES ('. $this->owner_id .", '". $this->owner_type ."', '". db_escape_string($chart['title']) ."', ". db_escape_int($chart['chart_id']) .")";
             $res = db_query($sql);
@@ -165,20 +171,21 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget {
         }
         return $content_id;
     }
-    function updatePreferences(Codendi_Request $request) {
+    function updatePreferences(Codendi_Request $request)
+    {
         $done = false;
         $vContentId = new Valid_UInt('content_id');
         $vContentId->required();
         if (($chart = $request->get('chart')) && $request->valid($vContentId)) {
             $vId = new Valid_UInt('chart_id');
-            if($request->validInArray('chart', $vId)) {
+            if ($request->validInArray('chart', $vId)) {
                 $id = " chart_id   = ". db_escape_int($chart['chart_id']) ." ";
             } else {
                 $id = '';
             }
 
             $vTitle = new Valid_String('title');
-            if($request->validInArray('chart', $vTitle)) {
+            if ($request->validInArray('chart', $vTitle)) {
                 $title = " title = '". db_escape_string($chart['title']) ."' ";
             } else {
                 $title = '';
@@ -192,15 +199,18 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget {
         }
         return $done;
     }
-    function destroy($id) {
+    function destroy($id)
+    {
         $sql = 'DELETE FROM plugin_graphontrackersv5_widget_chart WHERE id = '. $id .' AND owner_id = '. $this->owner_id ." AND owner_type = '". $this->owner_type ."'";
         db_query($sql);
     }
-    function isUnique() {
+    function isUnique()
+    {
         return false;
     }
 
-    function getCategory() {
+    function getCategory()
+    {
         return dgettext('tuleap-tracker', 'Trackers');
     }
 
@@ -218,8 +228,8 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget {
     public function getStylesheetDependencies()
     {
         $include_assets = new IncludeAssets(
-            __DIR__ . '/../www/themes/default/assets',
-            GRAPH_ON_TRACKERS_V5_URL . '/themes/default/assets'
+            __DIR__ . '/../../../src/www/assets/graphontrackersv5/themes',
+            '/assets/graphontrackersv5/themes'
         );
         return new CssAssetCollection([new CssAssetWithoutVariantDeclinaisons($include_assets, 'style')]);
     }

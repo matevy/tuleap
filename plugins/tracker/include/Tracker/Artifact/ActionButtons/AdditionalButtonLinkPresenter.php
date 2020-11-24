@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,8 +20,6 @@
 
 namespace Tuleap\Tracker\Artifact\ActionButtons;
 
-use Tuleap\Glyph\Glyph;
-
 class AdditionalButtonLinkPresenter
 {
     /**
@@ -33,15 +31,28 @@ class AdditionalButtonLinkPresenter
      * @var string
      */
     public $url;
+
     /**
      * @var string
      */
-    public $glyph;
+    public $icon;
 
-    public function __construct($link_label, $url, ?Glyph $glyph = null)
+    /**
+     * @var string
+     */
+    public $id;
+
+    /**
+     * @var array
+     */
+    public $data;
+
+    public function __construct(string $link_label, string $url, ?string $icon = null, ?string $id = null, ?array $data = null)
     {
         $this->link_label = $link_label;
         $this->url        = $url;
-        $this->glyph      = $glyph ? $glyph->getInlineString(): '';
+        $this->icon       = $icon ? $icon : '';
+        $this->id         = $id ? $id : '';
+        $this->data       = $data ? $data : [];
     }
 }

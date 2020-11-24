@@ -19,7 +19,8 @@
 
 namespace Tuleap\AgileDashboard\REST\v1\Kanban;
 
-class KanbanBacklogInfoRepresentation {
+class KanbanBacklogInfoRepresentation
+{
 
     /**
      * @var string
@@ -36,7 +37,8 @@ class KanbanBacklogInfoRepresentation {
      */
     public $user_can_add_in_place;
 
-    public function build($label, $is_open, $user_can_add_in_place) {
+    public function build($label, $is_open, $user_can_add_in_place)
+    {
         $this->label   = $label;
         $this->is_open = $is_open;
 

@@ -18,34 +18,37 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/backend/BackendService.class.php';
-
 /**
  * I am a command in a chain of responsability
  *
  * @see http://en.wikipedia.org/wiki/Chain-of-responsibility_pattern
  */
-abstract class Git_GitoliteHousekeeping_ChainOfResponsibility_Command {
+abstract class Git_GitoliteHousekeeping_ChainOfResponsibility_Command
+{
 
     /** @var Git_GitoliteHousekeeping_ChainOfResponsibility_Command */
     private $next_command;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->setNextCommand(new Git_GitoliteHousekeeping_ChainOfResponsibility_DoNothing());
     }
 
-    public function setNextCommand(Git_GitoliteHousekeeping_ChainOfResponsibility_Command $next_command) {
+    public function setNextCommand(Git_GitoliteHousekeeping_ChainOfResponsibility_Command $next_command)
+    {
         $this->next_command = $next_command;
     }
 
-    public function getNextCommand() {
+    public function getNextCommand()
+    {
         return $this->next_command;
     }
 
-    public function executeNextCommand() {
+    public function executeNextCommand()
+    {
         $this->next_command->execute();
     }
 
     /** @return void */
-    public abstract function execute();
+    abstract public function execute();
 }

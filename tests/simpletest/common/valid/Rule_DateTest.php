@@ -22,21 +22,24 @@
  *
  */
 
-require_once('common/valid/Rule.class.php');
 
-class Rule_DateTest extends TuleapTestCase {
+class Rule_DateTest extends TuleapTestCase
+{
 
-    function UnitTestCase($name = 'Rule_Date test') {
+    function UnitTestCase($name = 'Rule_Date test')
+    {
         $this->UnitTestCase($name);
     }
 
-    function testBadDate() {
+    function testBadDate()
+    {
         $r = new Rule_Date();
         $this->assertFalse($r->isValid('2007-13-5'));
         $this->assertFalse($r->isValid('2007-12-32'));
     }
 
-    function testBadFormat() {
+    function testBadFormat()
+    {
         $r = new Rule_Date();
         $this->assertFalse($r->isValid('2007-12'));
         $this->assertFalse($r->isValid('toto'));
@@ -45,7 +48,8 @@ class Rule_DateTest extends TuleapTestCase {
         $this->assertTrue($r->isValid('2007-1-01'));
     }
 
-    function testGoodDate() {
+    function testGoodDate()
+    {
         $r = new Rule_Date();
         $this->assertTrue($r->isValid('2007-11-30'));
         $this->assertTrue($r->isValid('2007-12-31'));
@@ -53,11 +57,10 @@ class Rule_DateTest extends TuleapTestCase {
         $this->assertTrue($r->isValid('200-1-5'));
     }
 
-    function testLeapYear() {
+    function testLeapYear()
+    {
         $r = new Rule_Date();
         $this->assertFalse($r->isValid('2001-2-29'));
         $this->assertTrue($r->isValid('2004-2-29'));
     }
-
 }
-?>

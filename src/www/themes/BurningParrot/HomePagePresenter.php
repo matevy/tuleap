@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,7 +24,7 @@ use Admin_Homepage_LogoFinder;
 use Codendi_HTMLPurifier;
 use PFUser;
 use Tuleap\layout\HomePage\NewsCollection;
-use Tuleap\Layout\HomePage\StatisticsCollection;
+use Tuleap\layout\HomePage\StatisticsCollection;
 use User_LoginPresenter;
 
 class HomePagePresenter
@@ -57,7 +57,7 @@ class HomePagePresenter
     public $news;
 
     public function __construct(
-        $headline,
+        string $headline,
         PFUser $user,
         $most_secure_url,
         User_LoginPresenter $login,

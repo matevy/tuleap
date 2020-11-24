@@ -20,12 +20,14 @@
 
 require_once __DIR__.'/../bootstrap.php';
 
-class Tracker_Artifact_XMLExportTest extends TuleapTestCase {
+class Tracker_Artifact_XMLExportTest extends TuleapTestCase
+{
 
     private $user_manager;
     private $formelement_factory;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->user_manager = mock('UserManager');
@@ -35,14 +37,16 @@ class Tracker_Artifact_XMLExportTest extends TuleapTestCase {
         Tracker_FormElementFactory::setInstance($this->formelement_factory);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         UserManager::clearInstance();
         Tracker_FormElementFactory::clearInstance();
 
         parent::tearDown();
     }
 
-    public function itExportsArtifactsInXML() {
+    public function itExportsArtifactsInXML()
+    {
         $user_01 = aUser()->withId(101)->withLdapId('ldap_01')->withUserName('user_01')->build();
         $user_02 = aUser()->withId(102)->withLdapId('ldap_02')->withUserName('user_02')->build();
 
@@ -63,7 +67,6 @@ class Tracker_Artifact_XMLExportTest extends TuleapTestCase {
         stub($text_field_01)->getTracker()->returns($tracker);
         $text_field_02 = stub('Tracker_FormElement_Field_Text')->getName()->returns('text_02');
         stub($text_field_02)->getTracker()->returns($tracker);
-
 
         $changeset_01 = partial_mock(
             'Tracker_Artifact_Changeset',
@@ -148,7 +151,6 @@ class Tracker_Artifact_XMLExportTest extends TuleapTestCase {
         stub($changeset_04)->getValues()->returns(array($value_07));
         stub($changeset_04)->getValueDao()->returns($value_dao);
 
-
         $artifact_01 = anArtifact()->withTracker($tracker)->withId(101)->withChangesets(array($changeset_01, $changeset_02))->build();
         $artifact_02 = anArtifact()->withTracker($tracker)->withId(102)->withChangesets(array($changeset_03, $changeset_04))->build();
 
@@ -158,19 +160,51 @@ class Tracker_Artifact_XMLExportTest extends TuleapTestCase {
         stub($changeset_04)->getArtifact()->returns($artifact_02);
 
         $comment_01 = new Tracker_Artifact_Changeset_Comment(
-            1, $changeset_01, 0, 0, 101, $timestamp_01, '<b> My comment 01</b>', 'html', 0
+            1,
+            $changeset_01,
+            0,
+            0,
+            101,
+            $timestamp_01,
+            '<b> My comment 01</b>',
+            'html',
+            0
         );
 
         $comment_02 = new Tracker_Artifact_Changeset_Comment(
-            2, $changeset_02, 0, 0, 101, $timestamp_02, '<b> My comment 02</b>', 'html', 0
+            2,
+            $changeset_02,
+            0,
+            0,
+            101,
+            $timestamp_02,
+            '<b> My comment 02</b>',
+            'html',
+            0
         );
 
         $comment_03 = new Tracker_Artifact_Changeset_Comment(
-            3, $changeset_03, 0, 0, 102, $timestamp_03, '<b> My comment 03</b>', 'html', 0
+            3,
+            $changeset_03,
+            0,
+            0,
+            102,
+            $timestamp_03,
+            '<b> My comment 03</b>',
+            'html',
+            0
         );
 
         $comment_04 = new Tracker_Artifact_Changeset_Comment(
-            4, $changeset_04, 0, 0, 102, $timestamp_04, '<b> My comment 04</b>', 'html', 0
+            4,
+            $changeset_04,
+            0,
+            0,
+            102,
+            $timestamp_04,
+            '<b> My comment 04</b>',
+            'html',
+            0
         );
 
         stub($changeset_01)->getComment()->returns($comment_01);
@@ -217,9 +251,11 @@ class Tracker_Artifact_XMLExportTest extends TuleapTestCase {
     }
 }
 
-class Tracker_Artifact_XMLExport_forceTest extends TuleapTestCase {
+class Tracker_Artifact_XMLExport_forceTest extends TuleapTestCase
+{
 
-    public function itRaisesAnExceptionWhenThresholdIsReached() {
+    public function itRaisesAnExceptionWhenThresholdIsReached()
+    {
         $rng_validator    = new XML_RNGValidator();
         $artifact_factory = stub('Tracker_ArtifactFactory')
             ->getArtifactsByTrackerId()

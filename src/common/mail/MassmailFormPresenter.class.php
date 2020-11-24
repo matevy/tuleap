@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class MassmailFormPresenter {
+class MassmailFormPresenter
+{
 
     public $project_id;
     public $submit_button;
@@ -29,19 +30,20 @@ class MassmailFormPresenter {
     public $title;
     public $action;
 
-    public function __construct(CSRFSynchronizerToken $token, $title, $action) {
-        $this->submit_button    = $GLOBALS['Language']->getText('global','btn_submit');
-        $this->close_button     = $GLOBALS['Language']->getText('global','btn_cancel');
-        $this->subject_label    = $GLOBALS['Language']->getText('my_index','subject_label');
-        $this->body_label       = $GLOBALS['Language']->getText('my_index','body_label');
+    public function __construct(CSRFSynchronizerToken $token, $title, $action)
+    {
+        $this->submit_button    = $GLOBALS['Language']->getText('global', 'btn_submit');
+        $this->close_button     = $GLOBALS['Language']->getText('global', 'btn_cancel');
+        $this->subject_label    = $GLOBALS['Language']->getText('my_index', 'subject_label');
+        $this->body_label       = $GLOBALS['Language']->getText('my_index', 'body_label');
         $this->title            = $title;
         $this->action           = $action;
 
         $this->csrf_token       = $token->fetchHTMLInput();
     }
 
-    public function getTemplateDir() {
+    public function getTemplateDir()
+    {
         return ForgeConfig::get('codendi_dir') .'/src/templates/widgets';
     }
-
 }

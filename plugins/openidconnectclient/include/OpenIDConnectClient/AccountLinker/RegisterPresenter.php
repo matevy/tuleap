@@ -20,16 +20,18 @@
 
 namespace Tuleap\OpenIDConnectClient\AccountLinker;
 
-
-class RegisterPresenter {
+class RegisterPresenter
+{
 
     private $link_id;
 
-    public function __construct($link_id) {
+    public function __construct($link_id)
+    {
         $this->link_id = $link_id;
     }
 
-    public function link_id() {
+    public function link_id()
+    {
         return $this->link_id;
     }
 }

@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,26 +20,27 @@
 
 /**
  * Returns the field fixed in the constructor no matter what artifact is given
- * 
+ *
  * @see Cardwall_FieldProviders_IProvideFieldGivenAnArtifact
  */
-class Cardwall_FieldProviders_CustomFieldRetriever implements Cardwall_FieldProviders_IProvideFieldGivenAnArtifact {
+class Cardwall_FieldProviders_CustomFieldRetriever implements Cardwall_FieldProviders_IProvideFieldGivenAnArtifact
+{
 
     /**
      * @var Tracker_FormElement_Field_Selectbox
      */
     private $field;
 
-    public function __construct(Tracker_FormElement_Field_Selectbox $field) {
+    public function __construct(Tracker_FormElement_Field_Selectbox $field)
+    {
         $this->field = $field;
     }
 
     /**
-     * @return Tracker_FormElement_Field_Selectbox
+     * @return Tracker_FormElement_Field_Selectbox | null
      */
-    public function getField(Tracker $tracker) {
+    public function getField(Tracker $tracker)
+    {
         return $this->field;
     }
 }
-
-?>

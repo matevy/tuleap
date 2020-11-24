@@ -18,18 +18,20 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Bootstrap_FeedbackFormatter extends FeedbackFormatter {
+class Bootstrap_FeedbackFormatter extends FeedbackFormatter
+{
 
     /**
      * @return string html
      */
-    function format(array $logs) {
+    function format(array $logs)
+    {
         $hp        = Codendi_HTMLPurifier::instance();
         $html      = '';
         $old_level = null;
 
         $html .= '<div class="container-fluid">';
-        foreach($logs as $log) {
+        foreach ($logs as $log) {
             if (!is_null($old_level) && $old_level != $log['level']) {
                 $html .= '</div>';
             }
@@ -64,4 +66,3 @@ class Bootstrap_FeedbackFormatter extends FeedbackFormatter {
         return $html;
     }
 }
-?>

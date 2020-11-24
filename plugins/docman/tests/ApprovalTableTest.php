@@ -24,9 +24,11 @@
 
 require_once 'bootstrap.php';
 
-class ApprovalTableTest extends TuleapTestCase {
+class ApprovalTableTest extends TuleapTestCase
+{
 
-    function testTableStateRejected() {
+    function testTableStateRejected()
+    {
         // Std case
         $row['nb_reviewers'] = 5;
         $row['rejected'] = 1;
@@ -54,7 +56,8 @@ class ApprovalTableTest extends TuleapTestCase {
         $this->assertEqual($t3->getApprovalState(), PLUGIN_DOCMAN_APPROVAL_STATE_REJECTED);
     }
 
-    function testTableStateApproved() {
+    function testTableStateApproved()
+    {
         // Std case
         $row['nb_reviewers'] = 5;
         $row['rejected'] = 0;
@@ -92,7 +95,8 @@ class ApprovalTableTest extends TuleapTestCase {
         $this->assertEqual($t1->getApprovalState(), PLUGIN_DOCMAN_APPROVAL_STATE_APPROVED);
     }
 
-    function testTableStateNotYet() {
+    function testTableStateNotYet()
+    {
         // Std case
         $row['nb_reviewers'] = 0;
         $row['rejected'] = 0;
@@ -139,7 +143,8 @@ class ApprovalTableTest extends TuleapTestCase {
         $this->assertEqual($t1->getApprovalState(), PLUGIN_DOCMAN_APPROVAL_STATE_NOTYET);
     }
 
-    function testNoData() {
+    function testNoData()
+    {
         // Std case
         $row = array();
         $t1 = new Docman_ApprovalTableItem();

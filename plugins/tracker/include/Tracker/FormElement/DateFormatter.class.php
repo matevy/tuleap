@@ -19,17 +19,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Tracker_FormElement_DateFormatter {
+class Tracker_FormElement_DateFormatter
+{
     public const DATE_FORMAT           = "Y-m-d";
 
     /** @var Tracker_FormElement_Field_Date */
     protected $field;
 
-    public function __construct(Tracker_FormElement_Field_Date $field) {
+    public function __construct(Tracker_FormElement_Field_Date $field)
+    {
         $this->field = $field;
     }
 
-    public function getFormat() {
+    public function getFormat()
+    {
         return self::DATE_FORMAT;
     }
 
@@ -37,15 +40,14 @@ class Tracker_FormElement_DateFormatter {
      * @return string
      */
     public function fetchArtifactValue(
-        Tracker_Artifact $artifact,
-        ?Tracker_Artifact_ChangesetValue $value = null,
+        ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values,
         array $errors
     ) {
         $formatted_value = '';
 
-        if (isset($submitted_values[0]) && is_array($submitted_values[0]) && isset($submitted_values[0][$this->field->getId()])) {
-            $formatted_value = $submitted_values[0][$this->field->getId()];
+        if (isset($submitted_values[$this->field->getId()])) {
+            $formatted_value = $submitted_values[$this->field->getId()];
         } else {
             if ($value != null) {
                 $timestamp       = $value->getTimestamp();
@@ -60,7 +62,7 @@ class Tracker_FormElement_DateFormatter {
         Tracker_Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value = null
     ) {
-        if ( empty($value) || ! $value->getTimestamp() ) {
+        if (empty($value) || ! $value->getTimestamp()) {
             return $this->field->getNoValueLabel();
         }
 
@@ -70,14 +72,16 @@ class Tracker_FormElement_DateFormatter {
         return $formatted_value;
     }
 
-    public function fetchSubmitValue(array $submitted_values, array $errors) {
+    public function fetchSubmitValue(array $submitted_values, array $errors)
+    {
         $value = $this->field->getValueFromSubmitOrDefault($submitted_values);
 
         return $this->getDatePicker($value, $errors);
     }
 
-    public function validate($value) {
-       $is_valid = true;
+    public function validate($value)
+    {
+        $is_valid = true;
         if ($value) {
             $rule     = new Rule_Date();
             $is_valid = $rule->isValid($value);
@@ -86,7 +90,8 @@ class Tracker_FormElement_DateFormatter {
                     'error',
                     $GLOBALS['Language']->getText(
                         'plugin_tracker_common_artifact',
-                        'error_date_value', array($this->field->getLabel())
+                        'error_date_value',
+                        array($this->field->getLabel())
                     )
                 );
             }
@@ -95,29 +100,34 @@ class Tracker_FormElement_DateFormatter {
         return $is_valid;
     }
 
-    public function fetchSubmitValueMasschange() {
+    public function fetchSubmitValueMasschange()
+    {
         return $this->getDatePicker(
-            $GLOBALS['Language']->getText('global','unchanged'),
+            $GLOBALS['Language']->getText('global', 'unchanged'),
             array()
         );
     }
 
-    public function getFieldDataForCSVPreview(array $date_explode) {
+    public function getFieldDataForCSVPreview(array $date_explode)
+    {
         return $date_explode[0] . '-' . $date_explode[1] . '-' . $date_explode[2];
     }
 
     /**
      * Format a timestamp into Y-m-d format
      */
-    public function formatDate($timestamp) {
+    public function formatDate($timestamp)
+    {
         return format_date(self::DATE_FORMAT, (float)$timestamp, '');
     }
 
-    public function formatDateForDisplay($timestamp) {
+    public function formatDateForDisplay($timestamp)
+    {
         return format_date($GLOBALS['Language']->getText('system', 'datefmt_short'), (float) $timestamp, '');
     }
 
-    protected function getDatePicker($value, array $errors) {
+    protected function getDatePicker($value, array $errors)
+    {
         return $GLOBALS['HTML']->getBootstrapDatePicker(
             "tracker_admin_field_". $this->field->getId(),
             'artifact['. $this->field->getId() .']',

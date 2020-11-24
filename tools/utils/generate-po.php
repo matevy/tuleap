@@ -1,21 +1,26 @@
 #!/usr/bin/env php
 <?php
-// Copyright (c) Enalean, 2015 - 2018. All rights reserved
-//
-// This file is a part of Tuleap.
-//
-// Tuleap is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// Tuleap is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Tuleap. If not, see <http://www.gnu.org/licenses/
+/**
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
+ *
+ * SourceForge: Breaking Down the Barriers to Open Source Development
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 use Tuleap\Language\Gettext\POTFileDumper;
 use Tuleap\Templating\Mustache\DomainExtractor;
 use Tuleap\Templating\Mustache\GettextCollector;
@@ -99,7 +104,10 @@ info("[core] Generating .pot file for .mustache files");
 $mustache_template = "$basedir/site-content/tuleap-core.mustache.pot";
 $gettext_in_mustache_extractor->extract(
     'tuleap-core',
-    "$basedir/src/templates",
+    [
+        "$basedir/src/templates",
+        "$basedir/src/common/FRS",
+    ],
     $mustache_template
 );
 
@@ -126,8 +134,10 @@ foreach (glob("$basedir/plugins/*", GLOB_ONLYDIR) as $path) {
     if (is_file($manifest)) {
         $json = json_decode(file_get_contents($manifest), true);
         gettextJS($translated_plugin, $path, $json);
+        gettextTS($translated_plugin, $path, $json);
         gettextSmarty($translated_plugin, $path, $json);
         gettextVue($translated_plugin, $path, $json);
+        gettextAngularJS($translated_plugin, $path, $json);
     }
 }
 
@@ -152,6 +162,7 @@ function gettextPHP($path, string $translated_plugin, DomainExtractor $gettext_i
             --from-code=UTF-8 \
             --omit-header \
             -o - \
+        | msguniq --sort-output --use-first -o - \
         | msggrep \
             --msgctxt \
             --regexp='$translated_plugin\b' \
@@ -169,6 +180,7 @@ function gettextPHP($path, string $translated_plugin, DomainExtractor $gettext_i
             --from-code=UTF-8 \
             --omit-header \
             -o - \
+        | msguniq --sort-output --use-first -o - \
         | msggrep \
             --msgctxt \
             --regexp='$translated_plugin\b' \
@@ -180,7 +192,7 @@ function gettextPHP($path, string $translated_plugin, DomainExtractor $gettext_i
     info("[$translated_plugin] Generating .pot file for .mustache files");
     $gettext_in_mustache_extractor->extract(
         "tuleap-$translated_plugin",
-        "$path/templates",
+        ["$path/templates"],
         "$path/site-content/tuleap-$translated_plugin-mustache.pot"
     );
 
@@ -240,8 +252,10 @@ function gettextJS($translated_plugin, $path, $manifest_json)
         $template = escapeshellarg("$path/${gettext['po']}/template.pot");
 
         executeCommandAndExitIfStderrNotEmpty("find $src \
-                            -name '*.js' \
+                            -not -name '*.spec.js' \
+                            -not -name '*.test.js' \
                             -not \( -path '**/node_modules/*' -o -path '**/coverage/*' \) \
+                            -name '*.js' \
                         | xargs xgettext \
                             --language=JavaScript \
                             --default-domain=core \
@@ -258,6 +272,27 @@ function gettextJS($translated_plugin, $path, $manifest_json)
     }
 }
 
+function gettextAngularJS(string $translated_plugin, string $path, array $manifest_json): void
+{
+    if (! isset($manifest_json['gettext-angularjs']) || ! is_array($manifest_json['gettext-angularjs'])) {
+        return;
+    }
+
+    foreach ($manifest_json['gettext-angularjs'] as $component => $gettext) {
+        $gettext_step_header = sprintf("[%s][angularjs][%s]", $translated_plugin, $component);
+        info("$gettext_step_header Generating default .pot file");
+        $src      = escapeshellarg("$path/${gettext['src']}");
+        $po       = escapeshellarg("$path/${gettext['po']}");
+        $template = escapeshellarg("$path/${gettext['po']}/template.pot");
+
+        executeCommandAndExitIfStderrNotEmpty("node_modules/.bin/angular-gettext-cli --files '$src/**/*.+(js|html)' --exclude '**/*.+(spec|test).js' --dest $template");
+        executeCommandAndExitIfStderrNotEmpty("msgcat --no-location --sort-output -o $template $template");
+
+        info("$gettext_step_header Merging .pot file into .po files");
+        exec("find $po -name '*.po' -exec msgmerge --update \"{}\" $template \;");
+    }
+}
+
 function gettextVue($translated_plugin, $path, $manifest_json)
 {
     if (! isset($manifest_json['gettext-vue']) || ! is_array($manifest_json['gettext-vue'])) {
@@ -266,16 +301,50 @@ function gettextVue($translated_plugin, $path, $manifest_json)
 
     foreach ($manifest_json['gettext-vue'] as $component => $gettext) {
         info("[$translated_plugin][vue][$component] Generating default .pot file");
-        $scripts           = escapeshellarg("$path/${gettext['scripts']}");
-        $po                = escapeshellarg("$path/${gettext['po']}");
-        $template          = escapeshellarg("$path/${gettext['po']}/template.pot");
-        $vue_template_path = "$path/${gettext['po']}/template.pot";
-        $vue_template      = escapeshellarg($vue_template_path);
-        executeCommandAndExitIfStderrNotEmpty("(cd $scripts && npm run extract-gettext-cli -- --output $template)");
+        $src      = escapeshellarg("$path/${gettext['src']}");
+        $po       = escapeshellarg("$path/${gettext['po']}");
+        $template = escapeshellarg("$path/${gettext['po']}/template.pot");
 
-        exec("msgcat --no-location --sort-output -o $template $vue_template");
+        executeCommandAndExitIfStderrNotEmpty("tools/utils/scripts/vue-typescript-gettext-extractor-cli.js \
+        $(find $src  \
+            -not \( -name '*.spec.js' -o -name '*.test.js' -o -name '*.test.ts' -o -name '*.d.ts' \) \
+            -not \( -path '**/node_modules/*' -o -path '**/coverage/*' \) \
+            -and \( -type f -name '*.vue' -o -name '*.ts' -o -name '*.js' \) \
+        ) \
+        --output $template");
+        executeCommandAndExitIfStderrNotEmpty("msguniq --sort-output --use-first -o $template $template");
+
+        executeCommandAndExitIfStderrNotEmpty("msgcat --no-location --sort-output -o $template $template");
 
         info("[$translated_plugin][vue][$component] Merging .pot file into .po files");
+        exec("find $po -name '*.po' -exec msgmerge --update \"{}\" $template \;");
+    }
+}
+
+function gettextTS($translated_plugin, $path, $manifest_json)
+{
+    if (! isset($manifest_json['gettext-ts']) || ! is_array($manifest_json['gettext-ts'])) {
+        return;
+    }
+
+    foreach ($manifest_json['gettext-ts'] as $component => $gettext) {
+        info("[$translated_plugin][ts][$component] Generating default .pot file");
+        $src      = escapeshellarg("$path/${gettext['src']}");
+        $po       = escapeshellarg("$path/${gettext['po']}");
+        $template = escapeshellarg("$path/${gettext['po']}/template.pot");
+
+        executeCommandAndExitIfStderrNotEmpty("tools/utils/scripts/vue-typescript-gettext-extractor-cli.js \
+        $(find $src \
+            -not \( -name '*.test.ts' -o -name '*.d.ts' \) \
+            -not \( -path '**/node_modules/*' -o -path '**/coverage/*' \) \
+            -and \( -type f -name '*.ts' \) \
+        ) \
+        --output $template");
+        executeCommandAndExitIfStderrNotEmpty("msguniq --sort-output --use-first -o $template $template");
+
+        executeCommandAndExitIfStderrNotEmpty("msgcat --no-location --sort-output -o $template $template");
+
+        info("[$translated_plugin][ts][$component] Merging .pot file into .po files");
         exec("find $po -name '*.po' -exec msgmerge --update \"{}\" $template \;");
     }
 }

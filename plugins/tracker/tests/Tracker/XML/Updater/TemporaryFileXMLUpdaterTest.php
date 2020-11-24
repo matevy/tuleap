@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../bootstrap.php';
 
-class Tracker_XML_Updater_TemporaryFileXMLUpdaterTest extends TuleapTestCase {
+class Tracker_XML_Updater_TemporaryFileXMLUpdaterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Updater_TemporaryFileXMLUpdater */
     private $updater;
@@ -27,7 +28,8 @@ class Tracker_XML_Updater_TemporaryFileXMLUpdaterTest extends TuleapTestCase {
     /** @var SimpleXMLElement */
     private $artifact_xml;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->artifact_xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?>'
                 . '<artifact>'
@@ -48,7 +50,8 @@ class Tracker_XML_Updater_TemporaryFileXMLUpdaterTest extends TuleapTestCase {
         $this->updater = new Tracker_XML_Updater_TemporaryFileXMLUpdater($temporary_file_creator);
     }
 
-    public function itReplacesThePathWithTheNewTempraryPath() {
+    public function itReplacesThePathWithTheNewTempraryPath()
+    {
         $this->updater->update($this->artifact_xml);
 
         $this->assertEqual((string)$this->artifact_xml->file[0]->path, '/tmp/toto.txt');

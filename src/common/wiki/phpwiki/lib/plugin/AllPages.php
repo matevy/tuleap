@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: AllPages.php,v 1.36 2005/01/28 12:08:42 rurban Exp $');
 /**
  Copyright 1999,2000,2001,2002,2004,2005 $ThePhpWikiProgrammingTeam
@@ -24,113 +25,161 @@ require_once('lib/PageList.php');
 
 /**
  * DONE: support author=[] (current user) and owner, creator
- * to be able to have pages: 
+ * to be able to have pages:
  * AllPagesCreatedByMe, AllPagesOwnedByMe, AllPagesLastAuthoredByMe
  */
-class WikiPlugin_AllPages
-extends WikiPlugin
+class WikiPlugin_AllPages extends WikiPlugin
 {
-    function getName () {
+    function getName()
+    {
         return _("AllPages");
     }
 
-    function getDescription () {
+    function getDescription()
+    {
         return _("List all pages in this wiki.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.36 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.36 $"
+        );
     }
 
-    function getDefaultArguments() {
-        return array_merge
-            (
-             PageList::supportedArgs(),
-             array(
+    function getDefaultArguments()
+    {
+        return array_merge(
+            PageList::supportedArgs(),
+            array(
                    'noheader'      => false,
                    'include_empty' => false,
                    //'pages'         => false, // DONT, this would be ListPages then.
                    'info'          => '',
                    'debug'         => false
-                   ));
+            )
+        );
     }
-    
+
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor,markup or all
     // exclude arg allows multiple pagenames exclude=HomePage,RecentChanges
     // sortby: [+|-] pagename|mtime|hits
 
     // 2004-07-08 22:05:35 rurban: turned off &$request to prevent from strange bug below
-    function run($dbi, $argstr, $request, $basepage) {
+    function run($dbi, $argstr, $request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
         $pages = false;
         // Todo: extend given _GET args
-        if ($args['debug'])
+        if ($args['debug']) {
             $timer = new DebugTimer;
+        }
         $caption = _("All pages in this wiki (%d total):");
-        
-        if ( !empty($args['owner']) ) {
-            $pages = PageList::allPagesByOwner($args['owner'], $args['include_empty'],
-                                               $args['sortby'], $args['limit']);
-            if ($args['owner'])
-                $caption = fmt("List of pages owned by [%s] (%d total):", 
-                               WikiLink($args['owner'] == '[]' 
-                                        ? $request->_user->getAuthenticatedId() 
-                                        : $args['owner'], 
-                                        'if_known'),
-                               count($pages));
-        } elseif ( !empty($args['author']) ) {
-            $pages = PageList::allPagesByAuthor($args['author'], $args['include_empty'],
-                                                $args['sortby'], $args['limit']);
-            if ($args['author'])
-                $caption = fmt("List of pages last edited by [%s] (%d total):", 
-                               WikiLink($args['author'] == '[]' 
-                                        ? $request->_user->getAuthenticatedId() 
-                                        : $args['author'], 
-                                        'if_known'), 
-                               count($pages));
-        } elseif ( !empty($args['creator']) ) {
-            $pages = PageList::allPagesByCreator($args['creator'], $args['include_empty'],
-                                                 $args['sortby'], $args['limit']);
-            if ($args['creator'])
-                $caption = fmt("List of pages created by [%s] (%d total):", 
-                               WikiLink($args['creator'] == '[]' 
-                                        ? $request->_user->getAuthenticatedId() 
+
+        if (!empty($args['owner'])) {
+            $pages = PageList::allPagesByOwner(
+                $args['owner'],
+                $args['include_empty'],
+                $args['sortby'],
+                $args['limit']
+            );
+            if ($args['owner']) {
+                $caption = fmt(
+                    "List of pages owned by [%s] (%d total):",
+                    WikiLink(
+                        $args['owner'] == '[]'
+                                        ? $request->_user->getAuthenticatedId()
+                                        : $args['owner'],
+                        'if_known'
+                    ),
+                    count($pages)
+                );
+            }
+        } elseif (!empty($args['author'])) {
+            $pages = PageList::allPagesByAuthor(
+                $args['author'],
+                $args['include_empty'],
+                $args['sortby'],
+                $args['limit']
+            );
+            if ($args['author']) {
+                $caption = fmt(
+                    "List of pages last edited by [%s] (%d total):",
+                    WikiLink(
+                        $args['author'] == '[]'
+                                        ? $request->_user->getAuthenticatedId()
+                                        : $args['author'],
+                        'if_known'
+                    ),
+                    count($pages)
+                );
+            }
+        } elseif (!empty($args['creator'])) {
+            $pages = PageList::allPagesByCreator(
+                $args['creator'],
+                $args['include_empty'],
+                $args['sortby'],
+                $args['limit']
+            );
+            if ($args['creator']) {
+                $caption = fmt(
+                    "List of pages created by [%s] (%d total):",
+                    WikiLink(
+                        $args['creator'] == '[]'
+                                        ? $request->_user->getAuthenticatedId()
                                         : $args['creator'],
-                                        'if_known'), 
-                               count($pages));
+                        'if_known'
+                    ),
+                    count($pages)
+                );
+            }
         //} elseif ($pages) {
         //    $args['count'] = count($pages);
         } else {
-            if (! $request->getArg('count'))  
+            if (! $request->getArg('count')) {
                 $args['count'] = $dbi->numPages($args['include_empty'], $args['exclude']);
-            else $args['count'] = $request->getArg('count');
+            } else {
+                $args['count'] = $request->getArg('count');
+            }
         }
-        if (empty($args['count']) and !empty($pages))
+        if (empty($args['count']) and !empty($pages)) {
             $args['count'] = count($pages);
+        }
         $pagelist = new PageList($args['info'], $args['exclude'], $args);
-        if (!$args['noheader']) $pagelist->setCaption($caption);
+        if (!$args['noheader']) {
+            $pagelist->setCaption($caption);
+        }
 
         // deleted pages show up as version 0.
-        if ($args['include_empty'])
+        if ($args['include_empty']) {
             $pagelist->_addColumn('version');
+        }
 
-        if ($pages !== false)
+        if ($pages !== false) {
             $pagelist->addPageList($pages);
-        else
-            $pagelist->addPages( $dbi->getAllPages($args['include_empty'], $args['sortby'], 
-                                                   $args['limit']) );
+        } else {
+            $pagelist->addPages($dbi->getAllPages(
+                $args['include_empty'],
+                $args['sortby'],
+                $args['limit']
+            ));
+        }
         if ($args['debug']) {
-            return HTML($pagelist,
-                        HTML::p(fmt("Elapsed time: %s s", $timer->getStats())));
+            return HTML(
+                $pagelist,
+                HTML::p(fmt("Elapsed time: %s s", $timer->getStats()))
+            );
         } else {
             return $pagelist;
         }
     }
 
-    function getmicrotime(){
-        list($usec, $sec) = explode(" ",microtime());
+    function getmicrotime()
+    {
+        list($usec, $sec) = explode(" ", microtime());
         return (float)$usec + (float)$sec;
     }
 };
@@ -248,4 +297,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

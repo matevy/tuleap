@@ -1,6 +1,6 @@
 <?php
-/*
- * Copyright (c) Enalean, 2016 - 2018. All Rights Reserved.
+/**
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,8 +30,10 @@ use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbPresenterBuilder;
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Layout\SidebarPresenter;
+use Tuleap\OpenGraph\NoOpenGraphPresenter;
 use Tuleap\Project\Flags\ProjectFlagsBuilder;
 use Tuleap\Project\Flags\ProjectFlagsDao;
+use Tuleap\Project\Registration\ProjectRegistrationUserPermissionChecker;
 use Tuleap\Theme\BurningParrot\Navbar\PresenterBuilder as NavbarPresenterBuilder;
 use URLRedirect;
 use Widget_Static;
@@ -70,13 +72,13 @@ class BurningParrotTheme extends BaseLayout
         $this->request         = HTTPRequest::instance();
         $this->renderer        = TemplateRendererFactory::build()->getRenderer($this->getTemplateDir());
 
-        $this->project_flags_builder = new ProjectFlagsBuilder(new ProjectFlagsDao());
+        $this->project_flags_builder    = new ProjectFlagsBuilder(new ProjectFlagsDao());
 
         $tlp_include_assets = new IncludeAssets(
-            ForgeConfig::get('tuleap_dir') . '/src/www/themes/common/tlp/dist',
+            __DIR__ . '/../../themes/common/tlp/dist',
             '/themes/common/tlp/dist'
         );
-        $this->includeFooterJavascriptFile($tlp_include_assets->getFileURL('tlp-' . $user->getLocale() . '.js'));
+        $this->includeFooterJavascriptFile($tlp_include_assets->getFileURLWithFallback('tlp-' . $user->getLocale() . '.js', 'tlp-en_US.js'));
         $this->includeFooterJavascriptFile($this->include_asset->getFileURL('burning-parrot.js'));
     }
 
@@ -99,12 +101,14 @@ class BurningParrotTheme extends BaseLayout
         $header_presenter_builder    = new HeaderPresenterBuilder();
         $main_classes                = isset($params['main_classes']) ? $params['main_classes'] : array();
         $sidebar                     = $this->getSidebarFromParams($params);
-        $body_classes                = $this->getArrayOfClassnamesForBodyTag($params, $sidebar);
         $current_project_navbar_info = $this->getCurrentProjectNavbarInfo($params);
+        $body_classes                = $this->getArrayOfClassnamesForBodyTag($params, $sidebar, $current_project_navbar_info);
 
         $breadcrumb_presenter_builder = new BreadCrumbPresenterBuilder();
 
         $breadcrumbs = $breadcrumb_presenter_builder->build($this->breadcrumbs);
+
+        $open_graph = isset($params['open_graph']) ? $params['open_graph'] : new NoOpenGraphPresenter();
 
         $header_presenter = $header_presenter_builder->build(
             new NavbarPresenterBuilder(),
@@ -117,12 +121,15 @@ class BurningParrotTheme extends BaseLayout
             $main_classes,
             $sidebar,
             $current_project_navbar_info,
-            $this->getListOfIconUnicodes(),
             $url_redirect,
             $this->toolbar,
             $breadcrumbs,
             $this->getMOTD(),
-            $this->css_assets
+            $this->css_assets,
+            $open_graph,
+            new ProjectRegistrationUserPermissionChecker(
+                new \ProjectDao()
+            )
         );
 
         $this->renderer->renderToPage('header', $header_presenter);
@@ -146,12 +153,19 @@ class BurningParrotTheme extends BaseLayout
         echo $extra_content;
     }
 
-    private function getArrayOfClassnamesForBodyTag($params, $sidebar)
-    {
+    private function getArrayOfClassnamesForBodyTag(
+        $params,
+        $sidebar,
+        ?CurrentProjectNavbarInfoPresenter $current_project_navbar_info_presenter
+    ): array {
         $body_classes = array();
 
         if (isset($params['body_class'])) {
             $body_classes = $params['body_class'];
+        }
+
+        if ($current_project_navbar_info_presenter !== null && $current_project_navbar_info_presenter->project_banner_is_visible) {
+            $body_classes[] = 'has-visible-project-banner';
         }
 
         if (! $sidebar) {
@@ -201,7 +215,7 @@ class BurningParrotTheme extends BaseLayout
      * Although this is the case, it's worth bearing in mind when refactoring.
      *
      * @param array $params
-     * @return boolean
+     * @return bool
      */
     private function canShowFooter($params)
     {
@@ -265,10 +279,10 @@ class BurningParrotTheme extends BaseLayout
         );
     }
 
-    private function getCurrentProjectNavbarInfo(array $params)
+    private function getCurrentProjectNavbarInfo(array $params): ?CurrentProjectNavbarInfoPresenter
     {
         if (empty($params['group'])) {
-            return false;
+            return null;
         }
 
         $project = $this->project_manager->getProject($params['group']);
@@ -276,7 +290,8 @@ class BurningParrotTheme extends BaseLayout
         return new CurrentProjectNavbarInfoPresenter(
             $project,
             $this->getProjectPrivacy($project),
-            $this->project_flags_builder->buildProjectFlags($project)
+            $this->project_flags_builder->buildProjectFlags($project),
+            $this->getProjectBanner($project, $this->user, 'project-banner-bp.js')
         );
     }
 

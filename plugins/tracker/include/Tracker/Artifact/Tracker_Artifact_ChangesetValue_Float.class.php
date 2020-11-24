@@ -22,12 +22,14 @@
 /**
  * Manage values in changeset for float fields
  */
-class Tracker_Artifact_ChangesetValue_Float extends Tracker_Artifact_ChangesetValue_Numeric {
+class Tracker_Artifact_ChangesetValue_Float extends Tracker_Artifact_ChangesetValue_Numeric
+{
 
     /**
      * @return mixed
      */
-    public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor) {
+    public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor)
+    {
         return $visitor->visitFloat($this);
     }
 
@@ -36,7 +38,8 @@ class Tracker_Artifact_ChangesetValue_Float extends Tracker_Artifact_ChangesetVa
      *
      * @return float the float value
      */
-    public function getFloat() {
+    public function getFloat()
+    {
         if ($this->numeric !== null) {
             $this->numeric = (float)$this->numeric;
         }
@@ -48,7 +51,8 @@ class Tracker_Artifact_ChangesetValue_Float extends Tracker_Artifact_ChangesetVa
      *
      * @return float the float value
      */
-    public function getNumeric() {
+    public function getNumeric()
+    {
         return $this->getFloat();
     }
 
@@ -57,18 +61,21 @@ class Tracker_Artifact_ChangesetValue_Float extends Tracker_Artifact_ChangesetVa
      *
      * @return string|null The value of this artifact changeset value
      */
-    public function getValue() {
+    public function getValue()
+    {
         if ($this->getFloat() !== null) {
             return (string) (float) number_format($this->getFloat(), Tracker_FormElement_Field_Float::FLOAT_DECIMALS, '.', '');
         }
         return null;
     }
 
-    public function getRESTValue(PFUser $user) {
+    public function getRESTValue(PFUser $user)
+    {
         return $this->getFullRESTValue($user);
     }
 
-    public function getFullRESTValue(PFUser $user) {
+    public function getFullRESTValue(PFUser $user)
+    {
         return $this->getFullRESTRepresentation($this->getFloat());
     }
 
@@ -77,7 +84,8 @@ class Tracker_Artifact_ChangesetValue_Float extends Tracker_Artifact_ChangesetVa
      *
      * @return string The value of this artifact changeset value in Json format
      */
-    public function getJsonValue() {
+    public function getJsonValue()
+    {
         return $this->getFloat();
     }
 }

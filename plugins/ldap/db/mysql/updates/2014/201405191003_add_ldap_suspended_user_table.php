@@ -18,14 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201405191003_add_ldap_suspended_user_table extends ForgeUpgrade_Bucket {
+class b201405191003_add_ldap_suspended_user_table extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add plugin_ldap_suspended_user table
 EOT;
@@ -36,7 +38,8 @@ EOT;
      *
      * @retun Void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -45,7 +48,8 @@ EOT;
      *
      * @return Void
      */
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE plugin_ldap_suspended_user (
                  user_id int(11) NOT NULL,
                  deletion_date int(11) NOT NULL
@@ -62,11 +66,10 @@ EOT;
      *
      * @return Void
      */
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('plugin_ldap_suspended_user')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('The table plugin_ldap_suspended_user still not created');
         }
     }
 }
-
-?>

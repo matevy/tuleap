@@ -21,14 +21,15 @@
 
 /**
  * Manage rename of LDAP users in the whole platform.
- * 
+ *
  * As of today, when LDAP authentication is in use, the LDAP login
  * is used for web authentication (sic!) dans for Subversion authentication.
- * 
+ *
  * So we need to propagate LDAP login change to SVNAccessFile only (the Tuleap
  * user name is not changed).
  */
-class SystemEvent_PLUGIN_LDAP_UPDATE_LOGIN  extends SystemEvent {
+class SystemEvent_PLUGIN_LDAP_UPDATE_LOGIN extends SystemEvent
+{
     /** @var UserManager */
     private $user_manager;
 
@@ -55,14 +56,15 @@ class SystemEvent_PLUGIN_LDAP_UPDATE_LOGIN  extends SystemEvent {
 
     /**
      * Execute action
-     * 
+     *
      * @see src/common/system_event/SystemEvent::process()
      */
-    public function process() {
+    public function process()
+    {
         $user_ids    = $this->getParametersAsArray();
         $project_ids = array();
-        
-        // Get all projects the user is member of (project member or user group member) 
+
+        // Get all projects the user is member of (project member or user group member)
         $um = $this->getUserManager();
         foreach ($user_ids as $user_id) {
             $user = $um->getUserById($user_id);
@@ -75,7 +77,7 @@ class SystemEvent_PLUGIN_LDAP_UPDATE_LOGIN  extends SystemEvent {
                 }
             }
         }
-        
+
         // Update SVNAccessFile of projects
         $backendSVN = $this->getBackendSVN();
         foreach ($project_ids as $project_id) {
@@ -84,38 +86,39 @@ class SystemEvent_PLUGIN_LDAP_UPDATE_LOGIN  extends SystemEvent {
                 $backendSVN->updateProjectSVNAccessFile($project);
             }
         }
-        
+
         $this->done();
     }
 
     /**
      * Display parameters
-     * 
+     *
      * @see src/common/system_event/SystemEvent::verbalizeParameters()
-     * 
-     * @param Boolean $with_link With link 
+     *
+     * @param bool $with_link With link
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return  $this->parameters;
     }
-    
+
     /**
      * Wrapper for UserManager
-     * 
+     *
      * @return UserManager
      */
-    protected function getUserManager() {
+    protected function getUserManager()
+    {
         return $this->user_manager;
     }
-    
+
     /**
      * Wrapper for BackendSVN
-     * 
+     *
      * @return BackendSVN
      */
-    protected function getBackendSVN() {
+    protected function getBackendSVN()
+    {
         return $this->backend_svn;
     }
-
 }
-?>

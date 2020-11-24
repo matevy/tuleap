@@ -16,21 +16,26 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201503271456_add_forgeconfig extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201503271456_add_forgeconfig extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Add table to store forge configuration";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $this->createTable();
         $this->populateTable();
     }
 
-    private function createTable() {
+    private function createTable()
+    {
         $sql = "CREATE TABLE forgeconfig (
             name VARCHAR(255) NOT NULL,
             value VARCHAR(255) NOT NULL DEFAULT '',
@@ -42,7 +47,8 @@ class b201503271456_add_forgeconfig extends ForgeUpgrade_Bucket {
         }
     }
 
-    private function populateTable() {
+    private function populateTable()
+    {
         $access_mode = $this->getCurrentAccessMode();
         $sql = "REPLACE INTO forgeconfig (name, value) VALUES ('access_mode', '$access_mode')";
         $res = $this->db->dbh->exec($sql);
@@ -51,7 +57,8 @@ class b201503271456_add_forgeconfig extends ForgeUpgrade_Bucket {
         }
     }
 
-    private function getCurrentAccessMode() {
+    private function getCurrentAccessMode()
+    {
         include($this->getLocalIncPath());
         $variables_in_localinc = get_defined_vars();
 
@@ -62,19 +69,20 @@ class b201503271456_add_forgeconfig extends ForgeUpgrade_Bucket {
             if (isset($variables_in_localinc['sys_allow_restricted_users']) && $variables_in_localinc['sys_allow_restricted_users'] == true) {
                 $access_mode = 'restricted';
             }
-        } else if (isset($variables_in_localinc['sys_allow_restricted_users']) && $variables_in_localinc['sys_allow_restricted_users'] == true) {
+        } elseif (isset($variables_in_localinc['sys_allow_restricted_users']) && $variables_in_localinc['sys_allow_restricted_users'] == true) {
             $this->log->warn('Ambiguous configuration: both sys_allow_anon & sys_allow_restricted_users were activated whereas it makes no sense. Deactivating restricted users; you can change it through the web interface.');
         }
 
         return $access_mode;
     }
 
-    private function getLocalIncPath() {
+    private function getLocalIncPath()
+    {
         $default_path = '/etc/tuleap/conf/local.inc';
         $centos5_path = '/etc/codendi/conf/local.inc';
         $local_inc    = getenv('TULEAP_LOCAL_INC') ? getenv('TULEAP_LOCAL_INC') : getenv('CODENDI_LOCAL_INC');
 
-        if (! $local_inc ) {
+        if (! $local_inc) {
             if (is_file($default_path)) {
                 $local_inc = $default_path;
             } else {

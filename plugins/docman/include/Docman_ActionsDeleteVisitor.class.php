@@ -1,10 +1,10 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -21,28 +21,33 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Docman\DeleteFailedException;
+use Tuleap\Docman\DocumentDeletion\DocmanWikiDeletor;
+use Tuleap\Docman\Item\ItemVisitor;
 use Tuleap\PHPWiki\WikiPage;
 
-require_once('Docman_FileStorage.class.php');
-require_once('Docman_VersionFactory.class.php');
-class Docman_ActionsDeleteVisitor /* implements Visitor */ {
+class Docman_ActionsDeleteVisitor implements ItemVisitor
+{
     protected $user;
     protected $response;
 
-    public function __construct() {
+    public function __construct()
+    {
         //More coherent to have only one delete date for a whole hierarchy.
         $this->deleteDate = time();
-        $this->response   = $GLOBALS['Response'];
     }
-    
+
     /**
-     * 
+     *
      * Enter description here ...
      *
      * @param Docman_Folder $item
-     * @param $params
+     * @param               $params
+     *
+     * @throws DeleteFailedException
      */
-    public function visitFolder(&$item, $params = array()) {
+    public function visitFolder(Docman_Folder $item, $params = array())
+    {
         //delete all sub items before
         $items = $item->getAllItems();
         if (isset($params['parent'])) {
@@ -53,7 +58,7 @@ class Docman_ActionsDeleteVisitor /* implements Visitor */ {
         $one_item_has_not_been_deleted = false;
         if ($items->size()) {
             $it = $items->iterator();
-            while($it->valid()) {
+            while ($it->valid()) {
                 $o = $it->current();
                 $params['parent'] = $item;
                 if (!$o->accept($this, $params)) {
@@ -62,128 +67,119 @@ class Docman_ActionsDeleteVisitor /* implements Visitor */ {
                 $it->next();
             }
         }
-        
+
         if ($one_item_has_not_been_deleted) {
-            $this->response->addFeedback('error', $GLOBALS['Language']->getText('plugin_docman', 'error_delete_notempty', $item->getTitle()));
-            return false;
+            throw DeleteFailedException::fromFolder($item);
         } else {
             //Mark the folder as deleted;
             $params['parent'] = $parent;
             return $this->_deleteItem($item, $params);
         }
     }
-    
-    public function visitDocument($item, $params = array()) {
+
+    /**
+     * @throws DeleteFailedException
+     */
+    public function visitDocument($item, $params = array())
+    {
         //Mark the document as deleted
         return $this->_deleteItem($item, $params);
     }
 
     /**
-    * Handles wiki page deletion with two different behaviors:
-    * 1- User decides to keep wiki page in wiki service. In this case, we restrict access to that wiki page to wiki admins only.
-    * 2- User decides to cascade deletion of the wiki page to wiki service too. In that case, we completely remove the wiki page from wiki service.
-    *
-    * @param Docman_Item $item
-    * @param array $params params.
-    *
-    * @return boolean $deleted. True if there is no error.  False otherwise.
-    */
-    public function visitWiki(&$item, $params = array()) {
-        // delete the document.
-        $deleted = $this->visitDocument($item, $params);
+     * Handles wiki page deletion with two different behaviors:
+     * 1- User decides to keep wiki page in wiki service. In this case, we restrict access to that wiki page to wiki
+     * admins only.
+     * 2- User decides to cascade deletion of the wiki page to wiki service too. In that case, we completely remove the
+     * wiki page from wiki service.
+     *
+     * @param Docman_Wiki $item
+     * @param array       $params params.
+     *
+     * @return bool $deleted. True if there is no error.  False otherwise.
+     * @throws DeleteFailedException
+     */
+    public function visitWiki(Docman_Wiki $wiki, array $params = [])
+    {
+        $should_propagate_deletion = $params['cascadeWikiPageDeletion'];
+        $user                      = $params['user'];
 
-        if($deleted) {
-            if(!$params['cascadeWikiPageDeletion']) {
-                // grant a wiki permission only to wiki admins on the corresponding wiki page.
-                $this->restrictAccess($item, $params);
-
-                $wiki_page = new WikiPage($item->getGroupId(), $item->getPageName());
-
-                if ($wiki_page->getId()) {
-                    $event_manager = EventManager::instance();
-                    $event_manager->processEvent(
-                        "wiki_page_updated",
-                        array(
-                            'group_id'   => $item->getGroupId(),
-                            'wiki_page'  => $item->getPageName(),
-                            'referenced' => false,
-                            'user'       => $params['user']
-                        )
-                    );
-                }
-
-            } else { // User have choosen to delete wiki page from wiki service too
-                $dIF = $this->_getItemFactory();
-                if ($dIF->deleteWikiPage($item->getPageName(), $item->getGroupId())) {
-                    $this->response->addFeedback('info', $GLOBALS['Language']->getText('plugin_docman', 'docman_wiki_delete_wiki_page_success'));
-                } else {
-                    $this->response->addFeedback('error', $GLOBALS['Language']->getText('plugin_docman', 'docman_wiki_delete_wiki_page_failed'));
-                }
-            }
-        }
-        return $deleted;
+        return (new DocmanWikiDeletor(
+            new \Tuleap\Docman\DocmanReferencedWikiPageRetriever(),
+            $this->getPermissionManager($wiki->getGroupId()),
+            $this->_getItemFactory(),
+            $this->_getItemDao(),
+            $this->_getEventManager()
+        ))->deleteWiki($wiki, $user, $should_propagate_deletion);
     }
-    
-    public function visitLink(&$item, $params = array()) {
+
+    public function visitLink(Docman_Link $item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    public function visitFile($item, $params = array()) {
-        if ($this->getPermissionManager($item->getGroupId())->userCanWrite($params['user'], $item->getId())) {
+    /**
+     * @throws DeleteFailedException
+     */
+    public function visitFile(Docman_File $item, $params = array())
+    {
+        if ($this->getPermissionManager($item->getGroupId())->userCanDelete($params['user'], $item)) {
             if (isset($params['version']) && $params['version'] !== false) {
                 return $this->_deleteVersion($item, $params['version'], $params['user']);
             } else {
                 return $this->_deleteFile($item, $params);
             }
         } else {
-            $this->response->addFeedback('error', $GLOBALS['Language']->getText('plugin_docman', 'error_perms_delete_item', $item->getTitle()));
-            return false;
+            throw DeleteFailedException::fromFile($item);
         }
     }
 
-    public function visitEmbeddedFile(&$item, $params = array()) {
+    /**
+     * @throws DeleteFailedException
+     */
+    public function visitEmbeddedFile(Docman_EmbeddedFile $item, $params = array())
+    {
         return $this->visitFile($item, $params);
     }
 
-    public function visitEmpty(&$item, $params = array()) {
+    /**
+     * @throws DeleteFailedException
+     */
+    public function visitEmpty(Docman_Empty $item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    public function restrictAccess($item, $params = array()) {
-        // Check whether there is other references to this wiki page.
-        $dao = $this->_getItemDao();
-        $referenced = $dao->isWikiPageReferenced($item->getPageName(), $item->getGroupId());
-        if(!$referenced) {
-            $dIF = $this->_getItemFactory();
-            $id_in_wiki = $dIF->getIdInWikiOfWikiPageItem($item->getPageName(), $item->getGroupId());
-            // Restrict access to wiki admins if the page already exists in wiki.
-            if($id_in_wiki !== null) {
-                permission_clear_all($item->getGroupId(), 'WIKIPAGE_READ', $id_in_wiki, false);
-                permission_add_ugroup($item->getGroupId(), 'WIKIPAGE_READ', $id_in_wiki, $GLOBALS['UGROUP_WIKI_ADMIN']);
-            }
-        }
+    public function visitItem(Docman_Item $item, array $params = [])
+    {
+        return null;
     }
 
-    function _deleteItem($item, $params) {
-       if ($this->getPermissionManager($item->getGroupId())->userCanWrite($params['user'], $item->getId())) {
+    /**
+     * @throws DeleteFailedException
+     */
+    function _deleteItem($item, $params)
+    {
+        if ($this->getPermissionManager($item->getGroupId())->userCanDelete($params['user'], $item)) {
             $dIF = $this->_getItemFactory();
             $dIF->delete($item);
             return true;
         } else {
-            $this->response->addFeedback('error', $GLOBALS['Language']->getText('plugin_docman', 'error_perms_delete_item', $item->getTitle()));
-            return false;
+            throw DeleteFailedException::fromItem($item);
         }
     }
 
     /**
      * Delete a file (all versions of the file)
-     * 
+     *
      * @param Docman_File $item
      * @param Array       $params
-     * 
-     * @return Boolean
+     *
+     * @return bool
+     * @throws DeleteFailedException
      */
-    function _deleteFile(Docman_File $item, $params) {
+    function _deleteFile(Docman_File $item, $params)
+    {
         // Delete all versions before
         $version_factory = $this->_getVersionFactory();
         if ($versions = $version_factory->getAllVersionForItem($item)) {
@@ -200,57 +196,64 @@ class Docman_ActionsDeleteVisitor /* implements Visitor */ {
 
     /**
      * Delete a version of a file
-     * 
+     *
      * @param Docman_File    $item
      * @param Docman_Version $version
      * @param PFUser           $user
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
-    function _deleteVersion(Docman_File $item, Docman_Version $version, PFUser $user) {
+    function _deleteVersion(Docman_File $item, Docman_Version $version, PFUser $user)
+    {
         // Proceed to deletion
         $version_factory = $this->_getVersionFactory();
         return $version_factory->deleteSpecificVersion($item, $version->getNumber());
     }
 
-    function _getEventManager() {
+    function _getEventManager()
+    {
         return EventManager::instance();
     }
-    
+
     var $version_factory;
-    function _getVersionFactory() {
+    function _getVersionFactory()
+    {
         if (!$this->version_factory) {
             $this->version_factory = new Docman_VersionFactory();
         }
         return $this->version_factory;
     }
-    
+
     var $item_factory;
-    function _getItemFactory() {
+    function _getItemFactory()
+    {
         if (!$this->item_factory) {
             $this->item_factory = new Docman_ItemFactory();
         }
         return $this->item_factory;
     }
-    
+
     var $lock_factory;
-    function _getLockFactory() {
+    function _getLockFactory()
+    {
         if (!$this->lock_factory) {
-            $this->lock_factory = new Docman_LockFactory();
+            $this->lock_factory = new \Docman_LockFactory(new \Docman_LockDao(), new \Docman_Log());
         }
         return $this->lock_factory;
-    }   
-     
-    function _getFileStorage() {
+    }
+
+    function _getFileStorage()
+    {
         return new Docman_FileStorage();
     }
-    
-    function _getItemDao() {
+
+    function _getItemDao()
+    {
         return new Docman_ItemDao(CodendiDataAccess::instance());
     }
-    
-    function getPermissionManager($groupId) {
+
+    function getPermissionManager($groupId)
+    {
         return Docman_PermissionsManager::instance($groupId);
     }
 }
-?>

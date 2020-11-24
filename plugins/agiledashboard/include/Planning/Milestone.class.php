@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -25,7 +25,6 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
 {
     public const REMAINING_EFFORT_FIELD_NAME = 'remaining_effort';
     public const CAPACITY_FIELD_NAME         = 'capacity';
-    public const START_DATE_FIELD_NAME       = 'start_date';
     public const DURATION_FIELD_NAME         = 'duration';
 
     /**
@@ -44,7 +43,7 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
     public function getArtifact();
 
     /**
-     * @return Boolean
+     * @return bool
      */
     public function userCanView(PFUser $user);
 
@@ -97,7 +96,7 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
      * Example: a root node (a product) is not IN hierarchy
      *          a lonely milestone is not either.
      *
-     * @return boolean
+     * @return bool
      */
     public function hasAncestors();
 
@@ -125,14 +124,14 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
     /**
      * Get the start date of the milestone
      *
-     * @return int the timestamp value of start_date field
+     * @return int|null the timestamp value of start_date field
      */
     public function getStartDate();
 
     /**
      * Get the end date of the milestone
      *
-     * @return int the timestamp value of the duration field
+     * @return int|null the timestamp value of the duration field
      */
     public function getEndDate();
 
@@ -150,7 +149,7 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
     /**
      * Return milestone duration in days
      *
-     * @return float
+     * @return int|null
      */
     public function getDuration();
 
@@ -172,7 +171,7 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
      * Return If type of element is compatible.
      *
      * @param Planning_Milestone $potential_submilestone
-     * @return boolean
+     * @return bool
      */
     public function milestoneCanBeSubmilestone(Planning_Milestone $potential_submilestone);
 
@@ -186,4 +185,8 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
      * @return mixed Tracker_Chart_Data_Burndown | null
      */
     public function getBurndownData(PFUser $user);
+
+    public function setTimePeriod(TimePeriodWithoutWeekEnd $time_period);
+    public function setCapacity($capacity);
+    public function setRemainingEffort($remaining_effort);
 }

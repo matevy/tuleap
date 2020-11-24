@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+  - Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -30,7 +30,7 @@
                 v-bind:placeholder="placeholder"
                 v-model="writingCrossTrackerReport.expert_query"
             ></textarea>
-            <p class="tlp-text-muted">
+            <p class="tlp-text-info">
                 <i class="fa fa-info-circle"></i>
                 <translate>You can use: AND, OR, parenthesis. Autocomplete is activated with Ctrl + Space.</translate>
             </p>
@@ -61,8 +61,11 @@ import {
     TQL_cross_tracker_autocomplete_keywords,
     TQL_cross_tracker_mode_definition
 } from "./tql-configuration.js";
-import { insertAllowedFieldInCodeMirror } from "plugin-tracker-TQL/allowed-field-inserter.js";
-import { initializeTQLMode, codeMirrorify } from "plugin-tracker-TQL/builder.js";
+import { insertAllowedFieldInCodeMirror } from "../../../../../tracker/www/scripts/report/TQL-CodeMirror/allowed-field-inserter.js";
+import {
+    initializeTQLMode,
+    codeMirrorify
+} from "../../../../../tracker/www/scripts/report/TQL-CodeMirror/builder.js";
 
 export default {
     name: "QueryEditor",

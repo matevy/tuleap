@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -18,6 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Tracker\XML\TrackerXmlImportFeedbackCollector;
+use Tuleap\Tracker\Semantic\Timeframe\ArtifactTimeframeHelper;
+
 require_once('bootstrap.php');
 Mock::generate('Tracker_Artifact');
 
@@ -51,21 +55,22 @@ Mock::generate('Tracker_FormElement_Field_Value_DateDao');
 
 Mock::generate('DataAccessResult');
 
-require_once('common/valid/Rule.class.php');    // unit test not really unit...
-
-class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
+class Tracker_FormElement_Field_DateTest extends TuleapTestCase
+{
 
     /** @var XML_Security */
     protected $xml_security;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->xml_security = new XML_Security();
         $this->xml_security->enableExternalLoadOfEntities();
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         $this->xml_security->disableExternalLoadOfEntities();
 
         unset($GLOBALS['sys_incdir']);
@@ -75,12 +80,14 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         parent::tearDown();
     }
 
-    function testNoDefaultValue() {
+    function testNoDefaultValue()
+    {
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
         $this->assertFalse($date_field->hasDefaultValue());
     }
 
-    function testDefaultValue() {
+    function testDefaultValue()
+    {
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
         $date_field->setReturnValue('getProperty', '1', array('default_value_type')); //custom date
         $date_field->setReturnValue('getProperty', '1234567890', array('default_value'));
@@ -89,7 +96,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual($date_field->getDefaultValue(), '2009-02-13');
     }
 
-    function testToday() {
+    function testToday()
+    {
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
         $date_field->setReturnValue('getProperty', '0', array('default_value_type')); //today
         $date_field->setReturnValue('getProperty', '1234567890', array('default_value'));
@@ -99,21 +107,24 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual($date_field->getDefaultValue(), 'date-of-today');
     }
 
-    public function itDisplayTime() {
+    public function itDisplayTime()
+    {
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
         $date_field->setReturnValue('getProperty', 1, array('display_time'));
 
         $this->assertTrue($date_field->isTimeDisplayed());
     }
 
-    public function itDontDisplayTime() {
+    public function itDontDisplayTime()
+    {
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
         $date_field->setReturnValue('getProperty', 0, array('display_time'));
 
         $this->assertFalse($date_field->isTimeDisplayed());
     }
 
-    function testGetChangesetValue() {
+    function testGetChangesetValue()
+    {
         $value_dao = new MockTracker_FormElement_Field_Value_DateDao();
         $dar = new MockDataAccessResult();
         $dar->setReturnValueAt(0, 'getRow', array('id' => 123, 'field_id' => 1, 'value' => '1221221466'));
@@ -126,7 +137,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertIsA($date_field->getChangesetValue(mock('Tracker_Artifact_Changeset'), 123, false), 'Tracker_Artifact_ChangesetValue_Date');
     }
 
-    function testGetChangesetValue_doesnt_exist() {
+    function testGetChangesetValue_doesnt_exist()
+    {
         $value_dao = new MockTracker_FormElement_Field_Value_DateDao();
         $dar = new MockDataAccessResult();
         $dar->setReturnValue('getRow', false);
@@ -138,7 +150,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertNull($date_field->getChangesetValue(null, 123, false));
     }
 
-    function testIsValidRequiredField() {
+    function testIsValidRequiredField()
+    {
         $f = new Tracker_FormElement_Field_DateTestVersion();
         $f->setReturnValue('isRequired', true);
         $a = new MockTracker_Artifact();
@@ -154,7 +167,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertFalse($f->isValidRegardingRequiredProperty($a, null));
     }
 
-    function testIsValidNotRequiredField() {
+    function testIsValidNotRequiredField()
+    {
         $f = new Tracker_FormElement_Field_DateTestVersion();
         $f->setReturnValue('isRequired', false);
         $a = new MockTracker_Artifact();
@@ -162,19 +176,22 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertTrue($f->isValid($a, null));
     }
 
-    function testGetFieldData() {
+    function testGetFieldData()
+    {
         $f = new Tracker_FormElement_Field_DateTestVersion();
         $this->assertEqual('2010-04-30', $f->getFieldData('2010-04-30'));
         $this->assertNull($f->getFieldData('03-04-2010'));
     }
 
-    function testGetFieldDataAsTimestamp() {
+    function testGetFieldDataAsTimestamp()
+    {
         $f = new Tracker_FormElement_Field_DateTestVersion();
-        $this->assertEqual('2010-04-30', $f->getFieldData((string)mktime(5,3,2,4,30,2010)));
+        $this->assertEqual('2010-04-30', $f->getFieldData((string)mktime(5, 3, 2, 4, 30, 2010)));
         $this->assertNull($f->getFieldData('1.5'));
     }
 
-    function testGetFieldDataForCSVPreview() {
+    function testGetFieldDataForCSVPreview()
+    {
         $f = new Tracker_FormElement_Field_DateTestVersion();
         $f->setReturnValueAt(0, '_getUserCSVDateFormat', 'day_month_year');
         $f->setReturnValueAt(1, '_getUserCSVDateFormat', 'month_day_year');
@@ -187,7 +204,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertNull($f->getFieldDataForCSVPreview(''));
     }
 
-    function testExplodeXlsDateFmtDDMMYYYY() {
+    function testExplodeXlsDateFmtDDMMYYYY()
+    {
         $f = new Tracker_FormElement_Field_DateTestVersion();
         $f->setReturnValue('_getUserCSVDateFormat', 'day_month_year');
         $this->assertEqual(array('1981', '04', '25', '0', '0', '0'), $f->explodeXlsDateFmt('25/04/1981'));
@@ -197,7 +215,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertArrayEmpty($f->explodeXlsDateFmt('25/04/81 10AM'));
     }
 
-    function testExplodeXlsDateFmtMMDDYYYY() {
+    function testExplodeXlsDateFmtMMDDYYYY()
+    {
         $f = new Tracker_FormElement_Field_DateTestVersion();
         $f->setReturnValue('_getUserCSVDateFormat', 'month_day_year');
         $this->assertEqual(array('1981', '04', '25', '0', '0', '0'), $f->explodeXlsDateFmt('04/25/1981'));
@@ -207,7 +226,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertArrayEmpty($f->explodeXlsDateFmt('04/25/81 10AM'));
     }
 
-    public function itExplodesDateWithHoursInDDMMYYYYFormat() {
+    public function itExplodesDateWithHoursInDDMMYYYYFormat()
+    {
         $field = new Tracker_FormElement_Field_DateTestVersion();
         $field->setReturnValue('_getUserCSVDateFormat', 'day_month_year');
 
@@ -217,7 +237,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         );
     }
 
-    public function itExplodesDateWithHoursInMMDDYYYYFormat() {
+    public function itExplodesDateWithHoursInMMDDYYYYFormat()
+    {
         $field = new Tracker_FormElement_Field_DateTestVersion();
         $field->setReturnValue('_getUserCSVDateFormat', 'month_day_year');
 
@@ -227,7 +248,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         );
     }
 
-    public function itExplodesDateWithHoursInMMDDYYYYHHSSFormatWithoutGivenSeconds() {
+    public function itExplodesDateWithHoursInMMDDYYYYHHSSFormatWithoutGivenSeconds()
+    {
         $field = new Tracker_FormElement_Field_DateTestVersion();
         $field->setReturnValue('_getUserCSVDateFormat', 'month_day_year');
 
@@ -237,7 +259,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         );
     }
 
-    function testNbDigits() {
+    function testNbDigits()
+    {
         $f = new Tracker_FormElement_Field_DateTestVersion();
         $this->assertEqual(1, $f->_nbDigits(1));
         $this->assertEqual(2, $f->_nbDigits(15));
@@ -248,7 +271,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual(1, $f->_nbDigits('001'));
     }
 
-    function testExportPropertiesToXMLNoDefaultValue() {
+    function testExportPropertiesToXMLNoDefaultValue()
+    {
         $xml_test = simplexml_load_file(dirname(__FILE__) . '/_fixtures/ImportTrackerFormElementDatePropertiesNoDefaultValueTest.xml');
 
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
@@ -277,7 +301,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual(count($root->properties->attributes()), 0);
     }
 
-    function testExportPropertiesToXMLNoDefaultValue2() {
+    function testExportPropertiesToXMLNoDefaultValue2()
+    {
         // another test if value = '0' instead of ''
         $xml_test = simplexml_load_file(dirname(__FILE__) . '/_fixtures/ImportTrackerFormElementDatePropertiesNoDefaultValueTest.xml');
 
@@ -307,7 +332,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual(count($root->properties->attributes()), 0);
     }
 
-    function testExportPropertiesToXMLDefaultValueToday() {
+    function testExportPropertiesToXMLDefaultValueToday()
+    {
         $xml_test = simplexml_load_file(dirname(__FILE__) . '/_fixtures/ImportTrackerFormElementDatePropertiesDefaultValueTodayTest.xml');
 
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
@@ -338,7 +364,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual('today', ((string)$attr->default_value));
     }
 
-    function testExportPropertiesToXMLDefaultValueSpecificDate() {
+    function testExportPropertiesToXMLDefaultValueSpecificDate()
+    {
         $xml_test = simplexml_load_file(dirname(__FILE__) . '/_fixtures/ImportTrackerFormElementDatePropertiesDefaultValueSpecificDateTest.xml');
 
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
@@ -369,7 +396,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual('1234567890', ((string)$attr->default_value));
     }
 
-    public function testExportPropertiesToXMLDisplayTime() {
+    public function testExportPropertiesToXMLDisplayTime()
+    {
         $xml_test = simplexml_load_file(dirname(__FILE__) . '/_fixtures/ImportTrackerFormElementDatePropertiesDisplayTime.xml');
 
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
@@ -391,7 +419,8 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual('1', ((string)$attr->display_time));
     }
 
-    public function testExportPropertiesToXMLDisplayTimeWhenDisplayTimeIsZero() {
+    public function testExportPropertiesToXMLDisplayTimeWhenDisplayTimeIsZero()
+    {
         $xml_test = simplexml_load_file(dirname(__FILE__) . '/_fixtures/ImportTrackerFormElementDatePropertiesDisplayTimeZero.xml');
 
         $date_field = new Tracker_FormElement_Field_DateTestVersion();
@@ -413,15 +442,15 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $this->assertEqual('0', ((string)$attr->display_time));
     }
 
-    function testImport_realdate() {
+    function testImport_realdate()
+    {
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <formElement type="date" ID="F0" rank="20" required="1">
                 <name>field_name</name>
                 <label>field_label</label>
                 <description>field_description</description>
                 <properties default_value="1234567890" />
-            </formElement>'
-        );
+            </formElement>');
 
         $mapping = array();
 
@@ -429,20 +458,22 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $date->setReturnValue('formatDate', '2009-02-13', array('1234567890'));
         $date->setReturnValue('formatDate', 'date-of-today', array($_SERVER['REQUEST_TIME']));
 
-        $date->continueGetInstanceFromXML($xml, $mapping, mock('User\XML\Import\IFindUserFromXMLReference'));
+        $feedback_collector = \Mockery::mock(TrackerXmlImportFeedbackCollector::class);
+
+        $date->continueGetInstanceFromXML($xml, $mapping, mock('User\XML\Import\IFindUserFromXMLReference'), $feedback_collector);
 
         $this->assertEqual($date->getDefaultValue(), '2009-02-13');
     }
 
-    function testImport_today() {
+    function testImport_today()
+    {
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <formElement type="date" ID="F0" rank="20" required="1">
                 <name>field_name</name>
                 <label>field_label</label>
                 <description>field_description</description>
                 <properties default_value="today" />
-            </formElement>'
-        );
+            </formElement>');
 
         $mapping = array();
 
@@ -450,20 +481,22 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $date->setReturnValue('formatDate', '2009-02-13', array('1234567890'));
         $date->setReturnValue('formatDate', 'date-of-today', array($_SERVER['REQUEST_TIME']));
 
-        $date->continueGetInstanceFromXML($xml, $mapping, mock('User\XML\Import\IFindUserFromXMLReference'));
+        $feedback_collector = \Mockery::mock(TrackerXmlImportFeedbackCollector::class);
+
+        $date->continueGetInstanceFromXML($xml, $mapping, mock('User\XML\Import\IFindUserFromXMLReference'), $feedback_collector);
 
         $this->assertEqual($date->getDefaultValue(), 'date-of-today');
     }
 
-    function testImport_nodefault() {
+    function testImport_nodefault()
+    {
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <formElement type="date" ID="F0" rank="20" required="1">
                 <name>field_name</name>
                 <label>field_label</label>
                 <description>field_description</description>
                 <properties />
-            </formElement>'
-        );
+            </formElement>');
 
         $mapping = array();
 
@@ -471,20 +504,22 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $date->setReturnValue('formatDate', '2009-02-13', array('1234567890'));
         $date->setReturnValue('formatDate', 'date-of-today', array($_SERVER['REQUEST_TIME']));
 
-        $date->continueGetInstanceFromXML($xml, $mapping, mock('User\XML\Import\IFindUserFromXMLReference'));
+        $feedback_collector = \Mockery::mock(TrackerXmlImportFeedbackCollector::class);
+
+        $date->continueGetInstanceFromXML($xml, $mapping, mock('User\XML\Import\IFindUserFromXMLReference'), $feedback_collector);
 
         $this->assertEqual($date->getDefaultValue(), '');
     }
 
-    function testImport_empty() {
+    function testImport_empty()
+    {
         $xml = new SimpleXMLElement('<?xml version="1.0" standalone="yes"?>
             <formElement type="date" ID="F0" rank="20" required="1">
                 <name>field_name</name>
                 <label>field_label</label>
                 <description>field_description</description>
                 <properties default_value="" />
-            </formElement>'
-        );
+            </formElement>');
 
         $mapping = array();
 
@@ -492,40 +527,46 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $date->setReturnValue('formatDate', '2009-02-13', array('1234567890'));
         $date->setReturnValue('formatDate', 'date-of-today', array($_SERVER['REQUEST_TIME']));
 
-        $date->continueGetInstanceFromXML($xml, $mapping, mock('User\XML\Import\IFindUserFromXMLReference'));
+        $feedback_collector = \Mockery::mock(TrackerXmlImportFeedbackCollector::class);
+
+        $date->continueGetInstanceFromXML($xml, $mapping, mock('User\XML\Import\IFindUserFromXMLReference'), $feedback_collector);
 
         $this->assertEqual($date->getDefaultValue(), '');
     }
 
-    function testFieldDateShouldSendEmptyMailValueWhenValueIsEmpty() {
+    function testFieldDateShouldSendEmptyMailValueWhenValueIsEmpty()
+    {
         $user = mock('PFUser');
         $artifact = new MockTracker_Artifact();
         $date = new Tracker_FormElement_Field_DateTestVersion();
         $this->assertEqual('-', $date->fetchMailArtifactValue($artifact, $user, false, null, null));
     }
 
-    function testFieldDateShouldSendAMailWithAReadableDate_EnUS() {
+    function testFieldDateShouldSendAMailWithAReadableDate_EnUS()
+    {
         $GLOBALS['sys_incdir'] = TRACKER_BASE_DIR. '/../../../site-content';
         $GLOBALS['sys_custom_incdir'] = TRACKER_BASE_DIR. '/../../../site-content';
 
         $GLOBALS['Language'] = new BaseLanguage('en_US', 'en_US');
-        $GLOBALS['Language']->lang = 'en_US';;
+        $GLOBALS['Language']->lang = 'en_US';
 
         $user     = mock('PFUser');
         $artifact = new MockTracker_Artifact();
 
-        $date = partial_mock('Tracker_FormElement_Field_Date', array('formatDateForDisplay', 'isTimeDisplayed'));
-        stub($date)->formatDateForDisplay('2011-12-01')->returns(1322752769);
-        stub($date)->isTimeDisplayed()->returns(false);
+        $date = Mockery::mock(Tracker_FormElement_Field_Date::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $date->shouldReceive('formatDateForDisplay')->with('2011-12-01')->andReturn(1322752769);
+        $date->shouldReceive('isTimeDisplayed')->andReturnFalse();
+        $date->shouldReceive('getArtifactTimeframeHelper')->andReturn(Mockery::mock(ArtifactTimeframeHelper::class, ['artifactHelpShouldBeShownToUser' => false]));
 
-        $value = new MockTracker_Artifact_ChangesetValue_Date();
-        $value->setReturnValue('getTimestamp', 1322752769);
+        $value = Mockery::mock(Tracker_Artifact_ChangesetValue_Date::class);
+        $value->shouldReceive('getTimestamp')->andReturn(1322752769);
 
         $this->assertEqual('2011-12-01', $date->fetchMailArtifactValue($artifact, $user, false, $value, 'text'));
         $this->assertEqual('2011-12-01', $date->fetchMailArtifactValue($artifact, $user, false, $value, 'html'));
     }
 
-    function testFieldDateShouldSendAMailWithAReadableDate_frFR() {
+    function testFieldDateShouldSendAMailWithAReadableDate_frFR()
+    {
         $GLOBALS['sys_incdir'] = TRACKER_BASE_DIR. '/../../../site-content';
         $GLOBALS['sys_custom_incdir'] = TRACKER_BASE_DIR. '/../../../site-content';
 
@@ -535,18 +576,20 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
         $user     = mock('PFUser');
         $artifact = new MockTracker_Artifact();
 
-        $date = partial_mock('Tracker_FormElement_Field_Date', array('formatDateForDisplay', 'isTimeDisplayed'));
-        stub($date)->formatDateForDisplay('2011-12-01')->returns(1322752769);
-        stub($date)->isTimeDisplayed()->returns(false);
+        $date = Mockery::mock(Tracker_FormElement_Field_Date::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $date->shouldReceive('formatDateForDisplay')->with('2011-12-01')->andReturn(1322752769);
+        $date->shouldReceive('isTimeDisplayed')->andReturnFalse();
+        $date->shouldReceive('getArtifactTimeframeHelper')->andReturn(Mockery::mock(ArtifactTimeframeHelper::class, ['artifactHelpShouldBeShownToUser' => false]));
 
-        $value = new MockTracker_Artifact_ChangesetValue_Date();
-        $value->setReturnValue('getTimestamp', 1322752769);
+        $value = Mockery::mock(Tracker_Artifact_ChangesetValue_Date::class);
+        $value->shouldReceive('getTimestamp')->andReturn(1322752769);
 
         $this->assertEqual('01/12/2011', $date->fetchMailArtifactValue($artifact, $user, false, $value, 'text'));
         $this->assertEqual('01/12/2011', $date->fetchMailArtifactValue($artifact, $user, false, $value, 'html'));
     }
 
-    function testFieldDateShouldSendEmptyMailWhenThereIsNoDateDefined() {
+    function testFieldDateShouldSendEmptyMailWhenThereIsNoDateDefined()
+    {
         $user     = mock('PFUser');
         $artifact = new MockTracker_Artifact();
 
@@ -560,13 +603,16 @@ class Tracker_FormElement_Field_DateTest extends TuleapTestCase {
     }
 }
 
-class Tracker_FormElement_Field_DateTest_setCriteriaValueFromREST extends TuleapTestCase {
+class Tracker_FormElement_Field_DateTest_setCriteriaValueFromREST extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         $this->date = new Tracker_FormElement_Field_DateTestVersion();
     }
 
-    public function itAddsAnEqualsCrterion() {
+    public function itAddsAnEqualsCrterion()
+    {
         $date                 = '2014-04-05';
         $criteria             = mock('Tracker_Report_Criteria');
         $criteria->report     = mock('Tracker_Report');
@@ -585,7 +631,8 @@ class Tracker_FormElement_Field_DateTest_setCriteriaValueFromREST extends Tuleap
         $this->assertEqual($res['to_date'], strtotime($date));
     }
 
-    public function itAddsAGreaterThanCrterion() {
+    public function itAddsAGreaterThanCrterion()
+    {
         $date                 = '2014-04-05T00:00:00-05:00';
         $criteria             = mock('Tracker_Report_Criteria');
         $criteria->report     = mock('Tracker_Report');
@@ -604,7 +651,8 @@ class Tracker_FormElement_Field_DateTest_setCriteriaValueFromREST extends Tuleap
         $this->assertEqual($res['to_date'], strtotime($date));
     }
 
-    public function itAddsALessThanCrterion() {
+    public function itAddsALessThanCrterion()
+    {
         $date                 = '2014-04-05';
         $criteria             = mock('Tracker_Report_Criteria');
         $criteria->report     = mock('Tracker_Report');
@@ -623,7 +671,8 @@ class Tracker_FormElement_Field_DateTest_setCriteriaValueFromREST extends Tuleap
         $this->assertEqual($res['to_date'], strtotime($date));
     }
 
-    public function itAddsABetweenCrterion() {
+    public function itAddsABetweenCrterion()
+    {
         $from_date            = '2014-04-05';
         $to_date              = '2014-05-12';
         $criteria             = mock('Tracker_Report_Criteria');
@@ -643,7 +692,8 @@ class Tracker_FormElement_Field_DateTest_setCriteriaValueFromREST extends Tuleap
         $this->assertEqual($res['to_date'], strtotime($to_date));
     }
 
-    public function itIgnoresInvalidDates() {
+    public function itIgnoresInvalidDates()
+    {
         $date     = 'christmas eve';
 
         $criteria = mock('Tracker_Report_Criteria');
@@ -655,27 +705,33 @@ class Tracker_FormElement_Field_DateTest_setCriteriaValueFromREST extends Tuleap
         $res = $this->date->setCriteriaValueFromREST($criteria, $values);
         $this->assertFalse($res);
     }
-
 }
 
-class DayFieldTestVersion extends Tracker_FormElement_Field_Date {
-    public function __construct() {}
+class DayFieldTestVersion extends Tracker_FormElement_Field_Date
+{
+    public function __construct()
+    {
+    }
 
-    public function getSQLCompareDate($is_advanced, $op, $from, $to, $column) {
+    public function getSQLCompareDate($is_advanced, $op, $from, $to, $column)
+    {
         return parent::getSQLCompareDate($is_advanced, $op, $from, $to, $column);
     }
 
-    public function isTimeDisplayed() {
+    public function isTimeDisplayed()
+    {
         return false;
     }
 }
 
-class Tracker_FormElement_Field_DateTest_getSQLCompareDate_DAY extends TuleapTestCase {
+class Tracker_FormElement_Field_DateTest_getSQLCompareDate_DAY extends TuleapTestCase
+{
 
     /** @var DayFieldTestVersion */
     private $day_field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->day_field = new DayFieldTestVersion();
@@ -694,7 +750,8 @@ class Tracker_FormElement_Field_DateTest_getSQLCompareDate_DAY extends TuleapTes
         parent::tearDown();
     }
 
-    public function itReturnsTheCorrectCriteriaForBetween() {
+    public function itReturnsTheCorrectCriteriaForBetween()
+    {
         $is_advanced = true;
         $column      = 'my_date_column';
         $from        = strtotime('2014-07-05');
@@ -705,7 +762,8 @@ class Tracker_FormElement_Field_DateTest_getSQLCompareDate_DAY extends TuleapTes
         $this->assertEqual($sql, "my_date_column BETWEEN $from AND $to + 86400 - 1");
     }
 
-    public function itReturnsTheCorrectCriteriaForBefore_IncludingTheToDay() {
+    public function itReturnsTheCorrectCriteriaForBefore_IncludingTheToDay()
+    {
         $is_advanced = true;
         $column      = 'my_date_column';
         $to          = strtotime('2014-07-07');
@@ -715,7 +773,8 @@ class Tracker_FormElement_Field_DateTest_getSQLCompareDate_DAY extends TuleapTes
         $this->assertEqual($sql, "my_date_column <= $to + 86400 - 1");
     }
 
-    public function itReturnsTheCorrectCriteriaForEquals() {
+    public function itReturnsTheCorrectCriteriaForEquals()
+    {
         $is_advanced = false;
         $column      = 'my_date_column';
         $from        = null;
@@ -726,7 +785,8 @@ class Tracker_FormElement_Field_DateTest_getSQLCompareDate_DAY extends TuleapTes
         $this->assertEqual($sql, "my_date_column BETWEEN $to AND $to + 86400 - 1");
     }
 
-    public function itReturnsTheCorrectCriteriaForBefore() {
+    public function itReturnsTheCorrectCriteriaForBefore()
+    {
         $is_advanced = false;
         $column      = 'my_date_column';
         $from        = null;
@@ -737,7 +797,8 @@ class Tracker_FormElement_Field_DateTest_getSQLCompareDate_DAY extends TuleapTes
         $this->assertEqual($sql, "my_date_column < $to");
     }
 
-    public function itReturnsTheCorrectCriteriaForAfter() {
+    public function itReturnsTheCorrectCriteriaForAfter()
+    {
         $is_advanced = false;
         $column      = 'my_date_column';
         $from        = null;
@@ -748,30 +809,38 @@ class Tracker_FormElement_Field_DateTest_getSQLCompareDate_DAY extends TuleapTes
         $this->assertEqual($sql, "my_date_column > $to + 86400");
     }
 
-    private function makeStringCheckable(&$string) {
+    private function makeStringCheckable(&$string)
+    {
         $string = str_replace(PHP_EOL, ' ', trim($string));
 
-        while(strstr($string, '  ')) {
+        while (strstr($string, '  ')) {
             $string = str_replace('  ', ' ', $string);
         }
     }
 }
 
-class DateTimeFieldTestVersion extends Tracker_FormElement_Field_Date {
-    public function __construct() {}
+class DateTimeFieldTestVersion extends Tracker_FormElement_Field_Date
+{
+    public function __construct()
+    {
+    }
 
-    public function getSQLCompareDate($is_advanced, $op, $from, $to, $column) {
+    public function getSQLCompareDate($is_advanced, $op, $from, $to, $column)
+    {
         return parent::getSQLCompareDate($is_advanced, $op, $from, $to, $column);
     }
 
-    public function isTimeDisplayed() {
+    public function isTimeDisplayed()
+    {
         return true;
     }
 }
 
-class Tracker_FormElement_Field_Date_RESTTests extends TuleapTestCase {
+class Tracker_FormElement_Field_Date_RESTTests extends TuleapTestCase
+{
 
-    public function itThrowsAnExceptionWhenReturningValueIndexedByFieldName() {
+    public function itThrowsAnExceptionWhenReturningValueIndexedByFieldName()
+    {
         $field = new DayFieldTestVersion();
 
         $this->expectException('Tracker_FormElement_RESTValueByField_NotImplementedException');

@@ -56,11 +56,8 @@ class LogEventAdder
             'plugin_docman_event_metadata_update',
             'plugin_docman_event_set_version_author',
             'plugin_docman_event_set_version_date',
-            'plugin_docman_event_lock_add',
-            'plugin_docman_event_lock_del',
             'plugin_docman_event_perms_change',
         ];
-
 
         foreach ($log_events as $event) {
             $this->event_manager->addListener($event, $this->logger, 'log', true);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  * Copyright 1999-2000 (c) The SourceForge Crew
  *
  * This file is a part of Tuleap.
@@ -22,48 +22,50 @@
 
 $G_SESSION=array();
 
-function session_make_url($loc) {
-	 return get_server_url(). $loc;
+function session_make_url($loc)
+{
+    return HTTPRequest::instance()->getServerUrl(). $loc;
 }
 
-function session_redirect($loc) {
-	$GLOBALS['Response']->redirect($loc);
-	print("\n\n");
-	exit;
+function session_redirect($loc)
+{
+    $GLOBALS['Response']->redirect($loc);
+    print("\n\n");
+    exit;
 }
 
-function session_require($req) {
-  global $Language;
-	/*
-		Codendi admins always return true
-	*/
-	if (user_is_super_user()) {
-		return true;
-	}
+function session_require($req)
+{
+    global $Language;
+    /*
+        Codendi admins always return true
+    */
+    if (user_is_super_user()) {
+        return true;
+    }
 
-	if (isset($req['group']) && $req['group']) {
-		$query = "SELECT user_id FROM user_group WHERE user_id=" . user_getid()
-			. " AND group_id=".db_ei($req['group']);
-		if (isset($req['admin_flags']) && $req['admin_flags']) {
+    if (isset($req['group']) && $req['group']) {
+        $db_escaped_user_id = db_ei(UserManager::instance()->getCurrentUser()->getId());
+        $query = "SELECT user_id FROM user_group WHERE user_id=" . $db_escaped_user_id
+        . " AND group_id=".db_ei($req['group']);
+        if (isset($req['admin_flags']) && $req['admin_flags']) {
             $query .= " AND admin_flags = '".db_escape_string($req['admin_flags'])."'";
-		}
+        }
 
-		if ((db_numrows(db_query($query)) < 1) || !$req['group']) {
-			exit_error($Language->getText('include_session','insufficient_g_access'),$Language->getText('include_session','no_perm_to_view'));
-		}
-	}
-	elseif (isset($req['user']) && $req['user']) {
-		if (user_getid() != $req['user']) {
-			exit_error($Language->getText('include_session','insufficient_u_access'),$Language->getText('include_session','no_perm_to_view'));
-		}
-	}
-        elseif (isset($req['isloggedin']) && $req['isloggedin']) {
-		if (!user_isloggedin()) {
-			exit_error($Language->getText('include_session','required_login'),$Language->getText('include_session','login'));
-		}
-	} else {
-		exit_error($Language->getText('include_session','insufficient_access'),$Language->getText('include_session','no_access'));
-	}
+        if ((db_numrows(db_query($query)) < 1) || !$req['group']) {
+            exit_error($Language->getText('include_session', 'insufficient_g_access'), $Language->getText('include_session', 'no_perm_to_view'));
+        }
+    } elseif (isset($req['user']) && $req['user']) {
+        if (UserManager::instance()->getCurrentUser()->getId() != $req['user']) {
+            exit_error($Language->getText('include_session', 'insufficient_u_access'), $Language->getText('include_session', 'no_perm_to_view'));
+        }
+    } elseif (isset($req['isloggedin']) && $req['isloggedin']) {
+        if (!user_isloggedin()) {
+            exit_error($Language->getText('include_session', 'required_login'), $Language->getText('include_session', 'login'));
+        }
+    } else {
+        exit_error($Language->getText('include_session', 'insufficient_access'), $Language->getText('include_session', 'no_access'));
+    }
 }
 
 /**
@@ -72,9 +74,8 @@ function session_require($req) {
  *
  * @param string The session key
  */
-function session_continue($sessionKey) {
+function session_continue($sessionKey)
+{
     $user = UserManager::instance()->getCurrentUser($sessionKey);
     return $user->isLoggedIn();
 }
-
-?>

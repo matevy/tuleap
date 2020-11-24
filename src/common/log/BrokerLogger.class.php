@@ -18,52 +18,59 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class BrokerLogger implements Logger {
+class BrokerLogger implements Logger
+{
 
     private $loggers = array();
 
-    public function __construct(array $loggers) {
+    public function __construct(array $loggers)
+    {
         $this->loggers = $loggers;
     }
 
-    public function debug($message) {
+    public function debug($message)
+    {
         foreach ($this->loggers as $logger) {
             $logger->debug($message);
         }
     }
 
-    public function info($message) {
+    public function info($message)
+    {
         foreach ($this->loggers as $logger) {
             $logger->info($message);
         }
     }
 
-    public function warn($message, ?Exception $exception = null) {
+    public function warn($message, ?Exception $exception = null)
+    {
         foreach ($this->loggers as $logger) {
             $logger->warn($message, $exception);
         }
     }
 
-    public function error($message, ?Exception $exception = null) {
+    public function error($message, ?Exception $exception = null)
+    {
         foreach ($this->loggers as $logger) {
             $logger->error($message, $exception);
         }
     }
 
-    public function log($message, $level = Logger::INFO) {
+    public function log($message, $level = Logger::INFO)
+    {
         switch ($level) {
-           case Logger::DEBUG:
-               $this->debug($message);
-               break;
-           case Logger::INFO:
-               $this->info($message);
-               break;
-           case Logger::WARN:
-               $this->warn($message);
-               break;
-           case Logger::ERROR:
-               $this->error($message);
-               break;
-       }
+            case Logger::DEBUG:
+                $this->debug($message);
+                break;
+            case Logger::INFO:
+                $this->info($message);
+                break;
+            case Logger::WARN:
+                $this->warn($message);
+                break;
+            case Logger::ERROR:
+                $this->error($message);
+                break;
+        }
     }
 }

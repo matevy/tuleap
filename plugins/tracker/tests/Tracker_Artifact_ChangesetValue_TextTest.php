@@ -23,16 +23,18 @@ require_once('bootstrap.php');
 
 Mock::generatePartial('Tracker_Artifact_ChangesetValue_Text', 'Tracker_Artifact_ChangesetValue_TextTestVersion', array('getCodendi_HTMLPurifier'));
 
-class Tracker_Artifact_ChangesetValue_TextTest extends TuleapTestCase {
+class Tracker_Artifact_ChangesetValue_TextTest extends TuleapTestCase
+{
 
     private $field;
     private $user;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $base_language = mock('BaseLanguage');
-        stub($base_language)->getText('plugin_tracker_include_artifact','toggle_diff')->returns('Show diff');
+        stub($base_language)->getText('plugin_tracker_include_artifact', 'toggle_diff')->returns('Show diff');
 
         $GLOBALS['Language'] = $base_language;
 
@@ -42,27 +44,31 @@ class Tracker_Artifact_ChangesetValue_TextTest extends TuleapTestCase {
         $this->changeset = mock('Tracker_Artifact_Changeset');
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         unset($GLOBALS['Language']);
 
         parent::tearDown();
     }
 
-    public function testTexts() {
+    public function testTexts()
+    {
         $field = aTextField()->withTracker(aTracker()->withProject(mock('Project'))->build())->build();
         $text  = new Tracker_Artifact_ChangesetValue_Text(111, $this->changeset, $field, false, 'Problems during installation', 'text');
         $this->assertEqual($text->getText(), 'Problems during installation');
         $this->assertEqual($text->getValue(), 'Problems during installation');
     }
 
-    public function testNoDiff() {
+    public function testNoDiff()
+    {
         $text_1 = new Tracker_Artifact_ChangesetValue_Text(111, $this->changeset, $this->field, false, 'Problems during installation', 'text');
         $text_2 = new Tracker_Artifact_ChangesetValue_Text(111, $this->changeset, $this->field, false, 'Problems during installation', 'text');
         $this->assertFalse($text_1->diff($text_2));
         $this->assertFalse($text_2->diff($text_1));
     }
 
-    public function testDiff() {
+    public function testDiff()
+    {
         $text_1 = new Tracker_Artifact_ChangesetValue_Text(111, $this->changeset, $this->field, false, 'Problems during <ins> installation', 'text');
         $text_2 = new Tracker_Artifact_ChangesetValue_Text(111, $this->changeset, $this->field, false, 'FullTextSearch does not work on Wiki pages', 'text');
         $this->assertEqual($text_1->diff($text_2), '<button class="btn btn-mini toggle-diff">' . $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'toggle_diff') . '</button>'.
@@ -102,9 +108,11 @@ class Tracker_Artifact_ChangesetValue_TextTest extends TuleapTestCase {
     }
 }
 
-class Tracker_Artifact_ChangesetValue_Text_getContentAsTextTest extends TuleapTestCase {
+class Tracker_Artifact_ChangesetValue_Text_getContentAsTextTest extends TuleapTestCase
+{
 
-     public function itReturnsTheValueWhenFormatIsText() {
+    public function itReturnsTheValueWhenFormatIsText()
+    {
         $field = aTextField()->withTracker(aTracker()->withProject(mock('Project'))->build())->build();
         $text = new Tracker_Artifact_ChangesetValue_Text(
             111,
@@ -115,9 +123,10 @@ class Tracker_Artifact_ChangesetValue_Text_getContentAsTextTest extends TuleapTe
             Tracker_Artifact_ChangesetValue_Text::TEXT_CONTENT
         );
         $this->assertEqual($text->getContentAsText(), 'Problems with my code: <b>example</b>');
-     }
+    }
 
-     public function itStripHTMLWhenFormatIsHTML() {
+    public function itStripHTMLWhenFormatIsHTML()
+    {
         $field = aTextField()->withTracker(aTracker()->withProject(mock('Project'))->build())->build();
         $text = new Tracker_Artifact_ChangesetValue_Text(
             111,
@@ -128,12 +137,14 @@ class Tracker_Artifact_ChangesetValue_Text_getContentAsTextTest extends TuleapTe
             Tracker_Artifact_ChangesetValue_Text::HTML_CONTENT
         );
         $this->assertEqual($text->getContentAsText(), 'Problems with my code: example');
-     }
+    }
 }
 
-class Tracker_Artifact_ChangesetValue_Text_RESTTest extends TuleapTestCase {
+class Tracker_Artifact_ChangesetValue_Text_RESTTest extends TuleapTestCase
+{
 
-    public function itReturnsTheRESTValue() {
+    public function itReturnsTheRESTValue()
+    {
         $field = stub('Tracker_FormElement_Field_Text')->getName()->returns('field_text');
         $user  = aUser()->withId(101)->build();
 

@@ -23,16 +23,19 @@ use PFUser;
 use Logger;
 use UserManager;
 
-class WillBeActivatedUser implements ReadyToBeImportedUser {
+class WillBeActivatedUser implements ReadyToBeImportedUser
+{
 
     /** @var PFUser */
     private $user;
 
-    public function __construct(PFUser $user) {
+    public function __construct(PFUser $user)
+    {
         $this->user = $user;
     }
 
-    public function getUserName() {
+    public function getUserName()
+    {
         return $this->user->getUserName();
     }
 
@@ -40,15 +43,18 @@ class WillBeActivatedUser implements ReadyToBeImportedUser {
      *
      * @return PFUser
      */
-    public function getUser() {
+    public function getUser()
+    {
         return $this->user;
     }
 
-    public function getRealUser(UserManager $user_manager) {
+    public function getRealUser(UserManager $user_manager)
+    {
         return $this->user;
     }
 
-    public function process(UserManager $user_manager, Logger $logger) {
+    public function process(UserManager $user_manager, Logger $logger)
+    {
         $logger->info($this->user->getUserName().' is not alive. Nothing to do.');
     }
 }

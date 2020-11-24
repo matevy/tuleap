@@ -22,8 +22,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'pre.php';
-require_once __DIR__.'/../include/svnPlugin.class.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
+require_once __DIR__ . '/../include/svnPlugin.php';
 
 use Tuleap\SVN\AccessControl\AccessFileHistoryDao;
 use Tuleap\SVN\AccessControl\AccessFileHistoryFactory;
@@ -69,8 +69,8 @@ try {
         new ImmutableTagFactory(new ImmutableTagDao()),
         $svnlook,
         new SHA1CollisionDetector(),
-        new SvnLogger()
-        , new HookConfigRetriever(new HookDao(), new HookConfigSanitizer())
+        new SvnLogger(),
+        new HookConfigRetriever(new HookDao(), new HookConfigSanitizer())
     );
 
     $hook->assertCommitMessageIsValid(ReferenceManager::instance());

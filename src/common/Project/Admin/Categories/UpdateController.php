@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Tuleap\Project\Admin\Categories;
 
+use Feedback;
 use HTTPRequest;
 use Project;
 use ProjectManager;
@@ -77,7 +78,7 @@ class UpdateController implements DispatchableWithRequest, DispatchableWithProje
 
         $categories = $request->get('categories');
         if (! is_array($categories)) {
-            $layout->addFeedback(\Feedback::ERROR, gettext("Your request is invalid"));
+            $layout->addFeedback(Feedback::ERROR, gettext("Your request is invalid"));
             $layout->redirect($redirect_url);
             return;
         }
@@ -85,9 +86,15 @@ class UpdateController implements DispatchableWithRequest, DispatchableWithProje
         $csrf = new \CSRFSynchronizerToken($redirect_url);
         $csrf->check();
 
-        $this->updater->update($project, $categories);
+        try {
+            $this->updater->update($project, CategoryCollection::buildFromWebPayload($categories));
+            $layout->addFeedback(Feedback::INFO, gettext("Categories successfully updated."));
+        } catch (MissingMandatoryCategoriesException $exception) {
+            $layout->addFeedback(Feedback::ERROR, _('Some mandatory categories are missing'));
+        } catch (ProjectCategoriesException $exception) {
+            $layout->addFeedback(Feedback::ERROR, _('Invalid selection of categories'));
+        }
 
-        $layout->addFeedback(\Feedback::INFO, gettext("Categories successfully updated."));
         $layout->redirect($redirect_url);
     }
 }

@@ -19,24 +19,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201202101244_shared_field_default_is_0 extends ForgeUpgrade_Bucket {
+class b201202101244_shared_field_default_is_0 extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 The default original id is 0 for shared fields
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $this->updateFieldTable();
         $this->updateFieldListBindStaticValueTable();
     }
-    
-    private function updateFieldTable() {
+
+    private function updateFieldTable()
+    {
         $sql = "ALTER TABLE tracker_field ALTER COLUMN original_field_id SET DEFAULT '0'";
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
@@ -49,7 +54,8 @@ EOT;
         }
     }
 
-    private function updateFieldListBindStaticValueTable() {
+    private function updateFieldListBindStaticValueTable()
+    {
         $sql = "ALTER TABLE tracker_field_list_bind_static_value ALTER COLUMN original_value_id SET DEFAULT '0'";
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
@@ -62,4 +68,3 @@ EOT;
         }
     }
 }
-?>

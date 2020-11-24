@@ -25,14 +25,17 @@ use Tuleap\Project\REST\ProjectResourceReference;
 /**
  * Inject resource into restler
  */
-class Git_REST_ResourcesInjector {
+class Git_REST_ResourcesInjector
+{
 
-    public function populate(Luracast\Restler\Restler $restler) {
+    public function populate(Luracast\Restler\Restler $restler)
+    {
         $restler->addAPIClass('\\Tuleap\\Git\\REST\\v1\\RepositoryResource', GitRepositoryRepresentation::ROUTE);
         $restler->addAPIClass('\\Tuleap\\Git\\REST\\v1\\GerritResource', GerritServerRepresentation::ROUTE);
     }
 
-    public function declareProjectPlanningResource(array &$resources, Project $project) {
+    public function declareProjectPlanningResource(array &$resources, Project $project)
+    {
         $routes = array(
             GitRepositoryRepresentation::ROUTE,
         );

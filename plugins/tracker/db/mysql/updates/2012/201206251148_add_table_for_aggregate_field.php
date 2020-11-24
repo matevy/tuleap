@@ -18,17 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201206251148_add_table_for_aggregate_field extends ForgeUpgrade_Bucket {
+class b201206251148_add_table_for_aggregate_field extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Add a new table to store aggregate fields';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = <<<SQL
         CREATE TABLE tracker_field_aggregate (
           field_id INT(11) NOT NULL PRIMARY KEY,
@@ -42,6 +46,4 @@ SQL;
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($error_message);
         }
     }
-
 }
-?>

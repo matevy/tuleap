@@ -1,12 +1,35 @@
-import { contains } from "lodash";
+/*
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import { loadTooltips } from "../../../../../../src/www/scripts/codendi/Tooltip.js";
 import { isInCreationMode } from "./modal-creation-mode-state.js";
 import { setError, hasError, getErrorMessage } from "./rest/rest-error-state.js";
+import { isDisabled } from "./tuleap-artifact-modal-fields/disabled-field-detector.js";
 import { createArtifact, editArtifact, getFollowupsComments } from "./rest/rest-service.js";
 import {
     getAllFileFields,
     isThereAtLeastOneFileField
 } from "./tuleap-artifact-modal-fields/file-field/file-field-detector.js";
-import { loadTooltips } from "tuleap-core/codendi/Tooltip.js";
+import {
+    isUploadingInCKEditor,
+    setIsNotUploadingInCKEditor
+} from "./tuleap-artifact-modal-fields/file-field/is-uploading-in-ckeditor-state.js";
 import { uploadAllTemporaryFiles } from "./tuleap-artifact-modal-fields/file-field/file-uploader.js";
 
 export default ArtifactModalController;
@@ -47,48 +70,42 @@ function ArtifactModalController(
         ordered_fields: modal_model.ordered_fields,
         parent: null,
         parent_artifact_id: modal_model.parent_artifact_id,
-        title:
-            modal_model.title.content !== undefined ? modal_model.title.content : modal_model.title,
+        title: getTitle(),
         tracker: modal_model.tracker,
         values: modal_model.values,
-        text_formats: modal_model.text_formats,
         followups_comments: {
             content: [],
             loading_comments: true,
             invert_order: modal_model.invert_followups_comments_order ? "asc" : "desc"
         },
+        new_followup_comment: {
+            body: "",
+            format: modal_model.text_fields_format
+        },
+        hidden_fieldsets: extractHiddenFieldsets(modal_model.ordered_fields),
         formatColor,
         getDropdownAttribute,
         getRestErrorMessage: getErrorMessage,
         hasRestError: hasError,
-        initCkeditorConfig,
         isDisabled,
         isFollowupCommentFormDisplayed,
         isNewParentAlertShown,
+        isUploadingInCKEditor,
         isThereAtLeastOneFileField: () => isThereAtLeastOneFileField(Object.values(self.values)),
         setupTooltips,
         submit,
+        setFieldValue,
+        addToFilesAddedByTextField,
+        setFollowupComment,
         toggleFieldset,
-        followup_comment: {
-            body: "",
-            format: modal_model.text_fields_format
-        },
-        ckeditor_options: {
-            default_ckeditor: {
-                toolbar: [
-                    ["Bold", "Italic", "Underline"],
-                    ["NumberedList", "BulletedList", "-", "Blockquote", "Format"],
-                    ["Link", "Unlink", "Anchor", "Image"],
-                    ["Source"]
-                ],
-                height: "100px"
-            }
-        }
+        hasHiddenFieldsets,
+        showHiddenFieldsets
     });
 
     function init() {
         setFieldDependenciesWatchers();
 
+        modal_instance.tlp_modal.addEventListener("tlp-modal-hidden", setIsNotUploadingInCKEditor);
         TuleapArtifactModalLoading.loading = false;
         self.setupTooltips();
 
@@ -97,31 +114,20 @@ function ArtifactModalController(
         }
     }
 
-    function initCkeditorConfig(field) {
-        var id = "default_ckeditor";
-        if (field) {
-            id = field.field_id;
-            if (!self.ckeditor_options[id]) {
-                self.ckeditor_options[id] = {
-                    toolbar: [
-                        ["Bold", "Italic", "Underline"],
-                        ["NumberedList", "BulletedList", "-", "Blockquote", "Format"],
-                        ["Link", "Unlink", "Anchor", "Image"],
-                        ["Source"]
-                    ],
-                    height: "100px",
-                    readOnly: self.isDisabled(field)
-                };
-            }
-        }
-
-        return self.ckeditor_options[id];
-    }
-
     function setupTooltips() {
         $timeout(function() {
             loadTooltips();
         }, 0);
+    }
+
+    function getTitle() {
+        if (modal_model.title === null) {
+            return "";
+        }
+
+        const is_title_a_text_field = typeof modal_model.title.content !== "undefined";
+
+        return is_title_a_text_field ? modal_model.title.content : modal_model.title;
     }
 
     function isFollowupCommentFormDisplayed() {
@@ -146,13 +152,17 @@ function ArtifactModalController(
     }
 
     function submit() {
+        if (isUploadingInCKEditor()) {
+            return;
+        }
         TuleapArtifactModalLoading.loading = true;
 
         uploadAllFileFields()
             .then(function() {
                 var validated_values = TuleapArtifactModalValidateService.validateArtifactFieldsValues(
                     self.values,
-                    isInCreationMode()
+                    isInCreationMode(),
+                    self.new_followup_comment
                 );
 
                 var promise;
@@ -162,7 +172,7 @@ function ArtifactModalController(
                     promise = editArtifact(
                         modal_model.artifact_id,
                         validated_values,
-                        self.followup_comment
+                        self.new_followup_comment
                     );
                 }
 
@@ -229,18 +239,13 @@ function ArtifactModalController(
     function isUploadQuotaExceeded(error) {
         return (
             error.code === 406 &&
-            error.hasOwnProperty("message") &&
+            Object.prototype.hasOwnProperty.call(error, "message") &&
             error.message.includes("You exceeded your quota")
         );
     }
 
-    function isDisabled(field) {
-        var necessary_permission = isInCreationMode() ? "create" : "update";
-        return !contains(field.permissions, necessary_permission);
-    }
-
     function getDropdownAttribute(field) {
-        return self.isDisabled(field) ? "" : "dropdown";
+        return isDisabled(field) ? "" : "dropdown";
     }
 
     function toggleFieldset(fieldset) {
@@ -307,5 +312,41 @@ function ArtifactModalController(
 
     function isNewParentAlertShown() {
         return isInCreationMode() && self.parent;
+    }
+
+    function setFieldValue(field_id) {
+        return value => {
+            self.values[field_id].value = value;
+        };
+    }
+
+    function addToFilesAddedByTextField(field_id, uploaded_file) {
+        const value_model = self.values[field_id];
+        value_model.value = [uploaded_file.id].concat(value_model.value);
+        value_model.images_added_by_text_fields = [uploaded_file].concat(
+            value_model.images_added_by_text_fields
+        );
+    }
+
+    function setFollowupComment(value) {
+        self.new_followup_comment = value;
+    }
+
+    function extractHiddenFieldsets(fields) {
+        if (isInCreationMode() === true) {
+            return [];
+        }
+
+        return fields.filter(field => field.is_hidden);
+    }
+
+    function hasHiddenFieldsets() {
+        return self.hidden_fieldsets.length > 0;
+    }
+
+    function showHiddenFieldsets(is_visible) {
+        self.hidden_fieldsets.forEach(function(field) {
+            field.is_hidden = !is_visible;
+        });
     }
 }

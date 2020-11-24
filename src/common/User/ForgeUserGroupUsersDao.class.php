@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class User_ForgeUserGroupUsersDao extends DataAccessObject {
+class User_ForgeUserGroupUsersDao extends DataAccessObject
+{
 
-    public function getUsersByForgeUserGroupId($ugroup_id) {
+    public function getUsersByForgeUserGroupId($ugroup_id)
+    {
         $ugroup_id = $this->da->escapeInt($ugroup_id);
 
         $sql = "SELECT DISTINCT user.* FROM ugroup_user
@@ -33,7 +35,8 @@ class User_ForgeUserGroupUsersDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function addUserToForgeUserGroup($user_id, $ugroup_id) {
+    public function addUserToForgeUserGroup($user_id, $ugroup_id)
+    {
         $user_id   = $this->da->escapeInt($user_id);
         $ugroup_id = $this->da->escapeInt($ugroup_id);
 
@@ -44,7 +47,8 @@ class User_ForgeUserGroupUsersDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function removeUserFromForgeUserGroup($user_id, $ugroup_id) {
+    public function removeUserFromForgeUserGroup($user_id, $ugroup_id)
+    {
         $user_id   = $this->da->escapeInt($user_id);
         $ugroup_id = $this->da->escapeInt($ugroup_id);
 
@@ -55,7 +59,8 @@ class User_ForgeUserGroupUsersDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function isUserInGroup($user_id, $ugroup_id) {
+    public function isUserInGroup($user_id, $ugroup_id)
+    {
         $user_id   = $this->da->escapeInt($user_id);
         $ugroup_id = $this->da->escapeInt($ugroup_id);
 
@@ -67,5 +72,4 @@ class User_ForgeUserGroupUsersDao extends DataAccessObject {
 
         return count($this->retrieve($sql)) > 0;
     }
-
 }

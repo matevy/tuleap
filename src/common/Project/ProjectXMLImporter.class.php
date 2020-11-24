@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,29 +18,35 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once "account.php";
+require_once __DIR__ . '/../../www/include/account.php';
 
+use Tuleap\Dashboard\Project\DisabledProjectWidgetsChecker;
+use Tuleap\Dashboard\Project\DisabledProjectWidgetsDao;
+use Tuleap\Dashboard\Project\ProjectDashboardDao;
+use Tuleap\Dashboard\Project\ProjectDashboardSaver;
+use Tuleap\Dashboard\Project\ProjectDashboardXMLImporter;
+use Tuleap\Dashboard\Widget\DashboardWidgetDao;
 use Tuleap\FRS\FRSPermissionCreator;
+use Tuleap\FRS\FRSPermissionDao;
+use Tuleap\FRS\UploadedLinksDao;
 use Tuleap\FRS\UploadedLinksUpdater;
 use Tuleap\Project\Admin\ProjectUGroup\CannotCreateUGroupException;
-use Tuleap\Dashboard\Project\ProjectDashboardXMLImporter;
-use Tuleap\Project\UgroupDuplicator;
+use Tuleap\Project\Admin\ProjectUGroup\ProjectImportCleanupUserCreatorFromAdministrators;
+use Tuleap\Project\SystemEventRunnerInterface;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdder;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithoutStatusCheckAndNotifications;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
 use Tuleap\Project\UserRemover;
+use Tuleap\Project\UserRemoverDao;
 use Tuleap\Project\XML\Import\ArchiveInterface;
 use Tuleap\Project\XML\Import\ImportConfig;
 use Tuleap\Project\XML\Import\ImportNotValidException;
+use Tuleap\Project\XML\XMLFileContentRetriever;
+use Tuleap\Widget\WidgetFactory;
 use Tuleap\XML\MappingsRegistry;
 
-/**
- * This class import a project from a xml content
- */
-class ProjectXMLImporter {
-
-    /**
-     * @var UgroupDuplicator
-     */
-    private $ugroup_duplicator;
-
+class ProjectXMLImporter //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
+{
     /** @var EventManager */
     private $event_manager;
 
@@ -84,6 +90,18 @@ class ProjectXMLImporter {
      * @var ProjectDashboardXMLImporter
      */
     private $dashboard_importer;
+    /**
+     * @var SynchronizedProjectMembershipDao
+     */
+    private $synchronized_project_membership_dao;
+    /**
+     * @var ProjectMemberAdder
+     */
+    private $project_member_adder;
+    /**
+     * @var XMLFileContentRetriever
+     */
+    private $XML_file_content_retriever;
 
     public function __construct(
         EventManager $event_manager,
@@ -94,33 +112,113 @@ class ProjectXMLImporter {
         User\XML\Import\IFindUserFromXMLReference $user_finder,
         ServiceManager $service_manager,
         Logger $logger,
-        UgroupDuplicator $ugroup_duplicator,
         FRSPermissionCreator $frs_permissions_creator,
-        UserRemover $user_remover,
+        UserRemover $project_member_remover,
+        ProjectMemberAdder $project_member_adder,
         ProjectCreator $project_creator,
         UploadedLinksUpdater $uploaded_links_updater,
-        ProjectDashboardXMLImporter $dashboard_importer
+        ProjectDashboardXMLImporter $dashboard_importer,
+        SynchronizedProjectMembershipDao $synchronized_project_membership_dao,
+        XMLFileContentRetriever $XML_file_content_retriever
     ) {
-        $this->event_manager           = $event_manager;
-        $this->project_manager         = $project_manager;
-        $this->user_manager            = $user_manager;
-        $this->xml_validator           = $xml_validator;
-        $this->ugroup_manager          = $ugroup_manager;
-        $this->user_finder             = $user_finder;
-        $this->logger                  = $logger;
-        $this->service_manager         = $service_manager;
-        $this->ugroup_duplicator       = $ugroup_duplicator;
-        $this->frs_permissions_creator = $frs_permissions_creator;
-        $this->user_remover            = $user_remover;
-        $this->project_creator         = $project_creator;
-        $this->uploaded_links_updater  = $uploaded_links_updater;
-        $this->dashboard_importer      = $dashboard_importer;
+        $this->event_manager                       = $event_manager;
+        $this->project_manager                     = $project_manager;
+        $this->user_manager                        = $user_manager;
+        $this->xml_validator                       = $xml_validator;
+        $this->ugroup_manager                      = $ugroup_manager;
+        $this->user_finder                         = $user_finder;
+        $this->logger                              = $logger;
+        $this->service_manager                     = $service_manager;
+        $this->frs_permissions_creator             = $frs_permissions_creator;
+        $this->user_remover                        = $project_member_remover;
+        $this->project_member_adder                = $project_member_adder;
+        $this->project_creator                     = $project_creator;
+        $this->uploaded_links_updater              = $uploaded_links_updater;
+        $this->dashboard_importer                  = $dashboard_importer;
+        $this->synchronized_project_membership_dao = $synchronized_project_membership_dao;
+        $this->XML_file_content_retriever          = $XML_file_content_retriever;
+    }
+
+    public static function build(\User\XML\Import\IFindUserFromXMLReference $user_finder, ProjectCreator $project_creator): self
+    {
+        $event_manager           = EventManager::instance();
+        $user_manager            = UserManager::instance();
+        $ugroup_manager          = new UGroupManager();
+        $logger                  = new ProjectXMLImporterLogger();
+        $frs_permissions_creator = new FRSPermissionCreator(
+            new FRSPermissionDao(),
+            new UGroupDao(),
+            new ProjectHistoryDao()
+        );
+
+        $widget_factory                      = new WidgetFactory(
+            $user_manager,
+            new User_ForgeUserGroupPermissionsManager(new User_ForgeUserGroupPermissionsDao()),
+            $event_manager
+        );
+        $widget_dao                          = new DashboardWidgetDao($widget_factory);
+        $project_dao                         = new ProjectDashboardDao($widget_dao);
+        $synchronized_project_membership_dao = new SynchronizedProjectMembershipDao();
+
+        return new self(
+            $event_manager,
+            ProjectManager::instance(),
+            $user_manager,
+            new XML_RNGValidator(),
+            $ugroup_manager,
+            $user_finder,
+            ServiceManager::instance(),
+            $logger,
+            $frs_permissions_creator,
+            new UserRemover(
+                ProjectManager::instance(),
+                $event_manager,
+                new ArtifactTypeFactory(false),
+                new UserRemoverDao(),
+                $user_manager,
+                new ProjectHistoryDao(),
+                new UGroupManager()
+            ),
+            ProjectMemberAdderWithoutStatusCheckAndNotifications::build(),
+            $project_creator,
+            new UploadedLinksUpdater(new UploadedLinksDao(), FRSLog::instance()),
+            new ProjectDashboardXMLImporter(
+                new ProjectDashboardSaver(
+                    $project_dao
+                ),
+                $widget_factory,
+                $widget_dao,
+                $logger,
+                $event_manager,
+                new DisabledProjectWidgetsChecker(new DisabledProjectWidgetsDao())
+            ),
+            $synchronized_project_membership_dao,
+            new XMLFileContentRetriever()
+        );
+    }
+
+    public function importWithProjectData(
+        ImportConfig $configuration,
+        ArchiveInterface $archive,
+        SystemEventRunnerInterface $event_runner,
+        ProjectCreationData $project_creation_data
+    ): Project {
+        $this->logger->info('Start creating new project from archive ' . $archive->getExtractionPath());
+
+        $xml_element = $this->getProjectXMLFromArchive($archive);
+        $this->assertXMLisValid($xml_element);
+
+        $project = $this->createProject($event_runner, $project_creation_data);
+
+        $this->importContent($configuration, $project, $xml_element, $archive->getExtractionPath());
+
+        return $project;
     }
 
     public function importNewFromArchive(
         ImportConfig $configuration,
         ArchiveInterface $archive,
-        Tuleap\Project\SystemEventRunner $event_runner,
+        Tuleap\Project\SystemEventRunnerInterface $event_runner,
         $is_template,
         $project_name_override = null
     ) {
@@ -128,49 +226,45 @@ class ProjectXMLImporter {
 
         $xml_element = $this->getProjectXMLFromArchive($archive);
 
-        $error                 = false;
-        $params['xml_content'] = $xml_element;
-        $params['error']       = &$error;
-        $this->event_manager->processEvent(
-            Event::IMPORT_XML_IS_PROJECT_VALID,
-            $params
-        );
+        $this->assertXMLisValid($xml_element);
 
-        if ($params['error']) {
-            throw new ImportNotValidException();
-        }
+        $project_creation_data = $this->getProjectCreationDataFromXml($xml_element, $is_template, $project_name_override);
 
-        if (!empty($project_name_override)) {
-            $xml_element['unix-name'] = $project_name_override;
-        }
-
-        $project = $this->createProject($xml_element, $event_runner, $is_template);
+        $project = $this->createProject($event_runner, $project_creation_data);
 
         $this->importContent($configuration, $project, $xml_element, $archive->getExtractionPath());
     }
 
-    private function createProject(
-        SimpleXMLElement $xml,
-        Tuleap\Project\SystemEventRunner $event_runner,
-        $is_template
-    ) {
-        $event_runner->checkPermissions();
+    private function getProjectCreationDataFromXml(SimpleXMLElement $xml, bool $is_template, ?string $project_name_override): ProjectCreationData
+    {
+        if (! empty($project_name_override)) {
+            $xml['unix-name'] = $project_name_override;
+        }
 
-        $this->logger->info("Create project {$xml['unix-name']}");
         $data = ProjectCreationData::buildFromXML(
             $xml,
-            100,
             $this->xml_validator,
             ServiceManager::instance(),
-            $this->project_manager,
             $this->logger
         );
         if ($is_template) {
             $this->logger->info("The project will be a template");
             $data->setIsTemplate();
         }
-        $this->logger->debug("ProjectMetadata extrcted from XML, now create in DB");
-        $project = $this->project_creator->build($data);
+        $this->logger->debug("ProjectMetadata extracted from XML, now create in DB");
+
+        return $data;
+    }
+
+    private function createProject(
+        Tuleap\Project\SystemEventRunnerInterface $event_runner,
+        ProjectCreationData $project_creation_data
+    ) {
+        $event_runner->checkPermissions();
+
+        $this->logger->info(sprintf('Create project %s', $project_creation_data->getUnixName()));
+
+        $project = $this->project_creator->build($project_creation_data);
 
         $this->logger->info("Execute system events to finish creation of project {$project->getID()}, this can take a while...");
         $event_runner->runSystemEvents();
@@ -179,42 +273,36 @@ class ProjectXMLImporter {
         return $project;
     }
 
-    public function importFromArchive(ImportConfig $configuration, $project_id, ArchiveInterface $archive) {
+    public function importFromArchive(ImportConfig $configuration, $project_id, ArchiveInterface $archive)
+    {
         $this->logger->info('Start importing into existing project from archive ' . $archive->getExtractionPath());
 
         $xml_element = $this->getProjectXMLFromArchive($archive);
 
-        $error                 = false;
-        $params['xml_content'] = $xml_element;
-        $params['error']       = &$error;
-        $this->event_manager->processEvent(
-            Event::IMPORT_XML_IS_PROJECT_VALID,
-            $params
-        );
-
-        if ($params['error']) {
-            throw new ImportNotValidException();
-        }
+        $this->assertXMLisValid($xml_element);
 
         $this->importFromXMLIntoExistingProject($configuration, $project_id, $xml_element, $archive->getExtractionPath());
     }
 
-    public function import(ImportConfig $configuration, $project_id, $xml_file_path) {
+    public function import(ImportConfig $configuration, $project_id, $xml_file_path)
+    {
         $this->logger->info('Start importing from file ' . $xml_file_path);
 
-        $xml_element = $this->getSimpleXMLElementFromFilePath($xml_file_path);
+        $xml_element = $this->XML_file_content_retriever->getSimpleXMLElementFromFilePath($xml_file_path);
 
         $this->importFromXMLIntoExistingProject($configuration, $project_id, $xml_element, '');
     }
 
-    private function importFromXMLIntoExistingProject(ImportConfig $configuration, $project_id, SimpleXMLElement $xml_element, $extraction_path) {
+    private function importFromXMLIntoExistingProject(ImportConfig $configuration, $project_id, SimpleXMLElement $xml_element, $extraction_path)
+    {
         $project = $this->project_manager->getValidProjectByShortNameOrId($project_id);
         $this->activateServices($project, $xml_element);
 
         $this->importContent($configuration, $project, $xml_element, $extraction_path);
     }
 
-    private function activateServices(Project $project, SimpleXMLElement $xml_element) {
+    private function activateServices(Project $project, SimpleXMLElement $xml_element)
+    {
         if ($xml_element->services) {
             foreach ($xml_element->services->service as $service) {
                 $short_name = (string) $service['shortname'];
@@ -231,13 +319,14 @@ class ProjectXMLImporter {
     {
         $this->logger->info('Start collecting errors from file ' . $xml_file_path);
 
-        $xml_element = $this->getSimpleXMLElementFromFilePath($xml_file_path);
+        $xml_element = $this->XML_file_content_retriever->getSimpleXMLElementFromFilePath($xml_file_path);
         $project = $this->project_manager->getValidProjectByShortNameOrId($project_id);
 
         return $this->collectBlockingErrorsWithoutImportingContent($project, $xml_element);
     }
 
-    private function importContent(ImportConfig $configuration, Project $project, SimpleXMLElement $xml_element, $extraction_path) {
+    private function importContent(ImportConfig $configuration, Project $project, SimpleXMLElement $xml_element, $extraction_path)
+    {
         $this->logger->info("Importing project in project ".$project->getUnixName());
 
         $user_creator = $this->user_manager->getCurrentUser();
@@ -303,22 +392,27 @@ class ProjectXMLImporter {
         return $errors;
     }
 
-    private function importUgroups(Project $project, SimpleXMLElement $xml_element, PFUser $user_creator) {
+    private function importUgroups(Project $project, SimpleXMLElement $xml_element, PFUser $user_creator)
+    {
         $this->logger->info("Check if there are ugroups to add");
 
         if ($xml_element->ugroups) {
             $this->logger->info("Some ugroups are defined in the XML");
 
-            list($ugroups_in_xml, $project_members) = $this->getUgroupsFromXMLToAdd($project, $xml_element->ugroups);
+            if ((string) $xml_element->ugroups['mode'] === ProjectXMLExporter::UGROUPS_MODE_SYNCHRONIZED) {
+                $this->synchronized_project_membership_dao->enable($project);
+            }
 
-            foreach($project_members as $user) {
+            [$ugroups_in_xml, $project_members] = $this->getUgroupsFromXMLToAdd($project, $xml_element->ugroups);
+
+            foreach ($project_members as $user) {
                 $this->addProjectMember($project, $user);
             }
 
             foreach ($ugroups_in_xml as $ugroup_def) {
                 $ugroup = $this->ugroup_manager->getDynamicUGoupByName($project, $ugroup_def['name']);
 
-                if(empty($ugroup)) {
+                if (empty($ugroup)) {
                     $this->logger->debug("Creating empty ugroup " . $ugroup_def['name']);
                     try {
                         $new_ugroup_id = $this->ugroup_manager->createEmptyUgroup(
@@ -357,11 +451,7 @@ class ProjectXMLImporter {
     {
         $this->logger->info("Add user {$user->getUserName()} to project.");
 
-        $check_user_status  = false;
-        $send_notifications = false;
-        if (! account_add_user_obj_to_group($project->getID(), $user, $check_user_status, $send_notifications)) {
-            $this->logger->info("User is already member");
-        }
+        $this->project_member_adder->addProjectMember($user, $project);
     }
 
     private function cleanProjectMembersFromUserCreator(Project $project, array $users, PFUser $user_creator)
@@ -371,9 +461,12 @@ class ProjectXMLImporter {
         }
     }
 
-    private function cleanProjectAdminsFromUserCreator(ProjectUGroup $ugroup, array $users, PFUser $user_creator)
+    private function cleanProjectAdminsFromUserCreator(ProjectUGroup $ugroup, array $users, PFUser $user_creator) : void
     {
         if (! empty($users) && ! in_array($user_creator, $users)) {
+            $this->event_manager->processEvent(
+                new ProjectImportCleanupUserCreatorFromAdministrators($user_creator, $ugroup)
+            );
             $ugroup->removeUser($user_creator);
         }
     }
@@ -383,7 +476,8 @@ class ProjectXMLImporter {
      *
      * @return array
      */
-    private function getUgroupsFromXMLToAdd(Project $project, SimpleXMLElement $xml_element_ugroups) {
+    private function getUgroupsFromXMLToAdd(Project $project, SimpleXMLElement $xml_element_ugroups)
+    {
         $ugroups = array();
         $project_members = array();
 
@@ -420,7 +514,8 @@ class ProjectXMLImporter {
      *
      * @return PFUser[]
      */
-    private function getListOfUgroupMember(SimpleXMLElement $ugroup) {
+    private function getListOfUgroupMember(SimpleXMLElement $ugroup)
+    {
         $ugroup_members = array();
 
         foreach ($ugroup->members->member as $xml_member) {
@@ -430,57 +525,39 @@ class ProjectXMLImporter {
         return $ugroup_members;
     }
 
-    private function getProjectXMLFromArchive(ArchiveInterface $archive) {
+    private function getProjectXMLFromArchive(ArchiveInterface $archive)
+    {
         $xml_contents = $archive->getProjectXML();
 
         if (! $xml_contents) {
             throw new RuntimeException('No content available in archive for file ' . ArchiveInterface::PROJECT_FILE);
         }
 
-        return $this->getSimpleXMLElementFromString($xml_contents);
-    }
-
-    /**
-     * @return SimpleXMLElement
-     */
-    private function getSimpleXMLElementFromFilePath($file_path)
-    {
-        $xml_contents = file_get_contents($file_path, 'r');
-        return $this->getSimpleXMLElementFromString($xml_contents);
-    }
-
-    private function getSimpleXMLElementFromString($file_contents) {
-        $this->checkFileIsValidXML($file_contents);
-
-        return simplexml_load_string($file_contents, 'SimpleXMLElement', $this->getLibXMLOptions());
-    }
-
-    private function checkFileIsValidXML($file_contents) {
-        libxml_use_internal_errors(true);
-        libxml_clear_errors();
-        $xml = new DOMDocument();
-        $xml->loadXML($file_contents, $this->getLibXMLOptions());
-        $errors = libxml_get_errors();
-
-        if (! empty($errors)){
-            throw new RuntimeException($GLOBALS['Language']->getText('project_import', 'invalid_xml'));
-        }
-    }
-
-    private function getLibXMLOptions() {
-        if ($this->isAllowedToLoadHugeFiles()) {
-            return LIBXML_PARSEHUGE;
-        }
-
-        return 0;
-    }
-
-    private function isAllowedToLoadHugeFiles() {
-        return defined('IS_SCRIPT') && IS_SCRIPT;
+        return $this->XML_file_content_retriever->getSimpleXMLElementFromString($xml_contents);
     }
 
     private function importDashboards(SimpleXMLElement $xml_element, PFUser $user, Project $project, MappingsRegistry $mapping_registry)
     {
         $this->dashboard_importer->import($xml_element, $user, $project, $mapping_registry);
+    }
+
+    /**
+     * @throws ImportNotValidException
+     */
+    private function assertXMLisValid(SimpleXMLElement $xml_element): void
+    {
+        $error  = false;
+        $params = [
+            'xml_content' => $xml_element,
+            'error'       => &$error,
+        ];
+        $this->event_manager->processEvent(
+            Event::IMPORT_XML_IS_PROJECT_VALID,
+            $params
+        );
+
+        if ($params['error']) {
+            throw new ImportNotValidException();
+        }
     }
 }

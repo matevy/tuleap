@@ -20,7 +20,8 @@
 
 require_once 'src/db/driver/Abstract.php';
 
-class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract {
+class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract
+{
     protected $pdo;
     protected $dsn;
     protected $user;
@@ -29,7 +30,8 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract {
     protected $platform_name = "tuleap";
     protected $env_variable_name = "TULEAP_LOCAL_INC";
 
-    protected function initOptions() {
+    protected function initOptions()
+    {
         if (!$this->dsn) {
             $localInc = $this->getLocalInc();
             if (is_file($localInc)) {
@@ -59,11 +61,13 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract {
         }
     }
 
-    private function getLocalInc() {
+    private function getLocalInc()
+    {
         return getenv($this->env_variable_name) ? getenv($this->env_variable_name) : '/etc/'.$this->platform_name.'/conf/local.inc';
     }
 
-    private function getErrorLocalIncMessage() {
+    private function getErrorLocalIncMessage()
+    {
         return 'Unable to find a valid local.inc for '.$this->platform_name.', please check '.$this->env_variable_name.' environment variable';
     }
 
@@ -74,11 +78,16 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract {
      *
      * @return PDO
      */
-    public function getPdo() {
+    public function getPdo()
+    {
         if (!$this->pdo) {
             $this->initOptions();
-            $this->pdo = new PDO($this->dsn, $this->user, $this->password,
-                                 array(PDO::MYSQL_ATTR_INIT_COMMAND =>  "SET NAMES 'UTF8'"));
+            $this->pdo = new PDO(
+                $this->dsn,
+                $this->user,
+                $this->password,
+                array(PDO::MYSQL_ATTR_INIT_COMMAND =>  "SET NAMES 'UTF8'")
+            );
             //$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return $this->pdo;
@@ -91,7 +100,8 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract {
      *
      * @return LoggerAppenderPDO
      */
-    public function getBucketLoggerAppender(ForgeUpgrade_Bucket $bucket) {
+    public function getBucketLoggerAppender(ForgeUpgrade_Bucket $bucket)
+    {
         $this->initOptions();
 
         $logger = new LoggerAppenderPDO();
@@ -106,5 +116,3 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract {
         return $logger;
     }
 }
-
-?>

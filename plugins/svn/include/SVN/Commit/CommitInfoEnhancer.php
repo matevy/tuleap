@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2016 - 2018. All rights reserved.
+ * Copyright Enalean (c) 2016 - Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -32,7 +32,7 @@ class CommitInfoEnhancer
     private $commit_info;
     private $svn_look;
 
-    public function __construct(SVNLook $svn_look, CommitInfo $commit_info)
+    public function __construct(Svnlook $svn_look, CommitInfo $commit_info)
     {
         $this->svn_look    = $svn_look;
         $this->commit_info = $commit_info;
@@ -69,7 +69,7 @@ class CommitInfoEnhancer
             $transaction_path = $this->svn_look->getTransactionPath($repository, $revision);
             $this->commit_info->setTransactionPath($transaction_path);
         } else {
-            throw new CannotFindRepositoryException($GLOBALS['Language']->getText('plugin_svn', 'find_error'));
+            throw new CannotFindRepositoryException(dgettext('tuleap-svn', 'Repository not found'));
         }
     }
 
@@ -81,7 +81,7 @@ class CommitInfoEnhancer
             $this->commit_info->setDate($info_commit[1]);
             $this->commit_info->setCommitMessage(implode("\n", array_slice($info_commit, 2)));
         } else {
-            throw new CannotFindRepositoryException($GLOBALS['Language']->getText('plugin_svn', 'find_error'));
+            throw new CannotFindRepositoryException(dgettext('tuleap-svn', 'Repository not found'));
         }
     }
 
@@ -117,7 +117,7 @@ class CommitInfoEnhancer
                 );
             }
         } else {
-            throw new CannotFindRepositoryException($GLOBALS['Language']->getText('plugin_svn', 'find_error'));
+            throw new CannotFindRepositoryException(dgettext('tuleap-svn', 'Repository not found'));
         }
     }
 
@@ -133,7 +133,7 @@ class CommitInfoEnhancer
                 );
             }
         } else {
-            throw new CannotFindRepositoryException($GLOBALS['Language']->getText('plugin_svn', 'find_error'));
+            throw new CannotFindRepositoryException(dgettext('tuleap-svn', 'Repository not found'));
         }
     }
 

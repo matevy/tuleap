@@ -19,22 +19,27 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201508141600_remove_people_skills extends ForgeUpgrade_Bucket {
+class b201508141600_remove_people_skills extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Remove people skills feature';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $this->removeFieldsUserTable();
         $this->dropTablesPeopleSkills();
     }
 
-    private function dropTablesPeopleSkills() {
+    private function dropTablesPeopleSkills()
+    {
         $sql = 'DROP TABLE people_skill, people_skill_inventory, people_skill_level, people_skill_year';
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
@@ -42,12 +47,12 @@ class b201508141600_remove_people_skills extends ForgeUpgrade_Bucket {
         }
     }
 
-    private function removeFieldsUserTable() {
+    private function removeFieldsUserTable()
+    {
         $sql = 'ALTER TABLE user DROP COLUMN people_view_skills, DROP COLUMN people_resume';
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occurred while editing user table for removing people skills informations.');
         }
     }
-
 }

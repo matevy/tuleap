@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Git_Mirror_MirrorSystemEventQueue extends SystemEventQueue {
+class Git_Mirror_MirrorSystemEventQueue extends SystemEventQueue
+{
 
     /**
      * @var Logger
@@ -27,19 +28,23 @@ class Git_Mirror_MirrorSystemEventQueue extends SystemEventQueue {
 
     public const NAME = 'grokmirror';
 
-    public function __construct(Logger $logger) {
+    public function __construct(Logger $logger)
+    {
         $this->logger = $logger;
     }
 
-    public function getName() {
+    public function getName()
+    {
         return self::NAME;
     }
 
-    public function getLabel() {
+    public function getLabel()
+    {
         return dgettext('tuleap-git', 'Grok Mirror');
     }
 
-    public function getLogger() {
+    public function getLogger()
+    {
         return $this->logger;
     }
 }

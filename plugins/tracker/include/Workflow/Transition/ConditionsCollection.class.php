@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Workflow_Transition_ConditionsCollection implements ArrayAccess {
+class Workflow_Transition_ConditionsCollection implements ArrayAccess
+{
 
     /** @var array of Workflow_Transition_Condition */
     private $conditions = array();
@@ -27,7 +28,8 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess {
     private $current;
 
     // {{{ ArrayAccess
-    public function offsetSet($offset, $value) {
+    public function offsetSet($offset, $value)
+    {
         if (is_null($offset)) {
             $this->conditions[] = $value;
         } else {
@@ -35,15 +37,18 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess {
         }
     }
 
-    public function offsetExists($offset) {
+    public function offsetExists($offset)
+    {
         return isset($this->conditions[$offset]);
     }
 
-    public function offsetUnset($offset) {
+    public function offsetUnset($offset)
+    {
         unset($this->conditions[$offset]);
     }
 
-    public function offsetGet($offset) {
+    public function offsetGet($offset)
+    {
         return isset($this->conditions[$offset]) ? $this->conditions[$offset] : null;
     }
     // }}}
@@ -51,7 +56,8 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess {
     /**
      * Add a condition to the collection
      */
-    public function add(?Workflow_Transition_Condition $condition = null) {
+    public function add(?Workflow_Transition_Condition $condition = null)
+    {
         if ($condition) { //pattern null object?
             $this->conditions[] = $condition;
         }
@@ -62,14 +68,16 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess {
      *
      * @return array
      */
-    public function getConditions() {
+    public function getConditions()
+    {
         return $this->conditions;
     }
 
     /**
      * Creates new conditions in the database
      */
-    public function saveObject() {
+    public function saveObject()
+    {
         foreach ($this->conditions as $condition) {
             $condition->saveObject();
         }
@@ -78,7 +86,8 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess {
     /**
      * @return string html permission form for the transition
      */
-    public function fetch() {
+    public function fetch()
+    {
         $html  = '';
         $html .= '<ul class="workflow_conditions">';
         foreach ($this->conditions as $condition) {
@@ -103,7 +112,8 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess {
      *
      * @return void
      */
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping) {
+    public function exportToXml(SimpleXMLElement $root, $xmlMapping)
+    {
         if ($this->conditions) {
             $child = $root->addChild('conditions');
             foreach ($this->conditions as $condition) {
@@ -117,7 +127,8 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess {
      *
      * @return true if all conditions are satisfied
      */
-    public function validate($fields_data, Tracker_Artifact $artifact, $comment_body) {
+    public function validate($fields_data, Tracker_Artifact $artifact, $comment_body)
+    {
         foreach ($this->getConditions() as $condition) {
             if (! $condition->validate($fields_data, $artifact, $comment_body)) {
                 return false;
@@ -126,4 +137,3 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess {
         return true;
     }
 }
-?>

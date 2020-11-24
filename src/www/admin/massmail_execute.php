@@ -17,7 +17,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('pre.php');
+require_once __DIR__ . '/../include/pre.php';
 
 $request = HTTPRequest::instance();
 $request->checkUserIsSuperUser();
@@ -27,9 +27,10 @@ $csrf->check();
 
 $request = HTTPRequest::instance();
 if ($request->isPost() && $request->existAndNonEmpty('destination')) {
-
-    $validDestination = new Valid_WhiteList('destination',
-        array('preview', 'comm', 'sf', 'all', 'admin', 'sfadmin', 'devel'));
+    $validDestination = new Valid_WhiteList(
+        'destination',
+        array('preview', 'comm', 'sf', 'all', 'admin', 'sfadmin', 'devel')
+    );
     $destination      = $request->getValidated('destination', $validDestination);
 
     $validFormat = new Valid_WhiteList('comment_format', array('html', 'text'));

@@ -18,9 +18,13 @@
   -
   -->
 <template>
+    <div v-if="is_an_embedded_file && is_loading_content" class="document-quicklook-content">
+        <i class="fa fa-spin fa-circle-o-notch document-preview-spinner" data-test="document-preview-spinner"></i>
+    </div>
     <div v-dompurify-html="currently_previewed_item.embedded_file_properties.content"
          class="document-quick-look-embedded"
-         v-if="is_embedded"
+         v-else-if="is_an_embedded_file"
+         data-test="document-quick-look-embedded"
     ></div>
 
     <div class="document-quick-look-image-container" v-else-if="is_an_image && currently_previewed_item.user_can_write">
@@ -36,13 +40,13 @@
         <div class="document-quick-look-image-overlay">
             <i class="fa fa-ban"></i>
             <span class="document-quick-look-dropzone-text" v-translate>
-                You are not allowed to update this file
+                You are not allowed to upload a new version of this file
             </span>
         </div>
         <img class="document-quick-look-image" v-bind:src="currently_previewed_item.file_properties.download_href" v-bind:alt="currently_previewed_item.title">
     </div>
 
-    <div class="document-quick-look-folder-container" v-else-if="is_a_folder && currently_previewed_item.user_can_write">
+    <div class="document-quick-look-folder-container" v-else-if="is_item_a_folder(currently_previewed_item) && currently_previewed_item.user_can_write">
         <icon-quicklook-folder/>
         <icon-quicklook-drop-into-folder/>
         <span key="upload"
@@ -52,7 +56,7 @@
             Drop to upload in folder
         </span>
     </div>
-    <div class="document-quick-look-folder-container" v-else-if="is_a_folder && ! currently_previewed_item.user_can_write">
+    <div class="document-quick-look-folder-container" v-else-if="is_item_a_folder(currently_previewed_item) && ! currently_previewed_item.user_can_write">
         <icon-quicklook-folder/>
         <i class="fa fa-ban"></i>
         <span key="folder"
@@ -83,15 +87,15 @@
               class="document-quick-look-dropzone-text"
               v-translate
         >
-            You are not allowed to update this file
+            You are not allowed to upload a new version of this file
         </span>
     </div>
 </template>
 <script>
-import { mapState } from "vuex";
-import { TYPE_EMBEDDED, TYPE_FOLDER } from "../../../constants.js";
-import IconQuicklookFolder from "../../svg-icons/IconQuicklookFolder.vue";
-import IconQuicklookDropIntoFolder from "../../svg-icons/IconQuicklookDropIntoFolder.vue";
+import { mapState, mapGetters } from "vuex";
+import IconQuicklookFolder from "../../svg/svg-icons/IconQuicklookFolder.vue";
+import IconQuicklookDropIntoFolder from "../../svg/svg-icons/IconQuicklookDropIntoFolder.vue";
+import { TYPE_EMBEDDED } from "../../../constants.js";
 
 export default {
     components: {
@@ -102,7 +106,15 @@ export default {
         iconClass: String
     },
     computed: {
-        ...mapState(["currently_previewed_item"]),
+        ...mapState(["currently_previewed_item", "is_loading_currently_previewed_item"]),
+        ...mapGetters(["is_item_a_folder"]),
+        is_loading_content() {
+            if (!this.is_an_embedded_file) {
+                return false;
+            }
+
+            return this.is_loading_currently_previewed_item === true;
+        },
         is_an_image() {
             if (!this.currently_previewed_item.file_properties) {
                 return false;
@@ -112,14 +124,8 @@ export default {
                 this.currently_previewed_item.file_properties.file_type.includes("image")
             );
         },
-        is_embedded() {
-            return (
-                this.currently_previewed_item.type === TYPE_EMBEDDED &&
-                this.currently_previewed_item.embedded_file_properties
-            );
-        },
-        is_a_folder() {
-            return this.currently_previewed_item.type === TYPE_FOLDER;
+        is_an_embedded_file() {
+            return this.currently_previewed_item.type === TYPE_EMBEDDED;
         }
     }
 };

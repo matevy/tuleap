@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,7 +21,7 @@ export async function handleErrors(context, exception) {
     const message = "Internal server error";
     if (exception.response === undefined) {
         context.commit("error/setFolderLoadingError", message);
-        return;
+        throw exception;
     }
 
     const status = exception.response.status;
@@ -38,11 +38,21 @@ export async function handleErrors(context, exception) {
     }
 }
 
+export async function handleErrorsForLock(context, exception) {
+    try {
+        const json = await exception.response.json();
+        context.commit("error/setLockError", getErrorMessage(json));
+    } catch (error) {
+        context.commit("error/setLockError", "Internal server error");
+        throw exception;
+    }
+}
+
 export async function handleErrorsForDocument(context, exception) {
     const message = "Internal server error";
     if (exception.response === undefined) {
         context.commit("error/setItemLoadingError", message);
-        return;
+        throw exception;
     }
 
     const status = exception.response.status;
@@ -63,7 +73,7 @@ export async function handleErrorsForModal(context, exception) {
     const message = "Internal server error";
     if (exception.response === undefined) {
         context.commit("error/setModalError", message);
-        return;
+        throw exception;
     }
     try {
         const json = await exception.response.json();
@@ -73,9 +83,28 @@ export async function handleErrorsForModal(context, exception) {
     }
 }
 
+export async function handleErrorsForDeletionModal(context, exception, item) {
+    const message = "Internal server error";
+    if (exception.response === undefined) {
+        context.commit("error/setModalError", message);
+        throw exception;
+    }
+    try {
+        const json = await exception.response.json();
+        context.commit("error/setModalError", getErrorMessage(json));
+
+        if (json.error.code === 404) {
+            context.commit("removeItemFromFolderContent", item);
+            context.commit("updateCurrentlyPreviewedItem", null);
+        }
+    } catch (error) {
+        context.commit("error/setModalError", message);
+    }
+}
+
 export function getErrorMessage(error_json) {
-    if (error_json.hasOwnProperty("error")) {
-        if (error_json.error.hasOwnProperty("i18n_error_message")) {
+    if (Object.prototype.hasOwnProperty.call(error_json, "error")) {
+        if (Object.prototype.hasOwnProperty.call(error_json.error, "i18n_error_message")) {
             return error_json.error.i18n_error_message;
         }
 

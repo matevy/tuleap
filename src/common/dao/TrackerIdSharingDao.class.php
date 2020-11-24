@@ -18,13 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/dao/include/DataAccessObject.class.php');
-
 /**
  * Manage ID sharing between tracker v3 and v5.
  *
  * If you need to insert something in tracker or artifact tables, then
- * you must use the corresponding method of this class to ensure that 
+ * you must use the corresponding method of this class to ensure that
  * there will be no id overlap between both tracker engines.
  *
  * Usage:
@@ -36,26 +34,28 @@ require_once('common/dao/include/DataAccessObject.class.php');
  *                 VALUES ($id, ........
  * </pre>
  */
-class TrackerIdSharingDao extends DataAccessObject {
-    
+class TrackerIdSharingDao extends DataAccessObject
+{
+
     /**
      * Get a good tracker id.
      *
      * @return int (or false if something gone mad)
      */
-    public function generateTrackerId() {
+    public function generateTrackerId()
+    {
         $sql = "INSERT INTO tracker_idsharing_tracker VALUES ()";
         return $this->updateAndGetLastId($sql);
     }
-    
+
     /**
      * Get a good artifact id.
      *
      * @return int (or false if something gone mad)
      */
-    public function generateArtifactId() {
+    public function generateArtifactId()
+    {
         $sql = "INSERT INTO tracker_idsharing_artifact VALUES ()";
         return $this->updateAndGetLastId($sql);
     }
 }
-?>

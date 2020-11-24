@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
+class Tracker_Migration_V3_FieldsDao extends DataAccessObject
+{
 
-    public function create($tv3_id, $tv5_id) {
+    public function create($tv3_id, $tv5_id)
+    {
         $this->duplicateFields($tv3_id, $tv5_id);
         $this->duplicateFieldUsageAndRanking($tv3_id, $tv5_id);
         $this->reorderFieldsForPrepareRankingUsage($tv5_id);
@@ -34,7 +36,8 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
         $this->insertBindTypeUsers($tv5_id);
     }
 
-    private function duplicateFields($tv3_id, $tv5_id) {
+    private function duplicateFields($tv3_id, $tv5_id)
+    {
         $sql = "INSERT INTO tracker_field (
                     old_id,
                     tracker_id,
@@ -66,10 +69,11 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
                     , 1)
                 FROM artifact_field
                 WHERE field_name NOT IN('comment_type_id') AND group_artifact_id = $tv3_id";
-       $this->update($sql);
+        $this->update($sql);
     }
 
-    private function duplicateFieldUsageAndRanking($tv3_id, $tv5_id) {
+    private function duplicateFieldUsageAndRanking($tv3_id, $tv5_id)
+    {
         $sql = "UPDATE tracker_field AS f, artifact_field_usage AS u
                     SET f.use_it = u.use_it, f.rank = u.place, f.parent_id = If(u.use_it, f.parent_id, 0)
                     WHERE f.old_id = u.field_id
@@ -77,7 +81,8 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function reorderFieldsForPrepareRankingUsage($tv5_id) {
+    private function reorderFieldsForPrepareRankingUsage($tv5_id)
+    {
         $this->update("SET @counter = 0");
         $this->update("SET @previous = NULL");
         $sql = "UPDATE tracker_field
@@ -93,7 +98,8 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function migrateFieldType($tv3_id, $tv5_id) {
+    private function migrateFieldType($tv3_id, $tv5_id)
+    {
         $sql = "UPDATE tracker_field AS f, artifact_field as a
                     SET f.formElement_type = CASE
                             WHEN a.display_type = 'SB' AND f.name = 'submitted_by' THEN 'subby'
@@ -117,7 +123,8 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
          $this->update($sql);
     }
 
-    private function insertIntoFieldList($tv3_id, $tv5_id) {
+    private function insertIntoFieldList($tv3_id, $tv5_id)
+    {
         $sql = "INSERT INTO tracker_field_list(field_id, bind_type)
                     SELECT f.id, CASE WHEN a.value_function = '' OR a.value_function IS NULL THEN 'static' ELSE 'users' END
                     FROM tracker_field AS f INNER JOIN artifact_field as a
@@ -126,7 +133,8 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function insertIntoFieldListBindStatic($tv5_id) {
+    private function insertIntoFieldListBindStatic($tv5_id)
+    {
         $sql = "INSERT INTO tracker_field_list_bind_static(field_id, is_rank_alpha)
                     SELECT field_id, 0 FROM tracker_field_list AS l INNER JOIN tracker_field AS f
                         ON (l.field_id = f.id AND f.tracker_id = $tv5_id)
@@ -134,7 +142,8 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function insertIntoFieldListBindStaticValue($tv3_id, $tv5_id) {
+    private function insertIntoFieldListBindStaticValue($tv3_id, $tv5_id)
+    {
         $sql = "INSERT INTO tracker_field_list_bind_static_value(old_id, field_id, label, description, rank, is_hidden)
                 SELECT v.value_id,
                     f.id,
@@ -147,17 +156,19 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function insertIntoFieldListBindUsers($tv3_id, $tv5_id) {
+    private function insertIntoFieldListBindUsers($tv3_id, $tv5_id)
+    {
         $sql = "INSERT INTO tracker_field_list_bind_users(field_id, value_function)
                 SELECT l.field_id, a.value_function
                 FROM tracker_field_list AS l
                      INNER JOIN tracker_field AS f ON (f.id = l.field_id)
                      INNER JOIN artifact_field as a ON (a.field_id = f.old_id AND f.tracker_id = $tv5_id AND a.group_artifact_id = $tv3_id)
                 WHERE bind_type = 'users'";
-       $this->update($sql);
+        $this->update($sql);
     }
 
-    private function insertIntoFieldListBindDecorators($tv3_id, $tv5_id) {
+    private function insertIntoFieldListBindDecorators($tv3_id, $tv5_id)
+    {
         $sql = "INSERT INTO tracker_field_list_bind_decorator(field_id, value_id, red, green, blue)
                 SELECT f.id, b.id, 218 as red,
                     CASE b.old_id
@@ -187,7 +198,8 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function insertBindType($tv5_id) {
+    private function insertBindType($tv5_id)
+    {
         $sql = "INSERT INTO tracker_field_list(field_id, bind_type)
                     SELECT id, 'users'
                     FROM tracker_field
@@ -195,12 +207,12 @@ class Tracker_Migration_V3_FieldsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    private function insertBindTypeUsers($tv5_id) {
+    private function insertBindTypeUsers($tv5_id)
+    {
         $sql = "INSERT INTO tracker_field_list_bind_users(field_id, value_function)
                     SELECT id, 'artifact_submitters'
                     FROM tracker_field
                     WHERE formElement_type = 'subby' AND tracker_id = $tv5_id";
-       $this->update($sql);
+        $this->update($sql);
     }
 }
-?>

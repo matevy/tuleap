@@ -1,58 +1,75 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('include/DataAccessObject.class.php');
-require_once('common/system_event/SystemEvent.class.php');
+class SystemEventDao extends DataAccessObject
+{
+    public function getElapsedTime(SystemEvent $system_event): int
+    {
+        $id = $this->da->escapeInt($system_event->getId());
+        $sql = "SELECT TIMESTAMPDIFF(SECOND, process_date, end_date) AS seconds
+                FROM system_event
+                WHERE id = $id
+                AND end_date IS NOT NULL";
+        $dar = $this->retrieve($sql);
+        if ($dar) {
+            $row = $dar->getRow();
+            return (int) $row['seconds'];
+        }
+        return -1;
+    }
 
-/**
- *  Data Access Object for SystemEvent 
- */
-class SystemEventDao extends DataAccessObject {
-    /** 
+    /**
      * Create new SystemEvent and store it in the DB
      * @return true if there is no error
      */
-    function store($type, $parameters, $priority,$status, $create_date, $owner) {
-        $sql = sprintf("INSERT INTO system_event (type, parameters, priority, status, create_date, owner) VALUES (%s, %s, %d, %s, FROM_UNIXTIME(%d), %s)",
-                       $this->da->quoteSmart($type),
-                       $this->da->quoteSmart($parameters),
-                       $this->da->escapeInt($priority),
-                       $this->da->quoteSmart($status),
-                       $this->da->escapeInt($create_date),
-                       $this->da->quoteSmart($owner));
-        
+    function store($type, $parameters, $priority, $status, $create_date, $owner)
+    {
+        $sql = sprintf(
+            "INSERT INTO system_event (type, parameters, priority, status, create_date, owner) VALUES (%s, %s, %d, %s, FROM_UNIXTIME(%d), %s)",
+            $this->da->quoteSmart($type),
+            $this->da->quoteSmart($parameters),
+            $this->da->escapeInt($priority),
+            $this->da->quoteSmart($status),
+            $this->da->escapeInt($create_date),
+            $this->da->quoteSmart($owner)
+        );
+
         return $this->updateAndGetLastId($sql);
     }
 
-     /** 
+     /**
      * Close SystemEvent: update status, log and end_date.
      * @param $sysevent : SystemEvent object
      * @return true if there is no error
      */
-    function close($sysevent) {
+    function close($sysevent)
+    {
         $now = time();
-        $sql = sprintf("UPDATE system_event SET status=%s, log=%s, end_date=FROM_UNIXTIME(%d) WHERE id=%d",
-                       $this->da->quoteSmart($sysevent->getStatus()),
-                       $this->da->quoteSmart($sysevent->getLog()),
-                       $this->da->escapeInt($now),
-                       $this->da->escapeInt($sysevent->getId()));
+        $sql = sprintf(
+            "UPDATE system_event SET status=%s, log=%s, end_date=FROM_UNIXTIME(%d) WHERE id=%d",
+            $this->da->quoteSmart($sysevent->getStatus()),
+            $this->da->quoteSmart($sysevent->getLog()),
+            $this->da->escapeInt($now),
+            $this->da->escapeInt($sysevent->getId())
+        );
         if ($updated = $this->update($sql)) {
             $sysevent->setEndDate($now);
         }
@@ -60,12 +77,13 @@ class SystemEventDao extends DataAccessObject {
     }
 
     /**
-     * Return next system event    
+     * Return next system event
      * criteria: higer priority first, then most recent first
      * And set the event status to 'RUNNING'
      * @return DataAccessResult
     */
-    function checkOutNextEvent($owner, $types) {
+    function checkOutNextEvent($owner, $types)
+    {
         $owner    = $this->da->quoteSmart($owner);
         $types    = $this->da->quoteSmartImplode(',', $types);
 
@@ -76,7 +94,7 @@ class SystemEventDao extends DataAccessObject {
                     AND type IN ($types)
                     ORDER BY priority, create_date LIMIT 1";
         $dar = $this->retrieve($sql);
-        if($dar && !$dar->isError()) {
+        if ($dar && !$dar->isError()) {
             // Mark event as 'RUNNING'
             if ($row = $dar->getRow()) {
                 $id = $row['id'];
@@ -91,7 +109,8 @@ class SystemEventDao extends DataAccessObject {
     }
 
     /** @return bool */
-    public function hasThereAnyEventsRunning() {
+    public function hasThereAnyEventsRunning()
+    {
         $status = $this->da->quoteSmart(SystemEvent::STATUS_RUNNING);
 
         $sql = "SELECT NULL
@@ -105,12 +124,13 @@ class SystemEventDao extends DataAccessObject {
     /**
      * Search n last status
      */
-    public function searchLastEvents($offset, $limit, $filters_status, $filters_type) {
+    public function searchLastEvents($offset, $limit, $filters_status, $filters_type)
+    {
         $offset         = $this->da->escapeInt($offset);
         $limit          = $this->da->escapeInt($limit);
         $filters_status = $this->da->quoteSmartImplode(", ", $filters_status);
         $filters_type   = $this->da->quoteSmartImplode(", ", $filters_type);
-        $sql = "SELECT SQL_CALC_FOUND_ROWS * 
+        $sql = "SELECT SQL_CALC_FOUND_ROWS *
                 FROM system_event
                 WHERE status IN ($filters_status)
                   AND type   IN ($filters_type)
@@ -119,7 +139,8 @@ class SystemEventDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchQueueStatsForLastDay($types) {
+    public function searchQueueStatsForLastDay($types)
+    {
         $types = $this->da->quoteSmartImplode(',', $types);
 
         $sql = "SELECT status, count(*) as nb
@@ -133,12 +154,12 @@ class SystemEventDao extends DataAccessObject {
     }
 
     /**
-     * 
+     *
      * The searched parameter may be at one of these positions:
      * $val::someThing (position == head)
      * someThing::$val (position == tail)
      * someThing::$val::someThing (position == middle)
-     * 
+     *
      * @param String $position
      * @param String $val
      * @param Array $type
@@ -156,10 +177,10 @@ class SystemEventDao extends DataAccessObject {
         } else {
             $stm = $this->da->quoteLikeValueSurround($separator.$val.$separator);
         }
-        
+
         $type   = $this->da->quoteSmartImplode(", ", $type);
         $status = $this->da->quoteSmartImplode(", ", $status);
-        
+
         $sql = 'SELECT  * FROM system_event
                 WHERE type   IN ('.$type.')
                 AND status IN ('.$status.')
@@ -186,7 +207,8 @@ class SystemEventDao extends DataAccessObject {
     /**
      * @return DataAccessResult
      */
-    public function resetStatus($id, $status) {
+    public function resetStatus($id, $status)
+    {
         $id     = $this->da->escapeInt($id);
         $status = $this->da->quoteSmart($status);
         $sql = "UPDATE system_event
@@ -198,7 +220,8 @@ class SystemEventDao extends DataAccessObject {
     /**
      * @return array of event id and parameters
      */
-    public function searchNewGitRepoUpdateEvents() {
+    public function searchNewGitRepoUpdateEvents()
+    {
         $sql = "SELECT id, parameters FROM system_event
             WHERE status = 'NEW'
             AND type = 'GIT_REPO_UPDATE'";
@@ -208,9 +231,10 @@ class SystemEventDao extends DataAccessObject {
 
     /**
      * @param array $event_ids
-     * @return boolean
+     * @return bool
      */
-    public function markAsDone($event_ids) {
+    public function markAsDone($event_ids)
+    {
         $event_ids = $this->da->escapeIntImplode($event_ids);
 
         $sql = "UPDATE system_event
@@ -224,9 +248,10 @@ class SystemEventDao extends DataAccessObject {
 
     /**
      * @param array $event_ids
-     * @return boolean
+     * @return bool
      */
-    public function markAsRunning($event_ids) {
+    public function markAsRunning($event_ids)
+    {
         $event_ids = $this->da->escapeIntImplode($event_ids);
 
         $sql = "UPDATE system_event
@@ -237,7 +262,8 @@ class SystemEventDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function purgeDataOlderThanOneYear() {
+    public function purgeDataOlderThanOneYear()
+    {
         $one_year_ago_date = date('Y-m-d 00:00:00', strtotime('-1 year', time()));
 
         $sql = "DELETE FROM system_event
@@ -248,7 +274,8 @@ class SystemEventDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function searchAllMatchingEvents($status, $limit, $offset) {
+    public function searchAllMatchingEvents($status, $limit, $offset)
+    {
         $limit  = $this->da->escapeInt($limit);
         $offset = $this->da->escapeInt($offset);
 

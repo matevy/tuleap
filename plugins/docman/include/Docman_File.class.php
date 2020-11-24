@@ -24,12 +24,17 @@ require_once('Docman_Document.class.php');
  * URL is a transport object (aka container) used to share data between
  * Model/Controler and View layer of the application
  */
-class Docman_File extends Docman_Document {
-    
-    function __construct($data = null) {
+class Docman_File extends Docman_Document
+{
+
+    function __construct($data = null)
+    {
         parent::__construct($data);
     }
-    
+
+    /**
+     * @var Docman_Version
+     */
     var $currentVersion;
     public function setCurrentVersion($currentVersion)
     {
@@ -48,7 +53,8 @@ class Docman_File extends Docman_Document {
         return $type;
     }
 
-    function toRow() {
+    function toRow()
+    {
         $row = parent::toRow();
         $row['item_type'] = PLUGIN_DOCMAN_ITEM_TYPE_FILE;
         return $row;
@@ -59,5 +65,3 @@ class Docman_File extends Docman_Document {
         return $visitor->visitFile($this, $params);
     }
 }
-
-?>

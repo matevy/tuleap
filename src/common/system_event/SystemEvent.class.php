@@ -23,7 +23,8 @@
  * System Event class
  *
  */
-abstract class SystemEvent {
+abstract class SystemEvent
+{
 
     protected $id;
     protected $type;
@@ -75,11 +76,20 @@ abstract class SystemEvent {
     public const STATUS_WARNING    = "WARNING";
     public const STATUS_ERROR      = "ERROR";
 
+    public const ALL_STATUS = [
+        self::STATUS_NONE,
+        self::STATUS_NEW,
+        self::STATUS_RUNNING,
+        self::STATUS_DONE,
+        self::STATUS_WARNING,
+        self::STATUS_ERROR,
+    ];
+
     //Priority of the event
     public const PRIORITY_HIGH   = 1;
     public const PRIORITY_MEDIUM = 2;
     public const PRIORITY_LOW    = 3;
-    
+
     public const PARAMETER_SEPARATOR        = '::';
     public const PARAMETER_SEPARATOR_ESCAPE = '\:\:';
 
@@ -102,7 +112,8 @@ abstract class SystemEvent {
      * @param string $end_date
      * @param string $log
      */
-    function __construct($id, $type, $owner, $parameters, $priority, $status, $create_date, $process_date, $end_date, $log) {
+    function __construct($id, $type, $owner, $parameters, $priority, $status, $create_date, $process_date, $end_date, $log)
+    {
         $this->id           = $id;
         $this->type         = $type;
         $this->owner        = $owner;
@@ -117,104 +128,121 @@ abstract class SystemEvent {
 
     // Getters
 
-    function getId() {
+    function getId()
+    {
         return $this->id;
     }
 
-    function getType() {
+    function getType()
+    {
         return $this->type;
     }
 
-    function getOwner() {
+    function getOwner()
+    {
         return $this->owner;
     }
 
-    function getParameters() {
+    function getParameters()
+    {
         return $this->parameters;
     }
-    
+
     /**
-     * Verbalize the parameters so they are readable and much user friendly in 
+     * Verbalize the parameters so they are readable and much user friendly in
      * notifications
-     * 
-     * @param bool $with_link true if you want links to entities. The returned 
+     *
+     * @param bool $with_link true if you want links to entities. The returned
      * string will be html instead of plain/text
      *
      * @return string
      */
-    public abstract function verbalizeParameters($with_link);
-    
+    abstract public function verbalizeParameters($with_link);
+
     /**
      * verbalize a user id.
-     * 
-     * @param integer $user_id   The user id
-     * @param boolean $with_link true if you want links to entities. The returned 
-     * string will be html instead of plain/text
+     *
+     * @param int $user_id The user id
+     * @param bool $with_link true if you want links to entities. The returned string will be html instead of plain/text
      *
      * @return string
      */
-    public function verbalizeUserId($user_id, $with_link) {
+    public function verbalizeUserId($user_id, $with_link)
+    {
         $txt = '#'. $user_id;
         if ($with_link) {
             $txt = '<a href="/admin/usergroup.php?user_id='. $user_id .'">'. $txt .'</a>';
         }
         return $txt;
     }
-    
+
     /**
      * verbalize a project id.
-     * 
-     * @param integer $group_id   The project id
-     * @param boolean $with_link true if you want links to entities. The returned 
-     * string will be html instead of plain/text
+     *
+     * @param int $group_id The project id
+     * @param bool $with_link true if you want links to entities. The returned string will be html instead of plain/text
      *
      * @return string
      */
-    public function verbalizeProjectId($group_id, $with_link) {
+    public function verbalizeProjectId($group_id, $with_link)
+    {
         $txt = '#'. $group_id;
         if ($with_link) {
             $txt = '<a href="/admin/groupedit.php?group_id='. $group_id .'">'. $txt .'</a>';
         }
         return $txt;
     }
-    
-    function getParametersAsArray() {
+
+    function getParametersAsArray()
+    {
         return explode(self::PARAMETER_SEPARATOR, $this->parameters);
     }
 
-    function getPriority() {
+    function getPriority()
+    {
         return $this->priority;
     }
 
-    function getStatus() {
+    /**
+     * @psalm-return value-of<self::ALL_STATUS>
+     */
+    public function getStatus(): string
+    {
         return $this->status;
     }
 
-    function getLog() {
+    function getLog()
+    {
         return $this->log;
     }
 
-    function setStatus($status) {
+    function setStatus($status)
+    {
         $this->status=$status;
     }
 
-    function setLog($log) {
+    function setLog($log)
+    {
         $this->log=$log;
     }
 
-    function setParameters($params) {
+    function setParameters($params)
+    {
         $this->parameters = $params;
     }
 
-    function getCreateDate() {
+    function getCreateDate()
+    {
         return $this->create_date;
     }
-    
-    function getProcessDate() {
+
+    function getProcessDate()
+    {
         return $this->process_date;
     }
-    
-    function getEndDate() {
+
+    function getEndDate()
+    {
         return $this->end_date;
     }
 
@@ -231,13 +259,13 @@ abstract class SystemEvent {
 
         if ($duration->y) {
             $format = $GLOBALS['Language']->getText('admin_system_events', 'duration_years');
-        } else if ($duration->m) {
+        } elseif ($duration->m) {
             $format = $GLOBALS['Language']->getText('admin_system_events', 'duration_months');
-        } else if ($duration->d) {
+        } elseif ($duration->d) {
             $format = $GLOBALS['Language']->getText('admin_system_events', 'duration_days');
-        } else if ($duration->h) {
+        } elseif ($duration->h) {
             $format = $GLOBALS['Language']->getText('admin_system_events', 'duration_hours');
-        } else if ($duration->i) {
+        } elseif ($duration->i) {
             $format = $GLOBALS['Language']->getText('admin_system_events', 'duration_minutes');
         } else {
             $format = $GLOBALS['Language']->getText('admin_system_events', 'duration_seconds');
@@ -245,15 +273,17 @@ abstract class SystemEvent {
 
         return $duration->format($format);
     }
-    
-    public function setProcessDate($process_date) {
+
+    public function setProcessDate($process_date)
+    {
         $this->process_date = is_numeric($process_date) ? date('Y-m-d H:i:s', $process_date) : $process_date;
     }
-    
-    public function setEndDate($end_date) {
+
+    public function setEndDate($end_date)
+    {
         $this->end_date = is_numeric($end_date) ? date('Y-m-d H:i:s', $end_date) : $end_date;
     }
-    
+
     /**
      * Checks if the given value represents integer
      * is_int() won't work on string containing integers...
@@ -266,18 +296,23 @@ abstract class SystemEvent {
     /**
      * A few functions to parse the parameters string
      */
-    function getIdFromParam() {
+    function getIdFromParam()
+    {
         if ($this->int_ok($this->parameters)) {
             return $this->parameters;
-        } else return 0;
+        } else {
+            return 0;
+        }
     }
 
-    public function getParameter($index) {
+    public function getParameter($index)
+    {
         $params = $this->getParametersAsArray();
         return isset($params[$index]) && $params[$index] !== '' ? $params[$index] : null;
     }
 
-    public function getRequiredParameter($index) {
+    public function getRequiredParameter($index)
+    {
         $param = $this->getParameter($index);
         if ($param === null) {
             throw new SystemEventMissingParameterException('Missing parameter n°'. (int)$index);
@@ -288,17 +323,19 @@ abstract class SystemEvent {
     /**
      * Error functions
      */
-    function setErrorBadParam() {
+    function setErrorBadParam()
+    {
         $this->error("Bad parameter for event ".$this->getType().": ".$this->getParameters());
         return 0;
     }
 
 
-    /** 
+    /**
      * Process stored event
      * Virtual method redeclared in children
      */
-    function process() {
+    function process()
+    {
         return null;
     }
 
@@ -306,11 +343,13 @@ abstract class SystemEvent {
      * This function allows one to call all listeners (e.g. plugins) of an event related to the current processed system event
      * @param string $eventName
      */
-    protected function callSystemEventListeners( $eventName ) {
-        EventManager::instance()->processEvent( $eventName , $this->getParametersAsArray() );
+    protected function callSystemEventListeners($eventName)
+    {
+        EventManager::instance()->processEvent($eventName, $this->getParametersAsArray());
     }
 
-    public function logException(Exception $exception) {
+    public function logException(Exception $exception)
+    {
         $this->error($exception->getMessage());
     }
 
@@ -319,54 +358,59 @@ abstract class SystemEvent {
      * @param string $status the status
      * @param string $msg the message to log
      */
-    private function logStatus($status, $msg) {
+    private function logStatus($status, $msg)
+    {
         $this->setStatus($status);
         $this->setLog($msg);
     }
-    
+
     /**
      * Set the status of the event to STATUS_ERROR
      * and log the msg
      * @param string $msg the message to log
      */
-    protected function error($msg) {
+    protected function error($msg)
+    {
         $this->logStatus(self::STATUS_ERROR, $msg);
     }
-    
+
     /**
      * Set the status of the event to STATUS_DONE
      * and log the msg
      * @param string $msg the message to log. default is 'OK'
      */
-    protected function done($msg = 'OK') {
+    protected function done($msg = 'OK')
+    {
         $this->logStatus(self::STATUS_DONE, $msg);
     }
-    
+
     /**
      * Set the status of the event to STATUS_WARNING
      * and log the msg
      * @param string $msg the message to log.
      */
-    protected function warning($msg) {
+    protected function warning($msg)
+    {
         $this->logStatus(self::STATUS_WARNING, $msg);
     }
-    
+
     /**
      * Initialize a project from the given $group_id
      * @param int $group_id the id of the project
      * @return Project
      */
-    protected function getProject($group_id) {
+    protected function getProject($group_id)
+    {
         if (!$group_id) {
             return $this->setErrorBadParam();
         }
-        
+
         $project = ProjectManager::instance()->getProject($group_id);
-        
+
         if (!$project) {
             $this->error("Could not create/initialize project object");
         }
-        
+
         return $project;
     }
 
@@ -375,37 +419,40 @@ abstract class SystemEvent {
      * @param int $user_id the id of the User
      * @return PFUser
      */
-    protected function getUser($user_id) {
+    protected function getUser($user_id)
+    {
         if (!$user_id) {
             return $this->setErrorBadParam();
         }
-        
+
         $user = UserManager::instance()->getUserById($user_id);
-        
+
         if (!$user) {
             $this->error("Could not create/initialize user object");
         }
-        
+
         return $user;
     }
     /**
      * Wrapper for event manager
-     * 
+     *
      * @return EventManager
      */
-    protected function getEventManager() {
+    protected function getEventManager()
+    {
         return EventManager::instance();
     }
-    
+
     /**
      * Notify people that listen to the status of the event
      */
-    public function notify(?SystemEventsFollowersDao $dao = null) {
-        if(is_null($dao)) {
+    public function notify(?SystemEventsFollowersDao $dao = null)
+    {
+        if (is_null($dao)) {
             $dao = new SystemEventsFollowersDao(CodendiDataAccess::instance());
         }
         $listeners = array();
-        foreach($dao->searchByType($this->getStatus()) as $row) {
+        foreach ($dao->searchByType($this->getStatus()) as $row) {
             $listeners = array_merge($listeners, explode(',', $row['emails']));
         }
         if (count($listeners)) {
@@ -425,20 +472,21 @@ Create Date:  {$this->getCreateDate()}
 Process Date: {$this->getProcessDate()}
 End Date:     {$this->getEndDate()}
 ---------------
-<". get_server_url() ."/admin/system_events/>
+<". HTTPRequest::instance()->getServerUrl() ."/admin/system_events/>
 ");
             $m->send();
         }
     }
-    
+
     /**
      * Wrapper for Backend
-     * 
+     *
      * @param String $type Backend type
-     * 
+     *
      * @return Backend
      */
-    protected function getBackend($type) {
+    protected function getBackend($type)
+    {
         return Backend::instance($type);
     }
 
@@ -447,7 +495,8 @@ End Date:     {$this->getEndDate()}
      *
      * @return string suitable to be enclosed as parameter
      */
-    public static function encode($data) {
+    public static function encode($data)
+    {
         return str_replace(self::PARAMETER_SEPARATOR, self::PARAMETER_SEPARATOR_ESCAPE, json_encode(array('data' => $data)));
     }
 
@@ -456,7 +505,8 @@ End Date:     {$this->getEndDate()}
      *
      * @return mixed data
      */
-    public static function decode($string) {
+    public static function decode($string)
+    {
         $decode = json_decode(str_replace(self::PARAMETER_SEPARATOR_ESCAPE, self::PARAMETER_SEPARATOR, $string), true);
         if (isset($decode['data'])) {
             return $decode['data'];

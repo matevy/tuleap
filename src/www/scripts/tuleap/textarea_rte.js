@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -17,10 +17,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var tuleap = tuleap || {};
+import "regenerator-runtime/runtime";
+
+/* global Class:readonly Builder:readonly $:readonly */
+var tuleap = window.tuleap || {};
 tuleap.textarea = tuleap.textarea || {};
 
-tuleap.textarea.RTE = Class.create(codendi.RTE, {
+import "../codendi/RichTextEditor.js";
+
+tuleap.textarea.RTE = Class.create(window.codendi.RTE, {
     initialize: function($super, element, options) {
         options = Object.extend({ toolbar: "tuleap" }, options || {});
         this.options = Object.extend({ htmlFormat: false, id: 0 }, options || {});
@@ -62,6 +67,11 @@ tuleap.textarea.RTE = Class.create(codendi.RTE, {
         );
         selectbox.appendChild(text_option);
 
+        this.help_block = null;
+        if (typeof this.element.dataset.helpId !== "undefined") {
+            this.help_block = document.getElementById(this.element.dataset.helpId);
+        }
+
         // Add an option that tells that the content format is HTML
         // The value is defined in Artifact class.
         var html_option = Builder.node(
@@ -86,6 +96,9 @@ tuleap.textarea.RTE = Class.create(codendi.RTE, {
         }
 
         if ($("comment_format_html" + this.options.id).selected == true) {
+            if (this.help_block) {
+                this.help_block.classList.add("shown");
+            }
             this.init_rte();
         }
 
@@ -102,6 +115,10 @@ tuleap.textarea.RTE = Class.create(codendi.RTE, {
             option = "text";
         } else if (option === "1") {
             option = "html";
+        }
+
+        if (this.help_block) {
+            this.help_block.classList.toggle("shown");
         }
 
         if ($(id).hasAttribute("data-required") && option == "text" && this.rte) {

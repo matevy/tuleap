@@ -19,7 +19,8 @@
 
 namespace Tuleap\REST\v2;
 
-class BacklogRepresentationBase {
+class BacklogRepresentationBase
+{
 
     public const BACKLOG_ROUTE = 'backlog';
 
@@ -37,8 +38,7 @@ class BacklogRepresentationBase {
     public $accept;
 
     /**
-     * @var boolean
+     * @var bool
      */
     public $has_user_priority_change_permission;
-
 }

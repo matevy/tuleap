@@ -16,9 +16,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201203071642_change_service_shortname extends ForgeUpgrade_Bucket {
+class b201203071642_change_service_shortname extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Replace 'git' by 'plugin_git' as service shortname.
 EOT;
@@ -29,7 +31,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -38,7 +41,8 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $sql = "UPDATE service SET short_name = 'plugin_git' WHERE short_name = 'git'";
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
@@ -46,5 +50,3 @@ EOT;
         }
     }
 }
-
-?>

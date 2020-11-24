@@ -18,24 +18,29 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201512071530_add_svn_paths extends ForgeUpgrade_Bucket {
+class b201512071530_add_svn_paths extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add svn_paths column in plugin_hudson_job
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $this->addColumn();
         $this->populateSVNJobsWithStarOperator();
     }
 
-    private function addColumn() {
+    private function addColumn()
+    {
         $sql = "ALTER TABLE plugin_hudson_job
                 ADD COLUMN svn_paths TEXT NOT NULL";
 
@@ -46,7 +51,8 @@ EOT;
         }
     }
 
-    private function populateSVNJobsWithStarOperator() {
+    private function populateSVNJobsWithStarOperator()
+    {
         $sql = "UPDATE plugin_hudson_job
                 SET svn_paths = '*'
                 WHERE use_svn_trigger = 1";

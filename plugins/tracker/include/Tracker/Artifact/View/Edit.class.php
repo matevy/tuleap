@@ -20,8 +20,17 @@
 
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfig;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfigDao;
+use Tuleap\Tracker\Artifact\RichTextareaProvider;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
+use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
+use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 
-class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
+class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
+{
 
     public const USER_PREFERENCE_DISPLAY_CHANGES = 'tracker_artifact_comment_display_changes';
     public const USER_PREFERENCE_INVERT_ORDER    = 'tracker_comment_invertorder';
@@ -50,7 +59,8 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
     }
 
     /** @see Tracker_Artifact_View_View::getURL() */
-    public function getURL() {
+    public function getURL()
+    {
         return TRACKER_BASE_URL .'/?'. http_build_query(
             array(
                 'aid' => $this->artifact->getId(),
@@ -59,21 +69,28 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
     }
 
     /** @see Tracker_Artifact_View_View::getTitle() */
-    public function getTitle() {
+    public function getTitle()
+    {
         return $GLOBALS['Language']->getText('plugin_tracker_artifact', 'edit_title');
     }
 
     /** @see Tracker_Artifact_View_View::getIdentifier() */
-    public function getIdentifier() {
+    public function getIdentifier()
+    {
         return 'edit';
     }
 
     /** @see Tracker_Artifact_View_View::fetch() */
-    public function fetch() {
+    public function fetch()
+    {
         $html  = '';
         $html .= '<div class="tracker_artifact">';
 
-        $html_form = $this->renderer->fetchFields($this->artifact, $this->request->get('artifact'));
+        $submitted_values = $this->request->get('artifact');
+        if (! $submitted_values || ! is_array($submitted_values)) {
+            $submitted_values = [];
+        }
+        $html_form = $this->renderer->fetchFields($this->artifact, $submitted_values);
         $html_form .= $this->fetchFollowUps($this->request->get('artifact_followup_comment'));
 
         $html .= $this->renderer->fetchArtifactForm($html_form);
@@ -89,7 +106,8 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
      *
      * @return string The HTML code for artifact follow-up comments
      */
-    private function fetchFollowUps($submitted_comment = '') {
+    private function fetchFollowUps($submitted_comment = '')
+    {
         $html = '';
         $html .= $this->fetchSubmitButton();
 
@@ -105,7 +123,7 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
         $html .= '<div id="tracker_artifact_followup_comments" class="'. $classname .'">';
         $html .= '<div id="tracker_artifact_followup_comments-content">';
         $html .= $this->fetchSettingsButton($invert_order, $display_changes);
-        $html .= '<h1 id="tracker_artifact_followups">'.$GLOBALS['Language']->getText('plugin_tracker_include_artifact','follow_ups').'</h1>';
+        $html .= '<h1 id="tracker_artifact_followups">'.$GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'follow_ups').'</h1>';
         $html .= '<ul class="tracker_artifact_followups">';
 
         $comments = $this->artifact->getFollowupsContent();
@@ -213,7 +231,38 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
         }
 
         if ($this->artifact->userCanUpdate($this->user)) {
-            $html .= '<textarea id="tracker_followup_comment_new" class="user-mention" wrap="soft" rows="8" cols="80" name="artifact_followup_comment" id="artifact_followup_comment">'. $hp->purify($submitted_comment, CODENDI_PURIFIER_CONVERT_HTML).'</textarea>';
+            $rich_textarea_provider = new RichTextareaProvider(
+                Tracker_FormElementFactory::instance(),
+                TemplateRendererFactory::build(),
+                new FrozenFieldDetector(
+                    new TransitionRetriever(
+                        new StateFactory(
+                            new TransitionFactory(
+                                Workflow_Transition_ConditionFactory::build()
+                            ),
+                            new SimpleWorkflowDao()
+                        ),
+                        new TransitionExtractor()
+                    ),
+                    new FrozenFieldsRetriever(
+                        new FrozenFieldsDao(),
+                        Tracker_FormElementFactory::instance()
+                    )
+                )
+            );
+
+            $html .= $rich_textarea_provider->getTextarea(
+                $tracker,
+                $this->artifact,
+                $this->user,
+                'tracker_followup_comment_new',
+                'artifact_followup_comment',
+                8,
+                80,
+                $submitted_comment,
+                false,
+                []
+            );
             $html .= $this->fetchReplyByMailHelp();
             $html .= '</div>';
         }
@@ -223,7 +272,8 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
         return $html;
     }
 
-    private function fetchReplyByMailHelp() {
+    private function fetchReplyByMailHelp()
+    {
         $html = '';
         if ($this->canUpdateArtifactByMail()) {
             $email = Codendi_HTMLPurifier::instance()->purify($this->artifact->getInsecureEmailAddress());
@@ -238,7 +288,8 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
     /**
      * @return Tracker_ArtifactByEmailStatus
      */
-    private function canUpdateArtifactByMail() {
+    private function canUpdateArtifactByMail()
+    {
         $config = new MailGatewayConfig(
             new MailGatewayConfigDao()
         );
@@ -248,7 +299,8 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View {
         return $status->canUpdateArtifactInInsecureMode($this->artifact->getTracker());
     }
 
-    private function fetchSubmitButton() {
+    private function fetchSubmitButton()
+    {
         if ($this->artifact->userCanUpdate($this->user)) {
             return $this->renderer->fetchSubmitButton($this->user);
         }

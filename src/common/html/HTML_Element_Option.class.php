@@ -23,19 +23,24 @@ require_once('HTML_Element.class.php');
 /**
  * Define a html select option
  */
-class HTML_Element_Option extends HTML_Element {
+class HTML_Element_Option extends HTML_Element
+{
     protected $selected;
-    public function __construct($label, $value, $selected = false) {
+    public function __construct($label, $value, $selected = false)
+    {
         parent::__construct($label, '', $value);
         $this->setSelected($selected);
     }
-    public function setSelected($selected = false) {
+    public function setSelected($selected = false)
+    {
         $this->selected = $selected ? 'selected="selected"' : '';
     }
-    public function render() {
+    public function render()
+    {
         return $this->renderValue();
     }
-    protected function renderValue() {
+    protected function renderValue()
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '<option value="'.  $hp->purify($this->value, CODENDI_PURIFIER_CONVERT_HTML) .'" '. $this->selected .'>';
         $html .=  $hp->purify($this->label, CODENDI_PURIFIER_CONVERT_HTML) ;
@@ -43,5 +48,3 @@ class HTML_Element_Option extends HTML_Element {
         return $html;
     }
 }
-
-?>

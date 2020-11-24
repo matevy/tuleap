@@ -20,13 +20,15 @@
 
 require_once 'bootstrap.php';
 
-class GitRepositoryFactoryTest extends TuleapTestCase {
+class GitRepositoryFactoryTest extends TuleapTestCase
+{
     private $dao;
     private $project_manager;
     private $project;
     private $factory;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->dao             = safe_mock(GitDao::class);
@@ -41,21 +43,24 @@ class GitRepositoryFactoryTest extends TuleapTestCase {
         $this->factory        = new GitRepositoryFactory($this->dao, $this->project_manager);
     }
 
-    function testGetRepositoryFromFullPath() {
+    function testGetRepositoryFromFullPath()
+    {
         expect($this->dao)->searchProjectRepositoryByPath(101, 'garden/u/manuel/grou/ping/diskinstaller.git')->once();
         stub($this->dao)->searchProjectRepositoryByPath()->returns([]);
 
         $this->factory->getFromFullPath('/data/tuleap/gitolite/repositories/garden/u/manuel/grou/ping/diskinstaller.git');
     }
 
-    function testGetRepositoryFromFullPathAndGitRoot() {
+    function testGetRepositoryFromFullPathAndGitRoot()
+    {
         expect($this->dao)->searchProjectRepositoryByPath(101, 'garden/diskinstaller.git')->once();
         stub($this->dao)->searchProjectRepositoryByPath()->returns([]);
 
         $this->factory->getFromFullPath('/data/tuleap/gitroot/garden/diskinstaller.git');
     }
 
-    public function itReturnsSpecialRepositoryWhenIdMatches() {
+    public function itReturnsSpecialRepositoryWhenIdMatches()
+    {
         $this->assertIsA(
             $this->factory->getRepositoryById(GitRepositoryGitoliteAdmin::ID),
             'GitRepositoryGitoliteAdmin'
@@ -67,7 +72,6 @@ class GitRepositoryFactoryTest extends TuleapTestCase {
         $user    = mock('PFUser');
         $project = mock('Project');
         $backend = mock('Git_Backend_Interface');
-
 
         $repository = $this->factory->buildRepository($project, 'a', $user, $backend);
         $this->assertEqual($repository->getName(), 'a');
@@ -83,9 +87,11 @@ class GitRepositoryFactoryTest extends TuleapTestCase {
     }
 }
 
-class GitRepositoryFactory_getGerritRepositoriesWithPermissionsForUGroupTest extends TuleapTestCase {
+class GitRepositoryFactory_getGerritRepositoriesWithPermissionsForUGroupTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->dao = \Mockery::mock(GitDao::class);
         $this->project_manager = mock('ProjectManager');
@@ -102,7 +108,8 @@ class GitRepositoryFactory_getGerritRepositoriesWithPermissionsForUGroupTest ext
         $this->ugroup  = stub('ProjectUGroup')->getId()->returns($this->ugroup_id);
     }
 
-    public function itCallsDaoWithArguments() {
+    public function itCallsDaoWithArguments()
+    {
         $ugroups = array(404, 416, 115);
         $this->dao->shouldReceive('searchGerritRepositoriesWithPermissionsForUGroupAndProject')
             ->with($this->project_id, $ugroups)->andReturn([])
@@ -110,7 +117,8 @@ class GitRepositoryFactory_getGerritRepositoriesWithPermissionsForUGroupTest ext
         $this->factory->getGerritRepositoriesWithPermissionsForUGroupAndProject($this->project, $this->ugroup, $this->user);
     }
 
-    public function itHydratesTheRepositoriesWithFactory() {
+    public function itHydratesTheRepositoriesWithFactory()
+    {
         $db_row_for_repo_12 = array('repository_id' => 12, 'permission_type' => Git::PERM_READ, 'ugroup_id' => 115);
         $db_row_for_repo_23 = array('repository_id' => 23, 'permission_type' => Git::PERM_READ, 'ugroup_id' => 115);
 
@@ -126,7 +134,8 @@ class GitRepositoryFactory_getGerritRepositoriesWithPermissionsForUGroupTest ext
         $this->factory->getGerritRepositoriesWithPermissionsForUGroupAndProject($this->project, $this->ugroup, $this->user);
     }
 
-    public function itReturnsOneRepositoryWithOnePermission() {
+    public function itReturnsOneRepositoryWithOnePermission()
+    {
         stub($this->dao)->searchGerritRepositoriesWithPermissionsForUGroupAndProject()->returnsDar(
             array(
                 'repository_id'   => 12,
@@ -157,7 +166,8 @@ class GitRepositoryFactory_getGerritRepositoriesWithPermissionsForUGroupTest ext
         );
     }
 
-    public function itReturnsOneRepositoryWithTwoPermissions() {
+    public function itReturnsOneRepositoryWithTwoPermissions()
+    {
         stub($this->dao)->searchGerritRepositoriesWithPermissionsForUGroupAndProject()->returnsDar(
             array(
                 'repository_id'   => 12,
@@ -193,7 +203,8 @@ class GitRepositoryFactory_getGerritRepositoriesWithPermissionsForUGroupTest ext
         );
     }
 
-    public function itReturnsOneRepositoryWithTwoGroupsForOnePermissionType() {
+    public function itReturnsOneRepositoryWithTwoGroupsForOnePermissionType()
+    {
         stub($this->dao)->searchGerritRepositoriesWithPermissionsForUGroupAndProject()->returnsDar(
             array(
                 'repository_id'   => 12,
@@ -240,9 +251,11 @@ class GitRepositoryFactory_getGerritRepositoriesWithPermissionsForUGroupTest ext
     }
 }
 
-class GitRepositoryFactory_getAllGerritRepositoriesFromProjectTest extends TuleapTestCase {
+class GitRepositoryFactory_getAllGerritRepositoriesFromProjectTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->dao = \Mockery::mock(GitDao::class);
         $this->project_manager = mock('ProjectManager');
@@ -274,7 +287,8 @@ class GitRepositoryFactory_getAllGerritRepositoriesFromProjectTest extends Tulea
         $this->factory->getAllGerritRepositoriesFromProject($this->project, $this->user);
     }
 
-    public function itInstanciateGitRepositoriesObjects() {
+    public function itInstanciateGitRepositoriesObjects()
+    {
         stub($this->dao)->searchAllGerritRepositoriesOfProject()->returnsDar(
             array('repository_id' => 12),
             array('repository_id' => 23)
@@ -289,7 +303,8 @@ class GitRepositoryFactory_getAllGerritRepositoriesFromProjectTest extends Tulea
         $this->factory->getAllGerritRepositoriesFromProject($this->project, $this->user);
     }
 
-    public function itMergesPermissions() {
+    public function itMergesPermissions()
+    {
         stub($this->dao)->searchAllGerritRepositoriesOfProject()->returnsDar(
             array('repository_id' => 12)
         );

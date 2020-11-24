@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2014. All rights reserved
  *
@@ -19,17 +18,17 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObject {
+class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObject
+{
 
-    public function create($user_id, $name, $description, $mimetype, $timestamp, $tempname) {
+    public function create($user_id, $name, $description, $mimetype, $timestamp, $tempname)
+    {
         $user_id     = $this->da->escapeInt($user_id);
         $name        = $this->da->quoteSmart($name);
         $description = $this->da->quoteSmart($description);
         $mimetype    = $this->da->quoteSmart($mimetype);
         $timestamp   = $this->da->escapeInt($timestamp);
         $tempname    = $this->da->quoteSmart($tempname);
-
-        $this->startTransaction();
 
         $sql = "INSERT INTO tracker_fileinfo
                     (submitted_by, description, filename, filetype)
@@ -38,7 +37,6 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
         $file_id = $this->updateAndGetLastId($sql);
 
         if (! $file_id) {
-            $this->rollBack();
             return false;
         }
 
@@ -47,15 +45,14 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
                 VALUES ($file_id, $timestamp, $timestamp, $tempname)";
 
         if (! $this->update($sql)) {
-            $this->rollBack();
             return false;
         }
 
-        $this->commit();
         return $file_id;
     }
 
-    public function updateFileInfo($file_id, $offset, $last_modified, $size) {
+    public function updateFileInfo($file_id, $offset, $last_modified, $size)
+    {
         $file_id       = $this->da->escapeInt($file_id);
         $offset        = $this->da->escapeInt($offset);
         $last_modified = $this->da->escapeInt($last_modified);
@@ -72,7 +69,8 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
         return $this->update($sql);
     }
 
-    public function getTemporaryFile($file_id) {
+    public function getTemporaryFile($file_id)
+    {
         $file_id  = $this->da->escapeInt($file_id);
 
         $sql = "SELECT * FROM tracker_fileinfo_temporary
@@ -82,7 +80,8 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
         return $this->retrieveFirstRow($sql);
     }
 
-    public function getTemporaryFileByTemporaryName($temporary_name) {
+    public function getTemporaryFileByTemporaryName($temporary_name)
+    {
         $temporary_name  = $this->da->quoteSmart($temporary_name);
 
         $sql = "SELECT * FROM tracker_fileinfo_temporary
@@ -93,14 +92,16 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
     }
 
 
-    public function doesFileExist($file_id) {
+    public function doesFileExist($file_id)
+    {
         $file_id = $this->da->escapeInt($file_id);
 
         $sql = "SELECT * FROM tracker_fileinfo_temporary
                 WHERE fileinfo_id = $file_id";
         return $this->retrieve($sql)->count() > 0;
     }
-    public function delete($file_id) {
+    public function delete($file_id)
+    {
         $file_id = $this->da->escapeInt($file_id);
 
         $sql = "DELETE tracker_fileinfo_temporary, tracker_fileinfo FROM tracker_fileinfo_temporary
@@ -109,7 +110,8 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
         return $this->update($sql);
     }
 
-    public function deleteByTemporaryName($temporary_name) {
+    public function deleteByTemporaryName($temporary_name)
+    {
         $temporary_name = $this->da->quoteSmart($temporary_name);
 
         $sql = "DELETE FROM tracker_fileinfo_temporary
@@ -117,7 +119,8 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
         return $this->update($sql);
     }
 
-    public function searchPaginatedUserTemporaryFiles($user_id, $offset, $limit) {
+    public function searchPaginatedUserTemporaryFiles($user_id, $offset, $limit)
+    {
         $user_id = $this->da->escapeInt($user_id);
         $offset  = $this->da->escapeInt($offset);
         $limit   = $this->da->escapeInt($limit);
@@ -131,7 +134,8 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
         return $this->retrieve($sql);
     }
 
-    public function searchTemporaryFilesOlderThan($timestamp) {
+    public function searchTemporaryFilesOlderThan($timestamp)
+    {
         $timestamp = $this->da->escapeInt($timestamp);
 
         $sql = "SELECT *

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014-2018. All rights reserved
+ * Copyright (c) Enalean, 2014-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -23,7 +23,7 @@ use Tuleap\REST\MilestoneBase;
 /**
  * @group MilestonesTest
  */
-class MilestonesBacklogPatchTest extends MilestoneBase
+class MilestonesBacklogPatchTest extends MilestoneBase //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /** @var Test\Rest\Tracker\Tracker */
     private $release;
@@ -69,7 +69,18 @@ class MilestonesBacklogPatchTest extends MilestoneBase
         $this->uri     = 'milestones/'.$this->release['id'].'/backlog';
     }
 
-    public function testPatchBacklogAfter() {
+    public function testPatchBacklogForbiddenForRESTReadOnlyUserNotInvolvedInProject(): void
+    {
+        $response = $this->getResponse(
+            $this->client->patch($this->uri, null, null),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
+    }
+
+    public function testPatchBacklogAfter()
+    {
         $response = $this->getResponse($this->client->patch($this->uri, null, json_encode(array(
             'order' => array(
                 'ids'         => array($this->story_mul['id'], $this->story_div['id']),
@@ -90,7 +101,8 @@ class MilestonesBacklogPatchTest extends MilestoneBase
         );
     }
 
-    public function testPatchBacklogWithoutPermission() {
+    public function testPatchBacklogWithoutPermission()
+    {
         $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_2_NAME, $this->client->patch($this->uri, null, json_encode(array(
             'order' => array(
                 'ids'         => array($this->story_div['id'], $this->story_mul['id']),
@@ -111,7 +123,8 @@ class MilestonesBacklogPatchTest extends MilestoneBase
         );
     }
 
-    public function testPatchBacklogBefore() {
+    public function testPatchBacklogBefore()
+    {
         $response = $this->getResponse($this->client->patch($this->uri, null, json_encode(array(
             'order' => array(
                 'ids'         => array($this->story_mul['id'], $this->story_sub['id']),
@@ -144,7 +157,8 @@ class MilestonesBacklogPatchTest extends MilestoneBase
         $this->assertEquals(409, $response->getStatusCode());
     }
 
-    public function testPatchContentBefore() {
+    public function testPatchContentBefore()
+    {
         $uri = 'milestones/'.$this->release['id'].'/content';
 
         $response = $this->getResponse($this->client->patch($uri, null, json_encode(array(
@@ -168,7 +182,8 @@ class MilestonesBacklogPatchTest extends MilestoneBase
         );
     }
 
-    public function testPatchContentAfter() {
+    public function testPatchContentAfter()
+    {
         $uri = 'milestones/'.$this->release['id'].'/content';
 
         $response = $this->getResponse($this->client->patch($uri, null, json_encode(array(
@@ -192,7 +207,8 @@ class MilestonesBacklogPatchTest extends MilestoneBase
         );
     }
 
-    public function testPatchContentWithoutPermission() {
+    public function testPatchContentWithoutPermission()
+    {
         $uri = 'milestones/'.$this->release['id'].'/content';
 
         $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_2_NAME, $this->client->patch($uri, null, json_encode(array(
@@ -216,7 +232,8 @@ class MilestonesBacklogPatchTest extends MilestoneBase
         );
     }
 
-    public function testPatchContentReMove() {
+    public function testPatchContentReMove()
+    {
         $uri = 'milestones/'.$this->release['id'].'/content';
 
         $another_release_id = $this->releases['Another release'];
@@ -254,7 +271,8 @@ class MilestonesBacklogPatchTest extends MilestoneBase
     /**
      * @depends testPatchContentReMove
      */
-    public function testPatchAddAndOrder() {
+    public function testPatchAddAndOrder()
+    {
         $uri = 'milestones/'.$this->release['id'].'/content';
 
         $response = $this->getResponse($this->client->patch($uri, null, json_encode(array(
@@ -285,11 +303,12 @@ class MilestonesBacklogPatchTest extends MilestoneBase
     /**
      * @depends testPatchBacklogBefore
      */
-    public function testPatchBacklogAddAndOrder() {
+    public function testPatchBacklogAddAndOrder()
+    {
         $inconsistent_story['id'] = $this->stories['Created in sprint'];
         $sprint_id = $this->sprints['Sprint 9001'];
 
-        $response = $this->getResponse($this->client->patch($this->uri, null, json_encode(array(
+        $patch_body = json_encode(array(
             'order'  => array(
                 'ids'         => array($inconsistent_story['id'], $this->story_div['id'], $this->story_sub['id']),
                 'direction'   => 'after',
@@ -301,8 +320,10 @@ class MilestonesBacklogPatchTest extends MilestoneBase
                     'remove_from' => $sprint_id,
                 )
             ),
-        ))));
-        $this->assertEquals($response->getStatusCode(), 200);
+        ));
+
+        $response = $this->getResponse($this->client->patch($this->uri, null, $patch_body));
+        $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertEquals(
             array(
@@ -318,10 +339,11 @@ class MilestonesBacklogPatchTest extends MilestoneBase
         $this->assertCount(0, $this->getResponse($this->client->get('milestones/'.$sprint_id.'/backlog'))->json());
     }
 
-    private function getIdsOrderedByPriority($uri) {
+    private function getIdsOrderedByPriority($uri)
+    {
         $response = $this->getResponse($this->client->get($uri));
         $actual_order = array();
-        foreach($response->json() as $backlog_element) {
+        foreach ($response->json() as $backlog_element) {
             $actual_order[] = $backlog_element['id'];
         }
         return $actual_order;

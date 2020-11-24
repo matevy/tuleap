@@ -19,12 +19,18 @@
 
 const loadJsonFile = require("load-json-file");
 const WebpackAssetsManifest = require("webpack-assets-manifest");
+// eslint-disable-next-line import/no-extraneous-dependencies
+const merge = require("webpack-merge");
 const path = require("path");
 const polyfills_for_fetch = require("../../../tools/utils/scripts/ie11-polyfill-names.js")
     .polyfills_for_fetch;
 const webpack_configurator = require("../../../tools/utils/scripts/webpack-configurator.js");
+const webpack_config_for_rich_text_editor = require("./webpack.richtext.js");
+const webpack_config_for_vue_components = require("./webpack.vue.js");
+const webpack_config_for_vue_components_with_manifest = require("./webpack.vue.with.manifest.js");
 
 const assets_dir_path = path.resolve(__dirname, "../assets");
+
 const manifest_plugin = new WebpackAssetsManifest({
     output: "manifest.json",
     merge: true,
@@ -54,7 +60,8 @@ const webpack_config_for_ckeditor = {
             {
                 from: path.resolve(__dirname, "node_modules/ckeditor"),
                 to: path.resolve(__dirname, `../assets/ckeditor-${ckeditor_version}/`),
-                toType: "dir"
+                toType: "dir",
+                ignore: ["**/samples/**", "**/.github/**", "**/*.!(js|css|png)"]
             }
         ])
     ]
@@ -114,7 +121,7 @@ const webpack_config_for_burning_parrot_code = {
     entry: {
         "burning-parrot": "./BurningParrot/index.js",
         "project-admin": "./project/admin/index.js",
-        "project-admin-ugroups": "./project/admin//project-admin-ugroups.js",
+        "project-admin-ugroups": "./project/admin/project-admin-ugroups.js",
         "site-admin-permission-delegation": "./admin/permission-delegation.js",
         "site-admin-mass-emailing": "./admin/massmail.js",
         "site-admin-most-recent-logins": "./admin/most-recent-logins.js",
@@ -134,7 +141,9 @@ const webpack_config_for_burning_parrot_code = {
     context: path.resolve(__dirname),
     output: webpack_configurator.configureOutput(assets_dir_path),
     externals: {
-        tlp: "tlp"
+        tlp: "tlp",
+        tuleap: "tuleap",
+        ckeditor: "CKEDITOR"
     },
     module: {
         rules: [
@@ -146,10 +155,10 @@ const webpack_config_for_burning_parrot_code = {
     plugins: [manifest_plugin]
 };
 
-const webpack_config_for_vue_components = {
+const webpack_config_for_project_banner = {
     entry: {
-        "news-permissions": "./news/permissions-per-group/index.js",
-        "frs-permissions": "./frs/permissions-per-group/index.js"
+        "project-banner-bp": "./project/banner/index-bp.ts",
+        "project-banner-fp": "./project/banner/index-fp.ts"
     },
     context: path.resolve(__dirname),
     output: webpack_configurator.configureOutput(assets_dir_path),
@@ -158,21 +167,79 @@ const webpack_config_for_vue_components = {
     },
     module: {
         rules: [
-            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11),
-            webpack_configurator.rule_easygettext_loader,
-            webpack_configurator.rule_vue_loader
+            ...webpack_configurator.configureTypescriptRules(
+                webpack_configurator.babel_options_ie11
+            ),
+            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11)
         ]
     },
-    plugins: [manifest_plugin, webpack_configurator.getVueLoaderPlugin()],
-    resolveLoader: {
-        alias: webpack_configurator.easygettext_loader_alias
+    plugins: [webpack_configurator.getTypescriptCheckerPlugin(false)],
+    resolve: {
+        extensions: [".ts", ".js"]
     }
 };
 
+const webpack_config_for_frs_admin = {
+    entry: {
+        "frs-admin-license-agreement": "./frs/admin/license-agreement.js"
+    },
+    context: path.resolve(__dirname),
+    output: webpack_configurator.configureOutput(assets_dir_path),
+    externals: {
+        tuleap: "tuleap",
+        ckeditor: "CKEDITOR"
+    },
+    module: {
+        rules: [webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11)]
+    }
+};
+
+const webpack_config_for_project_registration_modal = {
+    entry: {
+        "project-registration-creation": "./project/registration/index-for-modal.ts"
+    },
+    context: path.resolve(__dirname),
+    output: webpack_configurator.configureOutput(
+        assets_dir_path + "/project-registration/creation/scripts/"
+    ),
+    externals: {
+        tlp: "tlp"
+    },
+    module: {
+        rules: [
+            ...webpack_configurator.configureTypescriptRules(
+                webpack_configurator.babel_options_ie11
+            ),
+            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11),
+            webpack_configurator.rule_mustache_files
+        ]
+    },
+    plugins: [
+        webpack_configurator.getManifestPlugin(),
+        webpack_configurator.getTypescriptCheckerPlugin(false)
+    ],
+    resolve: {
+        extensions: [".ts", ".js"]
+    }
+};
+
+const configs_with_manifest = [
+    webpack_config_for_vue_components,
+    webpack_config_for_rich_text_editor,
+    webpack_config_for_project_banner,
+    webpack_config_for_frs_admin
+].map(config =>
+    merge(config, {
+        plugins: [manifest_plugin]
+    })
+);
+
 module.exports = [
+    webpack_config_for_vue_components_with_manifest,
     webpack_config_for_ckeditor,
     webpack_config_for_dashboards,
     webpack_config_for_flaming_parrot_code,
     webpack_config_for_burning_parrot_code,
-    webpack_config_for_vue_components
+    ...configs_with_manifest,
+    webpack_config_for_project_registration_modal
 ];

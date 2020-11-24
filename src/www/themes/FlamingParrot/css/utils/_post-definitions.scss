@@ -26,9 +26,11 @@
 
     &.project-administration {
         background: $main-background;
-
         .content {
             padding: 0;
+        }
+        .administration-title {
+            padding: 20px 20px 0;
         }
     }
 
@@ -48,7 +50,8 @@
             width: $sidebar-width-collapsed;
 
             .project-title-container,
-            .sidebar-about {
+            .sidebar-about-version,
+            .sidebar-copyright {
                 display: none;
             }
 
@@ -59,6 +62,11 @@
                 & > span {
                     display: none;
                 }
+            }
+
+            .project-sidebar-nav-item-new-tab {
+                right: 3px;
+                left: auto;
             }
         }
 

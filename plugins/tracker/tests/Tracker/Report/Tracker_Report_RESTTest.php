@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2014. All rights reserved
  *
@@ -20,13 +19,16 @@
  */
 require_once __DIR__.'/../../bootstrap.php';
 
-class TestTracker_Report_REST extends Tracker_Report_REST {
+class TestTracker_Report_REST extends Tracker_Report_REST
+{
     public $rest_criteria = array();
 }
 
-class Tracker_Report_RESTTest_setRESTCriteria extends TuleapTestCase {
+class Tracker_Report_RESTTest_setRESTCriteria extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         $current_user        = mock('PFUser');
         $tracker             = mock('Tracker');
         $permissions_manager = mock('PermissionsManager');
@@ -36,13 +38,15 @@ class Tracker_Report_RESTTest_setRESTCriteria extends TuleapTestCase {
         $this->report = new TestTracker_Report_REST($current_user, $tracker, $permissions_manager, $dao, $formelement_factory);
     }
 
-    public function itThrowsAnExceptionForBadJSON() {
+    public function itThrowsAnExceptionForBadJSON()
+    {
         $this->expectException("Tracker_Report_InvalidRESTCriterionException");
 
         $this->report->setRESTCriteria("{fvf");
     }
 
-    public function itThrowsAnExceptionForAnInvalidQueryWithMissingOperator() {
+    public function itThrowsAnExceptionForAnInvalidQueryWithMissingOperator()
+    {
         $this->expectException("Tracker_Report_InvalidRESTCriterionException");
 
         $query = new ArrayObject(array(
@@ -54,7 +58,8 @@ class Tracker_Report_RESTTest_setRESTCriteria extends TuleapTestCase {
         $this->report->setRESTCriteria(json_encode($query));
     }
 
-    public function itThrowsAnExceptionForAnInvalidQueryWithMissingValue() {
+    public function itThrowsAnExceptionForAnInvalidQueryWithMissingValue()
+    {
         $this->expectException("Tracker_Report_InvalidRESTCriterionException");
 
         $query = new ArrayObject(array(
@@ -66,7 +71,8 @@ class Tracker_Report_RESTTest_setRESTCriteria extends TuleapTestCase {
         $this->report->setRESTCriteria(json_encode($query));
     }
 
-    public function itThrowsAnExceptionForAnInvalidQueryWithInvlidOperator() {
+    public function itThrowsAnExceptionForAnInvalidQueryWithInvlidOperator()
+    {
         $this->expectException("Tracker_Report_InvalidRESTCriterionException");
 
         $query = new ArrayObject(array(
@@ -79,7 +85,8 @@ class Tracker_Report_RESTTest_setRESTCriteria extends TuleapTestCase {
         $this->report->setRESTCriteria(json_encode($query));
     }
 
-    public function itTransformsBasicCriteriaToTheCorrectFormat() {
+    public function itTransformsBasicCriteriaToTheCorrectFormat()
+    {
         $query = new ArrayObject(array(
             "my_field" => new ArrayObject(array(
                 Tracker_Report_REST::VALUE_PROPERTY_NAME    => "true",
@@ -94,7 +101,8 @@ class Tracker_Report_RESTTest_setRESTCriteria extends TuleapTestCase {
     }
 }
 
-class Tracker_Report_RESTTest_getCriteria extends TuleapTestCase {
+class Tracker_Report_RESTTest_getCriteria extends TuleapTestCase
+{
 
     /**
      * @var Tracker_FormElementFactory
@@ -106,7 +114,8 @@ class Tracker_Report_RESTTest_getCriteria extends TuleapTestCase {
      */
     private $tracker;
 
-    public function setUp() {
+    public function setUp()
+    {
         $current_user        = mock('PFUser');
         $permissions_manager = mock('PermissionsManager');
         $dao                 = mock('Tracker_ReportDao');
@@ -130,7 +139,8 @@ class Tracker_Report_RESTTest_getCriteria extends TuleapTestCase {
         $this->report->setRESTCriteria(json_encode($query));
     }
 
-    public function itChoosesTheFormElementIdOverTheShortName() {
+    public function itChoosesTheFormElementIdOverTheShortName()
+    {
         stub($this->formelement_factory)->getFormElementById('my_field')->returns(null);
         stub($this->formelement_factory)->getFormElementById('my_other_field')->returns(null);
         stub($this->formelement_factory)->getFormElementById(137)->returns(mock('Tracker_FormElement_Field_Integer'));
@@ -139,14 +149,16 @@ class Tracker_Report_RESTTest_getCriteria extends TuleapTestCase {
         $this->report->getCriteria();
     }
 
-    public function itFetchesByNameIfTheFormElementByIdDoesNotExist() {
+    public function itFetchesByNameIfTheFormElementByIdDoesNotExist()
+    {
         stub($this->formelement_factory)->getFormElementById(137)->returns(null);
         stub($this->formelement_factory)->getFormElementByName(137)->count(3);
 
         $this->report->getCriteria();
     }
 
-    public function itOnlyAddsCrieriaOnFieldsUserCanSee() {
+    public function itOnlyAddsCrieriaOnFieldsUserCanSee()
+    {
         $field_1 = mock('Tracker_FormElement_Field_Integer');
         $field_2 = mock('Tracker_FormElement_Field_Integer');
         $field_3 = mock('Tracker_FormElement_Field_Integer');
@@ -173,7 +185,8 @@ class Tracker_Report_RESTTest_getCriteria extends TuleapTestCase {
         $this->assertEqual($criteria_field_ids[0], 333);
     }
 
-    public function itAddsCriteria() {
+    public function itAddsCriteria()
+    {
         $integer = mock('Tracker_FormElement_Field_Integer');
         stub($integer)->getId()->returns(22);
         stub($integer)->userCanRead()->returns(true);
@@ -194,4 +207,3 @@ class Tracker_Report_RESTTest_getCriteria extends TuleapTestCase {
         $this->assertCount($criteria, 1);
     }
 }
-?>

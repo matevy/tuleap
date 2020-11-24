@@ -19,7 +19,8 @@
 
 namespace Tuleap\AgileDashboard\REST\v1\Kanban;
 
-class KanbanArchiveInfoRepresentation {
+class KanbanArchiveInfoRepresentation
+{
 
     /**
      * @var string
@@ -31,7 +32,8 @@ class KanbanArchiveInfoRepresentation {
      */
     public $is_open;
 
-    public function build($label, $is_open) {
+    public function build($label, $is_open)
+    {
         $this->label   = $label;
         $this->is_open = $is_open;
     }

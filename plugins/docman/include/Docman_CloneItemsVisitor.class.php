@@ -1,10 +1,10 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All rights reserved
+ * Copyright (c) Enalean, 2018-Present. All rights reserved
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -21,36 +21,53 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_ItemFactory.class.php');
-require_once('Docman_PermissionsManager.class.php');
-require_once('Docman_MetadataValueFactory.class.php');
-require_once('Docman_MetadataFactory.class.php');
+use Tuleap\Docman\Item\ItemVisitor;
+use Tuleap\Docman\Metadata\DocmanMetadataTypeValueFactory;
 
-class Docman_CloneItemsVisitor {
+/**
+ * @template-implements ItemVisitor<void>
+ */
+class Docman_CloneItemsVisitor implements ItemVisitor
+{
     var $dstGroupId;
     var $_cacheMetadataUsage;
     var $itemMapping;
+    /**
+     * @var ProjectManager
+     */
+    private $project_manager;
+    /**
+     * @var Docman_LinkVersionFactory
+     */
+    private $link_version_factory;
 
-    function __construct($dstGroupId) {
-        $this->dstGroupId = $dstGroupId;
-        $this->_cacheMetadataUsage = array();
-        $this->itemMapping = array();
+    public function __construct(
+        $dstGroupId,
+        ProjectManager $project_manager,
+        Docman_LinkVersionFactory $link_version_factory
+    ) {
+        $this->dstGroupId           = $dstGroupId;
+        $this->_cacheMetadataUsage  = array();
+        $this->itemMapping          = array();
+        $this->project_manager      = $project_manager;
+        $this->link_version_factory = $link_version_factory;
     }
 
-    function visitFolder($item, $params = array()) {
+    function visitFolder($item, $params = array())
+    {
         // Clone folder
         $newItemId = $this->_cloneItem($item, $params);
-        if($newItemId > 0) {
+        if ($newItemId > 0) {
             $params['parentId'] = $newItemId;
-            
+
             // Recurse
             $items = $item->getAllItems();
-            if($items) {
+            if ($items) {
                 $nb = $items->size();
-                if($nb) {
+                if ($nb) {
                     $iter = $items->iterator();
                     $iter->rewind();
-                    while($iter->valid()) {
+                    while ($iter->valid()) {
                         $child = $iter->current();
                         $child->accept($this, $params);
                         $iter->next();
@@ -60,71 +77,119 @@ class Docman_CloneItemsVisitor {
         }
     }
 
-    function visitDocument(&$item, $params = array()) {
+    function visitDocument(&$item, $params = array())
+    {
         die('never happen');
     }
 
-    function visitWiki(&$item, $params = array()) {
+    public function visitWiki(Docman_Wiki $item, $params = array())
+    {
         $this->_cloneItem($item, $params);
     }
 
-    function visitLink(&$item, $params = array()) {
-        $this->_cloneItem($item, $params);
+    public function visitLink(Docman_Link $item, $params = array())
+    {
+        $copied_item_id = $this->_cloneItem($item, $params);
+
+        $copied_item = $this->_getItemFactory()->getItemFromDb($copied_item_id);
+        if ($copied_item !== null) {
+            assert($copied_item instanceof Docman_Link);
+            $this->link_version_factory->create(
+                $copied_item,
+                dgettext('tuleap-docman', 'Copy from template'),
+                $this->getChangelogForCopiedItem($copied_item),
+                (new DateTimeImmutable())->getTimestamp()
+            );
+        }
     }
 
-    function visitFile(&$item, $params = array()) {
+    public function visitFile(Docman_File $item, $params = array())
+    {
         $this->_cloneFile($item, $params);
     }
 
-    function visitEmbeddedFile(&$item, $params = array()) {
+    public function visitEmbeddedFile(Docman_EmbeddedFile $item, $params = array())
+    {
         $this->_cloneFile($item, $params);
     }
 
-    function visitEmpty(&$item, $params = array()) {
+    public function visitEmpty(Docman_Empty $item, $params = array())
+    {
         $this->_cloneItem($item, $params);
     }
 
-    function _cloneFile($item, $params) {
+    public function visitItem(Docman_Item $item, array $params = [])
+    {
+    }
+
+    function _cloneFile($item, $params)
+    {
         $newItemId = $this->_cloneItem($item, $params);
-        if($newItemId > 0) {
+        if ($newItemId > 0) {
             // Clone physical file of the last version in the template item
             $srcVersion = $item->getCurrentVersion();
             $srcPath = $srcVersion->getPath();
             $dstName = basename($srcPath);
             //print $srcPath.'-'.$dstName."-<br>";
             $fs = $this->_getFileStorage($params['data_root']);
-            $dstPath = $fs->copy($srcPath,
-                                      $dstName, $this->dstGroupId, $newItemId, 0);
+            $dstPath = $fs->copy(
+                $srcPath,
+                $dstName,
+                $this->dstGroupId,
+                $newItemId,
+                0
+            );
 
             // Register a new file
             $versionFactory = $this->_getVersionFactory();
             $user = $params['user'];
-            $label = $GLOBALS['Language']->getText('plugin_docman', 'clone_file_label');
-            $pm = ProjectManager::instance();
-            $project = $pm->getProject($item->getGroupId());
-            $changelog = $GLOBALS['Language']->getText('plugin_docman', 'clone_file_changelog', array($item->getTitle(),
-                                                                                                      $project->getPublicName(),
-                                                                                                      $srcVersion->getNumber()));
+
             $newVersionArray = array('item_id'   => $newItemId,
                                      'number'    => 0,
                                      'user_id'   => $user->getId(),
-                                     'label'     => $label,
-                                     'changelog' => $changelog,
+                                     'label'     => dgettext('tuleap-docman', 'Copy from template'),
+                                     'changelog' => $this->getChangelogForCopiedItem($item),
                                      'filename'  => $srcVersion->getFilename(),
                                      'filesize'  => $srcVersion->getFilesize(),
                                      'filetype'  => $srcVersion->getFiletype(),
                                      'path'      => $dstPath);
-            
+
             $versionId = $versionFactory->create($newVersionArray);
-            
         }
     }
 
-    function _cloneItem($item, $params) {
+    /**
+     * @param Docman_File|Docman_Link $original_item
+     */
+    private function getChangelogForCopiedItem($original_item) : string
+    {
+        $project_id = $original_item->getGroupId();
+        $project    = $this->project_manager->getProject($project_id);
+        if ($project === null) {
+            throw new RuntimeException(
+                sprintf(
+                    'The project #%d of item #%d does not exist',
+                    $original_item->getId(),
+                    $original_item->getGroupId()
+                )
+            );
+        }
+
+        $current_version = $original_item->getCurrentVersion();
+
+        return sprintf(
+            dgettext('tuleap-docman', 'Copy of %s in %s at version %d.'),
+            $original_item->getTitle(),
+            $project->getUnconvertedPublicName(),
+            $current_version === null ? 0 : $current_version->getNumber()
+        );
+    }
+
+    function _cloneItem($item, $params)
+    {
         $parentId = $params['parentId'];
         $metadataMapping = $params['metadataMapping'];
         $ugroupsMapping = $params['ugroupsMapping'];
-
 
         // Clone Item
         $itemFactory = $this->_getItemFactory();
@@ -133,21 +198,21 @@ class Docman_CloneItemsVisitor {
         $newItem->setGroupId($this->dstGroupId);
         $newItem->setParentId($parentId);
         // Change rank if specified
-        if($item->getId() === $params['srcRootId']) {
-            if(isset($params['newRank']) && $params['newRank'] !== null) {
+        if ($item->getId() === $params['srcRootId']) {
+            if (isset($params['newRank']) && $params['newRank'] !== null) {
                 $newItem->setRank($params['newRank']);
             }
         }
         // Check for special metadata
-        if(!$this->_metadataEnabled($item->getGroupId(), 'status')) {
+        if (!$this->_metadataEnabled($item->getGroupId(), 'status')) {
             $newItem->setStatus(PLUGIN_DOCMAN_ITEM_STATUS_NONE);
         }
-        if(!$this->_metadataEnabled($item->getGroupId(), 'obsolescence_date')) {
+        if (!$this->_metadataEnabled($item->getGroupId(), 'obsolescence_date')) {
             $newItem->setObsolescenceDate(PLUGIN_DOCMAN_ITEM_VALIDITY_PERMANENT);
         }
 
         $newItemId = $itemFactory->rawCreate($newItem);
-        if($newItemId > 0) {
+        if ($newItemId > 0) {
             // Keep track of which item id in the new tree correspond the source item id
             // This is needed for reports that applies on specific folders.
             $this->itemMapping[$item->getId()] = $newItemId;
@@ -161,58 +226,60 @@ class Docman_CloneItemsVisitor {
         return $newItemId;
     }
 
-    function _clonePermissions($item, $newItemId, $ugroupsMapping) {
+    function _clonePermissions($item, $newItemId, $ugroupsMapping)
+    {
         $dpm = $this->_getPermissionsManager($item->getGroupId());
-        if($ugroupsMapping === false) {
+        if ($ugroupsMapping === false) {
             // ugroups mapping is not available.
             // use default values.
             $dpm->setDefaultItemPermissions($newItemId, true);
-        }
-        else {
+        } else {
             $dpm->cloneItemPermissions($item->getId(), $newItemId, $this->dstGroupId);
         }
     }
 
-    function _cloneMetadataValues($item, $newItemId, $metadataMapping) {
+    function _cloneMetadataValues($item, $newItemId, $metadataMapping)
+    {
         // List for current item all its metadata and
         // * change the itemId
         // * change the fieldId (use mapping between template metadata and
         //   project metadata)
         // * for list of values change the values (use mapping as behind).
         $newMdvFactory = $this->_getMetadataValueFactory($this->dstGroupId);
-        
+        $type_value_factory = new DocmanMetadataTypeValueFactory();
+
         $oldMdFactory = $this->_getMetadataFactory($item->getGroupId());
         $oldMdFactory->appendItemMetadataList($item);
-        
+
         $oldMdIter = $item->getMetadataIterator();
         $oldMdIter->rewind();
-        while($oldMdIter->valid()) {
+        while ($oldMdIter->valid()) {
             $oldMd = $oldMdIter->current();
-            
-            if($oldMdFactory->isRealMetadata($oldMd->getLabel())) {
+
+            if ($oldMdFactory->isRealMetadata($oldMd->getLabel())) {
                 $oldValue = $oldMdFactory->getMetadataValue($item, $oldMd);
 
-                if(isset($metadataMapping['md'][$oldMd->getId()])) {
-                    $newMdv = $newMdvFactory->createFromType($oldMd->getType());
+                if (isset($metadataMapping['md'][$oldMd->getId()])) {
+                    $newMdv = $type_value_factory->createFromType($oldMd->getType());
                     $newMdv->setItemId($newItemId);
                     $newMdv->setFieldId($metadataMapping['md'][$oldMd->getId()]);
-                    if($oldMd->getType() == PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
+                    if ($oldMd->getType() == PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
                         $ea = array();
                         $oldValue->rewind();
-                        while($oldValue->valid()) {
+                        while ($oldValue->valid()) {
                             $e = $oldValue->current();
-                            
+
                             // no maping for value `100` (shared by all lists).
-                            if(($e->getId() != 100) && isset($metadataMapping['love'][$e->getId()])) {
+                            if (($e->getId() != 100) && isset($metadataMapping['love'][$e->getId()])) {
                                 $newE = clone $e;
                                 $newE->setId($metadataMapping['love'][$e->getId()]);
                                 $ea[] = $newE;
                             }
-                            
+
                             $oldValue->next();
                         }
                         // No match found: set None value.
-                        if(count($ea) == 0) {
+                        if (count($ea) == 0) {
                             $e = new Docman_MetadataListOfValuesElement();
                             $e->setId(PLUGIN_DOCMAN_ITEM_STATUS_NONE);
                             $ea[] = $e;
@@ -228,12 +295,13 @@ class Docman_CloneItemsVisitor {
             $oldMdIter->next();
         }
     }
-    
-    function _metadataEnabled($srcGroupId, $mdLabel) {
-        if(!isset($this->_cacheMetadataUsage[$mdLabel])) {
+
+    function _metadataEnabled($srcGroupId, $mdLabel)
+    {
+        if (!isset($this->_cacheMetadataUsage[$mdLabel])) {
             $srcSettingsBo = $this->_getSettingsBo($srcGroupId);
             $dstSettingsBo = $this->_getSettingsBo($this->dstGroupId);
-            $this->_cacheMetadataUsage[$mdLabel] = ($srcSettingsBo->getMetadataUsage($mdLabel) 
+            $this->_cacheMetadataUsage[$mdLabel] = ($srcSettingsBo->getMetadataUsage($mdLabel)
                                                     && $dstSettingsBo->getMetadataUsage($mdLabel));
         }
         return $this->_cacheMetadataUsage[$mdLabel];
@@ -243,7 +311,8 @@ class Docman_CloneItemsVisitor {
      * Return the mapping between item_id in the original tree (src) and the new one (dst).
      * Src item id it the key of the hash map.
      */
-    function getItemMapping() {
+    function getItemMapping()
+    {
         return $this->itemMapping;
     }
 
@@ -277,11 +346,9 @@ class Docman_CloneItemsVisitor {
     {
         return new Docman_MetadataFactory($groupId);
     }
-    
+
     function _getSettingsBo($groupId)
     {
         return Docman_SettingsBo::instance($groupId);
     }
 }
-
-?>

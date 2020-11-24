@@ -22,8 +22,11 @@ use Tuleap\Tracker\Workflow\WorkflowBackendLogger;
 
 require_once __DIR__.'/../../bootstrap.php';
 
-class Tracker_Workflow_Trigger_RulesProcessor_GeneralTest extends TuleapTestCase {
-
+class Tracker_Workflow_Trigger_RulesProcessor_GeneralTest extends TuleapTestCase
+{
+    /**
+     * @var Mockery\MockInterface|Tracker_Artifact
+     */
     private $parent;
     private $artifact;
     private $user;
@@ -33,10 +36,13 @@ class Tracker_Workflow_Trigger_RulesProcessor_GeneralTest extends TuleapTestCase
     private $rule;
     private $target_field;
     private $target_value;
+    private $task_tracker;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
-        $this->parent = mock('Tracker_Artifact');
+        $this->parent = Mockery::spy(Tracker_Artifact::class);
+        $this->parent->shouldReceive('getTrackerId')->andReturn(899);
         $this->task_tracker = aTracker()->withId(899)->build();
         $this->artifact = anArtifact()->withChangesets(array(mock('Tracker_Artifact_Changeset')))->withParentWithoutPermissionChecking($this->parent)->withTracker($this->task_tracker)->build();
         $this->user = aUser()->build();
@@ -50,7 +56,7 @@ class Tracker_Workflow_Trigger_RulesProcessor_GeneralTest extends TuleapTestCase
         );
 
         $this->target_field_id = 569;
-        $this->target_field    = aSelectBoxField()->withId($this->target_field_id)->build();
+        $this->target_field    = aSelectBoxField()->withId($this->target_field_id)->withTracker($this->task_tracker)->build();
         $this->target_value_id = 7;
         $this->target_value    = aBindStaticValue()->withId($this->target_value_id)->build();
         $this->rule = aTriggerRule()
@@ -65,40 +71,32 @@ class Tracker_Workflow_Trigger_RulesProcessor_GeneralTest extends TuleapTestCase
             ->build();
     }
 
-    public function itDoesNothingWhenArtifactHasNoParents() {
+    public function itDoesNothingWhenArtifactHasNoParents()
+    {
         $artifact = anArtifact()->withTracker($this->task_tracker)->withoutParentWithoutPermissionChecking()->build();
 
         // expect no errors
         $this->rules_processor->process($artifact, $this->rule);
     }
 
-    public function itAlwaysApplyRuleWhenAtLeastOneValueIsSet() {
+    public function itAlwaysApplyRuleWhenAtLeastOneValueIsSet()
+    {
         $fields_data = array(
             $this->target_field_id => $this->target_value_id
         );
-        $email = '';
         $send_notification = true;
 
-        expect($this->parent)->createNewChangeset($fields_data, '*', new IsAWorkflowUserExpectation(), $send_notification, Tracker_Artifact_Changeset_Comment::HTML_COMMENT)->once();
+        $this->parent->shouldReceive('createNewChangeset')
+            ->with($fields_data, Mockery::any(), Mockery::type(Tracker_Workflow_WorkflowUser::class), $send_notification, Tracker_Artifact_Changeset_Comment::HTML_COMMENT)
+            ->once();
 
         $this->rules_processor->process($this->artifact, $this->rule);
     }
 
-     public function itDoesntSetTargetValueIfAlreadySet() {
+    public function itDoesntSetTargetValueIfAlreadySet()
+    {
         stub($this->parent)->getValue($this->target_field)->returns(aChangesetValueList()->withValues(array($this->target_value))->build());
         expect($this->parent)->createNewChangeset()->never();
         $this->rules_processor->process($this->artifact, $this->rule);
     }
 }
-
-class IsAWorkflowUserExpectation extends SimpleExpectation {
-    public function test($compare) {
-        return $compare instanceof Tracker_Workflow_WorkflowUser;
-    }
-
-    public function testMessage($compare) {
-        return 'Tracker_Workflow_WorkflowUser expected, '.get_class($compare).' given';
-    }
-}
-
-?>

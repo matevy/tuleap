@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2012 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,18 +20,16 @@
  *
  */
 
-// phpcs:ignoreFile
-
 Mock::generate('PFUser');
 Mock::generate('UserDao');
 Mock::generate('DataAccessResult');
 Mock::generate('Response');
 Mock::generate('BaseLanguage');
-Mock::generate('EventManager');
 
-Mock::generatePartial('UserManager',
-                      'UserManagerTestVersion',
-                      array('getUserInstanceFromRow',
+Mock::generatePartial(
+    'UserManager',
+    'UserManagerTestVersion',
+    array('getUserInstanceFromRow',
                             'getCookieManager',
                             'getTokenManager',
                             'getSessionManager',
@@ -39,26 +37,19 @@ Mock::generatePartial('UserManager',
                             '_getEventManager',
                             'getDao',
                             'destroySession',
+                            'getForgeUserGroupPermissionsManager'
                       )
 );
 // Special mock for getUserByIdentifier test
 Mock::generatePartial('UserManager', 'UserManager4GetByIdent', array('_getEventManager', 'getUserByUserName', 'getUserById', 'getUserByEmail'));
 
-Mock::generate('EventManager', 'BaseMockEventManager');
-
-class MockEM4UserManager extends BaseMockEventManager {
-   function processEvent($event, $params = []) {
-       foreach(parent::processEvent($event, $params) as $key => $value) {
-           $params[$key] = $value;
-       }
-   }
-}
-
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class UserManagerTest extends TuleapTestCase
 {
-    const PASSWORD = 'pwd';
+    public const PASSWORD = 'pwd';
 
-    function testCachingById() {
+    public function testCachingById()
+    {
         $dao = mock('UserDao');
         stub($dao)->searchByUserId()->returnsDar(array('user_name' => 'user_123', 'user_id' => 123));
 
@@ -81,7 +72,8 @@ class UserManagerTest extends TuleapTestCase
         $this->assertReference($user_1, $user_2);
     }
 
-    function testCachingByUserName() {
+    public function testCachingByUserName()
+    {
         $dao = new MockUserDao($this);
         $dar = new MockDataAccessResult($this);
         $dao->setReturnReference('searchByUserName', $dar);
@@ -107,7 +99,8 @@ class UserManagerTest extends TuleapTestCase
         $this->assertReference($user_1, $user_2);
     }
 
-    function testDoubleCaching() {
+    public function testDoubleCaching()
+    {
         $dao = mock('UserDao');
         stub($dao)->searchByUserId(123)->returnsDar(array('user_name' => 'user_123', 'user_id' => 123));
         stub($dao)->searchByUserName('user_456')->returnsDar(array('user_name' => 'user_456', 'user_id' => 456));
@@ -135,7 +128,8 @@ class UserManagerTest extends TuleapTestCase
         $this->assertReference($user_3, $user_4);
     }
 
-    function testIsLoaded() {
+    public function testIsLoaded()
+    {
         $dao = mock('UserDao');
         stub($dao)->searchByUserId(123)->returnsDar(array('user_name' => 'user_123', 'user_id' => 123));
 
@@ -156,17 +150,17 @@ class UserManagerTest extends TuleapTestCase
         $this->assertTrue($um->isUserLoadedByUserName('user_123'));
     }
 
-    function testGoodLogin() {
-        $cm               = mock(\Tuleap\CookieManager::class);
-        $session_manager  = mock('Tuleap\User\SessionManager');
-        $dao              = new MockUserDao($this);
-        $dar              = new MockDataAccessResult($this);
-        $user123          = mock('PFUser');
-        $user_manager     = new UserManagerTestVersion($this);
-        $em               = new MockEventManager($this);
-        $password_handler = PasswordHandlerFactory::getPasswordHandler();
+    public function testGoodLogin()
+    {
+        $cm                  = Mockery::mock(\Tuleap\CookieManager::class);
+        $session_manager     = mock('Tuleap\User\SessionManager');
+        $dao                 = Mockery::mock(UserDao::class);
+        $user123             = mock('PFUser');
+        $user_manager        = new UserManagerTestVersion($this);
+        $password_handler    = PasswordHandlerFactory::getPasswordHandler();
+        $permissions_manager = mock(User_ForgeUserGroupPermissionsManager::class);
 
-        $user_manager->setReturnReference('_getEventManager', $em);
+        $user_manager->setReturnValue('_getEventManager', \Mockery::spy(EventManager::class));
         $hash = 'valid_hash';
 
         $token_value   = 'token';
@@ -179,34 +173,39 @@ class UserManagerTest extends TuleapTestCase
         $user123->setReturnValue('getStatus', 'A');
         $user123->setReturnValue('isAnonymous', false);
 
-        $cm->expectOnce('setCookie', array('session_hash', $hash, 0));
+        $cm->shouldReceive('setCookie')->with('session_hash', $hash, 0)->once();
 
         stub($session_manager)->createSession()->returns($hash);
+        stub($permissions_manager)->doesUserHavePermission()->returns(false);
 
         $user_manager->setReturnReference('getCookieManager', $cm);
         stub($user_manager)->getSessionManager()->returns($session_manager);
         stub($user_manager)->getTokenManager()->returns($token_manager);
+        stub($user_manager)->getForgeUserGroupPermissionsManager()->returns($permissions_manager);
 
-        $dao->setReturnReference('searchByUserName', $dar, array('user_123'));
-        $dar->setReturnValue('getRow', array('user_name' => 'user_123', 'user_id' => 123));
+        $dao->shouldReceive('searchByUserName')
+            ->with('user_123')
+            ->andReturn(TestHelper::arrayToDar(['user_name' => 'user_123', 'user_id' => 123]));
+        $dao->shouldReceive('getUserAccessInfo')->andReturn(['nb_auth_failure' => 0, 'last_auth_success' => 0]);
         $user_manager->setReturnReference('getUserInstanceFromRow', $user123, array(array('user_name' => 'user_123', 'user_id' => 123)));
 
-        $dao->expectNever('storeLoginFailure');
+        $dao->shouldNotReceive('storeLoginFailure');
+        $dao->shouldReceive('storeLoginSuccess');
 
         $user_manager->setReturnReference('getDao', $dao);
         $this->assertEqual($user123, $user_manager->login('user_123', self::PASSWORD, 0));
     }
 
-    function testBadLogin() {
-        $cm               = mock(\Tuleap\CookieManager::class);
+    public function testBadLogin()
+    {
+        $cm               = Mockery::mock(\Tuleap\CookieManager::class);
         $dao              = new MockUserDao($this);
         $dar              = new MockDataAccessResult($this);
         $user123          = mock('PFUser');
         $userAnonymous    = mock('PFUser');
         $um               = new UserManagerTestVersion($this);
-        $em               = new MockEventManager($this);
 
-        $um->setReturnReference('_getEventManager', $em);
+        $um->setReturnValue('_getEventManager', \Mockery::spy(EventManager::class));
 
         $user123->setReturnValue('getId', 123);
         $user123->setReturnValue('getUserName', 'user_123');
@@ -218,7 +217,7 @@ class UserManagerTest extends TuleapTestCase
         $userAnonymous->setReturnValue('getId', 0);
         $userAnonymous->setReturnValue('isAnonymous', true);
 
-        $cm->expectNever('setCookie');
+        $cm->shouldReceive('setCookie')->never();
         $um->setReturnReference('getCookieManager', $cm);
 
         $dao->setReturnReference('searchByUserName', $dar, array('user_123'));
@@ -232,9 +231,10 @@ class UserManagerTest extends TuleapTestCase
         $this->assertEqual($userAnonymous, $um->login('user_123', 'bad_pwd', 0));
     }
 
-    function testSuspenedUserGetSession() {
+    public function testSuspenedUserGetSession()
+    {
 
-        $cm               = mock(\Tuleap\CookieManager::class);
+        $cm               = Mockery::mock(\Tuleap\CookieManager::class);
         $session_manager  = mock('Tuleap\User\SessionManager');
         $dar_valid_hash   = new MockDataAccessResult($this);
         $user123          = mock('PFUser');
@@ -249,7 +249,7 @@ class UserManagerTest extends TuleapTestCase
 
         $userAnonymous->setReturnValue('isAnonymous', true);
 
-        $cm->setReturnValue('getCookie', 'valid_hash');
+        $cm->shouldReceive('getCookie')->andReturn('valid_hash');
         $dar_valid_hash->setReturnValue('getRow', array('user_name' => 'user_123', 'user_id' => 123));
         $um->setReturnReference('getUserInstanceFromRow', $user123, array(array('user_name' => 'user_123', 'user_id' => 123)));
         $um->setReturnReference('getUserInstanceFromRow', $userAnonymous, array(array('user_id' => 0)));
@@ -266,8 +266,9 @@ class UserManagerTest extends TuleapTestCase
         $this->assertTrue($user->isAnonymous(), 'A suspended user should not be able to use a valid session');
     }
 
-    function testDeletedUserGetSession() {
-        $cm               = mock(\Tuleap\CookieManager::class);
+    public function testDeletedUserGetSession()
+    {
+        $cm               = Mockery::mock(\Tuleap\CookieManager::class);
         $session_manager  = mock('Tuleap\User\SessionManager');
         $dar_valid_hash   = new MockDataAccessResult($this);
         $user123          = mock('PFUser');
@@ -282,7 +283,7 @@ class UserManagerTest extends TuleapTestCase
 
         $userAnonymous->setReturnValue('isAnonymous', true);
 
-        $cm->setReturnValue('getCookie', 'valid_hash');
+        $cm->shouldReceive('getCookie')->andReturn('valid_hash');
         $dar_valid_hash->setReturnValue('getRow', array('user_name' => 'user_123', 'user_id' => 123));
         $um->setReturnReference('getUserInstanceFromRow', $user123, array(array('user_name' => 'user_123', 'user_id' => 123)));
         $um->setReturnReference('getUserInstanceFromRow', $userAnonymous, array(array('user_id' => 0)));
@@ -299,9 +300,10 @@ class UserManagerTest extends TuleapTestCase
         $this->assertTrue($user->isAnonymous(), 'A deleted user should not be able to use a valid session');
     }
 
-    function testGetUserByIdentifierPluginNoAnswerWithSimpleId() {
-        $em = new MockEventManager($this);
-        $em->expectOnce('processEvent');
+    public function testGetUserByIdentifierPluginNoAnswerWithSimpleId()
+    {
+        $em = \Mockery::mock(EventManager::class);
+        $em->shouldReceive('processEvent');
 
         $um = new UserManager4GetByIdent($this);
         $um->setReturnReference('_getEventManager', $em);
@@ -313,9 +315,10 @@ class UserManagerTest extends TuleapTestCase
         $this->assertNull($user);
     }
 
-    function testGetUserByIdentifierPluginAnswerWithSimpleId() {
-        $em = new MockEventManager($this);
-        $em->expectOnce('processEvent');
+    public function testGetUserByIdentifierPluginAnswerWithSimpleId()
+    {
+        $em = \Mockery::mock(EventManager::class);
+        $em->shouldReceive('processEvent');
 
         $um = new UserManager4GetByIdent($this);
         $um->setReturnReference('_getEventManager', $em);
@@ -328,9 +331,10 @@ class UserManagerTest extends TuleapTestCase
         $this->assertIdentical($user, $u1);
     }
 
-    function testGetUserByIdentifierPluginNoAnswerWithComplexId() {
-        $em = new MockEventManager($this);
-        $em->expectOnce('processEvent');
+    public function testGetUserByIdentifierPluginNoAnswerWithComplexId()
+    {
+        $em = \Mockery::mock(EventManager::class);
+        $em->shouldReceive('processEvent');
 
         $um = new UserManager4GetByIdent($this);
         $um->setReturnReference('_getEventManager', $em);
@@ -341,10 +345,25 @@ class UserManagerTest extends TuleapTestCase
         $this->assertNull($user);
     }
 
-    function testGetUserByIdentifierPluginAnswer() {
+    public function testGetUserByIdentifierPluginAnswer()
+    {
         $u1 = mock('PFUser');
-        $em = new MockEM4UserManager($this);
-        $em->setReturnValue('processEvent', array('tokenFound' => true, 'user' => &$u1));
+
+        $em = new class($u1) extends EventManager {
+
+            private $user;
+
+            public function __construct(PFUser $user)
+            {
+                $this->user = $user;
+            }
+
+            public function processEvent($event, $params = array())
+            {
+                $params['tokenFound'] = true;
+                $params['user'] = $this->user;
+            }
+        };
 
         $um = new UserManager4GetByIdent($this);
         $um->setReturnReference('_getEventManager', $em);
@@ -355,10 +374,16 @@ class UserManagerTest extends TuleapTestCase
         $this->assertIdentical($user, $u1);
     }
 
-    function testGetUserByIdentifierPluginAnswerNotFound() {
+    public function testGetUserByIdentifierPluginAnswerNotFound()
+    {
         $u1 = mock('PFUser');
-        $em = new MockEM4UserManager($this);
-        $em->setReturnValue('processEvent', array('tokenFound' => false));
+
+        $em = new class extends EventManager {
+            public function processEvent($event, $params = array())
+            {
+                $params['tokenFound'] = false;
+            }
+        };
 
         $um = new UserManager4GetByIdent($this);
         $um->setReturnReference('_getEventManager', $em);
@@ -370,8 +395,9 @@ class UserManagerTest extends TuleapTestCase
         $this->assertNull($user);
     }
 
-    function testUpdateFailureWhenAnonymous() {
-    	$user = mock('PFUser');
+    public function testUpdateFailureWhenAnonymous()
+    {
+        $user = mock('PFUser');
         $user->setReturnValue('isAnonymous', true);
 
         $dao = new MockUserDao($this);
@@ -380,22 +406,23 @@ class UserManagerTest extends TuleapTestCase
         $this->assertFalse($um->updateDb($user));
     }
 
-    function testUpdateDaoResultPropagated() {
-    	$user = mock('PFUser');
-    	$user->setReturnValue('isAnonymous', false);
-    	$user->setReturnValue('isSuspended', false);
-    	$user->setReturnValue('isDeleted',   false);
-        $user->setReturnValue('toRow',       array());
+    public function testUpdateDaoResultPropagated()
+    {
+        $user = mock('PFUser');
+        $user->setReturnValue('isAnonymous', false);
+        $user->setReturnValue('isSuspended', false);
+        $user->setReturnValue('isDeleted', false);
+        $user->setReturnValue('toRow', array());
 
 
-    	// True
+        // True
         $daotrue = Mockery::mock(UserDao::class);
         $daotrue->shouldReceive('updateByRow')->andReturns(true);
         $daotrue->shouldReceive('searchByUserId')->andReturns(new DataAccessResultEmpty());
         $session_manager_true = mock('Tuleap\User\SessionManager');
         $session_manager_true->expectNever('destroyAllSessions');
-    	$umtrue = new UserManagerTestVersion($this);
-        stub($umtrue)->_getEventManager()->returns(mock('EventManager'));
+        $umtrue = new UserManagerTestVersion($this);
+        stub($umtrue)->_getEventManager()->returns(\Mockery::spy(\EventManager::class));
         stub($umtrue)->getSessionManager()->returns($session_manager_true);
         $umtrue->setReturnReference('getDao', $daotrue);
         $this->assertTrue($umtrue->updateDb($user));
@@ -407,14 +434,15 @@ class UserManagerTest extends TuleapTestCase
         $session_manager_false = mock('Tuleap\User\SessionManager');
         $session_manager_false->expectNever('destroyAllSessions');
         $umfalse = new UserManagerTestVersion($this);
-        stub($umfalse)->_getEventManager()->returns(mock('EventManager'));
+        stub($umfalse)->_getEventManager()->returns(\Mockery::mock(\EventManager::class));
         stub($umfalse)->getSessionManager()->returns($session_manager_false);
         $umfalse->setReturnReference('getDao', $daofalse);
         $this->assertFalse($umfalse->updateDb($user));
     }
 
-    function testUpdatePassword() {
-    	$user = mock('PFUser');
+    public function testUpdatePassword()
+    {
+        $user = mock('PFUser');
         $user->setReturnValue('isAnonymous', false);
         $user->setReturnValue('toRow', array());
         $user->setReturnValue('getPassword', self::PASSWORD);
@@ -429,7 +457,8 @@ class UserManagerTest extends TuleapTestCase
         $um->updateDb($user);
     }
 
-    function testUpdateNoPasswordChange() {
+    public function testUpdateNoPasswordChange()
+    {
         $password_handler = PasswordHandlerFactory::getPasswordHandler();
         $user             = mock('PFUser');
         $user->setReturnValue('isAnonymous', false);
@@ -446,12 +475,13 @@ class UserManagerTest extends TuleapTestCase
         $um->updateDb($user);
     }
 
-    function testUpdateToSuspendedDeleteSessions() {
+    public function testUpdateToSuspendedDeleteSessions()
+    {
         $user = mock('PFUser');
         $user->setReturnValue('getId', 123);
         $user->setReturnValue('isAnonymous', false);
         $user->setReturnValue('isSuspended', true);
-        $user->setReturnValue('toRow',       array());
+        $user->setReturnValue('toRow', array());
 
         $dao = Mockery::mock(UserDao::class);
         $dao->shouldReceive('updateByRow')->andReturns(true);
@@ -461,19 +491,20 @@ class UserManagerTest extends TuleapTestCase
         $session_manager->expectOnce('destroyAllSessions', array($user));
 
         $um = new UserManagerTestVersion($this);
-        stub($um)->_getEventManager()->returns(mock('EventManager'));
+        stub($um)->_getEventManager()->returns(\Mockery::spy(\EventManager::class));
         stub($um)->getSessionManager()->returns($session_manager);
         $um->setReturnReference('getDao', $dao);
 
         $this->assertTrue($um->updateDb($user));
     }
 
-    function testUpdateToDeletedDeleteSessions() {
+    public function testUpdateToDeletedDeleteSessions()
+    {
         $user = mock('PFUser');
         $user->setReturnValue('getId', 123);
         $user->setReturnValue('isAnonymous', false);
         $user->setReturnValue('isDeleted', true);
-        $user->setReturnValue('toRow',       array());
+        $user->setReturnValue('toRow', array());
 
         $dao = Mockery::mock(UserDao::class);
         $dao->shouldReceive('updateByRow')->andReturns(true);
@@ -483,14 +514,15 @@ class UserManagerTest extends TuleapTestCase
         $session_manager->expectOnce('destroyAllSessions', array($user));
 
         $um = new UserManagerTestVersion($this);
-        stub($um)->_getEventManager()->returns(mock('EventManager'));
+        stub($um)->_getEventManager()->returns(\Mockery::spy(\EventManager::class));
         stub($um)->getSessionManager()->returns($session_manager);
         $um->setReturnReference('getDao', $dao);
 
         $this->assertTrue($um->updateDb($user));
     }
 
-    function testAssignNextUnixUidUpdateUser() {
+    public function testAssignNextUnixUidUpdateUser()
+    {
         $user = mock('PFUser');
         $user->expectOnce('setUnixUid', array(1789));
 
@@ -505,7 +537,8 @@ class UserManagerTest extends TuleapTestCase
         // Codendi 4.0 and new User, we should use this assertion:
         //$this->assertEqual(1789, $user->getUnixUid());
     }
-    function testLoginAsCallsGetCurrentUser() {
+    public function testLoginAsCallsGetCurrentUser()
+    {
         $ordinaryUser = mock('PFUser');
         $ordinaryUser->setReturnValue('isSuperUser', false);
         $um = $this->aUserManagerWithCurrentUser($ordinaryUser);
@@ -516,7 +549,8 @@ class UserManagerTest extends TuleapTestCase
         $um->loginAs(null);
     }
 
-    function testLoginAsReturnsAnExceptionWhenNotCallByTheSuperUser() {
+    public function testLoginAsReturnsAnExceptionWhenNotCallByTheSuperUser()
+    {
         $hash_is_not_important = null;
         $ordinaryUser = mock('PFUser');
         $ordinaryUser->setReturnValue('isSuperUser', false);
@@ -526,7 +560,8 @@ class UserManagerTest extends TuleapTestCase
         $um->loginAs('tlkjtj');
     }
 
-    function testLoginAsReturnsAnExceptionWhenAccountDoesNotExist() {
+    public function testLoginAsReturnsAnExceptionWhenAccountDoesNotExist()
+    {
         $um = TestHelper::getPartialMock('UserManager', array('getCurrentUser', 'getUserByUserName'));
         $admin_user = $this->anAdminUser();
         $um->setReturnValue('getCurrentUser', $admin_user);
@@ -538,7 +573,8 @@ class UserManagerTest extends TuleapTestCase
         $um->loginAs($name);
     }
 
-    function testLoginAsReturnsAnExceptionWhenAccountIsNotInOrder() {
+    public function testLoginAsReturnsAnExceptionWhenAccountIsNotInOrder()
+    {
         $um = $this->aUserManagerWithCurrentUser($this->anAdminUser());
         $this->injectUser($um, 'Johnny', 'D');
 
@@ -546,20 +582,23 @@ class UserManagerTest extends TuleapTestCase
         $um->loginAs('Johnny');
     }
 
-    private function aUserWithStatusAndId($status, $id) {
+    private function aUserWithStatusAndId($status, $id)
+    {
         $userLoginAs = mock('PFUser');
         $userLoginAs->setReturnValue('getStatus', $status);
         $userLoginAs->setReturnValue('getId', $id);
         return $userLoginAs;
     }
 
-    private function aUserManagerWithCurrentUser($user) {
+    private function aUserManagerWithCurrentUser($user)
+    {
         $um = TestHelper::getPartialMock('UserManager', array('getCurrentUser'));
         $um->setReturnValue('getCurrentUser', $user);
         return $um;
     }
 
-    function injectUser(UserManager $um, $name, $status) {
+    private function injectUser(UserManager $um, $name, $status)
+    {
         $whatever = 999;
         $user = $this->aUserWithStatusAndId($status, $whatever);
         $um->_userid_bynames[$name] = $user->getId();
@@ -567,7 +606,8 @@ class UserManagerTest extends TuleapTestCase
         return $user;
     }
 
-    private function anAdminUser() {
+    private function anAdminUser()
+    {
         $adminUser = mock('PFUser');
         $adminUser->setReturnValue('isSuperUser', true);
         return $adminUser;
@@ -576,18 +616,21 @@ class UserManagerTest extends TuleapTestCase
     public function itInsuresThatPluginsDoNotReceiveInvalidUsernameWhenFindingUser()
     {
         $user_manager  = TestHelper::getPartialMock('UserManager', array('_getEventManager'));
-        $event_manager = mock('EventManager');
+        $event_manager = \Mockery::mock(\EventManager::class);
         stub($user_manager)->_getEventManager()->returns($event_manager);
 
-        $event_manager->expectNever('processEvent');
+        $event_manager->shouldNotReceive('processEvent');
         $this->assertEqual($user_manager->findUser(null), null);
         $this->assertEqual($user_manager->findUser(false), null);
     }
 }
 
-class UserManager_GetUserWithSSHKeyTest extends TuleapTestCase {
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MultipleClasses,PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+class UserManager_GetUserWithSSHKeyTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->user_name = 'toto';
@@ -600,7 +643,8 @@ class UserManager_GetUserWithSSHKeyTest extends TuleapTestCase {
         $this->dar = new DataAccessResult($data_access, $result);
     }
 
-    public function itReturnsTheListOfUsers() {
+    public function itReturnsTheListOfUsers()
+    {
         $dao = stub('UserDao')->searchSSHKeys()->returns($this->dar);
 
         $user_manager = partial_mock('UserManager', array('getDao'));
@@ -611,43 +655,51 @@ class UserManager_GetUserWithSSHKeyTest extends TuleapTestCase {
     }
 }
 
-class UserManager_GetInstanceFromRowEventsTest extends TuleapTestCase {
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,PSR1.Classes.ClassDeclaration.MultipleClasses,Squiz.Classes.ValidClassName.NotCamelCaps
+class UserManager_GetInstanceFromRowEventsTest extends TuleapTestCase
+{
 
     private $event_manager;
     private $user_manager;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
-        $this->event_manager = mock('EventManager');
-        $this->user_manager = partial_mock('UserManager',array());
+        $this->event_manager = \Mockery::mock(\EventManager::class);
+        $this->user_manager = partial_mock('UserManager', array());
         EventManager::setInstance($this->event_manager);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         parent::tearDown();
         EventManager::clearInstance();
     }
 
-    public function itDoesNotFailsWhenRowIsNull() {
+    public function itDoesNotFailsWhenRowIsNull()
+    {
         $this->assertEqual(
             $this->user_manager->getUserInstanceFromRow(null),
             new PFUser()
         );
     }
 
-    public function itThrowsAnEventOnUserWithSpecialUserIds() {
+    public function itThrowsAnEventOnUserWithSpecialUserIds()
+    {
         expect($this->event_manager)->processEvent(Event::USER_MANAGER_GET_USER_INSTANCE, '*')->once();
 
         $this->user_manager->getUserInstanceFromRow(array("user_id" => 90));
     }
 
-    public function itDoesNotThrowsAnEventOnUserWithoutSpecialUserIds() {
+    public function itDoesNotThrowsAnEventOnUserWithoutSpecialUserIds()
+    {
         expect($this->event_manager)->processEvent()->never();
 
         $this->user_manager->getUserInstanceFromRow(array("user_id" => 200));
     }
 
-    public function itThrowsAnEventWithUserRowAsParameter() {
+    public function itThrowsAnEventWithUserRowAsParameter()
+    {
         $user_row = array('user_id' => 90);
 
         $user = null;
@@ -660,7 +712,9 @@ class UserManager_GetInstanceFromRowEventsTest extends TuleapTestCase {
         $this->user_manager->getUserInstanceFromRow($user_row);
     }
 
-    public function itReturnsAPFUserWhenNothingMatches() {
+    public function itReturnsAPFUserWhenNothingMatches()
+    {
+        $this->event_manager->shouldReceive('processEvent');
         $user_row = array('user_id' => 90);
 
         $this->assertEqual(
@@ -669,7 +723,8 @@ class UserManager_GetInstanceFromRowEventsTest extends TuleapTestCase {
         );
     }
 
-    public function itPassUserByReference() {
+    public function itPassUserByReference()
+    {
         $user_row = array('user_id' => 90);
 
         $event_manager = new EventManager();
@@ -681,12 +736,15 @@ class UserManager_GetInstanceFromRowEventsTest extends TuleapTestCase {
         $this->assertEqual($result, $result_expected);
     }
 
-    public function mockedMethodForEventTest(array $params) {
+    public function mockedMethodForEventTest(array $params)
+    {
         $params['user'] = 'thatValue';
     }
 }
 
-class UserManager_ManageSSHKeys extends TuleapTestCase {
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,PSR1.Classes.ClassDeclaration.MultipleClasses,Squiz.Classes.ValidClassName.NotCamelCaps
+class UserManager_ManageSSHKeys extends TuleapTestCase
+{
 
     /** @var UserManager */
     private $user_manager;
@@ -694,7 +752,8 @@ class UserManager_ManageSSHKeys extends TuleapTestCase {
     /** @var PFUser */
     private $user;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $dao = mock('UserDao');
@@ -712,7 +771,8 @@ class UserManager_ManageSSHKeys extends TuleapTestCase {
         $this->a_second_ssh_key         = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7pihW/WsGL8Pmk89ET/x1GTa646GWs/7DHujgxfP4ZH7mt6ta+KwH2tsEj5ESS19EIYG4hQYpckpd65fgihs7SrwLEVG3yO1gZSS+4bBfGaR/zQoFRNlJHiKh9vrr3AZZxCUUM4xpMi2wT4hBlr8lgYaxCQZpgXRqI6CSUSAVDM7e6Ct4zItmp7VqFLHTv7pljeIF+VTyoDWfMSaIBbDmmnZctR9hR3ywSmokvA9iN4a5bWjeXlIQdpjcjqapolvlo2XamN7HRTfxWefFceoVX3yVjTZ7DFkbHJdqwBMIQmAMbG633dx67dQLgeAKfWu/tGbCnalnzzeuMvU9b41y comment2";
     }
 
-    public function itAddsANewSSHKey() {
+    public function itAddsANewSSHKey()
+    {
         $user_ssh_keys   = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7pihW/WsGL8Pmk89ET/x1GTa646GWs/7DHujgxfP4ZH7mt6ta+KwH2tsEj5ESS19EIYG4hQYpckpd65fgihs7SrwLEVG3yO1gZSS+4bBfGaR/zQoFRNlJHiKh9vrr3AZZxCUUM4xpMi2wT4hBlr8lgYaxCQZpgXRqI6CSUSAVDM7e6Ct4zItmp7VqFLHTv7pljeIF+VTyoDWfMSaIBbDmmnZctR9hR3ywSmokvA9iN4a5bWjeXlIQdpjcjqapolvlo2XamN7HRTfxWefFceoVX3yVjTZ7DFkbHJdqwBMIQmAMbG633dx67dQLgeAKfWu/tGbCnalnzzeuMvU9b4oF comment1';
         $expected_keys   = array(
             $user_ssh_keys,
@@ -726,22 +786,24 @@ class UserManager_ManageSSHKeys extends TuleapTestCase {
         $this->user_manager->addSSHKeys($this->user, $this->an_ssh_key);
     }
 
-     public function itOnlyAddsANewSSHKeyIfTheNewKeyEndedWithANewLineChar() {
+    public function itOnlyAddsANewSSHKeyIfTheNewKeyEndedWithANewLineChar()
+    {
         $user_ssh_keys   = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7pihW/WsGL8Pmk89ET/x1GTa646GWs/7DHujgxfP4ZH7mt6ta+KwH2tsEj5ESS19EIYG4hQYpckpd65fgihs7SrwLEVG3yO1gZSS+4bBfGaR/zQoFRNlJHiKh9vrr3AZZxCUUM4xpMi2wT4hBlr8lgYaxCQZpgXRqI6CSUSAVDM7e6Ct4zItmp7VqFLHTv7pljeIF+VTyoDWfMSaIBbDmmnZctR9hR3ywSmokvA9iN4a5bWjeXlIQdpjcjqapolvlo2XamN7HRTfxWefFceoVX3yVjTZ7DFkbHJdqwBMIQmAMbG633dx67dQLgeAKfWu/tGbCnalnzzeuMvU9b4oF comment1';
         $expected_keys   = array(
-            $user_ssh_keys,
-            $this->an_ssh_key
+           $user_ssh_keys,
+           $this->an_ssh_key
         );
 
         $this->user->setAuthorizedKeys($user_ssh_keys);
 
         expect($this->user_manager)->updateUserSSHKeys($this->user, $expected_keys)->once();
-        expect($GLOBALS['Response'])->addFeedback('warning','*')->never();
+        expect($GLOBALS['Response'])->addFeedback('warning', '*')->never();
 
         $this->user_manager->addSSHKeys($this->user, $this->an_ssh_key_with_new_line);
     }
 
-    public function itAddsMultipleNewSSHKeys() {
+    public function itAddsMultipleNewSSHKeys()
+    {
         $user_ssh_keys   = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7pihW/WsGL8Pmk89ET/x1GTa646GWs/7DHujgxfP4ZH7mt6ta+KwH2tsEj5ESS19EIYG4hQYpckpd65fgihs7SrwLEVG3yO1gZSS+4bBfGaR/zQoFRNlJHiKh9vrr3AZZxCUUM4xpMi2wT4hBlr8lgYaxCQZpgXRqI6CSUSAVDM7e6Ct4zItmp7VqFLHTv7pljeIF+VTyoDWfMSaIBbDmmnZctR9hR3ywSmokvA9iN4a5bWjeXlIQdpjcjqapolvlo2XamN7HRTfxWefFceoVX3yVjTZ7DFkbHJdqwBMIQmAMbG633dx67dQLgeAKfWu/tGbCnalnzzeuMvU9b4oF comment1';
         $expected_keys   = array(
             $user_ssh_keys,
@@ -756,7 +818,8 @@ class UserManager_ManageSSHKeys extends TuleapTestCase {
         $this->user_manager->addSSHKeys($this->user, $this->an_ssh_key . PHP_EOL . $this->a_second_ssh_key);
     }
 
-    public function itDoesNotAddAnExistingSSHKey() {
+    public function itDoesNotAddAnExistingSSHKey()
+    {
         $user_ssh_keys = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7pihW/WsGL8Pmk89ET/x1GTa646GWs/7DHujgxfP4ZH7mt6ta+KwH2tsEj5ESS19EIYG4hQYpckpd65fgihs7SrwLEVG3yO1gZSS+4bBfGaR/zQoFRNlJHiKh9vrr3AZZxCUUM4xpMi2wT4hBlr8lgYaxCQZpgXRqI6CSUSAVDM7e6Ct4zItmp7VqFLHTv7pljeIF+VTyoDWfMSaIBbDmmnZctR9hR3ywSmokvA9iN4a5bWjeXlIQdpjcjqapolvlo2XamN7HRTfxWefFceoVX3yVjTZ7DFkbHJdqwBMIQmAMbG633dx67dQLgeAKfWu/tGbCnalnzzeuMvU9b4oF comment1 ###" . $this->an_ssh_key;
 
         $expected_keys = array(
@@ -771,10 +834,11 @@ class UserManager_ManageSSHKeys extends TuleapTestCase {
         $this->user_manager->addSSHKeys($this->user, $this->an_ssh_key);
     }
 
-     public function itRemovesSelectedSSHKeys() {
+    public function itRemovesSelectedSSHKeys()
+    {
         $user_ssh_keys =
-            'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7pihW/WsGL8Pmk89ET/x1GTa646GWs/7DHujgxfP4ZH7mt6ta+KwH2tsEj5ESS19EIYG4hQYpckpd65fgihs7SrwLEVG3yO1gZSS+4bBfGaR/zQoFRNlJHiKh9vrr3AZZxCUUM4xpMi2wT4hBlr8lgYaxCQZpgXRqI6CSUSAVDM7e6Ct4zItmp7VqFLHTv7pljeIF+VTyoDWfMSaIBbDmmnZctR9hR3ywSmokvA9iN4a5bWjeXlIQdpjcjqapolvlo2XamN7HRTfxWefFceoVX3yVjTZ7DFkbHJdqwBMIQmAMbG633dx67dQLgeAKfWu/tGbCnalnzzeuMvU9b4oF comment1'
-            . PFUser::SSH_KEY_SEPARATOR . $this->an_ssh_key;
+           'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7pihW/WsGL8Pmk89ET/x1GTa646GWs/7DHujgxfP4ZH7mt6ta+KwH2tsEj5ESS19EIYG4hQYpckpd65fgihs7SrwLEVG3yO1gZSS+4bBfGaR/zQoFRNlJHiKh9vrr3AZZxCUUM4xpMi2wT4hBlr8lgYaxCQZpgXRqI6CSUSAVDM7e6Ct4zItmp7VqFLHTv7pljeIF+VTyoDWfMSaIBbDmmnZctR9hR3ywSmokvA9iN4a5bWjeXlIQdpjcjqapolvlo2XamN7HRTfxWefFceoVX3yVjTZ7DFkbHJdqwBMIQmAMbG633dx67dQLgeAKfWu/tGbCnalnzzeuMvU9b4oF comment1'
+           . PFUser::SSH_KEY_SEPARATOR . $this->an_ssh_key;
 
         $ssh_keys_to_delete_index = array(0);
 
@@ -786,7 +850,9 @@ class UserManager_ManageSSHKeys extends TuleapTestCase {
     }
 }
 
-class UserManager_createAccountTest extends TuleapTestCase {
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,PSR1.Classes.ClassDeclaration.MultipleClasses,Squiz.Classes.ValidClassName.NotCamelCaps
+class UserManager_createAccountTest extends TuleapTestCase
+{
 
     /** @var UserManager */
     private $manager;
@@ -800,7 +866,8 @@ class UserManager_createAccountTest extends TuleapTestCase {
     /** @var User_PendingUserNotifier */
     private $pending_user_notifier;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         ForgeConfig::store();
         $this->user                  = aUser()->build();
@@ -818,18 +885,21 @@ class UserManager_createAccountTest extends TuleapTestCase {
         stub($this->manager)->getDefaultWidgetCreator()->returns($default_widget_creator);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         ForgeConfig::restore();
         parent::tearDown();
     }
 
-    public function itAsksToDaoToCreateTheAccount() {
+    public function itAsksToDaoToCreateTheAccount()
+    {
         expect($this->dao)->create()->once();
 
         $this->manager->createAccount($this->user);
     }
 
-    public function itSendsAnEmailToAdministratorIfUserIsPendingAndUserNeedsApproval() {
+    public function itSendsAnEmailToAdministratorIfUserIsPendingAndUserNeedsApproval()
+    {
         stub($this->dao)->create()->returns(101);
         $this->user->setStatus(PFUser::STATUS_PENDING);
         ForgeConfig::set('sys_user_approval', 1);
@@ -839,7 +909,8 @@ class UserManager_createAccountTest extends TuleapTestCase {
         $this->manager->createAccount($this->user);
     }
 
-    public function itDoesNotSendAnEmailToAdministratorIfNoUserApproval() {
+    public function itDoesNotSendAnEmailToAdministratorIfNoUserApproval()
+    {
         stub($this->dao)->create()->returns(101);
         $this->user->setStatus(PFUser::STATUS_PENDING);
         ForgeConfig::set('sys_user_approval', 0);
@@ -849,7 +920,8 @@ class UserManager_createAccountTest extends TuleapTestCase {
         $this->manager->createAccount($this->user);
     }
 
-    public function itDoesNotSendAnEmailToAdministratorIfUserIsActive() {
+    public function itDoesNotSendAnEmailToAdministratorIfUserIsActive()
+    {
         stub($this->dao)->create()->returns(101);
         $this->user->setStatus(PFUser::STATUS_ACTIVE);
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,18 +18,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Hierarchy_Presenter {
+class Tracker_Hierarchy_Presenter
+{
 
     /**
      * @var Tracker_Hierarchy_HierarchicalTracker
      */
     public $tracker;
-    
+
     /**
      * @var Array of Tracker
      */
     public $possible_children;
-    
+
     /**
      * @var TreeNode
      */
@@ -70,11 +71,24 @@ class Tracker_Hierarchy_Presenter {
      */
     public $hierarchy_title;
 
+    /**
+     * @var string
+     */
+    public $tracker_used_in_trigger_rules_names;
+    /**
+     * @var int
+     */
+    public $tracker_used_in_trigger_rules_nb;
+
+    /**
+     * @param Tracker[] $trackers_used_in_trigger_rules
+     */
     public function __construct(
         Tracker_Hierarchy_HierarchicalTracker $tracker,
         array $possible_children,
         TreeNode $hierarchy,
-        $is_child_is_disabled
+        $is_child_is_disabled,
+        array $trackers_used_in_trigger_rules
     ) {
         $this->tracker           = $tracker;
         $this->possible_children = array_values($possible_children);
@@ -103,39 +117,56 @@ class Tracker_Hierarchy_Presenter {
         );
 
         $this->hierarchy_title = dgettext('tuleap-tracker', 'Hierarchy');
+
+        $this->tracker_used_in_trigger_rules_names = implode(
+            ', ',
+            array_map(
+                static function (Tracker $tracker) : string {
+                    return $tracker->getName();
+                },
+                $trackers_used_in_trigger_rules
+            )
+        );
+        $this->tracker_used_in_trigger_rules_nb = count($trackers_used_in_trigger_rules);
     }
 
-    public function getTrackerUrl() {
+    public function getTrackerUrl()
+    {
         return TRACKER_BASE_URL;
     }
-    
-    public function getTrackerId() {
+
+    public function getTrackerId()
+    {
         return $this->tracker->getId();
     }
-    
-    public function getManageHierarchyTitle() {
+
+    public function getManageHierarchyTitle()
+    {
         return $GLOBALS['Language']->getText('plugin_tracker_admin', 'manage_hierarchy_title');
     }
-    
-    public function getSubmitLabel() {
+
+    public function getSubmitLabel()
+    {
         return $GLOBALS['Language']->getText('global', 'btn_submit');
     }
-    
-    public function getPossibleChildren() {
+
+    public function getPossibleChildren()
+    {
         $possible_children = array();
-        
+
         foreach ($this->possible_children as $possible_child) {
             $selected = $this->getSelectedAttribute($possible_child);
-                    
+
             $possible_children[] = array('id'       => $possible_child->getId(),
                                          'name'     => $possible_child->getName(),
                                          'selected' => $selected);
         }
-        
+
         return $possible_children;
     }
-    
-    private function getSelectedAttribute(Tracker $possible_child) {
+
+    private function getSelectedAttribute(Tracker $possible_child)
+    {
         if ($this->tracker->hasChild($possible_child)) {
             return 'selected="selected"';
         }

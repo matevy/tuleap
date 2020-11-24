@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  * Copyright STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Dave Kibble, 2006.
@@ -21,12 +21,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('pre.php');
-require_once('common/plugin/PluginManager.class.php');
+require_once __DIR__ . '/../../../src/www/include/pre.php';
 $plugin_manager = PluginManager::instance();
 $p = $plugin_manager->getPluginByName('projectlinks');
 if ($p && $plugin_manager->isPluginAvailable($p)) {
     $p->adminPage();
 } else {
-    header('Location: '.get_server_url());
+    header('Location: /');
 }

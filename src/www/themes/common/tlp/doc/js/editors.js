@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2016 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -16,6 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+import * as tlp from "tlp";
+import CodeMirror from "codemirror";
+import "codemirror/mode/htmlmixed/htmlmixed";
+import "codemirror/addon/scroll/simplescrollbars";
+import { sanitize } from "dompurify";
 
 (function loadCodeMirrorEditors() {
     var demo_panels = document.querySelectorAll(".demo");
@@ -42,7 +48,7 @@
         });
 
         function updatePreview() {
-            example.innerHTML = editor.getValue();
+            example.innerHTML = sanitize(editor.getValue());
             var datepickers = example.querySelectorAll(".tlp-input-date");
             [].forEach.call(datepickers, function(datepicker) {
                 tlp.datePicker(datepicker);
@@ -192,6 +198,16 @@
                 tlp.dropdown(dropdown_trigger_options, {
                     keyboard: false,
                     dropdown_menu: document.getElementById("dropdown-menu-example-options")
+                });
+            }
+
+            var dropdown_trigger_disabled_options = document.getElementById(
+                "dropdown-disable-options"
+            );
+            if (dropdown_trigger_disabled_options) {
+                tlp.dropdown(dropdown_trigger_disabled_options, {
+                    keyboard: false,
+                    dropdown_menu: document.getElementById("dropdown-menu-disable-options")
                 });
             }
 

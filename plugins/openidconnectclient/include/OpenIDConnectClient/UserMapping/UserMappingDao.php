@@ -22,9 +22,11 @@ namespace Tuleap\OpenIDConnectClient\UserMapping;
 
 use DataAccessObject;
 
-class UserMappingDao extends DataAccessObject {
+class UserMappingDao extends DataAccessObject
+{
 
-    public function save($user_id, $provider_id, $identifier, $last_used) {
+    public function save($user_id, $provider_id, $identifier, $last_used)
+    {
         $user_id     = $this->getDa()->escapeInt($user_id);
         $provider_id = $this->getDa()->escapeInt($provider_id);
         $identifier  = $this->getDa()->quoteSmart($identifier);
@@ -35,7 +37,8 @@ class UserMappingDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function deleteById($id) {
+    public function deleteById($id)
+    {
         $id = $this->getDa()->escapeInt($id);
 
         $sql = "DELETE FROM plugin_openidconnectclient_user_mapping
@@ -62,7 +65,8 @@ class UserMappingDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchByIdentifierAndProviderId($identifier, $provider_id) {
+    public function searchByIdentifierAndProviderId($identifier, $provider_id)
+    {
         $identifier  = $this->getDa()->quoteSmart($identifier);
         $provider_id = $this->getDa()->escapeInt($provider_id);
 
@@ -93,5 +97,4 @@ class UserMappingDao extends DataAccessObject {
                 ORDER BY unique_authentication_endpoint DESC, name ASC";
         return $this->retrieve($sql);
     }
-
 }

@@ -16,17 +16,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201601081758_create_plugin_svn_repositories_table extends ForgeUpgrade_Bucket {
+class b201601081758_create_plugin_svn_repositories_table extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Create table plugin_svn_repositories for SVN plugin';
     }
 
-   public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE plugin_svn_repositories (
                     id  int(11) unsigned NOT NULL auto_increment,
                     name  varchar(255) NOT NULL,

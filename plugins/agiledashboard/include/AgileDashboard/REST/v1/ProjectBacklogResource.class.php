@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -41,16 +41,31 @@ use Tracker_ArtifactDao;
 use Tracker_ArtifactFactory;
 use Tracker_FormElementFactory;
 use TrackerFactory;
-use Tuleap\AgileDashboard\BacklogItem\RemainingEffortValueRetriever;
+use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
+use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
 use Tuleap\AgileDashboard\MonoMilestone\MonoMilestoneBacklogItemDao;
 use Tuleap\AgileDashboard\MonoMilestone\MonoMilestoneItemsFinder;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneDao;
+use Tuleap\AgileDashboard\Planning\MilestoneBurndownFieldChecker;
+use Tuleap\AgileDashboard\RemainingEffortValueRetriever;
+use Tuleap\AgileDashboard\REST\v1\Milestone\MilestoneElementAdder;
+use Tuleap\AgileDashboard\REST\v1\Milestone\MilestoneElementRemover;
+use Tuleap\AgileDashboard\REST\v1\Milestone\NoRootPlanningException;
+use Tuleap\AgileDashboard\REST\v1\Milestone\ProvidedAddedIdIsNotInPartOfTopBacklogException;
+use Tuleap\AgileDashboard\REST\v1\Milestone\ProvidedRemoveIdIsNotInExplicitBacklogException;
+use Tuleap\AgileDashboard\REST\v1\Milestone\RemoveNotAvailableInClassicBacklogModeException;
+use Tuleap\AgileDashboard\REST\v1\Rank\ArtifactsRankOrderer;
 use Tuleap\Cardwall\BackgroundColor\BackgroundColorBuilder;
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\REST\Header;
 use Tuleap\REST\v1\OrderRepresentationBase;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
 use Tuleap\Tracker\REST\v1\ArtifactLinkUpdater;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
+use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
 use UserManager;
 
 /**
@@ -116,12 +131,18 @@ class ProjectBacklogResource
         $this->milestone_factory = new Planning_MilestoneFactory(
             $planning_factory,
             Tracker_ArtifactFactory::instance(),
-            Tracker_FormElementFactory::instance(),
+            $tracker_form_element_factory,
             TrackerFactory::instance(),
             $status_counter,
             $this->planning_permissions_manager,
             new AgileDashboard_Milestone_MilestoneDao(),
-            new ScrumForMonoMilestoneChecker(new ScrumForMonoMilestoneDao(), $planning_factory)
+            new ScrumForMonoMilestoneChecker(new ScrumForMonoMilestoneDao(), $planning_factory),
+            new TimeframeBuilder(
+                $tracker_form_element_factory,
+                new SemanticTimeframeBuilder(new SemanticTimeframeDao(), $tracker_form_element_factory),
+                new \BackendLogger()
+            ),
+            new MilestoneBurndownFieldChecker($tracker_form_element_factory)
         );
 
         $this->backlog_factory = new AgileDashboard_Milestone_Backlog_BacklogFactory(
@@ -135,13 +156,14 @@ class ProjectBacklogResource
         $this->backlog_item_collection_factory = new AgileDashboard_Milestone_Backlog_BacklogItemCollectionFactory(
             new AgileDashboard_BacklogItemDao(),
             $tracker_artifact_factory,
-            $tracker_form_element_factory,
             $this->milestone_factory,
             $this->planning_factory,
             new AgileDashboard_Milestone_Backlog_BacklogItemBuilder(),
             new RemainingEffortValueRetriever(
                 $tracker_form_element_factory
-            )
+            ),
+            new ArtifactsInExplicitBacklogDao(),
+            new Tracker_Artifact_PriorityDao()
         );
 
         $this->milestone_validator = new MilestoneResourceValidator(
@@ -166,8 +188,7 @@ class ProjectBacklogResource
         $this->resources_patcher         = new ResourcesPatcher(
             $this->artifactlink_updater,
             $tracker_artifact_factory,
-            $priority_manager,
-            $event_manager
+            $priority_manager
         );
 
         $color_builder = new BackgroundColorBuilder(new BindDecoratorRetriever());
@@ -180,37 +201,47 @@ class ProjectBacklogResource
         $this->paginated_backlog_item_representation_builder = new AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentationsBuilder(
             $item_factory,
             $this->backlog_item_collection_factory,
-            $this->backlog_factory
+            $this->backlog_factory,
+            new \Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao()
         );
     }
 
     /**
      * Get the backlog items that can be planned in a top-milestone of a given project
      */
-    public function get(PFUser $user, Project $project, $limit, $offset) {
+    public function get(PFUser $user, Project $project, $limit, $offset)
+    {
         if (! $this->limitValueIsAcceptable($limit)) {
              throw new RestException(406, 'Maximum value for limit exceeded');
         }
-
-        $top_milestone = $this->milestone_factory->getVirtualTopMilestone($user, $project);
-
-        $paginated_backlog_items_representations = $this->paginated_backlog_item_representation_builder->getPaginatedBacklogItemsRepresentationsForTopMilestone($user, $top_milestone, $limit, $offset);
-
         $this->sendAllowHeaders();
-        $this->sendPaginationHeaders($limit, $offset, $paginated_backlog_items_representations->getTotalSize());
 
-        return $paginated_backlog_items_representations->getBacklogItemsRepresentations();
+        try {
+            $top_milestone = $this->milestone_factory->getVirtualTopMilestone($user, $project);
+
+            $paginated_backlog_items_representations = $this->paginated_backlog_item_representation_builder->getPaginatedBacklogItemsRepresentationsForTopMilestone($user, $top_milestone, $limit, $offset);
+
+            $this->sendPaginationHeaders($limit, $offset, $paginated_backlog_items_representations->getTotalSize());
+
+            return $paginated_backlog_items_representations->getBacklogItemsRepresentations();
+        } catch (\Planning_NoPlanningsException $e) {
+            $this->sendPaginationHeaders($limit, $offset, 0);
+            return [];
+        }
     }
 
-    private function limitValueIsAcceptable($limit) {
+    private function limitValueIsAcceptable($limit)
+    {
         return $limit <= self::MAX_LIMIT;
     }
 
-    public function options(PFUser $user, Project $project, $limit, $offset) {
+    public function options(PFUser $user, Project $project, $limit, $offset)
+    {
         $this->sendAllowHeaders();
     }
 
-    public function put(PFUser $user, Project $project, array $ids) {
+    public function put(PFUser $user, Project $project, array $ids)
+    {
         $this->checkIfUserCanChangePrioritiesInMilestone($user, $project);
 
         $this->validateArtifactIdsAreInUnassignedTopBacklog($ids, $user, $project);
@@ -224,35 +255,74 @@ class ProjectBacklogResource
         $this->sendAllowHeaders();
     }
 
-    public function patch(PFUser $user, Project $project, ?OrderRepresentationBase $order = null, ?array $add = null) {
+    /**
+     * Action called when an artifact is added to backlog
+     *
+     * Explicit backlog
+     *  => create new entry in db
+     *
+     * Standard backlog
+     *  => reorder item to save it as first element of backlog
+     *
+     * @throws RestException
+     * @throws \Throwable
+     */
+    public function patch(
+        PFUser $user,
+        Project $project,
+        ?OrderRepresentationBase $order = null,
+        ?array $add = null,
+        ?array $remove = null
+    ) {
         $this->checkIfUserCanChangePrioritiesInMilestone($user, $project);
-
         if ($add) {
             try {
-                $this->resources_patcher->removeArtifactFromSource($user, $add);
-            } catch (\Exception $exception) {
+                $adder = new MilestoneElementAdder(
+                    new ExplicitBacklogDao(),
+                    new ArtifactsInExplicitBacklogDao(),
+                    $this->resources_patcher,
+                    $this->planning_factory,
+                    Tracker_ArtifactFactory::instance(),
+                    new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection())
+                );
+                $adder->addElementToBacklog($project, $add, $user);
+            } catch (ProvidedAddedIdIsNotInPartOfTopBacklogException $exception) {
                 throw new RestException(400, $exception->getMessage());
+            } catch (NoRootPlanningException $exception) {
+                throw new RestException(404, $exception->getMessage());
             }
         }
 
         if ($order) {
-            $order->checkFormat($order);
+            $order->checkFormat();
 
             $all_ids = array_merge(array($order->compared_to), $order->ids);
             $this->validateArtifactIdsAreInUnassignedTopBacklog($all_ids, $user, $project);
 
+            $orderer = ArtifactsRankOrderer::build();
+            $orderer->reorder($order, self::TOP_BACKLOG_IDENTIFIER, $project);
+        }
+
+        if ($remove) {
             try {
-                $this->resources_patcher->updateArtifactPriorities($order, self::TOP_BACKLOG_IDENTIFIER, $project->getId());
-            } catch (Tracker_Artifact_Exception_CannotRankWithMyself $exception) {
+                $adder = new MilestoneElementRemover(
+                    new ExplicitBacklogDao(),
+                    new ArtifactsInExplicitBacklogDao()
+                );
+                $adder->removeElementsFromBacklog($project, $remove);
+            } catch (RemoveNotAvailableInClassicBacklogModeException $exception) {
+                throw new RestException(400, $exception->getMessage());
+            } catch (ProvidedRemoveIdIsNotInExplicitBacklogException $exception) {
                 throw new RestException(400, $exception->getMessage());
             }
         }
     }
 
     /**
-     * @throws 403
+     * @throws RestException 403
      */
-    private function checkIfUserCanChangePrioritiesInMilestone(PFUser $user, Project $project) {
+    private function checkIfUserCanChangePrioritiesInMilestone(PFUser $user, Project $project)
+    {
         $root_planning = $this->planning_factory->getRootPlanning($user, $project->getId());
 
         if (! $root_planning) {
@@ -271,9 +341,15 @@ class ProjectBacklogResource
         }
     }
 
-    private function validateArtifactIdsAreInUnassignedTopBacklog($ids, $user, $project) {
+    private function validateArtifactIdsAreInUnassignedTopBacklog(array $ids, PFUser $user, Project $project)
+    {
         try {
-            $this->milestone_validator->validateArtifactIdsAreInUnassignedTopBacklog($ids, $user, $project);
+            $explicit_backlog_dao = new ExplicitBacklogDao();
+            if ($explicit_backlog_dao->isProjectUsingExplicitBacklog((int) $project->getID()) === true) {
+                $this->milestone_validator->validateIdsAreUnique($ids);
+            } else {
+                $this->milestone_validator->validateArtifactIdsAreInUnassignedTopBacklog($ids, $user, $project);
+            }
         } catch (ArtifactIsNotInUnassignedTopBacklogItemsException $exception) {
             throw new RestException(409, $exception->getMessage());
         } catch (IdsFromBodyAreNotUniqueException $exception) {
@@ -283,11 +359,13 @@ class ProjectBacklogResource
         }
     }
 
-    private function sendPaginationHeaders($limit, $offset, $size) {
+    private function sendPaginationHeaders($limit, $offset, $size)
+    {
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
     }
 
-    private function sendAllowHeaders() {
+    private function sendAllowHeaders()
+    {
         Header::allowOptionsGetPut();
     }
 }

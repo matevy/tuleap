@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Tuleap\Document\Tree;
 
+use CSRFSynchronizerToken;
 use ForgeConfig;
 use HTTPRequest;
 use Project;
@@ -67,18 +68,17 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
         $this->includeHeaderAndNavigationBar($layout, $project);
         $this->includeJavascriptFiles($layout);
 
-        $preference = $user->getPreference('plugin_document_set_display_under_construction_modal_' . $project->getID());
-
         $renderer = TemplateRendererFactory::build()->getRenderer(__DIR__ . "/../../templates");
         $renderer->renderToPage(
             'document-tree',
             new DocumentTreePresenter(
                 $project,
                 $request->getCurrentUser(),
-                $preference === '1',
                 (bool)$this->docman_plugin_info->getPropertyValueForName('embedded_are_allowed'),
                 $is_item_status_used,
-                $is_obsolescence_date_used
+                $is_obsolescence_date_used,
+                (bool) $this->docman_plugin_info->getPropertyValueForName('only_siteadmin_can_delete'),
+                new CSRFSynchronizerToken('plugin-document')
             )
         );
 
@@ -101,10 +101,7 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
         return $docman_setting_bo->getMetadataUsage($label) === "1";
     }
 
-    /**
-     * @return IncludeAssets
-     */
-    private function includeJavascriptFiles(BaseLayout $layout)
+    private function includeJavascriptFiles(BaseLayout $layout) : void
     {
         $include_assets = new IncludeAssets(
             __DIR__ . '/../../../../src/www/assets/document/scripts',
@@ -138,10 +135,10 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
         $layout->addCssAsset(
             new CssAsset(
                 new IncludeAssets(
-                    __DIR__ . '/../../../../src/www/assets/document/BurningParrot',
-                    '/assets/document/BurningParrot'
+                    __DIR__ . '/../../../../src/www/assets/document/themes',
+                    '/assets/document/themes'
                 ),
-                'document'
+                'style'
             )
         );
     }

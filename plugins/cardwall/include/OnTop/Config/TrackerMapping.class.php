@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,7 +19,8 @@
  */
 
 
-abstract class Cardwall_OnTop_Config_TrackerMapping {
+abstract class Cardwall_OnTop_Config_TrackerMapping
+{
 
     /**
      * @var Tracker
@@ -31,7 +32,8 @@ abstract class Cardwall_OnTop_Config_TrackerMapping {
      */
     private $available_fields;
 
-    public function __construct(Tracker $tracker, array $available_fields) {
+    public function __construct(Tracker $tracker, array $available_fields)
+    {
         $this->tracker          = $tracker;
         $this->available_fields = $available_fields;
     }
@@ -39,11 +41,13 @@ abstract class Cardwall_OnTop_Config_TrackerMapping {
     /**
      * @return Tracker
      */
-    public function getTracker() {
+    public function getTracker()
+    {
         return $this->tracker;
     }
 
-    public function getAvailableFields() {
+    public function getAvailableFields()
+    {
         return $this->available_fields;
     }
 
@@ -51,11 +55,12 @@ abstract class Cardwall_OnTop_Config_TrackerMapping {
      * Return true of the given status label belongs to the given column
      *
      * @param Cardwall_Column $column
-     * @param String          $artifact_status
+     * @param string|null $artifact_status
      *
-     * @return Boolean
+     * @return bool
      */
-    public function isMappedTo(Cardwall_Column $column, $artifact_status) {
+    public function isMappedTo(Cardwall_Column $column, $artifact_status)
+    {
         foreach ($this->getValueMappings() as $value_mapping) {
             if ($value_mapping->matchStatusLabel($artifact_status)) {
                 return $value_mapping->getColumnId() == $column->getId();
@@ -67,20 +72,20 @@ abstract class Cardwall_OnTop_Config_TrackerMapping {
     /**
      * @return Tracker_FormElement
      */
-    public abstract function getField();
+    abstract public function getField();
 
     /**
      * @return Cardwall_OnTop_Config_ValueMapping[]
      */
-    public abstract function getValueMappings();
+    abstract public function getValueMappings();
 
     /**
      * @pattern Visitor
      */
-    public abstract function accept($visitor);
+    abstract public function accept($visitor);
 
-    public function isCustom() {
+    public function isCustom()
+    {
         return false;
     }
-
 }

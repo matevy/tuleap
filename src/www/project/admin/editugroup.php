@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2011-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,38 +19,35 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\DB\DBFactory;
-use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Project\Admin\MembershipDelegationDao;
 use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
 use Tuleap\Project\Admin\ProjectUGroup\BindingController;
 use Tuleap\Project\Admin\ProjectUGroup\BindingPresenterBuilder;
 use Tuleap\Project\Admin\ProjectUGroup\DelegationController;
+use Tuleap\Project\Admin\ProjectUGroup\Details\MembersPresenterBuilder;
 use Tuleap\Project\Admin\ProjectUGroup\DetailsController;
-use Tuleap\Project\Admin\ProjectUGroup\DynamicUGroupMembersUpdater;
 use Tuleap\Project\Admin\ProjectUGroup\EditBindingUGroupEventLauncher;
 use Tuleap\Project\Admin\ProjectUGroup\IndexController;
-use Tuleap\Project\Admin\ProjectUGroup\MembersController;
-use Tuleap\Project\Admin\ProjectUGroup\MembersPresenterBuilder;
 use Tuleap\Project\Admin\ProjectUGroup\PermissionsDelegationPresenterBuilder;
 use Tuleap\Project\Admin\ProjectUGroup\ProjectUGroupPresenterBuilder;
 use Tuleap\Project\Admin\ProjectUGroup\UGroupRouter;
-use Tuleap\Project\UserPermissionsDao;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDetector;
 
-require_once('pre.php');
+require_once __DIR__ . '/../../include/pre.php';
 
 $request = HTTPRequest::instance();
 
 $group_id = $request->getValidated('group_id', 'GroupId', 0);
 session_require(array('group' => $group_id, 'admin_flags' => 'A'));
 
-$event_manager       = EventManager::instance();
-$ugroup_manager      = new UGroupManager();
-$ugroup_binding      = new UGroupBinding(new UGroupUserDao(), $ugroup_manager);
-$project_manager     = ProjectManager::instance();
-$edit_event_launcher = new EditBindingUGroupEventLauncher($event_manager);
-$binding_controller  = new BindingController(
+$event_manager                            = EventManager::instance();
+$ugroup_manager                           = new UGroupManager();
+$ugroup_binding                           = new UGroupBinding(new UGroupUserDao(), $ugroup_manager);
+$project_manager                          = ProjectManager::instance();
+$edit_event_launcher    = new EditBindingUGroupEventLauncher($event_manager);
+$binding_controller                       = new BindingController(
     new ProjectHistoryDao(),
     $project_manager,
     $ugroup_manager,
@@ -58,17 +55,9 @@ $binding_controller  = new BindingController(
     $request,
     $edit_event_launcher
 );
-$user_manager        = UserManager::instance();
-$members_controller  = new MembersController(
-    $request,
-    $user_manager,
-    new DynamicUGroupMembersUpdater(
-        new UserPermissionsDao(),
-        new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
-        $ugroup_binding,
-        $event_manager
-    )
-
+$user_manager                             = UserManager::instance();
+$synchronized_project_membership_detector = new SynchronizedProjectMembershipDetector(
+    new SynchronizedProjectMembershipDao()
 );
 
 $membership_delegation_dao = new MembershipDelegationDao();
@@ -84,7 +73,7 @@ $index_controller = new IndexController(
             $user_manager,
             $event_manager
         ),
-        new MembersPresenterBuilder($event_manager, new UserHelper()),
+        new MembersPresenterBuilder($event_manager, new UserHelper(), $synchronized_project_membership_detector),
         new PermissionsDelegationPresenterBuilder($membership_delegation_dao)
     ),
     new IncludeAssets(ForgeConfig::get('tuleap_dir') . '/src/www/assets', '/assets'),
@@ -98,7 +87,6 @@ $router = new UGroupRouter(
     $request,
     $edit_event_launcher,
     $binding_controller,
-    $members_controller,
     new DelegationController($membership_delegation_dao, new ProjectHistoryDao()),
     $index_controller,
     $details_controller,

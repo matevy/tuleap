@@ -17,29 +17,32 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
 use Tuleap\TimezoneRetriever;
 
-
 /**
- * I'm responsible of 
+ * I'm responsible of
  * - displaying a Burndown chart
  * - prepare data for display
  */
-class Tracker_Chart_BurndownView extends Tracker_Chart_Burndown {
+class Tracker_Chart_BurndownView extends Tracker_Chart_Burndown
+{
 
     /**
      * @var Tracker_Chart_Data_Burndown
      */
     private $burndown_data;
-    
-    public function __construct(Tracker_Chart_Data_Burndown $burndown_data) {
+
+    public function __construct(Tracker_Chart_Data_Burndown $burndown_data)
+    {
         $this->burndown_data = $burndown_data;
     }
 
     /**
      * @return Chart
      */
-    public function buildGraph() {
+    public function buildGraph()
+    {
         $user_timezone = date_default_timezone_get();
         date_default_timezone_set(TimezoneRetriever::getServerTimezone());
 
@@ -75,7 +78,4 @@ class Tracker_Chart_BurndownView extends Tracker_Chart_Burndown {
 
         return $graph;
     }
-
 }
-
-?>

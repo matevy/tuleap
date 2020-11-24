@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2015 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,6 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueFullRepresentation;
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueOpenListRepresentation;
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation;
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentationData;
 
 /**
  * Manage values in changeset for fields
@@ -41,11 +46,12 @@ abstract class Tracker_Artifact_ChangesetValue
     protected $field;
 
     /**
-     * @var boolean
+     * @var bool
      */
     protected $has_changed;
 
-    public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed) {
+    public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed)
+    {
         $this->id          = $id;
         $this->field       = $field;
         $this->has_changed = $has_changed;
@@ -57,7 +63,8 @@ abstract class Tracker_Artifact_ChangesetValue
      *
      * @return int
      */
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
@@ -66,16 +73,18 @@ abstract class Tracker_Artifact_ChangesetValue
      *
      * @return Tracker_FormElement_Field
      */
-    public function getField() {
+    public function getField()
+    {
         return $this->field;
     }
 
     /**
      * Returns true if the changeset value has changed, false otherwise
      *
-     * @return boolean true if the changeset value has changed, false otherwise
+     * @return bool true if the changeset value has changed, false otherwise
      */
-    public function hasChanged() {
+    public function hasChanged()
+    {
         return $this->has_changed;
     }
 
@@ -85,18 +94,18 @@ abstract class Tracker_Artifact_ChangesetValue
      * @param Tracker_Artifact_ChangesetValue $changeset_value The changeset value to compare to this changeset value
      * @param string                          $format          The format of the diff (html, text, ...)
      * @param PFUser                          $user            The user or null
-     * @param boolean                         $ignore_perms
+     * @param bool $ignore_perms
      *
-     * @return string The difference between another $changeset_value, false if no differences
+     * @return string|false The difference between another $changeset_value, false if no differences
      */
-    public abstract function diff($changeset_value, $format = 'html', ?PFUser $user = null, $ignore_perms = false);
+    abstract public function diff($changeset_value, $format = 'html', ?PFUser $user = null, $ignore_perms = false);
 
-    public abstract function nodiff($format = 'html');
+    abstract public function nodiff($format = 'html');
 
     /**
      * Returns a mail format diff between current changeset value and changeset value in param
      *
-     * @return string The difference between another $changeset_value, false if no differences
+     * @return string|false The difference between another $changeset_value, false if no differences
      */
     public function mailDiff(
         $changeset_value,
@@ -116,9 +125,10 @@ abstract class Tracker_Artifact_ChangesetValue
      * @param string                          $format          The format of the diff (html, text, ...)
      * @param PFUser                          $user            The user or null
      *
-     * @return string The difference between another $changeset_value, false if no differences
+     * @return string|false The difference between another $changeset_value, false if no differences
      */
-    public function modalDiff($changeset_value, $format = 'html', ?PFUser $user = null) {
+    public function modalDiff($changeset_value, $format = 'html', ?PFUser $user = null)
+    {
         return $this->diff($changeset_value, $format, $user);
     }
 
@@ -127,39 +137,40 @@ abstract class Tracker_Artifact_ChangesetValue
      *
      * @param PFUser $user
      *
-     * @return Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation
+     * @return ArtifactFieldValueRepresentationData
      */
-    public abstract function getRESTValue(PFUser $user);
+    abstract public function getRESTValue(PFUser $user);
 
     /**
      * Return the full REST value of this changeset value
      *
      * @param PFUser $user
      *
-     * @return Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation
+     * @return ArtifactFieldValueRepresentationData
      */
-    public abstract function getFullRESTValue(PFUser $user);
+    abstract public function getFullRESTValue(PFUser $user);
 
     /**
      * @return mixed
      */
-    public abstract function accept(Tracker_Artifact_ChangesetValueVisitor $visitor);
+    abstract public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor);
 
     /**
      * Returns the Json value of this changeset value
      *
      * @return string The value of this artifact changeset value for Json format
      */
-    public function getJsonValue() {
+    public function getJsonValue()
+    {
         return $this->getValue();
     }
 
     /**
      * Returns the value of this changeset value
      *
-     * @return string|array The value of this artifact changeset value
+     * @return mixed The value of this artifact changeset value
      */
-    public abstract function getValue();
+    abstract public function getValue();
 
     /**
      * @return Tracker_Artifact_Changeset
@@ -169,10 +180,9 @@ abstract class Tracker_Artifact_ChangesetValue
         return $this->changeset;
     }
 
-    protected function getRESTRepresentation($value) {
-        $classname_with_namespace = 'Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation';
-
-        $artifact_field_value_representation = new $classname_with_namespace;
+    protected function getRESTRepresentation($value)
+    {
+        $artifact_field_value_representation = new ArtifactFieldValueRepresentation();
         $artifact_field_value_representation->build(
             $this->field->getId(),
             $this->field->getLabel(),
@@ -182,10 +192,9 @@ abstract class Tracker_Artifact_ChangesetValue
         return $artifact_field_value_representation;
     }
 
-    protected function getFullRESTRepresentation($value) {
-        $classname_with_namespace = 'Tuleap\Tracker\REST\Artifact\ArtifactFieldValueFullRepresentation';
-
-        $artifact_field_value_full_representation = new $classname_with_namespace;
+    protected function getFullRESTRepresentation($value)
+    {
+        $artifact_field_value_full_representation = new ArtifactFieldValueFullRepresentation();
         $artifact_field_value_full_representation->build(
             $this->field->getId(),
             Tracker_FormElementFactory::instance()->getType($this->field),

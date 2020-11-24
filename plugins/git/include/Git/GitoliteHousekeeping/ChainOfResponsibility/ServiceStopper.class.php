@@ -18,12 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/backend/BackendService.class.php';
-
 /**
  * I stop teh service
  */
-class Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceStopper extends Git_GitoliteHousekeeping_ChainOfResponsibility_Command {
+class Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceStopper extends Git_GitoliteHousekeeping_ChainOfResponsibility_Command
+{
 
     /** @var Git_GitoliteHousekeeping_GitoliteHousekeepingResponse */
     private $response;
@@ -31,13 +30,15 @@ class Git_GitoliteHousekeeping_ChainOfResponsibility_ServiceStopper extends Git_
     /** @var BackendService */
     private $backend_service;
 
-    public function __construct(Git_GitoliteHousekeeping_GitoliteHousekeepingResponse $response, BackendService $backend_service) {
+    public function __construct(Git_GitoliteHousekeeping_GitoliteHousekeepingResponse $response, BackendService $backend_service)
+    {
         parent::__construct();
         $this->response         = $response;
         $this->backend_service  = $backend_service;
     }
 
-    public function execute() {
+    public function execute()
+    {
         $this->response->info('Stopping service');
         $this->backend_service->stop();
         $this->executeNextCommand();

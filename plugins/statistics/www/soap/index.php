@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'pre.php';
+require_once __DIR__ . '/../../../../src/www/include/pre.php';
 
 // First, check plugin availability
 $pluginManager = PluginManager::instance();
@@ -26,7 +26,5 @@ $p = $pluginManager->getPluginByName('statistics');
 if ($p && $plugin_manager->isPluginAvailable($p)) {
     $p->processSOAP($request);
 } else {
-    header('Location: '.get_server_url());
+    header('Location: /');
 }
-
-?>

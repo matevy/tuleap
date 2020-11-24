@@ -1,7 +1,4 @@
 <?php
-
-use Tuleap\Docman\View\DocmanViewURLBuilder;
-
 /**
  * Copyright © Enalean, 2011 - Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
@@ -25,13 +22,18 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Docman_View_Admin_Obsolete extends Docman_View_Extra {
+use Tuleap\Docman\View\DocmanViewURLBuilder;
 
-    function _title($params) {
+class Docman_View_Admin_Obsolete extends Docman_View_Extra
+{
+
+    function _title($params)
+    {
         echo '<h2>'. $this->_getTitle($params) .' - '. $GLOBALS['Language']->getText('plugin_docman', 'admin_obsolete_title') .'</h2>';
     }
 
-    function getTable($params) {
+    function getTable($params)
+    {
         $html = '';
 
         // Get root
@@ -40,20 +42,28 @@ class Docman_View_Admin_Obsolete extends Docman_View_Extra {
 
         $nbItemsFound = 0;
 
-        $itemIterator = $itemFactory->getItemList($rootItem->getId(),
-                                              $nbItemsFound,
-                                              array('user' => $params['user'],
-                                                    'ignore_collapse' => true,
-                                                    'obsolete_only' => true));
+        if ($rootItem !== null) {
+            $itemIterator = $itemFactory->getItemList(
+                $rootItem->getId(),
+                $nbItemsFound,
+                [
+                    'user' => $params['user'],
+                    'ignore_collapse' => true,
+                    'obsolete_only' => true
+                ]
+            );
+        } else {
+            $itemIterator = new ArrayIterator([]);
+        }
 
         $table = html_build_list_table_top(array('Title', 'Obsolete date'));
 
         $altRowClass = 0;
         $itemIterator->rewind();
-        while($itemIterator->valid()) {            
+        while ($itemIterator->valid()) {
             $item = $itemIterator->current();
             $type = $itemFactory->getItemTypeForItem($item);
-            if($type != PLUGIN_DOCMAN_ITEM_TYPE_FOLDER) {
+            if ($type != PLUGIN_DOCMAN_ITEM_TYPE_FOLDER) {
                 $trclass = html_get_alt_row_color($altRowClass++);
                 $table .= "<tr class=\"".$trclass."\">\n";
 
@@ -94,7 +104,8 @@ class Docman_View_Admin_Obsolete extends Docman_View_Extra {
         return $html;
     }
 
-    function _content($params) {
+    function _content($params)
+    {
         $html = '';
 
         $html .= '<p>';
@@ -105,5 +116,4 @@ class Docman_View_Admin_Obsolete extends Docman_View_Extra {
 
         print $html;
     }
-
 }

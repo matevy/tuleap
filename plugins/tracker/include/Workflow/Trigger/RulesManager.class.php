@@ -19,8 +19,10 @@
  */
 
 use Tuleap\Tracker\Workflow\WorkflowBackendLogger;
+use Tuleap\Tracker\Workflow\WorkflowRulesManagerLoopSafeGuard;
 
-class Tracker_Workflow_Trigger_RulesManager {
+class Tracker_Workflow_Trigger_RulesManager
+{
     /** @var Tracker_Workflow_Trigger_RulesDao */
     private $dao;
 
@@ -37,19 +39,25 @@ class Tracker_Workflow_Trigger_RulesManager {
      * @var Tracker_Workflow_Trigger_RulesBuilderFactory
      */
     private $trigger_builder;
+    /**
+     * @var WorkflowRulesManagerLoopSafeGuard
+     */
+    private $loop_safe_guard;
 
     public function __construct(
         Tracker_Workflow_Trigger_RulesDao $dao,
         Tracker_FormElementFactory $formelement_factory,
         Tracker_Workflow_Trigger_RulesProcessor $rules_processor,
         WorkflowBackendLogger $logger,
-        Tracker_Workflow_Trigger_RulesBuilderFactory $trigger_builder
+        Tracker_Workflow_Trigger_RulesBuilderFactory $trigger_builder,
+        WorkflowRulesManagerLoopSafeGuard $loop_safe_guard
     ) {
         $this->dao                 = $dao;
         $this->formelement_factory = $formelement_factory;
         $this->rules_processor     = $rules_processor;
         $this->logger              = $logger;
         $this->trigger_builder     = $trigger_builder;
+        $this->loop_safe_guard     = $loop_safe_guard;
     }
 
     /**
@@ -60,7 +68,8 @@ class Tracker_Workflow_Trigger_RulesManager {
      *
      * @return void
      */
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping, Tracker $tracker) {
+    public function exportToXml(SimpleXMLElement $root, $xmlMapping, Tracker $tracker)
+    {
         $trigger_rule_collection = $this->getForTargetTracker($tracker);
 
         foreach ($trigger_rule_collection as $trigger_rule) {
@@ -77,7 +86,6 @@ class Tracker_Workflow_Trigger_RulesManager {
                 $trigger_xml->addChild('field_value_id')->addAttribute('REF', $trigger->getValue()->getXMLId());
             }
 
-
             $trigger_rule_xml->addChild('condition', $trigger_rule->getCondition());
 
             $target = $trigger_rule->getTarget();
@@ -87,8 +95,9 @@ class Tracker_Workflow_Trigger_RulesManager {
         }
     }
 
-    public function createFromXML(SimpleXMLElement $xml_element, array $xmlMapping) {
-        foreach($xml_element->trigger_rule as $trigger_rule_xml) {
+    public function createFromXML(SimpleXMLElement $xml_element, array $xmlMapping)
+    {
+        foreach ($xml_element->trigger_rule as $trigger_rule_xml) {
             $triggers = array();
             foreach ($trigger_rule_xml->triggers->trigger as $trigger_xml) {
                 $triggers[] = new Tracker_Workflow_Trigger_FieldValue(
@@ -98,13 +107,13 @@ class Tracker_Workflow_Trigger_RulesManager {
             }
 
             $new_trigger_rule = new Tracker_Workflow_Trigger_TriggerRule(
-                    0,
-                    new Tracker_Workflow_Trigger_FieldValue(
-                        $xmlMapping[(string) $trigger_rule_xml->target->field_id['REF']],
-                        $xmlMapping[(string) $trigger_rule_xml->target->field_value_id['REF']]
-                    ),
-                    (string) $trigger_rule_xml->condition,
-                    $triggers
+                0,
+                new Tracker_Workflow_Trigger_FieldValue(
+                    $xmlMapping[(string) $trigger_rule_xml->target->field_id['REF']],
+                    $xmlMapping[(string) $trigger_rule_xml->target->field_value_id['REF']]
+                ),
+                (string) $trigger_rule_xml->condition,
+                $triggers
             );
 
             $this->add($new_trigger_rule);
@@ -116,7 +125,8 @@ class Tracker_Workflow_Trigger_RulesManager {
      *
      * @param Tracker_Workflow_Trigger_TriggerRule $rule
      */
-    public function add(Tracker_Workflow_Trigger_TriggerRule $rule) {
+    public function add(Tracker_Workflow_Trigger_TriggerRule $rule)
+    {
         try {
             $this->dao->enableExceptionsOnError();
             $this->dao->startTransaction();
@@ -141,7 +151,8 @@ class Tracker_Workflow_Trigger_RulesManager {
      * @param Tracker_Workflow_Trigger_TriggerRule $rule
      * @throws Tracker_Workflow_Trigger_Exception_RuleException
      */
-    public function delete(Tracker $tracker, Tracker_Workflow_Trigger_TriggerRule $rule) {
+    public function delete(Tracker $tracker, Tracker_Workflow_Trigger_TriggerRule $rule)
+    {
         if ($rule->getTargetTracker() != $tracker) {
             throw new Tracker_Workflow_Trigger_Exception_RuleException('Cannot delete rules from another tracker');
         }
@@ -161,7 +172,8 @@ class Tracker_Workflow_Trigger_RulesManager {
      *
      * @return Tracker_Workflow_Trigger_TriggerRule
      */
-    public function getRuleById($rule_id) {
+    public function getRuleById($rule_id)
+    {
         $dar = $this->dao->searchForTargetByRuleId($rule_id);
         if ($dar && count($dar) == 1) {
             return $this->getInstanceFromRow($dar->current());
@@ -176,7 +188,8 @@ class Tracker_Workflow_Trigger_RulesManager {
      *
      * @return Tracker_Workflow_Trigger_TriggerRuleCollection
      */
-    public function getForTargetTracker(Tracker $tracker) {
+    public function getForTargetTracker(Tracker $tracker)
+    {
         $rules = new Tracker_Workflow_Trigger_TriggerRuleCollection();
         foreach ($this->dao->searchForTargetTracker($tracker->getId()) as $row) {
             $rules->push($this->getInstanceFromRow($row));
@@ -189,7 +202,8 @@ class Tracker_Workflow_Trigger_RulesManager {
         return $this->dao->searchTriggersByFieldId($field->getId());
     }
 
-    private function getInstanceFromRow(array $row) {
+    private function getInstanceFromRow(array $row)
+    {
         return new Tracker_Workflow_Trigger_TriggerRule(
             $row['id'],
             $this->getTarget($row['field_id'], $row['value_id']),
@@ -198,11 +212,13 @@ class Tracker_Workflow_Trigger_RulesManager {
         );
     }
 
-    private function getTarget($field_id, $value_id) {
+    private function getTarget($field_id, $value_id)
+    {
         return $this->getFieldValue($field_id, $value_id);
     }
 
-    private function getTriggers($rule_id) {
+    private function getTriggers($rule_id)
+    {
         $triggers = array();
         foreach ($this->dao->searchForTriggeringFieldByRuleId($rule_id) as $row) {
             $triggers[] = $this->getFieldValue($row['field_id'], $row['value_id']);
@@ -210,7 +226,8 @@ class Tracker_Workflow_Trigger_RulesManager {
         return $triggers;
     }
 
-    private function getFieldValue($field_id, $value_id) {
+    private function getFieldValue($field_id, $value_id)
+    {
         $field = $this->formelement_factory->getUsedFormElementFieldById($field_id);
         return new Tracker_Workflow_Trigger_FieldValue(
             $field,
@@ -218,7 +235,8 @@ class Tracker_Workflow_Trigger_RulesManager {
         );
     }
 
-    private function getValue(array $all_values, $value_id) {
+    private function getValue(array $all_values, $value_id)
+    {
         foreach ($all_values as $value) {
             if ($value->getId() == $value_id) {
                 return $value;
@@ -226,13 +244,24 @@ class Tracker_Workflow_Trigger_RulesManager {
         }
     }
 
-    public function processChildrenTriggers(Tracker_Artifact $parent) {
+    public function processChildrenTriggers(Tracker_Artifact $parent)
+    {
+        $this->loop_safe_guard->process(
+            $parent,
+            function () use ($parent) : void {
+                $this->processChildrenTriggersWithinLoopSafeGuard($parent);
+            }
+        );
+    }
+
+    private function processChildrenTriggersWithinLoopSafeGuard(Tracker_Artifact $parent) : void
+    {
         $this->logger->start(__METHOD__, $parent->getId());
 
         $dar_rules = $this->dao->searchForInvolvedRulesForChildrenLastChangeset($parent->getId());
         foreach ($dar_rules as $row) {
             $artifact = Tracker_ArtifactFactory::instance()->getInstanceFromRow($row);
-            $rule = $this->getRuleById($row['rule_id']);
+            $rule     = $this->getRuleById($row['rule_id']);
             $this->logger->debug("Found matching rule ". json_encode($rule->fetchFormattedForJson()));
             $this->rules_processor->process($artifact, $rule);
         }
@@ -240,7 +269,8 @@ class Tracker_Workflow_Trigger_RulesManager {
         $this->logger->end(__METHOD__, $parent->getId());
     }
 
-    public function processTriggers(Tracker_Artifact_Changeset $changeset) {
+    public function processTriggers(Tracker_Artifact_Changeset $changeset)
+    {
         $this->logger->start(__METHOD__, $changeset->getId());
 
         $dar_rules = $this->dao->searchForInvolvedRulesIdsByChangesetId($changeset->getId());
@@ -259,13 +289,15 @@ class Tracker_Workflow_Trigger_RulesManager {
      * @param array $template_trackers
      * @param array $field_mapping
      */
-    public function duplicate(array $template_trackers, array $field_mapping) {
+    public function duplicate(array $template_trackers, array $field_mapping)
+    {
         foreach ($template_trackers as $template_tracker) {
             $this->duplicateFromTemplateTracker($template_tracker, $field_mapping);
         }
     }
 
-    private function duplicateFromTemplateTracker(Tracker $template_tracker, array $field_mapping) {
+    private function duplicateFromTemplateTracker(Tracker $template_tracker, array $field_mapping)
+    {
         $trigger_rule_collection = $this->getForTargetTracker($template_tracker);
 
         foreach ($trigger_rule_collection as $template_trigger_rule) {
@@ -275,10 +307,10 @@ class Tracker_Workflow_Trigger_RulesManager {
             $new_triggers = $this->buildRuleTriggersFromTemplateTriggerRule($old_triggers, $field_mapping);
 
             $new_trigger_rule = new Tracker_Workflow_Trigger_TriggerRule(
-                    0,
-                    $new_target,
-                    $template_trigger_rule->getCondition(),
-                    $new_triggers
+                0,
+                $new_target,
+                $template_trigger_rule->getCondition(),
+                $new_triggers
             );
 
             $this->add($new_trigger_rule);
@@ -300,16 +332,17 @@ class Tracker_Workflow_Trigger_RulesManager {
         }
 
         return new Tracker_Workflow_Trigger_FieldValue(
-                $target_field,
-                $target_value
+            $target_field,
+            $target_value
         );
     }
 
-    private function buildRuleTriggersFromTemplateTriggerRule(array $template_triggers, array $field_mapping) {
+    private function buildRuleTriggersFromTemplateTriggerRule(array $template_triggers, array $field_mapping)
+    {
         $new_triggers = array();
 
         foreach ($template_triggers as $template_trigger) {
-           $new_triggers[] = $this->buildRuleTargetFromTemplateTriggerRule($template_trigger, $field_mapping);
+            $new_triggers[] = $this->buildRuleTargetFromTemplateTriggerRule($template_trigger, $field_mapping);
         }
 
         return $new_triggers;

@@ -21,26 +21,30 @@
 
 require_once __DIR__.'/../../../bootstrap.php';
 
-class Transition_PostAction_CIBuildFactory_BaseTest extends TuleapTestCase {
+class Transition_PostAction_CIBuildFactory_BaseTest extends TuleapTestCase
+{
 
     protected $factory;
     protected $dao;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->transition_id  = 123;
         $this->post_action_id = 789;
 
         $this->transition = aTransition()->withId($this->transition_id)->build();
-        $this->dao        = mock('Transition_PostAction_CIBuildDao');
+        $this->dao        = Mockery::mock('Transition_PostAction_CIBuildDao');
         $this->factory    = new Transition_PostAction_CIBuildFactory($this->dao);
     }
 }
 
-class Transition_PostAction_CIBuildFactory_LoadPostActionsTest extends Transition_PostAction_CIBuildFactory_BaseTest {
+class Transition_PostAction_CIBuildFactory_LoadPostActionsTest extends Transition_PostAction_CIBuildFactory_BaseTest
+{
 
-    public function itLoadsCIBuildPostActions() {
+    public function itLoadsCIBuildPostActions()
+    {
         $post_action_value = 'http://ww.myjenks.com/job';
         $post_action_rows  = array(
             'id'         => $this->post_action_id,
@@ -60,9 +64,11 @@ class Transition_PostAction_CIBuildFactory_LoadPostActionsTest extends Transitio
     }
 }
 
-class Transition_PostAction_CIBuildFactory_DuplicateTest extends Transition_PostAction_CIBuildFactory_BaseTest {
+class Transition_PostAction_CIBuildFactory_DuplicateTest extends Transition_PostAction_CIBuildFactory_BaseTest
+{
 
-    public function itDelegatesTheDuplicationToTheDao() {
+    public function itDelegatesTheDuplicationToTheDao()
+    {
         $to_transition_id   = 2;
         $field_mapping      = array();
 
@@ -71,9 +77,11 @@ class Transition_PostAction_CIBuildFactory_DuplicateTest extends Transition_Post
     }
 }
 
-class Transition_CIBuildFactory_GetInstanceFromXmlTest extends Transition_PostAction_CIBuildFactory_BaseTest {
+class Transition_CIBuildFactory_GetInstanceFromXmlTest extends Transition_PostAction_CIBuildFactory_BaseTest
+{
 
-    public function itReconstitutesCIBuildPostActionsFromXML() {
+    public function itReconstitutesCIBuildPostActionsFromXML()
+    {
         $xml = new SimpleXMLElement('
             <postaction_ci_build job_url="http://www"/>
         ');
@@ -81,15 +89,16 @@ class Transition_CIBuildFactory_GetInstanceFromXmlTest extends Transition_PostAc
         $post_action = $this->factory->getInstanceFromXML($xml, $this->mapping, $this->transition);
 
         $this->assertIsA($post_action, 'Transition_PostAction_CIBuild');
-        $this->assertEqual($post_action->getJobUrl(),"http://www" );
+        $this->assertEqual($post_action->getJobUrl(), "http://www");
         $this->assertTrue($post_action->isDefined());
     }
 }
 
-class Transition_CIBuildFactory_isFieldUsedInPostActionsTest extends Transition_PostAction_CIBuildFactory_BaseTest {
+class Transition_CIBuildFactory_isFieldUsedInPostActionsTest extends Transition_PostAction_CIBuildFactory_BaseTest
+{
 
-    public function itReturnsAlwaysFalseSinceThereIsNoFieldUsedInThisPostAction() {
+    public function itReturnsAlwaysFalseSinceThereIsNoFieldUsedInThisPostAction()
+    {
         $this->assertFalse($this->factory->isFieldUsedInPostActions(mock('Tracker_FormElement_Field_Selectbox')));
     }
 }
-?>

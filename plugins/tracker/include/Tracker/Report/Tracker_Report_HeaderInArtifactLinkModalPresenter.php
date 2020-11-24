@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Tracker_Report_HeaderInArtifactLinkModalPresenter {
+class Tracker_Report_HeaderInArtifactLinkModalPresenter
+{
 
     private $tracker_switcher;
     private $reports_selector;
@@ -27,26 +28,31 @@ class Tracker_Report_HeaderInArtifactLinkModalPresenter {
     private $title;
 
 
-    public function __construct($title, $tracker_switcher, $select_report_url, $reports_selector) {
+    public function __construct($title, $tracker_switcher, $select_report_url, $reports_selector)
+    {
         $this->title             = $title;
         $this->reports_selector  = $reports_selector;
         $this->select_report_url = $select_report_url;
         $this->tracker_switcher  = $tracker_switcher;
     }
 
-    public function tracker_switcher() {
+    public function tracker_switcher()
+    {
         return $this->tracker_switcher;
     }
 
-    public function title() {
+    public function title()
+    {
         return $this->title;
     }
 
-    public function select_report_url() {
+    public function select_report_url()
+    {
         return $this->select_report_url;
     }
 
-    public function reports_selector() {
+    public function reports_selector()
+    {
         return $this->reports_selector;
     }
 }

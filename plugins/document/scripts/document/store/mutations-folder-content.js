@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,6 +19,7 @@
 
 import Vue from "vue";
 import { TYPE_FOLDER } from "../constants.js";
+import { getFolderSubtree } from "../helpers/retrieve-subtree-helper.js";
 
 export {
     saveFolderContent,
@@ -30,7 +31,8 @@ export {
     removeCreatedPropertyOnItem,
     replaceUploadingFileWithActualFile,
     removeItemFromFolderContent,
-    addDocumentToFoldedFolder
+    addDocumentToFoldedFolder,
+    updateCurrentItemForQuickLokDisplay
 };
 
 function saveFolderContent(state, folder_content) {
@@ -132,7 +134,7 @@ function addJustCreatedItemToFolderContent(state, new_item) {
         return addDocumentToTheRightPlace(state, new_item, parent);
     }
 
-    addFolderToTheRightPlace(state, new_item, parent);
+    return addFolderToTheRightPlace(state, new_item, parent);
 }
 
 function appendSubFolderContent(state, [folder_id, sub_items]) {
@@ -182,7 +184,7 @@ function isParentFoldedByOnOfIsAncestors(state, parent_folder) {
 }
 
 function isFolderClosed(state, folder_id) {
-    return state.folded_by_map.hasOwnProperty(folder_id);
+    return Object.prototype.hasOwnProperty.call("state", folder_id);
 }
 
 function foldFolderContent(state, folder_id) {
@@ -239,7 +241,7 @@ function getFolderUnfoldedDescendants(state, folder_id) {
     const unfolded_descendants = [];
 
     children.forEach(child => {
-        if (state.folded_by_map.hasOwnProperty(child.id)) {
+        if (Object.prototype.hasOwnProperty.call(state.folded_by_map, child.id)) {
             return;
         }
 
@@ -268,5 +270,23 @@ function removeItemFromFolderContent(state, item_to_remove) {
         return;
     }
 
+    if (item_to_remove.type === TYPE_FOLDER) {
+        unfoldFolderContent(state, item_to_remove.id);
+
+        const children = getFolderSubtree(state.folder_content, item_to_remove.id);
+
+        children.forEach(child => {
+            if (child.type === TYPE_FOLDER) {
+                unfoldFolderContent(state, child.id);
+            }
+
+            removeItemFromFolderContent(state, child);
+        });
+    }
+
     state.folder_content.splice(index, 1);
+}
+
+function updateCurrentItemForQuickLokDisplay(state, item) {
+    state.currently_previewed_item = item;
 }

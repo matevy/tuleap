@@ -1,4 +1,4 @@
-#!/opt/remi/php72/root/usr/bin/php
+#!/opt/remi/php73/root/usr/bin/php
 <?php
 /**
  * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
@@ -24,7 +24,10 @@ declare(strict_types=1);
 require_once __DIR__.'/../vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
+use TuleapCfg\Command\ProcessFactory;
 
 $application = new Application();
 $application->add(new \TuleapCfg\Command\ConfigureCommand());
+$application->add(new \TuleapCfg\Command\SystemControlCommand(new ProcessFactory()));
+$application->add(new \TuleapCfg\Command\DockerAioRunCommand(new ProcessFactory()));
 $application->run();

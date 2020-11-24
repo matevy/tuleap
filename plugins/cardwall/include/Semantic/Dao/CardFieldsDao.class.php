@@ -21,11 +21,11 @@
 * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
 */
 
-require_once('common/dao/include/DataAccessObject.class.php');
+class Cardwall_Semantic_Dao_CardFieldsDao extends DataAccessObject implements Tracker_Semantic_IRetrieveSemanticDARByTracker
+{
 
-class Cardwall_Semantic_Dao_CardFieldsDao extends DataAccessObject implements Tracker_Semantic_IRetrieveSemanticDARByTracker {
-
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->table_name = 'plugin_cardwall_semantic_cardfields';
     }
@@ -33,7 +33,8 @@ class Cardwall_Semantic_Dao_CardFieldsDao extends DataAccessObject implements Tr
     /**
      * @return mixed either false if error or object DataAccessResult
      */
-    public function searchByTrackerId($tracker_id) {
+    public function searchByTrackerId($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
 
         $sql = "SELECT *
@@ -45,9 +46,10 @@ class Cardwall_Semantic_Dao_CardFieldsDao extends DataAccessObject implements Tr
     }
 
     /**
-     * @return boolean true if success
+     * @return bool true if success
      */
-    public function add($tracker_id, $field_id, $rank) {
+    public function add($tracker_id, $field_id, $rank)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $field_id   = $this->da->escapeInt($field_id);
         $rank       = $this->da->escapeInt($this->prepareRanking(0, $tracker_id, $rank, 'id', 'tracker_id'));
@@ -59,9 +61,10 @@ class Cardwall_Semantic_Dao_CardFieldsDao extends DataAccessObject implements Tr
 
 
     /**
-     * @return boolean true if success
+     * @return bool true if success
      */
-    public function remove($tracker_id, $field_id) {
+    public function remove($tracker_id, $field_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $field_id   = $this->da->escapeInt($field_id);
 
@@ -72,4 +75,3 @@ class Cardwall_Semantic_Dao_CardFieldsDao extends DataAccessObject implements Tr
         return $this->update($sql);
     }
 }
-?>

@@ -18,8 +18,7 @@
  */
 
 
-class Tracker_FormElement_View_Admin_Field_Radiobutton extends Tracker_FormElement_View_Admin_Field_Selectbox {
-     protected $availableTypes = array('sb', 'msb', 'cb');
+class Tracker_FormElement_View_Admin_Field_Radiobutton extends Tracker_FormElement_View_Admin_Field_Selectbox
+{
+    protected $availableTypes = array('sb', 'msb', 'cb');
 }
-
-?>

@@ -1,15 +1,34 @@
 <?php
+/**
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 require_once('user.php');
 
 
-function groups_to_soap($groups) {
+function groups_to_soap($groups)
+{
     $return = array();
     foreach ($groups as $group_id => $group) {
         if (!$group || $group->isError()) {
             //skip if error
         } else {
-            $return[] = group_to_soap($group);	
+            $return[] = group_to_soap($group);
         }
     }
     return $return;
@@ -20,9 +39,10 @@ function groups_to_soap($groups) {
  * regarding the restricted access
  *
  * @param Object{Group} $group the Group object
- * @return boolean true if the current session user has access to this project, false otherwise
+ * @return bool true if the current session user has access to this project, false otherwise
  */
-function checkRestrictedAccess($group) {
+function checkRestrictedAccess($group)
+{
     if (ForgeConfig::areRestrictedUsersAllowed()) {
         if ($group) {
             $user = UserManager::instance()->getCurrentUser();
@@ -46,7 +66,8 @@ function checkRestrictedAccess($group) {
 /**
  * Returns true is the current user is a member of the given group
  */
-function checkGroupMemberAccess($group) {
+function checkGroupMemberAccess($group)
+{
     if ($group) {
         $user = UserManager::instance()->getCurrentUser();
         if ($user) {
@@ -59,9 +80,10 @@ function checkGroupMemberAccess($group) {
     }
 }
 
-function ugroups_to_soap($ugroups) {
+function ugroups_to_soap($ugroups)
+{
     $return = array();
-    
+
     foreach ($ugroups as $ugroup) {
         $ugroup_id = $ugroup['ugroup_id'];
         if (!isset($return[$ugroup_id])) {
@@ -69,13 +91,13 @@ function ugroups_to_soap($ugroups) {
             $return[$ugroup_id]['name'] = $ugroup['name'];
             $return[$ugroup_id]['members'] = array();
         }
-        
+
         if ($ugroup['user_id']) {
             $return[$ugroup_id]['members'][] = array('user_id' => $ugroup['user_id'],
                                                      'user_name' => $ugroup['user_name']);
         }
     }
-    
+
     return $return;
 }
 
@@ -90,7 +112,8 @@ function ugroups_to_soap($ugroups) {
  * @param PFUser $current_user
  * @return array
  */
-function user_to_soap($identifier, ?PFUser $user = null, PFUser $current_user) {
+function user_to_soap($identifier, ?PFUser $user = null, PFUser $current_user)
+{
     if ($user !== null && ($user->isActive() || $user->isRestricted() || $user->isSuspended())) {
         if ($current_user->canSee($user)) {
             return array(
@@ -104,5 +127,3 @@ function user_to_soap($identifier, ?PFUser $user = null, PFUser $current_user) {
         }
     }
 }
-
-?>

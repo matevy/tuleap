@@ -22,7 +22,8 @@ use Tuleap\AgileDashboard\Milestone\ParentTrackerRetriever;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 use Tuleap\AgileDashboard\REST\v1\MilestoneRepresentation;
 
-class AgileDashboard_Milestone_MilestoneRepresentationBuilder {
+class AgileDashboard_Milestone_MilestoneRepresentationBuilder
+{
 
     /** @var Planning_MilestoneFactory */
     private $milestone_factory;
@@ -57,7 +58,8 @@ class AgileDashboard_Milestone_MilestoneRepresentationBuilder {
         $this->parent_tracker_retriever     = $parent_tracker_retriever;
     }
 
-    public function getMilestoneRepresentation(Planning_Milestone $milestone, PFUser $user, $representation_type) {
+    public function getMilestoneRepresentation(Planning_Milestone $milestone, PFUser $user, $representation_type)
+    {
         $status_count = array();
         if ($representation_type === MilestoneRepresentation::ALL_FIELDS) {
             $status_count = $this->milestone_factory->getMilestoneStatusCount($user, $milestone);
@@ -97,16 +99,16 @@ class AgileDashboard_Milestone_MilestoneRepresentationBuilder {
         Planning_Milestone $milestone,
         PFUser $user,
         $representation_type,
-        Tuleap\AgileDashboard\Milestone\Criterion\ISearchOnStatus $criterion,
+        Tuleap\AgileDashboard\Milestone\Criterion\Status\ISearchOnStatus $criterion,
         $limit,
         $offset,
         $order
     ) {
         $sub_milestones = $this->milestone_factory
-            ->getPaginatedSubMilestones($user, $milestone, $criterion, $limit, $offset, $order);
+            ->getPaginatedSubMilestonesWithStatusCriterion($user, $milestone, $criterion, $limit, $offset, $order);
 
         $submilestones_representations = array();
-        foreach($sub_milestones->getMilestones() as $submilestone) {
+        foreach ($sub_milestones->getMilestones() as $submilestone) {
             $submilestones_representations[] = $this->getMilestoneRepresentation($submilestone, $user, $representation_type);
         }
 
@@ -120,12 +122,12 @@ class AgileDashboard_Milestone_MilestoneRepresentationBuilder {
         Planning_Milestone $milestone,
         PFUser $user,
         $representation_type,
-        Tuleap\AgileDashboard\Milestone\Criterion\ISearchOnStatus $criterion,
+        Tuleap\AgileDashboard\Milestone\Criterion\Status\ISearchOnStatus $criterion,
         $limit,
         $offset
     ) {
         $siblings = $this->milestone_factory
-            ->getPaginatedSiblingMilestones($user, $milestone, $criterion, $limit, $offset);
+            ->getPaginatedSiblingMilestonesWithStatusCriterion($user, $milestone, $criterion, $limit, $offset);
 
         $sibling_representations = [];
         foreach ($siblings->getMilestones() as $sibling) {
@@ -146,16 +148,17 @@ class AgileDashboard_Milestone_MilestoneRepresentationBuilder {
         Project $project,
         PFUser $user,
         $representation_type,
-        Tuleap\AgileDashboard\Milestone\Criterion\ISearchOnStatus $criterion,
+        Tuleap\AgileDashboard\Milestone\Criterion\Status\ISearchOnStatus $criterion,
         $limit,
         $offset,
         $order
     ) {
+
         $sub_milestones = $this->milestone_factory
-            ->getPaginatedTopMilestones($user, $project, $criterion, $limit, $offset, $order);
+            ->getPaginatedTopMilestonesWithStatusCriterion($user, $project, $criterion, $limit, $offset, $order);
 
         $submilestones_representations = array();
-        foreach($sub_milestones->getMilestones() as $submilestone) {
+        foreach ($sub_milestones->getMilestones() as $submilestone) {
             $submilestones_representations[] = $this->getMilestoneRepresentation($submilestone, $user, $representation_type);
         }
 
@@ -165,7 +168,8 @@ class AgileDashboard_Milestone_MilestoneRepresentationBuilder {
         );
     }
 
-    private function getBacklogTrackers(Planning_Milestone $milestone) {
+    private function getBacklogTrackers(Planning_Milestone $milestone)
+    {
         return $this->backlog_factory->getBacklog($milestone)->getDescendantTrackers();
     }
 }

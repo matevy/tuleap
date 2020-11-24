@@ -140,9 +140,6 @@ $codendi_bin_prefix = '/usr/lib/tuleap/bin';
 // Tuleap database configuration file
 $db_config_file = $sys_custom_dir . '/conf/database.inc';
 
-// Rabbitmq config file
-$rabbitmq_config_file = '/etc/tuleap/conf/rabbitmq.inc';
-
 // Redis config file
 $redis_config_file = '/etc/tuleap/conf/redis.inc';
 
@@ -351,10 +348,6 @@ $sys_file_deletion_delay = 3;
 // are also configured to allow this size.
 $sys_max_size_upload = 67108864;
 
-// Max upload size for attachments (bugs, SR, artifacts, etc.)
-// in bytes. E.g. 16777216 for 16 MB
-$sys_max_size_attachment = 16777216;
-
 //Proxy used to access to Internet. "host:port"
 $sys_proxy = '';
 
@@ -472,8 +465,7 @@ $sys_use_unsecure_ssl_certificate = 0;
 // Allow backend processing of emails
 // /!\ WARNING /!\
 // Only enable this if you have
-// - RabbitMQ configured (see /usr/share/tuleap/src/etc/rabbitmq.inc.dist)
-// - Backend workers (below) is set to a positive value
+// Backend workers (below) is set to a positive value
 // Otherwise you will loose email notifications.
 //
 // Possible values:
@@ -486,5 +478,4 @@ $sys_use_unsecure_ssl_certificate = 0;
 // Number of backend workers to process background jobs.
 // To be adapted given your server workload.
 // 2 is a good starting value, you can increase it
-// RabbitMQ must be configured prior to set this.
 // $sys_nb_backend_workers = 0;

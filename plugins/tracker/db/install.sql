@@ -111,7 +111,7 @@ CREATE TABLE tracker(
     log_priority_changes TINYINT(1) NOT NULL default '0',
     notifications_level INT( 11 ) NOT NULL default '0',
     from_tv3_id INT(11) NULL,
-    color varchar(64) NOT NULL DEFAULT 'inca_silver',
+    color varchar(64) NOT NULL DEFAULT 'inca-silver',
     enable_emailgateway TINYINT(1) NOT NULL DEFAULT '0',
     INDEX idx_fk_group_id( group_id )
 ) ENGINE=InnoDB;
@@ -198,6 +198,7 @@ CREATE TABLE tracker_field_openlist(
 DROP TABLE IF EXISTS tracker_field_computed;
 CREATE TABLE tracker_field_computed (
     field_id INT(11) NOT NULL PRIMARY KEY,
+    default_value DOUBLE NULL,
     target_field_name VARCHAR(255) NULL,
     fast_compute TINYINT DEFAULT 0
 ) ENGINE=InnoDB;
@@ -558,7 +559,8 @@ CREATE TABLE plugin_tracker_artifact_pending_removal LIKE tracker_artifact;
 DROP TABLE IF EXISTS tracker_artifact_priority_rank;
 CREATE TABLE tracker_artifact_priority_rank(
     artifact_id INT(11) PRIMARY KEY,
-    rank INT(11) UNSIGNED NOT NULL
+    rank INT(11) UNSIGNED NOT NULL,
+    INDEX idx_rank(rank)
 ) ENGINE=InnoDB;
 
 DROP TABLE IF EXISTS tracker_artifact_priority_history;
@@ -614,6 +616,12 @@ CREATE TABLE IF NOT EXISTS tracker_only_status_change_notification_subscribers (
     tracker_id INT(11) NOT NULL,
     user_id INT(11) NOT NULL,
     PRIMARY KEY (tracker_id, user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS plugin_tracker_involved_notification_subscribers (
+   tracker_id INT(11) NOT NULL,
+   user_id INT(11) NOT NULL,
+   PRIMARY KEY (tracker_id, user_id)
 ) ENGINE=InnoDB;
 
 DROP TABLE IF EXISTS    tracker_watcher;
@@ -726,6 +734,14 @@ CREATE TABLE tracker_semantic_contributor (
   INDEX filed_id_idx(field_id)
 ) ENGINE=InnoDB;
 
+DROP TABLE IF EXISTS tracker_semantic_timeframe;
+CREATE TABLE tracker_semantic_timeframe (
+  tracker_id int(11) NOT NULL PRIMARY KEY,
+  start_date_field_id int(11) NOT NULL,
+  duration_field_id int(11) NULL,
+  end_date_field_id int(11) NULL
+) ENGINE=InnoDB;
+
 DROP TABLE IF EXISTS tracker_rule;
 CREATE TABLE IF NOT EXISTS tracker_rule(
   id int(11) unsigned NOT NULL auto_increment PRIMARY KEY,
@@ -754,7 +770,8 @@ CREATE TABLE IF NOT EXISTS tracker_rule_date(
 DROP TABLE IF EXISTS tracker_hierarchy;
 CREATE TABLE IF NOT EXISTS tracker_hierarchy (
   parent_id int(11) NOT NULL,
-  child_id int(11) NOT NULL PRIMARY KEY
+  child_id int(11) NOT NULL PRIMARY KEY,
+  INDEX idx_tracker_hierarchy_parent_id(parent_id)
 ) ENGINE=InnoDB;
 
 DROP TABLE IF EXISTS tracker_reminder;
@@ -921,6 +938,33 @@ CREATE TABLE IF NOT EXISTS plugin_tracker_workflow_postactions_frozen_fields_val
     postaction_id INT(11) UNSIGNED NOT NULL,
     field_id INT(11) NOT NULL,
     PRIMARY KEY (postaction_id, field_id)
+) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS plugin_tracker_file_upload;
+CREATE TABLE plugin_tracker_file_upload (
+    fileinfo_id int(11) PRIMARY KEY,
+    expiration_date int(11) UNSIGNED,
+    field_id int(11) NOT NULL,
+    KEY idx_expiration_date(expiration_date)
+) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS plugin_tracker_workflow_postactions_hidden_fieldsets;
+CREATE TABLE IF NOT EXISTS plugin_tracker_workflow_postactions_hidden_fieldsets (
+    id INT(11) UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    transition_id INT(11) NOT NULL,
+    INDEX idx_wf_transition_id(transition_id)
+) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS plugin_tracker_workflow_postactions_hidden_fieldsets_value;
+CREATE TABLE IF NOT EXISTS plugin_tracker_workflow_postactions_hidden_fieldsets_value (
+    postaction_id INT(11) UNSIGNED NOT NULL,
+    fieldset_id INT(11) NOT NULL,
+    PRIMARY KEY (postaction_id, fieldset_id)
+) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS plugin_tracker_new_layout_modal_user;
+CREATE TABLE IF NOT EXISTS plugin_tracker_new_layout_modal_user (
+    user_id INT(11) PRIMARY KEY
 ) ENGINE=InnoDB;
 
 -- Enable service for project 100

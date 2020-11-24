@@ -20,27 +20,28 @@
  * along with Codendi; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * 
+ *
  */
-
-require_once('common/tracker/ArtifactRuleValueView.class.php');
 
 /**
 * Javascript representation (JSON) of a rule
 *
 */
-class ArtifactRuleValueJavascript extends ArtifactRuleValueView {
+class ArtifactRuleValueJavascript extends ArtifactRuleValueView
+{
 
     /**
-	 *  ArtifactRuleHtml() - constructor
-	 *
-	 *  @param $artifact_rule object
-	 */
-	function __construct(&$rule) {
-		parent::__construct($rule);
-	}
-    
-    function fetch() {
+     *  ArtifactRuleHtml() - constructor
+     *
+     *  @param $artifact_rule object
+     */
+    function __construct(&$rule)
+    {
+        parent::__construct($rule);
+    }
+
+    function fetch()
+    {
         $output  = '{id:'. (int)$this->rule->id .', ';
         $output .= 'group_artifact_id:'. (int)$this->rule->group_artifact_id .', ';
         $output .= 'source_field:'. (int)$this->rule->source_field .', ';
@@ -51,5 +52,3 @@ class ArtifactRuleValueJavascript extends ArtifactRuleValueView {
         return $output;
     }
 }
-
-?>

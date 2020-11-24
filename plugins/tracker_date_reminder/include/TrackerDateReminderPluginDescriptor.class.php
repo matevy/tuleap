@@ -18,13 +18,12 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/plugin/PluginDescriptor.class.php';
+class TrackerDateReminderPluginDescriptor extends PluginDescriptor
+{
 
-class TrackerDateReminderPluginDescriptor extends PluginDescriptor {
-
-    function __construct() {
+    function __construct()
+    {
         parent::__construct($GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'descriptor_name'), false, $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'descriptor_description'));
         $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');
     }
 }
-?>

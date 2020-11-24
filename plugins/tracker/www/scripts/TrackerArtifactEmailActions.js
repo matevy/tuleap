@@ -17,6 +17,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* global codendi:readonly jQuery:readonly */
+
 (function($, window) {
     $(function() {
         $(
@@ -45,7 +47,7 @@
 
                     updateButtonLabel(button, data.notification);
                 })
-                .fail(function(data) {
+                .fail(function() {
                     codendi.feedback.clear();
                     codendi.feedback.log(
                         "error",
@@ -60,7 +62,7 @@
                         codendi.locales.tracker_artifact.disable_notifications_alternate_text
                     );
                     button.html(
-                        '<i class="fa fa-bell"></i> ' +
+                        '<i class="fa fa-bell-slash-o"></i> ' +
                             codendi.locales.tracker_artifact.disable_notifications
                     );
                 } else {
@@ -69,7 +71,7 @@
                         codendi.locales.tracker_artifact.enable_notifications_alternate_text
                     );
                     button.html(
-                        '<i class="fa fa-bell"></i> ' +
+                        '<i class="fa fa-bell-o"></i> ' +
                             codendi.locales.tracker_artifact.enable_notifications
                     );
                 }

@@ -37,7 +37,8 @@ use Tuleap\REST\ProjectStatusVerificator;
 use UserManager;
 use PFUser;
 
-class GerritResource extends AuthenticatedResource {
+class GerritResource extends AuthenticatedResource
+{
 
     /**
      * @var Git_RemoteServer_GerritServerFactory
@@ -58,7 +59,8 @@ class GerritResource extends AuthenticatedResource {
      */
     private $server_permission_manager;
 
-    public function __construct() {
+    public function __construct()
+    {
         $git_dao               = new GitDao();
         $this->project_manager = ProjectManager::instance();
         $repository_factory    = new GitRepositoryFactory(
@@ -102,10 +104,11 @@ class GerritResource extends AuthenticatedResource {
      *
      * @return array {@type Tuleap\Git\REST\v1\GerritServerRepresentation}
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
-    protected function get($for_project = null) {
+    protected function get($for_project = null)
+    {
         $current_user = $this->user_manager->getCurrentUser();
 
         $this->checkUserCanListGerritServers($current_user);
@@ -124,7 +127,7 @@ class GerritResource extends AuthenticatedResource {
         }
 
         $representations = array();
-        foreach($servers as $server) {
+        foreach ($servers as $server) {
             $representation = new GerritServerRepresentation();
             $representation->build($server);
             $representations[] = $representation;
@@ -135,7 +138,7 @@ class GerritResource extends AuthenticatedResource {
     }
 
     /**
-     * @return Project
+     * @return \Project
      */
     private function getProjectFromRequest($project_id)
     {
@@ -148,11 +151,11 @@ class GerritResource extends AuthenticatedResource {
         return $project;
     }
 
-    private function checkUserCanListGerritServers(PFUser $user) {
+    private function checkUserCanListGerritServers(PFUser $user)
+    {
         if (! $user->isSuperUser() && ! $this->server_permission_manager->isUserAllowedToListServers($user)) {
             throw new RestException(403, 'User is not allowed to list Gerrit server');
         }
-
     }
 
     /**
@@ -160,11 +163,13 @@ class GerritResource extends AuthenticatedResource {
      *
      * @url OPTIONS
      */
-    public function options() {
+    public function options()
+    {
         $this->sendAllowHeaders();
     }
 
-    private function sendAllowHeaders() {
+    private function sendAllowHeaders()
+    {
         Header::allowOptionsGet();
     }
 }

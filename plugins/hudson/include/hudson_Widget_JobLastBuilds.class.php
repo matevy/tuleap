@@ -19,7 +19,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 use Tuleap\Dashboard\User\UserDashboardController;
 use Tuleap\Hudson\HudsonJobBuilder;
 
@@ -96,7 +95,6 @@ class hudson_Widget_JobLastBuilds extends HudsonJobWidget
             } else {
                 $this->job = null;
             }
-
         }
     }
 

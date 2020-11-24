@@ -148,6 +148,9 @@ class RepositoryResource extends AuthenticatedResource
         $dao                        = new Dao();
         $logger                     = new SvnLogger();
         $system_command             = new \System_Command();
+        /**
+         * @var \BackendSVN $backend_svn
+         */
         $backend_svn                = \Backend::instance(\Backend::SVN);
         $project_history_dao        = new ProjectHistoryDao();
         $this->system_event_manager = \SystemEventManager::instance();
@@ -194,7 +197,8 @@ class RepositoryResource extends AuthenticatedResource
             new AccessFileHistoryDao(),
             $access_file_history_factory,
             $project_history_dao,
-            $project_history_formatter
+            $project_history_formatter,
+            $backend_svn
         );
 
         $this->ugroup_manager = new UGroupManager();
@@ -221,7 +225,6 @@ class RepositoryResource extends AuthenticatedResource
             $access_file_history_creator,
             $mail_notification_manager
         );
-
 
         $user_to_notify_dao           = new UsersToNotifyDao();
         $ugroup_to_notify_dao         = new UgroupsToNotifyDao();
@@ -341,8 +344,8 @@ class RepositoryResource extends AuthenticatedResource
      *
      * @return FullRepositoryRepresentation
      *
-     * @throws 404
-     * @throws 403
+     * @throws RestException 404
+     * @throws RestException 403
      */
     public function get($id)
     {
@@ -428,8 +431,8 @@ class RepositoryResource extends AuthenticatedResource
      *
      * @return FullRepositoryRepresentation
      *
-     * @throws 404
-     * @throws 403
+     * @throws RestException 404
+     * @throws RestException 403
      */
     protected function put($id, SettingsPUTRepresentation $settings)
     {
@@ -504,9 +507,9 @@ class RepositoryResource extends AuthenticatedResource
      *
      * @param int $repository_id Id of the repository
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      */
     protected function delete($id)
     {
@@ -641,10 +644,10 @@ class RepositoryResource extends AuthenticatedResource
      * @param SettingsPOSTRepresentation $settings Repository settings {@type \Tuleap\SVN\REST\v1\SettingsPOSTRepresentation} {@required false}
      *
      * @return \Tuleap\SVN\REST\v1\RepositoryRepresentation
-     * @throws 400 BadRequest Given project does not exist or project does not use SVN service
-     * @throws 403 Forbidden User doesn't have permission to create a repository
-     * @throws 500 Error Unable to create the repository
-     * @throws 409 Repository name is invalid
+     * @throws RestException 400 BadRequest Given project does not exist or project does not use SVN service
+     * @throws RestException 403 Forbidden User doesn't have permission to create a repository
+     * @throws RestException 500 Error Unable to create the repository
+     * @throws RestException 409 Repository name is invalid
      */
     protected function post($project_id, $name, ?SettingsPOSTRepresentation $settings = null)
     {

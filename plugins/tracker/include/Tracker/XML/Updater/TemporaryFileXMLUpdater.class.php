@@ -22,7 +22,8 @@
  * I change the xml file elements to target a temporary file instead of real file
  * (so that it is not moved during the import)
  */
-class Tracker_XML_Updater_TemporaryFileXMLUpdater {
+class Tracker_XML_Updater_TemporaryFileXMLUpdater
+{
 
     /**
      * @var Tracker_XML_Updater_TemporaryFileCreator
@@ -35,8 +36,9 @@ class Tracker_XML_Updater_TemporaryFileXMLUpdater {
         $this->temporary_file_creator = $temporary_file_creator;
     }
 
-    public function update(SimpleXMLElement $xml_artifact) {
-        foreach($xml_artifact->file as $file) {
+    public function update(SimpleXMLElement $xml_artifact)
+    {
+        foreach ($xml_artifact->file as $file) {
             $path = (string)$file->path;
             $temporary_path = $this->temporary_file_creator->createTemporaryFile($path);
             $file->path = $temporary_path;

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012 - 2016. All Rights Reserved.
  *
@@ -20,13 +19,15 @@
  */
 
 require_once __DIR__.'/../../../bootstrap.php';
-class FieldNotEmpty_BaseTest extends TuleapTestCase {
+class FieldNotEmpty_BaseTest extends TuleapTestCase
+{
 
     protected $condition;
     protected $empty_data = '';
     protected $not_empty_data = 'coin';
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $factory = mock('Tracker_FormElementFactory');
 
@@ -57,42 +58,50 @@ class FieldNotEmpty_BaseTest extends TuleapTestCase {
         return $field;
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         Tracker_FormElementFactory::clearInstance();
         parent::tearDown();
     }
 }
 
-class FieldNotEmpty_saveTest extends FieldNotEmpty_BaseTest {
+class FieldNotEmpty_saveTest extends FieldNotEmpty_BaseTest
+{
 
-    public function itSavesUsingTheRealFieldObject() {
+    public function itSavesUsingTheRealFieldObject()
+    {
         $this->condition->addField($this->field);
         expect($this->dao)->create(42, array(123))->once();
         $this->condition->saveObject();
     }
 }
-class FieldNotEmpty_validateTest extends FieldNotEmpty_BaseTest {
+class FieldNotEmpty_validateTest extends FieldNotEmpty_BaseTest
+{
 
-    public function itReturnsTrueWhenNoField() {
+    public function itReturnsTrueWhenNoField()
+    {
         $fields_data = array();
         $is_valid    = $this->condition->validate($fields_data, $this->artifact, '');
         $this->assertTrue($is_valid);
     }
 
-    public function itReturnsTrueWhenNoFieldId() {
+    public function itReturnsTrueWhenNoFieldId()
+    {
         $fields_data = array(1 => $this->not_empty_data);
         $is_valid    = $this->condition->validate($fields_data, $this->artifact, '');
         $this->assertTrue($is_valid);
     }
 
-    public function itReturnsTrueWhenFieldNotEmpty() {
+    public function itReturnsTrueWhenFieldNotEmpty()
+    {
         $this->condition->addField($this->field);
         $fields_data = array(123 => $this->not_empty_data);
         $is_valid    = $this->condition->validate($fields_data, $this->artifact, '');
         $this->assertTrue($is_valid);
     }
 
-    public function itReturnsTrueWhenFieldNotPresentInRequestButAlreadySetInTheLastChangeset() {
+    public function itReturnsTrueWhenFieldNotPresentInRequestButAlreadySetInTheLastChangeset()
+    {
         $this->condition->addField($this->field);
         stub($this->changeset)->getValue($this->field)->returns($this->previous_value);
         stub($this->previous_value)->getValue()->returns($this->not_empty_data);
@@ -101,7 +110,8 @@ class FieldNotEmpty_validateTest extends FieldNotEmpty_BaseTest {
         $this->assertTrue($is_valid);
     }
 
-    public function itReturnsFalseWhenFieldNotPresentInRequestAndNotSetInTheLastChangeset() {
+    public function itReturnsFalseWhenFieldNotPresentInRequestAndNotSetInTheLastChangeset()
+    {
         $this->condition->addField($this->field);
         stub($this->changeset)->getValue($this->field)->returns($this->previous_value);
         stub($this->previous_value)->getValue()->returns($this->empty_data);
@@ -110,7 +120,8 @@ class FieldNotEmpty_validateTest extends FieldNotEmpty_BaseTest {
         $this->assertFalse($is_valid);
     }
 
-    public function itReturnsFalseWhenFieldNotPresentInRequestAndNotInTheLastChangeset() {
+    public function itReturnsFalseWhenFieldNotPresentInRequestAndNotInTheLastChangeset()
+    {
         $this->condition->addField($this->field);
         stub($this->changeset)->getValue($this->field)->returns(null);
         $fields_data = array();
@@ -118,7 +129,8 @@ class FieldNotEmpty_validateTest extends FieldNotEmpty_BaseTest {
         $this->assertFalse($is_valid);
     }
 
-    public function itReturnsFalseWhenFieldNotPresentInRequestAndThereIsNoLastChangeset() {
+    public function itReturnsFalseWhenFieldNotPresentInRequestAndThereIsNoLastChangeset()
+    {
         $this->condition->addField($this->field);
         $artifact_without_changeset = mock('Tracker_Artifact');
         $fields_data = array();
@@ -126,7 +138,8 @@ class FieldNotEmpty_validateTest extends FieldNotEmpty_BaseTest {
         $this->assertFalse($is_valid);
     }
 
-    public function itReturnsFalseWhenTheFieldIsEmpty() {
+    public function itReturnsFalseWhenTheFieldIsEmpty()
+    {
         $this->condition->addField($this->field);
         $fields_data = array(123 => $this->empty_data);
         $is_valid    = $this->condition->validate($fields_data, $this->artifact, '');

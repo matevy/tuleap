@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -38,7 +38,8 @@
  * and null
  *
  */
-class Planning_VirtualTopMilestone  implements Planning_Milestone {
+class Planning_VirtualTopMilestone implements Planning_Milestone
+{
 
     /**
      * The project where the milestone is defined
@@ -59,130 +60,173 @@ class Planning_VirtualTopMilestone  implements Planning_Milestone {
      * @param Project  $project
      * @param Planning $planning
      */
-    public function __construct(Project $project, Planning $planning) {
-        $this->project = $project;
+    public function __construct(Project $project, Planning $planning)
+    {
+        $this->project  = $project;
         $this->planning = $planning;
     }
 
     /**
      * @return string
      */
-    public function getXRef() {
+    public function getXRef()
+    {
         return '';
     }
 
-    public function getArtifact() {
+    public function getArtifact()
+    {
         return null;
     }
 
-    public function getArtifactId() {
+    public function getArtifactId()
+    {
         return null;
     }
 
-    public function setArtifact(Tracker_Artifact $artifact) {
+    public function setArtifact(Tracker_Artifact $artifact)
+    {
         $this->artifact = $artifact;
     }
 
-    public function getTrackerId() {
+    public function getTrackerId()
+    {
         return $this->planning->getBacklogTrackersIds();
     }
 
-    public function getArtifactTitle() {
+    public function getArtifactTitle()
+    {
         return null;
     }
 
     /**
      * @param PFUser $user
-     * @return boolean
+     * @return bool
      */
-    public function userCanView(PFUser $user) {
+    public function userCanView(PFUser $user)
+    {
         return null;
     }
 
-    public function getLinkedArtifacts(PFUser $user) {
+    public function getLinkedArtifacts(PFUser $user)
+    {
     }
 
-    public function getPlannedArtifacts() {
+    public function getPlannedArtifacts()
+    {
     }
 
-    public function getPlanning() {
+    public function getPlanning()
+    {
         return $this->planning;
     }
 
-    public function getPlanningId() {
+    public function getPlanningId()
+    {
         return $this->planning->getId();
     }
 
-    public function getProject() {
+    public function getProject()
+    {
         return $this->project;
     }
 
-    public function getGroupId() {
+    public function getGroupId()
+    {
         return $this->project->getID();
     }
 
-    public function hasAncestors() {
+    public function hasAncestors()
+    {
         return false;
     }
 
-    public function getAncestors() {
+    public function getAncestors()
+    {
         return array();
     }
 
-    public function setAncestors(array $ancestors) {
+    public function setAncestors(array $ancestors)
+    {
     }
 
-    public function setStartDate($start_date) {
+    public function setStartDate($start_date)
+    {
     }
 
-    public function getStartDate() {
+    public function getStartDate()
+    {
         return null;
     }
 
-    public function setDuration($duration) {
+    public function setDuration($duration)
+    {
     }
 
-    public function getEndDate() {
+    public function getEndDate()
+    {
         return null;
     }
 
-    public function getCapacity() {
+    public function getCapacity()
+    {
         return null;
     }
 
-    public function getRemainingEffort() {
+    public function getRemainingEffort()
+    {
         return null;
     }
 
-    public function getLastModifiedDate() {
+    public function getLastModifiedDate()
+    {
         return null;
     }
 
-    public function getDuration() {
+    public function getDuration()
+    {
         return null;
     }
 
-    public function getParent() {
+    public function getParent()
+    {
         return null;
     }
 
-    public function milestoneCanBeSubmilestone(Planning_Milestone $potential_submilestone) {
+    public function milestoneCanBeSubmilestone(Planning_Milestone $potential_submilestone)
+    {
         return false;
     }
 
-    public function hasBurdownField(PFUser $user) {
+    public function hasBurdownField(PFUser $user)
+    {
         return false;
     }
 
-    public function getDaysSinceStart() {
+    public function getDaysSinceStart()
+    {
         return 0;
     }
 
-    public function getDaysUntilEnd() {
+    public function getDaysUntilEnd()
+    {
         return 0;
     }
 
-    public function getBurndownData(PFUser $user) {
+    public function getBurndownData(PFUser $user)
+    {
         return null;
+    }
+
+    public function setTimePeriod(TimePeriodWithoutWeekEnd $time_period)
+    {
+    }
+
+    public function setCapacity($capacity)
+    {
+    }
+
+    public function setRemainingEffort($remaining_effort)
+    {
     }
 }

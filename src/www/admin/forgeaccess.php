@@ -1,6 +1,6 @@
 <?php
 /**
-  * Copyright (c) Enalean, 2015 - 2016. All Rights Reserved.
+  * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
   *
   * This file is a part of Tuleap.
   *
@@ -18,7 +18,7 @@
   * along with Tuleap. If not, see <http://www.gnu.org/licenses/
   */
 
-require_once 'pre.php';
+require_once __DIR__ . '/../include/pre.php';
 
 use Tuleap\FRS\FRSPermissionCreator;
 use Tuleap\FRS\FRSPermissionDao;
@@ -32,7 +32,8 @@ $controller = new ForgeAccess_AdminController(
         EventManager::instance(),
         new FRSPermissionCreator(
             new FRSPermissionDao(),
-            new UGroupDao()
+            new UGroupDao(),
+            new ProjectHistoryDao()
         )
     ),
     new Config_LocalIncFinder(),

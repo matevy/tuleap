@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All rights reserved
+ * Copyright (c) Enalean, 2017 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -20,8 +20,8 @@
 
 namespace Tuleap\SVN\REST;
 
+use Guzzle\Http\Message\Response;
 use REST_TestDataBuilder;
-use Tuleap\SVN\REST\TestBase;
 
 require_once dirname(__FILE__).'/../bootstrap.php';
 
@@ -30,12 +30,27 @@ require_once dirname(__FILE__).'/../bootstrap.php';
  */
 class ProjectTest extends TestBase
 {
-    public function testGETRepositories()
+    public function testGETRepositories(): void
     {
         $response  = $this->getResponse($this->client->get(
             'projects/'.$this->svn_project_id.'/svn'
         ));
 
+        $this->assertRepositories($response);
+    }
+
+    public function testGETRepositoriesWithRESTReadOnlyUser(): void
+    {
+        $response  = $this->getResponse(
+            $this->client->get('projects/'.$this->svn_project_id.'/svn'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertRepositories($response);
+    }
+
+    private function assertRepositories(Response $response): void
+    {
         $repositories_response = $response->json();
         $repositories          = $repositories_response['repositories'];
 
@@ -45,10 +60,12 @@ class ProjectTest extends TestBase
         $repository_01 = $repositories[0];
         $this->assertArrayHasKey('id', $repository_01);
         $this->assertEquals($repository_01['name'], 'repo01');
+        $this->assertEquals($repository_01['svn_url'], $this->svn_domain.'/svnplugin/SVN-plugin-test/repo01');
 
         $repository_02 = $repositories[1];
         $this->assertArrayHasKey('id', $repository_02);
         $this->assertEquals($repository_02['name'], 'repo02');
+        $this->assertEquals($repository_02['svn_url'], $this->svn_domain.'/svnplugin/SVN-plugin-test/repo02');
     }
 
     public function testGETRepositoriesWithQuery()
@@ -72,6 +89,7 @@ class ProjectTest extends TestBase
         $repository = $repositories[0];
         $this->assertArrayHasKey('id', $repository);
         $this->assertEquals($repository['name'], 'repo01');
+        $this->assertEquals($repository['svn_url'], $this->svn_domain.'/svnplugin/SVN-plugin-test/repo01');
     }
 
     public function testOPTIONS()
@@ -81,5 +99,15 @@ class ProjectTest extends TestBase
         ));
 
         $this->assertEquals(array('OPTIONS', 'GET'), $response->getHeader('Allow')->normalize()->toArray());
+    }
+
+    public function testOPTIONSWithRESTReadOnlyUser()
+    {
+        $response  = $this->getResponse(
+            $this->client->options('projects/'.$this->svn_project_id.'/svn'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(['OPTIONS', 'GET'], $response->getHeader('Allow')->normalize()->toArray());
     }
 }

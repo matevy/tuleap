@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -25,19 +25,28 @@ use Docman_VersionFactory;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use org\bovigo\vfs\vfsStream;
 use PHPUnit\Framework\TestCase;
-use Tuleap\ForgeConfigSandbox;
+use Tuleap\Docman\REST\v1\DocmanItemsEventAdder;
 use Tuleap\Test\DB\DBTransactionExecutorPassthrough;
 use Tuleap\Upload\FileAlreadyUploadedInformation;
 use Tuleap\Upload\FileBeingUploadedInformation;
+use Tuleap\Upload\UploadPathAllocator;
 
-class DocumentUploadFinisherTest extends TestCase
+final class DocumentUploadFinisherTest extends TestCase
 {
-    use MockeryPHPUnitIntegration, ForgeConfigSandbox;
+    use MockeryPHPUnitIntegration;
 
+    /**
+     * @var \Mockery\LegacyMockInterface|\Mockery\MockInterface|DocmanItemsEventAdder
+     */
+    private $event_adder;
+    /**
+     * @var \Mockery\LegacyMockInterface|\Mockery\MockInterface
+     */
+    private $project_manager;
+    private $metadata_to_upload_finisher;
     private $logger;
     private $item_factory;
     private $version_factory;
-    private $permission_manager;
     private $event_manager;
     private $on_going_upload_dao;
     private $item_dao;
@@ -46,39 +55,40 @@ class DocumentUploadFinisherTest extends TestCase
 
     protected function setUp() : void
     {
-        $this->logger              = \Mockery::mock(\Logger::class);
-        $this->item_factory        = \Mockery::mock(Docman_ItemFactory::class);
-        $this->version_factory     = \Mockery::mock(Docman_VersionFactory::class);
-        $this->permission_manager  = \Mockery::mock(\PermissionsManager::class);
-        $this->event_manager       = \Mockery::mock(\EventManager::class);
-        $this->on_going_upload_dao = \Mockery::mock(DocumentOngoingUploadDAO::class);
-        $this->item_dao            = \Mockery::mock(\Docman_ItemDao::class);
-        $this->file_storage        = \Mockery::mock(\Docman_FileStorage::class);
-        $this->user_manager        = \Mockery::mock(\UserManager::class);
+        $this->logger                      = \Mockery::mock(\Logger::class);
+        $this->item_factory                = \Mockery::mock(Docman_ItemFactory::class);
+        $this->version_factory             = \Mockery::mock(Docman_VersionFactory::class);
+        $this->event_manager               = \Mockery::mock(\EventManager::class);
+        $this->on_going_upload_dao         = \Mockery::mock(DocumentOngoingUploadDAO::class);
+        $this->item_dao                    = \Mockery::mock(\Docman_ItemDao::class);
+        $this->file_storage                = \Mockery::mock(\Docman_FileStorage::class);
+        $this->user_manager                = \Mockery::mock(\UserManager::class);
+        $this->metadata_to_upload_finisher = \Mockery::mock(DocumentMetadataCreator::class);
+        $this->event_adder                 = \Mockery::mock(DocmanItemsEventAdder::class);
+        $this->project_manager             = \Mockery::mock(\ProjectManager::instance());
     }
 
     public function testDocumentIsAddedToTheDocumentManagerWhenTheUploadIsComplete() : void
     {
         $root = vfsStream::setup();
-        \ForgeConfig::set('tmp_dir', $root->url());
 
-        $path_allocator = new DocumentUploadPathAllocator();
+        $path_allocator = new UploadPathAllocator($root->url() . '/document');
 
         $upload_finisher = new DocumentUploadFinisher(
             $this->logger,
             $path_allocator,
             $this->item_factory,
             $this->version_factory,
-            $this->permission_manager,
             $this->event_manager,
             $this->on_going_upload_dao,
             $this->item_dao,
             $this->file_storage,
             new \Docman_MIMETypeDetector(),
             $this->user_manager,
-            new DBTransactionExecutorPassthrough()
+            new DBTransactionExecutorPassthrough(),
+            $this->event_adder,
+            $this->project_manager
         );
-
 
         $item_id_being_created = 12;
         $file_information = new FileBeingUploadedInformation($item_id_being_created, 'Filename', 123, 0);
@@ -103,7 +113,6 @@ class DocumentUploadFinisherTest extends TestCase
         );
         $this->on_going_upload_dao->shouldReceive('deleteByItemID')->once();
         $this->item_factory->shouldReceive('create')->once()->andReturns(true);
-        $this->permission_manager->shouldReceive('clonePermissions')->once()->andReturns(true);
         $created_docman_file = $root->url() . '/created_file';
         touch($created_docman_file);
         $this->file_storage->shouldReceive('copy')->once()->andReturns($created_docman_file);
@@ -112,6 +121,9 @@ class DocumentUploadFinisherTest extends TestCase
         $this->event_manager->shouldReceive('processEvent');
         $this->user_manager->shouldReceive('getUserByID')->andReturns(\Mockery::mock(\PFUser::class));
         $this->logger->shouldReceive('debug');
+        $project = \Mockery::mock(\Project::class);
+        $this->project_manager->shouldReceive('getProject')->andReturn($project);
+        $this->event_adder->shouldReceive('addNotificationEvents')->withArgs([$project])->once();
 
         $file_information = new FileAlreadyUploadedInformation($item_id_being_created, 'Filename', 123);
 

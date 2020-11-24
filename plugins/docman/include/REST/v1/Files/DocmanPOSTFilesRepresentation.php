@@ -22,13 +22,17 @@ declare(strict_types = 1);
 
 namespace Tuleap\Docman\REST\v1\Files;
 
+use Tuleap\Docman\REST\v1\CopyItem\CanContainACopyRepresentation;
+use Tuleap\Docman\REST\v1\CopyItem\DocmanCopyItemRepresentation;
 use Tuleap\Docman\REST\v1\ItemRepresentation;
-use Tuleap\Docman\REST\v1\Metadata\ItemStatusMapper;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSetRepresentation;
 
-class DocmanPOSTFilesRepresentation
+class DocmanPOSTFilesRepresentation implements CanContainACopyRepresentation
 {
+    private const REQUIRED_NON_COPY_PROPERTIES = ['title', 'file_properties'];
+
     /**
-     * @var string Item title {@from body} {@required true}
+     * @var string Item title {@from body} {@required false} Mandatory if copy is not set
      */
     public $title;
     /**
@@ -37,16 +41,34 @@ class DocmanPOSTFilesRepresentation
     public $description = '';
     /**
      * @var FilePropertiesPOSTPATCHRepresentation File properties must be set when creating a new file {@from body}
-     *      {@required true} {@type \Tuleap\Docman\REST\v1\Files\FilePropertiesPOSTPATCHRepresentation}
+     *      {@required false} {@type \Tuleap\Docman\REST\v1\Files\FilePropertiesPOSTPATCHRepresentation} Mandatory if copy is not set
      */
     public $file_properties;
     /**
      * @var string | null Item status {@from body} {@required false} {@choice none,draft,approved,rejected}
      */
-    public $status = ItemStatusMapper::ITEM_STATUS_NONE;
+    public $status;
 
     /**
-     * @var string Obsolescence date {@from body} {@required false}
+     * @var string | null Obsolescence date {@from body} {@required false}
      */
     public $obsolescence_date = ItemRepresentation::OBSOLESCENCE_DATE_NONE;
+    /**
+     * @var array | null {@required false} {@type \Tuleap\Docman\REST\v1\Metadata\POSTCustomMetadataRepresentation}
+     */
+    public $metadata;
+    /**
+     * @var DocmanItemPermissionsForGroupsSetRepresentation {@required false} {@type \Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSetRepresentation}
+     * @psalm-var DocmanItemPermissionsForGroupsSetRepresentation|null
+     */
+    public $permissions_for_groups;
+    /**
+     * @var DocmanCopyItemRepresentation {@required false} {@type \Tuleap\Docman\REST\v1\CopyItem\DocmanCopyItemRepresentation} Mandatory if others parameters are not set
+     */
+    public $copy;
+
+    public static function getNonCopyRequiredObjectProperties() : array
+    {
+        return self::REQUIRED_NON_COPY_PROPERTIES;
+    }
 }

@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201403130910_update_apache_config extends ForgeUpgrade_Bucket {
+class b201403130910_update_apache_config extends ForgeUpgrade_Bucket
+{
     public const BACKUP_FILE = '/etc/httpd/conf.d/codendi_aliases.conf_b201403130910_update_apache_config';
     public const CONFIG_FILE = '/etc/httpd/conf.d/codendi_aliases.conf';
 
@@ -27,7 +28,8 @@ class b201403130910_update_apache_config extends ForgeUpgrade_Bucket {
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Update Apache config to allow Rewrite rules
 EOT;
@@ -38,22 +40,24 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         if (file_exists(self::BACKUP_FILE)) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Backup file '.self::BACKUP_FILE.' already exists please save it or remove it first');
         }
-        if ( ! copy(self::CONFIG_FILE, self::BACKUP_FILE)) {
+        if (! copy(self::CONFIG_FILE, self::BACKUP_FILE)) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Unable to backup config file: '.self::CONFIG_FILE);
         }
         $this->patchConfig();
     }
 
-    private function patchConfig() {
+    private function patchConfig()
+    {
         $in_block    = false;
         $first_match = false;
         $had_match   = false;
 
-        $source_lines = file(self::CONFIG_FILE,  FILE_IGNORE_NEW_LINES);
+        $source_lines = file(self::CONFIG_FILE, FILE_IGNORE_NEW_LINES);
         if ($source_lines === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Unable to read config file: '.self::CONFIG_FILE);
         }
@@ -98,5 +102,4 @@ EOT;
             $this->log->warn(self::CONFIG_FILE.' was not modified by bucket. If it was already patched it\'s ok, otherwise you should check it manually. See plugins/git/README.txt for reference.');
         }
     }
-
 }

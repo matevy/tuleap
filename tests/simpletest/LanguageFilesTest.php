@@ -2,13 +2,16 @@
 /**
 * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
 *
-* 
+*
 */
 
-class LanguageFilesTest extends TuleapTestCase {
+class LanguageFilesTest extends TuleapTestCase
+{
 
-    function testLanguagesFiles() {
-        $cmd          = $GLOBALS['basedir'].'/src/utils/analyse_language_files.pl '.$GLOBALS['basedir'].' 2>&1';
+    function testLanguagesFiles()
+    {
+        $basedir      = __DIR__ . '/../../';
+        $cmd          = $basedir.'/src/utils/analyse_language_files.pl '.$basedir.' 2>&1';
         $return_value = 1;
         $output       = array();
         exec($cmd, $output, $return_value);

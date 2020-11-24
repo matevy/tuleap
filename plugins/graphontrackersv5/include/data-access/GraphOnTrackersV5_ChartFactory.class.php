@@ -1,62 +1,64 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
- 
-require_once('GraphOnTrackersV5_ChartDao.class.php');
-require_once(TRACKER_BASE_DIR .'/Tracker/Report/Tracker_Report_Session.class.php');
 
-class GraphOnTrackersV5_ChartFactory {
+class GraphOnTrackersV5_ChartFactory
+{
     private const CHART_REMOVED = 'removed';
 
     protected $charts;
     protected $chart_factories;
-    
-    protected function __construct() {
+
+    protected function __construct()
+    {
         $this->charts        = null;
         $this->chart_factories = array();
         $em = EventManager::instance();
         $em->processEvent('graphontrackersv5_load_chart_factories', array('factories' => &$this->chart_factories));
     }
-    
+
     /**
      * Hold an instance of the class
      */
     protected static $_instance;
-    
+
     /**
      * @return GraphOnTrackersV5_ChartFactory
      */
-    public static function instance() {
+    public static function instance()
+    {
         if (!isset(self::$_instance)) {
             self::$_instance = new self();
         }
         return self::$_instance;
     }
-    
-    public function getCharts($renderer, $store_in_session = true) {
+
+    public function getCharts($renderer, $store_in_session = true)
+    {
         if (!isset($this->charts[$renderer->id])) {
             $charts_data = array();
             $this->charts[$renderer->id] = array();
             if ($store_in_session) {
                 $this->report_session = new Tracker_Report_Session($renderer->report->id);
                 $this->report_session->changeSessionNamespace("renderers.{$renderer->id}");
-                
+
                 $charts_data = $this->report_session->get("charts");
             }
             //do we have charts in session?
@@ -72,7 +74,7 @@ class GraphOnTrackersV5_ChartFactory {
                 }
             }
             if ($charts_data) {
-                foreach($charts_data as $row) {
+                foreach ($charts_data as $row) {
                     if ($row !== self::CHART_REMOVED) {
                         if ($c = $this->instanciateChart($row, $renderer, $store_in_session)) {
                             $this->charts[$renderer->id][$row['id']] = $c;
@@ -102,23 +104,26 @@ class GraphOnTrackersV5_ChartFactory {
         $sorter->sortChartInSession($this->getCharts($renderer), $edited_chart, $wanted_position);
     }
 
-    public function sortArrayByRank($a, $b) {
+    public function sortArrayByRank($a, $b)
+    {
         if ($a === self::CHART_REMOVED || $b === self::CHART_REMOVED) {
             return 0;
         }
 
         return $a['rank'] - $b['rank'];
     }
-    
-    public function getChartsFromDb($renderer) {
+
+    public function getChartsFromDb($renderer)
+    {
         $charts = array();
         $dao = new GraphOnTrackersV5_ChartDao(CodendiDataAccess::instance());
         $charts = $dao->searchByReportId($renderer->id);
         return $charts;
     }
-    
-    
-    public function getReportRenderersByReportFromDb($report) {
+
+
+    public function getReportRenderersByReportFromDb($report)
+    {
         $renderers = array();
         foreach ($this->getDao()->searchByReportId($report->id) as $row) {
             if ($r = $this->getInstanceFromRow($row, $report)) {
@@ -127,16 +132,17 @@ class GraphOnTrackersV5_ChartFactory {
         }
         return $renderers;
     }
-    
-    
-    public function getChartFactories() {
+
+
+    public function getChartFactories()
+    {
         return $this->chart_factories;
     }
-    
-    public function createChart($renderer, $chart_type) {
+
+    public function createChart($renderer, $chart_type)
+    {
         $chart = null;
         if ($chart_classname = $this->getChartClassname($chart_type)) {
-            
             $dao = new GraphOnTrackersV5_ChartDao(CodendiDataAccess::instance());
             $default_title       = 'Untitled '.$chart_type;
             $default_description = '';
@@ -147,7 +153,7 @@ class GraphOnTrackersV5_ChartFactory {
             $session->changeSessionNamespace("renderers.{$renderer->id}");
             $id = -count($session->charts) - 1;
             $rank = 0;
-            
+
             //Add new chart in session
             $session->set("charts.$id.chart_type", $chart_type);
             $session->setHasChanged();
@@ -156,18 +162,20 @@ class GraphOnTrackersV5_ChartFactory {
         return $chart;
     }
 
-    public function deleteChart($renderer, $id, $user_can_update_report) {
+    public function deleteChart($renderer, $id, $user_can_update_report)
+    {
         $session = new Tracker_Report_Session($renderer->report->id);
         $session->changeSessionNamespace("renderers.{$renderer->id}");
         if (isset($session->charts[$id])) {
             $session->set("charts.$id", self::CHART_REMOVED);
             $session->setHasChanged();
-        } else if ($user_can_update_report) {
-            $this->deleteDb($renderer,  $id);
+        } elseif ($user_can_update_report) {
+            $this->deleteDb($renderer, $id);
         }
     }
-    
-    public function deleteDb($renderer,  $id) {
+
+    public function deleteDb($renderer, $id)
+    {
         //not in session, but in db cause removed in session
         if ($c = $this->getChartFromDb($renderer, $id)) {
             $dao = new GraphOnTrackersV5_ChartDao(CodendiDataAccess::instance());
@@ -175,31 +183,33 @@ class GraphOnTrackersV5_ChartFactory {
             $c->delete();
         }
     }
-    
-    
-    public function updateDb($renderer_id, $chart) {
+
+
+    public function updateDb($renderer_id, $chart)
+    {
         $dao = new GraphOnTrackersV5_ChartDao(CodendiDataAccess::instance());
         $dao->updateById(
-            $renderer_id, 
-            $chart->getId(), 
-            $chart->getRank(), 
-            $chart->getTitle(), 
-            $chart->getDescription(), 
-            $chart->getWidth(), 
+            $renderer_id,
+            $chart->getId(),
+            $chart->getRank(),
+            $chart->getTitle(),
+            $chart->getDescription(),
+            $chart->getWidth(),
             $chart->getHeight()
         );
         $chart->updateDb();
     }
-    
-    public function createDb($renderer_id, $chart) {
+
+    public function createDb($renderer_id, $chart)
+    {
         $dao = new GraphOnTrackersV5_ChartDao(CodendiDataAccess::instance());
         $id = $dao->create(
-            $renderer_id, 
+            $renderer_id,
             $chart->getChartType(),
             $chart->getRank(),
-            $chart->getTitle(), 
+            $chart->getTitle(),
             $chart->getDescription(),
-            $chart->getWidth(), 
+            $chart->getWidth(),
             $chart->getHeight()
         );
         $chart->createDb($id);
@@ -219,17 +229,17 @@ class GraphOnTrackersV5_ChartFactory {
         if ($renderer != null && $store_in_session) {
             $session = new Tracker_Report_Session($renderer->report->id);
             $session->changeSessionNamespace("renderers.{$renderer->id}");
-            
+
             // look for the chart in the session
             $chart_data = $session->get("charts.$id");
         }
-        
-        if ( ! $chart_data ){
+
+        if (! $chart_data) {
             // not found. look in the db
             $dao = new GraphOnTrackersV5_ChartDao(CodendiDataAccess::instance());
             $chart_data = $dao->searchById($id)->getRow();
         }
-        
+
         if ($chart_data) {
             if (!$renderer) {
                 $report = null; //We don't know the report
@@ -241,7 +251,7 @@ class GraphOnTrackersV5_ChartFactory {
         }
         return $c;
     }
-    
+
     /**
      * retrieve a specific chart by its id from db only
      * @return GraphOnTrackersV5_Chart | null
@@ -257,24 +267,29 @@ class GraphOnTrackersV5_ChartFactory {
                 $report = null; //We don't know the report
                 $renderer = Tracker_Report_RendererFactory::instance()->getReportRendererById($chart_data['report_graphic_id'], $report);
             }
-            if ($renderer) {                
-                if ($chart_classname = $this->getChartClassname($chart_data['chart_type'])) { 
+            if ($renderer) {
+                if ($chart_classname = $this->getChartClassname($chart_data['chart_type'])) {
                     $c = new $chart_classname($renderer, $chart_data['id'], $chart_data['rank'], $chart_data['title'], $chart_data['description'], $chart_data['width'], $chart_data['height']);
                 }
             }
         }
         return $c;
     }
-    
-    protected function getChartClassname($chart_type) {
+
+    /**
+     * @psalm-return class-string<GraphOnTrackersV5_Chart>|null
+     */
+    protected function getChartClassname($chart_type)
+    {
         $chart_classname = null;
         if (isset($this->chart_factories[$chart_type])) {
             $chart_classname = $this->chart_factories[$chart_type]['chart_classname'];
         }
         return $chart_classname;
     }
-    
-    protected function instanciateChart($row, $renderer, $store_in_session = true) {
+
+    protected function instanciateChart($row, $renderer, $store_in_session = true)
+    {
         $c = null;
         if ($chart_classname = $this->getChartClassname($row['chart_type'])) {
             if ($store_in_session) {
@@ -291,20 +306,22 @@ class GraphOnTrackersV5_ChartFactory {
         }
         return $c;
     }
-    
+
     /**
      * Duplicate the charts
      */
-    public function duplicate($from_renderer, $to_renderer, $field_mapping) {
+    public function duplicate($from_renderer, $to_renderer, $field_mapping)
+    {
         $dao = new GraphOnTrackersV5_ChartDao(CodendiDataAccess::instance());
-        foreach($this->getCharts($from_renderer) as $chart) {
+        foreach ($this->getCharts($from_renderer) as $chart) {
             if ($id = $dao->duplicate($chart->getId(), $to_renderer->id)) {
                 $this->getChart($to_renderer, $id)->duplicate($chart, $field_mapping);
             }
         }
     }
-    
-    public function getInstanceFromXML($xml, $renderer, $formsMapping, $store_in_session = true) {
+
+    public function getInstanceFromXML($xml, $renderer, $formsMapping, $store_in_session = true)
+    {
         $att = $xml->attributes();
         $row = array(
             'id'          => 0,
@@ -315,10 +332,9 @@ class GraphOnTrackersV5_ChartFactory {
             'title'       => (string)$xml->title,
             'description' => (string)$xml->description,
         );
-        
+
         $chart = $this->instanciateChart($row, $renderer, $store_in_session);
         $chart->setSpecificPropertiesFromXML($xml, $formsMapping);
         return $chart;
     }
 }
-?>

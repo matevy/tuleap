@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class AgileDashboard_ConfigurationDao extends DataAccessObject {
+class AgileDashboard_ConfigurationDao extends DataAccessObject
+{
 
     public function updateConfiguration(
         $project_id,
@@ -39,7 +40,8 @@ class AgileDashboard_ConfigurationDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function duplicate($project_id, $template_id) {
+    public function duplicate($project_id, $template_id)
+    {
         $project_id  = $this->da->escapeInt($project_id);
         $template_id = $this->da->escapeInt($template_id);
 
@@ -51,7 +53,8 @@ class AgileDashboard_ConfigurationDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function isKanbanActivated($project_id) {
+    public function isKanbanActivated($project_id)
+    {
         $project_id = $this->da->escapeInt($project_id);
 
         $sql = "SELECT kanban
@@ -61,7 +64,8 @@ class AgileDashboard_ConfigurationDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function isScrumActivated($project_id) {
+    public function isScrumActivated($project_id)
+    {
         $project_id = $this->da->escapeInt($project_id);
 
         $sql = "SELECT scrum
@@ -71,7 +75,8 @@ class AgileDashboard_ConfigurationDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getScrumTitle($project_id) {
+    public function getScrumTitle($project_id)
+    {
         $project_id = $this->da->escapeInt($project_id);
 
         $sql = "SELECT scrum_title
@@ -81,7 +86,8 @@ class AgileDashboard_ConfigurationDao extends DataAccessObject {
         return $this->retrieveFirstRow($sql);
     }
 
-    public function getKanbanTitle($project_id) {
+    public function getKanbanTitle($project_id)
+    {
         $project_id = $this->da->escapeInt($project_id);
 
         $sql = "SELECT kanban_title

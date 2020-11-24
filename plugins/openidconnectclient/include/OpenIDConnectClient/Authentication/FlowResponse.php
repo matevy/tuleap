@@ -20,10 +20,10 @@
 
 namespace Tuleap\OpenIDConnectClient\Authentication;
 
-
 use Tuleap\OpenIDConnectClient\Provider\Provider;
 
-class FlowResponse {
+class FlowResponse
+{
 
     /**
      * @var Provider
@@ -45,7 +45,8 @@ class FlowResponse {
      */
     private $user_identifier;
 
-    public function __construct(Provider $provider, $return_to, $user_identifier, array $user_informations) {
+    public function __construct(Provider $provider, $return_to, $user_identifier, array $user_informations)
+    {
         $this->provider          = $provider;
         $this->return_to         = $return_to;
         $this->user_identifier   = $user_identifier;
@@ -55,14 +56,16 @@ class FlowResponse {
     /**
      * @return Provider
      */
-    public function getProvider() {
+    public function getProvider()
+    {
         return $this->provider;
     }
 
     /**
      * @return string
      */
-    public function getReturnTo() {
+    public function getReturnTo()
+    {
         return $this->return_to;
     }
 
@@ -77,7 +80,8 @@ class FlowResponse {
     /**
      * @return array
      */
-    public function getUserInformations() {
+    public function getUserInformations()
+    {
         return $this->user_informations;
     }
 }

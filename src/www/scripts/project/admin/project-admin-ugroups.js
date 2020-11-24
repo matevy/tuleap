@@ -1,5 +1,5 @@
-/**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+/*
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -32,12 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     if (member_list_container) {
         gettext_provider.addTranslations("fr_FR", "project-admin", french_translations);
-        gettext_provider.setLocale(member_list_container.dataset.locale);
+        gettext_provider.setLocale(document.body.dataset.userLocale);
         gettext_provider.setTextDomain("project-admin");
     }
 
     initModals();
-    initModalAddDynamicUserToUGroup();
+    initModalAddUserToUGroupAndProjectMembers();
     initGroupsFilter();
     initBindingDependencies();
 });
@@ -76,6 +76,7 @@ function updateDeleteModalContent(button) {
     document.getElementById("project-admin-remove-user-from-group-modal-user-id").value =
         button.dataset.userId;
     updateDeleteModalDescription(button);
+    updateDeleteModalButtons(button);
 }
 
 function updateDeleteModalDescription(button) {
@@ -98,8 +99,20 @@ function updateDeleteModalDescription(button) {
     );
 }
 
-async function initModalAddDynamicUserToUGroup() {
-    const button = document.getElementById("project-admin-add-dynamic-modal");
+function updateDeleteModalButtons(button) {
+    const user_is_admin = button.dataset.userIsProjectAdmin === "1";
+    const delete_from_project_button = document.getElementById(
+        "project-admin-remove-user-from-group-modal-remove-from-project"
+    );
+
+    delete_from_project_button.classList.toggle(
+        "project-admin-remove-user-from-group-and-project-hidden-button",
+        user_is_admin
+    );
+}
+
+function initModalAddUserToUGroupAndProjectMembers() {
+    const button = document.getElementById("project-admin-add-to-ugroup-and-project-members-modal");
     if (!button) {
         return;
     }
@@ -110,16 +123,12 @@ async function initModalAddDynamicUserToUGroup() {
         if (!selected_user) {
             return;
         }
+        const icon = document.getElementById(
+            "project-administration-add-to-ugroup-and-project-members-icon"
+        );
 
-        document
-            .getElementById("project-administration-add-dynamic-ugroup-icon")
-            .classList.remove("fa-plus");
-        document
-            .getElementById("project-administration-add-dynamic-ugroup-icon")
-            .classList.add("fa-spin");
-        document
-            .getElementById("project-administration-add-dynamic-ugroup-icon")
-            .classList.add("fa-spinner");
+        icon.classList.remove("fa-plus");
+        icon.classList.add("fa-spin", "fa-spinner");
 
         document.getElementById("add-user-to-ugroup").value = selected_user;
         initModalOrSendForm(selected_user);
@@ -127,33 +136,30 @@ async function initModalAddDynamicUserToUGroup() {
 }
 
 function openConfirmationModal(selected_user) {
-    const button = document.getElementById("project-admin-add-dynamic-modal");
+    const button = document.getElementById("project-admin-add-to-ugroup-and-project-members-modal");
     const modal = createModal(document.getElementById(button.dataset.targetModalId));
     const ugroup_name = document.getElementById("user-group").value;
+    const icon = document.getElementById(
+        "project-administration-add-to-ugroup-and-project-members-icon"
+    );
     const confirmation_message = sprintf(
         gettext_provider.gettext("You are about to add <b>%s</b> in <b>%s</b> users group."),
         selected_user,
         ugroup_name
     );
 
-    document.getElementById("add-user-to-dynamic-ugroup-confirmation-message").innerHTML = sanitize(
-        confirmation_message
-    );
+    document.getElementById(
+        "add-user-to-ugroup-and-project-members-confirmation-message"
+    ).innerHTML = sanitize(confirmation_message);
 
     modal.show();
-    document
-        .getElementById("project-administration-add-dynamic-ugroup-icon")
-        .classList.add("fa-plus");
-    document
-        .getElementById("project-administration-add-dynamic-ugroup-icon")
-        .classList.remove("fa-spin");
-    document
-        .getElementById("project-administration-add-dynamic-ugroup-icon")
-        .classList.remove("fa-spinner");
+
+    icon.classList.add("fa-plus");
+    icon.classList.remove("fa-spin", "fa-spinner");
 }
 
 async function initModalOrSendForm(identifier) {
-    const button = document.getElementById("project-admin-add-dynamic-modal");
+    const button = document.getElementById("project-admin-add-to-ugroup-and-project-members-modal");
     const project_id = button.dataset.projectId;
 
     const members_ugroup_id = 3;
@@ -169,7 +175,7 @@ async function initModalOrSendForm(identifier) {
     if (users.length === 0) {
         openConfirmationModal(identifier);
     } else {
-        document.getElementById("add-user-to-dynamic-ugroup").submit();
+        document.getElementById("add-user-to-ugroup-and-project-members").submit();
     }
 }
 

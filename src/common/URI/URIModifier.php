@@ -48,7 +48,6 @@ class URIModifier
             return $carry;
         }, array());
 
-
         $filtered_uri = implode(DIRECTORY_SEPARATOR, $filtered_buffer);
 
         $last_element_input_buffer = end($input_buffer);
@@ -80,6 +79,14 @@ class URIModifier
      */
     public static function removeEmptySegments($uri)
     {
-        return preg_replace('/' . preg_quote(DIRECTORY_SEPARATOR, '/') . '+/', DIRECTORY_SEPARATOR, $uri);
+        $is_vfs_stream_path = strpos($uri, 'vfs://') === 0;
+
+        $new_uri = preg_replace('/' . preg_quote(DIRECTORY_SEPARATOR, '/') . '+/', DIRECTORY_SEPARATOR, $uri);
+
+        if ($is_vfs_stream_path) {
+            $new_uri = preg_replace('%^vfs:%', 'vfs:/', $new_uri);
+        }
+
+        return $new_uri;
     }
 }

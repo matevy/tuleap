@@ -17,9 +17,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class UserNotAuthorizedException extends Exception {
-    function __construct($message = 'user not authorized') {
+class UserNotAuthorizedException extends Exception
+{
+    function __construct($message = 'user not authorized')
+    {
         parent::__construct($message, 3300);
     }
 }
-?>

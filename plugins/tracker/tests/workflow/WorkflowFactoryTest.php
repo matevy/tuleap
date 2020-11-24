@@ -20,6 +20,7 @@
  */
 
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
+use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
 use Tuleap\Tracker\Workflow\WorkflowBackendLogger;
 
 require_once __DIR__.'/../bootstrap.php';
@@ -31,91 +32,8 @@ Mock::generate('TransitionFactory');
 
 Mock::generate('Tracker_FormElement_Field_List');
 
-class WorkflowFactoryTest extends TuleapTestCase {
-
-    /** @var XML_Security */
-    private $xml_security;
-
-    public function setUp() {
-        parent::setUp();
-
-        PermissionsManager::setInstance(mock('PermissionsManager'));
-        $this->xml_security = new XML_Security();
-        $this->xml_security->enableExternalLoadOfEntities();
-
-        $this->project = mock('Project');
-    }
-
-    public function tearDown() {
-        PermissionsManager::clearInstance();
-        $this->xml_security->disableExternalLoadOfEntities();
-
-        parent::tearDown();
-    }
-
-     public function testImport() {
-        $xml = simplexml_load_file(dirname(__FILE__) . '/_fixtures/importWorkflow.xml');
-        
-        $tracker = new MockTracker();
-        
-        $mapping = array(
-            'F1'     => aSelectBoxField()->withId(110)->build(),
-            'F32'    => aSelectBoxField()->withId(111)->build(),
-            'F32-V0' => 801,
-            'F32-V1' => 802
-        );
-        
-        $condition_factory  = mock('Workflow_Transition_ConditionFactory');
-        stub($condition_factory)->getAllInstancesFromXML()->returns(new Workflow_Transition_ConditionsCollection());
-        $transition_factory = mock('TransitionFactory');
-
-        $third_transition = mock('Transition');
-        $date_post_action = mock('Transition_PostAction_Field_Date');
-        stub($date_post_action)->getField()->returns(110);
-        stub($date_post_action)->getValueType()->returns(1);
-        
-        stub($third_transition)->getPostActions()->returns(array($date_post_action));
-
-        $first_transition = Mockery::mock(Transition::class);
-        $first_transition->shouldReceive('getPostActions')->andReturns([]);
-        $second_transition = Mockery::mock(Transition::class);
-        $second_transition->shouldReceive('getPostActions')->andReturns([]);
-
-        stub($transition_factory)->getInstanceFromXML($xml->transitions->transition[0], $mapping, $this->project)->at(0)->returns($first_transition);
-        stub($transition_factory)->getInstanceFromXML($xml->transitions->transition[1], $mapping, $this->project)->at(1)->returns($second_transition);
-        stub($transition_factory)->getInstanceFromXML($xml->transitions->transition[2], $mapping, $this->project)->at(2)->returns($third_transition);
-
-        $workflow_factory   = new WorkflowFactory(
-            $transition_factory,
-            mock('TrackerFactory'),
-            mock('Tracker_FormElementFactory'),
-            mock('Tracker_Workflow_Trigger_RulesManager'),
-            new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG),
-            \Mockery::mock(FrozenFieldsDao::class)
-        );
-
-        $workflow = $workflow_factory->getInstanceFromXML($xml, $mapping, $tracker, $this->project);
-
-        $this->assertEqual($workflow->getIsUsed(), 1);
-        $this->assertEqual($workflow->getFieldId(), 111);
-        $this->assertEqual(count($workflow->getTransitions()), 3);
-        
-        // Test post actions
-        $transitions = $workflow->getTransitions();
-        $this->assertEqual(count($transitions[0]->getPostActions()), 0);
-        $this->assertEqual(count($transitions[1]->getPostActions()), 0);
-        $this->assertEqual(count($transitions[2]->getPostActions()), 1);        
-        
-        // There is one post action on last transition
-        $postactions = $transitions[2]->getPostActions();
-        $this->assertEqual($postactions[0]->getField(), 110);
-        $this->assertEqual($postactions[0]->getValueType(), 1);
-        
-        $this->assertEqual($third_transition, $transitions[2]);
-        
-    }
-}
-class WorkflowFactory_IsFieldUsedInWorkflowTest extends TuleapTestCase {
+class WorkflowFactory_IsFieldUsedInWorkflowTest extends TuleapTestCase
+{
 
     /** @var Tracker_FormElement */
     private $field_status;
@@ -135,7 +53,8 @@ class WorkflowFactory_IsFieldUsedInWorkflowTest extends TuleapTestCase {
     /** @var TransitionFactory */
     private $transition_factory;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $tracker = stub('Tracker')->getId()->returns(123);
 
@@ -160,59 +79,70 @@ class WorkflowFactory_IsFieldUsedInWorkflowTest extends TuleapTestCase {
                 mock('Tracker_FormElementFactory'),
                 mock('Tracker_Workflow_Trigger_RulesManager'),
                 new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG),
-                \Mockery::mock(FrozenFieldsDao::class)
+                \Mockery::mock(FrozenFieldsDao::class),
+                Mockery::mock(StateFactory::class)
             )
         );
         stub($this->workflow_factory)->getWorkflowByTrackerId($tracker->getId())->returns($workflow);
     }
 
-    private function setUpField(Tracker $tracker, $id) {
+    private function setUpField(Tracker $tracker, $id)
+    {
         $field = mock('Tracker_FormElement_Field_List');
         stub($field)->getTracker()->returns($tracker);
         stub($field)->getId()->returns($id);
         return $field;
     }
 
-    public function itReturnsTrueIfTheFieldIsUsedToDescribeTheStatesOfTheWorkflow() {
+    public function itReturnsTrueIfTheFieldIsUsedToDescribeTheStatesOfTheWorkflow()
+    {
         expect($this->transition_factory)->isFieldUsedInTransitions()->never();
         $this->assertTrue($this->workflow_factory->isFieldUsedInWorkflow($this->field_status));
     }
 
-    public function itReturnsTrueIfTheFieldIsUsedInAPostAction() {
+    public function itReturnsTrueIfTheFieldIsUsedInAPostAction()
+    {
         expect($this->transition_factory)->isFieldUsedInTransitions()->once();
         $this->assertTrue($this->workflow_factory->isFieldUsedInWorkflow($this->field_close_date));
     }
 
-    public function itReturnsFalseIfTheFieldIsNotUsedByTheWorkflow() {
+    public function itReturnsFalseIfTheFieldIsNotUsedByTheWorkflow()
+    {
         expect($this->transition_factory)->isFieldUsedInTransitions()->once();
         $this->assertFalse($this->workflow_factory->isFieldUsedInWorkflow($this->field_start_date));
     }
 }
 
-class WorkflowFactory_CacheTest extends TuleapTestCase {
+class WorkflowFactory_CacheTest extends TuleapTestCase
+{
 
     /** @var WorkflowFactory */
     private $workflow_factory;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
+        $this->tracker_rules_manager = Mockery::mock(Tracker_RulesManager::class);
         $this->workflow_factory = partial_mock(
             'WorkflowFactory',
-            array('getDao'),
+            array('getDao', 'getGlobalRulesManager'),
             array(
                 mock('TransitionFactory'),
                 stub('TrackerFactory')->getTrackerById()->returns(aMockTracker()->build()),
                 mock('Tracker_FormElementFactory'),
                 mock('Tracker_Workflow_Trigger_RulesManager'),
                 new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG),
-                \Mockery::mock(FrozenFieldsDao::class)
+                \Mockery::mock(FrozenFieldsDao::class),
+                Mockery::mock(StateFactory::class)
             )
         );
         $this->dao = mock('Workflow_Dao');
         stub($this->workflow_factory)->getDao()->returns($this->dao);
+        stub($this->workflow_factory)->getGlobalRulesManager()->returns($this->tracker_rules_manager);
     }
 
-    public function itReturnsSameObjectWhenUsingSameTrackerId() {
+    public function itReturnsSameObjectWhenUsingSameTrackerId()
+    {
         stub($this->dao)->searchByTrackerId(112)->returnsDar(
             array('tracker_id' => 112, 'workflow_id' => 34, 'field_id' => 56, 'is_used' => 1, 'is_legacy' => 0, 'is_advanced' => 1)
         );

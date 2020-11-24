@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,16 +19,20 @@
  */
 
 use Tracker\Artifact\XMLArtifactSourcePlatformExtractor;
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
+use Tuleap\Tracker\Artifact\Changeset\FieldsToBeSavedInSpecificOrderRetriever;
 use Tuleap\Tracker\Artifact\ExistingArtifactSourceIdFromTrackerExtractor;
 use Tuleap\Tracker\DAO\TrackerArtifactSourceIdDao;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SourceOfAssociationCollectionBuilder;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SourceOfAssociationDetector;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SubmittedValueConvertor;
-use Tuleap\Tracker\RecentlyVisited\RecentlyVisitedDao;
-use Tuleap\Tracker\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\Artifact\RecentlyVisited\RecentlyVisitedDao;
+use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
 
-class Tracker_Artifact_XMLImportBuilder {
+class Tracker_Artifact_XMLImportBuilder
+{
 
     /**
      * @return Tracker_Artifact_XMLImport
@@ -50,17 +54,21 @@ class Tracker_Artifact_XMLImportBuilder {
             $fields_validator,
             new Tracker_Artifact_Changeset_InitialChangesetAtGivenDateCreator(
                 $fields_validator,
-                $formelement_factory,
+                new FieldsToBeSavedInSpecificOrderRetriever($formelement_factory),
                 $changeset_dao,
                 $artifact_factory,
-                EventManager::instance()
+                EventManager::instance(),
+                new Tracker_Artifact_Changeset_ChangesetDataInitializator($formelement_factory),
+                $logger
             ),
-            $visit_recorder
+            $visit_recorder,
+            $logger,
+            new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
         );
 
         $new_changeset_creator = new Tracker_Artifact_Changeset_NewChangesetAtGivenDateCreator(
             $fields_validator,
-            $formelement_factory,
+            new FieldsToBeSavedInSpecificOrderRetriever($formelement_factory),
             $changeset_dao,
             $changeset_comment_dao,
             $artifact_factory,
@@ -74,7 +82,9 @@ class Tracker_Artifact_XMLImportBuilder {
                     )
                 ),
                 Tracker_FormElementFactory::instance()
-            )
+            ),
+            new Tracker_Artifact_Changeset_ChangesetDataInitializator($formelement_factory),
+            new \Tuleap\DB\DBTransactionExecutorWithConnection(\Tuleap\DB\DBFactory::getMainTuleapDBConnection()),
         );
 
         $artifact_source_id_dao = new TrackerArtifactSourceIdDao();

@@ -18,23 +18,26 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/resource_restrictor/RestrictedResourceDao.class.php';
+class MediawikiSiteAdminResourceRestrictorDao extends RestrictedResourceDao
+{
 
-class MediawikiSiteAdminResourceRestrictorDao extends RestrictedResourceDao {
-
-    public function getResourceAllowedProjectsTableName() {
+    public function getResourceAllowedProjectsTableName()
+    {
         return 'plugin_mediawiki_site_restricted_features';
     }
 
-    public function getResourceFieldName() {
+    public function getResourceFieldName()
+    {
         return 'feature';
     }
 
-    public function isResourceRestricted($resource_id) {
+    public function isResourceRestricted($resource_id)
+    {
         return true;
     }
 
-    public function searchAllowedProjectsOnResource($resource_id) {
+    public function searchAllowedProjectsOnResource($resource_id)
+    {
         $resource_id = $this->da->escapeInt($resource_id);
         $sql = "SELECT groups.*
                 FROM groups
@@ -44,11 +47,13 @@ class MediawikiSiteAdminResourceRestrictorDao extends RestrictedResourceDao {
         return $this->retrieve($sql);
     }
 
-    public function setResourceRestricted($resource_id) {
+    public function setResourceRestricted($resource_id)
+    {
         return false;
     }
 
-    public function unsetResourceRestricted($resource_id) {
+    public function unsetResourceRestricted($resource_id)
+    {
         return false;
     }
 }

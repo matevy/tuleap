@@ -25,7 +25,8 @@
 /**
  * Store informations about a push
  */
-class Git_Hook_PushDetails {
+class Git_Hook_PushDetails
+{
     public const ACTION_ERROR  = 'error';
     public const ACTION_CREATE = 'create';
     public const ACTION_DELETE = 'delete';
@@ -47,7 +48,8 @@ class Git_Hook_PushDetails {
     private $user;
     private $refname;
 
-    public function __construct(GitRepository $repository, PFUser $user, $refname, $type, $rev_type, array $revision_list) {
+    public function __construct(GitRepository $repository, PFUser $user, $refname, $type, $rev_type, array $revision_list)
+    {
         $this->repository    = $repository;
         $this->user          = $user;
         $this->refname       = $refname;
@@ -61,7 +63,8 @@ class Git_Hook_PushDetails {
      *
      *  @return GitRepository
      */
-    public function getRepository() {
+    public function getRepository()
+    {
         return $this->repository;
     }
 
@@ -70,7 +73,8 @@ class Git_Hook_PushDetails {
      *
      * @return PFUser
      */
-    public function getUser() {
+    public function getUser()
+    {
         return $this->user;
     }
 
@@ -79,7 +83,8 @@ class Git_Hook_PushDetails {
      *
      * @return String
      */
-    public function getRefname() {
+    public function getRefname()
+    {
         return $this->refname;
     }
 
@@ -88,7 +93,8 @@ class Git_Hook_PushDetails {
      *
      * @return String
      */
-    public function getType() {
+    public function getType()
+    {
         return $this->type;
     }
 
@@ -97,7 +103,8 @@ class Git_Hook_PushDetails {
      *
      * @return String
      */
-    public function getRevType() {
+    public function getRevType()
+    {
         return $this->rev_type;
     }
 
@@ -106,7 +113,8 @@ class Git_Hook_PushDetails {
      *
      * @return String
      */
-    public function getRefnameType() {
+    public function getRefnameType()
+    {
         if (strpos($this->refname, 'refs/tags/') === 0) {
             switch ($this->rev_type) {
                 case self::OBJECT_TYPE_COMMIT:
@@ -131,9 +139,8 @@ class Git_Hook_PushDetails {
      *
      * @return String[] A list of sha1
      */
-    public function getRevisionList() {
+    public function getRevisionList()
+    {
         return $this->revision_list;
     }
 }
-
-?>

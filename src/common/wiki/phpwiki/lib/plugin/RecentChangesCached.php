@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: RecentChangesCached.php,v 1.4 2004/03/08 18:17:10 rurban Exp $');
 /**
  Copyright 1999, 2000, 2001, 2002 $ThePhpWikiProgrammingTeam
@@ -38,42 +39,50 @@ rcs_id('$Id: RecentChangesCached.php,v 1.4 2004/03/08 18:17:10 rurban Exp $');
 require_once "lib/WikiPluginCached.php";
 require_once "lib/plugin/RecentChanges.php";
 
-class WikiPlugin_RecentChangesCached
-extends WikiPluginCached
+class WikiPlugin_RecentChangesCached extends WikiPluginCached
 {
     /* --------- overwrite virtual or abstract methods ---------------- */
-    function getPluginType() {
+    function getPluginType()
+    {
         return PLUGIN_CACHED_HTML;
     }
 
-    function getName() {
+    function getName()
+    {
         return "RecentChangesCached";
     }
 
-    function getDescription() {
+    function getDescription()
+    {
         return 'Caches output of RecentChanges called with default arguments.';
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.4 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.4 $"
+        );
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return WikiPlugin_RecentChanges::getDefaultArguments();
     }
 
-    function getExpire($dbi, $argarray, $request) {
+    function getExpire($dbi, $argarray, $request)
+    {
         return '+900'; // 15 minutes
     }
 
-    function getHtml($dbi, $argarray, $request, $basepage) {
+    function getHtml($dbi, $argarray, $request, $basepage)
+    {
         $loader = new WikiPluginLoader;
         return $loader->expandPI('<?plugin RecentChanges '
             . WikiPluginCached::glueArgs($argarray)
                                  . ' ?>', $request, $this, $basepage);
     }
-
 } // WikiPlugin_TexToPng
 
 // $Log: RecentChangesCached.php,v $
@@ -97,4 +106,3 @@ extends WikiPluginCached
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

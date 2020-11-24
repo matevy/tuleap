@@ -24,32 +24,37 @@ namespace Tuleap\ProFTPd\Directory;
 /**
  * I represent a collection of DirectoryPathPart
  */
-class DirectoryPathCollection {
+class DirectoryPathCollection
+{
 
     private $collection = array();
 
     /**
      * @param DirectoryPathPart $path_part
      */
-    public function add(DirectoryPathPart $path_part) {
+    public function add(DirectoryPathPart $path_part)
+    {
         $this->collection[] = $path_part;
     }
 
-    public function count() {
+    public function count()
+    {
         return count($this->collection);
     }
 
     /**
      * @return DirectoryPathPart | null
      */
-    public function last() {
+    public function last()
+    {
         return end($this->collection);
     }
 
     /**
      * @return DirectoryPathPart[]
      */
-    public function parent_directory_parts() {
+    public function parent_directory_parts()
+    {
         if (count($this->collection) > 1) {
             $parent_directories = $this->collection;
             array_pop($parent_directories);
@@ -60,5 +65,3 @@ class DirectoryPathCollection {
         return array();
     }
 }
-
-?>

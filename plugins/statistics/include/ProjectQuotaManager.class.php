@@ -30,7 +30,8 @@ require_once 'Statistics_ProjectQuotaDao.class.php';
 /**
  * Management of custom quota by project
  */
-class ProjectQuotaManager {
+class ProjectQuotaManager
+{
 
     /**
      * The Projects dao used to fetch data
@@ -50,7 +51,8 @@ class ProjectQuotaManager {
     /**
      * ProjectQuotaManager constructor
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->dao = $this->getDao();
         $this->pm  = ProjectManager::instance();
 
@@ -73,11 +75,12 @@ class ProjectQuotaManager {
     /**
      * Retrieve the authorized disk quota for a project
      *
-     * @param Integer $group_id The ID of the project we are looking for its quota
+     * @param int $group_id The ID of the project we are looking for its quota
      *
      * @return int
      */
-    public function getProjectAuthorizedQuota($group_id) {
+    public function getProjectAuthorizedQuota($group_id)
+    {
         $quota = $this->getProjectCustomQuota($group_id);
         if (empty($quota)) {
             $quota = $this->getDefaultQuota();
@@ -88,27 +91,29 @@ class ProjectQuotaManager {
     /**
      * Convert a given quota size in bi to Gib
      *
-     * @param Integer $size The quota size in bi
+     * @param int $size The quota size in bi
      *
      * @return Float
      */
-    private function convertQuotaToGiB($size) {
+    private function convertQuotaToGiB($size)
+    {
         return $size * 1024 * 1024 * 1024;
     }
 
     /**
      * Check if a given project is overquota given it
      *
-     * @param Integer $current_size The current disk size of the project in bi
-     * @param Integer $allowed_size The allowed disk size of the project in bi
+     * @param int $current_size The current disk size of the project in bi
+     * @param int $allowed_size The allowed disk size of the project in bi
      *
-     * @return Boolean
+     * @return bool
      */
-    private function isProjectOverQuota($current_size, $allowed_size) {
+    private function isProjectOverQuota($current_size, $allowed_size)
+    {
         if (!empty($current_size) && ($current_size > $allowed_size)) {
-            return True;
+            return true;
         }
-        return False;
+        return false;
     }
 
     /**
@@ -150,7 +155,8 @@ class ProjectQuotaManager {
         return $exceeding_projects;
     }
 
-    private function fetchProjects() {
+    private function fetchProjects()
+    {
         return $this->diskUsageManager->_getDao()->searchAllGroups();
     }
 
@@ -159,9 +165,10 @@ class ProjectQuotaManager {
      *
      * @param int $groupId ID of the project we want to retrieve its custom quota
      *
-     * @return Integer
+     * @return int
      */
-    public function getProjectCustomQuota($groupId) {
+    public function getProjectCustomQuota($groupId)
+    {
         $allowedQuota = null;
         $res = $this->dao->getProjectCustomQuota($groupId);
         if ($res && !$res->isError() && $res->rowCount() == 1) {
@@ -176,12 +183,13 @@ class ProjectQuotaManager {
      *
      * @param String  $project    Project for which quota will be customized
      * @param String  $requester  User that asked for the custom quota
-     * @param Integer $quota      Quota to be set for the project
+     * @param int $quota Quota to be set for the project
      * @param String  $motivation Why the custom quota was requested
      *
      * @return Void
      */
-    public function addQuota($project, $requester, $quota, $motivation) {
+    public function addQuota($project, $requester, $quota, $motivation)
+    {
         $maxQuota = $this->getMaximumQuota();
         if (empty($project)) {
             $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_statistics', 'invalid_project'));
@@ -221,7 +229,8 @@ class ProjectQuotaManager {
      *
      * @return int
      */
-    public function getDefaultQuota() {
+    public function getDefaultQuota()
+    {
         $quota = intval($this->diskUsageManager->getProperty('allowed_quota'));
         if (!$quota) {
             $quota = 5;
@@ -234,7 +243,8 @@ class ProjectQuotaManager {
      *
      * @return int
      */
-    public function getMaximumQuota() {
+    public function getMaximumQuota()
+    {
         $maxQuota = intval($this->diskUsageManager->getProperty('maximum_quota'));
         if (!$maxQuota) {
             $maxQuota = 50;
@@ -242,7 +252,8 @@ class ProjectQuotaManager {
         return $maxQuota;
     }
 
-    public function deleteCustomQuota(Project $project) {
+    public function deleteCustomQuota(Project $project)
+    {
         $defaultQuota = $this->diskUsageManager->getProperty('allowed_quota');
         $historyDao   = new ProjectHistoryDao(CodendiDataAccess::instance());
         if ($this->dao->deleteCustomQuota($project->getId())) {
@@ -256,12 +267,11 @@ class ProjectQuotaManager {
     /**
      * @return Statistics_ProjectQuotaDao
      */
-    public function getDao() {
+    public function getDao()
+    {
         if (!isset($this->dao)) {
             $this->dao = new Statistics_ProjectQuotaDao();
         }
         return $this->dao;
     }
 }
-
-?>

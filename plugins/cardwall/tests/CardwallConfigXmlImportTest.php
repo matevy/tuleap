@@ -20,12 +20,18 @@
 
 require_once dirname(__FILE__) .'/bootstrap.php';
 
-class CardwallConfigXmlImportTest extends TuleapTestCase {
+class CardwallConfigXmlImportTest extends TuleapTestCase
+{
 
     private $default_xml_input;
     private $enhanced_xml_input;
+    /**
+     * @var a|\Mockery\MockInterface|EventManager
+     */
+    private $event_manager;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->default_xml_input = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?>
             <project>
@@ -62,7 +68,6 @@ class CardwallConfigXmlImportTest extends TuleapTestCase {
               </cardwall>
               <agiledashboard/>
             </project>');
-
 
         $this->enhanced_xml_input = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?>
             <project>
@@ -151,7 +156,7 @@ class CardwallConfigXmlImportTest extends TuleapTestCase {
         $this->mapping_field_dao          = mock('Cardwall_OnTop_ColumnMappingFieldDao');
         $this->mapping_field_value_dao    = mock('Cardwall_OnTop_ColumnMappingFieldValueDao');
         $this->group_id                   = 145;
-        $this->event_manager              = mock('EventManager');
+        $this->event_manager              = \Mockery::mock(\EventManager::class);
         $this->xml_validator              = mock('XML_RNGValidator');
         $this->cardwall_config_xml_import = new CardwallConfigXmlImport(
             $this->group_id,
@@ -166,14 +171,20 @@ class CardwallConfigXmlImportTest extends TuleapTestCase {
         );
     }
 
-    public function itStoresAllTheCardwallOnTop() {
+    public function itStoresAllTheCardwallOnTop()
+    {
+        $this->event_manager->shouldReceive('processEvent');
+
         expect($this->cardwall_ontop_dao)->enable()->count(2);
         expect($this->cardwall_ontop_dao)->enableFreestyleColumns()->count(2);
 
         $this->cardwall_config_xml_import->import($this->default_xml_input);
     }
 
-    public function itCreatesTheFreestyleColumns() {
+    public function itCreatesTheFreestyleColumns()
+    {
+        $this->event_manager->shouldReceive('processEvent');
+
         expect($this->column_dao)->createWithcolor()->count(4);
         expect($this->column_dao)->createWithcolor(555, 'Todo', '', '', '')->at(0);
         expect($this->column_dao)->createWithcolor(555, 'On going', '', '', '')->at(1);
@@ -183,7 +194,10 @@ class CardwallConfigXmlImportTest extends TuleapTestCase {
         $this->cardwall_config_xml_import->import($this->default_xml_input);
     }
 
-    public function itCreatesTheFreestyleColumnsWithColor() {
+    public function itCreatesTheFreestyleColumnsWithColor()
+    {
+        $this->event_manager->shouldReceive('processEvent');
+
         stub($this->column_dao)->createWithcolor()->returnsAt(0, 20);
         stub($this->column_dao)->createWithcolor()->returnsAt(1, 21);
         stub($this->column_dao)->createWithcolor()->returnsAt(2, 22);
@@ -201,14 +215,20 @@ class CardwallConfigXmlImportTest extends TuleapTestCase {
         $this->cardwall_config_xml_import->import($this->enhanced_xml_input);
     }
 
-    public function itDoesNotCreateMappingAndMappingValueinDefaultXML() {
+    public function itDoesNotCreateMappingAndMappingValueinDefaultXML()
+    {
+        $this->event_manager->shouldReceive('processEvent');
+
         expect($this->mapping_field_dao)->create()->never();
         expect($this->mapping_field_value_dao)->save()->never();
 
         $this->cardwall_config_xml_import->import($this->default_xml_input);
     }
 
-    public function itCreatesMappingAndMappingValue() {
+    public function itCreatesMappingAndMappingValue()
+    {
+        $this->event_manager->shouldReceive('processEvent');
+
         stub($this->column_dao)->createWithcolor()->returnsAt(0, 20);
         stub($this->column_dao)->createWithcolor()->returnsAt(1, 21);
         stub($this->column_dao)->createWithcolor()->returnsAt(2, 22);
@@ -225,22 +245,24 @@ class CardwallConfigXmlImportTest extends TuleapTestCase {
         $this->cardwall_config_xml_import->import($this->enhanced_xml_input);
     }
 
-    public function itProcessesANewEventIfAllCardwallAreEnabled() {
-        expect($this->event_manager)->processEvent(
+    public function itProcessesANewEventIfAllCardwallAreEnabled()
+    {
+        $this->event_manager->shouldReceive('processEvent')->with(
             Event::IMPORT_XML_PROJECT_CARDWALL_DONE,
             array(
                 'project_id'  => $this->group_id,
                 'xml_content' => $this->default_xml_input,
                 'mapping'     => $this->mapping
             )
-        )->once();
+        );
 
         $this->cardwall_ontop_dao->expectCallCount('enable', 2);
 
         $this->cardwall_config_xml_import->import($this->default_xml_input);
     }
 
-    public function itDoesNotProcessAnEventIfAtLeastOneCardwallCannotBeEnabledAndThrowsAnException() {
+    public function itDoesNotProcessAnEventIfAtLeastOneCardwallCannotBeEnabledAndThrowsAnException()
+    {
         $cardwall_ontop_dao         = stub('Cardwall_OnTop_Dao')->enable()->returns(false);
         $cardwall_config_xml_import = new CardwallConfigXmlImport(
             $this->group_id,
@@ -254,7 +276,7 @@ class CardwallConfigXmlImportTest extends TuleapTestCase {
             $this->xml_validator
         );
 
-        expect($this->event_manager)->processEvent(Event::IMPORT_XML_PROJECT_CARDWALL_DONE, '*')->never();
+        $this->event_manager->shouldNotReceive('processEvent')->with(Event::IMPORT_XML_PROJECT_CARDWALL_DONE, \Mockery::any());
 
         $this->expectException();
         $cardwall_ontop_dao->expectCallCount('enable', 1);
@@ -262,7 +284,8 @@ class CardwallConfigXmlImportTest extends TuleapTestCase {
         $cardwall_config_xml_import->import($this->default_xml_input);
     }
 
-    public function itThrowsAnExceptionIfXmlDoesNotMatchRNG() {
+    public function itThrowsAnExceptionIfXmlDoesNotMatchRNG()
+    {
         $xml_validator  = stub('XML_RNGValidator')->validate()->throws(new XML_ParseException('', array(), array()));
 
         $cardwall_config_xml_import = new CardwallConfigXmlImport(

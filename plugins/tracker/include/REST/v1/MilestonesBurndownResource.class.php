@@ -20,18 +20,21 @@
 
 namespace Tuleap\Tracker\REST\v1;
 
-use \PFUser;
-use \Planning_Milestone;
-use \Tuleap\REST\Header;
-use \Luracast\Restler\RestException;
+use PFUser;
+use Planning_Milestone;
+use Tuleap\REST\Header;
+use Luracast\Restler\RestException;
 
-class MilestonesBurndownResource {
+class MilestonesBurndownResource
+{
 
-    public function options() {
+    public function options()
+    {
         Header::allowOptionsGet();
     }
 
-    public function get(PFUser $user, Planning_Milestone $milestone) {
+    public function get(PFUser $user, Planning_Milestone $milestone)
+    {
         $artifact = $milestone->getArtifact();
         $field    = $artifact->getABurndownField($user);
         if (! $field) {
@@ -42,7 +45,8 @@ class MilestonesBurndownResource {
         return $rest->value;
     }
 
-    public function hasBurndown(PFUser $user, Planning_Milestone $milestone) {
+    public function hasBurndown(PFUser $user, Planning_Milestone $milestone)
+    {
         $artifact = $milestone->getArtifact();
         $field    = $artifact->getABurndownField($user);
         if (! $field) {

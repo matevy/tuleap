@@ -29,7 +29,8 @@ use Tuleap\Git\Permissions\RegexpFineGrainedRetriever;
 /**
  * GitForkPermissionsManager
  */
-class GitForkPermissionsManager {
+class GitForkPermissionsManager
+{
 
     /**
      * @var GitPermissionsManager
@@ -93,7 +94,8 @@ class GitForkPermissionsManager {
      *
      * @return ProjectManager
      */
-    function getProjectManager() {
+    function getProjectManager()
+    {
         return $this->repository->_getProjectManager();
     }
 
@@ -102,7 +104,8 @@ class GitForkPermissionsManager {
      *
      * @return Codendi_HTMLPurifier
      */
-    function getPurifier() {
+    function getPurifier()
+    {
         return Codendi_HTMLPurifier::instance();
     }
 
@@ -113,7 +116,8 @@ class GitForkPermissionsManager {
      *
      * @return String
      */
-    private function displayForkDestinationMessage($params) {
+    private function displayForkDestinationMessage($params)
+    {
         if ($params['scope'] == 'project') {
             $project         = $this->getProjectManager()->getProject($params['group_id']);
             $destinationHTML = sprintf(dgettext('tuleap-git', 'Into project <b>%1$s</b>'), $project->getPublicName());
@@ -130,7 +134,8 @@ class GitForkPermissionsManager {
      *
      * @return String
      */
-    private function displayForkSourceRepositories(array $repository_ids) {
+    private function displayForkSourceRepositories(array $repository_ids)
+    {
         $dao             = new GitDao();
         $repoFactory     = new GitRepositoryFactory($dao, $this->getProjectManager());
         $sourceReposHTML = '';
@@ -146,12 +151,13 @@ class GitForkPermissionsManager {
      * Fetch the html code to display permissions form when forking repositories
      *
      * @param Array   $params   Request params
-     * @param Integer $groupId  Project Id
+     * @param int $groupId Project Id
      * @param String  $userName User name
      *
      * @return String
      */
-    public function displayRepositoriesPermissionsForm($params, $groupId, $userName) {
+    public function displayRepositoriesPermissionsForm($params, $groupId, $userName)
+    {
         $repository_ids  = explode(',', $params['repos']);
         $sourceReposHTML = $this->displayForkSourceRepositories($repository_ids);
         $form  = '<h2>'.dgettext('tuleap-git', 'Fork repositories').'</h2>';
@@ -178,7 +184,8 @@ class GitForkPermissionsManager {
         return $form;
     }
 
-    private function displayDefaultAccessControlWhileForkingMultipleRepositories($project_id) {
+    private function displayDefaultAccessControlWhileForkingMultipleRepositories($project_id)
+    {
         $project = ProjectManager::instance()->getProject($project_id);
 
         $can_use_fine_grained_permissions     = true;
@@ -248,11 +255,12 @@ class GitForkPermissionsManager {
     /**
      * Display access control management for gitolite backend
      *
-     * @param Integer $project_id Project Id, to manage permissions when performing a cross project fork
+     * @param int $project_id Project Id, to manage permissions when performing a cross project fork
      *
      * @return String
      */
-    private function displayAccessControlForm($project_id = null, $is_fork = false) {
+    private function displayAccessControlForm($project_id = null, $is_fork = false)
+    {
         $project = ($project_id) ? ProjectManager::instance()->getProject($project_id) : $this->repository->getProject();
         $user    = UserManager::instance()->getCurrentUser();
 
@@ -321,7 +329,8 @@ class GitForkPermissionsManager {
         return $this->regexp_retriever->areRegexpActivatedForDefault($project);
     }
 
-    private function isRWPlusBlocked() {
+    private function isRWPlusBlocked()
+    {
         $project_creator_status = new Git_Driver_Gerrit_ProjectCreatorStatus(
             new Git_Driver_Gerrit_ProjectCreatorStatusDao()
         );

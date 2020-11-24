@@ -19,40 +19,40 @@
  */
 
 use Tuleap\Project\DefaultProjectVisibilityRetriever;
+use Tuleap\Project\Registration\Template\TemplateFromProjectForCreation;
 
-class OneStepProjectCreationRequestTest extends TuleapTestCase {
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
+class OneStepProjectCreationRequestTest extends TuleapTestCase
+{
 
     private $template_id        = 100;
     private $service_git_id     = 11;
     private $service_tracker_id = 12;
 
-    public function setUp() {
-        parent::setUp();
-
-        $service_git = mock('Service');
-        stub($service_git)->getId()->returns($this->service_git_id);
-        stub($service_git)->isUsed()->returns(false);
-
-        $service_tracker = mock('Service');
-        stub($service_tracker)->getId()->returns($this->service_tracker_id);
-        stub($service_tracker)->isUsed()->returns(true);
-
-        $template = mock('Project');
-        stub($template)->getServices()->returns(array($service_git, $service_tracker));
-
-        $this->project_manager = stub('ProjectManager')->getProject($this->template_id)->returns($template);
-    }
-
-    protected function aCreationRequest($request_data) {
+    protected function aCreationRequest($request_data): Project_OneStepCreation_OneStepCreationRequest
+    {
         $request = aRequest()->withParams($request_data)->build();
-        return new Project_OneStepCreation_OneStepCreationRequest(
+        $creation_request = new Project_OneStepCreation_OneStepCreationRequest(
             $request,
-            $this->project_manager,
             new DefaultProjectVisibilityRetriever()
         );
+        $service_git = Mockery::mock(Service::class, ['getId' => $this->service_git_id, 'isUsed' => false]);
+        $service_tracker = Mockery::mock(Service::class, ['getId' => $this->service_tracker_id, 'isUsed' => true]);
+
+        $project_used_as_template = Mockery::mock(Project::class);
+        $project_used_as_template->shouldReceive('getID')->andReturn($this->template_id);
+        $project_used_as_template->shouldReceive('getServices')->andReturn([$service_git, $service_tracker]);
+
+        $template_for_project_creation = Mockery::mock(TemplateFromProjectForCreation::class);
+        $template_for_project_creation->shouldReceive('getProject')->andReturn($project_used_as_template);
+
+        $creation_request->setTemplateForProjectCreation($template_for_project_creation);
+
+        return $creation_request;
     }
 
-    public function testNewObjectSetsACustomTextDescriptionField() {
+    public function testNewObjectSetsACustomTextDescriptionField()
+    {
         $text_content = 'bla bla bla';
         $custom_id    = 101;
 
@@ -64,7 +64,8 @@ class OneStepProjectCreationRequestTest extends TuleapTestCase {
         $this->assertEqual($text_content, $creation_request->getCustomProjectDescription($custom_id));
     }
 
-    public function itDoesNotSetACustomTextDescriptionFieldIfIdIsNotNumeric() {
+    public function itDoesNotSetACustomTextDescriptionFieldIfIdIsNotNumeric()
+    {
         $text_content = 'bla bla bla';
         $custom_id    = 'name';
 
@@ -76,7 +77,8 @@ class OneStepProjectCreationRequestTest extends TuleapTestCase {
         $this->assertNull($creation_request->getCustomProjectDescription($custom_id));
     }
 
-    public function testGetProjectValuesContainsCustomTextDescriptionField() {
+    public function testGetProjectValuesContainsCustomTextDescriptionField()
+    {
         $text_content = 'bla bla bla';
         $custom_id    = 101;
 
@@ -90,7 +92,8 @@ class OneStepProjectCreationRequestTest extends TuleapTestCase {
         $this->assertEqual($project_values['project'][Project_OneStepCreation_OneStepCreationPresenter::PROJECT_DESCRIPTION_PREFIX."$custom_id"], $text_content);
     }
 
-    public function itForcesTheProjectToNotBeATest() {
+    public function itForcesTheProjectToNotBeATest()
+    {
         $request_data     = array('whatever');
         $creation_request = $this->aCreationRequest($request_data);
 
@@ -98,7 +101,8 @@ class OneStepProjectCreationRequestTest extends TuleapTestCase {
         $this->assertFalse($values['project']['is_test']);
     }
 
-    public function itIncludesTheUsedServicesOfTheChoosenTemplate() {
+    public function itIncludesTheUsedServicesOfTheChoosenTemplate()
+    {
         $request_data = array(
             Project_OneStepCreation_OneStepCreationPresenter::TEMPLATE_ID => $this->template_id,
         );
@@ -110,7 +114,8 @@ class OneStepProjectCreationRequestTest extends TuleapTestCase {
         $this->assertEqual($values['project']['services'][$this->service_git_id]['is_used'], 0);
     }
 
-    public function itIncludesMandatoryTroveCats() {
+    public function itIncludesMandatoryTroveCats()
+    {
         $request_data = array(
             Project_OneStepCreation_OneStepCreationPresenter::TROVE_CAT_PREFIX => array(
                 1 => 235

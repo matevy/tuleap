@@ -19,10 +19,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Docman_View_Embedded extends Docman_View_Display {
-    
-    
-    function _content($params) {
+class Docman_View_Embedded extends Docman_View_Display
+{
+
+
+    function _content($params)
+    {
         if (isset($params['version_number'])) {
             $version_factory = $this->_getVersionFactory($params);
             $version = $version_factory->getSpecificVersion($params['item'], $params['version_number']);

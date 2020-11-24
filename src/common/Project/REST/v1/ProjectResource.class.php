@@ -30,29 +30,42 @@ use Project_InvalidShortName_Exception;
 use ProjectCreator;
 use ProjectManager;
 use ProjectUGroup;
+use ProjectXMLImporter;
+use ProjectXMLImporterLogger;
 use ReferenceManager;
 use ServiceManager;
-use Tuleap\Dashboard\Project\ProjectDashboardDao;
-use Tuleap\Dashboard\Project\ProjectDashboardDuplicator;
-use Tuleap\Dashboard\Project\ProjectDashboardRetriever;
-use Tuleap\Dashboard\Widget\DashboardWidgetDao;
-use Tuleap\Dashboard\Widget\DashboardWidgetRetriever;
-use Tuleap\FRS\FRSPermissionCreator;
-use Tuleap\FRS\FRSPermissionDao;
+use Tuleap\Glyph\GlyphFinder;
 use Tuleap\Label\Label;
 use Tuleap\Label\PaginatedCollectionsOfLabelsBuilder;
 use Tuleap\Label\REST\LabelRepresentation;
-use Tuleap\Project\DefaultProjectVisibilityRetriever;
+use Tuleap\Project\Admin\Categories\ProjectCategoriesUpdater;
+use Tuleap\Project\Admin\Categories\TroveSetNodeFacade;
+use Tuleap\Project\Admin\DescriptionFields\FieldUpdator;
+use Tuleap\Project\Admin\ProjectDetails\ProjectDetailsDAO;
+use Tuleap\Project\Banner\BannerCreator;
+use Tuleap\Project\Banner\BannerDao;
+use Tuleap\Project\Banner\BannerPermissionsChecker;
+use Tuleap\Project\Banner\BannerRemover;
+use Tuleap\Project\Banner\BannerRetriever;
+use Tuleap\Project\DescriptionFieldsDao;
+use Tuleap\Project\DescriptionFieldsFactory;
 use Tuleap\Project\Event\GetProjectWithTrackerAdministrationPermission;
 use Tuleap\Project\HeartbeatsEntryCollection;
 use Tuleap\Project\Label\LabelDao;
 use Tuleap\Project\Label\LabelsCurlyCoatedRetriever;
 use Tuleap\Project\PaginatedProjects;
+use Tuleap\Project\ProjectDescriptionMandatoryException;
 use Tuleap\Project\ProjectStatusMapper;
+use Tuleap\Project\Registration\ProjectRegistrationUserPermissionChecker;
+use Tuleap\Project\Registration\Template\InsufficientPermissionToUseProjectAsTemplateException;
+use Tuleap\Project\Registration\Template\InvalidTemplateException;
+use Tuleap\Project\Registration\Template\InvalidXMLTemplateNameException;
+use Tuleap\Project\Registration\Template\ProjectTemplateIDInvalidException;
+use Tuleap\Project\Registration\Template\TemplateFactory;
 use Tuleap\Project\REST\HeartbeatsRepresentation;
 use Tuleap\Project\REST\ProjectRepresentation;
 use Tuleap\Project\REST\UserGroupRepresentation;
-use Tuleap\Project\UgroupDuplicator;
+use Tuleap\Project\XML\XMLFileContentRetriever;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Event\ProjectGetSvn;
 use Tuleap\REST\Event\ProjectOptionsSvn;
@@ -67,20 +80,17 @@ use Tuleap\REST\v1\GitRepositoryRepresentationBase;
 use Tuleap\REST\v1\MilestoneRepresentationBase;
 use Tuleap\REST\v1\OrderRepresentationBase;
 use Tuleap\REST\v1\PhpWikiPageRepresentation;
-use Tuleap\Service\ServiceCreator;
 use Tuleap\User\ForgeUserGroupPermission\RestProjectManagementPermission;
 use Tuleap\Widget\Event\GetProjectsWithCriteria;
-use Tuleap\Widget\WidgetFactory;
-use UGroupBinding;
-use UGroupDao;
 use UGroupManager;
-use UGroupUserDao;
 use URLVerification;
 use User_ForgeUserGroupPermissionsDao;
 use User_ForgeUserGroupPermissionsManager;
 use UserManager;
 use Wiki;
 use WikiDao;
+use XML_RNGValidator;
+use XMLImportHelper;
 
 /**
  * Wrapper for project related REST methods
@@ -102,19 +112,8 @@ class ProjectResource extends AuthenticatedResource
     /** @var UGroupManager */
     private $ugroup_manager;
 
-    /** @var ProjectCreator */
-    private $project_creator;
-
-    /** @var ReferenceManager */
-    private $reference_manager;
-
     /** @var EventManager */
     private $event_manager;
-
-    /**
-     * @var UgroupDuplicator
-     */
-    private $ugroup_duplicator;
 
     /**
      * @var JsonDecoder
@@ -126,67 +125,44 @@ class ProjectResource extends AuthenticatedResource
      */
     private $forge_ugroup_permissions_manager;
 
+    /**
+     * @var BannerCreator
+     */
+    private $banner_creator;
+
+    /**
+     * @var BannerPermissionsChecker
+     */
+    private $banner_permissions_checker;
+
+    /**
+     * @var BannerRetriever
+     */
+    private $banner_retriever;
+
     public function __construct()
     {
         $this->user_manager      = UserManager::instance();
         $this->project_manager   = ProjectManager::instance();
-        $this->reference_manager = ReferenceManager::instance();
         $this->ugroup_manager    = new UGroupManager();
         $this->json_decoder      = new JsonDecoder();
-        $ugroup_user_dao         = new UGroupUserDao();
         $this->event_manager     = EventManager::instance();
 
         $this->forge_ugroup_permissions_manager = new User_ForgeUserGroupPermissionsManager(
             new User_ForgeUserGroupPermissionsDao()
         );
 
-        $widget_factory = new WidgetFactory(
-            $this->user_manager,
-            $this->forge_ugroup_permissions_manager,
-            $this->event_manager
-        );
-
-        $widget_dao        = new DashboardWidgetDao($widget_factory);
-        $project_dao       = new ProjectDashboardDao($widget_dao);
-        $project_retriever = new ProjectDashboardRetriever($project_dao);
-        $widget_retriever  = new DashboardWidgetRetriever($widget_dao);
-        $duplicator        = new ProjectDashboardDuplicator(
-            $project_dao,
-            $project_retriever,
-            $widget_dao,
-            $widget_retriever,
-            $widget_factory
-        );
-
-        $this->ugroup_duplicator = new UgroupDuplicator(
-            new UGroupDao(),
-            $this->ugroup_manager,
-            new UGroupBinding($ugroup_user_dao, $this->ugroup_manager),
-            $ugroup_user_dao,
-            EventManager::instance()
-        );
-        $send_notifications      = true;
-        $force_activation        = false;
         $label_dao               = new LabelDao();
-
-        $this->project_creator = new ProjectCreator(
-            $this->project_manager,
-            $this->reference_manager,
-            $this->user_manager,
-            $this->ugroup_duplicator,
-            $send_notifications,
-            new FRSPermissionCreator(new FRSPermissionDao(), new UGroupDao()),
-            $duplicator,
-            new ServiceCreator(),
-            $label_dao,
-            new DefaultProjectVisibilityRetriever(),
-            $force_activation
-        );
 
         $this->labels_retriever = new LabelsCurlyCoatedRetriever(
             new PaginatedCollectionsOfLabelsBuilder(),
             $label_dao
         );
+
+        $banner_dao = new BannerDao();
+        $this->banner_permissions_checker = new BannerPermissionsChecker();
+        $this->banner_creator             = new BannerCreator($banner_dao);
+        $this->banner_retriever           = new BannerRetriever($banner_dao);
     }
 
     /**
@@ -197,51 +173,29 @@ class ProjectResource extends AuthenticatedResource
      * @url    POST
      * @status 201
      *
-     * @param string      $shortname        Name of the project
-     * @param string      $description      Full description of the project
-     * @param string      $label            A short description of the project
-     * @param bool        $is_public        Define the visibility of the project
-     * @param bool | null $allow_restricted Define if the project should accept restricted users {@required false}
-     * @param int         $template_id      Template for this project.
+     * @param ProjectPostRepresentation $post_representation {@from body}
      *
      *
      * @return ProjectRepresentation
-     * @throws 400
-     * @throws 403
-     * @throws 429
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 429
      */
-    protected function post($shortname, $description, $label, $is_public, ?bool $allow_restricted, $template_id)
+    protected function post(ProjectPostRepresentation $post_representation)
     {
         $this->checkAccess();
 
         $user = $this->user_manager->getCurrentUser();
 
-        if (! $this->isUserARestProjectManager($user)) {
-            throw new RestException(403, 'You are not allowed to create a project through the api');
-        }
-
-        if (! $this->project_manager->userCanCreateProject($this->user_manager->getCurrentUser())) {
-            throw new RestException(429, 'Too many projects were created');
-        }
-
-        $data = [
-            'project' => [
-                'form_short_description' => $description,
-                'is_test'                => false,
-                'is_public'              => $is_public,
-                'built_from_template'    => $template_id,
-            ]
-        ];
-
-        if ($allow_restricted !== null) {
-            $data['project']['allow_restricted'] = $allow_restricted;
-        }
-
         try {
-            $project = $this->project_creator->createFromRest($shortname, $label, $data);
+            $project = $this->getRestProjectCreator()->create($user, $post_representation);
         } catch (Project_InvalidShortName_Exception $exception) {
             throw new RestException(400, $exception->getMessage());
         } catch (Project_InvalidFullName_Exception $exception) {
+            throw new RestException(400, $exception->getMessage());
+        } catch (ProjectDescriptionMandatoryException $exception) {
+            throw new RestException(400, $exception->getMessage());
+        } catch (InvalidTemplateException $exception) {
             throw new RestException(400, $exception->getMessage());
         }
 
@@ -297,9 +251,9 @@ class ProjectResource extends AuthenticatedResource
      * @param int    $offset Position of the first element to display
      * @param string $query  JSON object of search criteria properties {@from path}
      *
-     * @throws 403
-     * @throws 404
-     * @throws 406
+     * @throws RestException 403
+     * @throws RestException 404
+     * @throws RestException 406
      *
      * @return array {@type Tuleap\Project\REST\ProjectRepresentation}
      */
@@ -421,8 +375,8 @@ class ProjectResource extends AuthenticatedResource
      * @param int $id Id of the project
      *
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @return ProjectRepresentation
      */
@@ -449,8 +403,8 @@ class ProjectResource extends AuthenticatedResource
      *
      * @param int $id Id of the project
      *
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function optionsId($id)
     {
@@ -458,8 +412,8 @@ class ProjectResource extends AuthenticatedResource
     }
 
     /**
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @return Project
      */
@@ -474,8 +428,8 @@ class ProjectResource extends AuthenticatedResource
     }
 
     /**
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @return Project
      */
@@ -703,8 +657,10 @@ class ProjectResource extends AuthenticatedResource
      *
      * <p>
      * $query parameter is optional, by default we return all milestones. If
-     * query={"status":"open"} then only open milestones are returned and if
-     * query={"status":"closed"} then only closed milestones are returned.
+     * query={"status":"open"} then only open milestones are returned, if
+     * query={"status":"closed"} then only closed milestones are returned, if
+     * query={"period":"future"} then only milestones planned are returned and if
+     * query={"period":"current"} then only current milestones are returned.
      * </p>
      *
      * @url    GET {id}/milestones
@@ -813,9 +769,9 @@ class ProjectResource extends AuthenticatedResource
      *
      * @return array {@type Tuleap\Tracker\REST\TrackerRepresentation}
      *
-     * @throws 400 RestException
-     * @throws 403 RestException
-     * @throws 404 RestException
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function getTrackers($id, $representation = 'full', $limit = 10, $offset = 0, $query = '')
     {
@@ -870,61 +826,6 @@ class ProjectResource extends AuthenticatedResource
     }
 
     /**
-     * Get FRS packages
-     *
-     * Get the list of packages in the project
-     *
-     * @url    GET {id}/frs_packages
-     * @access hybrid
-     *
-     * @param int $id     Id of the project
-     * @param int $limit  Number of elements displayed per page {@from path}
-     * @param int $offset Position of the first element to display {@from path}
-     *
-     * @return array {@type Tuleap\REST\v1\FRSPackageRepresentationBase}
-     *
-     * @throws 406
-     */
-    public function getFRSPackages($id, $limit = 10, $offset = 0)
-    {
-        $this->checkAccess();
-        $this->checkLimitValueIsAcceptable($limit);
-        $this->checkFRSEndpointsAvailable();
-
-        $project    = $this->getProjectForUser($id);
-        $result     = [];
-        $total_size = 0;
-
-        $this->event_manager->processEvent(
-            Event::REST_GET_PROJECT_FRS_PACKAGES,
-            [
-                'project'      => $project,
-                'current_user' => $this->user_manager->getCurrentUser(),
-                'limit'        => $limit,
-                'offset'       => $offset,
-                'result'       => &$result,
-                'total_size'   => &$total_size
-            ]
-        );
-
-        $this->sendAllowHeadersForFRSPackages();
-        $this->sendPaginationHeaders($limit, $offset, $total_size);
-
-        return $result;
-    }
-
-    /**
-     * @url OPTIONS {id}/frs_packages
-     *
-     * @param int $id Id of the project
-     */
-    public function optionsFRSPackages($id)
-    {
-        $this->checkFRSEndpointsAvailable();
-        $this->sendAllowHeadersForFRSPackages();
-    }
-
-    /**
      * Get backlog
      *
      * Get the backlog items that can be planned in a top-milestone
@@ -938,7 +839,7 @@ class ProjectResource extends AuthenticatedResource
      *
      * @return array {@type Tuleap\REST\v1\BacklogItemRepresentationBase}
      *
-     * @throws 406
+     * @throws RestException 406
      */
     public function getBacklog($id, $limit = 10, $offset = 0)
     {
@@ -978,7 +879,7 @@ class ProjectResource extends AuthenticatedResource
      * @param int   $id  Id of the project
      * @param array $ids Ids of backlog items {@from body}
      *
-     * @throws 500
+     * @throws RestException 500
      */
     public function putBacklog($id, array $ids)
     {
@@ -1034,6 +935,17 @@ class ProjectResource extends AuthenticatedResource
      * </pre>
      *
      * <br>
+     * Remove example (only available for project using explicit backlog management):
+     * <pre>
+     * "Remove": [
+     *   {
+     *     "id": 34
+     *   },
+     *   ...
+     * ]
+     * </pre>
+     *
+     * <br>
      * Will remove element id 34 from milestone 56 backlog
      *
      * @url    PATCH {id}/backlog
@@ -1041,13 +953,14 @@ class ProjectResource extends AuthenticatedResource
      *
      * @param int                                     $id    Id of the project
      * @param \Tuleap\REST\v1\OrderRepresentationBase $order Order of the children {@from body}
-     * @param array                                   $add   Add (move) item to the backlog {@from body}
+     * @param array                                   $add   Add (move) item to the backlog {@from body} {@type \Tuleap\REST\v1\BacklogAddRepresentation}
+     * @param array                                   $remove   Remove item to the backlog {@from body} {@type \Tuleap\REST\v1\BacklogRemoveRepresentation}
      *
-     * @throws 500
-     * @throws 409
-     * @throws 400
+     * @throws RestException 500
+     * @throws RestException 409
+     * @throws RestException 400
      */
-    public function patchBacklog($id, ?OrderRepresentationBase $order = null, ?array $add = null)
+    public function patchBacklog($id, ?OrderRepresentationBase $order = null, ?array $add = null, ?array $remove = null)
     {
         $this->checkAccess();
 
@@ -1065,6 +978,7 @@ class ProjectResource extends AuthenticatedResource
                 'project' => $project,
                 'order'   => $order,
                 'add'     => $add,
+                'remove'  => $remove,
                 'result'  => &$result,
             ]
         );
@@ -1097,10 +1011,10 @@ class ProjectResource extends AuthenticatedResource
      * @param int                        $id             Id of the project
      * @param PATCHProjectRepresentation $patch_resource {@from body} {@type Tuleap\Project\REST\v1\PATCHProjectRepresentation}
      *
-     * @throws 400
-     * @throws 401
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 401
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function patchProject($id, PATCHProjectRepresentation $patch_resource)
     {
@@ -1171,6 +1085,7 @@ class ProjectResource extends AuthenticatedResource
      * Otherwise, these groupes are excluded.
      *
      * @url GET {id}/user_groups
+     * @access hybrid
      *
      * @param int    $id    Id of the project
      * @param string $query JSON object of filtering options {@from path} {@required false}
@@ -1179,7 +1094,7 @@ class ProjectResource extends AuthenticatedResource
      * @throws I18NRestException 400
      * @throws \Tuleap\REST\Exceptions\InvalidJsonException
      */
-    protected function getUserGroups($id, $query = '')
+    public function getUserGroups($id, $query = '')
     {
         $project = $this->getProjectForUser($id);
         $this->userCanSeeUserGroups($id);
@@ -1188,13 +1103,7 @@ class ProjectResource extends AuthenticatedResource
         if ($queryRepresentation->isWithSystemUserGroups()) {
             $ugroups = $this->ugroup_manager->getAvailableUGroups($project);
         } else {
-            $excluded_ugroups_ids = [
-                ProjectUGroup::NONE,
-                ProjectUGroup::ANONYMOUS,
-                ProjectUGroup::REGISTERED,
-                ProjectUGroup::AUTHENTICATED
-            ];
-            $ugroups              = $this->ugroup_manager->getUGroups($project, $excluded_ugroups_ids);
+            $ugroups = $this->ugroup_manager->getUGroups($project, ProjectUGroup::SYSTEM_USER_GROUPS);
         }
         $user_groups = $this->getUserGroupsRepresentations($ugroups, $id);
 
@@ -1209,7 +1118,7 @@ class ProjectResource extends AuthenticatedResource
 
         foreach ($ugroups as $ugroup) {
             $representation = new UserGroupRepresentation();
-            $representation->build($project_id, $ugroup);
+            $representation->build((int) $project_id, $ugroup);
             $user_groups[] = $representation;
         }
 
@@ -1217,16 +1126,16 @@ class ProjectResource extends AuthenticatedResource
     }
 
     /**
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      *
-     * @return boolean
+     * @return bool
      */
     private function userCanSeeUserGroups($project_id)
     {
         $project = $this->project_manager->getProject($project_id);
         $user    = $this->user_manager->getCurrentUser();
-        ProjectAuthorization::userCanAccessProjectAndIsProjectAdmin($user, $project);
+        ProjectAuthorization::userCanAccessProject($user, $project, new URLVerification());
 
         return true;
     }
@@ -1236,7 +1145,7 @@ class ProjectResource extends AuthenticatedResource
      *
      * @param int $id Id of the project
      *
-     * @throws 404
+     * @throws RestException 404
      */
     public function optionsGit($id)
     {
@@ -1396,7 +1305,7 @@ class ProjectResource extends AuthenticatedResource
      *
      * @param int $id Id of the project
      *
-     * @throws 404
+     * @throws RestException 404
      */
     public function optionsSvn($id)
     {
@@ -1442,7 +1351,7 @@ class ProjectResource extends AuthenticatedResource
      *
      * @return array {@type Tuleap\REST\v1\SvnRepositoryRepresentationBase}
      *
-     * @throws 404
+     * @throws RestException 404
      */
     public function getSvn($id, $query = '', $limit = 10, $offset = 0)
     {
@@ -1463,6 +1372,101 @@ class ProjectResource extends AuthenticatedResource
         $this->sendPaginationHeaders($limit, $offset, $event->getTotalRepositories());
 
         return ['repositories' => $event->getRepositoriesRepresentations()];
+    }
+
+    /**
+     * Put banner
+     *
+     * Put the banner message to be displayed
+     *
+     * <br>
+     * <pre>
+     * {<br>
+     *   &nbsp;"message": "A message to be displayed on the project"<br>
+     *  }<br>
+     * </pre>
+     *
+     * @url PUT {id}/banner
+     *
+     * @param int $id id of the project
+     * @param BannerRepresentation $banner banner to be displayed {@from body}
+     * @throws RestException
+     */
+    protected function putBanner($id, BannerRepresentation $banner): void
+    {
+        $this->checkAccess();
+
+        if (empty($banner->message)) {
+            throw new RestException(400, 'Message cannot be empty');
+        }
+
+        $project           = $this->getProjectForUser($id);
+        $update_permission = $this->banner_permissions_checker->getEditBannerPermission(
+            $this->user_manager->getCurrentUser(),
+            $project
+        );
+
+        if (! $update_permission) {
+            throw new RestException(403);
+        }
+
+        $this->banner_creator->addBanner(
+            $update_permission,
+            $banner->message
+        );
+    }
+
+    /**
+     * Delete the banner message
+     *
+     * @url DELETE {id}/banner
+     *
+     * @param int $id id of the project
+     * @throws RestException 403
+     */
+    protected function deleteBanner(int $id) : void
+    {
+        $project           = $this->getProjectForUser($id);
+        $delete_permission = $this->banner_permissions_checker->getEditBannerPermission(
+            $this->user_manager->getCurrentUser(),
+            $project
+        );
+
+        if ($delete_permission === null) {
+            throw new RestException(403);
+        }
+
+        $banner_remover = new BannerRemover(new BannerDao());
+        $banner_remover->deleteBanner($delete_permission);
+    }
+
+     /**
+      * Get banner
+      *
+      * Get the banner
+      *
+      * @url GET {id}/banner
+      * @access hybrid
+      *
+      * @param int $id id of the project
+      * @return BannerRepresentation
+      * @throws RestException
+      */
+    public function getBanner($id): BannerRepresentation
+    {
+        $this->checkAccess();
+
+        $project = $this->getProjectForUser($id);
+        $banner  = $this->banner_retriever->getBannerForProject($project);
+
+        if (! $banner) {
+            throw new RestException(404, 'No banner set for this project');
+        }
+
+        $representation = new BannerRepresentation();
+        $representation->build($banner);
+
+        return $representation;
     }
 
     private function getRepositoryNameFromQuery($query)
@@ -1567,9 +1571,9 @@ class ProjectResource extends AuthenticatedResource
      * @param int $offset Position of the first element to display {@from path} {@min 0}
      *
      * @return array {@type Tuleap\Project\REST\v1\ServiceRepresentation}
-     * @throws 401
-     * @throws 403
-     * @throws 404
+     * @throws RestException 401
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function getServices(int $id, int $limit = 10, int $offset = 0): array
     {
@@ -1619,22 +1623,6 @@ class ProjectResource extends AuthenticatedResource
 
         if ($available === false) {
             throw new RestException(404, 'AgileDashboard plugin not activated');
-        }
-    }
-
-    private function checkFRSEndpointsAvailable()
-    {
-        $available = false;
-
-        $this->event_manager->processEvent(
-            Event::REST_PROJECT_FRS_ENDPOINTS,
-            [
-                'available' => &$available
-            ]
-        );
-
-        if ($available === false) {
-            throw new RestException(404, 'FRS plugin not activated');
         }
     }
 
@@ -1698,11 +1686,6 @@ class ProjectResource extends AuthenticatedResource
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
     }
 
-    private function sendAllowHeadersForFRSPackages()
-    {
-        Header::allowOptionsGet();
-    }
-
     private function checkLimitValueIsAcceptable($limit)
     {
         if (! $this->limitValueIsAcceptable($limit)) {
@@ -1730,5 +1713,37 @@ class ProjectResource extends AuthenticatedResource
     private function getUserGroupQueryParser(): UserGroupQueryParameterParser
     {
         return new UserGroupQueryParameterParser($this->json_decoder);
+    }
+
+    private function getRestProjectCreator(): RestProjectCreator
+    {
+        return new RestProjectCreator(
+            $this->project_manager,
+            ProjectCreator::buildSelfRegularValidation(),
+            new XMLFileContentRetriever(),
+            ServiceManager::instance(),
+            \BackendLogger::getDefaultLogger(),
+            new XML_RNGValidator(),
+            ProjectXMLImporter::build(
+                new XMLImportHelper(UserManager::instance()),
+                ProjectCreator::buildSelfRegularValidation()
+            ),
+            TemplateFactory::build(),
+            new ProjectRegistrationUserPermissionChecker(
+                new \ProjectDao()
+            ),
+            new ProjectCategoriesUpdater(
+                new \TroveCatFactory(
+                    new \TroveCatDao(),
+                ),
+                new \ProjectHistoryDao(),
+                new TroveSetNodeFacade(),
+            ),
+            new FieldUpdator(
+                new DescriptionFieldsFactory(new DescriptionFieldsDao()),
+                new ProjectDetailsDAO(),
+                new ProjectXMLImporterLogger()
+            )
+        );
     }
 }

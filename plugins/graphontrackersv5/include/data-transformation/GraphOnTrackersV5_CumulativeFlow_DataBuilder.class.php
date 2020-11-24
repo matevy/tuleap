@@ -1,6 +1,6 @@
 <?php
-/*
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+/**
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * Originally written by Yoann Celton, 2013. Jtekt Europe SAS.
  *
@@ -21,7 +21,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
+class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5
+{
 
     public const MAX_STEPS = 75;
     protected $timeFiller;
@@ -31,19 +32,21 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
     protected $nbSteps;
     protected $labels;
     protected $observed_field_id;
+    protected $observed_field;
 
     /**
      * build cumulative_flow chart properties
      *
      * @param GraphOnTrackersV5_Engine_CumulativeFlow $engine object
      */
-    public function buildProperties($engine) {
+    public function buildProperties($engine)
+    {
         parent::buildProperties($engine);
 
         $form_element_factory = Tracker_FormElementFactory::instance();
-        $observed_field       = $form_element_factory->getFormElementById($this->chart->getFieldId());
-        $type                 = $form_element_factory->getType($observed_field);
-        $this->observed_field_id = $observed_field->getId();
+        $this->observed_field = $form_element_factory->getFormElementById($this->chart->getFieldId());
+        $type                 = $form_element_factory->getType($this->observed_field);
+        $this->observed_field_id = $this->observed_field->getId();
         $this->timeFiller = array(GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_DAY => 3600*24,
             GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_WEEK => 3600*24*7,
             GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_MONTH => 3600*24*30.45
@@ -53,7 +56,7 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
         $this->scale = $this->chart->getScale();
         $this->nbSteps = ceil(($this->stopDate - $this->startDate)/$this->timeFiller[$this->scale]);
 
-        if ($this->isValidObservedField($observed_field, $type) && $this->isValidType($type)) {
+        if ($this->isValidObservedField($this->observed_field, $type) && $this->isValidType($type)) {
             $engine->data = $this->getCumulativeFlowData($engine);
         }
 
@@ -63,8 +66,9 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
         $engine->stop_date   = $this->chart->getStopDate();
     }
 
-    protected function getCumulativeFlowData($engine) {
-        if($this->nbSteps > GraphOnTrackersV5_CumulativeFlow_DataBuilder::MAX_STEPS) {
+    protected function getCumulativeFlowData($engine)
+    {
+        if ($this->nbSteps > GraphOnTrackersV5_CumulativeFlow_DataBuilder::MAX_STEPS) {
             $engine->setError(
                 dgettext('tuleap-graphontrackersv5', 'Please choose a smaller period, or increase the scale.')
             );
@@ -74,7 +78,7 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
 
         $empty_columns = $this->initEmptyColumns($engine);
 
-        for ($i = 0 ; $i <= $this->nbSteps; $i++ ) {
+        for ($i = 0; $i <= $this->nbSteps; $i++) {
             $timestamp = $this->startDate + ($i * $this->timeFiller[$this->scale]) ;
             $changesets = $this->getLastChangesetsBefore($timestamp);
 
@@ -89,7 +93,7 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
                     GROUP BY l.bindvalue_id";
 
             $res = db_query($sql);
-            while($data = db_fetch_array($res)) {
+            while ($data = db_fetch_array($res)) {
                 if (array_key_exists((int) $data['bindvalue_id'], $empty_columns)) {
                     $empty_columns[$data['bindvalue_id']]['values'][$timestamp]['count'] = (int) $data['count'];
                 }
@@ -101,8 +105,14 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
 
     public function getColumns(array $data)
     {
+        $report_filter = $this->getReportFilter();
+
         $columns = [];
-        foreach($data as $column_id => $column) {
+        foreach ($data as $column_id => $column) {
+            if (count($report_filter) > 0 && ! in_array($column_id, $report_filter)) {
+                continue;
+            }
+
             $values = array_values($column['values']);
 
             if (! $this->isColumnEmpty($values)) {
@@ -114,10 +124,30 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
         return $columns;
     }
 
+    private function getReportFilter(): array
+    {
+        $tracker_report = $this->chart->getRenderer()->getReport();
+        assert($tracker_report instanceof Tracker_Report);
+
+        $report_filter = [];
+        foreach ($tracker_report->getCriteria() as $criterion) {
+            $criterion_field = $criterion->getField();
+            if ((int) $criterion_field->getId() === (int) $this->chart->getFieldId()) {
+                $criterion_value = $criterion_field->getCriteriaValue($criterion);
+                if (is_array($criterion_value)) {
+                    $report_filter = $criterion_value;
+                }
+                break;
+            }
+        }
+
+        return $report_filter;
+    }
+
     private function isColumnEmpty(array $column_values)
     {
         $counts = array_map(
-            function($value) {
+            function ($value) {
                 return $value['count'];
             },
             $column_values
@@ -126,7 +156,8 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
         return array_sum($counts) === 0;
     }
 
-    protected function isValidObservedField($observed_field, $type) {
+    protected function isValidObservedField($observed_field, $type)
+    {
         return $observed_field && $observed_field->userCanRead(UserManager::instance()->getCurrentUser());
     }
 
@@ -135,7 +166,8 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
      *
      * @var array
      */
-    protected function isValidType($type) {
+    protected function isValidType($type)
+    {
         return in_array($type, array('sb', 'msb', 'cb'));
     }
 
@@ -145,7 +177,8 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
      * @param int $field_id ID of the observed field
      * @return array $resultArray Initialized array for this graph
      */
-    private function initEmptyColumns($engine) {
+    private function initEmptyColumns($engine)
+    {
 
             //Return {Label, r, g, b}
             $sql = "SELECT val.id, val.label, deco.red, deco.green, deco.blue, deco.tlp_color_name
@@ -159,12 +192,12 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
 
             $resultArray[100] = [
                 'id' => 100,
-                'label' => $GLOBALS['Language']->getText('global','none'),
+                'label' => $GLOBALS['Language']->getText('global', 'none'),
                 'color' => null,
                 'values' => $this->generateEmptyValues()
             ];
 
-            while($data = db_fetch_array($res)) {
+            while ($data = db_fetch_array($res)) {
                 $column = [
                     'id' => (int) $data['id'],
                     'label' => $data['label'],
@@ -179,16 +212,17 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
                 $resultArray[$timestamp] = array_reverse($resultArray[$timestamp], true);
             }
 
-        return $resultArray;
+            return $resultArray;
     }
 
     /**
      *
      * Get the the last changeset BEFORE the timestamp for each artifact
      * @param int $beforeTimestamp
-     * @return $changesets array of changeset_id
+     * @return array $changesets array of changeset_id
      */
-    private function getLastChangesetsBefore($timestamp) {
+    private function getLastChangesetsBefore($timestamp)
+    {
         $sql = "SELECT MAX(id) as id
             FROM `tracker_changeset` c
             WHERE c.submitted_on < $timestamp
@@ -197,8 +231,8 @@ class GraphOnTrackersV5_CumulativeFlow_DataBuilder extends ChartDataBuilderV5 {
 
         $res = db_query($sql);
         $changesets = array();
-        while($data = db_fetch_array($res)) {
-           $changesets[] = $data['id'];
+        while ($data = db_fetch_array($res)) {
+            $changesets[] = $data['id'];
         }
         return $changesets;
     }

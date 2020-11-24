@@ -21,12 +21,13 @@ const webpack = require("webpack");
 const merge = require("webpack-merge");
 const WebpackAssetsManifest = require("webpack-assets-manifest");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
-const AngularGettextPlugin = require("angular-gettext-plugin");
-const CleanWebpackPlugin = require("clean-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const FixStyleOnlyEntriesPlugin = require("webpack-fix-style-only-entries");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const { VueLoaderPlugin } = require("vue-loader");
+const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+
 const rule_configurations = require("./webpack-rule-configs.js");
 const aliases = require("./webpack-aliases.js");
 
@@ -66,13 +67,10 @@ function getVueLoaderPlugin() {
     return new VueLoaderPlugin();
 }
 
-function getAngularGettextPlugin() {
-    return new AngularGettextPlugin({
-        extractStrings: {
-            input: "src/**/*.+(js|html)",
-            lineNumbers: false,
-            destination: "po/template.pot"
-        }
+function getTypescriptCheckerPlugin(use_vue) {
+    return new ForkTsCheckerWebpackPlugin({
+        vue: use_vue,
+        reportFiles: ["**", "!**/*.test.ts"]
     });
 }
 
@@ -82,7 +80,10 @@ function getCopyPlugin(patterns = [], options = {}) {
 
 function getCSSExtractionPlugins() {
     return [
-        new FixStyleOnlyEntriesPlugin(),
+        new FixStyleOnlyEntriesPlugin({
+            extensions: ["scss", "css"],
+            silent: true
+        }),
         new MiniCssExtractPlugin({
             filename: "[name]-[chunkhash].css"
         })
@@ -118,18 +119,26 @@ function extendProdConfiguration(webpack_configs) {
     return webpack_configs.map(webpack_config =>
         merge(webpack_config, {
             mode: "production",
-            plugins: [getCSSOptimizerPlugin()]
+            plugins: [getCSSOptimizerPlugin()],
+            stats: {
+                all: false,
+                assets: true,
+                errors: true,
+                errorDetails: true,
+                performance: true,
+                timings: true
+            }
         })
     );
 }
 
 const configurator = {
     configureOutput,
-    getAngularGettextPlugin,
     getCopyPlugin,
     getManifestPlugin,
     getMomentLocalePlugin,
     getVueLoaderPlugin,
+    getTypescriptCheckerPlugin,
     getCleanWebpackPlugin,
     getCSSExtractionPlugins,
     extendDevConfiguration,

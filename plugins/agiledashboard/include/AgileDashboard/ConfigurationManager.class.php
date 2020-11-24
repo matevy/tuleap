@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class AgileDashboard_ConfigurationManager {
+class AgileDashboard_ConfigurationManager
+{
 
     public const DEFAULT_SCRUM_TITLE  = 'Scrum';
     public const DEFAULT_KANBAN_TITLE = 'Kanban';
@@ -29,11 +30,13 @@ class AgileDashboard_ConfigurationManager {
      */
     private $dao;
 
-    public function __construct(AgileDashboard_ConfigurationDao $dao) {
+    public function __construct(AgileDashboard_ConfigurationDao $dao)
+    {
         $this->dao = $dao;
     }
 
-    public function kanbanIsActivatedForProject($project_id) {
+    public function kanbanIsActivatedForProject($project_id)
+    {
         $row = $this->dao->isKanbanActivated($project_id)->getRow();
         if ($row) {
             return $row['kanban'];
@@ -42,7 +45,8 @@ class AgileDashboard_ConfigurationManager {
         return false;
     }
 
-    public function scrumIsActivatedForProject($project_id) {
+    public function scrumIsActivatedForProject($project_id)
+    {
         $row = $this->dao->isScrumActivated($project_id)->getRow();
         if ($row) {
             return $row['scrum'];
@@ -51,7 +55,8 @@ class AgileDashboard_ConfigurationManager {
         return true;
     }
 
-    public function getScrumTitle($project_id) {
+    public function getScrumTitle($project_id)
+    {
         $row = $this->dao->getScrumTitle($project_id);
 
         if ($row) {
@@ -61,7 +66,8 @@ class AgileDashboard_ConfigurationManager {
         return self::DEFAULT_SCRUM_TITLE;
     }
 
-    public function getKanbanTitle($project_id) {
+    public function getKanbanTitle($project_id)
+    {
         $row = $this->dao->getKanbanTitle($project_id);
 
         if ($row) {
@@ -87,7 +93,8 @@ class AgileDashboard_ConfigurationManager {
         );
     }
 
-    public function duplicate($project_id, $template_id) {
+    public function duplicate($project_id, $template_id)
+    {
         $this->dao->duplicate($project_id, $template_id);
     }
 }

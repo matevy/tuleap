@@ -24,12 +24,14 @@
 
 namespace Tuleap\Docman\REST\v1;
 
+use Codendi_HTMLPurifier;
 use Docman_Item;
 use Docman_ItemDao;
 use Docman_ItemFactory;
 use Docman_VersionFactory;
 use EventManager;
 use Luracast\Restler\RestException;
+use PermissionsManager;
 use Project;
 use ProjectManager;
 use Tuleap\Docman\ApprovalTable\ApprovalTableRetriever;
@@ -37,10 +39,13 @@ use Tuleap\Docman\ApprovalTable\ApprovalTableStateMapper;
 use Tuleap\Docman\REST\v1\Folders\ItemCanHaveSubItemsChecker;
 use Tuleap\Docman\REST\v1\Metadata\MetadataRepresentationBuilder;
 use Tuleap\Docman\REST\v1\Metadata\UnknownMetadataException;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsBuilder;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\I18NRestException;
-use Tuleap\REST\UserManager as RestUserManager;
+use UGroupManager;
+use UserHelper;
+use UserManager;
 
 class DocmanItemsResource extends AuthenticatedResource
 {
@@ -51,9 +56,9 @@ class DocmanItemsResource extends AuthenticatedResource
      */
     private $item_dao;
     /**
-     * @var RestUserManager
+     * @var UserManager
      */
-    private $rest_user_manager;
+    private $user_manager;
     /**
      * @var DocmanItemsRequestBuilder
      */
@@ -66,10 +71,10 @@ class DocmanItemsResource extends AuthenticatedResource
 
     public function __construct()
     {
-        $this->rest_user_manager = RestUserManager::build();
-        $this->item_dao          = new Docman_ItemDao();
-        $this->request_builder   = new DocmanItemsRequestBuilder($this->rest_user_manager, ProjectManager::instance());
-        $this->event_manager     = EventManager::instance();
+        $this->user_manager    = UserManager::instance();
+        $this->item_dao        = new Docman_ItemDao();
+        $this->request_builder = new DocmanItemsRequestBuilder($this->user_manager, ProjectManager::instance());
+        $this->event_manager   = EventManager::instance();
     }
 
     /**
@@ -90,9 +95,9 @@ class DocmanItemsResource extends AuthenticatedResource
      *
      * @return ItemRepresentation
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function getId($id)
     {
@@ -104,7 +109,7 @@ class DocmanItemsResource extends AuthenticatedResource
 
         $representation_visitor = $this->getItemRepresentationVisitor($items_request);
         try {
-            return $item->accept($representation_visitor, ['current_user' => $items_request->getUser()]);
+            return $item->accept($representation_visitor, ['current_user' => $items_request->getUser(), 'is_a_direct_access' => true]);
         } catch (UnknownMetadataException $exception) {
             throw new RestException(
                 500,
@@ -125,9 +130,9 @@ class DocmanItemsResource extends AuthenticatedResource
      *
      * @return ItemRepresentation[]
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      */
     public function getDocumentItems($id, $limit = self::MAX_LIMIT, $offset = 0)
     {
@@ -190,9 +195,9 @@ class DocmanItemsResource extends AuthenticatedResource
      * @return ItemRepresentation[]
      *
      * @status 200
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      *
      */
     public function getParents($id, $limit = self::MAX_LIMIT, $offset = 0)
@@ -211,24 +216,6 @@ class DocmanItemsResource extends AuthenticatedResource
         Header::sendPaginationHeaders($limit, $offset, $items_representation->getTotalSize(), self::MAX_LIMIT);
 
         return $items_representation->getPaginatedElementCollection();
-    }
-
-    /**
-     * Create new item
-     *
-     * @url    POST
-     * @access hybrid
-     *
-     * @deprecated this route will be split into smaller routes, easier to use (POST docman_folders/id/type)
-     *
-     * @throws 301
-     */
-    public function post()
-    {
-        throw new RestException(
-            301,
-            "This route have been split into smaller routes, please use POST docman_folders/id/type instead"
-        );
     }
 
     /**
@@ -273,36 +260,49 @@ class DocmanItemsResource extends AuthenticatedResource
         );
     }
 
-    /**
-     *
-     * @return ItemRepresentationVisitor
-     */
-    private function getItemRepresentationVisitor(DocmanItemsRequest $items_request)
+    private function getItemRepresentationVisitor(DocmanItemsRequest $items_request): ItemRepresentationVisitor
     {
+        $event_adder = new DocmanItemsEventAdder($this->event_manager);
+        $event_adder->addLogEvents();
+
         return new ItemRepresentationVisitor(
             $this->getItemRepresentationBuilder($items_request->getItem(), $items_request->getProject()),
             new \Docman_VersionFactory(),
-            new \Docman_LinkVersionFactory()
+            new \Docman_LinkVersionFactory(),
+            Docman_ItemFactory::instance($items_request->getProject()->getGroupId()),
+            $this->event_manager
         );
     }
 
-    private function getItemRepresentationBuilder(Docman_Item $item, Project $project)
+    private function getItemRepresentationBuilder(Docman_Item $item, Project $project) : ItemRepresentationBuilder
     {
-        $item_representation_builder = new ItemRepresentationBuilder(
+        $html_purifier = Codendi_HTMLPurifier::instance();
+
+        $permissions_manager = $this->getDocmanPermissionManager($project);
+
+        return new ItemRepresentationBuilder(
             $this->item_dao,
             \UserManager::instance(),
             Docman_ItemFactory::instance($item->getGroupId()),
-            $this->getDocmanPermissionManager($project),
-            new \Docman_LockFactory(),
+            $permissions_manager,
+            new \Docman_LockFactory(new \Docman_LockDao(), new \Docman_Log()),
             new ApprovalTableStateMapper(),
             new MetadataRepresentationBuilder(
-                new \Docman_MetadataFactory($project->getID())
+                new \Docman_MetadataFactory($project->getID()),
+                $html_purifier,
+                UserHelper::instance()
             ),
             new ApprovalTableRetriever(
                 new \Docman_ApprovalTableFactoriesFactory(),
                 new Docman_VersionFactory()
-            )
+            ),
+            new DocmanItemPermissionsForGroupsBuilder(
+                $permissions_manager,
+                ProjectManager::instance(),
+                PermissionsManager::instance(),
+                new UGroupManager()
+            ),
+            $html_purifier
         );
-        return $item_representation_builder;
     }
 }

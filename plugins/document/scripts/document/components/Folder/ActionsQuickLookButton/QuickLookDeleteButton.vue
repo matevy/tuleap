@@ -18,17 +18,21 @@
   -->
 
 <template>
-    <button v-if="item.user_can_write" type="button" class="tlp-button-small tlp-button-outline tlp-button-danger"
-            v-on:click="redirectDeleteUrl"
-            data-test="quick-look-delete-button">
+    <button
+        v-if="item.user_can_write && is_deletion_allowed"
+        type="button"
+        class="tlp-button-small tlp-button-outline tlp-button-danger"
+        v-on:click="processDeletion"
+        data-test="document-quick-look-delete-button"
+    >
         <i class="fa fa-trash-o tlp-button-icon"></i>
         <translate>Delete</translate>
     </button>
 </template>
 
 <script>
+import EventBus from "../../../helpers/event-bus.js";
 import { mapState } from "vuex";
-import { redirectToUrl } from "../../../helpers/location-helper.js";
 
 export default {
     name: "QuickLookDeleteButton",
@@ -36,15 +40,13 @@ export default {
         item: Object
     },
     computed: {
-        ...mapState(["project_id"])
+        ...mapState(["is_deletion_allowed"])
     },
     methods: {
-        redirectDeleteUrl() {
-            redirectToUrl(
-                `/plugins/docman/?group_id=${encodeURIComponent(
-                    this.project_id
-                )}&action=confirmDelete&id=${encodeURIComponent(this.item.id)}`
-            );
+        processDeletion() {
+            EventBus.$emit("show-confirm-item-deletion-modal", {
+                detail: { current_item: this.item }
+            });
         }
     }
 };

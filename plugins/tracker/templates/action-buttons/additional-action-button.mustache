@@ -1,6 +1,12 @@
     <li>
-        <a class="btn tracker-action-button" href="{{ url }}">
-            {{{ glyph }}}
-            {{ link_label }}
+        <a class="btn tracker-action-button"
+           {{# url }} href="{{ url }}"{{/ url }}
+           {{# id }} id="{{ id }}"{{/ id }}
+           {{# data }}
+               data-{{ name }}="{{ value }}"
+           {{/ data }}
+        >
+            <i class="fa fa-fw {{ icon }}"></i>
+            <span class="additional-artifact-action-title">{{ link_label }}</span>
         </a>
     </li>

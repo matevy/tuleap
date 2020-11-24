@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class FlamingParrot_NavBarProjectPresenter {
+class FlamingParrot_NavBarProjectPresenter
+{
 
     /** @var  string */
     public $project_name;
@@ -26,7 +27,8 @@ class FlamingParrot_NavBarProjectPresenter {
     /** @var  string */
     public $project_uri;
 
-    public function __construct(Project $project) {
+    public function __construct(Project $project)
+    {
         $this->project_name  = util_unconvert_htmlspecialchars($project->getPublicName());
         $this->project_uri   = '/projects/' . $project->getUnixName();
     }

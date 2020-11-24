@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tuleap_TourUsageStatsDao extends DataAccessObject {
+class Tuleap_TourUsageStatsDao extends DataAccessObject
+{
 
-    public function save($user_id, $tour_name, $nb_steps, $current_step, $the_end) {
+    public function save($user_id, $tour_name, $nb_steps, $current_step, $the_end)
+    {
         $user_id      = $this->da->escapeInt($user_id);
         $executed_on  = $this->da->escapeInt($_SERVER['REQUEST_TIME']);
         $tour_name    = $this->da->quoteSmart($tour_name);

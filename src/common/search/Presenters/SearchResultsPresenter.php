@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Search_SearchResultsPresenter {
+class Search_SearchResultsPresenter
+{
     public const TEMPLATE_PREFIX = 'results-';
 
     private $template;
@@ -33,7 +34,8 @@ class Search_SearchResultsPresenter {
 
     public $maybe_more_results;
 
-    public function __construct(Search_SearchResultsIntroPresenter $results_intro_presenter, array $results, $template, $maybe_more_results) {
+    public function __construct(Search_SearchResultsIntroPresenter $results_intro_presenter, array $results, $template, $maybe_more_results)
+    {
         $this->results_intro_presenter = $results_intro_presenter;
         $this->results                 = $results;
         $this->template                = $template;
@@ -41,23 +43,28 @@ class Search_SearchResultsPresenter {
         $this->maybe_more_results      = $maybe_more_results;
     }
 
-    public function results_intro() {
+    public function results_intro()
+    {
         return $this->results_intro_presenter;
     }
 
-    public function has_results() {
+    public function has_results()
+    {
         return count($this->results) > 0;
     }
 
-    public function results() {
+    public function results()
+    {
         return $this->results;
     }
 
-    public function getTemplate() {
+    public function getTemplate()
+    {
         return self::TEMPLATE_PREFIX.$this->template;
     }
 
-    public function no_more_results() {
+    public function no_more_results()
+    {
         return $GLOBALS['Language']->getText('search_index', 'no_more_results');
     }
 }

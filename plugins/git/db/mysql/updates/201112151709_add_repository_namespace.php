@@ -19,14 +19,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201112151709_add_repository_namespace extends ForgeUpgrade_Bucket {
+class b201112151709_add_repository_namespace extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add the column repository_namespace in plugin_git.
 EOT;
@@ -37,7 +39,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -46,7 +49,8 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE plugin_git 
                     ADD repository_namespace varchar(255) NULL';
         $res = $this->db->dbh->exec($sql);
@@ -60,12 +64,10 @@ EOT;
      *
      * @return void
      */
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('plugin_git', 'repository_namespace')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Column repository_namespace in table plugin_git is missing');
         }
     }
-
 }
-
-?>

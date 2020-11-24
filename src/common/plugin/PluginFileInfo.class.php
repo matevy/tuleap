@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, 2006. All Rights Reserved.
  *
  * Originally written by Nicolas Terray, 2006
@@ -21,9 +21,6 @@
  * along with Tuleap; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-require_once 'PluginInfo.class.php';
-require_once 'common/include/PropertyDescriptor.class.php';
 
 /**
  * File based plugin options management
@@ -57,7 +54,8 @@ class PluginFileInfo extends PluginInfo
      * This is left intentionnaly protected so that we can deploy this feature progressively. When all concerned plugins
      * will use it this method will not be required anymore and should be inlined.
      */
-    protected function getDefaultConfPath(Plugin $plugin, $incname) {
+    protected function getDefaultConfPath(Plugin $plugin, $incname)
+    {
         return null;
     }
 
@@ -113,9 +111,11 @@ class PluginFileInfo extends PluginInfo
             }
 
             $replace = '$1'. $value;
-            $content = preg_replace('`((?:^|\n)\$'. preg_quote($desc_name, '`') .'\s*=\s*)(.*)\s*;`',
+            $content = preg_replace(
+                '`((?:^|\n)\$'. preg_quote($desc_name, '`') .'\s*=\s*)(.*)\s*;`',
                 $replace,
-                $content);
+                $content
+            );
 
             if (! preg_match('`(?:^|\n)\$'. preg_quote($desc_name, '`') .'\s*=`', $content)) {
                 $content .= '$' . $desc_name .' = '. $value . PHP_EOL;
@@ -129,16 +129,17 @@ class PluginFileInfo extends PluginInfo
         }
     }
 
-    private function cleanContentFromClosingPHPTag($content) {
+    private function cleanContentFromClosingPHPTag($content)
+    {
         return str_replace('?>', '', $content);
     }
 
     /**
      * Return the property value for given property name
      *
-     * @param String $name Label of the property
+     * @param string $name Label of the property
      *
-     * @return String
+     * @return string
      */
     function getPropertyValueForName($name)
     {
@@ -174,35 +175,35 @@ class PluginFileInfo extends PluginInfo
         $current   = 0;
         foreach ($tokens as $token) {
             switch ($token[0]) {
-            case T_VARIABLE:
-                $variables[$current] = array('name' => substr($token[1], 1), 'value' => '');
-                break;
-            case T_STRING:
-            case T_CONSTANT_ENCAPSED_STRING:
-            case T_DNUMBER:
-            case T_LNUMBER:
-            case T_NUM_STRING:
-                if (T_STRING == $token[0] && (!strcasecmp($token[1], "false") || !strcasecmp($token[1], "true"))) {
-                    $val = (bool)strcasecmp($token[1], "false");
-                    if (isset($variables[$current])) {
-                        $variables[$current]['value'] = $val;
+                case T_VARIABLE:
+                    $variables[$current] = array('name' => substr($token[1], 1), 'value' => '');
+                    break;
+                case T_STRING:
+                case T_CONSTANT_ENCAPSED_STRING:
+                case T_DNUMBER:
+                case T_LNUMBER:
+                case T_NUM_STRING:
+                    if (T_STRING == $token[0] && (!strcasecmp($token[1], "false") || !strcasecmp($token[1], "true"))) {
+                        $val = (bool)strcasecmp($token[1], "false");
+                        if (isset($variables[$current])) {
+                            $variables[$current]['value'] = $val;
+                        }
+                    } else {
+                        if (isset($variables[$current])) {
+                            $variables[$current]['value'] .= $token[1];
+                        }
                     }
-                } else {
+                    break;
+                case '*':
                     if (isset($variables[$current])) {
-                        $variables[$current]['value'] .= $token[1];
+                        $variables[$current]['value'] .= $token[0];
                     }
-                }
-                break;
-            case '*':
-                if (isset($variables[$current])) {
-                    $variables[$current]['value'] .= $token[0];
-                }
-                break;
-            case ';':
-                $current++;
-                break;
-            default:
-                break;
+                    break;
+                case ';':
+                    $current++;
+                    break;
+                default:
+                    break;
             }
         }
         return $variables;
@@ -217,4 +218,3 @@ class PluginFileInfo extends PluginInfo
         require $path;
     }
 }
-?>

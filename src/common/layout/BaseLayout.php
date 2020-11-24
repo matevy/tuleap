@@ -26,6 +26,7 @@ use EventManager;
 use ForgeConfig;
 use HTTPRequest;
 use PermissionsOverrider_PermissionsOverriderManager;
+use PFUser;
 use Project;
 use ProjectManager;
 use Response;
@@ -37,6 +38,10 @@ use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbLinkCollection;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbSubItems;
 use Tuleap\Layout\BreadCrumbDropdown\SubItemsUnlabelledSection;
 use Tuleap\Project\Admin\MembershipDelegationDao;
+use Tuleap\Project\Banner\Banner;
+use Tuleap\Project\Banner\BannerDao;
+use Tuleap\Project\Banner\BannerDisplay;
+use Tuleap\Project\Banner\BannerRetriever;
 use Tuleap\Sanitizer\URISanitizer;
 use UserManager;
 use Valid_FTPURI;
@@ -64,7 +69,7 @@ abstract class BaseLayout extends Response
     /**
      * Set to true if HTML object is displayed through a Service
      *
-     * @var Boolean
+     * @var bool
      */
     protected $is_rendered_through_service = false;
 
@@ -312,7 +317,7 @@ abstract class BaseLayout extends Response
         echo '</fieldset>';
 
         // Display all queries used to generate the page ordered by time taken
-        usort($queries_by_time_taken, array(__CLASS__, 'sortQueriesByTimeTaken'));
+        usort($queries_by_time_taken, array(self::class, 'sortQueriesByTimeTaken'));
         echo '<fieldset><legend id="footer_debug_allqueries_time_taken" class="'. Toggler::getClassname('footer_debug_allqueries_time_taken') .'">All queries by time taken:</legend>';
         echo '<table border="1" style="border-collapse:collapse" cellpadding="2" cellspacing="0">';
         echo '<thead><tr><th>n°</th><th style="white-space:nowrap;">time taken</th><th>sum</th><th>sql</th></tr></thead>';
@@ -455,7 +460,11 @@ abstract class BaseLayout extends Response
         }
 
         foreach ($breadcrumbs as $breadcrumb) {
-            $this->breadcrumbs->addBreadCrumb($this->getBreadCrumbItem($breadcrumb));
+            if ($breadcrumb instanceof BreadCrumb) {
+                $this->breadcrumbs->addBreadCrumb($breadcrumb);
+            } else {
+                $this->breadcrumbs->addBreadCrumb($this->getBreadCrumbItem($breadcrumb));
+            }
         }
     }
 
@@ -524,25 +533,11 @@ abstract class BaseLayout extends Response
     }
 
     /**
-     * @return array
-     */
-    protected function getListOfIconUnicodes()
-    {
-        $list_of_icon_unicodes = array();
-
-        EventManager::instance()->processEvent(Event::SERVICE_ICON, array(
-            'list_of_icon_unicodes' => &$list_of_icon_unicodes
-        ));
-
-        return $list_of_icon_unicodes;
-    }
-
-    /**
      * Set to true if HTML object is displayed through a Service
      *
      * @see Service
      *
-     * @param Boolean $value
+     * @param bool $value
      */
     public function setRenderedThroughservice($value)
     {
@@ -606,6 +601,18 @@ abstract class BaseLayout extends Response
             return _('Project privacy set to private.') .' '.
                 _('Only project members can access its content.');
         }
+    }
+
+    final protected function getProjectBanner(Project $project, PFUser $current_user, string $script_name) : ?BannerDisplay
+    {
+        $project_banner = (new BannerRetriever(new BannerDao()))->getBannerForDisplayPurpose($project, $current_user);
+        if ($project_banner === null) {
+            return null;
+        }
+
+        $this->includeFooterJavascriptFile($this->include_asset->getFileURL($script_name));
+
+        return $project_banner;
     }
 
     protected function getFooterSiteJs()

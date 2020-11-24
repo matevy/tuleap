@@ -22,11 +22,12 @@
  *
  */
 
-require_once('common/valid/Rule.class.php');
 
-class Rule_EmailTest extends TuleapTestCase {
+class Rule_EmailTest extends TuleapTestCase
+{
 
-    function UnitTestCase($name = 'Rule_Email test') {
+    function UnitTestCase($name = 'Rule_Email test')
+    {
         $this->UnitTestCase($name);
     }
 
@@ -36,21 +37,24 @@ class Rule_EmailTest extends TuleapTestCase {
         unset($GLOBALS['sys_disable_subdomains']);
     }
 
-    function testWithoutSubDomains() {
+    function testWithoutSubDomains()
+    {
         $GLOBALS['sys_disable_subdomains'] = 1;
         $r = new Rule_Email();
         $this->assertTrue($r->isValid('user@codendi'));
         $this->assertTrue($r->isValid('user@codendi.domain.com'));
     }
 
-    function testWithSubDomains() {
+    function testWithSubDomains()
+    {
         $GLOBALS['sys_disable_subdomains'] = 0;
         $r = new Rule_Email();
         $this->assertFalse($r->isValid('user@codendi'));
         $this->assertTrue($r->isValid('user@codendi.domain.com'));
     }
 
-    function testSpecialCharsWoSD() {
+    function testSpecialCharsWoSD()
+    {
         $GLOBALS['sys_disable_subdomains'] = 1;
         $r = new Rule_Email();
         $this->assertFalse($r->isValid("user@codendi.domain.com\n"));
@@ -61,7 +65,8 @@ class Rule_EmailTest extends TuleapTestCase {
         $this->assertFalse($r->isValid("user@codendi.domain.com\0user@codendi.domain.com"));
     }
 
-    function testSpecialCharsWithSD() {
+    function testSpecialCharsWithSD()
+    {
         $GLOBALS['sys_disable_subdomains'] = 0;
         $r = new Rule_Email();
         $this->assertFalse($r->isValid("user@codendi.domain.com\n"));
@@ -72,7 +77,8 @@ class Rule_EmailTest extends TuleapTestCase {
         $this->assertFalse($r->isValid("user@codendi.domain.com\0user@codendi.domain.com"));
     }
 
-    function testMultipleEmails() {
+    function testMultipleEmails()
+    {
         $r = new Rule_Email(',');
 
         $this->assertTrue($r->isValid("user@codendi.domain.com"));
@@ -84,7 +90,8 @@ class Rule_EmailTest extends TuleapTestCase {
         $this->assertFalse($r->isValid("toto l'asticot"));
     }
 
-    function testMultipleEmailsMultipleSeparator() {
+    function testMultipleEmailsMultipleSeparator()
+    {
         $r = new Rule_Email('[,;]');
 
         $this->assertTrue($r->isValid("user@codendi.domain.com"));

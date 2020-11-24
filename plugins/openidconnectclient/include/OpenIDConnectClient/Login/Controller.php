@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -37,7 +37,8 @@ use User_LoginException;
 use UserNotActiveException;
 use UserManager;
 
-class Controller {
+class Controller
+{
     /**
      * @var UserManager
      */
@@ -85,7 +86,7 @@ class Controller {
 
     public function login(\HTTPRequest $request, $return_to, $login_time)
     {
-        require_once('account.php');
+        require_once __DIR__ . '/../../../../../src/www/include/account.php';
         $this->checkIfUserAlreadyLogged($return_to);
 
         try {
@@ -112,14 +113,16 @@ class Controller {
         }
     }
 
-    private function checkIfUserAlreadyLogged($return_to) {
+    private function checkIfUserAlreadyLogged($return_to)
+    {
         $user = $this->user_manager->getCurrentUser();
-        if($user->isLoggedIn()) {
+        if ($user->isLoggedIn()) {
             \account_redirect_after_login($return_to);
         }
     }
 
-    private function openSession(UserMapping $user_mapping, $return_to, $login_time) {
+    private function openSession(UserMapping $user_mapping, $return_to, $login_time)
+    {
         $user = $this->user_manager->getUserById($user_mapping->getUserId());
         try {
             $this->user_manager->openSessionForUser($user);
@@ -141,12 +144,17 @@ class Controller {
         \account_redirect_after_login($return_to);
     }
 
-    private function redirectAfterFailure($message) {
+    /**
+     * @psalm-return never-return
+     */
+    private function redirectAfterFailure($message): void
+    {
         $GLOBALS['Response']->addFeedback(
             Feedback::ERROR,
             $message
         );
         $GLOBALS['Response']->redirect('/');
+        exit();
     }
 
     private function dealWithUnregisteredUser(FlowResponse $flow_response, $login_time)
@@ -185,7 +193,8 @@ class Controller {
         $GLOBALS['Response']->redirect('/');
     }
 
-    private function redirectToLinkAnUnknowAccount(FlowResponse $flow_response) {
+    private function redirectToLinkAnUnknowAccount(FlowResponse $flow_response)
+    {
         $provider          = $flow_response->getProvider();
         $user_identifier   = $flow_response->getUserIdentifier();
         try {

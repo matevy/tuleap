@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,9 +23,11 @@ namespace Tuleap\Tracker\FormElement;
 use Codendi_HTMLPurifier;
 use EventManager;
 use Tracker;
+use Tracker_FormElement_Chart_Field_Exception;
 use Tracker_FormElement_Field;
 use Tracker_HierarchyFactory;
 use Tuleap\Tracker\FormElement\Event\MessageFetcherAdditionalWarnings;
+use UserManager;
 
 class ChartMessageFetcher
 {
@@ -34,7 +36,7 @@ class ChartMessageFetcher
      */
     private $hierarchy_factory;
     /**
-     * @var ChartConfigurationValueChecker
+     * @var ChartConfigurationFieldRetriever
      */
     private $configuration_field_retriever;
 
@@ -43,14 +45,21 @@ class ChartMessageFetcher
      */
     private $event_manager;
 
+    /**
+     * @var UserManager
+     */
+    private $user_manager;
+
     public function __construct(
         Tracker_HierarchyFactory $hierarchy_factory,
         ChartConfigurationFieldRetriever $configuration_field_retriever,
-        EventManager $event_manager
+        EventManager $event_manager,
+        UserManager $user_manager
     ) {
         $this->hierarchy_factory             = $hierarchy_factory;
         $this->configuration_field_retriever = $configuration_field_retriever;
         $this->event_manager                 = $event_manager;
+        $this->user_manager                  = $user_manager;
     }
 
     /**
@@ -61,27 +70,28 @@ class ChartMessageFetcher
     public function fetchWarnings(Tracker_FormElement_Field $field, ChartFieldUsage $usage)
     {
         $tracker = $field->getTracker();
+        assert($tracker instanceof Tracker);
+        $user    = $this->user_manager->getCurrentUser();
 
         $warnings = array();
         if ($usage->getUseStartDate()) {
-            $warning_message = $this->fetchMissingFieldWarning(
-                $tracker,
-                ChartConfigurationFieldRetriever::START_DATE_FIELD_NAME,
-                'date'
-            );
-            if ($warning_message !== null) {
-                $warnings[] = $warning_message;
+            try {
+                $this->configuration_field_retriever->getStartDateField($tracker, $user);
+            } catch (Tracker_FormElement_Chart_Field_Exception $e) {
+                $warnings[] = '<li>'. $e->getMessage() . '</li>';
             }
         }
 
         if ($usage->getUseDuration()) {
-            $warning_message = $this->fetchMissingFieldWarning(
-                $tracker,
-                ChartConfigurationFieldRetriever::DURATION_FIELD_NAME,
-                'int'
-            );
-            if ($warning_message !== null) {
-                $warnings[] = $warning_message;
+            try {
+                $this->configuration_field_retriever->getDurationField($tracker, $user);
+            } catch (Tracker_FormElement_Chart_Field_Exception $exception_duration) {
+                try {
+                    $this->configuration_field_retriever->getEndDateField($tracker, $user);
+                } catch (Tracker_FormElement_Chart_Field_Exception $exception_end_date) {
+                    $warnings[] = '<li>'. $exception_duration->getMessage() . '</li>';
+                    $warnings[] = '<li>'. $exception_end_date->getMessage() . '</li>';
+                }
             }
         }
 
@@ -136,9 +146,8 @@ class ChartMessageFetcher
     private function fetchMissingRemainingEffortWarning(Tracker $tracker)
     {
         $tracker_links = implode(', ', $this->getLinksToChildTrackersWithoutRemainingEffort($tracker));
-
         if ($tracker_links) {
-            $warning = $GLOBALS['Language']->getText('plugin_tracker', 'burndown_missing_remaining_effort_warning');
+            $warning = dgettext('tuleap-tracker', 'Some child trackers don\'t have a "remaining_effort" Integer or Float or Computed field:');
 
             return "<li>$warning $tracker_links.</li>";
         }

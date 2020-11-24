@@ -22,7 +22,8 @@ namespace Tuleap\OpenIDConnectClient\Administration;
 
 use Tuleap\OpenIDConnectClient\Provider\Provider;
 
-class ColorPresenterFactory {
+class ColorPresenterFactory
+{
 
     private $available_colors = array(
         'inca_silver',
@@ -43,20 +44,22 @@ class ColorPresenterFactory {
         'flamingo_pink'
     );
 
-    public function getColorsPresenters() {
+    public function getColorsPresenters()
+    {
         $colors_presenters = array();
 
-        foreach($this->available_colors as $color) {
+        foreach ($this->available_colors as $color) {
             $colors_presenters[] = new ColorPresenter($color, false);
         }
 
         return $colors_presenters;
     }
 
-    public function getColorsPresentersForProvider(Provider $provider) {
+    public function getColorsPresentersForProvider(Provider $provider)
+    {
         $colors_presenters = array();
 
-        foreach($this->available_colors as $color) {
+        foreach ($this->available_colors as $color) {
             $is_color_selected = false;
 
             if ($provider->getColor() === $color) {
@@ -68,5 +71,4 @@ class ColorPresenterFactory {
 
         return $colors_presenters;
     }
-
 }

@@ -17,12 +17,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class SVN_PermissionsManager {
-    
-    public function userCanRead(PFUser $user, Project $project, $svnpath) {
-        include_once 'www/svn/svn_utils.php';
+class SVN_PermissionsManager
+{
+
+    public function userCanRead(PFUser $user, Project $project, $svnpath)
+    {
+        include_once __DIR__ . '/../../www/svn/svn_utils.php';
         return svn_utils_check_access($user->getUserName(), $project->getSVNRootPath(), $svnpath);
     }
 }
-
-?>

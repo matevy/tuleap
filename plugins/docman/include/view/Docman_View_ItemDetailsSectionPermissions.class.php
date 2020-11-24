@@ -21,17 +21,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_View_ItemDetailsSection.class.php');
-require_once('www/project/admin/permissions.php');
+require_once __DIR__ . '/../../../../src/www/project/admin/permissions.php';
 
-class Docman_View_ItemDetailsSectionPermissions extends Docman_View_ItemDetailsSection {
-    function __construct($item, $url) {
-        parent::__construct($item, $url, 'permissions', $GLOBALS['Language']->getText('plugin_docman','details_permissions'));
+class Docman_View_ItemDetailsSectionPermissions extends Docman_View_ItemDetailsSection
+{
+    function __construct($item, $url)
+    {
+        parent::__construct($item, $url, 'permissions', $GLOBALS['Language']->getText('plugin_docman', 'details_permissions'));
     }
-    function getContent($params = []) {
+    function getContent($params = [])
+    {
         $content  = '';
         $content .= '<form action="'. $this->url .'" method="post">';
-        
+
         //{{{ Explanations
         /* => in the doc
         $content .= '<div>';
@@ -52,12 +54,12 @@ class Docman_View_ItemDetailsSectionPermissions extends Docman_View_ItemDetailsS
         $content .= '</div>';
         */
         //}}}
-        
+
         //{{{ Permissions
         $content .= '<div>';
         $titles = array();
-        $titles[] = $GLOBALS['Language']->getText('plugin_docman','details_permissions_ugroups');
-        $titles[] = $GLOBALS['Language']->getText('plugin_docman','details_permissions_perms');
+        $titles[] = $GLOBALS['Language']->getText('plugin_docman', 'details_permissions_ugroups');
+        $titles[] = $GLOBALS['Language']->getText('plugin_docman', 'details_permissions_perms');
         $content .= html_build_list_table_top($titles, false, false, false);
         $odd_even = array('boxitem', 'boxitemalt');
         $i = 0;
@@ -70,7 +72,7 @@ class Docman_View_ItemDetailsSectionPermissions extends Docman_View_ItemDetailsS
             $content .= '<option value="100">-</option>';
             $perms = array('PLUGIN_DOCMAN_READ', 'PLUGIN_DOCMAN_WRITE', 'PLUGIN_DOCMAN_MANAGE');
             $i = 1;
-            foreach($perms as $perm) {
+            foreach ($perms as $perm) {
                 $content .= '<option value="'. $i++ .'" '. (isset($ugroup['permissions'][$perm])  ? 'selected="selected"' : '') .'>'. permission_get_name($perm) .'</option>';
             }
             $content .= '</select></td>';
@@ -80,17 +82,17 @@ class Docman_View_ItemDetailsSectionPermissions extends Docman_View_ItemDetailsS
 
         if (is_a($this->item, 'Docman_Folder')) {
             $content .= '<div>';
-            $content .= '<input type="checkbox" name="recursive" id="docman_recusrsive_permissions" value="1" /><label for="docman_recusrsive_permissions">'. $GLOBALS['Language']->getText('plugin_docman','details_permissions_recursive') .'</label>';
+            $content .= '<input type="checkbox" name="recursive" id="docman_recusrsive_permissions" value="1" /><label for="docman_recusrsive_permissions">'. $GLOBALS['Language']->getText('plugin_docman', 'details_permissions_recursive') .'</label>';
             $content .= '</div>';
         }
         $content .= '<div>';
         $content .= '<input type="hidden" name="action" value="permissions" />';
         $content .= '<input type="hidden" name="id"     value="'. $this->item->getId() .'" />';
-        $content .= '<input type="submit" name="update" value="'. $GLOBALS['Language']->getText('project_admin_permissions','submit_perm') .'" />';
+        $content .= '<input type="submit" name="update" value="'. $GLOBALS['Language']->getText('project_admin_permissions', 'submit_perm') .'" />';
         $content .= '</div>';
         $content .= '</div>';
         //}}}
-        
+
         $content .= '</form>';
         return $content;
     }

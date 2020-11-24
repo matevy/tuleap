@@ -19,30 +19,34 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201203291146_delete_deprecated_doc extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201203291146_delete_deprecated_doc extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return <<<EOT
 Remove deprecated documentation and update url
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
-    
-    public function up() {        
+
+    public function up()
+    {
         $sql = "UPDATE plugin_docman_item 
                 SET link_url = '/documentation/cli/html/fr_FR/CLI.html'
                 WHERE link_url = '/documentation/cli/html/fr_FR/Codendi_CLI.html'";
-        
+
         $res = $this->db->dbh->exec($sql);
-        
+
         $sql = "UPDATE plugin_docman_item 
                 SET link_url = '/documentation/cli/html/en_US/CLI.html'
                 WHERE link_url = '/documentation/cli/html/en_US/Codendi_CLI.html'";
-        
+
         $res = $this->db->dbh->exec($sql);
-        
+
         $sql = "UPDATE plugin_docman_item 
                 SET delete_date = UNIX_TIMESTAMP(NOW())
                 WHERE link_url IN ('/plugins/eclipse/documentation/doc/help/pdf/Codendi_Eclipse_Plugin_User_Guide.pdf',
@@ -52,9 +56,7 @@ EOT;
                                    '/plugins/eclipse/documentation/doc/help/html/index.html',
                                    '/plugins/eclipse/documentation/nl/fr/FR/doc/help/html/index.html')
                     AND delete_date IS NULL";
-        
+
         $res = $this->db->dbh->exec($sql);
     }
 }
-
-?>

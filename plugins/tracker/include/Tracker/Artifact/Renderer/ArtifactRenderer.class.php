@@ -25,7 +25,8 @@
 /**
  * I'm responsible of rendering artifact to user (creation, update, view...)
  */
-abstract class Tracker_Artifact_ArtifactRenderer {
+abstract class Tracker_Artifact_ArtifactRenderer
+{
     /**
      * @var Tracker
      */
@@ -41,7 +42,8 @@ abstract class Tracker_Artifact_ArtifactRenderer {
      */
     protected $redirect;
 
-    public function __construct(Tracker $tracker, EventManager $event_manager) {
+    public function __construct(Tracker $tracker, EventManager $event_manager)
+    {
         $this->tracker            = $tracker;
         $this->event_manager      = $event_manager;
         $this->redirect           = new Tracker_Artifact_Redirect();
@@ -54,7 +56,8 @@ abstract class Tracker_Artifact_ArtifactRenderer {
      * @param Codendi_Request $request
      * @param PFUser $current_user
      */
-    public function display(Codendi_Request $request, PFUser $current_user) {
+    public function display(Codendi_Request $request, PFUser $current_user)
+    {
         $this->enhanceRedirect($request);
 
         $this->displayHeader();
@@ -82,17 +85,15 @@ abstract class Tracker_Artifact_ArtifactRenderer {
     abstract protected function fetchFormContent(Codendi_Request $request, PFUser $current_user);
 
     /**
-     * Returns HTML code to display the artifact fields
-     *
-     * @param array $submitted_values array of submitted values
-     *
      * @return string The HTML code for artifact fields
      */
-    public function fetchFields(Tracker_Artifact $artifact, $submitted_values = array()) {
-        return $artifact->getTracker()->fetchFormElements($artifact, array($submitted_values));
+    public function fetchFields(Tracker_Artifact $artifact, array $submitted_values)
+    {
+        return $artifact->getTracker()->fetchFormElements($artifact, $submitted_values);
     }
 
-    public function fetchFieldsForCopy(Tracker_Artifact $artifact) {
+    public function fetchFieldsForCopy(Tracker_Artifact $artifact)
+    {
         return $artifact->getTracker()->fetchFormElementsForCopy($artifact, array());
     }
 
@@ -101,7 +102,8 @@ abstract class Tracker_Artifact_ArtifactRenderer {
      *
      * @return string The HTML code for submit buttons
      */
-    public function fetchSubmitButton(PFUser $current_user) {
+    public function fetchSubmitButton(PFUser $current_user)
+    {
         return '<div class="hidden-artifact-submit-button">
                     <input type="hidden" id="submit-type" />
                     <div class="btn-group dropup">
@@ -116,7 +118,8 @@ abstract class Tracker_Artifact_ArtifactRenderer {
                 </div>';
     }
 
-    protected function getConcurrentEditMessage() {
+    protected function getConcurrentEditMessage()
+    {
         return '<div id="artifact-submit-keeper-message">
                     <span class="help_title">'. $GLOBALS['Language']->getText('plugin_tracker_artifact', 'submission_keeper_warning_title') .'</span>
                     '. $GLOBALS['Language']->getText('plugin_tracker_artifact', 'submission_keeper_warning_msg') .'
@@ -128,7 +131,8 @@ abstract class Tracker_Artifact_ArtifactRenderer {
      *
      * @return string
      */
-    public function fetchAnonymousEmailForm() {
+    public function fetchAnonymousEmailForm()
+    {
         $html = '<p>';
         $html .= $GLOBALS['Language']->getText('plugin_tracker_artifact', 'not_logged_in', array('/account/login.php?return_to='.urlencode($_SERVER['REQUEST_URI'])));
         $html .= '<br />';
@@ -145,11 +149,13 @@ abstract class Tracker_Artifact_ArtifactRenderer {
         </form>';
     }
 
-    protected function fetchRulesAsJavascript() {
+    protected function fetchRulesAsJavascript()
+    {
         return $this->tracker->displayRulesAsJavascript();
     }
 
-    protected function enhanceRedirect(Codendi_Request $request) {
+    protected function enhanceRedirect(Codendi_Request $request)
+    {
         $this->event_manager->processEvent(
             TRACKER_EVENT_BUILD_ARTIFACT_FORM_ACTION,
             array(

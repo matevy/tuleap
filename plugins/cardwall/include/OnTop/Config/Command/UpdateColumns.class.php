@@ -18,19 +18,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/layout/ColorHelper.class.php';
-
 /**
  * Update a column for a cardwall on top of a tracker
  */
-class Cardwall_OnTop_Config_Command_UpdateColumns extends Cardwall_OnTop_Config_Command {
+class Cardwall_OnTop_Config_Command_UpdateColumns extends Cardwall_OnTop_Config_Command
+{
 
     /**
      * @var Cardwall_OnTop_ColumnDao
      */
     private $dao;
 
-    public function __construct(Tracker $tracker, Cardwall_OnTop_ColumnDao $dao) {
+    public function __construct(Tracker $tracker, Cardwall_OnTop_ColumnDao $dao)
+    {
         parent::__construct($tracker);
         $this->dao = $dao;
     }
@@ -38,7 +38,8 @@ class Cardwall_OnTop_Config_Command_UpdateColumns extends Cardwall_OnTop_Config_
     /**
      * @see Cardwall_OnTop_Config_Command::execute()
      */
-    public function execute(Codendi_Request $request) {
+    public function execute(Codendi_Request $request)
+    {
         if ($request->get('column')) {
             foreach ($request->get('column') as $id => $column_definition) {
                 $column_label    = $column_definition['label'];

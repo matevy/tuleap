@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2011 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,10 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once 'PathJoinUtil.php';
-
 use Tuleap\Git\BigObjectAuthorization\BigObjectAuthorizationManager;
 use Tuleap\Git\Gitolite\VersionDetector;
+use Tuleap\Git\PathJoinUtil;
 
 /**
  * This class manage the interaction between Tuleap and Gitolite
@@ -38,7 +37,8 @@ use Tuleap\Git\Gitolite\VersionDetector;
  * And if you don't push, you will stay in Gitolite admin directory!
  *
  */
-class Git_GitoliteDriver {
+class Git_GitoliteDriver
+{
 
     /**
      * @var Logger
@@ -91,9 +91,9 @@ class Git_GitoliteDriver {
         Git::PERM_WPLUS => ' RW+'
     );
 
-    public CONST OLD_AUTHORIZED_KEYS_PATH = "/usr/com/gitolite/.ssh/authorized_keys";
-    public CONST NEW_AUTHORIZED_KEYS_PATH = "/var/lib/gitolite/.ssh/authorized_keys";
-    public CONST EXTRA_REPO_RESTORE_DEPTH = 2;
+    public const OLD_AUTHORIZED_KEYS_PATH = "/usr/com/gitolite/.ssh/authorized_keys";
+    public const NEW_AUTHORIZED_KEYS_PATH = "/var/lib/gitolite/.ssh/authorized_keys";
+    public const EXTRA_REPO_RESTORE_DEPTH = 2;
 
     /**
      * Constructor
@@ -108,7 +108,7 @@ class Git_GitoliteDriver {
         GitDao $git_dao,
         Git_Mirror_MirrorDao $git_mirror_dao,
         GitPlugin $git_plugin,
-        ?Git_Exec $gitExec                        = null,
+        ?Git_Exec $gitExec = null,
         ?GitRepositoryFactory $repository_factory = null,
         ?Git_Gitolite_ConfigPermissionsSerializer $permissions_serializer = null,
         ?Git_Gitolite_GitoliteConfWriter $gitolite_conf_writer = null,
@@ -131,7 +131,7 @@ class Git_GitoliteDriver {
         $this->project_manager        = $project_manager ? $project_manager : ProjectManager::instance();
         $this->url_manager            = $url_manager;
 
-        if(empty($mirror_data_mapper)) {
+        if (empty($mirror_data_mapper)) {
             $this->mirror_data_mapper = new Git_Mirror_MirrorDataMapper(
                 $git_mirror_dao,
                 UserManager::instance(),
@@ -148,7 +148,7 @@ class Git_GitoliteDriver {
             $this->mirror_data_mapper = $mirror_data_mapper;
         }
 
-        if(empty($permissions_serializer)) {
+        if (empty($permissions_serializer)) {
             $this->permissions_serializer = new Git_Gitolite_ConfigPermissionsSerializer(
                 $this->mirror_data_mapper,
                 new Git_Driver_Gerrit_ProjectCreatorStatus(
@@ -182,7 +182,6 @@ class Git_GitoliteDriver {
             $this->project_manager,
             $adminPath
         );
-
     }
 
     /**
@@ -190,7 +189,8 @@ class Git_GitoliteDriver {
      *
      * @return string
      */
-    public function getAdminPath() {
+    public function getAdminPath()
+    {
         return $this->adminPath;
     }
 
@@ -199,11 +199,13 @@ class Git_GitoliteDriver {
      *
      * @return string
      */
-    public function getRepositoriesPath() {
+    public function getRepositoriesPath()
+    {
         return realpath($this->adminPath .'/../repositories');
     }
 
-    public function setAdminPath($adminPath) {
+    public function setAdminPath($adminPath)
+    {
         $this->oldCwd    = getcwd();
         $this->adminPath = $adminPath;
         chdir($this->adminPath);
@@ -215,9 +217,10 @@ class Git_GitoliteDriver {
      * A driver is initialized if the repository has branches.
      *
      * @param string $repoPath
-     * @return boolean
+     * @return bool
      */
-    public function isInitialized($repoPath) {
+    public function isInitialized($repoPath)
+    {
         try {
             $headsPath = $repoPath.'/refs/heads';
             if (is_dir($headsPath)) {
@@ -228,7 +231,7 @@ class Git_GitoliteDriver {
                     }
                 }
             }
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             // If directory doesn't even exists, return false
         }
         return false;
@@ -237,9 +240,10 @@ class Git_GitoliteDriver {
     /**
      *
      * @param string $repoPath
-     * @return boolean
+     * @return bool
      */
-    public function isRepositoryCreated($repoPath) {
+    public function isRepositoryCreated($repoPath)
+    {
         $headsPath = $repoPath.'/refs/heads';
         return is_dir($headsPath);
     }
@@ -282,7 +286,8 @@ class Git_GitoliteDriver {
         return true;
     }
 
-    public function updateMainConfIncludes() {
+    public function updateMainConfIncludes()
+    {
         $git_modifications = $this->gitolite_conf_writer->writeGitoliteConfiguration();
         $files_are_correctly_added = true;
 
@@ -293,7 +298,8 @@ class Git_GitoliteDriver {
         return $files_are_correctly_added;
     }
 
-    public function push() {
+    public function push()
+    {
         $this->logger->debug('Pushing in gitolite admin repository...');
         $res = $this->gitExec->push();
         $this->logger->debug('Pushing in gitolite admin repository: done');
@@ -302,7 +308,8 @@ class Git_GitoliteDriver {
         return $res;
     }
 
-    public function commit($message) {
+    public function commit($message)
+    {
         return $this->gitExec->commit($message);
     }
 
@@ -318,18 +325,17 @@ class Git_GitoliteDriver {
      *
      * @return true if success, false otherwise
      */
-    public function renameProject($oldName, $newName) {
+    public function renameProject($oldName, $newName)
+    {
         $ok = true;
 
         $git_modifications = $this->gitolite_conf_writer->renameProject($oldName, $newName);
 
-        foreach ($git_modifications->toAdd() as $file)
-        {
+        foreach ($git_modifications->toAdd() as $file) {
             $ok = $ok && $this->gitExec->add($file);
         }
 
-        foreach ($git_modifications->toMove() as $old_file => $new_file)
-        {
+        foreach ($git_modifications->toMove() as $old_file => $new_file) {
             $ok = $ok && $this->gitExec->mv($old_file, $new_file);
         }
 
@@ -340,28 +346,31 @@ class Git_GitoliteDriver {
         return $ok;
     }
 
-    public function delete($path) {
-        if ( empty($path) || !is_writable($path) ) {
-           throw new GitDriverErrorException('Empty path or permission denied '.$path);
+    public function delete($path)
+    {
+        if (empty($path) || !is_writable($path)) {
+            throw new GitDriverErrorException('Empty path or permission denied '.$path);
         }
         $rcode = 0;
         $this->logger->debug('Removing physically the repository...');
         $output = system('rm -fr '.escapeshellarg($path), $rcode);
-        if ( $rcode != 0 ) {
+        if ($rcode != 0) {
             throw new GitDriverErrorException('Unable to delete path '.$path);
         }
         $this->logger->debug('Removing physically the repository: done');
         return true;
     }
 
-    public function fork($repo, $old_ns, $new_ns) {
-        $source = unixPathJoin(array($this->getRepositoriesPath(), $old_ns, $repo)) .'.git';
-        $target = unixPathJoin(array($this->getRepositoriesPath(), $new_ns, $repo)) .'.git';
+    public function fork($repo, $old_ns, $new_ns)
+    {
+        $source = PathJoinUtil::unixPathJoin(array($this->getRepositoriesPath(), $old_ns, $repo)) .'.git';
+        $target = PathJoinUtil::unixPathJoin(array($this->getRepositoriesPath(), $new_ns, $repo)) .'.git';
 
         $this->executeShellCommand('sudo -u gitolite /usr/share/tuleap/plugins/git/bin/gl-clone-bundle.sh ' . escapeshellarg($source) . ' ' . escapeshellarg($target));
     }
 
-    protected function executeShellCommand($cmd) {
+    protected function executeShellCommand($cmd)
+    {
         $cmd = $cmd.' 2>&1';
         exec($cmd, $output, $retVal);
         if ($retVal == 0) {
@@ -371,14 +380,16 @@ class Git_GitoliteDriver {
         }
     }
 
-    public function checkAuthorizedKeys() {
+    public function checkAuthorizedKeys()
+    {
         $authorized_keys_file = $this->getAuthorizedKeysPath();
         if (filesize($authorized_keys_file) == 0) {
             throw new GitAuthorizedKeysFileException($authorized_keys_file);
         }
     }
 
-    private function getAuthorizedKeysPath() {
+    private function getAuthorizedKeysPath()
+    {
         if (!file_exists(self::OLD_AUTHORIZED_KEYS_PATH)) {
             return self::NEW_AUTHORIZED_KEYS_PATH;
         }
@@ -393,7 +404,8 @@ class Git_GitoliteDriver {
      * @param String $repositoryName
      *
      */
-    public function backup(GitRepository $repository, $backup_directory) {
+    public function backup(GitRepository $repository, $backup_directory)
+    {
         if (! is_readable($repository->getFullPath())) {
             throw new GitDriverErrorException('Gitolite backup: Empty path or permission denied '.$repository->getFullPath());
         }
@@ -424,7 +436,8 @@ class Git_GitoliteDriver {
         }
     }
 
-    public function deleteBackup(GitRepository $repository, $backup_directory) {
+    public function deleteBackup(GitRepository $repository, $backup_directory)
+    {
         $archive = $this->getBackupPath($repository, $backup_directory);
         if (is_file($archive)) {
             if (! unlink($archive)) {
@@ -444,29 +457,30 @@ class Git_GitoliteDriver {
      * @param String git_root_path
      * @param String $backup_directory
      *
-     * @return boolean
+     * @return bool
      *
      */
-    public function restoreRepository(GitRepository $repository, $git_root_path, $backup_directory) {
+    public function restoreRepository(GitRepository $repository, $git_root_path, $backup_directory)
+    {
         $repository_path = $git_root_path.$repository->getPath();
         $backup_path     = $this->getBackupPath($repository, $backup_directory);
-        if(! file_exists($backup_path)) {
+        if (! file_exists($backup_path)) {
             $this->logger->error('[Gitolite][Restore] Unable to find repository archive: '.$backup_path);
             return false;
         }
 
         $backup_path = realpath($backup_path);
 
-        if(!$this->extractRepository($backup_path)) {
+        if (!$this->extractRepository($backup_path)) {
             $this->logger->error('[Gitolite][Restore] Unable to restore repository: '.$repository->getName());
             return false;
         }
         $this->deleteBackup($repository, $backup_directory);
 
-        if(!$this->getDao()->activate($repository->getId())) {
+        if (!$this->getDao()->activate($repository->getId())) {
             $this->logger->error('[Gitolite][Restore] Unable to activate repository after restore: '.$repository->getName());
         }
-        if(!$repository->getBackend()->updateRepoConf($repository)) {
+        if (!$repository->getBackend()->updateRepoConf($repository)) {
             $this->logger->warn('[Gitolite][Restore] Unable to update repository configuration after restore : '.$repository->getName());
         }
 
@@ -482,7 +496,8 @@ class Git_GitoliteDriver {
      * @param String $restore_path
      *
      */
-    private function extractRepository($backup_path) {
+    private function extractRepository($backup_path)
+    {
         $this->logger->debug('[Gitolite][Restore] sudo gitolite restore');
         $base = realpath(ForgeConfig::get('codendi_bin_prefix'));
 
@@ -500,7 +515,8 @@ class Git_GitoliteDriver {
         return true;
     }
 
-    private function getBackupPath(GitRepository $repository, $backup_directory) {
+    private function getBackupPath(GitRepository $repository, $backup_directory)
+    {
         return $backup_directory .'/'. $repository->getBackupPath() .'.tar.gz';
     }
 
@@ -509,11 +525,13 @@ class Git_GitoliteDriver {
      *
      * @return GitDao
      */
-    protected function getDao() {
+    protected function getDao()
+    {
         return $this->git_dao;
     }
 
-    public function dumpAllMirroredRepositories() {
+    public function dumpAllMirroredRepositories()
+    {
         foreach ($this->mirror_data_mapper->fetchAllProjectsConcernedByMirroring() as $project) {
             if (! $this->dumpProjectRepoConf($project)) {
                 return false;
@@ -523,7 +541,8 @@ class Git_GitoliteDriver {
         return $this->updateMainConfIncludes();
     }
 
-    public function updateMirror($mirror_id, $old_hostname) {
+    public function updateMirror($mirror_id, $old_hostname)
+    {
         $git_modifications = $this->gitolite_conf_writer->updateMirror($mirror_id, $old_hostname);
 
         foreach ($git_modifications->toAdd() as $file) {
@@ -549,7 +568,8 @@ class Git_GitoliteDriver {
         return true;
     }
 
-    public function deleteMirror($old_hostname) {
+    public function deleteMirror($old_hostname)
+    {
         $git_modifications = $this->gitolite_conf_writer->deleteMirror($old_hostname);
 
         foreach ($git_modifications->toRemove() as $file) {

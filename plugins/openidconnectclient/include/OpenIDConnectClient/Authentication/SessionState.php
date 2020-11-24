@@ -20,8 +20,8 @@
 
 namespace Tuleap\OpenIDConnectClient\Authentication;
 
-
-class SessionState {
+class SessionState
+{
     /**
      * @var string
      */
@@ -45,14 +45,16 @@ class SessionState {
     /**
      * @return string
      */
-    public function getSecretKey() {
+    public function getSecretKey()
+    {
         return $this->secret_key;
     }
 
     /**
      * @return string
      */
-    public function getReturnTo() {
+    public function getReturnTo()
+    {
         return $this->return_to;
     }
 

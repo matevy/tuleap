@@ -20,11 +20,11 @@
 
 <template>
     <div class="tlp-modal-header">
-        <h1 class="tlp-modal-title" v-bind:id="ariaLabelledBy">
-            <i class="fa fa-plus tlp-modal-title-icon"></i>
+        <h1 class="tlp-modal-title document-modal-title" v-bind:id="ariaLabelledBy" v-bind:title="`${$gettext('Close')}`">
+            <i class="fa tlp-modal-title-icon" v-bind:class="iconHeaderClass"></i>
             {{ modalTitle }}
         </h1>
-        <div class="tlp-modal-close" data-dismiss="modal" v-bind:aria-label="close">
+        <div class="tlp-modal-close" data-dismiss="modal" v-bind:aria-label="`${$gettext('Close')}`">
             &times;
         </div>
     </div>
@@ -34,12 +34,8 @@ export default {
     name: "ModalHeader",
     props: {
         modalTitle: String,
-        ariaLabelledBy: String
-    },
-    computed: {
-        close() {
-            return this.$gettext("Close");
-        }
+        ariaLabelledBy: String,
+        iconHeaderClass: String
     }
 };
 </script>

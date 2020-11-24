@@ -19,16 +19,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/system_event/include/SystemEvent_UGROUP_MODIFY.class.php');
-require_once('common/backend/BackendSystem.class.php');
-Mock::generatePartial('SystemEvent_UGROUP_MODIFY',
-                      'SystemEvent_UGROUP_MODIFY_TestVersion',
-                      array('getProject',
+Mock::generatePartial(
+    'SystemEvent_UGROUP_MODIFY',
+    'SystemEvent_UGROUP_MODIFY_TestVersion',
+    array('getProject',
                             'getBackend',
                             'done',
                             'processUgroupBinding',
                             'error',
-                            'getParametersAsArray'));
+    'getParametersAsArray')
+);
 Mock::generatePartial(
     'SystemEvent_UGROUP_MODIFY',
     'SystemEvent_UGROUP_MODIFY_TestUGroupVersion',
@@ -50,14 +50,16 @@ Mock::generate('UGroupBinding');
 /**
  * Test for project delete system event
  */
-class SystemEvent_UGROUP_MODIFY_Test extends TuleapTestCase {
+class SystemEvent_UGROUP_MODIFY_Test extends TuleapTestCase
+{
 
     /**
      * ProjectUGroup modify Users fail
      *
      * @return Void
      */
-    public function testUgroupModifyProcessUgroupModifyFail() {
+    public function testUgroupModifyProcessUgroupModifyFail()
+    {
         $evt = new SystemEvent_UGROUP_MODIFY_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_UGROUP_MODIFY, SystemEvent::OWNER_ROOT, '1', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->setReturnValue('getParametersAsArray', array(1, 2));
@@ -86,7 +88,8 @@ class SystemEvent_UGROUP_MODIFY_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testUgroupModifyProcessSVNFail() {
+    public function testUgroupModifyProcessSVNFail()
+    {
         $evt = new SystemEvent_UGROUP_MODIFY_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_UGROUP_MODIFY, SystemEvent::OWNER_ROOT, '1', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->setReturnValue('getParametersAsArray', array(1, 2));
@@ -116,7 +119,8 @@ class SystemEvent_UGROUP_MODIFY_Test extends TuleapTestCase {
      *
      * @return Void
      */
-    public function testUgroupModifyProcessSuccess() {
+    public function testUgroupModifyProcessSuccess()
+    {
         $evt = new SystemEvent_UGROUP_MODIFY_TestVersion();
         $evt->__construct('1', SystemEvent::TYPE_UGROUP_MODIFY, SystemEvent::OWNER_ROOT, '1', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->setReturnValue('getParametersAsArray', array(1, 2));
@@ -140,7 +144,8 @@ class SystemEvent_UGROUP_MODIFY_Test extends TuleapTestCase {
         $this->assertTrue($evt->process());
     }
 
-    public function testUpdateSVNOfBindedUgroups() {
+    public function testUpdateSVNOfBindedUgroups()
+    {
         $evt = new SystemEvent_UGROUP_MODIFY_TestUGroupVersion();
         $evt->__construct('1', SystemEvent::TYPE_UGROUP_MODIFY, SystemEvent::OWNER_ROOT, '1', SystemEvent::PRIORITY_HIGH, SystemEvent::STATUS_RUNNING, $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], $_SERVER['REQUEST_TIME'], '');
         $evt->setReturnValue('getParametersAsArray', array(1, 2));
@@ -172,15 +177,17 @@ class SystemEvent_UGROUP_MODIFY_Test extends TuleapTestCase {
     }
 }
 
-class SystemEvent_UGROUP_MODIFY_RenameTest extends TuleapTestCase {
+class SystemEvent_UGROUP_MODIFY_RenameTest extends TuleapTestCase
+{
 
     private $system_event;
     private $project;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
-        EventManager::setInstance(mock('EventManager'));
+        EventManager::setInstance(\Mockery::mock(\EventManager::class));
         ProjectManager::setInstance(mock('ProjectManager'));
 
         $event_params = array(
@@ -215,14 +222,16 @@ class SystemEvent_UGROUP_MODIFY_RenameTest extends TuleapTestCase {
         stub(ProjectManager::instance())->getProject('101')->returns($this->project);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         EventManager::clearInstance();
         ProjectManager::clearInstance();
 
         parent::tearDown();
     }
 
-    public function itWarnsOthersThatUGroupHasBeenModified() {
+    public function itWarnsOthersThatUGroupHasBeenModified()
+    {
         expect(EventManager::instance())->processEvent(
             Event::UGROUP_MODIFY,
             array(

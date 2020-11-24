@@ -18,18 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class FlamingParrot_NavBarItemDropdownSectionPresenter {
+class FlamingParrot_NavBarItemDropdownSectionPresenter
+{
 
     public $is_last_section = true;
 
     /** @var FlamingParrot_NavBarItemLinkPresenter[] */
     public $items;
 
-    public function __construct(array $items) {
+    public function __construct(array $items)
+    {
         $this->items = $items;
     }
 
-    public function flagAsNotLastSection() {
+    public function flagAsNotLastSection()
+    {
         $this->is_last_section = false;
     }
 }

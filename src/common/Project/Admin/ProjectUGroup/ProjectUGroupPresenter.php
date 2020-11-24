@@ -27,6 +27,7 @@ namespace Tuleap\Project\Admin\ProjectUGroup;
 use CSRFSynchronizerToken;
 use PFUser;
 use ProjectUGroup;
+use Tuleap\Project\Admin\ProjectUGroup\Details\MembersPresenter;
 
 class ProjectUGroupPresenter
 {
@@ -49,10 +50,9 @@ class ProjectUGroupPresenter
     public function __construct(
         ProjectUGroup $ugroup,
         PermissionsDelegationPresenter $permissions_delegation,
-        $binding,
-        $members,
-        CSRFSynchronizerToken $csrf_token,
-        PFUser $user
+        BindingPresenter $binding,
+        MembersPresenter $members,
+        CSRFSynchronizerToken $csrf_token
     ) {
         $this->id                        = $ugroup->getId();
         $this->project_id                = $ugroup->getProjectId();
@@ -62,7 +62,6 @@ class ProjectUGroupPresenter
         $this->members                   = $members;
         $this->csrf_token                = $csrf_token;
         $this->is_static_ugroup          = $ugroup->isStatic();
-        $this->locale                    = $user->getLocale();
         $this->permissions_per_group_url = $this->getPermissionPerGroupUrl();
 
         $this->permissions_delegation = $permissions_delegation;

@@ -21,33 +21,30 @@
     "imports-loader": "^0.7.1",
     "lodash": "2.4.0",
     "moment": "^2.18.1",
-    "ng-ckeditor": "^2.0.3",
+    "ngVue": "^1.7.6",
     "node-gettext": "^2.0.0",
+    "pretty-kibibytes": "^4.0.4",
     "pump": "^3.0.0",
     "readable-stream": "^2.3.6",
     "sprintf-js": "^1.1.1",
-    "vue": "^2.5.17",
-    "vue-gettext": "^2.1.0",
-    "vuex": "^3.0.1"
+    "vue": "^2.6.10",
+    "vue-dompurify-html": "^2.1.1",
+    "vue-gettext": "^2.1.6",
+    "vuex": "^3.1.1"
   },
   "devDependencies": {
-    "@vue/test-utils": "^1.0.0-beta.27",
+    "@vue/test-utils": "^1.0.0-beta.29",
     "angular-mocks": "^1.7.4",
     "gulp": "^3.9.1",
     "gulp-angular-gettext": "^2.2.0",
-    "vuex-mock-store": "0.0.6"
+    "jquery": "^3.4.1"
   },
   "config": {
     "bin": "../../../../node_modules/.bin/"
   },
   "scripts": {
-    "karma-artifact-modal": "$npm_package_config_bin/karma start ./angular-artifact-modal/karma.conf.js",
-    "karma-action-buttons": "$npm_package_config_bin/karma start ./artifact-action-buttons/karma.conf.js",
-    "karma-workflow": "$npm_package_config_bin/karma start ./workflow-transitions/karma.conf.js",
     "build": "NODE_ENV=production $npm_package_config_bin/webpack --mode=production",
-    "coverage": "rm -rf ./coverage/* && export NODE_ENV=coverage; npm run karma-artifact-modal && npm run karma-action-buttons && npm run karma-workflow && $npm_package_config_bin/http-server -os -a 0.0.0.0 -p 9000 coverage/",
-    "test": "export NODE_ENV=test; npm run karma-artifact-modal && npm run karma-action-buttons && npm run karma-workflow",
-    "watch": "NODE_ENV=watch $npm_package_config_bin/concurrently --raw --kill-others 'gulp watch' '$npm_package_config_bin/webpack --watch --mode=development' 'npm run karma-artifact-modal' 'npm run karma-action-buttons' 'npm run karma-workflow'",
-    "extract-gettext-cli": "$npm_package_config_bin/gettext-extract --attribute v-translate $(find colorpicker/ -type f -name '*.vue') $(find artifact-action-buttons/ -type f -name '*.vue')"
+    "test": "BABEL_ENV=test $npm_package_config_bin/jest",
+    "watch": "NODE_ENV=watch $npm_package_config_bin/concurrently --raw --kill-others 'gulp watch' '$npm_package_config_bin/webpack --watch --mode=development' 'CI=true npm test -- --watch'"
   }
 }

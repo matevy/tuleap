@@ -18,17 +18,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Planning_ArtifactParentsSelector_SameTrackerCommand extends Planning_ArtifactParentsSelector_Command {
+class Planning_ArtifactParentsSelector_SameTrackerCommand extends Planning_ArtifactParentsSelector_Command
+{
 
     /**
      * @see Planning_ArtifactParentsSelector_Command
      *
      * @return array of Tracker_Artifact
      */
-    public function getPossibleParents(Tracker $parent_tracker, Tracker_Artifact $source_artifact, PFUser $user) {
+    public function getPossibleParents(Tracker $parent_tracker, Tracker_Artifact $source_artifact, PFUser $user)
+    {
         if ($source_artifact->getTracker() == $parent_tracker) {
             return array($source_artifact);
         }
     }
 }
-?>

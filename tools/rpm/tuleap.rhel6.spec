@@ -1,4 +1,5 @@
 # Define variables
+# Define variables
 %define PKG_NAME @@PKG_NAME@@
 %define APP_NAME tuleap
 %define APP_USER codendiadm
@@ -9,7 +10,7 @@
 %define APP_DATA_DIR %{_localstatedir}/lib/%{APP_NAME}
 %define APP_CACHE_DIR %{_localstatedir}/tmp/%{APP_NAME}_cache
 %define APP_LOG_DIR /var/log/%{APP_NAME}
-%define APP_PHP_INCLUDE_PATH /usr/share/pear:%{APP_DIR}/src/www/include:%{APP_DIR}/src:.
+%define APP_PHP_INCLUDE_PATH %{APP_DIR}/src/www/include:%{APP_DIR}/src:.
 
 # Compatibility
 %define OLD_APP_NAME codendi
@@ -42,11 +43,11 @@ Packager: Manuel VACELET <manuel.vacelet@enalean.com>
 
 AutoReqProv: no
 
-Requires: vixie-cron >= 4.1-9, tmpwatch
+Requires: vixie-cron >= 4.1-9
 # Php and web related stuff
-Requires: php72-php-mysqlnd, php72-php-pdo, php72-php-xml, php72-php-mbstring, php72-php-gd
-Requires: php72-php-soap, php72-php-pear, php72-php-intl, php72-php-process, php72-php-cli
-Requires: php72-php-bcmath, php72-php-fpm, php72-php-opcache, php72-php-json, php72-php-pecl-zip, php72-php-pecl-redis, php72-php-sodium
+Requires: php73-php-mysqlnd, php73-php-pdo, php73-php-xml, php73-php-mbstring, php73-php-gd
+Requires: php73-php-soap, php73-php-intl, php73-php-process, php73-php-cli
+Requires: php73-php-bcmath, php73-php-fpm, php73-php-opcache, php73-php-json, php73-php-pecl-zip, php73-php-pecl-redis, php73-php-sodium
 
 Requires: curl
 Requires: tuleap-core-subversion
@@ -76,7 +77,7 @@ Requires(post): policycoreutils-python
 # Bind utils
 Requires: bind-utils
 
-Obsoletes: php-restler, php-amqplib-amqplib, php-markdown
+Obsoletes: php-restler, php-markdown
 Obsoletes: %{name}-plugin-im
 Obsoletes: %{name}-plugin-fulltextsearch
 
@@ -155,7 +156,7 @@ Summary: ForumML plugin for Tuleap
 Group: Development/Tools
 Version: @@PLUGIN_FORUMML_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
-Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, php72-php-pecl-mailparse
+Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, php73-php-pecl-mailparse
 Requires: tuleap-core-mailman
 Provides: tuleap-plugin-forumml = %{version}
 %description plugin-forumml
@@ -194,6 +195,7 @@ Group: Development/Tools
 Version: @@PLUGIN_GIT_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
 AutoReqProv: no
+Requires(pre): shadow-utils
 Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, sclo-git212-git, gitolite3
 Requires: php-guzzle-Guzzle, sudo
 Provides: tuleap-plugin-git = %{version}
@@ -226,7 +228,7 @@ Summary: Tuleap plugin to manage LDAP integration
 Group: Development/Tools
 Version: @@PLUGIN_LDAP_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
-Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, perl-LDAP, php72-php-ldap
+Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, perl-LDAP, php73-php-ldap
 Provides: tuleap-plugin-ldap = %{version}
 %description plugin-ldap
 LDAP Plugin for Tuleap. Provides LDAP information, LDAP
@@ -265,7 +267,7 @@ Group: Development/Tools
 Version: @@PLUGIN_WEBDAV_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
 Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}
-Requires: php-sabredav = 1.4.4
+Obsoletes: php-sabredav
 %description plugin-webdav
 Plugin to access to file releases & docman though WebDAV
 
@@ -275,7 +277,7 @@ Summary: Tracker v5 for Tuleap
 Group: Development/Tools
 Version: @@PLUGIN_TRACKER_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
-Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, libxslt, php72-php-pecl-mailparse
+Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, libxslt, php73-php-pecl-mailparse
 %description plugin-tracker
 New tracker generation for Tuleap.
 
@@ -511,6 +513,7 @@ for i in tools plugins site-content src VERSION LICENSE; do
 	%{__cp} -ar $i $RPM_BUILD_ROOT/%{APP_DIR}
 done
 # No need of template
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/release_widget
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/template
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/label
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/crosstracker
@@ -523,9 +526,14 @@ done
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/prometheus_metrics
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/tuleap_synchro
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/project_ownership
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/taskboard
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/releasewidget
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/label
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/crosstracker
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/document
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/project_ownership
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/taskboard
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/timetracking
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/tuleap_synchro
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/velocity
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/composer.json
@@ -540,9 +548,25 @@ done
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/sass.sh
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/tuleap-gulp-build.js
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/run_dev/
-%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/php72/run.sh
-%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/themes/common/tlp/webpack.config.js
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/php73/run.sh
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/themes/FlamingParrot/composer.json
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/themes/BurningParrot/composer.json
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/artifactsfolders/scripts/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/artifactsfolders/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/bugzilla_reference/scripts/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/bugzilla_reference/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/captcha/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/cardwall/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/docman/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/forumml/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/frs/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/git/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/graphontrackersv5/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/hudson/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/hudson_svn/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/ldap/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/mediawiki/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/openidconnectclient/themes/
 
 # Link to local config for logo and themes images
 # Needed for nginx try_files
@@ -794,14 +818,12 @@ fi
 %pre plugin-git-gitolite3
 if [ "$1" -eq "1" ]; then
     # Install
-    if ! grep -q "^gitolite:" /etc/group 2> /dev/null ; then
-        /usr/sbin/groupadd -r gitolite 2> /dev/null || :
-    fi
+    getent group gitolite >/dev/null || groupadd -r gitolite
 
-    if id gitolite >/dev/null 2>&1; then
+    if getent passwd gitolite >/dev/null; then
         /usr/sbin/usermod -c 'Git'    -d '/var/lib/gitolite' -g gitolite gitolite
     else
-        /usr/sbin/useradd -c 'Git' -m -d '/var/lib/gitolite' -g gitolite gitolite
+        /usr/sbin/useradd -r -c 'Git' -m -d '/var/lib/gitolite' -g gitolite gitolite
     fi
 
 else
@@ -835,6 +857,9 @@ fi
 
 # This adds the proper /etc/rc*.d links for the script that runs the Tuleap backend
 #/sbin/chkconfig --add %{APP_NAME}
+
+# Clean old tuleap cache file
+%{__rm} -f %{APP_CACHE_DIR}/tuleap_hooks_cache
 
 # Restart the services
 #/sbin/service httpd start
@@ -1013,8 +1038,11 @@ fi
 %{APP_DIR}/src/www/assets/*.js
 %{APP_DIR}/src/www/assets/manifest.json
 %{APP_DIR}/src/www/assets/admindelegation
+%{APP_DIR}/src/www/assets/dashboards
+%{APP_DIR}/src/www/assets/docman
 %{APP_DIR}/src/www/assets/statistics
 %{APP_DIR}/src/www/assets/projectlinks
+%{APP_DIR}/src/www/assets/project-registration
 %{APP_DIR}/src/www/assets/ckeditor-*
 %{APP_DIR}/src/www/cvs
 %{APP_DIR}/src/www/favicon.ico
@@ -1052,7 +1080,6 @@ fi
 %dir %{APP_DIR}/plugins
 %{APP_DIR}/plugins/admindelegation
 %{APP_DIR}/plugins/docman
-%{APP_DIR}/plugins/graphontrackers
 %{APP_DIR}/plugins/pluginsadministration
 %{APP_DIR}/plugins/projectlinks
 %{APP_DIR}/plugins/statistics
@@ -1142,12 +1169,14 @@ fi
 %files plugin-forumml
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/forumml
+%{APP_DIR}/src/www/assets/forumml
 %attr(00750,%{APP_USER},%{APP_USER}) %{_localstatedir}/run/forumml
 %attr(00440,root,root) %{_sysconfdir}/sudoers.d/tuleap_plugin_forumml
 
 %files plugin-git
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/git
+%{APP_DIR}/src/www/assets/git
 %dir %{APP_DATA_DIR}/gitroot
 %dir %{APP_DATA_DIR}/gitolite
 %attr(00770,gitolite,gitolite)  %{APP_DATA_DIR}/gitolite/repositories
@@ -1166,6 +1195,7 @@ fi
 %files plugin-git-gitolite3
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/git
+%{APP_DIR}/src/www/assets/git
 %dir %{APP_DATA_DIR}/gitroot
 %dir %{APP_DATA_DIR}/gitolite
 %attr(00770,gitolite,gitolite)  %{APP_DATA_DIR}/gitolite/repositories
@@ -1200,6 +1230,7 @@ fi
 %files plugin-ldap
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/ldap
+%{APP_DIR}/src/www/assets/ldap
 %attr(00644,root,root) /etc/logrotate.d/%{APP_NAME}_ldap
 %config(noreplace) /etc/logrotate.d/%{APP_NAME}_ldap
 
@@ -1211,6 +1242,7 @@ fi
 %files plugin-hudson-svn
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/hudson_svn
+%{APP_DIR}/src/www/assets/hudson_svn
 %attr(00644,root,root) /etc/logrotate.d/%{APP_NAME}_hudson_svn
 %config(noreplace) /etc/logrotate.d/%{APP_NAME}_hudson_svn
 
@@ -1269,6 +1301,7 @@ fi
 %files plugin-mediawiki
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/mediawiki
+%{APP_DIR}/src/www/assets/mediawiki
 %dir %{APP_DATA_DIR}/mediawiki
 %dir %{APP_DATA_DIR}/mediawiki/master
 %dir %{APP_DATA_DIR}/mediawiki/projects
@@ -1276,6 +1309,7 @@ fi
 %files plugin-openidconnectclient
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/openidconnectclient
+%{APP_DIR}/src/www/assets/openidconnectclient
 %attr(00644,root,root) /etc/logrotate.d/%{APP_NAME}_openid_connect_client
 %config(noreplace) /etc/logrotate.d/%{APP_NAME}_openid_connect_client
 
@@ -1287,6 +1321,7 @@ fi
 %files plugin-frs
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/frs
+%{APP_DIR}/src/www/assets/frs
 
 %files plugin-referencealias-core
 %defattr(-,%{APP_USER},%{APP_USER},-)
@@ -1311,21 +1346,23 @@ fi
 %files plugin-artifactsfolders
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/artifactsfolders
+%{APP_DIR}/src/www/assets/artifactsfolders
 
 %files plugin-captcha
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/captcha
+%{APP_DIR}/src/www/assets/captcha
 
 %files plugin-bugzilla-reference
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/bugzilla_reference
+%{APP_DIR}/src/www/assets/bugzilla_reference
 %attr(00644,root,root) /etc/logrotate.d/%{APP_NAME}_bugzilla_reference
 
 %files plugin-create-test-env
 %defattr(-,%{APP_USER},%{APP_USER},-)
 %{APP_DIR}/plugins/create_test_env
 %attr(00400,root,root) %{_sysconfdir}/sudoers.d/tuleap_plugin_create_test_env
-%{APP_DIR}/src/www/assets/create_test_env
 
 %files api-explorer
 %defattr(-,%{APP_USER},%{APP_USER},-)

@@ -1,12 +1,28 @@
 <?php
-// Copyright (c) Enalean, 2015. All Rights Reserved.
-//
-// SourceForge: Breaking Down the Barriers to Open Source Development
-// Copyright 1999-2000 (c) The SourceForge Crew
-// http://sourceforge.net
-function send_new_project_email(Project $project) {
+/**
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
+ * Copyright (c) The SourceForge Crew, 1999-2000. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+function send_new_project_email(Project $project)
+{
     $ugroup_manager = new UGroupManager();
-    $admin_ugroup   = $ugroup_manager->getUGroup($project, ProjectUGroup::PROJECT_ADMIN);
+    $admin_ugroup   = $ugroup_manager->getProjectAdminsUGroup($project);
 
     foreach ($admin_ugroup->getMembers() as $user) {
         /** @var PFUser $user */
@@ -22,9 +38,10 @@ function send_new_project_email(Project $project) {
     return true;
 }
 
-function send_new_user_email($to, $login, $confirm_hash) {
+function send_new_user_email($to, $login, $confirm_hash)
+{
     //needed by new_user_email.txt
-    $base_url  = get_server_url();
+    $base_url  = HTTPRequest::instance()->getServerUrl();
     $presenter = new MailPresenterFactory();
 
     $renderer  = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') .'/src/templates/mail/');
@@ -36,7 +53,7 @@ function send_new_user_email($to, $login, $confirm_hash) {
 function send_admin_new_user_email($to, $login)
 {
     //needed by new_user_email.txt
-    $base_url  = get_server_url();
+    $base_url  = HTTPRequest::instance()->getServerUrl();
     $presenter = new MailPresenterFactory();
 
     $renderer  = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') .'/src/templates/mail/');
@@ -45,9 +62,10 @@ function send_admin_new_user_email($to, $login)
     return $mail->send();
 }
 
-function send_new_user_email_notification($to, $login) {
+function send_new_user_email_notification($to, $login)
+{
     //needed by new_user_email.txt
-    $base_url  = get_server_url();
+    $base_url  = HTTPRequest::instance()->getServerUrl();
     $presenter = new MailPresenterFactory();
 
     $renderer  = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') .'/src/templates/mail/');
@@ -56,9 +74,10 @@ function send_new_user_email_notification($to, $login) {
     return $mail->send();
 }
 
-function send_approval_new_user_email($to, $login) {
+function send_approval_new_user_email($to, $login)
+{
     //needed by new_user_email.txt
-    $base_url  = get_server_url();
+    $base_url  = HTTPRequest::instance()->getServerUrl();
     $presenter = new MailPresenterFactory();
 
     $renderer  = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') .'/src/templates/mail/');

@@ -24,19 +24,22 @@ require_once 'CustomDescriptionDao.class.php';
 /**
  * Factory to instanciate Project_CustomDescription_CustomDescription
  */
-class Project_CustomDescription_CustomDescriptionFactory {
+class Project_CustomDescription_CustomDescriptionFactory
+{
 
     /** @var Project_CustomDescription_CustomDescriptionDao */
     private $dao;
 
-    public function __construct(Project_CustomDescription_CustomDescriptionDao $dao) {
+    public function __construct(Project_CustomDescription_CustomDescriptionDao $dao)
+    {
         $this->dao = $dao;
     }
 
     /**
      * @return Project_CustomDescription_CustomDescription[]
      */
-    public function getRequiredCustomDescriptions() {
+    public function getRequiredCustomDescriptions()
+    {
         $required_custom_descriptions = array();
         $res = $this->dao->getRequiredCustomDescriptions();
         while ($row = $res->getRow()) {
@@ -45,7 +48,8 @@ class Project_CustomDescription_CustomDescriptionFactory {
         return $required_custom_descriptions;
     }
 
-    public function getCustomDescription($id) {
+    public function getCustomDescription($id)
+    {
         $res = $this->dao->getCustomDescription($id);
 
         if ($res && $res->rowCount() == 1) {
@@ -58,7 +62,8 @@ class Project_CustomDescription_CustomDescriptionFactory {
     /**
      * @return Project_CustomDescription_CustomDescription[]
      */
-    public function getCustomDescriptions() {
+    public function getCustomDescriptions()
+    {
         $custom_descriptions = array();
         $res = $this->dao->getCustomDescriptions();
         while ($row = $res->getRow()) {
@@ -74,7 +79,8 @@ class Project_CustomDescription_CustomDescriptionFactory {
      *
      * @return CustomDescription
      */
-    public function getInstanceFromRow(array $row) {
+    public function getInstanceFromRow(array $row)
+    {
         return new Project_CustomDescription_CustomDescription(
             $row['group_desc_id'],
             $row['desc_name'],
@@ -85,4 +91,3 @@ class Project_CustomDescription_CustomDescriptionFactory {
         );
     }
 }
-?>

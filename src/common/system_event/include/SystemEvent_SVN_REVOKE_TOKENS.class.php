@@ -22,16 +22,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class SystemEvent_SVN_REVOKE_TOKENS extends SystemEvent {
+class SystemEvent_SVN_REVOKE_TOKENS extends SystemEvent
+{
 
     /** @var BackendSVN */
     private $backend_svn;
 
-    public function injectDependencies(BackendSVN $backend_svn) {
+    public function injectDependencies(BackendSVN $backend_svn)
+    {
         $this->backend_svn = $backend_svn;
     }
 
-    public function process() {
+    public function process()
+    {
         if ($this->getParameters()) {
             $this->backend_svn->setSVNApacheConfNeedUpdate();
             $this->done();
@@ -49,7 +52,8 @@ class SystemEvent_SVN_REVOKE_TOKENS extends SystemEvent {
      *
      * @return string
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return 'projects: ' . $this->getParameters();
     }
 }

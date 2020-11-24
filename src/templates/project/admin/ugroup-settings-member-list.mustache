@@ -7,10 +7,15 @@
                 </h1>
             </div>
             <section class="tlp-pane-section">
+                {{# is_synchronized_message_shown }}
+                    <p class="tlp-alert-info">
+                        {{# gettext }}Project members and group members are synchronized. Whenever you add someone in a user group, they are automatically added in project members.{{/ gettext }}
+                    </p>
+                {{/ is_synchronized_message_shown }}
                 <div class="tlp-table-actions">
                     {{# can_be_updated }}
                         {{^ is_dynamic_group }}
-                            <form action="?group_id={{ project_id }}&ugroup_id={{ id }}"
+                            <form action="/project/{{ project_id }}/admin/user-group/{{ id }}/add"
                                   method="post"
                                   class="project-admin-members-form"
                             >
@@ -30,23 +35,21 @@
                                 <button
                                     class="tlp-append tlp-button-primary"
                                     {{# is_dynamic_group }}
-                                        id="project-admin-add-dynamic-modal"
-                                        data-is-dynamic-group="{{ is_dynamic_group }}"
-                                        data-target-modal-id="add-user-to-dynamic-ugroup"
+                                        id="project-admin-add-to-ugroup-and-project-members-modal"
+                                        data-target-modal-id="add-user-to-ugroup-and-project-members"
                                         data-project-id="{{ project_id }}"
                                         data-ugroup-id="{{ id }}"
                                     {{/ is_dynamic_group }}
                                 >
-                                    <i class="fa fa-plus tlp-button-icon" id="project-administration-add-dynamic-ugroup-icon"></i> {{# gettext }}
+                                    <i class="fa fa-plus tlp-button-icon" id="project-administration-add-to-ugroup-and-project-members-icon"></i> {{# gettext }}
                                     Add member{{/ gettext }}
                                 </button>
                             </div>
                         {{^ is_dynamic_group }}
-                            <input type="hidden" name="action" value="edit_ugroup_members">
                             </form>
                         {{/ is_dynamic_group }}
                         {{# is_dynamic_group}}
-                            {{> ugroup-add-project-administrator-modal }}
+                            {{> ugroup-add-member-modal }}
                         {{/ is_dynamic_group }}
                     {{/ can_be_updated }}
                     <div class="tlp-table-actions-spacer"></div>
@@ -63,18 +66,19 @@
                     <thead>
                     <tr>
                         <th class="tlp-table-cell-filterable">{{# gettext }}Name{{/ gettext }}</th>
+                        <th class="tlp-table-cell-filterable">{{# gettext }}Account status{{/ gettext }}</th>
                         <th></th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr class="tlp-table-empty-filter">
-                        <td colspan="2" class="tlp-table-cell-empty">
+                        <td colspan="3" class="tlp-table-cell-empty">
                             {{# gettext }}There isn't any matching members{{/ gettext }}
                         </td>
                     </tr>
                     {{^ has_members }}
                         <tr>
-                            <td colspan="2" class="tlp-table-cell-empty">
+                            <td colspan="3" class="tlp-table-cell-empty">
                                 {{# gettext }}This group does not have any members yet.{{/ gettext }}
                             </td>
                         </tr>
@@ -85,11 +89,20 @@
                                 <td class="tlp-table-cell-filterable">
                                     <div class="tlp-avatar projectadmin-userlist-result-name-avatar">
                                         {{# has_avatar }}
-                                            <img src="/users/{{ user_name }}/avatar.png"/>
+                                            <img src="{{ avatar_url }}"/>
                                         {{/ has_avatar }}
                                     </div>
                                     <a href="{{ profile_page_url }}">{{ username_display }}</a>
                                 </td>
+                                {{# status_presenter }}
+                                    <td>
+                                    <span class = "tlp-badge-{{status_level}}
+                                        {{^ status_is_important }}tlp-badge-outline{{/ status_is_important}}"
+                                    >
+                                        {{ status_label }}
+                                    </span>
+                                    </td>
+                                {{/ status_presenter }}
                                 <td class="tlp-table-cell-actions">
                                     {{# can_be_updated }}
                                         <button class="tlp-table-cell-actions-button
@@ -117,6 +130,7 @@
                                             data-user-id="{{ user_id }}"
                                             data-user-name="{{ username_display }}"
                                             data-ugroup-name="{{ name }}"
+                                            data-user-is-project-admin="{{ user_is_project_admin }}"
                                         >
                                             <i class="fa fa-trash-o tlp-button-icon"></i> {{# gettext }}Remove from users group{{/ gettext }}
                                         </button>

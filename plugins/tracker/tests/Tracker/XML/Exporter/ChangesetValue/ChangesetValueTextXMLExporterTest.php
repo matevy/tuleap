@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueTextXMLExporterTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueTextXMLExporterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter */
     private $exporter;
@@ -36,7 +37,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueTextXMLExporterTest exte
     /** @var Tracker_FormElement_Field */
     private $field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->field         = aFileField()->withName('textarea')->build();
         $this->exporter      = new Tracker_XML_Exporter_ChangesetValue_ChangesetValueTextXMLExporter();
@@ -47,7 +49,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueTextXMLExporterTest exte
         stub($this->changeset_value)->getField()->returns($this->field);
     }
 
-    public function itCreatesTextNodeWithHTMLFormattedText() {
+    public function itCreatesTextNodeWithHTMLFormattedText()
+    {
 
         stub($this->changeset_value)->getText()->returns('<p>test</p>');
         stub($this->changeset_value)->getFormat()->returns(Tracker_Artifact_ChangesetValue_Text::HTML_CONTENT);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,10 +20,12 @@
 
 namespace Tuleap\Tracker\Artifact\ArtifactsDeletion;
 
+use EventManager;
 use PFUser;
 use ProjectHistoryDao;
 use Tracker_Artifact;
 use Tracker_ArtifactDao;
+use Tuleap\Tracker\Artifact\ArtifactInstrumentation;
 
 class ArtifactDeletor
 {
@@ -46,16 +48,23 @@ class ArtifactDeletor
      */
     private $asynchronous_actions_runner;
 
+    /**
+     * @var EventManager
+     */
+    private $event_manager;
+
     public function __construct(
         Tracker_ArtifactDao $dao,
         ProjectHistoryDao $project_history_dao,
         PendingArtifactRemovalDao $pending_artifact_removal_dao,
-        AsynchronousArtifactsDeletionActionsRunner $asynchronous_actions_runner
+        AsynchronousArtifactsDeletionActionsRunner $asynchronous_actions_runner,
+        EventManager $event_manager
     ) {
         $this->dao                          = $dao;
         $this->project_history_dao          = $project_history_dao;
         $this->pending_artifact_removal_dao = $pending_artifact_removal_dao;
         $this->asynchronous_actions_runner  = $asynchronous_actions_runner;
+        $this->event_manager                = $event_manager;
     }
 
     public function delete(Tracker_Artifact $artifact, PFUser $user)
@@ -63,13 +72,16 @@ class ArtifactDeletor
         $this->dao->startTransaction();
         $this->processDelete($artifact, $user);
         $this->dao->commit();
+        ArtifactInstrumentation::increment(ArtifactInstrumentation::TYPE_DELETED);
         $this->addProjectHistory($artifact);
+        $this->processEvent($artifact);
     }
 
     public function deleteWithoutTransaction(Tracker_Artifact $artifact, PFUser $user)
     {
         $this->processDelete($artifact, $user);
         $this->addProjectHistory($artifact);
+        $this->processEvent($artifact);
     }
 
     private function processDelete(Tracker_Artifact $artifact, PFUser $user)
@@ -87,6 +99,16 @@ class ArtifactDeletor
             self::PROJECT_HISTORY_ARTIFACT_DELETED,
             '#' . $artifact->getId() . ' tracker #' . $artifact->getTrackerId() . ' (' . $artifact->getTracker()->getName() . ')',
             $artifact->getTracker()->getGroupId()
+        );
+    }
+
+    private function processEvent(Tracker_Artifact $artifact)
+    {
+        $this->event_manager->processEvent(
+            TRACKER_EVENT_ARTIFACT_DELETE,
+            array(
+                'artifact' => $artifact,
+            )
         );
     }
 }

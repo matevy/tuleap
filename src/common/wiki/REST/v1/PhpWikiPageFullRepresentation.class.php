@@ -23,11 +23,11 @@ namespace Tuleap\PhpWiki\REST\v1;
 
 use Tuleap\PHPWiki\WikiPage;
 use Tuleap\REST\v1\PhpWikiPageRepresentation;
-use Tuleap\PhpWiki\REST\v1\PhpWikiPageVersionRepresentation;
 use WikiVersionDao;
 use WikiPageVersionFactory;
 
-class PhpWikiPageFullRepresentation extends PhpWikiPageRepresentation {
+class PhpWikiPageFullRepresentation extends PhpWikiPageRepresentation
+{
 
     /**
      * @var int {@type int}
@@ -39,14 +39,16 @@ class PhpWikiPageFullRepresentation extends PhpWikiPageRepresentation {
      */
     public $versions;
 
-    public function build(WikiPage $page) {
+    public function build(WikiPage $page)
+    {
         parent::build($page);
 
         $this->last_version  = (int) $page->getLastVersionId();
         $this->versions      = $this->getVerisonsRepresentations();
     }
 
-    private function getVerisonsRepresentations() {
+    private function getVerisonsRepresentations()
+    {
         $representations = array();
 
         $wiki_version_dao     = new WikiVersionDao();

@@ -18,13 +18,16 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ForumDao extends DataAccessObject {
-    public function __construct($da = null) {
+class ForumDao extends DataAccessObject
+{
+    public function __construct($da = null)
+    {
         parent::__construct($da);
         $this->table_name = 'forum_group_list';
     }
 
-    public function searchByGroupForumId($forum_id){
+    public function searchByGroupForumId($forum_id)
+    {
         $forum_id= $this->da->quoteSmart($forum_id);
         $sql = "SELECT group_id 
                 FROM $this->table_name
@@ -32,7 +35,8 @@ class ForumDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getMessageProjectIdAndForumId($message_id) {
+    public function getMessageProjectIdAndForumId($message_id)
+    {
         $message_id = $this->da->escapeInt($message_id);
 
         $sql = "SELECT forum_group_list.group_id, forum.group_forum_id
@@ -43,11 +47,13 @@ class ForumDao extends DataAccessObject {
         return $this->retrieveFirstRow($sql);
     }
 
-    public function searchGlobal($words, $exact, $offset, $forum_id) {
+    public function searchGlobal($words, $exact, $offset, $forum_id)
+    {
         $this->searchGlobalPaginated($words, $exact, $offset, $forum_id, 26);
     }
 
-    public function searchGlobalPaginated($words, $exact, $offset, $forum_id, $limit) {
+    public function searchGlobalPaginated($words, $exact, $offset, $forum_id, $limit)
+    {
         $offset = $this->da->escapeInt($offset);
         $limit  = $this->da->escapeInt($limit);
         if ($exact === true) {

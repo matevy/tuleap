@@ -19,27 +19,30 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-require_once('Widget_ProjectLatestCommits.class.php');
-require_once('www/cvs/commit_utils.php');
+require_once __DIR__ . '/../../www/cvs/commit_utils.php';
 
 /**
 * Widget_ProjectLatestCvsCommits
-* 
+*
 */
-class Widget_ProjectLatestCvsCommits extends Widget_ProjectLatestCommits {
+class Widget_ProjectLatestCvsCommits extends Widget_ProjectLatestCommits
+{
 
     public function __construct()
     {
         parent::__construct('projectlatestcvscommits', 'cvs_get_revisions');
     }
 
-    function getTitle() {
-        return $GLOBALS['Language']->getText('include_project_home','latest_cvs_commit');
+    function getTitle()
+    {
+        return $GLOBALS['Language']->getText('include_project_home', 'latest_cvs_commit');
     }
-    function _getLinkToCommit($data) {
+    function _getLinkToCommit($data)
+    {
         return '/cvs/index.php?func=detailcommit&amp;group_id='.$this->group_id.'&amp;commit_id='.$data['id'];
     }
-    function _getLinkToMore() {
+    function _getLinkToMore()
+    {
         return '/cvs/?func=browse&group_id='.$this->group_id;
     }
 
@@ -48,7 +51,8 @@ class Widget_ProjectLatestCvsCommits extends Widget_ProjectLatestCommits {
         return $project->usesCvs();
     }
 
-    function getDescription() {
-        return $GLOBALS['Language']->getText('widget_description_project_latest_cvs_commits','description');
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('widget_description_project_latest_cvs_commits', 'description');
     }
 }

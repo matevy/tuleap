@@ -21,12 +21,12 @@
  * along with Codendi; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * 
+ *
  */
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
 
-require('pre.php');
+require __DIR__ . '/../include/pre.php';
 
 $hp = Codendi_HTMLPurifier::instance();
 
@@ -41,7 +41,7 @@ if ($request->valid($vPv) && $request->get('pv') == 2) {
 
 $vReturnTo = new Valid_String('return_to');
 $vReturnTo->required();
-if($request->valid($vReturnTo)) {
+if ($request->valid($vReturnTo)) {
     // Re-serialize feedback to display it on the 'return_to' page.
     $HTML->_serializeFeedback();
 
@@ -62,8 +62,7 @@ function return_to_url() {
 setTimeout("return_to_url()",1000);
 </script>
 ';
-}
-else {
+} else {
     $redirect = $Language->getText('my_redirect', 'default_txt');
 }
 ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2010. All Rights Reserved.
  *
  * This file is a part of Tuleap.
@@ -19,18 +19,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\WebDAV\Docman\DocumentDownloader;
+
 /**
  * This class Represents Docman files & embedded files in WebDAV
  */
-class WebDAVDocmanFile extends WebDAVDocmanDocument {
+class WebDAVDocmanFile extends WebDAVDocmanDocument
+{
 
-    private $maxFileSize;
-
-    public function __construct($user, $project, $item, $maxFileSize) {
-        parent::__construct($user, $project, $item);
-        $this->maxFileSize = $maxFileSize;
+    public function __construct($user, $project, $item, DocumentDownloader $document_downloader)
+    {
+        parent::__construct($user, $project, $item, $document_downloader);
     }
-    
+
     /**
      * This method is used to download the file
      *
@@ -38,7 +39,8 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
      *
      * @see plugins/webdav/include/FS/WebDAVDocmanDocument::get()
      */
-    function get() {
+    function get()
+    {
         $item = $this->getItem();
         $version = $item->getCurrentVersion();
 
@@ -64,7 +66,8 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
      *
      * @see plugins/webdav/include/FS/WebDAVDocmanDocument::getName()
      */
-    function getName() {
+    function getName()
+    {
         switch (get_class($this->getItem())) {
             case 'Docman_File':
                 $item = $this->getItem();
@@ -83,7 +86,8 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
      *
      * @see plugins/webdav/include/FS/WebDAVDocmanDocument::getContentType()
      */
-    function getContentType() {
+    function getContentType()
+    {
         $item = $this->getItem();
         $version = $item->getCurrentVersion();
         return $version->getFiletype();
@@ -92,11 +96,12 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
     /**
      * Returns the file size
      *
-     * @return Integer
+     * @return int
      *
      * @see plugins/webdav/include/FS/WebDAVDocmanDocument::getSize()
      */
-    function getSize() {
+    function getSize()
+    {
         $item = $this->getItem();
         $version = $item->getCurrentVersion();
         return $version->getFilesize();
@@ -107,7 +112,8 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
      *
      * @return String
      */
-    function getETag() {
+    function getETag()
+    {
         $item = $this->getItem();
         $version = $item->getCurrentVersion();
         return '"'.$this->getUtils()->getIncomingFileMd5Sum($version->getPath()).'"';
@@ -116,21 +122,11 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
     /**
      * Returns the max file size
      *
-     * @return Integer
+     * @return int
      */
-    function getMaxFileSize() {
-        return $this->maxFileSize;
-    }
-
-    /**
-     * Sets the max file size
-     *
-     * @param Integer $maxFileSize
-     *
-     * @return void
-     */
-    function setMaxFileSize($maxFileSize) {
-        $this->maxFileSize = $maxFileSize;
+    function getMaxFileSize()
+    {
+        return (int) ForgeConfig::get(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING);
     }
 
     /**
@@ -140,7 +136,7 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
      *
      * @return void
      */
-    function download($version, $filesize = '', $path = '')
+    public function download($version, $filesize = '', $path = '')
     {
         $version->preDownload($this->getItem(), $this->getUser());
         // Download the file
@@ -154,11 +150,12 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
      *
      * @return void
      */
-    function put($data) {
+    public function put($data)
+    {
         if ($this->getUtils()->isWriteEnabled()) {
             // Request
             $params['action']   = 'new_version';
-            $params['group_id'] = $this->getProject()->getGroupId();
+            $params['group_id'] = $this->getProject()->getID();
             $params['confirm']  = true;
 
             // File stuff
@@ -188,7 +185,8 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
      *
      * @return void
      */
-    function setName($name) {
+    function setName($name)
+    {
         switch (get_class($this->getItem())) {
             case 'Docman_File':
                 throw new Sabre_DAV_Exception_MethodNotAllowed($GLOBALS['Language']->getText('plugin_webdav_common', 'file_denied_rename'));
@@ -198,7 +196,4 @@ class WebDAVDocmanFile extends WebDAVDocmanDocument {
                 break;
         }
     }
-
 }
-
-?>

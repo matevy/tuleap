@@ -29,11 +29,9 @@
     margin: 0 $tlp-double-spacing 0 0;
 }
 
-.project-admin-ugroup-binding-project-info {
-    > .tuleap-svg-project-small {
-        margin: 0 3px 0 0;
-        fill: $tlp-ui-dimmed;
-    }
+.project-admin-ugroup-binding-project-info-icon {
+    margin: 0 3px 0 0;
+    color: $tlp-ui-dimmed;
 }
 
 .project-admin-ugroup-binding-clones-ugroup {
@@ -45,11 +43,10 @@
 
 .project-admin-ugroup-binding-clones-project {
     white-space: nowrap;
+}
 
-    > .tuleap-svg-project-small {
-        margin: 0 3px 0 0;
-        fill: $tlp-theme-color;
-    }
+.project-admin-ugroup-binding-clones-project-icon {
+    margin: 0 3px 0 0;
 }
 
 .project-admin-user-groups-container {
@@ -129,4 +126,12 @@
 
 #user-to-add-to-ugroup {
     font-weight: bold;
+}
+
+.user-group-remove-member-modal {
+    max-width: 1200px;
+}
+
+.project-admin-remove-user-from-group-and-project-hidden-button {
+    display: none;
 }

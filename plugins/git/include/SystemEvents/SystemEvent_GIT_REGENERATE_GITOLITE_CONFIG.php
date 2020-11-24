@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class SystemEvent_GIT_REGENERATE_GITOLITE_CONFIG extends SystemEvent {
+class SystemEvent_GIT_REGENERATE_GITOLITE_CONFIG extends SystemEvent
+{
 
     public const NAME = 'GIT_REGENERATE_GITOLITE_CONFIG';
 
@@ -37,7 +38,8 @@ class SystemEvent_GIT_REGENERATE_GITOLITE_CONFIG extends SystemEvent {
         $this->project_manager  = $project_manager;
     }
 
-    public function process() {
+    public function process()
+    {
         $project_id = $this->getProjectIdFromParameters();
 
         if (! $project_id) {
@@ -57,13 +59,15 @@ class SystemEvent_GIT_REGENERATE_GITOLITE_CONFIG extends SystemEvent {
         return true;
     }
 
-    private function getProjectIdFromParameters() {
+    private function getProjectIdFromParameters()
+    {
         $parameters = $this->getParametersAsArray();
 
         return $parameters[0];
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $project_id = $this->getProjectIdFromParameters();
 
         return 'Project: '.$this->verbalizeProjectId($project_id, $with_link);

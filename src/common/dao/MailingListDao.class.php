@@ -23,14 +23,16 @@ require_once('include/DataAccessObject.class.php');
 /**
  *  Data Access Object for mailing lists
  */
-class MailingListDao extends DataAccessObject {
+class MailingListDao extends DataAccessObject
+{
 
     /**
     * Search active (=not deteted) mailing lists
     * return all active lists
     * @return DataAccessResult
     */
-    function searchAllActiveML() {
+    function searchAllActiveML()
+    {
         $sql = "SELECT *
                 FROM mail_group_list
                 WHERE is_public IN (0,1)";
@@ -41,7 +43,8 @@ class MailingListDao extends DataAccessObject {
     * Searches by group_list_id
     * @return DataAccessResult
     */
-    function searchByGroupListId($group_list_id) {
+    function searchByGroupListId($group_list_id)
+    {
         $group_list_id = $this->da->escapeInt($group_list_id);
         $sql = "SELECT * FROM mail_group_list
                 WHERE group_list_id = $group_list_id";
@@ -51,11 +54,12 @@ class MailingListDao extends DataAccessObject {
     /**
     * Searches by project id
     *
-    * @param Integer $projectId id of the project
+    * @param int $projectId id of the project
     *
     * @return DataAccessResult
     */
-    function searchByProject($projectId) {
+    function searchByProject($projectId)
+    {
         $projectId = $this->da->escapeInt($projectId);
         $sql = "SELECT * FROM mail_group_list
                 WHERE group_id = $projectId";
@@ -65,30 +69,30 @@ class MailingListDao extends DataAccessObject {
     /**
      * Mark the list as deleted
      *
-     * @param Integer $listId Id of the mailing list
+     * @param int $listId Id of the mailing list
      *
-     * @return Boolean
+     * @return bool
      */
-    function deleteList($listId) {
+    function deleteList($listId)
+    {
         $listId = $this->da->escapeInt($listId);
         $sql="UPDATE mail_group_list SET is_public=9 ".
              " WHERE group_list_id=".$listId;
         return $this->update($sql);
-	}
+    }
 
-	/**
+    /**
      * Delete the list
      *
-     * @param Integer $listId Id of the mailing list
+     * @param int $listId Id of the mailing list
      *
-     * @return Boolean
+     * @return bool
      */
-    function deleteListDefinitively($listId) {
+    function deleteListDefinitively($listId)
+    {
         $listId = $this->da->escapeInt($listId);
         $sql="DELETE FROM mail_group_list ".
              " WHERE group_list_id=".$listId;
         return $this->update($sql);
     }
-
 }
-?>

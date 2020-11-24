@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,6 +20,7 @@
 
 namespace Tuleap\User\AccessKey;
 
+use DateTimeImmutable;
 use ParagonIE\EasyDB\EasyStatement;
 use Tuleap\DB\DataAccessObject;
 
@@ -28,15 +29,16 @@ class AccessKeyDAO extends DataAccessObject
     /**
      * @return int
      */
-    public function create($user_id, $hashed_verification_string, $current_time, $description)
+    public function create($user_id, $hashed_verification_string, $current_time, $description, $expiration_date_timestamp)
     {
         return (int) $this->getDB()->insertReturnId(
             'user_access_key',
             [
-                'user_id'       => $user_id,
-                'verifier'      => $hashed_verification_string,
-                'creation_date' => $current_time,
-                'description'   => $description
+                'user_id'         => $user_id,
+                'verifier'        => $hashed_verification_string,
+                'creation_date'   => $current_time,
+                'description'     => $description,
+                'expiration_date' => $expiration_date_timestamp
             ]
         );
     }
@@ -46,14 +48,18 @@ class AccessKeyDAO extends DataAccessObject
      */
     public function searchAccessKeyVerificationAndTraceabilityDataByID($key_id)
     {
-        return $this->getDB()->row('SELECT verifier, user_id, last_usage, last_ip FROM user_access_key WHERE id = ?', $key_id);
+        return $this->getDB()->row('SELECT verifier, user_id, last_usage, last_ip, expiration_date FROM user_access_key WHERE id = ?', $key_id);
     }
 
-    public function searchMetadataByUserID($user_id)
+    public function searchMetadataByUserIDAtCurrentTime(int $user_id, int $current_timestamp)
     {
         return $this->getDB()->run(
-            'SELECT id, creation_date, description, last_usage, last_ip FROM user_access_key WHERE user_id = ?',
-            $user_id
+            'SELECT id, creation_date, expiration_date, description, last_usage, last_ip
+             FROM user_access_key
+             WHERE user_id = ?
+             AND (expiration_date IS NULL OR expiration_date > ?)',
+            $user_id,
+            $current_timestamp
         );
     }
 
@@ -66,6 +72,14 @@ class AccessKeyDAO extends DataAccessObject
         $this->getDB()->delete(
             'user_access_key',
             EasyStatement::open()->with('user_id = ?', $user_id)->andIn('id IN (?*)', $key_ids)
+        );
+    }
+
+    public function deleteByExpirationDate(int $timestamp): void
+    {
+        $this->getDB()->delete(
+            'user_access_key',
+            EasyStatement::open()->with('expiration_date <= ?', $timestamp)->andWith('expiration_date IS NOT NULL')
         );
     }
 

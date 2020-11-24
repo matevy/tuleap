@@ -63,12 +63,22 @@ class FrozenFieldsDao extends DataAccessObject
         return $result !== false;
     }
 
-    public function createPostActionForTransitionId(int $transition_id) : void
+    public function createPostActionForTransitionId(int $transition_id, array $field_ids) : void
     {
-        $this->getDB()->insert(
+        $frozen_fields_action_id = (int) $this->getDB()->insertReturnId(
             "plugin_tracker_workflow_postactions_frozen_fields",
             ["transition_id" => $transition_id]
         );
+
+        foreach ($field_ids as $field_id) {
+            $this->getDB()->insert(
+                "plugin_tracker_workflow_postactions_frozen_fields_value",
+                [
+                    "postaction_id" => $frozen_fields_action_id,
+                    "field_id"      => $field_id,
+                ]
+            );
+        }
     }
 
     public function deletePostActionsByTransitionId(int $transition_id) : void
@@ -83,6 +93,25 @@ class FrozenFieldsDao extends DataAccessObject
         $this->getDB()->run(
             $sql,
             $transition_id
+        );
+    }
+
+    public function deleteAllPostActionsForWorkflow(int $workflow_id) : void
+    {
+        $sql = "
+            DELETE plugin_tracker_workflow_postactions_frozen_fields, plugin_tracker_workflow_postactions_frozen_fields_value
+            FROM tracker_workflow
+                INNER JOIN tracker_workflow_transition
+                    ON (tracker_workflow.workflow_id = tracker_workflow_transition.workflow_id)
+                INNER JOIN plugin_tracker_workflow_postactions_frozen_fields
+                    ON (tracker_workflow_transition.transition_id = plugin_tracker_workflow_postactions_frozen_fields.transition_id)
+                LEFT JOIN plugin_tracker_workflow_postactions_frozen_fields_value
+                    ON plugin_tracker_workflow_postactions_frozen_fields_value.postaction_id = plugin_tracker_workflow_postactions_frozen_fields.id
+            WHERE tracker_workflow.workflow_id = ?";
+
+        $this->getDB()->run(
+            $sql,
+            $workflow_id
         );
     }
 }

@@ -25,80 +25,86 @@ use Tuleap\Tracker\Workflow\PostAction\Visitor;
  */
 class Transition_PostAction_Field_Date extends Transition_PostAction_Field
 {//phpcs:ignore
-    
+
     /**
      * @const Clear the date.
      */
     public const CLEAR_DATE = 1;
-    
+
     /**
      * @const Fill the date to the current time
      */
     public const FILL_CURRENT_TIME = 2;
-    
+
     public const SHORT_NAME   = 'field_date';
     public const XML_TAG_NAME = 'postaction_field_date';
 
     /**
-     * @var Integer the type of the value. CLEAR_DATE | FILL_CURRENT_TIME
+     * @var int the type of the value. CLEAR_DATE | FILL_CURRENT_TIME
      */
     protected $value_type;
-    
+
     /**
      * Constructor
      *
      * @param Transition                   $transition The transition the post action belongs to
-     * @param Integer                      $id         Id of the post action
+     * @param int $id Id of the post action
      * @param Tracker_FormElement_Field    $field      The field the post action should modify
-     * @param Integer                      $value_type The type of the value to set
+     * @param int $value_type The type of the value to set
      */
-    public function __construct(Transition $transition, $id, $field, $value_type) {
+    public function __construct(Transition $transition, $id, $field, $value_type)
+    {
         parent::__construct($transition, $id, $field);
         $this->value_type = $value_type;
     }
-    
+
     /**
      * Get the shortname of the post action
      *
      * @return string
      */
-    public function getShortName() {
+    public function getShortName()
+    {
         return self::SHORT_NAME;
     }
-    
+
     /**
      * Get the value type of the post action
      *
-     * @return integer
+     * @return int
      */
-    public function getValueType() {
+    public function getValueType()
+    {
         return $this->value_type;
     }
-    
+
     /**
      * Get the label of the post action
      *
      * @return string
      */
-    public static function getLabel() {
+    public static function getLabel()
+    {
         return $GLOBALS['Language']->getText('workflow_admin', 'post_action_change_value_date_field');
     }
-    
+
     /**
      * Say if the action is well defined
      *
      * @return bool
      */
-    public function isDefined() {
+    public function isDefined()
+    {
         return $this->getField() && ($this->value_type === self::CLEAR_DATE || $this->value_type === self::FILL_CURRENT_TIME);
     }
-    
+
     /**
      * Get the html code needed to display the post action in workflow admin
      *
      * @return string html
      */
-    public function fetch() {
+    public function fetch()
+    {
         $purifier = Codendi_HTMLPurifier::instance();
         $html     = '';
 
@@ -118,12 +124,12 @@ class Transition_PostAction_Field_Date extends Transition_PostAction_Field
         $select_value_type .= $GLOBALS['Language']->getText('workflow_admin', 'post_action_field_date_current_time');
         $select_value_type .= '</option>';
         $select_value_type .= '</select>';
-        
+
         //define the selectbox for date fields
         $tracker = $this->transition->getWorkflow()->getTracker();
         $tff = $this->getFormElementFactory();
         $fields_date = $tff->getUsedFormElementsByType($tracker, array('date'));
-        
+
         $select_field  = '<select name="workflow_postaction_field_date['.$purifier->purify($this->id).']">';
         $options_field = '';
         $one_selected  = false;
@@ -132,7 +138,7 @@ class Transition_PostAction_Field_Date extends Transition_PostAction_Field
             if ($this->field && ($this->field->getId() == $field_date->getId())) {
                 $selected     = 'selected="selected"';
                 $one_selected = true;
-            }            
+            }
             $options_field .= '<option value="'. $purifier->purify($field_date->getId()) .'" '. $selected.'>'.$purifier->purify($field_date->getLabel()).'</option>';
         }
         if (!$one_selected) {
@@ -142,10 +148,10 @@ class Transition_PostAction_Field_Date extends Transition_PostAction_Field
         $select_field .= '</select>';
 
         $html .= $GLOBALS['Language']->getText('workflow_admin', 'change_value_date_field_to', array($select_field, $select_value_type));
-        
+
         return $html;
     }
-    
+
     /**
      * Update/Delete action
      *
@@ -153,42 +159,44 @@ class Transition_PostAction_Field_Date extends Transition_PostAction_Field
      *
      * @return void
      */
-    public function process(Codendi_Request $request) {
+    public function process(Codendi_Request $request)
+    {
         if ($request->getInArray('remove_postaction', $this->id)) {
             $this->getDao()->deletePostAction($this->id);
         } else {
             $field_id     = $this->getFieldId();
             $value_type   = $this->value_type;
-            
+
             // Target field
             if ($request->validInArray('workflow_postaction_field_date', new Valid_UInt($this->id))) {
                 $new_field_id = $request->getInArray('workflow_postaction_field_date', $this->id);
                 $field_id = $this->getFieldIdOfPostActionToUpdate($new_field_id);
             }
-            
+
             // Value Type
             $valid_value_type = new Valid_WhiteList($this->id, array(self::CLEAR_DATE, self::FILL_CURRENT_TIME));
             if ($request->validInArray('workflow_postaction_field_date_value_type', $valid_value_type)) {
                 $value_type = $request->getInArray('workflow_postaction_field_date_value_type', $this->id);
             }
-            
+
             // Update if something changed
             if ($field_id != $this->getFieldId() || $value_type != $this->value_type) {
                 $this->getDao()->updatePostAction($this->id, $field_id, $value_type);
             }
         }
     }
-    
+
     /**
      * Execute actions before transition happens
-     * 
+     *
      * @param Array &$fields_data Request field data (array[field_id] => data)
      * @param PFUser  $current_user The user who are performing the update
-     * 
+     *
      * @return void
      */
-    public function before(array &$fields_data, PFUser $current_user) {
-        // Do something only if the value_type and the date field are properly defined 
+    public function before(array &$fields_data, PFUser $current_user)
+    {
+        // Do something only if the value_type and the date field are properly defined
         if ($this->isDefined()) {
             $field = $this->getField();
             if ($this->value_type === self::FILL_CURRENT_TIME) {
@@ -206,7 +214,7 @@ class Transition_PostAction_Field_Date extends Transition_PostAction_Field
             $this->bypass_permissions = true;
         }
     }
-    
+
     /**
      * Export postactions date to XML
      *
@@ -215,20 +223,22 @@ class Transition_PostAction_Field_Date extends Transition_PostAction_Field
      *
      * @return void
      */
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping) {
+    public function exportToXml(SimpleXMLElement $root, $xmlMapping)
+    {
         if ($this->getFieldId()) {
             $child = $root->addChild(Transition_PostAction_Field_Date::XML_TAG_NAME);
              $child->addAttribute('valuetype', $this->getValueType());
              $child->addChild('field_id')->addAttribute('REF', array_search($this->getFieldId(), $xmlMapping));
-         }
+        }
     }
-    
+
     /**
      * Wrapper for Transition_PostAction_Field_DateDao
-     * 
+     *
      * @return Transition_PostAction_Field_DateDao
      */
-    protected function getDao() {
+    protected function getDao()
+    {
         return new Transition_PostAction_Field_DateDao();
     }
 
@@ -237,4 +247,3 @@ class Transition_PostAction_Field_Date extends Transition_PostAction_Field
         $visitor->visitDateField($this);
     }
 }
-?>

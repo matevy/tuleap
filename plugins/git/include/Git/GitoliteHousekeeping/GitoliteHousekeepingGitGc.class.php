@@ -18,12 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/backend/BackendService.class.php';
-
 /**
  * I run git gc on gitolite admin working copy
  */
-class Git_GitoliteHousekeeping_GitoliteHousekeepingGitGc {
+class Git_GitoliteHousekeeping_GitoliteHousekeepingGitGc
+{
 
     /** @var Git_GitoliteHousekeeping_GitoliteHousekeepingDao */
     private $dao;
@@ -44,7 +43,8 @@ class Git_GitoliteHousekeeping_GitoliteHousekeepingGitGc {
         $this->gitolite_admin_working_copy = $gitolite_admin_working_copy;
     }
 
-    public function cleanUpGitoliteAdminWorkingCopy() {
+    public function cleanUpGitoliteAdminWorkingCopy()
+    {
         if ($this->dao->isGitGcEnabled()) {
             $this->logger->info('Running git gc on gitolite admin working copy.');
             $this->execGitGcAsAppAdm();
@@ -60,7 +60,8 @@ class Git_GitoliteHousekeeping_GitoliteHousekeepingGitGc {
     /**
      * @protected for testing purpose
      */
-    protected function execGitGcAsAppAdm() {
+    protected function execGitGcAsAppAdm()
+    {
         exec("su - codendiadm -c '(cd {$this->gitolite_admin_working_copy} && git gc)'");
     }
 }

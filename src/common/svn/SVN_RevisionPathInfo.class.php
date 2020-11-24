@@ -20,7 +20,8 @@
 /**
  * Represents the revison info for a given svn path
  */
-class SVN_RevisionPathInfo {
+class SVN_RevisionPathInfo
+{
 
     private $revision_id;
     private $path;
@@ -28,7 +29,8 @@ class SVN_RevisionPathInfo {
     private $timestamp;
     private $commit_message;
 
-    public function __construct($revision_id, $path, $author_id, $timestamp, $commit_message) {
+    public function __construct($revision_id, $path, $author_id, $timestamp, $commit_message)
+    {
         $this->revision_id      = $revision_id;
         $this->path             = $path;
         $this->author_id        = $author_id;
@@ -36,7 +38,8 @@ class SVN_RevisionPathInfo {
         $this->commit_message   = $commit_message;
     }
 
-    public function exportToSoap() {
+    public function exportToSoap()
+    {
         return array(
             'path'      => $this->path,
             'author'    => (int) $this->author_id,
@@ -45,8 +48,8 @@ class SVN_RevisionPathInfo {
         );
     }
 
-    public function getTimestamp() {
+    public function getTimestamp()
+    {
         return $this->timestamp;
     }
 }
-?>

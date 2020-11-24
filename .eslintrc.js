@@ -1,15 +1,24 @@
 module.exports = {
-    plugins: ["you-dont-need-lodash-underscore", "cypress", "vue", "jasmine"],
+    plugins: [
+        "you-dont-need-lodash-underscore",
+        "cypress",
+        "vue",
+        "jest",
+        "@typescript-eslint",
+        "import"
+    ],
     extends: [
         "eslint:recommended",
         "plugin:you-dont-need-lodash-underscore/all",
-        "plugin:vue/recommended"
+        "plugin:vue/recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:import/typescript",
+        "plugin:@typescript-eslint/recommended"
     ],
     parser: "vue-eslint-parser",
     parserOptions: {
-        parser: "babel-eslint",
-        ecmaVersion: 2019,
-        sourceType: "module"
+        parser: "@typescript-eslint/parser",
+        extraFileExtensions: [".vue"]
     },
     env: {
         es6: true,
@@ -19,6 +28,7 @@ module.exports = {
         // Possible Errors
         "no-template-curly-in-string": "error",
         // Best Practices
+        "no-unused-vars": "off",
         "array-callback-return": "warn",
         "consistent-return": "warn",
         curly: "error",
@@ -26,6 +36,7 @@ module.exports = {
         "dot-notation": "warn",
         eqeqeq: "warn",
         "no-alert": "error",
+        "no-console": "error",
         "no-caller": "error",
         "no-div-regex": "error",
         "no-else-return": "warn",
@@ -81,57 +92,101 @@ module.exports = {
         "vue/max-attributes-per-line": "off",
         "vue/multiline-html-element-content-newline": "off", // Just annoying and would be better adressed with prettier
         "vue/no-spaces-around-equal-signs-in-attribute": "error",
-        "vue/no-unused-components": "off", // This rule is too flaky, sometimes false positives, sometimes false negatives...
+        "vue/no-unused-components": "error",
         "vue/order-in-components": "error",
-        "vue/prop-name-casing": "off",
-        "vue/require-component-is": "off", // There is a bug, it always reports an error. See https://github.com/vuejs/eslint-plugin-vue/issues/869
+        "vue/prop-name-casing": "off", // This would be interesting, but the --fix does not rename all instances, which will silently break your code
+        "vue/require-component-is": "error",
         "vue/require-default-prop": "off",
-        "vue/require-direct-export": "error",
+        "vue/require-direct-export": "off",
         "vue/singleline-html-element-content-newline": "off", // Just annoying and would be better adressed with prettier
+        "vue/html-closing-bracket-newline": "off",
         "vue/v-bind-style": ["error", "longform"],
-        "vue/v-on-style": ["error", "longform"]
+        "vue/v-on-style": ["error", "longform"],
+        // Typescript
+        "@typescript-eslint/camelcase": "off",
+        "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
+        "@typescript-eslint/explicit-function-return-type": "error",
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-non-null-assertion": "error",
+        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-use-before-define": ["error", { functions: false, typedefs: false }],
+        // import
+        "import/no-extraneous-dependencies": "error"
     },
     overrides: [
         {
-            files: ["*.spec.js", "*.spec-helper.js"],
-            env: {
-                jasmine: true
-            },
-            globals: {
-                // jasmine 3.2
-                expectAsync: true,
-                // jasmine-fixture
-                affix: true,
-                // jasmine-promise-matchers,
-                installPromiseMatchers: true
-            },
+            // Disable some rules enabled by @typescript-eslint/recommended for existing JS files
+            files: ["*.js"],
             rules: {
-                "jasmine/expect-matcher": "error",
-                "jasmine/expect-single-argument": "error",
-                "jasmine/no-assign-spyon": "error",
-                "jasmine/no-disabled-tests": "error",
-                "jasmine/no-expect-in-setup-teardown": "error",
-                "jasmine/no-focused-tests": "error",
-                "jasmine/no-global-setup": "error",
-                "jasmine/no-promise-without-done-fail": "error",
-                "jasmine/no-suite-callback-args": "error",
-                "jasmine/no-unsafe-spy": "error",
-                "jasmine/prefer-jasmine-matcher": "error"
+                "@typescript-eslint/no-var-requires": "off",
+                "@typescript-eslint/explicit-function-return-type": "off",
+                "prefer-const": "off",
+                "no-var": "off",
+                "prefer-rest-params": "off",
+                "prefer-spread": "off",
+                "@typescript-eslint/no-array-constructor": "off",
+                "@typescript-eslint/no-use-before-define": "off",
+                "@typescript-eslint/no-this-alias": "off",
+                "@typescript-eslint/no-empty-function": "off"
+            }
+        },
+        {
+            // Disable some rules enabled by @typescript-eslint/recommended for existing Vue files
+            files: [
+                "plugins/document/**/*.vue",
+                "plugins/tracker/**/*.vue",
+                "plugins/timetracking/**/*.vue",
+                "plugins/svn/**/*.vue",
+                "plugins/pullrequest/**/*.vue",
+                "plugins/label/**/*.vue",
+                "plugins/git/**/*.vue",
+                "plugins/testmanagement/**/*.vue",
+                "plugins/baseline/**/*.vue",
+                "plugins/create_test_env/**/*.vue",
+                "plugins/crosstracker/**/*.vue",
+                "plugins/agiledashboard/www/js/permissions-per-group/**/*.vue",
+                "src/www/scripts/project/admin/services/**/*.vue",
+                "src/www/scripts/*/permissions-per-group/**/*.vue",
+                "src/www/scripts/vue-components/skeletons/SkeletonTable.vue"
+            ],
+            rules: {
+                "@typescript-eslint/explicit-function-return-type": "off",
+                "prefer-const": "off",
+                "no-var": "off"
+            }
+        },
+        {
+            files: ["*.test.js", "*.test.ts", "tests/jest/fail-console-error-warning.js"],
+            extends: ["plugin:jest/recommended"],
+            rules: {
+                "jest/consistent-test-it": "error",
+                "jest/no-empty-title": "error",
+                "jest/no-expect-resolves": "error",
+                "jest/no-large-snapshots": ["error", { maxSize: 100 }],
+                "jest/prefer-spy-on": "error"
+            }
+        },
+        {
+            files: ["*.test.ts"],
+            rules: {
+                "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "as" }]
             }
         },
         {
             files: [
                 "gulpfile.js",
-                "karma.conf.js",
+                "webpack.*.js",
                 "plugins/tracker/grammar/",
                 "tools/**/*.js",
-                "webpack.config.js",
-                "webpack.common.js",
-                "webpack.dev.js",
-                "webpack.prod.js"
+                "jest.config.js",
+                "jest.projects.config.js",
+                "tests/jest/*.js"
             ],
             env: {
                 node: true
+            },
+            rules: {
+                "no-console": "off"
             }
         },
         {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,11 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Tuleap\Tracker\RecentlyVisited;
+namespace Tuleap\Tracker\Artifact\RecentlyVisited;
 
 use Tuleap\Glyph\GlyphFinder;
 use Tuleap\User\History\HistoryEntry;
-use Tuleap\User\History\HistoryQuickLink;
+use Tuleap\User\History\HistoryEntryCollection;
 
 class VisitRetriever
 {
@@ -65,39 +65,39 @@ class VisitRetriever
     }
 
     /**
-     * @return HistoryEntry[]
      * @throws \DataAccessException
      */
-    public function getVisitHistory(\PFUser $user, $max_length_history)
+    public function getVisitHistory(HistoryEntryCollection $entry_collection, int $max_length_history): void
     {
-        $history               = array();
-        $recently_visited_rows = $this->dao->searchVisitByUserId($user->getId(), $max_length_history);
+        $recently_visited_rows = $this->dao->searchVisitByUserId(
+            $entry_collection->getUser()->getId(),
+            $max_length_history
+        );
+
         foreach ($recently_visited_rows as $recently_visited_row) {
             $artifact = $this->artifact_factory->getArtifactById($recently_visited_row['artifact_id']);
             if ($artifact === null) {
                 continue;
             }
 
-            $tracker     = $artifact->getTracker();
-            $quick_links = array(
-                new HistoryQuickLink(
-                    sprintf(dgettext('tuleap-tracker', '%s tracker'), $tracker->getName()),
-                    $tracker->getUri()
+            $collection = new HistoryQuickLinkCollection($artifact);
+            \EventManager::instance()->processEvent($collection);
+            $tracker = $artifact->getTracker();
+
+            $entry_collection->addEntry(
+                new HistoryEntry(
+                    $recently_visited_row['created_on'],
+                    $artifact->getXRef(),
+                    $artifact->getUri(),
+                    $artifact->getTitle(),
+                    $tracker->getColor()->getName(),
+                    $this->glyph_finder->get('tuleap-tracker-small'),
+                    $this->glyph_finder->get('tuleap-tracker'),
+                    '',
+                    $tracker->getProject(),
+                    $collection->getLinks()
                 )
             );
-            $history[]   = new HistoryEntry(
-                $recently_visited_row['created_on'],
-                $artifact->getXRef(),
-                $artifact->getUri(),
-                $artifact->getTitle(),
-                $tracker->getColor(),
-                $this->glyph_finder->get('tuleap-tracker-small'),
-                $this->glyph_finder->get('tuleap-tracker'),
-                $artifact->getTracker()->getProject(),
-                $quick_links
-            );
         }
-
-        return $history;
     }
 }

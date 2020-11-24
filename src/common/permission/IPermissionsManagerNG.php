@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,7 +22,15 @@
 /**
  * This interface describe all methods needed to replace the old permissions.php
  */
-interface IPermissionsManagerNG {
+interface IPermissionsManagerNG
+{
+    /**
+     * @return int[]
+     */
     public function getAuthorizedUGroupIdsForProject(Project $project, $object_id, $permission_type);
+    /**
+     * @return int[]
+     */
+    public function getAuthorizedUGroupIdsForProjectWithoutDefaultValues(Project $project, $object_id, $permission_type);
     public function savePermissions(Project $project, $object_id, $permission_type, array $ugroup_ids);
 }

@@ -23,8 +23,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('pre.php');
-require_once('www/project/admin/project_admin_utils.php');
+require_once __DIR__ . '/../../include/pre.php';
+require_once __DIR__ . '/project_admin_utils.php';
 
 use Tuleap\Project\Admin\ProjectDetails\ProjectDetailsController;
 use Tuleap\Project\Admin\ProjectDetails\ProjectDetailsDAO;
@@ -35,6 +35,7 @@ use Tuleap\Project\Admin\RestrictedUsersProjectCounter;
 use Tuleap\Project\Admin\ServicesUsingTruncatedMailRetriever;
 use Tuleap\Project\DescriptionFieldsDao;
 use Tuleap\Project\DescriptionFieldsFactory;
+use Tuleap\Project\Registration\Template\TemplateFactory;
 use Tuleap\TroveCat\TroveCatLinkDao;
 
 $group_id = $request->get('group_id');
@@ -76,10 +77,10 @@ $project_details_controller = new ProjectDetailsController(
     $project_history_dao,
     $project_visibility_presenter_builder,
     $project_visibility_configuration,
-    $service_truncated_mails_retriever,
     $ugroup_binding,
     $trove_cat_link_dao,
-    $csrf_token
+    $csrf_token,
+    TemplateFactory::build(),
 );
 
 $project_details_router = new ProjectDetailsRouter(

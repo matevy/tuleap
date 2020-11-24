@@ -11,6 +11,10 @@ const webpack_config_for_charts = {
     },
     context: path.resolve(__dirname),
     output: webpack_configurator.configureOutput(assets_dir_path),
+    externals: {
+        tuleap: "tuleap",
+        jquery: "jQuery"
+    },
     resolve: {
         alias: {
             "charts-builders": path.resolve(
@@ -38,8 +42,9 @@ const path_to_badge = path.resolve(
 
 const webpack_config_for_overview_and_vue = {
     entry: {
-        overview: "./scrum-header.js",
+        "scrum-header": "./scrum-header.js",
         "permission-per-group": "./permissions-per-group/src/index.js",
+        administration: "./administration.js",
         "planning-admin": "./planning-admin.js"
     },
     context: path.resolve(__dirname),
@@ -65,4 +70,32 @@ const webpack_config_for_overview_and_vue = {
     }
 };
 
-module.exports = [webpack_config_for_charts, webpack_config_for_overview_and_vue];
+const webpack_config_for_artifact_additional_action = {
+    entry: {
+        "artifact-additional-action": "./artifact-additional-action/src/index.ts"
+    },
+    context: path.resolve(__dirname),
+    output: webpack_configurator.configureOutput(
+        assets_dir_path,
+        "/plugins/agiledashboard/assets/"
+    ),
+    module: {
+        rules: [
+            ...webpack_configurator.configureTypescriptRules(
+                webpack_configurator.babel_options_ie11
+            ),
+            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11),
+            webpack_configurator.rule_po_files
+        ]
+    },
+    plugins: [manifest_plugin, webpack_configurator.getTypescriptCheckerPlugin(false)],
+    resolve: {
+        extensions: [".ts", ".js"]
+    }
+};
+
+module.exports = [
+    webpack_config_for_charts,
+    webpack_config_for_overview_and_vue,
+    webpack_config_for_artifact_additional_action
+];

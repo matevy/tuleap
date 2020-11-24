@@ -19,13 +19,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/plugin/Plugin.class.php');
 Mock::generatePartial('Plugin', 'PluginTestVersion', array('_getPluginManager'));
 
-require_once('common/plugin/PluginManager.class.php');
 Mock::generate('PluginManager');
 
-class FakePluginToTestHooks extends Plugin {
+class FakePluginToTestHooks extends Plugin
+{
 
     public function hook1()
     {
@@ -52,16 +51,19 @@ class FakePluginToTestHooks extends Plugin {
     }
 }
 
-class PluginTest extends TuleapTestCase {
+class PluginTest extends TuleapTestCase
+{
 
-    function testId() {
+    function testId()
+    {
         $p = new Plugin();
         $this->assertEqual($p->getId(), -1);
         $p = new Plugin(123);
         $this->assertEqual($p->getId(), 123);
     }
 
-    function testPluginInfo() {
+    function testPluginInfo()
+    {
         $p = new Plugin();
         $this->assertIsA($p->getPluginInfo(), 'PluginInfo');
     }
@@ -77,8 +79,8 @@ class PluginTest extends TuleapTestCase {
         $col = $p->getHooksAndCallbacks();
         $it = $col->iterator();
         $current_hook = $it->current();
-        $this->assertEqual($current_hook['hook'],       $hook);
-        $this->assertEqual($current_hook['callback'],   'anEvent');
+        $this->assertEqual($current_hook['hook'], $hook);
+        $this->assertEqual($current_hook['callback'], 'anEvent');
         $this->assertFalse($current_hook['recallHook']);
     }
 
@@ -92,8 +94,8 @@ class PluginTest extends TuleapTestCase {
         $col = $p->getHooksAndCallbacks();
         $it = $col->iterator();
         $current_hook = $it->current();
-        $this->assertEqual($current_hook['hook'],       $hook);
-        $this->assertEqual($current_hook['callback'],   $callback);
+        $this->assertEqual($current_hook['hook'], $hook);
+        $this->assertEqual($current_hook['callback'], $callback);
         $this->assertFalse($current_hook['recallHook']);
     }
 
@@ -108,8 +110,8 @@ class PluginTest extends TuleapTestCase {
         $col = $p->getHooksAndCallbacks();
         $it = $col->iterator();
         $current_hook = $it->current();
-        $this->assertEqual($current_hook['hook'],       $hook);
-        $this->assertEqual($current_hook['callback'],   $callback);
+        $this->assertEqual($current_hook['hook'], $hook);
+        $this->assertEqual($current_hook['callback'], $callback);
         $this->assertEqual($current_hook['recallHook'], $recall);
     }
 
@@ -129,13 +131,15 @@ class PluginTest extends TuleapTestCase {
         $plugin->addHook('no_callback_defined');
     }
 
-    function testScope() {
+    function testScope()
+    {
         $p = new Plugin();
         $this->assertIdentical($p->getScope(), Plugin::SCOPE_SYSTEM);
         $this->assertNotEqual($p->getScope(), Plugin::SCOPE_PROJECT);
         $this->assertNotEqual($p->getScope(), Plugin::SCOPE_USER);
     }
-    function testGetPluginEtcRoot() {
+    function testGetPluginEtcRoot()
+    {
         $GLOBALS['sys_custompluginsroot'] = $this->getTmpDir().'/test/custom/';
         $shortname = 'shortname';
         $pm = new MockPluginManager($this);
@@ -144,8 +148,9 @@ class PluginTest extends TuleapTestCase {
         $p->setReturnReference('_getPluginManager', $pm);
 
         $this->assertEqual($p->getPluginEtcRoot(), $GLOBALS['sys_custompluginsroot'].'/'.$shortname.'/etc');
-     }
-    function testGetPluginPath() {
+    }
+    function testGetPluginPath()
+    {
         $GLOBALS['sys_pluginspath']       = '/plugins';
         $GLOBALS['sys_custompluginspath'] = '/customplugins';
         $shortname = 'shortname';
@@ -160,7 +165,8 @@ class PluginTest extends TuleapTestCase {
         $this->assertEqual($p->getPluginPath(), $GLOBALS['sys_custompluginspath'].'/'.$shortname);
     }
 
-    function testGetThemePath() {
+    function testGetThemePath()
+    {
         $GLOBALS['sys_user_theme']        = 'current_theme';
         $GLOBALS['sys_pluginspath']       = '/plugins';
         $GLOBALS['sys_custompluginspath'] = '/customplugins';
@@ -226,7 +232,6 @@ class PluginTest extends TuleapTestCase {
         rmdir($GLOBALS['sys_pluginsroot'].$shortname);
         rmdir($GLOBALS['sys_pluginsroot']);
 
-
         //Now plugin is custom
         mkdir($GLOBALS['sys_custompluginsroot']);
         mkdir($GLOBALS['sys_custompluginsroot'].$shortname);
@@ -255,7 +260,8 @@ class PluginTest extends TuleapTestCase {
         rmdir(dirname($GLOBALS['sys_custompluginsroot']));
     }
 
-    function testGetThemePathShouldReturnNullIfNoUserTheme() {
+    function testGetThemePathShouldReturnNullIfNoUserTheme()
+    {
         unset($GLOBALS['sys_user_theme']);
         $GLOBALS['sys_pluginspath']       = '/plugins';
         $GLOBALS['sys_custompluginspath'] = '/customplugins';
@@ -272,7 +278,8 @@ class PluginTest extends TuleapTestCase {
         $this->assertEqual($p->getThemePath(), '');
     }
 
-    function testGetFilesystemPath() {
+    function testGetFilesystemPath()
+    {
         $GLOBALS['sys_pluginsroot']       = '/my/application';
 
         $pm = new MockPluginManager($this);
@@ -285,7 +292,8 @@ class PluginTest extends TuleapTestCase {
         $this->assertEqual($p->getFilesystemPath(), '/my/application/zataz');
     }
 
-    function testGetFilesystemPathCustom() {
+    function testGetFilesystemPathCustom()
+    {
         $GLOBALS['sys_custompluginsroot']       = '/my/custom/application';
 
         $pm = new MockPluginManager($this);
@@ -298,7 +306,8 @@ class PluginTest extends TuleapTestCase {
         $this->assertEqual($p->getFilesystemPath(), '/my/custom/application/zataz');
     }
 
-    function testGetFilesystemPathWithSlashAtTheEnd() {
+    function testGetFilesystemPathWithSlashAtTheEnd()
+    {
         $GLOBALS['sys_pluginsroot']       = '/my/application/';
 
         $pm = new MockPluginManager($this);
@@ -311,12 +320,14 @@ class PluginTest extends TuleapTestCase {
         $this->assertEqual($p->getFilesystemPath(), '/my/application/zataz');
     }
 
-    function itHasNoDependenciesByDefault() {
+    function itHasNoDependenciesByDefault()
+    {
         $plugin = new Plugin();
         $this->assertArrayEmpty($plugin->getDependencies());
     }
 
-    function itDoesntAllowToListenSameHookSeveralTimes() {
+    function itDoesntAllowToListenSameHookSeveralTimes()
+    {
         $this->expectException();
         $plugin = new Plugin();
         $plugin->addHook('bla');

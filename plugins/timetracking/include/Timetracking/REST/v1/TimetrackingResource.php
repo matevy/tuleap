@@ -29,7 +29,6 @@ use Tracker_ArtifactFactory;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\ProjectStatusVerificator;
-use Tuleap\REST\UserManager;
 use Tuleap\Timetracking\Admin\AdminDao;
 use Tuleap\Timetracking\Admin\TimetrackingUgroupDao;
 use Tuleap\Timetracking\Admin\TimetrackingUgroupRetriever;
@@ -43,6 +42,7 @@ use Tuleap\Timetracking\Time\TimeChecker;
 use Tuleap\Timetracking\Time\TimeDao;
 use Tuleap\Timetracking\Time\TimeRetriever;
 use Tuleap\Timetracking\Time\TimeUpdater;
+use UserManager;
 
 class TimetrackingResource extends AuthenticatedResource
 {
@@ -53,7 +53,7 @@ class TimetrackingResource extends AuthenticatedResource
     /**
      * @var UserManager
      */
-    private $rest_user_manager;
+    private $user_manager;
 
     /**
      * @var TimeRetriever
@@ -67,20 +67,20 @@ class TimetrackingResource extends AuthenticatedResource
 
     public function __construct()
     {
-        $time_dao                     = new TimeDao();
-        $permissionsRetriever         = new PermissionsRetriever((
+        $time_dao             = new TimeDao();
+        $permissionsRetriever = new PermissionsRetriever((
         new TimetrackingUgroupRetriever(
             new TimetrackingUgroupDao()
         )
         ));
-        $this->time_retriever         = new TimeRetriever(
+        $this->time_retriever = new TimeRetriever(
             $time_dao,
             $permissionsRetriever,
             new AdminDao(),
             \ProjectManager::instance()
         );
-        $this->time_updater           = new TimeUpdater($time_dao, new TimeChecker(), $permissionsRetriever);
-        $this->rest_user_manager      = UserManager::build();
+        $this->time_updater   = new TimeUpdater($time_dao, new TimeChecker(), $permissionsRetriever);
+        $this->user_manager   = UserManager::instance();
     }
 
     /**
@@ -111,7 +111,7 @@ class TimetrackingResource extends AuthenticatedResource
         $this->checkAccess();
         $this->sendAllowHeaders();
         try {
-            $current_user = $this->rest_user_manager->getCurrentUser();
+            $current_user = $this->user_manager->getCurrentUser();
             $retriever = ArtifactTimeRetriever::build();
             return $retriever->getArtifactTime($current_user, $query);
         } catch (\User_StatusInvalidException $exception) {
@@ -146,10 +146,10 @@ class TimetrackingResource extends AuthenticatedResource
      * @param TimetrackingPOSTRepresentation $item_representation The created Time {@from body} {@type Tuleap\Timetracking\REST\v1\TimetrackingPOSTRepresentation}
      * @return TimetrackingRepresentation
      *
-     * @throws 400
-     * @throws 401
+     * @throws RestException 400
+     * @throws RestException 401
      * @throws RestException 403
-     * @throws 404
+     * @throws RestException 404
      */
     protected function addTime(TimetrackingPOSTRepresentation $item)
     {
@@ -157,7 +157,7 @@ class TimetrackingResource extends AuthenticatedResource
 
         $this->sendAllowHeaders();
 
-        $current_user = $this->rest_user_manager->getCurrentUser();
+        $current_user = $this->user_manager->getCurrentUser();
 
         $artifact = $this->getArtifact($current_user, $item->artifact_id);
 
@@ -202,10 +202,10 @@ class TimetrackingResource extends AuthenticatedResource
      *
      * @return TimetrackingRepresentation
      *
-     * @throws 400
-     * @throws 401
+     * @throws RestException 400
+     * @throws RestException 401
      * @throws RestException 403
-     * @throws 404
+     * @throws RestException 404
      */
     protected function updateTime($id, TimetrackingPUTRepresentation $item)
     {
@@ -213,7 +213,7 @@ class TimetrackingResource extends AuthenticatedResource
 
         $this->sendAllowHeaders();
 
-        $current_user = $this->rest_user_manager->getCurrentUser();
+        $current_user = $this->user_manager->getCurrentUser();
         $time         = $this->time_retriever->getTimeByIdForUser($current_user, $id);
 
         if (! $time) {
@@ -254,9 +254,9 @@ class TimetrackingResource extends AuthenticatedResource
      *
      * @param int $id Id of the time
      *
-     * @throws 401
+     * @throws RestException 401
      * @throws RestException 403
-     * @throws 404
+     * @throws RestException 404
      */
     protected function delete($id)
     {
@@ -264,7 +264,7 @@ class TimetrackingResource extends AuthenticatedResource
 
         $this->sendAllowHeaders();
 
-        $current_user = $this->rest_user_manager->getCurrentUser();
+        $current_user = $this->user_manager->getCurrentUser();
 
         $time     = $this->getTime($current_user, $id);
         $artifact = $this->getArtifact($current_user, $time->getArtifactId());

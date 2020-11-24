@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace Tuleap\FRS\Tests\REST;
 
 use Guzzle\Http\Client;
+use REST_TestDataBuilder;
 use RestBase;
 
 class FileTest extends RestBase
@@ -46,10 +47,38 @@ class FileTest extends RestBase
         );
     }
 
+    public function testOPTIONSFileWithUserRESTReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options('frs_files/1'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(
+            ['OPTIONS', 'GET', 'POST', 'DELETE'],
+            $response->getHeader('Allow')->normalize()->toArray()
+        );
+    }
+
     public function testGETFile(): void
     {
         $file = $this->getResponse($this->client->get('frs_files/1'))->json();
 
+        $this->assertGETFile($file);
+    }
+
+    public function testGETFileWithUserRESTReadOnlyAdmin(): void
+    {
+        $file = $this->getResponse(
+            $this->client->get('frs_files/1'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        )->json();
+
+        $this->assertGETFile($file);
+    }
+
+    private function assertGETFile(array $file): void
+    {
         $this->assertEquals(1, $file['id']);
         $this->assertEquals('BooksAuthors.txt', $file['name']);
         $this->assertEquals('x86_64', $file['arch']);
@@ -57,8 +86,25 @@ class FileTest extends RestBase
         $this->assertEquals(72, $file['file_size']);
         $this->assertEquals('2015-12-03T16:46:00+01:00', $file['date']);
         $this->assertEquals('7865eaef28db1b906eaf1e4fa353796d', $file['computed_md5']);
-        $this->assertEquals("/file/download.php/{$this->project_id}/1/BooksAuthors.txt", $file['download_url']);
+        $this->assertEquals('/file/download/1', $file['download_url']);
         $this->assertEquals('rest_api_tester_1', $file['owner']['username']);
+
+        $file_data_response = $this->getResponse($this->setup_client->get($file['download_url']));
+        $this->assertEquals(200, $file_data_response->getStatusCode());
+        $this->assertStringEqualsFile(
+            __DIR__ . '/../_fixtures/frs/data/authors.txt',
+            (string)$file_data_response->getBody()
+        );
+    }
+
+    public function testDELETEFileWithUserRESTReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->delete('frs_files/2'),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
     }
 
     public function testDELETEFile(): void
@@ -67,6 +113,24 @@ class FileTest extends RestBase
         $this->assertEquals(202, $response->getStatusCode());
         $response = $this->getResponse($this->client->get('frs_files/2'));
         $this->assertEquals(404, $response->getStatusCode());
+    }
+
+    public function testPOSTFileWithUserRESTReadOnlyAdminNotProjectMember(): void
+    {
+        $file_size = 123;
+
+        $query = [
+            'release_id' => 1,
+            'name'       => 'file_creation_' . bin2hex(random_bytes(8)),
+            'file_size'  => $file_size
+        ];
+
+        $response = $this->getResponse(
+            $this->client->post('frs_files', null, json_encode($query)),
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(403, $response->getStatusCode());
     }
 
     public function testPOSTFile(): void
@@ -98,6 +162,7 @@ class FileTest extends RestBase
             str_replace('/api/v1', '', $this->client->getBaseUrl()),
             $this->client->getConfig()
         );
+        $tus_client->setCurlMulti($this->client->getCurlMulti());
         $tus_client->setSslVerification(false, false, false);
         $tus_response_upload = $this->getResponse(
             $tus_client->patch(
@@ -132,6 +197,7 @@ class FileTest extends RestBase
             str_replace('/api/v1', '', $this->client->getBaseUrl()),
             $this->client->getConfig()
         );
+        $tus_client->setCurlMulti($this->client->getCurlMulti());
         $tus_client->setSslVerification(false, false, false);
         $tus_response_upload = $this->getResponse(
             $tus_client->delete(

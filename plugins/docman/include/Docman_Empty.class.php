@@ -4,7 +4,7 @@
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2007
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -23,9 +23,11 @@
 
 require_once('Docman_Document.class.php');
 
-class Docman_Empty extends Docman_Document {
-    
-    function __construct($data = null) {
+class Docman_Empty extends Docman_Document
+{
+
+    function __construct($data = null)
+    {
         parent::__construct($data);
     }
 
@@ -34,7 +36,8 @@ class Docman_Empty extends Docman_Document {
         return $visitor->visitEmpty($this, $params);
     }
 
-    function toRow() {
+    function toRow()
+    {
         $row = parent::toRow();
         $row['item_type'] = PLUGIN_DOCMAN_ITEM_TYPE_EMPTY;
         return $row;
@@ -44,7 +47,4 @@ class Docman_Empty extends Docman_Document {
     {
         return $GLOBALS['Language']->getText('plugin_docman', 'doc_type_empty');
     }
-
 }
-
-?>

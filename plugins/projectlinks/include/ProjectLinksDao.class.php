@@ -30,11 +30,12 @@ class ProjectLinksDao extends DataAccessObject
 
     /**
      * Search all links of a given type
-     * 
-     * @param Integer $linkTypeId
+     *
+     * @param int $linkTypeId
      * @return DataAccessResult
      */
-    function searchLinksByType($linkTypeId) {
+    function searchLinksByType($linkTypeId)
+    {
         $sql = 'SELECT rel.*, g.group_name'.
                ' FROM plugin_projectlinks_relationship rel'.
                '  JOIN groups g ON (g.group_id = rel.target_group_id)'.
@@ -42,14 +43,15 @@ class ProjectLinksDao extends DataAccessObject
                ' ORDER BY g.group_name';
         return $this->retrieve($sql);
     }
-    
+
     /**
      * Search all the links from $groupId project to other prjs.
-     
-     * @param  Integer $groupId Group id
+
+     * @param int $groupId Group id
      * @return DataAccessResult
      */
-    function searchForwardLinks($groupId) {
+    function searchForwardLinks($groupId)
+    {
         $sql = 'SELECT name AS link_name, type, groups.group_id,
                   group_name, unix_group_name, uri_plus, link_id, creation_date,
                   master_group_id, target_group_id, link_type.link_type_id
@@ -66,11 +68,12 @@ class ProjectLinksDao extends DataAccessObject
 
     /**
      * Search all the links that point to $groupId project
-     * 
-     * @param  Integer $groupId Group id
+     *
+     * @param int $groupId Group id
      * @return DataAccessResult
      */
-    function searchBackLinks($groupId) {
+    function searchBackLinks($groupId)
+    {
         $sql = 'SELECT reverse_name AS link_name, type, groups.group_id,
                   group_name, unix_group_name, uri_plus, link_id, creation_date,
                   master_group_id, target_group_id,  link_type.link_type_id
@@ -88,12 +91,13 @@ class ProjectLinksDao extends DataAccessObject
     /**
      * Return true if there are links from or toward this project or if there is
      * at least one link type defined in the project.
-     * 
-     * @param Integer $groupId
-     * 
-     * @return Boolean
+     *
+     * @param int $groupId
+     *
+     * @return bool
      */
-    function projectUsesProjectLinks($groupId) {
+    function projectUsesProjectLinks($groupId)
+    {
         $sql = 'SELECT NULL'.
                ' FROM plugin_projectlinks_link_type'.
                ' WHERE group_id = '.$groupId.
@@ -115,5 +119,3 @@ class ProjectLinksDao extends DataAccessObject
         return false;
     }
 }
-
-?>

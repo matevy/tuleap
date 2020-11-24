@@ -21,7 +21,8 @@
 /**
  * Presenter for one step creation project
  */
-class Project_OneStepCreation_OneStepCreationPresenter {
+class Project_OneStepCreation_OneStepCreationPresenter //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
+{
 
     public const DEFAULT_TEMPLATE_ID = 100;
 
@@ -76,13 +77,18 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      * @var string
      */
     private $csrf_token;
+    /**
+     * @var bool
+     */
+    public $is_description_mandatory;
 
     public function __construct(
         Project_OneStepCreation_OneStepCreationRequest $creation_request,
         array $required_custom_descriptions,
         ProjectManager $project_manager,
         array $trove_cats,
-        $csrf_token_field
+        $csrf_token_field,
+        bool $is_description_mandatory
     ) {
         $this->creation_request                       = $creation_request;
         $this->project_manager                        = $project_manager;
@@ -90,16 +96,19 @@ class Project_OneStepCreation_OneStepCreationPresenter {
         $this->trove_cats                             = array_values($trove_cats);
         $this->csrf_token                             = $csrf_token_field;
         $this->has_project_without_restricted         = ForgeConfig::areRestrictedUsersAllowed();
+        $this->is_description_mandatory               = $is_description_mandatory;
     }
 
-    public function hasTroveCats() {
+    public function hasTroveCats()
+    {
         return count($this->trove_cats) > 0;
     }
 
     /**
      * @return Project_CustomDescription_CustomDescriptionPresenter[]
      */
-    private function getCustomDescriptionPresenters(array $required_custom_descriptions) {
+    private function getCustomDescriptionPresenters(array $required_custom_descriptions)
+    {
         $presenters = array();
         foreach ($required_custom_descriptions as $custom_description) {
             $presenters[] = new Project_CustomDescription_CustomDescriptionPresenter(
@@ -111,14 +120,16 @@ class Project_OneStepCreation_OneStepCreationPresenter {
         return $presenters;
     }
 
-    public function getSysName() {
+    public function getSysName()
+    {
         return ForgeConfig::get('sys_name');
     }
 
     /**
      * @return bool
      */
-    public function isProjectApprovalEnabled() {
+    public function isProjectApprovalEnabled()
+    {
         return ForgeConfig::get(\ProjectManager::CONFIG_PROJECT_APPROVAL);
     }
 
@@ -126,7 +137,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return string
      */
-    public function getUnixName() {
+    public function getUnixName()
+    {
         return $this->creation_request->getUnixName();
     }
 
@@ -134,7 +146,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return string
      */
-    public function getFullName() {
+    public function getFullName()
+    {
         return $this->creation_request->getFullName();
     }
 
@@ -142,7 +155,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return string
      */
-    public function getShortDescription() {
+    public function getShortDescription()
+    {
         return $this->creation_request->getShortDescription();
     }
 
@@ -150,7 +164,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return int
      */
-    public function getTemplateId() {
+    public function getTemplateId()
+    {
         return $this->creation_request->getTemplateId();
     }
 
@@ -158,7 +173,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return bool
      */
-    public function isPublic() {
+    public function isPublic()
+    {
         return $this->creation_request->isPublic();
     }
 
@@ -166,7 +182,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return bool
      */
-    public function userCanSelectProjectPrivacy() {
+    public function userCanSelectProjectPrivacy()
+    {
         return $this->creation_request->userCanSelectProjectPrivacy();
     }
 
@@ -174,134 +191,166 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return type
      */
-    public function getTosApproval() {
+    public function getTosApproval()
+    {
         return $this->creation_request->getTosApproval();
     }
 
-    public function getProjectDescriptionFields() {
+    public function getProjectDescriptionFields()
+    {
         return $this->required_custom_description_presenters;
     }
 
-    public function getTitle() {
+    public function getTitle()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'title');
     }
 
-    public function getPageDescriptionBeg() {
+    public function getPageDescriptionBeg()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'page_description_beg');
     }
 
-    public function getPageDescriptionEnd() {
+    public function getPageDescriptionEnd()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'page_description_end');
     }
 
-    public function getWarning() {
+    public function getWarning()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'warning');
     }
 
-    public function getWarningMessage() {
+    public function getWarningMessage()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'warning_message');
     }
 
-    public function getDescriptionContainerTitle() {
+    public function getDescriptionContainerTitle()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_title');
     }
 
-    public function getDescriptionContainerFullName() {
+    public function getDescriptionContainerFullName()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_full_name');
     }
 
-    public function getDescriptionContainerShortName() {
+    public function getDescriptionContainerShortName()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_short_name');
     }
 
-    public function getDescriptionContainerFullNameHelp() {
+    public function getDescriptionContainerFullNameHelp()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_full_name_help');
     }
 
-    public function getDescriptionContainerShortNameHelp() {
+    public function getDescriptionContainerShortNameHelp()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_short_name_help');
     }
 
-    public function getDescriptionContainerShortNameLabel() {
+    public function getDescriptionContainerShortNameLabel()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_short_name_label');
     }
 
-    public function getDescriptionContainerShortDescription() {
+    public function getDescriptionContainerShortDescription()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_short_description');
     }
 
-    public function getDescriptionContainerShortDescriptionHelp() {
+    public function getDescriptionContainerShortDescriptionHelp()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_short_description_help');
     }
 
-    public function getDescriptionContainerProjectDescription() {
+    public function getDescriptionContainerProjectDescription()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_project_description');
     }
 
-    public function getDescriptionContainerProjectPrivacy() {
+    public function getDescriptionContainerProjectPrivacy()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_project_privacy');
     }
 
-    public function getDescriptionContainerPublicLabel() {
+    public function getDescriptionContainerPublicLabel()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_project_public_label');
     }
 
-    public function getDescriptionContainerPrivateLabel() {
+    public function getDescriptionContainerPrivateLabel()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'description_container_project_private_label');
     }
 
-    public function getChooseTemplateContainerTitle() {
+    public function getChooseTemplateContainerTitle()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'choose_template_title');
     }
 
-    public function getChooseTemplateContainerDescriptionPartOne() {
+    public function getChooseTemplateContainerDescriptionPartOne()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'choose_template_description_part_one');
     }
 
-    public function getChooseTemplateContainerDescriptionPartTwo() {
+    public function getChooseTemplateContainerDescriptionPartTwo()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'choose_template_description_part_two');
     }
 
-    public function getDefaultTemplatesTitle() {
+    public function getDefaultTemplatesTitle()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'choose_default_templates');
     }
 
-    public function getAdminProjectsTitle() {
+    public function getAdminProjectsTitle()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'choose_admin_projects');
     }
 
-    public function getCreateProjectButtonLabel() {
+    public function getCreateProjectButtonLabel()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'submit_button');
     }
 
-    public function getAgreeTOSLabel() {
+    public function getAgreeTOSLabel()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'agree_TOS_label');
     }
 
-    public function getTOSLabel() {
+    public function getTOSLabel()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'TOS_label');
     }
 
-    public function getAboutToCreateLabel() {
+    public function getAboutToCreateLabel()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'about_to_create');
     }
 
-    public function getAboutToCreateOptionalLabel() {
+    public function getAboutToCreateOptionalLabel()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'about_to_create_optional');
     }
 
-    public function trove_cat_legend() {
+    public function trove_cat_legend() //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'trove_cat_legend');
     }
 
-    public function none_selected() {
+    public function none_selected() //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    {
         return $GLOBALS['Language']->getText('include_trove', 'none_selected');
     }
 
     /**
      * @return bool
      */
-    public function hasMoreThanOneAvailableTemplate() {
+    public function hasMoreThanOneAvailableTemplate()
+    {
         return $this->hasUserTemplates() || $this->hasMoreThanOneDefaultTemplates();
     }
 
@@ -309,7 +358,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return ProjectCreationTemplatePresenter[]
      */
-    public function getDefaultTemplates() {
+    public function getDefaultTemplates()
+    {
         $projects = $this->project_manager->getSiteTemplates();
         return $this->generateTemplatesFromParsedDbData($projects);
     }
@@ -317,7 +367,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
     /**
      * @return bool
      */
-    public function hasMoreThanOneDefaultTemplates() {
+    public function hasMoreThanOneDefaultTemplates()
+    {
         return count($this->getDefaultTemplates()) > 1;
     }
 
@@ -325,7 +376,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      *
      * @return ProjectCreationTemplatePresenter[]
      */
-    public function getUserTemplates() {
+    public function getUserTemplates()
+    {
         $projects = $this->project_manager->getProjectsUserIsAdmin($this->creation_request->getCurrentUser());
         return $this->generateTemplatesFromParsedDbData($projects);
     }
@@ -333,7 +385,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
     /**
      * @return bool
      */
-    public function hasUserTemplates() {
+    public function hasUserTemplates()
+    {
         return count($this->getUserTemplates()) > 0;
     }
 
@@ -341,7 +394,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
      * @param Project[] $projects
      * @return ProjectCreationTemplatePresenter[]
      */
-    private function generateTemplatesFromParsedDbData(array $projects) {
+    private function generateTemplatesFromParsedDbData(array $projects)
+    {
         $templates = array();
         foreach ($projects as $project) {
             /** @var Project $project */
@@ -350,7 +404,8 @@ class Project_OneStepCreation_OneStepCreationPresenter {
         return $templates;
     }
 
-    public function csrf_token() {
+    public function csrf_token() //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    {
         return $this->csrf_token;
     }
 }

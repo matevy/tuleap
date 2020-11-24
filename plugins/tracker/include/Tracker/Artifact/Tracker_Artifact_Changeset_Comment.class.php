@@ -1,7 +1,7 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2015-2018. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,7 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_Changeset_Comment {
+class Tracker_Artifact_Changeset_Comment
+{
 
     /**
      * @const Changeset comment format is text.
@@ -82,15 +83,17 @@ class Tracker_Artifact_Changeset_Comment {
      * @param string                     $bodyFormat         The comment type (text or html follow-up comment)
      * @param int                        $parent_id          The id of the parent (if comment has been modified)
      */
-    public function __construct($id,
-                                $changeset,
-                                $comment_type_id,
-                                $canned_response_id,
-                                $submitted_by,
-                                $submitted_on,
-                                $body,
-                                $bodyFormat,
-                                $parent_id) {
+    public function __construct(
+        $id,
+        $changeset,
+        $comment_type_id,
+        $canned_response_id,
+        $submitted_by,
+        $submitted_on,
+        $body,
+        $bodyFormat,
+        $parent_id
+    ) {
         $this->id                 = $id;
         $this->changeset          = $changeset;
         $this->comment_type_id    = $comment_type_id;
@@ -105,7 +108,8 @@ class Tracker_Artifact_Changeset_Comment {
     /**
      * @return string the cleaned body to be included in a text/plain context
      */
-    public function getPurifiedBodyForText() {
+    public function getPurifiedBodyForText()
+    {
         $level = self::$PURIFIER_LEVEL_IN_TEXT[$this->bodyFormat];
         return $this->purifyBody($level);
     }
@@ -113,7 +117,8 @@ class Tracker_Artifact_Changeset_Comment {
     /**
      * @return string the cleaned body to be included in a text/html context
      */
-    public function getPurifiedBodyForHTML() {
+    public function getPurifiedBodyForHTML()
+    {
         if ($this->bodyFormat === 'html') {
             return $this->purifyHTMLBody();
         }
@@ -122,16 +127,18 @@ class Tracker_Artifact_Changeset_Comment {
         return $this->purifyBody($level);
     }
 
-    private function purifyBody($level) {
+    private function purifyBody($level)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         return $hp->purify(
             $this->body,
             $level,
-            $this->changeset->artifact->getTracker()->group_id
+            $this->changeset->getArtifact()->getTracker()->getGroupId()
         );
     }
 
-    private function purifyHTMLBody() {
+    private function purifyHTMLBody()
+    {
         $hp = Codendi_HTMLPurifier::instance();
         return $hp->purifyHTMLWithReferences(
             $this->body,
@@ -144,7 +151,8 @@ class Tracker_Artifact_Changeset_Comment {
      *
      * @return string the HTML code of this comment
      */
-    public function fetchFollowUp() {
+    public function fetchFollowUp()
+    {
         if ($this->hasEmptyBody()) {
             return null;
         }
@@ -179,7 +187,8 @@ class Tracker_Artifact_Changeset_Comment {
      *
      * @return bool
      */
-    public function hasEmptyBody() {
+    public function hasEmptyBody()
+    {
         return empty($this->body);
     }
 
@@ -189,7 +198,8 @@ class Tracker_Artifact_Changeset_Comment {
      * @param String  $format Format of the output
      * @return string the HTML code of this comment
      */
-    public function fetchMailFollowUp($format = 'html') {
+    public function fetchMailFollowUp($format = 'html')
+    {
         if ($format != 'html') {
             if ($this->hasEmptyBody()) {
                 return '';
@@ -265,25 +275,27 @@ class Tracker_Artifact_Changeset_Comment {
         return $comment_format;
     }
 
-    private function fetchFormattedMailComment() {
+    private function fetchFormattedMailComment()
+    {
         $formatted_comment = '';
         if (!empty($this->body)) {
-           if ($this->parent_id && !trim($this->body)) {
-               $comment =
+            if ($this->parent_id && !trim($this->body)) {
+                $comment =
                 '<em>'.
                     $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'comment_cleared') .'
                 </em>';
-           } else {
-               $comment = $this->getPurifiedBodyForHTML();
-           }
+            } else {
+                $comment = $this->getPurifiedBodyForHTML();
+            }
 
-           $formatted_comment = '<div style="margin: 1em 0; padding: 0.5em 1em;">'. $comment .'</div>';
+            $formatted_comment = '<div style="margin: 1em 0; padding: 0.5em 1em;">'. $comment .'</div>';
         }
 
         return $formatted_comment;
     }
 
-    private function fetchFormattedMailUserInfo(PFUser $user) {
+    private function fetchFormattedMailUserInfo(PFUser $user)
+    {
         $hp = Codendi_HTMLPurifier::instance();
 
         if ($user && !$user->isAnonymous()) {
@@ -294,21 +306,24 @@ class Tracker_Artifact_Changeset_Comment {
         } else {
             $user = UserManager::instance()->getUserAnonymous();
             $user->setEmail($this->changeset->getEmail());
-            $user_info = $GLOBALS['Language']->getText('tracker_include_artifact','anon_user');
+            $user_info = $GLOBALS['Language']->getText('tracker_include_artifact', 'anon_user');
         }
 
         return $user_info;
     }
 
-    public function getSubmittedBy() {
+    public function getSubmittedBy()
+    {
         return $this->submitted_by;
     }
 
-    public function getSubmittedOn() {
+    public function getSubmittedOn()
+    {
         return $this->submitted_on;
     }
 
-    public function exportToXML(SimpleXMLElement $comments_node, UserXMLExporter $user_xml_exporter) {
+    public function exportToXML(SimpleXMLElement $comments_node, UserXMLExporter $user_xml_exporter)
+    {
         $comment_node = $comments_node->addChild('comment');
 
         $user_xml_exporter->exportUserByUserId($this->submitted_by, $comment_node, 'submitted_by');
@@ -323,7 +338,8 @@ class Tracker_Artifact_Changeset_Comment {
         $comment_node->body['format'] = $this->bodyFormat;
     }
 
-    private function getCommentBodyWithEscapedCrossReferences() {
+    private function getCommentBodyWithEscapedCrossReferences()
+    {
         $reference_manager = new ReferenceManager();
         $pattern           = $reference_manager->_getExpForRef();
         $matches           = array();

@@ -20,11 +20,12 @@
 
 use Tuleap\Admin\AdminPageRenderer;
 use Tuleap\Git\AdminAllowedProjectsGerritPresenter;
+use Tuleap\Git\AdminGerritBuilder;
 use Tuleap\Git\GerritServerResourceRestrictor;
 use Tuleap\Git\RemoteServer\Gerrit\Restrictor;
-use Tuleap\Git\AdminGerritBuilder;
 
-class Git_AdminGerritController {
+class Git_AdminGerritController
+{
 
     private $servers;
 
@@ -67,12 +68,13 @@ class Git_AdminGerritController {
         $this->admin_gerrit_builder        = $admin_gerrit_builder;
     }
 
-    public function process(Codendi_Request $request) {
+    public function process(Codendi_Request $request)
+    {
         if ($request->get('action') == 'edit-gerrit-server') {
             $this->updateGerritServer($request);
-        } else if ($request->get('action') == 'add-gerrit-server') {
+        } elseif ($request->get('action') == 'add-gerrit-server') {
             $this->addGerritServer($request);
-        } else if ($request->get('action') == 'delete-gerrit-server') {
+        } elseif ($request->get('action') == 'delete-gerrit-server') {
             $this->deleteGerritServer($request);
         } elseif ($request->get('action') == 'set-gerrit-server-restriction') {
             $this->gerrit_restrictor->setGerritServerRestriction($request);
@@ -97,14 +99,16 @@ class Git_AdminGerritController {
         $GLOBALS['Response']->redirect(GIT_SITE_ADMIN_BASE_URL . '?pane=gerrit_servers_admin');
     }
 
-    private function updateGerritServer(Codendi_Request $request) {
+    private function updateGerritServer(Codendi_Request $request)
+    {
         $request_gerrit_server = $request->params;
         $this->csrf->check();
         $this->updateServer($request_gerrit_server);
         $GLOBALS['Response']->redirect(GIT_SITE_ADMIN_BASE_URL . '?pane=gerrit_servers_admin');
     }
 
-    public function display(Codendi_Request $request) {
+    public function display(Codendi_Request $request)
+    {
         $title = dgettext('tuleap-git', 'Git');
 
         switch ($request->get('action')) {
@@ -157,7 +161,8 @@ class Git_AdminGerritController {
         );
     }
 
-    private function getManageAllowedProjectsPresenter(Codendi_Request $request) {
+    private function getManageAllowedProjectsPresenter(Codendi_Request $request)
+    {
         $gerrit_server_id = $request->get('gerrit_server_id');
         $gerrit_server    = $this->gerrit_server_factory->getServerById($gerrit_server_id);
 
@@ -168,13 +173,15 @@ class Git_AdminGerritController {
         );
     }
 
-    private function fetchGerritServers() {
+    private function fetchGerritServers()
+    {
         if (empty($this->servers)) {
             $this->servers = $this->gerrit_server_factory->getServers();
         }
     }
 
-    private function getListOfGerritServersPresenters() {
+    private function getListOfGerritServersPresenters()
+    {
         $this->fetchGerritServers();
 
         $list_of_presenters = array();
@@ -211,7 +218,7 @@ class Git_AdminGerritController {
             $this->gerrit_server_factory->save($server);
             $this->servers[$server->getId()] = $server;
 
-            $this->updateReplicationPassword($server,  $gerrit_server['replication_password']);
+            $this->updateReplicationPassword($server, $gerrit_server['replication_password']);
         }
     }
 
@@ -230,8 +237,12 @@ class Git_AdminGerritController {
         if (isset($server_id)) {
             $server = $this->gerrit_server_factory->getServerById($server_id);
 
+            if (! isset($request_gerrit_server['auth_type'])) {
+                $request_gerrit_server['auth_type'] = "Basic";
+            }
+
             if ($this->allGerritServerParamsRequiredExist($request_gerrit_server)) {
-                $gerrit_server = $this->admin_gerrit_builder->buildFromRequestForEdition($request_gerrit_server);
+                $gerrit_server = $this->admin_gerrit_builder->buildFromRequest($request_gerrit_server);
                 if ($gerrit_server['host'] != $server->getHost() ||
                     $gerrit_server['ssh_port'] != $server->getSSHPort() ||
                     $gerrit_server['http_port'] != $server->getHTTPPort() ||

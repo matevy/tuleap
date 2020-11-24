@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,7 +21,13 @@
 use Tuleap\AgileDashboard\AdminController;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AdministrationCrumbBuilder;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AgileDashboardCrumbBuilder;
+use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
+use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsModeChecker;
+use Tuleap\AgileDashboard\Planning\PlanningUpdater;
 use Tuleap\AgileDashboard\Planning\ScrumPlanningFilter;
+use Tuleap\AgileDashboard\Scrum\ScrumPresenterBuilder;
+use Tuleap\DB\DBTransactionExecutor;
+use Tuleap\Tracker\Semantic\Timeframe\TimeframeChecker;
 
 require_once(dirname(__FILE__).'/../../../tracker/tests/builders/all.php');
 
@@ -49,35 +55,40 @@ abstract class Planning_Controller_BaseTest extends TuleapTestCase
         $service_crumb_builder        = mock(AgileDashboardCrumbBuilder::class);
         $admin_crumb_builder          = mock(AdministrationCrumbBuilder::class);
 
-        $this->planning_controller    = new Planning_Controller(
+        $this->planning_request_validator = Mockery::mock(Planning_RequestValidator::class);
+        $this->planning_controller  = new Planning_Controller(
             $this->request,
             $this->planning_factory,
             mock('Planning_MilestoneFactory'),
             mock('ProjectManager'),
             mock('AgileDashboard_XMLFullStructureExporter'),
-            '/path/to/theme',
             '/path/to/plugin',
             mock('AgileDashboard_KanbanManager'),
             mock('AgileDashboard_ConfigurationManager'),
             mock('AgileDashboard_KanbanFactory'),
             mock('PlanningPermissionsManager'),
-            mock('AgileDashboard_HierarchyChecker'),
             $this->mono_milestone_checker,
             $this->scrum_planning_filter,
-            mock('TrackerFactory'),
             mock('Tracker_FormElementFactory'),
             $service_crumb_builder,
-            $admin_crumb_builder
+            $admin_crumb_builder,
+            Mockery::mock(TimeframeChecker::class),
+            Mockery::mock(DBTransactionExecutor::class),
+            Mockery::mock(ArtifactsInExplicitBacklogDao::class),
+            Mockery::mock(PlanningUpdater::class),
+            Mockery::mock(EventManager::class),
+            $this->planning_request_validator
         );
 
-
         $configuration_manager = mock('AgileDashboard_ConfigurationManager');
-        $this->event_manager   = mock('EventManager');
+        $this->event_manager   = \Mockery::spy(\EventManager::class);
 
         stub($configuration_manager)->getScrumTitle()->returns('Scrum');
         stub($configuration_manager)->getKanbanTitle()->returns('Kanban');
         stub($configuration_manager)->scrumIsActivatedForProject()->returns(true);
         stub($configuration_manager)->kanbanIsActivatedForProject()->returns(true);
+
+        $count_element_mode_checker = Mockery::mock(CountElementsModeChecker::class);
 
         $this->controller = new AdminController(
             $this->request,
@@ -86,11 +97,14 @@ abstract class Planning_Controller_BaseTest extends TuleapTestCase
             mock('AgileDashboard_KanbanFactory'),
             $configuration_manager,
             mock('TrackerFactory'),
-            $this->mono_milestone_checker,
             $this->event_manager,
             $service_crumb_builder,
-            $admin_crumb_builder
+            $admin_crumb_builder,
+            $count_element_mode_checker,
+            Mockery::mock(ScrumPresenterBuilder::class)
         );
+
+        $count_element_mode_checker->shouldReceive('burnupMustUseCountElementsMode')->andReturnFalse();
 
         stub($this->mono_milestone_checker)->isMonoMilestoneEnabled()->returns(false);
         stub($this->mono_milestone_checker)->isScrumMonoMilestoneAvailable()->returns(false);
@@ -104,24 +118,28 @@ abstract class Planning_Controller_BaseTest extends TuleapTestCase
         UserManager::setInstance($this->user_manager);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         ForgeConfig::restore();
         UserManager::clearInstance();
         parent::tearDown();
     }
 
-    protected function userIsAdmin() {
+    protected function userIsAdmin()
+    {
         stub($this->current_user)->isAdmin($this->group_id)->returns(true);
     }
 
-    protected function userIsNotAdmin() {
+    protected function userIsNotAdmin()
+    {
         stub($this->current_user)->isAdmin($this->group_id)->returns(false);
     }
 
     /**
      * @param string $action example: 'updatePlanning'
      */
-    protected function assertThatPlanningFactoryActionIsNotCalledWhenUserIsNotAdmin($action) {
+    protected function assertThatPlanningFactoryActionIsNotCalledWhenUserIsNotAdmin($action)
+    {
         $this->userIsNotAdmin();
         stub($this->planning_factory)->$action()->never();
         stub($GLOBALS['Response'])->redirect()->once();
@@ -130,43 +148,8 @@ abstract class Planning_Controller_BaseTest extends TuleapTestCase
     }
 }
 
-abstract class Planning_ControllerAdminTest extends Planning_Controller_BaseTest {
-
-    protected function renderAdminScrum() {
-        $this->planning_factory->expectOnce('getPlannings', array($this->current_user, $this->group_id));
-        $this->planning_factory->setReturnValue('getPlannings', $this->plannings);
-
-        stub($this->planning_factory)->getRootPlanning()->returns(aPlanning()->withPlanningTracker(aMockTracker()->build())->build());
-
-        $this->output = $this->controller->adminScrum();
-    }
-
-    public function itHasALinkToCreateANewPlanning() {
-        $this->assertPattern('/action=new/', $this->output);
-    }
-}
-
-class Planning_ControllerNonEmptyAdminTest extends Planning_ControllerAdminTest {
-    function setUp() {
-        parent::setUp();
-
-        $this->plannings = array(
-            aPlanning()->withId(1)->withName('Release Planning')->build(),
-            aPlanning()->withId(2)->withName('Sprint Planning')->build(),
-        );
-
-        $this->renderAdminScrum();
-    }
-
-    public function itListsExistingPlannings() {
-        foreach($this->plannings as $planning) {
-            $this->assertPattern('/'.$planning->getName().'/', $this->output);
-            $this->assertPattern('/href=".*?planning_id='.$planning->getId().'.*"/', $this->output);
-        }
-    }
-}
-
-class Planning_ControllerNewTest extends TuleapTestCase {
+class Planning_ControllerNewTest extends TuleapTestCase
+{
 
     private $available_backlog_trackers;
 
@@ -174,36 +157,40 @@ class Planning_ControllerNewTest extends TuleapTestCase {
     {
         parent::setUp();
         ForgeConfig::store();
-        ForgeConfig::set('codendi_dir', TRACKER_BASE_DIR .'/../../..');
+        ForgeConfig::set('codendi_dir', TRACKER_BASE_DIR . '/../../..');
         $this->group_id               = 123;
         $project_manager              = Mockery::spy(ProjectManager::class, ['getProject' => aMockProject()->withId($this->group_id)->build()]);
         $this->request                = aRequest()->withProjectManager($project_manager)->with('group_id', "$this->group_id")->build();
         $this->planning_factory       = mock('PlanningFactory');
         $this->tracker_factory        = mock('TrackerFactory');
-        $hierarchy_checker            = mock('AgileDashboard_HierarchyChecker');
         $scrum_mono_milestone_checker = mock('Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker');
 
-        $kanban_factory = stub('AgileDashboard_KanbanFactory')->getKanbanTrackerIds()->returns(array());
+        $kanban_factory = stub('AgileDashboard_KanbanFactory')->getKanbanTrackerIds()->returns([]);
 
-        $this->planning_controller = new Planning_Controller(
+        $event_manager                    = Mockery::mock(EventManager::class);
+        $this->planning_request_validator = Mockery::mock(Planning_RequestValidator::class);
+        $this->planning_controller        = new Planning_Controller(
             $this->request,
             $this->planning_factory,
             mock('Planning_MilestoneFactory'),
             mock('ProjectManager'),
             mock('AgileDashboard_XMLFullStructureExporter'),
-            '/path/to/theme',
             '/path/to/plugin',
             mock('AgileDashboard_KanbanManager'),
             mock('AgileDashboard_ConfigurationManager'),
             $kanban_factory,
             mock('PlanningPermissionsManager'),
-            $hierarchy_checker,
             $scrum_mono_milestone_checker,
             new ScrumPlanningFilter($scrum_mono_milestone_checker, $this->planning_factory),
-            mock('TrackerFactory'),
             mock('Tracker_FormElementFactory'),
             mock(AgileDashboardCrumbBuilder::class),
-            mock(AdministrationCrumbBuilder::class)
+            mock(AdministrationCrumbBuilder::class),
+            Mockery::mock(TimeframeChecker::class),
+            Mockery::mock(DBTransactionExecutor::class),
+            Mockery::mock(ArtifactsInExplicitBacklogDao::class),
+            Mockery::mock(PlanningUpdater::class),
+            $event_manager,
+            $this->planning_request_validator
         );
 
         stub($GLOBALS['Language'])->getText()->returns('');
@@ -219,35 +206,44 @@ class Planning_ControllerNewTest extends TuleapTestCase {
             aTracker()->withId(103)->withName('Sprints')->build()
         );
 
-        stub($this->planning_factory)->buildNewPlanning($this->group_id)->returns(aPlanning()->withGroupId($this->group_id)->build());
+        stub($this->planning_factory)->buildNewPlanning($this->group_id)->returns(
+            aPlanning()->withGroupId($this->group_id)->build()
+        );
+
+        stub($event_manager)->processEvent();
 
         $this->renderNew();
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         ForgeConfig::restore();
         parent::tearDown();
     }
 
-    protected function renderNew() {
+    protected function renderNew()
+    {
         stub($this->planning_factory)->getAvailablePlanningTrackers()->returns($this->available_planning_trackers);
         stub($this->planning_factory)->getAvailableBacklogTrackers()->returns($this->available_backlog_trackers);
 
         $this->output = $this->planning_controller->new_();
     }
 
-    public function itHasATextFieldForTheName() {
+    public function itHasATextFieldForTheName()
+    {
         $this->assertPattern('/<input type="text" name="planning\[name\]"/', $this->output);
     }
 
-    public function itHasASelectBoxListingBacklogTrackers() {
+    public function itHasASelectBoxListingBacklogTrackers()
+    {
         $this->assertPattern('/\<select name="planning\['.PlanningParameters::BACKLOG_TRACKER_IDS.'\]\[\]"/', $this->output);
         foreach ($this->available_backlog_trackers as $tracker) {
             $this->assertPattern('/\<option value="'.$tracker->getId().'".*\>'.$tracker->getName().'/', $this->output);
         }
     }
 
-    public function itHasASelectBoxListingPlanningTrackers() {
+    public function itHasASelectBoxListingPlanningTrackers()
+    {
         $this->assertPattern('/\<select name="planning\[planning_tracker_id\]"/', $this->output);
         foreach ($this->available_planning_trackers as $tracker) {
             $this->assertPattern('/\<option value="'.$tracker->getId().'".*\>'.$tracker->getName().'/', $this->output);
@@ -255,8 +251,10 @@ class Planning_ControllerNewTest extends TuleapTestCase {
     }
 }
 
-abstract class Planning_ControllerCreateTest extends Planning_Controller_BaseTest {
-    public function setUp() {
+abstract class Planning_ControllerCreateTest extends Planning_Controller_BaseTest
+{
+    public function setUp()
+    {
         parent::setUp();
 
         $this->planning_factory->setReturnValue('getAvailableBacklogTrackers', array());
@@ -264,8 +262,10 @@ abstract class Planning_ControllerCreateTest extends Planning_Controller_BaseTes
     }
 }
 
-class Planning_ControllerCreateWithInvalidParamsTest extends Planning_ControllerCreateTest {
-    public function setUp() {
+class Planning_ControllerCreateWithInvalidParamsTest extends Planning_ControllerCreateTest
+{
+    public function setUp()
+    {
         parent::setUp();
 
         $this->request->set('planning[name]', '');
@@ -273,16 +273,22 @@ class Planning_ControllerCreateWithInvalidParamsTest extends Planning_Controller
         $this->request->set('planning[planning_tracker_id]', '');
     }
 
-    public function itShowsAnErrorMessageAndRedirectsBackToTheCreationForm() {
+    public function itShowsAnErrorMessageAndRedirectsBackToTheCreationForm()
+    {
+        stub($this->planning_request_validator)->isValid()->returns(false);
+
         $this->userIsAdmin();
         $this->expectFeedback('error', '*');
-        $this->expectRedirectTo('/plugins/agiledashboard/?group_id='.$this->group_id.'&action=new');
+        $this->expectRedirectTo('/plugins/agiledashboard/?group_id=' . $this->group_id . '&action=new');
+
         $this->planning_controller->create();
     }
 }
 
-class Planning_ControllerCreateWithValidParamsTest extends Planning_ControllerCreateTest {
-    public function setUp() {
+class Planning_ControllerCreateWithValidParamsTest extends Planning_ControllerCreateTest
+{
+    public function setUp()
+    {
         parent::setUp();
 
         $this->planning_parameters = array(
@@ -301,154 +307,21 @@ class Planning_ControllerCreateWithValidParamsTest extends Planning_ControllerCr
         $this->request->set('planning', $this->planning_parameters);
     }
 
-    public function itCreatesThePlanningAndRedirectsToTheIndex() {
+    public function itCreatesThePlanningAndRedirectsToTheIndex()
+    {
+        stub($this->planning_request_validator)->isValid()->returns(true);
+
         $this->userIsAdmin();
         $this->planning_factory->expectOnce('createPlanning', array($this->group_id, PlanningParameters::fromArray($this->planning_parameters)));
         $this->expectRedirectTo('/plugins/agiledashboard/?group_id='.$this->group_id.'&action=admin');
         $this->planning_controller->create();
     }
 
-    public function itDoesntCreateAnythingIfTheUserIsNotAdmin() {
+    public function itDoesntCreateAnythingIfTheUserIsNotAdmin()
+    {
+        stub($this->planning_request_validator)->isValid()->returns(true);
+
         $this->assertThatPlanningFactoryActionIsNotCalledWhenUserIsNotAdmin('createPlanning');
         $this->planning_controller->create();
-    }
-}
-
-class Planning_Controller_EditTest extends Planning_Controller_BaseTest {
-
-    public function itRendersTheEditTemplate() {
-        $group_id         = 123;
-        $planning_id      = 456;
-        $planning         = aPlanning()->withGroupId($group_id)
-                                       ->withId($planning_id)->build();
-        $project_manager              = Mockery::spy(ProjectManager::class, ['getProject' => aMockProject()->withId($group_id)->build()]);
-        $request          = aRequest()
-            ->withProjectManager($project_manager)
-            ->with('planning_id', $planning_id)
-            ->with('action', 'edit')
-            ->build();
-        $planning_factory = mock('PlanningFactory');
-        $planning_filter  = mock('Tuleap\AgileDashboard\Planning\ScrumPlanningFilter');
-        stub($planning_factory)->getPlanning($planning_id)->returns($planning);
-        stub($planning_filter)->getPlanningTrackersFiltered()->returns(array());
-        stub($planning_filter)->getBacklogTrackersFiltered()->returns(array());
-
-        stub($planning_factory)->getAvailablePlanningTrackers()->returns([]);
-        stub($planning_factory)->getAvailableBacklogTrackers()->returns([]);
-
-        $kanban_factory = stub('AgileDashboard_KanbanFactory')->getKanbanTrackerIds()->returns(array());
-
-        $controller = partial_mock(
-            'Planning_Controller',
-            array('renderToString'),
-            array(
-                $request,
-                $planning_factory,
-                mock('Planning_MilestoneFactory'),
-                mock('ProjectManager'),
-                mock('AgileDashboard_XMLFullStructureExporter'),
-                '/path/to/theme',
-                '/path/to/plugin',
-                mock('AgileDashboard_KanbanManager'),
-                mock('AgileDashboard_ConfigurationManager'),
-                $kanban_factory,
-                mock('PlanningPermissionsManager'),
-                mock('AgileDashboard_HierarchyChecker'),
-                mock('Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker'),
-                $planning_filter,
-                mock('TrackerFactory'),
-                mock('Tracker_FormElementFactory'),
-                mock(AgileDashboardCrumbBuilder::class),
-                mock(AdministrationCrumbBuilder::class)
-            )
-        );
-
-        $controller->expectOnce('renderToString', array('edit', new IsAExpectation('Planning_FormPresenter')));
-        $controller->edit();
-    }
-}
-
-class Planning_Controller_Update_BaseTest extends Planning_Controller_BaseTest {
-
-    protected $planning_id         = 123;
-    protected $planning_parameters = array(
-        'name'                                           => 'Foo',
-        'backlog_title'                                  => 'Bar',
-        'plan_title'                                     => 'Baz',
-        'planning_tracker_id'                            => 654823,
-        PlanningParameters::BACKLOG_TRACKER_IDS          => array(43875),
-        PlanningPermissionsManager::PERM_PRIORITY_CHANGE => array(
-            '2',
-            '3'
-        )
-    );
-
-    public function setUp() {
-        parent::setUp();
-        $this->request->set('planning_id', $this->planning_id);
-        $this->request->set('planning', $this->planning_parameters);
-
-        // TODO: Inject validator into controller so that we can mock it and test it in isolation.
-        stub($this->planning_factory)->getPlanningTrackerIdsByGroupId($this->group_id)->returns(array());
-        stub($this->planning_factory)->getPlanning()->returns(mock('Planning'));
-    }
-}
-
-class Planning_Controller_ValidUpdateTest extends Planning_Controller_Update_BaseTest {
-
-    public function itUpdatesThePlanningAndRedirectToTheIndex() {
-        $this->userIsAdmin();
-        $this->planning_factory->expectOnce('updatePlanning', array($this->planning_id, $this->group_id, PlanningParameters::fromArray($this->planning_parameters)));
-        $this->expectRedirectTo("/plugins/agiledashboard/?group_id={$this->group_id}&planning_id={$this->planning_id}&action=edit");
-        $this->planning_controller->update();
-    }
-
-    public function itDoesntUpdateAnythingIfTheUserIsNotAdmin() {
-        $this->assertThatPlanningFactoryActionIsNotCalledWhenUserIsNotAdmin('updatePlanning');
-        $this->planning_controller->update();
-    }
-}
-
-class Planning_Controller_InvalidUpdateTest extends Planning_Controller_Update_BaseTest {
-
-    protected $planning_parameters = array();
-
-    public function setUp() {
-        parent::setUp();
-        $this->userIsAdmin();
-    }
-
-    public function itDoesNotUpdateThePlanning() {
-        $this->planning_factory->expectNever('updatePlanning');
-        $this->planning_controller->update();
-    }
-
-    public function itReRendersTheEditForm() {
-        $this->expectRedirectTo("/plugins/agiledashboard/?group_id=$this->group_id&planning_id=$this->planning_id&action=edit");
-        $this->planning_controller->update();
-    }
-
-    public function itDisplaysTheRelevantErrorMessages() {
-        $this->expectFeedback('error', '*');
-        $this->planning_controller->update();
-    }
-}
-
-class Planning_ControllerDeleteTest extends Planning_Controller_BaseTest {
-
-    protected $planning_id = '12';
-
-    public function itDeletesThePlanningAndRedirectsToTheIndex() {
-        $this->userIsAdmin();
-        $this->request->set('planning_id', $this->planning_id);
-
-        stub($this->planning_factory)->deletePlanning($this->planning_id)->once();
-        $this->expectRedirectTo('/plugins/agiledashboard/?group_id='.$this->group_id.'&action=admin');
-        $this->planning_controller->delete();
-    }
-
-    public function itDoesntDeleteAnythingIfTheUserIsNotAdmin() {
-        $this->assertThatPlanningFactoryActionIsNotCalledWhenUserIsNotAdmin('deletePlanning');
-        $this->planning_controller->delete();
     }
 }

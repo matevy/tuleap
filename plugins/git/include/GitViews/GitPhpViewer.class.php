@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - present. All Rights Reserved.
  * Copyright (c) 2010 Christopher Han
  *
  * This file is a part of Tuleap.
@@ -22,14 +22,11 @@
 use Tuleap\Git\GitPHP\Config;
 use Tuleap\Git\GitPHP\Controller;
 use Tuleap\Git\GitPHP\Controller_Message;
-use Tuleap\Git\GitPHP\DiffExe;
 use Tuleap\Git\GitPHP\MessageException;
 use Tuleap\Git\GitPHP\ProjectList;
 
 class GitViews_GitPhpViewer
 {
-    use \Tuleap\Git\Repository\View\FeatureFlag;
-
     public const GLOSSIFIED_GITPHP_ACTIONS = [
         'blob',
         'blobdiff',
@@ -89,10 +86,6 @@ class GitViews_GitPhpViewer
 
     private function canDisplayEnclosingDiv(HTTPRequest $request)
     {
-        if (! $this->isTuleapBeauGitActivated()) {
-            return true;
-        }
-
         return ! in_array($request->get('a'), self::GLOSSIFIED_GITPHP_ACTIONS, true);
     }
 
@@ -103,12 +96,11 @@ class GitViews_GitPhpViewer
 
             ProjectList::Instantiate($this->repository);
 
-            $controller = Controller::GetController((isset($_GET['a']) ? $_GET['a'] : null));
+            $controller = Controller::GetController($_GET['a'] ?? '');
             if ($controller) {
                 $controller->RenderHeaders();
                 $controller->Render();
             }
-
         } catch (Exception $e) {
             $controller = new Controller_Message();
             $controller->SetParam('message', $e->getMessage());
@@ -120,7 +112,6 @@ class GitViews_GitPhpViewer
             }
             $controller->RenderHeaders();
             $controller->Render();
-
         }
     }
 
@@ -131,9 +122,7 @@ class GitViews_GitPhpViewer
         $config->SetValue('title', 'Tuleap');
         $config->SetValue('compressformat', \Tuleap\Git\GitPHP\Archive::COMPRESS_BZ2);
         $config->SetValue('compresslevel', 9);
-        $config->SetValue('geshi', true);
         $config->SetValue('filemimetype', true);
-        $config->SetValue('magicdb', '/usr/share/misc/magic.mgc');
         $config->SetValue('search', true);
         $config->SetValue('smarty_tmp', '/tmp/gitphp-tuleap/smarty');
     }

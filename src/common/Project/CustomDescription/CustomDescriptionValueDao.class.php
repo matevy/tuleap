@@ -19,11 +19,11 @@
  *
  */
 
-require_once('common/dao/include/DataAccessObject.class.php');
+class Project_CustomDescription_CustomDescriptionValueDao extends DataAccessObject
+{
 
-class Project_CustomDescription_CustomDescriptionValueDao extends DataAccessObject {
-
-    public function setDescriptionFieldValue($group_id, $field_id_to_update, $value) {
+    public function setDescriptionFieldValue($group_id, $field_id_to_update, $value)
+    {
         $id       = $this->getDescriptionFieldValueId($group_id, $field_id_to_update);
 
         if ($id) {
@@ -33,7 +33,8 @@ class Project_CustomDescription_CustomDescriptionValueDao extends DataAccessObje
         }
     }
 
-    private function updateDescriptionFieldValue($id, $value) {
+    private function updateDescriptionFieldValue($id, $value)
+    {
         $group_id             = $this->da->escapeInt($group_id);
         $description_field_id = $this->da->escapeInt($description_field_id);
         $value                = $this->da->quoteSmart($value);
@@ -45,7 +46,8 @@ class Project_CustomDescription_CustomDescriptionValueDao extends DataAccessObje
         return $this->update($sql);
     }
 
-    private function addDescriptionFieldValue($group_id, $description_field_id, $value) {
+    private function addDescriptionFieldValue($group_id, $description_field_id, $value)
+    {
         $group_id             = $this->da->escapeInt($group_id);
         $description_field_id = $this->da->escapeInt($description_field_id);
         $value                = $this->da->quoteSmart($value);
@@ -56,7 +58,8 @@ class Project_CustomDescription_CustomDescriptionValueDao extends DataAccessObje
         return $this->update($sql);
     }
 
-    public function getDescriptionFieldValueId($group_id, $description_field_id) {
+    public function getDescriptionFieldValueId($group_id, $description_field_id)
+    {
         $group_id             = $this->da->escapeInt($group_id);
         $description_field_id = $this->da->escapeInt($description_field_id);
 
@@ -75,7 +78,8 @@ class Project_CustomDescription_CustomDescriptionValueDao extends DataAccessObje
         return $row['desc_value_id'];
     }
 
-    public function getDescriptionFieldsValue($group_id) {
+    public function getDescriptionFieldsValue($group_id)
+    {
         $group_id = $this->da->escapeInt($group_id);
 
         $sql = "SELECT *
@@ -85,7 +89,8 @@ class Project_CustomDescription_CustomDescriptionValueDao extends DataAccessObje
         return $this->retrieve($sql);
     }
 
-    public function getAllDescriptionValues($group_desc_id) {
+    public function getAllDescriptionValues($group_desc_id)
+    {
         $group_desc_id = $this->da->escapeInt($group_desc_id);
 
         $sql = "SELECT group_id, value AS result
@@ -95,4 +100,3 @@ class Project_CustomDescription_CustomDescriptionValueDao extends DataAccessObje
         return $this->retrieve($sql);
     }
 }
-?>

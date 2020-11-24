@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,9 +27,11 @@ use HTTPRequest;
 /**
  * Ensure that request has the right properties before going RESTFul
  */
-class GateKeeper {
+class GateKeeper
+{
 
-    public function assertAccess(PFUser $user, HTTPRequest $request) {
+    public function assertAccess(PFUser $user, HTTPRequest $request)
+    {
         if ($this->isTokenBasedAuthentication($user)) {
             if ($request->isSecure() || $this->canReachApiWithoutHTTPS()) {
                 return true;
@@ -43,53 +45,60 @@ class GateKeeper {
         }
     }
 
-    private function isTokenBasedAuthentication(PFUser $user) {
+    private function isTokenBasedAuthentication(PFUser $user)
+    {
         return $user->isAnonymous();
     }
 
-    private function canReachApiWithoutHTTPS() {
+    private function canReachApiWithoutHTTPS()
+    {
         return $this->isInDebugMode() || ForgeConfig::get('sys_rest_api_over_http');
     }
 
-    private function isInDebugMode() {
+    private function isInDebugMode()
+    {
         return isset($GLOBALS['DEBUG_MODE']) && $GLOBALS['DEBUG_MODE'] == 1;
     }
 
     /**
      * @todo We should really check based on a csrf token but no way to get it done yet
-     * @return boolean
+     * @return bool
      */
-    private function isCSRFSafe(HTTPRequest $request) {
+    private function isCSRFSafe(HTTPRequest $request)
+    {
         if ($this->isRequestFromSelf($request)) {
             return true;
         }
         return false;
     }
 
-    private function isRequestFromSelf(HTTPRequest $request) {
+    private function isRequestFromSelf(HTTPRequest $request)
+    {
         return strtolower($this->getQueryHost($request)) === strtolower($this->getRefererHost());
     }
 
-    private function getQueryHost(HTTPRequest $request) {
+    private function getQueryHost(HTTPRequest $request)
+    {
         return $this->getUrlBase($request->getServerUrl());
     }
 
-    private function getRefererHost() {
+    private function getRefererHost()
+    {
         if (isset($_SERVER['HTTP_REFERER'])) {
             return $this->getUrlBase($_SERVER['HTTP_REFERER']);
         }
     }
 
-    private function getUrlBase($url) {
+    private function getUrlBase($url)
+    {
         $parsed_url = parse_url($url);
         $scheme = '';
         if (! ForgeConfig::get('sys_rest_api_over_http')) {
             $scheme = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
         }
-        $host   = isset($parsed_url['host'])   ? idn_to_ascii($parsed_url['host']) : '';
-        $port   = isset($parsed_url['port'])   ? ':' . $parsed_url['port'] : '';
+        $host = isset($parsed_url['host']) ? idn_to_ascii($parsed_url['host'], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46) : '';
+        $port = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
 
         return "$scheme$host$port";
     }
-
 }

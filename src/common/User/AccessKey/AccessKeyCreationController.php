@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,6 +20,7 @@
 
 namespace Tuleap\User\AccessKey;
 
+use DateTimeImmutable;
 use HTTPRequest;
 use Tuleap\Authentication\SplitToken\SplitTokenVerificationStringHasher;
 use Tuleap\Cryptography\KeyFactory;
@@ -49,10 +50,42 @@ class AccessKeyCreationController implements DispatchableWithRequest
             new AccessKeyCreationNotifier($request->getServerUrl(), \Codendi_HTMLPurifier::instance())
         );
 
-        $description = $request->get('access-key-description') ?: '';
+        $description     = $request->get('access-key-description') ?: '';
+        $expiration_date = $this->getExpirationDate($request, $layout);
 
-        $access_key_creator->create($current_user, $description);
+        try {
+            $access_key_creator->create($current_user, $description, $expiration_date);
+            $layout->redirect('/account/#account-access-keys');
+        } catch (AccessKeyAlreadyExpiredException $exception) {
+            $layout->addFeedback(
+                \Feedback::ERROR,
+                _("You cannot create an already expired access key.")
+            );
 
-        $layout->redirect('/account/#account-access-keys');
+            $layout->redirect('/account/');
+        }
+    }
+
+    private function getExpirationDate(HTTPRequest $request, BaseLayout $layout): ?DateTimeImmutable
+    {
+        $expiration_date = null;
+
+        $provided_expiration_date = $request->get('access-key-expiration-date');
+        if ($provided_expiration_date !== '') {
+            $expiration_date = \DateTimeImmutable::createFromFormat('Y-m-d', $provided_expiration_date);
+
+            if (! $expiration_date) {
+                $layout->addFeedback(
+                    \Feedback::ERROR,
+                    _("Expiration date is not well formed.")
+                );
+
+                $layout->redirect('/account/');
+            }
+
+            $expiration_date = $expiration_date->setTime(23, 59, 59);
+        }
+
+        return $expiration_date;
     }
 }

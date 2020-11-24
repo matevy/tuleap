@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Planning_Presenter_MilestoneBurndownSummaryPresenter extends Planning_Presenter_MilestoneSummaryPresenterAbstract{
+class Planning_Presenter_MilestoneBurndownSummaryPresenter extends Planning_Presenter_MilestoneSummaryPresenterAbstract
+{
 
     /** @var Tracker_Chart_Data_Burndown */
     private $burndown_data;
@@ -34,12 +35,13 @@ class Planning_Presenter_MilestoneBurndownSummaryPresenter extends Planning_Pres
         $this->burndown_data = $burndown_data;
     }
 
-    public function has_burndown() {
+    public function has_burndown()
+    {
         return true;
     }
 
-    public function burndown_data() {
+    public function burndown_data()
+    {
         return $this->burndown_data->getJsonRepresentation();
     }
 }
-?>

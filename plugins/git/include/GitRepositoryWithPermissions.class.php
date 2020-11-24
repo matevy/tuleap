@@ -1,5 +1,4 @@
 <?php
-
 /*
  * Copyright Enalean (c) 2011, 2012, 2013. All rights reserved.
  *
@@ -27,7 +26,8 @@
 /**
  * Git Repository with its permissions
  */
-class GitRepositoryWithPermissions {
+class GitRepositoryWithPermissions
+{
     private $repository;
     private $permissions = array(
         Git::PERM_READ          => array(),
@@ -36,14 +36,16 @@ class GitRepositoryWithPermissions {
         Git::SPECIAL_PERM_ADMIN => array()
     );
 
-    public function __construct(GitRepository $repository, array $permissions = array()) {
+    public function __construct(GitRepository $repository, array $permissions = array())
+    {
         $this->repository  = $repository;
         if (count($permissions) > 0) {
             $this->permissions = $permissions;
         }
     }
 
-    public function addUGroupForPermissionType($permission_type, $ugroup_id) {
+    public function addUGroupForPermissionType($permission_type, $ugroup_id)
+    {
         if (!isset($this->permissions[$permission_type])) {
             throw new RuntimeException('Invalid GIT permission type '.$permission_type);
         }
@@ -53,7 +55,8 @@ class GitRepositoryWithPermissions {
     /**
      * @return GitRepository
      */
-    public function getRepository() {
+    public function getRepository()
+    {
         return $this->repository;
     }
 
@@ -63,9 +66,8 @@ class GitRepositoryWithPermissions {
      *
      * @return Array
      */
-    public function getPermissions() {
+    public function getPermissions()
+    {
         return $this->permissions;
     }
 }
-
-?>

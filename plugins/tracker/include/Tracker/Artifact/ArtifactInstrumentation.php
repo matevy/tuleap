@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,17 +19,26 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\Tracker\Artifact;
 
-class ArtifactInstrumentation
-{
-    public const METRIC_NAME  = 'tracker_artifacts_total';
-    public const TYPE_CREATED = 'created';
-    public const TYPE_UPDATED = 'updated';
-    public const TYPE_VIEWED  = 'viewed';
+use Tuleap\Instrument\Prometheus\Prometheus;
 
-    public static function increment($type)
+final class ArtifactInstrumentation
+{
+    private const METRIC_NAME  = 'tracker_artifacts_total';
+
+    public const TYPE_CREATED  = 'created';
+    public const TYPE_UPDATED  = 'updated';
+    public const TYPE_VIEWED   = 'viewed';
+    public const TYPE_DELETED  = 'deleted';
+
+    /**
+     * @psalm-param self::TYPE_CREATED|self::TYPE_UPDATED|self::TYPE_VIEWED|self::TYPE_DELETED $type
+     */
+    public static function increment(string $type) : void
     {
-        \Tuleap\Instrument\Prometheus\Prometheus::instance()->increment(self::METRIC_NAME, 'Total number of artifacts', ['type' => $type]);
+        Prometheus::instance()->increment(self::METRIC_NAME, 'Total number of artifacts', ['type' => $type]);
     }
 }

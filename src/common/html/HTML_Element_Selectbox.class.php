@@ -24,32 +24,36 @@ require_once('HTML_Element_Option.class.php');
 /**
  * Define a html selectbox
  */
-class HTML_Element_Selectbox extends HTML_Element {
+class HTML_Element_Selectbox extends HTML_Element
+{
     protected $options;
     protected $onchange;
-    public function __construct($label, $name, $value, $with_none = false, $onchange = "", $desc="") {
+    public function __construct($label, $name, $value, $with_none = false, $onchange = "", $desc = "")
+    {
         parent::__construct($label, $name, $value, $desc);
         $this->options = array();
-        
+
         $this->onchange = $onchange;
         if ($with_none) {
             $this->addOption(new HTML_Element_Option($GLOBALS['Language']->getText('global', 'none_dashed'), "", ($this->value === "" || $this->value === null)));
         }
     }
-    public function renderValue() {
+    public function renderValue()
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '<select id="'. $this->id .'" name="'.  $hp->purify($this->name, CODENDI_PURIFIER_CONVERT_HTML) .'" ';
         if ($this->onchange) {
             $html .= 'onchange="'. $this->onchange .'" ';
         }
         $html .= '>';
-        foreach($this->options as $o) {
+        foreach ($this->options as $o) {
             $html .= $o->render();
         }
         $html .= '</select>';
         return $html;
     }
-    public function addOption(HTML_Element_Option $option) {
+    public function addOption(HTML_Element_Option $option)
+    {
         $this->options[] = $option;
     }
 
@@ -60,7 +64,8 @@ class HTML_Element_Selectbox extends HTML_Element {
      *
      * @return void
      */
-    public function setId($id) {
+    public function setId($id)
+    {
         $this->id = $id;
     }
 
@@ -72,11 +77,10 @@ class HTML_Element_Selectbox extends HTML_Element {
      *
      * @return void
      */
-    public function addMultipleOptions($options, $selected) {
+    public function addMultipleOptions($options, $selected)
+    {
         foreach ($options as $value => $label) {
             $this->addOption(new HTML_Element_Option($label, $value, $value == $selected));
         }
     }
 }
-
-?>

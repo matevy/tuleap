@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright Enalean (c) 2014. All rights reserved.
  *
@@ -25,7 +24,8 @@
 
 require_once dirname(__FILE__).'/../bootstrap.php';
 
-class ProFTPd_SystemEventManagerTest extends \PHPUnit\Framework\TestCase {
+class ProFTPd_SystemEventManagerTest extends \PHPUnit\Framework\TestCase
+{
 
     public $system_event_manager;
 
@@ -41,10 +41,12 @@ class ProFTPd_SystemEventManagerTest extends \PHPUnit\Framework\TestCase {
             $this->getMockBuilder('Backend')->disableOriginalConstructor()->getMock(),
             $this->getMockBuilder('Tuleap\ProFTPd\Admin\PermissionsManager')->disableOriginalConstructor()->getMock(),
             $this->getMockBuilder('ProjectManager')->disableOriginalConstructor()->getMock(),
-            dirname(__FILE__).'/_fixtures');
+            dirname(__FILE__).'/_fixtures'
+        );
     }
 
-    public function testItCreatesRepositoryCreateEvent() {
+    public function testItCreatesRepositoryCreateEvent()
+    {
         $project_unix_name = 'test';
         $this->system_event_manager
             ->expects($this->once())
@@ -59,7 +61,8 @@ class ProFTPd_SystemEventManagerTest extends \PHPUnit\Framework\TestCase {
         $this->proftpd_system_event_manager->queueDirectoryCreate($project_unix_name);
     }
 
-    public function testItDoesntQueueDirectoryCreationIfAlreadyExists() {
+    public function testItDoesntQueueDirectoryCreationIfAlreadyExists()
+    {
         $this->system_event_manager
             ->expects($this->never())
             ->method('createEvent');
@@ -67,7 +70,8 @@ class ProFTPd_SystemEventManagerTest extends \PHPUnit\Framework\TestCase {
         $this->proftpd_system_event_manager->queueDirectoryCreate('project_name');
     }
 
-    public function testItQueuesUpdateACLEvent() {
+    public function testItQueuesUpdateACLEvent()
+    {
         $project_unix_name = 'test';
         $this->system_event_manager
             ->expects($this->once())

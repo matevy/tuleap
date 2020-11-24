@@ -18,24 +18,28 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201206271626_rename_aggregate_to_computed extends ForgeUpgrade_Bucket {
+class b201206271626_rename_aggregate_to_computed extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Rename aggregate field to computed';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE tracker_field_aggregate RENAME TO tracker_field_computed';
         $result = $this->db->dbh->exec($sql);
         if ($result === false) {
             $error_message = implode(', ', $this->db->dbh->errorInfo());
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($error_message);
         }
-        
+
         $sql = 'UPDATE tracker_field SET formElement_type = "computed" WHERE formElement_type = "aggregate"';
         $result = $this->db->dbh->exec($sql);
         if ($result === false) {
@@ -43,6 +47,4 @@ class b201206271626_rename_aggregate_to_computed extends ForgeUpgrade_Bucket {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($error_message);
         }
     }
-
 }
-?>

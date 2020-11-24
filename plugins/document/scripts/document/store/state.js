@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,6 +20,7 @@
 const state = {
     user_id: null,
     project_id: null,
+    project_ugroups: null,
     is_loading_folder: true,
     is_user_administrator: false,
     folder_content: [],
@@ -33,12 +34,15 @@ const state = {
     user_can_create_wiki: false,
     max_files_dragndrop: 1,
     max_size_upload: 1,
-    is_under_construction: false,
     files_uploads_list: [],
     embedded_are_allowed: false,
+    is_loading_currently_previewed_item: false,
     currently_previewed_item: null,
     is_item_status_metadata_used: false,
-    is_obsolescence_date_metadata_used: false
+    is_obsolescence_date_metadata_used: false,
+    show_post_deletion_notification: false,
+    is_embedded_in_large_view: true,
+    toggle_quick_look: false
 };
 
 export default state;

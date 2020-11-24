@@ -19,16 +19,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201504091644_add_authenticated_user_group extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201504091644_add_authenticated_user_group extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Add authenticated user group";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "INSERT INTO ugroup (ugroup_id, name, description, group_id)
                     VALUES (5, 'ugroup_authenticated_users_name_key', 'ugroup_authenticated_users_desc_key', 100);";
         $res = $this->db->dbh->exec($sql);

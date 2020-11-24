@@ -20,12 +20,13 @@
 
 namespace Tuleap\Tracker\REST;
 
-use \Tracker_FormElement_Field_List_Value;
+use Tracker_FormElement_Field_List_Value;
 use Tuleap\Project\REST\UserRepresentation;
 use Tuleap\REST\JsonCast;
 use Project;
 
-class FieldListBindUserValueRepresentation {
+class FieldListBindUserValueRepresentation
+{
     /**
      * @var int
      */
@@ -41,7 +42,8 @@ class FieldListBindUserValueRepresentation {
      */
     public $user_reference;
 
-    public function build(Tracker_FormElement_Field_List_Value $value, UserRepresentation $user_representation) {
+    public function build(Tracker_FormElement_Field_List_Value $value, UserRepresentation $user_representation)
+    {
         $this->id             = JsonCast::toInt($value->getId());
         $this->label          = $value->getAPIValue();
         $this->user_reference = $user_representation;

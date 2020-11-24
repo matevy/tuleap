@@ -19,12 +19,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/plugin/PluginInfo.class.php');
-require_once('hudsonPluginDescriptor.class.php');
+class hudsonPluginInfo extends PluginInfo
+{
 
-class hudsonPluginInfo extends PluginInfo {
-    
-    public function __construct($plugin) {
+    public function __construct($plugin)
+    {
         parent::__construct($plugin);
         $this->setPluginDescriptor(new hudsonPluginDescriptor());
     }

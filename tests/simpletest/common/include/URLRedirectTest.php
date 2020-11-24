@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2014-2017. All Rights Reserved.
  *
@@ -18,7 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-class URLRedirect_MakeUrlTest extends TuleapTestCase {
+class URLRedirect_MakeUrlTest extends TuleapTestCase
+{
 
     private $url_redirect;
 
@@ -29,8 +29,7 @@ class URLRedirect_MakeUrlTest extends TuleapTestCase {
         ForgeConfig::set('sys_default_domain', 'example.com');
         ForgeConfig::set('sys_https_host', 'example.com');
 
-        $event_manager      = mock('EventManager');
-        $this->url_redirect = new URLRedirect($event_manager);
+        $this->url_redirect = new URLRedirect(\Mockery::spy(\EventManager::class));
     }
 
     public function tearDown()
@@ -61,7 +60,8 @@ class URLRedirect_MakeUrlTest extends TuleapTestCase {
         $this->assertEqual('/account/login.php?return_to=%2Fmy%2F', $login_url_from_register_page);
     }
 
-    public function itNotRedirectToUntrustedWebsite() {
+    public function itNotRedirectToUntrustedWebsite()
+    {
         $this->assertEqual(
             '/my/redirect.php?return_to=/',
             $this->url_redirect->makeReturnToUrl('/my/redirect.php', 'http://evil.example.com/')
@@ -72,7 +72,8 @@ class URLRedirect_MakeUrlTest extends TuleapTestCase {
         );
     }
 
-    public function itNotRedirectToUntrustedCode() {
+    public function itNotRedirectToUntrustedCode()
+    {
         $this->assertEqual(
             '/my/redirect.php?return_to=/',
             $this->url_redirect->makeReturnToUrl('/my/redirect.php', 'javascript:alert(1)')
@@ -82,5 +83,4 @@ class URLRedirect_MakeUrlTest extends TuleapTestCase {
             $this->url_redirect->makeReturnToUrl('/my/redirect.php', 'vbscript:msgbox(1)')
         );
     }
-
 }

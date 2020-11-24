@@ -18,27 +18,32 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tuleap_TourUsage {
+class Tuleap_TourUsage
+{
 
     /**
      * @var Tuleap_TourUsageStatsDao
      */
     private $stats_dao;
 
-    public function __construct(Tuleap_TourUsageStatsDao $stats_dao) {
+    public function __construct(Tuleap_TourUsageStatsDao $stats_dao)
+    {
         $this->stats_dao = $stats_dao;
     }
 
-    public function endTour(PFUser $user, Tuleap_Tour $tour, $current_step) {
+    public function endTour(PFUser $user, Tuleap_Tour $tour, $current_step)
+    {
         $user->setPreference($tour->name, true);
         $this->registerCurrentStep($user, $tour, $current_step, true);
     }
 
-    public function stepShown(PFUser $user, Tuleap_Tour $tour, $current_step) {
+    public function stepShown(PFUser $user, Tuleap_Tour $tour, $current_step)
+    {
         $this->registerCurrentStep($user, $tour, $current_step, false);
     }
 
-    private function registerCurrentStep(PFUser $user, Tuleap_Tour $tour, $current_step, $the_end) {
+    private function registerCurrentStep(PFUser $user, Tuleap_Tour $tour, $current_step, $the_end)
+    {
         $this->stats_dao->save(
             $user->getId(),
             $tour->name,

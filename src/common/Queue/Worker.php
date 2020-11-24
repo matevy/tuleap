@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -28,8 +28,7 @@ use BrokerLogger;
 use Log_ConsoleLogger;
 use ForgeConfig;
 use Exception;
-use EventManager;
-use Tuleap\DB\DBFactory;
+use Tuleap\Queue\TaskWorker\TaskWorkerProcess;
 use Tuleap\System\DaemonLocker;
 use System_Command;
 
@@ -86,15 +85,12 @@ class Worker
     {
         $this->logger->info('Wait for messages');
 
-        $event_manager = EventManager::instance();
-        $db_connection = DBFactory::getMainTuleapDBConnection();
+        $task_worker = new TaskWorkerProcess();
 
-        $queue = QueueFactory::getPersistentQueue($this->logger, self::EVENT_QUEUE_NAME, QueueFactory::REDIS);
-        $queue->listen($this->id, '*', function ($event) use ($event_manager, $db_connection) {
+        $queue = (new QueueFactory($this->logger))->getPersistentQueue(self::EVENT_QUEUE_NAME, QueueFactory::REDIS);
+        $queue->listen($this->id, '*', function ($event) use ($task_worker) {
             $this->logger->info('Got message: ' .$event);
-            $db_connection->reconnectAfterALongRunningProcess();
-            $worker_queue_event = new WorkerEvent($this->logger, json_decode($event, true));
-            $event_manager->processEvent($worker_queue_event);
+            $task_worker->run($event);
         });
         $this->logger->info('All message processed, exiting');
         $this->locker->cleanExit();
@@ -105,9 +101,7 @@ class Worker
         if (isset($options['id'])) {
             if (ctype_digit((string) $options['id']) && $options['id'] >= 0) {
                 $this->id = (int) $options['id'];
-                if ($this->id > 0) {
-                    $this->pid_file = '/var/run/tuleap/worker_' . $this->id . '.pid';
-                }
+                $this->pid_file = self::getPidFilePath($this->id);
             } else {
                 $this->cliError("Invalid 'id' it should be a positive integer\n");
             }
@@ -205,33 +199,30 @@ EOT;
         exit(255);
     }
 
-    public static function run(Logger $logger, $id = 0)
+    public static function getWorkerPid(int $id): int
     {
-        try {
-            $pid_file = self::DEFAULT_PID_FILE_PATH;
-            if ($id !== 0) {
-                $id = abs((int) $id);
-                $pid_file = '/var/run/tuleap/worker_'.$id.'.pid';
-            }
-
-            $logger->debug("Check worker $id with $pid_file");
-            if (! self::isWorkerRunning($pid_file)) {
-                $logger->debug("Starting worker $id");
-                $command = new System_Command();
-                $command->exec('/usr/share/tuleap/src/utils/worker.php --id='.escapeshellarg($id).' >/dev/null 2>/dev/null &');
-            }
-        } catch (\System_Command_CommandException $exception) {
-            $logger->error("Unable to launch backend worker: ".$exception->getMessage());
+        $pid_file = self::getPidFilePath($id);
+        if (file_exists($pid_file)) {
+            return (int) trim(file_get_contents($pid_file));
         }
+        return -1;
     }
 
-    private static function isWorkerRunning($pid_file)
+    public static function isWorkerRunning(int $id): bool
     {
-        if (file_exists($pid_file)) {
-            $pid = (int) trim(file_get_contents($pid_file));
+        $pid = self::getWorkerPid($id);
+        if ($pid > 0) {
             $ret = posix_kill($pid, SIG_DFL);
             return $ret === true;
         }
         return false;
+    }
+
+    private static function getPidFilePath(int $id): string
+    {
+        if ($id === 0) {
+            return self::DEFAULT_PID_FILE_PATH;
+        }
+        return sprintf('/var/run/tuleap/worker_%d.pid', $id);
     }
 }

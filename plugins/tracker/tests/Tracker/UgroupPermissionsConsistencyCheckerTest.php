@@ -24,7 +24,8 @@
 
 require_once __DIR__ .'/../bootstrap.php';
 
-class Tracker_UgroupPermissionsConsistencyCheckerTest extends TuleapTestCase {
+class Tracker_UgroupPermissionsConsistencyCheckerTest extends TuleapTestCase
+{
 
     protected $template_tracker;
     protected $target_project;
@@ -44,7 +45,8 @@ class Tracker_UgroupPermissionsConsistencyCheckerTest extends TuleapTestCase {
      */
     protected $checker;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->template_ugroup_dev     = mockery_stub(\ProjectUGroup::class)->getName()->returns('dev');
@@ -67,9 +69,11 @@ class Tracker_UgroupPermissionsConsistencyCheckerTest extends TuleapTestCase {
     }
 }
 
-class Tracker_UgroupPermissionsConsistencyChecker_SameProjectTest extends Tracker_UgroupPermissionsConsistencyCheckerTest {
+class Tracker_UgroupPermissionsConsistencyChecker_SameProjectTest extends Tracker_UgroupPermissionsConsistencyCheckerTest
+{
 
-    public function itReturnsNoMessage() {
+    public function itReturnsNoMessage()
+    {
         expect($this->messenger)->allIsWell()->once();
         expect($this->messenger)->ugroupsMissing()->never();
         expect($this->messenger)->ugroupsAreTheSame()->never();
@@ -78,9 +82,11 @@ class Tracker_UgroupPermissionsConsistencyChecker_SameProjectTest extends Tracke
     }
 }
 
-class Tracker_UgroupPermissionsConsistencyChecker_NoPermOnStaticGroupsTest extends Tracker_UgroupPermissionsConsistencyCheckerTest {
+class Tracker_UgroupPermissionsConsistencyChecker_NoPermOnStaticGroupsTest extends Tracker_UgroupPermissionsConsistencyCheckerTest
+{
 
-    public function itReturnsNoMessage() {
+    public function itReturnsNoMessage()
+    {
         stub($this->permissions_retriever)->getListOfInvolvedStaticUgroups($this->template_tracker)->returns([]);
 
         expect($this->messenger)->allIsWell()->once();
@@ -89,18 +95,20 @@ class Tracker_UgroupPermissionsConsistencyChecker_NoPermOnStaticGroupsTest exten
 
         $this->checker->checkConsistency($this->template_tracker, $this->target_project);
     }
-
 }
 
-class Tracker_UgroupPermissionsConsistencyChecker_PermOnOneStaticGroupTest extends Tracker_UgroupPermissionsConsistencyCheckerTest {
+class Tracker_UgroupPermissionsConsistencyChecker_PermOnOneStaticGroupTest extends Tracker_UgroupPermissionsConsistencyCheckerTest
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         stub($this->permissions_retriever)->getListOfInvolvedStaticUgroups($this->template_tracker)->returns(array($this->template_ugroup_dev));
     }
 
-    public function itReturnsAWarningWhenTheTargetProjectDoesNotHaveTheStaticGroup() {
+    public function itReturnsAWarningWhenTheTargetProjectDoesNotHaveTheStaticGroup()
+    {
         stub($this->ugroup_manager)->getStaticUGroups($this->target_project)->returns(array($this->target_ugroup_support));
 
         expect($this->messenger)->allIsWell()->never();
@@ -110,7 +118,8 @@ class Tracker_UgroupPermissionsConsistencyChecker_PermOnOneStaticGroupTest exten
         $message = $this->checker->checkConsistency($this->template_tracker, $this->target_project);
     }
 
-    public function itReturnsAnInfoWhenTheTargetProjectHasTheStaticGroup() {
+    public function itReturnsAnInfoWhenTheTargetProjectHasTheStaticGroup()
+    {
         stub($this->ugroup_manager)->getStaticUGroups($this->target_project)->returns(array($this->target_ugroup_dev));
 
         expect($this->messenger)->allIsWell()->never();
@@ -121,15 +130,18 @@ class Tracker_UgroupPermissionsConsistencyChecker_PermOnOneStaticGroupTest exten
     }
 }
 
-class Tracker_UgroupPermissionsConsistencyChecker_PermOnManyStaticGroupTest extends Tracker_UgroupPermissionsConsistencyCheckerTest {
+class Tracker_UgroupPermissionsConsistencyChecker_PermOnManyStaticGroupTest extends Tracker_UgroupPermissionsConsistencyCheckerTest
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         stub($this->permissions_retriever)->getListOfInvolvedStaticUgroups($this->template_tracker)->returns(array($this->template_ugroup_dev, $this->template_ugroup_support));
     }
 
-    public function itReturnsAWarningWhenTheTargetProjectDoesNotHaveTheStaticGroups() {
+    public function itReturnsAWarningWhenTheTargetProjectDoesNotHaveTheStaticGroups()
+    {
         stub($this->ugroup_manager)->getStaticUGroups($this->target_project)->returns(array());
 
         expect($this->messenger)->allIsWell()->never();
@@ -139,7 +151,8 @@ class Tracker_UgroupPermissionsConsistencyChecker_PermOnManyStaticGroupTest exte
         $message = $this->checker->checkConsistency($this->template_tracker, $this->target_project);
     }
 
-    public function itReturnsAWarningWhenTheTargetProjectDoesNotHaveOneOfTheStaticGroups() {
+    public function itReturnsAWarningWhenTheTargetProjectDoesNotHaveOneOfTheStaticGroups()
+    {
         stub($this->ugroup_manager)->getStaticUGroups($this->target_project)->returns(array($this->target_ugroup_dev));
 
         expect($this->messenger)->allIsWell()->never();
@@ -149,7 +162,8 @@ class Tracker_UgroupPermissionsConsistencyChecker_PermOnManyStaticGroupTest exte
         $message = $this->checker->checkConsistency($this->template_tracker, $this->target_project);
     }
 
-    public function itReturnsAnInfoWhenTheTargetProjectHasTheStaticGroups() {
+    public function itReturnsAnInfoWhenTheTargetProjectHasTheStaticGroups()
+    {
         stub($this->ugroup_manager)->getStaticUGroups($this->target_project)->returns(array($this->target_ugroup_dev, $this->target_ugroup_support));
 
         expect($this->messenger)->allIsWell()->never();

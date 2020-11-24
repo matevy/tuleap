@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+  - Copyright (c) Enalean, 2018-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -19,12 +19,13 @@
 
 <template>
     <div class="document-app">
-        <permission-error v-if="has_folder_permission_error"/>
+        <permission-error v-if="has_folder_permission_error "/>
         <document-breadcrumb v-if="! has_folder_permission_error"/>
-        <loading-error v-if="has_folder_loading_error || has_document_loading_error"/>
-        <item-permission-error v-if="has_document_permission_error"/>
+        <loading-error v-if="has_folder_loading_error || has_document_loading_error || has_document_lock_error"/>
+        <item-permission-error v-if="has_document_permission_error" v-bind:csrf_token="csrf_token" v-bind:csrf_token_name="csrf_token_name"/>
         <router-view/>
         <switch-to-old-u-i v-if="user_id !== 0"/>
+        <post-item-deletion-notification/>
     </div>
 </template>
 <script>
@@ -34,6 +35,7 @@ import PermissionError from "./Folder/Error/PermissionError.vue";
 import ItemPermissionError from "./Folder/Error/ItemPermissionError.vue";
 import LoadingError from "./Folder/Error/LoadingError.vue";
 import SwitchToOldUI from "./Folder/SwitchToOldUI.vue";
+import PostItemDeletionNotification from "./Folder/ModalDeleteItem/PostItemDeletionNotification.vue";
 
 export default {
     name: "App",
@@ -42,7 +44,8 @@ export default {
         PermissionError,
         LoadingError,
         SwitchToOldUI,
-        ItemPermissionError
+        ItemPermissionError,
+        PostItemDeletionNotification
     },
     props: {
         user_id: Number,
@@ -52,17 +55,20 @@ export default {
         date_time_format: String,
         max_files_dragndrop: Number,
         max_size_upload: Number,
-        is_under_construction: Boolean,
         embedded_are_allowed: Boolean,
+        is_deletion_allowed: Boolean,
         is_item_status_metadata_used: Boolean,
-        is_obsolescence_date_metadata_used: Boolean
+        is_obsolescence_date_metadata_used: Boolean,
+        csrf_token: String,
+        csrf_token_name: String
     },
     computed: {
         ...mapState("error", [
             "has_folder_permission_error",
             "has_folder_loading_error",
             "has_document_permission_error",
-            "has_document_loading_error"
+            "has_document_loading_error",
+            "has_document_lock_error"
         ]),
         ...mapGetters(["is_uploading"])
     },
@@ -88,8 +94,8 @@ export default {
             this.user_can_create_wiki,
             this.max_files_dragndrop,
             this.max_size_upload,
-            this.is_under_construction,
             this.embedded_are_allowed,
+            this.is_deletion_allowed,
             this.is_item_status_metadata_used,
             this.is_obsolescence_date_metadata_used
         ]);

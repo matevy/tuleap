@@ -22,13 +22,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class SystemEventPurger {
+class SystemEventPurger
+{
 
-    public function __construct(SystemEventDao $dao) {
+    public function __construct(SystemEventDao $dao)
+    {
         $this->dao = $dao;
     }
 
-    public function purgeSystemEventsDataOlderThanOneYear() {
+    public function purgeSystemEventsDataOlderThanOneYear()
+    {
         return $this->dao->purgeDataOlderThanOneYear();
     }
 }

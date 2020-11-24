@@ -21,30 +21,34 @@
 require_once('bootstrap.php');
 Mock::generate('Tracker');
 
-class Tracker_TooltipFactoryTest extends TuleapTestCase {
+class Tracker_TooltipFactoryTest extends TuleapTestCase
+{
 
     /** @var XML_Security */
     protected $xml_security;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->xml_security = new XML_Security();
         $this->xml_security->enableExternalLoadOfEntities();
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         $this->xml_security->disableExternalLoadOfEntities();
 
         parent::tearDown();
     }
 
     //testing Tooltip import
-    public function testImport() {
+    public function testImport()
+    {
         $xml = simplexml_load_file(dirname(__FILE__) . '/_fixtures/ImportTrackerSemanticTooltipTest.xml');
-        
+
         $tracker = new MockTracker();
-        
+
         $mapping = array(
                     'F8'  => 108,
                     'F9'  => 109,
@@ -52,7 +56,7 @@ class Tracker_TooltipFactoryTest extends TuleapTestCase {
                     'F14' => 114
                     );
         $tooltip = Tracker_TooltipFactory::instance()->getInstanceFromXML($xml, $mapping, $tracker);
-        
+
         $this->assertEqual(count($tooltip->getFields()), 3);
         $fields = $tooltip->getFields();
         $this->assertTrue(in_array(108, $fields));
@@ -60,7 +64,4 @@ class Tracker_TooltipFactoryTest extends TuleapTestCase {
         $this->assertTrue(in_array(116, $fields));
         $this->assertFalse(in_array(114, $fields));
     }
-    
 }
-
-?>

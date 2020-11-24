@@ -12,8 +12,6 @@ CREATE TABLE IF NOT EXISTS plugin_pullrequest_review (
     sha1_dest CHAR(40) NOT NULL,
     status VARCHAR(1) NOT NULL DEFAULT 'R',
     merge_status INT(2) NOT NULL,
-    last_build_status VARCHAR(1) NOT NULL DEFAULT 'U',
-    last_build_date INT(11),
     INDEX idx_pr_user_id(user_id),
     INDEX idx_pr_repository_id(repository_id)
 );
@@ -69,6 +67,21 @@ CREATE TABLE IF NOT EXISTS plugin_pullrequest_merge_setting (
 CREATE TABLE IF NOT EXISTS plugin_pullrequest_template_merge_setting (
     project_id INT(11) NOT NULL PRIMARY KEY,
     merge_commit_allowed BOOLEAN NOT NULL
+);
+
+CREATE TABLE plugin_pullrequest_reviewer_change (
+    change_id INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    pull_request_id INT(11) NOT NULL,
+    user_id INT(11) UNSIGNED NOT NULL,
+    change_date INT(11) NOT NULL,
+    INDEX idx_pr_pull_request_id(pull_request_id)
+);
+
+CREATE TABLE plugin_pullrequest_reviewer_change_user (
+   change_id INT(11) UNSIGNED NOT NULL,
+   user_id INT(11) UNSIGNED NOT NULL,
+   is_removal BOOLEAN NOT NULL,
+   PRIMARY KEY (change_id, user_id)
 );
 
 INSERT INTO reference (id, keyword, description, link, scope, service_short_name, nature)

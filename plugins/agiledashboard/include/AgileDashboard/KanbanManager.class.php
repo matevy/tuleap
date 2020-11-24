@@ -18,7 +18,8 @@
  * along with Tuleap; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-class AgileDashboard_KanbanManager {
+class AgileDashboard_KanbanManager
+{
 
     /**
      * @var TrackerFactory
@@ -45,11 +46,13 @@ class AgileDashboard_KanbanManager {
         $this->hierarchy_checker = $hierarchy_checker;
     }
 
-    public function doesKanbanExistForTracker(Tracker $tracker) {
+    public function doesKanbanExistForTracker(Tracker $tracker)
+    {
         return $this->dao->getKanbanByTrackerId($tracker->getId())->count() > 0;
     }
 
-    public function createKanban($kanban_name, $tracker_id) {
+    public function createKanban($kanban_name, $tracker_id)
+    {
         return $this->dao->create($kanban_name, $tracker_id);
     }
 
@@ -84,7 +87,8 @@ class AgileDashboard_KanbanManager {
     /**
      * @return Tracker[]
      */
-    public function getTrackersUsedAsKanban(Project $project) {
+    public function getTrackersUsedAsKanban(Project $project)
+    {
         $trackers = array();
         foreach ($this->dao->getKanbansForProject($project->getId()) as $row) {
             $tracker = $this->tracker_factory->getTrackerById($row['tracker_id']);

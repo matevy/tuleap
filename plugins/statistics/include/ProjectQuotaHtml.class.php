@@ -28,7 +28,8 @@ require_once('ProjectQuotaManager.class.php');
 /**
  * Management of custom quota by project
  */
-class ProjectQuotaHtml {
+class ProjectQuotaHtml
+{
 
     /**
      * ProjectManager instance
@@ -62,9 +63,10 @@ class ProjectQuotaHtml {
      *
      * @param HTTPRequest $request HTTP request
      *
-     * @return Integer
+     * @return int
      */
-    private function validateOffset(HTTPRequest $request) {
+    private function validateOffset(HTTPRequest $request)
+    {
         $valid = new Valid('offset');
         $valid->setErrorMessage('Invalid offset submitted. Force it to 0 (zero).');
         $valid->addRule(new Rule_Int());
@@ -84,7 +86,8 @@ class ProjectQuotaHtml {
      *
      * @return String
      */
-    private function validateProjectFilter(HTTPRequest $request) {
+    private function validateProjectFilter(HTTPRequest $request)
+    {
         $validFilter = new Valid_String('project_filter');
         $filter      = null;
         if ($request->valid($validFilter)) {
@@ -100,7 +103,8 @@ class ProjectQuotaHtml {
      *
      * @return Array
      */
-    private function validateOrderByFilter(HTTPRequest $request) {
+    private function validateOrderByFilter(HTTPRequest $request)
+    {
         $validSort = new Valid_String('sort');
         $sortBy    = null;
         $validRequest = array();
@@ -186,7 +190,8 @@ class ProjectQuotaHtml {
      *
      * @return array of int (groups ids)
      */
-    private function getListOfProjectsIds($filter) {
+    private function getListOfProjectsIds($filter)
+    {
         $list = array();
         if (! $filter) {
             return $list;
@@ -212,12 +217,13 @@ class ProjectQuotaHtml {
      *
      * @return Void
      */
-    public function handleRequest(HTTPRequest $request) {
+    public function handleRequest(HTTPRequest $request)
+    {
         $validAction = new Valid_WhiteList('action', array('add', 'delete'));
         if ($request->valid($validAction)) {
             $action = $request->get('action');
             switch ($action) {
-                case 'add' :
+                case 'add':
                     $this->csrf->check();
                     $validProject = new Valid_String('project');
                     $validProject->required();
@@ -246,7 +252,7 @@ class ProjectQuotaHtml {
                     $this->projectQuotaManager->addQuota($project, $requester, $quota, $motivation);
                     $GLOBALS['Response']->redirect('/plugins/statistics/project_quota.php');
                     break;
-                case 'delete' :
+                case 'delete':
                     $this->csrf->check();
                     $project_id       = $request->get('delete_quota');
                     $valid_project_id = new Valid_UInt();
@@ -258,7 +264,7 @@ class ProjectQuotaHtml {
                     }
                     $GLOBALS['Response']->redirect('/plugins/statistics/project_quota.php');
                     break;
-                default :
+                default:
                     break;
             }
         } else {

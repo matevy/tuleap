@@ -22,8 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once('pre.php');
-require_once('www/file/file_utils.php');
+require_once __DIR__ . '/../../include/pre.php';
+require_once __DIR__ . '/../file_utils.php';
 
 use Tuleap\FRS\ToolbarPresenter;
 use Tuleap\FRS\FRSPermissionFactory;
@@ -32,10 +32,10 @@ use Tuleap\FRS\FRSPermissionDao;
 
 $vGroupId = new Valid_GroupId();
 $vGroupId->required();
-if($request->valid($vGroupId)) {
+if ($request->valid($vGroupId)) {
     $group_id = $request->get('group_id');
 } else {
-   exit_no_group();
+    exit_no_group();
 }
 
 $permission_manager = FRSPermissionManager::build();
@@ -58,22 +58,21 @@ if ($request->valid($vProcId)) {
 
 
 $renderer  = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') .'/src/templates/frs');
-$title     = $Language->getText('file_admin_index', 'file_manager_admin');
-$presenter = new ToolbarPresenter($project, $title);
+$presenter = new ToolbarPresenter($project);
 $presenter->setProcessorsIsActive();
 $presenter->displaySectionNavigation();
 
-$project->getService(Service::FILE)->displayFRSHeader($project, $title);
+$project->getService(Service::FILE)->displayFRSHeader($project, _('Files Administration'));
 $renderer->renderToPage('toolbar-presenter', $presenter);
 
 $sql = "SELECT name,rank FROM frs_processor WHERE group_id=".db_ei($group_id)." AND processor_id=".db_ei($proc_id);
 $result = db_query($sql);
-$name = db_result($result,0,'name');
-$rank = db_result($result,0,'rank');
+$name = db_result($result, 0, 'name');
+$rank = db_result($result, 0, 'rank');
 
 if (db_numrows($result) < 1) {
     // invalid  processor  id
-    $feedback .= " ".$Language->getText('file_admin_manageprocessors','invalid_procid');
+    $feedback .= " ".$Language->getText('file_admin_manageprocessors', 'invalid_procid');
     file_utils_footer(array());
     exit;
 }
@@ -81,19 +80,19 @@ if (db_numrows($result) < 1) {
 ?>
 
 <P>
-<H2><?php echo $Language->getText('file_admin_manageprocessors','update_proc'); ?></H2>
+<H2><?php echo $Language->getText('file_admin_manageprocessors', 'update_proc'); ?></H2>
 
 <?php
 $hp = Codendi_HTMLPurifier::instance();
 $return = '<TABLE><FORM ACTION="/file/admin/manageprocessors.php?group_id='.$group_id.'" METHOD="POST">
     <INPUT TYPE="HIDDEN" NAME="group_id" VALUE="'.$group_id.'">
     <INPUT TYPE="HIDDEN" NAME="proc_id" VALUE="'.$proc_id.'">
-    <TR><TD>'.$Language->getText('file_file_utils','proc_name').': <font color=red>*</font> </TD>
+    <TR><TD>'.$Language->getText('file_file_utils', 'proc_name').': <font color=red>*</font> </TD>
     <TD><INPUT TYPE="TEXT" NAME="processname" VALUE="'.$hp->purify($name).'" SIZE=30></TD></TR>
-    <TR><TD>'.$Language->getText('file_file_utils','proc_rank').': <font color=red>*</font> </TD>
+    <TR><TD>'.$Language->getText('file_file_utils', 'proc_rank').': <font color=red>*</font> </TD>
     <TD><INPUT TYPE="TEXT" NAME="processrank" VALUE="'.$rank.'" SIZE=10></TD></TR></TABLE>
-    <p><INPUT TYPE="SUBMIT" NAME="update" VALUE="'.$Language->getText('file_file_utils','update_proc').'"></p></FORM>
-    <p><font color="red">*</font>: '.$Language->getText('file_file_utils','required_fields').'</p>';
+    <p><INPUT TYPE="SUBMIT" NAME="update" VALUE="'.$Language->getText('file_file_utils', 'update_proc').'"></p></FORM>
+    <p><font color="red">*</font>: '.$Language->getText('file_file_utils', 'required_fields').'</p>';
 
 echo $return;
 

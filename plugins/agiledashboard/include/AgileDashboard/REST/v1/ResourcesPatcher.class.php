@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,16 +20,14 @@
 
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use EventManager;
-use Tuleap\REST\v1\OrderRepresentationBase;
 use Luracast\Restler\RestException;
-use Tracker_ArtifactFactory;
-use Tracker_Artifact_PriorityManager;
 use PFUser;
-use Tuleap\Tracker\Artifact\Event\ArtifactsReordered;
+use Tracker_Artifact_PriorityManager;
+use Tracker_ArtifactFactory;
 use Tuleap\Tracker\REST\v1\ArtifactLinkUpdater;
 
-class ResourcesPatcher {
+class ResourcesPatcher
+{
 
     /**
      * @var Tracker_Artifact_PriorityManager
@@ -45,64 +43,47 @@ class ResourcesPatcher {
      * @var ArtifactLinkUpdater
      */
     private $artifactlink_updater;
-    /**
-     * @var EventManager
-     */
-    private $event_manager;
 
     public function __construct(
         ArtifactLinkUpdater $artifactlink_updater,
         Tracker_ArtifactFactory $artifact_factory,
-        Tracker_Artifact_PriorityManager $priority_manager,
-        EventManager $event_manager
+        Tracker_Artifact_PriorityManager $priority_manager
     ) {
         $this->artifactlink_updater = $artifactlink_updater;
         $this->artifact_factory     = $artifact_factory;
         $this->priority_manager     = $priority_manager;
-        $this->event_manager        = $event_manager;
         $this->priority_manager->enableExceptionsOnError();
     }
 
-    public function startTransaction() {
+    public function startTransaction()
+    {
         $this->priority_manager->startTransaction();
     }
 
-    public function commit() {
+    public function commit()
+    {
         $this->priority_manager->commit();
     }
 
-    public function rollback() {
+    public function rollback()
+    {
         $this->priority_manager->rollback();
-    }
-
-    public function updateArtifactPriorities(OrderRepresentationBase $order, $context, $project_id) {
-        if ($order->direction === OrderRepresentationBase::BEFORE) {
-            $this->priority_manager->moveListOfArtifactsBefore($order->ids, $order->compared_to, $context, $project_id);
-        } else {
-            $this->priority_manager->moveListOfArtifactsAfter($order->ids, $order->compared_to, $context, $project_id);
-        }
-
-        $this->event_manager->processEvent(new ArtifactsReordered($order->ids));
     }
 
     public function removeArtifactFromSource(PFUser $user, array $add)
     {
         $to_add = array();
         foreach ($add as $move) {
-            if (! isset($move['id']) || ! is_int($move['id'])) {
-                throw new RestException(400, "invalid value specified for `id`. Expected: integer");
-            }
-            if (isset($move['remove_from']) && ! is_int($move['remove_from'])) {
-                throw new RestException(400, "invalid value specified for `remove_from`. Expected: integer");
-            }
-            $to_add[] = $move['id'];
-            if (isset($move['remove_from'])) {
-                $from_artifact = $this->getArtifact($move['remove_from']);
+            $added_id = $move->id;
+            $to_add[] = $added_id;
+            $remove_from = $move->remove_from;
+            if ($remove_from !== null) {
+                $from_artifact = $this->getArtifact($remove_from);
                 $this->artifactlink_updater->updateArtifactLinks(
                     $user,
                     $from_artifact,
                     array(),
-                    array($move['id']),
+                    array($added_id),
                     \Tracker_FormElement_Field_ArtifactLink::NO_NATURE
                 );
             }
@@ -111,7 +92,8 @@ class ResourcesPatcher {
         return $to_add;
     }
 
-    private function getArtifact($id) {
+    private function getArtifact($id)
+    {
         $artifact = $this->artifact_factory->getArtifactById($id);
 
         if (! $artifact) {

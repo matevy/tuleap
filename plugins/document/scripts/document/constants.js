@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -38,12 +38,15 @@ export const RETRY_DELAYS = [0, 1000, 3000, 5000];
 
 export const FILE_UPLOAD_UNKNOWN_ERROR = "unknown error";
 
-export const ITEM_STATUS_NONE = "none";
-
-export const OBSOLESCENCE_DATE_NONE = "0";
-
 export const APPROVAL_NOT_YET = "Not yet";
 export const APPROVAL_APPROVED = "Approved";
 export const APPROVAL_REJECTED = "Rejected";
 export const APPROVAL_DECLINED = "Declined";
 export const APPROVAL_COMMENTED = "Commented";
+
+export const USER_CANNOT_PROPAGATE_DELETION_TO_WIKI_SERVICE = null;
+
+export const METADATA_OBSOLESCENCE_DATE_SHORT_NAME = "obsolescence_date";
+
+export const CLIPBOARD_OPERATION_CUT = "cut";
+export const CLIPBOARD_OPERATION_COPY = "copy";

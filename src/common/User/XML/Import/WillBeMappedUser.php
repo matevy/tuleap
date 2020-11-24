@@ -23,7 +23,8 @@ use PFUser;
 use UserManager;
 use Logger;
 
-class WillBeMappedUser implements ReadyToBeImportedUser {
+class WillBeMappedUser implements ReadyToBeImportedUser
+{
 
     /** @var string */
     private $username;
@@ -39,19 +40,23 @@ class WillBeMappedUser implements ReadyToBeImportedUser {
         $this->mapped_user = $mapped_user;
     }
 
-    public function getUserName() {
+    public function getUserName()
+    {
         return $this->username;
     }
 
-    public function getMappedUser() {
+    public function getMappedUser()
+    {
         return $this->mapped_user;
     }
 
-    public function getRealUser(UserManager $user_manager) {
+    public function getRealUser(UserManager $user_manager)
+    {
         return $this->mapped_user;
     }
 
-    public function process(UserManager $user_manager, Logger $logger) {
+    public function process(UserManager $user_manager, Logger $logger)
+    {
         $logger->info($this->username .' will be mapped to '. $this->mapped_user->getUserName());
     }
 }

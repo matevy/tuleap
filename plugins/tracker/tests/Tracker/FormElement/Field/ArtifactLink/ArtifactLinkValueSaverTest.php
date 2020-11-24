@@ -26,7 +26,8 @@ use Tracker_ArtifactFactory;
 
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class ArtifactLinkValueSaverTest extends TuleapTestCase {
+class ArtifactLinkValueSaverTest extends TuleapTestCase
+{
 
     /** @var Tracker_FormElement_Field_ArtifactLink */
     private $field;
@@ -60,7 +61,8 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
     /** @var Tracker_FormElement_Field_Value_ArtifactLinkDao */
     private $dao;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->field             = mock('Tracker_FormElement_Field_ArtifactLink');
@@ -122,19 +124,21 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
             $this->artifact_factory,
             $this->dao,
             $this->reference_manager,
-            mock('EventManager'),
+            \Mockery::spy(\EventManager::class),
             $this->artifact_link_usage_dao
         );
 
         Tracker_ArtifactFactory::setInstance($this->artifact_factory);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         Tracker_ArtifactFactory::clearInstance();
         parent::tearDown();
     }
 
-    public function itRemovesACrossReference() {
+    public function itRemovesACrossReference()
+    {
         $artifact = stub('Tracker_Artifact')->getTracker()->returns($this->tracker);
 
         $value = array(
@@ -156,12 +160,12 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
             $this->user,
             $artifact,
             $this->changeset_value_id,
-            $value,
-            $this->previous_changesetvalue
+            $value
         );
     }
 
-    public function itAddsACrossReference() {
+    public function itAddsACrossReference()
+    {
         $artifact = stub('Tracker_Artifact')->getTracker()->returns($this->tracker);
 
         $value = array(
@@ -182,12 +186,12 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
             $this->user,
             $artifact,
             $this->changeset_value_id,
-            $value,
-            $this->previous_changesetvalue
+            $value
         );
     }
 
-    public function itCallsOnlyOneTimeCreateInDBIfAllArtifactsAreInTheSameTracker() {
+    public function itCallsOnlyOneTimeCreateInDBIfAllArtifactsAreInTheSameTracker()
+    {
         $artifact = mock('Tracker_Artifact');
 
         $value = array(
@@ -207,12 +211,12 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
             $this->user,
             $artifact,
             $this->changeset_value_id,
-            $value,
-            $this->previous_changesetvalue
+            $value
         );
     }
 
-    public function itUsesArtifactLinkNature() {
+    public function itUsesArtifactLinkNature()
+    {
         $artifact = mock('Tracker_Artifact');
 
         $value = array(
@@ -232,12 +236,12 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
             $this->user,
             $artifact,
             $this->changeset_value_id,
-            $value,
-            $this->previous_changesetvalue
+            $value
         );
     }
 
-    public function itUsesDefaultArtifactLinkNature() {
+    public function itUsesDefaultArtifactLinkNature()
+    {
         $artifact = mock('Tracker_Artifact');
 
         $value = array(
@@ -250,19 +254,19 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
 
         stub($this->field)->getTracker()->returns($this->tracker_child);
 
-        expect($this->dao)->create('*', NULL, '*', '*', '*')->once();
+        expect($this->dao)->create('*', null, '*', '*', '*')->once();
 
         $this->saver->saveValue(
             $this->field,
             $this->user,
             $artifact,
             $this->changeset_value_id,
-            $value,
-            $this->previous_changesetvalue
+            $value
         );
     }
 
-    public function itUsesIsChildArtifactLinkTypeIfAHierarchyIsDefined() {
+    public function itUsesIsChildArtifactLinkTypeIfAHierarchyIsDefined()
+    {
         $artifact = mock('Tracker_Artifact');
 
         $value = array(
@@ -283,12 +287,12 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
             $this->user,
             $artifact,
             $this->changeset_value_id,
-            $value,
-            $this->previous_changesetvalue
+            $value
         );
     }
 
-    public function itDoesNotUseIsChildArtifactLinkTypeIfTargetTrackerIsNotChildInHierarchy() {
+    public function itDoesNotUseIsChildArtifactLinkTypeIfTargetTrackerIsNotChildInHierarchy()
+    {
         $artifact = mock('Tracker_Artifact');
 
         $value = array(
@@ -300,15 +304,14 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
 
         stub($this->field)->getTracker()->returns($this->tracker);
 
-        expect($this->dao)->create('*', NULL, '*', '*', '*')->once();
+        expect($this->dao)->create('*', null, '*', '*', '*')->once();
 
         $this->saver->saveValue(
             $this->field,
             $this->user,
             $artifact,
             $this->changeset_value_id,
-            $value,
-            $this->previous_changesetvalue
+            $value
         );
     }
 
@@ -327,15 +330,14 @@ class ArtifactLinkValueSaverTest extends TuleapTestCase {
         stub($this->field)->getTracker()->returns($this->tracker);
         stub($this->artifact_link_usage_dao)->isTypeDisabledInProject(101, '_is_child')->returns(true);
 
-        expect($this->dao)->create('*', NULL, '*', '*', '*')->once();
+        expect($this->dao)->create('*', null, '*', '*', '*')->once();
 
         $this->saver->saveValue(
             $this->field,
             $this->user,
             $artifact,
             $this->changeset_value_id,
-            $value,
-            $this->previous_changesetvalue
+            $value
         );
     }
 }

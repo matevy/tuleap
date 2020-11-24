@@ -18,10 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  *
- * 
+ *
  */
 
-class BackendSystem extends Backend {
+class BackendSystem extends Backend
+{
 
 
     protected $needRefreshUserCache = false;
@@ -33,12 +34,13 @@ class BackendSystem extends Backend {
      * This is required so that nscd (name service caching daemon) knows that it needs
      * to update its user data.
      *
-     * NOTE: Don't need to update cache on deleted user since shadow information are not cached, 
+     * NOTE: Don't need to update cache on deleted user since shadow information are not cached,
      * so even if the cache is not refreshed, a deleted user won't be able to login
-     * 
+     *
      * @return true on success, false otherwise
      */
-    public function refreshUserCache() {
+    public function refreshUserCache()
+    {
         if (! ForgeConfig::areUnixUsersAvailableOnSystem()) {
             $this->log('No homedir_prefix, refreshUserCache skipped', Backend::LOG_INFO);
             return true;
@@ -46,22 +48,24 @@ class BackendSystem extends Backend {
 
         return (system("/usr/sbin/nscd --invalidate=passwd") !== false);
     }
-    
+
     /**
      * set if we need to refresh the user cache
-     * 
+     *
      * @return null
      */
-    public function setNeedRefreshUserCache() {
+    public function setNeedRefreshUserCache()
+    {
         $this->needRefreshUserCache = true;
     }
-    
+
     /**
      * Return if we need to refresh the user cache
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function getNeedRefreshUserCache() {
+    public function getNeedRefreshUserCache()
+    {
         return $this->needRefreshUserCache;
     }
 
@@ -71,10 +75,11 @@ class BackendSystem extends Backend {
      * to update its group data.
      *
      * NOTE: Currently, we don't update group cache on deleted group, new user and deleted user
-     * 
+     *
      * @return true on success, false otherwise
      */
-    public function refreshGroupCache() {
+    public function refreshGroupCache()
+    {
         if (! ForgeConfig::areUnixGroupsAvailableOnSystem()) {
             $this->log('No grpdir_prefix, refreshGroupCache skipped', Backend::LOG_INFO);
             return true;
@@ -82,46 +87,50 @@ class BackendSystem extends Backend {
 
         return (system("/usr/sbin/nscd --invalidate=group") !== false);
     }
-    
+
     /**
      * set if we need to refresh the group cache
      *
      * @return null
     */
-    public function setNeedRefreshGroupCache() {
+    public function setNeedRefreshGroupCache()
+    {
         $this->needRefreshGroupCache = true;
     }
 
     /**
      * Return if we need to refresh the groupo cache
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function getNeedRefreshGroupCache() {
+    public function getNeedRefreshGroupCache()
+    {
         return $this->needRefreshGroupCache;
     }
 
     /**
      * Hard reset of system related stuff (nscd for uid/gid and fs cache).
-     * 
+     *
      * Should be used before modification of system (new user, project, etc)
-     * 
+     *
      * @return null
      */
-    public function flushNscdAndFsCache() {
+    public function flushNscdAndFsCache()
+    {
         $this->refreshGroupCache();
         $this->refreshUserCache();
         clearstatcache();
     }
-    
+
     /**
      * Ensure user home directory is created and has the right uid
-     * 
+     *
      * @param PFUser $user the user we want to sanitize his home
-     * 
+     *
      * @return null
      */
-    public function userHomeSanityCheck(PFUser $user) {
+    public function userHomeSanityCheck(PFUser $user)
+    {
         if (! ForgeConfig::areUnixUsersAvailableOnSystem()) {
             $this->log('No homedir_prefix, userHomeSanityCheck skipped', Backend::LOG_INFO);
             return true;
@@ -134,18 +143,19 @@ class BackendSystem extends Backend {
             $this->setUserHomeOwnership($user);
         }
     }
-    
+
     /**
      * Create user home directory
-     * 
+     *
      * Also copy files from the skel directory to the new home directory.
      * If the directory already exists, nothing is done.
-     * 
+     *
      * @param PFUser $user the user we want to create a home
-     * 
+     *
      * @return true if directory is successfully created, false otherwise
      */
-    public function createUserHome(PFUser $user) {
+    public function createUserHome(PFUser $user)
+    {
         if (! ForgeConfig::areUnixUsersAvailableOnSystem()) {
             $this->log('No homedir_prefix, createUserHome skipped', Backend::LOG_INFO);
             return true;
@@ -170,26 +180,28 @@ class BackendSystem extends Backend {
         }
         return true;
     }
-    
+
     /**
      * Verify if given name exists as user home directory
-     * 
+     *
      * @param String $username the user name to test if home exists
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function userHomeExists($username) {
+    public function userHomeExists($username)
+    {
         return (is_dir(ForgeConfig::get('homedir_prefix')."/".$username));
     }
-    
+
     /**
      * Verify is user home directory has the right uid
-     * 
+     *
      * @param PFUser $user the user needed to verify his home directory
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    private function isUserHomeOwnedByUser(PFUser $user) {
+    private function isUserHomeOwnedByUser(PFUser $user)
+    {
         $stat = stat($user->getUnixHomeDir());
         if ($stat) {
             if ($stat['uid'] != $user->getRealUnixUID()) {
@@ -198,15 +210,16 @@ class BackendSystem extends Backend {
         }
         return true;
     }
-    
+
     /**
      * Set user's uid/gid on its home directory (recursively)
-     * 
+     *
      * @param PFUser $user user to set uid/gid
-     * 
+     *
      * @return null
      */
-    private function setUserHomeOwnership(PFUser $user) {
+    private function setUserHomeOwnership(PFUser $user)
+    {
         $no_filter_file_extension = array();
         $this->recurseChownChgrp(
             $user->getUnixHomeDir(),
@@ -215,16 +228,17 @@ class BackendSystem extends Backend {
             $no_filter_file_extension
         );
     }
-    
+
     /**
      * Create project home directory
      * If the directory already exists, nothing is done.
-     * 
+     *
      * @param int $group_id a group id
-     * 
+     *
      * @return true if directory is successfully created, false otherwise
      */
-    public function createProjectHome($group_id) {
+    public function createProjectHome($group_id)
+    {
         $project = $this->getProjectManager()->getProject($group_id);
         if (! $project || $project->isDeleted()) {
             return false;
@@ -253,7 +267,7 @@ class BackendSystem extends Backend {
             // in there are owned by the project group and not
             // the user own group
             // Moreover, we need to chmod after mkdir because the umask may not allow the precised mode
-            if (mkdir($projdir,0775)) {
+            if (mkdir($projdir, 0775)) {
                 $this->chown($projdir, "dummy");
                 $this->chgrp($projdir, $unix_group_name);
                 $this->chmod($projdir, 02775);
@@ -280,7 +294,7 @@ class BackendSystem extends Backend {
         if ($projdir != $lcProjectDir) {
             $lcprojlnk = $lcProjectDir;
             if (!is_link($lcprojlnk)) {
-                if (!symlink($projdir,$lcprojlnk)) {
+                if (!symlink($projdir, $lcprojlnk)) {
                     $this->log("Can't create project link: $lcprojlnk", Backend::LOG_ERROR);
                 }
             }
@@ -288,7 +302,7 @@ class BackendSystem extends Backend {
 
         if (!is_dir($ht_dir)) {
             // Project web site directory
-            if (mkdir($ht_dir,0775)) {
+            if (mkdir($ht_dir, 0775)) {
                 $this->chown($ht_dir, "dummy");
                 $this->chgrp($ht_dir, $unix_group_name);
                 chmod($ht_dir, 02775);
@@ -300,16 +314,15 @@ class BackendSystem extends Backend {
                 if (is_file($custom_homepage)) {
                     $dest_homepage = $ht_dir . '/index.php';
                     copy($custom_homepage, $dest_homepage);
-                } else if (is_file($default_homepage)) {
+                } elseif (is_file($default_homepage)) {
                     $dest_homepage = $ht_dir . '/index.html';
                     copy($default_homepage, $dest_homepage);
                 }
                 if (is_file($dest_homepage)) {
                     $this->chown($dest_homepage, "dummy");
                     $this->chgrp($dest_homepage, $unix_group_name);
-                    chmod($dest_homepage,0664);
+                    chmod($dest_homepage, 0664);
                 }
-
             } else {
                 $this->log("Can't create project web root: $ht_dir", Backend::LOG_ERROR);
                 return false;
@@ -317,7 +330,7 @@ class BackendSystem extends Backend {
         }
 
         if (!is_dir($private_dir)) {
-            if (mkdir($private_dir,0770)) {
+            if (mkdir($private_dir, 0770)) {
                 $this->chmod($private_dir, 02770);
                 $this->chown($private_dir, "dummy");
                 $this->chgrp($private_dir, $unix_group_name);
@@ -336,7 +349,7 @@ class BackendSystem extends Backend {
             $stat = stat("$private_dir");
             if ($stat) {
                 $dummy_user = posix_getpwnam('dummy');
-                if ( ($stat['uid'] != $dummy_user['uid'])
+                if (($stat['uid'] != $dummy_user['uid'])
                     || ($stat['gid'] != $project->getUnixGID()) ) {
                     $this->log("Restoring privacy on private dir: $private_dir", Backend::LOG_WARNING);
                     $this->chown($private_dir, "dummy");
@@ -400,57 +413,61 @@ class BackendSystem extends Backend {
 
     /**
      * Archive the user home directory
-     * 
+     *
      * @param int $user_id a user id needed to find the home dir to archive
-     * 
+     *
      * @return true if directory is successfully archived, false otherwise
      */
-    public function archiveUserHome($user_id) {
+    public function archiveUserHome($user_id)
+    {
         if (! ForgeConfig::areUnixUsersAvailableOnSystem()) {
             $this->log('No homedir_prefix, archiveUserHome skipped', Backend::LOG_INFO);
             return true;
         }
 
         $user=$this->getUserManager()->getUserById($user_id);
-        if (!$user) return false;
+        if (!$user) {
+            return false;
+        }
         $homedir=ForgeConfig::get('homedir_prefix')."/".$user->getUserName();
         $backupfile=ForgeConfig::get('sys_project_backup_path')."/".$user->getUserName().".tgz";
 
         if (is_dir($homedir)) {
             system("cd ".ForgeConfig::get('homedir_prefix')."; tar cfz $backupfile ".$user->getUserName());
-            chmod($backupfile,0600);
+            chmod($backupfile, 0600);
             $this->recurseDeleteInDir($homedir);
             rmdir($homedir);
         }
         return true;
-
     }
 
 
     /**
      * Archive the project directory
-     * 
-     * @param int $group_id the group id used to find the home directory to archive 
-     * 
+     *
+     * @param int $group_id the group id used to find the home directory to archive
+     *
      * @return true if directory is successfully archived, false otherwise
      */
-    public function archiveProjectHome($group_id) {
+    public function archiveProjectHome($group_id)
+    {
         if (! ForgeConfig::areUnixGroupsAvailableOnSystem()) {
             $this->log('No grpdir_prefix, archiveProjectHome skipped', Backend::LOG_INFO);
             return true;
         }
 
         $project=$this->getProjectManager()->getProject($group_id);
-        if (!$project) return false;
+        if (!$project) {
+            return false;
+        }
         $mydir=ForgeConfig::get('grpdir_prefix')."/".$project->getUnixName(false);
         $backupfile=ForgeConfig::get('sys_project_backup_path')."/".$project->getUnixName(false).".tgz";
 
         if (is_dir($mydir)) {
             system("cd ".ForgeConfig::get('grpdir_prefix')."; tar cfz $backupfile ".$project->getUnixName(false));
-            chmod($backupfile,0600);
+            chmod($backupfile, 0600);
             $this->recurseDeleteInDir($mydir);
             rmdir($mydir);
-
 
             // Remove lower-case symlink if it exists
             if ($project->getUnixName(true) != $project->getUnixName(false)) {
@@ -467,11 +484,12 @@ class BackendSystem extends Backend {
      * It would delete FTP directory content of the project
      * and create a Tarball in temp dir.
      *
-     * @param Integer $group_id the group id
+     * @param int $group_id the group id
      *
-     * @return boolean
+     * @return bool
      */
-    function archiveProjectFtp($group_id) {
+    function archiveProjectFtp($group_id)
+    {
         if (! is_dir(ForgeConfig::get('ftp_anon_dir_prefix'))) {
             $this->log('No ftp_anon_dir_prefix, archiveProjectFtp skipped', Backend::LOG_INFO);
             return true;
@@ -493,7 +511,7 @@ class BackendSystem extends Backend {
 
     /**
      * Remove deleted releases and released files
-     * 
+     *
      * @return bool the status
      */
     public function cleanupFRS()
@@ -521,74 +539,80 @@ class BackendSystem extends Backend {
 
     /**
      * dumps SSH authorized_keys into all users homedirs
-     * 
-     * @return boolean always true
+     *
+     * @return bool always true
      */
-    public function dumpSSHKeys() {
+    public function dumpSSHKeys()
+    {
         if (ForgeConfig::areUnixUsersAvailableOnSystem()) {
             $sshkey_dumper = new User_SSHKeyDumper($this);
             $user_manager  = $this->getUserManager();
-            foreach($user_manager->getUsersWithSshKey() as $user) {
+            foreach ($user_manager->getUsersWithSshKey() as $user) {
                 $sshkey_dumper->writeSSHKeys($user);
             }
         }
         EventManager::instance()->processEvent(Event::DUMP_SSH_KEYS, array());
         return true;
     }
-    
+
     /**
      * dumps SSH authorized_keys for a user in its homedir
-     * 
+     *
      * @param PFUser $user the user we want to dump his key
      * @param string $original_keys the original keys of the user
-     * 
-     * @return boolean if the ssh key was written
+     *
+     * @return bool if the ssh key was written
      */
-    public function dumpSSHKeysForUser(PFUser $user, $original_keys) {
+    public function dumpSSHKeysForUser(PFUser $user, $original_keys)
+    {
         $sshkey_dumper = new User_SSHKeyDumper($this);
         return $sshkey_dumper->writeSSHKeys($user);
     }
 
     /**
      * Check if repository of given project exists
-     * 
+     *
      * @param Project $project project to test if home exist
-     * 
+     *
      * @return true is repository already exists, false otherwise
      */
-    public function projectHomeExists($project) {
+    public function projectHomeExists($project)
+    {
         $unix_group_name = $project->getUnixName(false); // May contain upper-case letters
         $home_dir=ForgeConfig::get('grpdir_prefix')."/".$unix_group_name;
         if (is_dir($home_dir)) {
             return true;
-        } else return false; 
+        } else {
+            return false;
+        }
     }
 
     /**
      * Check if given name is not used by a repository or a file or a link under project directories
-     * 
+     *
      * Return false if repository or file  or link already exists:
      **  with the same name under the grp_dir
-     **  with its lower case name under the grp_dir 
+     **  with its lower case name under the grp_dir
      **  under FRS
-     **  under ftp anon 
+     **  under ftp anon
      * true otherwise
-     * 
+     *
      * @param String $name the project name to test
-     * 
-     * @return boolean 
+     *
+     * @return bool
      */
-    public function isProjectNameAvailable($name) {
+    public function isProjectNameAvailable($name)
+    {
         if (! ForgeConfig::areUnixGroupsAvailableOnSystem()) {
             return true;
         }
         $dir = ForgeConfig::get('grpdir_prefix')."/".$name;
         $frs = $GLOBALS['ftp_frs_dir_prefix']."/".$name;
         $ftp = ForgeConfig::get('ftp_anon_dir_prefix')."/".$name;
-        
+
         if ($this->fileExists($dir)) {
             return false;
-        } else if ($name != strtolower ($name)) {
+        } elseif ($name != strtolower($name)) {
             $link = ForgeConfig::get('grpdir_prefix')."/".strtolower($name);
             if ($this->fileExists($link)) {
                 return false;
@@ -596,37 +620,39 @@ class BackendSystem extends Backend {
         }
         if ($this->fileExists($frs)) {
             return false;
-        } else if ($this->fileExists($ftp)) {
+        } elseif ($this->fileExists($ftp)) {
             return false;
         }
         return true;
     }
-    
+
     /**
      * Check if given name is not used by a repository or a file or a link under user directory
-     * 
+     *
      * @param String $name a user name to test availability
-     * 
-     * @return boolean false if repository or file  or link already exists, true otherwise
+     *
+     * @return bool false if repository or file  or link already exists, true otherwise
      */
-    function isUserNameAvailable($name) {
+    function isUserNameAvailable($name)
+    {
         if (! ForgeConfig::areUnixUsersAvailableOnSystem()) {
             return true;
         }
         $path = ForgeConfig::get('homedir_prefix')."/".$name;
         return (!$this->fileExists($path));
     }
-    
-    
+
+
     /**
      * Rename project home directory (following project unix_name change)
-     * 
+     *
      * @param Project $project a project to rename
      * @param String  $newName the new name of the project
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function renameProjectHomeDirectory($project, $newName) {
+    public function renameProjectHomeDirectory($project, $newName)
+    {
         if (! ForgeConfig::areUnixGroupsAvailableOnSystem()) {
             $this->log('No grpdir_prefix, renameProjectHomeDirectory skipped', Backend::LOG_INFO);
             return true;
@@ -642,7 +668,7 @@ class BackendSystem extends Backend {
                     unlink(ForgeConfig::get('grpdir_prefix').'/'.$project->getUnixName(true));
                 }
                 if (strtolower($newName) != $newName) {
-                    return symlink(ForgeConfig::get('grpdir_prefix').'/'.$newName,ForgeConfig::get('grpdir_prefix').'/'.strtolower($newName));
+                    return symlink(ForgeConfig::get('grpdir_prefix').'/'.$newName, ForgeConfig::get('grpdir_prefix').'/'.strtolower($newName));
                 } else {
                     return true;
                 }
@@ -650,53 +676,56 @@ class BackendSystem extends Backend {
             return $renamed;
         }
     }
-    
+
     /**
      * Rename Directory where the released files are located (following project unix_name change)
-     * 
+     *
      * @param Project $project a project
      * @param String  $newName a new name
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function renameFileReleasedDirectory($project, $newName) {
+    public function renameFileReleasedDirectory($project, $newName)
+    {
         if (is_dir($GLOBALS['ftp_frs_dir_prefix'].'/'.$project->getUnixName(false))) {
             return rename($GLOBALS['ftp_frs_dir_prefix'].'/'.$project->getUnixName(false), $GLOBALS['ftp_frs_dir_prefix'].'/'.$newName);
         } else {
             return true;
         }
     }
-    
+
     /**
      * Rename anon ftp project homedir (following project unix_name change)
-     * 
+     *
      * @param Project $project a project
      * @param String  $newName a new name
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function renameAnonFtpDirectory($project, $newName) {
+    public function renameAnonFtpDirectory($project, $newName)
+    {
         if (! is_dir(ForgeConfig::get('ftp_anon_dir_prefix'))) {
             $this->log('No ftp_anon_dir_prefix, renameAnonFtpDirectory skipped', Backend::LOG_INFO);
             return true;
         }
 
-        if (is_dir(ForgeConfig::get('ftp_anon_dir_prefix').'/'.$project->getUnixName(false))){
+        if (is_dir(ForgeConfig::get('ftp_anon_dir_prefix').'/'.$project->getUnixName(false))) {
             return rename(ForgeConfig::get('ftp_anon_dir_prefix').'/'.$project->getUnixName(false), ForgeConfig::get('ftp_anon_dir_prefix').'/'.$newName);
         } else {
             return true;
         }
     }
-    
+
     /**
-     * Rename User home directory 
-     * 
+     * Rename User home directory
+     *
      * @param PFUser    $user    a user
      * @param String  $newName the new name of user home directory
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function renameUserHomeDirectory($user, $newName) {
+    public function renameUserHomeDirectory($user, $newName)
+    {
         if (! ForgeConfig::areUnixUsersAvailableOnSystem()) {
             $this->log('No homedir_prefix, renameUserHomeDirectory skipped', Backend::LOG_INFO);
             return true;
@@ -704,24 +733,24 @@ class BackendSystem extends Backend {
 
         return rename(ForgeConfig::get('homedir_prefix').'/'.$user->getUserName(), ForgeConfig::get('homedir_prefix').'/'.$newName);
     }
-    
+
     /**
      * Wrapper for getFRSFileFactory
-     * 
+     *
      * @return FRSFileFactory
      */
-    protected function getFRSFileFactory() {
+    protected function getFRSFileFactory()
+    {
         return new FRSFileFactory();
     }
 
     /**
      * Wrapper for getWikiAttachment
-     * 
+     *
      * @return WikiAttachment
      */
-    protected function getWikiAttachment() {
+    protected function getWikiAttachment()
+    {
         return new WikiAttachment();
     }
-    
-
 }

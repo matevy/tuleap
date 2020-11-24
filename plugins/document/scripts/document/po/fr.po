@@ -3,31 +3,48 @@ msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
-"Last-Translator: Nicolas Terray <nicolas.terray@enalean.com>\n"
+"Last-Translator: Joris MASSON <joris.masson@enalean.com>\n"
 "Language-Team: \n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.2.3\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-msgid ""
-"<a v-bind:href=\"table_owner.user_url\">{{ table_owner.display_name }}</a> "
-"has created an <a v-bind:href=\"approval_table_url\">approval table</a>  for "
-"the last version of {{ filename }}."
-msgstr ""
-"<a v-bind:href=\"table_owner.user_url\">{{ table_owner.display_name }}</a> a "
-"créé une <a v-bind:href=\"approval_table_url\">table d'approbation</a> pour "
-"la dernière version de {{ filename }}."
+msgid "\"%{ title }\" is being copied…"
+msgstr "\"%{ title }\" est en train d'être copié…"
+
+msgid "\"%{ title }\" is being moved…"
+msgstr "\"%{ title }\" est en train d'être déplacé…"
 
 msgid ""
-"<b>The new interface is under construction</b>, all features are not "
-"available for now. Here's the list of what is yet to be implemented:"
+"%{ filename } has been locked for edition by <a href=\"%{ lock_owner_url }\">"
+"%{ lock_owner_name }</a>.\n"
+"                You can't upload a new version of this file until the lock "
+"is released."
 msgstr ""
-"<b>La nouvelle interface est en cours de construction</b>, toutes les "
-"fonctionnalités ne sont pas disponibles pour le moment. Voici ce qu'il reste "
-"à implémenter:"
+"L'édition de %{ filename } a été bloquée par <a href=\"%{ lock_owner_url }\">"
+"%{ lock_owner_name }</a>. Vous ne pouvez pas téléverser de nouvelle version "
+"tant que le verrou n'a pas été levé."
+
+msgid "12 months"
+msgstr "12 mois"
+
+msgid "3 months"
+msgstr "3 mois"
+
+msgid "6 months"
+msgstr "6 mois"
+
+msgid ""
+"<a href=\"%{ table_owner_url }\">%{ table_owner_name }</a> has created an <a "
+"href=\"%{ approval_table_url }\">approval table</a> for the last version of "
+"%{ filename }."
+msgstr ""
+"<a href=\"%{ table_owner_url }\">%{ table_owner_name }</a> a créé une <a "
+"href=\"%{ approval_table_url }\">table d'approbation</a> pour la dernière "
+"version de %{ filename }."
 
 msgid "A document already exists with the same title."
 msgstr "Un document existe déjà avec le même titre."
@@ -49,14 +66,39 @@ msgstr "Administration"
 msgid "Advanced"
 msgstr "Avancé"
 
+msgid ""
+"All the properties values that you define here will be proposed as default "
+"values for the\n"
+"            items that will be created within this folder."
+msgstr ""
+"Toutes les valeurs des propriétés que vous définirez ici seront proposées "
+"comme valeurs par défaut pour les éléments qui seront créés dans ce dossier."
+
+msgid ""
+"All the properties values that you define here will be proposed as default "
+"values for the items that will be created within this folder."
+msgstr ""
+"Toutes les valeurs des propriétés que vous définirez ici seront proposées "
+"comme valeurs par défaut pour les éléments qui seront créés dans ce dossier."
+
 msgid "An error has occurred, please contact your administrator"
 msgstr "Une erreur est servenue, merci de contacter votre administrateur"
 
-msgid "Approval status"
-msgstr "Status de la table d'approbation"
+msgid "Apply new values on this folder and all its content"
+msgstr "Appliquer les nouvelles valeurs sur ce dossier et son contenu"
+
+msgid "Apply new values on this folder and its subfolders only"
+msgstr "Appliquer les nouvelles valeurs sur ce dossier et ses sous-dossiers"
+
+msgid "Apply same permissions to all sub-items of this folder"
+msgstr ""
+"Appliquer les mêmes permissions pour tous les sous-éléments de ce dossier"
 
 msgid "Approval table"
-msgstr "Tables d'approbation"
+msgstr "Table d'approbation"
+
+msgid "Approval table status"
+msgstr "Status de la table d'approbation"
 
 msgid "Approval tables"
 msgstr "Tables d'approbation"
@@ -82,8 +124,11 @@ msgstr "Commenté"
 msgid "Content"
 msgstr "Contenu"
 
+msgid "Copy"
+msgstr "Copier"
+
 msgid "Copy the previous approval table."
-msgstr "Copier la table d'approbation précedente."
+msgstr "Copier la table d'approbation précédente."
 
 msgid "Corrupted"
 msgstr "Corrompu"
@@ -97,17 +142,23 @@ msgstr "Créer le document"
 msgid "Create folder"
 msgstr "Créer le dossier"
 
-msgid "Creation date"
-msgstr "Date de création"
+msgid "Create new version"
+msgstr "Créer une nouvelle version"
 
-msgid "Current approval table state: {{ table_state }}."
-msgstr "État de la table d’approbation actuel: {{ table_state }}"
+msgid "Creation"
+msgstr "Création"
 
-msgid "Cut / Copy / Paste documents"
-msgstr "Couper / Copier / Coller des documents"
+msgid "Current approval table state: %{ table_state }."
+msgstr "État de la table d’approbation actuel: %{ table_state }."
+
+msgid "Cut"
+msgstr "Couper"
 
 msgid "Declined"
 msgstr "Décliné"
+
+msgid "Default properties"
+msgstr "Propriétés par défaut"
 
 msgid "Delete"
 msgstr "Supprimer"
@@ -134,7 +185,7 @@ msgid ""
 "Drag and drop is not supported under IE11. Please use a more recent browser."
 msgstr ""
 "Le glisser déposer n'est pas supporté pour IE11. Merci d'utiliser un "
-"navigateur plus récent. "
+"navigateur plus récent."
 
 msgid "Drop one file to upload it to %(folder)s (max size is %(size)s)."
 msgid_plural ""
@@ -156,6 +207,12 @@ msgstr "Déposer pour téléverser dans le dossier"
 msgid "Dropping files in %s is forbidden."
 msgstr "Déposer des fichiers dans %s n'est pas permis."
 
+msgid "Edit \"%s\" permissions"
+msgstr "Editer les permissions de \"%s\""
+
+msgid "Edit \"%s\" properties"
+msgstr "Editer les propriétés de \"%s\""
+
 msgid "Embedded"
 msgstr "Embarqué"
 
@@ -168,8 +225,11 @@ msgstr "Fichier"
 msgid "File size"
 msgstr "Taille du fichier"
 
+msgid "Fixed date"
+msgstr "Date fixe"
+
 msgid "Go to Document manager home page"
-msgstr "Aller à la page d'accueil du service gestion de documents"
+msgstr "Aller à la page d'accueil du service Gestion de documents"
 
 msgid "Go to my home page"
 msgstr "Aller à la page d'accueil"
@@ -180,18 +240,19 @@ msgstr "Aller au dossier parent"
 msgid "Go to the wiki page"
 msgstr "Aller à la page wiki"
 
-msgid "Have a button to delete a document"
-msgstr "Avoir un bouton permettant de supprimer un document"
-
-msgid "Have the state of approval tables displayed in the tree view"
-msgstr ""
-"Visualiser le status des tables d'approbations dans la vue arborescente"
-
 msgid "History"
 msgstr "Historique"
 
+msgid "Hold on a second!"
+msgstr "Attendez une seconde !"
+
 msgid "Id"
 msgstr "Id"
+
+msgid "It seems action you try to performed can't be done."
+msgstr ""
+"Il semble que l'action que vous souhaitez effectuer ne peut pas être "
+"réalisée."
 
 msgid "It seems the content of this element can't be loaded."
 msgstr "Le contenu de cet élément n'a pas pu être chargé."
@@ -200,22 +261,31 @@ msgid "It's time to add new documents!"
 msgstr "Il est temps d'ajouter des documents !"
 
 msgid "Keep lock?"
-msgstr "Garder le verrou?"
+msgstr "Garder le verrou ?"
 
 msgid "Keep reviewers, comments and commitments."
 msgstr "Garder les approbateurs, commentaires et les engagements."
 
-msgid "Last update date"
-msgstr "Mis à jour"
+msgid "Large view"
+msgstr "Vue large"
 
-msgid "Last updated date"
-msgstr "Date de dernière mise à jour"
+msgid "Last update date"
+msgstr "Mise à jour"
 
 msgid "Link"
 msgstr "Lien"
 
+msgid "Lock"
+msgstr "Verrouiller"
+
 msgid "Lock new version"
 msgstr "Verrouiller la nouvelle version"
+
+msgid "Mail content is required"
+msgstr "Le contenu du mail est requis"
+
+msgid "Manager"
+msgstr "Gestionnaire"
 
 msgid "My content..."
 msgstr "Mon contenu..."
@@ -238,11 +308,17 @@ msgstr "Nom"
 msgid "Name, description..."
 msgstr "Nom, description..."
 
+msgid "Narrow view"
+msgstr "Vue étroite"
+
 msgid "New document"
 msgstr "Nouveau document"
 
 msgid "New folder"
 msgstr "Nouveau dossier"
+
+msgid "New version for \"%s\""
+msgstr "Nouvelle version de \"%s\""
 
 msgid "None"
 msgstr "Aucun"
@@ -253,17 +329,17 @@ msgstr "Pas encore"
 msgid "Notifications"
 msgstr "Notifications"
 
-msgid "OK, got it"
-msgstr "OK, compris"
-
 msgid "Obsolescence date"
 msgstr "Date d'obsolescence"
+
+msgid "Obsolete today"
+msgstr "Obsolète aujourd'hui"
 
 msgid ""
 "Only the table structure will be kept. Reviewer comments and commitments "
 "will be discarded."
 msgstr ""
-"Seul la structure de la table sera gardé. Les approbateurs et les "
+"Seule la structure de la table sera gardée. Les approbateurs et les "
 "engagements seront annulés."
 
 msgid "Oops, there's an issue."
@@ -280,6 +356,9 @@ msgstr[1] "Oups… Impossible de téléverser des fichiers"
 msgid "Open link"
 msgstr "Ouvrir le lien"
 
+msgid "Other information"
+msgstr "Autres informations"
+
 msgid "Owner"
 msgstr "Propriétaire"
 
@@ -287,20 +366,50 @@ msgid "Parent folders are not displayed to not clutter the interface"
 msgstr ""
 "Les dossiers parents ne sont pas affichés pour ne pas encombrer l'interface"
 
+msgid "Paste"
+msgstr "Coller"
+
+msgid "Permanent"
+msgstr "Permanent"
+
 msgid "Permissions"
 msgstr "Permissions"
 
 msgid "Please describe the changes of the new version here"
-msgstr "Merci de décrire ici le changement de version."
+msgstr "Merci de décrire ici le changement de version"
+
+msgid "Please enter a reason for why you need to access this document."
+msgstr ""
+"Merci d'indiquer la raison pour laquelle vous avez besoin d'accéder à ce "
+"document."
+
+msgid ""
+"Please note that if you check this option, the referenced wiki page will no "
+"longer exist in the wiki service too."
+msgstr ""
+"Veuillez noter que si vous activez cette option, la page wiki référencée "
+"n'existera également plus dans le service wiki."
 
 msgid "Please start again."
 msgstr "Merci de bien vouloir recommencer."
 
+msgid "Please write something meaningful for the admin."
+msgstr "Veuillez soumettre un message pertinent afin d'aider l'administrateur."
+
 msgid "Project documentation"
 msgstr "Documentation du projet"
 
+msgid "Propagate deletion to wiki service"
+msgstr "Propager la suppression au service wiki"
+
 msgid "Quick look"
 msgstr "Aperçu"
+
+msgid "Reader"
+msgstr "Lecteur"
+
+msgid "Recursion option"
+msgstr "Options de récursion"
 
 msgid "Rejected"
 msgstr "Rejeté"
@@ -308,25 +417,8 @@ msgstr "Rejeté"
 msgid "Reset the approval cycle."
 msgstr "Recommencer le cycle d'approbation."
 
-msgid "See if a document is locked"
-msgstr "Voir si un document est verrouillé"
-
-msgid ""
-"Set the read and write permissions of a document in the document creation "
-"and update modals"
-msgstr ""
-"Configurer les permissions de lecture et d'écriture d'un document dans les "
-"modales de création et de mise à jour de documents"
-
-msgid ""
-"Set the values of custom document properties in the document creation and "
-"update modals"
-msgstr ""
-"Configurer les valeurs des propriétés personnalisées dans les modales de "
-"création et de mise à jour de documents"
-
-msgid "Share the preview url of a document"
-msgstr "Partager l'url de prévisualisation d'un document"
+msgid "Send mail"
+msgstr "Envoyer un Email"
 
 msgid "Show error details"
 msgstr "Voir les détails de l'erreur"
@@ -345,11 +437,17 @@ msgstr "Statut"
 msgid "Switch to old user interface"
 msgstr "Basculer sur l'ancienne interface utilisateur"
 
+msgid "The current date is the same or before the obsolescence date"
+msgstr "La date actuelle est la même ou antérieure à la date d'obsolescence"
+
 msgid "The document has been created below."
-msgstr "Le document a été créé ci dessous."
+msgstr "Le document a été créé ci-dessous."
 
 msgid "The folder has been created below."
-msgstr "Le dossier a été créé ci dessous."
+msgstr "Le dossier a été créé ci-dessous."
+
+msgid "The item has been deleted successfully."
+msgstr "L'objet a été supprimé avec succès."
 
 msgid ""
 "The item you have dropped is not a file. If you want to upload a folder, we "
@@ -371,8 +469,8 @@ msgstr[1] ""
 msgid "There is no upload in progress"
 msgstr "Il n'y a aucun téléversement en cours"
 
-msgid "This document is currently locked."
-msgstr "Ce document est actuellement verrouillé"
+msgid "This document is currently locked by"
+msgstr "Ce document est actuellement verrouillé par"
 
 msgid "This folder is empty"
 msgstr "Ce dossier est vide"
@@ -380,32 +478,35 @@ msgstr "Ce dossier est vide"
 msgid "This is a private folder."
 msgstr "Ce dossier est privé."
 
+msgid ""
+"This page is asking you to confirm that you want to leave - data you have "
+"entered may not be saved. Do you want to leave this page?"
+msgstr ""
+"Cette page vous demande de confirmer que vous souhaitez partir - les données "
+"que vous avez entrées ne seront pas sauvegardées. Voulez-vous quitter cette "
+"page ?"
+
 msgid "This wiki has a approval table, you can't update it."
-msgstr "Ce wiki a une table d'approbation, vous ne pouvez pas mettre à jour."
+msgstr ""
+"Ce wiki a une table d'approbation, vous ne pouvez pas le mettre à jour."
 
 msgid "Title"
 msgstr "Titre"
 
+msgid "Today"
+msgstr "Aujourd'hui"
+
 msgid "URL"
 msgstr "URL"
 
-msgid "Update"
-msgstr "Mettre à jour"
+msgid "Unlock"
+msgstr "Déverrouiller"
 
-msgid "Update embedded file"
-msgstr "Mettre à jour un fichier embarqué"
+msgid "Update permissions"
+msgstr "Mettre à jour les permissions"
 
-msgid "Update file"
-msgstr "Mettre à jour"
-
-msgid "Update link"
-msgstr "Mettre à jour un lien"
-
-msgid "Update modal for documents of type \"empty\""
-msgstr "Modale de mise à jour des documents de type \"vide\""
-
-msgid "Update wiki page"
-msgstr "Mettre à jour la page wiki"
+msgid "Update properties"
+msgstr "Mettre à jour les propriétés"
 
 msgid "Upload error"
 msgstr "Erreur de téléversement"
@@ -413,41 +514,76 @@ msgstr "Erreur de téléversement"
 msgid "Uploading documents"
 msgstr "Documents en cours de téléversement"
 
+msgid "Validity"
+msgstr "Validité"
+
 msgid "Version name"
 msgstr "Nom de version"
 
-msgid "Welcome to the new documents manager"
-msgstr "Bienvenue dans le nouveau gestionnaire de documents"
+msgid ""
+"When you delete a folder, all its content is also deleted. Please think "
+"wisely!"
+msgstr ""
+"Lorsque vous supprimez un dossier, tout son contenu est également supprimé. "
+"Réfléchissez bien !"
 
 msgid "Wiki page"
 msgstr "Page wiki"
+
+msgid ""
+"Write your message below and click on the button to send your request to the "
+"project administrators"
+msgstr ""
+"Ecrivez votre message ci-dessous et cliquez sur le bouton pour envoyer votre "
+"requête aux administrateurs du projet."
+
+msgid "Writer"
+msgstr "Rédacteur"
+
+msgid "You are about to delete \"%s\" permanently. Please confirm your action."
+msgstr ""
+"Vous êtes sur le point de supprimer \"%s\" de manière définitive. Veuillez "
+"confirmer cette action."
+
+msgid ""
+"You are currently copying \"%{ title }\". You can paste it in a folder you "
+"are allowed to write into using the folder action drop-down."
+msgstr ""
+"Vous êtes en train de copier \"%{ title }\". Vous pouvez le coller dans un "
+"dossier dans lequel vous êtes autorisé à écrire en utilisant le menu "
+"déroulant."
+
+msgid ""
+"You are currently moving \"%{ title }\". You can paste it in a folder you "
+"are allowed to write into using the folder action drop-down.\n"
+"        You also cannot move the item somewhere where the name is already "
+"used by another item."
+msgstr ""
+"Vous êtes en train de déplacer \"%{ title }\". Vous pouvez le coller dans un "
+"dossier dans lequel vous êtes autorisé à écrire en utilisant le menu "
+"déroulant. Il n'est pas autorisé de déplacer un élément dans un dossier où "
+"le nom est déjà utilisé par un autre élément."
 
 msgid "You are not allowed to drag 'n drop more than %{ nb } file at once."
 msgid_plural ""
 "You are not allowed to drag 'n drop more than %{ nb } files at once."
 msgstr[0] ""
-"Vous n'êtes pas autorisés à glisser-déposer plus d'un fichier à la fois."
+"Vous n'êtes pas autorisé à glisser-déposer plus d'un fichier à la fois."
 msgstr[1] ""
-"Vous n'êtes pas autorisés à glisser-déposer plus de %{ nb } fichiers à la "
+"Vous n'êtes pas autorisé à glisser-déposer plus de %{ nb } fichiers à la "
 "fois."
 
-msgid "You are not allowed to update this file"
-msgstr "Vous n'êtes pas autorisé à mettre à jour ce fichier"
+msgid "You are not allowed to upload a new version of this file"
+msgstr ""
+"Vous n'êtes pas autorisé à téléverser une nouvelle version de ce fichier"
 
 msgid "You are not allowed to upload files bigger than %s."
 msgstr ""
-"Vous n'êtes pas autorisés à téléverser des fichiers avec une taille excédant "
+"Vous n'êtes pas autorisé à téléverser des fichiers avec une taille excédant "
 "%s."
 
 msgid "You are not allowed to write in this folder"
 msgstr "Vous n'êtes pas autorisé à écrire dans ce dossier"
-
-msgid ""
-"You can switch to the old Document Manager UI whenever you want. (The switch "
-"is at the bottom of the page)"
-msgstr ""
-"Vous pouvez revenir à l'ancienne interface du gestionnaire de documents à "
-"tout moment. (Le bouton se trouve en bas de la page)"
 
 msgid ""
 "You can't upload a new version of this file until the approval table is "
@@ -457,21 +593,21 @@ msgstr ""
 "d'approbation n'a pas été close."
 
 msgid "You don't have read permission for this item."
-msgstr "Vous n'avez pas le droit de lecture sur ces éléments"
+msgstr "Vous n'avez pas le droit de lecture sur ces éléments."
 
 msgid "You may only access documents you are granted read permission on."
 msgstr ""
 "Vous pouvez seulement accéder aux documents pour lesquels vous avez la "
 "permission de lecture."
 
+msgid ""
+"You should also be aware that the following wiki documents referencing page "
+"\"%s\" will no longer be valid if you choose to propagate the deletion to "
+"the wiki service:"
+msgstr ""
+"Vous devez également être conscient que les documents wiki suivants "
+"référençant la page \"%s\" ne seront plus valides si vous choisissez de "
+"propager la suppression au service wiki :"
+
 msgid "or you don't have permissions to see its items"
 msgstr "ou alors vous n'avez pas le droit de voir ses éléments"
-
-msgid ""
-"{{ filename }} has been locked for edition by <a v-bind:href=\"lock_owner."
-"user_url\">{{ lock_owner.display_name }}</a>. You can't upload a new version "
-"of this file until the lock is released."
-msgstr ""
-"L'édition de {{ filename }} a été bloquée par <a v-bind:href=\"lock_owner."
-"user_url\">{{ lock_owner.display_name }}</a>. Vous ne pouvez pas téléverser "
-"de nouvelle version tant que le verrou n'a pas été levé."

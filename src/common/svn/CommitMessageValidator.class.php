@@ -25,16 +25,19 @@
 /**
  * I'm responsible of checking that commit message is valid
  */
-class SVN_CommitMessageValidator {
+class SVN_CommitMessageValidator
+{
 
     /** @var ReferenceManager */
     private $reference_manager;
 
-    public function __construct(ReferenceManager $reference_manager) {
+    public function __construct(ReferenceManager $reference_manager)
+    {
         $this->reference_manager = $reference_manager;
     }
 
-    public function assertCommitMessageIsValid(Project $project, $commit_message) {
+    public function assertCommitMessageIsValid(Project $project, $commit_message)
+    {
         if ($project->isSVNMandatoryRef()
             && ! $this->reference_manager->stringContainsReferences($commit_message, $project)
         ) {

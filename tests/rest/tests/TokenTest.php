@@ -22,9 +22,11 @@
 /**
  * @group TokenTests
  */
-class TokenTest extends RestBase {
+class TokenTest extends RestBase
+{
 
-    public function testPostThrowExceptionIfUsernameDoesNotExist() {
+    public function testPostThrowExceptionIfUsernameDoesNotExist()
+    {
         $response = $this->getResponseWithoutAuth($this->client->post(
             'tokens',
             null,
@@ -36,7 +38,8 @@ class TokenTest extends RestBase {
         $this->assertEquals(401, $response->getStatusCode());
     }
 
-    public function testPostThrowExceptionIfUsernameAndPaswordDoesNotMatch() {
+    public function testPostThrowExceptionIfUsernameAndPaswordDoesNotMatch()
+    {
         $response = $this->getResponseWithoutAuth($this->client->post(
             'tokens',
             null,

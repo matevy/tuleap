@@ -16,13 +16,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/plugin/PluginFileInfo.class.php');
-require_once('ArchiveDeletedItemsPluginDescriptor.class.php');
-
 /**
  * ArchiveDeletedItemsInfo
  */
-class ArchiveDeletedItemsPluginInfo extends PluginFileInfo {
+class ArchiveDeletedItemsPluginInfo extends PluginFileInfo
+{
 
     /**
      * Constructor
@@ -31,10 +29,9 @@ class ArchiveDeletedItemsPluginInfo extends PluginFileInfo {
      *
      * @return Void
      */
-    public function __construct(ArchivedeleteditemsPlugin $plugin) {
+    public function __construct(ArchivedeleteditemsPlugin $plugin)
+    {
         parent::__construct($plugin, 'archivedeleteditems');
         $this->setPluginDescriptor(new ArchiveDeletedItemsPluginDescriptor());
     }
-
 }
-?>

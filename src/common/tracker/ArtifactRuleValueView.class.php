@@ -23,28 +23,32 @@
 * Basic view for a rule
 *
 */
-class ArtifactRuleValueView {
+class ArtifactRuleValueView
+{
 
     var $rule;
-    
-	/**
-	 *  ArtifactRuleValueView() - constructor
-	 *
-	 *  @param $artifact_rule object
-	 */
-	function __construct($rule) {
-		$this->rule = $rule;
-	}
-    
-    function display() {
+
+    /**
+     *  ArtifactRuleValueView() - constructor
+     *
+     *  @param $artifact_rule object
+     */
+    function __construct($rule)
+    {
+        $this->rule = $rule;
+    }
+
+    function display()
+    {
         echo $this->fetch();
     }
-    
+
     /**
      * @return a representation of an artifact rule
      * #id@group_artifact_id source_field(source_value) => target_field(target_value_1, target_value_2)
      */
-    function fetch() {
+    function fetch()
+    {
         $output  = '#'. $this->rule->id;
         $output .= '@'. $this->rule->group_artifact_id;
         $output .= ' '. $this->rule->source_field;

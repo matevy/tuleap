@@ -18,17 +18,21 @@
   * along with Tuleap. If not, see <http://www.gnu.org/licenses/
   */
 
-class Project_OneStepCreation_OneStepCreationCompletePresenter {
+class Project_OneStepCreation_OneStepCreationCompletePresenter
+{
 
-    public function page_title() {
+    public function page_title()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'complete_title');
     }
 
-    public function wait() {
+    public function wait()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'complete_wait');
     }
 
-    public function thanks() {
+    public function thanks()
+    {
         return $GLOBALS['Language']->getText('register_project_one_step', 'complete_thanks', array(ForgeConfig::get('sys_name')));
     }
 }

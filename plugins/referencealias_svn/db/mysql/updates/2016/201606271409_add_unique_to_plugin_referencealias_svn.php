@@ -19,14 +19,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201606271409_add_unique_to_plugin_referencealias_svn extends ForgeUpgrade_Bucket {
+class b201606271409_add_unique_to_plugin_referencealias_svn extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add UNIQUE attribute to plugin_referencealias_svn table
 EOT;
@@ -37,7 +39,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -46,7 +49,8 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER IGNORE TABLE plugin_referencealias_svn ADD UNIQUE (source)";
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {

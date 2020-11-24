@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018 - 2018. All Rights Reserved.
+  - Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -23,6 +23,7 @@
         class="tlp-dropdown-split-button-main"
         type="button"
         v-on:click="showNewDocumentModal()"
+        data-test="docman-new-item-button"
     >
         <i class="fa fa-plus tlp-button-icon"></i>
         <translate>New document</translate>
@@ -30,17 +31,15 @@
 </template>
 
 <script>
+import EventBus from "../../../helpers/event-bus.js";
+
 export default {
     props: {
         item: Object
     },
     methods: {
         showNewDocumentModal() {
-            document.dispatchEvent(
-                new CustomEvent("show-new-document-modal", {
-                    detail: { parent: this.item }
-                })
-            );
+            EventBus.$emit("show-new-document-modal", { detail: { parent: this.item } });
         }
     }
 };

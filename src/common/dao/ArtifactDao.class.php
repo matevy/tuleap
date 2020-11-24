@@ -19,13 +19,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ArtifactDao extends DataAccessObject {
-    public function __construct($da = null) {
+class ArtifactDao extends DataAccessObject
+{
+    public function __construct($da = null)
+    {
         parent::__construct($da);
         $this->table_name = 'artifact';
     }
 
-    public function searchArtifactId($artifact_id){
+    public function searchArtifactId($artifact_id)
+    {
         if (! $this->artifactTableExists()) {
             return false;
         }
@@ -37,11 +40,13 @@ class ArtifactDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchGlobal($words, $exact, $offset, $atid, array $user_ugroups) {
+    public function searchGlobal($words, $exact, $offset, $atid, array $user_ugroups)
+    {
         $this->searchGlobalPaginated($words, $exact, $offset, $atid, $user_ugroups, 25);
     }
 
-    public function searchGlobalPaginated($words, $exact, $offset, $atid, array $user_ugroups, $limit) {
+    public function searchGlobalPaginated($words, $exact, $offset, $atid, array $user_ugroups, $limit)
+    {
         if ($exact) {
             $details = $this->searchExactMatch($words);
             $summary = $this->searchExactMatch($words);
@@ -83,7 +88,8 @@ class ArtifactDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function artifactTableExists() {
+    public function artifactTableExists()
+    {
         $sql = "SHOW TABLES LIKE '{$this->table_name}'";
         $dar = $this->retrieve($sql);
         if (count($dar) == 1) {

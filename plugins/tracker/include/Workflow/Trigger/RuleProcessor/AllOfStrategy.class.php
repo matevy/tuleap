@@ -21,23 +21,26 @@
 /**
  * Verify that all of siblings artifacts meet rule trigger conditions
  */
-class Tracker_Workflow_Trigger_RulesProcessor_AllOfStrategy implements Tracker_Workflow_Trigger_RulesProcessor_Strategy {
+class Tracker_Workflow_Trigger_RulesProcessor_AllOfStrategy implements Tracker_Workflow_Trigger_RulesProcessor_Strategy
+{
     /** @var Tracker_Artifact */
     private $artifact;
 
     /** @var Tracker_Workflow_Trigger_TriggerRule */
     private $rule;
 
-    public function __construct(Tracker_Artifact $artifact, Tracker_Workflow_Trigger_TriggerRule $rule) {
+    public function __construct(Tracker_Artifact $artifact, Tracker_Workflow_Trigger_TriggerRule $rule)
+    {
         $this->artifact = $artifact;
         $this->rule     = $rule;
     }
 
     /**
      * @see Tracker_Workflow_Trigger_RulesProcessor_Strategy::allPrecondtionsAreMet
-     * @return boolean
+     * @return bool
      */
-    public function allPrecondtionsAreMet() {
+    public function allPrecondtionsAreMet()
+    {
         $siblings = $this->artifact->getSiblingsWithoutPermissionChecking();
         if (count($siblings)) {
             return $this->allOfSiblingsHaveTriggeringValue($siblings, $this->rule);
@@ -45,7 +48,8 @@ class Tracker_Workflow_Trigger_RulesProcessor_AllOfStrategy implements Tracker_W
         return true;
     }
 
-    private function allOfSiblingsHaveTriggeringValue(Iterator $siblings) {
+    private function allOfSiblingsHaveTriggeringValue(Iterator $siblings)
+    {
         $update_parent = true;
         foreach ($siblings as $sibling) {
             $update_parent &= $this->artifactMatchRulesValue($sibling);
@@ -53,7 +57,8 @@ class Tracker_Workflow_Trigger_RulesProcessor_AllOfStrategy implements Tracker_W
         return $update_parent;
     }
 
-    private function artifactMatchRulesValue(Tracker_Artifact $sibling) {
+    private function artifactMatchRulesValue(Tracker_Artifact $sibling)
+    {
         $update_parent = true;
         foreach ($this->rule->getTriggers() as $trigger) {
             $update_parent &= $this->artifactMatchTriggerValue($sibling, $trigger);
@@ -61,12 +66,11 @@ class Tracker_Workflow_Trigger_RulesProcessor_AllOfStrategy implements Tracker_W
         return $update_parent;
     }
 
-    private function artifactMatchTriggerValue(Tracker_Artifact $sibling, Tracker_Workflow_Trigger_FieldValue $trigger) {
+    private function artifactMatchTriggerValue(Tracker_Artifact $sibling, Tracker_Workflow_Trigger_FieldValue $trigger)
+    {
         if ($trigger->getField()->getTracker() == $sibling->getTracker()) {
             return $trigger->isSetForArtifact($sibling);
         }
         return true;
     }
 }
-
-?>

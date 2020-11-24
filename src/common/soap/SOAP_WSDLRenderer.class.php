@@ -21,14 +21,16 @@
 /**
  * This class allows a human to read a wsdl
  */
-class SOAP_WSDLRenderer {
-    
+class SOAP_WSDLRenderer
+{
+
     /**
      * Output a html view of the given wsdl
      *
      * @param string $wsdl_uri https://example.com/plugins/statistics/soap/?wsdl
      */
-    public function render($wsdl_uri) {
+    public function render($wsdl_uri)
+    {
         $xml_security = new XML_Security();
         $xml_security->enableExternalLoadOfEntities();
 
@@ -37,7 +39,7 @@ class SOAP_WSDLRenderer {
         $xslDoc = new DOMDocument();
         $xslDoc->load(ForgeConfig::get('codendi_dir')."/src/www/soap/wsdl-viewer.xsl");
         $proc->importStylesheet($xslDoc);
-        
+
         $xmlDoc = new DOMDocument();
         $xmlDoc->loadXML($this->getWSDL($wsdl_uri));
         echo $proc->transformToXML($xmlDoc);
@@ -45,11 +47,13 @@ class SOAP_WSDLRenderer {
         $xml_security->disableExternalLoadOfEntities();
     }
 
-    private function getWSDL($wsdl_uri) {
+    private function getWSDL($wsdl_uri)
+    {
         return file_get_contents($wsdl_uri, false, stream_context_create($this->getHTTPContext()));
     }
 
-    private function getHTTPContext() {
+    private function getHTTPContext()
+    {
         if (ForgeConfig::get('sys_use_unsecure_ssl_certificate', false)) {
             return array(
                 'ssl' => array(

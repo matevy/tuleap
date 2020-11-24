@@ -4,7 +4,7 @@
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
 use Tuleap\Event\Events\ArchiveDeletedItemEvent;
 use Tuleap\Event\Events\ArchiveDeletedItemFileProvider;
 
@@ -27,36 +28,44 @@ use Tuleap\Event\Events\ArchiveDeletedItemFileProvider;
  * VersionFactory is a transport object (aka container) used to share data between
  * Model/Controler and View layer of the application
  */
-class Docman_VersionFactory {
-    
-    function __construct() {
+class Docman_VersionFactory
+{
+
+    function __construct()
+    {
     }
-    
-    function create($row) {
+
+    function create($row)
+    {
         $dao = $this->_getVersionDao();
         return $dao->createFromRow($row);
     }
     var $dao;
-    function _getVersionDao() {
+    function _getVersionDao()
+    {
         if (!$this->dao) {
             $this->dao = new Docman_VersionDao(CodendiDataAccess::instance());
         }
         return $this->dao;
     }
 
-    function _getEventManager() {
+    function _getEventManager()
+    {
         return EventManager::instance();
     }
 
-    function _getItemFactory() {
+    function _getItemFactory()
+    {
         return new Docman_ItemFactory();
     }
 
-    function _getUserManager() {
+    function _getUserManager()
+    {
         return UserManager::instance();
     }
 
-    function getAllVersionForItem(&$item) {
+    function getAllVersionForItem(&$item)
+    {
         $dao = $this->_getVersionDao();
         $dar = $dao->searchByItemId($item->getId());
         $versions = false;
@@ -74,7 +83,8 @@ class Docman_VersionFactory {
     /**
      * @return Docman_Version|null
      */
-    public function getCurrentVersionForItem($item) {
+    public function getCurrentVersionForItem($item)
+    {
         $all_versions = $this->getAllVersionForItem($item);
 
         if (! empty($all_versions)) {
@@ -84,7 +94,8 @@ class Docman_VersionFactory {
         return null;
     }
 
-    function getSpecificVersion($item, $number) {
+    function getSpecificVersion($item, $number)
+    {
         $dao = $this->_getVersionDao();
         $dar = $dao->searchByNumber($item->getId(), $number);
         $version = null;
@@ -96,12 +107,13 @@ class Docman_VersionFactory {
     /**
      * Returns the version of a given id
      *
-     * @param Integer $id    Id of the version
+     * @param int $id Id of the version
      * @param String  $table Table name
      *
      * @return Docman_Version | null
      */
-    function getSpecificVersionById($id, $table = 'plugin_docman_version_deleted') {
+    function getSpecificVersionById($id, $table = 'plugin_docman_version_deleted')
+    {
         $dao = $this->_getVersionDao();
         $dar = $dao->searchById($id, $table);
         $version = null;
@@ -117,22 +129,24 @@ class Docman_VersionFactory {
      *
      * @param Docman_Item $item
      *
-     * @return Integer
+     * @return int
      */
-    function getNextVersionNumber($item) {
+    function getNextVersionNumber($item)
+    {
         $dao = $this->_getVersionDao();
         return $dao->searchNextVersionNumber($item->getId());
     }
 
     /**
      * Delete given version of document
-     * 
+     *
      * @param Docman_Item $item
-     * @param Integer        $number
-     * 
-     * @return Boolean
+     * @param int $number
+     *
+     * @return bool
      */
-    function deleteSpecificVersion($item, $number) {
+    function deleteSpecificVersion($item, $number)
+    {
         // The event must be processed before the version is deleted
         $version = $this->getSpecificVersion($item, $number) ;
         $user    = $this->_getUserManager()->getCurrentUser();
@@ -144,11 +158,12 @@ class Docman_VersionFactory {
     /**
      * Physically remove files related to deleted versions
      *
-     * @param Integer $time
+     * @param int $time
      *
-     * @return Boolean
+     * @return bool
      */
-    public function purgeDeletedVersions($time) {
+    public function purgeDeletedVersions($time)
+    {
         $dao = $this->_getVersionDao();
         $dar = $dao->listVersionsToPurge($time);
         if ($dar && !$dar->isError()) {
@@ -186,7 +201,7 @@ class Docman_VersionFactory {
      *
      * @param Docman_Version $version
      *
-     * @return Boolean
+     * @return bool
      */
     public function purgeDeletedVersion($version)
     {
@@ -203,12 +218,13 @@ class Docman_VersionFactory {
 
     /**
      * Restore one version
-     * 
+     *
      * @param Docman_Version $version
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
-    public function restore($version) {
+    public function restore($version)
+    {
         $dao = $this->_getVersionDao();
         $dar = $dao->searchDeletedVersion($version->getItemId(), $version->getNumber());
         if ($dar && !$dar->isError()) {
@@ -229,8 +245,7 @@ class Docman_VersionFactory {
                           'group_id'   => $item->getGroupId(),
                           'item'       => $item,
                           'old_value'  => $value,
-                          'user'       => $user)
-                    );
+                          'user'       => $user));
                     return true;
                 }
             }
@@ -242,28 +257,30 @@ class Docman_VersionFactory {
      * @param  String  $docman_path
      * @param  Project $project
      * @param  String  $new_name
-     * @return Boolean
+     * @return bool
      */
-    function renameProject($docman_path, $project, $new_name){
+    function renameProject($docman_path, $project, $new_name)
+    {
         $updateSystem = rename($docman_path.$project->getUnixName(true), $docman_path.strtolower($new_name));
-        if ($updateSystem){
+        if ($updateSystem) {
             $dao = $this->_getVersionDao();
             return $dao->renameProject($docman_path, $project, $new_name);
         }
         return false;
     }
-    
+
         /**
      * List pending versions ( marked as deleted but not physically removed yet)
      * in order to ease the restore
      *
-     * @param Integer $groupId
-     * @param Integer $offset
-     * @param Integer $limit
+     * @param int $groupId
+     * @param int $offset
+     * @param int $limit
      *
      * @return Array
      */
-    function listPendingVersions($groupId, $offset, $limit) {
+    function listPendingVersions($groupId, $offset, $limit)
+    {
         $dao = $this->_getVersionDao();
         return $dao->listPendingVersions($groupId, $offset, $limit);
     }
@@ -275,7 +292,8 @@ class Docman_VersionFactory {
      *
      * @return Array()
      */
-    function listVersionsToPurgeForItem($item) {
+    function listVersionsToPurgeForItem($item)
+    {
         $dao = $this->_getVersionDao();
         $dar = $dao->listVersionsToPurgeByItemId($item->getId());
         if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
@@ -294,9 +312,10 @@ class Docman_VersionFactory {
      *
      * @param String $path
      *
-     * @return Boolean
+     * @return bool
      */
-    function physicalDeleteVersion($path) {
+    function physicalDeleteVersion($path)
+    {
         if (unlink($path)) {
             return true;
         }

@@ -22,28 +22,29 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/html/HTML_Table_Bootstrap.class.php';
 require_once 'HTML_TableTest.php';
 
-class HTML_Table_BoostrapTest extends HTML_TableTest {
+class HTML_Table_BoostrapTest extends HTML_TableTest
+{
 
     /**
      * @var HTML_Table_Boostrap
      */
     protected $html_table;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->html_table = new HTML_Table_Bootstrap();
     }
 
-    public function itBuildsATable() {
+    public function itBuildsATable()
+    {
         $this->assertPattern('%<table class="table">.*</table>%s', $this->html_table->render());
     }
 
-    public function itHasTableClasses() {
+    public function itHasTableClasses()
+    {
         $this->assertPattern('%<table class="table bla">%', $this->html_table->addTableClass('bla')->render());
     }
 }
-
-?>

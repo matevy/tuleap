@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2013 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -19,12 +19,14 @@
  */
 namespace Tuleap\REST;
 
+use Guzzle\Http\Message\Response;
+
 /**
  * @group TrackersTests
  */
-class TrackersTest extends TrackerBase
+final class TrackersTest extends TrackerBase
 {
-    public function testOptionsTrackers()
+    public function testOptionsTrackers(): void
     {
         $response = $this->getResponse($this->client->options('trackers'));
 
@@ -32,7 +34,18 @@ class TrackersTest extends TrackerBase
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
-    public function testOptionsTrackersId()
+    public function testOptionsTrackersWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options('trackers'),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(array('OPTIONS'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testOptionsTrackersId(): void
     {
         $response = $this->getResponse($this->client->options($this->getReleaseTrackerUri()));
 
@@ -40,12 +53,34 @@ class TrackersTest extends TrackerBase
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
-    public function testOptionsTrackersIdReports()
+    public function testOptionsTrackersIdWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options($this->getReleaseTrackerUri()),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(array('OPTIONS', 'GET', 'PATCH'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testOptionsTrackersIdReports(): void
     {
         $response = $this->getResponse($this->client->options($this->getReleaseTrackerReportsUri()));
 
         $this->assertEquals(array('OPTIONS', 'GET'), $response->getHeader('Allow')->normalize()->toArray());
         $this->assertEquals($response->getStatusCode(), 200);
+    }
+
+    public function testOptionsTrackersIdReportsForReadOnlyUser(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options($this->getReleaseTrackerReportsUri()),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(['OPTIONS', 'GET'], $response->getHeader('Allow')->normalize()->toArray());
     }
 
     public function testOptionsReportsId()
@@ -56,15 +91,37 @@ class TrackersTest extends TrackerBase
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
-    public function testOptionsReportsArtifactsId()
+    public function testOptionsReportsIdForReadOnlyUser(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options($this->report_uri),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(['OPTIONS', 'GET'], $response->getHeader('Allow')->normalize()->toArray());
+    }
+
+    public function testOptionsReportsArtifactsId(): void
     {
         $response = $this->getResponse($this->client->options($this->getReportsArtifactsUri()));
 
         $this->assertEquals(array('OPTIONS', 'GET'), $response->getHeader('Allow')->normalize()->toArray());
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function testOptionsGetParentArtifacts()
+    public function testOptionsReportsArtifactsIdForReadOnlyUser(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options($this->getReportsArtifactsUri()),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(array('OPTIONS', 'GET'), $response->getHeader('Allow')->normalize()->toArray());
+    }
+
+    public function testOptionsGetParentArtifacts(): void
     {
         $response = $this->getResponse($this->client->options('trackers/' . $this->user_stories_tracker_id . '/parent_artifacts'));
 
@@ -72,11 +129,38 @@ class TrackersTest extends TrackerBase
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
-    public function testGetTrackersId()
+    public function testOptionsGetParentArtifactsWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->options('trackers/' . $this->user_stories_tracker_id . '/parent_artifacts'),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertEquals(array('OPTIONS', 'GET'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testGetTrackersId(): void
     {
         $tracker_uri = $this->getReleaseTrackerUri();
-        $response    = $this->getResponse($this->client->get($tracker_uri));
+        $response = $this->getResponse($this->client->get($tracker_uri));
 
+        $this->assertGETTrackersId($response, $tracker_uri);
+    }
+
+    public function testGETTrackersIdWithReadOnlyAdmin(): void
+    {
+        $tracker_uri = $this->getReleaseTrackerUri();
+        $response = $this->getResponse(
+            $this->client->get($tracker_uri),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETTrackersId($response, $tracker_uri);
+    }
+
+    private function assertGETTrackersId(Response $response, string $tracker_uri): void
+    {
         $tracker = $response->json();
 
         $this->assertEquals(basename($tracker_uri), $tracker['id']);
@@ -96,15 +180,127 @@ class TrackersTest extends TrackerBase
         $this->assertArrayHasKey('parent', $tracker);
         $this->assertArrayHasKey('structure', $tracker);
         $this->assertArrayHasKey('color_name', $tracker);
+        $this->assertArrayHasKey('permissions_for_groups', $tracker);
 
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function testGetTrackersIdReports()
+    public function testGetTrackersIdReturnsPermissionsForGroupsToTrackerAdmin()
+    {
+        $tracker = $this->getResponseByName(
+            \TestDataBuilder::TEST_USER_1_NAME,
+            $this->client->get($this->getReleaseTrackerUri())
+        )->json();
+
+        $all_user_groups = $this->getResponse($this->client->get('projects/'.$this->project_private_member_id.'/user_groups'))->json();
+        $developers_ugroup = [];
+        $static_ugroup_2   = [];
+        $project_members   = [];
+        foreach ($all_user_groups as $user_group) {
+            if ($user_group['short_name'] === 'developers') {
+                $developers_ugroup = $user_group;
+            }
+            if ($user_group['short_name'] === 'static_ugroup_2') {
+                $static_ugroup_2 = $user_group;
+            }
+            if ($user_group['short_name'] === 'project_members') {
+                $project_members = $user_group;
+            }
+        }
+
+        $this->assertEquals(
+            [
+                "can_access" => [
+                    [
+                        "id"         => "1",
+                        "uri"        => "user_groups/1",
+                        "label"      => "Anonymous",
+                        "users_uri"  => "user_groups/1/users",
+                        "short_name" => "all_users",
+                        "key"        => "ugroup_anonymous_users_name_key",
+                    ]
+                ],
+                "can_access_submitted_by_user"  => [],
+                "can_access_assigned_to_group"  => [],
+                "can_access_submitted_by_group" => [],
+                "can_admin"                     => [
+                    $developers_ugroup
+                ],
+            ],
+            $tracker['permissions_for_groups']
+        );
+
+        $status_field = $this->getStatusField($tracker);
+        $this->assertEquals(
+            [
+                'can_read'   => [
+                    [
+                        "id"         => "1",
+                        "uri"        => "user_groups/1",
+                        "label"      => "Anonymous",
+                        "users_uri"  => "user_groups/1/users",
+                        "short_name" => "all_users",
+                        "key"        => "ugroup_anonymous_users_name_key",
+                    ]
+                ],
+                'can_submit' => [
+                    [
+                        "id"         => "2",
+                        "uri"        => "user_groups/2",
+                        "label"      => "Registered users",
+                        "users_uri"  => "user_groups/2/users",
+                        "short_name" => "registered_users",
+                        "key"        => "ugroup_registered_users_name_key",
+                    ]
+                ],
+                'can_update' => [
+                    $project_members,
+                    $static_ugroup_2,
+                ],
+            ],
+            $status_field['permissions_for_groups']
+        );
+    }
+
+    public function testGetTrackersIdReturnsNoPermissionsForGroupsToRegularUsers()
+    {
+        $tracker = $this->getResponseByName(
+            \TestDataBuilder::TEST_USER_2_NAME,
+            $this->client->get($this->getReleaseTrackerUri())
+        )->json();
+
+        $status_field = $this->getStatusField($tracker);
+
+        $this->assertEquals(null, $tracker['permissions_for_groups']);
+        $this->assertEquals(null, $status_field['permissions_for_groups']);
+    }
+
+    private function getStatusField(array $tracker) : array
+    {
+        foreach ($tracker['fields'] as $field) {
+            if ($field['label'] === 'Status') {
+                return $field;
+            }
+        }
+        return [];
+    }
+
+    public function testGetTrackersIdReports(): void
     {
         $report_uri = $this->getReleaseTrackerReportsUri();
         $response   = $this->getResponse($this->client->get($report_uri));
+        $this->assertGETTrackersIdReports($response);
+    }
 
+    public function testGetTrackersIdReportsForReadOnlyUser(): void
+    {
+        $report_uri = $this->getReleaseTrackerReportsUri();
+        $response   = $this->getResponse($this->client->get($report_uri), \REST_TestDataBuilder::TEST_BOT_USER_NAME);
+        $this->assertGETTrackersIdReports($response);
+    }
+
+    private function assertGETTrackersIdReports(Response $response): void
+    {
         $reports        = $response->json();
         $default_report = $reports[0];
 
@@ -112,25 +308,54 @@ class TrackersTest extends TrackerBase
         $this->assertEquals('tracker_reports/' . $this->report_id, $default_report['uri']);
         $this->assertEquals('Default', $default_report['label']);
 
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function testGetReportsId()
+    public function testGetReportsId(): void
     {
         $response = $this->getResponse($this->client->get($this->report_uri));
 
+        $this->assertGETReportsId($response);
+    }
+
+    public function testGetReportsIdFoReadOnlyUser(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get($this->report_uri),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETReportsId($response);
+    }
+
+    private function assertGETReportsId(Response $response): void
+    {
         $report = $response->json();
 
         $this->assertEquals($this->report_id, $report['id']);
         $this->assertEquals('tracker_reports/' . $this->report_id, $report['uri']);
         $this->assertEquals('Default', $report['label']);
 
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     public function testGetReportsArtifactsId()
     {
-        $response  = $this->getResponse($this->client->get($this->getReportsArtifactsUri()));
+        $response = $this->getResponse($this->client->get($this->getReportsArtifactsUri()));
+        $this->assertGETReportsByArtifactsId($response);
+    }
+
+    public function testGetReportsByArtifactsIdForReadOnlyUser(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get($this->getReportsArtifactsUri()),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+        $this->assertGETReportsByArtifactsId($response);
+    }
+
+    private function assertGETReportsByArtifactsId(Response $response): void
+    {
         $artifacts = $response->json();
 
         $first_artifact_info = $artifacts[0];
@@ -140,17 +365,31 @@ class TrackersTest extends TrackerBase
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
-    public function testGetTrackerArtifacts()
+    public function testGetTrackerArtifacts(): void
     {
-        $request   = $this->client->get($this->getReleaseTrackerUri() . '/artifacts');
-        $response  = $this->getResponse($request);
+        $request = $this->client->get($this->getReleaseTrackerUri() . '/artifacts');
+        $response = $this->getResponse($request);
+
+        $this->assertGETTrackerArtifacts($response);
+    }
+
+    public function testGetTrackerArtifactsWithReadOnlyAdmin(): void
+    {
+        $request = $this->client->get($this->getReleaseTrackerUri() . '/artifacts');
+        $response = $this->getResponse($request, \REST_TestDataBuilder::TEST_BOT_USER_NAME);
+
+        $this->assertGETTrackerArtifacts($response);
+    }
+
+    private function assertGETTrackerArtifacts(Response $response): void
+    {
         $artifacts = $response->json();
 
         $first_artifact_info = $artifacts[0];
         $this->assertEquals($this->release_artifact_ids[1], $first_artifact_info['id']);
         $this->assertEquals('artifacts/' . $this->release_artifact_ids[1], $first_artifact_info['uri']);
 
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     public function testGetTrackerArtifactsBasicQuery()
@@ -256,12 +495,28 @@ class TrackersTest extends TrackerBase
         $this->assertStringContainsString('deleted', $response->json()['error']['i18n_error_message']);
     }
 
-    public function testGetParentArtifacts()
+    public function testGetParentArtifacts(): void
     {
-        $response         = $this->getResponse($this->client->get('trackers/' . $this->user_stories_tracker_id . '/parent_artifacts'));
+        $response = $this->getResponse($this->client->get('trackers/' . $this->user_stories_tracker_id . '/parent_artifacts'));
+
+        $this->assertGETParentArtifacts($response);
+    }
+
+    public function testGetParentArtifactsWithReadOnlyAdmin(): void
+    {
+        $response = $this->getResponse(
+            $this->client->get('trackers/' . $this->user_stories_tracker_id . '/parent_artifacts'),
+            \REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $this->assertGETParentArtifacts($response);
+    }
+
+    private function assertGETParentArtifacts(Response $response): void
+    {
         $parent_artifacts = $response->json();
 
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertEquals(200, $response->getStatusCode());
         $this->assertCount(5, $parent_artifacts);
         $this->assertEquals($parent_artifacts[0]['title'], "Epic epoc");
         $this->assertEquals($parent_artifacts[1]['title'], "Epic c'est tout");
@@ -290,7 +545,6 @@ class TrackersTest extends TrackerBase
     private function getReportsArtifactsUri()
     {
         $response_report = $this->getResponse($this->client->get($this->report_uri))->json();
-
 
         foreach ($response_report['resources'] as $resource) {
             if ($resource['type'] == 'artifacts') {

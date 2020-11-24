@@ -18,23 +18,26 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_SharedFormElementFactory {
+class Tracker_SharedFormElementFactory
+{
     /**
      * @var Tracker_FormElementFactory
      */
     protected $factory;
     /**
-     * @var Tracker_FormElement_Field_List_BindFactory $boundValuesFactory 
+     * @var Tracker_FormElement_Field_List_BindFactory $boundValuesFactory
      */
     private $boundValuesFactory;
 
-    function __construct(Tracker_FormElementFactory $factory, Tracker_FormElement_Field_List_BindFactory $boundValuesFactory) {
+    function __construct(Tracker_FormElementFactory $factory, Tracker_FormElement_Field_List_BindFactory $boundValuesFactory)
+    {
         $this->boundValuesFactory = $boundValuesFactory;
         $this->factory = $factory;
     }
 
-    
-    public function createFormElement(Tracker $tracker, array $formElement_data, PFUser $user, $tracker_is_empty, $force_absolute_ranking) {
+
+    public function createFormElement(Tracker $tracker, array $formElement_data, PFUser $user, $tracker_is_empty, $force_absolute_ranking)
+    {
         $formElement = $this->factory->getFormElementById($formElement_data['field_id']);
         if (!$formElement) {
             $exception_message = $GLOBALS['Language']->getText('plugin_tracker_formelement_exception', 'wrong_field_id', $formElement_data['field_id']);
@@ -42,15 +45,16 @@ class Tracker_SharedFormElementFactory {
         }
         $field = $this->getRootOriginalField($formElement);
         $this->assertFieldCanBeCopied($field, $user);
-        
+
         $data = $this->populateFormElementDataForASharedField($field);
         $type = $data['type'];
         $id = $this->factory->createFormElement($tracker, $type, $data, $tracker_is_empty, $force_absolute_ranking);
         $this->boundValuesFactory->duplicateByReference($field->getId(), $id);
         return $id;
     }
-    
-    private function getRootOriginalField(Tracker_FormElement $field) {
+
+    private function getRootOriginalField(Tracker_FormElement $field)
+    {
         $originalField = $field->getOriginalField();
         if ($originalField === null) {
             return $field;
@@ -70,24 +74,27 @@ class Tracker_SharedFormElementFactory {
         $this->assertFieldIsReadable($field, $user);
         $this->assertFieldIsStaticSelectbox($field);
     }
-    
-    private function assertFieldIsReadable(Tracker_FormElement $field, PFUser $user) {
-        if ( ! ($field->userCanRead($user) 
+
+    private function assertFieldIsReadable(Tracker_FormElement $field, PFUser $user)
+    {
+        if (! ($field->userCanRead($user)
               && $field->getTracker()->userCanView($user))) {
             $exception_message = $GLOBALS['Language']->getText('plugin_tracker_formelement_exception', 'permission_denied');
             throw new Exception($exception_message);
         }
     }
-    
-    private function assertFieldIsStaticSelectbox(Tracker_FormElement $field) {
-        if ( ! ($field instanceof Tracker_FormElement_Field_Selectbox
+
+    private function assertFieldIsStaticSelectbox(Tracker_FormElement $field)
+    {
+        if (! ($field instanceof Tracker_FormElement_Field_Selectbox
                 && $field->getBind() instanceof Tracker_FormElement_Field_List_Bind_Static)) {
             $exception_message = $GLOBALS['Language']->getText('plugin_tracker_formelement_exception', 'field_must_be_static');
             throw new Exception($exception_message);
         }
     }
-    
-    private function populateFormElementDataForASharedField($originField) {
+
+    private function populateFormElementDataForASharedField($originField)
+    {
         return array(
             'type'              => $this->factory->getType($originField),
             'label'             => $originField->getLabel(),
@@ -108,7 +115,7 @@ class Tracker_SharedFormElementFactory {
      */
     private function assertProjectIsActive(Project $project)
     {
-        if ( ! $project->isActive()) {
+        if (! $project->isActive()) {
             $exception_message = dgettext('tuleap-tracker', "The provided field can't be shared with this tracker because the project it comes from is not active.");
             throw new Exception($exception_message);
         }

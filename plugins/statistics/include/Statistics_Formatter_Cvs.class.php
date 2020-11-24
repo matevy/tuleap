@@ -23,18 +23,20 @@ require_once 'Statistics_Formatter_Scm.class.php';
 /**
  * SCM statistics for CVS
  */
-class Statistics_Formatter_Cvs extends Statistics_Formatter_Scm {
+class Statistics_Formatter_Cvs extends Statistics_Formatter_Scm
+{
 
     /**
      * Constructor of the class
      *
      * @param String  $startDate Period start date
      * @param String  $endDate   Period end date
-     * @param Integer $groupId   Project Id
+     * @param int $groupId Project Id
      *
      * @return void
      */
-    function __construct($startDate, $endDate, $groupId = null) {
+    function __construct($startDate, $endDate, $groupId = null)
+    {
         $this->dao = new Statistics_ScmCvsDao(CodendiDataAccess::instance(), $this->groupId);
         parent::__construct('cvs', $startDate, $endDate, $groupId);
     }
@@ -44,11 +46,9 @@ class Statistics_Formatter_Cvs extends Statistics_Formatter_Scm {
      *
      * @return String
      */
-    function getStats() {
+    function getStats()
+    {
         $this->addHeader('CVS');
         return parent::getStats();
     }
-
 }
-
-?>

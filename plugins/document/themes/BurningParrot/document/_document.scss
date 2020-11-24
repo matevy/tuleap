@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,10 +21,17 @@
 @import 'folder-content';
 @import 'new-document';
 @import 'upload';
-@import 'under-the-fold-notification';
+@import 'notifications';
 @import 'switch-to-docman';
 @import 'quicklook';
 @import 'update-document';
+@import 'confirm-deletion-modal';
+@import 'embedded-document';
+@import 'metadata';
+@import 'folder-properties-modal';
+@import 'modal-common';
+@import 'clipboard';
+@import 'permissions-modal';
 @import '../../../../../src/www/themes/BurningParrot/css/includes/global-variables';
 
 .document-app {
@@ -35,4 +42,8 @@
     > .breadcrumb {
         flex: 0 0 auto;
     }
+}
+
+.has-visible-project-banner .document-app {
+    height: calc(100vh - #{$navbar-height} - #{$project-banner-base-height});
 }

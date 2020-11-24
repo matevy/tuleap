@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,6 +23,8 @@ namespace Tuleap\Project\Admin\ProjectUGroup;
 use CSRFSynchronizerToken;
 use Project;
 use ProjectUGroup;
+use Tuleap\Project\Admin\ProjectUGroup\SynchronizedProjectMembership\SynchronizedProjectMembershipPresenter;
+use Tuleap\Project\UGroups\SynchronizedProjectMembershipDetector;
 use Tuleap\User\UserGroup\NameTranslator;
 use UGroupManager;
 
@@ -32,23 +34,42 @@ class UGroupListPresenterBuilder
      * @var UGroupManager
      */
     private $ugroup_manager;
+    /**
+     * @var SynchronizedProjectMembershipDetector
+     */
+    private $detector;
 
-    public function __construct(UGroupManager $ugroup_manager)
-    {
+    public function __construct(
+        UGroupManager $ugroup_manager,
+        SynchronizedProjectMembershipDetector $detector
+    ) {
         $this->ugroup_manager = $ugroup_manager;
+        $this->detector       = $detector;
     }
 
-    public function build(Project $project, CSRFSynchronizerToken $csrf)
-    {
+    public function build(
+        Project $project,
+        CSRFSynchronizerToken $ugroup_delete_token,
+        CSRFSynchronizerToken $synchronized_membership_token
+    ) {
         $static_ugroups = $this->getStaticUGroups($project);
         $templates      = $this->getUGroupsThatCanBeUsedAsTemplate($project, $static_ugroups);
+
+        $is_synchronized_project_membership = $this->detector->isSynchronizedWithProjectMembers($project);
+        $synchronous_presenter              = $this->buildSynchronizedProjectMembershipPresenter(
+            $project,
+            $is_synchronized_project_membership,
+            $synchronized_membership_token
+        );
 
         return new UGroupListPresenter(
             $project,
             $this->getDynamicUGroups($project),
             $this->getStaticUGroupsPresenters($project, $static_ugroups),
             $templates,
-            $csrf
+            $ugroup_delete_token,
+            $is_synchronized_project_membership,
+            $synchronous_presenter
         );
     }
 
@@ -95,8 +116,10 @@ class UGroupListPresenterBuilder
     private function injectDynamicUGroup(Project $project, $ugroup_id, &$ugroups)
     {
         $ugroup         = $this->ugroup_manager->getUGroup($project, $ugroup_id);
-        $can_be_deleted = false;
-        $ugroups[]      = new UGroupPresenter($project, $ugroup, $can_be_deleted);
+        if ($ugroup) {
+            $can_be_deleted = false;
+            $ugroups[]      = new UGroupPresenter($project, $ugroup, $can_be_deleted);
+        }
     }
 
     /**
@@ -167,5 +190,17 @@ class UGroupListPresenterBuilder
         return array_filter($static_ugroups, function (ProjectUGroup $ugroup) {
             return $ugroup->getId() > 100;
         });
+    }
+
+    private function buildSynchronizedProjectMembershipPresenter(
+        Project $project,
+        bool $is_synchronized,
+        CSRFSynchronizerToken $csrf_token
+    ): ?SynchronizedProjectMembershipPresenter {
+        if (! $project->isPublic()) {
+            return null;
+        }
+
+        return new SynchronizedProjectMembershipPresenter($project, $is_synchronized, $csrf_token);
     }
 }

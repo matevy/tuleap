@@ -29,13 +29,13 @@ class ForgeAccess_AdminPresenter
     /** @var string */
     public $localinc_path;
 
-    /** @var boolean */
+    /** @var bool */
     public $access_restricted;
 
-    /** @var boolean */
+    /** @var bool */
     public $access_regular;
 
-    /** @var boolean */
+    /** @var bool */
     public $access_anonymous;
 
     /** @var string */
@@ -141,12 +141,12 @@ class ForgeAccess_AdminPresenter
         $this->platform_access_control_label = $GLOBALS['Language']->getText('admin_main', 'platform_access_control');
     }
 
-    private function isLocalIncObsolete() {
+    private function isLocalIncObsolete()
+    {
         include($this->localinc_path);
         $variables_in_local_inc = get_defined_vars();
 
         return isset($variables_in_local_inc['sys_allow_anon'])
             || isset($variables_in_local_inc['sys_allow_restricted_users']);
     }
-
 }

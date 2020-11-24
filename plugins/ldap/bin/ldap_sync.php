@@ -25,7 +25,7 @@
 ini_set('max_execution_time', 0);
 ini_set('memory_limit', -1);
 
-require_once 'pre.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
 
 $time_start = microtime(true);
 
@@ -39,7 +39,7 @@ if ($pluginManager->isPluginAvailable($ldapPlugin)) {
         $users_to_suspend     = $ldapQuery->getLdapUserManager()->getUsersToBeSuspended();
         $nbr_users_to_suspend = count($users_to_suspend);
         $nbr_active_users     = $ldapQuery->getLdapUserManager()->getNbrActiveUsers();
-        if($nbr_users_to_suspend == 0) {
+        if ($nbr_users_to_suspend == 0) {
             echo "No user will be suspended \n";
             return;
         }
@@ -60,11 +60,10 @@ if ($pluginManager->isPluginAvailable($ldapPlugin)) {
             echo "e-mail : ".$user->getEmail()."\n";
             echo "--------------------------------------------------- \n";
         }
-    } else{
+    } else {
         $ldapQuery->syncAll();
         $retentionPeriod = $ldapPlugin->getLdap()->getLDAPParam('daily_sync_retention_period');
-        if ($retentionPeriod != NULL && $retentionPeriod!= "") {
-
+        if ($retentionPeriod != null && $retentionPeriod!= "") {
             $user_remover = new \Tuleap\Project\UserRemover(
                 ProjectManager::instance(),
                 EventManager::instance(),

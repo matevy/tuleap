@@ -19,11 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class PasswordHandlerFactory {
+class PasswordHandlerFactory
+{
     /**
      * @return PasswordHandler
      */
-    public static function getPasswordHandler() {
+    public static function getPasswordHandler()
+    {
         return new StandardPasswordHandler();
     }
 }

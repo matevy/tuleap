@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class AgileDashboard_Milestone_Backlog_DescendantItemsCollection implements Iterator, Countable {
+class AgileDashboard_Milestone_Backlog_DescendantItemsCollection implements Iterator, Countable
+{
 
     /** @var Tracker_Artifact[] */
     private $items = array();
@@ -26,39 +27,48 @@ class AgileDashboard_Milestone_Backlog_DescendantItemsCollection implements Iter
     /** @var int */
     private $total_available_size;
 
-    public function push(Tracker_Artifact $item) {
+    public function push(Tracker_Artifact $item)
+    {
         $this->items[] = $item;
     }
 
-    public function current() {
+    public function current()
+    {
         return current($this->items);
     }
 
-    public function key() {
+    public function key()
+    {
         return key($this->items);
     }
 
-    public function next() {
+    public function next()
+    {
         return next($this->items);
     }
 
-    public function rewind() {
+    public function rewind()
+    {
         reset($this->items);
     }
 
-    public function count($mode = 'COUNT_NORMAL') {
+    public function count($mode = 'COUNT_NORMAL')
+    {
         return count($this->items);
     }
 
-    public function valid() {
+    public function valid()
+    {
         return current($this->items) !== false;
     }
 
-    public function getTotalAvaialableSize() {
+    public function getTotalAvaialableSize()
+    {
         return $this->total_available_size;
     }
 
-    public function setTotalAvaialableSize($size) {
+    public function setTotalAvaialableSize($size)
+    {
         $this->total_available_size = (int) $size;
     }
 }

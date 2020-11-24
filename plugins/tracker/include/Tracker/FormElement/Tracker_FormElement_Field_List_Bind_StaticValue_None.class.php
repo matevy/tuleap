@@ -19,29 +19,32 @@
   */
 
 
-class Tracker_FormElement_Field_List_Bind_StaticValue_None extends Tracker_FormElement_Field_List_Bind_StaticValue {
+class Tracker_FormElement_Field_List_Bind_StaticValue_None extends Tracker_FormElement_Field_List_Bind_StaticValue
+{
     public const VALUE_ID     = 100;
     public const XML_VALUE_ID = "";
 
     /**
-     * 
+     *
      * @param int $id
      * @param string $label
      * @param string $description
      * @param int $rank
      * @param bool $is_hidden
      */
-    public function __construct() {
+    public function __construct()
+    {
         $id = self::VALUE_ID;
-        $label = $GLOBALS['Language']->getText('global','none');
+        $label = $GLOBALS['Language']->getText('global', 'none');
         $description = '';
         $rank = 0;
         $is_hidden = false;
-        
+
         parent::__construct($id, $label, $description, $rank, $is_hidden);
     }
 
-    public function getXMLId() {
+    public function getXMLId()
+    {
         return self::XML_VALUE_ID;
     }
 }

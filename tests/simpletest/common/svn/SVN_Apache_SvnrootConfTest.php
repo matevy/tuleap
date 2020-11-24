@@ -18,19 +18,21 @@
  *
  */
 
-class SVN_Apache_SvnrootConfTestEventManager extends EventManager {
-    public function processEvent($event_name, $params = []) {
+class SVN_Apache_SvnrootConfTestEventManager extends EventManager
+{
+    public function processEvent($event_name, $params = [])
+    {
         $project_row = array();
 
         $params['svn_apache_auth'] = null;
     }
 }
 
-Mock::generate('EventManager');
+class SVN_Apache_SvnrootConfTest extends TuleapTestCase
+{
 
-class SVN_Apache_SvnrootConfTest extends TuleapTestCase {
-
-    function setUp() {
+    function setUp()
+    {
         ForgeConfig::store();
         $GLOBALS['sys_name']   = 'Platform';
         $GLOBALS['sys_dbhost'] = 'db_server';
@@ -40,7 +42,8 @@ class SVN_Apache_SvnrootConfTest extends TuleapTestCase {
         $GLOBALS['sys_dbauth_passwd'] = 'dbauth_passwd';
     }
 
-    function tearDown() {
+    function tearDown()
+    {
         ForgeConfig::restore();
         unset($GLOBALS['sys_name']);
         unset($GLOBALS['sys_dbname']);
@@ -81,7 +84,8 @@ class SVN_Apache_SvnrootConfTest extends TuleapTestCase {
         return $svnroot->getFullConf();
     }
 
-    function testFullConfShouldWrapEveryThing() {
+    function testFullConfShouldWrapEveryThing()
+    {
         $conf = $this->GivenAFullApacheConfWithModPerl();
         //echo '<pre>'.htmlentities($conf).'</pre>';
 
@@ -90,19 +94,22 @@ class SVN_Apache_SvnrootConfTest extends TuleapTestCase {
         $this->ThenThereAreOnlyOneCustomLogStatement($conf);
     }
 
-    private function ThenThereAreTwoLocationDefinedGpigAndGarden($conf) {
+    private function ThenThereAreTwoLocationDefinedGpigAndGarden($conf)
+    {
         $matches = array();
         preg_match_all('%<Location /svnroot/([^>]*)>%', $conf, $matches);
         $this->assertEqual($matches[1][0], 'gpig');
         $this->assertEqual($matches[1][1], 'garden');
     }
 
-    private function ThenThereAreOnlyOneCustomLogStatement($conf) {
+    private function ThenThereAreOnlyOneCustomLogStatement($conf)
+    {
         preg_match_all('/CustomLog/', $conf, $matches);
         $this->assertEqual(1, count($matches[0]));
     }
 
-    public function itHasALogFileFromConfiguration() {
+    public function itHasALogFileFromConfiguration()
+    {
         ForgeConfig::store();
         ForgeConfig::set(SVN_Apache_SvnrootConf::CONFIG_SVN_LOG_PATH, '${APACHE_LOG_DIR}/tuleap_svn.log');
 

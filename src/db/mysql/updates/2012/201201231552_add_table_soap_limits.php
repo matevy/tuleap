@@ -19,19 +19,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201201231552_add_table_soap_limits extends ForgeUpgrade_Bucket {
+class b201201231552_add_table_soap_limits extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add table to store soap API call limits
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE IF NOT EXISTS soap_call_counter (
                    method_name varchar(255) NOT NULL,
                    date int(11) unsigned NOT NULL,
@@ -40,11 +44,10 @@ EOT;
         $this->db->createTable('soap_call_counter', $sql);
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('soap_call_counter')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('soap_call_counter table is missing');
         }
     }
-
 }
-?>

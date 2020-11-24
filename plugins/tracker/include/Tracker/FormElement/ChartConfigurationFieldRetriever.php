@@ -23,16 +23,14 @@ namespace Tuleap\Tracker\FormElement;
 use PFUser;
 use Tracker;
 use Tracker_Artifact;
-use Tracker_FormElement_Field;
 use Tracker_FormElement_Chart_Field_Exception;
-use Tracker_FormElement_InvalidFieldException;
+use Tracker_FormElement_Field;
 use Tracker_FormElementFactory;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 
 class ChartConfigurationFieldRetriever
 {
     public const REMAINING_EFFORT_FIELD_NAME = 'remaining_effort';
-    public const DURATION_FIELD_NAME         = 'duration';
-    public const START_DATE_FIELD_NAME       = 'start_date';
     public const CAPACITY_FIELD_NAME         = 'capacity';
 
     /**
@@ -44,9 +42,18 @@ class ChartConfigurationFieldRetriever
      */
     private $logger;
 
-    public function __construct(Tracker_FormElementFactory $form_element_field_factory, \Logger $logger)
-    {
+    /**
+     * @var SemanticTimeframeBuilder
+     */
+    private $semantic_timeframe_builder;
+
+    public function __construct(
+        Tracker_FormElementFactory $form_element_field_factory,
+        SemanticTimeframeBuilder $semantic_timeframe_builder,
+        \Logger $logger
+    ) {
         $this->form_element_field_factory = $form_element_field_factory;
+        $this->semantic_timeframe_builder = $semantic_timeframe_builder;
         $this->logger                     = $logger;
     }
 
@@ -64,7 +71,7 @@ class ChartConfigurationFieldRetriever
         if (! $field) {
             $this->logger->info("Tracker " . $tracker->getName() . " doesn't have a capacity field (or field is not properly set)");
             throw new Tracker_FormElement_Chart_Field_Exception(
-                $GLOBALS['Language']->getText('plugin_tracker', 'burndown_missing_capacity_warning')
+                dgettext('tuleap-tracker', 'The tracker doesn\'t have a "capacity" Integer or Float or Computed field or you don\'t have the permission to access it.')
             );
         }
 
@@ -72,21 +79,18 @@ class ChartConfigurationFieldRetriever
     }
 
     /**
-     * @param Tracker_Artifact $artifact
-     * @param PFUser $user
      * @return Tracker_FormElement_Field
+     * @throws Tracker_FormElement_Chart_Field_Exception
      */
-    public function getDurationField(Tracker_Artifact $artifact, PFUser $user)
+    public function getDurationField(Tracker $tracker, PFUser $user)
     {
-        $field = $this->form_element_field_factory->getNumericFieldByNameForUser(
-            $artifact->getTracker(),
-            $user,
-            self::DURATION_FIELD_NAME
-        );
+        $semantic = $this->semantic_timeframe_builder->getSemantic($tracker);
 
-        if (! $field) {
+        $field = $semantic->getDurationField();
+
+        if (! $field || ! $field->userCanRead($user)) {
             throw new Tracker_FormElement_Chart_Field_Exception(
-                $GLOBALS['Language']->getText('plugin_tracker', 'burndown_missing_duration_warning')
+                dgettext('tuleap-tracker', 'The tracker doesn\'t have a "duration" Integer field or you don\'t have the permission to access it.')
             );
         }
 
@@ -94,21 +98,37 @@ class ChartConfigurationFieldRetriever
     }
 
     /**
-     * @param Tracker_Artifact $artifact
-     * @param PFUser $user
-     * @return bool|Tracker_FormElement_Field
+     * @return Tracker_FormElement_Field
+     * @throws Tracker_FormElement_Chart_Field_Exception
      */
-    public function getStartDateField(Tracker_Artifact $artifact, PFUser $user)
+    public function getEndDateField(Tracker $tracker, PFUser $user)
     {
-        $field = $this->form_element_field_factory->getDateFieldByNameForUser(
-            $artifact->getTracker(),
-            $user,
-            self::START_DATE_FIELD_NAME
-        );
+        $semantic = $this->semantic_timeframe_builder->getSemantic($tracker);
 
-        if (! $field) {
+        $field = $semantic->getEndDateField();
+
+        if (! $field || ! $field->userCanRead($user)) {
             throw new Tracker_FormElement_Chart_Field_Exception(
-                $GLOBALS['Language']->getText('plugin_tracker', 'burndown_missing_start_date_warning')
+                dgettext('tuleap-tracker', 'The tracker doesn\'t have a "end_date" Date field or you don\'t have the permission to access it.')
+            );
+        }
+
+        return $field;
+    }
+
+    /**
+     * @return Tracker_FormElement_Field
+     * @throws Tracker_FormElement_Chart_Field_Exception
+     */
+    public function getStartDateField(Tracker $tracker, PFUser $user)
+    {
+        $semantic = $this->semantic_timeframe_builder->getSemantic($tracker);
+
+        $field = $semantic->getStartDateField();
+
+        if (! $field || ! $field->userCanRead($user)) {
+            throw new Tracker_FormElement_Chart_Field_Exception(
+                dgettext('tuleap-tracker', 'The tracker doesn\'t have a "start_date" Date field or you don\'t have the permission to access it.')
             );
         }
 
@@ -131,7 +151,7 @@ class ChartConfigurationFieldRetriever
 
     /**
      * @param Tracker $tracker
-     * @return Boolean
+     * @return bool
      */
     public function doesRemainingEffortFieldExists(Tracker $tracker)
     {
@@ -149,6 +169,17 @@ class ChartConfigurationFieldRetriever
     {
         try {
             $this->getCapacityField($tracker);
+
+            return true;
+        } catch (Tracker_FormElement_Chart_Field_Exception $e) {
+            return false;
+        }
+    }
+
+    public function doesEndDateFieldExist(Tracker $tracker, PFUser $user): bool
+    {
+        try {
+            $this->getEndDateField($tracker, $user);
 
             return true;
         } catch (Tracker_FormElement_Chart_Field_Exception $e) {

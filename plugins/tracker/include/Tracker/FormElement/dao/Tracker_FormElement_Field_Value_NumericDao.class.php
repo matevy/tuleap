@@ -19,18 +19,20 @@
  */
 
 
-abstract class Tracker_FormElement_Field_Value_NumericDao extends Tracker_FormElement_Field_ValueDao {
+abstract class Tracker_FormElement_Field_Value_NumericDao extends Tracker_FormElement_Field_ValueDao
+{
 
     /**
      * Retrieves the value of the given field at the most recent time BEFORE the given timestamp
      *
-     * @param Integer $artifact_id
-     * @param Integer $field_id
-     * @param Integer $timestamp
+     * @param int $artifact_id
+     * @param int $field_id
+     * @param int $timestamp
      *
      * @return Array
      */
-    public function getValueAt($artifact_id, $field_id, $timestamp) {
+    public function getValueAt($artifact_id, $field_id, $timestamp)
+    {
         $artifact_id = $this->da->escapeInt($artifact_id);
         $field_id    = $this->da->escapeInt($field_id);
         $timestamp   = $this->da->escapeInt($timestamp);
@@ -49,11 +51,12 @@ abstract class Tracker_FormElement_Field_Value_NumericDao extends Tracker_FormEl
     /**
      * Return the last value for given artifact/field
      *
-     * @param Integer $artifact_id
-     * @param Integer $field_id
+     * @param int $artifact_id
+     * @param int $field_id
      * @return Array
      */
-    public function getLastValue($artifact_id, $field_id) {
+    public function getLastValue($artifact_id, $field_id)
+    {
         $artifact_id = $this->da->escapeInt($artifact_id);
         $field_id    = $this->da->escapeInt($field_id);
 
@@ -65,5 +68,3 @@ abstract class Tracker_FormElement_Field_Value_NumericDao extends Tracker_FormEl
         return $this->retrieveFirstRow($sql);
     }
 }
-
-?>

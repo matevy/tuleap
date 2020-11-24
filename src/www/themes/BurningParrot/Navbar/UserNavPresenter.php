@@ -38,67 +38,61 @@ class UserNavPresenter
     /** @var PFUser */
     private $current_user;
 
-    /** @var boolean */
+    /** @var bool */
     public $display_new_user_menu_item;
     /**
      * @var URLRedirect
      */
     private $url_redirect;
-    /**
-     * @var GlyphFinder
-     */
-    private $glyph_finder;
 
     public function __construct(
         HTTPRequest $request,
         PFUser $current_user,
         $display_new_user_menu_item,
-        URLRedirect $url_redirect,
-        GlyphFinder $glyph_finder
+        URLRedirect $url_redirect
     ) {
         $this->request                    = $request;
         $this->current_user               = $current_user;
         $this->display_new_user_menu_item = $display_new_user_menu_item;
         $this->url_redirect               = $url_redirect;
-        $this->glyph_finder               = $glyph_finder;
     }
 
-    public function is_user_logged_in()
+    public function is_user_logged_in() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return $this->current_user->isLoggedIn();
     }
 
-    public function user_real_name()
+    public function user_real_name() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return $this->current_user->getRealName();
     }
 
-    public function user_user_name()
+    public function user_user_name() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return $this->current_user->getUserName();
     }
 
-    public function user_has_avatar()
+    public function user_has_avatar() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return $this->current_user->hasAvatar();
     }
 
-    public function user_avatar_url()
+    public function user_avatar_url() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return $this->current_user->getAvatarUrl();
     }
 
-    public function user_avatar_alt()
+    public function user_avatar_alt() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return _('User avatar');
     }
 
-    public function my_account_label()
+    public function my_account_label() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return $GLOBALS['Language']->getText('menu', 'my_personal_page');
     }
 
-    public function login_menu_item()
+    public function login_menu_item() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return new MenuItemPresenter(
             $GLOBALS['Language']->getText('include_menu', 'login'),
@@ -109,7 +103,7 @@ class UserNavPresenter
         );
     }
 
-    public function new_user_menu_item()
+    public function new_user_menu_item() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return new MenuItemPresenter(
             $GLOBALS['Language']->getText('include_menu', 'new_user'),
@@ -120,21 +114,17 @@ class UserNavPresenter
         );
     }
 
-    public function user_history_dropdown()
+    public function user_history_dropdown() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return new DropdownMenuItemPresenter(
             _('History'),
             'fa fa-history',
-            new UserHistoryPresenter(
-                'user-history',
-                $this->current_user,
-                $this->glyph_finder
-            ),
+            new UserHistoryPresenter('user-history', $this->current_user),
             'only-icon without-carret nav-dropdown-right'
         );
     }
 
-    public function user_nav_items()
+    public function user_nav_items() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         return array(
             new MenuItemPresenter(
@@ -147,7 +137,7 @@ class UserNavPresenter
         );
     }
 
-    public function logout_menu_item()
+    public function logout_menu_item() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $logout_csrf = new CSRFSynchronizerToken('logout_action');
         return new LogoutPresenter(

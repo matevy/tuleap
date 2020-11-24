@@ -22,22 +22,18 @@
 /**
  * @group TokenTests
  */
-class AuthenticationTest extends RestBase {
+class AuthenticationTest extends RestBase
+{
 
-    public function testRestrictedGETResourceIsNotReadableByAnonymous()
+    public function testOPTIONSIsReadableByAnonymous()
     {
-        $response = $this->client->get("projects/$this->project_public_id/user_groups")->send();
-
-        $this->assertEquals(401, $response->getStatusCode());
-    }
-
-    public function testOPTIONSIsReadableByAnonymous() {
         $response = $this->client->options('projects')->send();
 
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
-    public function testPublicGETResourceIsReadableByAnonymous() {
+    public function testPublicGETResourceIsReadableByAnonymous()
+    {
         $response = $this->client->get('projects')->send();
 
         $this->assertEquals(200, $response->getStatusCode());

@@ -21,14 +21,16 @@
 /**
  * Build the artifact tree to be presented on the cardwall
  */
-class Cardwall_PaneBoardBuilder {
+class Cardwall_PaneBoardBuilder
+{
 
     private $artifact_factory;
     private $presenter_builder;
     private $dao;
     private $swimline_factory;
 
-    public function __construct(Cardwall_CardInCellPresenterBuilder $presenter_builder, Tracker_ArtifactFactory $artifact_factory, AgileDashboard_BacklogItemDao $dao, Cardwall_SwimlineFactory $swimline_factory) {
+    public function __construct(Cardwall_CardInCellPresenterBuilder $presenter_builder, Tracker_ArtifactFactory $artifact_factory, AgileDashboard_BacklogItemDao $dao, Cardwall_SwimlineFactory $swimline_factory)
+    {
         $this->presenter_builder = $presenter_builder;
         $this->artifact_factory = $artifact_factory;
         $this->dao = $dao;
@@ -44,7 +46,8 @@ class Cardwall_PaneBoardBuilder {
      * @param Cardwall_MappingCollection $mapping_collection
      * @return \Cardwall_Board
      */
-    public function getBoard(PFUser $user, Tracker_Artifact $milestone_artifact, Cardwall_OnTop_Config_ColumnCollection $columns, Cardwall_MappingCollection $mapping_collection) {
+    public function getBoard(PFUser $user, Tracker_Artifact $milestone_artifact, Cardwall_OnTop_Config_ColumnCollection $columns, Cardwall_MappingCollection $mapping_collection)
+    {
         return new Cardwall_Board(
             $this->getSwimlines($user, $milestone_artifact, $columns),
             $columns,
@@ -61,7 +64,8 @@ class Cardwall_PaneBoardBuilder {
      *
      * @return Cardwall_Swimline[]
      */
-    private function getSwimlines(PFUser $user, Tracker_Artifact $milestone_artifact, Cardwall_OnTop_Config_ColumnCollection $columns) {
+    private function getSwimlines(PFUser $user, Tracker_Artifact $milestone_artifact, Cardwall_OnTop_Config_ColumnCollection $columns)
+    {
         $swimlines = array();
         foreach ($this->dao->getBacklogArtifacts($milestone_artifact->getId()) as $row) {
             $swimline_artifact = $this->artifact_factory->getInstanceFromRow($row);
@@ -72,7 +76,8 @@ class Cardwall_PaneBoardBuilder {
         return $swimlines;
     }
 
-    private function buildSwimlineForArtifact(PFUser $user, Tracker_Artifact $artifact, Cardwall_OnTop_Config_ColumnCollection $columns) {
+    private function buildSwimlineForArtifact(PFUser $user, Tracker_Artifact $artifact, Cardwall_OnTop_Config_ColumnCollection $columns)
+    {
         $artifact_presenter = $this->presenter_builder->getCardInCellPresenter($artifact, $artifact->getId());
         $children           = $artifact->getChildrenForUser($user);
 
@@ -84,7 +89,8 @@ class Cardwall_PaneBoardBuilder {
         }
     }
 
-    private function buildSwimlineSolo(Tracker_Artifact $artifact, Cardwall_CardInCellPresenter $artifact_presenter, Cardwall_OnTop_Config_ColumnCollection $columns) {
+    private function buildSwimlineSolo(Tracker_Artifact $artifact, Cardwall_CardInCellPresenter $artifact_presenter, Cardwall_OnTop_Config_ColumnCollection $columns)
+    {
         $cells = $this->swimline_factory->getCells($columns, array($artifact_presenter));
 
         if ($this->areSwimlineCellsEmpty($cells)) {
@@ -97,7 +103,8 @@ class Cardwall_PaneBoardBuilder {
         );
     }
 
-    private function areSwimlineCellsEmpty(array $cells) {
+    private function areSwimlineCellsEmpty(array $cells)
+    {
         foreach ($cells as $cell) {
             if ($cell['cardincell_presenters']) {
                 return false;
@@ -107,14 +114,16 @@ class Cardwall_PaneBoardBuilder {
         return true;
     }
 
-    private function buildSwimline(Cardwall_CardInCellPresenter $artifact_presenter, Cardwall_OnTop_Config_ColumnCollection $columns, array $children_presenters) {
+    private function buildSwimline(Cardwall_CardInCellPresenter $artifact_presenter, Cardwall_OnTop_Config_ColumnCollection $columns, array $children_presenters)
+    {
         return new Cardwall_Swimline(
             $artifact_presenter,
             $this->swimline_factory->getCells($columns, $children_presenters)
         );
     }
 
-    private function buildSwimlineSoloNoMatchingColumns(Cardwall_CardInCellPresenter $artifact_presenter, Tracker_Artifact $artifact, array $cells) {
+    private function buildSwimlineSoloNoMatchingColumns(Cardwall_CardInCellPresenter $artifact_presenter, Tracker_Artifact $artifact, array $cells)
+    {
         return new Cardwall_SwimlineSoloNoMatchingColumns(
             $artifact_presenter,
             $artifact,
@@ -122,5 +131,3 @@ class Cardwall_PaneBoardBuilder {
         );
     }
 }
-
-?>

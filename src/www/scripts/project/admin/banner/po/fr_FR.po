@@ -1,0 +1,32 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Activate banner"
+msgstr "Activer la bannière"
+
+msgid "An error occurred: %{ error_message }"
+msgstr "Une erreur est survenue : %{ error_message }"
+
+msgid "Choose a banner message"
+msgstr "Choisissez un message pour la bannière"
+
+msgid "Message"
+msgstr "Message"
+
+msgid "No banner defined"
+msgstr "Aucune bannière définie"
+
+msgid "Save"
+msgstr "Sauvegarder"
+
+msgid "Your message will be condensed to one line"
+msgstr "Votre message sera condensé en une ligne"

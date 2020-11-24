@@ -22,7 +22,8 @@ namespace Test\Rest;
 
 use Guzzle\Http\Client;
 
-class RequestWrapper {
+class RequestWrapper
+{
 
     public const MAX_RETRY = 3;
     /**
@@ -35,19 +36,22 @@ class RequestWrapper {
      */
     private $cache;
 
-    public function __construct(Client $client, Cache $cache) {
+    public function __construct(Client $client, Cache $cache)
+    {
         $this->client = $client;
         $this->cache  = $cache;
     }
 
-    public function getResponseWithoutAuth($request) {
+    public function getResponseWithoutAuth($request)
+    {
         return $request->send();
     }
 
-    public function getResponseByName($name, $request) {
+    public function getResponseByName($name, $request): \Guzzle\Http\Message\Response
+    {
         $token = $this->cache->getTokenForUser($name);
         if (! $token) {
-            $token = $this->getTokenForUser($name, 'welcome0');
+            $token = $this->getTokenForUser($name, \REST_TestDataBuilder::STANDARD_PASSWORD);
             $this->cache->setTokenForUser($name, $token);
         }
 
@@ -57,7 +61,8 @@ class RequestWrapper {
             ->send();
     }
 
-    public function getResponseByBasicAuth($username, $password, $request) {
+    public function getResponseByBasicAuth($username, $password, $request)
+    {
         $request->setAuth($username, $password);
         return $request->send();
     }
@@ -79,8 +84,9 @@ class RequestWrapper {
                 sleep($wait_for);
             }
             $retry--;
-            $response = $this->client->post('tokens', null, $payload)->send();
-        } while(substr($response->getBody(true), 0, 1) !== '{' && $retry > 0);
+            // need to hardcode the v1 path here when running v2 tests in standalone
+            $response = $this->client->post('/api/v1/tokens', null, $payload)->send();
+        } while (substr($response->getBody(true), 0, 1) !== '{' && $retry > 0);
 
         return $response->json();
     }

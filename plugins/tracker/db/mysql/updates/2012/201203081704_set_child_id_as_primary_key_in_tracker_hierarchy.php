@@ -19,31 +19,34 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201203081704_set_child_id_as_primary_key_in_tracker_hierarchy extends ForgeUpgrade_Bucket {
+class b201203081704_set_child_id_as_primary_key_in_tracker_hierarchy extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Tracker can have only one parent, so child_id can be used as primary key.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE tracker_hierarchy 
                     DROP KEY idx,
                     ADD PRIMARY KEY (child_id)";
-        
+
         $res = $this->db->dbh->exec($sql);
-        
+
         if ($res === false) {
             $error_detail  = implode(', ', $this->db->dbh->errorInfo());
             $error_message = 'An error occured while changing primary key to `child_id` on `tracker_hierarchy`: '.$error_detail;
-            
+
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($error_message);
         }
     }
 }
-?>

@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_UsersTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_UsersTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter */
     private $exporter;
@@ -36,7 +37,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_User
     /** @var Tracker_FormElement_Field */
     private $field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->artifact_xml  = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><artifact />');
         $this->changeset_xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><changeset />');
@@ -58,7 +60,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_User
         $this->exporter = new Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter($user_xml_exporter);
     }
 
-    public function itCreatesFieldChangeNodeWithMultipleValuesInChangesetNode() {
+    public function itCreatesFieldChangeNodeWithMultipleValuesInChangesetNode()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             'o14',
             'b112'
@@ -71,7 +74,6 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_User
             $this->changeset_value
         );
 
-
         $field_change = $this->changeset_xml->field_change;
         $this->assertEqual((string)$field_change['type'], 'open_list');
         $this->assertEqual((string)$field_change['bind'], 'users');
@@ -82,7 +84,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_User
     }
 }
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_UgroupsTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_UgroupsTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter */
     private $exporter;
@@ -99,7 +102,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_Ugro
     /** @var Tracker_FormElement_Field */
     private $field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->artifact_xml  = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><artifact />');
         $this->changeset_xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><changeset />');
@@ -122,7 +126,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_Ugro
         $this->exporter = new Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter($user_xml_exporter);
     }
 
-    public function itCreatesFieldChangeNodeWithMultipleValuesInChangesetNode() {
+    public function itCreatesFieldChangeNodeWithMultipleValuesInChangesetNode()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             'o14',
             'b112'
@@ -135,7 +140,6 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_Ugro
             $this->changeset_value
         );
 
-
         $field_change = $this->changeset_xml->field_change;
         $this->assertEqual((string)$field_change['type'], 'open_list');
         $this->assertEqual((string)$field_change['bind'], 'ugroups');
@@ -146,7 +150,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_Ugro
     }
 }
 
-class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_StaticTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_StaticTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter */
     private $exporter;
@@ -163,7 +168,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_Stat
     /** @var Tracker_FormElement_Field */
     private $field;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $user_xml_exporter = new UserXMLExporter(mock('UserManager'), mock('UserXMLExportedCollection'));
@@ -185,7 +191,8 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_Stat
         stub($this->changeset_value)->getField()->returns($this->field);
     }
 
-    public function itCreatesFieldChangeNodeWithMultipleValuesInChangesetNode() {
+    public function itCreatesFieldChangeNodeWithMultipleValuesInChangesetNode()
+    {
         stub($this->changeset_value)->getValue()->returns(array(
             'o14',
             'b112'
@@ -197,7 +204,6 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter_Stat
             mock('Tracker_Artifact'),
             $this->changeset_value
         );
-
 
         $field_change = $this->changeset_xml->field_change;
         $this->assertEqual((string)$field_change['type'], 'open_list');

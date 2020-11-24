@@ -24,19 +24,23 @@ namespace Tuleap\ProFTPd\Directory;
 use DirectoryIterator;
 use UnexpectedValueException;
 
-class DirectoryParser {
+class DirectoryParser
+{
 
     private $base_dir;
 
-    public function __construct($base_dir) {
+    public function __construct($base_dir)
+    {
         $this->base_dir = $base_dir;
     }
 
-    public function isFile($path) {
+    public function isFile($path)
+    {
         return is_file($this->getFullPath($path));
     }
 
-    public function getFullPath($path) {
+    public function getFullPath($path)
+    {
         return $this->base_dir . DIRECTORY_SEPARATOR . $path;
     }
 
@@ -47,7 +51,8 @@ class DirectoryParser {
      *
      * @return DirectoryItemCollection
      */
-    public function parseDirectory($path, $remove_parent_directory_listing) {
+    public function parseDirectory($path, $remove_parent_directory_listing)
+    {
         $items = array(
             'folders' => array(),
             'files'   => array(),
@@ -80,7 +85,8 @@ class DirectoryParser {
         return $this->createNaturalAlphabeticallyItemsCollection($items);
     }
 
-    private function addItemInRightSection(array $items, DirectoryItem $current_item, $file_info) {
+    private function addItemInRightSection(array $items, DirectoryItem $current_item, $file_info)
+    {
         if ($file_info->isDir()) {
             $items['folders'][$file_info->getFilename()] = $current_item;
         } else {
@@ -90,9 +96,10 @@ class DirectoryParser {
         return $items;
     }
 
-    private function createNaturalAlphabeticallyItemsCollection(array $items) {
+    private function createNaturalAlphabeticallyItemsCollection(array $items)
+    {
         uksort($items['folders'], "strnatcmp");
-        uksort($items['files'],  "strnatcmp");
+        uksort($items['files'], "strnatcmp");
 
         $folders = array_values($items['folders']);
         $files   = array_values($items['files']);
@@ -100,7 +107,8 @@ class DirectoryParser {
         return new DirectoryItemCollection($folders, $files);
     }
 
-    private function getDirectoryOperator($path) {
+    private function getDirectoryOperator($path)
+    {
         try {
             return new DirectoryIterator($path);
         } catch (UnexpectedValueException $e) {
@@ -108,7 +116,8 @@ class DirectoryParser {
         }
     }
 
-    private function createForbiddenDirectoryContents() {
+    private function createForbiddenDirectoryContents()
+    {
         $parent_item = new DirectoryItem('..', 'dir', null, null);
 
         $directory_contents = new DirectoryItemCollection(array($parent_item), array());

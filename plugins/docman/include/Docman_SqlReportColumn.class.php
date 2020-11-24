@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2007
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -22,39 +22,42 @@
 
 require_once('Docman_MetadataSqlQueryChunk.class.php');
 
-class Docman_SqlReportColumnFactory {
+class Docman_SqlReportColumnFactory
+{
 
-    function &getFromColumn($c) {
+    function &getFromColumn($c)
+    {
         $obj = null;
-        switch(strtolower(get_class($c))) {
-        case 'docman_reportcolumnlocation':
-            // No sort on this column
-            break;
-        default:
-            $obj = new Docman_SqlReportColumn($c);
+        switch (strtolower(get_class($c))) {
+            case 'docman_reportcolumnlocation':
+                // No sort on this column
+                break;
+            default:
+                $obj = new Docman_SqlReportColumn($c);
         }
         return $obj;
     }
 }
 
-class Docman_SqlReportColumn 
-extends Docman_MetadataSqlQueryChunk {
+class Docman_SqlReportColumn extends Docman_MetadataSqlQueryChunk
+{
     var $column;
 
-    function __construct($column) {
+    function __construct($column)
+    {
         $this->column = $column;
         parent::__construct($column->md);
     }
 
-    function getOrderBy() {
+    function getOrderBy()
+    {
         $sql = '';
-        
+
         $sort = $this->column->getSort();
-        if($sort !== null) {
-            if($sort == PLUGIN_DOCMAN_SORT_ASC) {
+        if ($sort !== null) {
+            if ($sort == PLUGIN_DOCMAN_SORT_ASC) {
                 $sql = $this->field.' ASC';
-            }
-            else {
+            } else {
                 $sql = $this->field.' DESC';
             }
         }
@@ -62,5 +65,3 @@ extends Docman_MetadataSqlQueryChunk {
         return $sql;
     }
 }
-
-?>

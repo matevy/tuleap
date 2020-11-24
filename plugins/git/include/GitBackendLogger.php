@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class GitBackendLogger extends TruncateLevelLogger {
+class GitBackendLogger extends TruncateLevelLogger
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct(
             new BackendLogger(ForgeConfig::get('codendi_log') .'/git_syslog'),
             ForgeConfig::get('sys_logger_level')

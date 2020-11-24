@@ -321,6 +321,28 @@ CREATE TABLE frs_package (
   KEY idx_package_group_id (group_id)
 );
 
+CREATE TABLE frs_download_agreement (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    project_id int(11) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT,
+    PRIMARY KEY  (id),
+    INDEX idx_project_id(project_id, id)
+);
+
+CREATE TABLE frs_package_download_agreement (
+    package_id INT(11) NOT NULL,
+    agreement_id INT(11) NOT NULL,
+    PRIMARY KEY (package_id, agreement_id),
+    INDEX idx_reverse(agreement_id, package_id)
+);
+
+CREATE TABLE frs_download_agreement_default (
+    project_id int(11) NOT NULL,
+    agreement_id INT(11) NOT NULL,
+    PRIMARY KEY (project_id)
+);
+
 #
 # Table structure for table 'frs_processor'
 #
@@ -520,6 +542,11 @@ CREATE TABLE project_webhook_log (
   created_on INT(11) NOT NULL,
   status TEXT NOT NULL,
   INDEX idx_webhook_id(webhook_id)
+);
+
+CREATE TABLE project_template_xml (
+    id INT(11) UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    template_name VARCHAR(255)
 );
 
 CREATE TABLE svn_accessfile_history (
@@ -900,15 +927,16 @@ CREATE TABLE user_lost_password (
   INDEX idx_user_id (user_id)
 );
 
-
 CREATE TABLE user_access_key (
   id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   user_id INT(11) NOT NULL,
   verifier VARCHAR(255) NOT NULL,
   creation_date INT(11) UNSIGNED NOT NULL,
+  expiration_date INT(11) UNSIGNED DEFAULT NULL,
   description TEXT,
   last_usage INT(11) UNSIGNED DEFAULT NULL,
-  last_ip VARCHAR(45) DEFAULT NULL
+  last_ip VARCHAR(45) DEFAULT NULL,
+  INDEX idx_expiration_date (expiration_date)
 );
 
 #
@@ -1117,20 +1145,22 @@ CREATE TABLE svn_token (
 # Service table
 #
 CREATE TABLE service (
-	service_id int(11) NOT NULL auto_increment,
-	group_id int(11) NOT NULL,
-	label text,
-	description text,
-	short_name text,
-	link text,
-	is_active int(11) DEFAULT 0 NOT NULL,
-	is_used int(11) DEFAULT 0 NOT NULL,
-        scope text NOT NULL,
-        rank int(11) NOT NULL default '0',
-        location ENUM( 'master', 'same', 'satellite' ) NOT NULL DEFAULT 'master', -- distributed architecture: to be deleted (but requires to check all plugins)
-        server_id INT( 11 ) UNSIGNED NULL,  -- distributed architecture: to be deleted (but requires to check all plugins)
-        is_in_iframe TINYINT(1) NOT NULL DEFAULT '0',
-	primary key (service_id),
+    service_id int(11) NOT NULL auto_increment,
+    group_id int(11) NOT NULL,
+    label text,
+    description text,
+    short_name text,
+    link text,
+    is_active int(11) DEFAULT 0 NOT NULL,
+    is_used int(11) DEFAULT 0 NOT NULL,
+    scope text NOT NULL,
+    rank int(11) NOT NULL default '0',
+    location ENUM( 'master', 'same', 'satellite' ) NOT NULL DEFAULT 'master', -- distributed architecture: to be deleted (but requires to check all plugins)
+    server_id INT( 11 ) UNSIGNED NULL,  -- distributed architecture: to be deleted (but requires to check all plugins)
+    is_in_iframe TINYINT(1) NOT NULL DEFAULT '0',
+    is_in_new_tab BOOL NOT NULL DEFAULT false,
+    icon VARCHAR(255) NOT NULL DEFAULT '',
+    primary key (service_id),
     key idx_group_id(group_id),
     INDEX idx_short_name (short_name(10))
 );
@@ -1492,7 +1522,8 @@ CREATE TABLE IF NOT EXISTS system_event (
   owner VARCHAR(255) NOT NULL default 'root',
   log TEXT,
   PRIMARY KEY (id),
-  INDEX type_idx (type(20))
+  INDEX type_idx (type(20)),
+  INDEX idx_status (status)
 );
 
 CREATE TABLE system_events_followers (
@@ -1649,6 +1680,11 @@ CREATE TABLE project_dashboards (
   INDEX idx(project_id, name(5))
 );
 
+DROP TABLE IF EXISTS project_dashboards_disabled_widgets;
+CREATE TABLE project_dashboards_disabled_widgets (
+    name VARCHAR(255) PRIMARY KEY
+) ENGINE=InnoDB;
+
 DROP TABLE IF EXISTS dashboards_lines;
 CREATE TABLE dashboards_lines (
   id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -1691,6 +1727,18 @@ CREATE TABLE project_label (
 DROP TABLE IF EXISTS project_membership_delegation;
 CREATE TABLE project_membership_delegation (
     ugroup_id INT(11) NOT NULL PRIMARY KEY
+);
+
+DROP TABLE IF EXISTS project_ugroup_synchronized_membership;
+CREATE TABLE project_ugroup_synchronized_membership (
+    project_id INT(11) NOT NULL PRIMARY KEY,
+    is_activated TINYINT(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS project_banner;
+CREATE TABLE project_banner (
+    project_id INT(11) NOT NULL PRIMARY KEY,
+    message text
 );
 #
 # EOF

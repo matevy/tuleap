@@ -19,26 +19,29 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-require_once('Widget_ProjectLatestCommits.class.php');
-require_once('www/svn/svn_utils.php');
+require_once __DIR__ . '/../../www/svn/svn_utils.php';
 
 /**
 * Widget_ProjectLatestSvnCommits
 */
-class Widget_ProjectLatestSvnCommits extends Widget_ProjectLatestCommits {
+class Widget_ProjectLatestSvnCommits extends Widget_ProjectLatestCommits
+{
 
     public function __construct()
     {
         parent::__construct('projectlatestsvncommits', 'svn_get_revisions');
     }
 
-    function getTitle() {
-        return $GLOBALS['Language']->getText('include_project_home','latest_svn_commit');
+    function getTitle()
+    {
+        return $GLOBALS['Language']->getText('include_project_home', 'latest_svn_commit');
     }
-    function _getLinkToCommit($data) {
+    function _getLinkToCommit($data)
+    {
         return '/svn/?func=detailrevision&amp;group_id='.$this->group_id.'&amp;commit_id='.$data['commit_id'];
     }
-    function _getLinkToMore() {
+    function _getLinkToMore()
+    {
         return '/svn/?func=browse&group_id='.$this->group_id;
     }
 
@@ -47,11 +50,13 @@ class Widget_ProjectLatestSvnCommits extends Widget_ProjectLatestCommits {
         return $project->usesSvn();
     }
 
-    function getDescription() {
-        return $GLOBALS['Language']->getText('widget_description_project_latest_svn_commits','description');
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('widget_description_project_latest_svn_commits', 'description');
     }
 
-    function getLatestRevisions() {
+    function getLatestRevisions()
+    {
         if (! $this->latest_revisions) {
             $pm = ProjectManager::instance();
             $project = $pm->getProject($this->group_id);

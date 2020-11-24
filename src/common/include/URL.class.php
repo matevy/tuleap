@@ -1,39 +1,44 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class URL {
+class URL
+{
 
     /**
     * @see http://www.ietf.org/rfc/rfc2396.txt Annex B
     */
-    /* static */ function parse($url) {
+    /* static */ function parse($url)
+    {
         $components = array();
-        preg_match('`^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?`i',$url, $components);
+        preg_match('`^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?`i', $url, $components);
         return $components;
     }
-    /* static */ function getHost($url) {
+    /* static */ function getHost($url)
+    {
         $components = URL::parse($url);
         return $components[4];
     }
 
-    static function getScheme($url) {
+    static function getScheme($url)
+    {
         $components = URL::parse($url);
         return $components[2];
     }
@@ -41,13 +46,14 @@ class URL {
      *
      * Retreives the project name from svn request uri
      * @param String $uri
-     * 
+     *
      * @return String
      */
-    function getGroupNameFromSVNUrl($uri) {
+    function getGroupNameFromSVNUrl($uri)
+    {
         $pieces = explode('&', $uri);
-        foreach($pieces as $piece) {
-            if(strpos($piece, 'root=') !== false) {
+        foreach ($pieces as $piece) {
+            if (strpos($piece, 'root=') !== false) {
                 $parts = $piece;
                 break;
             }
@@ -62,7 +68,8 @@ class URL {
     /**
      * Wrapper for Rule_ProjectName
      */
-    function getProjectNameRule() {
+    function getProjectNameRule()
+    {
         return new Rule_ProjectName();
     }
 
@@ -71,10 +78,10 @@ class URL {
         $request = HTTPRequest::instance();
         $req_uri = '/'.trim($url, "/");
         // /projects/ and /viewvc/
-        if ((strpos($req_uri,'/projects/') === 0) || (strpos($req_uri,'/viewvc.php/') !== false)) {
-            if (strpos($req_uri,'/viewvc.php/') !== false) {
+        if ((strpos($req_uri, '/projects/') === 0) || (strpos($req_uri, '/viewvc.php/') !== false)) {
+            if (strpos($req_uri, '/viewvc.php/') !== false) {
                 $this_proj_name = $this->getGroupNameFromSVNUrl($req_uri);
-            } else if (strpos($req_uri,'/projects/') !== false) {
+            } elseif (strpos($req_uri, '/projects/') !== false) {
                 $pieces = explode("/", $url);
                 $this_proj_name=$pieces[2];
             }
@@ -92,7 +99,7 @@ class URL {
             $group_id=$group_id['group_id'];
         }
         // Forum and news. Each published news is a special forum of project 'news'
-        if (strpos($req_uri,'/forum/') === 0) {
+        if (strpos($req_uri, '/forum/') === 0) {
             if (array_key_exists('forum_id', $_REQUEST) && $_REQUEST['forum_id']) {
                 // Get corresponding project
                 $dao = $this->getForumDao();
@@ -120,16 +127,9 @@ class URL {
                 }
             }
         }
-        // File downloads. It might be a good idea to restrict access to shownotes.php too...
-        if (strpos($req_uri,'/file/download.php') === 0) {
-            $url = parse_url($req_uri);
-            if ($url !== false) {
-                [$group_id,] = explode('/', str_replace('/file/download.php/', '', $url['path']));
-            }
-        }
 
         // Artifact attachment download...
-        if (strpos($req_uri,'/tracker/download.php') === 0) {
+        if (strpos($req_uri, '/tracker/download.php') === 0) {
             if (isset($_REQUEST['artifact_id'])) {
                 $dao = $this->getArtifactDao();
                 $result = $dao->searchArtifactId($_REQUEST['artifact_id']);
@@ -165,20 +165,23 @@ class URL {
         return $group_id['group_id'];
     }
 
-    function getProjectDao() {
+    function getProjectDao()
+    {
         return new ProjectDao(CodendiDataAccess::instance());
     }
-    
-    function getForumDao() {
+
+    function getForumDao()
+    {
         return new ForumDao(CodendiDataAccess::instance());
     }
-    
-    function getNewsBytesDao() {
+
+    function getNewsBytesDao()
+    {
         return new NewsBytesDao(CodendiDataAccess::instance());
     }
-    
-     function getArtifactDao() {
+
+    function getArtifactDao()
+    {
         return new ArtifactDao(CodendiDataAccess::instance());
     }
 }
-?>

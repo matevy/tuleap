@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ArtifactAttachmentXMLLinker implements ArtifactAttachmentXMLExporter {
+class ArtifactAttachmentXMLLinker implements ArtifactAttachmentXMLExporter
+{
 
     /** @var ArtifactXMLNodeHelper */
     private $node_helper;
@@ -26,14 +27,16 @@ class ArtifactAttachmentXMLLinker implements ArtifactAttachmentXMLExporter {
     /** @var ArtifactXMLExporterDao */
     private $dao;
 
-    public function __construct(ArtifactXMLNodeHelper $node_helper, ArtifactXMLExporterDao $dao) {
+    public function __construct(ArtifactXMLNodeHelper $node_helper, ArtifactXMLExporterDao $dao)
+    {
         $this->node_helper = $node_helper;
         $this->dao         = $dao;
     }
 
-    public function addFilesToArtifact(DOMElement $artifact_node, $artifact_type_id, $artifact_id) {
+    public function addFilesToArtifact(DOMElement $artifact_node, $artifact_type_id, $artifact_id)
+    {
         $dar = $this->dao->searchFilesForArtifact($artifact_id);
-        foreach($dar as $row) {
+        foreach ($dar as $row) {
             $xml_file_id     = ArtifactAttachmentFieldXMLExporter::XML_FILE_PREFIX.$row['id'];
 
             $file = $this->node_helper->createElement('file');
@@ -47,13 +50,15 @@ class ArtifactAttachmentXMLLinker implements ArtifactAttachmentXMLExporter {
         }
     }
 
-    private function getPathRelativeToTv3RootPath($artifact_type_id, $attachment_id) {
+    private function getPathRelativeToTv3RootPath($artifact_type_id, $attachment_id)
+    {
         $full_path = $this->getFilePathOnServer($artifact_type_id, $attachment_id);
 
         return dirname($full_path) . DIRECTORY_SEPARATOR . basename($full_path);
     }
 
-    private function getFilePathOnServer($artifact_type_id, $attachment_id) {
+    private function getFilePathOnServer($artifact_type_id, $attachment_id)
+    {
         return ArtifactFile::getPathOnFilesystemByArtifactTypeId($artifact_type_id, $attachment_id);
     }
 }

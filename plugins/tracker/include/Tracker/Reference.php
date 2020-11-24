@@ -18,12 +18,14 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Reference extends Reference {
+class Tracker_Reference extends Reference
+{
 
     /**
      * @return Reference
      */
-    public function __construct(Tracker $tracker, $keyword) {
+    public function __construct(Tracker $tracker, $keyword)
+    {
         $base_id    = 0;
         $visibility = 'P';
         $is_used    = 1;
@@ -31,7 +33,7 @@ class Tracker_Reference extends Reference {
         parent::__construct(
             $base_id,
             $keyword,
-            $GLOBALS['Language']->getText('project_reference','reference_art_desc_key') .' - '. $tracker->getName(),
+            $GLOBALS['Language']->getText('project_reference', 'reference_art_desc_key') .' - '. $tracker->getName(),
             TRACKER_BASE_URL.'/?aid=$1&group_id=$group_id',
             $visibility,
             trackerPlugin::SERVICE_SHORTNAME,
@@ -40,5 +42,4 @@ class Tracker_Reference extends Reference {
             $tracker->getGroupId()
         );
     }
-
 }

@@ -19,14 +19,16 @@
 
 require_once 'XMLDocmanImport.class.php';
 
-class Docman_ImportFromDocmanV1 {
+class Docman_ImportFromDocmanV1
+{
 
     private $temporary_directory;
     private $wsdl_url;
     private $user_login;
     private $user_password;
 
-    public function __construct($wsdl_url, $login, $password) {
+    public function __construct($wsdl_url, $login, $password)
+    {
         $this->temporary_directory = tempnam(ForgeConfig::get('tmp_dir'), 'docmanv1-docmanv2-');
         $this->wsdl_url            = $wsdl_url;
         $this->user_login          = $login;
@@ -35,7 +37,8 @@ class Docman_ImportFromDocmanV1 {
         $xml_security->enableExternalLoadOfEntities();
     }
 
-    public function migrate(Project $project) {
+    public function migrate(Project $project)
+    {
         $this->createTemporaryDirectory();
         $this->dumpDocmanV1($project);
         $folder_id = $this->createTarget($project);
@@ -43,7 +46,8 @@ class Docman_ImportFromDocmanV1 {
         $this->removeTemporaryDirectory();
     }
 
-    private function dumpDocmanV1(Project $project) {
+    private function dumpDocmanV1(Project $project)
+    {
         $XMLExport = new DocmanV1_XMLExport(
             $project,
             $this->temporary_directory,
@@ -53,7 +57,8 @@ class Docman_ImportFromDocmanV1 {
         $XMLExport->dumpPackage();
     }
 
-    private function createTarget(Project $project) {
+    private function createTarget(Project $project)
+    {
         $client = new SoapClient($this->wsdl_url);
 
         // Establish connection to the server
@@ -94,7 +99,8 @@ class Docman_ImportFromDocmanV1 {
         );
     }
 
-    private function importDump(Project $project, $folder_id) {
+    private function importDump(Project $project, $folder_id)
+    {
         $logger = new WrapperLogger(new Log_ConsoleLogger(), 'Import Docman');
         $xml_import = new XMLDocmanImport(
             'import:',
@@ -113,16 +119,16 @@ class Docman_ImportFromDocmanV1 {
         $xml_import->importPath($this->temporary_directory, $folder_id, '/'.DocmanV1_XMLExportData::ROOT_FOLDER_NAME);
     }
 
-    private function createTemporaryDirectory() {
+    private function createTemporaryDirectory()
+    {
         unlink($this->temporary_directory);
         mkdir($this->temporary_directory, 0700);
     }
 
-    private function removeTemporaryDirectory() {
+    private function removeTemporaryDirectory()
+    {
         $system = Backend::instance(Backend::SYSTEM);
         $system->recurseDeleteInDir($this->temporary_directory);
         rmdir($this->temporary_directory);
     }
-
-
 }

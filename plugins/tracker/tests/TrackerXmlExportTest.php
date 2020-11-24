@@ -22,7 +22,8 @@ use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenter;
 
 require_once 'bootstrap.php';
 
-class TrackerXmlExportTest extends TuleapTestCase {
+class TrackerXmlExportTest extends TuleapTestCase
+{
 
     private $tracker1;
     private $tracker2;
@@ -35,7 +36,8 @@ class TrackerXmlExportTest extends TuleapTestCase {
      */
     private $tracker_artifact_XMLexport;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->tracker1  = stub('Tracker')->exportToXML()->returns('<tracker>');
@@ -53,13 +55,14 @@ class TrackerXmlExportTest extends TuleapTestCase {
             mock('XML_RNGValidator'),
             $this->tracker_artifact_XMLexport,
             mock('UserXMLExporter'),
-            mock('EventManager'),
+            \Mockery::spy(\EventManager::class),
             $this->nature_presenter_factory,
             $this->artifact_link_dao
         );
     }
 
-    public function testExportToXml() {
+    public function testExportToXml()
+    {
         $xml_content = new SimpleXMLElement('<project/>');
         $project     = aMockProject()->withId(123)->build();
 
@@ -82,7 +85,8 @@ class TrackerXmlExportTest extends TuleapTestCase {
         );
     }
 
-    public function testExportToXmlDoNotIncludeDeletedTrackers() {
+    public function testExportToXmlDoNotIncludeDeletedTrackers()
+    {
         $xml_content = new SimpleXMLElement('<project/>');
         $project     = aMockProject()->withId(123)->build();
 
@@ -105,7 +109,8 @@ class TrackerXmlExportTest extends TuleapTestCase {
         );
     }
 
-    public function testExportSingleTracker() {
+    public function testExportSingleTracker()
+    {
         $xml_content = new SimpleXMLElement('<project/>');
         $tracker_id  = 456;
         $user        = mock('PFUser');

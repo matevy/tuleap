@@ -17,7 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
-class Tracker_Artifact_Presenter_FollowUpCommentsPresenter {
+class Tracker_Artifact_Presenter_FollowUpCommentsPresenter
+{
 
     /** @var PFUser */
     protected $user;
@@ -28,11 +29,13 @@ class Tracker_Artifact_Presenter_FollowUpCommentsPresenter {
     /**
      * @param Tracker_Artifact_Followup_Item[] $followups
      */
-    public function __construct(array $followups) {
+    public function __construct(array $followups)
+    {
         $this->followups = $this->buildFollowUpsPresenters($followups);
     }
 
-    public function no_comment() {
+    public function no_comment()
+    {
         return $GLOBALS['Language']->getText('plugin_tracker_modal_artifact', 'no_comment');
     }
 

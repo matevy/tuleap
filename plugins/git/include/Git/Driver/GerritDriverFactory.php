@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014-2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,15 +19,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\Git\Driver\Gerrit\GerritUnsupportedVersionDriver;
+
 /**
  * I build Git_Driver_Gerrit objects
  */
-class Git_Driver_Gerrit_GerritDriverFactory {
+class Git_Driver_Gerrit_GerritDriverFactory
+{
 
     /** @var Logger */
     private $logger;
 
-    public function __construct(Logger $logger) {
+    public function __construct(Logger $logger)
+    {
         $this->logger = $logger;
     }
 
@@ -38,7 +42,8 @@ class Git_Driver_Gerrit_GerritDriverFactory {
      *
      * @return Git_Driver_Gerrit
      */
-    public function getDriver(Git_RemoteServer_GerritServer $server) {
+    public function getDriver(Git_RemoteServer_GerritServer $server)
+    {
         if ($server->getGerritVersion() === Git_RemoteServer_GerritServer::GERRIT_VERSION_2_8_PLUS) {
             require_once '/usr/share/php/Guzzle/autoload.php';
             return new Git_Driver_GerritREST(
@@ -48,6 +53,6 @@ class Git_Driver_Gerrit_GerritDriverFactory {
             );
         }
 
-        return new Git_Driver_GerritLegacy(new Git_Driver_Gerrit_RemoteSSHCommand($this->logger), $this->logger);
+        return new GerritUnsupportedVersionDriver();
     }
 }

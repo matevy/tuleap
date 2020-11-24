@@ -25,11 +25,13 @@
 
 require_once(dirname(__FILE__).'/../../include/Planning/Planning.class.php');
 
-function aPlanning() {
+function aPlanning()
+{
     return new Test_Planning_Builder();
 }
 
-class Test_Planning_Builder {
+class Test_Planning_Builder
+{
     private $id                 = '1';
     private $name               = 'Test Planning';
     private $backlog_title      = 'Release Backlog';
@@ -40,61 +42,69 @@ class Test_Planning_Builder {
     private $backlog_tracker_ids = array();
     private $backlog_trackers = array();
 
-    public function withId($id) {
+    public function withId($id)
+    {
         $this->id = $id;
         return $this;
     }
-    
-    public function withName($name) {
+
+    public function withName($name)
+    {
         $this->name = $name;
         return $this;
     }
-    
-    public function withBacklogTrackerId($backlog_tracker_id) {
+
+    public function withBacklogTrackerId($backlog_tracker_id)
+    {
         $this->backlog_tracker_ids[] = $backlog_tracker_id;
         return $this;
     }
 
-    public function withGroupId($group_id) {
+    public function withGroupId($group_id)
+    {
         $this->group_id = $group_id;
         return $this;
     }
-    
-    public function withPlanningTrackerId($planning_tracker_id) {
+
+    public function withPlanningTrackerId($planning_tracker_id)
+    {
         $this->planning_tracker_id = $planning_tracker_id;
         return $this;
     }
-    
-    public function withPlanningTracker($tracker) {
+
+    public function withPlanningTracker($tracker)
+    {
         $this->planning_tracker    = $tracker;
         $this->planning_tracker_id = $tracker->getId();
         return $this;
     }
 
-    public function withBacklogTracker($backlog_tracker) {
+    public function withBacklogTracker($backlog_tracker)
+    {
         $this->backlog_tracker_ids[] = $backlog_tracker->getId();
         $this->backlog_trackers[]    = $backlog_tracker;
         return $this;
     }
 
-    public function build() {
-        $planning = new Planning($this->id,
-                                 $this->name,
-                                 $this->group_id,
-                                 $this->backlog_title,
-                                 $this->plan_title,
-                                 $this->backlog_tracker_ids,
-                                 $this->planning_tracker_id);
-        
+    public function build()
+    {
+        $planning = new Planning(
+            $this->id,
+            $this->name,
+            $this->group_id,
+            $this->backlog_title,
+            $this->plan_title,
+            $this->backlog_tracker_ids,
+            $this->planning_tracker_id
+        );
+
         if ($this->planning_tracker) {
             $planning->setPlanningTracker($this->planning_tracker);
         }
         if ($this->backlog_trackers) {
             $planning->setBacklogTrackers($this->backlog_trackers);
         }
-        
+
         return $planning;
     }
 }
-
-?>

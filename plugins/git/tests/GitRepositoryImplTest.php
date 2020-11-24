@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,15 +18,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 use Tuleap\Git\Gitolite\GitoliteAccessURLGenerator;
 
 require_once 'bootstrap.php';
 
-abstract class GitRepositoryImplTest extends TuleapTestCase {
+class GitRepositoryImplTest extends TuleapTestCase
+{
 
-
-    public function test_isNameValid() {
+    public function test_isNameValid()
+    {
         $creator = $this->newCreator();
         $this->assertFalse($creator->isNameValid(''));
         $this->assertFalse($creator->isNameValid('/'));
@@ -45,21 +44,22 @@ abstract class GitRepositoryImplTest extends TuleapTestCase {
         $this->assertFalse($creator->isNameValid('u/toto'));
         $this->assertTrue($creator->isNameValid('jambon/beurre'));
     }
-    
-    public function itAllowsLettersNumbersDotsUnderscoresSlashesAndDashes() {
+
+    public function itAllowsLettersNumbersDotsUnderscoresSlashesAndDashes()
+    {
         $creator = $this->newCreator();
         $this->assertEqual($creator->getAllowedCharsInNamePattern(), 'a-zA-Z0-9/_.-');
     }
-    
-    /**
-     * @return GitRepositoryCreator 
-     */
-    abstract function newCreator();
- 
-}
 
-class Git_Backend_Gitolite_isNameValidTest extends GitRepositoryImplTest {
-    public function newCreator() {
-        return new Git_Backend_Gitolite(mock('Git_GitoliteDriver'), mock(GitoliteAccessURLGenerator::class), mock('Logger'));
+    /**
+     * @return GitRepositoryCreator
+     */
+    public function newCreator()
+    {
+        return new Git_Backend_Gitolite(
+            \Mockery::spy(\Git_GitoliteDriver::class),
+            mock(GitoliteAccessURLGenerator::class),
+            \Mockery::spy(\Logger::class)
+        );
     }
 }

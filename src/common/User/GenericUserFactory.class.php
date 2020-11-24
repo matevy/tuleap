@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2013. All rights reserved
  *
@@ -18,12 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
-require_once 'GenericUser.class.php';
-require_once 'UserManager.class.php';
-require_once 'common/dao/GenericUserDao.class.php';
 
 
-class GenericUserFactory {
+class GenericUserFactory
+{
     public const CONFIG_KEY_SUFFIX = 'sys_generic_user_suffix';
 
     /**
@@ -42,7 +39,8 @@ class GenericUserFactory {
      */
     private $project_manager;
 
-    public function __construct(UserManager $userManager, ProjectManager $project_manager, GenericUserDao $dao) {
+    public function __construct(UserManager $userManager, ProjectManager $project_manager, GenericUserDao $dao)
+    {
         $this->user_manager = $userManager;
         $this->project_manager = $project_manager;
         $this->dao = $dao;
@@ -51,7 +49,8 @@ class GenericUserFactory {
     /**
      * @return GenericUser
      */
-    public function update(GenericUser $user) {
+    public function update(GenericUser $user)
+    {
         $this->user_manager->updateDb($user);
 
         return $user;
@@ -62,8 +61,9 @@ class GenericUserFactory {
      * @param int $group_id
      * @return GenericUser|null
      */
-    public function fetch($group_id) {
-        if ($row = $this->dao->fetch($group_id)->getRow()){
+    public function fetch($group_id)
+    {
+        if ($row = $this->dao->fetch($group_id)->getRow()) {
             $pfuser = $this->user_manager->getUserById($row['user_id']);
 
             $generic_user = $this->generateGenericUser($group_id, $pfuser);
@@ -80,7 +80,8 @@ class GenericUserFactory {
      * @param string $password
      * @return GenericUser
      */
-    public function create($group_id, $password) {
+    public function create($group_id, $password)
+    {
         $generic_user = $this->generateGenericUser($group_id, new PFUser());
         $generic_user->setPassword($password);
 
@@ -94,13 +95,14 @@ class GenericUserFactory {
      * @param int $group_id
      * @return GenericUser
      */
-    private function generateGenericUser($group_id, PFUser $user) {
+    private function generateGenericUser($group_id, PFUser $user)
+    {
         $project = $this->project_manager->getProject($group_id);
         return $this->getGenericUser($project, $user);
     }
 
-    public function getGenericUser(Project $project, PFUser $user) {
+    public function getGenericUser(Project $project, PFUser $user)
+    {
         return new GenericUser($project, $user, ForgeConfig::get(self::CONFIG_KEY_SUFFIX));
     }
 }
-?>

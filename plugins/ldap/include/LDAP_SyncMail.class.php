@@ -20,7 +20,8 @@
  */
 
 
-class LDAP_SyncMail {
+class LDAP_SyncMail
+{
 
     private $projectManager;
     private $logger;
@@ -38,7 +39,8 @@ class LDAP_SyncMail {
      *
      * @return Array
      */
-    private function getProjectsForUser(PFUser $user) {
+    private function getProjectsForUser(PFUser $user)
+    {
         return $this->projectManager->getActiveProjectsForUser($user);
     }
 
@@ -49,14 +51,15 @@ class LDAP_SyncMail {
      *
      * @return Array
      */
-    public function getNotificationRecipients(PFUser $user) {
+    public function getNotificationRecipients(PFUser $user)
+    {
         $projectList = $this->getProjectsForUser($user);
         $recipient   = array();
         foreach ($projectList as $project) {
             $projectRecipient = array();
             $projectAdmins    = $project->getAdmins();
             $unixProjectName      = $project->getUnixName();
-            foreach($projectAdmins as $admin) {
+            foreach ($projectAdmins as $admin) {
                 $projectRecipient[$admin->getId()] = $admin->getEmail();
             }
             $recipient[$unixProjectName] = $projectRecipient;
@@ -73,9 +76,10 @@ class LDAP_SyncMail {
      * @param String  $subject          The subject of the notification mail
      * @param String  $body             The content of the notification mail
      *
-     * @return boolean
+     * @return bool
      */
-    public function notifyProjectsAdmins($recipients, $unixProjectName, $user, $subject, $body) {
+    public function notifyProjectsAdmins($recipients, $unixProjectName, $user, $subject, $body)
+    {
         $notificationStatus = true;
         try {
             $mail = $this->prepareMail($recipients, $unixProjectName, $subject, $body);
@@ -94,13 +98,14 @@ class LDAP_SyncMail {
      * Prepare the mail to be sent after daily user sync
      *
      * @param String  $recipients       List of project administrators emails we want to notify
-     * @param Integer $unixProjectName  Unix name of the project we want to notify its administrators
+     * @param int $unixProjectName Unix name of the project we want to notify its administrators
      * @param String  $subject          The subject of the notification mail
      * @param String  $body             The content of the notification mail
      *
      * @return Codendi_Mail
      */
-    protected function prepareMail($recipients, $unixProjectName, $subject,$body) {
+    protected function prepareMail($recipients, $unixProjectName, $subject, $body)
+    {
         $mail = new Codendi_Mail();
         $mail->setFrom($GLOBALS['sys_noreply']);
         if (empty($recipients)) {
@@ -111,6 +116,4 @@ class LDAP_SyncMail {
         $mail->setBody($body);
         return $mail;
     }
-
 }
-?>

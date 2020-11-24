@@ -16,14 +16,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201407081620_replace_mediwiki_apache_conf extends ForgeUpgrade_Bucket {
+class b201407081620_replace_mediwiki_apache_conf extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Replace mediawiki apache conf
 EOT;
@@ -32,7 +34,8 @@ EOT;
     /**
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $config_file = '/etc/httpd/conf.d/tuleap-plugins/mediawiki.conf';
         if (file_exists($config_file)) {
             exec("mv $config_file $config_file.backup");
@@ -40,5 +43,3 @@ EOT;
         }
     }
 }
-
-?>

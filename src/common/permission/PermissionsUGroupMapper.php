@@ -19,7 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class PermissionsUGroupMapper {
+class PermissionsUGroupMapper
+{
 
     private $mapping = array(
         ProjectUGroup::ANONYMOUS     => ProjectUGroup::ANONYMOUS,
@@ -27,7 +28,8 @@ class PermissionsUGroupMapper {
         ProjectUGroup::REGISTERED    => ProjectUGroup::REGISTERED,
     );
 
-    public function __construct(Project $project) {
+    public function __construct(Project $project)
+    {
         if (! $project->isPublic()) {
             $this->mapping = array(
                 ProjectUGroup::ANONYMOUS     => ProjectUGroup::PROJECT_MEMBERS,
@@ -49,7 +51,8 @@ class PermissionsUGroupMapper {
         }
     }
 
-    public function getUGroupIdAccordingToMapping($ugroup_id) {
+    public function getUGroupIdAccordingToMapping($ugroup_id)
+    {
         if (isset($this->mapping[$ugroup_id])) {
             return $this->mapping[$ugroup_id];
         }

@@ -30,6 +30,7 @@ use TemplateRendererFactory;
 use Tracker;
 use Tracker_Artifact_Changeset;
 use Tracker_FormElement_Field;
+use Tracker_FormElement_Field_List_Value;
 use Tracker_Semantic;
 use Tracker_Semantic_Status;
 use Tracker_SemanticManager;
@@ -108,7 +109,7 @@ class SemanticDone extends Tracker_Semantic
     /**
      * Display the basic info about this semantic
      *
-     * @return string html
+     * @return void
      */
     public function display()
     {
@@ -134,7 +135,7 @@ class SemanticDone extends Tracker_Semantic
      * @param Codendi_Request $request The request
      * @param PFUser $current_user The user who made the request
      *
-     * @return string html
+     * @return void
      */
     public function displayAdmin(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user)
     {
@@ -345,6 +346,7 @@ class SemanticDone extends Tracker_Semantic
 
         foreach ($selected_values as $selected_value_id) {
             $value = $field->getBind()->getValue($selected_value_id);
+            assert($value instanceof Tracker_FormElement_Field_List_Value);
 
             if ($value && $this->value_checker->isValueAPossibleDoneValue($value, $this->semantic_status)) {
                 $this->done_values[$selected_value_id] = $value;
@@ -388,9 +390,9 @@ class SemanticDone extends Tracker_Semantic
      *
      * @param Tracker_FormElement_Field the field to test if it is used in semantics or not
      *
-     * @return boolean returns true if the field is used in semantics, false otherwise
+     * @return bool returns true if the field is used in semantics, false otherwise
      */
-    public function isUsedInSemantics($field)
+    public function isUsedInSemantics(Tracker_FormElement_Field $field)
     {
         return $this->semantic_status->isUsedInSemantics($field);
     }
@@ -462,7 +464,7 @@ class SemanticDone extends Tracker_Semantic
         return false;
     }
 
-    protected static $_instances;
+    private static $instances;
     /**
      * Load an instance of a SemanticDone
      *
@@ -472,11 +474,11 @@ class SemanticDone extends Tracker_Semantic
      */
     public static function load(Tracker $tracker)
     {
-        if (! isset(self::$_instances[$tracker->getId()])) {
+        if (! isset(self::$instances[$tracker->getId()])) {
             return self::forceLoad($tracker);
         }
 
-        return self::$_instances[$tracker->getId()];
+        return self::$instances[$tracker->getId()];
     }
 
     private static function forceLoad(Tracker $tracker): SemanticDone
@@ -487,9 +489,9 @@ class SemanticDone extends Tracker_Semantic
 
         $semantic_done = (new SemanticDoneLoader($dao, $value_checker))->load($tracker, $semantic_status);
 
-        self::$_instances[$tracker->getId()] = $semantic_done;
+        self::$instances[$tracker->getId()] = $semantic_done;
 
-        return self::$_instances[$tracker->getId()];
+        return self::$instances[$tracker->getId()];
     }
 
     /**

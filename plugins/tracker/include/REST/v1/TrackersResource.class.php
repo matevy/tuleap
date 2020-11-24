@@ -35,6 +35,7 @@ use Tracker_ReportDao;
 use Tracker_ReportFactory;
 use Tracker_REST_TrackerRestBuilder;
 use TrackerFactory;
+use TransitionFactory;
 use Tuleap\DB\DBFactory;
 use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\REST\AuthenticatedResource;
@@ -46,26 +47,40 @@ use Tuleap\REST\JsonDecoder;
 use Tuleap\REST\MissingMandatoryParameterException;
 use Tuleap\REST\ProjectStatusVerificator;
 use Tuleap\REST\QueryParameterParser;
+use Tuleap\Tracker\FormElement\Container\Fieldset\HiddenFieldsetChecker;
+use Tuleap\Tracker\FormElement\Container\FieldsExtractor;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
+use Tuleap\Tracker\PermissionsFunctionsWrapper;
 use Tuleap\Tracker\Report\Query\Advanced\Grammar\SyntaxError;
 use Tuleap\Tracker\Report\Query\Advanced\LimitSizeIsExceededException;
 use Tuleap\Tracker\Report\Query\Advanced\SearchablesAreInvalidException;
 use Tuleap\Tracker\Report\Query\Advanced\SearchablesDoNotExistException;
+use Tuleap\Tracker\REST\Artifact\ArtifactRepresentation;
 use Tuleap\Tracker\REST\Artifact\ArtifactRepresentationBuilder;
 use Tuleap\Tracker\REST\Artifact\ParentArtifactReference;
+use Tuleap\Tracker\REST\CompleteTrackerRepresentation;
+use Tuleap\Tracker\REST\FormElementRepresentationsBuilder;
 use Tuleap\Tracker\REST\MinimalTrackerRepresentation;
 use Tuleap\Tracker\REST\PermissionsExporter;
+use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
 use Tuleap\Tracker\REST\ReportRepresentation;
+use Tuleap\Tracker\REST\Tracker\PermissionsRepresentationBuilder;
 use Tuleap\Tracker\REST\v1\Workflow\ModeUpdater;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsRetriever;
+use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
+use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
 use Tuleap\Tracker\Workflow\SimpleMode\TransitionReplicator;
 use Tuleap\Tracker\Workflow\SimpleMode\TransitionReplicatorBuilder;
-use Tuleap\Tracker\Workflow\SimpleMode\TransitionRetriever;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use UserManager;
 use Workflow_Dao;
-use Workflow_TransitionDao;
+use Workflow_Transition_ConditionFactory;
 use WorkflowFactory;
 
 /**
@@ -146,7 +161,7 @@ class TrackersResource extends AuthenticatedResource
      *
      * @param int $id Id of the tracker
      *
-     * @return Tuleap\Tracker\REST\CompleteTrackerRepresentation
+     * @return CompleteTrackerRepresentation
      * @throws RestException 403
      * @throws RestException 404
      */
@@ -154,16 +169,54 @@ class TrackersResource extends AuthenticatedResource
     {
         $this->checkAccess();
 
-        $builder = new Tracker_REST_TrackerRestBuilder(
-            $this->formelement_factory,
-            new PermissionsExporter(
-                new FrozenFieldDetector(
-                    new FrozenFieldsRetriever(
-                        new FrozenFieldsDao()
-                    )
-                )
+        $transition_retriever = new TransitionRetriever(
+            new StateFactory(
+                new TransitionFactory(
+                    Workflow_Transition_ConditionFactory::build()
+                ),
+                new SimpleWorkflowDao()
+            ),
+            new TransitionExtractor()
+        );
+
+        $frozen_fields_detector = new FrozenFieldDetector(
+            $transition_retriever,
+            new FrozenFieldsRetriever(
+                new FrozenFieldsDao(),
+                Tracker_FormElementFactory::instance()
             )
         );
+
+        $builder = new Tracker_REST_TrackerRestBuilder(
+            $this->formelement_factory,
+            new FormElementRepresentationsBuilder(
+                $this->formelement_factory,
+                new PermissionsExporter(
+                    $frozen_fields_detector
+                ),
+                new HiddenFieldsetChecker(
+                    new HiddenFieldsetsDetector(
+                        $transition_retriever,
+                        new HiddenFieldsetsRetriever(
+                            new HiddenFieldsetsDao(),
+                            $this->formelement_factory
+                        ),
+                        Tracker_FormElementFactory::instance()
+                    ),
+                    new FieldsExtractor()
+                ),
+                new PermissionsForGroupsBuilder(
+                    new \UGroupManager(),
+                    $frozen_fields_detector,
+                    new PermissionsFunctionsWrapper()
+                )
+            ),
+            new PermissionsRepresentationBuilder(
+                new \UGroupManager(),
+                new PermissionsFunctionsWrapper()
+            )
+        );
+
         $user    = $this->user_manager->getCurrentUser();
         $tracker = $this->getTrackerById($user, $id);
 
@@ -174,7 +227,7 @@ class TrackersResource extends AuthenticatedResource
 
         $this->sendAllowHeaderForTracker();
 
-        return $builder->getTrackerRepresentationWithoutWorkflowComputedPermissions($user, $tracker);
+        return $builder->getTrackerRepresentationInTrackerContext($user, $tracker);
     }
 
     /**
@@ -292,12 +345,12 @@ class TrackersResource extends AuthenticatedResource
      */
     public function getArtifacts(
         $id,
-        $values       = self::DEFAULT_VALUES,
-        $limit        = self::DEFAULT_LIMIT,
-        $offset       = self::DEFAULT_OFFSET,
-        $query        = self::DEFAULT_CRITERIA,
+        $values = self::DEFAULT_VALUES,
+        $limit = self::DEFAULT_LIMIT,
+        $offset = self::DEFAULT_OFFSET,
+        $query = self::DEFAULT_CRITERIA,
         $expert_query = self::DEFAULT_EXPERT_QUERY,
-        $order        = self::ORDER_ASC
+        $order = self::ORDER_ASC
     ) {
         $this->checkAccess();
         $this->checkLimitValue($limit);
@@ -412,7 +465,7 @@ class TrackersResource extends AuthenticatedResource
     }
 
     /**
-     * @return Tuleap\Tracker\REST\Artifact\ArtifactRepresentation[]
+     * @return ArtifactRepresentation[]
      */
     private function getListOfArtifactRepresentation(PFUser $user, $artifacts, $with_all_field_values)
     {
@@ -472,7 +525,7 @@ class TrackersResource extends AuthenticatedResource
      * @throws RestException 403
      * @throws RestException 404
      */
-    public function getParentArtifacts($id, $limit  = self::DEFAULT_LIMIT, $offset = self::DEFAULT_OFFSET)
+    public function getParentArtifacts($id, $limit = self::DEFAULT_LIMIT, $offset = self::DEFAULT_OFFSET)
     {
         $this->checkAccess();
         $this->checkLimitValue($limit);
@@ -596,7 +649,7 @@ class TrackersResource extends AuthenticatedResource
      * @param int    $id    Id of the tracker.
      * @param string $query JSON object of search criteria properties {@from query}
      *
-     * @return Tuleap\Tracker\REST\CompleteTrackerRepresentation
+     * @return CompleteTrackerRepresentation
      *
      * @throws I18NRestException 500
      * @throws I18NRestException 400
@@ -627,17 +680,55 @@ class TrackersResource extends AuthenticatedResource
             $this->getWorkflowFactory()->clearTrackerWorkflowFromCache($tracker);
             $tracker->workflow = null;
 
-            $builder = new Tracker_REST_TrackerRestBuilder(
-                $this->formelement_factory,
-                new PermissionsExporter(
-                    new FrozenFieldDetector(
-                        new FrozenFieldsRetriever(
-                            new FrozenFieldsDao()
-                        )
-                    )
+            $transition_retriever = new TransitionRetriever(
+                new StateFactory(
+                    new TransitionFactory(
+                        Workflow_Transition_ConditionFactory::build()
+                    ),
+                    new SimpleWorkflowDao()
+                ),
+                new TransitionExtractor()
+            );
+
+            $frozen_fields_detector = new FrozenFieldDetector(
+                $transition_retriever,
+                new FrozenFieldsRetriever(
+                    new FrozenFieldsDao(),
+                    Tracker_FormElementFactory::instance()
                 )
             );
-            return $builder->getTrackerRepresentationWithoutWorkflowComputedPermissions($user, $tracker);
+
+            $builder = new Tracker_REST_TrackerRestBuilder(
+                $this->formelement_factory,
+                new FormElementRepresentationsBuilder(
+                    $this->formelement_factory,
+                    new PermissionsExporter(
+                        $frozen_fields_detector
+                    ),
+                    new HiddenFieldsetChecker(
+                        new HiddenFieldsetsDetector(
+                            $transition_retriever,
+                            new HiddenFieldsetsRetriever(
+                                new HiddenFieldsetsDao(),
+                                $this->formelement_factory
+                            ),
+                            Tracker_FormElementFactory::instance()
+                        ),
+                        new FieldsExtractor()
+                    ),
+                    new PermissionsForGroupsBuilder(
+                        new \UGroupManager(),
+                        $frozen_fields_detector,
+                        new PermissionsFunctionsWrapper()
+                    )
+                ),
+                new PermissionsRepresentationBuilder(
+                    new \UGroupManager(),
+                    new PermissionsFunctionsWrapper()
+                )
+            );
+
+            return $builder->getTrackerRepresentationInTrackerContext($user, $tracker);
         } catch (InvalidParameterTypeException $e) {
             throw new I18NRestException(400, dgettext('tuleap-tracker', 'Please provide a valid query.'));
         } catch (MissingMandatoryParameterException $e) {
@@ -678,19 +769,18 @@ class TrackersResource extends AuthenticatedResource
 
         if (isset($workflow_query['is_advanced'])) {
             $workflow_mode_updater = $this->getModeUpdater();
+            $transaction_executor  = new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection());
 
-            if ($workflow_query['is_advanced'] === true) {
-                return $workflow_mode_updater->switchWorkflowToAdvancedMode($tracker);
-            } else {
-                $transaction_executor = new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection());
-                $transaction_executor->execute(
-                    function () use ($workflow_mode_updater, $tracker) {
+            $transaction_executor->execute(
+                function () use ($workflow_mode_updater, $tracker, $workflow_query) {
+                    if ($workflow_query['is_advanced'] === true) {
+                        $workflow_mode_updater->switchWorkflowToAdvancedMode($tracker);
+                    } else {
                         $workflow_mode_updater->switchWorkflowToSimpleMode($tracker);
                     }
-                );
-                return;
-            }
-
+                }
+            );
+            return;
         }
 
         throw new I18NRestException(400, dgettext('tuleap-tracker', 'Please provide a valid query.'));
@@ -701,16 +791,16 @@ class TrackersResource extends AuthenticatedResource
      */
     private function getModeUpdater() : ModeUpdater
     {
-        $transition_factory = \TransitionFactory::instance();
-
         return new ModeUpdater(
             new Workflow_Dao(),
-            $transition_factory,
-            new TransitionRetriever(
-                new Workflow_TransitionDao(),
-                $transition_factory
+            $this->getTransitionReplicator(),
+            new FrozenFieldsDao(),
+            new HiddenFieldsetsDao(),
+            new StateFactory(
+                TransitionFactory::instance(),
+                new SimpleWorkflowDao()
             ),
-            $this->getTransitionReplicator()
+            new TransitionExtractor()
         );
     }
 
@@ -769,7 +859,6 @@ class TrackersResource extends AuthenticatedResource
         if (!$workflow_factory->deleteWorkflow($workflow->getId())) {
             throw new I18NRestException(500, dgettext('tuleap-tracker', "An error has occurred, the workflow couldn't be reset."));
         }
-
     }
 
     /**
@@ -787,7 +876,6 @@ class TrackersResource extends AuthenticatedResource
         if (!$field) {
             throw new I18NRestException(404, dgettext('tuleap-tracker', 'Field not found.'));
         }
-
 
         $new_workflow_id = $workflow_factory->create($tracker->getId(), $field->getId());
         if (!$new_workflow_id) {

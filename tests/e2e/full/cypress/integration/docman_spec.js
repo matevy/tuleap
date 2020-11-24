@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,7 +21,11 @@ describe("Docman", function() {
     before(() => {
         cy.clearCookie("__Host-TULEAP_session_hash");
         cy.ProjectAdministratorLogin();
-        cy.visitProjectService("docman-project", "Documents");
+
+        //document is available on new instance, so we must switch back to old UI
+        //because, even if we call old UI, as the project has no custom metadata we'll be redirected on new UI
+        cy.visit("/plugins/docman/?group_id=102");
+        cy.get("[data-test=document-switch-to-old-ui]").click();
     });
 
     beforeEach(() => {
@@ -93,6 +97,13 @@ describe("Docman", function() {
             cy.get("[data-test=create_document_next]").click();
             cy.get("#title").type("my document title");
 
+            cy.on("uncaught:exception", err => {
+                // the message bellow is only thown by ckeditor, if any other js exception is thrown
+                // the test will fail
+                expect(err.message).to.include("Cannot read property 'compatMode' of undefined");
+                return false;
+            });
+
             cy.get('[type="radio"]').check("4");
             cy.window().then(win => {
                 win.CKEDITOR.instances.embedded_content.setData("<p>my content</p>");
@@ -101,7 +112,6 @@ describe("Docman", function() {
 
             cy.get("[data-test=feedback]").contains("Document successfully created.");
             cy.contains("my document title").click();
-            cy.get(".docman_embedded_file_content").contains("my content");
 
             cy.get("[data-test=document_item]").then($new_document_id => {
                 cy.wrap($new_document_id.data("test-document-id")).as("embedded_document_id");
@@ -109,7 +119,6 @@ describe("Docman", function() {
         });
 
         it("create a new version of a document", function() {
-            cy.visitProjectService("docman-project", "Documents");
             cy.get(
                 `[data-test=document_item][data-test-document-id=${this.embedded_document_id}]`
             ).click();
@@ -124,7 +133,6 @@ describe("Docman", function() {
         });
 
         it("delete a given version of a document", function() {
-            cy.visitProjectService("docman-project", "Documents");
             cy.get(
                 `[data-test=document_item][data-test-document-id=${this.embedded_document_id}]`
             ).click();
@@ -140,7 +148,6 @@ describe("Docman", function() {
         });
 
         it("throw an error when you try to delete the last version of a document", function() {
-            cy.visitProjectService("docman-project", "Documents");
             cy.get(
                 `[data-test=document_item][data-test-document-id=${this.embedded_document_id}]`
             ).click();
@@ -175,7 +182,6 @@ describe("Docman", function() {
 
     context("easy search", function() {
         it("should search items by name", function() {
-            cy.visitProjectService("docman-project", "Documents");
             cy.get("[data-test=docman_search]").type("folder");
             cy.get("[data-test=docman_search_button]").click();
 
@@ -183,7 +189,6 @@ describe("Docman", function() {
         });
 
         it("should expand result", function() {
-            cy.visitProjectService("docman-project", "Documents");
             cy.get("[data-test=docman_report_search]").click();
             cy.get("[data-test=docman_search]").should("be.disabled");
             cy.get("[data-test=docman_form_table]").contains("Global text search");

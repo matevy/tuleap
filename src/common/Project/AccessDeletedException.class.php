@@ -17,8 +17,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Project_AccessDeletedException extends Project_AccessException {
-    public function __construct(Project $project) {
+class Project_AccessDeletedException extends Project_AccessException
+{
+    public function __construct(Project $project)
+    {
         parent::__construct($GLOBALS['Language']->getText('include_exit', 'project_status_'.$project->getStatus()));
     }
 }

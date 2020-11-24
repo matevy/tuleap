@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class GitPresenters_MirrorPresenter {
+class GitPresenters_MirrorPresenter
+{
 
     /**
      * @var int
@@ -31,15 +32,15 @@ class GitPresenters_MirrorPresenter {
     public $name;
 
     /**
-     * @var boolean
+     * @var bool
      */
     public $is_used;
 
 
-    public function __construct(Git_Mirror_Mirror $mirror, $is_used) {
+    public function __construct(Git_Mirror_Mirror $mirror, $is_used)
+    {
         $this->mirror_id = $mirror->id;
         $this->name      = $mirror->name;
         $this->is_used   = $is_used;
     }
-
 }

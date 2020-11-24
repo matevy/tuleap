@@ -22,23 +22,25 @@
 /**
  * Traverse a list of repositories and furnish a ul/li tree representation
  */
-class GitViewsRepositoriesTraversalStrategy_Selectbox extends GitViewsRepositoriesTraversalStrategy {
-    
+class GitViewsRepositoriesTraversalStrategy_Selectbox extends GitViewsRepositoriesTraversalStrategy
+{
+
     /**
      * @var GitViews
      */
     protected $view;
-    
+
     /**
      * Constructor
      *
      * @param GitViews $view The GitViews
      */
-    public function __construct(GitViews $view) {
+    public function __construct(GitViews $view)
+    {
         parent::__construct();
         $this->view = $view;
     }
-    
+
     /**
      * Get the main wrapper of the whole representation
      *
@@ -46,10 +48,11 @@ class GitViewsRepositoriesTraversalStrategy_Selectbox extends GitViewsRepositori
      *
      * @return string the $inner encapsuled in the wrapper
      */
-    protected function getMainWrapper($inner) {
+    protected function getMainWrapper($inner)
+    {
         return '<select multiple size="7" id="fork_repositories_repo" name="repos[]">'. $inner .'</select>';
     }
-    
+
     /**
      * Get Item wrapper
      *
@@ -58,12 +61,11 @@ class GitViewsRepositoriesTraversalStrategy_Selectbox extends GitViewsRepositori
      *
      * @return string the $inner encapsulated in its own wrapper
      */
-    protected function getItemWrapper(GitRepository $repo, $inner) {
+    protected function getItemWrapper(GitRepository $repo, $inner)
+    {
         if ($repo->getBackend() instanceof Git_Backend_Gitolite) {
             return '<option value="'. $repo->getId() .'">'. $inner .'</option>';
         }
         return '';
     }
-    
 }
-?>

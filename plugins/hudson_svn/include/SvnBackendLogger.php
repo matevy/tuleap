@@ -24,9 +24,11 @@ use TruncateLevelLogger;
 use BackendLogger;
 use ForgeConfig;
 
-class SvnBackendLogger extends TruncateLevelLogger {
+class SvnBackendLogger extends TruncateLevelLogger
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct(
             new BackendLogger(ForgeConfig::get('codendi_log') .'/hudson_svn_syslog'),
             ForgeConfig::get('sys_logger_level')

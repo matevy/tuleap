@@ -21,24 +21,26 @@
 
 /**
  * PasswordRegexpValidator
- * 
+ *
  * Validate a password with a regexp
- * 
+ *
  */
-/* abstract */ class PasswordRegexpValidator extends PasswordValidator {
-    
+/* abstract */ class PasswordRegexpValidator extends PasswordValidator
+{
+
     var $regexp;
-    
+
     /**
     * Constructor
     */
-    function __construct($regexp, $description) {
+    function __construct($regexp, $description)
+    {
         parent::__construct($description);
         $this->regexp = $regexp;
     }
-    
-    function validate($password) {
+
+    function validate($password)
+    {
         return preg_match($this->regexp, $password);
     }
 }
-?>

@@ -19,23 +19,23 @@
 
 namespace Tuleap\User\REST\v1;
 
+use Luracast\Restler\RestException;
 use PFUser;
-use UserManager;
-use UGroupLiteralizer;
+use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\JsonDecoder;
-use Tuleap\REST\UserManager as RestUserManager;
-use Luracast\Restler\RestException;
+use UGroupLiteralizer;
 use User_ForgeUserGroupPermission_RetrieveUserMembershipInformation;
 use User_ForgeUserGroupPermission_UserManagement;
-use User_ForgeUserGroupPermissionsManager;
 use User_ForgeUserGroupPermissionsDao;
-use Tuleap\REST\AuthenticatedResource;
+use User_ForgeUserGroupPermissionsManager;
+use UserManager;
 
 /**
  * Get Memberships For a list of Users
  */
-class UserMembershipResource extends AuthenticatedResource {
+class UserMembershipResource extends AuthenticatedResource
+{
     public const MAX_LIMIT = 1000;
 
     public const CRITERION_WITH_SSH_KEY = 'with_ssh_key';
@@ -49,17 +49,14 @@ class UserMembershipResource extends AuthenticatedResource {
     /** @var UGroupLiteralizer */
     private $ugroup_literalizer;
 
-    /** @var \Tuleap\REST\UserManager */
-    private $rest_user_manager;
-
     /** @var User_ForgeUserGroupPermissionsManager */
     private $forge_ugroup_permissions_manager;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->user_manager       = UserManager::instance();
         $this->json_decoder       = new JsonDecoder();
         $this->ugroup_literalizer = new UGroupLiteralizer();
-        $this->rest_user_manager  = RestUserManager::build();
 
         $this->forge_ugroup_permissions_manager = new User_ForgeUserGroupPermissionsManager(
             new User_ForgeUserGroupPermissionsDao()
@@ -75,7 +72,7 @@ class UserMembershipResource extends AuthenticatedResource {
      *
      * @url GET
      * @access protected
-     * @throws 406
+     * @throws RestException 406
      *
      * @param string $query Criterion to filter the results {@choice with_ssh_key}
      * @param int $limit  Number of elements displayed per page
@@ -83,7 +80,8 @@ class UserMembershipResource extends AuthenticatedResource {
      *
      * @return array {@type Tuleap\User\REST\v1\UserMembershipRepresentation}
      */
-    public function get($query, $offset = 0, $limit = 10) {
+    public function get($query, $offset = 0, $limit = 10)
+    {
         if ($limit > self::MAX_LIMIT) {
             throw new RestException(406, 'Maximum value for limit exceeded');
         }
@@ -96,7 +94,7 @@ class UserMembershipResource extends AuthenticatedResource {
         $this->checkUserCanSeeOtherUsers($current_user);
 
         $users_memberships = array();
-        $paginated_users = $this->user_manager->getPaginatedUsersWithSshKey($offset, $limit);
+        $paginated_users   = $this->user_manager->getPaginatedUsersWithSshKey($offset, $limit);
         foreach ($paginated_users->getUsers() as $user) {
             $representation = new UserMembershipRepresentation();
             $representation->build($user->getUsername(), $this->ugroup_literalizer->getUserGroupsForUser($user));
@@ -110,7 +108,8 @@ class UserMembershipResource extends AuthenticatedResource {
         return $users_memberships;
     }
 
-    private function checkUserCanSeeOtherUsers(PFUser $user) {
+    private function checkUserCanSeeOtherUsers(PFUser $user)
+    {
         if ($user->isSuperUser()) {
             return;
         }
@@ -137,14 +136,16 @@ class UserMembershipResource extends AuthenticatedResource {
      *
      * @access public
      *
-     * @throws 400
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 404
      */
-    public function options() {
+    public function options()
+    {
         $this->sendAllowHeaders();
     }
 
-    private function sendAllowHeaders() {
+    private function sendAllowHeaders()
+    {
         Header::allowOptionsGet();
     }
 }

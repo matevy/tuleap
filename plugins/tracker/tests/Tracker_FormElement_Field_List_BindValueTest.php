@@ -19,9 +19,11 @@
  */
 require_once('bootstrap.php');
 
-class Tracker_FormElement_Field_List_BindValueTest extends TuleapTestCase {
-    
-    public function testJSon() {
+class Tracker_FormElement_Field_List_BindValueTest extends TuleapTestCase
+{
+
+    public function testJSon()
+    {
         $id          = 123;
         $label       = 'Reopen';
         $value = partial_mock('Tracker_FormElement_Field_List_BindValue', array('getLabel', '__toString'));
@@ -29,5 +31,4 @@ class Tracker_FormElement_Field_List_BindValueTest extends TuleapTestCase {
         $value->setId($id);
         $this->assertEqual(json_encode($value->fetchForOpenListJson()), '{"id":123,"value":"b123","caption":"Reopen","rest_value":"Reopen"}');
     }
-    
 }

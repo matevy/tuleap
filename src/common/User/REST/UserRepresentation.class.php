@@ -19,10 +19,10 @@
 
 namespace Tuleap\User\REST;
 
-use \PFUser;
-use \Tuleap\User\REST\MinimalUserRepresentation;
+use PFUser;
 
-class UserRepresentation extends MinimalUserRepresentation {
+class UserRepresentation extends MinimalUserRepresentation
+{
 
     /**
      * @var String {@type string}
@@ -35,7 +35,8 @@ class UserRepresentation extends MinimalUserRepresentation {
     public $status;
 
 
-    public function build(PFUser $user) {
+    public function build(PFUser $user)
+    {
         parent::build($user);
 
         $this->email  = $user->getEmail();

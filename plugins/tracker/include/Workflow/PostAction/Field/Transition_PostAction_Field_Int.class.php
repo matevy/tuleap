@@ -34,35 +34,38 @@ class Transition_PostAction_Field_Int extends Transition_PostAction_Field_Numeri
      *
      * @return string
      */
-    public function getShortName() {
+    public function getShortName()
+    {
         return self::SHORT_NAME;
     }
-    
+
     /**
      * Get the label of the post action
      *
      * @return string
      */
-    public static function getLabel() {
+    public static function getLabel()
+    {
         return $GLOBALS['Language']->getText('workflow_admin', 'post_action_change_value_int_field');
     }
-    
+
     /**
      * Get the html code needed to display the post action in workflow admin
      *
      * @return string html
      */
-    public function fetch() {
+    public function fetch()
+    {
         $purifier    = Codendi_HTMLPurifier::instance();
         $html        = '';
         $input_value = '<input type="text" name="workflow_postaction_field_int_value['. $purifier->purify($this->id) .
             ']" value="'.$purifier->purify($this->getValue()).'"/>';
-        
+
         //define the selectbox for date fields
         $tracker = $this->transition->getWorkflow()->getTracker();
         $tff = $this->getFormElementFactory();
         $fields_int = $tff->getUsedFormElementsByType($tracker, array('int'));
-        
+
         $select_field  = '<select name="workflow_postaction_field_int['.$purifier->purify($this->id).']">';
         $options_field = '';
         $one_selected  = false;
@@ -71,7 +74,7 @@ class Transition_PostAction_Field_Int extends Transition_PostAction_Field_Numeri
             if ($this->field && ($this->field->getId() == $field_int->getId())) {
                 $selected     = 'selected="selected"';
                 $one_selected = true;
-            }            
+            }
             $options_field .= '<option value="'. $purifier->purify($field_int->getId()) .'" '. $selected.'>'.
                 $purifier->purify($field_int->getLabel()).'</option>';
         }
@@ -84,15 +87,15 @@ class Transition_PostAction_Field_Int extends Transition_PostAction_Field_Numeri
         $html .= $GLOBALS['Language']->getText('workflow_admin', 'change_value_int_field_to', array($select_field, $input_value));
         return $html;
     }
-        
+
     /**
      * @see Transition_PostAction
      */
-    public function process(Codendi_Request $request) {
+    public function process(Codendi_Request $request)
+    {
         if ($request->getInArray('remove_postaction', $this->id)) {
             $this->getDao()->deletePostAction($this->id);
         } else {
-            
             $field_id = $this->getFieldId();
             $value    = $request->getInArray('workflow_postaction_field_int_value', $this->id);
 
@@ -111,7 +114,7 @@ class Transition_PostAction_Field_Int extends Transition_PostAction_Field_Numeri
             }
         }
     }
-    
+
     /**
      * Export postactions date to XML
      *
@@ -120,18 +123,20 @@ class Transition_PostAction_Field_Int extends Transition_PostAction_Field_Numeri
      *
      * @return void
      */
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping) {
+    public function exportToXml(SimpleXMLElement $root, $xmlMapping)
+    {
         if ($this->getFieldId()) {
             $child = $root->addChild(Transition_PostAction_Field_Int::XML_TAG_NAME);
              $child->addAttribute('value', $this->getValue());
              $child->addChild('field_id')->addAttribute('REF', array_search($this->getFieldId(), $xmlMapping));
-         }
+        }
     }
-    
+
     /**
-     * @return \Transition_PostAction_Field_IntDao 
+     * @return \Transition_PostAction_Field_IntDao
      */
-    protected function getDao() {
+    protected function getDao()
+    {
         return new Transition_PostAction_Field_IntDao();
     }
 
@@ -140,4 +145,3 @@ class Transition_PostAction_Field_Int extends Transition_PostAction_Field_Numeri
         $visitor->visitIntField($this);
     }
 }
-?>

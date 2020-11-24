@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -51,15 +51,17 @@ class MinimalTrackerRepresentation implements TrackerRepresentation
      */
     public $project;
 
-    public function build(Tracker $tracker)
+    public function build(Tracker $tracker): self
     {
         $this->id         = JsonCast::toInt($tracker->getId());
         $this->uri        = CompleteTrackerRepresentation::ROUTE . '/' . $this->id;
         $this->label      = $tracker->getName();
-        $this->color_name = $tracker->getNormalizedColor();
+        $this->color_name = $tracker->getColor()->getName();
 
         $project       = $tracker->getProject();
         $this->project = new ProjectReference();
         $this->project->build($project);
+
+        return $this;
     }
 }

@@ -21,8 +21,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once 'common/plugin/PluginDescriptor.class.php';
-
 /**
  * Describe LDAP plugin
  *
@@ -32,10 +30,9 @@ class LdapPluginDescriptor extends PluginDescriptor
     /**
      * Constructor
      */
-    function __construct() 
+    function __construct()
     {
         parent::__construct('Ldap', false, $GLOBALS['Language']->getText('plugin_ldap', 'descriptor_description'));
         $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');
     }
 }
-?>

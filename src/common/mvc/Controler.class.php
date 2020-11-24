@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2011 - Present. All Rights Reserved.
  * Copyright 2005, STMicroelectronics
  *
  * Originally written by Manuel Vacelet
@@ -27,34 +27,46 @@
  * This is a part of lite Model/View/Controler design pattern.
  *
  */
-class Controler {
+class Controler
+{
   /* protected */ var $gid;
   /* protected */ var $view;
   /* protected */ var $action;
   /* protected */ var $_viewParams   = array();
   /* protected */ var $_actionParams = array();
 
-  function request() {
-  }
+    function request()
+    {
+    }
 
-  function viewsManagement() {
-    $className = get_class($this).'Views';
-    $wv = new $className($this, $this->gid, $this->view, $this->_viewParams);
-    return $wv->display($this->view);
-  }
+    function viewsManagement()
+    {
+        $className = static::class.'Views';
+        if (! class_exists($className)) {
+            throw new LogicException(sprintf('View class %s does not exist, nothing can be displayed', $className));
+        }
+        $wv = new $className($this, $this->gid, $this->view, $this->_viewParams);
+        return $wv->display($this->view);
+    }
 
-  function actionsManagement() {
-    $className = get_class($this).'Actions';
-    $wa = new $className($this, $this->gid);
-    $wa->process($this->action, $this->_actionParams);
-  }
+    function actionsManagement()
+    {
+        $className = static::class.'Actions';
+        if (! class_exists($className)) {
+            throw new LogicException(sprintf('Action class %s does not exist, nothing can be processed', $className));
+        }
+        $wa = new $className($this, $this->gid);
+        $wa->process($this->action, $this->_actionParams);
+    }
 
-  function process() {
-    $this->request();
+    function process()
+    {
+        $this->request();
 
-    if($this->action)
-      $this->actionsManagement();
-    
-    return $this->viewsManagement();
-  }
+        if ($this->action) {
+            $this->actionsManagement();
+        }
+
+        return $this->viewsManagement();
+    }
 }

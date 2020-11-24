@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -27,6 +27,7 @@ use SystemEventManager;
 use TemplateRendererFactory;
 use Tracker_Artifact;
 use Tracker_Artifact_Changeset;
+use Tracker_Artifact_ChangesetFactory;
 use Tracker_Artifact_ChangesetFactoryBuilder;
 use Tracker_Artifact_ChangesetValue;
 use Tracker_ArtifactFactory;
@@ -34,7 +35,12 @@ use Tracker_FormElement_Chart_Field_Exception;
 use Tracker_FormElement_Field;
 use Tracker_FormElement_Field_ReadOnly;
 use Tracker_FormElement_FieldVisitor;
+use Tracker_FormElementFactory;
 use Tracker_HierarchyFactory;
+use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsCacheDao;
+use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsCalculator;
+use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsModeChecker;
+use Tuleap\AgileDashboard\FormElement\Burnup\ProjectsCountModeDao;
 use Tuleap\AgileDashboard\Semantic\Dao\SemanticDoneDao;
 use Tuleap\AgileDashboard\Semantic\SemanticDoneFactory;
 use Tuleap\AgileDashboard\Semantic\SemanticDoneValueChecker;
@@ -46,8 +52,12 @@ use Tuleap\Tracker\FormElement\ChartConfigurationValueChecker;
 use Tuleap\Tracker\FormElement\ChartConfigurationValueRetriever;
 use Tuleap\Tracker\FormElement\ChartFieldUsage;
 use Tuleap\Tracker\FormElement\ChartMessageFetcher;
+use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 use Tuleap\Tracker\FormElement\TrackerFormElementExternalField;
 use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
+use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
+use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
 use UserManager;
 
 class Burnup extends Tracker_FormElement_Field implements Tracker_FormElement_Field_ReadOnly, TrackerFormElementExternalField
@@ -96,16 +106,21 @@ class Burnup extends Tracker_FormElement_Field implements Tracker_FormElement_Fi
         return new ChartMessageFetcher(
             Tracker_HierarchyFactory::instance(),
             $this->getConfigurationFieldRetriever(),
-            EventManager::instance()
+            EventManager::instance(),
+            UserManager::instance()
         );
     }
 
     private function getConfigurationFieldRetriever()
     {
-        return new ChartConfigurationFieldRetriever($this->getFormElementFactory(), $this->getLogger());
+        return new ChartConfigurationFieldRetriever(
+            $this->getFormElementFactory(),
+            $this->getSemanticTimeframeBuilder(),
+            $this->getLogger()
+        );
     }
 
-    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, $submitted_values = array())
+    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, array $submitted_values)
     {
     }
 
@@ -162,6 +177,7 @@ class Burnup extends Tracker_FormElement_Field implements Tracker_FormElement_Fi
         $css_file_url              = $theme_include_assets->getFileURL('burnup-chart.css');
 
         return new BurnupFieldPresenter(
+            $this->getCountElementsModeChecker(),
             $burnup_representation,
             $artifact,
             $can_burnup_be_regenerated,
@@ -204,16 +220,17 @@ class Burnup extends Tracker_FormElement_Field implements Tracker_FormElement_Fi
     {
     }
 
-    public function fetchSubmit($submitted_values = array())
+    public function fetchSubmit(array $submitted_values)
     {
         return '';
     }
 
     public function fetchSubmitMasschange()
     {
+        return '';
     }
 
-    protected function fetchSubmitValue()
+    protected function fetchSubmitValue(array $submitted_values)
     {
     }
 
@@ -329,8 +346,10 @@ class Burnup extends Tracker_FormElement_Field implements Tracker_FormElement_Fi
         $artifact,
         $changeset_value_id,
         $value,
-        ?Tracker_Artifact_ChangesetValue $previous_changesetvalue = null
+        ?Tracker_Artifact_ChangesetValue $previous_changesetvalue,
+        CreatedFileURLMapping $id_mapping
     ) {
+        return false;
     }
 
     public function testImport()
@@ -391,7 +410,15 @@ class Burnup extends Tracker_FormElement_Field implements Tracker_FormElement_Fi
             ),
             $this->getConfigurationValueRetriever(),
             $burnup_cache_dao,
-            $this->getBurnupCalculator()
+            $this->getBurnupCalculator(),
+            new CountElementsCacheDao(),
+            new CountElementsCalculator(
+                Tracker_Artifact_ChangesetFactoryBuilder::build(),
+                Tracker_ArtifactFactory::instance(),
+                Tracker_FormElementFactory::instance(),
+                new BurnupDao()
+            ),
+            $this->getCountElementsModeChecker()
         );
     }
 
@@ -424,9 +451,29 @@ class Burnup extends Tracker_FormElement_Field implements Tracker_FormElement_Fi
      */
     private function getConfigurationValueRetriever()
     {
+        $form_element_factory = Tracker_FormElementFactory::instance();
+
         return new ChartConfigurationValueRetriever(
             $this->getConfigurationFieldRetriever(),
+            new TimeframeBuilder(
+                $form_element_factory,
+                new SemanticTimeframeBuilder(new SemanticTimeframeDao(), $form_element_factory),
+                $this->getLogger()
+            ),
             $this->getLogger()
         );
+    }
+
+    private function getSemanticTimeframeBuilder()
+    {
+        return new SemanticTimeframeBuilder(
+            new SemanticTimeframeDao(),
+            Tracker_FormElementFactory::instance()
+        );
+    }
+
+    private function getCountElementsModeChecker(): CountElementsModeChecker
+    {
+        return new CountElementsModeChecker(new ProjectsCountModeDao());
     }
 }

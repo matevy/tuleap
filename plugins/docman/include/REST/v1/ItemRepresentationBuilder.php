@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,15 +20,17 @@
 
 namespace Tuleap\Docman\REST\v1;
 
+use Codendi_HTMLPurifier;
 use Docman_ItemDao;
 use Docman_ItemFactory;
 use Project;
 use Tuleap\Docman\ApprovalTable\ApprovalTableRetriever;
 use Tuleap\Docman\ApprovalTable\ApprovalTableStateMapper;
-use Tuleap\Docman\REST\v1\EmbeddedFiles\EmbeddedFilePropertiesRepresentation;
+use Tuleap\Docman\REST\v1\EmbeddedFiles\IEmbeddedFilePropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Files\FilePropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Metadata\MetadataRepresentationBuilder;
 use Tuleap\Docman\REST\v1\Metadata\UnknownMetadataException;
+use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsBuilder;
 use Tuleap\Docman\REST\v1\Wiki\WikiPropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Links\LinkPropertiesRepresentation;
 use Tuleap\User\REST\MinimalUserRepresentation;
@@ -67,6 +69,14 @@ class ItemRepresentationBuilder
      * @var ApprovalTableRetriever
      */
     private $approval_table_retriever;
+    /**
+     * @var DocmanItemPermissionsForGroupsBuilder
+     */
+    private $item_permissions_for_groups_builder;
+    /**
+     * @var Codendi_HTMLPurifier
+     */
+    private $purifier;
 
     public function __construct(
         Docman_ItemDao $dao,
@@ -76,39 +86,43 @@ class ItemRepresentationBuilder
         \Docman_LockFactory $lock_factory,
         ApprovalTableStateMapper $approval_table_state_mapper,
         MetadataRepresentationBuilder $metadata_representation_builder,
-        ApprovalTableRetriever $approval_table_retriever
+        ApprovalTableRetriever $approval_table_retriever,
+        DocmanItemPermissionsForGroupsBuilder $item_permissions_for_groups_builder,
+        Codendi_HTMLPurifier $purifier
     ) {
-        $this->dao                             = $dao;
-        $this->user_manager                    = $user_manager;
-        $this->docman_item_factory             = $docman_item_factory;
-        $this->permissions_manager             = $permissions_manager;
-        $this->lock_factory                    = $lock_factory;
-        $this->approval_table_state_mapper     = $approval_table_state_mapper;
-        $this->metadata_representation_builder = $metadata_representation_builder;
-        $this->approval_table_retriever        = $approval_table_retriever;
+        $this->dao                                 = $dao;
+        $this->user_manager                        = $user_manager;
+        $this->docman_item_factory                 = $docman_item_factory;
+        $this->permissions_manager                 = $permissions_manager;
+        $this->lock_factory                        = $lock_factory;
+        $this->approval_table_state_mapper         = $approval_table_state_mapper;
+        $this->metadata_representation_builder     = $metadata_representation_builder;
+        $this->approval_table_retriever            = $approval_table_retriever;
+        $this->purifier                            = $purifier;
+        $this->item_permissions_for_groups_builder = $item_permissions_for_groups_builder;
     }
 
     /**
      * @return ItemRepresentation|null
      * @throws UnknownMetadataException
      */
-    public function buildRootId(Project $project, \PFUser $current_user)
+    public function buildRootId(Project $project, \PFUser $current_user) : ?ItemRepresentation
     {
         $result = $this->dao->searchRootItemForGroupId($project->getID());
 
         if (! $result) {
-            return;
+            return null;
         }
 
         $item = $this->docman_item_factory->getItemFromRow($result);
-        if (! $item) {
-            return;
+        if ($item === null || ! $this->permissions_manager->userCanRead($current_user, $item->getId())) {
+            return null;
         }
 
         return $this->buildItemRepresentation(
             $item,
             $current_user,
-            PLUGIN_DOCMAN_ITEM_TYPE_FOLDER
+            ItemRepresentation::TYPE_FOLDER
         );
     }
 
@@ -119,9 +133,9 @@ class ItemRepresentationBuilder
     public function buildItemRepresentation(
         \Docman_Item $item,
         \PFUser $current_user,
-        $type,
+        ?string $type,
         ?FilePropertiesRepresentation $file_properties = null,
-        ?EmbeddedFilePropertiesRepresentation $embedded_file_properties = null,
+        ?IEmbeddedFilePropertiesRepresentation $embedded_file_properties = null,
         ?LinkPropertiesRepresentation $link_properties = null,
         ?WikiPropertiesRepresentation $wiki_properties = null
     ) {
@@ -148,6 +162,7 @@ class ItemRepresentationBuilder
 
         $item_representation->build(
             $item,
+            $this->purifier,
             $owner_representation,
             $user_can_write,
             $type,
@@ -158,6 +173,7 @@ class ItemRepresentationBuilder
             $is_approval_table_enabled,
             $approval_table,
             $lock_info,
+            $this->item_permissions_for_groups_builder->getRepresentation($current_user, $item),
             $file_properties,
             $embedded_file_properties,
             $link_properties,

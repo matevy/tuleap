@@ -18,16 +18,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class WrapperLoggerTest extends TuleapTestCase {
+class WrapperLoggerTest extends TuleapTestCase
+{
 
     private $logger;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->logger = mock('Logger');
     }
 
-    public function itAppendAPrefix() {
+    public function itAppendAPrefix()
+    {
         $wrapper = new WrapperLogger($this->logger, 'stuff');
 
         expect($this->logger)->info('[stuff] bla')->once();
@@ -35,7 +38,8 @@ class WrapperLoggerTest extends TuleapTestCase {
         $wrapper->info('bla');
     }
 
-    public function itWrapAWrapper() {
+    public function itWrapAWrapper()
+    {
         $wrapper1 = new WrapperLogger($this->logger, 'tracker');
 
         $wrapper2 = new WrapperLogger($wrapper1, 'artifact');
@@ -45,7 +49,8 @@ class WrapperLoggerTest extends TuleapTestCase {
         $wrapper2->info('bla');
     }
 
-    public function itAddAPrefixDynamically() {
+    public function itAddAPrefixDynamically()
+    {
         $wrapper = new WrapperLogger($this->logger, 'tracker');
 
         expect($this->logger)->info('[tracker][53] bla')->once();
@@ -54,7 +59,8 @@ class WrapperLoggerTest extends TuleapTestCase {
         $wrapper->info('bla');
     }
 
-    public function itAddAPrefixDynamicallyAndItsKept() {
+    public function itAddAPrefixDynamicallyAndItsKept()
+    {
         $wrapper = new WrapperLogger($this->logger, 'tracker');
 
         expect($this->logger)->info()->count(2);
@@ -66,7 +72,8 @@ class WrapperLoggerTest extends TuleapTestCase {
         $wrapper->info('coin');
     }
 
-    public function testAddedPrefixAreStacked() {
+    public function testAddedPrefixAreStacked()
+    {
         $wrapper = new WrapperLogger($this->logger, 'tracker');
 
         expect($this->logger)->info()->count(2);
@@ -79,7 +86,8 @@ class WrapperLoggerTest extends TuleapTestCase {
         $wrapper->info('coin');
     }
 
-    public function itPopPrefixes() {
+    public function itPopPrefixes()
+    {
         $wrapper = new WrapperLogger($this->logger, 'tracker');
 
         expect($this->logger)->info()->count(2);
@@ -92,7 +100,8 @@ class WrapperLoggerTest extends TuleapTestCase {
         $wrapper->info('coin');
     }
 
-    public function itPopPrefixes2() {
+    public function itPopPrefixes2()
+    {
         $wrapper = new WrapperLogger($this->logger, 'tracker');
 
         expect($this->logger)->info()->count(3);

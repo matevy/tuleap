@@ -21,31 +21,33 @@
 require_once('include/DataAccessObject.class.php');
 
 /**
- *  Data Access Object for ArtifactField 
+ *  Data Access Object for ArtifactField
  */
-class ArtifactFieldDao extends DataAccessObject {
+class ArtifactFieldDao extends DataAccessObject
+{
     /**
     * Gets all tables of the db
     * @return DataAccessResult
     */
-    function & searchAll() {
+    function & searchAll()
+    {
         $sql = "SELECT * FROM artifact_field";
         return $this->retrieve($sql);
     }
-    
+
     /**
     * Searches field_id for (multi_)assigned_to By artifactTypeId
     * @return DataAccessResult
     */
-    function & searchAssignedToFieldIdByArtifactTypeId($artifactTypeId) {
-        $sql = sprintf(" SELECT field_id ".
+    function & searchAssignedToFieldIdByArtifactTypeId($artifactTypeId)
+    {
+        $sql = sprintf(
+            " SELECT field_id ".
                        " FROM artifact_field ".
                        " WHERE group_artifact_id = %s ".
                        "   AND (field_name = 'assigned_to' OR field_name = 'multi_assigned_to') ",
-				$artifactTypeId);
+            $artifactTypeId
+        );
         return $this->retrieve($sql);
     }
 }
-
-
-?>

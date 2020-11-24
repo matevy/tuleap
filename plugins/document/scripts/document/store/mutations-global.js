@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -27,8 +27,15 @@ export {
     stopLoadingAscendantHierarchy,
     appendFolderToAscendantHierarchy,
     setCurrentFolder,
-    removeIsUnderConstruction,
-    updateCurrentlyPreviewedItem
+    updateCurrentlyPreviewedItem,
+    showPostDeletionNotification,
+    hidePostDeletionNotification,
+    shouldDisplayEmbeddedInLargeMode,
+    replaceCurrentFolder,
+    setProjectUserGroups,
+    toggleQuickLook,
+    beginLoadingCurrentlyPreviewedItem,
+    stopLoadingCurrentlyPreviewedItem
 };
 
 function initApp(
@@ -42,8 +49,8 @@ function initApp(
         user_can_create_wiki,
         max_files_dragndrop,
         max_size_upload,
-        is_under_construction,
         embedded_are_allowed,
+        is_deletion_allowed,
         is_item_status_metadata_used,
         is_obsolescence_date_metadata_used
     ]
@@ -56,8 +63,8 @@ function initApp(
     state.user_can_create_wiki = user_can_create_wiki;
     state.max_files_dragndrop = max_files_dragndrop;
     state.max_size_upload = max_size_upload;
-    state.is_under_construction = is_under_construction;
     state.embedded_are_allowed = embedded_are_allowed;
+    state.is_deletion_allowed = is_deletion_allowed;
     state.is_item_status_metadata_used = is_item_status_metadata_used;
     state.is_obsolescence_date_metadata_used = is_obsolescence_date_metadata_used;
 }
@@ -117,11 +124,42 @@ function appendFolderToAscendantHierarchy(state, folder) {
 function setCurrentFolder(state, folder) {
     state.current_folder = folder;
 }
-
-function removeIsUnderConstruction(state) {
-    state.is_under_construction = false;
+function replaceCurrentFolder(state, folder) {
+    state.current_folder = folder;
+    const folder_in_hierarchy_index = state.current_folder_ascendant_hierarchy.findIndex(
+        item => item.id === folder.id
+    );
+    if (folder_in_hierarchy_index >= 0) {
+        state.current_folder_ascendant_hierarchy[folder_in_hierarchy_index] = folder;
+    }
 }
 
+function beginLoadingCurrentlyPreviewedItem(state) {
+    state.is_loading_currently_previewed_item = true;
+}
+
+function stopLoadingCurrentlyPreviewedItem(state) {
+    state.is_loading_currently_previewed_item = false;
+}
 function updateCurrentlyPreviewedItem(state, item) {
     state.currently_previewed_item = item;
+}
+
+function showPostDeletionNotification(state) {
+    state.show_post_deletion_notification = true;
+}
+
+function hidePostDeletionNotification(state) {
+    state.show_post_deletion_notification = false;
+}
+function shouldDisplayEmbeddedInLargeMode(state, is_embedded_in_large_view) {
+    state.is_embedded_in_large_view = is_embedded_in_large_view;
+}
+
+function setProjectUserGroups(state, project_ugroups) {
+    state.project_ugroups = project_ugroups;
+}
+
+function toggleQuickLook(state, toogle) {
+    state.toggle_quick_look = toogle;
 }

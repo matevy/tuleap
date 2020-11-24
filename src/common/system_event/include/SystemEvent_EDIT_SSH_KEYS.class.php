@@ -17,18 +17,20 @@
  * You should have received a copy of the GNU General Public License
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
-class SystemEvent_EDIT_SSH_KEYS extends SystemEvent {
-    
+class SystemEvent_EDIT_SSH_KEYS extends SystemEvent
+{
+
     /**
-     * Verbalize the parameters so they are readable and much user friendly in 
+     * Verbalize the parameters so they are readable and much user friendly in
      * notifications
-     * 
-     * @param bool $with_link true if you want links to entities. The returned 
+     *
+     * @param bool $with_link true if you want links to entities. The returned
      * string will be html instead of plain/text
      *
      * @return string
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $txt = '';
         $txt .= 'user: '. $this->verbalizeUserId($this->getParameter(0), $with_link);
         return $txt;
@@ -38,10 +40,11 @@ class SystemEvent_EDIT_SSH_KEYS extends SystemEvent {
      * @see BackendSystem::dumpSSHKeysForUser()
      * @see UserManager::updateUserSSHKeys()
      * @see SystemEventManager::addSystemEvent()
-     * 
-     * @return boolean
+     *
+     * @return bool
      */
-    public function process() {
+    public function process()
+    {
         $user_id = $this->getParameter(0);
         if (! $this->int_ok($user_id)) {
             $user_id = 0;
@@ -59,4 +62,3 @@ class SystemEvent_EDIT_SSH_KEYS extends SystemEvent {
         return true;
     }
 }
-?>

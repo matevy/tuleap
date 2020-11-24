@@ -21,14 +21,16 @@ namespace User\XML\Import;
 
 use PFUser;
 
-class ToBeCreatedUser extends ActionToBeTakenForUser {
+class ToBeCreatedUser extends ActionToBeTakenForUser
+{
 
     private static $ALLOWED_ACTIONS = array('create', 'map');
 
     public const ACTION = 'create';
 
     /** @return array */
-    public function getCSVData() {
+    public function getCSVData()
+    {
         return array(
             $this->username,
             self::ACTION .':'. PFUser::STATUS_SUSPENDED,
@@ -41,7 +43,8 @@ class ToBeCreatedUser extends ActionToBeTakenForUser {
         );
     }
 
-    public function isActionAllowed($action) {
+    public function isActionAllowed($action)
+    {
         return in_array($action, self::$ALLOWED_ACTIONS);
     }
 }

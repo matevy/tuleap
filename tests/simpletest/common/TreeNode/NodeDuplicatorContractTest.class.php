@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012. All Rights Reserved.
  *
@@ -19,15 +18,17 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-abstract class NodeDuplicatorContractTest extends TuleapTestCase {
-    
-    public function itCopiesAllPropertiesOfTheGivenNode() {
+abstract class NodeDuplicatorContractTest extends TuleapTestCase
+{
+
+    public function itCopiesAllPropertiesOfTheGivenNode()
+    {
         $tree_node      = aNode()->withId(3)
                                  ->withArtifact(mock('Tracker_Artifact'))
                                  ->withChildren(aNode(), aNode())
                                  ->withObject(mock('Tracker_Artifact'))
                                  ->build();
-        
+
         $presenter_node = $this->newNode($tree_node);
         $this->assertEqual($tree_node->getId(), $presenter_node->getId());
         $this->assertIdentical($tree_node->getData(), $presenter_node->getData());
@@ -35,9 +36,5 @@ abstract class NodeDuplicatorContractTest extends TuleapTestCase {
         $this->assertEqual($tree_node->getObject(), $presenter_node->getObject());
     }
 
-    protected abstract function newNode(TreeNode $tree_node);
-    
+    abstract protected function newNode(TreeNode $tree_node);
 }
-
-
-?>

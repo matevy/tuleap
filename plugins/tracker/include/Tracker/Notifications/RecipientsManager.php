@@ -88,14 +88,13 @@ class RecipientsManager
         $recipients = array_merge($recipients, $changeset->getArtifact()->getCommentators());
         $recipients = array_values(array_unique($recipients));
 
-
         //now force check perms for all this people
         $tablo = array();
         foreach ($recipients as $r) {
             $tablo[$r] = true;
         }
 
-        $this->removeRecipientsWhenTrackerIsInOnlyUpdateMode($changeset, $tablo);
+        $this->removeRecipientsWhenTrackerIsInOnlyStatusUpdateMode($changeset, $tablo);
 
         // 3 Get from the global notif
         foreach ($changeset->getTracker()->getRecipients() as $r) {
@@ -108,6 +107,9 @@ class RecipientsManager
         $this->removeRecipientsThatMayReceiveAnEmptyNotification($changeset, $tablo);
         $this->removeRecipientsThatHaveUnsubcribedFromNotification($changeset, $tablo);
         $this->removeRecipientsWhenTheyAreInStatusUpdateOnlyMode($changeset, $tablo);
+        if ($is_update) {
+            $this->removeRecipientsWhenTheyAreInCreationOnlyMode($changeset, $tablo);
+        }
 
         return $tablo;
     }
@@ -192,7 +194,7 @@ class RecipientsManager
         return $user;
     }
 
-    private function removeRecipientsWhenTrackerIsInOnlyUpdateMode(
+    private function removeRecipientsWhenTrackerIsInOnlyStatusUpdateMode(
         Tracker_Artifact_Changeset $changeset,
         array &$recipients
     ) {
@@ -204,7 +206,7 @@ class RecipientsManager
             return;
         }
 
-        $this->removeUsersWhoAreNotInAllNotificationsMode($changeset, $recipients);
+        $this->removeUsersWhoAreNotInAllNotificationsOrInvolvedMode($changeset, $recipients);
     }
 
     /**
@@ -238,7 +240,7 @@ class RecipientsManager
      *
      * @return array
      */
-    private function removeUsersWhoAreNotInAllNotificationsMode(Tracker_Artifact_Changeset $changeset, array &$recipients)
+    private function removeUsersWhoAreNotInAllNotificationsOrInvolvedMode(Tracker_Artifact_Changeset $changeset, array &$recipients)
     {
         $tracker = $changeset->getTracker();
 
@@ -249,7 +251,29 @@ class RecipientsManager
                 $tracker
             );
 
-            if (! $user_notification_settings->isInNotifyOnEveryChangeMode()) {
+            if (! $user_notification_settings->isInNotifyOnEveryChangeMode() &&
+                ! $user_notification_settings->isInNoGlobalNotificationMode()
+            ) {
+                unset($recipients[$recipient]);
+            }
+        }
+    }
+
+    private function removeRecipientsWhenTheyAreInCreationOnlyMode(Tracker_Artifact_Changeset $changeset, array &$recipients)
+    {
+        foreach ($recipients as $recipient => $is_notification_enabled) {
+            $user = $this->getUserFromRecipientName($recipient);
+
+            if ($user === null) {
+                continue;
+            }
+
+            $user_notification_settings = $this->notification_settings_retriever->getUserNotificationSettings(
+                $user,
+                $changeset->getTracker()
+            );
+
+            if ($user_notification_settings->isInNotifyOnArtifactCreationMode()) {
                 unset($recipients[$recipient]);
             }
         }

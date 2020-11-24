@@ -19,9 +19,11 @@
  */
 
 
-abstract class GitRepositoryCreatorImpl implements GitRepositoryCreator {
+abstract class GitRepositoryCreatorImpl implements GitRepositoryCreator
+{
 
-    public function isNameValid($name) {
+    public function isNameValid($name)
+    {
         $len = strlen($name);
         return 1 <= $len && $len < GitDao::REPO_NAME_MAX_LENGTH &&
                !preg_match('`[^'. $this->getAllowedCharsInNamePattern() .']`', $name) &&
@@ -37,9 +39,9 @@ abstract class GitRepositoryCreatorImpl implements GitRepositoryCreator {
      *
      * @return string
      */
-    public function getAllowedCharsInNamePattern() {
+    public function getAllowedCharsInNamePattern()
+    {
         //alphanums, underscores, slashes and dash
         return 'a-zA-Z0-9/_.-';
     }
 }
-?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -26,9 +26,11 @@ use Git_Command_Exception;
 use Git_GitRepositoryUrlManager;
 use GitDao;
 use GitPlugin;
+use GitRepoNotFoundException;
 use GitRepository;
 use GitRepositoryFactory;
 use Luracast\Restler\RestException;
+use PermissionsOverrider_PermissionsOverriderManager;
 use PFUser;
 use PluginFactory;
 use Project_AccessException;
@@ -55,7 +57,10 @@ use Tuleap\Label\REST\UnableToAddAndRemoveSameLabelException;
 use Tuleap\Label\REST\UnableToAddEmptyLabelException;
 use Tuleap\Label\UnknownLabelException;
 use Tuleap\Project\Label\LabelDao;
+use Tuleap\Project\REST\UserRESTReferenceRetriever;
+use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
 use Tuleap\PullRequest\Authorization\PullRequestPermissionChecker;
+use Tuleap\PullRequest\Authorization\UserCannotMergePullRequestException;
 use Tuleap\PullRequest\Comment\Comment;
 use Tuleap\PullRequest\Comment\Dao as CommentDao;
 use Tuleap\PullRequest\Comment\Factory as CommentFactory;
@@ -63,9 +68,7 @@ use Tuleap\PullRequest\Dao as PullRequestDao;
 use Tuleap\PullRequest\Events\PullRequestDiffRepresentationBuild;
 use Tuleap\PullRequest\Exception\PullRequestAlreadyExistsException;
 use Tuleap\PullRequest\Exception\PullRequestAnonymousUserException;
-use Tuleap\PullRequest\Exception\PullRequestCannotBeAbandoned;
 use Tuleap\PullRequest\Exception\PullRequestCannotBeCreatedException;
-use Tuleap\PullRequest\Exception\PullRequestCannotBeMerged;
 use Tuleap\PullRequest\Exception\PullRequestNotFoundException;
 use Tuleap\PullRequest\Exception\PullRequestRepositoryMigratedOnGerritException;
 use Tuleap\PullRequest\Exception\PullRequestTargetException;
@@ -89,14 +92,28 @@ use Tuleap\PullRequest\Label\LabelsCurlyCoatedRetriever;
 use Tuleap\PullRequest\Label\PullRequestLabelDao;
 use Tuleap\PullRequest\MergeSetting\MergeSettingDAO;
 use Tuleap\PullRequest\MergeSetting\MergeSettingRetriever;
+use Tuleap\PullRequest\Notification\EventDispatcherWithFallback;
+use Tuleap\PullRequest\Notification\EventSubjectToNotificationAsynchronousRedisDispatcher;
+use Tuleap\PullRequest\Notification\PullRequestNotificationSupport;
 use Tuleap\PullRequest\PullRequest;
 use Tuleap\PullRequest\PullRequestCloser;
 use Tuleap\PullRequest\PullRequestCreator;
 use Tuleap\PullRequest\PullRequestMerger;
 use Tuleap\PullRequest\PullRequestWithGitReference;
+use Tuleap\PullRequest\REST\v1\Reviewer\ReviewerRepresentationInformationExtractor;
+use Tuleap\PullRequest\REST\v1\Reviewer\ReviewersPUTRepresentation;
+use Tuleap\PullRequest\REST\v1\Reviewer\ReviewersRepresentation;
+use Tuleap\PullRequest\Reviewer\Change\ReviewerChangeDAO;
+use Tuleap\PullRequest\Reviewer\Change\ReviewerChangeRetriever;
+use Tuleap\PullRequest\Reviewer\ReviewerDAO;
+use Tuleap\PullRequest\Reviewer\ReviewerRetriever;
+use Tuleap\PullRequest\Reviewer\ReviewersCannotBeUpdatedOnClosedPullRequestException;
+use Tuleap\PullRequest\Reviewer\ReviewerUpdater;
+use Tuleap\PullRequest\Reviewer\UserCannotBeAddedAsReviewerException;
 use Tuleap\PullRequest\Timeline\Dao as TimelineDao;
 use Tuleap\PullRequest\Timeline\Factory as TimelineFactory;
 use Tuleap\PullRequest\Timeline\TimelineEventCreator;
+use Tuleap\Queue\QueueFactory;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\ProjectAuthorization;
@@ -122,7 +139,7 @@ class PullRequestsResource extends AuthenticatedResource
     /** @var GitRepositoryFactory */
     private $git_repository_factory;
 
-    /** @var Tuleap\PullRequest\Factory */
+    /** @var PullRequestFactory */
     private $pull_request_factory;
 
     /** @var Tuleap\PullRequest\Timeline\Factory */
@@ -140,17 +157,14 @@ class PullRequestsResource extends AuthenticatedResource
     /** @var UserManager */
     private $user_manager;
 
-    /** @var Tuleap\PullRequest\PullRequestMerger */
+    /** @var PullRequestMerger */
     private $pull_request_merger;
 
-    /** @var Tuleap\PullRequest\PullRequestCloser */
+    /** @var PullRequestCloser */
     private $pull_request_closer;
 
-    /** @var Tuleap\PullRequest\PullRequestCreator */
+    /** @var PullRequestCreator */
     private $pull_request_creator;
-
-    /** @var Tuleap\PullRequest\Timeline\TimelineEventCreator */
-    private $timeline_event_creator;
 
     /** @var EventManager */
     private $event_manager;
@@ -199,12 +213,27 @@ class PullRequestsResource extends AuthenticatedResource
         $reference_manager          = ReferenceManager::instance();
         $this->pull_request_factory = new PullRequestFactory($pull_request_dao, $reference_manager);
 
+        $this->logger               = new BackendLogger();
+
+        $event_dispatcher = PullRequestNotificationSupport::buildDispatcher($this->logger);
+
         $comment_dao           = new CommentDao();
-        $this->comment_factory = new CommentFactory($comment_dao, $reference_manager);
+        $this->comment_factory = new CommentFactory($comment_dao, $reference_manager, $event_dispatcher);
+
+        $this->user_manager         = UserManager::instance();
 
         $inline_comment_dao     = new InlineCommentDao();
         $timeline_dao           = new TimelineDao();
-        $this->timeline_factory = new TimelineFactory($comment_dao, $inline_comment_dao, $timeline_dao);
+        $this->timeline_factory = new TimelineFactory(
+            $comment_dao,
+            $inline_comment_dao,
+            $timeline_dao,
+            new ReviewerChangeRetriever(
+                new ReviewerChangeDAO(),
+                $this->pull_request_factory,
+                $this->user_manager,
+            )
+        );
 
         $this->paginated_timeline_representation_builder = new PaginatedTimelineRepresentationBuilder(
             $this->timeline_factory
@@ -214,7 +243,6 @@ class PullRequestsResource extends AuthenticatedResource
             $this->comment_factory
         );
 
-        $this->user_manager         = UserManager::instance();
         $this->event_manager        = EventManager::instance();
         $this->pull_request_merger  = new PullRequestMerger(
             new MergeSettingRetriever(new MergeSettingDAO())
@@ -229,10 +257,12 @@ class PullRequestsResource extends AuthenticatedResource
                 new GitPullRequestReferenceNamespaceAvailabilityChecker
             )
         );
-        $this->pull_request_closer  = new PullRequestCloser($this->pull_request_factory, $this->pull_request_merger);
-        $this->logger               = new BackendLogger();
-
-        $this->timeline_event_creator = new TimelineEventCreator(new TimelineDao());
+        $this->pull_request_closer  = new PullRequestCloser(
+            $pull_request_dao,
+            $this->pull_request_merger,
+            new TimelineEventCreator(new TimelineDao()),
+            $event_dispatcher
+        );
 
         $dao = new \Tuleap\PullRequest\InlineComment\Dao();
         $this->inline_comment_creator = new InlineCommentCreator($dao, $reference_manager);
@@ -250,7 +280,12 @@ class PullRequestsResource extends AuthenticatedResource
 
         $this->permission_checker = new PullRequestPermissionChecker(
             $this->git_repository_factory,
-            new URLVerification()
+            new \Tuleap\Project\ProjectAccessChecker(
+                PermissionsOverrider_PermissionsOverriderManager::instance(),
+                new RestrictedUserCanAccessProjectVerifier(),
+                $this->event_manager
+            ),
+            $this->access_control_verifier
         );
 
         $git_pull_request_reference_dao             = new GitPullRequestReferenceDAO;
@@ -261,7 +296,7 @@ class PullRequestsResource extends AuthenticatedResource
         );
 
         $this->git_plugin  = PluginFactory::instance()->getPluginByName('git');
-        $url_manager = new Git_GitRepositoryUrlManager($this->git_plugin);
+        $url_manager = new Git_GitRepositoryUrlManager($this->git_plugin, new \Tuleap\InstanceBaseURLBuilder());
 
         $this->status_retriever = new CommitStatusRetriever(new CommitStatusDAO);
         $metadata_retriever     = new CommitMetadataRetriever($this->status_retriever, $this->user_manager);
@@ -297,15 +332,15 @@ class PullRequestsResource extends AuthenticatedResource
      *
      * @return array {@type Tuleap\PullRequest\REST\v1\PullRequestRepresentation}
      *
-     * @throws 403
-     * @throws 404 x Pull request does not exist
+     * @throws RestException 403
+     * @throws RestException 404 x Pull request does not exist
      */
     protected function get($id)
     {
         $this->checkAccess();
         $this->sendAllowHeadersForPullRequests();
 
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $user                            = $this->user_manager->getCurrentUser();
         $repository_src                  = $this->getRepository($pull_request->getRepositoryId());
@@ -351,17 +386,17 @@ class PullRequestsResource extends AuthenticatedResource
      *
      * @return array {@type \Tuleap\Git\REST\v1\GitCommitRepresentation}
      *
-     * @throws 403
-     * @throws 404 x Pull request does not exist
-     * @throws 410
-     * @throws 500
+     * @throws RestException 403
+     * @throws RestException 404 x Pull request does not exist
+     * @throws RestException 410
+     * @throws RestException 500
      */
     public function getCommits($id, $limit = 50, $offset = 0)
     {
         $this->checkAccess();
         $this->sendAllowHeadersForCommits();
 
-        $pull_requests_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_requests_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
 
         $pull_request   = $pull_requests_with_git_reference->getPullRequest();
         $git_repository = $this->getRepository($pull_request->getRepoDestId());
@@ -431,15 +466,15 @@ class PullRequestsResource extends AuthenticatedResource
      *
      * @return array
      *
-     * @throws 403
-     * @throws 404 x Pull request does not exist
+     * @throws RestException 403
+     * @throws RestException 404 x Pull request does not exist
      */
     protected function getLabels($id, $limit = self::MAX_LIMIT, $offset = 0)
     {
         $this->checkAccess();
         $this->sendAllowHeadersForLabels();
 
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $dest_repository                 = $this->getRepository($pull_request->getRepoDestId());
 
@@ -518,9 +553,9 @@ class PullRequestsResource extends AuthenticatedResource
      * @param int $id pull request ID
      * @param LabelsPATCHRepresentation $body
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404 x Pull request does not exist
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404 x Pull request does not exist
      */
     protected function patchLabels($id, LabelsPATCHRepresentation $body)
     {
@@ -566,15 +601,15 @@ class PullRequestsResource extends AuthenticatedResource
      *
      * @return array {@type PullRequest\REST\v1\PullRequestFileRepresentation}
      *
-     * @throws 403
-     * @throws 404 x Pull request does not exist
+     * @throws RestException 403
+     * @throws RestException 404 x Pull request does not exist
      */
     protected function getFiles($id)
     {
         $this->checkAccess();
         $this->sendAllowHeadersForPullRequests();
 
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $git_repository_destination      = $this->getRepository($pull_request->getRepoDestId());
         $executor                        = $this->getExecutor($git_repository_destination);
@@ -614,16 +649,16 @@ class PullRequestsResource extends AuthenticatedResource
      *
      * @return PullRequestFileUniDiffRepresentation {@type Tuleap\PullRequest\REST\v1\PullRequestFileUniDiffRepresentation}
      *
-     * @throws 403
-     * @throws 404 x Pull request does not exist
-     * @throws 404 x The file does not exist
+     * @throws RestException 403
+     * @throws RestException 404 x Pull request does not exist
+     * @throws RestException 404 x The file does not exist
      */
     protected function getFileDiff($id, $path)
     {
         $this->checkAccess();
         $this->sendAllowHeadersForPullRequests();
 
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $git_repository_destination      = $this->getRepository($pull_request->getRepoDestId());
 
@@ -706,7 +741,7 @@ class PullRequestsResource extends AuthenticatedResource
         $this->checkAccess();
         $this->sendAllowHeadersForInlineComments();
 
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $git_repository_source           = $this->getRepository($pull_request->getRepositoryId());
         $git_repository_destination      = $this->getRepository($pull_request->getRepoDestId());
@@ -780,9 +815,9 @@ class PullRequestsResource extends AuthenticatedResource
      * @param  PullRequestPOSTRepresentation $content Id of the Git repository, name of the source branch and name of the destination branch
      * @return PullRequestReference
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      * @status 201
      */
     protected function post(PullRequestPOSTRepresentation $content)
@@ -891,11 +926,11 @@ class PullRequestsResource extends AuthenticatedResource
      * @param  PullRequestPATCHRepresentation $body new pull request status {@from body}
      * @return array {@type Tuleap\PullRequest\REST\v1\PullRequestRepresentation}
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404 x Pull request does not exist
-     * @throws 500 x Error while abandoning the pull request
-     * @throws 500 x Error while merging the pull request
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404 x Pull request does not exist
+     * @throws RestException 500 x Error while abandoning the pull request
+     * @throws RestException 500 x Error while merging the pull request
      */
     protected function patch($id, PullRequestPATCHRepresentation $body)
     {
@@ -903,7 +938,7 @@ class PullRequestsResource extends AuthenticatedResource
         $this->sendAllowHeadersForPullRequests();
 
         $user                            = $this->user_manager->getCurrentUser();
-        $pull_request_with_git_reference = $this->getWritablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $repository_src                  = $this->getRepository($pull_request->getRepositoryId());
         $repository_dest                 = $this->getRepository($pull_request->getRepoDestId());
@@ -940,45 +975,26 @@ class PullRequestsResource extends AuthenticatedResource
         );
     }
 
+    /**
+     * @throws RestException
+     */
     private function patchStatus(PFUser $user, PullRequest $pull_request, $status)
     {
-        switch ($status) {
-            case PullRequestRepresentation::STATUS_ABANDON:
-                try {
-                    $this->abandon($pull_request);
-                    $this->timeline_event_creator->storeAbandonEvent($pull_request, $user);
-                } catch (PullRequestCannotBeAbandoned $exception) {
-                    throw new RestException(400, $exception->getMessage());
-                }
-                break;
-            case PullRequestRepresentation::STATUS_MERGE:
-                $git_repository_dest = $this->getRepository($pull_request->getRepoDestId());
+        $status_patcher = new StatusPatcher(
+            $this->git_repository_factory,
+            $this->access_control_verifier,
+            $this->permission_checker,
+            $this->pull_request_closer,
+            new URLVerification(),
+            $this->logger
+        );
 
-                try {
-                    $this->pull_request_closer->doMerge($git_repository_dest, $pull_request, $user);
-                    $this->timeline_event_creator->storeMergeEvent($pull_request, $user);
-                } catch (PullRequestCannotBeMerged $exception) {
-                    throw new RestException(400, $exception->getMessage());
-                } catch (Git_Command_Exception $exception) {
-                    $this->logger->error('Error while merging the pull request -> ' . $exception->getMessage());
-                    throw new RestException(500, 'Error while merging the pull request');
-                }
-                break;
-            default:
-                throw new RestException(
-                    400,
-                    'Cannot deal with provided status. Supported statuses are ' . PullRequestRepresentation::STATUS_MERGE . ', '. PullRequestRepresentation::STATUS_ABANDON
-                );
-        }
-    }
-
-    private function abandon(PullRequest $pull_request)
-    {
-        $this->pull_request_closer->abandon($pull_request);
+        $status_patcher->patchStatus($user, $pull_request, $status);
     }
 
     /**
-     * @throws 400
+     * @throws RestException 400
+     * @throws RestException 403
      */
     private function patchInfo(
         PFUser $user,
@@ -986,6 +1002,8 @@ class PullRequestsResource extends AuthenticatedResource
         $project_id,
         $body
     ) {
+        $this->checkUserCanMerge($pull_request, $user);
+
         $trimmed_title = trim($body->title);
         if (empty($trimmed_title)) {
             throw new RestException(400, 'Title cannot be empty');
@@ -1026,8 +1044,8 @@ class PullRequestsResource extends AuthenticatedResource
      * @return array {@type Tuleap\PullRequest\REST\v1\TimelineRepresentation}
      *
      * @throws RestException 403
-     * @throws 404
-     * @throws 406
+     * @throws RestException 404
+     * @throws RestException 406
      */
     protected function getTimeline($id, $limit = 10, $offset = 0)
     {
@@ -1035,7 +1053,7 @@ class PullRequestsResource extends AuthenticatedResource
         $this->checkLimit($limit);
         $this->sendAllowHeadersForTimeline();
 
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $git_repository                  = $this->getRepository($pull_request->getRepositoryId());
         $project_id                      = $git_repository->getProjectId();
@@ -1046,7 +1064,7 @@ class PullRequestsResource extends AuthenticatedResource
         );
 
         $paginated_timeline_representation = $this->paginated_timeline_representation_builder->getPaginatedTimelineRepresentation(
-            $id,
+            $pull_request,
             $project_id,
             $limit,
             $offset
@@ -1084,8 +1102,8 @@ class PullRequestsResource extends AuthenticatedResource
      * @return array {@type Tuleap\PullRequest\REST\v1\CommentRepresentation}
      *
      * @throws RestException 403
-     * @throws 404
-     * @throws 406
+     * @throws RestException 404
+     * @throws RestException 406
      */
     protected function getComments($id, $limit = 10, $offset = 0, $order = 'asc')
     {
@@ -1093,7 +1111,7 @@ class PullRequestsResource extends AuthenticatedResource
         $this->checkLimit($limit);
         $this->sendAllowHeadersForComments();
 
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $git_repository                  = $this->getRepository($pull_request->getRepositoryId());
         $project_id                      = $git_repository->getProjectId();
@@ -1143,7 +1161,7 @@ class PullRequestsResource extends AuthenticatedResource
         $this->sendAllowHeadersForComments();
 
         $user                            = $this->user_manager->getCurrentUser();
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
         $git_repository                  = $this->getRepository($pull_request->getRepositoryId());
         $project_id                      = $git_repository->getProjectId();
@@ -1165,6 +1183,95 @@ class PullRequestsResource extends AuthenticatedResource
         return $comment_representation;
     }
 
+    /**
+     * Get pull request's reviewers
+     *
+     * @url OPTIONS {id}/reviewers
+     *
+     * @param int $id Pull request ID
+     */
+    public function optionsReviewers(int $id): void
+    {
+        Header::allowOptionsGetPut();
+    }
+
+    /**
+     * Get pull request's reviewers
+     *
+     * @url GET {id}/reviewers
+     *
+     * @access hybrid
+     *
+     * @param int $id Pull request ID
+     *
+     * @return ReviewersRepresentation
+     *
+     * @throws RestException 403
+     * @throws RestException 404
+     */
+    public function getReviewers(int $id): ReviewersRepresentation
+    {
+        $this->checkAccess();
+        $this->optionsReviewers($id);
+
+        $pull_request = $this->getAccessiblePullRequest($id);
+
+        $reviewer_retrievers = new ReviewerRetriever($this->user_manager, new ReviewerDAO(), $this->permission_checker);
+
+        return ReviewersRepresentation::fromUsers(...$reviewer_retrievers->getReviewers($pull_request));
+    }
+
+    /**
+     * Set pull request's reviewers
+     *
+     * @url PUT {id}/reviewers
+     *
+     * @status 204
+     *
+     * @param int $id Pull request ID
+     * @param ReviewersPUTRepresentation $representation
+     *
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
+     */
+    protected function putReviewers(int $id, ReviewersPUTRepresentation $representation): void
+    {
+        $this->checkAccess();
+        $this->optionsReviewers($id);
+
+        $pull_request = $this->getWritablePullRequestWithGitReference($id);
+
+        $information_extractor = new ReviewerRepresentationInformationExtractor(
+            new UserRESTReferenceRetriever($this->user_manager),
+        );
+        $users = $information_extractor->getUsers($representation);
+
+        $reviewer_updater = new ReviewerUpdater(
+            new ReviewerDAO(),
+            $this->permission_checker,
+            PullRequestNotificationSupport::buildDispatcher($this->logger)
+        );
+        try {
+            $reviewer_updater->updatePullRequestReviewers(
+                $pull_request->getPullRequest(),
+                $this->user_manager->getCurrentUser(),
+                new \DateTimeImmutable(),
+                ...$users
+            );
+        } catch (UserCannotBeAddedAsReviewerException $exception) {
+            throw new RestException(
+                400,
+                'User #' . $exception->getUser()->getId() . ' cannot access this pull request'
+            );
+        } catch (ReviewersCannotBeUpdatedOnClosedPullRequestException $exception) {
+            throw new RestException(
+                403,
+                'This pull request is already closed, the reviewers can not be updated'
+            );
+        }
+    }
+
     private function checkLimit($limit)
     {
         if ($limit > self::MAX_LIMIT) {
@@ -1178,29 +1285,27 @@ class PullRequestsResource extends AuthenticatedResource
      */
     private function getWritablePullRequestWithGitReference($id)
     {
-        $pull_request_with_git_reference = $this->getReadablePullRequestWithGitReference($id);
+        $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
         $pull_request                    = $pull_request_with_git_reference->getPullRequest();
 
         $current_user    = $this->user_manager->getCurrentUser();
-        $repository_dest = $this->getRepository($pull_request->getRepoDestId());
-        $this->checkUserCanWrite($current_user, $repository_dest, $pull_request->getBranchDest());
+
+        $this->checkUserCanMerge($pull_request, $current_user);
 
         return $pull_request_with_git_reference;
     }
 
     /**
-     * @param $id
-     * @return PullRequestWithGitReference
      * @throws RestException
      */
-    private function getReadablePullRequestWithGitReference($id)
+    private function getAccessiblePullRequest(int $pull_request_id): PullRequest
     {
         try {
-            $pull_request = $this->pull_request_factory->getPullRequestById($id);
+            $pull_request = $this->pull_request_factory->getPullRequestById($pull_request_id);
             $current_user = $this->user_manager->getCurrentUser();
             $this->permission_checker->checkPullRequestIsReadableByUser($pull_request, $current_user);
 
-            $git_reference = $this->git_pull_request_reference_retriever->getGitReferenceFromPullRequest($pull_request);
+            return $pull_request;
         } catch (PullRequestNotFoundException $exception) {
             throw new RestException(404);
         } catch (\GitRepoNotFoundException $exception) {
@@ -1211,6 +1316,20 @@ class PullRequestsResource extends AuthenticatedResource
             throw new RestException(403, $exception->getMessage());
         } catch (UserCannotReadGitRepositoryException $exception) {
             throw new RestException(403, 'User is not able to READ the git repository');
+        } catch (GitPullRequestReferenceNotFoundException $exception) {
+            throw new RestException(404);
+        }
+    }
+
+    /**
+     * @throws RestException
+     */
+    private function getAccessiblePullRequestWithGitReferenceForCurrentUser(int $id): PullRequestWithGitReference
+    {
+        try {
+            $pull_request = $this->getAccessiblePullRequest($id);
+
+            $git_reference = $this->git_pull_request_reference_retriever->getGitReferenceFromPullRequest($pull_request);
         } catch (GitPullRequestReferenceNotFoundException $exception) {
             throw new RestException(404);
         }
@@ -1262,12 +1381,18 @@ class PullRequestsResource extends AuthenticatedResource
         }
     }
 
-    private function checkUserCanWrite(PFUser $user, GitRepository $repository, $reference)
+    /**
+     * @throws RestException 403
+     * @throws RestException 404
+     */
+    private function checkUserCanMerge(PullRequest $pull_request, PFUser $user): void
     {
-        ProjectAuthorization::userCanAccessProject($user, $repository->getProject(), new URLVerification());
-
-        if (! $this->access_control_verifier->canWrite($user, $repository, $reference)) {
+        try {
+            $this->permission_checker->checkPullRequestIsMergeableByUser($pull_request, $user);
+        } catch (UserCannotMergePullRequestException $e) {
             throw new RestException(403, 'User is not able to WRITE the git repository');
+        } catch (GitRepoNotFoundException $e) {
+            throw new RestException(404, 'Git repository not found');
         }
     }
 

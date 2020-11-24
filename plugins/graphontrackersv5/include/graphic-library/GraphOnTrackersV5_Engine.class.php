@@ -23,7 +23,8 @@
 /**
  * Graphic engine which builds a graph
  */
-abstract class GraphOnTrackersV5_Engine {
+abstract class GraphOnTrackersV5_Engine
+{
 
     public $graph;
     public $data;
@@ -31,15 +32,16 @@ abstract class GraphOnTrackersV5_Engine {
     public $colors;
 
     /**
-     * @return boolean true if the data are valid to buid the chart
+     * @return bool true if the data are valid to buid the chart
      */
-    public function validData() {
+    public function validData()
+    {
         if (count($this->data) > 0) {
             return true;
         } else {
             $GLOBALS['Response']->addFeedback(
                 'info',
-                $GLOBALS['Language']->getText('plugin_graphontrackersv5_engine','no_datas',array($this->title))
+                $GLOBALS['Language']->getText('plugin_graphontrackersv5_engine', 'no_datas', array($this->title))
             );
 
             return false;
@@ -49,7 +51,8 @@ abstract class GraphOnTrackersV5_Engine {
     /**
      * @return array of hexa colors
      */
-    protected function getColors() {
+    protected function getColors()
+    {
         $available_colors = $this->graph->getThemedColors();
         $max_colors       = count($available_colors);
         $i = 0;
@@ -66,7 +69,8 @@ abstract class GraphOnTrackersV5_Engine {
      *
      * @return string hexadecimal representation of the color
      */
-    private function fillTheBlanks($color, $available_colors, $max_colors, &$i) {
+    private function fillTheBlanks($color, $available_colors, $max_colors, &$i)
+    {
         if ($this->isColorUndefined($color)) {
             return $available_colors[$i++ % $max_colors];
         }
@@ -74,12 +78,14 @@ abstract class GraphOnTrackersV5_Engine {
     }
 
     /** @return bool */
-    private function isColorUndefined($color) {
-        return $color[0] === NULL || $color[1] === NULL || $color[2] === NULL;
+    private function isColorUndefined($color)
+    {
+        return $color[0] === null || $color[1] === null || $color[2] === null;
     }
 
     /** @return string hexadecimal representation of the color */
-    private function getHexaColor($color) {
+    private function getHexaColor($color)
+    {
         return ColorHelper::RGBToHexa($color[0], $color[1], $color[2]);
     }
 
@@ -92,25 +98,29 @@ abstract class GraphOnTrackersV5_Engine {
      * Return public data as Array (meant to be transformed into Json)
      * @return array
      */
-    public function toArray() {
+    public function toArray()
+    {
         return array(
             'colors' => $this->toArrayColors(),
         );
     }
 
-    protected function toArrayColors() {
+    protected function toArrayColors()
+    {
         return is_array($this->colors) ? $this->getArrayColors() : null;
     }
 
-    private function getArrayColors() {
+    private function getArrayColors()
+    {
         $colors = array();
-        foreach($this->colors as $color) {
+        foreach ($this->colors as $color) {
             $colors[] = $this->getColorOrNull($color);
         }
         return $colors;
     }
 
-    protected function getColorOrNull($color) {
+    protected function getColorOrNull($color)
+    {
         if ($this->isColorATLPColor($color)) {
             return $color;
         }
@@ -130,4 +140,3 @@ abstract class GraphOnTrackersV5_Engine {
         return ! is_array($color) && strpos($color, '-') > 0;
     }
 }
-?>

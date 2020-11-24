@@ -19,7 +19,7 @@
 
 @import 'fonts';
 
-$tlp-font-family: 'SourceSansPro', Helvetica, Arial, sans-serif;
+$tlp-h1-color: $tlp-theme-sidebar-background-color;
 
 body {
     color: $tlp-typo-default-text-color;
@@ -43,16 +43,18 @@ h6 {
 
 h1 {
     margin: 0 0 $tlp-title-spacing;
-    font-size: 46px;
-    font-weight: 400;
+    color: $tlp-h1-color;
+    font-size: 36px;
+    font-weight: 600;
 
     small {
-        font-size: 28px;
+        font-size: 24px;
     }
 }
 
 h2 {
-    font-size: 30px;
+    color: $tlp-theme-color;
+    font-size: 28px;
     font-weight: 400;
 
     small {
@@ -107,10 +109,10 @@ hr {
 p {
     margin: 0 0 $tlp-spacing;
     font-size: 16px;
-    line-height: 24px;
+    line-height: $tlp-paragraph-line-height;
 
     &:last-child,
-    &[class^="text-"] {
+    &[class^='text-'] {
         margin: 0;
     }
 }
@@ -119,7 +121,7 @@ ul,
 ol {
     margin: 0 0 $tlp-spacing;
     padding: 0 0 0 1.5 * $tlp-spacing;
-    line-height: 24px;
+    line-height: $tlp-paragraph-line-height;
 
     &:last-child {
         margin: 0;
@@ -187,7 +189,7 @@ blockquote {
 %tlp-code {
     background: transparentize($tlp-theme-color, .95);
     color: $tlp-theme-color;
-    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
     font-size: 14px;
     font-weight: 400;
     line-height: 22px;

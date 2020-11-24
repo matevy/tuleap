@@ -19,9 +19,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* abstract */ class Docman_View_Header extends Docman_View_View {
+/* abstract */ class Docman_View_Header extends Docman_View_View
+{
 
-    function _header($params) {
+    function _header($params)
+    {
         if (!headers_sent()) {
             header("Cache-Control: no-store, no-cache, must-revalidate"); // HTTP/1.1
             header("Expires: Mon, 26 Jul 1997 05:00:00 GMT"); // Date in the past
@@ -64,13 +66,14 @@
         return array();
     }
 
-    /* protected */ function _getTitle($params) {
+    /* protected */ function _getTitle($params)
+    {
         $title = '';
         $project = $this->getProjectFromParams($params);
         if ($project) {
             $title .= $project->getPublicName().' - ';
         }
-        $title .= $GLOBALS['Language']->getText('plugin_docman','title');
+        $title .= $GLOBALS['Language']->getText('plugin_docman', 'title');
 
         return $title;
     }
@@ -87,20 +90,22 @@
         return $title;
     }
 
-    /* protected */ function _footer($params) {
-        if(isset($params['pv']) && $params['pv'] > 0) {
+    /* protected */ function _footer($params)
+    {
+        if (isset($params['pv']) && $params['pv'] > 0) {
             $GLOBALS['HTML']->pv_footer(array());
-        }
-        else {
+        } else {
             $GLOBALS['HTML']->footer(array());
         }
     }
 
-    /* protected */ function _getAdditionalHtmlParams($params) {
+    /* protected */ function _getAdditionalHtmlParams($params)
+    {
         return  array();
     }
 
-    /* protected */ function _feedback($params) {
+    /* protected */ function _feedback($params)
+    {
         //$this->_controller->feedback->display();
     }
 
@@ -109,7 +114,7 @@
         $project_id = null;
         if (isset($params['group_id'])) {
             $project_id = $params['group_id'];
-        } else if (isset($params['item']) && $params['item'] != null) {
+        } elseif (isset($params['item']) && $params['item'] != null) {
             $project_id = $params['item']->getGroupId();
         }
 

@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace Tuleap\Tracker\Workflow\SimpleMode;
 
 use Tracker_FormElementFactory;
+use Tracker_RuleFactory;
 use Transition_PostAction_CIBuildDao;
 use Transition_PostAction_CIBuildFactory;
 use Transition_PostAction_Field_DateDao;
@@ -32,14 +33,21 @@ use Transition_PostAction_FieldFactory;
 use TransitionFactory;
 use Tuleap\DB\DBFactory;
 use Tuleap\DB\DBTransactionExecutorWithConnection;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsRetriever;
 use Tuleap\Tracker\Workflow\PostAction\PostActionsRetriever;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildRepository;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildUpdater;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildValidator;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildValueRepository;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildValueUpdater;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildValueValidator;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\FrozenFieldsValueRepository;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\FrozenFieldsValueUpdater;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\FrozenFieldsValueValidator;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\HiddenFieldsetsValueRepository;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\HiddenFieldsetsValueUpdater;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\HiddenFieldsetsValueValidator;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\PostActionFieldIdValidator;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\PostActionIdValidator;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\PostActionsMapper;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\SetDateValueRepository;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\SetDateValueUpdater;
@@ -58,10 +66,53 @@ class TransitionReplicatorBuilder
 {
     public static function build() : TransitionReplicator
     {
-        $ids_validator        = new PostActionIdValidator();
         $field_ids_validator  = new PostActionFieldIdValidator();
         $form_element_factory = Tracker_FormElementFactory::instance();
         $transaction_executor = new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection());
+
+        $post_action_collection_updater = new PostActionCollectionUpdater(
+            new CIBuildValueUpdater(
+                new CIBuildValueRepository(
+                    new Transition_PostAction_CIBuildDao()
+                ),
+                new CIBuildValueValidator()
+            ),
+            new SetDateValueUpdater(
+                new SetDateValueRepository(
+                    new Transition_PostAction_Field_DateDao(),
+                    $transaction_executor
+                ),
+                new SetDateValueValidator($field_ids_validator, $form_element_factory)
+            ),
+            new SetIntValueUpdater(
+                new SetintValueRepository(
+                    new Transition_PostAction_Field_IntDao(),
+                    $transaction_executor
+                ),
+                new SetIntValueValidator($field_ids_validator, $form_element_factory)
+            ),
+            new SetFloatValueUpdater(
+                new SetFloatValueRepository(
+                    new Transition_PostAction_Field_FloatDao(),
+                    $transaction_executor
+                ),
+                new SetFloatValueValidator($field_ids_validator, $form_element_factory)
+            ),
+            new FrozenFieldsValueUpdater(
+                new FrozenFieldsValueRepository(
+                    new FrozenFieldsDao()
+                ),
+                new FrozenFieldsValueValidator($form_element_factory, Tracker_RuleFactory::instance())
+            ),
+            new HiddenFieldsetsValueUpdater(
+                new HiddenFieldsetsValueRepository(
+                    new HiddenFieldsetsDao()
+                ),
+                new HiddenFieldsetsValueValidator(
+                    $form_element_factory
+                )
+            )
+        );
 
         return new TransitionReplicator(
             Workflow_Transition_ConditionFactory::build(),
@@ -77,37 +128,16 @@ class TransitionReplicatorBuilder
                     new Transition_PostAction_Field_IntDao(),
                     new Transition_PostAction_Field_FloatDao()
                 ),
-                new FrozenFieldsRetriever(new FrozenFieldsDao())
-            ),
-            new PostActionCollectionUpdater(
-                new CIBuildUpdater(
-                    new CIBuildRepository(
-                        new Transition_PostAction_CIBuildDao()
-                    ),
-                    new CIBuildValidator($ids_validator)
+                new FrozenFieldsRetriever(
+                    new FrozenFieldsDao(),
+                    $form_element_factory
                 ),
-                new SetDateValueUpdater(
-                    new SetDateValueRepository(
-                        new Transition_PostAction_Field_DateDao(),
-                        $transaction_executor
-                    ),
-                    new SetDateValueValidator($ids_validator, $field_ids_validator, $form_element_factory)
-                ),
-                new SetIntValueUpdater(
-                    new SetintValueRepository(
-                        new Transition_PostAction_Field_IntDao(),
-                        $transaction_executor
-                    ),
-                    new SetIntValueValidator($ids_validator, $field_ids_validator, $form_element_factory)
-                ),
-                new SetFloatValueUpdater(
-                    new SetFloatValueRepository(
-                        new Transition_PostAction_Field_FloatDao(),
-                        $transaction_executor
-                    ),
-                    new SetFloatValueValidator($ids_validator, $field_ids_validator, $form_element_factory)
+                new HiddenFieldsetsRetriever(
+                    new HiddenFieldsetsDao(),
+                    $form_element_factory
                 )
             ),
+            $post_action_collection_updater,
             new PostActionsMapper()
         );
     }

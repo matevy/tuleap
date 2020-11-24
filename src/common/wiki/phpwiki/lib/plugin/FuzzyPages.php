@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: FuzzyPages.php,v 1.12 2004/11/23 15:17:19 rurban Exp $');
 /*
  Copyright 1999, 2000, 2001, 2002 $ThePhpWikiProgrammingTeam
@@ -33,50 +34,69 @@ rcs_id('$Id: FuzzyPages.php,v 1.12 2004/11/23 15:17:19 rurban Exp $');
  * http://www.php.net/manual/en/function.similar-text.php
  * http://www.php.net/manual/en/function.metaphone.php
  */
-class WikiPlugin_FuzzyPages
-extends WikiPlugin
+class WikiPlugin_FuzzyPages extends WikiPlugin
 {
-    function getName() {
+    function getName()
+    {
         return _("FuzzyPages");
     }
 
-    function getDescription() {
-        return sprintf(_("Search for page titles similar to %s."),
-                       '[pagename]');
+    function getDescription()
+    {
+        return sprintf(
+            _("Search for page titles similar to %s."),
+            '[pagename]'
+        );
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.12 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.12 $"
+        );
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array('s'     => false,
                      'debug' => false);
     }
 
-    function spelling_similarity($subject) {
+    function spelling_similarity($subject)
+    {
         $spelling_similarity_score = 0;
-        similar_text($subject, $this->_searchterm,
-                     $spelling_similarity_score);
+        similar_text(
+            $subject,
+            $this->_searchterm,
+            $spelling_similarity_score
+        );
         return $spelling_similarity_score;
     }
 
-    function sound_similarity($subject) {
+    function sound_similarity($subject)
+    {
         $sound_similarity_score = 0;
-        similar_text(metaphone($subject), $this->_searchterm_metaphone,
-                     $sound_similarity_score);
+        similar_text(
+            metaphone($subject),
+            $this->_searchterm_metaphone,
+            $sound_similarity_score
+        );
         return $sound_similarity_score;
     }
 
-    function averageSimilarities($subject) {
+    function averageSimilarities($subject)
+    {
         return ($this->spelling_similarity($subject)
                 + $this->sound_similarity($subject)) / 2;
     }
 
-    function collectSimilarPages(&$list, &$dbi) {
-        if (! defined('MIN_SCORE_CUTOFF'))
+    function collectSimilarPages(&$list, &$dbi)
+    {
+        if (! defined('MIN_SCORE_CUTOFF')) {
             define('MIN_SCORE_CUTOFF', 33);
+        }
 
         $this->_searchterm_metaphone = metaphone($this->_searchterm);
 
@@ -85,55 +105,71 @@ extends WikiPlugin
         while ($pagehandle = $allPages->next()) {
             $pagename = $pagehandle->getName();
             $similarity_score = $this->averageSimilarities($pagename);
-            if ($similarity_score > MIN_SCORE_CUTOFF)
+            if ($similarity_score > MIN_SCORE_CUTOFF) {
                 $list[$pagename] = $similarity_score;
+            }
         }
     }
 
-    function sortCollectedPages(&$list) {
+    function sortCollectedPages(&$list)
+    {
         arsort($list, SORT_NUMERIC);
     }
 
-    function addTableCaption(&$table, &$dbi) {
-        if ($dbi->isWikiPage($this->_searchterm))
+    function addTableCaption(&$table, &$dbi)
+    {
+        if ($dbi->isWikiPage($this->_searchterm)) {
             $link = WikiLink($this->_searchterm, 'auto');
-        else
+        } else {
             $link = $this->_searchterm;
+        }
         $caption = fmt("These page titles match fuzzy with '%s'", $link);
         $table->pushContent(HTML::caption(array('align'=>'top'), $caption));
     }
 
-    function addTableHead(&$table) {
-        $row = HTML::tr(HTML::th(_("Name")),
-                        HTML::th(array('align' => 'right'), _("Score")));
-        if ($this->debug)
+    function addTableHead(&$table)
+    {
+        $row = HTML::tr(
+            HTML::th(_("Name")),
+            HTML::th(array('align' => 'right'), _("Score"))
+        );
+        if ($this->debug) {
             $this->_pushDebugHeadingTDinto($row);
+        }
 
         $table->pushContent(HTML::thead($row));
     }
 
-    function addTableBody(&$list, &$table) {
-        if (! defined('HIGHLIGHT_ROWS_CUTOFF_SCORE'))
+    function addTableBody(&$list, &$table)
+    {
+        if (! defined('HIGHLIGHT_ROWS_CUTOFF_SCORE')) {
             define('HIGHLIGHT_ROWS_CUTOFF_SCORE', 60);
+        }
 
         $tbody = HTML::tbody();
         foreach ($list as $found_pagename => $score) {
-            $row = HTML::tr(array('class' =>
+            $row = HTML::tr(
+                array('class' =>
                                   $score > HIGHLIGHT_ROWS_CUTOFF_SCORE
                                   ? 'evenrow' : 'oddrow'),
-                            HTML::td(WikiLink($found_pagename)),
-                            HTML::td(array('align' => 'right'),
-                                     round($score)));
+                HTML::td(WikiLink($found_pagename)),
+                HTML::td(
+                    array('align' => 'right'),
+                    round($score)
+                )
+            );
 
-            if ($this->debug)
+            if ($this->debug) {
                 $this->_pushDebugTDinto($row, $found_pagename);
+            }
 
             $tbody->pushContent($row);
         }
         $table->pushContent($tbody);
     }
 
-    function formatTable(&$list, &$dbi) {
+    function formatTable(&$list, &$dbi)
+    {
 
         $table = HTML::table(array('cellpadding' => 2,
                                    'cellspacing' => 1,
@@ -146,11 +182,13 @@ extends WikiPlugin
     }
 
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
         extract($args);
-        if (empty($s))
+        if (empty($s)) {
             return '';
+        }
         $this->debug = $debug;
 
         $this->_searchterm = $s;
@@ -163,23 +201,32 @@ extends WikiPlugin
 
 
 
-    function _pushDebugHeadingTDinto(&$row) {
-        $row->pushContent(HTML::td(_("Spelling Score")),
-                          HTML::td(_("Sound Score")),
-                          HTML::td('Metaphones'));
+    function _pushDebugHeadingTDinto(&$row)
+    {
+        $row->pushContent(
+            HTML::td(_("Spelling Score")),
+            HTML::td(_("Sound Score")),
+            HTML::td('Metaphones')
+        );
     }
 
-    function _pushDebugTDinto(&$row, $pagename) {
+    function _pushDebugTDinto(&$row, $pagename)
+    {
         // This actually calculates everything a second time for each pagename
         // so the individual scores can be displayed separately for debugging.
         $debug_spelling = round($this->spelling_similarity($pagename), 1);
         $debug_sound = round($this->sound_similarity($pagename), 1);
-        $debug_metaphone = sprintf("(%s, %s)", metaphone($pagename),
-                                   $this->_searchterm_metaphone);
+        $debug_metaphone = sprintf(
+            "(%s, %s)",
+            metaphone($pagename),
+            $this->_searchterm_metaphone
+        );
 
-        $row->pushcontent(HTML::td(array('align' => 'center'), $debug_spelling),
-                          HTML::td(array('align' => 'center'), $debug_sound),
-                          HTML::td($debug_metaphone));
+        $row->pushcontent(
+            HTML::td(array('align' => 'center'), $debug_spelling),
+            HTML::td(array('align' => 'center'), $debug_sound),
+            HTML::td($debug_metaphone)
+        );
     }
 };
 
@@ -209,4 +256,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

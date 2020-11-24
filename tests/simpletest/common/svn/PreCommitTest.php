@@ -25,7 +25,8 @@
 /**
  * I'm responsible of handling what happens in pre-commit subversion hook
  */
-class SVN_Hook_PreCommit_BaseTest extends TuleapTestCase {
+class SVN_Hook_PreCommit_BaseTest extends TuleapTestCase
+{
 
     /** @var SVN_Svnlook */
     protected $svn_look;
@@ -36,7 +37,8 @@ class SVN_Hook_PreCommit_BaseTest extends TuleapTestCase {
     /** @var SVN_Immutable_Tags_Handler */
     protected $handler;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->repo           = 'SVN_repo';
@@ -61,9 +63,11 @@ class SVN_Hook_PreCommit_BaseTest extends TuleapTestCase {
     }
 }
 
-class SVN_Hook_PreCommit_MessageTest extends SVN_Hook_PreCommit_BaseTest {
+class SVN_Hook_PreCommit_MessageTest extends SVN_Hook_PreCommit_BaseTest
+{
 
-    public function itRejectsCommitIfCommitMessageIsEmptyAndForgeRequiresACommitMessage() {
+    public function itRejectsCommitIfCommitMessageIsEmptyAndForgeRequiresACommitMessage()
+    {
         ForgeConfig::set('sys_allow_empty_svn_commit_message', false);
 
         $this->expectException('Exception');
@@ -72,7 +76,8 @@ class SVN_Hook_PreCommit_MessageTest extends SVN_Hook_PreCommit_BaseTest {
         $this->pre_commit->assertCommitMessageIsValid($this->repo, $this->commit_message);
     }
 
-    public function itDoesNotRejectCommitIfCommitMessageIsEmptyAndForgeDoesNotRequireACommitMessage() {
+    public function itDoesNotRejectCommitIfCommitMessageIsEmptyAndForgeDoesNotRequireACommitMessage()
+    {
         ForgeConfig::set('sys_allow_empty_svn_commit_message', true);
 
         expect($this->commit_message_validator)->assertCommitMessageIsValid()->once();
@@ -81,9 +86,11 @@ class SVN_Hook_PreCommit_MessageTest extends SVN_Hook_PreCommit_BaseTest {
     }
 }
 
-class SVN_Hook_PreCommit_CommitToTagTest extends SVN_Hook_PreCommit_BaseTest {
+class SVN_Hook_PreCommit_CommitToTagTest extends SVN_Hook_PreCommit_BaseTest
+{
 
-    public function testCommitToTagIsAllowed() {
+    public function testCommitToTagIsAllowed()
+    {
         stub($this->handler)->doesProjectUsesImmutableTags()->returns(false);
 
         $this->assertCommitIsAllowed('A   moduleA/trunk/toto');
@@ -131,7 +138,8 @@ class SVN_Hook_PreCommit_CommitToTagTest extends SVN_Hook_PreCommit_BaseTest {
         $this->assertCommitIsAllowed('A   trunk/toto', 'A   tags/moduleA/v1/toto');
     }
 
-    public function testCommitToTagIsDeniedInModule() {
+    public function testCommitToTagIsDeniedInModule()
+    {
         stub($this->handler)->doesProjectUsesImmutableTags()->returns(true);
         stub($this->handler)->getImmutableTagsPathForProject()->returns('/*/tags/');
 
@@ -180,7 +188,8 @@ class SVN_Hook_PreCommit_CommitToTagTest extends SVN_Hook_PreCommit_BaseTest {
         $this->assertCommitIsAllowed('A   trunk/toto', 'A   tags/moduleA/v1/toto');
     }
 
-    public function testCommitToTagIsDeniedAtRoot() {
+    public function testCommitToTagIsDeniedAtRoot()
+    {
         stub($this->handler)->doesProjectUsesImmutableTags()->returns(true);
         stub($this->handler)->getImmutableTagsPathForProject()->returns('/tags/');
         stub($this->handler)->getAllowedTagsFromWhiteList()->returns(array(
@@ -232,7 +241,8 @@ class SVN_Hook_PreCommit_CommitToTagTest extends SVN_Hook_PreCommit_BaseTest {
         $this->assertCommitIsDenied('A   trunk/toto', 'A   tags/moduleA/v1/toto');
     }
 
-    public function testCommitToTagIsDeniedAtRootAndInModules() {
+    public function testCommitToTagIsDeniedAtRootAndInModules()
+    {
         $paths = <<<EOS
 /tags
 /*/tags
@@ -286,14 +296,15 @@ EOS;
         $this->assertCommitIsDenied('A   trunk/toto', 'A   tags/moduleA/v1/toto');
     }
 
-    private function assertCommitIsAllowed() {
+    private function assertCommitIsAllowed()
+    {
         $paths      = func_get_args();
         $pre_commit = $this->buildPreCommitHook($paths);
 
         try {
             $pre_commit->assertCommitToTagIsAllowed(
-               $this->repo,
-               $this->transaction
+                $this->repo,
+                $this->transaction
             );
 
             $this->pass();
@@ -302,14 +313,15 @@ EOS;
         }
     }
 
-    private function assertCommitIsDenied() {
+    private function assertCommitIsDenied()
+    {
         $paths      = func_get_args();
         $pre_commit = $this->buildPreCommitHook($paths);
 
         try {
             $pre_commit->assertCommitToTagIsAllowed(
-               $this->repo,
-               $this->transaction
+                $this->repo,
+                $this->transaction
             );
 
             $this->fail('Commit of "'.implode(', ', $paths).'" should be denied');
@@ -318,7 +330,8 @@ EOS;
         }
     }
 
-    private function buildPreCommitHook(array $paths) {
+    private function buildPreCommitHook(array $paths)
+    {
         $svn_look = stub('SVN_Svnlook')
             ->getTransactionPath($this->project, $this->transaction)
             ->returns($paths);

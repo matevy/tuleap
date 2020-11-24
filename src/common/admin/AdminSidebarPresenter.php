@@ -59,6 +59,10 @@ class AdminSidebarPresenter
 
     public $plugins_section_title;
     public $plugins_manage_all;
+    /**
+     * @var string
+     */
+    public $configuration_nav_project_fields;
 
     public function __construct(
         $all_users_count,
@@ -68,7 +72,6 @@ class AdminSidebarPresenter
         $all_projects_count,
         $pending_projects_count,
         $pending_news_count,
-        $additional_tracker_entries,
         $plugins
     ) {
         $this->all_users_count              = $all_users_count;
@@ -78,7 +81,6 @@ class AdminSidebarPresenter
         $this->all_projects_count           = $all_projects_count;
         $this->pending_projects_count       = $pending_projects_count;
         $this->pending_news_count           = $pending_news_count;
-        $this->additional_tracker_entries   = $additional_tracker_entries;
         $this->plugins                      = $plugins;
 
         $this->users_section_title                     = $GLOBALS['Language']->getText('admin_sidebar', 'users_section_title');
@@ -99,7 +101,7 @@ class AdminSidebarPresenter
         $this->configuration_nav_global_access_rights  = $GLOBALS['Language']->getText('admin_sidebar', 'configuration_nav_global_access_rights');
         $this->configuration_nav_homepage              = $GLOBALS['Language']->getText('admin_sidebar', 'configuration_nav_homepage');
         $this->configuration_nav_categories            = $GLOBALS['Language']->getText('admin_sidebar', 'configuration_nav_categories');
-        $this->configuration_nav_project_fields        = $GLOBALS['Language']->getText('admin_sidebar', 'configuration_nav_project_fields');
+        $this->configuration_nav_project_fields        =  _('Project fields');
         $this->configuration_nav_predefined_references = $GLOBALS['Language']->getText('admin_sidebar', 'configuration_nav_predefined_references');
         $this->configuration_nav_tracker_restore       = $GLOBALS['Language']->getText('admin_sidebar', 'configuration_nav_tracker_restore');
         $this->configuration_nav_svn                   = $GLOBALS['Language']->getText('admin_sidebar', 'configuration_nav_svn');

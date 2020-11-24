@@ -1,7 +1,7 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2015. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,7 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field_Selectbox {
+class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field_Selectbox
+{
 
     public $default_properties = array(
         'size' => array(
@@ -30,13 +31,15 @@ class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field
     );
 
     /**
-     * @return boolean
+     * @return bool
      */
-    public function isMultiple() {
+    public function isMultiple()
+    {
         return true;
     }
 
-    protected function getDao() {
+    protected function getDao()
+    {
         return new Tracker_FormElement_Field_MultiSelectboxDao();
     }
 
@@ -45,41 +48,47 @@ class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field
      * This hooks is here to delete specific properties,
      * or specific values of the field.
      * (The field itself will be deleted later)
-     * @return boolean true if success
+     * @return bool true if success
      */
-    public function delete() {
+    public function delete()
+    {
         return $this->getDao()->delete($this->id);
     }
 
-    protected function getMaxSize() {
+    protected function getMaxSize()
+    {
         return $this->getproperty('size') ? $this->getproperty('size') : parent::getMaxSize();
     }
 
     /**
      * @return the label of the field (mainly used in admin part)
      */
-    public static function getFactoryLabel() {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin','multiselectbox');
+    public static function getFactoryLabel()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'multiselectbox');
     }
 
     /**
      * @return the description of the field (mainly used in admin part)
      */
-    public static function getFactoryDescription() {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin','multiselectbox_description');
+    public static function getFactoryDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'multiselectbox_description');
     }
 
     /**
      * @return the path to the icon
      */
-    public static function getFactoryIconUseIt() {
+    public static function getFactoryIconUseIt()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/ui-list-box.png');
     }
 
     /**
      * @return the path to the icon
      */
-    public static function getFactoryIconCreate() {
+    public static function getFactoryIconCreate()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/ui-list-box--plus.png');
     }
 
@@ -87,9 +96,10 @@ class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field
      * Change the type of the multi select box
      * @param string $type the new type
      *
-     * @return boolean true if the change is allowed and successful
+     * @return bool true if the change is allowed and successful
      */
-    public function changeType($type) {
+    public function changeType($type)
+    {
         if (in_array($type, array('sb', 'rb', 'cb'))) {
             // We should remove the entry in msb table
             // However we keep it for the case where admin changes its mind.
@@ -108,9 +118,16 @@ class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field
      *
      * @return void
      */
-    public function augmentDataFromRequest(&$fields_data) {
-
+    public function augmentDataFromRequest(&$fields_data)
+    {
         if (! $this->canAugmentData($fields_data)) {
+            return;
+        }
+
+        if (isset($fields_data['request_method_called']) &&
+            $fields_data['request_method_called'] === 'submit-artifact' &&
+            ! $this->userCanSubmit()
+        ) {
             return;
         }
 
@@ -119,7 +136,8 @@ class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field
         }
     }
 
-    private function canAugmentData($fields_data) {
+    private function canAugmentData($fields_data)
+    {
 
         /* When updating or massupdate an artifact, we do not want this method to reset the selected options.
          *
@@ -148,13 +166,15 @@ class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field
         return parent::getFieldDataFromCSVValue($csv_value, $artifact);
     }
 
-    public function getFieldDataFromRESTValue(array $value, ?Tracker_Artifact $artifact = null) {
+    public function getFieldDataFromRESTValue(array $value, ?Tracker_Artifact $artifact = null)
+    {
         if (array_key_exists('bind_value_ids', $value) && is_array($value['bind_value_ids'])) {
-           return array_unique(
-               array_map(
-                   array($this->getBind(), 'getFieldDataFromRESTValue'), $value['bind_value_ids']
-               )
-           );
+            return array_unique(
+                array_map(
+                    array($this->getBind(), 'getFieldDataFromRESTValue'),
+                    $value['bind_value_ids']
+                )
+            );
         }
 
         throw new Tracker_FormElement_InvalidFieldValueException('List fields values must be passed as an array of ids (integer) in \'bind_value_ids\''
@@ -162,29 +182,35 @@ class Tracker_FormElement_Field_MultiSelectbox extends Tracker_FormElement_Field
     }
 
     /**
-     * @return boolean true if the value corresponds to what we defined as "none"
+     * @return bool true if the value corresponds to what we defined as "none"
      */
-    public function isNone($value) {
+    public function isNone($value)
+    {
         return $this->isScalarNone($value) || (is_array($value) && $this->isArrayNone($value));
     }
 
-    private function isScalarNone($value) {
+    private function isScalarNone($value)
+    {
         return $value === null || $value === '';
     }
 
-    private function isArrayNone(array $value) {
+    private function isArrayNone(array $value)
+    {
         return $this->arrayContainsNone($value) || $this->arrayIsEmpty($value);
     }
 
-    private function arrayIsEmpty($value) {
+    private function arrayIsEmpty($value)
+    {
         return count($value) == 0;
     }
 
-    public function accept(Tracker_FormElement_FieldVisitor $visitor) {
+    public function accept(Tracker_FormElement_FieldVisitor $visitor)
+    {
         return $visitor->visitMultiSelectbox($this);
     }
 
-    public function getDefaultValue() {
+    public function getDefaultValue()
+    {
         $default_array = $this->getBind()->getDefaultValues();
         if (! $default_array) {
             return array(Tracker_FormElement_Field_List_Bind::NONE_VALUE);

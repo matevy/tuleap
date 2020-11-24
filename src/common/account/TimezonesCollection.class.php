@@ -17,7 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class Account_TimezonesCollection {
+class Account_TimezonesCollection
+{
 
     private $timezones = array(
         'US/Alaska',
@@ -479,15 +480,18 @@ class Account_TimezonesCollection {
         'Zulu',
     );
 
-    public function getTimezones() {
+    public function getTimezones()
+    {
         return $this->timezones;
     }
 
-    public function isValidTimezone($timezone) {
+    public function isValidTimezone($timezone)
+    {
         return in_array($timezone, $this->timezones);
     }
 
-    public function getTimezonePresenters($current_timezone) {
+    public function getTimezonePresenters($current_timezone)
+    {
         $list_of_presenters = array();
         foreach ($this->timezones as $timezone) {
             $presenter = new stdClass;
@@ -500,5 +504,4 @@ class Account_TimezonesCollection {
 
         return $list_of_presenters;
     }
-
 }

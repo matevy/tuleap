@@ -82,7 +82,7 @@ class MediaWikiXMLImporter
      * @var Project
      * @var SimpleXMLElement
      * @var String
-     * @return boolean
+     * @return bool
      */
     public function import(ImportConfig $configuration, Project $project, PFUser $creator, SimpleXMLElement $xml_input, $extraction_path)
     {
@@ -120,7 +120,8 @@ class MediaWikiXMLImporter
         $this->importReferences($configuration, $project, $xml_mediawiki->references);
     }
 
-    private function importPages(Project $project, $backup_path) {
+    private function importPages(Project $project, $backup_path)
+    {
         $this->logger->info("Importing pages for {$project->getUnixName()}");
         $project_name = escapeshellarg($project->getUnixName());
         $backup_path = escapeshellarg($backup_path);
@@ -129,7 +130,8 @@ class MediaWikiXMLImporter
         return true;
     }
 
-    private function importLanguage(Project $project, $language) {
+    private function importLanguage(Project $project, $language)
+    {
         $this->logger->info("Set language to $language for {$project->getUnixName()}");
         try {
             $this->language_manager->saveLanguageOption($project, $language);
@@ -138,7 +140,8 @@ class MediaWikiXMLImporter
         }
     }
 
-    private function importFiles(Project $project, $backup_path) {
+    private function importFiles(Project $project, $backup_path)
+    {
         $this->logger->info("Importing files for {$project->getUnixName()}");
         $project_name = escapeshellarg($project->getUnixName());
         $backup_path = escapeshellarg($backup_path);
@@ -146,36 +149,38 @@ class MediaWikiXMLImporter
 
         $this->sys_command->exec($command);
         return true;
-
     }
 
-    private function importRights(Project $project, SimpleXMLElement $xml_mediawiki) {
-        if($xml_mediawiki->{'read-access'}) {
+    private function importRights(Project $project, SimpleXMLElement $xml_mediawiki)
+    {
+        if ($xml_mediawiki->{'read-access'}) {
             $this->logger->info("Importing read access rights for {$project->getUnixName()}");
             $ugroups_ids = $this->getUgroupIdsForPermissions($project, $xml_mediawiki->{'read-access'});
-            if(count($ugroups_ids) > 0) {
+            if (count($ugroups_ids) > 0) {
                 $this->mediawiki_manager->saveReadAccessControl($project, $ugroups_ids);
             }
         }
-        if($xml_mediawiki->{'write-access'}) {
+        if ($xml_mediawiki->{'write-access'}) {
             $this->logger->info("Importing write access rights for {$project->getUnixName()}");
             $ugroups_ids = $this->getUgroupIdsForPermissions($project, $xml_mediawiki->{'write-access'});
-            if(count($ugroups_ids) > 0) {
+            if (count($ugroups_ids) > 0) {
                 $this->mediawiki_manager->saveWriteAccessControl($project, $ugroups_ids);
             }
         }
     }
 
-    private function getMaintenanceWrapperPath() {
+    private function getMaintenanceWrapperPath()
+    {
         return __DIR__ . "/../bin/mw-maintenance-wrapper.php";
     }
 
-    private function getUgroupIdsForPermissions(Project $project, SimpleXMLElement $permission_xmlnode) {
+    private function getUgroupIdsForPermissions(Project $project, SimpleXMLElement $permission_xmlnode)
+    {
         $ugroup_ids = array();
-        foreach($permission_xmlnode->ugroup as $ugroup) {
+        foreach ($permission_xmlnode->ugroup as $ugroup) {
             $ugroup_name = (string)$ugroup;
             $ugroup = $this->ugroup_manager->getUGroupByName($project, $ugroup_name);
-            if($ugroup === null) {
+            if ($ugroup === null) {
                 $this->logger->warn("Could not find any ugroup named $ugroup_name, skip it.");
                 continue;
             }
@@ -198,5 +203,4 @@ class MediaWikiXMLImporter
             )
         );
     }
-
 }

@@ -28,7 +28,7 @@ class Docman_View_ItemDetailsSectionPaste extends Docman_View_ItemDetailsSection
     var $srcGo;
     var $dstGo;
     private $mode;
-    
+
     public function __construct(
         $item,
         $url,
@@ -51,18 +51,21 @@ class Docman_View_ItemDetailsSectionPaste extends Docman_View_ItemDetailsSection
         $this->mode  = $mode;
     }
 
-    function checkMdDifferences(&$mdDiffers) {
+    function checkMdDifferences(&$mdDiffers)
+    {
         $html = '';
 
-        $mdCmp = new Docman_MetadataComparator($this->srcGo->getGroupId(),
-                                               $this->dstGo->getGroupId(),
-                                               $this->_controller->getThemePath());
+        $mdCmp = new Docman_MetadataComparator(
+            $this->srcGo->getGroupId(),
+            $this->dstGo->getGroupId(),
+            $this->_controller->getThemePath()
+        );
         $cmpTable = $mdCmp->getMetadataCompareTable($sthToImport);
-        if($sthToImport) {
+        if ($sthToImport) {
             $html .= '<h2>'. $GLOBALS['Language']->getText('plugin_docman', 'details_paste_mddiff_title') .'</h2>';
             $dPm = Docman_PermissionsManager::instance($this->dstGo->getGroupId());
             $current_user = UserManager::instance()->getCurrentUser();
-            if($dPm->userCanAdmin($current_user)) {
+            if ($dPm->userCanAdmin($current_user)) {
                 $mdDiffers = 'admin';
                 $html .= $cmpTable;
             } else {
@@ -75,11 +78,13 @@ class Docman_View_ItemDetailsSectionPaste extends Docman_View_ItemDetailsSection
         return $html;
     }
 
-    function getContent($params = []) {
+    function getContent($params = [])
+    {
         return $this->item->accept($this);
     }
-    
-    function visitFolder($item, $params = array()) {
+
+    function visitFolder($item, $params = array())
+    {
         $content = '';
 
         // First Check metadata differences
@@ -87,13 +92,13 @@ class Docman_View_ItemDetailsSectionPaste extends Docman_View_ItemDetailsSection
         if ($this->mode == 'copy') {
             $content = $this->checkMdDifferences($mdDiffers);
         }
-        
+
         $content .= '<h2>'. $GLOBALS['Language']->getText('plugin_docman', 'details_actions_paste') .'</h2>';
-        
+
         $content .= '<p>';
         $content .= $GLOBALS['Language']->getText('plugin_docman', 'details_actions_paste_from_'.$this->mode);
         $content .= '</p>';
-        
+
         $content .= '<form name="select_paste_location" method="POST" action="?">';
         $content .= '<input type="hidden" name="action" value="paste" />';
         $content .= '<input type="hidden" name="group_id" value="'.$this->item->getGroupId().'" />';
@@ -104,7 +109,7 @@ class Docman_View_ItemDetailsSectionPaste extends Docman_View_ItemDetailsSection
         $content .= $itemRanking->getDropDownWidget($this->item);
         $content .= '</p>';
 
-        if($this->mode == 'copy' && $mdDiffers == 'admin') {
+        if ($this->mode == 'copy' && $mdDiffers == 'admin') {
             $content .= '<p>';
             $content .= $GLOBALS['Language']->getText('plugin_docman', 'details_paste_importmd', array($this->srcGo->getPublicName()));
             $content .= ' ';
@@ -113,7 +118,7 @@ class Docman_View_ItemDetailsSectionPaste extends Docman_View_ItemDetailsSection
         }
 
         $buttonTxt = $GLOBALS['Language']->getText('plugin_docman', 'details_paste_button_paste');
-        if($this->mode == 'copy' && $mdDiffers == 'user') {
+        if ($this->mode == 'copy' && $mdDiffers == 'user') {
             $buttonTxt = $GLOBALS['Language']->getText('plugin_docman', 'details_paste_button_pasteanyway');
         }
         $content .= '<input type="submit" name="submit" value="'.$buttonTxt.'" />';
@@ -124,31 +129,38 @@ class Docman_View_ItemDetailsSectionPaste extends Docman_View_ItemDetailsSection
         return $content;
     }
 
-    function visitDocument($item, $params = array()) {
+    function visitDocument($item, $params = array())
+    {
         return '';
     }
 
-    function visitWiki($item, $params = array()) {
+    function visitWiki($item, $params = array())
+    {
         return '';
     }
 
-    function visitLink($item, $params = array()) {
+    function visitLink($item, $params = array())
+    {
         return '';
     }
 
-    function visitFile($item, $params = array()) {
+    function visitFile($item, $params = array())
+    {
         return '';
     }
 
-    function visitEmbeddedFile($item, $params = array()) {
+    function visitEmbeddedFile($item, $params = array())
+    {
         return '';
     }
 
-    function visitEmpty($item, $params = array()) {
+    function visitEmpty($item, $params = array())
+    {
         return '';
     }
 
-    function &_getDocmanIcons() {
+    function &_getDocmanIcons()
+    {
         $icons = new Docman_Icons($this->_controller->getThemePath().'/images/ic/');
         return $icons;
     }

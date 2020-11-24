@@ -19,27 +19,35 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Layout\CssAsset;
+use Tuleap\Layout\CssAssetCollection;
+use Tuleap\Layout\IncludeAssets;
+use Tuleap\Tracker\Artifact\MyArtifactsCollection;
+
 /**
  * Widget_MyArtifacts
  *
  * Artifact assigned to or submitted by this person
  */
-class Tracker_Widget_MyArtifacts extends Widget {
+class Tracker_Widget_MyArtifacts extends Widget
+{
     public const ID        = 'plugin_tracker_myartifacts';
     public const PREF_SHOW = 'plugin_tracker_myartifacts_show';
 
     protected $artifact_show;
 
-    function __construct() {
+    function __construct()
+    {
         parent::__construct(self::ID);
         $this->artifact_show = user_get_preference(self::PREF_SHOW);
-        if($this->artifact_show === false) {
+        if ($this->artifact_show === false) {
             $this->artifact_show = 'AS';
             user_set_preference(self::PREF_SHOW, $this->artifact_show);
         }
     }
 
-    function getTitle() {
+    function getTitle()
+    {
         return $GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 'my_arts') . ' [' . $GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', strtolower($this->artifact_show)) . ']';
     }
 
@@ -50,7 +58,7 @@ class Tracker_Widget_MyArtifacts extends Widget {
         $vShow->required();
         if (!$request->exist('cancel')) {
             if ($request->valid($vShow)) {
-                switch($request->get('show')) {
+                switch ($request->get('show')) {
                     case 'A':
                         $this->artifact_show = 'A';
                         break;
@@ -103,26 +111,28 @@ class Tracker_Widget_MyArtifacts extends Widget {
             ';
     }
 
-    function isAjax() {
+    function isAjax()
+    {
         return true;
     }
 
-    function getContent() {
+    function getContent()
+    {
         $html_my_artifacts = '';
 
         $taf = Tracker_ArtifactFactory::instance();
         $um = UserManager::instance();
-        $user_id = $um->getCurrentUser()->getId();
+        $user = $um->getCurrentUser();
         switch ($this->artifact_show) {
-        case 'A':
-            $my_artifacts = $taf->getUserOpenArtifactsAssignedTo($user_id);
-            break;
-        case 'S':
-            $my_artifacts = $taf->getUserOpenArtifactsSubmittedBy($user_id);
-            break;
-        default:
-            $my_artifacts = $taf->getUserOpenArtifactsSubmittedByOrAssignedTo($user_id);
-            break;
+            case 'A':
+                $my_artifacts = $taf->getUserOpenArtifactsAssignedTo($user);
+                break;
+            case 'S':
+                $my_artifacts = $taf->getUserOpenArtifactsSubmittedBy($user);
+                break;
+            default:
+                $my_artifacts = $taf->getUserOpenArtifactsSubmittedByOrAssignedTo($user);
+                break;
         }
 
         if (count($my_artifacts) > 0) {
@@ -163,15 +173,15 @@ class Tracker_Widget_MyArtifacts extends Widget {
         return $html_my_artifacts;
     }
 
-    function _display_artifacts($artifacts) {
+    function _display_artifacts(MyArtifactsCollection $my_artifacts)
+    {
         $hp = Codendi_HTMLPurifier::instance();
 
         $html_my_artifacts = '';
 
-        foreach ($artifacts as $tracker_id => $tracker_and_its_artifacts) {
-            if (count($tracker_and_its_artifacts['artifacts'])) {
-                $tracker = $tracker_and_its_artifacts['tracker'];
-
+        foreach ($my_artifacts->getTrackers() as $tracker) {
+            $artifacts_in_tracker_count = $my_artifacts->getArtifactsInTrackerCount($tracker);
+            if ($artifacts_in_tracker_count > 0) {
                 $div_id              = 'plugin_tracker_my_artifacts_tracker_' . $tracker->getId();
                 $classname           = Toggler::getClassname($div_id);
                 $group_id            = $tracker->getGroupId();
@@ -183,12 +193,12 @@ class Tracker_Widget_MyArtifacts extends Widget {
                 $html_my_artifacts .= '<a href="/plugins/tracker/?tracker=' . $tracker->getId() . '" class="tracker-widget-artifacts">';
                 $html_my_artifacts .= '<strong>' . $hp->purify($project_and_tracker, CODENDI_PURIFIER_CONVERT_HTML) . '</strong>';
                 $html_my_artifacts .= '</a>';
-                $html_my_artifacts .= ' [' . count($tracker_and_its_artifacts['artifacts']) . ']';
+                $html_my_artifacts .= ' [' . $artifacts_in_tracker_count . ']';
                 $html_my_artifacts .= ' </div>';
                 $html_my_artifacts .= '<ul class="plugin_tracker_my_artifacts_list tracker-widget-artifacts-list">';
-                foreach ($tracker_and_its_artifacts['artifacts'] as $artifact_and_its_title) {
+                foreach ($my_artifacts->getArtifactsInTracker($tracker) as $artifact) {
                     $html_my_artifacts .=  '<li>';
-                    $html_my_artifacts .=  $artifact_and_its_title['artifact']->fetchWidget($tracker->getItemName(), $artifact_and_its_title['title']);
+                    $html_my_artifacts .=  $artifact->fetchWidget($tracker->getItemName());
                     $html_my_artifacts .=  '</li>';
                 }
                 $html_my_artifacts .= '</ul>';
@@ -208,11 +218,22 @@ class Tracker_Widget_MyArtifacts extends Widget {
         return $ajax_url;
     }
 
-    function getCategory() {
+    function getCategory()
+    {
         return dgettext('tuleap-tracker', 'Trackers');
     }
 
-    function getDescription() {
-        return $GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts','description');
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 'description');
+    }
+
+    public function getStylesheetDependencies()
+    {
+        $include_assets = new IncludeAssets(
+            __DIR__ . '/../../../www/themes/BurningParrot/assets',
+            TRACKER_BASE_URL . '/themes/BurningParrot/assets'
+        );
+        return new CssAssetCollection([new CssAsset($include_assets, 'style')]);
     }
 }

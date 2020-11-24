@@ -23,7 +23,8 @@ namespace Tuleap\Tracker\REST;
 use Tuleap\REST\JsonCast;
 use Tracker_FormElement;
 
-class StructureElementRepresentation {
+class StructureElementRepresentation
+{
 
     /**
      * @var int
@@ -35,9 +36,9 @@ class StructureElementRepresentation {
      */
     public $content;
 
-    public function build(Tracker_FormElement $form_element) {
+    public function build(Tracker_FormElement $form_element)
+    {
         $this->id      = JsonCast::toInt($form_element->getId());
         $this->content = $form_element->getRESTContent();
     }
-
 }

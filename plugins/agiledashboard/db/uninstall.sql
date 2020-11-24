@@ -10,6 +10,12 @@ DROP TABLE IF EXISTS plugin_agiledashboard_kanban_widget;
 DROP TABLE IF EXISTS plugin_agiledashboard_kanban_widget_config;
 DROP TABLE IF EXISTS plugin_agiledashboard_semantic_done;
 DROP TABLE IF EXISTS plugin_agiledashboard_tracker_field_burnup_cache;
+DROP TABLE IF EXISTS plugin_agiledashboard_kanban_recently_visited;
+DROP TABLE IF EXISTS plugin_agiledashboard_planning_explicit_backlog_usage;
+DROP TABLE IF EXISTS plugin_agiledashboard_planning_artifacts_explicit_backlog;
+DROP TABLE IF EXISTS plugin_agiledashboard_burnup_projects_count_mode;
+DROP TABLE IF EXISTS plugin_agiledashboard_kanban_tracker_reports;
+DROP TABLE IF EXISTS plugin_agiledashboard_tracker_field_burnup_cache_subelements;
 
 DELETE FROM permissions_values WHERE permission_type IN ('PLUGIN_AGILEDASHBOARD_PLANNING_PRIORITY_CHANGE');
 

@@ -21,7 +21,8 @@
 
 namespace Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature;
 
-class NatureEditor {
+class NatureEditor
+{
 
     /** @var NatureDao */
     private $dao;
@@ -29,7 +30,8 @@ class NatureEditor {
     /** @var NatureValidator */
     private $validator;
 
-    public function __construct(NatureDao $dao, NatureValidator $validator) {
+    public function __construct(NatureDao $dao, NatureValidator $validator)
+    {
         $this->dao       = $dao;
         $this->validator = $validator;
     }
@@ -38,7 +40,8 @@ class NatureEditor {
      * @throws InvalidNatureParameterException
      * @throws UnableToEditNatureException
      */
-    public function edit($shortname, $forward_label, $reverse_label) {
+    public function edit($shortname, $forward_label, $reverse_label)
+    {
         $this->validator->checkForwardLabel($forward_label);
         $this->validator->checkReverseLabel($reverse_label);
 

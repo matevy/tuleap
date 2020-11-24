@@ -39,24 +39,43 @@ class HardcodedMetadataObsolescenceDateRetriever
     }
 
     /**
-     * @param string|null $date
-     *
-     * @param int         $item_type
-     *
      * @return int
-     * @throws InvalidDateTimeFormatException
+     * @throws HardCodedMetadataException
      */
-    public function getTimeStampOfDate(string $date, int $item_type)
+    public function getTimeStampOfDate(?string $date): int
     {
-        if (!$this->date_checker->isObsolescenceMetadataUsed() || $item_type === PLUGIN_DOCMAN_ITEM_TYPE_FOLDER) {
-            return (int)ItemRepresentation::OBSOLESCENCE_DATE_NONE;
+        $this->date_checker->checkObsolescenceDateUsageForDocument(
+            $date
+        );
+
+        if ($date === null) {
+            return (int) ItemRepresentation::OBSOLESCENCE_DATE_NONE;
         }
 
         $formatted_date = \DateTimeImmutable::createFromFormat('Y-m-d', $date);
         if (!$formatted_date) {
-            throw new InvalidDateTimeFormatException();
+            throw HardCodedMetadataException::invalidDateFormat();
         }
 
         return $formatted_date->getTimestamp();
+    }
+
+    /**
+     * @throws HardCodedMetadataException
+     */
+    public function getTimeStampOfDateWithoutPeriodValidity(?string $date, \DateTimeImmutable $current_time): int
+    {
+        if (!$this->date_checker->isObsolescenceMetadataUsed()) {
+            return (int)ItemRepresentation::OBSOLESCENCE_DATE_NONE;
+        }
+
+        $formatted_date_timestamp = $this->getTimeStampOfDate($date);
+
+        $this->date_checker->checkDateValidity(
+            $current_time->getTimestamp(),
+            $formatted_date_timestamp
+        );
+
+        return $formatted_date_timestamp;
     }
 }

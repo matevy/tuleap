@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,26 +21,33 @@
 require_once 'bootstrap.php';
 
 use Tuleap\Tracker\Events\XMLImportArtifactLinkTypeCanBeDisabled;
+use Tuleap\Tracker\Hierarchy\HierarchyDAO;
+use Tuleap\Tracker\XML\TrackerXmlImportFeedbackCollector;
 use Tuleap\Tracker\XML\Importer\TrackerExtraConfiguration;
 use Tuleap\XML\MappingsRegistry;
 use Tuleap\Project\XML\Import\ImportConfig;
 
-class TrackerXmlImportTestInstance extends TrackerXmlImport {
+class TrackerXmlImportTestInstance extends TrackerXmlImport
+{
 
-    public function getInstanceFromXML(SimpleXMLElement $xml, Project $project, $name, $description, $itemname) {
-        return parent::getInstanceFromXML($xml, $project, $name, $description, $itemname);
+    public function getInstanceFromXML(SimpleXMLElement $xml, Project $project, $name, $description, $itemname, TrackerXmlImportFeedbackCollector $feedback_collector)
+    {
+        return parent::getInstanceFromXML($xml, $project, $name, $description, $itemname, $feedback_collector);
     }
 
-    public function getAllXmlTrackers(SimpleXMLElement $xml) {
+    public function getAllXmlTrackers(SimpleXMLElement $xml)
+    {
         return parent::getAllXmlTrackers($xml);
     }
 
-    public function buildTrackersHierarchy(array $hierarchy, SimpleXMLElement $xml_tracker, array $mapper) {
+    public function buildTrackersHierarchy(array $hierarchy, SimpleXMLElement $xml_tracker, array $mapper)
+    {
         return parent::buildTrackersHierarchy($hierarchy, $xml_tracker, $mapper);
     }
 }
 
-class TrackerXmlImportTest extends TuleapTestCase {
+class TrackerXmlImportTest extends TuleapTestCase
+{
 
     /**
      * @var Logger
@@ -60,7 +67,8 @@ class TrackerXmlImportTest extends TuleapTestCase {
     private $extraction_path;
     private $configuration;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -95,7 +103,7 @@ class TrackerXmlImportTest extends TuleapTestCase {
         stub($this->project)->getID()->returns($this->group_id);
 
         $this->xml_tracker1 = new SimpleXMLElement(
-                 '<tracker id="T101" parent_id="0" instantiate_for_new_projects="1">
+            '<tracker id="T101" parent_id="0" instantiate_for_new_projects="1">
                     <name>name10</name>
                     <item_name>item11</item_name>
                     <description>desc12</description>
@@ -103,7 +111,7 @@ class TrackerXmlImportTest extends TuleapTestCase {
         );
 
         $this->xml_tracker2 = new SimpleXMLElement(
-                 '<tracker id="T102" parent_id="T101" instantiate_for_new_projects="1">
+            '<tracker id="T102" parent_id="T101" instantiate_for_new_projects="1">
                     <name>name20</name>
                     <item_name>item21</item_name>
                     <description>desc22</description>
@@ -111,7 +119,7 @@ class TrackerXmlImportTest extends TuleapTestCase {
         );
 
         $this->xml_tracker3 = new SimpleXMLElement(
-                 '<tracker id="T103" parent_id="T102" instantiate_for_new_projects="1">
+            '<tracker id="T103" parent_id="T102" instantiate_for_new_projects="1">
                     <name>name30</name>
                     <item_name>item31</item_name>
                     <description>desc32</description>
@@ -131,7 +139,7 @@ class TrackerXmlImportTest extends TuleapTestCase {
 
         $this->tracker_factory                = \Mockery::spy(\TrackerFactory::class);
         $this->event_manager                  = \Mockery::spy(\EventManager::class);
-        $this->hierarchy_dao                  = mockery_stub(\Tracker_Hierarchy_Dao::class)->updateChildren()->returns(true);
+        $this->hierarchy_dao                  = Mockery::spy(HierarchyDAO::class);
         $this->xml_import                     = \Mockery::spy(\Tracker_Artifact_XMLImport::class);
         $this->ugroup_manager                 = \Mockery::spy(\UGroupManager::class);
         $this->logger                         = \Mockery::spy(\Logger::class);
@@ -169,7 +177,8 @@ class TrackerXmlImportTest extends TuleapTestCase {
         $this->configuration = new ImportConfig();
     }
 
-    public function itReturnsEachSimpleXmlTrackerFromTheXmlInput() {
+    public function itReturnsEachSimpleXmlTrackerFromTheXmlInput()
+    {
         $trackers_result = $this->tracker_xml_importer->getAllXmlTrackers($this->xml_input);
         $diff = array_diff($trackers_result, $this->xml_trackers_list);
 
@@ -177,7 +186,8 @@ class TrackerXmlImportTest extends TuleapTestCase {
         $this->assertTrue(empty($diff));
     }
 
-    public function itCreatesAllTrackersAndStoresTrackersHierarchy() {
+    public function itCreatesAllTrackersAndStoresTrackersHierarchy()
+    {
         stub($this->tracker_xml_importer)->createFromXML(\Mockery::type(SimpleXMLElement::class), $this->project, 'name10', 'desc12', 'item11')->once()->returns($this->tracker1);
         stub($this->tracker_xml_importer)->createFromXML(\Mockery::type(SimpleXMLElement::class), $this->project, 'name20', 'desc22', 'item21')->once()->returns($this->tracker2);
         stub($this->tracker_xml_importer)->createFromXML(\Mockery::type(SimpleXMLElement::class), $this->project, 'name30', 'desc32', 'item31')->once()->returns($this->tracker3);
@@ -220,7 +230,8 @@ class TrackerXmlImportTest extends TuleapTestCase {
         $this->assertEqual($result, $this->mapping);
     }
 
-    public function itRaisesAnExceptionIfATrackerCannotBeCreatedAndDoesNotContinue() {
+    public function itRaisesAnExceptionIfATrackerCannotBeCreatedAndDoesNotContinue()
+    {
         stub($this->tracker_xml_importer)->createFromXML()->returns(null);
 
         $this->expectException();
@@ -234,7 +245,8 @@ class TrackerXmlImportTest extends TuleapTestCase {
         );
     }
 
-    public function itThrowsAnEventIfAllTrackersAreCreated() {
+    public function itThrowsAnEventIfAllTrackersAreCreated()
+    {
         stub($this->tracker_xml_importer)->createFromXML(
             \Mockery::type(SimpleXMLElement::class),
             $this->project,
@@ -267,10 +279,10 @@ class TrackerXmlImportTest extends TuleapTestCase {
                     $parameters['mapping'] === $this->mapping &&
                     $parameters['field_mapping'] === [] &&
                     $parameters['mappings_registery'] === $this->mapping_registery &&
-                    is_a($parameters['artifact_id_mapping'],  Tracker_XML_Importer_ArtifactImportedMapping::class) &&
+                    is_a($parameters['artifact_id_mapping'], Tracker_XML_Importer_ArtifactImportedMapping::class) &&
                     $parameters['extraction_path'] === $this->extraction_path &&
                     $parameters['logger'] === $this->logger &&
-                    is_a($parameters['value_mapping'],  TrackerXmlFieldsMapping_FromAnotherPlatform::class);
+                    is_a($parameters['value_mapping'], TrackerXmlFieldsMapping_FromAnotherPlatform::class);
             })
         )->once();
 
@@ -283,7 +295,8 @@ class TrackerXmlImportTest extends TuleapTestCase {
         );
     }
 
-    public function itBuildsTrackersHierarchy() {
+    public function itBuildsTrackersHierarchy()
+    {
         $hierarchy = array();
         $expected_hierarchy = array(444 => array(555));
         $mapper = array("T101" => 444, "T102" => 555);
@@ -294,12 +307,13 @@ class TrackerXmlImportTest extends TuleapTestCase {
         $this->assertIdentical($hierarchy, $expected_hierarchy);
     }
 
-    public function itAddsTrackersHierarchyOnExistingHierarchy() {
+    public function itAddsTrackersHierarchyOnExistingHierarchy()
+    {
         $hierarchy          = array(444 => array(555));
         $expected_hierarchy = array(444 => array(555, 666));
         $mapper             = array("T101" => 444, "T103" => 666);
         $xml_tracker        = new SimpleXMLElement(
-                 '<tracker id="T103" parent_id="T101" instantiate_for_new_projects="1">
+            '<tracker id="T103" parent_id="T101" instantiate_for_new_projects="1">
                     <name>t30</name>
                     <item_name>t31</item_name>
                     <description>t32</description>
@@ -351,6 +365,10 @@ class TrackerXmlImportTest extends TuleapTestCase {
 
     public function itSouldNotImportHierarchyIfIsChildIsNotUsed()
     {
+        $artifact_links_usage_dao = Mockery::spy(Tuleap\Tracker\Admin\ArtifactLinksUsageDao::class);
+        $artifact_links_usage_dao->shouldReceive('isTypeDisabledInProject')
+            ->with(Mockery::any(), '_is_child')->andReturn(true);
+
         $class_parameters = array(
             $this->tracker_factory,
             $this->event_manager,
@@ -368,7 +386,7 @@ class TrackerXmlImportTest extends TuleapTestCase {
             $this->ugroup_manager,
             \Mockery::spy(Logger::class),
             \Mockery::spy(Tuleap\Tracker\Admin\ArtifactLinksUsageUpdater::class),
-            \Mockery::spy(Tuleap\Tracker\Admin\ArtifactLinksUsageDao::class),
+            $artifact_links_usage_dao,
             \Mockery::spy(\Tuleap\Tracker\Webhook\WebhookFactory::class),
             \Mockery::spy(\Tuleap\Tracker\TrackerXMLFieldMappingFromExistingTracker::class)
         );
@@ -379,7 +397,7 @@ class TrackerXmlImportTest extends TuleapTestCase {
 
         stub($tracker_xml_importer)->createFromXML()->returns($this->tracker1);
 
-        expect($this->hierarchy_dao)->updateChildren()->never();
+        $this->hierarchy_dao->shouldReceive('updateChildren')->never();
 
         $tracker_xml_importer->import(
             $this->configuration,
@@ -388,14 +406,15 @@ class TrackerXmlImportTest extends TuleapTestCase {
             $this->mapping_registery,
             $this->extraction_path
         );
-
     }
 }
 
-class TrackerXmlImport_WithArtifactsTest extends TuleapTestCase {
+class TrackerXmlImport_WithArtifactsTest extends TuleapTestCase
+{
     private $configuration;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -421,7 +440,7 @@ class TrackerXmlImport_WithArtifactsTest extends TuleapTestCase {
         $this->tracker         = \Mockery::spy(\Tracker::class);
         $this->tracker_factory = \Mockery::spy(\TrackerFactory::class);
         $this->event_manager   = \Mockery::spy(\EventManager::class);
-        $this->hierarchy_dao   = mockery_stub(\Tracker_Hierarchy_Dao::class)->updateChildren()->returns(true);
+        $this->hierarchy_dao   = Mockery::spy(HierarchyDAO::class);
         $this->xml_import      = \Mockery::spy(\Tracker_Artifact_XMLImport::class);
         $this->ugroup_manager  = \Mockery::spy(\UGroupManager::class);
 
@@ -456,7 +475,8 @@ class TrackerXmlImport_WithArtifactsTest extends TuleapTestCase {
         $this->configuration = new ImportConfig();
     }
 
-    public function itImportsArtifacts() {
+    public function itImportsArtifacts()
+    {
         stub($this->tracker_xml_importer)->createFromXML()->returns($this->tracker);
         $this->xml_import->shouldReceive('importBareArtifactsFromXML')->once()->andReturn([]);
         $this->xml_import->shouldReceive('importArtifactChangesFromXML')->once();
@@ -470,7 +490,8 @@ class TrackerXmlImport_WithArtifactsTest extends TuleapTestCase {
         );
     }
 
-    public function itImportsUpdatedArtifacts() {
+    public function itImportsUpdatedArtifacts()
+    {
         stub($this->tracker_xml_importer)->updateFromXML()->returns($this->tracker);
         $this->xml_import->shouldReceive('importBareArtifactsFromXML')->andReturn([]);
         $this->configuration->setUpdate(true);
@@ -490,16 +511,23 @@ class TrackerXmlImport_InstanceTest extends TuleapTestCase
     private $tracker_xml_importer;
     private $xml_security;
 
-    public function setUp() {
+    /**
+     * @var \Mockery\MockInterface|TrackerXmlImportFeedbackCollector
+     */
+    private $error_logger;
+
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
         $tracker_factory = \Mockery::mock(\TrackerFactory::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->error_logger = \Mockery::mock(TrackerXmlImportFeedbackCollector::class);
 
         $this->tracker_xml_importer = new TrackerXmlImportTestInstance(
             $tracker_factory,
             \Mockery::spy(\EventManager::class),
-            \Mockery::spy(\Tracker_Hierarchy_Dao::class),
+            \Mockery::spy(HierarchyDAO::class),
             \Mockery::spy(\Tracker_CannedResponseFactory::class),
             \Mockery::spy(\Tracker_FormElementFactory::class),
             \Mockery::spy(\Tracker_SemanticFactory::class),
@@ -524,21 +552,23 @@ class TrackerXmlImport_InstanceTest extends TuleapTestCase
         stub($this->project)->getId()->returns(0);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         $this->xml_security->disableExternalLoadOfEntities();
 
         parent::tearDown();
     }
 
-    public function testImport() {
+    public function testImport()
+    {
         $xml = simplexml_load_file(dirname(__FILE__) . '/_fixtures/TestTracker-1.xml');
-        $tracker = $this->tracker_xml_importer->getInstanceFromXML($xml, $this->project, '', '', '');
+        $tracker = $this->tracker_xml_importer->getInstanceFromXML($xml, $this->project, '', '', '', $this->error_logger);
 
         //testing general properties
         $this->assertEqual($tracker->submit_instructions, 'some submit instructions');
         $this->assertEqual($tracker->browse_instructions, 'and some for browsing');
 
-        $this->assertEqual($tracker->getColor(), 'inca_gray');
+        $this->assertEqual($tracker->getColor()->getName(), 'inca-silver');
 
         //testing default values
         $this->assertEqual($tracker->allow_copy, 0);
@@ -548,9 +578,11 @@ class TrackerXmlImport_InstanceTest extends TuleapTestCase
     }
 }
 
-class TrackerFactoryInstanceFromXMLTest extends TuleapTestCase {
+class TrackerFactoryInstanceFromXMLTest extends TuleapTestCase
+{
 
-    public function testGetInstanceFromXmlGeneratesRulesFromDependencies() {
+    public function testGetInstanceFromXmlGeneratesRulesFromDependencies()
+    {
 
         $data = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -571,10 +603,12 @@ XML;
         $rule_factory = \Mockery::spy(\Tracker_RuleFactory::class);
         $tracker      = \Mockery::spy(\Tracker::class);
 
+        $error_logger = \Mockery::mock(TrackerXmlImportFeedbackCollector::class);
+
         $tracker_xml_importer = new TrackerXmlImportTestInstance(
             mockery_stub(\TrackerFactory::class)->getInstanceFromRow()->returns($tracker),
             \Mockery::spy(\EventManager::class),
-            \Mockery::spy(\Tracker_Hierarchy_Dao::class),
+            \Mockery::spy(HierarchyDAO::class),
             \Mockery::spy(\Tracker_CannedResponseFactory::class),
             \Mockery::spy(\Tracker_FormElementFactory::class),
             \Mockery::spy(\Tracker_SemanticFactory::class),
@@ -622,26 +656,41 @@ XML;
                 }
             ),
             array(),
-            $tracker)->once();
+            $tracker
+        )->once();
 
-        $tracker_xml_importer->getInstanceFromXML($xml, $this->project, $name, $description, $itemname);
+        $tracker_xml_importer->getInstanceFromXML($xml, $this->project, $name, $description, $itemname, $error_logger);
     }
-
 }
 
-class Tracker_FormElementFactoryForXMLTests extends Tracker_FormElementFactory {
+class Tracker_FormElementFactoryForXMLTests extends Tracker_FormElementFactory
+{
     private $mapping = array();
-    public function __construct($mapping) {
-        $this->mapping = $mapping;
+
+    /**
+     * @var \Mockery\MockInterface|TrackerXmlImportFeedbackCollector
+     */
+    private $error_logger;
+
+    public function __construct($mapping)
+    {
+        $this->mapping      = $mapping;
+        $this->error_logger = \Mockery::mock(TrackerXmlImportFeedbackCollector::class);
     }
 
-    public function getInstanceFromXML(Tracker $tracker, $elem, &$xmlMapping, User\XML\Import\IFindUserFromXMLReference $user_finder)
-    {
+    public function getInstanceFromXML(
+        Tracker $tracker,
+        $elem,
+        &$xmlMapping,
+        User\XML\Import\IFindUserFromXMLReference $user_finder,
+        TrackerXmlImportFeedbackCollector $feedback_collector
+    ) {
         $xmlMapping = $this->mapping;
     }
 }
 
-class TrackerXmlImport_TriggersTest extends TuleapTestCase {
+class TrackerXmlImport_TriggersTest extends TuleapTestCase
+{
 
     private $xml_input;
     private $group_id = 145;
@@ -653,7 +702,8 @@ class TrackerXmlImport_TriggersTest extends TuleapTestCase {
     private $xmlFieldMapping;
     private $configuration;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -743,8 +793,7 @@ class TrackerXmlImport_TriggersTest extends TuleapTestCase {
                 </trackers>
                 <cardwall/>
                 <agiledashboard/>
-            </project>'
-        );
+            </project>');
 
         $this->triggers = new SimpleXMLElement('<triggers>
                             <trigger_rule>
@@ -790,7 +839,7 @@ class TrackerXmlImport_TriggersTest extends TuleapTestCase {
 
         $this->event_manager = \Mockery::spy(\EventManager::class);
 
-        $this->hierarchy_dao = mockery_stub(\Tracker_Hierarchy_Dao::class)->updateChildren()->returns(true);
+        $this->hierarchy_dao = Mockery::spy(HierarchyDAO::class);
 
         $this->xmlFieldMapping = array(
             'F1685' => '',
@@ -830,9 +879,10 @@ class TrackerXmlImport_TriggersTest extends TuleapTestCase {
 
         $this->mapping_registery = new MappingsRegistry();
         $this->configuration     = new ImportConfig();
-     }
+    }
 
-    public function itDelegatesToRulesManager() {
+    public function itDelegatesToRulesManager()
+    {
         expect($this->trigger_rulesmanager)->createFromXML(
             \Mockery::on(
                 function (SimpleXMLElement $trigger) {
@@ -856,10 +906,12 @@ class TrackerXmlImport_TriggersTest extends TuleapTestCase {
     }
 }
 
-class TrackerXmlImport_PermissionsTest extends TuleapTestCase {
+class TrackerXmlImport_PermissionsTest extends TuleapTestCase
+{
     private $configuration;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->old_global = $GLOBALS;
@@ -880,8 +932,7 @@ class TrackerXmlImport_PermissionsTest extends TuleapTestCase {
             'V2118' => '',
         );
 
-        $this->hierarchy_dao = mockery_stub(\Tracker_Hierarchy_Dao::class)->updateChildren()->returns(true);
-
+        $this->hierarchy_dao = Mockery::spy(HierarchyDAO::class);
 
         $this->ugroup_manager = \Mockery::spy(\UGroupManager::class);
 
@@ -918,12 +969,14 @@ class TrackerXmlImport_PermissionsTest extends TuleapTestCase {
         $this->configuration     = new ImportConfig();
     }
 
-    public function tearDown(){
+    public function tearDown()
+    {
         parent::tearDown();
         $GLOBALS = $this->old_global;
     }
 
-    public function itShouldImportPermissions() {
+    public function itShouldImportPermissions()
+    {
         $xml = <<<XML
             <project>
                 <trackers>
@@ -975,13 +1028,15 @@ XML;
     }
 }
 
-class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
+class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase
+{
     private $configuration;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
-        $this->hierarchy_dao               = mockery_stub(\Tracker_Hierarchy_Dao::class)->updateChildren()->returns(true);
+        $this->hierarchy_dao               = Mockery::spy(HierarchyDAO::class);
         $this->artifact_link_usage_updater = \Mockery::spy(\Tuleap\Tracker\Admin\ArtifactLinksUsageUpdater::class);
         $this->artifact_link_usage_dao     = \Mockery::spy(\Tuleap\Tracker\Admin\ArtifactLinksUsageDao::class);
         $this->event_manager               = \Mockery::spy(\EventManager::class);
@@ -1014,7 +1069,8 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->configuration     = new ImportConfig();
     }
 
-    public function itShouldActivateIfNoAttributeAndProjectUsesNature() {
+    public function itShouldActivateIfNoAttributeAndProjectUsesNature()
+    {
         $xml_input = new SimpleXMLElement('<project><trackers /></project>');
 
         stub($this->artifact_link_usage_updater)->isProjectAllowedToUseArtifactLinkTypes()->returns(true);
@@ -1025,7 +1081,8 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
     }
 
-    public function itShouldActivateIfNoAttributeAndProjectDoesNotUseNature() {
+    public function itShouldActivateIfNoAttributeAndProjectDoesNotUseNature()
+    {
         $xml_input = new SimpleXMLElement('<project><trackers /></project>');
 
         stub($this->artifact_link_usage_updater)->isProjectAllowedToUseArtifactLinkTypes()->returns(false);
@@ -1036,17 +1093,18 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
     }
 
-    public function itShouldNotActivateIfAttributeIsFalseAndProjectDoesNotUseNature() {
+    public function itShouldNotActivateIfAttributeIsFalseAndProjectDoesNotUseNature()
+    {
         $xml_input = new SimpleXMLElement('<project><trackers use-natures="false"/></project>');
 
         stub($this->artifact_link_usage_updater)->isProjectAllowedToUseArtifactLinkTypes()->once()->returns(false);
         expect($this->artifact_link_usage_updater)->forceUsageOfArtifactLinkTypes()->never();
 
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
-
     }
 
-    public function itShouldActivateIfAttributeIsTrueAndProjectDoesNotUseNature() {
+    public function itShouldActivateIfAttributeIsTrueAndProjectDoesNotUseNature()
+    {
         $xml_input = new SimpleXMLElement('<project><trackers use-natures="true"/></project>');
 
         stub($this->artifact_link_usage_updater)->isProjectAllowedToUseArtifactLinkTypes()->once()->returns(false);
@@ -1055,7 +1113,8 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
     }
 
-    public function itShouldDoNothingIfAttributeIsTrueAndProjectUsesNature() {
+    public function itShouldDoNothingIfAttributeIsTrueAndProjectUsesNature()
+    {
         $xml_input = new SimpleXMLElement('<project><trackers use-natures="true"/></project>');
 
         stub($this->artifact_link_usage_updater)->isProjectAllowedToUseArtifactLinkTypes()->returns(true);
@@ -1064,7 +1123,8 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
     }
 
-    public function itShouldDeactivateIfAttributeIsFalseAndProjectUsesNature() {
+    public function itShouldDeactivateIfAttributeIsFalseAndProjectUsesNature()
+    {
         $xml_input = new SimpleXMLElement('<project><trackers use-natures="false"/></project>');
 
         stub($this->artifact_link_usage_updater)->isProjectAllowedToUseArtifactLinkTypes()->once()->returns(true);
@@ -1073,7 +1133,8 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
     }
 
-    public function itShouldDeactivateATypeIfAttributeIsFalse() {
+    public function itShouldDeactivateATypeIfAttributeIsFalse()
+    {
         $xml_input = new SimpleXMLElement(
             '<project>
                 <trackers/>
@@ -1088,7 +1149,8 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
     }
 
-    public function itShouldActivateATypeIfAttributeIsTrue() {
+    public function itShouldActivateATypeIfAttributeIsTrue()
+    {
         $xml_input = new SimpleXMLElement(
             '<project>
                 <trackers/>
@@ -1103,7 +1165,8 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
     }
 
-    public function itShouldActivateATypeIfAttributeIsMissing() {
+    public function itShouldActivateATypeIfAttributeIsMissing()
+    {
         $xml_input = new SimpleXMLElement(
             '<project>
                 <trackers/>
@@ -1118,7 +1181,8 @@ class TrackerXmlImport_ArtifactLinkV2Activation extends TuleapTestCase {
         $this->tracker_xml_importer->import($this->configuration, $this->project, $xml_input, $this->mapping_registery, '');
     }
 
-    public function itThrowsAnEventToCheckIfTypeCanBeDisabled() {
+    public function itThrowsAnEventToCheckIfTypeCanBeDisabled()
+    {
         $xml_input = new SimpleXMLElement(
             '<project>
                 <trackers/>

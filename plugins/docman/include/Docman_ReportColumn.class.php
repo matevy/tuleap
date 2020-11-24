@@ -4,7 +4,7 @@
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2007
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -23,114 +23,127 @@
 
 use Tuleap\Docman\View\DocmanViewURLBuilder;
 
-class Docman_ReportColumn {
+class Docman_ReportColumn
+{
     var $md;
     var $sort;
 
-    function __construct($md) {
+    function __construct($md)
+    {
         $this->md = $md;
         $this->sort = null;
     }
 
-    function setSort($s) {
+    function setSort($s)
+    {
         $this->sort = $s;
     }
-    function getSort() {
+    function getSort()
+    {
         return $this->sort;
     }
 
-    function getSortParameter() {
+    function getSortParameter()
+    {
         $sortParam = null;
-        if($this->md !== null) {
+        if ($this->md !== null) {
             $sortParam = 'sort_'.$this->md->getLabel();
         }
         return $sortParam;
     }
 
-    function getSortSelectorHtml() {
+    function getSortSelectorHtml()
+    {
         $html = '';
         $sort = $this->getSort();
-        if($sort !== null) {
+        if ($sort !== null) {
             $html .= '<input type="hidden" name="'.$this->getSortParameter().'" value="'.$sort.'" />';
             $html .= "\n";
         }
         return $html;
     }
-    
 
-    function getTitle($view, $viewParams) {
+
+    function getTitle($view, $viewParams)
+    {
         $sort = $this->getSort();
-        if($sort == 1) {
+        if ($sort == 1) {
             $toggleValue = '0';
             $toogleIcon = '<img src="'.util_get_image_theme("up_arrow.png").'" border="0" >';
-        }
-        else {
+        } else {
             $toggleValue = '1';
             $toogleIcon = '<img src="'.util_get_image_theme("dn_arrow.png").'" border="0" >';
         }
-        
+
         // URL
         $toggleParam = array();
         $sortParam = $this->getSortParameter();
-        if($sortParam !== null) {
+        if ($sortParam !== null) {
             $toggleParam[$sortParam] = $toggleValue;
         }
-        
+
         $url = $view->_buildSearchUrl($viewParams, array($sortParam => $toggleValue));
         $title = $GLOBALS['Language']->getText('plugin_docman', 'view_documenttable_toggletitle');
-        
+
         $purifier = Codendi_HTMLPurifier::instance();
         $link = $purifier->purify($this->md->getName());
 
-        if($sort !== null) {
+        if ($sort !== null) {
             $link .= '&nbsp;'.$toogleIcon;
         }
 
         $href = '<a href="'.$url.'" title="'.$title.'">'.$link.'</a>';
-        
+
         return $href;
     }
 
-    function initFromRequest($request) {
+    function initFromRequest($request)
+    {
         $sortparam = $this->getSortParameter();
-        if($request->exist($sortparam)) {
+        if ($request->exist($sortparam)) {
             $this->setSort((int) $request->get($sortparam));
         }
     }
 
-    function _getMdHtml($item) {
+    function _getMdHtml($item)
+    {
         $mdHtml = null;
         $md = $item->getMetadataFromLabel($this->md->getLabel());
-        if($md !== null) {
+        if ($md !== null) {
             $mdHtml = Docman_MetadataHtmlFactory::getFromMetadata($md, array());
         }
         return $mdHtml;
     }
 
-    function getTableBox($item, $view, $params) {
+    function getTableBox($item, $view, $params)
+    {
         $mdHtml = $this->_getMdHtml($item);
-        if($mdHtml !== null) {
+        if ($mdHtml !== null) {
             return $mdHtml->getValue();
         }
         return '';
     }
-    
-    function getJavascript($item, $view) {
+
+    function getJavascript($item, $view)
+    {
         return '';
     }
 }
 
-class Docman_ReportColumnLocation 
-extends Docman_ReportColumn {
-    function __construct() {
+class Docman_ReportColumnLocation extends Docman_ReportColumn
+{
+    function __construct()
+    {
         $this->sort = null;
     }
 
-    function setSort($s) {
+    function setSort($s)
+    {
         return;
     }
 
-    function getSortSelectorHtml() {
+    function getSortSelectorHtml()
+    {
         return;
     }
 
@@ -144,14 +157,15 @@ extends Docman_ReportColumn {
         return;
     }
 
-    function getTableBox($item, $view, $params) {
+    function getTableBox($item, $view, $params)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $pathTitle = $item->getPathTitle();
         $pathId    = $item->getPathId();
         $pathUrl   = array();
-        foreach($pathTitle as $key => $title) {
+        foreach ($pathTitle as $key => $title) {
             $id  = $pathId[$key];
-            
+
             // Replace in the current url the id of the root item.
             $dfltParams = $view->_getDefaultUrlParams($params);
             $dfltParams['id'] = $id;
@@ -165,13 +179,15 @@ extends Docman_ReportColumn {
     }
 }
 
-class Docman_ReportColumnTitle
-extends Docman_ReportColumn {
-    function __construct($md) {
+class Docman_ReportColumnTitle extends Docman_ReportColumn
+{
+    function __construct($md)
+    {
         parent::__construct($md);
     }
 
-    function getTableBox($item, $view, $params) {
+    function getTableBox($item, $view, $params)
+    {
         $html = '';
         $docmanIcons = $view->_getDocmanIcons($params);
         $icon_src = $docmanIcons->getIconForItem($item, $params);
@@ -192,24 +208,26 @@ extends Docman_ReportColumn {
         $html .= '</span>';
         return $html;
     }
-    
-    function getJavascript($item, $view) {
+
+    function getJavascript($item, $view)
+    {
         return $view->getActionForItem($item);
     }
 }
 
-class Docman_ReportColumnList
-extends Docman_ReportColumn {
-    function __construct($md) {
+class Docman_ReportColumnList extends Docman_ReportColumn
+{
+    function __construct($md)
+    {
         parent::__construct($md);
     }
 
-    function getTableBox($item, $view, $params) {
+    function getTableBox($item, $view, $params)
+    {
         $mdHtml = $this->_getMdHtml($item);
-        if($mdHtml !== null) {
+        if ($mdHtml !== null) {
             return $mdHtml->getValue(true);
         }
         return '';
     }
 }
-?>

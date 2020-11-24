@@ -20,7 +20,8 @@
 /**
  * Render statistics in csv format
  */
-class Statistics_Formatter {
+class Statistics_Formatter
+{
 
     private $separator;
     public $startDate;
@@ -28,7 +29,8 @@ class Statistics_Formatter {
     public $groupId = null;
     private $csv_handle;
 
-    public function __construct($startDate, $endDate, $separator, $groupId = null) {
+    public function __construct($startDate, $endDate, $separator, $groupId = null)
+    {
         $this->separator  = $separator;
         $this->csv_handle = fopen('php://memory', 'w+');
         $this->startDate  = $startDate;
@@ -44,7 +46,8 @@ class Statistics_Formatter {
      *
      * @return void
      */
-    public function addLine($line) {
+    public function addLine($line)
+    {
         fputcsv($this->csv_handle, $line, $this->separator);
     }
 
@@ -55,7 +58,8 @@ class Statistics_Formatter {
      *
      * @return void
      */
-    public function addHeader($title) {
+    public function addHeader($title)
+    {
         $this->addLine(array($title));
     }
 
@@ -64,7 +68,8 @@ class Statistics_Formatter {
      *
      * @return void
      */
-    public function addEmptyLine() {
+    public function addEmptyLine()
+    {
         fwrite($this->csv_handle, "\n");
     }
 
@@ -73,7 +78,8 @@ class Statistics_Formatter {
      *
      * @return void
      */
-    public function clearContent() {
+    public function clearContent()
+    {
         ftruncate($this->csv_handle, 0);
     }
 
@@ -82,7 +88,8 @@ class Statistics_Formatter {
      *
      * @return String
      */
-    public function getCsvContent() {
+    public function getCsvContent()
+    {
         rewind($this->csv_handle);
         return stream_get_contents($this->csv_handle);
     }

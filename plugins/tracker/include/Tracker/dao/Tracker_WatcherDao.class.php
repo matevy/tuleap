@@ -18,14 +18,17 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_WatcherDao extends DataAccessObject {
-    
-    function __construct() {
+class Tracker_WatcherDao extends DataAccessObject
+{
+
+    function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_watcher';
     }
-    
-    public function searchWatchees($tracker_id, $user_id) {
+
+    public function searchWatchees($tracker_id, $user_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $user_id    = $this->da->escapeInt($user_id);
         $sql = "SELECT *
@@ -34,8 +37,9 @@ class Tracker_WatcherDao extends DataAccessObject {
                   AND user_id = $user_id";
         return $this->retrieve($sql);
     }
-    
-    public function searchWatchers($tracker_id, $watchee_id) {
+
+    public function searchWatchers($tracker_id, $watchee_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $watchee_id = $this->da->escapeInt($watchee_id);
         $sql = "SELECT *
@@ -45,4 +49,3 @@ class Tracker_WatcherDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 }
-?>

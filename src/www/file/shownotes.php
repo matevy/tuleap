@@ -24,14 +24,12 @@ use Tuleap\FRS\FRSPermissionFactory;
 use Tuleap\FRS\FRSPermissionManager;
 use Tuleap\FRS\ReleasePermissionManager;
 
-require_once('pre.php');
-require_once('www/file/file_utils.php');
-require_once('common/frs/FRSReleaseFactory.class.php');
-require_once('common/reference/CrossReferenceFactory.class.php');
+require_once __DIR__ . '/../include/pre.php';
+require_once __DIR__ . '/file_utils.php';
 
 $release_id = (int)     $request->getValidated('release_id', 'uint', 0);
-if($release_id === 0) {
-    exit_error($GLOBALS['Language']->getText('file_shownotes','not_found_err'),$GLOBALS['Language']->getText('file_shownotes','release_not_found'));
+if ($release_id === 0) {
+    exit_error($GLOBALS['Language']->getText('file_shownotes', 'not_found_err'), $GLOBALS['Language']->getText('file_shownotes', 'release_not_found'));
 }
 
 $frsrf   = new FRSReleaseFactory();
@@ -39,25 +37,25 @@ $user    = UserManager::instance()->getCurrentUser();
 $release = $frsrf->getFRSReleaseFromDb($release_id);
 
 $permission_manager = FRSPermissionManager::build();
-$release_permission_manager = new ReleasePermissionManager($permission_manager , $frsrf);
+$release_permission_manager = new ReleasePermissionManager($permission_manager, $frsrf);
 if ($release === null ||
     $release_permission_manager->canUserSeeRelease($user, $release, $release->getProject()) === false) {
-    exit_error($Language->getText('file_shownotes','not_found_err'),$Language->getText('file_shownotes','release_not_found'));
+    exit_error($Language->getText('file_shownotes', 'not_found_err'), $Language->getText('file_shownotes', 'release_not_found'));
 }
 
 $additional_view = getAdditionalView($release, $user);
 
 $group_id = $release->getGroupID();
-file_utils_header(array('title'=>$Language->getText('file_shownotes','release_notes'),'group'=>$group_id));
+file_utils_header(array('title'=>$Language->getText('file_shownotes', 'release_notes'),'group'=>$group_id));
 
 if ($additional_view) {
     echo $additional_view;
 } else {
     $hp = Codendi_HTMLPurifier::instance();
 
-    $HTML->box1_top($Language->getText('file_shownotes','notes'));
+    $HTML->box1_top($Language->getText('file_shownotes', 'notes'));
 
-    echo '<h3>'.$Language->getText('file_shownotes','release_name').': <A HREF="showfiles.php?group_id='.$group_id.'">'.$hp->purify($release->getName()).'</A></H3>
+    echo '<h3>'.$Language->getText('file_shownotes', 'release_name').': <A HREF="showfiles.php?group_id='.$group_id.'">'.$hp->purify($release->getName()).'</A></H3>
         <P>';
 
 /*
@@ -68,10 +66,10 @@ if ($additional_view) {
         echo '<PRE>'.PHP_EOL;
         $purify_level = CODENDI_PURIFIER_BASIC_NOBR;
     }
-    echo '<B>'.$Language->getText('file_shownotes','notes').':</B>'.PHP_EOL
+    echo '<B>'.$Language->getText('file_shownotes', 'notes').':</B>'.PHP_EOL
          .$hp->purify($release->getNotes(), $purify_level, $group_id).
         '<HR NOSHADE SIZE=1>'.
-        '<B>'.$Language->getText('file_shownotes','changes').':</B>'.PHP_EOL
+        '<B>'.$Language->getText('file_shownotes', 'changes').':</B>'.PHP_EOL
         .$hp->purify($release->getChanges(), $purify_level, $group_id);
     if ($release->isPreformatted()) {
         echo '</PRE>';
@@ -81,7 +79,7 @@ if ($additional_view) {
     $crossref_fact->fetchDatas();
     if ($crossref_fact->getNbReferences() > 0) {
         echo '<hr noshade>';
-        echo '<b> '.$Language->getText('cross_ref_fact_include','references').'</b>';
+        echo '<b> '.$Language->getText('cross_ref_fact_include', 'references').'</b>';
         $crossref_fact->DisplayCrossRefs();
     }
 }

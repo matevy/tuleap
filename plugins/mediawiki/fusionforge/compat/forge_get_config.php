@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-function forge_get_config($key, $scope = 'core') {
+function forge_get_config($key, $scope = 'core')
+{
     $conf_variables_mapping = array(
         'web_host'          => 'sys_default_domain',
         'forge_name'        => 'sys_name',
@@ -31,7 +32,7 @@ function forge_get_config($key, $scope = 'core') {
     );
     if (isset($conf_variables_mapping[$key])) {
         $key = $conf_variables_mapping[$key];
-    } else if ($scope !== 'core') {
+    } elseif ($scope !== 'core') {
         $plugin_manager = PluginManager::instance();
         $plugin = $plugin_manager->getPluginByName($scope);
         if (! $plugin || ! $plugin_manager->isPluginAvailable($plugin)) {

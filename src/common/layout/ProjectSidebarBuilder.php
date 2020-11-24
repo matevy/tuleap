@@ -29,6 +29,7 @@ use PFUser;
 use Project;
 use ProjectManager;
 use Tuleap\Project\Admin\MembershipDelegationDao;
+use Tuleap\Project\Service\ProjectDefinedService;
 use Tuleap\Sanitizer\URISanitizer;
 
 class ProjectSidebarBuilder
@@ -74,29 +75,29 @@ class ProjectSidebarBuilder
         $this->membership_delegation_dao = $membership_delegation_dao;
     }
 
-    /** @return array[] Array of sidebar entries */
-    public function getSidebar(PFUser $user, $toptab, Project $project)
+    public function getSidebar(PFUser $user, $toptab, Project $project): \Generator
     {
-        $sidebar          = array();
         $allowed_services = $this->getAllowedServicesForUser($user, $project);
 
-        foreach ($project->getServicesData() as $short_name => $service_data) {
-            if (! $this->canServiceBeAddedInSidebar($project, $user, $short_name, $service_data, $allowed_services)) {
+        foreach ($project->getServices() as $service) {
+            if (! $this->canServiceBeAddedInSidebar($project, $user, $service, $allowed_services)) {
                 continue;
             }
 
-            $sidebar[] = array(
-                'link'        => $this->getLink($service_data, $project),
-                'icon'        => $this->getIcon($short_name, $service_data),
-                'name'        => $this->purifier->purify($service_data['label']),
-                'label'       => $this->getLabel($service_data),
-                'enabled'     => $this->isEnabled($toptab, $service_data, $short_name),
-                'description' => $this->purifier->purify($service_data['description']),
-                'id'          => $this->purifier->purify('sidebar-' . $short_name)
-            );
+            if ($service instanceof ProjectDefinedService) {
+                yield new SidebarProjectDefinedServicePresenter($service, $this->getLink($service, $project));
+            } else {
+                yield new SidebarServicePresenter(
+                    $this->purifier->purify('sidebar-' . $service->getShortName()),
+                    $this->purifier->purify($service->getInternationalizedName()),
+                    $this->getLink($service, $project),
+                    $service->getIcon(),
+                    $this->getLabel($service),
+                    $this->purifier->purify($service->getInternationalizedDescription()),
+                    $this->isEnabled($toptab, $service)
+                );
+            }
         }
-
-        return $sidebar;
     }
 
     private function restrictedMemberIsNotProjectMember(PFUser $user, Project $project)
@@ -109,15 +110,6 @@ class ProjectSidebarBuilder
         $projects = ForgeConfig::getSuperPublicProjectsFromRestrictedFile();
 
         return in_array($project->getID(), $projects);
-    }
-
-    private function getIcon($service_name, $service_data)
-    {
-        if (isset($service_data['icon'])) {
-            return $service_data['icon'];
-        }
-
-        return 'tuleap-services-angle-double-right tuleap-services-' . $service_name;
     }
 
     /** @return string[] */
@@ -139,14 +131,15 @@ class ProjectSidebarBuilder
     private function canServiceBeAddedInSidebar(
         Project $project,
         PFUser $user,
-        $short_name,
-        array $service_data,
+        \Service $service,
         array $allowed_services
-    ) {
-        if (! $service_data['is_used']) {
+    ) : bool {
+        $short_name = $service->getShortName();
+
+        if (! $service->isUsed()) {
             return false;
         }
-        if (! $service_data['is_active']) {
+        if (! $service->isActive()) {
             return false;
         }
 
@@ -171,31 +164,28 @@ class ProjectSidebarBuilder
         return true;
     }
 
-    /**
-     * @return string
-     */
-    private function getLink(array $service_data, Project $project)
+    private function getLink(\Service $service, Project $project) : string
     {
         $project_id = $project->getID();
 
-        if ($service_data['is_in_iframe']) {
-            $link = '/service/?group_id=' . $project_id . '&amp;id=' . $service_data['service_id'];
+        if ($service->isIFrame()) {
+            $link = '/service/?group_id=' . $project_id . '&amp;id=' . $service->getId();
         } else {
-            $service_url_collector = new ServiceUrlCollector($project, $service_data['short_name']);
+            $service_url_collector = new ServiceUrlCollector($project, $service->getShortName());
 
             $this->event_manager->processEvent($service_url_collector);
 
             if ($service_url_collector->hasUrl()) {
                 $link = $service_url_collector->getUrl();
             } else {
-                $link = $this->purifier->purify($service_data['link']);
+                $link = $this->purifier->purify($service->getUrl());
             }
         }
         if ($project_id == 100) {
             if (strpos($link, '$projectname') !== false) {
                 // NOTE: if you change link variables here, change them also in
                 // * src/common/Project/RegisterProjectStep_Confirmation.class.php
-                // * src/www/project/admin/servicebar.php
+                // * @see ServicePOSTDataBuilder::substituteVariablesInLink
                 // Don't check project name if not needed.
                 // When it is done here, the service bar will not appear updated on the current page
                 $link = str_replace(
@@ -216,27 +206,21 @@ class ProjectSidebarBuilder
         return $this->uri_sanitizer->sanitizeForHTMLAttribute($link);
     }
 
-    /**
-     * @return bool
-     */
-    private function isEnabled($toptab, array $service_data, $short_name)
+    private function isEnabled($toptab, \Service $service) : bool
     {
-        return (is_numeric($toptab) && $toptab == $service_data['service_id'])
-            || ($short_name && ($toptab == $short_name));
+        return (is_numeric($toptab) && $toptab == $service->getId())
+            || ($service->getShortName() && ($toptab == $service->getShortName()));
     }
 
-    /**
-     * @return string
-     */
-    private function getLabel(array $service_data)
+    private function getLabel(\Service $service) : string
     {
-        $label = '<span title="' . $this->purifier->purify($service_data['description']) . '">';
-        $label .= $this->purifier->purify($service_data['label']) . '</span>';
+        $label = '<span title="' . $this->purifier->purify($service->getInternationalizedDescription()) . '">';
+        $label .= $this->purifier->purify($service->getInternationalizedName()) . '</span>';
 
         return $label;
     }
 
-    private function userCanSeeAdminService(Project $project, PFUser $user)
+    private function userCanSeeAdminService(Project $project, PFUser $user) : bool
     {
         if (! $user->isLoggedIn()) {
             return false;

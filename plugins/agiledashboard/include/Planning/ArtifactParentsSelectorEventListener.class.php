@@ -22,7 +22,8 @@
  * This class is responsible of processing the TRACKER_EVENT_ARTIFACT_PARENTS_SELECTOR event
  * in the agiledashboard.
  */
-class Planning_ArtifactParentsSelectorEventListener {
+class Planning_ArtifactParentsSelectorEventListener
+{
 
     /**
      * @var Tracker_ArtifactFactory
@@ -52,7 +53,8 @@ class Planning_ArtifactParentsSelectorEventListener {
     /**
      * @param array $params the parameters of the event see TRACKER_EVENT_ARTIFACT_PARENTS_SELECTOR
      */
-    public function process($params) {
+    public function process($params)
+    {
         $source_artifact = $this->getSourceArtifact();
         if ($source_artifact) {
             $params['label']             = $GLOBALS['Language']->getText('plugin_agiledashboard', 'available', $params['parent_tracker']->getName());
@@ -64,7 +66,8 @@ class Planning_ArtifactParentsSelectorEventListener {
         }
     }
 
-    private function getSourceArtifact() {
+    private function getSourceArtifact()
+    {
         $source_artifact = null;
         if ($this->request->get('func') == 'new-artifact-link') {
             $source_artifact = $this->artifact_factory->getArtifactById($this->request->get('id'));
@@ -74,4 +77,3 @@ class Planning_ArtifactParentsSelectorEventListener {
         return $source_artifact;
     }
 }
-?>

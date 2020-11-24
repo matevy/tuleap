@@ -19,16 +19,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201507152200_increase_session_ip_field_size extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201507152200_increase_session_ip_field_size extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Increase session IP field size to accept IPv6";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE session MODIFY COLUMN ip_addr VARCHAR(45) NOT NULL';
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {

@@ -19,19 +19,23 @@
  */
 
 use Tuleap\Tracker\Workflow\WorkflowBackendLogger;
+use Tuleap\Tracker\Workflow\WorkflowRulesManagerLoopSafeGuard;
 
 require_once __DIR__.'/../../bootstrap.php';
 
-abstract class Tracker_Workflow_Trigger_RulesManagerTest extends TuleapTestCase {
+abstract class Tracker_Workflow_Trigger_RulesManagerTest extends TuleapTestCase
+{
     protected $manager;
     protected $dao;
     protected $target_value_id;
     protected $formelement_factory;
     protected $rules_processor;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
+        $workflow_logger           = new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG);
         $this->target_value_id     = 789;
         $this->dao                 = \Mockery::spy(\Tracker_Workflow_Trigger_RulesDao::class);
         $this->formelement_factory = \Mockery::spy(\Tracker_FormElementFactory::class);
@@ -40,17 +44,21 @@ abstract class Tracker_Workflow_Trigger_RulesManagerTest extends TuleapTestCase 
             $this->dao,
             $this->formelement_factory,
             $this->rules_processor,
-            new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG),
-            \Mockery::spy(\Tracker_Workflow_Trigger_RulesBuilderFactory::class)
+            $workflow_logger,
+            \Mockery::spy(\Tracker_Workflow_Trigger_RulesBuilderFactory::class),
+            new WorkflowRulesManagerLoopSafeGuard($workflow_logger)
         );
     }
 }
 
-class Tracker_Workflow_Trigger_RulesManager_duplicateTest extends Tracker_Workflow_Trigger_RulesManagerTest {
+class Tracker_Workflow_Trigger_RulesManager_duplicateTest extends Tracker_Workflow_Trigger_RulesManagerTest
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
+        $workflow_logger = new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG);
 
         $this->manager = \Mockery::mock(
             \Tracker_Workflow_Trigger_RulesManager::class,
@@ -58,15 +66,17 @@ class Tracker_Workflow_Trigger_RulesManager_duplicateTest extends Tracker_Workfl
                 $this->dao,
                 $this->formelement_factory,
                 $this->rules_processor,
-                new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG),
-                mock('Tracker_Workflow_Trigger_RulesBuilderFactory')
+                $workflow_logger,
+                mock('Tracker_Workflow_Trigger_RulesBuilderFactory'),
+                new WorkflowRulesManagerLoopSafeGuard($workflow_logger)
             )
         )
             ->makePartial()
             ->shouldAllowMockingProtectedMethods();
     }
 
-    public function itDuplicatesTriggerRulesFromOldTracker() {
+    public function itDuplicatesTriggerRulesFromOldTracker()
+    {
         $template_tracker  = mockery_stub(\Tracker::class)->getId()->returns(101);
         $new_field_01      = aMockField()->withTracker($template_tracker)->withId(502)->build();
         $new_field_02      = aMockField()->withTracker($template_tracker)->withId(503)->build();
@@ -127,7 +137,6 @@ class Tracker_Workflow_Trigger_RulesManager_duplicateTest extends Tracker_Workfl
             )
         );
 
-
         stub($this->manager)->getForTargetTracker()->returns(
             array($rule_01, $rule_02)
         );
@@ -169,12 +178,13 @@ class Tracker_Workflow_Trigger_RulesManager_duplicateTest extends Tracker_Workfl
 
         $this->manager->duplicate($template_trackers, $field_mapping);
     }
-
 }
 
-class Tracker_Workflow_Trigger_RulesManager_addTest extends Tracker_Workflow_Trigger_RulesManagerTest {
+class Tracker_Workflow_Trigger_RulesManager_addTest extends Tracker_Workflow_Trigger_RulesManagerTest
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -200,13 +210,15 @@ class Tracker_Workflow_Trigger_RulesManager_addTest extends Tracker_Workflow_Tri
         );
     }
 
-    public function itAddsTargetFieldAndCondition() {
+    public function itAddsTargetFieldAndCondition()
+    {
         expect($this->dao)->addTarget($this->target_value_id, Tracker_Workflow_Trigger_RulesBuilderData::CONDITION_AT_LEAST_ONE)->once();
 
         $this->manager->add($this->rule);
     }
 
-    public function itAddsTriggeringFields() {
+    public function itAddsTriggeringFields()
+    {
         $rule_id = 4587;
         stub($this->dao)->addTarget()->returns($rule_id);
 
@@ -217,7 +229,8 @@ class Tracker_Workflow_Trigger_RulesManager_addTest extends Tracker_Workflow_Tri
         $this->manager->add($this->rule);
     }
 
-    public function itUpdateRuleWithNewId() {
+    public function itUpdateRuleWithNewId()
+    {
         $rule_id = 4587;
         stub($this->dao)->addTarget()->returns($rule_id);
 
@@ -226,7 +239,8 @@ class Tracker_Workflow_Trigger_RulesManager_addTest extends Tracker_Workflow_Tri
         $this->assertEqual($rule_id, $this->rule->getId());
     }
 
-    public function itUsesTransactionToKeepConsistency() {
+    public function itUsesTransactionToKeepConsistency()
+    {
         expect($this->dao)->enableExceptionsOnError()->once();
         expect($this->dao)->startTransaction()->once();
         expect($this->dao)->commit()->once();
@@ -234,9 +248,11 @@ class Tracker_Workflow_Trigger_RulesManager_addTest extends Tracker_Workflow_Tri
     }
 }
 
-class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_Workflow_Trigger_RulesManagerTest {
+class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_Workflow_Trigger_RulesManagerTest
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -267,10 +283,10 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
             )
         );
         stub($this->formelement_factory)->getUsedFormElementFieldById($this->trigger_field_id_1)->returns($this->trigger_field_1);
-
     }
 
-    public function itFetchesDataFromDb() {
+    public function itFetchesDataFromDb()
+    {
         $this->dao->shouldReceive('searchForTargetTracker')
             ->with($this->tracker_id)
             ->once()
@@ -279,7 +295,8 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
         $this->manager->getForTargetTracker($this->tracker);
     }
 
-    public function itHasNoRules() {
+    public function itHasNoRules()
+    {
         stub($this->dao)->searchForTargetTracker()->returnsEmptyDar();
 
         $rule_collection = $this->manager->getForTargetTracker($this->tracker);
@@ -287,7 +304,8 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
         $this->assertCount($rule_collection, 0);
     }
 
-    public function setUpOneRule() {
+    public function setUpOneRule()
+    {
         stub($this->dao)->searchForTargetTracker()->returnsDar(array(
             'id'             => $this->rule_id,
             'field_id'       => $this->target_field_id,
@@ -295,7 +313,8 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
             'rule_condition' => Tracker_Workflow_Trigger_RulesBuilderData::CONDITION_AT_LEAST_ONE));
     }
 
-    public function itHasOneElementInCollection() {
+    public function itHasOneElementInCollection()
+    {
         $this->setUpOneRule();
         stub($this->dao)->searchForTriggeringFieldByRuleId()->returnsEmptyDar();
 
@@ -303,7 +322,8 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
         $this->assertCount($rule_collection, 1);
     }
 
-    public function itBuildsTheRuleWithId() {
+    public function itBuildsTheRuleWithId()
+    {
         $this->setUpOneRule();
         stub($this->dao)->searchForTriggeringFieldByRuleId()->returnsEmptyDar();
 
@@ -311,7 +331,8 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
         $this->assertEqual($rule->getId(), $this->rule_id);
     }
 
-    public function itBuildsTheRuleTargetField() {
+    public function itBuildsTheRuleTargetField()
+    {
         $this->setUpOneRule();
         stub($this->dao)->searchForTriggeringFieldByRuleId()->returnsEmptyDar();
 
@@ -320,7 +341,8 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
         $this->assertEqual($rule->getTarget()->getValue(), $this->target_field_value);
     }
 
-    public function itBuildsTheRuleCondition() {
+    public function itBuildsTheRuleCondition()
+    {
         $this->setUpOneRule();
         stub($this->dao)->searchForTriggeringFieldByRuleId()->returnsEmptyDar();
 
@@ -328,7 +350,8 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
         $this->assertEqual($rule->getCondition(), Tracker_Workflow_Trigger_RulesBuilderData::CONDITION_AT_LEAST_ONE);
     }
 
-    public function itBuildsTheRuleWithOneTriggeringField() {
+    public function itBuildsTheRuleWithOneTriggeringField()
+    {
         $this->setUpOneRule();
 
         stub($this->dao)->searchForTriggeringFieldByRuleId($this->rule_id)->returnsDar(array(
@@ -340,7 +363,8 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
         $this->assertCount($rule->getTriggers(), 1);
     }
 
-    public function itBuildsTheRuleWithTheRightTriggeringField() {
+    public function itBuildsTheRuleWithTheRightTriggeringField()
+    {
         $this->setUpOneRule();
 
         stub($this->dao)->searchForTriggeringFieldByRuleId($this->rule_id)->returnsDar(array(
@@ -355,13 +379,15 @@ class Tracker_Workflow_Trigger_RulesManager_getFromTrackerTest extends Tracker_W
     }
 }
 
-class Tracker_Workflow_Trigger_RulesManager_deleteByRuleIdTest extends Tracker_Workflow_Trigger_RulesManagerTest {
+class Tracker_Workflow_Trigger_RulesManager_deleteByRuleIdTest extends Tracker_Workflow_Trigger_RulesManagerTest
+{
 
     private $tracker;
     private $rule;
     private $rule_id;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->rule_id = 777;
@@ -371,19 +397,22 @@ class Tracker_Workflow_Trigger_RulesManager_deleteByRuleIdTest extends Tracker_W
         stub($this->rule)->getTargetTracker()->returns($this->tracker);
     }
 
-    public function itDeletesTheTriggeringFields() {
+    public function itDeletesTheTriggeringFields()
+    {
         expect($this->dao)->deleteTriggeringFieldsByRuleId($this->rule_id)->once();
 
         $this->manager->delete($this->tracker, $this->rule);
     }
 
-    public function itDeletesTheTarget() {
+    public function itDeletesTheTarget()
+    {
         expect($this->dao)->deleteTargetByRuleId($this->rule_id)->once();
 
         $this->manager->delete($this->tracker, $this->rule);
     }
 
-    public function itUsesTransactionToKeepConsistency() {
+    public function itUsesTransactionToKeepConsistency()
+    {
         expect($this->dao)->enableExceptionsOnError()->once();
         expect($this->dao)->startTransaction()->once();
         expect($this->dao)->commit()->once();
@@ -391,7 +420,8 @@ class Tracker_Workflow_Trigger_RulesManager_deleteByRuleIdTest extends Tracker_W
         $this->manager->delete($this->tracker, $this->rule);
     }
 
-    public function itRaisesAnExceptionWhenRuleTrackerDiffersFromGivenTracker() {
+    public function itRaisesAnExceptionWhenRuleTrackerDiffersFromGivenTracker()
+    {
         $this->expectException('Tracker_Exception');
 
         $this->manager->delete(aTracker()->build(), $this->rule);
@@ -399,17 +429,21 @@ class Tracker_Workflow_Trigger_RulesManager_deleteByRuleIdTest extends Tracker_W
 }
 
 
-class Tracker_Workflow_Trigger_RulesManager_processTriggersTest extends Tracker_Workflow_Trigger_RulesManagerTest {
+class Tracker_Workflow_Trigger_RulesManager_processTriggersTest extends Tracker_Workflow_Trigger_RulesManagerTest
+{
 
-    public function itProcessTheInvolvedTriggerRules() {
-        $manager = \Mockery::mock(
+    public function itProcessTheInvolvedTriggerRules()
+    {
+        $workflow_logger = new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG);
+        $manager         = \Mockery::mock(
             \Tracker_Workflow_Trigger_RulesManager::class,
             array(
                 $this->dao,
                 $this->formelement_factory,
                 $this->rules_processor,
-                new WorkflowBackendLogger(Mockery::spy(BackendLogger::class), Logger::DEBUG),
-                mock('Tracker_Workflow_Trigger_RulesBuilderFactory')
+                $workflow_logger,
+                mock('Tracker_Workflow_Trigger_RulesBuilderFactory'),
+                new WorkflowRulesManagerLoopSafeGuard($workflow_logger)
             )
         )
             ->makePartial()
@@ -435,12 +469,14 @@ class Tracker_Workflow_Trigger_RulesManager_processTriggersTest extends Tracker_
 }
 
 
-class TriggerRuleComparatorExpectaction extends SimpleExpectation {
+class TriggerRuleComparatorExpectaction extends SimpleExpectation
+{
 
     /** @var Tracker_Workflow_Trigger_TriggerRule */
     private $trigger_rule;
 
-    public function __construct(Tracker_Workflow_Trigger_TriggerRule $trigger_rule) {
+    public function __construct(Tracker_Workflow_Trigger_TriggerRule $trigger_rule)
+    {
         parent::__construct();
         $this->trigger_rule = $trigger_rule;
     }
@@ -460,25 +496,29 @@ class TriggerRuleComparatorExpectaction extends SimpleExpectation {
         }
     }
 
-    private function isConditionEqual($candidate) {
+    private function isConditionEqual($candidate)
+    {
         if ($candidate == $this->trigger_rule->getCondition()) {
             return true;
         }
         throw new Exception("Condition `".$this->trigger_rule->getCondition()."` expected, `$candidate` given");
     }
 
-    private function isTargetEqual(Tracker_Workflow_Trigger_FieldValue $candidate) {
+    private function isTargetEqual(Tracker_Workflow_Trigger_FieldValue $candidate)
+    {
         if ($this->isFieldValueEqual($this->trigger_rule->getTarget(), $candidate)) {
             return true;
         }
         throw new Exception("Target `".$this->formatFieldValue($this->trigger_rule->getTarget())."` expected, `".$this->formatFieldValue($candidate)."` given");
     }
 
-    private function formatFieldValue(Tracker_Workflow_Trigger_FieldValue $field_value) {
+    private function formatFieldValue(Tracker_Workflow_Trigger_FieldValue $field_value)
+    {
         return '(field_id :'.$field_value->getField()->getId().', field_value_id: '.$field_value->getValue()->getId().')';
     }
 
-    private function areTriggersEqual(array $triggers) {
+    private function areTriggersEqual(array $triggers)
+    {
         $reference_triggers = $this->trigger_rule->getTriggers();
         if (count($triggers) !== count($reference_triggers)) {
             throw new Exception('Triggers: '.count($reference_triggers).' tiggers expected, '.count($triggers).' given');
@@ -491,7 +531,8 @@ class TriggerRuleComparatorExpectaction extends SimpleExpectation {
         return true;
     }
 
-    private function isFieldValueEqual(Tracker_Workflow_Trigger_FieldValue $reference, Tracker_Workflow_Trigger_FieldValue $candidate) {
+    private function isFieldValueEqual(Tracker_Workflow_Trigger_FieldValue $reference, Tracker_Workflow_Trigger_FieldValue $candidate)
+    {
         return $reference->getField()->getId() == $candidate->getField()->getId() &&
                $reference->getValue()->getId() == $candidate->getValue()->getId();
     }
@@ -511,7 +552,8 @@ class TriggerRuleComparatorExpectaction extends SimpleExpectation {
     }
 }
 
-class Tracker_Workflow_Trigger_RulesManager_XMLImportTest extends Tracker_Workflow_Trigger_RulesManagerTest {
+class Tracker_Workflow_Trigger_RulesManager_XMLImportTest extends Tracker_Workflow_Trigger_RulesManagerTest
+{
 
     private $xml;
     private $xmlFieldMapping;
@@ -522,7 +564,8 @@ class Tracker_Workflow_Trigger_RulesManager_XMLImportTest extends Tracker_Workfl
     private $value_2117;
     private $value_2118;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
         $this->xml = new SimpleXMLElement('
@@ -553,8 +596,7 @@ class Tracker_Workflow_Trigger_RulesManager_XMLImportTest extends Tracker_Workfl
                     <field_value_id REF="V2118"/>
                   </target>
                 </trigger_rule>
-            </triggers>'
-        );
+            </triggers>');
 
         $this->field_1685 = mockery_stub(\Tracker_FormElement_Field_Selectbox::class)->getId()->returns(1685);
         $this->field_1741 = mockery_stub(\Tracker_FormElement_Field_Selectbox::class)->getId()->returns(1741);
@@ -575,7 +617,8 @@ class Tracker_Workflow_Trigger_RulesManager_XMLImportTest extends Tracker_Workfl
         $this->manager = \Mockery::mock(\Tracker_Workflow_Trigger_RulesManager::class)->makePartial()->shouldAllowMockingProtectedMethods();
     }
 
-    public function itImportRules() {
+    public function itImportRules()
+    {
 
         $trigger_rule_1 = new Tracker_Workflow_Trigger_TriggerRule(
             0,

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -26,30 +26,33 @@ require_once __DIR__ . '/../../www/my/my_utils.php';
 *
 * Artifact assigned to or submitted by this person
 */
-class Widget_MyArtifacts extends Widget {
+class Widget_MyArtifacts extends Widget
+{
     var $_artifact_show;
 
     public function __construct()
     {
         parent::__construct('myartifacts');
         $this->_artifact_show = user_get_preference('my_artifacts_show');
-        if($this->_artifact_show === false) {
+        if ($this->_artifact_show === false) {
             $this->_artifact_show = 'AS';
             user_set_preference('my_artifacts_show', $this->_artifact_show);
         }
     }
 
-    function getTitle() {
+    function getTitle()
+    {
         return $GLOBALS['Language']->getText('my_index', 'my_arts');
     }
 
-    function updatePreferences(Codendi_Request $request) {
+    function updatePreferences(Codendi_Request $request)
+    {
         $request->valid(new Valid_String('cancel'));
         $vShow = new Valid_WhiteList('show', array('A', 'S', 'N', 'AS'));
         $vShow->required();
         if (!$request->exist('cancel')) {
             if ($request->valid($vShow)) {
-                switch($request->get('show')) {
+                switch ($request->get('show')) {
                     case 'A':
                         $this->_artifact_show = 'A';
                         break;
@@ -106,13 +109,15 @@ class Widget_MyArtifacts extends Widget {
             ';
     }
 
-    function isAjax() {
+    function isAjax()
+    {
         return true;
     }
-    function getContent() {
+    function getContent()
+    {
         $html_my_artifacts = '<table style="width:100%">';
         if ($atf = new ArtifactTypeFactory(false)) {
-            $my_artifacts = $atf->getMyArtifacts(user_getid(), $this->_artifact_show);
+            $my_artifacts = $atf->getMyArtifacts(UserManager::instance()->getCurrentUser()->getId(), $this->_artifact_show);
             if (db_numrows($my_artifacts) > 0) {
                 $html_my_artifacts .= $this->_display_artifacts($my_artifacts, 0);
             }
@@ -125,7 +130,8 @@ class Widget_MyArtifacts extends Widget {
         return $html_my_artifacts;
     }
 
-    private function getPriorityColorsKey() {
+    private function getPriorityColorsKey()
+    {
         $html = '<P class="small"><B>' . $GLOBALS['Language']->getText('include_utils', 'prio_colors') . '</B><BR>
 		<table border=0><tr>';
 
@@ -137,12 +143,13 @@ class Widget_MyArtifacts extends Widget {
         return $html;
     }
 
-    function _display_artifacts($list_trackers, $print_box_begin) {
+    function _display_artifacts($list_trackers, $print_box_begin)
+    {
         $request = HTTPRequest::instance();
 
         $vItemId = new Valid_UInt('hide_item_id');
         $vItemId->required();
-        if($request->valid($vItemId)) {
+        if ($request->valid($vItemId)) {
             $hide_item_id = $request->get('hide_item_id');
         } else {
             $hide_item_id = null;
@@ -150,7 +157,7 @@ class Widget_MyArtifacts extends Widget {
 
         $vArtifact = new Valid_WhiteList('hide_artifact', array(0, 1));
         $vArtifact->required();
-        if($request->valid($vArtifact)) {
+        if ($request->valid($vArtifact)) {
             $hide_artifact = $request->get('hide_artifact');
         } else {
             $hide_artifact = null;
@@ -187,7 +194,7 @@ class Widget_MyArtifacts extends Widget {
             }
             if (!isset($artifact_types[$group_id][$atid])) {
                 $artifact_types[$group_id][$atid] = array();
-                $artifact_types[$group_id][$atid]['at'] = new ArtifactType($group,$atid);
+                $artifact_types[$group_id][$atid]['at'] = new ArtifactType($group, $atid);
                 $artifact_types[$group_id][$atid]['user_can_view_at']             = $artifact_types[$group_id][$atid]['at']->userCanView();
                 $artifact_types[$group_id][$atid]['user_can_view_summary_or_aid'] = null;
             }
@@ -215,28 +222,26 @@ class Widget_MyArtifacts extends Widget {
                     $artifact_types[$group_id][$atid]['user_can_view_summary_or_aid'] = $user_can_view_aid || $user_can_view_summary;
                 }
                 if ($artifact_types[$group_id][$atid]['user_can_view_summary_or_aid']) {
-
                     //work on the tracker of the last round if there was one
                     if ($atid != $atid_old && $count_aids != 0) {
                         list($hide_now,$count_diff,$hide_url) =
-                            my_hide_url('artifact',$atid_old,$hide_item_id,$count_aids,$hide_artifact, $request->get('dashboard_id'));
+                            my_hide_url('artifact', $atid_old, $hide_item_id, $count_aids, $hide_artifact, $request->get('dashboard_id'));
                         $html_hdr = ($j ? '<tr class="boxitem"><td colspan="3">' : '').
                         $hide_url.'<A HREF="/tracker/?group_id='.$group_id_old.'&atid='.$atid_old.'">'.
                         $group_name." - ".$tracker_name.'</A>&nbsp;&nbsp;&nbsp;&nbsp;';
                         $count_new = max(0, $count_diff);
 
-                        $html_hdr .= my_item_count($count_aids,$count_new).'</td></tr>';
+                        $html_hdr .= my_item_count($count_aids, $count_new).'</td></tr>';
                         $html_my_artifacts .= $html_hdr.$html;
 
                         $count_aids = 0;
                         $html = '';
                         $j++;
-
                     }
 
                     if ($count_aids == 0) {
                       //have to call it to get at least the hide_now even if count_aids is false at this point
-                      $hide_now = my_hide('artifact',$atid,$hide_item_id,$hide_artifact);
+                        $hide_now = my_hide('artifact', $atid, $hide_item_id, $hide_artifact);
                     }
 
                     $group_name   = $trackers_array['group_name'];
@@ -248,14 +253,13 @@ class Widget_MyArtifacts extends Widget {
 
                     // If user is assignee and submitter of an artifact, it will
                     // appears 2 times in the result set.
-                    if($aid != $aid_old) {
+                    if ($aid != $aid_old) {
                         $count_aids++;
                     }
 
                     if (!$hide_now && $aid != $aid_old) {
-
                         // Form the 'Submitted by/Assigned to flag' for marking
-                        $AS_flag = my_format_as_flag2($trackers_array['assignee'],$trackers_array['submitter']);
+                        $AS_flag = my_format_as_flag2($trackers_array['assignee'], $trackers_array['submitter']);
 
                         //get percent_complete if this field is used in the tracker
                         $percent_complete = '';
@@ -270,7 +274,7 @@ class Widget_MyArtifacts extends Widget {
                                 "AND afvl.field_id = af.field_id AND afvl.value_id = afv.valueInt";
                             $res = db_query($sql);
                             if (db_numrows($res) > 0) {
-                                $percent_complete = '<TD class="small">'.db_result($res,0,'value').'</TD>';
+                                $percent_complete = '<TD class="small">'.db_result($res, 0, 'value').'</TD>';
                             }
                         }
                         $html .= '
@@ -283,7 +287,6 @@ class Widget_MyArtifacts extends Widget {
                             $html .= stripslashes($summary);
                         }
                         $html .= '&nbsp;'.$AS_flag.'</TD>'.$percent_complete.'</TR>';
-
                     }
                     $aid_old = $aid;
                 }
@@ -292,18 +295,17 @@ class Widget_MyArtifacts extends Widget {
 
         //work on the tracker of the last round if there was one
         if ($atid_old != 0 && $count_aids != 0) {
-            list($hide_now,$count_diff,$hide_url) = my_hide_url('artifact',$atid_old,$hide_item_id,$count_aids,$hide_artifact, $request->get('dashboard_id'));
+            list($hide_now,$count_diff,$hide_url) = my_hide_url('artifact', $atid_old, $hide_item_id, $count_aids, $hide_artifact, $request->get('dashboard_id'));
             $html_hdr = ($j ? '<tr class="boxitem"><td colspan="3">' : '').
               $hide_url.'<A HREF="/tracker/?group_id='.$group_id_old.'&atid='.$atid_old.'">'.
               $group_name." - ".$tracker_name.'</A>&nbsp;&nbsp;&nbsp;&nbsp;';
             $count_new = max(0, $count_diff);
 
-            $html_hdr .= my_item_count($count_aids,$count_new).'</td></tr>';
+            $html_hdr .= my_item_count($count_aids, $count_new).'</td></tr>';
             $html_my_artifacts .= $html_hdr.$html;
         }
 
         return $html_my_artifacts;
-
     }
 
     public function getAjaxUrl($owner_id, $owner_type, $dashboard_id)
@@ -317,10 +319,12 @@ class Widget_MyArtifacts extends Widget {
 
         return $ajax_url;
     }
-    function getCategory() {
+    function getCategory()
+    {
         return _('Trackers');
     }
-    function getDescription() {
-        return $GLOBALS['Language']->getText('widget_description_my_artifacts','description');
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('widget_description_my_artifacts', 'description');
     }
 }

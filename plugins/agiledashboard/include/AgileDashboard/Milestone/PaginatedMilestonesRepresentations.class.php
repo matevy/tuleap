@@ -19,7 +19,8 @@
  */
 
 
-class AgileDashboard_Milestone_PaginatedMilestonesRepresentations {
+class AgileDashboard_Milestone_PaginatedMilestonesRepresentations
+{
 
     /** @var array */
     public $milestones_representations;
@@ -28,17 +29,19 @@ class AgileDashboard_Milestone_PaginatedMilestonesRepresentations {
     public $total_size;
 
 
-    public function __construct(array $milestones_representations, $total_size) {
+    public function __construct(array $milestones_representations, $total_size)
+    {
         $this->milestones_representations = $milestones_representations;
         $this->total_size                 = $total_size;
     }
 
-    public function getMilestonesRepresentations() {
+    public function getMilestonesRepresentations()
+    {
         return $this->milestones_representations;
     }
 
-    public function getTotalSize() {
+    public function getTotalSize()
+    {
         return $this->total_size;
     }
-
 }

@@ -1,29 +1,26 @@
 <?php
 /**
+ * Copyright Enalean (c) 2012-Present. All rights reserved.
  * Copyright (c) STMicroelectronics, 2010. All Rights Reserved.
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
 use Tuleap\Project\ProjectAccessChecker;
 use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
-
-require_once ('WebDAVProject.class.php');
-require_once (dirname(__FILE__).'/../WebDAVUtils.class.php');
-require_once ('common/dao/ProjectDao.class.php');
 
 /**
  * This is the root of WebDAV virtual filesystem
@@ -32,27 +29,34 @@ require_once ('common/dao/ProjectDao.class.php');
  *
  * or all public projects in case the user is anonymous
  */
-class WebDAVRoot extends Sabre_DAV_Directory {
+class WebDAVRoot extends Sabre_DAV_Directory
+{
 
     private $user;
     private $plugin;
     private $maxFileSize;
 
     /**
+     * @var ProjectDao
+     */
+    private $project_dao;
+
+    /**
      * Constructor of the class
      *
      * @param Plugin $plugin
      * @param PFUser $user
-     * @param Integer $maxFileSize
+     * @param int $maxFileSize
      *
      * @return void
      */
-    function __construct($plugin, $user, $maxFileSize) {
+    function __construct($plugin, $user, $maxFileSize, ProjectDao $project_dao)
+    {
 
         $this->user = $user;
         $this->plugin = $plugin;
         $this->maxFileSize = $maxFileSize;
-
+        $this->project_dao = $project_dao;
     }
 
     /**
@@ -64,7 +68,8 @@ class WebDAVRoot extends Sabre_DAV_Directory {
      *
      * @see lib/Sabre/DAV/Sabre_DAV_IDirectory#getChildren()
      */
-    function getChildren() {
+    function getChildren()
+    {
 
         if ($this->getUser()->isAnonymous()) {
             // Generate public project list
@@ -73,7 +78,6 @@ class WebDAVRoot extends Sabre_DAV_Directory {
             // Generate project list for the given user
             return $this->getUserProjectList($this->getUser());
         }
-
     }
 
     /**
@@ -85,7 +89,8 @@ class WebDAVRoot extends Sabre_DAV_Directory {
      *
      * @see lib/Sabre/DAV/Sabre_DAV_Directory#getChild($name)
      */
-    function getChild($projectName) {
+    function getChild($projectName)
+    {
 
         $projectId = $this->getProjectIdByName($projectName);
 
@@ -123,7 +128,6 @@ class WebDAVRoot extends Sabre_DAV_Directory {
         }*/
 
         return $project;
-
     }
 
     /**
@@ -133,10 +137,10 @@ class WebDAVRoot extends Sabre_DAV_Directory {
      *
      * @return String
      */
-    function getName() {
+    function getName()
+    {
 
         return ' WebDAV Root';
-
     }
 
     /**
@@ -146,10 +150,10 @@ class WebDAVRoot extends Sabre_DAV_Directory {
      *
      * @see plugins/webdav/lib/Sabre/DAV/Sabre_DAV_Node#getLastModified()
      */
-    function getLastModified() {
+    function getLastModified()
+    {
 
         return;
-
     }
 
     /**
@@ -157,18 +161,19 @@ class WebDAVRoot extends Sabre_DAV_Directory {
      *
      * @return PFUser
      */
-    function getUser() {
+    function getUser()
+    {
 
         return $this->user;
-
     }
 
     /**
      * Returns the max file size
      *
-     * @return Integer
+     * @return int
      */
-    function getMaxFileSize() {
+    function getMaxFileSize()
+    {
         return $this->maxFileSize;
     }
 
@@ -177,21 +182,19 @@ class WebDAVRoot extends Sabre_DAV_Directory {
      *
      * @param String $projectName
      *
-     * @return Integer
+     * @return int
      */
-    function getProjectIdByName($projectName) {
-
-        $dao = new ProjectDao(CodendiDataAccess::instance());
-        $res=$dao->searchByUnixGroupName($projectName);
-        $groupId=$res->getRow();
+    public function getProjectIdByName($projectName)
+    {
+        $res = $this->project_dao->searchByUnixGroupName($projectName);
+        $groupId = $res->getRow();
         return $groupId['group_id'];
-
     }
 
     /**
      * Returns a new WebDAVProject from the given group Id
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
      * @return WebDAVProject
      */
@@ -203,7 +206,8 @@ class WebDAVRoot extends Sabre_DAV_Directory {
             $this->getMaxFileSize(),
             new ProjectAccessChecker(
                 PermissionsOverrider_PermissionsOverriderManager::instance(),
-                new RestrictedUserCanAccessProjectVerifier()
+                new RestrictedUserCanAccessProjectVerifier(),
+                EventManager::instance()
             )
         );
     }
@@ -213,10 +217,10 @@ class WebDAVRoot extends Sabre_DAV_Directory {
      *
      * @param PFUser $user
      *
-     * @return Array
+     * @return array
      */
-    function getUserProjectList($user) {
-
+    public function getUserProjectList($user): array
+    {
         $res = $user->getProjects();
         $projects = array();
         foreach ($res as $groupId) {
@@ -228,44 +232,35 @@ class WebDAVRoot extends Sabre_DAV_Directory {
             }
         }
         return $projects;
-
     }
 
     /**
      * Generates public projects list
      *
-     * @return Array
+     * @return array
      */
-    function getPublicProjectList() {
-
-        $dao = new ProjectDao(CodendiDataAccess::instance());
-        $res = $dao->searchByPublicStatus(true);
-        $projects = array();
-        if ($res && !$res->isError() && $res->rowCount() > 0) {
-            foreach ($res as $row) {
-                if ($this->isWebDAVAllowedForProject($row['group_id'])) {
-                    $project = $this->getWebDAVProject($row['group_id']);
-                    $projects[] = $project;
-                }
+    public function getPublicProjectList(): array
+    {
+        $projects = [];
+        foreach ($this->project_dao->searchByPublicStatus(true) as $row) {
+            if ($this->isWebDAVAllowedForProject($row['group_id'])) {
+                $project = $this->getWebDAVProject($row['group_id']);
+                $projects[] = $project;
             }
         }
         return $projects;
-
     }
 
     /**
      * Checks whether the WebDAV plugin is available for the project or not
      *
-     * @param Integer $groupId
+     * @param int $groupId
      *
-     * @return Boolean
+     * @return bool
      */
-    function isWebDAVAllowedForProject($groupId) {
+    function isWebDAVAllowedForProject($groupId)
+    {
 
         return PluginManager::instance()->isPluginAllowedForProject($this->plugin, $groupId);
-
     }
-
 }
-
-?>

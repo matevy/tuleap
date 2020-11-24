@@ -49,11 +49,12 @@ use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\ProjectStatusVerificator;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
-use Tuleap\Tracker\REST\TrackerReference as TrackerReference;
-use Tuleap\Tracker\REST\v1\ArtifactValuesRepresentation as ArtifactValuesRepresentation;
+use Tuleap\Tracker\REST\TrackerReference;
+use Tuleap\Tracker\REST\v1\ArtifactValuesRepresentation;
 use UserManager;
 
-class KanbanItemsResource extends AuthenticatedResource {
+class KanbanItemsResource extends AuthenticatedResource
+{
 
     /** @var AgileDashboard_KanbanFactory */
     private $kanban_factory;
@@ -84,7 +85,8 @@ class KanbanItemsResource extends AuthenticatedResource {
      */
     private $item_representation_builder;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->tracker_factory      = TrackerFactory::instance();
         $this->artifact_factory     = Tracker_ArtifactFactory::instance();
         $this->form_element_factory = Tracker_FormElementFactory::instance();
@@ -130,7 +132,8 @@ class KanbanItemsResource extends AuthenticatedResource {
      * /!\ Kanban REST routes are under construction and subject to changes /!\
      * </pre>
      */
-    public function options() {
+    public function options()
+    {
         Header::allowOptionsGetPost();
     }
 
@@ -155,7 +158,8 @@ class KanbanItemsResource extends AuthenticatedResource {
      * @status 201
      * @throws RestException 403
      */
-    protected function post(KanbanItemPOSTRepresentation $item) {
+    protected function post(KanbanItemPOSTRepresentation $item)
+    {
         $current_user = $this->getCurrentUser();
         $kanban       = $this->getKanban($current_user, $item->kanban_id);
         $tracker      = $this->tracker_factory->getTrackerById($kanban->getTrackerId());
@@ -229,7 +233,8 @@ class KanbanItemsResource extends AuthenticatedResource {
      * @return Tuleap\AgileDashboard\REST\v1\Kanban\KanbanRepresentation
      * @throws RestException 403
      */
-    protected function get($id) {
+    protected function get($id)
+    {
         $this->checkAccess();
 
         $current_user = $this->getCurrentUser();
@@ -253,7 +258,8 @@ class KanbanItemsResource extends AuthenticatedResource {
         return $item_representation;
     }
 
-    private function buildFieldsData(Tracker $tracker, KanbanItemPOSTRepresentation $item) {
+    private function buildFieldsData(Tracker $tracker, KanbanItemPOSTRepresentation $item)
+    {
         $fields_data = array();
 
         $this->addSummaryToFieldsData($tracker, $item, $fields_data);
@@ -262,7 +268,8 @@ class KanbanItemsResource extends AuthenticatedResource {
         return $fields_data;
     }
 
-    private function addSummaryToFieldsData(Tracker $tracker, KanbanItemPOSTRepresentation $item, array &$fields_data) {
+    private function addSummaryToFieldsData(Tracker $tracker, KanbanItemPOSTRepresentation $item, array &$fields_data)
+    {
         $summary_field = $tracker->getTitleField();
 
         if (! $summary_field) {
@@ -276,7 +283,8 @@ class KanbanItemsResource extends AuthenticatedResource {
         $fields_data[] = $representation;
     }
 
-    private function addStatusToFieldsData(Tracker $tracker, KanbanItemPOSTRepresentation $item, array &$fields_data) {
+    private function addStatusToFieldsData(Tracker $tracker, KanbanItemPOSTRepresentation $item, array &$fields_data)
+    {
         $status_field = $tracker->getStatusField();
 
         if (! $status_field) {
@@ -303,11 +311,11 @@ class KanbanItemsResource extends AuthenticatedResource {
         $representation->bind_value_ids = array((int) $value);
 
         $fields_data[] = $representation;
-
     }
 
     /** @return AgileDashboard_Kanban */
-    private function getKanban(PFUser $user, $id) {
+    private function getKanban(PFUser $user, $id)
+    {
         try {
             $kanban = $this->kanban_factory->getKanban($user, $id);
         } catch (AgileDashboard_KanbanNotFoundException $exception) {
@@ -319,7 +327,8 @@ class KanbanItemsResource extends AuthenticatedResource {
         return $kanban;
     }
 
-    private function getCurrentUser() {
+    private function getCurrentUser()
+    {
         $user = UserManager::instance()->getCurrentUser();
 
         return $user;

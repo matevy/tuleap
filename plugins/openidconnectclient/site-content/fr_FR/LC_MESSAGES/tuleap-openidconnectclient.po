@@ -12,18 +12,11 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Poedit 2.0.6\n"
 
+msgid "Add Azure Active Directory provider"
+msgstr "Ajouter un fournisseur s'appuyant sur Azure Active Directory"
+
 msgid "Add provider"
 msgstr "Ajouter un fournisseur"
-
-msgid "An error occured while adding a new provider."
-msgstr "Une erreur est survenue lors de la création du nouveau fournisseur."
-
-#, php-format
-msgid "An error occured while removing the provider %1$s."
-msgstr "Une erreur est survenue lors de la suppression du fournisseur %1$s."
-
-msgid "An error occured while updating the provider."
-msgstr "Une erreur est survenue lors de la mise à jour du fournisseur."
 
 #, php-format
 msgid "An error occurred while removing the link with %1$s."
@@ -114,6 +107,9 @@ msgstr "Créer un nouveau compte"
 
 msgid "Request seems invalid, please retry"
 msgstr "La requête semble invalide, merci de réessayer"
+
+msgid "Tenant ID"
+msgstr "Id du locataire"
 
 msgid ""
 "The OpenID Connect plugin can only be used if the platform is accessible "

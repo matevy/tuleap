@@ -29,17 +29,20 @@ abstract class Tracker_Widget_Renderer extends Widget
     var $renderer_title;
     var $renderer_id;
 
-    function __construct($id, $owner_id, $owner_type) {
+    function __construct($id, $owner_id, $owner_type)
+    {
         parent::__construct($id);
         $this->setOwner($owner_id, $owner_type);
     }
 
-    function getTitle() {
+    function getTitle()
+    {
         return $this->renderer_title ?:
             dgettext('tuleap-tracker', 'Tracker renderer');
     }
 
-    function getContent() {
+    function getContent()
+    {
         $renderer = $this->getRenderer();
         if ($renderer) {
             return $renderer->fetchWidget($this->getCurrentUser());
@@ -63,7 +66,8 @@ abstract class Tracker_Widget_Renderer extends Widget
         return null;
     }
 
-    function isAjax() {
+    function isAjax()
+    {
         return true;
     }
 
@@ -150,7 +154,8 @@ abstract class Tracker_Widget_Renderer extends Widget
         return db_insertid($res);
     }
 
-    function loadContent($id) {
+    function loadContent($id)
+    {
         $sql = "SELECT * FROM tracker_widget_renderer WHERE owner_id = ". $this->owner_id ." AND owner_type = '". $this->owner_type ."' AND id = ". $id;
         $res = db_query($sql);
         if ($res && db_numrows($res)) {
@@ -161,12 +166,13 @@ abstract class Tracker_Widget_Renderer extends Widget
         }
     }
 
-    function create(Codendi_Request $request) {
+    function create(Codendi_Request $request)
+    {
         $content_id = false;
         $vId = new Valid_UInt('renderer_id');
         $vId->setErrorMessage("Can't add empty renderer id");
         $vId->required();
-        if($request->validInArray('renderer', $vId)) {
+        if ($request->validInArray('renderer', $vId)) {
             $renderer = $request->get('renderer');
             $sql = 'INSERT INTO tracker_widget_renderer (owner_id, owner_type, title, renderer_id) VALUES ('. $this->owner_id .", '". $this->owner_type ."', '". db_escape_string($renderer['title']) ."', ". db_escape_int($renderer['renderer_id']) .")";
             $res = db_query($sql);
@@ -182,14 +188,14 @@ abstract class Tracker_Widget_Renderer extends Widget
         $vContentId->required();
         if (($renderer = $request->get('renderer')) && $request->valid($vContentId)) {
             $vId = new Valid_UInt('renderer_id');
-            if($request->validInArray('renderer', $vId)) {
+            if ($request->validInArray('renderer', $vId)) {
                 $id = " renderer_id   = ". db_escape_int($renderer['renderer_id']) ." ";
             } else {
                 $id = '';
             }
 
             $vTitle = new Valid_String('title');
-            if($request->validInArray('renderer', $vTitle)) {
+            if ($request->validInArray('renderer', $vTitle)) {
                 $title = " title = '". db_escape_string($renderer['title']) ."' ";
             } else {
                 $title = '';
@@ -204,16 +210,19 @@ abstract class Tracker_Widget_Renderer extends Widget
         return $done;
     }
 
-    function destroy($id) {
+    function destroy($id)
+    {
         $sql = 'DELETE FROM tracker_widget_renderer WHERE id = '. $id .' AND owner_id = '. $this->owner_id ." AND owner_type = '". $this->owner_type ."'";
         db_query($sql);
     }
 
-    function isUnique() {
+    function isUnique()
+    {
         return false;
     }
 
-    function getCategory() {
+    function getCategory()
+    {
         return dgettext('tuleap-tracker', 'Trackers');
     }
 

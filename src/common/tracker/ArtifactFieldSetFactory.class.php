@@ -18,19 +18,20 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('common/tracker/ArtifactFieldSet.class.php');
-
 
 // Sort by rank result
-function art_fieldset_factory_cmp_place($fieldset1, $fieldset2) {
-    if ($fieldset1->getRank() < $fieldset2->getRank())
-		return -1;
-    else if ($fieldset1->getRank() > $fieldset2->getRank())
-		return 1;
+function art_fieldset_factory_cmp_place($fieldset1, $fieldset2)
+{
+    if ($fieldset1->getRank() < $fieldset2->getRank()) {
+        return -1;
+    } elseif ($fieldset1->getRank() > $fieldset2->getRank()) {
+        return 1;
+    }
     return 0;
 }
 
-class ArtifactFieldSetFactory {
+class ArtifactFieldSetFactory
+{
 
     /**
      * The ArtifactType object.
@@ -57,11 +58,12 @@ class ArtifactFieldSetFactory {
     /**
      *
      *
-     *	@param	object $ArtifactType The ArtifactType object to which this ArtifactFieldSetFactory is associated
-     *	@return	boolean	success.
+     *    @param    object $ArtifactType The ArtifactType object to which this ArtifactFieldSetFactory is associated
+     *    @return bool success.
      */
-    function __construct($ArtifactType) {
-        if ( $ArtifactType ) {
+    function __construct($ArtifactType)
+    {
+        if ($ArtifactType) {
             if ($ArtifactType->isError()) {
                 $this->setError('ArtifactFieldSetFactory:: '.$ArtifactType->getErrorMessage());
                 return false;
@@ -70,27 +72,29 @@ class ArtifactFieldSetFactory {
             $this->ArtifactFieldSets = array();
             $this->fetchData($this->ArtifactType->getID());
         }
-        
+
         return true;
     }
 
     /**
-     *	getArtifactType - get the ArtifactType object this ArtifactFieldSet is associated with.
+     *    getArtifactType - get the ArtifactType object this ArtifactFieldSet is associated with.
      *
-     *	@return	object The ArtifactType object.
+     *    @return    object The ArtifactType object.
      */
-    function getArtifactType() {
+    function getArtifactType()
+    {
         return $this->ArtifactType;
     }
-    
+
     /**
      *  Retrieve the fieldsets associated with an artifact type
      *
      *  @param int $group_artifact_id the artifact type id
-     *	@return	boolean	success
+     *    @return bool success
      */
-    function fetchData($group_artifact_id) {
-        
+    function fetchData($group_artifact_id)
+    {
+
         $sql = "SELECT * 
                 FROM artifact_field_set 
                 WHERE group_artifact_id=". db_ei($group_artifact_id) ." 
@@ -109,7 +113,7 @@ class ArtifactFieldSetFactory {
             $art_field_fact = new ArtifactFieldFactory($this->ArtifactType);
             $fields = $art_field_fact->getFieldsContainedInFieldSet($fieldset_array['field_set_id']);
             $fieldset->setArtifactFields($fields);
-            
+
             $this->ArtifactFieldSets[] = $fieldset;
         }
 
@@ -121,7 +125,8 @@ class ArtifactFieldSetFactory {
      *
      *  @param int $group_artifact_id the id of the tracker
      */
-    function getArtifactFieldSetsFromId($group_artifact_id) {
+    function getArtifactFieldSetsFromId($group_artifact_id)
+    {
         global $Language;
 
         $sql = "SELECT * 
@@ -129,12 +134,12 @@ class ArtifactFieldSetFactory {
                 WHERE group_artifact_id='". db_ei($group_artifact_id) ."'
                 ORDER BY rank ASC";
 
-        $result = db_query ($sql);
+        $result = db_query($sql);
         $rows = db_numrows($result);
         $myArtifactFieldSets = array();
-        
+
         if (!$result || $rows < 1) {
-            $this->setError($Language->getText('tracker_common_type','none_found').' '.db_error());
+            $this->setError($Language->getText('tracker_common_type', 'none_found').' '.db_error());
             return false;
         } else {
             while ($arr = db_fetch_array($result)) {
@@ -152,7 +157,8 @@ class ArtifactFieldSetFactory {
      * @param int $field_set_id the id of the field set we are looking for
      * @return Object{ArtifactFieldSet} the field set found, or null if not
      */
-    function getFieldSetById($field_set_id) {
+    function getFieldSetById($field_set_id)
+    {
         $fieldsets = $this->ArtifactFieldSets;
         $searched_fieldset = null;
         $found = false;
@@ -167,13 +173,14 @@ class ArtifactFieldSetFactory {
         }
         return $searched_fieldset;
     }
-    
+
     /**
      * getAllFieldSets - returns all the field sets of the tracker
      *
      * @return array{ArtifactFieldSet} all the field sets of the tracker $ArtifactType
      */
-    function getAllFieldSets() {
+    function getAllFieldSets()
+    {
         return $this->ArtifactFieldSets;
     }
 
@@ -184,10 +191,11 @@ class ArtifactFieldSetFactory {
      *
      * @return array{ArtifactFieldSet} the field set that contain at least one field used
      */
-    function getAllFieldSetsContainingUsedFields() {
+    function getAllFieldSetsContainingUsedFields()
+    {
         $fieldsets = $this->ArtifactFieldSets;
         $used_fieldsets = array();
-        foreach($fieldsets as $fieldset) {
+        foreach ($fieldsets as $fieldset) {
             $fields = $fieldset->getArtifactFields();
             $fieldset_contains_used_field = false;
             // Walk the field list, stop when we find a used field
@@ -204,11 +212,11 @@ class ArtifactFieldSetFactory {
                 $used_fieldsets[$fieldset->getID()] = $fieldset;
             }
         }
-        uasort($used_fieldsets,"art_fieldset_factory_cmp_place");
+        uasort($used_fieldsets, "art_fieldset_factory_cmp_place");
         return $used_fieldsets;
     }
-    
-    
+
+
     /**
      * getAllFieldSetsContainingUnusedFields - returns an array of fieldsets that contain unused fields in the tracker
      * unused for a field means that the 'use this field' checkbox has not been checked,
@@ -216,10 +224,11 @@ class ArtifactFieldSetFactory {
      *
      * @return array{ArtifactFieldSet} the field set that contain at least one field unused
      */
-    function getAllFieldSetsContainingUnusedFields() {
+    function getAllFieldSetsContainingUnusedFields()
+    {
         $fieldsets = $this->ArtifactFieldSets;
         $unused_fieldsets = array();
-        foreach($fieldsets as $fieldset) {
+        foreach ($fieldsets as $fieldset) {
             $fields = $fieldset->getArtifactFields();
             $fieldset_contains_unused_field = false;
             // Walk the field list, stop when we find an unused field
@@ -236,7 +245,7 @@ class ArtifactFieldSetFactory {
                 $unused_fieldsets[$fieldset->getID()] = $fieldset;
             }
         }
-        uasort($unused_fieldsets,"art_fieldset_factory_cmp_place");
+        uasort($unused_fieldsets, "art_fieldset_factory_cmp_place");
         return $unused_fieldsets;
     }
 
@@ -247,103 +256,106 @@ class ArtifactFieldSetFactory {
      *  @param string $description the field set description
      *  @param int $rank the rank on screen
      *
-     *  @return boolean - succeed or failed
+     *  @return bool - succeed or failed
      */
-    function createFieldSet($fieldset_name, $description, $rank) {
-    
+    function createFieldSet($fieldset_name, $description, $rank)
+    {
+
         global $Language;
 
         // Check arguments
-        if ($fieldset_name=="" ) {
-            $this->setError($Language->getText('tracker_common_fieldset_factory','label_requ'));
+        if ($fieldset_name=="") {
+            $this->setError($Language->getText('tracker_common_fieldset_factory', 'label_requ'));
             return false;
         }
 
         // Default values
         $description = ($description?$description:"");
         $rank = ($rank?$rank:0);
-        
+
         // create the artifact_field_set
         $sql = "INSERT INTO artifact_field_set (group_artifact_id, name, description, rank)
                 VALUES (". db_ei($this->ArtifactType->getID()) .",'". db_es($fieldset_name) ."','". db_es($description) ."',". db_ei($rank) .")";
 
         $res_insert = db_query($sql);
         if (!$res_insert || db_affected_rows($res_insert) <= 0) {
-            $this->setError($Language->getText('tracker_common_fieldset_factory','ins_err',array($field_id,$this->ArtifactType->getID(),db_error())));
+            $this->setError($Language->getText('tracker_common_fieldset_factory', 'ins_err', array($field_id,$this->ArtifactType->getID(),db_error())));
             return false;
         }
-        
+
         // Reload the fieldset
         $this->fetchData($this->ArtifactType->getID());
 
         return true;
-
     }
 
-	/**
-	 *	Delete a FieldSet
-	 *
-	 *  @param int $field_set_id the field set id to delete
-	 *	@return	boolean true if the deletion happen without problems, false otherwise
-	 */
-	function deleteFieldSet($field_set_id) {
+    /**
+     *    Delete a FieldSet
+     *
+     *  @param int $field_set_id the field set id to delete
+     *    @return bool true if the deletion happen without problems, false otherwise
+     */
+    function deleteFieldSet($field_set_id)
+    {
 
         global $Language;
-        
+
         // Check if the field set contains no field
         $sql = "SELECT field_id, label 
                 FROM artifact_field 
                 WHERE group_artifact_id='".  db_ei($this->ArtifactType->getID())  ."' AND
                       field_set_id='". db_ei($field_set_id) ."'";
 
-        $result = db_query ($sql);
+        $result = db_query($sql);
         $num_rows = db_numrows($result);
         if ($num_rows != 0) {
-            $this->setError($Language->getText('tracker_common_fieldset_factory','delete_only_empty_fieldset').' '.db_error());
+            $this->setError($Language->getText('tracker_common_fieldset_factory', 'delete_only_empty_fieldset').' '.db_error());
             return false;
         } else {
             // Delete the FieldSet
             $sql = "DELETE FROM artifact_field_set 
                     WHERE field_set_id=".  db_ei($field_set_id) ;
-            $result = db_query ($sql);
+            $result = db_query($sql);
             if (!$result || db_affected_rows($result) <= 0) {
                 $this->setError('Error: deleteArtifactFieldSet '.db_error());
                 return false;
             }
         }
         return true;
-	}
+    }
 
     /**
-	 *	Delete all the FieldSets of this ArtifactType, without checking if they are empty or not.
-	 *
-	 *	@return	boolean true if the deletion happen without problems, false otherwise
-	 */
-	function deleteFieldSets() {
-		// Delete artifact_field_set records
+     *    Delete all the FieldSets of this ArtifactType, without checking if they are empty or not.
+     *
+     *    @return bool true if the deletion happen without problems, false otherwise
+     */
+    function deleteFieldSets()
+    {
+     // Delete artifact_field_set records
         $artifact_type = $this->getArtifactType();
-	    $sql = 'DELETE FROM artifact_field_set WHERE group_artifact_id='. db_ei($artifact_type->getID()) ;
-		
-		//echo $sql;
-		
-	    $res = db_query($sql);
+        $sql = 'DELETE FROM artifact_field_set WHERE group_artifact_id='. db_ei($artifact_type->getID()) ;
+
+     //echo $sql;
+
+        $res = db_query($sql);
         if (!$res) {
             return false;
         }
         return true;
     }
-    
-    
+
+
     /**
-     * 
+     *
      *  Copy all the fieldsets informations from a tracker to another.
      *
      *  @param atid_source: source tracker
      *  @param atid_dest: destination tracker
      *
-     *	@return	array the mapping array between the old fieldset_id and the new ones array[$source_fieldset_id] = $dest_fieldset_id, or false if the copy goes wrong
+     *    @return    array the mapping array between the old fieldset_id and the new ones array[$source_fieldset_id] = $dest_fieldset_id, or false if the copy goes wrong
      */
-    function copyFieldSets($atid_source,$atid_dest) {
+    function copyFieldSets($atid_source, $atid_dest)
+    {
         global $Language;
         // Copy the field_sets
         $fieldset_id_source_dest_array = array();
@@ -360,11 +372,11 @@ class ArtifactFieldSetFactory {
                 db_ei($fieldset_source_array['rank']) .")";
             $res_insert_fieldset = db_query($sql_insert_fieldset);
             if (!$res_insert_fieldset || db_affected_rows($res_insert_fieldset) <= 0) {
-				$this->setError($Language->getText('tracker_common_fieldset_factory','ins_err',array($fieldset_source_array["field_set_id"],$atid_dest,db_error())));
-				return false;
-			}
+                $this->setError($Language->getText('tracker_common_fieldset_factory', 'ins_err', array($fieldset_source_array["field_set_id"],$atid_dest,db_error())));
+                return false;
+            }
             $dest_fieldset_id = db_insertid($res_insert_fieldset);
-            
+
             // remember the association source_fieldset_id <=> dest_fieldset_id
             $fieldset_id_source_dest_array[$fieldset_source_array['field_set_id']] = $dest_fieldset_id;
         }
@@ -375,7 +387,8 @@ class ArtifactFieldSetFactory {
     /**
      * @param $string
      */
-    public function setError($string) {
+    public function setError($string)
+    {
         $this->error_state = true;
         $this->error_message = $string;
     }
@@ -383,7 +396,8 @@ class ArtifactFieldSetFactory {
     /**
      * @return string
      */
-    public function getErrorMessage() {
+    public function getErrorMessage()
+    {
         if ($this->error_state) {
             return $this->error_message;
         } else {
@@ -394,10 +408,8 @@ class ArtifactFieldSetFactory {
     /**
      * @return bool
      */
-    public function isError() {
+    public function isError()
+    {
         return $this->error_state;
     }
-
 }
-
-?>

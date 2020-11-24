@@ -20,8 +20,8 @@
  */
  require_once('bootstrap.php');
 Mock::generatePartial(
-    'Tracker_FormElement_Field_List_Bind_UsersValue', 
-    'Tracker_FormElement_Field_List_Bind_UsersValueTestVersion', 
+    'Tracker_FormElement_Field_List_Bind_UsersValue',
+    'Tracker_FormElement_Field_List_Bind_UsersValueTestVersion',
     array('getUserHelper', 'getUserManager', 'getId')
 );
 
@@ -31,39 +31,43 @@ Mock::generate('UserManager');
 
 Mock::generate('PFUser');
 
-class Tracker_FormElement_Field_List_Bind_UsersValueTest extends TuleapTestCase {
-    
-    public function testGetLabel() {
+class Tracker_FormElement_Field_List_Bind_UsersValueTest extends TuleapTestCase
+{
+
+    public function testGetLabel()
+    {
         $uh = new MockUserHelper();
         $uh->setReturnValue('getDisplayNameFromUserId', 'John Smith', array(123));
-        
+
         $bv = new Tracker_FormElement_Field_List_Bind_UsersValueTestVersion();
         $bv->setReturnValue('getId', 123);
         $bv->setReturnReference('getUserHelper', $uh);
-        
+
         $this->assertEqual($bv->getLabel(), 'John Smith');
     }
-    
-    public function testGetUser() {
+
+    public function testGetUser()
+    {
         $u = mock('PFUser');
-        
+
         $uh = new MockUserManager();
         $uh->setReturnValue('getUserById', $u, array(123));
-        
+
         $bv = new Tracker_FormElement_Field_List_Bind_UsersValueTestVersion();
         $bv->setReturnValue('getId', 123);
         $bv->setReturnReference('getUserManager', $uh);
 
         $this->assertEqual($bv->getUser(), $u);
     }
-    
 }
 
-class Tracker_FormElement_Field_List_Bind_UsersValue_fetchJSONTest extends TuleapTestCase {
+class Tracker_FormElement_Field_List_Bind_UsersValue_fetchJSONTest extends TuleapTestCase
+{
     public $user_manager;
     public $user;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->user_manager = mock('UserManager');
         $this->user         = mock('PFUser');
@@ -73,28 +77,34 @@ class Tracker_FormElement_Field_List_Bind_UsersValue_fetchJSONTest extends Tulea
         stub($this->user_manager)->getUserById()->returns($this->user);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         UserManager::clearInstance();
         parent::tearDown();
     }
 
 
-    public function itReturnsTheUserNameAsWell() {
+    public function itReturnsTheUserNameAsWell()
+    {
         $value = new Tracker_FormElement_Field_List_Bind_UsersValue(12, 'neo', 'Thomas A. Anderson (neo)');
         $json = $value->fetchFormattedForJson();
-        $this->assertEqual($json, array(
-            'id'       => '12',
-            'label'    => 'Thomas A. Anderson (neo)',
-            'is_hidden' => false,
-            'username' => 'neo',
-            'realname' => 'Le roi arthur',
-        ));
+        $this->assertEqual(
+            $json,
+            [
+                'id'         => '12',
+                'label'      => 'Thomas A. Anderson (neo)',
+                'is_hidden'  => false,
+                'username'   => 'neo',
+                'realname'   => 'Le roi arthur',
+                'avatar_url' => ''
+            ]
+        );
     }
 
-    public function itReturnsNullForGetJsonIfUserIsNone() {
+    public function itReturnsNullForGetJsonIfUserIsNone()
+    {
         $value = new Tracker_FormElement_Field_List_Bind_UsersValue(100, 'none', 'none');
         $json = $value->getJsonValue();
         $this->assertNull($json);
     }
 }
-?>

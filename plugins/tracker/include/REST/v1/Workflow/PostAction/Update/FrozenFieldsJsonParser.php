@@ -21,7 +21,7 @@
 namespace Tuleap\Tracker\REST\v1\Workflow\PostAction\Update;
 
 use Tuleap\REST\I18NRestException;
-use Tuleap\Tracker\Workflow\PostAction\Update\FrozenFields;
+use Tuleap\Tracker\Workflow\PostAction\Update\FrozenFieldsValue;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\IncompatibleWorkflowModeException;
 use Tuleap\Tracker\Workflow\Update\PostAction;
 use Workflow;
@@ -43,13 +43,6 @@ class FrozenFieldsJsonParser implements PostActionUpdateJsonParser
     {
         if ($workflow->isAdvanced()) {
             throw new IncompatibleWorkflowModeException(self::POSTACTION_TYPE);
-        }
-
-        if (isset($json['id']) && !is_int($json['id'])) {
-            throw new I18NRestException(
-                400,
-                dgettext('tuleap-tracker', "Bad id attribute format: int expected.")
-            );
         }
 
         if (! isset($json['field_ids'])) {
@@ -82,6 +75,6 @@ class FrozenFieldsJsonParser implements PostActionUpdateJsonParser
             }
         }
 
-        return new FrozenFields(null, $json['field_ids']);
+        return new FrozenFieldsValue($json['field_ids']);
     }
 }

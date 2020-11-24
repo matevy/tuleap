@@ -19,20 +19,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Workflow_TransitionDao extends DataAccessObject //phpcs:ignoreFile
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+class Workflow_TransitionDao extends DataAccessObject
 {
-    public function __construct($da = null)
-    {
-        parent::__construct($da);
-        $this->table_name = 'tracker_workflow_transition';
-    }
-
     public function addTransition($workflow_id, $from, $to)
     {
         $workflow_id = $this->da->escapeInt($workflow_id);
         $to   = $this->da->escapeInt($to);
         $from   = $this->da->escapeInt($from);
-        $sql = "INSERT INTO $this->table_name (workflow_id, from_id, to_id)
+        $sql = "INSERT INTO tracker_workflow_transition (workflow_id, from_id, to_id)
                 VALUES ($workflow_id, $from, $to)";
         return $this->updateAndGetLastId($sql);
     }
@@ -106,8 +101,21 @@ class Workflow_TransitionDao extends DataAccessObject //phpcs:ignoreFile
     public function searchByWorkflow($workflow_id)
     {
         $workflow_id = $this->da->escapeInt($workflow_id);
-        $sql = "SELECT * FROM $this->table_name
+        $sql = "SELECT * FROM tracker_workflow_transition
                 WHERE workflow_id=$workflow_id";
+        return $this->retrieve($sql);
+    }
+
+    public function searchByWorkflowAndToId(int $workflow_id, int $to_id)
+    {
+        $workflow_id = $this->da->escapeInt($workflow_id);
+        $to_id       = $this->da->escapeInt($to_id);
+
+        $sql = "SELECT *
+                FROM tracker_workflow_transition
+                WHERE workflow_id=$workflow_id
+                AND to_id=$to_id";
+
         return $this->retrieve($sql);
     }
 
@@ -130,61 +138,18 @@ class Workflow_TransitionDao extends DataAccessObject //phpcs:ignoreFile
         $workflow_id = $this->da->escapeInt($workflow_id);
         $from = $this->da->escapeInt($from);
         $to = $this->da->escapeInt($to);
-        $sql = "SELECT * FROM $this->table_name
+        $sql = "SELECT * FROM tracker_workflow_transition
                 WHERE workflow_id=$workflow_id
                 AND from_id=$from
                 AND to_id=$to";
         return $this->retrieve($sql);
     }
 
-    public function getWorkflowId($transition_id)
-    {
-        $transition_id = $this->da->escapeInt($transition_id);
-        $sql = "SELECT workflow_id FROM $this->table_name
-                WHERE transition_id=$transition_id";
-        return $this->retrieve($sql);
-    }
-
     public function searchById($transition_id)
     {
         $transition_id = $this->da->escapeInt($transition_id);
-        $sql = "SELECT * FROM $this->table_name
+        $sql = "SELECT * FROM tracker_workflow_transition
                 WHERE transition_id=$transition_id";
         return $this->retrieve($sql);
-    }
-
-    /**
-     * @param int $workflow_id
-     * @param int $to_id
-     * @param int $transition_id
-     * @return DataAccessResult|false
-     */
-    public function searchSiblings($workflow_id, $to_id, $transition_id)
-    {
-        $workflow_id   = $this->da->escapeInt($workflow_id);
-        $to_id         = $this->da->escapeInt($to_id);
-        $transition_id = $this->da->escapeInt($transition_id);
-
-        $sql = "SELECT * FROM tracker_workflow_transition
-               WHERE to_id = $to_id
-                 AND workflow_id = $workflow_id
-                 AND transition_id != $transition_id";
-        return $this->retrieve($sql);
-    }
-
-    /**
-     * @return array|false
-     */
-    public function searchFirstTransition(int $workflow_id, int $to_id)
-    {
-        $workflow_id = $this->da->escapeInt($workflow_id);
-        $to_id       = $this->da->escapeInt($to_id);
-
-        $sql = "SELECT * FROM tracker_workflow_transition
-                WHERE to_id = $to_id
-                  AND workflow_id = $workflow_id
-                LIMIT 1";
-
-        return $this->retrieveFirstRow($sql);
     }
 }

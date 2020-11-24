@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: WantedPagesIter.php,v 1.1 2004/11/20 17:35:58 rurban Exp $');
 
 //require_once('lib/WikiDB/backend.php');
@@ -9,25 +10,29 @@ rcs_id('$Id: WantedPagesIter.php,v 1.1 2004/11/20 17:35:58 rurban Exp $');
  *
  * This is mostly here for testing, 'cause it's slow,slow,slow.
  */
-class WikiDB_backend_dumb_WantedPagesIter
-extends WikiDB_backend_iterator
+class WikiDB_backend_dumb_WantedPagesIter extends WikiDB_backend_iterator
 {
-    function __construct(&$backend, &$all_pages, $exclude='', $sortby=false, $limit=false) {
+    function __construct(&$backend, &$all_pages, $exclude = '', $sortby = false, $limit = false)
+    {
         $this->_allpages   = $all_pages;
         $this->_allpages_array   = $all_pages->asArray();
         $this->_backend = &$backend;
-        if (!is_array($exclude))
+        if (!is_array($exclude)) {
             $this->exclude = $exclude ? PageList::explodePageList($exclude) : array();
-        else 
+        } else {
             $this->exclude = $exclude;
+        }
     }
 
-    function next() {
+    function next()
+    {
         while ($page = $this->_allpages->next()) {
             $pagename = $page['pagename'];
             $links = $this->_backend->get_links($pagename, false);
             while ($link = $links->next()) {
-                if ($this->exclude and in_array($link['pagename'], $this->exclude)) continue;
+                if ($this->exclude and in_array($link['pagename'], $this->exclude)) {
+                    continue;
+                }
                 // better membership for a pageiterator???
                 if (! in_array($link['pagename'], $this->_allpages_array)) {
                     $links->free();
@@ -40,7 +45,8 @@ extends WikiDB_backend_iterator
         return false;
     }
 
-    function free() {
+    function free()
+    {
         unset($this->_allpages_array);
         $this->_allpages->free();
     }
@@ -54,4 +60,3 @@ extends WikiDB_backend_iterator
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

@@ -16,8 +16,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Kanban_SemanticStatusColumnIdsNotInOpenSemanticException extends Exception {
-    public function __construct() {
+class Kanban_SemanticStatusColumnIdsNotInOpenSemanticException extends Exception
+{
+    public function __construct()
+    {
         parent::__construct("Some columns ids are not in the open semantic");
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean 2017 - 2018. All rights reserved
+ * Copyright (c) Enalean 2017 - Present. All rights reserved
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -60,7 +60,8 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      * @param string $description the description of the renderer
      * @param int $rank the rank
      */
-     public function __construct($id, $report, $name, $description, $rank) {
+    public function __construct($id, $report, $name, $description, $rank)
+    {
         $this->id          = $id;
         $this->report      = $report;
         $this->name        = $name;
@@ -73,19 +74,25 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      *
      * @return int
      */
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
+    }
+
+    public function setId(int $id)
+    {
+        $this->id = $id;
     }
 
     /**
      * @return string
      */
-    public abstract function getIcon();
+    abstract public function getIcon();
 
     /**
      * Delete the renderer
      */
-    public abstract function delete();
+    abstract public function delete();
 
     /**
      * Fetch content of the renderer
@@ -97,45 +104,47 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      *
      * @return string
      */
-    public abstract function fetch($matching_ids, $request, $report_can_be_modified, PFUser $user);
+    abstract public function fetch($matching_ids, $request, $report_can_be_modified, PFUser $user);
 
     /**
      * Process the request
      * @param Request $request
      */
-    public abstract function processRequest(TrackerManager $tracker_manager, $request, $current_user);
+    abstract public function processRequest(TrackerManager $tracker_manager, $request, $current_user);
 
     /**
      * Fetch content to be displayed in widget
      */
-    public abstract function fetchWidget(PFUser $user);
+    abstract public function fetchWidget(PFUser $user);
 
     /**
      * Returns the type of this renderer
      */
-    public abstract function getType();
+    abstract public function getType();
 
-    public abstract function initiateSession();
+    abstract public function initiateSession();
     /**
      * Update the renderer
      *
      * @return bool true if success, false if failure
      */
-    public abstract function update();
+    abstract public function update();
 
     /**
      * Finishes import by saving specific properties
      *
      * @param Tracker_Report_Renderer $renderer containig the parameters to save
      */
-    public abstract function afterSaveObject(Tracker_Report_Renderer $renderer);
+    abstract public function afterSaveObject(Tracker_Report_Renderer $renderer);
 
-    public function process(TrackerManager $tracker_manager, $request, $current_user) {
+    public function process(TrackerManager $tracker_manager, $request, $current_user)
+    {
         $this->processRequest($tracker_manager, $request, $current_user);
         $this->afterProcessRequest($tracker_manager, $request, $current_user);
     }
 
-    public function afterProcessRequest(TrackerManager $tracker_manager, $request, $current_user) {
+    public function afterProcessRequest(TrackerManager $tracker_manager, $request, $current_user)
+    {
         if (!$request->isAjax()) {
             $params = array(
                 'report'   => $this->report->id,
@@ -155,7 +164,8 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      *
      * @return array of 'item_key' => {url: '', icon: '', label: ''}
      */
-    public function getOptionsMenuItems() {
+    public function getOptionsMenuItems()
+    {
         $items = array(
             'printer_version' => '<div class="btn-group"><a class="btn btn-mini" href="'. TRACKER_BASE_URL.'/?'.http_build_query(
                 array(
@@ -197,15 +207,16 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
             $presenter_builder->build($user, $project, $this)
         );
 
-
         $items = array('add_to_dashboard' => $html) + $items;
     }
 
-    private function getTemplateRenderer() {
+    private function getTemplateRenderer()
+    {
         return TemplateRendererFactory::build()->getRenderer(TRACKER_TEMPLATE_DIR.'/report');
     }
 
-    private function canAddToDashboard($user) {
+    private function canAddToDashboard($user)
+    {
         return $this->id > 0
             && (!isset($this->report_session) || !$this->report_session->hasChanged())
             && $user->isLoggedIn();
@@ -216,12 +227,12 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      *
      * @return bool true if success, false if failure
      */
-    public abstract function create();
+    abstract public function create();
 
     /**
      * Duplicate the renderer
      */
-    public abstract function duplicate($from_report_id, $field_mapping);
+    abstract public function duplicate($from_report_id, $field_mapping);
 
     /**
      * Display a link to let the user go back to report
@@ -231,8 +242,9 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      *
      * @return string html
      */
-    public function fetchWidgetGoToReport() {
-        return $this->fetchLinkGoTo('['. $GLOBALS['Language']->getText('plugin_tracker_report_widget','go_to_report') .']');
+    public function fetchWidgetGoToReport()
+    {
+        return $this->fetchLinkGoTo('['. $GLOBALS['Language']->getText('plugin_tracker_report_widget', 'go_to_report') .']');
     }
 
     /**
@@ -243,7 +255,8 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      *
      * @return string html
      */
-    public function fetchArtifactLinkGoToTracker() {
+    public function fetchArtifactLinkGoToTracker()
+    {
         $html = '';
         $html .= '<div class="tracker-form-element-artifactlink-gototracker">';
         $html .=  $this->fetchLinkGoTo($GLOBALS['Language']->getText('plugin_tracker_artifactlink', 'go_to_tracker'), array('target' => '_blank', 'rel' => 'noreferrer'));
@@ -258,7 +271,8 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      *
      * @return string html
      */
-    protected function fetchLinkGoTo($msg, $params = array()) {
+    protected function fetchLinkGoTo($msg, $params = array())
+    {
         $html = '';
         $html .= '<a href="'.TRACKER_BASE_URL.'/?'. http_build_query(
             array(
@@ -280,7 +294,9 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
      *
      * @param SimpleXMLElement $root the node to which the renderer is attached (passed by reference)
      */
-    public function exportToXml(SimpleXMLElement $root, array $xmlMapping) {
+    public function exportToXml(SimpleXMLElement $root, array $xmlMapping)
+    {
+        $root->addAttribute('ID', 'R'.$this->id);
         $root->addAttribute('type', $this->getType());
         $root->addAttribute('rank', $this->rank);
         // if old ids are important, modify code here
@@ -292,5 +308,10 @@ abstract class Tracker_Report_Renderer implements WidgetWithAssetDependencies
         if ($this->description) {
             $root->addChild('description', $this->description);
         }
+    }
+
+    public function getReport()
+    {
+        return $this->report;
     }
 }

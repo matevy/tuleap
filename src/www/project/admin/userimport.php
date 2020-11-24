@@ -22,8 +22,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once('pre.php');
-require_once('www/include/account.php');
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithStatusCheckAndNotifications;
+
+require_once __DIR__ . '/../../include/pre.php';
+require_once __DIR__ . '/../../include/account.php';
 
 if (! user_isloggedin()) {
     exit_not_logged_in();
@@ -46,14 +48,18 @@ if (! $user->isAdmin($project_id) && ! $membership_delegation_dao->doesUserHasMe
 }
 
 $user_manager  = UserManager::instance();
-$import        = new UserImport($request->get('project_id'), $user_manager, new UserHelper());
+$import        = new UserImport(
+    $user_manager,
+    new UserHelper(),
+    ProjectMemberAdderWithStatusCheckAndNotifications::build()
+);
 $user_filename = $_FILES['user_filename']['tmp_name'];
 
 if (!file_exists($user_filename) || !is_readable($user_filename)) {
     return $GLOBALS['Response']->send400JSONErrors(array('error' => _('You should provide a file in entry.')));
 }
 
-$user_collection = $import->parse($user_filename);
+$user_collection = $import->parse($request->get('project_id'), $user_filename);
 
 $GLOBALS['Response']->sendJSON(
     array(

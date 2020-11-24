@@ -18,19 +18,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Permission_PermissionPresenterBuilder {
+class Tracker_Permission_PermissionPresenterBuilder
+{
 
-    public function getPresenter(Tracker $tracker) {
+    public function getPresenter(Tracker $tracker)
+    {
         return new Tracker_Permission_PermissionPresenter($tracker, $this->getUGroupList($tracker));
     }
 
-    private function getUGroupList(Tracker $tracker) {
+    private function getUGroupList(Tracker $tracker)
+    {
         $ugroup_list = array();
 
         $ugroups_permissions = plugin_tracker_permission_get_tracker_ugroups_permissions($tracker->getGroupId(), $tracker->getId());
         ksort($ugroups_permissions);
         reset($ugroups_permissions);
-        foreach($ugroups_permissions as $ugroup_permissions) {
+        foreach ($ugroups_permissions as $ugroup_permissions) {
             $ugroup      = $ugroup_permissions['ugroup'];
             $permissions = $ugroup_permissions['permissions'];
 
@@ -47,7 +50,8 @@ class Tracker_Permission_PermissionPresenterBuilder {
         return $ugroup_list;
     }
 
-    private function getPermissionTypeList($ugroup_id, $permissions) {
+    private function getPermissionTypeList($ugroup_id, $permissions)
+    {
         $permission_type_list = array();
 
         $permission_type_list[] = new Tracker_Permission_PermissionTypePresenter(

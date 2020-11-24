@@ -69,12 +69,6 @@
                 <p class="tlp-text-warning" ng-if="overview.buildStatusIs('unknown')">
                     <i class="fa fa-exclamation-triangle"></i> <span translate>Unknown</span>
                 </p>
-                <p class="tlp-text-warning warning-deprecation-build-status-rest-route"
-                    ng-if="overview.pull_request.build_status_with_deprecated_route"
-                    title="{{ 'Your CI job is using a deprecated REST route to publish the build result and must be updated. Consult the documentation or the API Explorer for more information.' | translate }}"
-                >
-                    <i class="fa fa-exclamation-triangle"></i><span translate>Deprecated REST route</span>
-                </p>
             </div>
         </div>
 
@@ -91,7 +85,6 @@
             </div>
 
             <div ng-if="overview.isNonFastForwardMerge() && ! overview.is_merge_commit_allowed" class="tlp-alert-danger">
-                <i class="fa fa-times-circle"></i>
                 {{ "Merge commits are forbidden in the repository configuration (fast-forward only). Please rebase the commit and update the pull request." | translate }}
                 <div>
                     <button class="tlp-button-warning" disabled="true">
@@ -104,7 +97,6 @@
             </div>
 
             <div ng-if="overview.isConflictingMerge()" class="tlp-alert-danger">
-                <i class="fa fa-times-circle"></i>
                 {{ 'Pull request can not be merged automatically due to conflicts with destination. Resolve conflicts on the command line and update the pull request.' | translate }}
                 <div>
                     <button ng-if="overview.hasMergeRight()" class="tlp-button-warning" disabled="true">
@@ -117,7 +109,6 @@
             </div>
 
             <div ng-if="overview.isUnknownMerge()" class="tlp-alert-warning">
-                <i class="fa fa-warning"></i>
                 {{ 'Pull request mergeability with destination is not determined. You can merge on the command line and push to destination.' | translate }}
                 <div>
                     <button ng-if="overview.hasMergeRight()" class="tlp-button-warning" disabled="true">
@@ -147,5 +138,8 @@
         </div>
     </section>
 
-    <section ui-view="timeline" class="pull-request-timeline"></section>
+    <div class="pull-request-reviewers-timeline">
+        <section ui-view="reviewers"></section>
+        <section ui-view="timeline" class="pull-request-timeline"></section>
+    </div>
 </section>

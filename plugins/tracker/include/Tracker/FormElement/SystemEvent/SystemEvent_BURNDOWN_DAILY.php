@@ -28,7 +28,7 @@ use Tracker_FormElement_Field_ComputedDaoCache;
 use Tuleap\Tracker\FormElement\BurndownCacheDateRetriever;
 use Tuleap\Tracker\FormElement\FieldCalculator;
 
-class SystemEvent_BURNDOWN_DAILY extends SystemEvent
+class SystemEvent_BURNDOWN_DAILY extends SystemEvent //phpcs:ignore Squiz.Classes.ValidClassName.NotCamelCaps
 {
     public const NAME = 'SystemEvent_BURNDOWN_DAILY';
 
@@ -87,14 +87,23 @@ class SystemEvent_BURNDOWN_DAILY extends SystemEvent
     public function cacheYesterdayValues()
     {
         $yesterday = $this->date_retriever->getYesterday();
-
-        $yesterday_period = new TimePeriodWithoutWeekEnd($yesterday, 1);
-        if (! $yesterday_period->isNotWeekendDay($yesterday)) {
+        if (! TimePeriodWithoutWeekEnd::isNotWeekendDay($yesterday)) {
             return;
         }
 
         foreach ($this->burndown_dao->getArtifactsWithBurndown() as $burndown) {
-            $burndown_period = new TimePeriodWithoutWeekEnd($burndown['start_date'], $burndown['duration']);
+            if (empty($burndown['duration'])) {
+                $burndown_period = TimePeriodWithoutWeekEnd::buildFromEndDate(
+                    $burndown['start_date'],
+                    $burndown['end_date'],
+                    $this->logger
+                );
+            } else {
+                $burndown_period = TimePeriodWithoutWeekEnd::buildFromDuration(
+                    $burndown['start_date'],
+                    $burndown['duration']
+                );
+            }
 
             if ($burndown_period->getEndDate() >= $yesterday) {
                 $this->logger->debug(

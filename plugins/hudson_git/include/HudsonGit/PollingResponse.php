@@ -22,26 +22,30 @@ namespace Tuleap\HudsonGit;
 
 class PollingResponse
 {
-
-    private $job_paths = array();
+    /**
+     * @var string
+     */
     private $body;
+    /**
+     * @var string[]
+     */
+    private $job_paths;
 
-    public function addJob($job_path)
+    public function __construct(string $body, array $job_paths)
     {
-        $this->job_paths[] = $job_path;
+        $this->body      = $body;
+        $this->job_paths = $job_paths;
     }
 
-    public function setBody($body)
-    {
-        $this->body = $body;
-    }
-
-    public function getBody()
+    public function getBody() : string
     {
         return $this->body;
     }
 
-    public function getJobPaths()
+    /**
+     * @return string[]
+     */
+    public function getJobPaths() : array
     {
         return $this->job_paths;
     }

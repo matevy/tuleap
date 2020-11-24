@@ -21,7 +21,8 @@
 /**
  * Value object of a the recipient of email gateway
  */
-class Tracker_Artifact_MailGateway_Recipient {
+class Tracker_Artifact_MailGateway_Recipient
+{
 
     /** @var string */
     private $email;
@@ -42,16 +43,18 @@ class Tracker_Artifact_MailGateway_Recipient {
         $this->email    = $email;
     }
 
-    public function getEmail() {
+    public function getEmail()
+    {
         return $this->email;
     }
 
-    public function getArtifact() {
+    public function getArtifact()
+    {
         return $this->artifact;
     }
 
-    public function getUser() {
+    public function getUser()
+    {
         return $this->user;
     }
-
 }

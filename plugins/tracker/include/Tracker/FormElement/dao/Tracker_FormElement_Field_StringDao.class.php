@@ -19,56 +19,59 @@
  */
 
 /**
- *  Data Access Object for Tracker_FormElement_Field 
+ *  Data Access Object for Tracker_FormElement_Field
  */
-class Tracker_FormElement_Field_StringDao extends Tracker_FormElement_SpecificPropertiesDao {
-    
-    function __construct() {
+class Tracker_FormElement_Field_StringDao extends Tracker_FormElement_SpecificPropertiesDao
+{
+
+    function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_field_string';
     }
-    
-    public function save($field_id, $row) {
+
+    public function save($field_id, $row)
+    {
         $field_id  = $this->da->escapeInt($field_id);
-        
+
         if (isset($row['maxchars']) && (int)$row['maxchars']) {
             $maxchars = $this->da->escapeInt($row['maxchars']);
         } else {
             $maxchars = 0;
         }
-        
+
         if (isset($row['size']) && (int)$row['size']) {
             $size = $this->da->escapeInt($row['size']);
         } else {
             $size = 30;
         }
-        
+
         if (isset($row['default_value'])) {
             $default_value = $this->da->quoteSmart($row['default_value']);
         } else {
             $default_value = "''";
         }
-        
+
         $sql = "REPLACE INTO $this->table_name (field_id, maxchars, size, default_value)
                 VALUES ($field_id, $maxchars, $size, $default_value)";
         return $this->retrieve($sql);
     }
-    
+
     /**
      * Duplicate specific properties of field
      *
      * @param int $from_field_id the field id source
      * @param int $to_field_id   the field id target
      *
-     * @return boolean true if ok, false otherwise
+     * @return bool true if ok, false otherwise
      */
-    public function duplicate($from_field_id, $to_field_id) {
+    public function duplicate($from_field_id, $to_field_id)
+    {
         $from_field_id  = $this->da->escapeInt($from_field_id);
         $to_field_id  = $this->da->escapeInt($to_field_id);
-        
+
         $sql = "REPLACE INTO $this->table_name (field_id, maxchars, size, default_value)
                 SELECT $to_field_id, maxchars, size, default_value FROM $this->table_name WHERE field_id = $from_field_id";
         return $this->update($sql);
     }
 }
-?>

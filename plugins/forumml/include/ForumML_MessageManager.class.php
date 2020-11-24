@@ -20,10 +20,12 @@
 
 require_once 'ForumML_MessageDao.class.php';
 
-class ForumML_MessageManager {
+class ForumML_MessageManager
+{
     private $_dao;
 
-    function getHeaderValue($messageId, $headerId) {
+    function getHeaderValue($messageId, $headerId)
+    {
         $dar = $this->getDao()->searchHeaderValue($messageId, $headerId);
         if ($dar && !$dar->isError()) {
             $row = $dar->current();
@@ -32,13 +34,11 @@ class ForumML_MessageManager {
         return false;
     }
 
-    function getDao() {
+    function getDao()
+    {
         if (!isset($this->_dao)) {
             $this->_dao = new ForumML_MessageDao(CodendiDataAccess::instance());
         }
         return $this->_dao;
     }
-
 }
-
-?>

@@ -1,5 +1,5 @@
 <?php
-/* 
+/*
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Mahmoud MAALEJ, 2006. STMicroelectronics.
@@ -20,28 +20,31 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/dao/include/DataAccessObject.class.php');
-        
-class GraphOnTrackersV5_Chart_GanttDao extends DataAccessObject {
-    
-    function __construct($da = null) {
+class GraphOnTrackersV5_Chart_GanttDao extends DataAccessObject
+{
+
+    function __construct($da = null)
+    {
         parent::__construct($da);
         $this->table_name = 'plugin_graphontrackersv5_gantt_chart';
     }
-    
-    public function searchById($id) {
+
+    public function searchById($id)
+    {
         $id = $this->da->escapeInt($id);
         $sql = "SELECT * FROM $this->table_name WHERE id = $id";
         return $this->retrieve($sql);
     }
-    
-    public function delete($id) {
+
+    public function delete($id)
+    {
         $id = $this->da->escapeInt($id);
         $sql = "DELETE FROM $this->table_name WHERE id = $id";
         return $this->update($sql);
     }
-    
-    public function save($id, $field_start, $field_due, $field_finish, $field_percentage, $field_righttext, $scale, $as_of_date, $summary) {
+
+    public function save($id, $field_start, $field_due, $field_finish, $field_percentage, $field_righttext, $scale, $as_of_date, $summary)
+    {
         $id                 = $this->da->escapeInt($id);
         $field_start        = $this->da->escapeInt($field_start);
         $field_due          = $this->da->escapeInt($field_due);
@@ -51,13 +54,14 @@ class GraphOnTrackersV5_Chart_GanttDao extends DataAccessObject {
         $scale              = $this->da->quoteSmart($scale);
         $as_of_date         = (int) strtotime($as_of_date);
         $summary            = $this->da->escapeInt($summary);
-        
+
         $sql = "REPLACE INTO $this->table_name (id, field_start, field_due, field_finish, field_percentage, field_righttext, scale, as_of_date, summary)
                 VALUES ($id, $field_start, $field_due, $field_finish, $field_percentage, $field_righttext, $scale, $as_of_date, $summary)";
         return $this->update($sql);
     }
-    
-    public function duplicate($from_chart_id, $to_chart_id, $field_mapping) {
+
+    public function duplicate($from_chart_id, $to_chart_id, $field_mapping)
+    {
         $from_chart_id = $this->da->escapeInt($from_chart_id);
         $to_chart_id   = $this->da->escapeInt($to_chart_id);
         $sql = "INSERT INTO $this->table_name (id, field_start, field_due, field_finish, field_percentage, field_righttext, scale, as_of_date, summary)
@@ -66,10 +70,10 @@ class GraphOnTrackersV5_Chart_GanttDao extends DataAccessObject {
                 WHERE id = $from_chart_id";
 
         $this->update($sql);
-        foreach($field_mapping as $mapping) {
+        foreach ($field_mapping as $mapping) {
             $from  = $this->da->escapeInt($mapping['from']);
             $to    = $this->da->escapeInt($mapping['to']);
-            
+
             $sql = "UPDATE $this->table_name
                     SET
                      field_start      = IF(field_start = $from,      $to, field_start),
@@ -83,4 +87,3 @@ class GraphOnTrackersV5_Chart_GanttDao extends DataAccessObject {
         }
     }
 }
-?>

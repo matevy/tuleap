@@ -19,20 +19,22 @@
 
 namespace Tuleap\REST;
 
-use \PFUser;
-use \Project;
-use \URLVerification;
-use \EventManager;
-use \Event;
-use \Luracast\Restler\RestException;
-use \Project_AccessProjectNotFoundException;
-use \Project_AccessException;
-use \Project_AccessNotAdminException;
-use \Tracker_URLVerification;
+use PFUser;
+use Project;
+use URLVerification;
+use EventManager;
+use Event;
+use Luracast\Restler\RestException;
+use Project_AccessProjectNotFoundException;
+use Project_AccessException;
+use Project_AccessNotAdminException;
+use Tracker_URLVerification;
 
-class ProjectAuthorization {
+class ProjectAuthorization
+{
 
-    public static function userCanAccessProject(PFUser $user, Project $project, URLVerification $url_verification) {
+    public static function userCanAccessProject(PFUser $user, Project $project, URLVerification $url_verification)
+    {
         try {
             $url_verification->userCanAccessProject($user, $project);
             return true;
@@ -43,7 +45,8 @@ class ProjectAuthorization {
         }
     }
 
-    public static function canUserAccessUserGroupInfo(PFUser $user, Project $project, URLVerification $url_verification) {
+    public static function canUserAccessUserGroupInfo(PFUser $user, Project $project, URLVerification $url_verification)
+    {
         try {
             $url_verification->userCanAccessProject($user, $project);
             $url_verification->userCanAccessProjectAndIsProjectAdmin($user, $project);

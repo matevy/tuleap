@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -30,7 +30,8 @@ use Tuleap\OpenIDConnectClient\Provider\ProviderManager;
 use Tuleap\OpenIDConnectClient\UserMapping\UserMappingManager;
 use UserManager;
 
-class Controller {
+class Controller
+{
     /**
      * @var UserManager
      */
@@ -63,7 +64,8 @@ class Controller {
         $this->unlinked_account_manager = $unlinked_account_manager;
     }
 
-    public function showIndex(HTTPRequest $request) {
+    public function showIndex(HTTPRequest $request)
+    {
         $link_id = $request->get('link_id');
         try {
             $unlinked_account = $this->unlinked_account_manager->getbyId($link_id);
@@ -95,7 +97,8 @@ class Controller {
         $GLOBALS['HTML']->footer(array('without_content' => true));
     }
 
-    private function generateLinkToRegisterPage(HTTPRequest $request) {
+    private function generateLinkToRegisterPage(HTTPRequest $request)
+    {
         $openid_connect_to_register_page = array(
             'link_id'  => 'openidconnect_link_id',
             'name'     => 'form_realname',
@@ -114,7 +117,8 @@ class Controller {
         return '/account/register.php?' . http_build_query($query_parameters);
     }
 
-    public function linkExistingAccount(HTTPRequest $request) {
+    public function linkExistingAccount(HTTPRequest $request)
+    {
         try {
             $unlinked_account = $this->unlinked_account_manager->getbyId($request->get('link_id'));
             $provider         = $this->provider_manager->getById($unlinked_account->getProviderId());
@@ -135,12 +139,13 @@ class Controller {
                 Feedback::INFO,
                 sprintf(dgettext('tuleap-openidconnectclient', 'Your account has been successfully linked to %1$s'), $provider->getName())
             );
-            require_once('account.php');
+            require_once __DIR__ . '/../../../../../src/www/include/account.php';
             \account_redirect_after_login($request->get('return_to'));
         }
     }
 
-    public function linkRegisteringAccount($user_id, $link_id, $request_time) {
+    public function linkRegisteringAccount($user_id, $link_id, $request_time)
+    {
         try {
             $unlinked_account = $this->unlinked_account_manager->getbyId($link_id);
             $provider         = $this->provider_manager->getById($unlinked_account->getProviderId());
@@ -153,10 +158,10 @@ class Controller {
                 dgettext('tuleap-openidconnectclient', 'Request seems invalid, please retry')
             );
         }
-
     }
 
-    private function linkAccount(PFUser $user, Provider $provider, UnlinkedAccount $unlinked_account, $request_time) {
+    private function linkAccount(PFUser $user, Provider $provider, UnlinkedAccount $unlinked_account, $request_time)
+    {
         try {
             $this->user_mapping_manager->create(
                 $user->getId(),
@@ -172,11 +177,16 @@ class Controller {
         }
     }
 
-    private function redirectAfterFailure($message) {
+    /**
+     * @psalm-return never-return
+     */
+    private function redirectAfterFailure($message): void
+    {
         $GLOBALS['Response']->addFeedback(
             Feedback::ERROR,
             $message
         );
         $GLOBALS['Response']->redirect('/');
+        exit();
     }
 }

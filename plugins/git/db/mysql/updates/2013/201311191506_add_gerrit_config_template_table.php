@@ -16,14 +16,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201311191506_add_gerrit_config_template_table extends ForgeUpgrade_Bucket {
+class b201311191506_add_gerrit_config_template_table extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add plugin_git_gerrit_config_template table
 EOT;
@@ -34,7 +36,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -43,7 +46,8 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $sql = 'CREATE TABLE IF NOT EXISTS plugin_git_gerrit_config_template (
                 id INT(11) unsigned NOT NULL auto_increment,
                 group_id INT(11) NOT NULL,
@@ -60,10 +64,10 @@ EOT;
      *
      * @return void
      */
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('plugin_git_gerrit_config_template')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('plugin_git_gerrit_config_template table is missing');
         }
     }
 }
-?>

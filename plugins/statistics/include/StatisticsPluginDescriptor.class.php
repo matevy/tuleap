@@ -21,14 +21,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once 'common/plugin/PluginDescriptor.class.php';
+class StatisticsPluginDescriptor extends PluginDescriptor
+{
 
-class StatisticsPluginDescriptor extends PluginDescriptor {
-    
-    function __construct() {
+    function __construct()
+    {
         parent::__construct($GLOBALS['Language']->getText('plugin_statistics', 'descriptor_name'), false, $GLOBALS['Language']->getText('plugin_statistics', 'descriptor_description'));
         $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');
     }
 }
-
-?>

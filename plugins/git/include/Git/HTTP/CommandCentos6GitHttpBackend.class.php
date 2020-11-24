@@ -18,8 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Git_HTTP_CommandCentos6GitHttpBackend extends Git_HTTP_Command {
-    public function getCommand() {
+class Git_HTTP_CommandCentos6GitHttpBackend extends Git_HTTP_Command
+{
+    public function getCommand()
+    {
         return '/usr/libexec/git-core/git-http-backend';
     }
 }

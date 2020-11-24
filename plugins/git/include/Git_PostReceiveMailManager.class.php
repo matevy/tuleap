@@ -20,7 +20,8 @@
  */
 
 
-class Git_PostReceiveMailManager {
+class Git_PostReceiveMailManager
+{
 
     var $dao;
 
@@ -29,19 +30,21 @@ class Git_PostReceiveMailManager {
      *
      * @return void
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->dao = $this->_getDao();
     }
 
     /**
      * Add a mail address to a repository to be notified
      *
-     * @param Integer $repositoryId
+     * @param int $repositoryId
      * @param String  $mail
      *
-     * @return Boolean
+     * @return bool
      */
-    function addMail($repositoryId, $mail) {
+    function addMail($repositoryId, $mail)
+    {
         try {
             $this->dao->createNotification($repositoryId, $mail);
         } catch (PDOException $e) {
@@ -58,9 +61,10 @@ class Git_PostReceiveMailManager {
      * @param GitRepository  $repository
      * @param String  $mail
      *
-     *  @return Boolean
+     *  @return bool
      */
-    public function removeMailByRepository($repository, $mail) {
+    public function removeMailByRepository($repository, $mail)
+    {
         if ($this->dao->removeNotification($repository->getId(), $mail)) {
             $repository->loadNotifiedMails();
             return $repository->getBackend()->changeRepositoryMailingList($repository);
@@ -78,20 +82,22 @@ class Git_PostReceiveMailManager {
      *
      * @param GitRepository $repository
      *
-     * @return Boolean
+     * @return bool
      */
-    public function markRepositoryAsDeleted(GitRepository $repository) {
+    public function markRepositoryAsDeleted(GitRepository $repository)
+    {
         return $this->dao->removeNotification($repository->getId(), null);
     }
 
     /**
      * Returns the list of notified mails for post commit
      *
-     * @param Integer $repositoryId Id of the repository to retrieve itsnotification mails
+     * @param int $repositoryId Id of the repository to retrieve itsnotification mails
      *
      * @return array
      */
-    public function getNotificationMailsByRepositoryId($repositoryId) {
+    public function getNotificationMailsByRepositoryId($repositoryId)
+    {
         $dar = $this->dao->searchByRepositoryId($repositoryId);
 
         $mailList = array();
@@ -106,7 +112,8 @@ class Git_PostReceiveMailManager {
      *
      * @return Git_PostReceiveMailDao
      */
-    function _getDao() {
+    function _getDao()
+    {
         if (!$this->dao) {
             $this->dao = new Git_PostReceiveMailDao();
         }
@@ -116,17 +123,16 @@ class Git_PostReceiveMailManager {
     /**
      * Wrapper used for tests to get a new GitDao
      */
-    function _getGitDao() {
+    function _getGitDao()
+    {
         return new GitDao();
     }
 
     /**
      * Wrapper used for tests to get a new GitRepository
      */
-    function _getGitRepository() {
+    function _getGitRepository()
+    {
         return new GitRepository();
     }
-
 }
-
-?>

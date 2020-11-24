@@ -22,7 +22,8 @@ namespace Tuleap\HudsonSvn;
 
 use ForgeConfig;
 
-class FormPresenter {
+class FormPresenter
+{
 
     /**
      * @var string
@@ -35,7 +36,7 @@ class FormPresenter {
     public $repositories;
 
     /**
-     * @var boolean
+     * @var bool
      */
     public $is_checked;
 
@@ -50,7 +51,8 @@ class FormPresenter {
     public $repository_param_description;
     public $path_param_description;
 
-    public function __construct(array $repositories, $is_checked, $path) {
+    public function __construct(array $repositories, $is_checked, $path)
+    {
         $this->repositories = $repositories;
         $this->is_checked   = $is_checked;
         $this->path         = $path;

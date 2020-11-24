@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2014. All rights reserved
  *
@@ -19,5 +18,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class MediawikiInstantiaterException extends Exception {}
-?>
+class MediawikiInstantiaterException extends Exception
+{
+}

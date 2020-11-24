@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2013. All rights reserved.
+ * Copyright Enalean (c) 2013 - Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registrated trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -22,11 +22,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class AgileDashboard_BacklogItemDao extends DataAccessObject {
+class AgileDashboard_BacklogItemDao extends DataAccessObject
+{
     public const STATUS_OPEN   = 1;
     public const STATUS_CLOSED = 0;
 
-    public function getBacklogArtifacts($milestone_artifact_id) {
+    public function getBacklogArtifacts($milestone_artifact_id)
+    {
         $milestone_artifact_id = $this->da->escapeInt($milestone_artifact_id);
         $sql = "SELECT child_art.*
                 FROM tracker_artifact parent_art
@@ -43,7 +45,29 @@ class AgileDashboard_BacklogItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getTopBacklogArtifacts(array $backlog_tracker_ids) {
+    public function getBacklogArtifactsWithLimitAndOffset($milestone_artifact_id, $limit, $offset)
+    {
+        $milestone_artifact_id = $this->da->escapeInt($milestone_artifact_id);
+        $limit                 = $this->da->escapeInt($limit);
+        $offset                = $this->da->escapeInt($offset);
+        $sql = "SELECT SQL_CALC_FOUND_ROWS child_art.*, tracker_artifact_priority_rank.rank as rank
+                FROM tracker_artifact parent_art
+                    INNER JOIN tracker_field                        f          ON (f.tracker_id = parent_art.tracker_id AND f.formElement_type = 'art_link' AND use_it = 1)
+                    INNER JOIN tracker_changeset_value              cv         ON (cv.changeset_id = parent_art.last_changeset_id AND cv.field_id = f.id)
+                    INNER JOIN tracker_changeset_value_artifactlink artlink    ON (artlink.changeset_value_id = cv.id)
+                    INNER JOIN tracker_artifact                     child_art  ON (child_art.id = artlink.artifact_id)
+                    INNER JOIN plugin_agiledashboard_planning       planning   ON (planning.planning_tracker_id = parent_art.tracker_id)
+                    INNER JOIN plugin_agiledashboard_planning_backlog_tracker backlog ON (backlog.planning_id = planning.id AND child_art.tracker_id = backlog.tracker_id)
+                    INNER JOIN tracker_artifact_priority_rank                       ON (tracker_artifact_priority_rank.artifact_id = child_art.id)
+                WHERE parent_art.id = $milestone_artifact_id
+                ORDER BY tracker_artifact_priority_rank.rank ASC
+                LIMIT $limit OFFSET $offset";
+
+        return $this->retrieve($sql);
+    }
+
+    public function getTopBacklogArtifacts(array $backlog_tracker_ids)
+    {
         $backlog_tracker_ids = $this->da->escapeIntImplode($backlog_tracker_ids);
 
         $sql = "SELECT SQL_CALC_FOUND_ROWS *
@@ -55,7 +79,8 @@ class AgileDashboard_BacklogItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getTopBacklogArtifactsWithLimitAndOffset(array $backlog_tracker_ids, $limit, $offset) {
+    public function getTopBacklogArtifactsWithLimitAndOffset(array $backlog_tracker_ids, $limit, $offset)
+    {
         $backlog_tracker_ids = $this->da->escapeIntImplode($backlog_tracker_ids);
         $limit               = $this->da->escapeInt($limit);
         $offset              = $this->da->escapeInt($offset);
@@ -70,7 +95,8 @@ class AgileDashboard_BacklogItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getOpenUnplannedTopBacklogArtifacts(array $backlog_tracker_ids, $sub_milestone_ids) {
+    public function getOpenUnplannedTopBacklogArtifacts(array $backlog_tracker_ids, $sub_milestone_ids)
+    {
         $backlog_tracker_ids = $this->da->escapeIntImplode($backlog_tracker_ids);
         $sub_milestone_ids   = $this->da->escapeIntImplode($sub_milestone_ids);
 
@@ -106,7 +132,8 @@ class AgileDashboard_BacklogItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getUnplannedTopBacklogArtifacts(array $backlog_tracker_ids) {
+    public function getUnplannedTopBacklogArtifacts(array $backlog_tracker_ids)
+    {
         $backlog_tracker_ids = $this->da->escapeIntImplode($backlog_tracker_ids);
 
         $sql = "SELECT SQL_CALC_FOUND_ROWS art_1.*
@@ -131,7 +158,8 @@ class AgileDashboard_BacklogItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getOpenUnplannedTopBacklogArtifactsWithLimitAndOffset(array $backlog_tracker_ids, $limit, $offset) {
+    public function getOpenUnplannedTopBacklogArtifactsWithLimitAndOffset(array $backlog_tracker_ids, $limit, $offset)
+    {
         $backlog_tracker_ids = $this->da->escapeIntImplode($backlog_tracker_ids);
         $limit               = $this->da->escapeInt($limit);
         $offset              = $this->da->escapeInt($offset);
@@ -170,7 +198,8 @@ class AgileDashboard_BacklogItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getUnplannedTopBacklogArtifactsWithLimitAndOffset(array $backlog_tracker_ids, $limit, $offset) {
+    public function getUnplannedTopBacklogArtifactsWithLimitAndOffset(array $backlog_tracker_ids, $limit, $offset)
+    {
         $backlog_tracker_ids = $this->da->escapeIntImplode($backlog_tracker_ids);
         $limit               = $this->da->escapeInt($limit);
         $offset              = $this->da->escapeInt($offset);
@@ -198,7 +227,8 @@ class AgileDashboard_BacklogItemDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getPlannedItemIds(array $milestone_artifact_ids) {
+    public function getPlannedItemIds(array $milestone_artifact_ids)
+    {
         $milestone_artifact_ids = $this->da->escapeIntImplode($milestone_artifact_ids);
 
         $sql = "SELECT GROUP_CONCAT(id) AS ids
@@ -221,7 +251,8 @@ class AgileDashboard_BacklogItemDao extends DataAccessObject {
         return array();
     }
 
-    public function getArtifactsSemantics(array $artifact_ids, array $semantics) {
+    public function getArtifactsSemantics(array $artifact_ids, array $semantics)
+    {
         $artifact_ids = $this->da->escapeIntImplode($artifact_ids);
 
         $select_fields = array('artifact.id');

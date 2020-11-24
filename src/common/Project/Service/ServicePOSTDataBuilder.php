@@ -25,6 +25,8 @@ use Feedback;
 use ForgeConfig;
 use Project;
 use Service;
+use ServiceManager;
+use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\ServiceUrlCollector;
 
 class ServicePOSTDataBuilder
@@ -33,35 +35,38 @@ class ServicePOSTDataBuilder
      * @var \EventManager
      */
     private $event_manager;
+    /**
+     * @var ServiceManager
+     */
+    private $service_manager;
 
-    public function __construct(\EventManager $event_manager)
+    public function __construct(\EventManager $event_manager, ServiceManager $service_manager)
     {
-        $this->event_manager = $event_manager;
+        $this->event_manager   = $event_manager;
+        $this->service_manager = $service_manager;
     }
 
     /**
-     * @param Codendi_Request $request
-     * @return ServicePOSTData
      * @throws InvalidServicePOSTDataException
      */
-    public function buildFromRequest(Codendi_Request $request)
+    public function buildFromRequest(\HTTPRequest $request, Project $project, BaseLayout $response): ServicePOSTData
     {
-        $project = $request->getProject();
-
         $service_id        = $request->getValidated('service_id', 'uint', 0);
         $short_name        = $request->getValidated('short_name', 'string', '');
         $label             = $request->getValidated('label', 'string', '');
+        $icon_name         = $request->getValidated('icon_name', 'string', '');
         $description       = $request->getValidated('description', 'string', '');
         $rank              = $request->getValidated('rank', 'int', 500);
         $is_active         = $request->getValidated('is_active', 'uint', 0);
-        $is_used           = $request->getValidated('is_used', 'uint', false);
-        $is_in_iframe      = $request->get('is_in_iframe') ? 1 : 0;
+        $is_used           = $this->getIsUsed($request, $short_name);
+        $is_in_iframe      = $request->get('is_in_iframe') ? true : false;
+        $is_in_new_tab     = $request->get('is_in_new_tab') ? true : false;
         $is_system_service = $this->isSystemService($request, $short_name);
         $submitted_link    = $request->getValidated('link', 'localuri', '');
 
         if (! $is_active) {
             if ($is_used) {
-                $GLOBALS['Response']->addFeedback(
+                $response->addFeedback(
                     Feedback::WARN,
                     _(
                         'A non available service cannot be enabled. To enable this service, switch it to available before.'
@@ -71,17 +76,30 @@ class ServicePOSTDataBuilder
             }
         }
 
+        $current_services = $this->service_manager->getListOfAllowedServicesForProject($project);
+        if (isset($current_services[$service_id])) {
+            $current_version_of_service = $current_services[$service_id];
+            if ($label === $current_version_of_service->getInternationalizedName()) {
+                $label = $current_version_of_service->getLabel();
+            }
+            if ($description === $current_version_of_service->getInternationalizedDescription()) {
+                $description = $current_version_of_service->getDescription();
+            }
+        }
+
         return $this->createServicePOSTData(
             $project,
             $service_id,
             $short_name,
             $label,
+            $icon_name,
             $description,
             $rank,
             $submitted_link,
             $is_active,
             $is_used,
             $is_in_iframe,
+            $is_in_new_tab,
             $is_system_service
         );
     }
@@ -100,30 +118,19 @@ class ServicePOSTDataBuilder
             $service->getId(),
             $service->getShortName(),
             $service->getLabel(),
+            $service->getIconName(),
             $service->getDescription(),
             $service->getRank(),
             $service->getUrl(),
             $service->isActive(),
             $submitted_is_used,
             $service->isIFrame(),
+            $service->isOpenedInNewTab(),
             $service->getScope() === Service::SCOPE_SYSTEM
         );
     }
 
     /**
-     * @param Project $project
-     * @param         $short_name
-     * @param         $label
-     * @param         $rank
-     * @param         $submitted_link
-     * @param         $is_active
-     * @param         $is_used
-     * @param         $service_id
-     * @param         $description
-     * @param int     $is_in_iframe
-     * @param bool    $is_system_service
-     *
-     * @return ServicePOSTData
      * @throws InvalidServicePOSTDataException
      */
     private function createServicePOSTData(
@@ -131,12 +138,14 @@ class ServicePOSTDataBuilder
         $service_id,
         $short_name,
         $label,
+        $icon_name,
         $description,
         $rank,
         $submitted_link,
         $is_active,
         $is_used,
-        int $is_in_iframe,
+        bool $is_in_iframe,
+        bool $is_in_new_tab,
         bool $is_system_service
     ): ServicePOSTData {
         $scope = $is_system_service ? Service::SCOPE_SYSTEM : Service::SCOPE_PROJECT;
@@ -144,6 +153,10 @@ class ServicePOSTDataBuilder
         $this->checkShortname($project, $short_name);
         $this->checkLabel($label);
         $this->checkRank($project, $short_name, $rank);
+        if (! $is_system_service) {
+            $this->checkIcon($icon_name);
+            $this->checkIsInNewTab($is_in_iframe, $is_in_new_tab);
+        }
 
         $service_url_collector = new ServiceUrlCollector($project, $short_name);
         $this->event_manager->processEvent($service_url_collector);
@@ -157,19 +170,20 @@ class ServicePOSTDataBuilder
             $service_id,
             $short_name,
             $label,
+            $icon_name,
             $description,
             $link,
             $rank,
             $scope,
             (bool) $is_active,
             (bool) $is_used,
-            (bool) $is_system_service,
-            (bool) $is_in_iframe
+            $is_system_service,
+            $is_in_iframe,
+            $is_in_new_tab
         );
     }
 
     /**
-     * @extracted from servicebar.php
      * @param Project $project
      * @param $link
      * @return mixed
@@ -271,5 +285,36 @@ class ServicePOSTDataBuilder
                 $GLOBALS['Language']->getText('project_admin_servicebar', 'cant_make_s')
             );
         }
+    }
+
+    /**
+     * @throws InvalidServicePOSTDataException
+     */
+    private function checkIcon(string $icon_name): void
+    {
+        if (! ServiceIconValidator::isValidIcon($icon_name)) {
+            throw new InvalidServicePOSTDataException(_("This service icon name is not allowed."));
+        }
+    }
+
+    /**
+     * @throws InvalidServicePOSTDataException
+     */
+    private function checkIsInNewTab(bool $is_in_iframe, bool $is_in_new_tab): void
+    {
+        if ($is_in_iframe === true && $is_in_new_tab === true) {
+            throw new InvalidServicePOSTDataException(
+                _("The service cannot be opened in a new tab and in an iframe simultaneously. Please choose one.")
+            );
+        }
+    }
+
+    private function getIsUsed(\HTTPRequest $request, string $short_name): bool
+    {
+        if ($short_name === 'admin') {
+            return true;
+        }
+
+        return (bool) $request->getValidated('is_used', 'uint', false);
     }
 }

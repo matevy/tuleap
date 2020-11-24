@@ -28,12 +28,13 @@ use Tuleap\Git\Permissions\FineGrainedRepresentationBuilder;
 use Tuleap\Git\Permissions\FineGrainedRetriever;
 use Tuleap\Git\Permissions\RegexpFineGrainedRetriever;
 
-require_once 'www/project/admin/permissions.php';
+include_once __DIR__ . '/../../../src/www/project/admin/permissions.php';
 
 /**
  * GitViews
  */
-class GitViews extends PluginViews {
+class GitViews extends PluginViews
+{
 
     /** @var Project */
     private $project;
@@ -132,7 +133,8 @@ class GitViews extends PluginViews {
         $this->header_renderer->renderDefaultHeader($this->request, $this->user, $this->project);
     }
 
-    public function footer() {
+    public function footer()
+    {
         $GLOBALS['HTML']->footer(array());
     }
 
@@ -177,15 +179,16 @@ class GitViews extends PluginViews {
     /**
      * CONFIRM PRIVATE
      */
-    public function confirmPrivate() {
+    public function confirmPrivate()
+    {
         $params = $this->getData();
         $repository   = $params['repository'];
         $repoId       = $repository->getId();
         $repoName     = $repository->getName();
         $initialized  = $repository->isInitialized();
         $mails        = $params['mails'];
-        if ( $this->getController()->isAPermittedAction('save') ) :
-        ?>
+        if ($this->getController()->isAPermittedAction('save')) :
+            ?>
         <div class="confirm">
         <h3><?php echo dgettext('tuleap-git', 'Do you confirm change of repository access to private ?'); ?></h3>
         <form id="confirm_private" method="POST" action="/plugins/git/?group_id=<?php echo $this->groupId; ?>" >
@@ -195,33 +198,35 @@ class GitViews extends PluginViews {
         </form>
         <h3><?php echo dgettext('tuleap-git', 'List of mails to remove from notification'); ?></h3>
     <table>
-        <?php
-        $i = 0;
-        foreach ($mails as $mail) {
-            echo '<tr class="'.html_get_alt_row_color(++$i).'">';
-            echo '<td>'.$mail.'</td>';
-            echo '</tr>';
-        }
-        ?>
+            <?php
+            $i = 0;
+            foreach ($mails as $mail) {
+                echo '<tr class="'.html_get_alt_row_color(++$i).'">';
+                echo '<td>'.$mail.'</td>';
+                echo '</tr>';
+            }
+            ?>
     </table>
     </div>
-        <?php
+            <?php
         endif;
     }
 
     /**
      * TREE VIEW
      */
-    public function index() {
+    public function index()
+    {
         $params = $this->getData();
 
         $this->_tree($params);
-        if ( $this->getController()->isAPermittedAction('add') ) {
+        if ($this->getController()->isAPermittedAction('add')) {
             $this->_createForm();
         }
     }
 
-    protected function forkRepositories() {
+    protected function forkRepositories()
+    {
         $params = $this->getData();
 
         echo '<h1>'. dgettext('tuleap-git', 'Fork repositories') .'</h1>';
@@ -229,7 +234,7 @@ class GitViews extends PluginViews {
             echo dgettext('tuleap-git', '<p>You can create personal forks of any reference repositories. By default forks will end up into your personal area of this project.</p></p>');
         }
         echo dgettext('tuleap-git', '<p>You might choose to fork into another project. In this case, fork creates new "References" in the target project.<br />You need to be administrator of the target project to do so and Git service must be activated.</p>');
-        if ( !empty($params['repository_list']) ) {
+        if (!empty($params['repository_list'])) {
             echo '<form action="" method="POST">';
             echo '<input type="hidden" name="group_id" value="'. (int)$this->groupId .'" />';
             echo '<input type="hidden" name="action" value="fork_repositories_permissions" />';
@@ -397,15 +402,17 @@ class GitViews extends PluginViews {
         return $mirrored_repositories_presenters;
     }
 
-    private function generateMassUpdateCSRF() {
+    private function generateMassUpdateCSRF()
+    {
         return new CSRFSynchronizerToken('/plugins/git/?group_id='. (int)$this->groupId .'&action=admin-mass-update');
     }
 
-    private function getAdminMassUpdateMirrorPresenters() {
+    private function getAdminMassUpdateMirrorPresenters()
+    {
         $mirrors           = $this->mirror_data_mapper->fetchAllForProject($this->project);
         $mirror_presenters = array();
 
-        foreach($mirrors as $mirror) {
+        foreach ($mirrors as $mirror) {
             $mirror_presenters[] = new GitPresenters_MirrorPresenter($mirror, false);
         }
 
@@ -417,7 +424,8 @@ class GitViews extends PluginViews {
      *
      * @return void
      */
-    protected function forkRepositoriesPermissions() {
+    protected function forkRepositoriesPermissions()
+    {
         $params = $this->getData();
 
         if ($params['scope'] == 'project') {
@@ -453,11 +461,13 @@ class GitViews extends PluginViews {
         return new AccessRightsPresenterOptionsBuilder($user_group_factory, PermissionsManager::instance());
     }
 
-    private function getGitRepositoryFactory() {
+    private function getGitRepositoryFactory()
+    {
         return new GitRepositoryFactory(new GitDao(), ProjectManager::instance());
     }
 
-    private function fetchCopyToAnotherProject() {
+    private function fetchCopyToAnotherProject()
+    {
         $html = '';
         $userProjectOptions = $this->getUserProjectsAsOptions($this->user, ProjectManager::instance(), $this->groupId);
         if ($userProjectOptions) {
@@ -478,7 +488,8 @@ class GitViews extends PluginViews {
         return $html;
     }
 
-    public function getUserProjectsAsOptions(PFUser $user, ProjectManager $manager, $currentProjectId) {
+    public function getUserProjectsAsOptions(PFUser $user, ProjectManager $manager, $currentProjectId)
+    {
         $purifier   = Codendi_HTMLPurifier::instance();
         $html       = '';
         $option     = '<option value="%d" title="%s">%s</option>';

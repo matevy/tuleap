@@ -16,14 +16,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201206061045_create_reminder_table extends ForgeUpgrade_Bucket {
+class b201206061045_create_reminder_table extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add the table tracker_reminder in order to send mail reminders based on a date field.
 EOT;
@@ -34,7 +36,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -43,7 +46,8 @@ EOT;
      *
      * @return Void
      */
-    public function up() {
+    public function up()
+    {
         $sql = 'CREATE TABLE tracker_reminder (
                     reminder_id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
                     tracker_id INT(11) NOT NULL,
@@ -63,12 +67,10 @@ EOT;
      *
      * @return Void
      */
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('tracker_reminder')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('tracker_reminder table is missing');
         }
     }
-
 }
-
-?>

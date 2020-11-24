@@ -95,44 +95,6 @@ div.tracker-cant-delete {
     margin: 30px 0 20px;
 }
 
-#tracker-home-nav {
-    padding: 5px 1em 3px;
-    margin: 0;
-    border-bottom: 1px solid #999;
-    border-left: 1px solid #CCC;
-    border-right: 1px solid #CCC;
-    background-color: #f5f7f7;
-}
-
-#tracker-home-nav {
-    margin-top: 1em;
-    background-color: white;
-    border-left: none;
-    border-right: none;
-}
-
-#tracker-home-nav li {
-    list-style: none;
-    margin: 0;
-    display: inline;
-}
-
-#tracker-home-nav li a {
-    padding: 4px 0.5em;
-    padding-left: 24px;
-    margin-right: 3px;
-    border: 1px solid #999;
-    border-bottom: none;
-    background: #e0e0e0;
-    text-decoration: none;
-    background-position: 5px 5px;
-    background-repeat: no-repeat;
-}
-
-#tracker-home-nav li a {
-    padding-left: 0.5em;
-}
-
 .tracker_report_renderer {
     background-color: white;
     padding: 1em;
@@ -737,9 +699,22 @@ select.tracker-report-expert-allowed-fields {
         margin: 0;
         line-height: 30px;
     }
+    .header-spacer {
+        flex: 1 1 auto;
+        min-width: 20px;
+    }
+
+    .show-hide-fieldsets {
+        flex: 0 0 auto;
+        font-weight: 600;
+        font-size: 15px;
+        font-family: SourceSansPro, "Helvetica Neue", Arial, sans-serif;
+        line-height: 35px;
+    }
 }
 
 .tracker-artifact-actions {
+    line-height: 35px;
     margin: 0 0 0 10px;
     font-weight: 400;
 }
@@ -983,6 +958,10 @@ select.tracker-report-expert-allowed-fields {
     border-radius: 3px;
     margin-bottom: 20px;
     padding: 0 0 1px;
+
+    &.tracker_artifact_fieldset_hidden {
+        display: none;
+    }
 }
 
 .tracker_artifact_fieldset legend {
@@ -1611,12 +1590,14 @@ div.tracker_report_table_hide_masschange .tracker_report_table_masschange {
     display: inline;
 }
 
-#tracker_workflow_matrix .pc_check_unchecked,
+.tracker-field-dependencies-checkbox{
+    display: none;
+}
+
 #tracker_field_dependencies_matrix .pc_check_unchecked {
     background-image: url(../images/ic/bullet_grey.png);
 }
 
-#tracker_workflow_matrix .pc_check_checked,
 #tracker_field_dependencies_matrix .pc_check_checked {
     background-image: url(../images/ic/arrow-turn-090-left.png);
 }
@@ -1629,7 +1610,6 @@ div.tracker_report_table_hide_masschange .tracker_report_table_masschange {
     background-image: url(/themes/common/images/ic/bin.png);
 }
 
-.workflow_transitions,
 .workflow_rules {
     display: inline-block;
 }
@@ -1937,13 +1917,6 @@ td.first-column {
     white-space: nowrap;
     height: 100%;
     border: none;
-}
-
-.tracker-cross-search-result-actions {
-    margin: 0;
-    padding: .5em 1em;
-    border-left: 1px solid silver;
-    border-right: 1px solid silver;
 }
 
 .node-indent {
@@ -2913,6 +2886,14 @@ select[name='add_notempty_condition[]'] {
     }
 }
 
+.tracker_artifact_field-computed, .tracker_artifact_field-float, .tracker_artifact_field-int, .tracker_artifact_field-date {
+    .artifact-timeframe-helper {
+        margin: 0 0 0 3px;
+        color: #AAAAAA;
+        font-size: 11px;
+    }
+}
+
 .tracker_artifact_field-computed {
     .auto-computed {
         margin: 0 0 0 3px;
@@ -2924,7 +2905,7 @@ select[name='add_notempty_condition[]'] {
         display: block;
     }
 
-    .tracker-formelement-edit-for-modal, .tracker-formelement-edit-for-submit {
+    .tracker-formelement-edit-for-modal {
         font-size: 0.95em;
     }
 
@@ -2955,6 +2936,16 @@ select[name='add_notempty_condition[]'] {
 
     > .add-field {
         display: none;
+    }
+
+    &.with-default-value {
+        .auto-computed-for-submit {
+            display: none;
+        }
+
+        > .add-field {
+            display: block;
+        }
     }
 }
 
@@ -3077,6 +3068,10 @@ td.tracker-global-notifications-checkbox-cell {
     display: none;
 }
 
+#tracker-unsubcriber-add {
+    margin: 0 0 20px;
+}
+
 #tracker-unsubscriber-select {
     width: 100%;
 }
@@ -3165,14 +3160,6 @@ td.tracker-unsubscriber-actions {
 
 .tracker-colorpicker {
     display: inline-block;
-}
-
-.tracker-colorpicker > .colorpicker-input {
-    display: none;
-}
-
-.tracker-mail-notification-title {
-    margin: 20px 0 0;
 }
 
 .notifications-level-force-usage {
@@ -3316,4 +3303,42 @@ td.tracker-unsubscriber-actions {
 
 #tracker-action-icon {
     margin: 10px 0 0 5px;
+}
+
+.tracker-richtexteditor-help {
+    display: none;
+
+    &.shown {
+        display: block;
+    }
+}
+
+.tracker-field-dependency-highlight {
+    animation: 1s linear 0s field-dependencies-highlight-anim;
+}
+
+@keyframes field-dependencies-highlight-anim {
+    0% {
+        background: #ffff99;
+    }
+
+    100% {
+        background: #ffffff;
+    }
+}
+
+.tracker-administration-semantic-timeframe {
+    max-width: 800px;
+}
+
+.tracker-administration-semantic-timeframe-option-selector {
+    margin: 0 0 0 20px;
+}
+
+.tracker-administration-semantic-timeframe-action-buttons {
+    margin: 40px 0 0 0;
+}
+
+.tracker-administration-semantic-timeframe-option-not-required {
+    display: none;
 }

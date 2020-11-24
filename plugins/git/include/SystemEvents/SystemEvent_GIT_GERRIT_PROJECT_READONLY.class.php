@@ -21,9 +21,9 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('common/system_event/SystemEvent.class.php');
 
-class SystemEvent_GIT_GERRIT_PROJECT_READONLY extends SystemEvent {
+class SystemEvent_GIT_GERRIT_PROJECT_READONLY extends SystemEvent
+{
 
     public const NAME = 'GIT_GERRIT_PROJECT_READONLY';
 
@@ -45,14 +45,15 @@ class SystemEvent_GIT_GERRIT_PROJECT_READONLY extends SystemEvent {
     public function injectDependencies(
         GitRepositoryFactory $repository_factory,
         Git_RemoteServer_GerritServerFactory $gerrit_server_factory,
-        Git_Driver_Gerrit_GerritDriverFactory $driver_factory)
-    {
+        Git_Driver_Gerrit_GerritDriverFactory $driver_factory
+    ) {
         $this->repository_factory = $repository_factory;
         $this->server_factory     = $gerrit_server_factory;
         $this->driver_factory     = $driver_factory;
     }
 
-    public function process() {
+    public function process()
+    {
         $parameters   = $this->getParametersAsArray();
 
         if (! empty($parameters[0])) {
@@ -91,9 +92,9 @@ class SystemEvent_GIT_GERRIT_PROJECT_READONLY extends SystemEvent {
     }
 
     private function makeGerritProjectReadOnly(
-            GitRepository $repository,
-            Git_RemoteServer_GerritServer $server,
-            Project $project
+        GitRepository $repository,
+        Git_RemoteServer_GerritServer $server,
+        Project $project
     ) {
         try {
             $this->driver_factory->getDriver($server)->makeGerritProjectReadOnly($server, $project->getUnixName().'/'.$repository->getName());
@@ -106,7 +107,8 @@ class SystemEvent_GIT_GERRIT_PROJECT_READONLY extends SystemEvent {
         return true;
     }
 
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         return $this->parameters;
     }
 }

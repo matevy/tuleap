@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 const path = require("path");
 const webpack_configurator = require("../../../../tools/utils/scripts/webpack-configurator.js");
 
@@ -11,14 +30,11 @@ const webpack_config_for_create_button = {
     externals: {
         tlp: "tlp"
     },
-    resolve: {
-        alias: webpack_configurator.extendAliases(webpack_configurator.tlp_mocks_alias)
-    },
     context: path.resolve(__dirname),
     output: webpack_configurator.configureOutput(assets_dir_path),
     module: {
         rules: [
-            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_karma),
+            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11),
             webpack_configurator.rule_easygettext_loader,
             webpack_configurator.rule_vue_loader
         ]
@@ -42,26 +58,20 @@ const webpack_config = {
     resolve: {
         alias: webpack_configurator.extendAliases(
             {
-                "tuleap-pullrequest-module": path.resolve(__dirname, "./src/app/app.js"),
+                // angular-tlp
                 angular$: path.resolve(__dirname, "node_modules/angular")
             },
-            webpack_configurator.tlp_mocks_alias,
-            webpack_configurator.tuleap_core_alias,
             webpack_configurator.angular_tlp_alias
         )
     },
     module: {
         rules: [
-            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_karma),
+            webpack_configurator.configureBabelRule(webpack_configurator.babel_options_ie11),
             webpack_configurator.rule_ng_cache_loader,
             webpack_configurator.rule_angular_gettext_loader
         ]
     },
     plugins: [manifest_plugin, webpack_configurator.getMomentLocalePlugin()]
 };
-
-if (process.env.NODE_ENV === "watch") {
-    webpack_config.plugins.push(webpack_configurator.getAngularGettextPlugin());
-}
 
 module.exports = [webpack_config_for_create_button, webpack_config];

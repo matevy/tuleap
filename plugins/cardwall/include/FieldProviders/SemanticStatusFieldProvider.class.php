@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,16 +21,16 @@
 /**
  * Retrieves the semantic status field of the given artifact
  */
-class Cardwall_FieldProviders_SemanticStatusFieldRetriever implements Cardwall_FieldProviders_IProvideFieldGivenAnArtifact {
+class Cardwall_FieldProviders_SemanticStatusFieldRetriever implements Cardwall_FieldProviders_IProvideFieldGivenAnArtifact
+{
 
     /**
      * Retrieves the semantic status field of the given artifact
-     * 
-     * @return Tracker_FormElement_Field_Selectbox
+     *
+     * @return Tracker_FormElement_Field_Selectbox | null
      */
-    public function getField(Tracker $tracker) {
+    public function getField(Tracker $tracker)
+    {
         return Tracker_Semantic_StatusFactory::instance()->getByTracker($tracker)->getField();
     }
 }
-
-?>

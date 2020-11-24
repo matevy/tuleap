@@ -25,21 +25,28 @@
 namespace Tuleap\Docman\REST;
 
 use Luracast\Restler\Restler;
+use Project;
 use Tuleap\Docman\REST\v1\DocmanEmbeddedFilesResource;
+use Tuleap\Docman\REST\v1\DocmanEmptyDocumentsResource;
 use Tuleap\Docman\REST\v1\DocmanFilesResource;
 use Tuleap\Docman\REST\v1\DocmanFoldersResource;
 use Tuleap\Docman\REST\v1\DocmanItemsResource;
 use Tuleap\Docman\REST\v1\DocmanLinksResource;
 use Tuleap\Docman\REST\v1\DocmanWikiResource;
+use Tuleap\Docman\REST\v1\ProjectMetadataResource;
+use Tuleap\Docman\REST\v1\Service\DocmanServiceResource;
+use Tuleap\Project\REST\ProjectRepresentation;
+use Tuleap\Project\REST\ProjectResourceReference;
 
 class ResourcesInjector
 {
-    public const NAME          = 'docman_items';
-    public const FILES_NAME    = 'docman_files';
-    public const FOLDER_NAME   = 'docman_folders';
-    public const EMBEDDED_NAME = 'docman_embedded_files';
-    public const WIKI_NAME     = 'docman_wikis';
-    public const LINK_NAME     = 'docman_links';
+    public const NAME                = 'docman_items';
+    public const FILES_NAME          = 'docman_files';
+    public const FOLDER_NAME         = 'docman_folders';
+    public const EMBEDDED_NAME       = 'docman_embedded_files';
+    public const WIKI_NAME           = 'docman_wikis';
+    public const LINK_NAME           = 'docman_links';
+    public const EMPTY_DOCUMENT_NAME = 'docman_empty_documents';
 
     public function populate(Restler $restler)
     {
@@ -72,5 +79,28 @@ class ResourcesInjector
             DocmanLinksResource::class,
             self::LINK_NAME
         );
+
+        $restler->addAPIClass(
+            DocmanEmptyDocumentsResource::class,
+            self::EMPTY_DOCUMENT_NAME
+        );
+
+        $restler->addAPIClass(
+            ProjectMetadataResource::class,
+            ProjectRepresentation::ROUTE
+        );
+        $restler->addAPIClass(
+            DocmanServiceResource::class,
+            ProjectRepresentation::ROUTE
+        );
+    }
+
+    public static function declareProjectResources(array &$resources, Project $project) : void
+    {
+        if (! $project->usesService(\DocmanPlugin::SERVICE_SHORTNAME)) {
+            return;
+        }
+        $resources[] = (new ProjectResourceReference())->build($project, ProjectMetadataResource::RESOURCE_TYPE);
+        $resources[] = (new ProjectResourceReference())->build($project, DocmanServiceResource::RESOURCE_TYPE);
     }
 }

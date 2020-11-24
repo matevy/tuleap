@@ -22,13 +22,12 @@
 /**
  * Description of GitDriverSourceNotFoundException
  */
-class GitDriverSourceNotFoundException extends GitDriverException {
+class GitDriverSourceNotFoundException extends GitDriverException
+{
     //put your code here
 
-    public function __construct($msg) {
-        parent::__construct(__CLASS__.' : '.$msg);
+    public function __construct($msg)
+    {
+        parent::__construct(self::class.' : '.$msg);
     }
-    
 }
-
-?>

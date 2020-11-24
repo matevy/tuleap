@@ -21,7 +21,8 @@
 /**
  * Continuous integration for Git
  */
-class Git_Ci {
+class Git_Ci
+{
 
     private $_dao;
 
@@ -30,7 +31,8 @@ class Git_Ci {
      *
      * @return Git_Ci_Dao
      */
-    function getDao() {
+    function getDao()
+    {
         if (!isset($this->dao)) {
             $this->_dao = new Git_Ci_Dao();
         }
@@ -42,11 +44,13 @@ class Git_Ci {
      *
      * @return ProjectManager
      */
-    function getProjectManager() {
+    function getProjectManager()
+    {
         return ProjectManager::instance();
     }
 
-    private function getEventManager() {
+    private function getEventManager()
+    {
         return EventManager::instance();
     }
 
@@ -144,12 +148,13 @@ class Git_Ci {
     /**
      * Save a new trigger
      *
-     * @param Integer $jobId        Id of the CI job
-     * @param Integer $repositoryId Id of the repository
+     * @param int $jobId Id of the CI job
+     * @param int $repositoryId Id of the repository
      *
-     * @return Boolean
+     * @return bool
      */
-    function saveTrigger($jobId, $repositoryId) {
+    function saveTrigger($jobId, $repositoryId)
+    {
         $dar = $this->getDao()->checkRepository($jobId, $repositoryId);
         if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
             return $this->getDao()->saveTrigger($jobId, $repositoryId);
@@ -162,13 +167,12 @@ class Git_Ci {
     /**
      * Delete trigger
      *
-     * @param Integer $jobId Id of the CI job
+     * @param int $jobId Id of the CI job
      *
-     * @return Boolean
+     * @return bool
      */
-    function deleteTrigger($jobId) {
+    function deleteTrigger($jobId)
+    {
         return $this->getDao()->deleteTrigger($jobId);
     }
 }
-
-?>

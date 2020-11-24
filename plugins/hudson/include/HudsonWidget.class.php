@@ -22,19 +22,22 @@
 use Tuleap\Dashboard\Project\ProjectDashboardController;
 use Tuleap\Dashboard\User\UserDashboardController;
 
-abstract class HudsonWidget extends Widget {
+abstract class HudsonWidget extends Widget
+{
 
     /**
      * @var MinimalHudsonJobFactory
      */
     private $minimal_hudson_job_factory;
 
-    public function __construct($widget_id, MinimalHudsonJobFactory $factory) {
+    public function __construct($widget_id, MinimalHudsonJobFactory $factory)
+    {
         parent::__construct($widget_id);
         $this->minimal_hudson_job_factory = $factory;
     }
 
-    function getCategory() {
+    function getCategory()
+    {
         return dgettext('tuleap-hudson', 'Continuous integration');
     }
 
@@ -57,7 +60,8 @@ abstract class HudsonWidget extends Widget {
         );
     }
 
-    function isAjax() {
+    function isAjax()
+    {
         return true;
     }
 }

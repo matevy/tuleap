@@ -18,19 +18,23 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class b201503051029_add_restricted_mirrors extends ForgeUpgrade_Bucket {
+class b201503051029_add_restricted_mirrors extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add a plugin_git_restricted_mirrors and plugin_git_restricted_mirrors_allowed_projects tables.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $this->createTable(
             'plugin_git_restricted_mirrors',
             'CREATE TABLE IF NOT EXISTS plugin_git_restricted_mirrors (
@@ -48,7 +52,8 @@ EOT;
         );
     }
 
-    private function createTable($name, $sql) {
+    private function createTable($name, $sql)
+    {
         $this->db->createTable($name, $sql);
 
         if (! $this->db->tableNameExists($name)) {

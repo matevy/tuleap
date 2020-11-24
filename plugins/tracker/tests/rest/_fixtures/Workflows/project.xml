@@ -887,10 +887,42 @@
                     <label><![CDATA[Closed Date]]></label>
                     <properties display_time="0"/>
                 </formElement>
-                <formElement type="int" ID="F8457" rank="58824">
+                <formElement type="sb" ID="F9000" rank="4">
+                    <name>list01</name>
+                    <label><![CDATA[List 01]]></label>
+                    <bind type="static" is_rank_alpha="0">
+                        <items>
+                            <item ID="V9000" label="a" is_hidden="0"/>
+                            <item ID="V9001" label="b" is_hidden="0"/>
+                            <item ID="V9002" label="c" is_hidden="0"/>
+                        </items>
+                    </bind>
+                </formElement>
+                <formElement type="sb" ID="F9001" rank="5">
+                    <name>list02</name>
+                    <label><![CDATA[List 02]]></label>
+                    <bind type="static" is_rank_alpha="0">
+                        <items>
+                            <item ID="V9003" label="d" is_hidden="0"/>
+                            <item ID="V9004" label="e" is_hidden="0"/>
+                            <item ID="V9005" label="f" is_hidden="0"/>
+                        </items>
+                    </bind>
+                </formElement>
+                <formElement type="int" ID="F8457" rank="6">
                     <name>points</name>
                     <label><![CDATA[Points]]></label>
                     <properties size="5"/>
+                </formElement>
+                <formElement type="fieldset" ID="F9002" rank="7">
+                    <name>fieldset1</name>
+                    <label>Fieldset</label>
+                    <formElements>
+                        <formElement type="file" ID="F9003" rank="8">
+                            <name>attachment</name>
+                            <label>Attachments</label>
+                        </formElement>
+                    </formElements>
                 </formElement>
             </formElements>
             <semantics>
@@ -899,7 +931,14 @@
             </semantics>
             <rules>
                 <date_rules/>
-                <list_rules/>
+                <list_rules>
+                    <rule>
+                        <source_field REF="F9000"/>
+                        <target_field REF="F9001"/>
+                        <source_value REF="V9000"/>
+                        <target_value REF="V9005"/>
+                    </rule>
+                </list_rules>
             </rules>
             <reports>
                 <report is_default="0">
@@ -1012,6 +1051,15 @@
                 <permission scope="field" REF="F8457" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
                 <permission scope="field" REF="F8457" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
                 <permission scope="field" REF="F8457" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
+                <permission scope="field" REF="F9000" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
+                <permission scope="field" REF="F9000" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
+                <permission scope="field" REF="F9000" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
+                <permission scope="field" REF="F9001" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
+                <permission scope="field" REF="F9001" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
+                <permission scope="field" REF="F9001" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
+                <permission scope="field" REF="F9003" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
+                <permission scope="field" REF="F9003" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
+                <permission scope="field" REF="F9003" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
             </permissions>
         </tracker>
         <tracker id="T1678" parent_id="0" instantiate_for_new_projects="1">
@@ -1097,6 +1145,124 @@
                 <permission scope="field" REF="F41702" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
                 <permission scope="field" REF="F41702" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
                 <permission scope="field" REF="F41702" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
+            </permissions>
+        </tracker>
+        <tracker id="T404" parent_id="0" instantiate_for_new_projects="1">
+            <name><![CDATA[Workflow Simple Mode From XML]]></name>
+            <item_name>workflow_simple_mode_from_xml</item_name>
+            <description><![CDATA[Workflow Simple Mode From XML]]></description>
+            <color>fiesta_red</color>
+            <cannedResponses/>
+            <formElements>
+                <formElement type="sb" ID="F10000" rank="1">
+                    <name>status</name>
+                    <label><![CDATA[Status]]></label>
+                    <bind type="static" is_rank_alpha="0">
+                        <items>
+                            <item ID="V1" label="Open" is_hidden="0"/>
+                            <item ID="V2" label="Done" is_hidden="0"/>
+                            <item ID="V3" label="Closed" is_hidden="0"/>
+                        </items>
+                    </bind>
+                </formElement>
+                <formElement type="date" ID="F10001" rank="2">
+                    <name>closed_date</name>
+                    <label><![CDATA[Closed Date]]></label>
+                    <properties display_time="0"/>
+                </formElement>
+                <formElement type="int" ID="F10002" rank="3">
+                    <name>points</name>
+                    <label><![CDATA[Points]]></label>
+                    <properties size="5"/>
+                </formElement>
+                <formElement type="fieldset" ID="F10003" rank="4">
+                    <name>fieldset1</name>
+                    <label><![CDATA[Fieldset]]></label>
+                    <formElements>
+                        <formElement type="file" ID="F10004" rank="5">
+                            <name>attachment</name>
+                            <label><![CDATA[Attachments]]></label>
+                        </formElement>
+                    </formElements>
+                </formElement>
+            </formElements>
+            <semantics>
+                <semantic type="tooltip"/>
+                <semantic type="plugin_cardwall_card_fields"/>
+            </semantics>
+            <reports>
+                <report is_default="0">
+                    <name>Default</name>
+                    <description>The system default artifact report</description>
+                    <criterias/>
+                    <renderers>
+                        <renderer type="table" rank="0" chunksz="15">
+                            <name>Results</name>
+                            <columns/>
+                        </renderer>
+                    </renderers>
+                </report>
+            </reports>
+            <simple_workflow>
+                <field_id REF="F10000"/>
+                <is_used>1</is_used>
+                <states>
+                    <state>
+                        <to_id REF="V2"/>
+                        <transitions>
+                            <transition>
+                                <from_id REF="null"/>
+                            </transition>
+                            <transition>
+                                <from_id REF="V1"/>
+                            </transition>
+                        </transitions>
+                        <postactions>
+                            <postaction_field_date valuetype="2">
+                                <field_id REF="F10001"/>
+                            </postaction_field_date>
+                            <postaction_hidden_fieldsets>
+                                <fieldset_id REF="F10003"/>
+                            </postaction_hidden_fieldsets>
+                            <postaction_frozen_fields>
+                                <field_id REF="F10002"/>
+                            </postaction_frozen_fields>
+                        </postactions>
+                        <conditions>
+                            <condition type="perms">
+                                <permissions>
+                                    <permission ugroup="UGROUP_PROJECT_ADMIN"/>
+                                </permissions>
+                            </condition>
+                            <condition type="notempty">
+                                <field REF="F10002"/>
+                            </condition>
+                        </conditions>
+                    </state>
+                    <state>
+                        <to_id REF="V3"/>
+                        <transitions>
+                            <transition>
+                                <from_id REF="V2"/>
+                            </transition>
+                        </transitions>
+                    </state>
+                </states>
+            </simple_workflow>
+            <permissions>
+                <permission scope="tracker" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_ACCESS_FULL"/>
+                <permission scope="field" REF="F10000" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
+                <permission scope="field" REF="F10000" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
+                <permission scope="field" REF="F10000" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
+                <permission scope="field" REF="F10001" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
+                <permission scope="field" REF="F10001" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
+                <permission scope="field" REF="F10001" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
+                <permission scope="field" REF="F10002" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
+                <permission scope="field" REF="F10002" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
+                <permission scope="field" REF="F10002" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
+                <permission scope="field" REF="F10004" ugroup="UGROUP_ANONYMOUS" type="PLUGIN_TRACKER_FIELD_READ"/>
+                <permission scope="field" REF="F10004" ugroup="UGROUP_REGISTERED" type="PLUGIN_TRACKER_FIELD_SUBMIT"/>
+                <permission scope="field" REF="F10004" ugroup="UGROUP_PROJECT_MEMBERS" type="PLUGIN_TRACKER_FIELD_UPDATE"/>
             </permissions>
         </tracker>
     </trackers>

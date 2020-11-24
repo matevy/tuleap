@@ -20,9 +20,11 @@
  */
 require_once __DIR__.'/../../bootstrap.php';
 
-class Tracker_Report_ResultJoinerTest extends TuleapTestCase {
+class Tracker_Report_ResultJoinerTest extends TuleapTestCase
+{
 
-    public function itRemovesEntriesWhoseKeysAreNotPresentInOtherResult() {
+    public function itRemovesEntriesWhoseKeysAreNotPresentInOtherResult()
+    {
         $matching_ids = array(123 => 'whatever', 456 => 'whatever', 789 => 'whatever');
         $other_result = array(456 => 'whatever');
 
@@ -33,7 +35,8 @@ class Tracker_Report_ResultJoinerTest extends TuleapTestCase {
         $this->assertEqual($results, $expected);
     }
 
-    public function itDoesAnIntersectionWithEveryResults() {
+    public function itDoesAnIntersectionWithEveryResults()
+    {
         $matching_ids = array(123 => 'whatever', 456 => 'whatever', 789 => 'whatever');
         $other_result_1 = array(456 => 'whatever', 789 => 'whatever');
         $other_result_2 = array(456 => 'whatever');

@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Search_SearchPanePresenter {
+class Search_SearchPanePresenter
+{
 
     /** @var string */
     public $title;
@@ -37,7 +38,8 @@ class Search_SearchPanePresenter {
      * @param array $search_types
      * @param string $no_search_types
      */
-    public function __construct($title, array $search_types, $no_search_types) {
+    public function __construct($title, array $search_types, $no_search_types)
+    {
         $this->title            = $title;
         $this->search_types     = $search_types;
         $this->has_search_types = ! empty($search_types);

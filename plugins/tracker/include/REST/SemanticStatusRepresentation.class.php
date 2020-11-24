@@ -22,7 +22,8 @@ namespace Tuleap\Tracker\REST;
 
 use Tuleap\REST\JsonCast;
 
-class SemanticStatusRepresentation {
+class SemanticStatusRepresentation
+{
     /**
      * @var int
      */
@@ -33,7 +34,8 @@ class SemanticStatusRepresentation {
      */
     public $value_ids = array();
 
-    public function build($id, array $values) {
+    public function build($id, array $values)
+    {
         $this->field_id  = JsonCast::toInt($id);
         $this->value_ids = $values;
     }

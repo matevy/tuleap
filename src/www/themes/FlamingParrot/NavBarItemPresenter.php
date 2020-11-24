@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-abstract class FlamingParrot_NavBarItemPresenter {
+abstract class FlamingParrot_NavBarItemPresenter
+{
 
     public $is_link     = false;
     public $is_dropdown = false;
@@ -28,7 +29,8 @@ abstract class FlamingParrot_NavBarItemPresenter {
     public $id;
     public $is_active;
 
-    public function __construct($id, $is_active) {
+    public function __construct($id, $is_active)
+    {
         $this->id        = $id;
         $this->is_active = $is_active;
     }

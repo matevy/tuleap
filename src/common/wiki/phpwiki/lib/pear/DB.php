@@ -35,35 +35,35 @@ require_once 'PEAR.php';
  * If you add an error code here, make sure you also add a textual
  * version of it in DB::errorMessage().
  */
-define('DB_OK',                         1);
-define('DB_ERROR',                     -1);
-define('DB_ERROR_SYNTAX',              -2);
-define('DB_ERROR_CONSTRAINT',          -3);
-define('DB_ERROR_NOT_FOUND',           -4);
-define('DB_ERROR_ALREADY_EXISTS',      -5);
-define('DB_ERROR_UNSUPPORTED',         -6);
-define('DB_ERROR_MISMATCH',            -7);
-define('DB_ERROR_INVALID',             -8);
-define('DB_ERROR_NOT_CAPABLE',         -9);
-define('DB_ERROR_TRUNCATED',          -10);
-define('DB_ERROR_INVALID_NUMBER',     -11);
-define('DB_ERROR_INVALID_DATE',       -12);
-define('DB_ERROR_DIVZERO',            -13);
-define('DB_ERROR_NODBSELECTED',       -14);
-define('DB_ERROR_CANNOT_CREATE',      -15);
-define('DB_ERROR_CANNOT_DELETE',      -16);
-define('DB_ERROR_CANNOT_DROP',        -17);
-define('DB_ERROR_NOSUCHTABLE',        -18);
-define('DB_ERROR_NOSUCHFIELD',        -19);
-define('DB_ERROR_NEED_MORE_DATA',     -20);
-define('DB_ERROR_NOT_LOCKED',         -21);
+define('DB_OK', 1);
+define('DB_ERROR', -1);
+define('DB_ERROR_SYNTAX', -2);
+define('DB_ERROR_CONSTRAINT', -3);
+define('DB_ERROR_NOT_FOUND', -4);
+define('DB_ERROR_ALREADY_EXISTS', -5);
+define('DB_ERROR_UNSUPPORTED', -6);
+define('DB_ERROR_MISMATCH', -7);
+define('DB_ERROR_INVALID', -8);
+define('DB_ERROR_NOT_CAPABLE', -9);
+define('DB_ERROR_TRUNCATED', -10);
+define('DB_ERROR_INVALID_NUMBER', -11);
+define('DB_ERROR_INVALID_DATE', -12);
+define('DB_ERROR_DIVZERO', -13);
+define('DB_ERROR_NODBSELECTED', -14);
+define('DB_ERROR_CANNOT_CREATE', -15);
+define('DB_ERROR_CANNOT_DELETE', -16);
+define('DB_ERROR_CANNOT_DROP', -17);
+define('DB_ERROR_NOSUCHTABLE', -18);
+define('DB_ERROR_NOSUCHFIELD', -19);
+define('DB_ERROR_NEED_MORE_DATA', -20);
+define('DB_ERROR_NOT_LOCKED', -21);
 define('DB_ERROR_VALUE_COUNT_ON_ROW', -22);
-define('DB_ERROR_INVALID_DSN',        -23);
-define('DB_ERROR_CONNECT_FAILED',     -24);
-define('DB_ERROR_EXTENSION_NOT_FOUND',-25);
-define('DB_ERROR_ACCESS_VIOLATION',   -26);
-define('DB_ERROR_NOSUCHDB',           -27);
-define('DB_ERROR_CONSTRAINT_NOT_NULL',-29);
+define('DB_ERROR_INVALID_DSN', -23);
+define('DB_ERROR_CONNECT_FAILED', -24);
+define('DB_ERROR_EXTENSION_NOT_FOUND', -25);
+define('DB_ERROR_ACCESS_VIOLATION', -26);
+define('DB_ERROR_NOSUCHDB', -27);
+define('DB_ERROR_CONSTRAINT_NOT_NULL', -29);
 
 
 // }}}
@@ -88,7 +88,7 @@ define('DB_ERROR_CONSTRAINT_NOT_NULL',-29);
  */
 define('DB_PARAM_SCALAR', 1);
 define('DB_PARAM_OPAQUE', 2);
-define('DB_PARAM_MISC',   3);
+define('DB_PARAM_MISC', 3);
 
 
 // }}}
@@ -107,8 +107,8 @@ define('DB_PARAM_MISC',   3);
  * hex format, for example the string "123" would become "313233".
  */
 define('DB_BINMODE_PASSTHRU', 1);
-define('DB_BINMODE_RETURN',   2);
-define('DB_BINMODE_CONVERT',  3);
+define('DB_BINMODE_RETURN', 2);
+define('DB_BINMODE_CONVERT', 3);
 
 
 // }}}
@@ -146,7 +146,7 @@ define('DB_FETCHMODE_FLIPPED', 4);
 
 /* for compatibility */
 define('DB_GETMODE_ORDERED', DB_FETCHMODE_ORDERED);
-define('DB_GETMODE_ASSOC',   DB_FETCHMODE_ASSOC);
+define('DB_GETMODE_ASSOC', DB_FETCHMODE_ASSOC);
 define('DB_GETMODE_FLIPPED', DB_FETCHMODE_FLIPPED);
 
 
@@ -329,7 +329,7 @@ class DB
      *
      * @param string $query the query
      *
-     * @return boolean whether $query is a data manipulation query
+     * @return bool whether $query is a data manipulation query
      */
     public static function isManip($query)
     {
@@ -347,7 +347,7 @@ class DB
     /**
      * Return a textual error message for a DB error code
      *
-     * @param integer $value error code
+     * @param int $value error code
      *
      * @return string error message, or false if the error code was
      * not recognized
@@ -407,8 +407,8 @@ class DB
      * @param string $name the base name of the extension (without the .so or
      *                     .dll suffix)
      *
-     * @return boolean true if the extension was already or successfully
-     *                 loaded, false if it could not be loaded
+     * @return bool true if the extension was already or successfully
+ * loaded, false if it could not be loaded
      */
     function assertExtension($name)
     {
@@ -433,17 +433,20 @@ class DB_Error extends PEAR_Error
      *
      *
      * @param mixed   $code   DB error code, or string with error message.
-     * @param integer $mode   what "error mode" to operate in
-     * @param integer $level  what error level to use for $mode & PEAR_ERROR_TRIGGER
+     * @param int $mode what "error mode" to operate in
+     * @param int $level what error level to use for $mode & PEAR_ERROR_TRIGGER
      * @param mixed   $debuginfo  additional debug info, such as the last query
      *
      * @access public
      *
      * @see PEAR_Error
      */
-    function __construct($code = DB_ERROR, $mode = PEAR_ERROR_RETURN,
-              $level = E_USER_NOTICE, $debuginfo = null)
-    {
+    function __construct(
+        $code = DB_ERROR,
+        $mode = PEAR_ERROR_RETURN,
+        $level = E_USER_NOTICE,
+        $debuginfo = null
+    ) {
         if (is_int($code)) {
             parent::__construct('DB Error: ' . DB::errorMessage($code), $code, $mode, $level, $debuginfo);
         } else {
@@ -472,13 +475,13 @@ class DB_result
 
     /**
      * for limit queries, the row to start fetching
-     * @var integer
+     * @var int
      */
     var $limit_from  = null;
 
     /**
      * for limit queries, the number of rows to fetch
-     * @var integer
+     * @var int
      */
     var $limit_count = null;
 
@@ -508,9 +511,11 @@ class DB_result
     {
         switch ($key) {
             case 'limit_from':
-                $this->limit_from = $value; break;
+                $this->limit_from = $value;
+                break;
             case 'limit_count':
-                $this->limit_count = $value; break;
+                $this->limit_count = $value;
+                break;
         }
     }
 
@@ -544,7 +549,7 @@ class DB_result
      * @see DB_common::setOption(), DB_common::setFetchMode()
      * @access public
      */
-    function &fetchRow($fetchmode = DB_FETCHMODE_DEFAULT, $rownum=null)
+    function &fetchRow($fetchmode = DB_FETCHMODE_DEFAULT, $rownum = null)
     {
         if ($fetchmode === DB_FETCHMODE_DEFAULT) {
             $fetchmode = $this->fetchmode;
@@ -565,8 +570,7 @@ class DB_result
                 }
             }
             if ($this->row_counter >= (
-                    $this->limit_from + $this->limit_count))
-            {
+                    $this->limit_from + $this->limit_count)) {
                 if ($this->autofree) {
                     $this->free();
                 }
@@ -628,7 +632,7 @@ class DB_result
      * @see DB_common::setOption(), DB_common::setFetchMode()
      * @access public
      */
-    function fetchInto(&$arr, $fetchmode = DB_FETCHMODE_DEFAULT, $rownum=null)
+    function fetchInto(&$arr, $fetchmode = DB_FETCHMODE_DEFAULT, $rownum = null)
     {
         if ($fetchmode === DB_FETCHMODE_DEFAULT) {
             $fetchmode = $this->fetchmode;
@@ -649,8 +653,7 @@ class DB_result
                 }
             }
             if ($this->row_counter >= (
-                    $this->limit_from + $this->limit_count))
-            {
+                    $this->limit_from + $this->limit_count)) {
                 if ($this->autofree) {
                     $this->free();
                 }
@@ -749,7 +752,7 @@ class DB_result
 
     /**
      * returns the actual row number
-     * @return integer
+     * @return int
      */
     function getRowCounter()
     {
@@ -792,5 +795,3 @@ class DB_row
  * c-basic-offset: 4
  * End:
  */
-
-?>

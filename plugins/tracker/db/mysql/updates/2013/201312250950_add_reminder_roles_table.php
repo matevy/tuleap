@@ -16,17 +16,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201312250950_add_reminder_roles_table extends ForgeUpgrade_Bucket {
+class b201312250950_add_reminder_roles_table extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Add tracker reminder roles table and update the index';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE IF NOT EXISTS tracker_reminder_notified_roles (
                     reminder_id INT(11) UNSIGNED NOT NULL,
                     role_id TINYINT(1) UNSIGNED NOT NULL
@@ -65,10 +69,10 @@ class b201312250950_add_reminder_roles_table extends ForgeUpgrade_Bucket {
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('tracker_reminder_notified_roles')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('tracker_reminder_notified_roles');
         }
     }
 }
-?>

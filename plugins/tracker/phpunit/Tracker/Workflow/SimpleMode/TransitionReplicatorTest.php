@@ -25,8 +25,11 @@ namespace Tuleap\Tracker\Workflow\SimpleMode;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFields;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsets;
 use Tuleap\Tracker\Workflow\PostAction\PostActionsRetriever;
-use Tuleap\Tracker\Workflow\PostAction\Update\CIBuild;
+use Tuleap\Tracker\Workflow\PostAction\Update\CIBuildValue;
+use Tuleap\Tracker\Workflow\PostAction\Update\HiddenFieldsetsValue;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\PostActionsMapper;
 use Tuleap\Tracker\Workflow\PostAction\Update\PostActionCollection;
 use Tuleap\Tracker\Workflow\PostAction\Update\PostActionCollectionUpdater;
@@ -34,6 +37,7 @@ use Tuleap\Tracker\Workflow\PostAction\Update\SetDateValue;
 use Tuleap\Tracker\Workflow\PostAction\Update\SetFloatValue;
 use Tuleap\Tracker\Workflow\PostAction\Update\SetIntValue;
 use Tuleap\Tracker\Workflow\Transition\Condition\ConditionsUpdater;
+use Tuleap\Tracker\Workflow\PostAction\Update\FrozenFieldsValue;
 
 class TransitionReplicatorTest extends TestCase
 {
@@ -124,15 +128,39 @@ class TransitionReplicatorTest extends TestCase
             ->shouldReceive('getSetIntFieldValues')
             ->andReturn([$int_field]);
 
+        $frozen_fields = Mockery::mock(FrozenFields::class);
+        $frozen_fields->shouldReceive('getFieldIds')->andReturn([999]);
+        $this->post_actions_retriever
+            ->shouldReceive('getFrozenFields')
+            ->andReturn($frozen_fields);
+
+        $fieldset_01 = Mockery::mock(\Tracker_FormElement_Container_Fieldset::class);
+        $fieldset_02 = Mockery::mock(\Tracker_FormElement_Container_Fieldset::class);
+
+        $fieldset_01->shouldReceive('getID')->andReturn('648');
+        $fieldset_02->shouldReceive('getID')->andReturn('701');
+
+        $hidden_fieldsets = Mockery::mock(HiddenFieldsets::class);
+        $hidden_fieldsets->shouldReceive('getFieldsets')->andReturn([
+            $fieldset_01,
+            $fieldset_02
+        ]);
+
+        $this->post_actions_retriever
+            ->shouldReceive('getHiddenFieldsets')
+            ->andReturn($hidden_fieldsets);
+
         $this->conditions_updater
             ->shouldReceive('update')
             ->with($to_transition, ['191', '154_3'], $not_empty_ids, $is_comment_required);
         $this->post_actions_updater
             ->shouldReceive('updateByTransition', $to_transition, new PostActionCollection(
-                new CIBuild(null, 'https://example.com'),
-                new SetDateValue(null, 197, \Transition_PostAction_Field_Date::FILL_CURRENT_TIME),
-                new SetFloatValue(null, 201, 48.97),
-                new SetIntValue(null, 247, -128)
+                new CIBuildValue('https://example.com'),
+                new SetDateValue(197, \Transition_PostAction_Field_Date::FILL_CURRENT_TIME),
+                new SetFloatValue(201, 48.97),
+                new SetIntValue(247, -128),
+                new FrozenFieldsValue([999]),
+                new HiddenFieldsetsValue([648, 701])
             ));
 
         $this->transition_replicator->replicate($from_transition, $to_transition);

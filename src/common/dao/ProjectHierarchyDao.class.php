@@ -20,80 +20,85 @@
 
 require_once('include/DataAccessObject.class.php');
 
-class ProjectHierarchyDao extends DataAccessObject {
+class ProjectHierarchyDao extends DataAccessObject
+{
 
     /**
      * @param int $group_id
      * @param int $parent_group_id
-     * @return Boolean
+     * @return bool
      */
-    public function addParentProject($group_id, $parent_group_id) {
-       $group_id        = $this->da->escapeInt($group_id);
-       $parent_group_id = $this->da->escapeInt($parent_group_id);
+    public function addParentProject($group_id, $parent_group_id)
+    {
+        $group_id        = $this->da->escapeInt($group_id);
+        $parent_group_id = $this->da->escapeInt($parent_group_id);
 
-       $sql = "INSERT INTO project_parent (group_id, parent_group_id)
+        $sql = "INSERT INTO project_parent (group_id, parent_group_id)
                VALUES ($group_id, $parent_group_id)";
 
-       return $this->update($sql);
+        return $this->update($sql);
     }
 
     /**
      * @param int $group_id
      * @param int $parent_group_id
-     * @return Boolean
+     * @return bool
      */
-    public function updateParentProject($group_id, $parent_group_id) {
-       $group_id        = $this->da->escapeInt($group_id);
-       $parent_group_id = $this->da->escapeInt($parent_group_id);
+    public function updateParentProject($group_id, $parent_group_id)
+    {
+        $group_id        = $this->da->escapeInt($group_id);
+        $parent_group_id = $this->da->escapeInt($parent_group_id);
 
-       $sql = "UPDATE project_parent
+        $sql = "UPDATE project_parent
                SET parent_group_id = $parent_group_id
                WHERE group_id = $group_id";
 
-       return $this->update($sql);
+        return $this->update($sql);
     }
 
     /**
      * @param int $group_id
-     * @return Boolean
+     * @return bool
      */
-    public function removeParentProject($group_id) {
-       $group_id = $this->da->escapeInt($group_id);
+    public function removeParentProject($group_id)
+    {
+        $group_id = $this->da->escapeInt($group_id);
 
-       $sql = "DELETE FROM project_parent
+        $sql = "DELETE FROM project_parent
                WHERE group_id = $group_id";
 
-       return $this->update($sql);
+        return $this->update($sql);
     }
 
     /**
      * @param int $group_id
      * @return DataAccessResult
      */
-    public function getParentProject($group_id) {
-       $group_id = $this->da->escapeInt($group_id);
+    public function getParentProject($group_id)
+    {
+        $group_id = $this->da->escapeInt($group_id);
 
-       $sql = "SELECT groups.*
+        $sql = "SELECT groups.*
                FROM groups
                JOIN project_parent ON (groups.group_id = project_parent.parent_group_id)
                WHERE project_parent.group_id = $group_id";
 
-       return $this->retrieve($sql);
+        return $this->retrieve($sql);
     }
 
     /**
      * @param int $group_id
      * @return DataAccessResult
      */
-    public function getChildProjects($group_id) {
-       $group_id = $this->da->escapeInt($group_id);
+    public function getChildProjects($group_id)
+    {
+        $group_id = $this->da->escapeInt($group_id);
 
-       $sql = "SELECT groups.*
+        $sql = "SELECT groups.*
                FROM groups
                JOIN project_parent ON (groups.group_id = project_parent.group_id)
                WHERE project_parent.parent_group_id = $group_id";
 
-       return $this->retrieve($sql);
+        return $this->retrieve($sql);
     }
 }
-?>

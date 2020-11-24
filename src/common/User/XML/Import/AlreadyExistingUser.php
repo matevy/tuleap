@@ -23,14 +23,16 @@ use PFUser;
 use Logger;
 use UserManager;
 
-class AlreadyExistingUser extends ActionToBeTakenForUser implements ReadyToBeImportedUser {
+class AlreadyExistingUser extends ActionToBeTakenForUser implements ReadyToBeImportedUser
+{
 
     private static $ALLOWED_ACTIONS = array(ToBeActivatedUser::ACTION, ToBeMappedUser::ACTION);
 
     /** @var PFUser */
     private $user;
 
-    public function __construct(PFUser $user, $original_user_id, $original_ldap_id) {
+    public function __construct(PFUser $user, $original_user_id, $original_ldap_id)
+    {
         parent::__construct(
             $user->getUserName(),
             $user->getRealName(),
@@ -43,19 +45,23 @@ class AlreadyExistingUser extends ActionToBeTakenForUser implements ReadyToBeImp
     }
 
     /** @return array */
-    public function getCSVData() {
+    public function getCSVData()
+    {
         return array();
     }
 
-    public function isActionAllowed($action) {
+    public function isActionAllowed($action)
+    {
         return in_array($action, self::$ALLOWED_ACTIONS);
     }
 
-    public function process(UserManager $user_manager, Logger $logger) {
+    public function process(UserManager $user_manager, Logger $logger)
+    {
         $logger->info("Nothing to do for $this->username");
     }
 
-    public function getRealUser(UserManager $user_manager) {
+    public function getRealUser(UserManager $user_manager)
+    {
         return $this->user;
     }
 }

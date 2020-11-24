@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,14 +18,17 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Http\Client\Common\Plugin\CookiePlugin;
+use Http\Message\CookieJar;
+use Tuleap\Http\HttpClientFactory;
+use Tuleap\Http\HTTPFactoryBuilder;
 use Tuleap\Jenkins\JenkinsCSRFCrumbRetriever;
 
 require_once TRACKER_BASE_DIR .'/Workflow/PostAction/PostActionSubFactory.class.php';
 
-/**
- * Loads and saves CIBuild post actions
- */
-class Transition_PostAction_CIBuildFactory implements Transition_PostActionSubFactory {
+// phpcs:ignore Squiz.Classes.ValidClassName.NotCamelCaps,PSR1.Classes.ClassDeclaration.MissingNamespace
+class Transition_PostAction_CIBuildFactory implements Transition_PostActionSubFactory
+{
 
     /**
      * @var Array of available post actions classes run after fields validation
@@ -37,14 +40,16 @@ class Transition_PostAction_CIBuildFactory implements Transition_PostActionSubFa
     /** @var Transition_PostAction_CIBuildDao */
     private $dao;
 
-    public function __construct(Transition_PostAction_CIBuildDao $dao) {
+    public function __construct(Transition_PostAction_CIBuildDao $dao)
+    {
         $this->dao = $dao;
     }
 
     /**
      * @see Transition_PostActionSubFactory::addPostAction()
      */
-    public function addPostAction(Transition $transition, $requested_postaction) {
+    public function addPostAction(Transition $transition, $requested_postaction)
+    {
         $job_url = '';
         $this->dao->create($transition->getId(), $job_url);
     }
@@ -52,10 +57,11 @@ class Transition_PostAction_CIBuildFactory implements Transition_PostActionSubFa
     /**
      * @see Transition_PostActionSubFactory::loadPostActions()
      */
-    public function loadPostActions(Transition $transition) {
+    public function loadPostActions(Transition $transition)
+    {
         $post_actions = array();
 
-        foreach($this->loadPostActionRows($transition) as $row) {
+        foreach ($this->loadPostActionRows($transition) as $row) {
             $post_actions[] = $this->buildPostAction($transition, $row);
         }
 
@@ -65,21 +71,24 @@ class Transition_PostAction_CIBuildFactory implements Transition_PostActionSubFa
     /**
      * @see Transition_PostActionSubFactory::saveObject()
      */
-    public function saveObject(Transition_PostAction $post_action) {
+    public function saveObject(Transition_PostAction $post_action)
+    {
         $this->dao->create($post_action->getTransition()->getId(), $post_action->getJobUrl());
     }
 
     /**
      * @see Transition_PostActionSubFactory::duplicate()
      */
-    public function duplicate(Transition $from_transition, $to_transition_id, array $field_mapping) {
+    public function duplicate(Transition $from_transition, $to_transition_id, array $field_mapping)
+    {
         $this->dao->duplicate($from_transition->getId(), $to_transition_id);
     }
 
     /**
      * @see Transition_PostActionSubFactory::fetchPostActions()
      */
-    public function fetchPostActions() {
+    public function fetchPostActions()
+    {
         $html = '';
         $html .= '<option value="" selected>--</option>';
         $html .= '<option value="'. Transition_PostAction_CIBuild::SHORT_NAME .'">';
@@ -92,21 +101,24 @@ class Transition_PostAction_CIBuildFactory implements Transition_PostActionSubFa
     /**
      * @see Transition_PostActionSubFactory::deleteWorkflow()
      */
-    public function deleteWorkflow($workflow_id) {
+    public function deleteWorkflow($workflow_id)
+    {
         return $this->dao->deletePostActionsByWorkflowId($workflow_id);
     }
 
     /**
      * @see Transition_PostActionSubFactory::isFieldUsedInPostActions()
      */
-    public function isFieldUsedInPostActions(Tracker_FormElement_Field $field) {
+    public function isFieldUsedInPostActions(Tracker_FormElement_Field $field)
+    {
         return false;
     }
 
     /**
      * @see Transition_PostActionSubFactory::getInstanceFromXML()
      */
-    public function getInstanceFromXML($xml, &$xmlMapping, Transition $transition) {
+    public function getInstanceFromXML($xml, &$xmlMapping, Transition $transition)
+    {
         $postaction_attributes = $xml->attributes();
         $row = array(
             'id'      => 0,
@@ -126,11 +138,19 @@ class Transition_PostAction_CIBuildFactory implements Transition_PostActionSubFa
       *
       * @return Transition_PostAction
       */
-    private function buildPostAction(Transition $transition, $row) {
+    private function buildPostAction(Transition $transition, $row)
+    {
         $id                           = (int)$row['id'];
         $job_url                      = (string)$row['job_url'];
-        $jenkins_csrf_crumb_retriever = new JenkinsCSRFCrumbRetriever(new Http_Client());
-        $ci_client                    = new Jenkins_Client(new Http_Client(), $jenkins_csrf_crumb_retriever);
+        $http_client                  = HttpClientFactory::createClient(new CookiePlugin(new CookieJar()));
+        $http_request_factory         = HTTPFactoryBuilder::requestFactory();
+        $jenkins_csrf_crumb_retriever = new JenkinsCSRFCrumbRetriever($http_client, $http_request_factory);
+        $ci_client                    = new Jenkins_Client(
+            $http_client,
+            $http_request_factory,
+            HTTPFactoryBuilder::streamFactory(),
+            $jenkins_csrf_crumb_retriever
+        );
 
         return new Transition_PostAction_CIBuild($transition, $id, $job_url, $ci_client);
     }
@@ -143,7 +163,8 @@ class Transition_PostAction_CIBuildFactory implements Transition_PostActionSubFa
      *
      * @return DataAccessResult
      */
-    private function loadPostActionRows(Transition $transition) {
+    private function loadPostActionRows(Transition $transition)
+    {
         return $this->dao->searchByTransitionId($transition->getId());
     }
 }

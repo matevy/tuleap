@@ -18,28 +18,32 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Planning_ArtifactParentsSelector_SubChildrenBelongingToTrackerCommand extends Planning_ArtifactParentsSelector_Command {
+class Planning_ArtifactParentsSelector_SubChildrenBelongingToTrackerCommand extends Planning_ArtifactParentsSelector_Command
+{
 
     /**
      * @see Planning_ArtifactParentsSelector_Command
      *
      * @return array of Tracker_Artifact
      */
-    public function getPossibleParents(Tracker $parent_tracker, Tracker_Artifact $source_artifact, PFUser $user) {
+    public function getPossibleParents(Tracker $parent_tracker, Tracker_Artifact $source_artifact, PFUser $user)
+    {
         $sub_childs = $this->getSubChildrenBelongingToTracker($source_artifact, $parent_tracker, $user);
         if ($sub_childs) {
             return $sub_childs;
         }
     }
 
-    private function getSubChildrenBelongingToTracker(Tracker_Artifact $source_artifact, Tracker $expected_tracker, PFUser $user) {
+    private function getSubChildrenBelongingToTracker(Tracker_Artifact $source_artifact, Tracker $expected_tracker, PFUser $user)
+    {
         $hierarchy = $this->getParentTrackersAndStopAtGivenTracker($expected_tracker, $source_artifact->getTracker());
         if ($hierarchy) {
             return $this->recursivelyFindChildrenBelongingToTracker($source_artifact, $expected_tracker, $user, $hierarchy);
         }
     }
 
-    private function recursivelyFindChildrenBelongingToTracker(Tracker_Artifact $source_artifact, Tracker $expected_tracker, PFUser $user, array $hierarchy) {
+    private function recursivelyFindChildrenBelongingToTracker(Tracker_Artifact $source_artifact, Tracker $expected_tracker, PFUser $user, array $hierarchy)
+    {
         $artifacts = array();
         $children = $source_artifact->getLinkedArtifactsOfHierarchy($user);
         if (isset($hierarchy[$source_artifact->getId()])) {
@@ -58,7 +62,8 @@ class Planning_ArtifactParentsSelector_SubChildrenBelongingToTrackerCommand exte
         return $artifacts;
     }
 
-    private function getParentTrackersAndStopAtGivenTracker(Tracker $tracker, Tracker $stop) {
+    private function getParentTrackersAndStopAtGivenTracker(Tracker $tracker, Tracker $stop)
+    {
         $hierarchy = array();
         while (($parent = $this->hierarchy_factory->getParent($tracker)) && $parent != $stop) {
             $hierarchy[$parent->getId()] = $tracker;
@@ -70,4 +75,3 @@ class Planning_ArtifactParentsSelector_SubChildrenBelongingToTrackerCommand exte
         }
     }
 }
-?>

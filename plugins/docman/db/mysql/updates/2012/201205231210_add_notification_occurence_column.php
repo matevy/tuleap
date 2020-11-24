@@ -18,14 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201205231210_add_notification_occurence_column extends ForgeUpgrade_Bucket {
+class b201205231210_add_notification_occurence_column extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add notification_occurence column to plugin_docman_approval table
 EOT;
@@ -36,7 +38,8 @@ EOT;
      *
      * @retun Void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -45,7 +48,8 @@ EOT;
      *
      * @return Void
      */
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE plugin_docman_approval ADD COLUMN notification_occurence INT(11) DEFAULT 0 AFTER notification";
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
@@ -58,11 +62,10 @@ EOT;
      *
      * @return void
      */
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('plugin_docman_approval', 'notification_occurence')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('The column notification_occurence in table plugin_docman_approval still not created');
         }
     }
-
 }
-?>

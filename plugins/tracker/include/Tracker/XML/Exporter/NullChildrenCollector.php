@@ -18,26 +18,32 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_XML_Exporter_NullChildrenCollector extends Tracker_XML_ChildrenCollector {
+class Tracker_XML_Exporter_NullChildrenCollector extends Tracker_XML_ChildrenCollector
+{
 
     public const MAX = 50;
 
-    public function addChild($artifact_id, $parent_id) {
+    public function addChild($artifact_id, $parent_id)
+    {
     }
 
-    public function getAllChildrenIds() {
+    public function getAllChildrenIds()
+    {
         return array();
     }
 
-    public function pop() {
+    public function pop()
+    {
         return;
     }
 
-    public function getAllParents() {
+    public function getAllParents()
+    {
         return array();
     }
 
-    public function getChildrenForParent($parent_id) {
+    public function getChildrenForParent($parent_id)
+    {
         return array();
     }
 }

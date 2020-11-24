@@ -19,7 +19,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\Project\Admin\ProjectUGroup\CannotAddRestrictedUserToProjectNotAllowingRestricted;
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\DynamicUGroupMembersUpdater;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdder;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithoutStatusCheckAndNotifications;
+use Tuleap\Project\UGroups\Membership\MemberAdder;
+use Tuleap\Project\UserPermissionsDao;
 use Tuleap\User\UserGroup\NameTranslator;
 
 /**
@@ -49,6 +55,13 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
 
     public const DYNAMIC_UPPER_BOUNDARY = 100;
 
+    public const SYSTEM_USER_GROUPS = [
+        self::NONE,
+        self::ANONYMOUS,
+        self::REGISTERED,
+        self::AUTHENTICATED,
+    ];
+
     public static $legacy_ugroups = array(
         self::FILE_MANAGER_ADMIN,
         self::DOCUMENT_ADMIN,
@@ -59,13 +72,6 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         self::NEWS_ADMIN,
         self::NEWS_WRITER,
         self::SVN_ADMIN,
-    );
-
-    public static $forge_user_groups = array(
-        self::NONE,
-        self::ANONYMOUS,
-        self::REGISTERED,
-        self::AUTHENTICATED,
     );
 
     public static $normalized_names = array(
@@ -172,19 +178,6 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
     }
 
     /**
-     * Get instance of UserGroupDao
-     *
-     * @return UserGroupDao
-     */
-    protected function getUserGroupDao()
-    {
-        if (!$this->user_group_dao) {
-            $this->user_group_dao = new UserGroupDao();
-        }
-        return $this->user_group_dao;
-    }
-
-    /**
      * Get the ugroup name
      *
      * @return string
@@ -217,7 +210,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
     /**
      * Get the ugroup id
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {
@@ -263,10 +256,10 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         return $this->members;
     }
 
-    public function getMembersIncludingSuspended()
+    public function getMembersIncludingSuspendedAndDeleted()
     {
         if (! $this->members) {
-            $this->members = $this->getStaticOrDynamicMembersInludingSuspended($this->group_id);
+            $this->members = $this->getStaticOrDynamicMembersIncludingSuspendedAndDeleted($this->group_id);
         }
         return $this->members;
     }
@@ -316,13 +309,13 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         return $users;
     }
 
-    private function getStaticOrDynamicMembersInludingSuspended($group_id)
+    private function getStaticOrDynamicMembersIncludingSuspendedAndDeleted($group_id)
     {
         if ($this->is_dynamic) {
-            $dar = $this->getUGroupUserDao()->searchUserByDynamicUGroupIdIncludingSuspended($this->id, $group_id);
+            $dar = $this->getUGroupUserDao()->searchUserByDynamicUGroupIdIncludingSuspendedAndDeleted($this->id, $group_id);
             return $dar->instanciateWith(array($this, 'newUserFromIncompleteRow'));
         }
-        $dar   = $this->getUGroupUserDao()->searchUserByStaticUGroupIdIncludingSuspended($this->id);
+        $dar   = $this->getUGroupUserDao()->searchUserByStaticUGroupIdIncludingSuspendedAndDeleted($this->id);
         $users = [];
         foreach ($dar as $row) {
             $users[] = $this->newUser($row);
@@ -416,10 +409,10 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
     /**
     * Check if the ugroup exist for the given project
     *
-    * @param integer $groupId  The group id
-    * @param integer $ugroupId The ugroup id
+    * @param int $groupId The group id
+    * @param int $ugroupId The ugroup id
     *
-    * @return boolean
+    * @return bool
     */
     public function exists($groupId, $ugroupId)
     {
@@ -429,7 +422,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
     /**
      * Return project admins of given static group
      *
-     * @param integer $groupId Id of the project
+     * @param int $groupId Id of the project
      * @param array   $ugroups list of ugroups
      *
      * @return DataAccessResult|false
@@ -445,28 +438,14 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      *
      * @param PFUser $user User to add
      *
-     * @throws UGroup_Invalid_Exception
-     * @throws CannotAddRestrictedUserToProjectNotAllowingRestricted
-     *
      * @return void
+     * @throws UGroup_Invalid_Exception
+     * @throws \Tuleap\Project\UGroups\Membership\InvalidProjectException
+     * @throws \Tuleap\Project\UGroups\Membership\UserIsAnonymousException
      */
     public function addUser(PFUser $user)
     {
-        $this->assertProjectUGroupAndUserValidity($user);
-        $project = $this->getProject();
-        if ($project->getAccess() === Project::ACCESS_PRIVATE_WO_RESTRICTED && ForgeConfig::areRestrictedUsersAllowed() &&
-            $user->isRestricted()) {
-            throw new CannotAddRestrictedUserToProjectNotAllowingRestricted($user, $project);
-        }
-        if ($this->is_dynamic) {
-            $this->addUserToDynamicGroup($user);
-        } else {
-            if ($this->exists($this->group_id, $this->id)) {
-                $this->addUserToStaticGroup($this->group_id, $this->id, $user->getId());
-            } else {
-                throw new UGroup_Invalid_Exception();
-            }
-        }
+        $this->getMemberAdder()->addMember($user, $this);
     }
 
     /**
@@ -489,64 +468,24 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         }
     }
 
-    /**
-     * Add user to a static ugroup
-     *
-     * @param integer $group_id  Id of the project
-     * @param integer $ugroup_id Id of the ugroup
-     * @param integer $user_id   Id of the user
-     *
-     * @return void
-     */
-    protected function addUserToStaticGroup($group_id, $ugroup_id, $user_id)
+    private function getMemberAdder(): MemberAdder
     {
-        include_once 'www/project/admin/ugroup_utils.php';
-        ugroup_add_user_to_ugroup($group_id, $ugroup_id, $user_id);
+        return MemberAdder::build($this->getProjectMemberAdder());
     }
 
-    /**
-     * Add user to a dynamic ugroup
-     *
-     * @param PFUser $user User to add
-     *
-     * @return Void
-     */
-    protected function addUserToDynamicGroup(PFUser $user)
+    private function getDynamicUGroupMembersUpdater(): DynamicUGroupMembersUpdater
     {
-        $dao  = $this->getUserGroupDao();
-        $flag = $this->getAddFlagForUGroupId($this->id);
-        $dao->updateUserGroupFlags($user->getId(), $this->group_id, $flag);
+        return new DynamicUGroupMembersUpdater(
+            new UserPermissionsDao(),
+            new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
+            $this->getProjectMemberAdder(),
+            EventManager::instance()
+        );
     }
 
-    /**
-     * Convert a dynamic ugroup_id into it's DB table update to add someone to a given group
-     *
-     * @param integer $id Id of the ugroup
-     *
-     * @throws UGroup_Invalid_Exception
-     *
-     * @return string
-     */
-    public function getAddFlagForUGroupId($id)
+    private function getProjectMemberAdder() : ProjectMemberAdder
     {
-        switch ($id) {
-            case self::PROJECT_ADMIN:
-                return "admin_flags = 'A'";
-            case self::FILE_MANAGER_ADMIN:
-                return 'file_flags = 2';
-            case self::WIKI_ADMIN:
-                return 'wiki_flags = 2';
-            case self::SVN_ADMIN:
-                return 'svn_flags = 2';
-            case self::FORUM_ADMIN:
-                return 'forum_flags = 2';
-            case self::NEWS_ADMIN:
-                return 'news_flags = 2';
-            case self::NEWS_WRITER:
-                return 'news_flags = 1';
-            default:
-                throw new UGroup_Invalid_Exception();
-        }
+        return ProjectMemberAdderWithoutStatusCheckAndNotifications::build();
     }
 
     /**
@@ -576,72 +515,34 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
     /**
      * Remove user from static ugroup
      *
-     * @param integer $group_id  Id of the project
-     * @param integer $ugroup_id Id of the ugroup
-     * @param integer $user_id   Id of the user
+     * @param int $group_id Id of the project
+     * @param int $ugroup_id Id of the ugroup
+     * @param int $user_id Id of the user
      *
      * @return void
      */
     protected function removeUserFromStaticGroup($group_id, $ugroup_id, $user_id)
     {
-        include_once 'www/project/admin/ugroup_utils.php';
+        include_once __DIR__ . '/../../www/project/admin/ugroup_utils.php';
         ugroup_remove_user_from_ugroup($group_id, $ugroup_id, $user_id);
     }
 
-    /**
-     * Remove user from dynamic ugroup
-     *
-     * @param PFUser $user User to remove
-     *
-     * @return boolean
-     */
-    protected function removeUserFromDynamicGroup(PFUser $user)
+    protected function removeUserFromDynamicGroup(PFUser $user) : void
     {
-        $dao  = $this->getUserGroupDao();
-        if ($this->id == self::PROJECT_ADMIN &&
-            $dao->searchProjectAdminsByProjectIdExcludingOneUserId($this->group_id, $user->getId())->rowCount() === 0) {
-            throw new Exception('Impossible to remove last admin of the project');
+        $project = $this->getProject();
+        if ($project === null) {
+            return;
         }
-        $flag = $this->getRemoveFlagForUGroupId($this->id);
-        return $dao->updateUserGroupFlags($user->getId(), $this->group_id, $flag);
-    }
 
-    /**
-     * Convert a dynamic ugroup_id into it's DB table update to remove someone from given group
-     *
-     * @param integer $id Id of the ugroup
-     *
-     * @throws UGroup_Invalid_Exception
-     *
-     * @return string
-     */
-    public function getRemoveFlagForUGroupId($id)
-    {
-        switch ($id) {
-            case self::PROJECT_ADMIN:
-                return "admin_flags = ''";
-            case self::FILE_MANAGER_ADMIN:
-                return 'file_flags = 0';
-            case self::WIKI_ADMIN:
-                return 'wiki_flags = 0';
-            case self::SVN_ADMIN:
-                return 'svn_flags = 0';
-            case self::FORUM_ADMIN:
-                return 'forum_flags = 0';
-            case self::NEWS_ADMIN:
-            case self::NEWS_WRITER:
-                return 'news_flags = 0';
-            default:
-                throw new UGroup_Invalid_Exception();
-        }
+        $this->getDynamicUGroupMembersUpdater()->removeUser($project, $this, $user);
     }
 
     /**
      * Check if the user group is bound
      *
-     * @param integer $ugroupId Id of the user goup
+     * @param int $ugroupId Id of the user goup
      *
-     * @return boolean
+     * @return bool
      */
     public function isBound()
     {

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace Tuleap\Test\Psalm;
 
+use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
@@ -43,23 +44,25 @@ final class PsalmCommandLauncherWithIgnoreDirectoryTest extends TestCase
 
     public function testPsalmCommandIsCalledWithRewrittenConfig() : void
     {
-        $ignored_directory_provider = \Mockery::mock(PsalmIgnoreDirectory::class);
+        $ignored_directory_provider = Mockery::mock(PsalmIgnoreDirectory::class);
 
         $temporary_dir_for_rewritten_config = $this->tmp_dir->url() . DIRECTORY_SEPARATOR . 'conf';
         mkdir($temporary_dir_for_rewritten_config);
 
-        $shell_passthrough = function (string $command, int &$return_var) use ($temporary_dir_for_rewritten_config) {
-            $this->assertStringNotContainsString('{config_path}', $command);
-            $tmp_files = scandir($temporary_dir_for_rewritten_config, SCANDIR_SORT_DESCENDING);
-            $this->assertCount(3, $tmp_files);
+        $shell_passthrough = Mockery::mock(ShellPassthrough::class);
+        $shell_passthrough->shouldReceive('__invoke')->withArgs(
+            function (string $command) use ($temporary_dir_for_rewritten_config) : bool {
+                $this->assertStringNotContainsString('{config_path}', $command);
+                $tmp_files = scandir($temporary_dir_for_rewritten_config, SCANDIR_SORT_DESCENDING);
+                $this->assertCount(3, $tmp_files);
 
-            $this->assertXmlStringEqualsXmlString(
-                '<psalm><projectFiles><ignoreFiles><directory name="ignore1"/><directory name="ignore2"/></ignoreFiles></projectFiles></psalm>',
-                file_get_contents($temporary_dir_for_rewritten_config . DIRECTORY_SEPARATOR . $tmp_files[0])
-            );
-
-            $return_var = 147;
-        };
+                $this->assertXmlStringEqualsXmlString(
+                    '<psalm><projectFiles><ignoreFiles><directory name="ignore1"/><directory name="ignore2"/></ignoreFiles></projectFiles></psalm>',
+                    file_get_contents($temporary_dir_for_rewritten_config . DIRECTORY_SEPARATOR . $tmp_files[0])
+                );
+                return true;
+            }
+        )->andReturn(147);
 
         $command_launcher = new PsalmCommandLauncherWithIgnoreDirectory(
             $temporary_dir_for_rewritten_config,
@@ -71,22 +74,48 @@ final class PsalmCommandLauncherWithIgnoreDirectoryTest extends TestCase
         $existing_config_path = $this->tmp_dir->url() . DIRECTORY_SEPARATOR . 'psalm.xml';
         file_put_contents($existing_config_path, '<psalm/>');
 
-        $exit_code = $command_launcher->execute('init_script', $existing_config_path, './src/vendor/bin/psalm', '-c={config_path}');
+        $exit_code = $command_launcher->execute('', 'init_script', $existing_config_path, './src/vendor/bin/psalm', '-c={config_path}');
         $this->assertEquals(147, $exit_code);
         $tmp_files = scandir($temporary_dir_for_rewritten_config, SCANDIR_SORT_DESCENDING);
         $this->assertCount(2, $tmp_files);
+    }
+
+    public function testItExecutePsalmWithAnotherPhpInterpreter() : void
+    {
+        $ignored_directory_provider = Mockery::mock(PsalmIgnoreDirectory::class);
+        $ignored_directory_provider->shouldReceive('getIgnoredDirectories');
+
+        $temporary_dir_for_rewritten_config = $this->tmp_dir->url() . DIRECTORY_SEPARATOR . 'conf';
+        mkdir($temporary_dir_for_rewritten_config);
+        $existing_config_path = $this->tmp_dir->url() . DIRECTORY_SEPARATOR . 'psalm.xml';
+        file_put_contents($existing_config_path, '<psalm/>');
+
+        $shell_passthrough = Mockery::mock(ShellPassthrough::class);
+        $shell_passthrough->shouldReceive('__invoke')->withArgs(
+            function (string $command) use ($temporary_dir_for_rewritten_config) : bool {
+                return strpos($command, '/usr/bin/php73 ') === 0;
+            }
+        )->andReturn(147);
+
+        $command_launcher = new PsalmCommandLauncherWithIgnoreDirectory(
+            $temporary_dir_for_rewritten_config,
+            $ignored_directory_provider,
+            $shell_passthrough
+        );
+
+        $exit_code = $command_launcher->execute('/usr/bin/php73', 'init_script', $existing_config_path, './src/vendor/bin/psalm', '-c={config_path}');
+        $this->assertEquals(147, $exit_code);
     }
 
     public function testIncorrectCallToInitScriptIsRejected() : void
     {
         $command_launcher = new PsalmCommandLauncherWithIgnoreDirectory(
             $this->tmp_dir->url(),
-            \Mockery::mock(PsalmIgnoreDirectory::class),
-            function () {
-            }
+            Mockery::mock(PsalmIgnoreDirectory::class),
+            Mockery::mock(ShellPassthrough::class)
         );
 
-        $exit_code = $command_launcher->execute('init_script');
+        $exit_code = $command_launcher->execute('', 'init_script');
 
         $this->assertGreaterThan(0, $exit_code);
         $this->expectOutputRegex('/^Usage: init_script/');
@@ -96,14 +125,14 @@ final class PsalmCommandLauncherWithIgnoreDirectoryTest extends TestCase
     {
         $command_launcher = new PsalmCommandLauncherWithIgnoreDirectory(
             $this->tmp_dir->url(),
-            \Mockery::mock(PsalmIgnoreDirectory::class),
-            function () {
-            }
+            Mockery::mock(PsalmIgnoreDirectory::class),
+            Mockery::mock(ShellPassthrough::class)
         );
 
         $config_path = $this->tmp_dir->url() . DIRECTORY_SEPARATOR . 'not_existing_config';
 
         $exit_code = $command_launcher->execute(
+            '',
             'init_script',
             $config_path,
             './src/vendor/bin/psalm'
@@ -117,15 +146,15 @@ final class PsalmCommandLauncherWithIgnoreDirectoryTest extends TestCase
     {
         $command_launcher = new PsalmCommandLauncherWithIgnoreDirectory(
             $this->tmp_dir->url(),
-            \Mockery::mock(PsalmIgnoreDirectory::class),
-            function () {
-            }
+            Mockery::mock(PsalmIgnoreDirectory::class),
+            Mockery::mock(ShellPassthrough::class)
         );
 
         $config_path = $this->tmp_dir->url() . DIRECTORY_SEPARATOR . 'not_xml';
         file_put_contents($config_path, 'Not XML data');
 
         $exit_code = $command_launcher->execute(
+            '',
             'init_script',
             $config_path,
             './src/vendor/bin/psalm'
@@ -139,15 +168,15 @@ final class PsalmCommandLauncherWithIgnoreDirectoryTest extends TestCase
     {
         $command_launcher = new PsalmCommandLauncherWithIgnoreDirectory(
             $this->tmp_dir->url(),
-            \Mockery::mock(PsalmIgnoreDirectory::class),
-            function () {
-            }
+            Mockery::mock(PsalmIgnoreDirectory::class),
+            Mockery::mock(ShellPassthrough::class)
         );
 
         $config_path = $this->tmp_dir->url() . DIRECTORY_SEPARATOR . 'psalm.xml';
         file_put_contents($config_path, '<psalm/>');
 
         $exit_code = $command_launcher->execute(
+            '',
             'init_script',
             $config_path,
             'wrong_command'
@@ -160,9 +189,8 @@ final class PsalmCommandLauncherWithIgnoreDirectoryTest extends TestCase
     {
         $command_launcher = new PsalmCommandLauncherWithIgnoreDirectory(
             $this->tmp_dir->url(),
-            \Mockery::mock(PsalmIgnoreDirectory::class),
-            function () {
-            }
+            Mockery::mock(PsalmIgnoreDirectory::class),
+            Mockery::mock(ShellPassthrough::class)
         );
 
         $exit_code = $command_launcher->execute(

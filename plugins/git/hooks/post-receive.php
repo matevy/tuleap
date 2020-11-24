@@ -1,7 +1,7 @@
 #!/usr/share/tuleap/src/utils/php-launcher.sh
 <?php
 /**
- * Copyright Enalean (c) 2011-2019. All rights reserved.
+ * Copyright Enalean (c) 2011-Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -23,15 +23,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Http\Client\Common\Plugin\CookiePlugin;
+use Http\Message\CookieJar;
 use Tuleap\Git\Webhook\GitWebhookStatusLogger;
 use Tuleap\Http\HttpClientFactory;
 use Tuleap\Http\HTTPFactoryBuilder;
 use Tuleap\Jenkins\JenkinsCSRFCrumbRetriever;
 use Tuleap\Mail\MailFilter;
 use Tuleap\Mail\MailLogger;
+use Tuleap\Project\ProjectAccessChecker;
+use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
 
 require_once __DIR__ . '/../../../src/www/include/pre.php';
-require_once __DIR__ . '/../include/gitPlugin.class.php';
+require_once __DIR__ . '/../include/gitPlugin.php';
 
 const COUNT_THRESHOLD = 100;
 $exit_status_code     = 0;
@@ -51,7 +55,7 @@ $git_plugin                 = PluginManager::instance()->getPluginByName('git');
 $logger                     = $git_plugin->getLogger();
 $repository_path            = $argv[1];
 $git_exec                   = new Git_Exec($repository_path, $repository_path);
-$git_repository_url_manager = new Git_GitRepositoryUrlManager($git_plugin);
+$git_repository_url_manager = new Git_GitRepositoryUrlManager($git_plugin, new \Tuleap\InstanceBaseURLBuilder());
 
 $user_name = getenv('GL_USER');
 if ($user_name === false) {
@@ -59,11 +63,20 @@ if ($user_name === false) {
     $user_name         = $user_informations['name'];
 }
 
-$http_client = new Http_Client();
+$http_client          = HttpClientFactory::createClient(new CookiePlugin(new CookieJar()));
+$http_request_factory = HTTPFactoryBuilder::requestFactory();
 
 $mail_builder = new MailBuilder(
     TemplateRendererFactory::build(),
-    new MailFilter(UserManager::instance(), new URLVerification(), new MailLogger())
+    new MailFilter(
+        UserManager::instance(),
+        new ProjectAccessChecker(
+            PermissionsOverrider_PermissionsOverriderManager::instance(),
+            new RestrictedUserCanAccessProjectVerifier(),
+            EventManager::instance()
+        ),
+        new MailLogger()
+    )
 );
 
 $webhook_dao  = new \Tuleap\Git\Webhook\WebhookDao();
@@ -77,7 +90,9 @@ $post_receive = new Git_Hook_PostReceive(
     new Git_Ci_Launcher(
         new Jenkins_Client(
             $http_client,
-            new JenkinsCSRFCrumbRetriever(new Http_Client())
+            $http_request_factory,
+            HTTPFactoryBuilder::streamFactory(),
+            new JenkinsCSRFCrumbRetriever($http_client, $http_request_factory)
         ),
         new Git_Ci_Dao(),
         $logger
@@ -96,10 +111,10 @@ $post_receive = new Git_Hook_PostReceive(
     EventManager::instance(),
     new \Tuleap\Git\Webhook\WebhookRequestSender(
         new \Tuleap\Webhook\Emitter(
-                HTTPFactoryBuilder::requestFactory(),
-                HTTPFactoryBuilder::streamFactory(),
-                HttpClientFactory::createAsyncClient(),
-                new GitWebhookStatusLogger($webhook_dao)
+            HTTPFactoryBuilder::requestFactory(),
+            HTTPFactoryBuilder::streamFactory(),
+            HttpClientFactory::createAsyncClient(),
+            new GitWebhookStatusLogger($webhook_dao)
         ),
         new \Tuleap\Git\Webhook\WebhookFactory($webhook_dao),
         $logger

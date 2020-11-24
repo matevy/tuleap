@@ -19,9 +19,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('www/project/export/project_export_utils.php');
+require_once __DIR__ . '/../../www/project/export/project_export_utils.php';
 
-class Admin_ProjectListExporter {
+class Admin_ProjectListExporter
+{
 
     /**
      * @var array
@@ -37,7 +38,8 @@ class Admin_ProjectListExporter {
      * @param String  $var_return
      *
      */
-    public function exportProjectList($group_name_search, $status) {
+    public function exportProjectList($group_name_search, $status)
+    {
         $dao             = new ProjectDao();
         $result          = $dao->returnAllProjects(0, 0, $status, $group_name_search);
         $projects        = $result['projects'];
@@ -49,15 +51,16 @@ class Admin_ProjectListExporter {
      *
      * @return String
      */
-    private function buildCsvHeader() {
+    private function buildCsvHeader()
+    {
         $csv_header = "";
         $documents_title = array ('group_id'     => $GLOBALS['Language']->getText('admin_grouplist', 'id_group'),
-                                  'project_name' => $GLOBALS['Language']->getText('admin_groupedit','grp_name'),
-                                  'unix_name'    => $GLOBALS['Language']->getText('admin_groupedit','unix_grp'),
-                                  'status'       => $GLOBALS['Language']->getText('global','status'),
-                                  'type'         => $GLOBALS['Language']->getText('admin_groupedit','group_type'),
-                                  'public'       => $GLOBALS['Language']->getText('admin_groupedit','public'),
-                                  'members'      => $GLOBALS['Language']->getText('admin_grouplist','members'));
+                                  'project_name' => $GLOBALS['Language']->getText('admin_groupedit', 'grp_name'),
+                                  'unix_name'    => $GLOBALS['Language']->getText('admin_groupedit', 'unix_grp'),
+                                  'status'       => $GLOBALS['Language']->getText('global', 'status'),
+                                  'type'         => $GLOBALS['Language']->getText('admin_groupedit', 'group_type'),
+                                  'public'       => $GLOBALS['Language']->getText('admin_groupedit', 'public'),
+                                  'members'      => $GLOBALS['Language']->getText('admin_grouplist', 'members'));
         $csv_header .= build_csv_header($this->column_list, $documents_title);
         return $csv_header;
     }
@@ -69,7 +72,8 @@ class Admin_ProjectListExporter {
      *
      * @return String
      */
-    private function buildCsvBody($projects) {
+    private function buildCsvBody($projects)
+    {
         $csv_body = "";
         $daoUsers = new UserGroupDao();
         foreach ($projects as $project) {
@@ -93,7 +97,8 @@ class Admin_ProjectListExporter {
      *
      * @return String
      */
-    private function exportCsv($body) {
+    private function exportCsv($body)
+    {
         $eol = "\n";
         return $this->buildCsvHeader().$eol.$this->buildCsvBody($body);
     }
@@ -105,23 +110,24 @@ class Admin_ProjectListExporter {
      *
      * @return String
      */
-    private function getProjectStatus($status_code) {
+    private function getProjectStatus($status_code)
+    {
         $status="";
         switch ($status_code) {
             case Project::STATUS_ACTIVE:
-                $status = $GLOBALS['Language']->getText('admin_groupedit','status_A');
+                $status = $GLOBALS['Language']->getText('admin_groupedit', 'status_A');
                 break;
             case Project::STATUS_PENDING:
-                $status = $GLOBALS['Language']->getText('admin_groupedit','status_P');
+                $status = $GLOBALS['Language']->getText('admin_groupedit', 'status_P');
                 break;
             case Project::STATUS_SUSPENDED:
-                $status = $GLOBALS['Language']->getText('admin_groupedit','status_H');
+                $status = $GLOBALS['Language']->getText('admin_groupedit', 'status_H');
                 break;
             case Project::STATUS_DELETED:
-                $status = $GLOBALS['Language']->getText('admin_groupedit','status_D');
+                $status = $GLOBALS['Language']->getText('admin_groupedit', 'status_D');
                 break;
             case Project::STATUS_SYSTEM:
-                $status = $GLOBALS['Language']->getText('admin_groupedit','status_s');
+                $status = $GLOBALS['Language']->getText('admin_groupedit', 'status_s');
                 break;
         }
         return $status;

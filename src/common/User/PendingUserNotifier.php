@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -17,11 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once 'www/include/proj_email.php';
+require_once __DIR__ . '/../../www/include/proj_email.php';
 
-class User_PendingUserNotifier {
+class User_PendingUserNotifier
+{
 
-    public function notifyAdministrator(PFuser $user) {
+    public function notifyAdministrator(PFUser $user)
+    {
         $user_name  = $user->getUserName();
         $to         = ForgeConfig::get('sys_email_admin');
         if (!send_new_user_email_notification($to, $user_name)) {

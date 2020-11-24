@@ -26,5 +26,13 @@ setup_runner_account
 /usr/share/tuleap/tests/rest/bin/setup.sh
 
 if [ "$1" != "setup" ]; then
-    su -c "/usr/share/tuleap/tests/rest/bin/test_suite.sh" -l runner
+    sudo -E -u runner "/usr/share/tuleap/tests/rest/bin/test_suite.sh"
+else
+    set +x # No longer need debug, will make output below messy
+    PHPUNIT=/usr/share/tuleap/tests/rest/vendor/bin/phpunit
+    if [ -x "$PHP_CLI" ]; then
+        PHPUNIT="$PHP_CLI $PHPUNIT"
+    fi
+    echo "Run tests manually with: "
+    echo "$PHPUNIT --configuration /usr/share/tuleap/tests/rest/phpunit.xml"
 fi

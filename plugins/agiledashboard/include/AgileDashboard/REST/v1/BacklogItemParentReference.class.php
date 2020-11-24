@@ -25,9 +25,11 @@ use Tuleap\REST\JsonCast;
 use Tuleap\REST\v1\BacklogItemParentReferenceBase;
 use Tracker_Artifact;
 
-class BacklogItemParentReference extends BacklogItemParentReferenceBase {
+class BacklogItemParentReference extends BacklogItemParentReferenceBase
+{
 
-    public function build(Tracker_Artifact $backlog_item) {
+    public function build(Tracker_Artifact $backlog_item)
+    {
         $this->id    = JsonCast::toInt($backlog_item->getId());
         $this->label = $backlog_item->getTitle();
         $this->uri   = ResourceReference::NO_ROUTE;

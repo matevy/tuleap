@@ -21,7 +21,7 @@
 //
 // $Id: Pager.php,v 1.2 2004/04/26 20:44:37 rurban Exp $
 ///
-// Based on DB_Pager 0.7 from the pear.php.net repository. 
+// Based on DB_Pager 0.7 from the pear.php.net repository.
 // The only modifications made have been modification of the include paths.
 rcs_id('$Id: Pager.php,v 1.2 2004/04/26 20:44:37 rurban Exp $');
 rcs_id('From Pear CVS: Id: Pager.php,v 1.3 2002/05/12 13:59:40 cox Exp');
@@ -77,7 +77,7 @@ class DB_Pager extends PEAR
     *    and supply later to the constructor
     * @deprecated
     */
-    function __construct (&$res, $from, $limit, $numrows = null)
+    function __construct(&$res, $from, $limit, $numrows = null)
     {
         $this->res = $res;
         $this->from = $from;
@@ -114,7 +114,7 @@ class DB_Pager extends PEAR
     /**
     * @deprecated
     */
-    function fetchRow($mode=DB_FETCHMODE_DEFAULT)
+    function fetchRow($mode = DB_FETCHMODE_DEFAULT)
     {
         $this->current++;
         if ($this->current >= $this->top) {
@@ -126,7 +126,7 @@ class DB_Pager extends PEAR
     /**
     * @deprecated
     */
-    function fetchInto(&$arr, $mode=DB_FETCHMODE_DEFAULT)
+    function fetchInto(&$arr, $mode = DB_FETCHMODE_DEFAULT)
     {
         $this->current++;
         if ($this->current >= $this->top) {
@@ -174,8 +174,15 @@ class DB_Pager extends PEAR
         $from = (empty($from)) ? 0 : $from;
 
         if ($limit <= 0) {
-            return PEAR::raiseError (null, 'wrong "limit" param', null,
-                                     null, null, 'DB_Error', true);
+            return PEAR::raiseError(
+                null,
+                'wrong "limit" param',
+                null,
+                null,
+                null,
+                'DB_Error',
+                true
+            );
         }
 
         // Total number of pages
@@ -198,8 +205,15 @@ class DB_Pager extends PEAR
             }
         }
         if (!isset($data['current'])) {
-            return PEAR::raiseError (null, 'wrong "from" param', null,
-                                     null, null, 'DB_Error', true);
+            return PEAR::raiseError(
+                null,
+                'wrong "from" param',
+                null,
+                null,
+                null,
+                'DB_Error',
+                true
+            );
         }
 
         // Limit number of pages (goole algoritm)
@@ -249,4 +263,3 @@ class DB_Pager extends PEAR
         return $data;
     }
 }
-?>

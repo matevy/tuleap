@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class Git_Gitolite_Presenter_GitoliteConfPresenter {
+class Git_Gitolite_Presenter_GitoliteConfPresenter
+{
 
     /**
      * @var array
@@ -30,14 +31,16 @@ class Git_Gitolite_Presenter_GitoliteConfPresenter {
      */
     public $project_names;
 
-    public function __construct(array $project_names, array $mirrors) {
+    public function __construct(array $project_names, array $mirrors)
+    {
         $this->project_names = $project_names;
         foreach ($mirrors as $mirror) {
             $this->mirrors[] = $mirror->owner->getUserName();
         }
     }
 
-    public function has_mirror() {
+    public function has_mirror()
+    {
         return count($this->mirrors);
     }
 }

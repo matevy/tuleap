@@ -21,8 +21,9 @@
 namespace Tuleap\Tracker\REST;
 
 use Tuleap\REST\JsonCast;
-use \Tracker;
+use Tracker;
 use Tuleap\Project\REST\ProjectReference;
+use Tuleap\Tracker\REST\Tracker\PermissionsRepresentation;
 
 class CompleteTrackerRepresentation implements TrackerRepresentation
 {
@@ -45,7 +46,7 @@ class CompleteTrackerRepresentation implements TrackerRepresentation
     public $html_url;
 
     /**
-     * @var Tuleap\REST\ResourceReference
+     * @var ProjectReference
      */
     public $project;
 
@@ -80,12 +81,17 @@ class CompleteTrackerRepresentation implements TrackerRepresentation
     public $semantics = array();
 
     /**
-     * @var Tuleap\Tracker\REST\WorkflowRepresentation
+     * @var WorkflowRepresentation | null
      */
     public $workflow;
 
     /**
-     * @var Tuleap\Tracker\REST\TrackerReference
+     * @var PermissionsRepresentation | null
+     */
+    public $permissions_for_groups;
+
+    /**
+     * @var TrackerReference
      */
 
     public $parent;
@@ -96,11 +102,12 @@ class CompleteTrackerRepresentation implements TrackerRepresentation
     public $resources;
 
     /**
-     * @var array rgb
+     * @var string
      */
     public $color_name;
 
-    public function build(Tracker $tracker, array $tracker_fields, array $structure, array $semantics, ?WorkflowRepresentation $workflow = null) {
+    public function build(Tracker $tracker, array $tracker_fields, array $structure, array $semantics, ?WorkflowRepresentation $workflow = null, ?PermissionsRepresentation $permissions = null)
+    {
         $this->id          = JsonCast::toInt($tracker->getId());
         $this->uri         = self::ROUTE . '/' . $this->id;
         $this->html_url    = $tracker->getUri();
@@ -121,7 +128,8 @@ class CompleteTrackerRepresentation implements TrackerRepresentation
                 'uri'  => $this->uri .'/'. ReportRepresentation::ROUTE
             )
         );
-        $this->color_name  = $tracker->getColor();
+        $this->color_name  = $tracker->getColor()->getName();
+        $this->permissions_for_groups = $permissions;
 
         if ($tracker->getParent()) {
             $this->parent = new TrackerReference();

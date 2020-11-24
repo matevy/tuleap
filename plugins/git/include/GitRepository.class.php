@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,8 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once(dirname(__FILE__).'/../DVCS/DVCSRepository.class.php');
-require_once 'PathJoinUtil.php';
+use Tuleap\Git\PathJoinUtil;
 
 /**
  * Description of GitRepositoryclass
@@ -29,22 +28,22 @@ require_once 'PathJoinUtil.php';
 class GitRepository implements DVCSRepository
 {
     public const REPO_EXT       = '.git';
-   
+
     public const PRIVATE_ACCESS       = 'private';
     public const PUBLIC_ACCESS        = 'public';
-    
+
     public const DEFAULT_MAIL_PREFIX = '[SCM]';
     public const REPO_SCOPE_PROJECT  = 'P';
     public const REPO_SCOPE_INDIVIDUAL = 'I';
     public const DEFAULT_DESCRIPTION = "-- Default description --";
-    
+
     private $id;
     private $parentId;
     private $name;
     private $path;
     private $rootPath;
-    
-    private $project;    
+
+    private $project;
 
     private $description;
     private $isInitialized;
@@ -58,9 +57,9 @@ class GitRepository implements DVCSRepository
     private $hooks;
     private $branches;
     private $config;
-    
-    private $parent;    
-    private $loaded;    
+
+    private $parent;
+    private $loaded;
     private $dao;
     private $namespace;
     private $backup_path;
@@ -76,7 +75,8 @@ class GitRepository implements DVCSRepository
 
     protected $backendType;
 
-    public function __construct() {
+    public function __construct()
+    {
 
         $this->hash            = '';
         $this->rootPath        = '';
@@ -101,14 +101,15 @@ class GitRepository implements DVCSRepository
         $this->loaded          = false;
         $this->scope           = self::REPO_SCOPE_PROJECT;
         $this->is_mirrored     = false;
-    }       
+    }
 
     /**
      * Wrapper for tests
      *
      * @return UserManager
      */
-    function _getUserManager() {
+    function _getUserManager()
+    {
         return UserManager::instance();
     }
 
@@ -117,45 +118,48 @@ class GitRepository implements DVCSRepository
      *
      * @return ProjectManager
      */
-    function _getProjectManager() {
+    function _getProjectManager()
+    {
         return ProjectManager::instance();
     }
 
     /**
      * WARNING: this method will attempt to "Lazy load" the current object
      *          do not use it or kitten will die.
-     * 
+     *
      * @deprecated
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
-    public function exists() {
+    public function exists()
+    {
         try {
             $this->load();
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
         return true;
     }
-    
+
     /**
      * Loads data from database. Use GitRepositoryFactory instead.
-     * 
+     *
      * WARNING: this method will attempt to "Lazy load" the current object
      *          do not use it or kitten will die.
-     * 
+     *
      * @see GitRepositoryFactory
-     * 
+     *
      * @deprecated
-     * 
+     *
      */
-    public function load($force=false) {
+    public function load($force = false)
+    {
         //already loaded
-        if ( $force === false && $this->loaded === true ) {
+        if ($force === false && $this->loaded === true) {
             return true;
         }
         $id = $this->getId();
-        if ( empty($id) ) {
+        if (empty($id)) {
             $this->loaded = $this->getDao()->getProjectRepository($this);
         } else {
             $this->loaded = $this->getDao()->getProjectRepositoryById($this);
@@ -167,7 +171,8 @@ class GitRepository implements DVCSRepository
     /**
      * Save current GitRepostiroy object to the database
      */
-    public function save() {
+    public function save()
+    {
         $this->getBackend()->save($this);
     }
 
@@ -175,8 +180,9 @@ class GitRepository implements DVCSRepository
      * Allow to mock in UT
      * @return GitDao
      */
-    public function getDao() {
-        if ( empty($this->dao) ) {
+    public function getDao()
+    {
+        if (empty($this->dao)) {
             $this->dao = new GitDao();
         }
         return $this->dao;
@@ -187,83 +193,94 @@ class GitRepository implements DVCSRepository
      *
      * @param $backend
      */
-    public function setBackendType($backendType) {
+    public function setBackendType($backendType)
+    {
         $this->backendType = $backendType;
     }
 
     /** @return string */
-    public function getBackendType() {
+    public function getBackendType()
+    {
         return $this->backendType;
     }
-    
+
     /**
      * Define Backend used by repo
-     * 
+     *
      * @param $backend
      */
-    public function setBackend($backend) {
+    public function setBackend($backend)
+    {
         $this->backend = $backend;
     }
 
-                    
+
     /**
      * Allow to mock in UT
      *
      * @return Git_Backend_Interface
      */
-    public function getBackend() {
-        if ( empty($this->backend) ) {
+    public function getBackend()
+    {
+        if (empty($this->backend)) {
             /** @var GitPlugin $git_plugin */
             $git_plugin  = PluginManager::instance()->getPluginByName('git');
-            $url_manager = new Git_GitRepositoryUrlManager($git_plugin);
+            $url_manager = new Git_GitRepositoryUrlManager($git_plugin, new \Tuleap\InstanceBaseURLBuilder());
             switch ($this->getBackendType()) {
                 case GitDao::BACKEND_GITOLITE:
                     $this->backend = $git_plugin->getBackendGitolite();
                     break;
                 default:
-                    $this->backend = Backend::instance('Git','GitBackend', array($url_manager));
+                    $this->backend = Backend::instance('Git', 'GitBackend', array($url_manager));
             }
         }
         return $this->backend;
     }
-    
-    public function getPostReceiveMailManager() {
+
+    public function getPostReceiveMailManager()
+    {
         return new Git_PostReceiveMailManager();
     }
-    
-    public function setId($id) {
+
+    public function setId($id)
+    {
         $this->id = $id;
     }
 
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
-    public function hasChild() {
+    public function hasChild()
+    {
         $this->load();
         return $this->getDao()->hasChild($this);
     }
 
     /**
      * Shortcut of setParent
-     * @param Integer $id
+     * @param int $id
      */
-    public function setParentId($id) {
+    public function setParentId($id)
+    {
         $this->parentId = $id;
     }
 
     /**
      * Shortcut
-     * @return Integer
+     * @return int
      */
-    public function getParentId() {
+    public function getParentId()
+    {
         return $this->parentId;
     }
 
-    /**     
+    /**
      * @param GitRepository $parentRepository
      */
-    public function setParent($parentRepository) {
+    public function setParent($parentRepository)
+    {
         $this->parent = $parentRepository;
     }
 
@@ -272,8 +289,9 @@ class GitRepository implements DVCSRepository
      * Look into the database
      * @return GitRepository
      */
-    public function getParent() {
-        if ( empty($this->parent) ) {
+    public function getParent()
+    {
+        if (empty($this->parent)) {
             $factory = new GitRepositoryFactory($this->getDao(), $this->_getProjectManager());
             $this->parent = $factory->getRepositoryById($this->getParentId());
         }
@@ -283,26 +301,30 @@ class GitRepository implements DVCSRepository
     /**
      * @param Project $project
      */
-    public function setProject($project) {
+    public function setProject($project)
+    {
         $this->project = $project;
     }
 
     /**
      * @return Project
      */
-    public function getProject() {
+    public function getProject()
+    {
         return $this->project;
     }
 
-    public function getProjectId() {
+    public function getProjectId()
+    {
         $project = $this->getProject();
-        if ( empty($project) ) {
+        if (empty($project)) {
             return false;
         }
         return $this->getProject()->getId();
     }
 
-    public function belongsToProject(Project $project) {
+    public function belongsToProject(Project $project)
+    {
         return $this->project->getId() == $project->getID();
     }
 
@@ -312,9 +334,10 @@ class GitRepository implements DVCSRepository
      * @param String $repositoryName Name of the repository
      * @param String $projectName    Name of the project
      *
-     * @return Integer
+     * @return int
      */
-    public function getRepositoryIDByName($repositoryName, $projectName) {
+    public function getRepositoryIDByName($repositoryName, $projectName)
+    {
         $pm = $this->_getProjectManager();
         $project = $pm->getProjectByUnixName($projectName);
         $repoId = 0;
@@ -331,76 +354,84 @@ class GitRepository implements DVCSRepository
     /**
      * @param String $name
      */
-    public function setName($name) {
+    public function setName($name)
+    {
         $this->name = $name;
     }
 
     /**
      * Return repository name. Consider using getFullName instead
-     * 
+     *
      * @see GitRepository::getFullName
-     * 
+     *
      * @return String
      */
-    public function getName() {
+    public function getName()
+    {
         return $this->name;
     }
-    
+
     /**
      * Return repository namespace. Consider using getFullName instead
-     * 
+     *
      * @see GitRepository::getFullName
-     * 
+     *
      * @return String
      */
-    public function getNamespace() {
+    public function getNamespace()
+    {
         return $this->namespace;
     }
-    
-    public function setNamespace($namespace) {
+
+    public function setNamespace($namespace)
+    {
         $this->namespace = $namespace;
     }
-    
+
     /**
      * Return relative path from project repository root (without .git)
-     * 
-     * @return String
+     *
+     * @return string
      */
-    public function getFullName() {
-        return unixPathJoin(array($this->getNamespace(), $this->getName()));
+    public function getFullName()
+    {
+        return PathJoinUtil::unixPathJoin(array($this->getNamespace(), $this->getName()));
     }
-    
 
-    public function getDescription() {
+
+    public function getDescription()
+    {
         return $this->description;
     }
 
-    public function setDescription($description) {
+    public function setDescription($description)
+    {
         $this->description = $description;
-    }    
+    }
 
-    public function setIsInitialized($initialized) {
+    public function setIsInitialized($initialized)
+    {
         $this->isInitialized = $initialized;
     }
 
-    public function getIsInitialized() {
+    public function getIsInitialized()
+    {
         return $this->isInitialized;
     }
     /**
      *  Check repo status, if it is not initialized
      * @return <type>
      */
-    public function isInitialized() {
+    public function isInitialized()
+    {
         $this->load();
-        if ( $this->isInitialized == 1 ) {
+        if ($this->isInitialized == 1) {
             return true;
-        }        
-        else {
-            if ( $this->getBackend()->isInitialized($this) === true ) {
-                $this->isInitialized = 1;               
+        } else {
+            if ($this->getBackend()->isInitialized($this) === true) {
+                $this->isInitialized = 1;
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -410,39 +441,47 @@ class GitRepository implements DVCSRepository
      *
      * @return bool
      */
-    public function isCreated() {
+    public function isCreated()
+    {
         return $this->getBackend()->isCreated($this);
     }
 
-    public function setCreationDate($date) {
+    public function setCreationDate($date)
+    {
         $this->creationDate = $date;
     }
 
-    public function getCreationDate() {
+    public function getCreationDate()
+    {
         return $this->creationDate;
     }
 
-    public function setCreator($user) {
+    public function setCreator($user)
+    {
         $this->creator = $user;
     }
 
-    public function getCreator() {
+    public function getCreator()
+    {
         return $this->creator;
     }
 
-    public function getCreatorId() {
-        if ( !empty($this->creator) ) {
+    public function getCreatorId()
+    {
+        if (!empty($this->creator)) {
             return $this->creator->getId();
         }
         return 0;
     }
 
-    public function setDeletionDate($date) {        
+    public function setDeletionDate($date)
+    {
         $this->deletionDate = $date;
     }
 
-    public function getDeletionDate() {
-        if ( empty($this->deletionDate) ) {
+    public function getDeletionDate()
+    {
+        if (empty($this->deletionDate)) {
             $this->deletionDate = date('Y-m-d H:i:s');
         }
         return $this->deletionDate;
@@ -451,62 +490,68 @@ class GitRepository implements DVCSRepository
      * relative path to the repository dir (actually this is the project directory)
      * @param String $dir
      */
-    public function setRootPath($dir) {
+    public function setRootPath($dir)
+    {
         $this->rootPath = $dir;
     }
 
     /**
      * Gives the root path which is the project directory
-     * 
+     *
      * WARNING: this method will attempt to "Lazy load" the current object
      *          do not use it or kitten will die.
-     * 
+     *
      * @deprecated
-     * 
+     *
      * @return String
      */
-    public function getRootPath() {
-       if ( !$this->exists() ) {
-           $this->rootPath = $this->project->getUnixName();
-       }
-       return $this->rootPath;
+    public function getRootPath()
+    {
+        if (!$this->exists()) {
+            $this->rootPath = $this->project->getUnixName();
+        }
+        return $this->rootPath;
     }
 
     /**
      * @param String $path
      */
-    public function setPath($path) {
+    public function setPath($path)
+    {
         $this->path = $path;
     }
-    
+
     /**
      * Gives the scope of the repository
      * @return String
      */
-    public function getScope() {
+    public function getScope()
+    {
         return $this->scope;
     }
-    
+
     /**
      * @param String $scope
      */
-    public function setScope($scope){
+    public function setScope($scope)
+    {
         $this->scope = $scope;
     }
 
     /**
      * Gives the full relative path (from git root directory) to the repository. Consider using getFullName instead.
-     * 
+     *
      * @see GitRepository::getFullName
-     * 
+     *
      * @return String
      */
-    public function getPath() {
-        if ( empty($this->path) ) {
+    public function getPath()
+    {
+        if (empty($this->path)) {
             $rootPath   = $this->getRootPath();
             $name       = $this->getName();
             //can not return a bad path
-            if ( empty($rootPath) || empty($name) ) {
+            if (empty($rootPath) || empty($name)) {
                 $this->path = '';
             } else {
                 $this->path = $this->getPathFromProjectAndName($this->project, $name);
@@ -515,27 +560,30 @@ class GitRepository implements DVCSRepository
         return $this->path;
     }
 
-    public function getSSHForMirror(Git_Mirror_Mirror $mirror) {
+    public function getSSHForMirror(Git_Mirror_Mirror $mirror)
+    {
         return 'ssh://gitolite@'.$mirror->url.'/'.$this->getPath();
     }
-    
+
     /**
      * Gives the full relative path (from git root directory) to the repository.
-     * 
+     *
      * Countrary of self::getPath, this method will not attempt to load the
      * current object from the database if object is not already built from the DB.
      * It's especially useful on repository creation.
-     * 
-     * @return String 
+     *
+     * @return String
      */
-    public function getPathWithoutLazyLoading() {
+    public function getPathWithoutLazyLoading()
+    {
         if (!$this->path) {
             $this->path = $this->getPathFromProjectAndName($this->getProject(), $this->getName());
         }
         return $this->path;
     }
 
-    public static function getPathFromProjectAndName(Project $project, $name) {
+    public static function getPathFromProjectAndName(Project $project, $name)
+    {
         return $project->getUnixName().DIRECTORY_SEPARATOR.$name.self::REPO_EXT;
     }
 
@@ -544,12 +592,13 @@ class GitRepository implements DVCSRepository
      *
      * @return String
      */
-    public function getFullPath() {
+    public function getFullPath()
+    {
         $root_path = $this->getGitRootPath();
-        if(is_string($root_path) && strlen($root_path) > 0) {
+        if (is_string($root_path) && strlen($root_path) > 0) {
             $root_path = ($root_path[strlen($root_path) - 1] === DIRECTORY_SEPARATOR) ? $root_path : $root_path.DIRECTORY_SEPARATOR ;
         }
-        
+
         return $root_path . $this->getPathWithoutLazyLoading();
     }
 
@@ -558,34 +607,40 @@ class GitRepository implements DVCSRepository
      *
      * @return String
      */
-    public function getGitRootPath() {
+    public function getGitRootPath()
+    {
         return $this->getBackend()->getGitRootPath();
     }
 
-    public function getAccess() {
+    public function getAccess()
+    {
         return $this->access;
     }
 
-    public function setAccess($access) {
-        if ( $access != self::PRIVATE_ACCESS && $access != self::PUBLIC_ACCESS ) {
+    public function setAccess($access)
+    {
+        if ($access != self::PRIVATE_ACCESS && $access != self::PUBLIC_ACCESS) {
             throw new GitRepositoryException('Unknown repository access value ');
         }
         $this->access = $access;
-    }    
+    }
 
-    public function changeAccess() {
+    public function changeAccess()
+    {
         $this->getBackend()->changeRepositoryAccess($this);
     }
 
-    public function isPublic() {
-        if ( $this->access == self::PUBLIC_ACCESS ) {
+    public function isPublic()
+    {
+        if ($this->access == self::PUBLIC_ACCESS) {
             return true;
         }
         return false;
     }
 
-    public function isPrivate() {
-        if ( $this->access == self::PRIVATE_ACCESS ) {
+    public function isPrivate()
+    {
+        if ($this->access == self::PRIVATE_ACCESS) {
             return true;
         }
         return false;
@@ -596,7 +651,8 @@ class GitRepository implements DVCSRepository
      *
      * @return String
      */
-    public function getPostReceiveShowRev(Git_GitRepositoryUrlManager $url_manager) {
+    public function getPostReceiveShowRev(Git_GitRepositoryUrlManager $url_manager)
+    {
         $url  = $this->getDiffLink($url_manager, '%%H');
 
         $format = 'format:URL:    '.$url.'%%nAuthor: %%an <%%ae>%%nDate:   %%aD%%n%%n%%s%%n%%b';
@@ -609,7 +665,8 @@ class GitRepository implements DVCSRepository
         return $showrev;
     }
 
-    public function getDiffLink(Git_GitRepositoryUrlManager $url_manager, $revision_hash) {
+    public function getDiffLink(Git_GitRepositoryUrlManager $url_manager, $revision_hash)
+    {
         $url  = HTTPRequest::instance()->getServerUrl();
         $url .= $url_manager->getRepositoryBaseUrl($this);
         $url .= '?a=commitdiff&h=' . $revision_hash;
@@ -617,62 +674,72 @@ class GitRepository implements DVCSRepository
         return $url;
     }
 
-    public function getMailPrefix() {
+    public function getMailPrefix()
+    {
         return $this->mailPrefix;
     }
 
-    public function setMailPrefix($mailPrefix) {
+    public function setMailPrefix($mailPrefix)
+    {
         $this->mailPrefix = $mailPrefix;
     }
 
-    public function changeMailPrefix() {
+    public function changeMailPrefix()
+    {
         $this->getBackend()->changeRepositoryMailPrefix($this);
     }
 
-    public function loadNotifiedMails() {
+    public function loadNotifiedMails()
+    {
         $postRecMailManager = $this->getPostReceiveMailManager();
         $this->notifiedMails = $postRecMailManager->getNotificationMailsByRepositoryId($this->getId());
     }
 
-    public function setNotifiedMails($mails) {
+    public function setNotifiedMails($mails)
+    {
         $this->notifiedMails = $mails;
     }
-    
-    public function getNotifiedMails() {
+
+    public function getNotifiedMails()
+    {
         if ($this->notifiedMails === null) {
             $this->loadNotifiedMails();
         }
         return $this->notifiedMails;
     }
 
-    public function getAccessURL() {
+    public function getAccessURL()
+    {
         return $this->getBackend()->getAccessURL($this);
     }
-    
+
     /**
      * Create a reference repository
      * @deprecated to be removed when we purge gitshell creation from the code  (SystemEvent_GIT_REPO_CREATE)
      * @see GitRepositoryManager::create
      */
-    public function create() {
+    public function create()
+    {
         $this->getBackend()->createReference($this);
     }
 
     /**
      * Physically delete a repository already marked for deletion
      */
-    public function delete() {
+    public function delete()
+    {
         $this->getBackend()->delete($this);
     }
 
     /**
      * Perform logical deletion repository in DB
-     * 
+     *
      * @todo: makes deletion of repo in gitolite asynchronous
-     * 
-     * @throws GitBackendException 
+     *
+     * @throws GitBackendException
      */
-    public function markAsDeleted() {
+    public function markAsDeleted()
+    {
         if ($this->canBeDeleted()) {
             $this->forceMarkAsDeleted();
         } else {
@@ -683,7 +750,8 @@ class GitRepository implements DVCSRepository
     /**
      * Force logical deletion of repository
      */
-    public function forceMarkAsDeleted() {
+    public function forceMarkAsDeleted()
+    {
         $this->setDeletionDate(date('Y-m-d H:i:s'));
 
         $postRecMailManager = $this->getPostReceiveMailManager();
@@ -695,7 +763,8 @@ class GitRepository implements DVCSRepository
     /**
      * Rename project
      */
-    public function renameProject(Project $project, $newName) {
+    public function renameProject(Project $project, $newName)
+    {
         $newName = strtolower($newName);
         if ($this->getBackend()->renameProject($project, $newName)) {
             unset($this->backend);
@@ -709,22 +778,24 @@ class GitRepository implements DVCSRepository
 
     /**
      * Verify if the notfication is alreadyu enabled for the given mail
-     * 
+     *
      * @param String $mail
-     * @return Boolean
+     * @return bool
      */
-    public function isAlreadyNotified ($mail) {
+    public function isAlreadyNotified($mail)
+    {
         return (in_array($mail, $this->getNotifiedMails())) ;
     }
 
     /**
      * Add the @mail to the config git section and to DB
-     * 
+     *
      * @param String $mail
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
-    public function notificationAddMail($mail) {
+    public function notificationAddMail($mail)
+    {
         $this->notifiedMails[] = $mail;
         $postRecMailManager = $this->getPostReceiveMailManager();
         if ($postRecMailManager->addMail($this->getId(), $mail)) {
@@ -736,10 +807,11 @@ class GitRepository implements DVCSRepository
     /**
      * Remove the @mail from the config git section and from DB
      * @param String $mail
-     * 
-     * @return Boolean
+     *
+     * @return bool
      */
-    public function notificationRemoveMail($mail) {
+    public function notificationRemoveMail($mail)
+    {
         if (in_array($mail, $this->getNotifiedMails())) {
             $postRecMailManager = $this->getPostReceiveMailManager();
             return $postRecMailManager->removeMailByRepository($this, $mail);
@@ -752,7 +824,8 @@ class GitRepository implements DVCSRepository
      *
      * @return Array
      */
-    public function getNonMemberMails() {
+    public function getNonMemberMails()
+    {
         $mails = $this->getNotifiedMails();
         $mailsToDelete = array();
         $um = UserManager::instance();
@@ -773,9 +846,10 @@ class GitRepository implements DVCSRepository
      *
      * @param PFUser $user The user to test
      *
-     * @return Boolean
+     * @return bool
      */
-    public function userCanRead($user) {
+    public function userCanRead($user)
+    {
         return $this->getBackend()->userCanRead($user, $this);
     }
 
@@ -784,44 +858,48 @@ class GitRepository implements DVCSRepository
      *
      * @param PFUser $user The user to test
      *
-     * @return Boolean
+     * @return bool
      */
-    public function userCanAdmin($user) {
+    public function userCanAdmin($user)
+    {
         return $user->isMember($this->getProjectId(), 'A');
     }
-    
+
     /**
      * Check if path is a subpath of referencepath
      *
      * @param String $referencePath The path the repository is supposed to belong to
      * @param String $repositoryPath The path of the repository
      *
-     * @return Boolean
+     * @return bool
      */
-    public function isSubPath($referencePath, $repositoryPath) {
+    public function isSubPath($referencePath, $repositoryPath)
+    {
         if (strpos(realpath($repositoryPath), realpath($referencePath)) === 0) {
             return true;
         }
         return false;
     }
-    
+
     /**
      * Check if path contains .git at the end
      *
      * @param String $path
      *
-     * @return Boolean
+     * @return bool
      */
-    public function isDotGit($path) {
+    public function isDotGit($path)
+    {
         return (substr($path, -4) == '.git');
     }
-    
+
     /**
      * Check if repository can be deleted
      *
-     * @return Boolean
+     * @return bool
      */
-    public function canBeDeleted() {
+    public function canBeDeleted()
+    {
         if ($this->getPath() && $this->getBackend()->canBeDeleted($this)) {
             $referencePath  = $this->getBackend()->getGitRootPath().'/'.$this->getProject()->getUnixName();
             $repositoryPath = $this->getBackend()->getGitRootPath().'/'.$this->getPath();
@@ -829,7 +907,7 @@ class GitRepository implements DVCSRepository
         }
         return false;
     }
-    
+
     /**
      * Say if a repo belongs to a user
      *
@@ -837,35 +915,42 @@ class GitRepository implements DVCSRepository
      *
      * @return true if the repo is a personnal rep and if it is created by $user
      */
-    public function belongsTo(PFUser $user) {
+    public function belongsTo(PFUser $user)
+    {
         return $this->getScope() == self::REPO_SCOPE_INDIVIDUAL && $this->getCreatorId() == $user->getId();
     }
-    
-    public function canMigrateToGerrit() {
-        return $this->getBackendType() == GitDao::BACKEND_GITOLITE && 
+
+    public function canMigrateToGerrit()
+    {
+        return $this->getBackendType() == GitDao::BACKEND_GITOLITE &&
                ! $this->isMigratedToGerrit();
     }
 
-    public function setRemoteServerId($id) {
+    public function setRemoteServerId($id)
+    {
         $this->remote_server_id = $id;
     }
 
-    public function getRemoteServerId() {
+    public function getRemoteServerId()
+    {
         return $this->remote_server_id;
     }
 
-    public function isMigratedToGerrit() {
+    public function isMigratedToGerrit()
+    {
         return (
             $this->remote_server_id &&
             $this->remote_server_disconnect_date == false &&
             $this->remote_project_deletion_date == false);
     }
 
-    public function getMigrationStatus() {
+    public function getMigrationStatus()
+    {
         return $this->remote_server_migration_status;
     }
 
-    public function wasPreviouslyMigratedButNotDeleted() {
+    public function wasPreviouslyMigratedButNotDeleted()
+    {
         return (
             $this->remote_server_id &&
             $this->remote_server_disconnect_date != false &&
@@ -873,40 +958,48 @@ class GitRepository implements DVCSRepository
             ! $this->remote_project_is_deleted);
     }
 
-    public function setRemoteServerDisconnectDate($date) {
+    public function setRemoteServerDisconnectDate($date)
+    {
         $this->remote_server_disconnect_date = $date;
     }
 
-    public function setRemoteProjectDeletionDate($date) {
+    public function setRemoteProjectDeletionDate($date)
+    {
         $this->remote_project_deletion_date = $date;
     }
 
-    public function setRemoteServerMigrationStatus($status) {
+    public function setRemoteServerMigrationStatus($status)
+    {
         $this->remote_server_migration_status = $status;
     }
 
     /**
      * @return string html <a href="/path/to/repo">repo/name</a>
      */
-    public function getHTMLLink(Git_GitRepositoryUrlManager $url_manager) {
+    public function getHTMLLink(Git_GitRepositoryUrlManager $url_manager)
+    {
         $href  = $url_manager->getRepositoryBaseUrl($this);
         $label = $this->getName();
         return '<a href="'. $href .'">'. $label .'</a>';
     }
 
-    public function setIsMirrored($is_mirrored) {
+    public function setIsMirrored($is_mirrored)
+    {
         $this->is_mirrored = (boolean)$is_mirrored;
     }
 
-    public function getIsMirrored() {
+    public function getIsMirrored()
+    {
         return $this->is_mirrored;
     }
 
-    public function getBackupPath() {
+    public function getBackupPath()
+    {
         return $this->backup_path;
     }
 
-    public function setBackupPath($path) {
+    public function setBackupPath($path)
+    {
         $this->backup_path = $path;
     }
 

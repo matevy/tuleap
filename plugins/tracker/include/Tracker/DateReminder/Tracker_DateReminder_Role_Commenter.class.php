@@ -16,7 +16,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_DateReminder_Role_Commenter implements Tracker_DateReminder_Role {
+class Tracker_DateReminder_Role_Commenter implements Tracker_DateReminder_Role
+{
 
     public const IDENTIFIER = "3";
     /**
@@ -24,7 +25,8 @@ class Tracker_DateReminder_Role_Commenter implements Tracker_DateReminder_Role {
      *
      * @return String
      */
-    public function getIdentifier() {
+    public function getIdentifier()
+    {
         return self::IDENTIFIER;
     }
 
@@ -33,8 +35,9 @@ class Tracker_DateReminder_Role_Commenter implements Tracker_DateReminder_Role {
      *
      * @return String
      */
-    function getLabel() {
-        return $GLOBALS['Language']->getText('plugin_tracker_date_reminder','role_COMMENTER');
+    function getLabel()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'role_COMMENTER');
     }
 
     /**
@@ -44,7 +47,8 @@ class Tracker_DateReminder_Role_Commenter implements Tracker_DateReminder_Role {
      *
      * @return Array of PFUser
      */
-    function getRecipientsFromArtifact(Tracker_Artifact $artifact) {
+    function getRecipientsFromArtifact(Tracker_Artifact $artifact)
+    {
         $recipients   = array();
         $userManager  = $artifact->getUserManager();
         $recipientIds = $artifact->getCommentators();
@@ -57,4 +61,3 @@ class Tracker_DateReminder_Role_Commenter implements Tracker_DateReminder_Role {
         return $recipients;
     }
 }
-?>

@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Search_SearchPeopleResultPresenter {
+class Search_SearchPeopleResultPresenter
+{
 
     /** @var  string */
     private $user_name;
@@ -30,26 +31,30 @@ class Search_SearchPeopleResultPresenter {
     private $avatar;
 
 
-    public function __construct(PFUser $user) {
+    public function __construct(PFUser $user)
+    {
         $this->user_name = $user->getUserName();
         $this->real_name = $user->getRealName();
         $this->avatar    = $user->getAvatarUrl();
     }
 
-    public function user_name() {
+    public function user_name()
+    {
         return $this->user_name;
     }
 
-    public function real_name() {
+    public function real_name()
+    {
         return $this->real_name;
     }
 
-    public function user_uri() {
+    public function user_uri()
+    {
         return '/users/' . $this->user_name;
     }
 
-    public function avatar() {
+    public function avatar()
+    {
         return $this->avatar;
     }
-
 }

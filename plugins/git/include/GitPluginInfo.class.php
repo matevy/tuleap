@@ -18,19 +18,15 @@
   * along with Codendi. If not, see <http://www.gnu.org/licenses/
   */
 
-require_once('common/plugin/PluginFileInfo.class.php');
-
-
 /**
  * GitPluginInfo
  */
-class GitPluginInfo extends PluginFileInfo {
-    
-    public function __construct( $plugin ) {
-        parent::__construct($plugin, 'config');      
-        $this->setPluginDescriptor( new GitPluginDescriptor() );
+class GitPluginInfo extends PluginFileInfo
+{
 
+    public function __construct($plugin)
+    {
+        parent::__construct($plugin, 'config');
+        $this->setPluginDescriptor(new GitPluginDescriptor());
     }
-    
 }
-?>

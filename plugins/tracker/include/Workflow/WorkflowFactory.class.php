@@ -19,10 +19,15 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Rule\TrackerRulesDateValidator;
+use Tuleap\Tracker\Rule\TrackerRulesListValidator;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
+use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
+use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
 use Tuleap\Tracker\Workflow\WorkflowBackendLogger;
+use Tuleap\Tracker\Workflow\WorkflowRulesManagerLoopSafeGuard;
 
-class WorkflowFactory //phpcs:ignoreFile
+class WorkflowFactory // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
 
     /** @var TransitionFactory */
@@ -42,6 +47,10 @@ class WorkflowFactory //phpcs:ignoreFile
 
     /** @var FrozenFieldsDao */
     private $read_only_dao;
+    /**
+     * @var StateFactory
+     */
+    private $state_factory;
 
     /**
      * Should use the singleton instance()
@@ -54,7 +63,8 @@ class WorkflowFactory //phpcs:ignoreFile
         Tracker_FormElementFactory $formelement_factory,
         Tracker_Workflow_Trigger_RulesManager $trigger_rules_manager,
         WorkflowBackendLogger $logger,
-        FrozenFieldsDao $read_only_dao
+        FrozenFieldsDao $read_only_dao,
+        StateFactory $state_factory
     ) {
         $this->transition_factory    = $transition_factory;
         $this->tracker_factory       = $tracker_factory;
@@ -62,12 +72,13 @@ class WorkflowFactory //phpcs:ignoreFile
         $this->trigger_rules_manager = $trigger_rules_manager;
         $this->logger                = $logger;
         $this->read_only_dao         = $read_only_dao;
+        $this->state_factory         = $state_factory;
     }
 
     /**
      * Hold an instance of the class
      */
-    protected static $_instance;
+    protected static $_instance; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
     public static function setInstance($instance)
     {
@@ -98,17 +109,22 @@ class WorkflowFactory //phpcs:ignoreFile
                     $logger
                 ),
                 $logger,
-                new Tracker_Workflow_Trigger_RulesBuilderFactory($formelement_factory)
+                new Tracker_Workflow_Trigger_RulesBuilderFactory($formelement_factory),
+                new WorkflowRulesManagerLoopSafeGuard($logger)
             );
 
-            $c = __CLASS__;
+            $c = self::class;
             self::$_instance = new $c(
                 TransitionFactory::instance(),
                 TrackerFactory::instance(),
                 $formelement_factory,
                 $trigger_rules_manager,
                 $logger,
-                new FrozenFieldsDao()
+                new FrozenFieldsDao(),
+                new StateFactory(
+                    TransitionFactory::instance(),
+                    new SimpleWorkflowDao()
+                )
             );
         }
         return self::$_instance;
@@ -222,22 +238,6 @@ class WorkflowFactory //phpcs:ignoreFile
     }
 
     /**
-     * Add a transition
-     *
-     * @param int $workflow_id The workflow id
-     * @param string $transition the transition to insert
-     *
-     * @return int the id of the transition. False if error
-     */
-    public function addTransition($workflow_id, $transition)
-    {
-        $values = explode("_", $transition);
-        $from = $values[0];
-        $to = $values[1];
-        return $this->getTransitionDao()->addTransition($workflow_id, $from, $to);
-    }
-
-    /**
      * Get a transition id
      *
      * @param int $workflow_id The workflow id
@@ -251,34 +251,6 @@ class WorkflowFactory //phpcs:ignoreFile
         $from = $values[0];
         $to = $values[1];
         return $this->getTransitionDao()->searchTransitionId($workflow_id, $from, $to);
-    }
-
-    /**
-     * Get a workflow id
-     *
-     * @param int transition_id
-     *
-     * @return int the id of the workflow. False if error
-     */
-    public function getWorkflowId($transition_id)
-    {
-        return $this->getTransitionDao()->getWorkflowId($transition_id);
-    }
-
-    /**
-     * Delete a transition
-     *
-     * @param int $workflow_id The workflow id
-     * @param string $from the transition to insert
-     * @param string $to the transition to insert
-     */
-    public function deleteTransition($workflow_id, $from, $to)
-    {
-        if ($from == null) {
-            return $this->getTransitionDao()->deleteTransition($workflow_id, null, $to->getId());
-        } else {
-            return $this->getTransitionDao()->deleteTransition($workflow_id, $from->getId(), $to->getId());
-        }
     }
 
     protected $cache_workflowfield;
@@ -339,18 +311,6 @@ class WorkflowFactory //phpcs:ignoreFile
     }
 
     /**
-     *Get the transition_id
-     * @param int the id of the field_value_from
-     * @param int the id of the field_value_to
-     *
-     * @return int the transition_id
-     */
-    public function getTransitionIdFromTo($workflow_id, $field_value_from, $field_value_to)
-    {
-        return $this->getTransitionDao()->getTransitionId($workflow_id, $field_value_from, $field_value_to);
-    }
-
-    /**
      * Duplicate the workflow
      *
      * @param $from_tracker_id the template tracker id
@@ -382,21 +342,19 @@ class WorkflowFactory //phpcs:ignoreFile
      * Creates a workflow Object
      *
      * @param SimpleXMLElement $xml containing the structure of the imported workflow
-     * @param array            &$xmlMapping containig the newly created formElements idexed by their XML IDs
+     * @param array            &$xml_mapping containig the newly created formElements idexed by their XML IDs
      * @param Tracker $tracker to which the workflow is attached
      *
      * @return Workflow The workflow object, or null if error
      */
-    public function getInstanceFromXML($xml, &$xmlMapping, Tracker $tracker, Project $project)
+    public function getInstanceFromXML(SimpleXMLElement $xml, array &$xml_mapping, Tracker $tracker, Project $project)
     {
-        $xml_field_id = $xml->field_id;
-        $xml_field_attributes = $xml_field_id->attributes();
-        $field = $xmlMapping[(string)$xml_field_attributes['REF']];
+        $workflow_field = $this->getWorkflowField($xml, $xml_mapping);
 
         $transitions = array();
         foreach ($xml->transitions->transition as $t) {
             $tf = $this->transition_factory;
-            $transitions[] = $tf->getInstanceFromXML($t, $xmlMapping, $project);
+            $transitions[] = $tf->getInstanceFromXML($t, $xml_mapping, $project);
         }
 
         $workflow = new Workflow(
@@ -411,9 +369,57 @@ class WorkflowFactory //phpcs:ignoreFile
             false,
             $transitions
         );
+        if ($workflow_field) {
+            $workflow->setField($workflow_field);
+        }
 
-        $workflow->setField($field);
         return $workflow;
+    }
+
+    public function getSimpleInstanceFromXML(
+        SimpleXMLElement $xml,
+        array &$xml_mapping,
+        Tracker $tracker,
+        Project $project
+    ) {
+        $workflow_field = $this->getWorkflowField($xml, $xml_mapping);
+        $transitions    = [];
+
+        foreach ($xml->states->state as $state_xml) {
+            $state = $this->state_factory->getInstanceFromXML($state_xml, $xml_mapping, $project);
+            $transitions = array_merge(
+                $transitions,
+                $state->getTransitions()
+            );
+        }
+
+        $workflow = new Workflow(
+            $this->getGlobalRulesManager($tracker),
+            $this->trigger_rules_manager,
+            $this->logger,
+            0, // not available yet
+            $tracker->getId(),
+            0, // not available yet
+            (string)$xml->is_used,
+            false,
+            false,
+            $transitions
+        );
+
+        $workflow->setField($workflow_field);
+        return $workflow;
+    }
+
+    private function getWorkflowField(SimpleXMLElement $xml, array $xml_mapping)
+    {
+        $xml_field_id = $xml->field_id;
+        $xml_field_attributes = $xml_field_id->attributes();
+        if (! isset($xml_mapping[(string)$xml_field_attributes['REF']])) {
+            return null;
+        }
+        $field = $xml_mapping[(string)$xml_field_attributes['REF']];
+
+        return $field;
     }
 
     /**
@@ -445,7 +451,14 @@ class WorkflowFactory //phpcs:ignoreFile
 
     public function getGlobalRulesManager(Tracker $tracker)
     {
-        return new Tracker_RulesManager($tracker, $this->formelement_factory, $this->read_only_dao);
+        return new Tracker_RulesManager(
+            $tracker,
+            $this->formelement_factory,
+            $this->read_only_dao,
+            new TrackerRulesListValidator($this->formelement_factory),
+            new TrackerRulesDateValidator($this->formelement_factory),
+            $this->tracker_factory
+        );
     }
 
     /**

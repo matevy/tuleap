@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,11 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-//phpcs:ignoreFile
-
 use Tuleap\Tracker\Workflow\Transition\Condition\CannotCreateTransitionException;
 
-class Workflow_Transition_ConditionFactory {
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+class Workflow_Transition_ConditionFactory
+{
 
     /** @var Workflow_Transition_Condition_CommentNotEmpty_Factory */
     private $commentnotempty_factory;
@@ -49,7 +49,8 @@ class Workflow_Transition_ConditionFactory {
     /**
      * @return Workflow_Transition_ConditionFactory
      */
-    public static function build() {
+    public static function build()
+    {
         return new Workflow_Transition_ConditionFactory(
             new Workflow_Transition_Condition_Permissions_Factory(new UGroupManager()),
             new Workflow_Transition_Condition_FieldNotEmpty_Factory(
@@ -63,7 +64,8 @@ class Workflow_Transition_ConditionFactory {
     }
 
     /** @return bool */
-    public function isFieldUsedInConditions(Tracker_FormElement_Field $field) {
+    public function isFieldUsedInConditions(Tracker_FormElement_Field $field)
+    {
         return $this->fieldnotempty_factory->isFieldUsedInConditions($field);
     }
 
@@ -71,11 +73,17 @@ class Workflow_Transition_ConditionFactory {
      * @deprecated use get*Condition methods
      * @return Workflow_Transition_ConditionsCollection
      */
-    public function getConditions(Transition $transition) {
+    public function getConditions(Transition $transition)
+    {
         $collection = new Workflow_Transition_ConditionsCollection();
         $collection->add(new Workflow_Transition_Condition_Permissions($transition));
         $collection->add($this->fieldnotempty_factory->getFieldNotEmpty($transition));
-        $collection->add($this->commentnotempty_factory->getCommentNotEmpty($transition));
+        $collection->add(
+            $this->formatCommentNotEmptyCondition(
+                $this->commentnotempty_factory->getCommentNotEmpty($transition),
+                $transition
+            )
+        );
 
         return $collection;
     }
@@ -99,9 +107,27 @@ class Workflow_Transition_ConditionFactory {
     /**
      * @return Workflow_Transition_Condition_CommentNotEmpty
      */
-    public function getCommentNotEmptyCondition(Transition $transition)
+    public function getCommentNotEmptyCondition(Transition $transition) : Workflow_Transition_Condition_CommentNotEmpty
     {
-        return $this->commentnotempty_factory->getCommentNotEmpty($transition);
+        return $this->formatCommentNotEmptyCondition(
+            $this->commentnotempty_factory->getCommentNotEmpty($transition),
+            $transition
+        );
+    }
+
+    private function formatCommentNotEmptyCondition(
+        ?Workflow_Transition_Condition_CommentNotEmpty $condition,
+        Transition $transition
+    ) : Workflow_Transition_Condition_CommentNotEmpty {
+        if ($condition === null) {
+            return new Workflow_Transition_Condition_CommentNotEmpty(
+                $transition,
+                $this->getCommentNotEmptyDao(),
+                false
+            );
+        }
+
+        return $condition;
     }
 
     /**
@@ -118,17 +144,17 @@ class Workflow_Transition_ConditionFactory {
         }
 
         if ($transition->getIdFrom() !== '') {
-            if (! $this->getCommentNotEmptyDao()->create($transition->getId(), $is_comment_required)) {
-                throw new CannotCreateTransitionException();
-            }
+            $this->getCommentNotEmptyDao()->create($transition->getId(), $is_comment_required);
         }
     }
 
-    private function getFieldNotEmptyDao() {
+    private function getFieldNotEmptyDao()
+    {
         return new Workflow_Transition_Condition_FieldNotEmpty_Dao();
     }
 
-    private function getCommentNotEmptyDao() {
+    private function getCommentNotEmptyDao()
+    {
         return new Workflow_Transition_Condition_CommentNotEmpty_Dao();
     }
 
@@ -137,7 +163,8 @@ class Workflow_Transition_ConditionFactory {
      *
      * @return Workflow_Transition_ConditionsCollection
      */
-    public function getAllInstancesFromXML($xml, &$xmlMapping, Transition $transition, Project $project) {
+    public function getAllInstancesFromXML($xml, &$xmlMapping, Transition $transition, Project $project)
+    {
         $conditions = new Workflow_Transition_ConditionsCollection();
         if ($this->isLegacyXML($xml)) {
             if ($xml->permissions) {
@@ -148,7 +175,7 @@ class Workflow_Transition_ConditionFactory {
                     $project
                 ));
             }
-        } else if ($xml->conditions) {
+        } elseif ($xml->conditions) {
             foreach ($xml->conditions->condition as $xml_condition) {
                 $conditions->add($this->getInstanceFromXML(
                     $xml_condition,
@@ -169,7 +196,8 @@ class Workflow_Transition_ConditionFactory {
      *
      * @return Workflow_Transition_Condition The condition object, or null if error
      */
-    private function getInstanceFromXML($xml, &$xmlMapping, Transition $transition, Project $project) {
+    private function getInstanceFromXML($xml, &$xmlMapping, Transition $transition, Project $project)
+    {
         $type      = (string)$xml['type'];
         $condition = null;
         switch ($type) {
@@ -182,7 +210,10 @@ class Workflow_Transition_ConditionFactory {
                 $condition = $this->fieldnotempty_factory->getInstanceFromXML($xml, $xmlMapping, $transition);
                 break;
             case 'commentnotempty':
-                $condition = $this->commentnotempty_factory->getInstanceFromXML($xml, $xmlMapping, $transition);
+                $condition = $this->formatCommentNotEmptyCondition(
+                    $this->commentnotempty_factory->getInstanceFromXML($xml, $transition),
+                    $transition
+                );
                 break;
         }
         return $condition;
@@ -217,14 +248,16 @@ class Workflow_Transition_ConditionFactory {
      *
      * @return bool
      */
-    private function isLegacyXML(SimpleXMLElement $xml) {
+    private function isLegacyXML(SimpleXMLElement $xml)
+    {
         return isset($xml->permissions);
     }
 
     /**
      * Duplicate the conditions
      */
-    public function duplicate(Transition $from_transition, $new_transition_id, $field_mapping, $ugroup_mapping, $duplicate_type) {
+    public function duplicate(Transition $from_transition, $new_transition_id, $field_mapping, $ugroup_mapping, $duplicate_type)
+    {
         $this->permissions_factory->duplicate($from_transition, $new_transition_id, $field_mapping, $ugroup_mapping, $duplicate_type);
         $this->fieldnotempty_factory->duplicate($from_transition, $new_transition_id, $field_mapping, $ugroup_mapping, $duplicate_type);
         $this->commentnotempty_factory->duplicate($from_transition, $new_transition_id, $field_mapping, $ugroup_mapping, $duplicate_type);

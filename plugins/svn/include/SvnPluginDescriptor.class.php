@@ -18,12 +18,14 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class SvnPluginDescriptor extends PluginDescriptor {
-    public function __construct() {
+class SvnPluginDescriptor extends PluginDescriptor
+{
+    public function __construct()
+    {
         parent::__construct(
-            $GLOBALS['Language']->getText('plugin_svn', 'descriptor_name'),
+            dgettext('tuleap-svn', 'SVN with multiple repositories'),
             false,
-            $GLOBALS['Language']->getText('plugin_svn', 'descriptor_description')
+            dgettext('tuleap-svn', 'SVN repository manager. Supports multiple repositories for the same project.')
         );
 
         $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');

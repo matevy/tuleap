@@ -22,7 +22,8 @@ namespace Tuleap\Token\REST;
 use Rest_Token;
 use Tuleap\REST\JsonCast;
 
-class TokenRepresentation {
+class TokenRepresentation
+{
     public const ROUTE = 'tokens';
 
     /**
@@ -40,7 +41,8 @@ class TokenRepresentation {
      */
     public $uri;
 
-    public function build(Rest_Token $token) {
+    public function build(Rest_Token $token)
+    {
         $this->user_id = JsonCast::toInt($token->getUserId());
         $this->token   = $token->getTokenValue();
         $this->uri     = self::ROUTE.'/'.$this->token;

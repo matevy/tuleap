@@ -17,30 +17,36 @@
  * You should have received a copy of the GNU General Public License
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
-class ArtifactGlobalNotification {
-    
+class ArtifactGlobalNotification
+{
+
     var $data;
-	
+
     /**
     * Constructor
     */
-    function __construct($data) {
+    function __construct($data)
+    {
         $this->data = $data;
     }
-    function getId() {
+    function getId()
+    {
         return $this->data['id'];
     }
-    function getTrackerId() {
+    function getTrackerId()
+    {
         return $this->data['tracker_id'];
     }
-    function getAddresses() {
+    function getAddresses()
+    {
         return $this->data['addresses'];
     }
-    function isAllUpdates() {
+    function isAllUpdates()
+    {
         return $this->data['all_updates'];
     }
-    function isCheckPermissions() {
+    function isCheckPermissions()
+    {
         return $this->data['check_permissions'];
     }
 }
-?>

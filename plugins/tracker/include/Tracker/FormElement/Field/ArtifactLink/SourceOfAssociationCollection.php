@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -25,14 +25,18 @@ use PFUser;
 
 class SourceOfAssociationCollection implements \Countable
 {
-
+    /**
+     * @var Tracker_Artifact[]
+     */
     private $artifacts = array();
 
-    public function add(Tracker_Artifact $artifact) {
+    public function add(Tracker_Artifact $artifact)
+    {
         $this->artifacts[] = $artifact;
     }
 
-    public function linkToArtifact(Tracker_Artifact $artifact, PFUser $submitter) {
+    public function linkToArtifact(Tracker_Artifact $artifact, PFUser $submitter)
+    {
         foreach ($this->artifacts as $source_artifact) {
             $source_artifact->linkArtifact($artifact->getId(), $submitter);
         }

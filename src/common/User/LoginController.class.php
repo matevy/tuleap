@@ -18,21 +18,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/mvc2/Controller.class.php';
-require_once 'LoginPresenter.class.php';
+class User_LoginController extends MVC2_Controller
+{
 
-class User_LoginController extends MVC2_Controller {
-
-    public function __construct(Codendi_Request $request) {
+    public function __construct(Codendi_Request $request)
+    {
         parent::__construct('user', $request);
     }
 
-    public function index($presenter) {
+    public function index($presenter)
+    {
         $renderer = TemplateRendererFactory::build()->getRenderer($presenter->getTemplateDir());
         $renderer->renderToPage($presenter->getTemplate(), $presenter);
     }
 
-    public function confirmHash() {
+    public function confirmHash()
+    {
         $user_manager   = UserManager::instance();
         $confirm_hash   = $this->request->get('confirm_hash');
         $success        = $user_manager->getUserByConfirmHash($confirm_hash) !== null;
@@ -50,7 +51,6 @@ class User_LoginController extends MVC2_Controller {
                     // Set restricted shell for restricted users.
                     $user->setShell($GLOBALS['codendi_bin_prefix'] .'/cvssh-restricted');
                 }
-
             }
             $user->setUnixStatus(PFUser::STATUS_ACTIVE);
             $user_manager->updateDb($user);
@@ -63,5 +63,3 @@ class User_LoginController extends MVC2_Controller {
         }
     }
 }
-
-?>

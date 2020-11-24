@@ -17,11 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once 'common/dao/TrackerIdSharingDao.class.php';
 
-class Tracker_Migration_V3_Dao extends DataAccessObject {
+class Tracker_Migration_V3_Dao extends DataAccessObject
+{
 
-    public function create($project_id, $name, $description, $itemname, $tv3_id) {
+    public function create($project_id, $name, $description, $itemname, $tv3_id)
+    {
         $id_sharing = new TrackerIdSharingDao();
         if ($tv5_id = $id_sharing->generateTrackerId()) {
             $tv3_id     = $this->da->escapeInt($tv3_id);
@@ -32,7 +33,8 @@ class Tracker_Migration_V3_Dao extends DataAccessObject {
         return false;
     }
 
-    private function createTracker($id, $project_id, $name, $description, $itemname, $tv3_id) {
+    private function createTracker($id, $project_id, $name, $description, $itemname, $tv3_id)
+    {
         $project_id  = $this->da->escapeInt($project_id);
         $name        = $this->da->quoteSmart($name);
         $description = $this->da->quoteSmart($description);
@@ -56,4 +58,3 @@ class Tracker_Migration_V3_Dao extends DataAccessObject {
         $this->update($sql);
     }
 }
-?>

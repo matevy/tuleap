@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Copyright (c) Enalean, 2012 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,10 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once dirname(__FILE__).'/../../../bootstrap.php';
+require_once __DIR__.'/../../../bootstrap.php';
 
-class Git_Driver_Gerrit_ProjectCreator_BaseTest extends TuleapTestCase {
-
+class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends TuleapTestCase
+{
     protected $contributors      = 'tuleap-localhost-mozilla/firefox-contributors';
     protected $integrators       = 'tuleap-localhost-mozilla/firefox-integrators';
     protected $supermen          = 'tuleap-localhost-mozilla/firefox-supermen';
@@ -86,8 +85,17 @@ class Git_Driver_Gerrit_ProjectCreator_BaseTest extends TuleapTestCase {
     /** @var Git_Driver_Gerrit_Template_TemplateProcessor */
     protected $template_processor;
 
-    public function setUp() {
+    private function getGitExec($dir)
+    {
+        $git_exec = new Git_Exec($dir);
+        $git_exec->allowUsageOfFileProtocol();
+        return $git_exec;
+    }
+
+    public function setUp()
+    {
         parent::setUp();
+
         ForgeConfig::store();
         ForgeConfig::set('sys_default_domain', $this->tuleap_instance);
         ForgeConfig::set('tmp_dir', '/var/tmp');
@@ -172,15 +180,15 @@ class Git_Driver_Gerrit_ProjectCreator_BaseTest extends TuleapTestCase {
         $this->gerrit_tmpdir = $this->tmpdir.'/gerrit_tbd';
 
         $this->project_creator = new Git_Driver_Gerrit_ProjectCreator(
-                    $this->gerrit_tmpdir,
-                    $this->gerrit_driver_factory,
-                    $this->userfinder,
-                    $this->ugroup_manager,
-                    $this->membership_manager,
-                    $this->umbrella_manager,
-                    $this->template_factory,
-                    $this->template_processor,
-                    $this->getGitExec($this->gerrit_tmpdir)
+            $this->gerrit_tmpdir,
+            $this->gerrit_driver_factory,
+            $this->userfinder,
+            $this->ugroup_manager,
+            $this->membership_manager,
+            $this->umbrella_manager,
+            $this->template_factory,
+            $this->template_processor,
+            $this->getGitExec($this->gerrit_tmpdir)
         );
 
         stub($this->repository)->getProject()->returns($this->project);
@@ -194,27 +202,7 @@ class Git_Driver_Gerrit_ProjectCreator_BaseTest extends TuleapTestCase {
         stub($this->userfinder)->areRegisteredUsersAllowedTo(Git::PERM_READ, $this->repository_with_registered)->returns(true);
         stub($this->userfinder)->areRegisteredUsersAllowedTo(Git::PERM_WRITE, $this->repository_with_registered)->returns(true);
         stub($this->userfinder)->areRegisteredUsersAllowedTo(Git::PERM_WPLUS, $this->repository_with_registered)->returns(true);
-    }
 
-    protected function getGitExec($dir)
-    {
-        $git_exec = new Git_Exec($dir);
-        $git_exec->allowUsageOfFileProtocol();
-        return $git_exec;
-    }
-
-    public function tearDown() {
-        ForgeConfig::restore();
-        parent::tearDown();
-        $this->recurseDeleteInDir($this->tmpdir);
-        rmdir($this->tmpdir);
-    }
-}
-
-class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Driver_Gerrit_ProjectCreator_BaseTest {
-
-    public function setUp() {
-        parent::setUp();
         $this->project_members = mock('ProjectUGroup');
         stub($this->project_members)->getNormalizedName()->returns('project_members');
         stub($this->project_members)->getId()->returns(ProjectUGroup::PROJECT_MEMBERS);
@@ -236,7 +224,16 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         stub($this->membership_manager)->createArrayOfGroupsForServer()->returns(array($this->project_members, $this->another_ugroup, $this->project_admins));
     }
 
-    public function itPushesTheUpdatedConfigToTheServer() {
+    public function tearDown()
+    {
+        ForgeConfig::restore();
+        parent::tearDown();
+        $this->recurseDeleteInDir($this->tmpdir);
+        rmdir($this->tmpdir);
+    }
+
+    public function itPushesTheUpdatedConfigToTheServer()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array(ProjectUGroup::REGISTERED));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array(ProjectUGroup::PROJECT_MEMBERS, 120));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array(ProjectUGroup::PROJECT_ADMIN));
@@ -253,7 +250,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertEverythingIsPushedToTheServer();
     }
 
-    public function itThrowsAnExceptionIfProjectAlreadyExists() {
+    public function itThrowsAnExceptionIfProjectAlreadyExists()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array(ProjectUGroup::REGISTERED));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array(ProjectUGroup::PROJECT_MEMBERS, 120));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array(ProjectUGroup::PROJECT_ADMIN));
@@ -263,15 +261,15 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $gerrit_driver_factory = stub('Git_Driver_Gerrit_GerritDriverFactory')->getDriver()->returns($driver);
 
         $project_creator = new Git_Driver_Gerrit_ProjectCreator(
-                    $this->gerrit_tmpdir,
-                    $gerrit_driver_factory,
-                    $this->userfinder,
-                    $this->ugroup_manager,
-                    $this->membership_manager,
-                    $this->umbrella_manager,
-                    $this->template_factory,
-                    $this->template_processor,
-                    $this->getGitExec($this->gerrit_tmpdir)
+            $this->gerrit_tmpdir,
+            $gerrit_driver_factory,
+            $this->userfinder,
+            $this->ugroup_manager,
+            $this->membership_manager,
+            $this->umbrella_manager,
+            $this->template_factory,
+            $this->template_processor,
+            $this->getGitExec($this->gerrit_tmpdir)
         );
         $this->expectException('Git_Driver_Gerrit_ProjectCreator_ProjectAlreadyExistsException');
 
@@ -279,7 +277,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $project_creator->finalizeGerritProjectCreation($this->server, $this->repository, $this->template_id);
     }
 
-    public function itDoesNotSetPermsIfMigrateAccessRightIsFalse() {
+    public function itDoesNotSetPermsIfMigrateAccessRightIsFalse()
+    {
         $project_creator = partial_mock(
             Git_Driver_Gerrit_ProjectCreator::class,
             array('exportGitBranches'),
@@ -302,7 +301,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/group Administrators/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itDoesNotSetPermsOnRegisteredUsersIfProjectIsPrivate() {
+    public function itDoesNotSetPermsOnRegisteredUsersIfProjectIsPrivate()
+    {
         $project_creator = partial_mock(
             Git_Driver_Gerrit_ProjectCreator::class,
             array('exportGitBranches'),
@@ -328,7 +328,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertNoPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itDoesNotSetPermsOnRegisteredUsersIfRepoHasNoPermsForRegisteredOrAnonymous() {
+    public function itDoesNotSetPermsOnRegisteredUsersIfRepoHasNoPermsForRegisteredOrAnonymous()
+    {
         $groups = array(
             ProjectUGroup::REGISTERED,
             ProjectUGroup::ANONYMOUS,
@@ -343,7 +344,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertNoPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsLabelCodeReviewOnceIfUserCanReadANdWrite() {
+    public function itSetsPermsLabelCodeReviewOnceIfUserCanReadANdWrite()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array(ProjectUGroup::PROJECT_MEMBERS));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array(ProjectUGroup::PROJECT_MEMBERS));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array());
@@ -355,7 +357,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/label-Code-Review = -2..+2/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsOnRegisteredUsersIfRepoHasReadForRegistered() {
+    public function itSetsPermsOnRegisteredUsersIfRepoHasReadForRegistered()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array(ProjectUGroup::REGISTERED));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array());
@@ -366,7 +369,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsOnRegisteredUsersIfRepoHasWriteForRegistered() {
+    public function itSetsPermsOnRegisteredUsersIfRepoHasWriteForRegistered()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array(ProjectUGroup::REGISTERED));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array());
@@ -377,7 +381,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsOnRegisteredUsersIfRepoHasExecuteForRegistered() {
+    public function itSetsPermsOnRegisteredUsersIfRepoHasExecuteForRegistered()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array(ProjectUGroup::REGISTERED));
@@ -388,7 +393,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function isSetsPermsOnRegisteredUsersIfRepoHasReadForAuthenticated() {
+    public function isSetsPermsOnRegisteredUsersIfRepoHasReadForAuthenticated()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array(ProjectUGroup::AUTHENTICATED));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array());
@@ -399,7 +405,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsOnRegisteredUsersIfRepoHasWriteForAuthenticated() {
+    public function itSetsPermsOnRegisteredUsersIfRepoHasWriteForAuthenticated()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array(ProjectUGroup::AUTHENTICATED));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array());
@@ -410,7 +417,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsOnRegisteredUsersIfRepoHasExecuteForAuthenticated() {
+    public function itSetsPermsOnRegisteredUsersIfRepoHasExecuteForAuthenticated()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array(ProjectUGroup::AUTHENTICATED));
@@ -421,7 +429,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsOnRegisteredUsersIfRepoHasReadForAnonymous() {
+    public function itSetsPermsOnRegisteredUsersIfRepoHasReadForAnonymous()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array(ProjectUGroup::ANONYMOUS));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array());
@@ -432,7 +441,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsOnRegisteredUsersIfRepoHasWriteForAnonymous() {
+    public function itSetsPermsOnRegisteredUsersIfRepoHasWriteForAnonymous()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array(ProjectUGroup::ANONYMOUS));
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array());
@@ -443,7 +453,8 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    public function itSetsPermsOnRegisteredUsersIfRepoHasExecuteForAnonymous() {
+    public function itSetsPermsOnRegisteredUsersIfRepoHasExecuteForAnonymous()
+    {
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_READ)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WRITE)->returns(array());
         stub($this->userfinder)->getUgroups($this->repository->getId(), Git::PERM_WPLUS)->returns(array(ProjectUGroup::ANONYMOUS));
@@ -454,39 +465,42 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertPattern('/Registered Users/', file_get_contents("$this->gerrit_tmpdir/project.config"));
     }
 
-    private function assertItClonesTheDistantRepo() {
+    private function assertItClonesTheDistantRepo()
+    {
         $groups_file = "$this->gerrit_tmpdir/groups";
         $config_file = "$this->gerrit_tmpdir/project.config";
         $this->assertTrue(is_file($groups_file));
         $this->assertTrue(is_file($config_file));
     }
 
-    private function assertCommitterIsConfigured() {
+    private function assertCommitterIsConfigured()
+    {
         $this->assertEqual(trim(`cd $this->gerrit_tmpdir; git config --get user.name`), $this->gerrit_admin_instance);
         $this->assertEqual(trim(`cd $this->gerrit_tmpdir; git config --get user.email`), 'codendiadm@'. $this->tuleap_instance);
     }
 
-    private function assertTheRemoteOriginIsConfigured() {
+    private function assertTheRemoteOriginIsConfigured()
+    {
         $cwd = getcwd();
         chdir("$this->gerrit_tmpdir");
         exec('git remote -v', $output, $ret_val);
         chdir($cwd);
-        
+
         $port          = $this->server->getSSHPort();
         $identity_file = $this->server->getIdentityFile();
         $host_login    = $this->server->getLogin() . '@' . $this->server->getHost();
-        
+
         $this->assertEqual($output, array(
 //            "gerrit\text:ssh -p $port -i $identity_file $host_login %S  (fetch)",
 //            "gerrit\text:ssh -p $port -i $identity_file $host_login %S  (push)",
             "origin\t$this->gerrit_git_url (fetch)",
             "origin\t$this->gerrit_git_url (push)",
-            )
-        );
+            ));
         $this->assertEqual($ret_val, 0);
     }
 
-    private function assertEverythingIsPushedToTheServer() {
+    private function assertEverythingIsPushedToTheServer()
+    {
         $cwd = getcwd();
         chdir("$this->gerrit_tmpdir");
         exec('git push origin HEAD:refs/meta/config --porcelain', $output, $ret_val);
@@ -494,12 +508,12 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertEqual($output, array(
             "To $this->gerrit_git_url",
             "=\tHEAD:refs/meta/config\t[up to date]",
-            "Done")
-        );
+            "Done"));
         $this->assertEqual($ret_val, 0);
     }
 
-    private function assertEverythingIsCommitted() {
+    private function assertEverythingIsCommitted()
+    {
         $cwd = getcwd();
         chdir("$this->gerrit_tmpdir");
         exec('git status --porcelain', $output, $ret_val);
@@ -508,136 +522,22 @@ class Git_Driver_Gerrit_ProjectCreator_InitiatePermissionsTest extends Git_Drive
         $this->assertEqual($ret_val, 0);
     }
 
-    private function assertPermissionsFileHasEverything() {
+    private function assertPermissionsFileHasEverything()
+    {
         $config_file_contents = file_get_contents("$this->gerrit_tmpdir/project.config");
         $expected_contents    = file_get_contents("$this->fixtures/expected_access_rights.config"); // TODO: To be completed
 
         $this->assertEqual($config_file_contents, $expected_contents);
     }
 
-    private function assertGroupsFileHasEverything() {
+    private function assertGroupsFileHasEverything()
+    {
         $groups_file = "$this->gerrit_tmpdir/groups";
         $group_file_contents = file_get_contents($groups_file);
 
         $this->assertPattern("%$this->project_members_uuid\t$this->project_members_gerrit_name\n%", $group_file_contents);
-        $this->assertPattern("%$this->another_ugroup_uuid\t$this->another_ugroup_gerrit_name\n%",   $group_file_contents);
-        $this->assertPattern("%$this->replication_uuid\t$this->replication\n%",             $group_file_contents);
-        $this->assertPattern("%global:Registered-Users\tRegistered Users\n%",     $group_file_contents);
-    }
-
-}
-
-class Git_Driver_Gerrit_ProjectCreator_CallsToGerritTest extends Git_Driver_Gerrit_ProjectCreator_BaseTest {
-
-    public function setUp() {
-        parent::setUp();
-        stub($this->userfinder)->getUgroups()->returns(array());
-    }
-
-    public function itCreatesAProjectAndExportGitBranchesAndTagsWithoutCreateParentProject() {
-        //ssh gerrit gerrit create tuleap.net-Firefox/all/mobile
-
-        $this->project_admins = mock('ProjectUGroup');
-        stub($this->project_admins)->getNormalizedName()->returns('project_admins');
-        stub($this->project_admins)->getId()->returns(ProjectUGroup::PROJECT_ADMIN);
-
-        stub($this->ugroup_manager)->getUGroups()->returns(array($this->project_admins));
-        stub($this->driver)->DoesTheParentProjectExist()->returns(true);
-
-        stub($this->membership_manager)->createArrayOfGroupsForServer()->returns(array($this->project_admins));
-
-        expect($this->umbrella_manager)->recursivelyCreateUmbrellaProjects(array($this->server), $this->project)->once();
-        expect($this->driver)->createProject($this->server, $this->repository, $this->project_unix_name)->once();
-
-        $project_name = $this->project_creator->createGerritProject($this->server, $this->repository, $this->migrate_access_rights);
-        $this->project_creator->finalizeGerritProjectCreation($this->server, $this->repository, $this->template_id);
-        $this->assertEqual($this->gerrit_project, $project_name);
-
-        $this->assertAllGitBranchesPushedToTheServer();
-        $this->assertAllGitTagsPushedToTheServer();
-    }
-
-    public function itCreatesProjectMembersGroup() {
-        $ugroup = mock('ProjectUGroup');
-        stub($ugroup)->getNormalizedName()->returns('project_members');
-        stub($ugroup)->getId()->returns(ProjectUGroup::PROJECT_MEMBERS);
-
-        $ugroup_project_admins = mock('ProjectUGroup');
-        stub($ugroup_project_admins)->getNormalizedName()->returns('project_admins');
-        stub($ugroup_project_admins)->getId()->returns(ProjectUGroup::PROJECT_ADMIN);
-
-        expect($this->ugroup_manager)->getUGroups($this->project)->once();
-        stub($this->ugroup_manager)->getUGroups()->returns(array($ugroup, $ugroup_project_admins));
-
-        stub($this->membership_manager)->createArrayOfGroupsForServer()->returns(array($ugroup, $ugroup_project_admins));
-
-        expect($this->membership_manager)->createArrayOfGroupsForServer($this->server, array($ugroup, $ugroup_project_admins))->once();
-        $this->project_creator->createGerritProject($this->server, $this->repository, $this->migrate_access_rights);
-        $this->project_creator->finalizeGerritProjectCreation($this->server, $this->repository, $this->template_id);
-    }
-
-    public function itCreatesAllGroups() {
-        $ugroup_project_members = mock('ProjectUGroup');
-        stub($ugroup_project_members)->getNormalizedName()->returns('project_members');
-        stub($ugroup_project_members)->getId()->returns(ProjectUGroup::PROJECT_MEMBERS);
-
-        $ugroup_project_admins = mock('ProjectUGroup');
-        stub($ugroup_project_admins)->getNormalizedName()->returns('project_admins');
-        stub($ugroup_project_admins)->getId()->returns(ProjectUGroup::PROJECT_ADMIN);
-
-        $ugroup_another_group = mock('ProjectUGroup');
-        stub($ugroup_another_group)->getNormalizedName()->returns('another_group');
-        stub($ugroup_another_group)->getId()->returns(120);
-
-        stub($this->ugroup_manager)->getUGroups()->returns(array($ugroup_project_members, $ugroup_another_group, $ugroup_project_admins));
-
-        expect($this->membership_manager)->createArrayOfGroupsForServer($this->server, array($ugroup_project_members, $ugroup_another_group, $ugroup_project_admins))->once();
-        stub($this->membership_manager)->createArrayOfGroupsForServer()->returns(array($ugroup_project_members, $ugroup_another_group, $ugroup_project_admins));
-
-        $this->project_creator->createGerritProject($this->server, $this->repository, $this->migrate_access_rights);
-        $this->project_creator->finalizeGerritProjectCreation($this->server, $this->repository, $this->template_id);
-    }
-
-    private function assertAllGitBranchesPushedToTheServer() {
-        $cwd = getcwd();
-        chdir("$this->tmpdir/$this->gitolite_project");
-
-        exec("git show-ref --heads", $refs_cmd, $ret_val);
-
-        $expected_result = array("To $this->gerrit_git_url");
-
-        foreach ($refs_cmd as $ref) {
-            $ref               = substr($ref, strpos($ref, ' ') + 1);
-            $expected_result[] = "=\t$ref:$ref\t[up to date]";
-        }
-
-        $expected_result[] = "Done";
-
-        exec("git push $this->gerrit_git_url refs/heads/*:refs/heads/* --porcelain", $output, $ret_val);
-        chdir($cwd);
-
-        $this->assertEqual($output, $expected_result);
-        $this->assertEqual($ret_val, 0);
-    }
-
-    private function assertAllGitTagsPushedToTheServer() {
-        $cwd = getcwd();
-        chdir("$this->tmpdir/$this->gitolite_project");
-
-        exec("git show-ref --tags", $refs_cmd, $ret_val);
-        $expected_result = array("To $this->gerrit_git_url");
-
-        foreach ($refs_cmd as $ref) {
-            $ref               = substr($ref, strpos($ref, ' ') + 1);
-            $expected_result[] = "=\t$ref:$ref\t[up to date]";
-        }
-
-        $expected_result[] = "Done";
-
-        exec("git push $this->gerrit_git_url refs/tags/*:refs/tags/* --porcelain", $output, $ret_val);
-        chdir($cwd);
-
-        $this->assertEqual($output, $expected_result);
-        $this->assertEqual($ret_val, 0);
+        $this->assertPattern("%$this->another_ugroup_uuid\t$this->another_ugroup_gerrit_name\n%", $group_file_contents);
+        $this->assertPattern("%$this->replication_uuid\t$this->replication\n%", $group_file_contents);
+        $this->assertPattern("%global:Registered-Users\tRegistered Users\n%", $group_file_contents);
     }
 }

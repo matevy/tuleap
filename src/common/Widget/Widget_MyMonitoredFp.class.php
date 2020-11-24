@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,25 +19,27 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Widget.class.php');
-require_once('common/frs/FRSPackageFactory.class.php');
+require_once __DIR__ . '/../../www/my/my_utils.php';
 
 /**
 * Widget_MyMonitoredFp
 *
 * Filemodules that are actively monitored
 */
-class Widget_MyMonitoredFp extends Widget {
+class Widget_MyMonitoredFp extends Widget
+{
 
     public function __construct()
     {
         parent::__construct('mymonitoredfp');
     }
 
-    function getTitle() {
+    function getTitle()
+    {
         return $GLOBALS['Language']->getText('my_index', 'my_files');
     }
-    function getContent() {
+    function getContent()
+    {
         $frsrf = new FRSReleaseFactory();
         $html_my_monitored_fp = '';
         $sql="SELECT groups.group_name,groups.group_id ".
@@ -45,7 +47,7 @@ class Widget_MyMonitoredFp extends Widget {
             "WHERE groups.group_id=frs_package.group_id ".
             "AND frs_package.status_id !=". db_ei($frsrf->STATUS_DELETED) ." ".
             "AND frs_package.package_id=filemodule_monitor.filemodule_id ".
-            "AND filemodule_monitor.user_id='". db_ei(user_getid()) ."' ";
+            "AND filemodule_monitor.user_id='". db_ei(UserManager::instance()->getCurrentUser()->getId()) ."' ";
         $um = UserManager::instance();
         $current_user = $um->getCurrentUser();
         if ($current_user->isRestricted()) {
@@ -62,7 +64,7 @@ class Widget_MyMonitoredFp extends Widget {
             $html_my_monitored_fp .= '<table class="tlp-table" style="width:100%">';
             $request = HTTPRequest::instance();
             for ($j=0; $j<$rows; $j++) {
-                $group_id = db_result($result,$j,'group_id');
+                $group_id = db_result($result, $j, 'group_id');
 
                 $sql2="SELECT frs_package.name,filemodule_monitor.filemodule_id ".
                     "FROM groups,filemodule_monitor,frs_package ".
@@ -70,13 +72,13 @@ class Widget_MyMonitoredFp extends Widget {
                     "AND groups.group_id=". db_ei($group_id) . " ".
                     "AND frs_package.status_id !=". db_ei($frsrf->STATUS_DELETED) ." ".
                     "AND frs_package.package_id=filemodule_monitor.filemodule_id ".
-                    "AND filemodule_monitor.user_id='". db_ei(user_getid()) ."'  LIMIT 100";
+                    "AND filemodule_monitor.user_id='". db_ei(UserManager::instance()->getCurrentUser()->getId()) ."'  LIMIT 100";
                 $result2 = db_query($sql2);
                 $rows2 = db_numrows($result2);
 
                 $vItemId = new Valid_UInt('hide_item_id');
                 $vItemId->required();
-                if($request->valid($vItemId)) {
+                if ($request->valid($vItemId)) {
                     $hide_item_id = $request->get('hide_item_id');
                 } else {
                     $hide_item_id = null;
@@ -84,17 +86,17 @@ class Widget_MyMonitoredFp extends Widget {
 
                 $vFrs = new Valid_WhiteList('hide_frs', array(0, 1));
                 $vFrs->required();
-                if($request->valid($vFrs)) {
+                if ($request->valid($vFrs)) {
                     $hide_frs = $request->get('hide_frs');
                 } else {
                     $hide_frs = null;
                 }
 
-                list($hide_now,$count_diff,$hide_url) = my_hide_url('frs',$group_id,$hide_item_id,$rows2,$hide_frs, $request->get('dashboard_id'));
+                list($hide_now,$count_diff,$hide_url) = my_hide_url('frs', $group_id, $hide_item_id, $rows2, $hide_frs, $request->get('dashboard_id'));
 
                 $html_hdr = ($j ? '<tr class="boxitem"><td colspan="2">' : '').
                     $hide_url.'<A HREF="/project/?group_id='.$group_id.'">'.
-                    db_result($result,$j,'group_name').'</A>&nbsp;&nbsp;&nbsp;&nbsp;';
+                    db_result($result, $j, 'group_name').'</A>&nbsp;&nbsp;&nbsp;&nbsp;';
 
                 $html = '';
                 $count_new = max(0, $count_diff);
@@ -103,15 +105,15 @@ class Widget_MyMonitoredFp extends Widget {
                         $html .='
                         <TR class="'. util_get_alt_row_color($i) .'">'.
                             '<TD WIDTH="99%">&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;<A HREF="/file/showfiles.php?group_id='.$group_id.'">'.
-                            db_result($result2,$i,'name').'</A></TD>'.
+                            db_result($result2, $i, 'name').'</A></TD>'.
                             '<TD><A HREF="/file/filemodule_monitor.php?filemodule_id='.
-                            db_result($result2,$i,'filemodule_id').'&group_id='.$group_id.
+                            db_result($result2, $i, 'filemodule_id').'&group_id='.$group_id.
                             '" onClick="return confirm(\''.$GLOBALS['Language']->getText('my_index', 'stop_file').'\')">'.
                             '<i class="fa fa-trash-o" title="'.$GLOBALS['Language']->getText('my_index', 'stop_monitor').'"></i></A></TD></TR>';
                     }
                 }
 
-                $html_hdr .= my_item_count($rows2,$count_new).'</td></tr>';
+                $html_hdr .= my_item_count($rows2, $count_new).'</td></tr>';
                 $html_my_monitored_fp .= $html_hdr .$html;
             }
             $html_my_monitored_fp .= '</table>';
@@ -119,13 +121,17 @@ class Widget_MyMonitoredFp extends Widget {
         return $html_my_monitored_fp;
     }
 
-    function getCategory() {
+    function getCategory()
+    {
         return _('Files');
     }
-    function getDescription() {
-        return $GLOBALS['Language']->getText('widget_description_my_monitored_fp','description');;
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('widget_description_my_monitored_fp', 'description');
+        ;
     }
-    function isAjax() {
+    function isAjax()
+    {
         return true;
     }
 

@@ -21,36 +21,38 @@
 /**
 * PasswordValidator
 */
-/* abstract */ class PasswordValidator {
+/* abstract */ class PasswordValidator
+{
     var $description;
     /**
     * PasswordValidator
-    * 
-    * @param  description  
+    *
+    * @param  description
     */
-    function __construct($description) {
+    function __construct($description)
+    {
         $this->description = $description;
     }
-    
+
     /**
     * validate
-    * 
-    * @return boolean true if the password is valid
+    *
+    * @return bool true if the password is valid
     *
     */
-    /* abstract */ function validate($pwd) {
+    /* abstract */ function validate($pwd)
+    {
         return false;
     }
-    
+
     /**
     * description
-    * 
+    *
     * @return string descrption of the validator
     *
     */
-    function description() {
+    function description()
+    {
         return $this->description;
     }
-    
 }
-?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011. All Rights Reserved.
+ * Copyright (c) Enalean, 2011-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,7 +24,8 @@
  * All elements that must be dispatched from TrackerManager have to implement this
  * interface.
  */
-interface Tracker_Dispatchable_Interface {
+interface Tracker_Dispatchable_Interface
+{
 
     /**
      * Return the tracker the object belongs to
@@ -37,11 +38,10 @@ interface Tracker_Dispatchable_Interface {
      * Process the request
      *
      * @param Tracker_IDisplayTrackerLayout  $layout       The tracker manager
-     * @param Codendi_Request                $request      The data coming from the user
+     * @param HTTPRequest                    $request      The data coming from the user
      * @param PFUser                           $current_user The user who mades the request
      *
      * @return void
      */
     public function process(Tracker_IDisplayTrackerLayout $layout, $request, $current_user);
 }
-?>

@@ -22,12 +22,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_EditOverlayRenderer extends Tracker_Artifact_EditAbstractRenderer {
+class Tracker_Artifact_EditOverlayRenderer extends Tracker_Artifact_EditAbstractRenderer
+{
 
     protected function fetchFormContent(Codendi_Request $request, PFUser $current_user)
     {
-        $html  = parent::fetchFormContent($request, $current_user);
-        $html .= $this->fetchFields($this->artifact, $request->get('artifact'));
+        $html             = parent::fetchFormContent($request, $current_user);
+        $submitted_values = $request->get('artifact');
+        if (! $submitted_values || ! is_array($submitted_values)) {
+            $submitted_values = [];
+        }
+
+        $html .= $this->fetchFields($this->artifact, $submitted_values);
         $html .= '<input type="hidden" name="from_overlay" value="1">';
         $html .= $this->fetchSubmitAndCancelButtons($current_user);
 
@@ -39,7 +45,8 @@ class Tracker_Artifact_EditOverlayRenderer extends Tracker_Artifact_EditAbstract
      *
      * @return string The HTML code for submit and cancel buttons in the Overlay
      */
-    private function fetchSubmitAndCancelButtons(PFUser $current_user) {
+    private function fetchSubmitAndCancelButtons(PFUser $current_user)
+    {
         if ($this->artifact->userCanUpdate($current_user)) {
             return '<p class="artifact-submit-button">
                       <input class="btn btn-primary" type="submit" value="'. $GLOBALS['Language']->getText('global', 'btn_submit') .'" />
@@ -49,17 +56,18 @@ class Tracker_Artifact_EditOverlayRenderer extends Tracker_Artifact_EditAbstract
         }
     }
 
-    protected function enhanceRedirect(Codendi_Request $request) {
+    protected function enhanceRedirect(Codendi_Request $request)
+    {
         // does nothing (there is no redirect, it's meant to be inline)
     }
 
-    protected function displayHeader() {
+    protected function displayHeader()
+    {
         $GLOBALS['HTML']->overlay_header();
     }
 
-    protected function displayFooter() {
+    protected function displayFooter()
+    {
         $GLOBALS['HTML']->overlay_footer();
     }
 }
-
-?>

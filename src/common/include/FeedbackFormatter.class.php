@@ -18,16 +18,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class FeedbackFormatter {
+class FeedbackFormatter
+{
 
     /**
      * @return string html
      */
-    function format(array $logs) {
+    function format(array $logs)
+    {
         $html      = '';
         $old_level = null;
         $hp        = Codendi_HTMLPurifier::instance();
-        foreach($logs as $log) {
+        foreach ($logs as $log) {
             if (!is_null($old_level) && $old_level != $log['level']) {
                 $html .= '</ul>';
             }
@@ -43,4 +45,3 @@ class FeedbackFormatter {
         return $html;
     }
 }
-?>

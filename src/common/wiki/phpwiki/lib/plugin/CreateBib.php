@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: CreateToc.php,v 1.20 2004/05/11 13:57:46 rurban Exp $');
 /*
  Copyright 2004 $ThePhpWikiProgrammingTeam
@@ -23,59 +24,70 @@ rcs_id('$Id: CreateToc.php,v 1.20 2004/05/11 13:57:46 rurban Exp $');
 /**
  * CreateBib:  Automatically create a BibTex file from page
  *
- * Usage:   
+ * Usage:
  *  <?plugin CreateBib pagename||=whatever ?>
- *                     
+ *
  * @author:  Lea Viljanen
  */
 
-class WikiPlugin_CreateBib
-extends WikiPlugin
+class WikiPlugin_CreateBib extends WikiPlugin
 {
-    function getName() {
+    function getName()
+    {
         return _("CreateBib");
     }
 
-    function getDescription() {
+    function getDescription()
+    {
         return _("Automatically create a Bibtex file from linked pages");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 0.01 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 0.01 $"
+        );
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array( 'pagename'  => '[pagename]', // The page from which the BibTex file is generated
                       );
     }
 
-    function preg_quote ($heading) {
-        return str_replace(array("/",".","?","*"),
-    		           array('\/','\.','\?','\*'), $heading);
+    function preg_quote($heading)
+    {
+        return str_replace(
+            array("/",".","?","*"),
+            array('\/','\.','\?','\*'),
+            $heading
+        );
     }
-    
+
 
     // Have to include the $starttag and $endtag to the regexps...
-    function extractBibTeX (&$content, $starttag, $endtag) 
+    function extractBibTeX(&$content, $starttag, $endtag)
     {
         $bib = array();
 
         $start = false;
         $stop = false;
-        for ($i=0; $i<count($content); $i++) 
-        {
+        for ($i=0; $i<count($content); $i++) {
             // $starttag shows when to start
-            if (preg_match('/^@/',$content[$i],$match)) {
+            if (preg_match('/^@/', $content[$i], $match)) {
                 $start = true;
             }
             // $endtag shows when to stop
-            else if (preg_match('/^\}/',$content[$i],$match)) {
+            elseif (preg_match('/^\}/', $content[$i], $match)) {
                 $stop = true;
             }
             if ($start) {
                 $bib[] = $content[$i];
-                if ($stop) $start = false;
+                if ($stop) {
+                    $start = false;
+                }
             }
         }
         return $bib;
@@ -83,34 +95,38 @@ extends WikiPlugin
 
     // Extract article links. Current markup is by * characters...
     // Assume straight list
-    function extractArticles (&$content) {
+    function extractArticles(&$content)
+    {
         $articles = array();
         for ($i=0; $i<count($content); $i++) {
             // Should match "* [WikiPageName] whatever"
-            //if (preg_match('/^\s*\*\s+(\[.+\])/',$content[$i],$match)) 
-            if (preg_match('/^\s*\*\s+\[(.+)\]/',$content[$i],$match))
-            {
+            //if (preg_match('/^\s*\*\s+(\[.+\])/',$content[$i],$match))
+            if (preg_match('/^\s*\*\s+\[(.+)\]/', $content[$i], $match)) {
                 $articles[] = $match[1];
             }
         }
         return $articles;
     }
-                
 
-    function dumpFile(&$thispage, $filename) {
-      include_once("lib/loadsave.php");
-      $mailified = MailifyPage($thispage);
 
-      $attrib = array('mtime' => $thispage->get('mtime'), 'is_ascii' => 1);
+    function dumpFile(&$thispage, $filename)
+    {
+        include_once("lib/loadsave.php");
+        $mailified = MailifyPage($thispage);
 
-      $zip = new ZipWriter("Created by PhpWiki " . PHPWIKI_VERSION, $filename);
-      $zip->addRegularFile( FilenameForPage($thispage->getName()),
-                            $mailified, $attrib);
-      $zip->finish();
+        $attrib = array('mtime' => $thispage->get('mtime'), 'is_ascii' => 1);
 
+        $zip = new ZipWriter("Created by PhpWiki " . PHPWIKI_VERSION, $filename);
+        $zip->addRegularFile(
+            FilenameForPage($thispage->getName()),
+            $mailified,
+            $attrib
+        );
+        $zip->finish();
     }
 
-    function run($dbi, $argstr, $request, $basepage) {
+    function run($dbi, $argstr, $request, $basepage)
+    {
         extract($this->getArgs($argstr, $request));
         if ($pagename) {
             // Expand relative page names.
@@ -126,21 +142,23 @@ extends WikiPlugin
         $current = $page->getCurrentRevision();
         $content = $current->getContent();
 
-	// Prepare the button to trigger dumping
-	$dump_url = $request->getURLtoSelf(array("file" => "tube.bib"));
+    // Prepare the button to trigger dumping
+        $dump_url = $request->getURLtoSelf(array("file" => "tube.bib"));
         global $WikiTheme;
-        $dump_button = $WikiTheme->makeButton("To File", 
-					  $dump_url , 'foo');
+        $dump_button = $WikiTheme->makeButton(
+            "To File",
+            $dump_url,
+            'foo'
+        );
 
         $html = HTML::div(array('class' => 'bib','align' => 'left'));
-	$html->pushContent($dump_button, ' ');
+        $html->pushContent($dump_button, ' ');
         $list = HTML::pre(array('name'=>'biblist','id'=>'biblist',
-				'class' => 'bib'));
+        'class' => 'bib'));
 
         // Let's find the subpages
         if ($articles = $this->extractArticles($content)) {
             foreach ($articles as $h) {
-
                 // Now let's get the bibtex information from that subpage
                 $subpage = $dbi->getPage($h);
                 $subversion = $subpage->getCurrentRevision();
@@ -163,7 +181,7 @@ extends WikiPlugin
             $c = $p->getCurrentRevision();
             $pagedata = $c->getContent();
             $this->dumpFile($pagedata, $request->getArg('file'));
-	}
+        }
 
         return $html;
     }
@@ -180,4 +198,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

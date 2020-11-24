@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014-2018. All rights reserved
+ * Copyright (c) Enalean, 2014-Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -18,10 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-require_once 'pre.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
 
 // hack to make sure that pseudo-nice urls don't bypass the restricted user check
-if ( preg_match_all('/^\/plugins\/mediawiki\/wiki\/(\d+)\/([^\/][a-zA-Z]+)\/([a-zA-Z\-\_0-9]+)\/\?{0,1}.*/', $_SERVER['REQUEST_URI'], $matches) ) {
+if (preg_match_all('/^\/plugins\/mediawiki\/wiki\/(\d+)\/([^\/][a-zA-Z]+)\/([a-zA-Z\-\_0-9]+)\/\?{0,1}.*/', $_SERVER['REQUEST_URI'], $matches)) {
     $_REQUEST['group_id'] = $_GET['group_id'] = $matches[1][0];
 }
 
@@ -30,5 +30,5 @@ $p = $plugin_manager->getPluginByName('mediawiki');
 if ($p && $plugin_manager->isPluginAvailable($p)) {
     $p->showImage(HTTPRequest::instance());
 } else {
-    header('Location: '.get_server_url());
+    header('Location: /');
 }

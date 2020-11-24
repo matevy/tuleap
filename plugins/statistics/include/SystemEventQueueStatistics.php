@@ -18,19 +18,23 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class SystemEventQueueStatistics extends SystemEventQueue {
+class SystemEventQueueStatistics extends SystemEventQueue
+{
 
     public const NAME = 'statistics';
 
-    public function getName() {
+    public function getName()
+    {
         return self::NAME;
     }
 
-    public function getOwner() {
+    public function getOwner()
+    {
         return SystemEvent::OWNER_ROOT;
     }
 
-    public function getLabel() {
+    public function getLabel()
+    {
         return $GLOBALS['Language']->getText('plugin_statistics', 'sysevents_queue');
     }
 }

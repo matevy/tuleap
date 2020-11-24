@@ -9,7 +9,7 @@
 %define APP_DATA_DIR %{_localstatedir}/lib/%{APP_NAME}
 %define APP_CACHE_DIR %{_localstatedir}/tmp/%{APP_NAME}_cache
 %define APP_LOG_DIR /var/log/%{APP_NAME}
-%define APP_PHP_INCLUDE_PATH /usr/share/pear:%{APP_DIR}/src/www/include:%{APP_DIR}/src:.
+%define APP_PHP_INCLUDE_PATH %{APP_DIR}/src/www/include:%{APP_DIR}/src:.
 
 %define app_group        codendiadm
 %define app_user         codendiadm
@@ -35,15 +35,13 @@ Packager: Manuel VACELET <manuel.vacelet@enalean.com>
 AutoReqProv: no
 
 # Php and web related stuff
-Requires: php72-php, php72-php-mysql, php72-php-xml, php72-php-json, php72-php-mbstring, php72-php-gd, php72-php-soap, php72-php-pear, php72-php-intl, php72-php-process, php72-php-opcache, php72-php-fpm, php72-php-pecl-redis, php72-php-sodium, rh-mysql57-mysql
+Requires: php73-php, php73-php-mysql, php73-php-xml, php73-php-json, php73-php-mbstring, php73-php-gd, php73-php-soap, php73-php-intl, php73-php-process, php73-php-opcache, php73-php-fpm, php73-php-pecl-redis, php73-php-sodium, rh-mysql57-mysql
 
+Requires: perl-DBI, perl-DBD-MySQL
 Requires: highlight, forgeupgrade >= 1.6, nginx, logrotate
 
 # Unit file
 Requires: systemd
-
-# It's embedded in Tuleap thanks to composer.
-Obsoletes: php-amqplib-amqplib
 
 # It's embedded in Tuleap thanks to npm.
 Obsoletes: ckeditor
@@ -102,7 +100,7 @@ Summary: ForumML plugin for Tuleap
 Group: Development/Tools
 Version: @@PLUGIN_FORUMML_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
-Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, php72-php-pecl-mailparse
+Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, php73-php-pecl-mailparse
 Requires: tuleap-core-mailman
 %description plugin-forumml
 ForumML brings to Tuleap a very nice mail archive viewer and the possibility
@@ -124,6 +122,7 @@ Group: Development/Tools
 Version: @@PLUGIN_GIT_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
 AutoReqProv: no
+Requires(pre): shadow-utils
 Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, sclo-git212-git, gitolite3
 Requires: php-guzzle-Guzzle, sudo, openssh-server
 %description plugin-git
@@ -154,7 +153,7 @@ Summary: Tuleap plugin to manage LDAP integration
 Group: Development/Tools
 Version: @@PLUGIN_LDAP_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
-Requires: php72-php-ldap, perl-LDAP
+Requires: php73-php-ldap, perl-LDAP
 %description plugin-ldap
 LDAP Plugin for Tuleap. Provides LDAP information, LDAP
 authentication, user and group management.
@@ -191,8 +190,8 @@ Summary: WebDAV plugin for Tuleap
 Group: Development/Tools
 Version: @@PLUGIN_WEBDAV_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
-Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}
-Requires: php-sabredav = 1.4.4
+Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, tuleap-plugin-docman
+Obsoletes: php-sabredav
 %description plugin-webdav
 Plugin to access to file releases & docman though WebDAV
 
@@ -202,7 +201,7 @@ Summary: Tracker v5 for Tuleap
 Group: Development/Tools
 Version: @@PLUGIN_TRACKER_VERSION@@
 Release: @@VERSION@@_@@RELEASE@@%{?dist}
-Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, libxslt, php72-php-pecl-mailparse
+Requires: %{name} = @@VERSION@@-@@RELEASE@@%{?dist}, libxslt, php73-php-pecl-mailparse
 %description plugin-tracker
 New tracker generation for Tuleap.
 
@@ -438,6 +437,7 @@ done
 %{__rm} -f $RPM_BUILD_ROOT/%{APP_DIR}/src/utils/DocmanUploader.pl
 %{__rm} -f $RPM_BUILD_ROOT/%{APP_DIR}/src/utils/DocmanLegacyDownloader.pl
 # No need of template
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/release_widget
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/template
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/label
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/crosstracker
@@ -450,9 +450,14 @@ done
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/prometheus_metrics
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/tuleap_synchro
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/project_ownership
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/taskboard
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/releasewidget
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/label
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/crosstracker
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/document
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/project_ownership
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/taskboard
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/timetracking
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/tuleap_synchro
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/assets/velocity
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/composer.json
@@ -467,9 +472,25 @@ done
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/sass.sh
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/tuleap-gulp-build.js
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/run_dev/
-%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/php72/run.sh
-%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/themes/common/tlp/webpack.config.js
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/tools/utils/php73/run.sh
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/themes/FlamingParrot/composer.json
 %{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/src/www/themes/BurningParrot/composer.json
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/artifactsfolders/scripts/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/artifactsfolders/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/bugzilla_reference/scripts/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/bugzilla_reference/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/captcha/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/cardwall/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/docman/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/forumml/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/frs/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/git/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/graphontrackersv5/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/hudson/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/hudson_svn/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/ldap/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/mediawiki/themes/
+%{__rm} -rf $RPM_BUILD_ROOT/%{APP_DIR}/plugins/openidconnectclient/themes/
 
 # Link to local config for logo and themes images
 # Needed for nginx try_files
@@ -489,6 +510,8 @@ done
 # Install systemd Unit
 %{__install} -d $RPM_BUILD_ROOT/%{_unitdir}
 %{__install} src/utils/systemd/tuleap.service $RPM_BUILD_ROOT/%{_unitdir}
+%{__install} src/utils/systemd/tuleap-workers.service $RPM_BUILD_ROOT/%{_unitdir}
+%{__install} src/utils/systemd/tuleap-worker@.service $RPM_BUILD_ROOT/%{_unitdir}
 %{__install} src/utils/systemd/tuleap-svn-updater.service $RPM_BUILD_ROOT/%{_unitdir}
 %{__install} src/utils/systemd/tuleap-php-fpm.service $RPM_BUILD_ROOT/%{_unitdir}
 %{__install} src/utils/systemd/tuleap-process-system-events-default.timer $RPM_BUILD_ROOT/%{_unitdir}
@@ -649,6 +672,9 @@ done
 %{__perl} -pi -e "s~%PROJECT_NAME%~%{APP_NAME}~g" $RPM_BUILD_ROOT/etc/logrotate.d/%{APP_NAME}_openid_connect_client
 %{__perl} -pi -e "s~%%APP_USER%%~%{APP_USER}~g" $RPM_BUILD_ROOT/etc/logrotate.d/%{APP_NAME}_openid_connect_client
 
+# Symlink for compatibility with older version
+%{__ln_s} %{APP_DIR} $RPM_BUILD_ROOT/%{_datadir}/codendi
+
 #
 ##
 ## On package install
@@ -715,14 +741,12 @@ fi
 %pre plugin-git
 if [ "$1" -eq "1" ]; then
     # Install
-    if ! grep -q "^gitolite:" /etc/group 2> /dev/null ; then
-        /usr/sbin/groupadd -r gitolite 2> /dev/null || :
-    fi
+    getent group gitolite >/dev/null || groupadd -r gitolite
 
-    if id gitolite >/dev/null 2>&1; then
+    if getent passwd gitolite >/dev/null; then
         /usr/sbin/usermod -c 'Git'    -d '/var/lib/gitolite' -g gitolite gitolite
     else
-        /usr/sbin/useradd -c 'Git' -m -d '/var/lib/gitolite' -g gitolite gitolite
+        /usr/sbin/useradd -r -c 'Git' -m -d '/var/lib/gitolite' -g gitolite gitolite
     fi
 else
     true
@@ -737,17 +761,16 @@ chmod 750 /var/lib/gitolite
 if [ $1 -eq 1 ]; then
     /usr/bin/systemctl enable \
         tuleap.service \
+        tuleap-workers.service \
         tuleap-php-fpm.service &>/dev/null || :
-    /usr/bin/systemctl mask php72-php-fpm || :
+    /usr/bin/systemctl mask php73-php-fpm || :
 fi
+
+# Clean old tuleap cache file
+%{__rm} -f %{APP_CACHE_DIR}/tuleap_hooks_cache
 
 %post core-subversion
 /usr/bin/systemctl daemon-reload &>/dev/null || :
-if [ $1 -eq 1 ]; then
-    /usr/bin/systemctl enable \
-        tuleap-svn-updater.service &>/dev/null || :
-fi
-
 
 #
 # Post install of git plugin
@@ -763,27 +786,21 @@ if [ $1 -eq 0 ]; then
 
     /usr/bin/systemctl disable \
         tuleap.service \
+        tuleap-workers.service \
         tuleap-php-fpm.service &>/dev/null || :
 fi
 
 %preun core-subversion
 if [ $1 -eq 0 ]; then
     /usr/bin/systemctl stop tuleap.service &>/dev/null || :
-
-    /usr/bin/systemctl disable \
-        tuleap-svn-updater.service &>/dev/null || :
 fi
 
 %postun
-/usr/bin/systemctl unmask php72-php-fpm || :
+/usr/bin/systemctl unmask php73-php-fpm || :
 /usr/bin/systemctl daemon-reload &>/dev/null || :
 
 %postun core-subversion
 /usr/bin/systemctl daemon-reload &>/dev/null || :
-if [ $1 -eq 1 ]; then
-    /usr/bin/systemctl restart \
-        tuleap-svn-updater.service&>/dev/null || :
-fi
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
@@ -826,8 +843,10 @@ fi
 %{APP_DIR}/src/www/assets/*.js
 %{APP_DIR}/src/www/assets/manifest.json
 %{APP_DIR}/src/www/assets/admindelegation
+%{APP_DIR}/src/www/assets/dashboards
 %{APP_DIR}/src/www/assets/statistics
 %{APP_DIR}/src/www/assets/projectlinks
+%{APP_DIR}/src/www/assets/project-registration
 %{APP_DIR}/src/www/assets/ckeditor-*
 %{APP_DIR}/src/www/cvs
 %{APP_DIR}/src/www/favicon.ico
@@ -864,7 +883,6 @@ fi
 # Plugins dir
 %dir %{APP_DIR}/plugins
 %{APP_DIR}/plugins/admindelegation
-%{APP_DIR}/plugins/graphontrackers
 %{APP_DIR}/plugins/pluginsadministration
 %{APP_DIR}/plugins/projectlinks
 %{APP_DIR}/plugins/statistics
@@ -911,6 +929,8 @@ fi
 
 # Unit files
 %attr(00644,root,root) %{_unitdir}/tuleap.service
+%attr(00644,root,root) %{_unitdir}/tuleap-workers.service
+%attr(00644,root,root) %{_unitdir}/tuleap-worker@.service
 %attr(00644,root,root) %{_unitdir}/tuleap-php-fpm.service
 %attr(00644,root,root) %{_unitdir}/tuleap-process-system-events-default.timer
 %attr(00644,root,root) %{_unitdir}/tuleap-process-system-events-default.service
@@ -920,6 +940,9 @@ fi
 %attr(00644,root,root) %{_unitdir}/tuleap-launch-daily-event.service
 %attr(00644,root,root) %{_unitdir}/tuleap-launch-plugin-job.timer
 %attr(00644,root,root) %{_unitdir}/tuleap-launch-plugin-job.service
+
+# Compatibility with older version
+%attr(-,root,root) %{_datadir}/codendi
 
 #
 # Core
@@ -946,12 +969,14 @@ fi
 %files plugin-forumml
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/forumml
+%{APP_DIR}/src/www/assets/forumml
 %attr(00750,%{APP_USER},%{APP_USER}) %{_localstatedir}/run/forumml
 %attr(00440,root,root) %{_sysconfdir}/sudoers.d/tuleap_plugin_forumml
 
 %files plugin-git
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/git
+%{APP_DIR}/src/www/assets/git
 %dir %{APP_DATA_DIR}/gitolite
 %attr(00770,gitolite,gitolite)  %{APP_DATA_DIR}/gitolite/repositories
 %attr(00775,gitolite,gitolite)  %{APP_DATA_DIR}/gitolite/grokmirror
@@ -986,6 +1011,7 @@ fi
 %files plugin-ldap
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/ldap
+%{APP_DIR}/src/www/assets/ldap
 %attr(00644,root,root) /etc/logrotate.d/%{APP_NAME}_ldap
 %config(noreplace) /etc/logrotate.d/%{APP_NAME}_ldap
 
@@ -997,6 +1023,7 @@ fi
 %files plugin-hudson-svn
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/hudson_svn
+%{APP_DIR}/src/www/assets/hudson_svn
 %attr(00644,root,root) /etc/logrotate.d/%{APP_NAME}_hudson_svn
 %config(noreplace) /etc/logrotate.d/%{APP_NAME}_hudson_svn
 
@@ -1053,6 +1080,7 @@ fi
 %files plugin-mediawiki
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/mediawiki
+%{APP_DIR}/src/www/assets/mediawiki
 %dir %attr(0751,%{APP_USER},%{APP_USER}) %{APP_DATA_DIR}/mediawiki
 %dir %attr(0751,%{APP_USER},%{APP_USER}) %{APP_DATA_DIR}/mediawiki/master
 %dir %attr(0751,%{APP_USER},%{APP_USER}) %{APP_DATA_DIR}/mediawiki/projects
@@ -1060,6 +1088,7 @@ fi
 %files plugin-openidconnectclient
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/openidconnectclient
+%{APP_DIR}/src/www/assets/openidconnectclient
 %attr(00644,root,root) /etc/logrotate.d/%{APP_NAME}_openid_connect_client
 %config(noreplace) /etc/logrotate.d/%{APP_NAME}_openid_connect_client
 
@@ -1071,6 +1100,7 @@ fi
 %files plugin-frs
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/frs
+%{APP_DIR}/src/www/assets/frs
 
 %files plugin-referencealias-core
 %defattr(-,root,root,-)
@@ -1095,25 +1125,28 @@ fi
 %files plugin-artifactsfolders
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/artifactsfolders
+%{APP_DIR}/src/www/assets/artifactsfolders
 
 %files plugin-captcha
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/captcha
+%{APP_DIR}/src/www/assets/captcha
 
 %files plugin-bugzilla-reference
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/bugzilla_reference
+%{APP_DIR}/src/www/assets/bugzilla_reference
 %attr(00644,root,root) /etc/logrotate.d/%{APP_NAME}_bugzilla_reference
 
 %files plugin-create-test-env
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/create_test_env
 %attr(00400,root,root) %{_sysconfdir}/sudoers.d/tuleap_plugin_create_test_env
-%{APP_DIR}/src/www/assets/create_test_env
 
 %files plugin-docman
 %defattr(-,root,root,-)
 %{APP_DIR}/plugins/docman
+%{APP_DIR}/src/www/assets/docman
 
 %files api-explorer
 %defattr(-,root,root,-)

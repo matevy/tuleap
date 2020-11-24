@@ -21,7 +21,8 @@
  * to specify 2 (or more columns) to avoid that the legend box become too large and hide the image.
  * Legend ratio is computed in order to specify the number of text columns to use in the legend text box.
  */
-class Widget_ProjectSvnStats_Layout {
+class Widget_ProjectSvnStats_Layout
+{
 
     /**
      * The number of lgend plots
@@ -36,11 +37,12 @@ class Widget_ProjectSvnStats_Layout {
     /**
      * Constructor of the class
      *
-     * @param Integer $nb_committer The number of lgend plots
+     * @param int $nb_committer The number of lgend plots
      *
      * @return Void
      */
-    public function __construct($nb_committer) {
+    public function __construct($nb_committer)
+    {
         $this->nb_committer = $nb_committer;
         $this->legend_ratio = $nb_committer / 10;
     }
@@ -48,18 +50,20 @@ class Widget_ProjectSvnStats_Layout {
     /**
      * Adjust the chart width to fit legend ratio
      *
-     * @return Boolean
+     * @return bool
      */
-    public function getChartWidth() {
+    public function getChartWidth()
+    {
         return $this->hasOnlyOneColumn() ? 400 : 550;
     }
 
     /**
      * Adjust the chart heigh to fit legend ratio
      *
-     * @return Boolean
+     * @return bool
      */
-    public function getChartHeigh() {
+    public function getChartHeigh()
+    {
         return $this->hasOnlyOneColumn() ? 300+16*$this->nb_committer*(1/$this->legend_ratio) : 300+(16+$this->legend_ratio)*$this->nb_committer;
     }
 
@@ -67,18 +71,20 @@ class Widget_ProjectSvnStats_Layout {
      * Specify marging between the image bottom and the legend top
      * according to computed legend ratio(less than 10, between 10 and 20 or more than 20 legend items, etc...).
      *
-     * @return Integer
+     * @return int
      */
-    private function getCustomImageMargin() {
+    private function getCustomImageMargin()
+    {
         return $this->hasMoreThanTwoColumns() ? 80+(16-$this->legend_ratio)*$this->nb_committer : 125+15*(1/$this->legend_ratio)*$this->nb_committer;
     }
 
     /**
      * Check if committers number take one legend column
      *
-     * @return Boolean
+     * @return bool
      */
-    private function hasOnlyOneColumn() {
+    private function hasOnlyOneColumn()
+    {
         return $this->legend_ratio < 1;
     }
 
@@ -87,7 +93,8 @@ class Widget_ProjectSvnStats_Layout {
      *
      * @return Float
      */
-    public function getLegendXPosition() {
+    public function getLegendXPosition()
+    {
         return $this->hasOnlyOneColumn() ? 0.1 : 0.05;
     }
 
@@ -96,10 +103,11 @@ class Widget_ProjectSvnStats_Layout {
      *
      * @return Float
      */
-    public function getLegendYPosition() {
+    public function getLegendYPosition()
+    {
         if ($this->hasMoreThanTwoColumns()) {
             $legend_y_position = 0.6;
-        } else if ($this->hasOnlyOneColumn()) {
+        } elseif ($this->hasOnlyOneColumn()) {
             $legend_y_position = 0.99;
         } else {
             $legend_y_position = 0.645;
@@ -112,7 +120,8 @@ class Widget_ProjectSvnStats_Layout {
      *
      * @return Float
      */
-    public function getImageBottomMargin() {
+    public function getImageBottomMargin()
+    {
         $customImageMargin = $this->getCustomImageMargin();
         return $this->hasOnlyOneColumn() ? 100+18*$this->nb_committer : $customImageMargin;
     }
@@ -122,18 +131,18 @@ class Widget_ProjectSvnStats_Layout {
      *
      * @return String
      */
-    public function getLegendAlign() {
+    public function getLegendAlign()
+    {
         return $this->hasOnlyOneColumn() ? 'bottom' : 'top';
     }
 
     /**
      * Check if committers number take more than two legend columns
      *
-     * @return Boolean
+     * @return bool
      */
-    private function hasMoreThanTwoColumns() {
+    private function hasMoreThanTwoColumns()
+    {
         return $this->legend_ratio > 2;
     }
-
 }
-?>

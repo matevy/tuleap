@@ -20,16 +20,13 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('common/valid/Rule.class.php');
-
 /**
  * Check that value match widget owner format
  */
-class Rule_Widget_Owner
-extends Rule {
-    function isValid($val) {
+class Rule_Widget_Owner extends Rule
+{
+    function isValid($val)
+    {
         return (preg_match('/^([a-z][0-9]+)$/', $val) === 1);
     }
 }
-
-?>

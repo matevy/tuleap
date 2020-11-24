@@ -18,20 +18,22 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_CardFields {
-    
+class Tracker_CardFields
+{
+
     /**
      * @var Array
      */
     private $displayed_fields;
-    
+
     /**
      * @var PFUser
      */
     private $user_manager;
-    
-    
-    public function __construct() {
+
+
+    public function __construct()
+    {
         $this->displayed_fields     = array(Tracker::REMAINING_EFFORT_FIELD_NAME,
                                             Tracker::ASSIGNED_TO_FIELD_NAME,
                                             Tracker::IMPEDIMENT_FIELD_NAME);
@@ -45,15 +47,17 @@ class Tracker_CardFields {
      *
      * @return Tracker_FormElement_Field[]
      */
-    public function getFields(Tracker_Artifact $artifact) {
+    public function getFields(Tracker_Artifact $artifact)
+    {
         $diplayed_fields = array();
         $tracker_id      = $artifact->getTrackerId();
-        
+
         foreach ($this->displayed_fields as $diplayed_field_name) {
             $field = $this->form_element_factory->getUsedFieldByNameForUser(
-                        $tracker_id,
-                        $diplayed_field_name,
-                        $this->user_manager->getCurrentUser());
+                $tracker_id,
+                $diplayed_field_name,
+                $this->user_manager->getCurrentUser()
+            );
             if ($field) {
                 $diplayed_fields[] = $field;
             }
@@ -62,4 +66,3 @@ class Tracker_CardFields {
         return $diplayed_fields;
     }
 }
-?>

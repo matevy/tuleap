@@ -26,17 +26,16 @@
  * Access to LDAP project settings
  *
  */
-class LDAP_ProjectDao
-extends DataAccessObject
+class LDAP_ProjectDao extends DataAccessObject
 {
     /**
      * Check if given project has its svn repository with LDAP authentication
      *
-     * @param Integer $groupId Project id
-     * 
-     * @return Boolean
+     * @param int $groupId Project id
+     *
+     * @return bool
      */
-    function hasLdapSvn($groupId) 
+    function hasLdapSvn($groupId)
     {
         $sql = 'SELECT NULL'.
             ' FROM plugin_ldap_svn_repository'.
@@ -48,11 +47,11 @@ extends DataAccessObject
             return false;
         }
     }
-    
+
     /**
      * Enable LDAP based authentication for given project
      *
-     * @param Integer $groupId Project id
+     * @param int $groupId Project id
      */
     function activateLdapAuthForProject($groupId)
     {
@@ -61,19 +60,17 @@ extends DataAccessObject
         $this->update($sql);
     }
 
-    function hasLdapAuthByName($groupName) {
+    function hasLdapAuthByName($groupName)
+    {
         $sql = 'SELECT NULL'.
             ' FROM plugin_ldap_svn_repository'.
             ' JOIN groups USING (group_id)'.
             ' WHERE unix_group_name='.$this->da->quoteSmart($groupName);
         $dar = $this->retrieve($sql);
-        if($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
             return true;
         } else {
             return false;
         }
     }
-
 }
-
-?>

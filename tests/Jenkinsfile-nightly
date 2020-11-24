@@ -29,28 +29,20 @@ pipeline {
         stage('Tests') {
             failFast false
             parallel {
-                stage ('PHP 7.3') {
+                stage ('PHP 7.4') {
                     stages {
-                        stage('UT PHPUnit PHP 7.3') {
-                            steps { script { actions.runPHPUnitTests('73') } }
+                        stage('UT PHPUnit PHP 7.4') {
+                            steps { script { actions.runPHPUnitTests('74') } }
                             post {
                                 always {
                                     junit 'results/ut-phpunit/*/phpunit_tests_results.xml'
-                                    step([$class: 'CloverPublisher', cloverReportDir: 'results/ut-phpunit/php-73/coverage/', cloverReportFileName: 'clover.xml'])
+                                    step([$class: 'CloverPublisher', cloverReportDir: 'results/ut-phpunit/php-74/coverage/', cloverReportFileName: 'clover.xml'])
                                 }
                             }
                         }
-                        stage('UT SimpleTest PHP 7.3') {
-                            steps { script { actions.runSimpleTestTests('73') } }
-                            post { always { junit 'results/ut-simpletest/php-73/results.xml' } }
-                        }
-                        stage('REST CentOS 6 PHP 7.3') {
-                            steps { script { actions.runRESTTests('c6-php73-mysql57') } }
-                            post { always { junit 'results/api-rest/*/rest_tests.xml' } }
-                        }
-                        stage ('SOAP PHP 7.3') {
-                            steps { script { actions.runSOAPTests('php-73', '5') } }
-                            post { always { junit "results/api-soap/*/soap_tests.xml" } }
+                        stage('UT SimpleTest PHP 7.4') {
+                            steps { script { actions.runSimpleTestTests('74') } }
+                            post { always { junit 'results/ut-simpletest/php-74/results.xml' } }
                         }
                     }
                 }
@@ -73,15 +65,15 @@ pipeline {
                         dockerfile {
                             dir 'sources/tests/psalm/'
                             reuseNode true
+                            args '--network none'
                         }
                     }
                     steps {
                         script {
-                            try {
-                                actions.runPsalm('tests/psalm/psalm.xml')
-                            } catch (err) { }
+                            actions.runPsalm('tests/psalm/psalm.xml', '')
                         }
                     }
+                    post { always { recordIssues enabledForFailure: true, minimumSeverity: 'NORMAL', tools: [checkStyle(pattern: 'results/psalm/checkstyle.xml')] } }
                 }
             }
             post {

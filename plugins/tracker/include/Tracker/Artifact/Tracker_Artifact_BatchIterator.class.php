@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_BatchIterator {
+class Tracker_Artifact_BatchIterator
+{
 
     public const ITEMS_PER_BATCH = 100;
 
@@ -29,7 +30,8 @@ class Tracker_Artifact_BatchIterator {
 
     private $tracker_id;
 
-    public function __construct(Tracker_ArtifactFactory $tracker_artifact_factory, $tracker_id) {
+    public function __construct(Tracker_ArtifactFactory $tracker_artifact_factory, $tracker_id)
+    {
         $this->tracker_artifact_factory = $tracker_artifact_factory;
         $this->tracker_id               = $tracker_id;
     }
@@ -37,7 +39,8 @@ class Tracker_Artifact_BatchIterator {
     /**
      * @return Tracker_Artifact[]
      */
-    public function next() {
+    public function next()
+    {
         $this->batches_processed++;
 
         return $this->current();
@@ -46,7 +49,8 @@ class Tracker_Artifact_BatchIterator {
     /**
      * @return Tracker_Artifact[]
      */
-    public function current() {
+    public function current()
+    {
         $offset = max(array(self::ITEMS_PER_BATCH * $this->batches_processed, 0));
         $limit  = self::ITEMS_PER_BATCH;
 
@@ -54,7 +58,8 @@ class Tracker_Artifact_BatchIterator {
         return $paginated_artifacts->getArtifacts();
     }
 
-    public function rewind() {
+    public function rewind()
+    {
         $this->batches_processed = -1;
     }
 }

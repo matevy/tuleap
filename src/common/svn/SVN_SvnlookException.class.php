@@ -17,16 +17,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class SVN_SvnlookException extends Exception {
+class SVN_SvnlookException extends Exception
+{
     public $command;
     public $output;
     public $returnValue;
 
-    public function __construct($command, $output, $return_value) {
+    public function __construct($command, $output, $return_value)
+    {
         $truncated_output = implode(PHP_EOL, array_slice($output, 0, 20));
         $message = 'Command execution failure: '.$command.' (return value: '.$return_value.'): '.PHP_EOL.$truncated_output;
         parent::__construct($message, $return_value);
     }
 }
-
-?>

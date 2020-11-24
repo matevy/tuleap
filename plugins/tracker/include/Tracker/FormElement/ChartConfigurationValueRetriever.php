@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,8 +22,10 @@ namespace Tuleap\Tracker\FormElement;
 
 use Logger;
 use PFUser;
+use TimePeriodWithoutWeekEnd;
 use Tracker_Artifact;
 use Tracker_FormElement_Chart_Field_Exception;
+use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
 
 class ChartConfigurationValueRetriever
 {
@@ -35,11 +37,19 @@ class ChartConfigurationValueRetriever
      * @var Logger
      */
     private $logger;
+    /**
+     * @var TimeframeBuilder
+     */
+    private $timeframe_builder;
 
-    public function __construct(ChartConfigurationFieldRetriever $configuration_field_retriever, Logger $logger)
-    {
+    public function __construct(
+        ChartConfigurationFieldRetriever $configuration_field_retriever,
+        TimeframeBuilder $timeframe_builder,
+        Logger $logger
+    ) {
         $this->configuration_field_retriever = $configuration_field_retriever;
-        $this->logger                        = $logger;
+        $this->timeframe_builder = $timeframe_builder;
+        $this->logger            = $logger;
     }
 
     /**
@@ -63,58 +73,15 @@ class ChartConfigurationValueRetriever
     }
 
     /**
-     * @return Integer
+     * @return TimePeriodWithoutWeekEnd
      *
      * @throws Tracker_FormElement_Chart_Field_Exception
      */
-    public function getDuration(Tracker_Artifact $artifact, PFUser $user)
+    public function getTimePeriod(Tracker_Artifact $artifact, PFUser $user) : TimePeriodWithoutWeekEnd
     {
-        $field = $this->configuration_field_retriever->getDurationField($artifact, $user);
-
-        if ($artifact->getValue($field) === null) {
-            throw new Tracker_FormElement_Chart_Field_Exception(
-                $GLOBALS['Language']->getText('plugin_tracker', 'burndown_empty_duration_warning')
-            );
-        }
-
-        $duration = $artifact->getValue($field)->getValue();
-
-        if ($duration <= 0) {
-            throw new Tracker_FormElement_Chart_Field_Exception(
-                $GLOBALS['Language']->getText('plugin_tracker', 'burndown_empty_duration_warning')
-            );
-        }
-
-        if ($duration === 1) {
-            throw new Tracker_FormElement_Chart_Field_Exception(
-                $GLOBALS['Language']->getText('plugin_tracker', 'burndown_duration_too_short')
-            );
-        }
-
-        return $duration;
-    }
-
-    /**
-     * @param Tracker_Artifact $artifact
-     *
-     * @return Integer
-     *
-     * @throws Tracker_FormElement_Chart_Field_Exception
-     */
-    public function getStartDate(Tracker_Artifact $artifact, PFUser $user)
-    {
-        $start_date_field = $this->configuration_field_retriever->getStartDateField($artifact, $user);
-        if (! $artifact->getValue($start_date_field)) {
-            return;
-        }
-        $timestamp        = $artifact->getValue($start_date_field)->getTimestamp();
-
-        if (! $timestamp) {
-            throw new Tracker_FormElement_Chart_Field_Exception(
-                $GLOBALS['Language']->getText('plugin_tracker', 'burndown_empty_start_date_warning')
-            );
-        }
-
-        return $timestamp;
+        return $this->timeframe_builder->buildTimePeriodWithoutWeekendForArtifactChartRendering(
+            $artifact,
+            $user
+        );
     }
 }

@@ -23,31 +23,30 @@ class Docman_ApprovalTableFactoriesFactory
     /**
      * Return the right ApprovalTableFactory depending of the item.
      */
-    static function getFromItem($item, $version=null) {
+    static function getFromItem($item, $version = null)
+    {
         $appTableFactory = null;
-        if($item instanceof Docman_File) {
+        if ($item instanceof Docman_File) {
             $appTableFactory = new Docman_ApprovalTableFileFactory($item, $version);
-        }
-        elseif($item instanceof Docman_Wiki) {
+        } elseif ($item instanceof Docman_Wiki) {
             $appTableFactory = new Docman_ApprovalTableWikiFactory($item, $version);
-        }
-        elseif($item instanceof Docman_Link) {
+        } elseif ($item instanceof Docman_Link) {
             $appTableFactory = new Docman_ApprovalTableLinkFactory($item, $version);
-        }
-        elseif($item instanceof Docman_Empty) {
+        } elseif ($item instanceof Docman_Empty) {
             // there is no approval table for empty documents.
-        }
-        else {
+        } else {
             $appTableFactory = new Docman_ApprovalTableItemFactory($item);
         }
         return $appTableFactory;
     }
 
-    public function getSpecificFactoryFromItem($item, $version=null) {
+    public function getSpecificFactoryFromItem($item, $version = null)
+    {
         return self::getFromItem($item, $version);
     }
 
-    public function getReviewerFactory(Docman_ApprovalTable $table, Docman_Item $item) {
+    public function getReviewerFactory(Docman_ApprovalTable $table, Docman_Item $item)
+    {
         return new Docman_ApprovalTableReviewerFactory($table, $item);
     }
 }

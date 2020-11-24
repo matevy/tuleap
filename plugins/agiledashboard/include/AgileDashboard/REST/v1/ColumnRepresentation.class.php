@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
  *
@@ -19,11 +18,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use \Tuleap\REST\JsonCast;
+use Tuleap\REST\JsonCast;
 
-class AgileDashboard_ColumnRepresentation {
+class AgileDashboard_ColumnRepresentation
+{
 
-    /** @var integer */
+    /** @var int */
     public $id;
 
     /** @var String */
@@ -32,7 +32,8 @@ class AgileDashboard_ColumnRepresentation {
     /** @var String */
     public $color;
 
-    public function build(Cardwall_Column $column) {
+    public function build(Cardwall_Column $column)
+    {
         $this->id    = JsonCast::toInt($column->getId());
         $this->label = $column->getLabel();
         $this->color = ($column->isHeaderATLPColor())

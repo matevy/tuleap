@@ -27,14 +27,17 @@ require_once('Widget.class.php');
 * Display an image
 *
 */
-class Widget_ImageViewer extends Widget {
+class Widget_ImageViewer extends Widget
+{
     var $image_title;
     var $image_url;
-    function __construct($id, $owner_id, $owner_type) {
+    function __construct($id, $owner_id, $owner_type)
+    {
         parent::__construct($id);
         $this->setOwner($owner_id, $owner_type);
     }
-    function getTitle() {
+    function getTitle()
+    {
         return $this->image_title ?: 'Image';
     }
 
@@ -140,7 +143,8 @@ class Widget_ImageViewer extends Widget {
         return db_insertid($res);
     }
 
-    function loadContent($id) {
+    function loadContent($id)
+    {
         $sql = "SELECT * FROM widget_image WHERE owner_id = ". db_ei($this->owner_id) ." AND owner_type = '". db_es($this->owner_type) ."' AND id = ". db_ei($id);
         $res = db_query($sql);
         if ($res && db_numrows($res)) {
@@ -150,12 +154,13 @@ class Widget_ImageViewer extends Widget {
             $this->content_id = $id;
         }
     }
-    function create(Codendi_Request $request) {
+    function create(Codendi_Request $request)
+    {
         $content_id = false;
         $vUrl = new Valid_HTTPURI('url');
         $vUrl->setErrorMessage($GLOBALS['Language']->getText('widget_imageviewer', 'invalid_url'));
         $vUrl->required();
-        if($request->validInArray('image', $vUrl)) {
+        if ($request->validInArray('image', $vUrl)) {
             $image = $request->get('image');
             $vTitle = new Valid_String('title');
             $vTitle->required();
@@ -168,20 +173,21 @@ class Widget_ImageViewer extends Widget {
         }
         return $content_id;
     }
-    function updatePreferences(Codendi_Request $request) {
+    function updatePreferences(Codendi_Request $request)
+    {
         $done = false;
         $vContentId = new Valid_UInt('content_id');
         $vContentId->required();
         if (($image = $request->get('image')) && $request->valid($vContentId)) {
             $vUrl = new Valid_String('url');
-            if($request->validInArray('image', $vUrl)) {
+            if ($request->validInArray('image', $vUrl)) {
                 $url = " url   = '". db_escape_string($image['url']) ."' ";
             } else {
                 $url = '';
             }
 
             $vTitle = new Valid_String('title');
-            if($request->validInArray('image', $vTitle)) {
+            if ($request->validInArray('image', $vTitle)) {
                 $title = " title = '". db_escape_string($image['title']) ."' ";
             } else {
                 $title = '';
@@ -195,11 +201,13 @@ class Widget_ImageViewer extends Widget {
         }
         return $done;
     }
-    function destroy($id) {
+    function destroy($id)
+    {
         $sql = 'DELETE FROM widget_image WHERE id = '. db_ei($id) .' AND owner_id = '. db_ei($this->owner_id) ." AND owner_type = '". db_es($this->owner_type) ."'";
         db_query($sql);
     }
-    function isUnique() {
+    function isUnique()
+    {
         return false;
     }
 }

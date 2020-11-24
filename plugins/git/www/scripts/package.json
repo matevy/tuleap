@@ -8,12 +8,11 @@
   "dependencies": {
     "javascript-time-ago": "^1.0.31",
     "node-gettext": "^2.0.0",
-    "prismjs": "^1.15.0",
-    "prism-languages": "^0.4.0",
+    "prismjs": "^1.17.1",
     "sprintf-js": "^1.1.1",
-    "vue": "^2.5.17",
-    "vue-gettext": "^2.1.0",
-    "vuex": "^3.0.1"
+    "vue": "^2.6.10",
+    "vue-gettext": "^2.1.6",
+    "vuex": "^3.1.2"
   },
   "devDependencies": {},
   "config": {
@@ -21,9 +20,7 @@
   },
   "scripts": {
     "build": "NODE_ENV=production $npm_package_config_bin/webpack --mode=production",
-    "watch": "NODE_ENV=watch $npm_package_config_bin/concurrently --raw --kill-others '$npm_package_config_bin/webpack --watch --mode=development' '$npm_package_config_bin/karma start ./karma.conf.js'",
-    "coverage": "rm -rf ./coverage/* && NODE_ENV=coverage $npm_package_config_bin/karma start ./karma.conf.js && $npm_package_config_bin/http-server -os -a 0.0.0.0 -p 9000 coverage/",
-    "test": "NODE_ENV=test $npm_package_config_bin/karma start ./karma.conf.js",
-    "extract-gettext-cli": "$npm_package_config_bin/gettext-extract --attribute v-translate $(find repositories/src/components/ -type f -name '*.vue')"
+    "watch": "NODE_ENV=watch $npm_package_config_bin/concurrently --raw --kill-others '$npm_package_config_bin/webpack --watch --mode=development' 'npm test -- --watch'",
+    "test": "$npm_package_config_bin/jest"
   }
 }

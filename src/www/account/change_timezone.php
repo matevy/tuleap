@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  * Copyright 1999-2000 (c) The SourceForge Crew
  *
  * This file is a part of Tuleap.
@@ -20,8 +20,8 @@
  */
 
 
-require_once('pre.php');
-require_once('timezones.php');
+require_once __DIR__ . '/../include/pre.php';
+require_once __DIR__ . '/../include/timezones.php';
 
 $em = EventManager::instance();
 $em->processEvent('before_change_timezone', array());
@@ -37,11 +37,11 @@ if ($request->isPost()) {
     $csrf->check();
     if (! $request->existAndNonEmpty('timezone')) {
         $GLOBALS['Response']->addFeedback('error', $Language->getText('account_change_timezone', 'no_update'));
-    } else if (! is_valid_timezone($request->get('timezone'))) {
+    } elseif (! is_valid_timezone($request->get('timezone'))) {
         $GLOBALS['Response']->addFeedback('error', $Language->getText('account_change_timezone', 'choose_tz'));
     } else {
         // if we got this far, it must be good
-        db_query("UPDATE user SET timezone='" . db_es($request->get('timezone')) . "' WHERE user_id=" . user_getid());
+        db_query("UPDATE user SET timezone='" . db_es($request->get('timezone')) . "' WHERE user_id=" . db_ei(UserManager::instance()->getCurrentUser()->getId()));
         session_redirect("/account/");
     }
 }

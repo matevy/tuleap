@@ -22,7 +22,8 @@ namespace Tuleap\OpenIDConnectClient\Administration;
 
 use Tuleap\OpenIDConnectClient\Provider\Provider;
 
-class IconPresenterFactory {
+class IconPresenterFactory
+{
 
     private $available_icons = array(
         'github',
@@ -39,20 +40,22 @@ class IconPresenterFactory {
         'heart'
     );
 
-    public function getIconsPresenters() {
+    public function getIconsPresenters()
+    {
         $icons_presenters = array();
 
-        foreach($this->available_icons as $icon) {
+        foreach ($this->available_icons as $icon) {
             $icons_presenters[] = new IconPresenter($icon, false);
         }
 
         return $icons_presenters;
     }
 
-    public function getIconsPresentersForProvider(Provider $provider) {
+    public function getIconsPresentersForProvider(Provider $provider)
+    {
         $icons_presenters = array();
 
-        foreach($this->available_icons as $icon) {
+        foreach ($this->available_icons as $icon) {
             $is_icon_selected = false;
 
             if ($provider->getIcon() === $icon) {
@@ -64,5 +67,4 @@ class IconPresenterFactory {
 
         return $icons_presenters;
     }
-
 }

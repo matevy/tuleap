@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) Enalean, 2011-2018. All Rights Reserved.
+# Copyright (c) Enalean, 2011-Present. All Rights Reserved.
 # Copyright (c) STMicroelectronics, 2005. All Rights Reserved.
 #
 # Originally written by Manuel Vacelet, 2005
@@ -25,9 +25,9 @@
 set -e
 
 function findPHPCLI() {
-    local php72_remi_scl='/opt/remi/php72/root/usr/bin/php'
-    if [ -x "$php72_remi_scl" ]; then
-        echo "$php72_remi_scl"
+    local php73_remi_scl='/opt/remi/php73/root/usr/bin/php'
+    if [ -x "$php73_remi_scl" ]; then
+        echo "$php73_remi_scl"
         return
     fi
     echo "php"
@@ -39,18 +39,10 @@ if [ -z "$PHP" ]; then
     PHP="$(findPHPCLI)"
 fi
 
-if [ -f "/usr/share/tuleap/VERSION" ]; then
-    APP_PATH="/usr/share/tuleap"
-else
-    APP_PATH="/usr/share/codendi"
-fi
-
-PEAR_PATH="/usr/share/pear"
-
 # Include path is only defined in php.conf (and not php.ini).
 # It was also reported that 8MB (default memory limit) is not sufficient in some cases.
 if [ -z "$PHP_PARAMS" ]; then
-    PHP_PARAMS="-q -d include_path=/usr/share/php:/usr/share/pear:/usr/share/tuleap/src/www/include:/usr/share/tuleap/src:/usr/share/codendi/src/www/include:/usr/share/codendi/src:. -d memory_limit=256M"
+    PHP_PARAMS="-q -d memory_limit=256M"
 fi
 
 php_display_errors="-d error_reporting=0"

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -27,6 +27,7 @@ use Logger;
 use Tuleap\Queue\QueueFactory;
 use Tuleap\System\ApacheServiceControl;
 use Tuleap\System\ServiceControl;
+use TuleapCfg\Command\ProcessFactory;
 use WrapperLogger;
 use Exception;
 
@@ -48,7 +49,7 @@ class SvnrootUpdater
     public function __construct(Logger $logger)
     {
         $this->logger = new WrapperLogger($logger, 'svnroot_updater');
-        $this->queue  = QueueFactory::getPersistentQueue($this->logger, self::QUEUE_PREFIX);
+        $this->queue  = (new QueueFactory($this->logger))->getPersistentQueue(self::QUEUE_PREFIX);
     }
 
     public function push()
@@ -63,29 +64,31 @@ class SvnrootUpdater
      */
     public function listen($server_id)
     {
-        $this->logger->info("Wait for messages");
+        $this->logger->info("Wait for messages on ".get_class($this->queue));
 
         $generate = function () {
             ForgeConfig::set('svn_root_file', '/etc/httpd/conf.d/svnroot.conf');
 
             $apache_conf_generator = new ApacheConfGenerator(
-                (new ApacheServiceControl(
-                    new ServiceControl()
-                ))->disableInitUsage(),
+                new ApacheServiceControl(
+                    new ServiceControl(),
+                    new ProcessFactory()
+                ),
                 Backend::instance('SVN')
             );
             $apache_conf_generator->generate();
         };
 
+        $this->logger->debug('Re-generate conf at start');
         $generate();
 
         $logger = $this->logger;
 
+        $this->logger->debug('Waiting for new events');
         $this->queue->listen(self::QUEUE_PREFIX.$server_id, self::TOPIC, function ($msg) use ($logger, $generate) {
             try {
-                $logger->info("Received ", $msg->body);
+                $logger->info("Received ", $msg);
                 $generate();
-                $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
                 $logger->info("Update completed");
             } catch (Exception $e) {
                 $logger->error("Caught exception ".get_class($e).": ".$e->getMessage());

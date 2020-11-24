@@ -18,8 +18,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Cardwall_UserPreferences_UserPreferencesDisplayUser implements Tracker_CardDisplayPreferences {
-    
+class Cardwall_UserPreferences_UserPreferencesDisplayUser implements Tracker_CardDisplayPreferences
+{
+
     public const ASSIGNED_TO_USERNAME_PREFERENCE_NAME = 'AD_cardwall_assign_to_display_username_';
 
     public const DISPLAY_USERNAMES                    = 0;
@@ -28,12 +29,13 @@ class Cardwall_UserPreferences_UserPreferencesDisplayUser implements Tracker_Car
     /** @var bool */
     private $should_display_avatars;
 
-    public function __construct($should_display_avatars) {
+    public function __construct($should_display_avatars)
+    {
         $this->should_display_avatars = $should_display_avatars;
     }
-    
-    public function shouldDisplayAvatars() {
+
+    public function shouldDisplayAvatars()
+    {
         return $this->should_display_avatars;
     }
 }
-?>

@@ -19,14 +19,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201112150858_add_repository_scope extends ForgeUpgrade_Bucket {
+class b201112150858_add_repository_scope extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add the column repository_scope in plugin_git.
 EOT;
@@ -37,7 +39,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -46,20 +49,20 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE plugin_git 
                     ADD repository_scope varchar(1) NULL';
-        $res = $this->db->dbh->exec($sql);        
+        $res = $this->db->dbh->exec($sql);
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding the column repository_scope to the table plugin_git');
         }
-        
+
         $sql = "UPDATE plugin_git SET repository_scope = 'P'";
-        $res = $this->db->dbh->exec($sql);        
+        $res = $this->db->dbh->exec($sql);
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding the column repository_scope to the table plugin_git');
         }
-        
     }
 
     /**
@@ -67,12 +70,10 @@ EOT;
      *
      * @return void
      */
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('plugin_git', 'repository_scope')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Column repository_scope in table plugin_git is missing');
         }
     }
-
 }
-
-?>

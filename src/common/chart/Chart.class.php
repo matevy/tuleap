@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -20,7 +20,6 @@
  */
 
 use Tuleap\Chart\ColorsForCharts;
-
 
 /**
 * Chart
@@ -52,19 +51,19 @@ class Chart
     *
     * @return void
     */
-    public function __construct($aWidth = 600, $aHeight = 400, $aCachedName = "", $aTimeOut = 0, $aInline = true) {
+    public function __construct($aWidth = 600, $aHeight = 400, $aCachedName = "", $aTimeOut = 0, $aInline = true)
+    {
         $this->width  = $aWidth;
         $this->height = $aHeight;
 
         $this->colors_for_charts = new ColorsForCharts();
 
         $classname = $this->getGraphClass();
-        $this->jpgraph_instance = new $classname($aWidth,$aHeight,$aCachedName,$aTimeOut,$aInline);
+        $this->jpgraph_instance = new $classname($aWidth, $aHeight, $aCachedName, $aTimeOut, $aInline);
         $this->jpgraph_instance->SetMarginColor($this->getChartBackgroundColor());
         $this->jpgraph_instance->SetFrame(true, $this->getMainColor(), 0);
 
         if ($aWidth && $aHeight) {
-            require_once __DIR__ . '/EmptyImageAntiAliasPolyfill.php';
             $this->jpgraph_instance->img->SetAntiAliasing();
         }
 
@@ -73,7 +72,7 @@ class Chart
         //Fix margin
         try {
             $this->jpgraph_instance->img->SetMargin(70, 160, 30, 70);
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             // do nothing, JPGraph displays the error by itself
         }
 
@@ -101,7 +100,8 @@ class Chart
      *
      * @return string
      */
-    protected function getGraphClass() {
+    protected function getGraphClass()
+    {
         return 'Graph';
     }
 
@@ -113,7 +113,8 @@ class Chart
      *
      * @return mixed
      */
-    public function __get($name) {
+    public function __get($name)
+    {
         return $this->jpgraph_instance->$name;
     }
 
@@ -126,7 +127,8 @@ class Chart
      *
      * @return mixed the $value
      */
-    public function __set($name, $value) {
+    public function __set($name, $value)
+    {
         return $this->jpgraph_instance->$name = $value;
     }
 
@@ -136,9 +138,10 @@ class Chart
      *
      * @param string $name The name of the property
      *
-     * @return boolean
+     * @return bool
      */
-    public function __isset($name) {
+    public function __isset($name)
+    {
         return isset($this->jpgraph_instance->$name);
     }
 
@@ -148,9 +151,10 @@ class Chart
      *
      * @param string $name The name of the property
      *
-     * @return boolean
+     * @return bool
      */
-    public function __unset($name) {
+    public function __unset($name)
+    {
         unset($this->jpgraph_instance->$name);
     }
 
@@ -163,12 +167,17 @@ class Chart
      *
      * @return mixed
      */
-    public function __call($method, $args) {
-        try{
+    public function __call($method, $args)
+    {
+        try {
             $result = call_user_func_array(array($this->jpgraph_instance, $method), $args);
-        }
-        catch (Exception $exc) {
-            $error_message = $GLOBALS['Language']->getText('plugin_graphontrackers_error', 'jp_graph', array($this->title->t, $exc->getMessage()));
+        } catch (Exception $exc) {
+            $error_message = sprintf(
+                _('JpGraph error for graph "%s": %s'),
+                $this->title->t,
+                $exc->getMessage()
+            );
+
             if (headers_sent()) {
                 echo '<p class="feedback_error">';
                 echo $error_message;
@@ -197,7 +206,8 @@ class Chart
      *
      * @return int
      */
-    public function getFont() {
+    public function getFont()
+    {
         return FF_USERFONT;
     }
 
@@ -207,7 +217,8 @@ class Chart
      * @return string
      * @see Layout->getChartMainColor
      */
-    public function getMainColor() {
+    public function getMainColor()
+    {
         return $this->colors_for_charts->getChartMainColor();
     }
 
@@ -217,7 +228,8 @@ class Chart
      * @return array
      * @see Layout->getChartColors
      */
-    public function getThemedColors() {
+    public function getThemedColors()
+    {
         return $this->colors_for_charts->getChartColors();
     }
 
@@ -231,7 +243,8 @@ class Chart
      *
      * @return int
      */
-    public function getTopMargin() {
+    public function getTopMargin()
+    {
         return 20 + $this->jpgraph_instance->title->getTextHeight($this->jpgraph_instance->img) + $this->jpgraph_instance->subtitle->getTextHeight($this->jpgraph_instance->img);
     }
 
@@ -242,7 +255,8 @@ class Chart
      *
      * @return Void
      */
-    public function displayMessage($msg) {
+    public function displayMessage($msg)
+    {
         //ttf from jpgraph
         $ttf = new TTF();
         Chart_TTFFactory::setUserFont($ttf);

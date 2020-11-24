@@ -1,7 +1,7 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2015 - 2018. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,6 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\REST\StructureElementRepresentation;
+use Tuleap\Tracker\XML\TrackerXmlImportFeedbackCollector;
 
 /**
  * Base class for composite formElements.
@@ -26,28 +28,31 @@
  * A composite is a component which contain other component.
  * See DesignPattern Composite for more details.
  */
-abstract class Tracker_FormElement_Container extends Tracker_FormElement {
+abstract class Tracker_FormElement_Container extends Tracker_FormElement
+{
     /**
      * The formElements of this container
      */
     public $formElements = null;
 
     /**
-     * @return array the used formElements contained in this container
+     * @return Tracker_FormElement[] the used formElements contained in this container
      */
-    public function getFormElements() {
-        if (!is_array($this->formElements)) {
-            $aff = Tracker_FormElementFactory::instance();
-            $this->formElements = $aff->getUsedFormElementsByParentId($this->id);
+    public function getFormElements()
+    {
+        if (! is_array($this->formElements)) {
+            $this->formElements = $this->getFormElementFactory()->getUsedFormElementsByParentId($this->id);
         }
         return $this->formElements;
     }
 
-    public function getAllFormElements() {
+    public function getAllFormElements()
+    {
         return Tracker_FormElementFactory::instance()->getAllFormElementsByParentId($this->id);
     }
 
-    public function fetchMailArtifact($recipient, Tracker_Artifact $artifact, $format='text', $ignore_perms=false) {
+    public function fetchMailArtifact($recipient, Tracker_Artifact $artifact, $format = 'text', $ignore_perms = false)
+    {
         return $this->fetchMailRecursiveArtifact($format, 'fetchMailArtifact', array($recipient, $artifact, $format, $ignore_perms));
     }
 
@@ -56,7 +61,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @param Tracker_FormElement_Visitor $visitor
      */
-    public function accept(Tracker_FormElement_Visitor $visitor) {
+    public function accept(Tracker_FormElement_Visitor $visitor)
+    {
         $visitor->visit($this);
     }
 
@@ -65,17 +71,19 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return void
      */
-    public function prepareForDisplay() {
+    public function prepareForDisplay()
+    {
         $this->has_been_displayed = false;
-        foreach($this->getFormElements() as $field) {
+        foreach ($this->getFormElements() as $field) {
             $field->prepareForDisplay();
         }
     }
 
-    public function getRankSelectboxDefinition() {
+    public function getRankSelectboxDefinition()
+    {
         $def = parent::getRankSelectboxDefinition();
         $def['subitems'] = array();
-        foreach($this->getFormElements() as $field) {
+        foreach ($this->getFormElements() as $field) {
             $def['subitems'][] = $field->getRankSelectboxDefinition();
         }
         return $def;
@@ -89,7 +97,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return string
      */
-    public function fetchAddCriteria($used, $prefix = '') {
+    public function fetchAddCriteria($used, $prefix = '')
+    {
         return $this->fetchOptgroup('fetchAddCriteria', 'add_criteria_container_', $used, $prefix);
     }
 
@@ -101,7 +110,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return string
      */
-    public function fetchAddColumn($used, $prefix = '') {
+    public function fetchAddColumn($used, $prefix = '')
+    {
         return $this->fetchOptgroup('fetchAddColumn', 'add_column_container_', $used, $prefix);
     }
 
@@ -113,7 +123,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return string
      */
-    public function fetchAddTooltip($used, $prefix = '') {
+    public function fetchAddTooltip($used, $prefix = '')
+    {
         return $this->fetchOptgroup('fetchAddTooltip', 'add_tooltip_container_', $used, $prefix);
     }
 
@@ -130,12 +141,13 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return string
      */
-    protected function fetchOptgroup($method, $id_prefix, $used, $prefix) {
+    protected function fetchOptgroup($method, $id_prefix, $used, $prefix)
+    {
         $purifier  = Codendi_HTMLPurifier::instance();
         $prefix   .= $purifier->purify($this->getLabel());
         $html      = '<optgroup id="'. $id_prefix . $this->id .'" label="'. $prefix .'">';
         $optgroups = '';
-        foreach($this->getFormElements() as $formElement) {
+        foreach ($this->getFormElements() as $formElement) {
             if ($formElement->userCanRead()) {
                 $opt = $formElement->$method($used, $prefix . '::');
                 if (strpos($opt, '<optgroup') === 0) {
@@ -162,16 +174,17 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
         parent::exportToXML($root, $xmlMapping, $project_export_context, $user_xml_exporter);
         $subfields = $this->getAllFormElements();
         $child = $root->addChild('formElements');
-        foreach($subfields as $subfield) {
+        foreach ($subfields as $subfield) {
             $grandchild = $child->addChild('formElement');
             $subfield->exportToXML($grandchild, $xmlMapping, $project_export_context, $user_xml_exporter);
         }
     }
 
-    public function exportPermissionsToXML(SimpleXMLElement $node_perms, array $ugroups, &$xmlMapping) {
+    public function exportPermissionsToXML(SimpleXMLElement $node_perms, array $ugroups, &$xmlMapping)
+    {
         parent::exportPermissionsToXML($node_perms, $ugroups, $xmlMapping);
         $subfields = $this->getAllFormElements();
-        foreach($subfields as $subfield) {
+        foreach ($subfields as $subfield) {
             $subfield->exportPermissionsToXML($node_perms, $ugroups, $xmlMapping);
         }
     }
@@ -181,7 +194,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return true if Tracker is ok
      */
-    public function testImport() {
+    public function testImport()
+    {
         if ($this->formElements != null) {
             foreach ($this->formElements as $form) {
                 if (!$form->testImport()) {
@@ -198,16 +212,18 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return string html
      */
-    public function fetchSubmit($submitted_values = array()) {
-        return $this->fetchRecursiveArtifact('fetchSubmit', array($submitted_values));
+    public function fetchSubmit(array $submitted_values)
+    {
+        return $this->fetchRecursiveArtifactForSubmit('fetchSubmit', $submitted_values);
     }
 
     /**
      * Fetch the element for the submit masschange form
      * @return <type>
      */
-    public function fetchSubmitMasschange($submitted_values = array()) {
-        return $this->fetchRecursiveArtifact('fetchSubmitMasschange', array($submitted_values=array()));
+    public function fetchSubmitMasschange()
+    {
+        return $this->fetchRecursiveArtifactForSubmit('fetchSubmitMasschange', []);
     }
 
     /**
@@ -217,16 +233,22 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return string html
      */
-    public function fetchArtifact(Tracker_Artifact $artifact, $submitted_values = array()) {
-        return $this->fetchRecursiveArtifact('fetchArtifact', array($artifact, $submitted_values));
+    public function fetchArtifact(
+        Tracker_Artifact $artifact,
+        array $submitted_values,
+        array $additional_classes
+    ) {
+        return $this->fetchRecursiveArtifact('fetchArtifact', $artifact, $submitted_values, $additional_classes);
     }
 
-    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, $submitted_values = array()) {
-        return $this->fetchRecursiveArtifact('fetchArtifactForOverlay', array($artifact, $submitted_values));
+    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, array $submitted_values)
+    {
+        return $this->fetchRecursiveArtifact('fetchArtifactForOverlay', $artifact, $submitted_values, []);
     }
 
-    public function fetchSubmitForOverlay($submitted_values) {
-        return $this->fetchRecursiveArtifact('fetchSubmitForOverlay', array($submitted_values));
+    public function fetchSubmitForOverlay(array $submitted_values)
+    {
+        return $this->fetchRecursiveArtifactForSubmit('fetchSubmitForOverlay', $submitted_values);
     }
 
     /**
@@ -236,20 +258,23 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return string html
      */
-    public function fetchArtifactReadOnly(Tracker_Artifact $artifact, $submitted_values = array()) {
-        return $this->fetchRecursiveArtifact('fetchArtifactReadOnly', array($artifact, $submitted_values));
+    public function fetchArtifactReadOnly(Tracker_Artifact $artifact, array $submitted_values)
+    {
+        return $this->fetchRecursiveArtifact('fetchArtifactReadOnly', $artifact, $submitted_values, []);
     }
 
     /**
      * @see Tracker_FormElement::fetchArtifactCopyMode
      */
-    public function fetchArtifactCopyMode(Tracker_Artifact $artifact, $submitted_values = array()) {
-        return $this->fetchRecursiveArtifact('fetchArtifactCopyMode', array($artifact, $submitted_values));
+    public function fetchArtifactCopyMode(Tracker_Artifact $artifact, array $submitted_values)
+    {
+        return $this->fetchRecursiveArtifact('fetchArtifactCopyMode', $artifact, $submitted_values, []);
     }
 
-    protected function fetchRecursiveArtifact($method, $params = array()) {
+    protected function fetchRecursiveArtifactForSubmit($method, array $submitted_values)
+    {
         $html = '';
-        $content = $this->getContainerContent($method, $params);
+        $content = $this->getContainerContent($method, [$submitted_values]);
 
         if (count($content)) {
             $html .= $this->fetchArtifactPrefix();
@@ -261,20 +286,23 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
         return $html;
     }
 
-    protected function fetchRecursiveArtifactReadOnly($method, $params = array()) {
+    protected function fetchRecursiveArtifact($method, Tracker_Artifact $artifact, array $submitted_values, array $additional_classes)
+    {
         $html = '';
-        $content = $this->getContainerContent($method, $params);
+        $content = $this->getContainerContent($method, [$artifact, $submitted_values, $additional_classes]);
 
         if (count($content)) {
-            $html .= $this->fetchArtifactReadOnlyPrefix();
-            $html .= $this->fetchArtifactReadOnlyContent($content);
-            $html .= $this->fetchArtifactReadOnlySuffix();
+            $html .= $this->fetchArtifactPrefix();
+            $html .= $this->fetchArtifactContent($content);
+            $html .= $this->fetchArtifactSuffix();
         }
+
         $this->has_been_displayed = true;
         return $html;
     }
 
-    protected function fetchMailRecursiveArtifact($format, $method, $params = array()) {
+    protected function fetchMailRecursiveArtifact($format, $method, $params = array())
+    {
         $output = '';
         $content = $this->getContainerContent($method, $params);
 
@@ -287,9 +315,10 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
         return $output;
     }
 
-    protected function getContainerContent($method, $params) {
+    protected function getContainerContent($method, $params)
+    {
         $content = array();
-        foreach($this->getFormElements() as $formElement) {
+        foreach ($this->getFormElements() as $formElement) {
             if ($c = call_user_func_array(array($formElement, $method), $params)) {
                 $content[] = $c;
             }
@@ -298,7 +327,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
     }
 
     protected $has_been_displayed = false;
-    public function hasBeenDisplayed() {
+    public function hasBeenDisplayed()
+    {
         return $this->has_been_displayed;
     }
 
@@ -311,21 +341,26 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return void
      */
-     public function continueGetInstanceFromXML(
-         $xml,
-         &$xmlMapping,
-         User\XML\Import\IFindUserFromXMLReference $user_finder
-     ) {
-        parent::continueGetInstanceFromXML($xml, $xmlMapping, $user_finder);
+    public function continueGetInstanceFromXML(
+        $xml,
+        &$xmlMapping,
+        User\XML\Import\IFindUserFromXMLReference $user_finder,
+        TrackerXmlImportFeedbackCollector $feedback_collector
+    ) {
+        parent::continueGetInstanceFromXML($xml, $xmlMapping, $user_finder, $feedback_collector);
         // add children
         if ($xml->formElements) {
             foreach ($xml->formElements->formElement as $elem) {
-                $this->formElements[] = $this->getFormElementFactory()->getInstanceFromXML(
+                $form_element = $this->getFormElementFactory()->getInstanceFromXML(
                     $this->getTracker(),
                     $elem,
                     $xmlMapping,
-                    $user_finder
+                    $user_finder,
+                    $feedback_collector
                 );
+                if ($form_element) {
+                    $this->formElements[] = $form_element;
+                }
             }
         }
     }
@@ -338,9 +373,10 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      * @param bool $force_absolute_ranking
      * @return void
      */
-    public function afterSaveObject(Tracker $tracker, $tracker_is_empty, $force_absolute_ranking) {
+    public function afterSaveObject(Tracker $tracker, $tracker_is_empty, $force_absolute_ranking)
+    {
         //save sub elements
-        foreach ($this->getFormElements() as $elem){
+        foreach ($this->getFormElements() as $elem) {
             $this->getFormElementFactory()->saveObject($tracker, $elem, $this->getId(), $tracker_is_empty, $force_absolute_ranking);
         }
     }
@@ -350,7 +386,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return Tracker_FormElementFactory
      */
-    public function getFormElementFactory() {
+    public function getFormElementFactory()
+    {
         return Tracker_FormElementFactory::instance();
     }
 
@@ -359,7 +396,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return bool
      */
-    public function isUpdateable() {
+    public function isUpdateable()
+    {
         return false;
     }
 
@@ -368,7 +406,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return bool
      */
-    public function isSubmitable() {
+    public function isSubmitable()
+    {
         return false;
     }
 
@@ -378,7 +417,8 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return string
      */
-    public function getCannotRemoveMessage() {
+    public function getCannotRemoveMessage()
+    {
         $message = '';
 
         if (! $this->canBeRemovedFromUsage()) {
@@ -393,7 +433,7 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
 
     /**
      *
-     * @return boolean
+     * @return bool
      */
     public function canBeRemovedFromUsage()
     {
@@ -409,19 +449,19 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return bool
      */
-    public function userCanRead(?PFUser $user = null) {
+    public function userCanRead(?PFUser $user = null)
+    {
         return true;
     }
 
-    protected abstract function fetchArtifactPrefix();
-    protected abstract function fetchArtifactSuffix();
-    protected abstract function fetchArtifactReadOnlyPrefix();
-    protected abstract function fetchArtifactReadOnlySuffix();
-    protected abstract function fetchMailArtifactPrefix($format);
-    protected abstract function fetchMailArtifactSuffix($format);
+    abstract protected function fetchArtifactPrefix();
+    abstract protected function fetchArtifactSuffix();
+    abstract protected function fetchMailArtifactPrefix($format);
+    abstract protected function fetchMailArtifactSuffix($format);
 
 
-    protected function fetchMailArtifactContent($format, array $content) {
+    protected function fetchMailArtifactContent($format, array $content)
+    {
         if ($format == 'text') {
             return implode(PHP_EOL, $content);
         } else {
@@ -429,11 +469,13 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
         }
     }
 
-    protected function fetchArtifactContent(array $content) {
+    protected function fetchArtifactContent(array $content)
+    {
         return implode('', $content);
     }
 
-    protected function fetchArtifactReadOnlyContent(array $content) {
+    protected function fetchArtifactReadOnlyContent(array $content)
+    {
         return $this->fetchArtifactContent($content);
     }
 
@@ -443,28 +485,32 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
      *
      * @return mixed The values or null if there are no specific available values
      */
-    public function getRESTAvailableValues() {
+    public function getRESTAvailableValues()
+    {
         return null;
     }
 
-    public function isCollapsed() {
+    public function isCollapsed()
+    {
         return false;
     }
 
-    public function getDefaultValue() {
+    public function getDefaultValue()
+    {
         return null;
     }
 
-    public function getDefaultRESTValue() {
+    public function getDefaultRESTValue()
+    {
         return $this->getDefaultValue();
     }
 
-    public function getRESTContent() {
+    public function getRESTContent()
+    {
         $content_structure = array();
 
-        foreach($this->getFormElements() as $field) {
-            $classname_with_namespace         = 'Tuleap\Tracker\REST\StructureElementRepresentation';
-            $structure_element_representation = new $classname_with_namespace;
+        foreach ($this->getFormElements() as $field) {
+            $structure_element_representation = new Tuleap\Tracker\REST\StructureElementRepresentation();
             $structure_element_representation->build($field);
 
             $content_structure[] = $structure_element_representation;
@@ -472,5 +518,4 @@ abstract class Tracker_FormElement_Container extends Tracker_FormElement {
 
         return $content_structure;
     }
-
 }

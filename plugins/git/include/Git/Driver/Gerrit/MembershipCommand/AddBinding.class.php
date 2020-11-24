@@ -24,7 +24,8 @@
 
 require_once GIT_BASE_DIR .'/Git/Driver/Gerrit/MembershipCommand.class.php';
 
-class Git_Driver_Gerrit_MembershipCommand_AddBinding extends Git_Driver_Gerrit_MembershipCommand {
+class Git_Driver_Gerrit_MembershipCommand_AddBinding extends Git_Driver_Gerrit_MembershipCommand
+{
     private $source_ugroup;
 
     public function __construct(
@@ -37,7 +38,8 @@ class Git_Driver_Gerrit_MembershipCommand_AddBinding extends Git_Driver_Gerrit_M
         $this->source_ugroup = $source_ugroup;
     }
 
-    public function execute(Git_RemoteServer_GerritServer $server) {
+    public function execute(Git_RemoteServer_GerritServer $server)
+    {
         $driver = $this->getDriver($server);
         $group_name = $this->membership_manager->getFullyQualifiedUGroupName($this->ugroup);
         $included_group_name = $this->membership_manager->createGroupForServer($server, $this->source_ugroup);

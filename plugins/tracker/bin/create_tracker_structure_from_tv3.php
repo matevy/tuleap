@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'pre.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
 
 if ($argc !== 7) {
     fwrite(STDERR, "Usage: {$argv[0]} user project_id tv3_id name description itemname". PHP_EOL);
@@ -26,7 +26,7 @@ if ($argc !== 7) {
 }
 
 $sys_user = getenv("USER");
-if ( $sys_user !== 'root' && $sys_user !== 'codendiadm' ) {
+if ($sys_user !== 'root' && $sys_user !== 'codendiadm') {
     fwrite(STDERR, 'Unsufficient privileges for user '.$sys_user.PHP_EOL);
     exit(1);
 }
@@ -45,7 +45,7 @@ if ($project->isError() || ! $project->isActive()) {
     exit(1);
 }
 $tv3 = new ArtifactType($project, $tv3_tracker_id);
-if (! $tv3 || !is_object($tv3) || $tv3->isError() || ! $tv3->isValid() ) {
+if (! $tv3 || !is_object($tv3) || $tv3->isError() || ! $tv3->isValid()) {
     fwrite(STDERR, 'ERROR: Given tracker v3 does not exist or is invalid'. PHP_EOL);
     exit(1);
 }

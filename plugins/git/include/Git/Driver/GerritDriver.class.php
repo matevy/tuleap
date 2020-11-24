@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,7 +21,8 @@
 /**
  * I know how to speak to a Gerrit remote server
  */
-interface Git_Driver_Gerrit {
+interface Git_Driver_Gerrit
+{
 
     public const CACHE_ACCOUNTS        = 'accounts';
     public const CACHE_GROUPS_INCLUDES = 'groups_byinclude';
@@ -127,10 +128,6 @@ interface Git_Driver_Gerrit {
      * Add a user to a user group on a given gerrit server
      *
      * Can throw Git_Driver_Gerrit_RemoteSSHCommandFailure exception
-     *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param PFUser $user
-     * @param String $group_name
      */
     public function addUserToGroup(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $user, $group_name);
 
@@ -138,10 +135,6 @@ interface Git_Driver_Gerrit {
      * Remove a user from a user group on a given gerrit server
      *
      * Can throw Git_Driver_Gerrit_RemoteSSHCommandFailure exception
-     *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param PFUser $user
-     * @param String $group_name
      */
     public function removeUserFromGroup(
         Git_RemoteServer_GerritServer $server,
@@ -222,7 +215,7 @@ interface Git_Driver_Gerrit {
 
     /**
      * @param Git_RemoteServer_GerritServer $server
-     * @return boolean
+     * @return bool
      */
     public function isDeletePluginEnabled(Git_RemoteServer_GerritServer $server);
 

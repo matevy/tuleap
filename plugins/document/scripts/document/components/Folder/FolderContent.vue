@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+  - Copyright (c) Enalean, 2018-present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -28,7 +28,7 @@
                                 Name
                             </th>
                             <template v-if="! toggle_quick_look">
-                                <th class="document-tree-head-owner" v-translate>
+                                <th class="document-tree-head-owner" data-test="document-folder-owner-information" v-translate>
                                     Owner
                                 </th>
                                 <th class="document-tree-head-updatedate" v-translate>
@@ -38,21 +38,20 @@
                         </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody data-test="document-tree-content">
                         <folder-content-row
                             v-for="item of folder_content"
                             v-bind:key="item.id"
                             v-bind:item="item"
                             v-bind:is-quick-look-displayed="toggle_quick_look"
-                            v-on:displayQuickLook="displayQuickLook(item)"
                         />
                     </tbody>
                 </table>
             </div>
         </section>
-        <div v-if="toggle_quick_look" class="document-folder-right-container">
+        <div v-if="should_display_preview" class="document-folder-right-container" data-test="document-quick-look">
             <section class="tlp-pane document-quick-look-pane" v-bind:class="quick_look_dropzone_class" v-bind:data-item-id="item_id">
-                <quicklook-global v-on:closeQuickLookEvent="closeQuickLook" v-bind:item="quick_look_item"/>
+                <quicklook-global v-on:closeQuickLookEvent="closeQuickLook"/>
             </section>
         </div>
     </div>
@@ -63,44 +62,86 @@ import { mapState } from "vuex";
 import FolderContentRow from "./FolderContentRow.vue";
 import QuicklookGlobal from "./QuickLook/QuickLookGlobal.vue";
 import { TYPE_FOLDER, TYPE_FILE } from "../../constants.js";
+import EventBus from "../../helpers/event-bus.js";
 
 export default {
     name: "FolderContent",
     components: { QuicklookGlobal, FolderContentRow },
-    data() {
-        return {
-            quick_look_item: null,
-            toggle_quick_look: false
-        };
-    },
     computed: {
-        ...mapState(["folder_content"]),
+        ...mapState([
+            "folder_content",
+            "currently_previewed_item",
+            "toggle_quick_look",
+            "current_folder"
+        ]),
         item_id() {
-            if (!this.quick_look_item) {
+            if (this.currently_previewed_item === null) {
                 return null;
             }
 
-            return this.quick_look_item.id;
+            return this.currently_previewed_item.id;
         },
         quick_look_dropzone_class() {
-            if (!this.quick_look_item) {
-                return;
+            if (this.currently_previewed_item === null) {
+                return "";
             }
 
             return {
-                "document-quick-look-folder-dropzone": this.quick_look_item.type === TYPE_FOLDER,
-                "document-quick-look-file-dropzone": this.quick_look_item.type === TYPE_FILE
+                "document-quick-look-folder-dropzone":
+                    this.currently_previewed_item.type === TYPE_FOLDER,
+                "document-quick-look-file-dropzone":
+                    this.currently_previewed_item.type === TYPE_FILE
             };
+        },
+        should_display_preview() {
+            return this.toggle_quick_look && this.currently_previewed_item;
         }
     },
+    created() {
+        EventBus.$on("toggle-quick-look", this.toggleQuickLook);
+    },
+    beforeDestroy() {
+        EventBus.$off("toggle-quick-look", this.toggleQuickLook);
+    },
     methods: {
-        displayQuickLook(item) {
-            this.$store.commit("updateCurrentlyPreviewedItem", item);
-            this.quick_look_item = item;
-            this.toggle_quick_look = true;
+        async toggleQuickLook(event) {
+            if (!this.currently_previewed_item) {
+                await this.displayQuickLook(event.details.item);
+                return;
+            }
+
+            if (this.currently_previewed_item.id !== event.details.item.id) {
+                await this.displayQuickLook(event.details.item);
+                return;
+            }
+
+            if (!this.toggle_quick_look) {
+                await this.displayQuickLook(event.details.item);
+            } else {
+                await this.closeQuickLook(event.details.item);
+            }
         },
-        closeQuickLook() {
-            this.toggle_quick_look = false;
+        async displayQuickLook(item) {
+            await this.$router.replace({
+                name: "preview",
+                params: { preview_item_id: item.id }
+            });
+
+            this.$store.commit("updateCurrentlyPreviewedItem", item);
+            this.$store.commit("toggleQuickLook", true);
+        },
+        async closeQuickLook() {
+            if (this.current_folder.parent_id !== 0) {
+                await this.$router.replace({
+                    name: "folder",
+                    params: { item_id: this.current_folder.id }
+                });
+            } else {
+                await this.$router.replace({
+                    name: "root_folder"
+                });
+            }
+            this.$store.commit("toggleQuickLook", false);
         }
     }
 };

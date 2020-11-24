@@ -19,9 +19,9 @@
 
 const BabelPresetEnv = require("@babel/preset-env").default;
 const BabelPluginSyntaxDynamicImport = require("@babel/plugin-syntax-dynamic-import").default;
-const BabelPluginRewireExports = require("babel-plugin-rewire-exports").default;
-const BabelPluginIstanbul = require("babel-plugin-istanbul").default;
+const BabelPluginDynamicImportNode = require("babel-plugin-dynamic-import-node");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const path = require("path");
 
 const babel_preset_env_ie_config = [
     BabelPresetEnv,
@@ -39,7 +39,12 @@ const babel_preset_env_chrome_config = [
     BabelPresetEnv,
     {
         targets: {
-            browsers: ["last 2 Chrome versions"]
+            browsers: [
+                "last 2 Chrome versions",
+                "last 2 Firefox versions",
+                "Firefox ESR",
+                "last 2 Edge versions"
+            ]
         },
         modules: false,
         useBuiltIns: "usage",
@@ -52,34 +57,31 @@ const babel_options_ie11 = {
     plugins: [BabelPluginSyntaxDynamicImport]
 };
 
-const babel_options_karma = {
-    env: {
-        watch: babel_options_ie11,
-        production: babel_options_ie11,
-        test: {
-            presets: [babel_preset_env_chrome_config],
-            plugins: [BabelPluginSyntaxDynamicImport, BabelPluginRewireExports]
-        },
-        coverage: {
-            presets: [babel_preset_env_chrome_config],
-            plugins: [
-                BabelPluginSyntaxDynamicImport,
-                BabelPluginRewireExports,
-                [
-                    BabelPluginIstanbul,
-                    {
-                        exclude: ["**/*.spec.js"]
-                    }
-                ]
-            ]
-        }
-    }
+const babel_options_chrome_firefox = {
+    presets: [babel_preset_env_chrome_config],
+    plugins: [BabelPluginSyntaxDynamicImport]
+};
+
+const babel_options_jest = {
+    presets: [
+        [
+            BabelPresetEnv,
+            {
+                targets: {
+                    node: "8"
+                },
+                corejs: "3",
+                useBuiltIns: "usage"
+            }
+        ]
+    ],
+    plugins: [BabelPluginSyntaxDynamicImport, BabelPluginDynamicImportNode]
 };
 
 function configureBabelRule(babel_options) {
     return {
         test: /\.js$/,
-        exclude: [/node_modules/, /vendor/, /bower_components/],
+        exclude: [/node_modules/, /vendor/],
         use: [
             {
                 loader: "babel-loader",
@@ -89,10 +91,38 @@ function configureBabelRule(babel_options) {
     };
 }
 
+function configureTypescriptRules(babel_options) {
+    return [
+        {
+            test: /\.ts$/,
+            exclude: /node_modules/,
+            use: [
+                {
+                    loader: "babel-loader",
+                    options: babel_options
+                },
+                {
+                    loader: "ts-loader",
+                    options: {
+                        appendTsSuffixTo: ["\\.vue$"],
+                        transpileOnly: true
+                    }
+                }
+            ]
+        }
+    ];
+}
+
 const rule_vue_loader = {
     test: /\.vue$/,
     exclude: /node_modules/,
     use: [{ loader: "vue-loader" }]
+};
+
+const rule_file_loader_images = {
+    test: /\.svg$/,
+    exclude: /node_modules/,
+    use: [{ loader: "file-loader" }]
 };
 
 const rule_po_files = {
@@ -109,7 +139,7 @@ const rule_mustache_files = {
 
 const rule_ng_cache_loader = {
     test: /\.html$/,
-    exclude: [/node_modules/, /vendor/, /bower_components/],
+    exclude: [/node_modules/, /vendor/],
     use: [
         {
             loader: "ng-cache-loader",
@@ -118,26 +148,32 @@ const rule_ng_cache_loader = {
     ]
 };
 
+const artifact_modal_vue_initializer_path = path.resolve(
+    __dirname,
+    "../../../plugins/tracker/www/scripts/angular-artifact-modal/src/vue-initializer.js"
+);
+
 const rule_angular_gettext_loader = {
     test: /\.po$/,
-    exclude: [/node_modules/, /vendor/, /bower_components/],
+    exclude: [/node_modules/, /vendor/],
+    issuer: {
+        not: [artifact_modal_vue_initializer_path]
+    },
     use: [
+        { loader: "json-loader" },
         {
             loader: "angular-gettext-loader",
-            query: "browserify=true"
+            query: "browserify=true&format=json"
         }
     ]
 };
 
-const rule_angular_gettext_extract_loader = {
-    test: /src.*\.(js|html)$/,
-    exclude: [/node_modules/, /vendor/, /bower_components/],
-    use: [
-        {
-            loader: "angular-gettext-extract-loader",
-            query: "pofile=po/template.pot"
-        }
-    ]
+// This rule is only intended for the progressive migration of an AngularJS App to Vue
+const rule_angular_mixed_vue_gettext = {
+    test: /\.po$/,
+    exclude: [/node_modules/],
+    issuer: artifact_modal_vue_initializer_path,
+    use: [{ loader: "json-loader" }, { loader: "easygettext-loader" }]
 };
 
 const rule_easygettext_loader = {
@@ -153,11 +189,11 @@ const rule_scss_loader = {
         {
             loader: "css-loader",
             options: {
-                url: (url, resourcePath) => {
+                url: url => {
                     // Organization logos might be customized by administrators, let's exclude them for now
                     return (
-                        url.endsWith("organization_logo.png") ||
-                        url.endsWith("organization_logo_small.png")
+                        !url.endsWith("organization_logo.png") &&
+                        !url.endsWith("organization_logo_small.png")
                     );
                 }
             }
@@ -180,15 +216,18 @@ const rule_css_assets = {
 
 module.exports = {
     configureBabelRule,
+    configureTypescriptRules,
     babel_options_ie11,
-    babel_options_karma,
+    babel_options_chrome_firefox,
+    babel_options_jest,
     rule_po_files,
     rule_mustache_files,
     rule_vue_loader,
     rule_ng_cache_loader,
     rule_angular_gettext_loader,
-    rule_angular_gettext_extract_loader,
+    rule_angular_mixed_vue_gettext,
     rule_easygettext_loader,
     rule_scss_loader,
-    rule_css_assets
+    rule_css_assets,
+    rule_file_loader_images
 };

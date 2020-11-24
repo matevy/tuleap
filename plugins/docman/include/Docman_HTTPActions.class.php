@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -21,8 +21,7 @@
  */
 require_once('Docman_Actions.class.php');
 
-class Docman_HTTPActions extends Docman_Actions {
+class Docman_HTTPActions extends Docman_Actions
+{
 
 }
-
-?>

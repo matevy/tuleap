@@ -60,7 +60,8 @@ class NaturePresenterFactory
     }
 
     /** @return NaturePresenter[] */
-    public function getAllNatures() {
+    public function getAllNatures()
+    {
         $natures = $this->getDefaultNatures();
         $natures = array_merge($natures, $this->getPluginsNatures());
         $natures = array_merge($natures, $this->getCustomNatures());
@@ -134,7 +135,7 @@ class NaturePresenterFactory
     {
         $natures = array();
 
-        foreach ( $this->dao->searchAll() as $row) {
+        foreach ($this->dao->searchAll() as $row) {
             $natures[] = $this->instantiateFromRow($row);
         }
 
@@ -142,10 +143,11 @@ class NaturePresenterFactory
     }
 
     /** @return NaturePresenter[] */
-    public function getAllUsedNaturesByProject(Project $project) {
+    public function getAllUsedNaturesByProject(Project $project)
+    {
         $natures = array();
 
-        foreach ( $this->dao->searchAllUsedNatureByProject($project->getGroupId()) as $row) {
+        foreach ($this->dao->searchAllUsedNatureByProject($project->getGroupId()) as $row) {
             $natures[] = $row['nature'];
         }
 
@@ -153,12 +155,13 @@ class NaturePresenterFactory
     }
 
     /** @return NaturePresenter | null */
-    public function getFromShortname($shortname) {
-        if($shortname == \Tracker_FormElement_Field_ArtifactLink::NO_NATURE) {
+    public function getFromShortname($shortname)
+    {
+        if ($shortname == \Tracker_FormElement_Field_ArtifactLink::NO_NATURE) {
             return new NaturePresenter('', '', '', true);
         }
 
-        if($shortname == \Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD) {
+        if ($shortname == \Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD) {
             return new NatureIsChildPresenter();
         }
 
@@ -168,7 +171,7 @@ class NaturePresenterFactory
         }
 
         $row = $this->dao->getFromShortname($shortname);
-        if(!$row) {
+        if (!$row) {
             return null;
         }
         return $this->instantiateFromRow($row);
@@ -191,7 +194,8 @@ class NaturePresenterFactory
         return $presenter;
     }
 
-    public function instantiateFromRow($row) {
+    public function instantiateFromRow($row)
+    {
         return new NaturePresenter(
             $row['shortname'],
             $row['forward_label'],

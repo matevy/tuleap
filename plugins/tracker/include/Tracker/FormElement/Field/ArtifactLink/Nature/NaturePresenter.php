@@ -21,7 +21,8 @@
 
 namespace Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature;
 
-class NaturePresenter {
+class NaturePresenter
+{
 
     public const FORWARD_LABEL = 'forward';
     public const REVERSE_LABEL = 'reverse';
@@ -32,7 +33,8 @@ class NaturePresenter {
     public $is_system = false;
     public $is_visible;
 
-    public function __construct($shortname, $forward_label, $reverse_label, $is_visible) {
+    public function __construct($shortname, $forward_label, $reverse_label, $is_visible)
+    {
         $this->shortname           = $shortname;
         $this->forward_label       = $forward_label;
         $this->reverse_label       = $reverse_label;

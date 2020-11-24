@@ -24,14 +24,16 @@
 
 require_once dirname(__FILE__).'/../bootstrap.php';
 
-class Git_ReferenceManagerTest extends TuleapTestCase {
+class Git_ReferenceManagerTest extends TuleapTestCase
+{
     private $project;
     private $repository_factory;
     private $reference_manager;
     private $repository;
     private $git_reference_manager;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->project               = mock('Project');
         stub($this->project)->getId()->returns(101);
@@ -43,17 +45,20 @@ class Git_ReferenceManagerTest extends TuleapTestCase {
         $this->git_reference_manager = new Git_ReferenceManager($this->repository_factory, $this->reference_manager);
     }
 
-    public function itLoadsTheRepositoryWhenRootRepo() {
+    public function itLoadsTheRepositoryWhenRootRepo()
+    {
         expect($this->repository_factory)->getRepositoryByPath(101, 'gpig/rantanplan.git')->once();
         $this->git_reference_manager->getReference($this->project, Git::REFERENCE_KEYWORD, 'rantanplan/469eaa9');
     }
 
-    public function itLoadsTheRepositoryWhenRepoInHierarchy() {
+    public function itLoadsTheRepositoryWhenRepoInHierarchy()
+    {
         expect($this->repository_factory)->getRepositoryByPath(101, 'gpig/dev/x86_64/rantanplan.git')->once();
         $this->git_reference_manager->getReference($this->project, Git::REFERENCE_KEYWORD, 'dev/x86_64/rantanplan/469eaa9');
     }
 
-    public function itLoadTheReferenceFromDb() {
+    public function itLoadTheReferenceFromDb()
+    {
         stub($this->repository_factory)->getRepositoryByPath()->returns($this->repository);
 
         expect($this->reference_manager)->loadReferenceFromKeywordAndNumArgs(Git::REFERENCE_KEYWORD, 101, 2, 'rantanplan/469eaa9')->once();
@@ -61,7 +66,8 @@ class Git_ReferenceManagerTest extends TuleapTestCase {
         $this->git_reference_manager->getReference($this->project, Git::REFERENCE_KEYWORD, 'rantanplan/469eaa9');
     }
 
-    public function itReturnsTheReference() {
+    public function itReturnsTheReference()
+    {
         $reference = mock('Reference');
         stub($this->repository_factory)->getRepositoryByPath()->returns($this->repository);
         stub($this->reference_manager)->loadReferenceFromKeywordAndNumArgs()->returns($reference);
@@ -70,5 +76,3 @@ class Git_ReferenceManagerTest extends TuleapTestCase {
         $this->assertEqual($ref, $reference);
     }
 }
-
-?>

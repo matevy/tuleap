@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2019. All Rights Reserved.
+  - Copyright (c) Enalean, 2019-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -23,35 +23,32 @@
         <button v-if="item.user_can_write" type="button" class="tlp-button-primary tlp-button-small document-quick-look-folder-action-new-folder-button" v-on:click.prevent="showNewFolderModal">
             <i class="fa fa-folder-open-o tlp-button-icon"></i> <translate> New folder </translate>
         </button>
-        <div class="tlp-dropdown-split-button">
-            <new-item-button v-if="item.user_can_write" class="tlp-button-primary tlp-button-small tlp-button-outline" v-bind:item="item"/>
-            <dropdown-button v-bind:is-in-quick-look-mode="true" v-bind:is-appended="item.user_can_write">
-                <dropdown-menu v-bind:item="item" v-bind:is-in-quick-look-mode="true" v-bind:hide-item-title="true"/>
-            </dropdown-button>
-        </div>
-        <div class="document-header-spacer"></div>
-        <quick-look-delete-button v-bind:item="item"/>
+        <drop-down-quick-look v-bind:item="item"/>
+        <template v-if="can_delete_folder">
+            <div class="document-header-spacer"></div>
+            <quick-look-delete-button v-bind:item="item"/>
+        </template>
     </div>
 </template>
 
 <script>
-import NewItemButton from "../ActionsButton/NewItemButton.vue";
-import DropdownButton from "../ActionsDropDown/DropdownButton.vue";
-import DropdownMenu from "../ActionsDropDown/DropdownMenu.vue";
 import QuickLookDeleteButton from "../ActionsQuickLookButton/QuickLookDeleteButton.vue";
+import DropDownQuickLook from "../DropDown/DropDownQuickLook.vue";
+import EventBus from "../../../helpers/event-bus.js";
 
 export default {
-    components: { NewItemButton, DropdownButton, DropdownMenu, QuickLookDeleteButton },
+    components: { QuickLookDeleteButton, DropDownQuickLook },
     props: {
         item: Object
     },
+    computed: {
+        can_delete_folder() {
+            return this.item.user_can_write;
+        }
+    },
     methods: {
         showNewFolderModal() {
-            document.dispatchEvent(
-                new CustomEvent("show-new-folder-modal", {
-                    detail: { parent: this.item }
-                })
-            );
+            EventBus.$emit("show-new-folder-modal", { detail: { parent: this.item } });
         }
     }
 };

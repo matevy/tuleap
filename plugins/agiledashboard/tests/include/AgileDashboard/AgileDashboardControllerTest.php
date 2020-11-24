@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,7 +22,9 @@
 use Tuleap\AgileDashboard\AdminController;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AdministrationCrumbBuilder;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AgileDashboardCrumbBuilder;
+use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsModeChecker;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
+use Tuleap\AgileDashboard\Scrum\ScrumPresenterBuilder;
 
 require_once dirname(__FILE__).'/../../bootstrap.php';
 
@@ -58,8 +60,10 @@ class AgileDashboardControllerTest extends TuleapTestCase
     /** @var AdministrationCrumbBuilder */
     private $admin_crumb_builder;
 
-    /** @var ScrumForMonoMilestoneChecker */
-    private $scrum_mono_milestone_checker;
+    /**
+     * @var \Mockery\MockInterface|CountElementsModeChecker
+     */
+    private $count_element_mode_checker;
 
     public function setUp()
     {
@@ -74,12 +78,14 @@ class AgileDashboardControllerTest extends TuleapTestCase
         $this->config_manager               = mock('AgileDashboard_ConfigurationManager');
         $this->tracker_factory              = mock('TrackerFactory');
         $this->kanban_factory               = mock('AgileDashboard_KanbanFactory');
-        $this->event_manager                = mock('EventManager');
+        $this->event_manager                = \Mockery::spy(\EventManager::class);
         $this->service_crumb_builder        = mock(AgileDashboardCrumbBuilder::class);
         $this->admin_crumb_builder          = mock(AdministrationCrumbBuilder::class);
-        $this->scrum_mono_milestone_checker = mock(ScrumForMonoMilestoneChecker::class);
+        $this->count_element_mode_checker   = Mockery::mock(CountElementsModeChecker::class);
 
         UserManager::setInstance($this->user_manager);
+
+        $this->count_element_mode_checker->shouldReceive('burnupMustUseCountElementsMode')->andReturnFalse();
     }
 
     public function tearDown()
@@ -106,10 +112,11 @@ class AgileDashboardControllerTest extends TuleapTestCase
             $this->kanban_factory,
             $this->config_manager,
             $this->tracker_factory,
-            $this->scrum_mono_milestone_checker,
             $this->event_manager,
             $this->service_crumb_builder,
-            $this->admin_crumb_builder
+            $this->admin_crumb_builder,
+            $this->count_element_mode_checker,
+            Mockery::mock(ScrumPresenterBuilder::class)
         );
 
         expect($this->config_manager)->updateConfiguration()->never();
@@ -138,10 +145,11 @@ class AgileDashboardControllerTest extends TuleapTestCase
             $this->kanban_factory,
             $this->config_manager,
             $this->tracker_factory,
-            $this->scrum_mono_milestone_checker,
             $this->event_manager,
             $this->service_crumb_builder,
-            $this->admin_crumb_builder
+            $this->admin_crumb_builder,
+            $this->count_element_mode_checker,
+            Mockery::mock(ScrumPresenterBuilder::class)
         );
 
         expect($this->kanban_manager)->createKanban()->never();
@@ -170,10 +178,11 @@ class AgileDashboardControllerTest extends TuleapTestCase
             $this->kanban_factory,
             $this->config_manager,
             $this->tracker_factory,
-            $this->scrum_mono_milestone_checker,
             $this->event_manager,
             $this->service_crumb_builder,
-            $this->admin_crumb_builder
+            $this->admin_crumb_builder,
+            $this->count_element_mode_checker,
+            Mockery::mock(ScrumPresenterBuilder::class)
         );
 
         expect($this->kanban_manager)->createKanban()->never();

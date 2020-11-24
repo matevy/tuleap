@@ -17,13 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * @codingStandardsIgnoreFile
  */
 
 use Tuleap\DB\Compat\Legacy2018\LegacyDataAccessInterface;
 
-class Statistics_ServicesUsageDao extends DataAccessObject {
+class Statistics_ServicesUsageDao extends DataAccessObject
+{
 
     private $end_date;
     private $start_date;
@@ -37,13 +36,15 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
      *
      * @return Statistics_DiskUsageDao
      */
-    public function __construct(LegacyDataAccessInterface $da, $start_date, $end_date) {
+    public function __construct(LegacyDataAccessInterface $da, $start_date, $end_date)
+    {
         parent::__construct($da);
         $this->start_date = strtotime($start_date);
         $this->end_date   = strtotime($end_date);
     }
 
-    public function getNameOfActiveProjectsBeforeEndDate() {
+    public function getNameOfActiveProjectsBeforeEndDate()
+    {
         $sql = "SELECT group_id, group_name AS result
             FROM groups
             WHERE status='A'
@@ -53,7 +54,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getShortNameOfActiveProjectsBeforeEndDate() {
+    public function getShortNameOfActiveProjectsBeforeEndDate()
+    {
         $sql = "SELECT group_id, unix_group_name AS result
             FROM groups
             WHERE status='A'
@@ -63,7 +65,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getIdsOfActiveProjectsBeforeEndDate() {
+    public function getIdsOfActiveProjectsBeforeEndDate()
+    {
         $sql = "SELECT group_id, group_id AS result
             FROM groups
             WHERE status='A'
@@ -73,7 +76,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getPrivacyOfActiveProjectsBeforeEndDate() {
+    public function getPrivacyOfActiveProjectsBeforeEndDate()
+    {
         $sql = "SELECT group_id, access AS result
             FROM groups
             WHERE status='A'
@@ -83,7 +87,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getDescriptionOfActiveProjectsBeforeEndDate() {
+    public function getDescriptionOfActiveProjectsBeforeEndDate()
+    {
         $sql = "SELECT group_id, REPLACE(REPLACE (short_description, CHAR(13),' '),CHAR(10),' ') AS result
                 FROM groups
                 WHERE status='A'
@@ -93,7 +98,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getRegisterTimeOfActiveProjectsBeforeEndDate() {
+    public function getRegisterTimeOfActiveProjectsBeforeEndDate()
+    {
         $sql = "SELECT group_id, FROM_UNIXTIME(register_time,'%Y-%m-%d') AS result
                 FROM groups
                 WHERE status='A'
@@ -103,7 +109,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getInfosFromTroveGroupLink() {
+    public function getInfosFromTroveGroupLink()
+    {
         $sql = "SELECT tgl.group_id, tc.shortname AS result
                 FROM trove_group_link tgl, trove_cat tc
                 WHERE tgl.trove_cat_root='281'
@@ -114,7 +121,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getAdministrators() {
+    public function getAdministrators()
+    {
         $sql = "SELECT g.group_id, u.user_name AS result
                 FROM user_group g, user u
                 WHERE g.user_id=u.user_id
@@ -123,7 +131,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getAdministratorsRealNames() {
+    public function getAdministratorsRealNames()
+    {
         $sql = "SELECT g.group_id, u.realname AS result
                 FROM user_group g, user u
                 WHERE g.user_id=u.user_id
@@ -132,7 +141,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getAdministratorsEMails() {
+    public function getAdministratorsEMails()
+    {
         $sql = "SELECT g.group_id, u.email AS result
                 FROM user_group g, user u
                 WHERE g.user_id=u.user_id
@@ -145,8 +155,9 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
     {
         $end_date = $this->da->escapeInt($this->end_date);
 
-        $sql = "SELECT group_id, built_from_template AS result
+        $sql = "SELECT group_id, IF(xml.template_name IS NOT NULL, 0, built_from_template) AS result
                 FROM groups
+                    LEFT JOIN project_template_xml AS xml ON (xml.id = groups.group_id)
                 WHERE status='A'
                   AND register_time <= $end_date
                 GROUP BY group_id";
@@ -158,9 +169,10 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
     {
         $end_date = $this->da->escapeInt($this->end_date);
 
-        $sql = "SELECT project.group_id, template.group_name AS result
+        $sql = "SELECT project.group_id, IF(xml.template_name IS NOT NULL, xml.template_name, template.group_name) AS result
                 FROM groups AS project
                     INNER JOIN  groups AS template ON (template.group_id = project.built_from_template)
+                    LEFT JOIN project_template_xml AS xml ON (xml.id = project.group_id)
                 WHERE project.status='A'
                   AND project.register_time <= $end_date
                 GROUP BY project.group_id";
@@ -168,7 +180,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getCVSActivities() {
+    public function getCVSActivities()
+    {
         $cvs_format_start_date = $this->formatDateForCVS($this->start_date);
         $cvs_format_end_date   = $this->formatDateForCVS($this->end_date);
 
@@ -181,11 +194,13 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    private function formatDateForCVS($timestamp) {
+    private function formatDateForCVS($timestamp)
+    {
         return strftime("%Y%m%d", $timestamp);
     }
 
-    public function getSVNActivities() {
+    public function getSVNActivities()
+    {
         $sql = "SELECT group_id,COUNT(*) AS result
                 FROM  svn_commits
                 WHERE date <= $this->end_date
@@ -211,7 +226,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getGitWrite() {
+    public function getGitWrite()
+    {
         $sql = "SELECT project_id AS group_id, count(*) AS result
                 FROM  plugin_git_log
                     INNER JOIN plugin_git USING(repository_id)
@@ -222,7 +238,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getFilesPublished() {
+    public function getFilesPublished()
+    {
         $sql = "SELECT p.group_id, COUNT(file_id ) AS result
                 FROM frs_file f,frs_package p,frs_release r
                 WHERE f.release_id= r.release_id
@@ -234,7 +251,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getDistinctFilesPublished() {
+    public function getDistinctFilesPublished()
+    {
         $sql = "SELECT p.group_id, COUNT( DISTINCT file_id ) AS result
                 FROM frs_file f,frs_package p,frs_release r
                 WHERE f.release_id = r.release_id
@@ -245,7 +263,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfDownloadedFilesBeforeEndDate() {
+    public function getNumberOfDownloadedFilesBeforeEndDate()
+    {
         $sql = "SELECT p.group_id, COUNT(filerelease_id ) AS result
                 FROM filedownload_log l,frs_package p,frs_release r
                 WHERE l.filerelease_id = r.release_id
@@ -256,7 +275,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfDownloadedFilesBetweenStartDateAndEndDate() {
+    public function getNumberOfDownloadedFilesBetweenStartDateAndEndDate()
+    {
         $sql = "SELECT p.group_id,SUM(downloads ) AS result
                 FROM frs_dlstats_file_agg fdl, frs_file f,frs_package p,frs_release r
                 WHERE fdl.file_id=f.file_id AND f.release_id = r.release_id
@@ -268,7 +288,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfActiveMailingLists() {
+    public function getNumberOfActiveMailingLists()
+    {
         $sql = "SELECT group_id, COUNT( DISTINCT group_list_id ) AS result
                 FROM mail_group_list
                 WHERE is_public != 9
@@ -277,7 +298,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfInactiveMailingLists() {
+    public function getNumberOfInactiveMailingLists()
+    {
         $sql = "SELECT group_id, COUNT( DISTINCT group_list_id ) AS result
                 FROM mail_group_list
                 WHERE is_public = 9
@@ -286,7 +308,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfActiveForums() {
+    public function getNumberOfActiveForums()
+    {
         $sql = "SELECT group_id,COUNT( DISTINCT fg.group_forum_id ) AS result
                 FROM forum_group_list fg, forum f
                 WHERE fg.group_forum_id =f.group_forum_id
@@ -297,7 +320,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfInactiveForums() {
+    public function getNumberOfInactiveForums()
+    {
         $sql = "SELECT group_id,COUNT( DISTINCT fg.group_forum_id ) AS result
                 FROM forum_group_list fg, forum f
                 WHERE fg.group_forum_id =f.group_forum_id
@@ -308,7 +332,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getForumsActivitiesBetweenStartDateAndEndDate() {
+    public function getForumsActivitiesBetweenStartDateAndEndDate()
+    {
         $sql = "SELECT group_id,COUNT(DISTINCT f.msg_id ) AS result
                 FROM forum_group_list fg, forum f
                 WHERE fg.group_forum_id =f.group_forum_id
@@ -319,7 +344,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfWikiDocuments() {
+    public function getNumberOfWikiDocuments()
+    {
         $sql = "SELECT group_id, COUNT( DISTINCT id) AS result
                 FROM wiki_group_list
                 GROUP BY group_id";
@@ -327,7 +353,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfModifiedWikiPagesBetweenStartDateAndEndDate() {
+    public function getNumberOfModifiedWikiPagesBetweenStartDateAndEndDate()
+    {
         $sql = "SELECT group_id, COUNT(pagename) AS result
                 FROM wiki_log
                 WHERE time <= $this->end_date
@@ -337,7 +364,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfDistinctWikiPages() {
+    public function getNumberOfDistinctWikiPages()
+    {
         $sql = "SELECT group_id, COUNT( DISTINCT pagename) AS result
                 FROM wiki_log
                 WHERE time <= $this->end_date
@@ -346,7 +374,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfOpenArtifactsBetweenStartDateAndEndDate() {
+    public function getNumberOfOpenArtifactsBetweenStartDateAndEndDate()
+    {
         if (TrackerV3::instance()->available()) {
             $sql = "SELECT artifact_group_list.group_id, COUNT(artifact.artifact_id) AS result
                     FROM artifact_group_list, artifact
@@ -360,7 +389,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         }
     }
 
-    public function getNumberOfClosedArtifactsBetweenStartDateAndEndDate() {
+    public function getNumberOfClosedArtifactsBetweenStartDateAndEndDate()
+    {
         if (TrackerV3::instance()->available()) {
             $sql = "SELECT artifact_group_list.group_id, COUNT(artifact.artifact_id) AS result
                     FROM artifact_group_list, artifact
@@ -374,7 +404,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         }
     }
 
-    public function getNumberOfUserAddedBetweenStartDateAndEndDate() {
+    public function getNumberOfUserAddedBetweenStartDateAndEndDate()
+    {
         $sql = "SELECT group_id,COUNT(u.user_id) AS result
                 FROM user_group ug, user u
                 WHERE u.user_id = ug.user_id
@@ -385,7 +416,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getAddedDocumentBetweenStartDateAndEndDate() {
+    public function getAddedDocumentBetweenStartDateAndEndDate()
+    {
         $sql = "SELECT group_id, COUNT(item_id) AS result
                 FROM plugin_docman_item
                 WHERE create_date >= $this->start_date
@@ -395,7 +427,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getDeletedDocumentBetweenStartDateAndEndDate() {
+    public function getDeletedDocumentBetweenStartDateAndEndDate()
+    {
         $sql = "SELECT group_id, COUNT(item_id) AS result
                 FROM plugin_docman_item
                 WHERE delete_date >= $this->start_date
@@ -405,7 +438,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfNewsBetweenStartDateAndEndDate() {
+    public function getNumberOfNewsBetweenStartDateAndEndDate()
+    {
         $sql = "SELECT group_id, COUNT(id) AS result
                 FROM news_bytes
                 WHERE date >= $this->start_date
@@ -415,7 +449,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getProjectWithCIActivated() {
+    public function getProjectWithCIActivated()
+    {
         $sql = "SELECT group_id, is_used AS result
                 FROM service
                 WHERE short_name = 'hudson'
@@ -424,7 +459,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function getNumberOfCIJobs() {
+    public function getNumberOfCIJobs()
+    {
         $sql = "SELECT group_id, COUNT(*) AS result
                 FROM plugin_hudson_job
                 GROUP BY  group_id";
@@ -432,4 +468,3 @@ class Statistics_ServicesUsageDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 }
-?>

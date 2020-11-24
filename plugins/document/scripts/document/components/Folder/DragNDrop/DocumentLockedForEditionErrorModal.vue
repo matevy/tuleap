@@ -19,9 +19,7 @@
 
 <template>
     <error-modal v-on:error-modal-hidden="bubbleErrorModalHidden">
-        <p v-translate>
-            {{ filename }} has been locked for edition by <a v-bind:href="lock_owner.user_url">{{ lock_owner.display_name }}</a>. You can't upload a new version of this file until the lock is released.
-        </p>
+        <p v-dompurify-html="lock_message"></p>
     </error-modal>
 </template>
 
@@ -33,11 +31,18 @@ export default {
         reasons: Array
     },
     computed: {
-        filename() {
-            return this.reasons[0].filename;
-        },
         lock_owner() {
             return this.reasons[0].lock_owner;
+        },
+        lock_message() {
+            let translated = this
+                .$gettext(`%{ filename } has been locked for edition by <a href="%{ lock_owner_url }">%{ lock_owner_name }</a>.
+                You can't upload a new version of this file until the lock is released.`);
+            return this.$gettextInterpolate(translated, {
+                filename: this.reasons[0].filename,
+                lock_owner_url: this.lock_owner.user_url,
+                lock_owner_name: this.lock_owner.display_name
+            });
         }
     },
     methods: {

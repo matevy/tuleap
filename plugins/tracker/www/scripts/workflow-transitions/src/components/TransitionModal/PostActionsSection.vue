@@ -37,6 +37,7 @@
                 type="button"
                 v-on:click="addNewPostAction()"
                 v-bind:disabled="is_modal_save_running"
+                data-test="add-post-action"
             >
                 <i class="fa fa-plus tlp-button-icon"></i>
                 <translate>Add another action</translate>
@@ -54,11 +55,20 @@ import EmptyPostAction from "./Empty/EmptyPostAction.vue";
 import PostActionSkeleton from "./Skeletons/PostActionSkeleton.vue";
 import RunJobAction from "./PostAction/RunJobAction.vue";
 import SetValueAction from "./PostAction/SetValueAction.vue";
+import FrozenFieldsAction from "./PostAction/FrozenFieldsAction.vue";
+import HiddenFieldsetsAction from "./PostAction/HiddenFieldsetsAction.vue";
 import { mapState, mapGetters, mapMutations } from "vuex";
 
 export default {
     name: "PostActionsSection",
-    components: { EmptyPostAction, PostActionSkeleton, RunJobAction, SetValueAction },
+    components: {
+        EmptyPostAction,
+        PostActionSkeleton,
+        RunJobAction,
+        SetValueAction,
+        FrozenFieldsAction,
+        HiddenFieldsetsAction
+    },
     computed: {
         ...mapState("transitionModal", ["is_loading_modal", "is_modal_save_running"]),
         ...mapGetters("transitionModal", ["post_actions"]),
@@ -75,9 +85,13 @@ export default {
                 return RunJobAction;
             } else if (post_action.type === POST_ACTION_TYPE.SET_FIELD_VALUE) {
                 return SetValueAction;
-            } else {
-                return null;
+            } else if (post_action.type === POST_ACTION_TYPE.FROZEN_FIELDS) {
+                return FrozenFieldsAction;
+            } else if (post_action.type === POST_ACTION_TYPE.HIDDEN_FIELDSETS) {
+                return HiddenFieldsetsAction;
             }
+
+            return null;
         }
     }
 };

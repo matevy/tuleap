@@ -21,37 +21,25 @@
 use Tuleap\AgileDashboard\BaseController;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AdministrationCrumbBuilder;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AgileDashboardCrumbBuilder;
+use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
 use Tuleap\AgileDashboard\FormElement\Burnup;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 use Tuleap\AgileDashboard\Planning\AdditionalPlanningConfigurationWarningsRetriever;
+use Tuleap\AgileDashboard\Planning\PlanningUpdater;
 use Tuleap\AgileDashboard\Planning\Presenters\PlanningWarningPossibleMisconfigurationPresenter;
 use Tuleap\AgileDashboard\Planning\ScrumPlanningFilter;
-use Tuleap\Dashboard\Project\ProjectDashboardDao;
-use Tuleap\Dashboard\Project\ProjectDashboardDuplicator;
-use Tuleap\Dashboard\Project\ProjectDashboardRetriever;
-use Tuleap\Dashboard\Project\ProjectDashboardSaver;
-use Tuleap\Dashboard\Project\ProjectDashboardXMLImporter;
-use Tuleap\Dashboard\Widget\DashboardWidgetDao;
-use Tuleap\Dashboard\Widget\DashboardWidgetRetriever;
-use Tuleap\FRS\FRSPermissionCreator;
-use Tuleap\FRS\FRSPermissionDao;
-use Tuleap\FRS\UploadedLinksDao;
-use Tuleap\FRS\UploadedLinksUpdater;
+use Tuleap\DB\DBTransactionExecutor;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbCollection;
 use Tuleap\Layout\IncludeAssets;
-use Tuleap\Project\DefaultProjectVisibilityRetriever;
-use Tuleap\Project\Label\LabelDao;
-use Tuleap\Project\UgroupDuplicator;
-use Tuleap\Project\UserRemover;
-use Tuleap\Project\UserRemoverDao;
 use Tuleap\Project\XML\Import\ImportConfig;
+use Tuleap\Project\XML\XMLFileContentRetriever;
 use Tuleap\Service\ServiceCreator;
-use Tuleap\Widget\WidgetFactory;
+use Tuleap\Tracker\Semantic\Timeframe\TimeframeChecker;
 
 /**
  * Handles the HTTP actions related to a planning.
  */
-class Planning_Controller extends BaseController
+class Planning_Controller extends BaseController //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 {
     public const AGILE_DASHBOARD_TEMPLATE_NAME = 'agile_dashboard_template.xml';
     public const PAST_PERIOD   = 'past';
@@ -63,9 +51,6 @@ class Planning_Controller extends BaseController
 
     /** @var Planning_MilestoneFactory */
     private $milestone_factory;
-
-    /** @var String */
-    private $plugin_theme_path;
 
     /** @var ProjectManager */
     private $project_manager;
@@ -88,9 +73,6 @@ class Planning_Controller extends BaseController
     /** @var PlanningPermissionsManager */
     private $planning_permissions_manager;
 
-    /** @var AgileDashboard_HierarchyChecker */
-    private $hierarchy_checker;
-
     /**
      * @var ScrumForMonoMilestoneChecker
      */
@@ -100,11 +82,6 @@ class Planning_Controller extends BaseController
      * @var ScrumPlanningFilter
      */
     private $scrum_planning_filter;
-
-    /**
-     * @var TrackerFactory
-     */
-    private $tracker_factory;
 
     /**
      * @var Tracker_FormElementFactory
@@ -122,54 +99,88 @@ class Planning_Controller extends BaseController
     /** @var AdministrationCrumbBuilder */
     private $admin_crumb_builder;
 
+    /**
+     * @var TimeframeChecker
+     */
+    private $timeframe_checker;
+    /**
+     * @var DBTransactionExecutor
+     */
+    private $transaction_executor;
+
+    /**
+     * @var ArtifactsInExplicitBacklogDao
+     */
+    private $artifacts_in_explicit_backlog_dao;
+    /**
+     * @var PlanningUpdater
+     */
+    private $planning_updater;
+    /**
+     * @var EventManager
+     */
+    private $event_manager;
+    /**
+     * @var Planning_RequestValidator
+     */
+    private $planning_request_validator;
+
     public function __construct(
         Codendi_Request $request,
         PlanningFactory $planning_factory,
         Planning_MilestoneFactory $milestone_factory,
         ProjectManager $project_manager,
         AgileDashboard_XMLFullStructureExporter $xml_exporter,
-        $plugin_theme_path,
         $plugin_path,
         AgileDashboard_KanbanManager $kanban_manager,
         AgileDashboard_ConfigurationManager $config_manager,
         AgileDashboard_KanbanFactory $kanban_factory,
         PlanningPermissionsManager $planning_permissions_manager,
-        AgileDashboard_HierarchyChecker $hierarchy_checker,
         ScrumForMonoMilestoneChecker $scrum_mono_milestone_checker,
         ScrumPlanningFilter $scrum_planning_filter,
-        TrackerFactory $tracker_factory,
         Tracker_FormElementFactory $tracker_form_element_factory,
         AgileDashboardCrumbBuilder $service_crumb_builder,
-        AdministrationCrumbBuilder $admin_crumb_builder
+        AdministrationCrumbBuilder $admin_crumb_builder,
+        TimeframeChecker $timeframe_checker,
+        DBTransactionExecutor $transaction_executor,
+        ArtifactsInExplicitBacklogDao $artifacts_in_explicit_backlog_dao,
+        PlanningUpdater $planning_updater,
+        EventManager $event_manager,
+        Planning_RequestValidator $planning_request_validator
     ) {
         parent::__construct('agiledashboard', $request);
 
-        $this->project                      = $this->request->getProject();
-        $this->group_id                     = $this->project->getID();
-        $this->planning_factory             = $planning_factory;
-        $this->milestone_factory            = $milestone_factory;
-        $this->project_manager              = $project_manager;
-        $this->xml_exporter                 = $xml_exporter;
-        $this->plugin_theme_path            = $plugin_theme_path;
-        $this->plugin_path                  = $plugin_path;
-        $this->kanban_manager               = $kanban_manager;
-        $this->config_manager               = $config_manager;
-        $this->kanban_factory               = $kanban_factory;
-        $this->planning_permissions_manager = $planning_permissions_manager;
-        $this->hierarchy_checker            = $hierarchy_checker;
-        $this->scrum_mono_milestone_checker = $scrum_mono_milestone_checker;
-        $this->scrum_planning_filter        = $scrum_planning_filter;
-        $this->tracker_factory              = $tracker_factory;
-        $this->tracker_form_element_factory = $tracker_form_element_factory;
-        $this->service_crumb_builder        = $service_crumb_builder;
-        $this->admin_crumb_builder          = $admin_crumb_builder;
+        $this->project                           = $this->request->getProject();
+        $this->group_id                          = $this->project->getID();
+        $this->planning_factory                  = $planning_factory;
+        $this->milestone_factory                 = $milestone_factory;
+        $this->project_manager                   = $project_manager;
+        $this->xml_exporter                      = $xml_exporter;
+        $this->plugin_path                       = $plugin_path;
+        $this->kanban_manager                    = $kanban_manager;
+        $this->config_manager                    = $config_manager;
+        $this->kanban_factory                    = $kanban_factory;
+        $this->planning_permissions_manager      = $planning_permissions_manager;
+        $this->scrum_mono_milestone_checker      = $scrum_mono_milestone_checker;
+        $this->scrum_planning_filter             = $scrum_planning_filter;
+        $this->tracker_form_element_factory      = $tracker_form_element_factory;
+        $this->service_crumb_builder             = $service_crumb_builder;
+        $this->admin_crumb_builder               = $admin_crumb_builder;
+        $this->timeframe_checker                 = $timeframe_checker;
+        $this->transaction_executor              = $transaction_executor;
+        $this->artifacts_in_explicit_backlog_dao = $artifacts_in_explicit_backlog_dao;
+        $this->planning_updater                  = $planning_updater;
+        $this->event_manager                     = $event_manager;
+        $this->planning_request_validator        = $planning_request_validator;
     }
 
-    public function index() {
+    public function index()
+    {
         return $this->showHome();
     }
 
-    private function showHome() {
+    private function showHome()
+    {
         $user = $this->request->getCurrentUser();
         $plannings = $this->planning_factory->getNonLastLevelPlannings(
             $user,
@@ -218,7 +229,8 @@ class Planning_Controller extends BaseController
         return $this->scrum_mono_milestone_checker->isMonoMilestoneEnabled($this->group_id) === true;
     }
 
-    private function getKanbanSummaryPresenters() {
+    private function getKanbanSummaryPresenters()
+    {
         $kanban_presenters = array();
 
         $user = $this->request->getCurrentUser();
@@ -241,7 +253,8 @@ class Planning_Controller extends BaseController
     /**
      * Home page for when there is nothing set-up.
      */
-    private function showEmptyHome() {
+    private function showEmptyHome()
+    {
         $presenter = new Planning_Presenter_BaseHomePresenter(
             $this->group_id,
             $this->isUserAdmin(),
@@ -253,7 +266,8 @@ class Planning_Controller extends BaseController
     /**
      * @return Planning_Presenter_MilestoneAccessPresenter
      */
-    private function getMilestoneAccessPresenters($plannings) {
+    private function getMilestoneAccessPresenters($plannings)
+    {
         $milestone_access_presenters = array();
         foreach ($plannings as $planning) {
             $milestone_type      = $planning->getPlanningTracker();
@@ -268,8 +282,9 @@ class Planning_Controller extends BaseController
         return $milestone_access_presenters;
     }
 
-    private function getPlanningMilestonesDependingOnTimePeriodOrStatus(Planning $planning) {
-        $set_in_time = $this->planning_factory->canPlanningBeSetInTime($planning->getPlanningTracker());
+    private function getPlanningMilestonesDependingOnTimePeriodOrStatus(Planning $planning)
+    {
+        $set_in_time = $this->timeframe_checker->isATimePeriodBuildableInTracker($planning->getPlanningTracker());
 
         if ($set_in_time) {
             $milestones = $this->getPlanningMilestonesForTimePeriod($planning);
@@ -285,7 +300,8 @@ class Planning_Controller extends BaseController
      * @param PFUser $user
      * @return Planning_Presenter_LastLevelMilestone[]
      */
-    private function getLastLevelMilestonesPresenters($last_plannings, PFUser $user) {
+    private function getLastLevelMilestonesPresenters($last_plannings, PFUser $user)
+    {
         $presenters = array();
 
         foreach ($last_plannings as $last_planning) {
@@ -301,7 +317,8 @@ class Planning_Controller extends BaseController
     /**
      * @return Planning_Presenter_MilestoneSummaryPresenter[]
      */
-    private function getMilestoneSummaryPresenters(Planning $last_planning, PFUser $user) {
+    private function getMilestoneSummaryPresenters(Planning $last_planning, PFUser $user)
+    {
         $presenters   = array();
         $has_cardwall = $this->hasCardwall($last_planning);
 
@@ -340,7 +357,8 @@ class Planning_Controller extends BaseController
     /**
      * @return Planning_Milestone[]
      */
-    private function getPlanningMilestonesForTimePeriod(Planning $planning) {
+    private function getPlanningMilestonesForTimePeriod(Planning $planning)
+    {
         $user = $this->request->getCurrentUser();
 
         switch ($this->request->get('period')) {
@@ -363,7 +381,8 @@ class Planning_Controller extends BaseController
         }
     }
 
-    private function getPlanningMilestonesByStatus(Planning $planning) {
+    private function getPlanningMilestonesByStatus(Planning $planning)
+    {
         $user = $this->request->getCurrentUser();
 
         switch ($this->request->get('period')) {
@@ -389,27 +408,31 @@ class Planning_Controller extends BaseController
     /**
      * @return bool
      */
-    private function isUserAdmin() {
+    private function isUserAdmin()
+    {
         return $this->request->getProject()->userIsAdmin($this->request->getCurrentUser());
     }
 
     /**
      * Redirects a non-admin user to the agile dashboard home page
      */
-    private function redirectNonAdmin() {
+    private function redirectNonAdmin()
+    {
         if (! $this->isUserAdmin()) {
             $this->redirect(array('group_id'=>$this->group_id));
         }
     }
 
-    public function new_() {
+    public function new_()
+    {
         $planning  = $this->planning_factory->buildNewPlanning($this->group_id);
         $presenter = $this->getFormPresenter($this->request->getCurrentUser(), $planning);
 
         return $this->renderToString('new', $presenter);
     }
 
-    public function importForm() {
+    public function importForm()
+    {
         $this->redirectNonAdmin();
 
         $template_file = new Valid_File('template_file');
@@ -423,92 +446,9 @@ class Planning_Controller extends BaseController
         return $this->renderToString('import', $presenter);
     }
 
-    private function importConfiguration() {
-        $ugroup_user_dao   = new UGroupUserDao();
-        $ugroup_manager    = new UGroupManager();
-        $event_manager     = EventManager::instance();
-        $ugroup_duplicator = new UgroupDuplicator(
-            new UGroupDao(),
-            $ugroup_manager,
-            new UGroupBinding($ugroup_user_dao, $ugroup_manager),
-            $ugroup_user_dao,
-            $event_manager
-        );
-
-        $send_notifications = false;
-        $force_activation   = true;
-
-        $frs_permissions_creator = new FRSPermissionCreator(
-            new FRSPermissionDao(),
-            new UGroupDao()
-        );
-
-        $user_manager   = UserManager::instance();
-        $widget_factory = new WidgetFactory(
-            $user_manager,
-            new User_ForgeUserGroupPermissionsManager(new User_ForgeUserGroupPermissionsDao()),
-            $event_manager
-        );
-
-        $widget_dao            = new DashboardWidgetDao($widget_factory);
-        $project_dashboard_dao = new ProjectDashboardDao($widget_dao);
-        $project_retriever     = new ProjectDashboardRetriever($project_dashboard_dao);
-        $widget_retriever      = new DashboardWidgetRetriever($widget_dao);
-        $duplicator            = new ProjectDashboardDuplicator(
-            $project_dashboard_dao,
-            $project_retriever,
-            $widget_dao,
-            $widget_retriever,
-            $widget_factory
-        );
-
-        $project_creator = new ProjectCreator(
-            ProjectManager::instance(),
-            ReferenceManager::instance(),
-            $user_manager,
-            $ugroup_duplicator,
-            $send_notifications,
-            $frs_permissions_creator,
-            $duplicator,
-            new ServiceCreator(),
-            new LabelDao(),
-            new DefaultProjectVisibilityRetriever(),
-            $force_activation
-        );
-
-        $logger       = new ProjectXMLImporterLogger();
-        $xml_importer = new ProjectXMLImporter(
-            $event_manager,
-            ProjectManager::instance(),
-            $user_manager,
-            new XML_RNGValidator(),
-            $ugroup_manager,
-            new XMLImportHelper($user_manager),
-            ServiceManager::instance(),
-            $logger,
-            $ugroup_duplicator,
-            $frs_permissions_creator,
-            new UserRemover(
-                ProjectManager::instance(),
-                $event_manager,
-                new ArtifactTypeFactory(false),
-                new UserRemoverDao(),
-                $user_manager,
-                new ProjectHistoryDao(),
-                new UGroupManager()
-            ),
-            $project_creator,
-            new UploadedLinksUpdater(new UploadedLinksDao(), FRSLog::instance()),
-            new ProjectDashboardXMLImporter(
-                new ProjectDashboardSaver(
-                    $project_dashboard_dao
-                ),
-                $widget_factory,
-                $widget_dao,
-                $logger,
-                $event_manager
-            )
-        );
+    private function importConfiguration()
+    {
+        $xml_importer = ProjectXMLImporter::build(new XMLImportHelper(UserManager::instance()), \ProjectCreator::buildSelfByPassValidation());
 
         try {
             $errors = $xml_importer->collectBlockingErrorsWithoutImporting(
@@ -533,7 +473,8 @@ class Planning_Controller extends BaseController
     /**
      * Exports the agile dashboard configuration as an XML file
      */
-    public function exportToFile() {
+    public function exportToFile()
+    {
         try {
             $project = $this->getProjectFromRequest();
             $xml = $this->getFullConfigurationAsXML($project);
@@ -549,11 +490,13 @@ class Planning_Controller extends BaseController
      * @return Project
      * @throws Project_NotFoundException
      */
-    private function getProjectFromRequest() {
+    private function getProjectFromRequest()
+    {
         return $this->project_manager->getValidProject($this->group_id);
     }
 
-    private function getFullConfigurationAsXML(Project $project) {
+    private function getFullConfigurationAsXML(Project $project)
+    {
         return $this->xml_exporter->export($project);
     }
 
@@ -568,9 +511,7 @@ class Planning_Controller extends BaseController
             $this->redirect(array('group_id' => $this->group_id, 'action' => 'new'));
         }
 
-        $validator = new Planning_RequestValidator($this->planning_factory);
-
-        if ($validator->isValid($this->request)) {
+        if ($this->planning_request_validator->isValid($this->request)) {
             $this->planning_factory->createPlanning(
                 $this->group_id,
                 PlanningParameters::fromArray(
@@ -594,7 +535,8 @@ class Planning_Controller extends BaseController
         }
     }
 
-    public function edit() {
+    public function edit()
+    {
         $planning  = $this->planning_factory->getPlanning($this->request->get('planning_id'));
         $presenter = $this->getFormPresenter($this->request->getCurrentUser(), $planning);
 
@@ -645,31 +587,33 @@ class Planning_Controller extends BaseController
         );
     }
 
-    private function hasCardwall(Planning $planning) {
+    private function hasCardwall(Planning $planning)
+    {
         $tracker = $planning->getPlanningTracker();
         $enabled = false;
 
-        EventManager::instance()->processEvent(
+        $this->event_manager->processEvent(
             AGILEDASHBOARD_EVENT_IS_CARDWALL_ENABLED,
-            array(
+            [
                 'tracker' => $tracker,
-                'enabled'    => &$enabled,
-            )
+                'enabled' => &$enabled,
+            ]
         );
 
         return $enabled;
     }
 
-    private function getCardwallConfiguration(Planning $planning) {
+    private function getCardwallConfiguration(Planning $planning)
+    {
         $tracker  = $planning->getPlanningTracker();
         $view     = null;
 
-        EventManager::instance()->processEvent(
+        $this->event_manager->processEvent(
             AGILEDASHBOARD_EVENT_PLANNING_CONFIG,
-            array(
+            [
                 'tracker' => $tracker,
                 'view'    => &$view,
-            )
+            ]
         );
 
         return $view;
@@ -678,50 +622,75 @@ class Planning_Controller extends BaseController
     public function update()
     {
         $this->checkUserIsAdmin();
-        $validator = new Planning_RequestValidator($this->planning_factory);
 
-        if ($validator->isValid($this->request)) {
+        if ($this->planning_request_validator->isValid($this->request)) {
             $planning_parameter = PlanningParameters::fromArray(
                 $this->request->get('planning')
             );
 
-            $this->planning_factory->updatePlanning(
-                $this->request->get('planning_id'),
-                $this->group_id,
-                $planning_parameter
-            );
+            $updated_planning_id = (int) $this->request->get('planning_id');
+            $user                = $this->request->getCurrentUser();
+
+            $this->planning_updater->update($user, $this->project, $updated_planning_id, $planning_parameter);
 
             $this->addFeedback(
                 Feedback::INFO,
                 dgettext('tuleap-agiledashboard', 'Planning succesfully updated.')
             );
         } else {
-            $this->addFeedback('error', $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_all_fields_mandatory'));
+            $this->addFeedback(
+                Feedback::ERROR,
+                $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_all_fields_mandatory')
+            );
         }
 
         $this->updateCardwallConfig();
 
-        $this->redirect(array('group_id'    => $this->group_id,
-                              'planning_id' => $this->request->get('planning_id'),
-                              'action'      => 'edit'));
-    }
-
-    private function updateCardwallConfig() {
-        $tracker = $this->getPlanning()->getPlanningTracker();
-
-        EventManager::instance()->processEvent(
-            AGILEDASHBOARD_EVENT_PLANNING_CONFIG_UPDATE,
-            array(
-                'request' => $this->request,
-                'tracker' => $tracker,
-            )
+        $this->redirect(
+            [
+                'group_id'    => $this->group_id,
+                'planning_id' => $this->request->get('planning_id'),
+                'action'      => 'edit'
+            ]
         );
     }
 
-    public function delete() {
+    private function updateCardwallConfig()
+    {
+        $tracker = $this->getPlanning()->getPlanningTracker();
+
+        $this->event_manager->processEvent(
+            AGILEDASHBOARD_EVENT_PLANNING_CONFIG_UPDATE,
+            [
+                'request' => $this->request,
+                'tracker' => $tracker,
+            ]
+        );
+    }
+
+    /**
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function delete()
+    {
         $this->checkUserIsAdmin();
-        $this->planning_factory->deletePlanning($this->request->get('planning_id'));
-        return $this->redirect(array('group_id' => $this->group_id, 'action' => 'admin'));
+
+        $planning_id = $this->request->get('planning_id');
+        $user    = $this->request->getCurrentUser();
+        $project = $this->request->getProject();
+
+        $this->transaction_executor->execute(
+            function () use ($user, $planning_id, $project) {
+                $root_planning = $this->planning_factory->getRootPlanning($user, $project->getID());
+                if ($root_planning && (int) $root_planning->getId() === (int) $planning_id) {
+                    $this->artifacts_in_explicit_backlog_dao->removeExplicitBacklogOfPlanning((int) $planning_id);
+                }
+                $this->planning_factory->deletePlanning($planning_id);
+            }
+        );
+
+        return $this->redirect(['group_id' => $this->group_id, 'action' => 'admin']);
     }
 
     /**
@@ -745,7 +714,8 @@ class Planning_Controller extends BaseController
         return $breadcrumbs;
     }
 
-    private function getPlanning() {
+    private function getPlanning()
+    {
         $planning_id = $this->request->get('planning_id');
         return $this->planning_factory->getPlanning($planning_id);
     }
@@ -768,10 +738,10 @@ class Planning_Controller extends BaseController
         }
     }
 
-    private function addOtherWarnings(array &$warning_list,Tracker $planning_tracker)
+    private function addOtherWarnings(array &$warning_list, Tracker $planning_tracker)
     {
         $event = new AdditionalPlanningConfigurationWarningsRetriever($planning_tracker);
-        EventManager::instance()->processEvent($event);
+        $this->event_manager->processEvent($event);
 
         foreach ($event->getAllWarnings() as $warning) {
             $warning_list[] = $warning;

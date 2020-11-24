@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_XML_Importer_CopyArtifactInformationsAggregator implements Logger {
+class Tracker_XML_Importer_CopyArtifactInformationsAggregator implements Logger
+{
 
     /** @var Array */
     private $logs_stack = array();
@@ -26,36 +27,44 @@ class Tracker_XML_Importer_CopyArtifactInformationsAggregator implements Logger 
     /** @var BackendLogger */
     private $backend_logger;
 
-    public function __construct(BackendLogger $backend_logger) {
+    public function __construct(BackendLogger $backend_logger)
+    {
         $this->backend_logger = $backend_logger;
     }
 
-    public function getAllLogs() {
+    public function getAllLogs()
+    {
         return $this->logs_stack;
     }
 
-    public function log($message, $level = Feedback::INFO) {
+    public function log($message, $level = Feedback::INFO)
+    {
         $this->logs_stack[] = "[$level] $message";
         $this->backend_logger->log($message, $level);
     }
 
-    public function debug($message) {
+    public function debug($message)
+    {
         $this->backend_logger->log($message, Feedback::DEBUG);
     }
 
-    public function info($message) {
+    public function info($message)
+    {
         $this->backend_logger->log($message, Feedback::INFO);
     }
 
-    public function error($message, ?Exception $e = null) {
+    public function error($message, ?Exception $e = null)
+    {
         $this->log($this->generateLogWithException($message, $e), Feedback::ERROR);
     }
 
-    public function warn($message, ?Exception $e = null) {
+    public function warn($message, ?Exception $e = null)
+    {
         $this->log($this->generateLogWithException($message, $e), Feedback::WARN);
     }
 
-    private function generateLogWithException($message, $e) {
+    private function generateLogWithException($message, $e)
+    {
         if (! $e) {
             return $message;
         }

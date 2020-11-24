@@ -21,7 +21,8 @@
 /**
  * A board to display
  */
-abstract class Cardwall_BoardPresenter {
+abstract class Cardwall_BoardPresenter
+{
 
     /**
      * @var Cardwall_Board
@@ -54,7 +55,8 @@ abstract class Cardwall_BoardPresenter {
      * @param Cardwall_Board $board The board
      * @param string         $redirect_parameter the redirect paramter to add to various url
      */
-    public function __construct(Cardwall_Board $board, $redirect_parameter) {
+    public function __construct(Cardwall_Board $board, $redirect_parameter)
+    {
         $this->board                       = $board;
         $this->planning_redirect_parameter = $redirect_parameter;
     }
@@ -62,7 +64,8 @@ abstract class Cardwall_BoardPresenter {
     /**
      *@var int
      */
-    public function column_width() {
+    public function column_width()
+    {
         return round(100 / (count($this->board->columns) + ($this->has_swimline_header ? 1 : 0)));
     }
 }

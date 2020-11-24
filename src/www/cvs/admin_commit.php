@@ -34,12 +34,12 @@ $cvs_preamble = db_result($result, 0, 'cvs_preamble');
 $cvs_is_private = db_result($result, 0, 'cvs_is_private');
 
 if ($cvs_mailing_list == 'NULL') {
-  $cvs_mailing_list = '';
+    $cvs_mailing_list = '';
 }
 $custom_mailing_header = $cvs_mailing_header;
 
 if ($cvs_mailing_header == 'NULL') {
-  $custom_mailing_header = "";
+    $custom_mailing_header = "";
 }
 
 $project = ProjectManager::instance()->getProject($group_id);
@@ -47,7 +47,7 @@ $checked  = $project->isPublic() && !$cvs_is_private ? '' : 'checked="true"';
 $readonly = $project->isPublic() ? '' : 'readonly="true" disabled="true"';
 
 echo "<h2>".$GLOBALS['Language']->getText('cvs_admin_commit', 'title')."</h2>";
-  
+
 echo '<FORM ACTION="?" METHOD="GET">
 	<INPUT TYPE="HIDDEN" NAME="group_id" VALUE="'.$group_id.'">
 	<INPUT TYPE="HIDDEN" NAME="func" VALUE="setAdmin">
@@ -56,23 +56,23 @@ echo '<FORM ACTION="?" METHOD="GET">
     <label class="checkbox" for="cvs_private"><input type="hidden" name="private" '. $checked .' '. $readonly .' value="0" />
     <input type="checkbox" name="private" '. $checked .' '. $readonly .' value="1" id="cvs_private" />
     '. $GLOBALS['Language']->getText('cvs_admin_commit', 'private_lbl') .'</label>';
-    if (!$project->isPublic()) {
-        echo '<br /><em>'. $GLOBALS['Language']->getText('cvs_admin_commit', 'private_private_msg') .'</em>';
-    }
+if (!$project->isPublic()) {
+    echo '<br /><em>'. $GLOBALS['Language']->getText('cvs_admin_commit', 'private_private_msg') .'</em>';
+}
     echo '</p>
 	<h3>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'tracking_hdr').
-'</H3><p>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'tracking_msg',array($GLOBALS['sys_name'])).
+'</H3><p>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'tracking_msg', array($GLOBALS['sys_name'])).
         '<p>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'tracking_lbl').
         '&nbsp;&nbsp;&nbsp;&nbsp;<SELECT name="tracked"> '.
-        '<OPTION VALUE="1"'.(($cvs_tracked == '1') ? ' SELECTED':'').'>'.$GLOBALS['Language']->getText('global','on').'</OPTION>'.
-        '<OPTION VALUE="0"'.(($cvs_tracked == '0') ? ' SELECTED':'').'>'.$GLOBALS['Language']->getText('global','off').'</OPTION>'.
-	'</SELECT></p>'.
-	'<h3>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'watches_hdr').
-	'</H3><p>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'watches_msg').
+        '<OPTION VALUE="1"'.(($cvs_tracked == '1') ? ' SELECTED':'').'>'.$GLOBALS['Language']->getText('global', 'on').'</OPTION>'.
+        '<OPTION VALUE="0"'.(($cvs_tracked == '0') ? ' SELECTED':'').'>'.$GLOBALS['Language']->getText('global', 'off').'</OPTION>'.
+    '</SELECT></p>'.
+    '<h3>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'watches_hdr').
+    '</H3><p>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'watches_msg').
         '<p>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'watches_lbl').
         '&nbsp;&nbsp;&nbsp;&nbsp;<SELECT name="watches"> '.
-        '<OPTION VALUE="1"'.(($cvs_watch_mode == '1') ? ' SELECTED':'').'>'.$GLOBALS['Language']->getText('global','on').'</OPTION>'.
-        '<OPTION VALUE="0"'.(($cvs_watch_mode == '0') ? ' SELECTED':'').'>'.$GLOBALS['Language']->getText('global','off').'</OPTION>'.
+        '<OPTION VALUE="1"'.(($cvs_watch_mode == '1') ? ' SELECTED':'').'>'.$GLOBALS['Language']->getText('global', 'on').'</OPTION>'.
+        '<OPTION VALUE="0"'.(($cvs_watch_mode == '0') ? ' SELECTED':'').'>'.$GLOBALS['Language']->getText('global', 'off').'</OPTION>'.
         '</SELECT></p>'.
         '<H3>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'notif_hdr').
         '</H3><p>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'notif_msg').'</p>'.
@@ -81,8 +81,8 @@ echo '<FORM ACTION="?" METHOD="GET">
         '<p>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'subject').': <br>'.
         '<INPUT TYPE="TEXT" SIZE="30" NAME="custom_mailing_header" VALUE="'.$custom_mailing_header.
         '"></p> <h3>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'preamble_hdr').
-'</h3><P>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'preamble_msg',array("/cvs/?func=info&group_id=".$group_id, $GLOBALS['sys_name'])).
+'</h3><P>'.$GLOBALS['Language']->getText('cvs_admin_commit', 'preamble_msg', array("/cvs/?func=info&group_id=".$group_id, $GLOBALS['sys_name'])).
         '<p><TEXTAREA cols="70" rows="8" wrap="virtual" name="form_preamble">'.$cvs_preamble.'</TEXTAREA>';
-echo '</p><INPUT TYPE="SUBMIT" NAME="SUBMIT" VALUE="'.$GLOBALS['Language']->getText('global','btn_submit').'"></p></FORM>';
+echo '</p><INPUT TYPE="SUBMIT" NAME="SUBMIT" VALUE="'.$GLOBALS['Language']->getText('global', 'btn_submit').'"></p></FORM>';
 
 commits_footer(array());

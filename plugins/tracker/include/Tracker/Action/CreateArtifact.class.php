@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,7 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Action_CreateArtifact {
+use Tuleap\JSONHeader;
+
+class Tracker_Action_CreateArtifact
+{
     private $tracker;
     private $artifact_factory;
     private $tracker_factory;
@@ -36,7 +39,8 @@ class Tracker_Action_CreateArtifact {
         $this->formelement_factory = $formelement_factory;
     }
 
-    public function process(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user) {
+    public function process(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user)
+    {
         if ($this->tracker->userCanSubmitArtifact($current_user)) {
             $this->processCreate($layout, $request, $current_user);
         } else {
@@ -45,13 +49,15 @@ class Tracker_Action_CreateArtifact {
         }
     }
 
-    private function processCreate(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user) {
+    private function processCreate(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user)
+    {
         $link     = (int) $request->get('link-artifact-id');
         $artifact = $this->createArtifact($layout, $request, $current_user);
         if ($artifact) {
             $this->associateImmediatelyIfNeeded($artifact, $link, $request->get('immediate'), $current_user);
             $this->redirect($request, $current_user, $artifact);
         }
+        assert($layout instanceof Tracker_IFetchTrackerSwitcher);
         $this->tracker->displaySubmit($layout, $request, $current_user, $link);
     }
 
@@ -62,9 +68,10 @@ class Tracker_Action_CreateArtifact {
      * @param Codendi_Request                $request
      * @param PFUser                         $user
      *
-     * @return Tracker_Artifact the new artifact
+     * @return Tracker_Artifact|false the new artifact
      */
-    private function createArtifact(Tracker_IDisplayTrackerLayout $layout, $request, $user) {
+    private function createArtifact(Tracker_IDisplayTrackerLayout $layout, $request, $user)
+    {
         $email = null;
         if ($user->isAnonymous()) {
             $email = $request->get('email');
@@ -80,7 +87,8 @@ class Tracker_Action_CreateArtifact {
         return $this->artifact_factory->createArtifact($this->tracker, $fields_data, $user, $email);
     }
 
-    private function associateImmediatelyIfNeeded(Tracker_Artifact $new_artifact, $link_artifact_id, $doitnow, PFUser $current_user) {
+    private function associateImmediatelyIfNeeded(Tracker_Artifact $new_artifact, $link_artifact_id, $doitnow, PFUser $current_user)
+    {
         if ($link_artifact_id && $doitnow) {
             $source_artifact = $this->artifact_factory->getArtifactById($link_artifact_id);
             if ($source_artifact) {
@@ -89,23 +97,26 @@ class Tracker_Action_CreateArtifact {
         }
     }
 
-    private function redirect(Codendi_Request $request, PFUser $current_user, Tracker_Artifact $artifact) {
+    private function redirect(Codendi_Request $request, PFUser $current_user, Tracker_Artifact $artifact)
+    {
         $redirect = $this->getRedirect($request, $current_user, $artifact);
         $this->executeRedirect($request, $artifact, $redirect);
     }
-    
-    private function getRedirect(Codendi_Request $request, PFUser $current_user, Tracker_Artifact $artifact) {
+
+    private function getRedirect(Codendi_Request $request, PFUser $current_user, Tracker_Artifact $artifact)
+    {
         $redirect = $this->redirectUrlAfterArtifactSubmission($request, $this->tracker->getId(), $artifact->getId());
         $this->redirectToParentCreationIfNeeded($artifact, $current_user, $redirect, $request);
         $artifact->summonArtifactRedirectors($request, $redirect);
         return $redirect;
     }
 
-    private function executeRedirect(Codendi_Request $request, Tracker_Artifact $artifact, Tracker_Artifact_Redirect $redirect) {
+    private function executeRedirect(Codendi_Request $request, Tracker_Artifact $artifact, Tracker_Artifact_Redirect $redirect)
+    {
         if ($request->isAjax()) {
-            header(json_header(array('aid' => $artifact->getId())));
+            header(JSONHeader::getHeaderForPrototypeJS(['aid' => $artifact->getId()]));
             exit;
-        } else if ($this->isFromOverlay($request)) {
+        } elseif ($this->isFromOverlay($request)) {
             echo '<script>window.parent.codendi.tracker.artifact.artifactLink.newArtifact(' . (int) $artifact->getId() . ');</script>';
             exit;
         } else {
@@ -114,14 +125,16 @@ class Tracker_Action_CreateArtifact {
         }
     }
 
-    private function isFromOverlay(Codendi_Request $request) {
+    private function isFromOverlay(Codendi_Request $request)
+    {
         if ($request->existAndNonEmpty('link-artifact-id') && !$request->exist('immediate')) {
             return true;
         }
         return false;
     }
 
-    protected function redirectToParentCreationIfNeeded(Tracker_Artifact $artifact, PFUser $current_user, Tracker_Artifact_Redirect $redirect, Codendi_Request $request) {
+    protected function redirectToParentCreationIfNeeded(Tracker_Artifact $artifact, PFUser $current_user, Tracker_Artifact_Redirect $redirect, Codendi_Request $request)
+    {
         $parent_tracker = $this->tracker->getParent();
         if ($parent_tracker && count($artifact->getAllAncestors($current_user)) == 0) {
             $art_link    = $this->formelement_factory->getAnArtifactLinkField($current_user, $parent_tracker);
@@ -139,7 +152,8 @@ class Tracker_Action_CreateArtifact {
         }
     }
 
-    private function isParentCreationRequested(Codendi_Request $request, PFUser $current_user) {
+    private function isParentCreationRequested(Codendi_Request $request, PFUser $current_user)
+    {
         $request_data           = $request->get('artifact');
         $artifact_link_field    = $this->formelement_factory->getAnArtifactLinkField($current_user, $this->tracker);
 
@@ -156,10 +170,11 @@ class Tracker_Action_CreateArtifact {
         return false;
     }
 
-    protected function redirectUrlAfterArtifactSubmission(Codendi_Request $request, $tracker_id, $artifact_id) {
+    protected function redirectUrlAfterArtifactSubmission(Codendi_Request $request, $tracker_id, $artifact_id)
+    {
         $redirect = new Tracker_Artifact_Redirect();
         $redirect->base_url = TRACKER_BASE_URL;
-        
+
         $stay      = $request->get('submit_and_stay');
         $continue  = $request->get('submit_and_continue');
         if ($stay || $continue) {
@@ -172,7 +187,8 @@ class Tracker_Action_CreateArtifact {
         return $redirect;
     }
 
-    private function calculateRedirectParams($tracker_id, $artifact_id, $stay, $continue) {
+    private function calculateRedirectParams($tracker_id, $artifact_id, $stay, $continue)
+    {
         $redirect_params = array();
         $redirect_params['tracker']       = $tracker_id;
         if ($continue) {
@@ -183,7 +199,4 @@ class Tracker_Action_CreateArtifact {
         }
         return array_filter($redirect_params);
     }
-
 }
-
-?>

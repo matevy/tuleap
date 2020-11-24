@@ -21,9 +21,11 @@ namespace Tuleap\REST\Exceptions;
 
 use Exception;
 
-class NoAuthenticationHeadersException extends Exception {
+class NoAuthenticationHeadersException extends Exception
+{
 
-    public function __construct($header_name) {
+    public function __construct($header_name)
+    {
         parent::__construct($header_name.' HTTP header required');
     }
 }

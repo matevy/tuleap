@@ -42,69 +42,58 @@ pipeline {
         stage('Tests') {
             failFast false
             parallel {
-                stage('UT SimpleTest PHP 7.2') {
-                    steps { script { actions.runSimpleTestTests('72') } }
-                    post { always { junit 'results/ut-simpletest/php-72/results.xml' } }
+                stage('UT SimpleTest PHP 7.3') {
+                    steps { script { actions.runSimpleTestTests('73') } }
+                    post { always { junit 'results/ut-simpletest/php-73/results.xml' } }
                 }
                 stage('UT PHPUnit') {
                     stages {
-                        stage('UT PHPUnit PHP 7.2') {
-                            steps { script { actions.runPHPUnitTests('72') } }
+                        stage('UT PHPUnit PHP 7.3') {
+                            steps { script { actions.runPHPUnitTests('73') } }
                             post {
                                 always {
-                                    step([$class: 'CloverPublisher', cloverReportDir: 'results/ut-phpunit/php-72/coverage/', cloverReportFileName: 'clover.xml'])
+                                    step([$class: 'CloverPublisher', cloverReportDir: 'results/ut-phpunit/php-73/coverage/', cloverReportFileName: 'clover.xml'])
                                 }
                             }
                         }
                     }
                     post { always { junit 'results/ut-phpunit/*/phpunit_tests_results.xml' } }
                 }
-                stage ('Karma') {
-                    stages {
-                        stage('Karma AgileDashboard PlanningV2') {
-                            steps { script { actions.runKarmaTests('planning', 'plugins/agiledashboard/www/js/planning-v2') } }
-                        }
-                        stage('Karma AgileDashboard Kanban') {
-                            steps { script { actions.runKarmaTests('kanban', 'plugins/agiledashboard/www/js/kanban') } }
-                        }
-                        stage('Karma Tracker') {
-                            steps { script { actions.runKarmaTests('tracker', 'plugins/tracker/www/scripts') } }
-                        }
-                        stage('Karma FRS plugin') {
-                            steps { script { actions.runKarmaTests('frs', 'plugins/frs/www/js/angular') } }
-                        }
-                        stage('Karma Label plugin') {
-                            steps { script { actions.runKarmaTests('label', 'plugins/label/www/scripts') } }
-                        }
-                        stage('Karma PullRequest plugin') {
-                            steps { script { actions.runKarmaTests('pullrequest', 'plugins/pullrequest/www/scripts') } }
-                        }
-                        stage('Karma CrossTracker plugin') {
-                            steps { script { actions.runKarmaTests('crosstracker', 'plugins/crosstracker/scripts') } }
-                        }
-                        stage('Karma TimeTracking plugin') {
-                            steps { script { actions.runKarmaTests('timetracking', 'plugins/timetracking/www/scripts') } }
-                        }
-                        stage('Karma Git plugin') {
-                            steps { script { actions.runKarmaTests('git', 'plugins/git/www/scripts') } }
-                        }
-                        stage('Karma Document plugin') {
-                            steps { script { actions.runKarmaTests('document', 'plugins/document/scripts') } }
+                stage ('Jest') {
+                    agent {
+                        docker {
+                            image 'node:12.6-alpine'
+                            reuseNode true
+                            args '--network none'
                         }
                     }
-                    post { always { junit 'results/karma/test-*-results.xml' } }
+                    steps { script { actions.runJestTests('Tuleap', '.') } }
+                    post {
+                        always {
+                            junit 'results/jest/test-*-results.xml'
+                            step([$class: 'CloverPublisher', cloverReportDir: 'results/jest/coverage/', cloverReportFileName: 'clover.xml'])
+                        }
+                    }
                 }
                 stage('REST') {
                     stages {
-                        stage('REST CentOS 6 PHP 7.2 MySQL 5.7') {
-                            steps { script { actions.runRESTTests('c6-php72-mysql57') } }
+                        stage('REST CentOS 6 PHP 7.3 MySQL 5.7') {
+                            steps { script { actions.runRESTTests('c6-php73-mysql57') } }
                         }
                     }
                     post { always { junit 'results/api-rest/*/rest_tests.xml' } }
                 }
+                stage('DB Integration') {
+                    stages {
+                        stage('DB CentOS 6 PHP 7.3 MySQL 5.7') {
+                            steps { script { actions.runDBTests('c6-php73-mysql57') } }
+                        }
+                    }
+                    post { always { junit 'results/db/*/db_tests.xml' } }
+                }
                 stage('SOAP') {
                     stages {
-                        stage('SOAP PHP 7.2') { steps { script { actions.runSOAPTests('php-72', '4') } } }
+                        stage('SOAP PHP 7.3') { steps { script { actions.runSOAPTests('php-73', '5') } } }
                     }
                     post { always { junit "results/api-soap/*/soap_tests.xml" } }
                 }
@@ -120,6 +109,21 @@ pipeline {
                         stage('Javascript coding standards') {
                             steps { script { actions.runJavascriptCodingStandards() } }
                         }
+                        stage('ESLint static analysis') {
+                            agent {
+                                docker {
+                                    image 'node:12.6-alpine'
+                                    reuseNode true
+                                    args '--network none'
+                                }
+                            }
+                            steps { script { actions.runESLint() } }
+                            post {
+                                always {
+                                    recordIssues enabledForFailure: true, tools: [checkStyle(id: 'checkstyle_eslint', pattern: 'results/eslint/checkstyle.xml')]
+                                }
+                            }
+                        }
                         stage('PHP coding standards') {
                             steps {
                                 script {
@@ -133,6 +137,28 @@ pipeline {
                                         './tests/phpcs/tuleap-ruleset-minimal.xml',
                                         filesToAnalyze
                                     )
+                                }
+                            }
+                        }
+                        stage('Psalm static analysis') {
+                            when { not { branch 'master' } }
+                            agent {
+                                dockerfile {
+                                    dir 'sources/tests/psalm/'
+                                    reuseNode true
+                                    args '--network none'
+                                }
+                            }
+                            steps {
+                                script {
+                                    def helpers = load 'sources/tests/helpers.groovy'
+                                    def filesToAnalyze = helpers.getModifiedFilesSinceFirstParentOfCurrentCommit('sources/')
+                                    actions.runPsalm('tests/psalm/psalm.xml', filesToAnalyze)
+                                }
+                            }
+                            post {
+                                always {
+                                    recordIssues enabledForFailure: true, minimumSeverity: 'NORMAL', tools: [checkStyle(id: 'checkstyle_psalm', pattern: 'results/psalm/checkstyle.xml')]
                                 }
                             }
                         }

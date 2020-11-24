@@ -16,17 +16,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201405060841_add_index_for_semantic_and_artifact extends ForgeUpgrade_Bucket {
+class b201405060841_add_index_for_semantic_and_artifact extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Add Index on semantic and artifact';
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         if (! $this->indexNameExists('tracker_semantic_status', 'idx_field_open')) {
             $sql = 'ALTER TABLE tracker_semantic_status ADD INDEX idx_field_open(field_id, open_value_id)';
             $res = $this->db->dbh->exec($sql);
@@ -50,7 +54,8 @@ class b201405060841_add_index_for_semantic_and_artifact extends ForgeUpgrade_Buc
         }
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (! $this->indexNameExists('tracker_semantic_status', 'idx_field_open')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException("tracker_semantic_status has no idx_field_open index");
         }
@@ -66,9 +71,10 @@ class b201405060841_add_index_for_semantic_and_artifact extends ForgeUpgrade_Buc
      * @param String $tableName Table name
      * @param String $index     Index
      *
-     * @return Boolean
+     * @return bool
      */
-    private function indexNameExists($tableName, $index) {
+    private function indexNameExists($tableName, $index)
+    {
         $sql = 'SHOW INDEX FROM '.$tableName.' WHERE Key_name LIKE '.$this->db->dbh->quote($index);
         $res = $this->db->dbh->query($sql);
         if ($res && $res->fetch() !== false) {

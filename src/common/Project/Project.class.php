@@ -98,10 +98,10 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
             return;
         }
 
-        $this->serviceClassnames = array(
-            'file' => 'ServiceFile',
-            'svn'  => 'ServiceSVN'
-        );
+        $this->serviceClassnames = [
+            Service::FILE => ServiceFile::class,
+            Service::SVN  => ServiceSVN::class,
+        ];
 
         EventManager::instance()->processEvent(
             Event::SERVICE_CLASSNAMES,
@@ -149,17 +149,17 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         return $this->services[Service::SUMMARY]->getRank();
     }
 
-    public function getServiceLabel($short_name)
-    {
-        return $this->getService($short_name)->getLabel();
-    }
-
     private function getServiceLink($short_name)
     {
-        return $this->getService($short_name)->getUrl();
+        $service = $this->getService($short_name);
+        if ($service === null) {
+            return '';
+        }
+
+        return $service->getUrl();
     }
 
-    public function getServicesData()
+    private function getServicesData()
     {
         $this->cacheServices();
         return $this->service_data_array;
@@ -174,9 +174,13 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
      */
     public function getServiceClassName($short_name)
     {
+        if (! $short_name) {
+            return \Tuleap\Project\Service\ProjectDefinedService::class;
+        }
+
         $this->cacheServiceClassnames();
 
-        $classname = 'Service';
+        $classname = Service::class;
         if (isset($this->serviceClassnames[$short_name])) {
             $classname = $this->serviceClassnames[$short_name];
         }
@@ -189,7 +193,7 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
      *
      * @param String $service_name
      *
-     * @return Service
+     * @return Service|null
      */
     public function getService($service_name)
     {
@@ -222,10 +226,19 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         return $this->services;
     }
 
-    public function getActiveServices()
+    /**
+     * @return Service[]
+     */
+    public function getActiveServices(): array
     {
         $this->cacheServices();
         return $this->cache_active_services;
+    }
+
+    public function getFileService(): ?ServiceFile
+    {
+        $this->cacheServices();
+        return $this->usesService(Service::FILE) ? $this->services[Service::FILE] : null;
     }
 
     public function usesHomePage()
@@ -422,7 +435,7 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function allowsRestricted()
     {

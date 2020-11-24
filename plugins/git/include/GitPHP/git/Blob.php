@@ -92,7 +92,7 @@ class Blob extends FilesystemObject
      * @param mixed $project the project
      * @param string $hash object hash
      * @return mixed blob object
-     * @throws Exception exception on invalid hash
+     * @throws \Exception exception on invalid hash
      */
     public function __construct($project, $hash)
     {
@@ -105,7 +105,7 @@ class Blob extends FilesystemObject
      * Gets the blob data
      *
      * @access public
-     * @param boolean $explode true to explode data into an array of lines
+     * @param bool $explode true to explode data into an array of lines
      * @return string blob data
      */
     public function GetData($explode = false) // @codingStandardsIgnoreLine
@@ -142,7 +142,7 @@ class Blob extends FilesystemObject
      * @access public
      * @static
      * @param string $octMode octal mode
-     * @param boolean $local true if caller wants localized type
+     * @param bool $local true if caller wants localized type
      * @return string file type
      */
     public static function FileType($octMode, $local = false) // @codingStandardsIgnoreLine
@@ -187,7 +187,7 @@ class Blob extends FilesystemObject
      * Gets the blob size
      *
      * @access public
-     * @return integer size
+     * @return int size
      */
     public function GetSize() // @codingStandardsIgnoreLine
     {
@@ -208,7 +208,7 @@ class Blob extends FilesystemObject
      * Sets the blob size
      *
      * @access public
-     * @param integer $size size
+     * @param int $size size
      */
     public function SetSize($size) // @codingStandardsIgnoreLine
     {
@@ -221,16 +221,12 @@ class Blob extends FilesystemObject
      * Get the file mimetype
      *
      * @access public
-     * @param boolean $short true to only the type group
+     * @param bool $short true to only the type group
      * @return string mime
      */
     public function FileMime($short = false) // @codingStandardsIgnoreLine
     {
         $mime = $this->FileMime_Fileinfo();
-
-        if (empty($mime)) {
-            $mime = $this->FileMime_File();
-        }
 
         if (empty($mime)) {
             $mime = $this->FileMime_Extension();
@@ -267,12 +263,7 @@ class Blob extends FilesystemObject
 
         $mime = '';
 
-        $magicdb = Config::GetInstance()->GetValue('magicdb', null);
-        if (empty($magicdb)) {
-            $magicdb = '/usr/share/misc/magic';
-        }
-
-        $finfo = @finfo_open(FILEINFO_MIME, $magicdb);
+        $finfo = @finfo_open(FILEINFO_MIME);
         if ($finfo) {
             $mime = finfo_buffer($finfo, $this->data, FILEINFO_MIME);
             if ($mime && strpos($mime, '/')) {
@@ -284,48 +275,6 @@ class Blob extends FilesystemObject
         }
 
         return $mime;
-    }
-
-    /**
-     * FileMime_File
-     *
-     * Get the file mimetype using file command
-     *
-     * @access private
-     * @return string mimetype
-     */
-    private function FileMime_File() // @codingStandardsIgnoreLine
-    {
-        if (!$this->dataRead) {
-            $this->ReadData();
-        }
-
-        if (!$this->data) {
-            return '';
-        }
-
-        $descspec = array(
-            0 => array('pipe', 'r'),
-            1 => array('pipe', 'w')
-        );
-
-        $proc = proc_open('file -b --mime -', $descspec, $pipes);
-        if (is_resource($proc)) {
-            fwrite($pipes[0], $this->data);
-            fclose($pipes[0]);
-            $mime = stream_get_contents($pipes[1]);
-            fclose($pipes[1]);
-            proc_close($proc);
-
-            if ($mime && strpos($mime, '/')) {
-                if (strpos($mime, ';')) {
-                    $mime = strtok($mime, ';');
-                }
-                return $mime;
-            }
-        }
-
-        return '';
     }
 
     /**
@@ -493,7 +442,7 @@ class Blob extends FilesystemObject
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isBlob()
     {

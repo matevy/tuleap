@@ -19,31 +19,37 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class GitRepositoryPermissionsManager {
+class GitRepositoryPermissionsManager
+{
 
     /** @var GitDao */
     private $dao;
 
-    public function __construct(GitDao $dao) {
+    public function __construct(GitDao $dao)
+    {
         $this->dao = $dao;
     }
 
-    public function getUGroupsReaders(GitRepository $repository) {
+    public function getUGroupsReaders(GitRepository $repository)
+    {
         return $this->getUGroupsForPermission($repository->getId(), Git::PERM_READ);
     }
 
-    public function getUGroupsWriters(GitRepository $repository) {
+    public function getUGroupsWriters(GitRepository $repository)
+    {
         return $this->getUGroupsForPermission($repository->getId(), Git::PERM_WRITE);
     }
 
-    public function getUGroupsRewinders(GitRepository $repository) {
+    public function getUGroupsRewinders(GitRepository $repository)
+    {
         return $this->getUGroupsForPermission($repository->getId(), Git::PERM_WPLUS);
     }
 
     /**
      * @return DataAccessResult
      */
-    private function getUGroupsForPermission($repository_id, $permission_type) {
+    private function getUGroupsForPermission($repository_id, $permission_type)
+    {
         return $this->dao->getUGroupsByRepositoryPermissions($repository_id, $permission_type);
     }
 }

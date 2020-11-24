@@ -16,13 +16,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201512211530_force_refresh_svnaccessfile extends ForgeUpgrade_Bucket {
+class b201512211530_force_refresh_svnaccessfile extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return 'Force refresh of SVNAccessFile to correct permissions';
     }
 
-    public function up() {
+    public function up()
+    {
         exec('/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/src/utils/svn/force_refresh_svnaccessfile.php');
     }
 }

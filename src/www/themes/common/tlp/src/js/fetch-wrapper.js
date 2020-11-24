@@ -1,5 +1,5 @@
-/**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+/*
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -54,7 +54,7 @@ const encodeParamToURI = ([key, value]) => {
 };
 
 async function recursiveGet(input, init = {}) {
-    const { params, getCollectionCallback = json => [].concat(json) } = init;
+    const { params = {}, getCollectionCallback = json => [].concat(json) } = init;
 
     const { limit = 100, offset = 0 } = params;
 
@@ -69,23 +69,35 @@ async function recursiveGet(input, init = {}) {
     const json = await response.json();
     const results = getCollectionCallback(json);
 
-    const total = Number.parseInt(response.headers.get("X-PAGINATION-SIZE"), 10);
-    const new_offset = offset + limit;
-
-    if (new_offset >= total) {
-        return results;
+    if (response.headers.get("X-PAGINATION-SIZE") === null) {
+        throw new Error("No X-PAGINATION-SIZE field in the header.");
     }
+    const total = Number.parseInt(response.headers.get("X-PAGINATION-SIZE"), 10);
 
-    const new_init = {
-        ...init,
-        params: {
-            ...params,
-            offset: new_offset
-        }
-    };
+    const parallel_calls = [...getAdditionalOffsets(offset, limit, total)].map(async new_offset => {
+        const new_init = {
+            ...init,
+            params: {
+                ...params,
+                offset: new_offset
+            }
+        };
 
-    const second_response = await recursiveGet(input, new_init);
-    return results.concat(second_response);
+        const response = await get(input, new_init);
+        const json = await response.json();
+        return getCollectionCallback(json);
+    });
+    const all_responses = await Promise.all(parallel_calls);
+    return all_responses.reduce((accumulator, response) => accumulator.concat(response), results);
+}
+
+function* getAdditionalOffsets(offset, limit, total) {
+    let new_offset = offset;
+    while (new_offset + limit < total) {
+        new_offset += limit;
+        yield new_offset;
+    }
+    return new_offset;
 }
 
 function put(input, init = {}) {

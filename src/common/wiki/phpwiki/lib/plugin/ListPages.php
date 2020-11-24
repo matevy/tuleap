@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: ListPages.php,v 1.10 2005/09/27 17:34:19 rurban Exp $');
 /*
  Copyright 2004 $ThePhpWikiProgrammingTeam
@@ -26,56 +27,65 @@ require_once('lib/PageList.php');
  * ListPages - List pages that are explicitly given as the pages argument.
  *
  * Mainly used to see some ratings and recommendations.
- * But also possible to list some Categories or Users, or as generic 
+ * But also possible to list some Categories or Users, or as generic
  * frontend for plugin-list page lists.
  *
  * @author: Dan Frankowski
  */
-class WikiPlugin_ListPages
-extends WikiPlugin
+class WikiPlugin_ListPages extends WikiPlugin
 {
-    function getName() {
+    function getName()
+    {
         return _("ListPages");
     }
 
-    function getDescription() {
+    function getDescription()
+    {
         return _("List pages that are explicitly given as the pages argument.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.10 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.10 $"
+        );
     }
 
-    function getDefaultArguments() {
-        return array_merge
-            (
-             PageList::supportedArgs(),
-             array('pages'    => false,
+    function getDefaultArguments()
+    {
+        return array_merge(
+            PageList::supportedArgs(),
+            array('pages'    => false,
                    //'exclude'  => false,
                    'info'     => 'pagename',
                    'dimension' => 0,
-                   ));
+            )
+        );
     }
 
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor
-    // additional info args: 
+    // additional info args:
     //   top3recs      : recommendations
     //   numbacklinks  : number of backlinks (links to the given page)
     //   numpagelinks  : number of forward links (links at the given page)
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
         extract($args);
-        // If the ratings table does not exist, or on dba it will break otherwise. 
+        // If the ratings table does not exist, or on dba it will break otherwise.
         // Check if Theme isa 'wikilens'
-	if ($info == 'pagename' and isa($GLOBALS['WikiTheme'], 'wikilens'))
-	    $info .= ",top3recs";
-        if ($info)
+        if ($info == 'pagename' and isa($GLOBALS['WikiTheme'], 'wikilens')) {
+            $info .= ",top3recs";
+        }
+        if ($info) {
             $info = preg_split('/,/D', $info);
-        else
+        } else {
             $info = array();
+        }
 
         if (in_array('top3recs', $info)) {
             require_once('lib/wikilens/Buddy.php');
@@ -88,10 +98,9 @@ extends WikiPlugin
             if (!isset($userids) || !is_array($userids) || !count($userids)) {
                 // TKL: moved getBuddies call inside if statement because it was
                 // causing the userids[] parameter to be ignored
-                if (is_string($active_userid) 
-		    and strlen($active_userid) 
-		    and $active_user->isSignedIn()) 
-		{
+                if (is_string($active_userid)
+                and strlen($active_userid)
+                and $active_user->isSignedIn()) {
                     $userids = getBuddies($active_userid, $dbi);
                 } else {
                     $userids = array();
@@ -105,8 +114,9 @@ extends WikiPlugin
                              'users' => array());
             $args = array_merge($options, $args);
         }
-        if (empty($pages) and $pages != '0')
+        if (empty($pages) and $pages != '0') {
             return '';
+        }
 
         if (in_array('numbacklinks', $info)) {
             $args['types']['numbacklinks'] = new _PageList_Column_ListPages_count('numbacklinks', _("#"), true);
@@ -123,12 +133,15 @@ extends WikiPlugin
 };
 
 // how many back-/forwardlinks for this page
-class _PageList_Column_ListPages_count extends _PageList_Column {
-    function __construct($field, $display, $backwards = false) {
+class _PageList_Column_ListPages_count extends _PageList_Column
+{
+    function __construct($field, $display, $backwards = false)
+    {
         $this->_direction = $backwards;
         return parent::__construct($field, $display, 'center');
     }
-    function _getValue($page, &$revision_handle) {
+    function _getValue($page, &$revision_handle)
+    {
         $iter = $page->getLinks($this->_direction);
         $count = $iter->count();
         return $count;
@@ -179,4 +192,3 @@ class _PageList_Column_ListPages_count extends _PageList_Column {
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

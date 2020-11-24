@@ -21,31 +21,30 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('pre.php');
-require_once('common/include/GroupFactory.class.php');
+require_once __DIR__ . '/../include/pre.php';
 
 
 $gf = new GroupFactory();
 ?>
 <html>
 <head>
-<title><?php echo $Language->getText('tracker_group_selection','project_sel'); ?></title>
+<title><?php echo $Language->getText('tracker_group_selection', 'project_sel'); ?></title>
 <link rel="stylesheet" type="text/css" href="<?php echo util_get_css_theme(); ?>">
 <script language="JavaScript">
 
 function doSelection(form) {
-	if ( form.group_id.value != "" ) {
-		window.opener.document.<?php echo preg_replace('/[^a-z0-9\$_]/', '', $request->get('opener_form')); ?>.<?php echo preg_replace('/[^a-z0-9\$_]/', '', $request->get('opener_field')); ?>.value = form.group_id.value;
-	}
-	close();
+    if ( form.group_id.value != "" ) {
+        window.opener.document.<?php echo preg_replace('/[^a-z0-9\$_]/', '', $request->get('opener_form')); ?>.<?php echo preg_replace('/[^a-z0-9\$_]/', '', $request->get('opener_field')); ?>.value = form.group_id.value;
+    }
+    close();
 }
 
 function onChangeMemberFilter() {
-	window.location = "/tracker/group_selection.php?opener_form=form_create&opener_field=group_id_template&filter=member";
+    window.location = "/tracker/group_selection.php?opener_form=form_create&opener_field=group_id_template&filter=member";
 }
 
 function onChangeAllFilter() {
-	window.location = "/tracker/group_selection.php?opener_form=form_create&opener_field=group_id_template&filter=all";
+    window.location = "/tracker/group_selection.php?opener_form=form_create&opener_field=group_id_template&filter=all";
 }
 
 </script>
@@ -59,27 +58,31 @@ function onChangeAllFilter() {
 <select name="group_id" size="8">
 <?php
     $filter = $request->get('filter');
-	if ( $filter == "member" ) {
-		$results = $gf->getMemberGroups();
-	} else {
-		$results = $gf->getAllGroups();
-	}
+if ($filter == "member") {
+    $results = $gf->getMemberGroups();
+} else {
+    $results = $gf->getAllGroups();
+}
     $hp = Codendi_HTMLPurifier::instance();
-    while ($groups_array = db_fetch_array($results)) {
-    	echo '<option value="'.(int)$groups_array["group_id"].'">'. $hp->purify(html_entity_decode($groups_array["group_name"])) .'</option>';
-    }
+while ($groups_array = db_fetch_array($results)) {
+    echo '<option value="'.(int)$groups_array["group_id"].'">'. $hp->purify(html_entity_decode($groups_array["group_name"])) .'</option>';
+}
 
 ?>
 </select>
     </td>
   </tr>
   <tr>  
-    <td><input type="radio" name="radiobutton" value="radiobutton"<?php if ( $filter == "member" ) echo " checked"; ?> onClick="onChangeMemberFilter()"> <?php echo $Language->getText('tracker_group_selection','my_proj'); ?></td>
-    <td><input type="radio" name="radiobutton" value="radiobutton"<?php if ( $filter == "all" ) echo " checked"; ?> onClick="onChangeAllFilter()"> <?php echo $Language->getText('tracker_group_selection','all_proj'); ?></td>
+    <td><input type="radio" name="radiobutton" value="radiobutton"<?php if ($filter == "member") {
+        echo " checked";
+                                                                  } ?> onClick="onChangeMemberFilter()"> <?php echo $Language->getText('tracker_group_selection', 'my_proj'); ?></td>
+    <td><input type="radio" name="radiobutton" value="radiobutton"<?php if ($filter == "all") {
+        echo " checked";
+                                                                  } ?> onClick="onChangeAllFilter()"> <?php echo $Language->getText('tracker_group_selection', 'all_proj'); ?></td>
   </tr>
   <tr>
     <td colspan="2" align="center">
-    	<input type="button" name="selection" value="<?php echo $Language->getText('global','select'); ?>" onClick="doSelection(form_selection)">
+        <input type="button" name="selection" value="<?php echo $Language->getText('global', 'select'); ?>" onClick="doSelection(form_selection)">
     </td>
   </tr>
 </table>

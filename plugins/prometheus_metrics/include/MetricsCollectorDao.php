@@ -31,4 +31,9 @@ class MetricsCollectorDao extends DataAccessObject
         $sql = 'SELECT status, count(*) as nb FROM groups WHERE status IN ("A", "P", "D") GROUP BY status';
         return $this->getDB()->run($sql);
     }
+
+    public function getNewSystemEventsCount(): array
+    {
+        return $this->getDB()->run('SELECT status, count(*) as nb FROM system_event GROUP BY status');
+    }
 }

@@ -27,14 +27,15 @@ class MailManager
     /**
      * Return users corresponding to email addresses mapped according to their
      * preferences.
-     * 
+     *
      * @deprecated
-     * 
+     *
      * @param Array $addresses A set of addresses
-     * 
+     *
      * @return Array of Array of User
      */
-    public function getMailPreferencesByEmail($addresses) {
+    public function getMailPreferencesByEmail($addresses)
+    {
         $default = Codendi_Mail_Interface::FORMAT_HTML;
         $res     = array('html' => array(), 'text' => array());
         $um      = $this->getUserManager();
@@ -58,49 +59,51 @@ class MailManager
         }
         return $res;
     }
-    
+
     /**
      * Returns whether the user wants an HTML or a Text notification
-     * 
+     *
      * @param PFUser $user
-     * 
+     *
      * @return String
      */
-    public function getMailPreferencesByUser(PFUser $user) {
+    public function getMailPreferencesByUser(PFUser $user)
+    {
         if ($user->getPreference(Codendi_Mail_Interface::PREF_FORMAT) == Codendi_Mail_Interface::FORMAT_TEXT) {
             return Codendi_Mail_Interface::FORMAT_TEXT;
         }
         return Codendi_Mail_Interface::FORMAT_HTML;
     }
-    
+
     /**
      * Returns all possible mail formats
-     * 
+     *
      * @return Array
      */
-    public function getAllMailFormats() {
+    public function getAllMailFormats()
+    {
         return array(Codendi_Mail_Interface::FORMAT_TEXT, Codendi_Mail_Interface::FORMAT_HTML);
     }
 
     /**
      * Wrapper for configuration access
-     * 
+     *
      * @param String $var
-     * 
-     * @return String 
+     *
+     * @return String
      */
-    protected function getConfig($var) {
+    protected function getConfig($var)
+    {
         return ForgeConfig::get($var);
     }
-    
+
     /**
      * Wrapper for UserManager
-     * 
-     * @return UserManager 
+     *
+     * @return UserManager
      */
-    protected function getUserManager() {
+    protected function getUserManager()
+    {
         return UserManager::instance();
     }
 }
-
-?>

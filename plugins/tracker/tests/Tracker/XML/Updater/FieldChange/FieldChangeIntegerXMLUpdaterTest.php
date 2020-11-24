@@ -19,7 +19,8 @@
  */
 require_once __DIR__.'/../../../../bootstrap.php';
 
-class Tracker_XML_Updater_FieldChange_FieldChangeIntegerXMLUpdaterTest extends TuleapTestCase {
+class Tracker_XML_Updater_FieldChange_FieldChangeIntegerXMLUpdaterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Updater_FieldChange_FieldChangeIntegerXMLUpdater */
     private $updater;
@@ -27,17 +28,18 @@ class Tracker_XML_Updater_FieldChange_FieldChangeIntegerXMLUpdaterTest extends T
     /** @var SimpleXMLElement */
     private $field_change_xml;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->updater          = new Tracker_XML_Updater_FieldChange_FieldChangeIntegerXMLUpdater();
         $this->field_change_xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?>'
             . '<field_change field_name="story_points">'
             . '  <value>123</value>'
-            . '</field_change>'
-        );
+            . '</field_change>');
     }
 
-    public function itUpdatesTheNodeValueWithSubmittedValue() {
+    public function itUpdatesTheNodeValueWithSubmittedValue()
+    {
         $this->updater->update(
             $this->field_change_xml,
             '21'

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,8 @@ use UserManager;
 /**
  * Wrapper for user_groups related REST methods
  */
-class UserGroupResource extends AuthenticatedResource {
+class UserGroupResource extends AuthenticatedResource
+{
 
     public const MAX_LIMIT = 50;
     /**
@@ -74,7 +75,8 @@ class UserGroupResource extends AuthenticatedResource {
     /** @var ProjectManager */
     private $project_manager;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->ugroup_manager        = new UGroupManager();
         $this->user_manager          = UserManager::instance();
         $this->project_manager       = ProjectManager::instance();
@@ -98,29 +100,29 @@ class UserGroupResource extends AuthenticatedResource {
      * - format: projectId_ugroupId for dynamic project user groups (project members...)<br>
      * - format: ugroupId for all other groups (registered users, custom groups, ...)
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @return \Tuleap\Project\REST\UserGroupRepresentation
      */
-    public function getId($id) {
+    public function getId($id)
+    {
         $this->checkAccess();
 
         $ugroup     = $this->user_group_retriever->getExistingUserGroup($id);
         $project_id = $ugroup->getProjectId();
 
-        ProjectStatusVerificator::build()->checkProjectStatusAllowsOnlySiteAdminToAccessIt(
-            $this->user_manager->getCurrentUser(),
-            $ugroup->getProject()
-        );
-
         if ($project_id) {
+            ProjectStatusVerificator::build()->checkProjectStatusAllowsOnlySiteAdminToAccessIt(
+                $this->user_manager->getCurrentUser(),
+                $ugroup->getProject()
+            );
             $this->userCanSeeUserGroups($project_id);
         }
 
         $ugroup_representation = new UserGroupRepresentation();
-        $ugroup_representation->build($project_id, $ugroup);
+        $ugroup_representation->build((int) $project_id, $ugroup);
         $this->sendAllowHeadersForUserGroupId();
 
         return $ugroup_representation;
@@ -131,11 +133,12 @@ class UserGroupResource extends AuthenticatedResource {
      *
      * @param string $id Id of the ugroup (format: projectId_ugroupId)
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      */
-    public function optionsId($id) {
+    public function optionsId($id)
+    {
         $this->sendAllowHeadersForUserGroupId();
     }
 
@@ -165,10 +168,10 @@ class UserGroupResource extends AuthenticatedResource {
      * @param string $query User name to look for
      *
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
-     * @throws 406
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
+     * @throws RestException 406
      *
      * @return array {@type \Tuleap\User\REST\UserRepresentation}
      */
@@ -213,7 +216,6 @@ class UserGroupResource extends AuthenticatedResource {
             $this->sendPaginationHeaders($limit, $offset, $nb_member);
         }
 
-
         $this->sendAllowHeadersForUserGroupId();
 
         return $member_representations;
@@ -250,11 +252,12 @@ class UserGroupResource extends AuthenticatedResource {
      * @param string $id Id of the ugroup This should be one of two formats<br>
      * - format: projectId_ugroupId for dynamic project user groups (project members...)<br>
      * - format: ugroupId for all other groups (registered users, custom groups, ...)
+     *
      * @param array $user_references {@from body}
      *
-     * @throws 400
+     * @throws RestException 400
      * @throws RestException 403
-     * @throws 404
+     * @throws RestException 404
      */
     protected function putUsers($id, array $user_references)
     {
@@ -297,6 +300,10 @@ class UserGroupResource extends AuthenticatedResource {
          */
         $user_references_representations = [];
         foreach ($user_references as $user_reference) {
+            if (! is_array($user_reference)) {
+                throw new RestException(400, 'Invalid format provided for "user_references"');
+            }
+
             $user_references_representations[] = UserRESTReferenceRepresentation::buildFromArray($user_reference);
         }
 
@@ -378,18 +385,20 @@ class UserGroupResource extends AuthenticatedResource {
      *
      * @param int $id Id of the ugroup (format: projectId_ugroupId)
      */
-    public function optionsUsers($id) {
+    public function optionsUsers($id)
+    {
         $this->sendAllowHeadersForUserGroupId();
     }
 
     /**
      * Get the members of a group
      *
-     * @throws 404
+     * @throws RestException 404
      *
      * @return PFUser[]
      */
-    private function getUserGroupMembers(ProjectUGroup $user_group, $project_id, $limit, $offset) {
+    private function getUserGroupMembers(ProjectUGroup $user_group, $project_id, $limit, $offset)
+    {
         return $user_group->getStaticOrDynamicMembersPaginated($project_id, $limit, $offset);
     }
 
@@ -398,7 +407,8 @@ class UserGroupResource extends AuthenticatedResource {
      *
      * @return int
      */
-    private function countUserGroupMembers(ProjectUGroup $user_group, $project_id) {
+    private function countUserGroupMembers(ProjectUGroup $user_group, $project_id)
+    {
         return $user_group->countStaticOrDynamicMembers($project_id);
     }
 
@@ -409,7 +419,8 @@ class UserGroupResource extends AuthenticatedResource {
      *
      * @return \Tuleap\User\REST\UserRepresentation
      */
-    private function getUserRepresentation(PFUser $member) {
+    private function getUserRepresentation(PFUser $member)
+    {
         $user_representation = new UserRepresentation();
         $user_representation->build($member);
 
@@ -417,24 +428,25 @@ class UserGroupResource extends AuthenticatedResource {
     }
 
     /**
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      *
-     * @return boolean
+     * @return bool
      */
-    private function userCanSeeUserGroups($project_id) {
+    private function userCanSeeUserGroups($project_id)
+    {
         $project      = $this->project_manager->getProject($project_id);
         $user         = $this->user_manager->getCurrentUser();
-        ProjectAuthorization::canUserAccessUserGroupInfo($user, $project, new URLVerification());
+        ProjectAuthorization::userCanAccessProject($user, $project, new URLVerification());
 
         return true;
     }
 
     /**
-     * @throws 403
-     * @throws 404
+     * @throws RestException 403
+     * @throws RestException 404
      *
-     * @return boolean
+     * @return bool
      */
     private function userCanSeeUserGroupMembers(ProjectUGroup $ugroup)
     {
@@ -451,27 +463,31 @@ class UserGroupResource extends AuthenticatedResource {
     /**
      * @param int $ugroup_id
      *
-     * @throws 404
+     * @throws RestException 404
      *
-     * @return boolean
+     * @return bool
      */
-    private function checkGroupIsViewable($ugroup_id) {
-        if (in_array($ugroup_id, ProjectUGroup::$forge_user_groups)) {
+    private function checkGroupIsViewable(int $ugroup_id)
+    {
+        if (in_array($ugroup_id, ProjectUGroup::SYSTEM_USER_GROUPS, true)) {
             throw new RestException(404, 'Unable to list the users of this group');
         }
 
         return true;
     }
 
-    private function sendAllowHeadersForUserGroupId() {
+    private function sendAllowHeadersForUserGroupId()
+    {
         Header::allowOptionsGetPut();
     }
 
-    private function sendAllowHeadersForUserGroup() {
+    private function sendAllowHeadersForUserGroup()
+    {
         Header::allowOptionsPost();
     }
 
-    private function sendPaginationHeaders($limit, $offset, $size) {
+    private function sendPaginationHeaders($limit, $offset, $size)
+    {
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
     }
 
@@ -480,12 +496,13 @@ class UserGroupResource extends AuthenticatedResource {
      *
      * @param int $limit Number of elements displayed per page
      *
-     * @return boolean
+     * @return bool
      *
-     * @throws 406
+     * @throws RestException 406
      */
 
-    private function checkLimitValueIsAcceptable($limit) {
+    private function checkLimitValueIsAcceptable($limit)
+    {
         if ($limit > self::MAX_LIMIT) {
              throw new RestException(406, 'limit value is not acceptable');
         }
@@ -531,9 +548,9 @@ class UserGroupResource extends AuthenticatedResource {
      *
      * @return UserGroupRepresentation {@type \Tuleap\Project\REST\v1\UserGroupRepresentation}
      *
-     * @throws 401
-     * @throws 403
-     * @throws 404
+     * @throws RestException 401
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @status 201
      */
@@ -560,10 +577,9 @@ class UserGroupResource extends AuthenticatedResource {
 
             $new_ugroup                = $this->ugroup_manager->getById($new_ugroup_id);
             $new_ugroup_representation = new UserGroupRepresentation();
-            $new_ugroup_representation->build($project_id, $new_ugroup);
+            $new_ugroup_representation->build((int) $project_id, $new_ugroup);
 
             return $new_ugroup_representation;
-
         } catch (CannotCreateUGroupException $exception) {
             throw new RestException(400, $exception->getMessage());
         } finally {

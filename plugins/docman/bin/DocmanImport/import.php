@@ -21,17 +21,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once 'pre.php';
-require_once 'XMLDocmanImport.class.php';
-require_once 'XMLDocmanUpdate.class.php';
-require_once 'parameters.php';
+require_once __DIR__ . '/../../../../src/www/include/pre.php';
+require_once __DIR__ . '/XMLDocmanImport.class.php';
+require_once __DIR__ . '/XMLDocmanUpdate.class.php';
+require_once __DIR__ . '/parameters.php';
 
 $console = new Log_ConsoleLogger();
 $usage = "
 Usage: import.php --url=<Tuleap URL> --project=<destination project unix name> --archive=<archive path>
        import.php --help";
 
-function help($console) {
+function help($console)
+{
     global $usage;
 
     $console->info("Imports a set of Tuleap Docman documents to a project
@@ -69,7 +70,7 @@ $folderId = getParameter($argv, 'folder-id', true);
 
 if (($archive = getParameter($argv, 'archive', true)) === null) {
     $console->error("Missing parameter: --archive");
-} else if (is_dir($archive)) {
+} elseif (is_dir($archive)) {
     if (!is_file("$archive/".basename($archive).".xml")) {
         $console->error("The archive folder must contain an XML file with the same name");
         $archive = null;
@@ -120,7 +121,7 @@ if (!isset($login)) {
 if (!isset($password)) {
     echo "Password for $login: ";
 
-    if ( PHP_OS != 'WINNT') {
+    if (PHP_OS != 'WINNT') {
         shell_exec('stty -echo');
         $password = fgets(STDIN);
         shell_exec('stty echo');
@@ -150,7 +151,7 @@ if ($update || $continue) {
             $console->error($e->getMessage());
             exit(1);
         }
-    } else if ($continue) {
+    } elseif ($continue) {
         try {
             $xmlUpdate->continuePath($archive, $folderId, $path);
         } catch (Exception $e) {
@@ -173,4 +174,3 @@ if ($update || $continue) {
 
 $end = microtime(true);
 $console->info("Time elapsed: ".round($end-$start, 1)."s");
-?>

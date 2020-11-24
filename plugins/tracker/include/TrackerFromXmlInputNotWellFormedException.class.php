@@ -19,8 +19,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class TrackerFromXmlInputNotWellFormedException extends TrackerFromXmlException {
-    public function __construct($errors = array()) {
+class TrackerFromXmlInputNotWellFormedException extends TrackerFromXmlException
+{
+    public function __construct($errors = array())
+    {
         $message = 'The Tracker XML input is not well formed: '.PHP_EOL.implode(PHP_EOL, $errors);
         parent::__construct($message);
     }

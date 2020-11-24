@@ -20,17 +20,18 @@
  *
  * Portions Copyright 2010 (c) Mélanie Le Bail
  */
-require_once 'common/plugin/PluginFileInfo.class.php';
+class MediaWikiPluginInfo extends PluginFileInfo
+{
 
-class MediaWikiPluginInfo extends PluginFileInfo {
-
-    function __construct(&$plugin) {
+    function __construct(&$plugin)
+    {
         parent::__construct($plugin, 'mediawiki');
         $this->setPluginDescriptor(new MediaWikiPluginDescriptor());
     }
 
     /** @see PluginFileInfo::getDefaultConfPath() */
-    protected function getDefaultConfPath(Plugin $plugin, $incname) {
+    protected function getDefaultConfPath(Plugin $plugin, $incname)
+    {
         return $plugin->getFilesystemPath() .'/etc/'. $incname .'.inc.dist';
     }
 }

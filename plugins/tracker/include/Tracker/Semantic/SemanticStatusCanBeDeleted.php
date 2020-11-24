@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2017. All rights reserved.
+ * Copyright Enalean (c) 2017 - Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registrated trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -22,6 +22,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\Tracker\Semantic;
 
 use Tracker;
@@ -39,31 +41,35 @@ class SemanticStatusCanBeDeleted implements Dispatchable
     /**
      * @var bool
      */
-    private $semantic_can_be_deleted = false;
+    private $semantic_can_be_deleted = true;
+    /**
+     * @var string
+     */
+    private $reason = '';
 
     public function __construct(Tracker $tracker)
     {
         $this->tracker = $tracker;
     }
 
-    /**
-     * @return Tracker
-     */
-    public function getTracker()
+    public function getTracker(): Tracker
     {
         return $this->tracker;
     }
 
-    /**
-     * @return bool
-     */
-    public function semanticCanBeDeleted()
+    public function semanticCanBeDeleted(): bool
     {
         return $this->semantic_can_be_deleted;
     }
 
-    public function semanticIsDeletable()
+    public function semanticIsNotDeletable(string $reason): void
     {
-        $this->semantic_can_be_deleted = true;
+        $this->semantic_can_be_deleted = false;
+        $this->reason                  = $reason;
+    }
+
+    public function getReason(): string
+    {
+        return $this->reason;
     }
 }

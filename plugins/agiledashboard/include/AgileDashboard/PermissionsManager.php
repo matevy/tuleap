@@ -19,9 +19,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class AgileDashboard_PermissionsManager {
+class AgileDashboard_PermissionsManager
+{
 
-    public function userCanAdministrate(PFUser $user, $group_id) {
+    public function userCanAdministrate(PFUser $user, $group_id)
+    {
         return $user->isAdmin($group_id);
     }
 }

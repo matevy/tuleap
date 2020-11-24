@@ -18,14 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class MailNotificationBuilder {
+class MailNotificationBuilder
+{
 
     /**
      * @var MailBuilder
      */
     private $mail_builder;
 
-    public function __construct(MailBuilder $mail_builder) {
+    public function __construct(MailBuilder $mail_builder)
+    {
         $this->mail_builder = $mail_builder;
     }
 
@@ -75,7 +77,8 @@ class MailNotificationBuilder {
      *
      * @return Notification
      */
-    private function getNotification(array $emails, $subject, $html_body, $text_body, $link, $truncated_service_name) {
+    private function getNotification(array $emails, $subject, $html_body, $text_body, $link, $truncated_service_name)
+    {
         return new Notification($emails, $subject, $html_body, $text_body, $link, $truncated_service_name);
     }
 }

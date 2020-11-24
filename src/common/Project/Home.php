@@ -22,16 +22,9 @@
 namespace Tuleap\Project;
 
 use CSRFSynchronizerToken;
-use ProjectManager;
-use HTTPRequest;
-use Tuleap\Layout\BaseLayout;
-use Tuleap\Request\DispatchableWithRequest;
-use Tuleap\Request\NotFoundException;
-use UserManager;
 use EventManager;
-use ForgeConfig;
-use User_ForgeUserGroupPermissionsManager;
-use User_ForgeUserGroupPermissionsDao;
+use HTTPRequest;
+use ProjectManager;
 use Tuleap\Dashboard\AssetsIncluder;
 use Tuleap\Dashboard\Project\ProjectDashboardController;
 use Tuleap\Dashboard\Project\ProjectDashboardDao;
@@ -50,8 +43,16 @@ use Tuleap\Dashboard\Widget\DashboardWidgetReorder;
 use Tuleap\Dashboard\Widget\DashboardWidgetRetriever;
 use Tuleap\Dashboard\Widget\WidgetCreator;
 use Tuleap\Dashboard\Widget\WidgetDashboardController;
+use Tuleap\Layout\BaseLayout;
+use Tuleap\Layout\CssAsset;
+use Tuleap\Layout\CssAssetCollection;
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Request\DispatchableWithRequest;
+use Tuleap\Request\NotFoundException;
 use Tuleap\Widget\WidgetFactory;
+use User_ForgeUserGroupPermissionsDao;
+use User_ForgeUserGroupPermissionsManager;
+use UserManager;
 
 class Home implements DispatchableWithRequest
 {
@@ -90,6 +91,19 @@ class Home implements DispatchableWithRequest
                     EventManager::instance()
                 );
 
+                $project_registration_creation_javascript_asset = new IncludeAssets(
+                    __DIR__ . '/../../www/assets/project-registration/creation/scripts',
+                    '/assets/project-registration/creation/scripts'
+                );
+
+                $project_registration_creation_css_assets = new CssAsset(
+                    new IncludeAssets(
+                        __DIR__ . '/../../www/assets/project-registration/creation/themes',
+                        '/assets/project-registration/creation/themes'
+                    ),
+                    'project-registration-creation'
+                );
+
                 $csrf_token                   = new CSRFSynchronizerToken('/project/');
                 $dashboard_widget_dao         = new DashboardWidgetDao($widget_factory);
                 $dashboard_widget_retriever   = new DashboardWidgetRetriever($dashboard_widget_dao);
@@ -108,8 +122,21 @@ class Home implements DispatchableWithRequest
                         new WidgetMinimizor($dashboard_widget_dao),
                         new AssetsIncluder(
                             $layout,
-                            new IncludeAssets(ForgeConfig::get('tuleap_dir').'/src/www/assets', '/assets')
-                        )
+                            new IncludeAssets(__DIR__ .'/../../www/assets', '/assets'),
+                            new CssAssetCollection(
+                                [new CssAsset(
+                                    new IncludeAssets(
+                                        __DIR__ . '/../../www/assets/dashboards/themes',
+                                        '/assets/dashboards/themes'
+                                    ),
+                                    'dashboards'
+                                )]
+                            )
+                        ),
+                        EventManager::instance(),
+                        $layout,
+                        $project_registration_creation_javascript_asset,
+                        $project_registration_creation_css_assets
                     ),
                     new WidgetDashboardController(
                         $csrf_token,

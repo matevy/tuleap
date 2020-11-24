@@ -1,30 +1,39 @@
 <?php
+/**
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
+ * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-require_once('common/language/BaseLanguage.class.php');
 Mock::generate('BaseLanguage');
 
-require_once('common/reference/ReferenceManager.class.php');
-
-require_once('common/dao/ReferenceDao.class.php');
 Mock::generate('ReferenceDao');
-require_once('common/dao/CrossReferenceDao.class.php');
 Mock::generate('CrossReferenceDao');
 Mock::generate('DataAccessResult');
 
-/**
- * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- *
- *
- *
- * Tests the class ReferenceManager
- */
-class ReferenceManagerTest extends TuleapTestCase {
+class ReferenceManagerTest extends TuleapTestCase
+{
     private $rm;
     private $user_manager;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
-        EventManager::setInstance(mock('EventManager'));
+        EventManager::setInstance(\Mockery::spy(\EventManager::class));
         ProjectManager::setInstance(mock('ProjectManager'));
         $this->user_manager = mock('UserManager');
         UserManager::setInstance($this->user_manager);
@@ -37,20 +46,23 @@ class ReferenceManagerTest extends TuleapTestCase {
         ));
         $this->rm->__construct();
     }
-    
-    public function tearDown() {
+
+    public function tearDown()
+    {
         EventManager::clearInstance();
         ProjectManager::clearInstance();
         UserManager::clearInstance();
         parent::tearDown();
     }
-    
-    function testSingleton() {
+
+    function testSingleton()
+    {
         $this->assertEqual(ReferenceManager::instance(), ReferenceManager::instance());
         $this->assertIsA(ReferenceManager::instance(), 'ReferenceManager');
     }
 
-    function testExtractReference() {
+    function testExtractReference()
+    {
         $dao = new MockReferenceDao($this);
         $dar = new MockDataAccessResult($this);
 
@@ -99,7 +111,8 @@ class ReferenceManagerTest extends TuleapTestCase {
         $this->assertTrue(count($this->rm->extractReferences("art #100:123", 0)) == 1, "Art is a reference for project named codendi");
     }
 
-    function testExtractRegexp() {
+    function testExtractRegexp()
+    {
         $dao = new MockReferenceDao($this);
         //The Reference manager
         $this->rm->setReturnReference('_getReferenceDao', $dao);
@@ -163,7 +176,8 @@ class ReferenceManagerTest extends TuleapTestCase {
         $this->assertEqual($matches[0]['value'], '12784');
     }
 
-    function test_updateProjectReferenceShortName() {
+    function test_updateProjectReferenceShortName()
+    {
         $ref_dao = new MockReferenceDao($this);
         $cross_dao = new MockCrossReferenceDao($this);
 
@@ -180,36 +194,19 @@ class ReferenceManagerTest extends TuleapTestCase {
         $this->rm->updateProjectReferenceShortName($group_id, $from, $to);
     }
 
-    public function testInsertReferencesConvertsToUTF8ForRightPHPVersion() {
-        if ((version_compare(PHP_VERSION, '5.3.0') >= 0)) {
-            $html = 'g&=+}éàùœ';
-            $encoded = htmlentities($html, ENT_IGNORE, "UTF-8");
-            $decoded = html_entity_decode($encoded, ENT_IGNORE, "ISO-8859-15" );
+    public function testInsertReferencesConvertsToUTF8()
+    {
+        $html = 'g&=+}éàùœ';
+        $encoded = htmlentities($html, ENT_IGNORE, "UTF-8");
+        $decoded = html_entity_decode($encoded, ENT_IGNORE, "ISO-8859-15");
 
-            $pre_encoding = mb_detect_encoding($decoded, 'UTF-8,ISO-8859-15');
-            $this->assertEqual($pre_encoding, 'ISO-8859-15');
+        $pre_encoding = mb_detect_encoding($decoded, 'UTF-8,ISO-8859-15');
+        $this->assertEqual($pre_encoding, 'ISO-8859-15');
 
-            $this->rm->insertReferences($decoded, 45);
+        $this->rm->insertReferences($decoded, 45);
 
-            $post_encoding = mb_detect_encoding($decoded, 'UTF-8,ISO-8859-15');
-            $this->assertEqual($post_encoding, 'UTF-8');
-        }
-    }
-
-     public function testInsertReferencesDoesNotConvertToUTF8ForRightPHPVersion() {
-        if (! (version_compare(PHP_VERSION, '5.3.0') >= 0)) {
-            $html = 'g&=+}éàùœ';
-            $encoded = htmlentities($html, ENT_NOQUOTES, "UTF-8");
-            $decoded = html_entity_decode($encoded, ENT_NOQUOTES, "ISO-8859-15" );
-
-            $pre_encoding =  mb_detect_encoding($decoded, 'UTF-8,ISO-8859-15');
-            $this->assertEqual($pre_encoding, 'ISO-8859-15');
-
-            $this->rm->insertReferences($decoded, 45);
-
-            $post_encoding = mb_detect_encoding($decoded, 'UTF-8,ISO-8859-15');
-            $this->assertEqual($post_encoding, 'ISO-8859-15');
-        }
+        $post_encoding = mb_detect_encoding($decoded, 'UTF-8,ISO-8859-15');
+        $this->assertEqual($post_encoding, 'UTF-8');
     }
 
     public function itInsertsLinkForReferences()
@@ -249,7 +246,8 @@ class ReferenceManagerTest extends TuleapTestCase {
         );
     }
 
-    public function itInsertsLinkForMentionAtTheBeginningOfTheString() {
+    public function itInsertsLinkForMentionAtTheBeginningOfTheString()
+    {
         stub($this->user_manager)->getUserByUserName('username')->returns(mock('PFUser'));
 
         $html = '@username';
@@ -257,7 +255,8 @@ class ReferenceManagerTest extends TuleapTestCase {
         $this->assertEqual($html, '<a href="/users/username">@username</a>');
     }
 
-    public function itDoesNotInsertsLinkForUserThatDoNotExist() {
+    public function itDoesNotInsertsLinkForUserThatDoNotExist()
+    {
         stub($this->user_manager)->getUserByUserName('username')->returns(null);
 
         $html = '@username';
@@ -265,7 +264,8 @@ class ReferenceManagerTest extends TuleapTestCase {
         $this->assertEqual($html, '@username');
     }
 
-    public function itInsertsLinkForMentionAtTheMiddleOfTheString() {
+    public function itInsertsLinkForMentionAtTheMiddleOfTheString()
+    {
         stub($this->user_manager)->getUserByUserName('username')->returns(mock('PFUser'));
 
         $html = '/cc @username';
@@ -273,7 +273,44 @@ class ReferenceManagerTest extends TuleapTestCase {
         $this->assertEqual($html, '/cc <a href="/users/username">@username</a>');
     }
 
-    public function itDoesNotBreakEmailAddress() {
+    public function itInsertsLinkForMentionWhenPointAtTheMiddle()
+    {
+        stub($this->user_manager)->getUserByUserName('user.name')->returns(mock('PFUser'));
+
+        $html = '/cc @user.name';
+        $this->rm->insertReferences($html, 0);
+        $this->assertEqual($html, '/cc <a href="/users/user.name">@user.name</a>');
+    }
+
+    public function itInsertsLinkForMentionWhenHyphenAtTheMiddle()
+    {
+        stub($this->user_manager)->getUserByUserName('user-name')->returns(mock('PFUser'));
+
+        $html = '/cc @user-name';
+        $this->rm->insertReferences($html, 0);
+        $this->assertEqual($html, '/cc <a href="/users/user-name">@user-name</a>');
+    }
+
+    public function itInsertsLinkForMentionWhenUnderscoreAtTheMiddle()
+    {
+        stub($this->user_manager)->getUserByUserName('user_name')->returns(mock('PFUser'));
+
+        $html = '/cc @user_name';
+        $this->rm->insertReferences($html, 0);
+        $this->assertEqual($html, '/cc <a href="/users/user_name">@user_name</a>');
+    }
+
+    public function itDoesNotInsertsLinkIfInvalidCaracterAtBegining()
+    {
+        stub($this->user_manager)->getUserByUserName('1username')->returns(mock('PFUser'));
+
+        $html = '@1username';
+        $this->rm->insertReferences($html, 0);
+        $this->assertEqual($html, '@1username');
+    }
+
+    public function itDoesNotBreakEmailAddress()
+    {
         $html = 'toto@userna.me';
         $this->rm->insertReferences($html, 0);
         $this->assertEqual($html, 'toto@userna.me');

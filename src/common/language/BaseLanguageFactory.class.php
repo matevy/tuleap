@@ -17,36 +17,38 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 /**
  * Factory for BaseLanguage objects
  */
-class BaseLanguageFactory {
-    
+class BaseLanguageFactory
+{
+
     /**
      * @var array of BaseLanguage
      */
     protected $languages;
-    
+
     /**
     * @var string The supported languages eg: 'en_US,fr_FR'
      */
     protected $supported_languages;
-    
+
     /**
     * @var string The default language eg: 'en_US'
     */
     protected $default_language;
-    
+
     /**
      * Constructor
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->languages           = array();
         $this->supported_languages = ForgeConfig::get('sys_supported_languages');
         $this->default_language    = ForgeConfig::get('sys_lang');
     }
-    
+
     /**
      * Cache the BaseLanguage instance
      *
@@ -54,10 +56,11 @@ class BaseLanguageFactory {
      *
      * @return void
      */
-    public function cacheBaseLanguage(BaseLanguage $language) {
+    public function cacheBaseLanguage(BaseLanguage $language)
+    {
         $this->languages[$language->defaultLanguage] = $language;
     }
-    
+
     /**
      * Get an instance of a BaseLanguage according to a given locale
      *
@@ -65,7 +68,8 @@ class BaseLanguageFactory {
      *
      * @return BaseLanguage
      */
-    public function getBaseLanguage($locale) {
+    public function getBaseLanguage($locale)
+    {
         if (strpos($this->supported_languages, $locale) === false) {
             $locale = $this->default_language;
         }
@@ -74,7 +78,7 @@ class BaseLanguageFactory {
         }
         return $this->languages[$locale];
     }
-    
+
     /**
      * Instantiate and load a new BaseLanguage
      *
@@ -83,7 +87,8 @@ class BaseLanguageFactory {
      *
      * @return BaseLanguage
      */
-    protected function createBaseLanguage($locale) {
+    protected function createBaseLanguage($locale)
+    {
         $currentlocale = setlocale(LC_ALL, '0');
         $language = new BaseLanguage($this->supported_languages, $locale);
         $language->loadLanguage($locale);

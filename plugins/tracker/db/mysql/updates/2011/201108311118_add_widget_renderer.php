@@ -19,19 +19,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201108311118_add_widget_renderer extends ForgeUpgrade_Bucket {
+class b201108311118_add_widget_renderer extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add table to store widget renderer
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "CREATE TABLE tracker_widget_renderer (
                   id int(11) unsigned NOT NULL auto_increment PRIMARY KEY,
                   owner_id int(11) unsigned NOT NULL default '0',
@@ -43,11 +47,10 @@ EOT;
         $this->db->createTable('tracker_widget_renderer', $sql);
     }
 
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->tableNameExists('tracker_widget_renderer')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('tracker_widget_renderer table is missing');
         }
     }
-
 }
-?>

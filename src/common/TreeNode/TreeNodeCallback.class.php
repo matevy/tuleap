@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012. All Rights Reserved.
  *
@@ -24,14 +23,14 @@ require_once 'TreeNode.class.php';
 /**
  * To be used with @see \TreeNodeMapper
  */
-interface TreeNodeCallback {
-    
+interface TreeNodeCallback
+{
+
     /**
      * Returns a new TreeNode based on the given one. This function should return a perfectly new node
-     * 
+     *
      * @param TreeNode $node
      * @return TreeNode
      */
     function apply(TreeNode $node);
 }
-?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2011. All Rights Reserved.
  *
  * This file is a part of Tuleap.
@@ -22,41 +22,38 @@
 
 require_once 'bootstrap.php';
 
-Mock::generatePartial('GitBackend', 'GitBackendTestVersion', array('getDao', 'getDriver', 'getSystemEventManager'));
-Mock::generatePartial('GitBackend', 'GitBackend4SetUp', array('getDao', 'getDriver', 'deployPostReceive', 'setRepositoryPermissions', 'changeRepositoryAccess'));
+class GitBackendTest extends TuleapTestCase
+{
 
-Mock::generate('GitDriver');
-Mock::generate('GitRepository');
-Mock::generate('Project');
-Mock::generate('SystemEventManager');
-
-class GitBackendTest extends TuleapTestCase {
-
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
-        $this->http_request = mock('HTTPRequest');
+        $this->setUpGlobalsMockery();
+        $this->http_request = \Mockery::spy(\HTTPRequest::class);
         HTTPRequest::setInstance($this->http_request);
 
         $this->fixturesPath = dirname(__FILE__).'/_fixtures';
 
         $git_plugin = \Mockery::mock(GitPlugin::class);
         $git_plugin->shouldReceive('areFriendlyUrlsActivated')->andReturns();
-        $this->url_manager = new Git_GitRepositoryUrlManager($git_plugin);
+        $this->url_manager = new Git_GitRepositoryUrlManager($git_plugin, new \Tuleap\InstanceBaseURLBuilder());
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         @unlink($this->fixturesPath.'/tmp/hooks/post-receive');
         HTTPRequest::clearInstance();
 
         parent::tearDown();
     }
 
-    public function testAddMailingShowRev() {
-        stub($this->http_request)->getServerUrl()->returns('https://localhost');
+    public function testAddMailingShowRev()
+    {
+        $this->http_request->shouldReceive('getServerUrl')->andReturns('https://localhost');
 
-        $prj = new MockProject($this);
-        $prj->setReturnValue('getId', 1750);
-        $prj->setReturnValue('getUnixName', 'prj');
+        $prj = \Mockery::spy(\Project::class);
+        $prj->shouldReceive('getId')->andReturns(1750);
+        $prj->shouldReceive('getUnixName')->andReturns('prj');
 
         $repo = new GitRepository();
         $repo->setPath('prj/repo.git');
@@ -64,38 +61,40 @@ class GitBackendTest extends TuleapTestCase {
         $repo->setProject($prj);
         $repo->setId(290);
 
-        $driver = new MockGitDriver($this);
-        $driver->expectOnce('setConfig', array('/var/lib/codendi/gitroot/prj/repo.git', 'hooks.showrev', "t=%s; git show --name-status --pretty='format:URL:    https://localhost/plugins/git/prj/repo?a=commitdiff&h=%%H%%nAuthor: %%an <%%ae>%%nDate:   %%aD%%n%%n%%s%%n%%b' \$t"));
+        $driver = \Mockery::spy(\GitDriver::class);
+        $driver->shouldReceive('setConfig')->with('/var/lib/codendi/gitroot/prj/repo.git', 'hooks.showrev', "t=%s; git show --name-status --pretty='format:URL:    https://localhost/plugins/git/prj/repo?a=commitdiff&h=%%H%%nAuthor: %%an <%%ae>%%nDate:   %%aD%%n%%n%%s%%n%%b' \$t")->once();
 
-        $backend = new GitBackendTestVersion($this);
+        $backend = \Mockery::mock(\GitBackend::class)->makePartial()->shouldAllowMockingProtectedMethods();
         $backend->setUp($this->url_manager);
         $backend->setGitRootPath(Git_Backend_Interface::GIT_ROOT_PATH);
-        $backend->setReturnValue('getDriver', $driver);
+        $backend->shouldReceive('getDriver')->andReturns($driver);
 
         $backend->setUpMailingHook($repo);
     }
 
-    public function testArchiveCreatesATarGz() {
+    public function testArchiveCreatesATarGz()
+    {
         $this->GivenThereIsARepositorySetUp();
-        
-        $project = new MockProject();
-        $project->setReturnValue('getUnixName', 'zorblub');
-        
-        $repo = new MockGitRepository();
-        $repo->setReturnValue('getPath', 'gitolite-admin-ref');
-        $repo->setReturnValue('getName', 'gitolite-admin-ref');
-        $repo->setReturnValue('getDeletionDate', '2012-01-26');
-        $repo->setReturnValue('getProject', $project);
-        
-        $backend = new GitBackendTestVersion();
+
+        $project = \Mockery::spy(\Project::class);
+        $project->shouldReceive('getUnixName')->andReturns('zorblub');
+
+        $repo = \Mockery::spy(\GitRepository::class);
+        $repo->shouldReceive('getPath')->andReturns('gitolite-admin-ref');
+        $repo->shouldReceive('getName')->andReturns('gitolite-admin-ref');
+        $repo->shouldReceive('getDeletionDate')->andReturns('2012-01-26');
+        $repo->shouldReceive('getProject')->andReturns($project);
+
+        $backend = \Mockery::mock(\GitBackend::class)->makePartial()->shouldAllowMockingProtectedMethods();
         $backend->setGitRootPath($this->_tmpDir);
         $backend->setGitBackupDir($this->backupDir);
         $backend->archive($repo);
-        
+
         $this->ThenCleanTheWorkspace();
     }
-    
-    private function GivenThereIsARepositorySetUp() {
+
+    private function GivenThereIsARepositorySetUp()
+    {
         // Copy the reference to save time & create symlink because
         // git is very sensitive to path you are using. Just symlinking
         // spots bugs
@@ -107,12 +106,11 @@ class GitBackendTest extends TuleapTestCase {
         system('tar -xf '. $this->_fixDir.'/gitolite-admin-ref' .'.tar --directory '.$this->_tmpDir);
         mkdir($this->backupDir);
     }
-    
-    private function ThenCleanTheWorkspace() {
+
+    private function ThenCleanTheWorkspace()
+    {
         system('rm -rf '. $this->_glAdmDirRef);
         system('rm -rf '. $this->backupDir);
         chdir($this->cwd);
     }
 }
-
-?>

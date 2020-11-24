@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018. All Rights Reserved.
+  - Copyright (c) Enalean, 2018-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -19,10 +19,8 @@
 
 <template>
     <div>
-        <component
-            v-bind:is="under_construction_modal"
-        />
         <folder-header/>
+        <clipboard-content-information/>
         <drag-n-drop-handler v-if="! is_loading_folder"/>
         <under-the-fold-notification v-if="! is_loading_folder"/>
         <folder-loading-screen v-if="is_loading_folder"/>
@@ -41,6 +39,7 @@ import EmptyFolderForWriters from "./EmptyState/EmptyFolderForWriters.vue";
 import EmptyFolderForReaders from "./EmptyState/EmptyFolderForReaders.vue";
 import DragNDropHandler from "./DragNDrop/DragNDropHandler.vue";
 import UnderTheFoldNotification from "./ModalNewItem/UnderTheFoldNotification.vue";
+import ClipboardContentInformation from "./Clipboard/ClipboardContentInformation.vue";
 
 export default {
     name: "FolderView",
@@ -51,19 +50,12 @@ export default {
         EmptyFolderForReaders,
         FolderLoadingScreen,
         FolderContent,
-        UnderTheFoldNotification
+        UnderTheFoldNotification,
+        ClipboardContentInformation
     },
     computed: {
-        ...mapState(["is_loading_folder", "current_folder", "is_under_construction"]),
-        ...mapGetters(["is_folder_empty"]),
-        under_construction_modal() {
-            if (!this.is_under_construction) {
-                return null;
-            }
-
-            return () =>
-                import(/* webpackChunkName: "under-construction" */ "../UnderConstructionModal.vue");
-        }
+        ...mapState(["is_loading_folder", "current_folder"]),
+        ...mapGetters(["is_folder_empty"])
     }
 };
 </script>

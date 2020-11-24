@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2018 - 2019. All rights reserved.
+ * Copyright Enalean (c) 2018 - Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registrated trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -33,6 +33,10 @@ class TrackerBase extends RestBase
     public const TRACKER_FIELDS_PROJECT_NAME        = 'test-tracker-fields';
     public const TRACKER_ADMINISTRATOR_PROJECT_NAME = 'test-tracker-project-filter';
     public const TRACKER_WORKFLOWS_PROJECT_NAME     = 'test-tracker-workflows';
+    public const TRACKER_SEMANTICS_PROJECT_NAME     = 'test-tracker-semantics';
+    private const TRACKER_FILE_URL_PROJECT_NAME     = 'test-tracker-file-url';
+    private const REST_XML_API_PROJECT_NAME         = 'rest-xml-api';
+    private const COMPUTED_VALUE_PROJECT_NAME       = 'computed-fields-default-value';
 
     public const MOVE_TRACKER_SHORTNAME                           = 'ToMoveArtifacts';
     public const BASE_TRACKER_SHORTNAME                           = 'base';
@@ -44,9 +48,15 @@ class TrackerBase extends RestBase
     public const TRACKER_WORKFLOW_WITH_TRANSITIONS_SHORTNAME      = 'workflows_tracker_transitions';
     public const TRACKER_WORKFLOW_SIMPLE_MODE_SHORTNAME           = 'workflow_simple_mode';
     public const TRACKER_WORKFLOW_SIMPLE_MODE_TO_SWITCH_SHORTNAME = 'simple_workflow_to_switch';
+    public const TRACKER_WORKFLOW_SIMPLE_MODE_FROM_XML_SHORTNAME  = 'workflow_simple_mode_from_xml';
+    public const TRACKER_WITH_TIMEFRAME_SEMANTIC_SHORTNAME        = 'tracker_semantic_timeframe';
+    private const TRACKER_FILE_URL_SHORTNAME                      = 'image';
+    private const REST_XML_API_TRACKER_SHORTNAME                  = 'epic';
+    private const COMPUTED_VALUE_TRACKER_SHORTNAME                = 'ComputedFieldsDefaultValues';
 
     protected $tracker_administrator_project_id;
     protected $tracker_workflows_project_id;
+    protected $rest_xml_api_project_id;
 
     protected $delete_tracker_id;
     protected $move_tracker_id;
@@ -55,9 +65,19 @@ class TrackerBase extends RestBase
     protected $tracker_workflows_tracker_id;
     protected $simple_mode_workflow_tracker_id;
     protected $simple_mode_workflow_to_switch_tracker_id;
+    protected $simple_mode_from_xml_tracker_id;
+    protected $tracker_file_url_id;
+    protected $rest_xml_api_tracker_id;
+    protected $tracker_workflow_transitions_tracker_id;
+    protected $computed_value_tracker_id;
 
     protected $base_artifact_ids   = [];
     protected $delete_artifact_ids = [];
+
+    /**
+     * @var int
+     */
+    public $tracker_with_timeframe_semantic_id;
 
     public function setUp() : void
     {
@@ -68,6 +88,10 @@ class TrackerBase extends RestBase
         $tracker_fields_project_id              = $this->getProjectId(self::TRACKER_FIELDS_PROJECT_NAME);
         $this->tracker_administrator_project_id = $this->getProjectId(self::TRACKER_ADMINISTRATOR_PROJECT_NAME);
         $this->tracker_workflows_project_id     = $this->getProjectId(self::TRACKER_WORKFLOWS_PROJECT_NAME);
+        $file_url_project_id                    = $this->getProjectId(self::TRACKER_FILE_URL_PROJECT_NAME);
+        $tracker_semantics_project_id           = $this->getProjectId(self::TRACKER_SEMANTICS_PROJECT_NAME);
+        $this->rest_xml_api_project_id          = $this->getProjectId(self::REST_XML_API_PROJECT_NAME);
+        $computed_value_project_id              = $this->getProjectId(self::COMPUTED_VALUE_PROJECT_NAME);
 
         $this->move_tracker_id                           = $this->tracker_ids[$move_project_id][self::MOVE_TRACKER_SHORTNAME];
         $this->base_tracker_id                           = $this->tracker_ids[$move_project_id][self::BASE_TRACKER_SHORTNAME];
@@ -77,6 +101,11 @@ class TrackerBase extends RestBase
         $this->tracker_workflow_transitions_tracker_id   = $this->tracker_ids[$this->tracker_workflows_project_id][self::TRACKER_WORKFLOW_WITH_TRANSITIONS_SHORTNAME];
         $this->simple_mode_workflow_tracker_id           = $this->tracker_ids[$this->tracker_workflows_project_id][self::TRACKER_WORKFLOW_SIMPLE_MODE_SHORTNAME];
         $this->simple_mode_workflow_to_switch_tracker_id = $this->tracker_ids[$this->tracker_workflows_project_id][self::TRACKER_WORKFLOW_SIMPLE_MODE_TO_SWITCH_SHORTNAME];
+        $this->simple_mode_from_xml_tracker_id           = $this->tracker_ids[$this->tracker_workflows_project_id][self::TRACKER_WORKFLOW_SIMPLE_MODE_FROM_XML_SHORTNAME];
+        $this->tracker_file_url_id                       = $this->tracker_ids[$file_url_project_id][self::TRACKER_FILE_URL_SHORTNAME];
+        $this->tracker_with_timeframe_semantic_id        = $this->tracker_ids[$tracker_semantics_project_id][self::TRACKER_WITH_TIMEFRAME_SEMANTIC_SHORTNAME];
+        $this->rest_xml_api_tracker_id                   = $this->tracker_ids[$this->rest_xml_api_project_id][self::REST_XML_API_TRACKER_SHORTNAME];
+        $this->computed_value_tracker_id                 = $this->tracker_ids[$computed_value_project_id][self::COMPUTED_VALUE_TRACKER_SHORTNAME];
 
         $this->getBaseArtifactIds();
         $this->getDeleteArtifactIds();
@@ -104,14 +133,7 @@ class TrackerBase extends RestBase
         string $from_label,
         string $to_label
     ): array {
-        $response = $this->getResponseByName(
-            \REST_TestDataBuilder::ADMIN_USER_NAME,
-            $this->setup_client->get("trackers/$tracker_id")
-        );
-
-        $this->assertEquals($response->getStatusCode(), 200);
-
-        $tracker = $response->json();
+        $tracker = $this->tracker_representations[$tracker_id];
 
         $status_field_id = 0;
         $from_value_id   = 0;
@@ -153,23 +175,29 @@ class TrackerBase extends RestBase
         return $found_transition;
     }
 
-    protected function getAUsedField(int $tracker_id, string $field_shortname) : int
+    protected function getAUsedField(int $tracker_id, string $field_shortname) : ?array
     {
-        $response = $this->getResponseByName(
-            \REST_TestDataBuilder::ADMIN_USER_NAME,
-            $this->setup_client->get("trackers/$tracker_id")
-        );
-
-        $this->assertEquals($response->getStatusCode(), 200);
-
-        $tracker = $response->json();
-
+        $tracker = $this->tracker_representations[$tracker_id];
         foreach ($tracker['fields'] as $tracker_field) {
             if ($tracker_field['name'] === $field_shortname) {
-                return $tracker_field['field_id'];
+                return $tracker_field;
             }
         }
 
         $this->fail();
+
+        return null;
+    }
+
+    protected function getAUsedFieldId(int $tracker_id, string $field_shortname) : ?int
+    {
+        $field = $this->getAUsedField($tracker_id, $field_shortname);
+        if ($field !== null) {
+            return $field['field_id'];
+        }
+
+        $this->fail();
+
+        return null;
     }
 }

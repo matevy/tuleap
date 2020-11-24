@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,15 +19,15 @@
  *
  */
 
-require_once('common/dao/include/DataAccessObject.class.php');
-
-class Project_CustomDescription_CustomDescriptionDao extends DataAccessObject {
+class Project_CustomDescription_CustomDescriptionDao extends DataAccessObject //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
+{
 
     /**
      *
      * @return DataAccessResult
      */
-    public function getCustomDescriptions() {
+    public function getCustomDescriptions()
+    {
         $sql = 'SELECT *
                 FROM group_desc
                 ORDER BY desc_rank';
@@ -40,7 +40,8 @@ class Project_CustomDescription_CustomDescriptionDao extends DataAccessObject {
      *
      * @return DataAccessResult
      */
-    public function getCustomDescription($id) {
+    public function getCustomDescription($id)
+    {
         $id = $this->da->escapeInt($id);
 
         $sql = "SELECT *
@@ -54,7 +55,8 @@ class Project_CustomDescription_CustomDescriptionDao extends DataAccessObject {
      *
      * @return DataAccessResult
      */
-    public function getRequiredCustomDescriptions() {
+    public function getRequiredCustomDescriptions()
+    {
         $sql = 'SELECT *
                 FROM group_desc
                 WHERE desc_required = 1
@@ -62,5 +64,16 @@ class Project_CustomDescription_CustomDescriptionDao extends DataAccessObject {
 
         return $this->retrieve($sql);
     }
+
+    /**
+     * @throws DataAccessQueryException
+     */
+    public function updateRequiredCustomDescription(bool $required, int $id): void
+    {
+        $required = $this->da->escapeInt($required);
+        $id = $this->da->escapeInt($id);
+
+        $sql    = "UPDATE group_desc SET desc_required=$required where group_desc_id=$id";
+        $this->update($sql);
+    }
 }
-?>

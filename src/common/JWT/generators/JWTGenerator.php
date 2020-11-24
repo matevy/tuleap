@@ -22,7 +22,8 @@ use UserManager;
 use Firebase\JWT\JWT;
 use UGroupLiteralizer;
 
-class JWTGenerator {
+class JWTGenerator
+{
 
     /** @var UserManager */
     private $user_manager;
@@ -33,7 +34,8 @@ class JWTGenerator {
     /** @var string */
     private $private_key;
 
-    public function __construct($private_key, $user_manager, $ugroup_literalizer) {
+    public function __construct($private_key, $user_manager, $ugroup_literalizer)
+    {
         $this->private_key        = $private_key;
         $this->user_manager       = $user_manager;
         $this->ugroup_literalizer = $ugroup_literalizer;
@@ -45,7 +47,8 @@ class JWTGenerator {
      *
      * @return string
      */
-    public function getToken() {
+    public function getToken()
+    {
         $current_user = $this->user_manager->getCurrentUser();
         $data = array(
             'user_id'     => intval($current_user->getId()),
@@ -61,7 +64,8 @@ class JWTGenerator {
         return $encoded;
     }
 
-    private function getExpireDate() {
+    private function getExpireDate()
+    {
         $issuedAt  = new \DateTime();
         $notBefore = $issuedAt;
         return $notBefore->modify('+30 minutes')->getTimestamp();

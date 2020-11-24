@@ -18,21 +18,24 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class User_ForgeUserGroupPermissionsManager {
+class User_ForgeUserGroupPermissionsManager
+{
 
     /**
      * @var User_ForgeUserGroupPermissionsDao
      */
     private $permissions_dao;
 
-    public function __construct(User_ForgeUserGroupPermissionsDao $dao) {
+    public function __construct(User_ForgeUserGroupPermissionsDao $dao)
+    {
         $this->permissions_dao = $dao;
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
-    public function addPermission(User_ForgeUGroup $user_group, User_ForgeUserGroupPermission $permission) {
+    public function addPermission(User_ForgeUGroup $user_group, User_ForgeUserGroupPermission $permission)
+    {
         $user_group_id = $user_group->getId();
         $permission_id = $permission->getId();
 
@@ -46,7 +49,8 @@ class User_ForgeUserGroupPermissionsManager {
     /**
      * @return bool
      */
-    public function deletePermission(User_ForgeUGroup $user_group, User_ForgeUserGroupPermission $permission) {
+    public function deletePermission(User_ForgeUGroup $user_group, User_ForgeUserGroupPermission $permission)
+    {
         $user_group_id = $user_group->getId();
         $permission_id = $permission->getId();
 
@@ -56,8 +60,8 @@ class User_ForgeUserGroupPermissionsManager {
     /**
      * @return bool
      */
-    public function doesUserHavePermission(PFUser $user, User_ForgeUserGroupPermission $permission) {
+    public function doesUserHavePermission(PFUser $user, User_ForgeUserGroupPermission $permission)
+    {
         return $this->permissions_dao->doesUserHavePermission($user->getId(), $permission->getId());
     }
 }
-?>

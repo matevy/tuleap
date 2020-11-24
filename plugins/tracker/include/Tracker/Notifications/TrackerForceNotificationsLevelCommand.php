@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -31,6 +31,8 @@ use TrackerFactory;
 
 class TrackerForceNotificationsLevelCommand extends Command
 {
+    public const NAME = 'tracker:force-notifications-level';
+
     /**
      * @var NotificationsForceUsageUpdater
      */
@@ -44,7 +46,7 @@ class TrackerForceNotificationsLevelCommand extends Command
      */
     private $project_manager;
 
-    public const AUTHORIZED_CONFIGURATION_LEVEL
+    private const AUTHORIZED_CONFIGURATION_LEVEL
         = [
             Tracker::NOTIFICATIONS_LEVEL_DEFAULT_LABEL,
             Tracker::NOTIFICATIONS_LEVEL_DISABLED_LABEL,
@@ -66,7 +68,7 @@ class TrackerForceNotificationsLevelCommand extends Command
         TrackerFactory $tracker_factory,
         \TrackerDao $tracker_dao
     ) {
-        parent::__construct('tracker:force-notifications-level');
+        parent::__construct(self::NAME);
         $this->force_usage_updater          = $force_usage_updater;
         $this->project_manager              = $project_manager;
         $this->notification_level_extractor = $notification_level_extractor;
@@ -74,7 +76,7 @@ class TrackerForceNotificationsLevelCommand extends Command
         $this->tracker_dao                  = $tracker_dao;
     }
 
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output): int
     {
         $notification_level = $this->checkNotificationLevelParameter($input);
         $notification_level = $this->notification_level_extractor->extractNotificationLevelFromString(
@@ -90,6 +92,8 @@ class TrackerForceNotificationsLevelCommand extends Command
                 $this->force_usage_updater->forceUserPreferences($tracker, $notification_level);
             }
         }
+
+        return 0;
     }
 
     protected function configure()

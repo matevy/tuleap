@@ -17,9 +17,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_FormElement_View_Admin_Field_LastModifiedBy extends Tracker_FormElement_View_Admin_Field_List {
+class Tracker_FormElement_View_Admin_Field_LastModifiedBy extends Tracker_FormElement_View_Admin_Field_List
+{
 
-    protected function fetchCustomHelp() {
+    protected function fetchCustomHelp()
+    {
         $html = '';
         $html .= '<span class="tracker-admin-form-element-help">';
         $html .= $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'lastmodifiedby_help');
@@ -27,7 +29,8 @@ class Tracker_FormElement_View_Admin_Field_LastModifiedBy extends Tracker_FormEl
         return $html;
     }
 
-    protected function fetchRequired() {
+    protected function fetchRequired()
+    {
         return '';
     }
 
@@ -37,7 +40,8 @@ class Tracker_FormElement_View_Admin_Field_LastModifiedBy extends Tracker_FormEl
      *
      * @return string html
      */
-    public function fetchAfterAdminCreateForm() {
+    public function fetchAfterAdminCreateForm()
+    {
         // Don't display the values because this is a special field
         return '';
     }
@@ -47,7 +51,8 @@ class Tracker_FormElement_View_Admin_Field_LastModifiedBy extends Tracker_FormEl
      *
      * @return string html
      */
-    public function fetchAfterAdminEditForm() {
+    public function fetchAfterAdminEditForm()
+    {
         // Don't display the values because this is a special field
         return '';
     }

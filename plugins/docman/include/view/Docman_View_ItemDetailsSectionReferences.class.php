@@ -20,18 +20,17 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_View_ItemDetailsSection.class.php');
-require_once('common/reference/CrossReferenceFactory.class.php');
-require_once('common/reference/ReferenceManager.class.php');
+class Docman_View_ItemDetailsSectionReferences extends Docman_View_ItemDetailsSection
+{
 
-class Docman_View_ItemDetailsSectionReferences extends Docman_View_ItemDetailsSection {
-    
-    
-    function __construct($item, $url) {
-        parent::__construct($item, $url, 'references', $GLOBALS['Language']->getText('plugin_docman','details_references'));
+
+    function __construct($item, $url)
+    {
+        parent::__construct($item, $url, 'references', $GLOBALS['Language']->getText('plugin_docman', 'details_references'));
     }
-    
-    function getContent($params = []) {
+
+    function getContent($params = [])
+    {
         $crf = new CrossReferenceFactory($this->item->getId(), ReferenceManager::REFERENCE_NATURE_DOCUMENT, $this->item->getGroupId());
         $crf->fetchDatas();
         $content = $crf->getHTMLDisplayCrossRefs();

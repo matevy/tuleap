@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,7 +21,8 @@
 use Tuleap\Tracker\Artifact\MailGateway\IncomingMail;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayFilter;
 
-abstract class Tracker_Artifact_MailGateway_MailGateway {
+abstract class Tracker_Artifact_MailGateway_MailGateway
+{
 
     /**
      * @var Tracker_Artifact_MailGateway_CitationStripper
@@ -104,7 +105,7 @@ abstract class Tracker_Artifact_MailGateway_MailGateway {
         } catch (Tracker_Artifact_MailGateway_MultipleUsersExistException $e) {
             $this->logger->debug('Multiple users match with ' . implode(', ', $incoming_mail->getFrom()));
             $this->notifier->sendErrorMailMultipleUsers($incoming_mail);
-        } catch(Tracker_Artifact_MailGateway_RecipientUserDoesNotExistException $e) {
+        } catch (Tracker_Artifact_MailGateway_RecipientUserDoesNotExistException $e) {
             $this->logger->debug('No user match with ' . implode(', ', $incoming_mail->getFrom()));
             $this->notifier->sendErrorMailNoUserMatch($incoming_mail);
         } catch (Tracker_Exception $e) {
@@ -116,12 +117,12 @@ abstract class Tracker_Artifact_MailGateway_MailGateway {
     /**
      * @return bool
      */
-    protected abstract function canCreateArtifact(Tracker $tracker);
+    abstract protected function canCreateArtifact(Tracker $tracker);
 
     /**
      * @return bool
      */
-    protected abstract function canUpdateArtifact(Tracker $tracker);
+    abstract protected function canUpdateArtifact(Tracker $tracker);
 
     /**
      * @return Tracker_Artifact_Changeset|null
@@ -138,7 +139,7 @@ abstract class Tracker_Artifact_MailGateway_MailGateway {
             } else {
                 $this->logNoSufficientRightsToCreateChangeset($incoming_message, $incoming_mail);
             }
-        } else if ($this->canCreateArtifact($incoming_message->getTracker())) {
+        } elseif ($this->canCreateArtifact($incoming_message->getTracker())) {
             $artifact = $this->createArtifact(
                 $incoming_message->getUser(),
                 $incoming_message->getTracker(),
@@ -164,7 +165,8 @@ abstract class Tracker_Artifact_MailGateway_MailGateway {
     }
 
     /** @return Tracker_Artifact_Changeset|null */
-    private function addFollowUp(PFUser $user, Tracker_Artifact $artifact, $body) {
+    private function addFollowUp(PFUser $user, Tracker_Artifact $artifact, $body)
+    {
         $this->logger->debug("Receiving new follow-up comment from ". $user->getUserName());
 
         if (! $artifact->userCanUpdate($user)) {
@@ -182,14 +184,15 @@ abstract class Tracker_Artifact_MailGateway_MailGateway {
         );
     }
 
-    /** @return Tracker_Artifact */
-    private function createArtifact(PFUser $user, Tracker $tracker, $title, $body) {
+    /** @return Tracker_Artifact|false */
+    private function createArtifact(PFUser $user, Tracker $tracker, $title, $body)
+    {
         $this->logger->debug("Receiving new artifact from ". $user->getUserName());
 
         if (! $tracker->userCanSubmitArtifact($user)) {
             $this->logger->info("User ". $user->getUnixName() ." has no right to create an artifact in tracker #" . $tracker->getId());
             $this->notifier->sendErrorMailInsufficientPermissionCreation($user->getEmail(), $title);
-            return;
+            return false;
         }
 
         $title_field       = $tracker->getTitleField();

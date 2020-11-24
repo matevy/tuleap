@@ -48,7 +48,8 @@ use Tracker_ArtifactFactory;
  * and there is a hierarchy "Story tracker is parent of Task tracker", then the link will be removed so that it is
  * the story that will reference the task instead of the inverse.
  */
-class SubmittedValueConvertor {
+class SubmittedValueConvertor
+{
 
     /**
      * @var SourceOfAssociationDetector
@@ -173,7 +174,8 @@ class SubmittedValueConvertor {
         }
     }
 
-    private function addLinksFromSubmittedValue(array &$list_of_artifactlinkinfo, array $submitted_value) {
+    private function addLinksFromSubmittedValue(array &$list_of_artifactlinkinfo, array $submitted_value)
+    {
         $new_values = $this->extractNewValuesFromSubmittedValue($submitted_value);
 
         foreach ($new_values as $new_artifact_id) {
@@ -205,7 +207,8 @@ class SubmittedValueConvertor {
         return '';
     }
 
-    private function extractNewValuesFromSubmittedValue(array $submitted_value) {
+    private function extractNewValuesFromSubmittedValue(array $submitted_value)
+    {
         $new_values          = (string)$submitted_value['new_values'];
         $removed_values      = $this->extractRemovedValuesFromSubmittedValue($submitted_value);
         $new_values_as_array = array_filter(array_map('intval', explode(',', $new_values)));
@@ -213,15 +216,18 @@ class SubmittedValueConvertor {
         return array_unique(array_diff($new_values_as_array, array_keys($removed_values)));
     }
 
-    private function extractRemovedValuesFromSubmittedValue(array $submitted_value) {
+    private function extractRemovedValuesFromSubmittedValue(array $submitted_value)
+    {
         return $this->extractArrayFromSubmittedValue($submitted_value, 'removed_values');
     }
 
-    private function extractNaturesFromSubmittedValue(array $submitted_value) {
+    private function extractNaturesFromSubmittedValue(array $submitted_value)
+    {
         return $this->extractArrayFromSubmittedValue($submitted_value, 'natures');
     }
 
-    private function extractArrayFromSubmittedValue(array $submitted_value, $key) {
+    private function extractArrayFromSubmittedValue(array $submitted_value, $key)
+    {
         if (! isset($submitted_value[$key])) {
             return array();
         }

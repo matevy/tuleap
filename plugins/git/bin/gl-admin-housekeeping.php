@@ -19,8 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once 'pre.php';
-require_once __DIR__ . '/../include/gitPlugin.class.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
+require_once __DIR__ . '/../include/gitPlugin.php';
 
 $gitolite_var_path       = $GLOBALS['sys_data_dir'] . '/gitolite';
 $remote_admin_repository = 'gitolite@gl-adm:gitolite-admin';

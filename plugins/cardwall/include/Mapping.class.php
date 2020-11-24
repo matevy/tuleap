@@ -21,10 +21,11 @@
 /**
  * Mapping (column_is, field_id, value_id)
  *
- * Each artifact, must send its own values id depending on its status field 
+ * Each artifact, must send its own values id depending on its status field
  * and the column it has been dropped into.
  */
-class Cardwall_Mapping {
+class Cardwall_Mapping
+{
 
     /**
      * @var int
@@ -41,10 +42,10 @@ class Cardwall_Mapping {
      */
     public $value_id;
 
-    public function __construct($column_id, $field_id, $value_id) {
+    public function __construct($column_id, $field_id, $value_id)
+    {
         $this->column_id = $column_id;
         $this->field_id  = $field_id;
         $this->value_id  = $value_id;
     }
 }
-?>

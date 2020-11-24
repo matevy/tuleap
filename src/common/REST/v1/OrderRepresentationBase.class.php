@@ -21,13 +21,14 @@ namespace Tuleap\REST\v1;
 
 use Luracast\Restler\RestException;
 
-class OrderRepresentationBase {
+class OrderRepresentationBase
+{
 
     public const AFTER  = 'after';
     public const BEFORE = 'before';
 
     /**
-     * @var {@type array}
+     * @var array {@type int}
      */
     public $ids;
 
@@ -44,7 +45,8 @@ class OrderRepresentationBase {
     /**
      * @throws RestException
      */
-    public function checkFormat() {
+    public function checkFormat()
+    {
         if (! in_array($this->direction, array(self::BEFORE, self::AFTER))) {
             throw new RestException(400, "invalid value specified for `direction`. Expected: before | after");
         }
@@ -59,7 +61,8 @@ class OrderRepresentationBase {
         }
     }
 
-    private function isArrayOfInt($name) {
+    private function isArrayOfInt($name)
+    {
         if (! is_array($this->$name)) {
             throw new RestException(400, "invalid value specified for `$name`. Expected: array of integers");
         }

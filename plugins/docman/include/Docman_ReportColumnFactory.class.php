@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2007
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -24,43 +24,45 @@ require_once('Docman_ReportColumn.class.php');
 
 require_once('Docman_MetadataFactory.class.php');
 
-class Docman_ReportColumnFactory {
+class Docman_ReportColumnFactory
+{
     var $groupId;
 
-    function __construct($groupId) {
+    function __construct($groupId)
+    {
         $this->groupId = $groupId;
     }
 
-    function getColumnFromLabel($colLabel) {
+    function getColumnFromLabel($colLabel)
+    {
         $col = null;
         $mdFactory = $this->_getMetadataFactory();
-        switch($colLabel) {
-        case 'location':
-            $col = new Docman_ReportColumnLocation();
-            break;
-
-        case 'title':
-            $md  = $mdFactory->getFromLabel($colLabel);
-            $col = new Docman_ReportColumnTitle($md);
-            break;
-
-        default:
-            $md  = $mdFactory->getFromLabel($colLabel);
-            switch($md->getType()) {
-            case PLUGIN_DOCMAN_METADATA_TYPE_LIST:
-                $col = new Docman_ReportColumnList($md);
+        switch ($colLabel) {
+            case 'location':
+                $col = new Docman_ReportColumnLocation();
                 break;
+
+            case 'title':
+                $md  = $mdFactory->getFromLabel($colLabel);
+                $col = new Docman_ReportColumnTitle($md);
+                break;
+
             default:
-                $col = new Docman_ReportColumn($md);
-            }
+                $md  = $mdFactory->getFromLabel($colLabel);
+                switch ($md->getType()) {
+                    case PLUGIN_DOCMAN_METADATA_TYPE_LIST:
+                        $col = new Docman_ReportColumnList($md);
+                        break;
+                    default:
+                        $col = new Docman_ReportColumn($md);
+                }
         }
         return $col;
     }
 
-    function &_getMetadataFactory() {
+    function &_getMetadataFactory()
+    {
         $mdf = new Docman_MetadataFactory($this->groupId);
         return $mdf;
     }
 }
-
-?>

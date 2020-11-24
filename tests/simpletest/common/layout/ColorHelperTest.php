@@ -18,9 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'common/layout/ColorHelper.class.php';
-
-class ColorHelperTest extends TuleapTestCase {
+class ColorHelperTest extends TuleapTestCase
+{
 
     private $colorSet = array(
         '#FFFFFF' => array(255, 255, 255),
@@ -32,17 +31,17 @@ class ColorHelperTest extends TuleapTestCase {
         '#E025DC' => array(224, 37, 220)
     );
 
-    function testRGBToHexa() {
+    function testRGBToHexa()
+    {
         foreach ($this->colorSet as $hexa => $rgb) {
-           $this->assertEqual($hexa, ColorHelper::RGBToHexa($rgb[0], $rgb[1], $rgb[2])); 
-        } 
+            $this->assertEqual($hexa, ColorHelper::RGBToHexa($rgb[0], $rgb[1], $rgb[2]));
+        }
     }
 
-    function testHexaToRGB() {
+    function testHexaToRGB()
+    {
         foreach ($this->colorSet as $hexa => $rgb) {
-           $this->assertEqual(array($rgb[0], $rgb[1], $rgb[2]), ColorHelper::HexaToRGB($hexa)); 
+            $this->assertEqual(array($rgb[0], $rgb[1], $rgb[2]), ColorHelper::HexaToRGB($hexa));
         }
     }
 }
-
-?>

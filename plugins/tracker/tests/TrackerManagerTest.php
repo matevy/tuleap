@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -18,8 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Tracker\Admin\GlobalAdminController;
+
 require_once('bootstrap.php');
-require_once 'common/constants.php';
 Mock::generate('Tracker_URL');
 Mock::generate('Tracker');
 Mock::generate('Tracker_FormElement_Interface');
@@ -29,9 +31,10 @@ Mock::generate('TrackerFactory');
 Mock::generate('Tracker_FormElementFactory');
 Mock::generate('Tracker_ArtifactFactory');
 Mock::generate('Tracker_ReportFactory');
-Mock::generatePartial('TrackerManager',
-                      'TrackerManagerTestVersion',
-                      array(
+Mock::generatePartial(
+    'TrackerManager',
+    'TrackerManagerTestVersion',
+    array(
                           'getUrl',
                           'getTrackerFactory',
                           'getTracker_FormElementFactory',
@@ -42,18 +45,19 @@ Mock::generatePartial('TrackerManager',
                           'checkServiceEnabled',
                       )
 );
-Mock::generate('Codendi_Request');
 Mock::generate('PFUser');
 Mock::generate('Layout');
 Mock::generate('Project');
 Mock::generate('ReferenceManager');
 
 
-class TrackerManagerTest extends TuleapTestCase {
+class TrackerManagerTest extends TuleapTestCase
+{
 
     private $tracker;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->user = mock('PFUser');
         $this->user->setReturnValue('getId', 666);
@@ -98,7 +102,8 @@ class TrackerManagerTest extends TuleapTestCase {
         $this->tm->setReturnReference('getArtifactReportFactory', $rf);
         $this->tm->setReturnValue('checkServiceEnabled', true);
     }
-    public function tearDown() {
+    public function tearDown()
+    {
         unset($this->url);
         unset($this->user);
         unset($this->artifact);
@@ -109,33 +114,36 @@ class TrackerManagerTest extends TuleapTestCase {
         parent::tearDown();
     }
 
-    public function testProcessArtifact() {
+    public function testProcessArtifact()
+    {
         $this->artifact->expectOnce('process');
         $this->tracker->expectNever('process');
         $this->formElement->expectNever('process');
         $this->report->expectNever('process');
 
-        $request_artifact = new MockCodendi_Request($this);
-        $request_artifact->setReturnValue('get', '1', array('aid'));
+        $request_artifact = Mockery::spy(HTTPRequest::class);
+        $request_artifact->shouldReceive('get')->with('aid')->andReturn('1');
         $this->artifact->setReturnValue('userCanView', true);
         $this->tracker->setReturnValue('userCanView', true);
         $this->url->setReturnValue('getDispatchableFromRequest', $this->artifact);
         $this->tm->process($request_artifact, $this->user);
     }
 
-    public function testProcessReport() {
+    public function testProcessReport()
+    {
         $this->artifact->expectNever('process');
         $this->report->expectOnce('process');
         $this->tracker->expectNever('process');
         $this->formElement->expectNever('process');
 
-        $request_artifact = new MockCodendi_Request($this);
+        $request_artifact = Mockery::spy(HTTPRequest::class);
         $this->tracker->setReturnValue('userCanView', true);
         $this->url->setReturnValue('getDispatchableFromRequest', $this->report);
         $this->tm->process($request_artifact, $this->user);
     }
 
-    public function testProcessTracker() {
+    public function testProcessTracker()
+    {
         $this->artifact->expectNever('process');
         $this->report->expectNever('process');
         $this->tracker->expectOnce('process');
@@ -144,13 +152,14 @@ class TrackerManagerTest extends TuleapTestCase {
         $this->tracker->setReturnValue('userCanView', true);
         $this->tracker->expectOnce('userCanView');
 
-        $request_artifact = new MockCodendi_Request($this);
+        $request_artifact = Mockery::spy(HTTPRequest::class);
 
         $this->url->setReturnValue('getDispatchableFromRequest', $this->tracker);
         $this->tm->process($request_artifact, $this->user);
     }
 
-    public function testProcessTracker_with_no_permissions_to_view() {
+    public function testProcessTracker_with_no_permissions_to_view()
+    {
         $this->artifact->expectNever('process');
         $this->report->expectNever('process');
         $this->tracker->expectNever('process'); //user can't view the tracker. so don't process the request in tracker
@@ -162,19 +171,20 @@ class TrackerManagerTest extends TuleapTestCase {
         $GLOBALS['Language']->expect('getText', array('plugin_tracker_common_type', 'no_view_permission'));
         $this->tm->expectOnce('displayAllTrackers');
 
-        $request_artifact = new MockCodendi_Request($this);
+        $request_artifact = Mockery::spy(HTTPRequest::class);
 
         $this->url->setReturnValue('getDispatchableFromRequest', $this->tracker);
         $this->tm->process($request_artifact, $this->user);
     }
 
-    public function testProcessField() {
+    public function testProcessField()
+    {
         $this->artifact->expectNever('process');
         $this->report->expectNever('process');
         $this->tracker->expectNever('process');
         $this->formElement->expectOnce('process');
 
-        $request_artifact = new MockCodendi_Request($this);
+        $request_artifact = Mockery::spy(HTTPRequest::class);
         $request_artifact->setReturnValue('get', '4', array('formElement'));
         $request_artifact->setReturnValue('get', '5', array('group_id'));
         $this->tracker->setReturnValue('userCanView', true);
@@ -182,40 +192,42 @@ class TrackerManagerTest extends TuleapTestCase {
         $this->tm->process($request_artifact, $this->user);
     }
 
-    public function testProcessItself() {
-        $request_artifact = new MockCodendi_Request($this);
+    public function testProcessItself()
+    {
+        $request_artifact = Mockery::spy(HTTPRequest::class);
 
-        $tm = TestHelper::getPartialMock('TrackerManager', array('getProject', 'displayAllTrackers', 'checkServiceEnabled', 'getGlobalAdminController'));
-        $project = new MockProject();
-        $tm->expectOnce('getProject');
-        $tm->setReturnValue('getProject', $project, array(5));
-        $tm->setReturnValue('checkServiceEnabled', true, array($project, $request_artifact));
-        stub($tm)->getGlobalAdminController()->returns(mock('Tuleap\Tracker\Admin\GlobalAdminController'));
-        $tm->expectOnce('displayAllTrackers', array($project, $this->user));
+        $tm = Mockery::mock(TrackerManager::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $project = Mockery::spy(Project::class);
+        $tm->shouldReceive('getProject')->with(5)->andReturn($project)->once();
+        $tm->shouldReceive('checkServiceEnabled')->with($project, $request_artifact)->andReturn(true);
+        $tm->shouldReceive('getGlobalAdminController')->andReturn(Mockery::mock(GlobalAdminController::class));
+        $tm->shouldReceive('displayAllTrackers')->with($project, $this->user)->once();
 
         $this->artifact->expectNever('process');
         $this->report->expectNever('process');
         $this->tracker->expectNever('process');
         $this->formElement->expectNever('process');
 
-        $request_artifact->setReturnValue('get', '5', array('group_id'));
+        $request_artifact->shouldReceive('get')->with('group_id')->andReturn('5');
         $tm->process($request_artifact, $this->user);
     }
 
-    public function testSearch() {
-        $request = new MockCodendi_Request($this);
-        $request->setReturnValue('exist', true, array('tracker'));
-        $request->setReturnValue('get', 3, array('tracker'));
+    public function testSearch()
+    {
+        $request = Mockery::spy(HTTPRequest::class);
+        $request->shouldReceive('exist')->with('tracker')->andReturn(true);
+        $request->shouldReceive('get')->with('tracker')->andReturn(3);
         $this->tracker->setReturnValue('userCanView', true, array($this->user));
 
         $this->tracker->expectOnce('displaySearch');
         $this->tm->search($request, $this->user);
     }
 
-    public function testSearchUserCannotViewTracker() {
-        $request = new MockCodendi_Request($this);
-        $request->setReturnValue('exist', true, array('tracker'));
-        $request->setReturnValue('get', 3, array('tracker'));
+    public function testSearchUserCannotViewTracker()
+    {
+        $request = Mockery::spy(HTTPRequest::class);
+        $request->shouldReceive('exist')->with('tracker')->andReturn(true);
+        $request->shouldReceive('get')->with('tracker')->andReturn(3);
 
         $this->tracker->expectNever('displaySearch');
         $GLOBALS['Response']->expectOnce('addFeedback', array('error', '*'));
@@ -224,9 +236,10 @@ class TrackerManagerTest extends TuleapTestCase {
         $this->tm->search($request, $this->user);
     }
 
-    public function testSearchAllTrackerDisplaySearchNotCalled() {
-        $request = new MockCodendi_Request($this);
-        $request->setReturnValue('exist', false, array('tracker'));
+    public function testSearchAllTrackerDisplaySearchNotCalled()
+    {
+        $request = Mockery::spy(HTTPRequest::class);
+        $request->shouldReceive('exist')->with('tracker')->andReturn(false);
         $this->tracker->setReturnValue('userCanView', true, array($this->user));
 
         $this->tracker->expectNever('displaySearch');
@@ -249,7 +262,8 @@ class TrackerManagerTest extends TuleapTestCase {
      * And 'task' reference is not created (it's up to tracker creation to create the reference)
      *
      */
-    public function testDuplicateCopyReferences() {
+    public function testDuplicateCopyReferences()
+    {
         $source_project_id       = 100;
         $destinatnion_project_id = 120;
         $u_group_mapping         = array();
@@ -260,9 +274,9 @@ class TrackerManagerTest extends TuleapTestCase {
         $tf->shouldReceive('duplicate')->once();
         $tm->shouldReceive('getTrackerFactory')->andReturns($tf);
 
-        $r1 = new Reference(101 , 'bug',   'desc', '/plugins/tracker/?aid=$1&group_id=$group_id', 'P', 'plugin_tracker', 'plugin_tracker_artifact', 1 , 100);
-        $r2 = new Reference(102 , 'issue', 'desc', '/plugins/tracker/?aid=$1&group_id=$group_id', 'P', 'plugin_tracker', 'plugin_tracker_artifact', 1 , 100);
-        $r3 = new Reference(103 , 'task',  'desc', '/plugins/tracker/?aid=$1&group_id=$group_id', 'P', 'plugin_tracker', 'plugin_tracker_artifact', 1 , 100);
+        $r1 = new Reference(101, 'bug', 'desc', '/plugins/tracker/?aid=$1&group_id=$group_id', 'P', 'plugin_tracker', 'plugin_tracker_artifact', 1, 100);
+        $r2 = new Reference(102, 'issue', 'desc', '/plugins/tracker/?aid=$1&group_id=$group_id', 'P', 'plugin_tracker', 'plugin_tracker_artifact', 1, 100);
+        $r3 = new Reference(103, 'task', 'desc', '/plugins/tracker/?aid=$1&group_id=$group_id', 'P', 'plugin_tracker', 'plugin_tracker_artifact', 1, 100);
 
         $rm = Mockery::mock(ReferenceManager::class);
         $rm->shouldReceive('getReferencesByGroupId')->with($source_project_id)->andReturns([$r1, $r2, $r3])->once();

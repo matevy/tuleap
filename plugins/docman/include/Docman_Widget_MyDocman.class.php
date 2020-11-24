@@ -18,6 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
+
 use Tuleap\Layout\CssAsset;
 use Tuleap\Layout\CssAssetCollection;
 use Tuleap\Layout\IncludeAssets;
@@ -37,11 +38,13 @@ class Docman_Widget_MyDocman extends Widget
         $this->pluginPath = $pluginPath;
     }
 
-    function getTitle() {
+    function getTitle()
+    {
         return $GLOBALS['Language']->getText('plugin_docman', 'my_reviews');
     }
 
-    function getContent() {
+    function getContent()
+    {
         $html = '';
         $html .= '<script type="text/javascript">';
         $html .= "
@@ -67,7 +70,8 @@ class Docman_Widget_MyDocman extends Widget
         return $html;
     }
 
-    private function _getReviews($reviewer = true) {
+    private function _getReviews($reviewer = true)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
 
@@ -85,18 +89,18 @@ class Docman_Widget_MyDocman extends Widget
         $um   = UserManager::instance();
         $user = $um->getCurrentUser();
 
-        if($reviewer) {
+        if ($reviewer) {
             $reviewsArray = Docman_ApprovalTableReviewerFactory::getAllPendingReviewsForUser($user->getId());
         } else {
             $reviewsArray = Docman_ApprovalTableReviewerFactory::getAllApprovalTableForUser($user->getId());
         }
 
-        if(count($reviewsArray) > 0) {
+        if (count($reviewsArray) > 0) {
             $request = HTTPRequest::instance();
             // Get hide arguments
             $hideItemId = (int) $request->get('hide_item_id');
             $hideApproval = null;
-            if($request->exist('hide_plugin_docman_approval')) {
+            if ($request->exist('hide_plugin_docman_approval')) {
                 $hideApproval = (int) $request->get('hide_plugin_docman_approval');
             }
 
@@ -105,7 +109,7 @@ class Docman_Widget_MyDocman extends Widget
             $i = 0;
 
             $html .= '<table class="tlp-table">';
-            foreach($reviewsArray as $review) {
+            foreach ($reviewsArray as $review) {
                 if ($review['group_id'] != $prevGroupId) {
                     list($hideNow, $count_diff, $hideUrl) =
                         my_hide_url(
@@ -129,7 +133,7 @@ class Docman_Widget_MyDocman extends Widget
                     $i    = 0;
                 }
 
-                if(!$hideNow) {
+                if (!$hideNow) {
                     $html .= '<tr class="'. util_get_alt_row_color($i++).'">';
                     // Document
                     $html .= '<td align="left">';
@@ -137,7 +141,7 @@ class Docman_Widget_MyDocman extends Widget
                     $html .= '</td>';
 
                     // For requester, precise the status
-                    if(!$reviewer) {
+                    if (!$reviewer) {
                         $html .= '<td align="right">';
                         $html .= $review['status'];
                         $html .= '</td>';
@@ -145,7 +149,7 @@ class Docman_Widget_MyDocman extends Widget
 
                     // Date
                     $html .= '<td align="right">';
-                    $html .= util_timestamp_to_userdateformat($review['date'], true);
+                    $html .=  DateHelper::formatForLanguage($GLOBALS['Language'], $review['date'], true);
                     $html .= '</td>';
                 }
 
@@ -155,7 +159,7 @@ class Docman_Widget_MyDocman extends Widget
             }
             $html .= '</table>';
         } else {
-            if($reviewer) {
+            if ($reviewer) {
                 $html .= $GLOBALS['Language']->getText('plugin_docman', 'my_no_review');
             } else {
                 $html .= $GLOBALS['Language']->getText('plugin_docman', 'my_no_request');
@@ -173,15 +177,18 @@ class Docman_Widget_MyDocman extends Widget
         }
         return $html;
     }
-    function isAjax() {
+    function isAjax()
+    {
         return true;
     }
-    function getCategory() {
+    function getCategory()
+    {
         return dgettext('tuleap-docman', 'Document manager');
     }
 
-    function getDescription() {
-        return $GLOBALS['Language']->getText('plugin_docman','widget_description_my_docman');
+    function getDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_docman', 'widget_description_my_docman');
     }
 
     public function getAjaxUrl($owner_id, $owner_type, $dashboard_id)
@@ -195,12 +202,12 @@ class Docman_Widget_MyDocman extends Widget
         return $ajax_url;
     }
 
-    public function getStylesheetDependencies()
+    public function getStylesheetDependencies() : CssAssetCollection
     {
         $theme_include_assets = new IncludeAssets(
-            __DIR__ . '/../www/themes/BurningParrot/assets',
-            DOCMAN_BASE_URL . '/themes/BurningParrot/assets'
+            __DIR__ . '/../../../src/www/assets/docman/themes/',
+            '/assets/docman/themes'
         );
-        return new CssAssetCollection([new CssAsset($theme_include_assets, 'style')]);
+        return new CssAssetCollection([new CssAsset($theme_include_assets, 'burningparrot-style')]);
     }
 }

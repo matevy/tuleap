@@ -54,19 +54,11 @@ class AdminWebhooks extends Tracker_Workflow_Action
     }
 
     /**
-     * @return string eg: rules, transitions
-     */
-    protected function getPaneIdentifier()
-    {
-        return self::PANE_WEBHOOKS;
-    }
-
-    /**
      * Process the request
      */
     public function process(Tracker_IDisplayTrackerLayout $layout, Codendi_Request $request, PFUser $current_user)
     {
-        $this->displayHeader($layout);
+        $this->displayHeader($layout, dgettext('tuleap-tracker', 'Webhooks'));
 
         $presenter = new AdminPresenter(
             $this->getWebhookPresenters(),

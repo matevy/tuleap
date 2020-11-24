@@ -19,16 +19,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201505051630_add_new_password_field extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201505051630_add_new_password_field extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Add new password field";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE user ADD COLUMN password VARCHAR(255) DEFAULT NULL AFTER user_pw';
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -17,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Git\PathJoinUtil;
 
 require_once 'bootstrap.php';
 
@@ -54,7 +56,7 @@ class Git_ForkRepositories_Test extends TuleapTestCase
         $user = new PFUser();
         $user->setId(42);
         $user->setUserName('Ben');
-        $path = userRepoPath('Ben', 'toto');
+        $path = PathJoinUtil::userRepoPath('Ben', 'toto');
         $forkPermissions = array();
 
         $project = Mockery::mock(Project::class);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,12 @@
 namespace Tuleap\User\REST\v1;
 
 use EventManager;
+use Luracast\Restler\RestException;
+use PaginatedUserCollection;
 use PFUser;
-use Tuleap\REST\ProjectStatusVerificator;
+use Tuleap\REST\AuthenticatedResource;
+use Tuleap\REST\Header;
+use Tuleap\REST\JsonDecoder;
 use Tuleap\REST\v1\TimetrackingRepresentationBase;
 use Tuleap\User\AccessKey\AccessKeyDAO;
 use Tuleap\User\AccessKey\AccessKeyMetadataRetriever;
@@ -29,34 +33,27 @@ use Tuleap\User\AccessKey\REST\UserAccessKeyRepresentation;
 use Tuleap\User\History\HistoryCleaner;
 use Tuleap\User\History\HistoryEntry;
 use Tuleap\User\History\HistoryRetriever;
-use Tuleap\Widget\Event\UserTimeRetriever;
-use UserManager;
-use UGroupLiteralizer;
-use PaginatedUserCollection;
-use Tuleap\User\REST\UserRepresentation as UserRepresentation;
 use Tuleap\User\REST\MinimalUserRepresentation;
-use Tuleap\REST\Header;
-use Tuleap\REST\JsonDecoder;
-use Tuleap\REST\UserManager as RestUserManager;
-use Luracast\Restler\RestException;
+use Tuleap\User\REST\UserRepresentation;
+use Tuleap\Widget\Event\UserTimeRetriever;
+use UGroupLiteralizer;
 use User_ForgeUserGroupPermission_RetrieveUserMembershipInformation;
 use User_ForgeUserGroupPermission_UserManagement;
-use User_ForgeUserGroupPermissionsManager;
 use User_ForgeUserGroupPermissionsDao;
-use Tuleap\REST\AuthenticatedResource;
+use User_ForgeUserGroupPermissionsManager;
+use UserManager;
 
 /**
  * Wrapper for users related REST methods
  */
-class UserResource extends AuthenticatedResource {
+class UserResource extends AuthenticatedResource
+{
 
+    public const SELF_ID         = 'self';
     public const MAX_LIMIT       = 50;
     public const DEFAULT_LIMIT   = 10;
     public const DEFAULT_OFFSET  = 0;
     public const MAX_TIMES_BATCH = 100;
-
-    /** @var UserManager */
-    private $user_manager;
 
     /** @var JsonDecoder */
     private $json_decoder;
@@ -64,8 +61,8 @@ class UserResource extends AuthenticatedResource {
     /** @var UGroupLiteralizer */
     private $ugroup_literalizer;
 
-    /** @var \Tuleap\REST\UserManager */
-    private $rest_user_manager;
+    /** @var UserManager */
+    private $user_manager;
 
     /**
      * @var HistoryRetriever
@@ -78,13 +75,13 @@ class UserResource extends AuthenticatedResource {
     /** @var User_ForgeUserGroupPermissionsManager */
     private $forge_ugroup_permissions_manager;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->user_manager       = UserManager::instance();
         $this->json_decoder       = new JsonDecoder();
         $this->ugroup_literalizer = new UGroupLiteralizer();
-        $this->rest_user_manager  = RestUserManager::build();
         $this->history_retriever  = new HistoryRetriever(\EventManager::instance());
-        $this->event_manager     = EventManager::instance();
+        $this->event_manager      = EventManager::instance();
 
         $this->forge_ugroup_permissions_manager = new User_ForgeUserGroupPermissionsManager(
             new User_ForgeUserGroupPermissionsDao()
@@ -104,13 +101,14 @@ class UserResource extends AuthenticatedResource {
      *
      * @param int $id Id of the desired user
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @return UserRepresentation {@type UserRepresentation}
      */
-    public function getId($id) {
+    public function getId($id)
+    {
         $this->checkAccess();
 
         $user                = $this->getUserById($id);
@@ -125,10 +123,11 @@ class UserResource extends AuthenticatedResource {
      *
      * @access public
      *
-     * @throws 400
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 404
      */
-    public function optionsId($id) {
+    public function optionsId($id)
+    {
         $this->sendAllowHeaders();
     }
 
@@ -137,7 +136,8 @@ class UserResource extends AuthenticatedResource {
      *
      * @access public
      */
-    public function options() {
+    public function options()
+    {
         $this->sendAllowHeaders();
     }
 
@@ -179,7 +179,8 @@ class UserResource extends AuthenticatedResource {
         return $this->getUsersListRepresentation($user_collection, $offset, $limit);
     }
 
-    private function getUserFromExactSearch($query) {
+    private function getUserFromExactSearch($query)
+    {
         $json_query = $this->json_decoder->decodeAsAnArray('query', $query);
         if (! isset($json_query['username'])) {
             throw new RestException(400, 'You can only search on "username"');
@@ -195,7 +196,8 @@ class UserResource extends AuthenticatedResource {
         );
     }
 
-    private function getUsersFromPatternSearch($query, $offset, $limit) {
+    private function getUsersFromPatternSearch($query, $offset, $limit)
+    {
         $exact = false;
         return $this->user_manager->getPaginatedUsersByUsernameOrRealname(
             $query,
@@ -205,7 +207,8 @@ class UserResource extends AuthenticatedResource {
         );
     }
 
-    private function getUsersListRepresentation(PaginatedUserCollection $user_collection, $offset, $limit) {
+    private function getUsersListRepresentation(PaginatedUserCollection $user_collection, $offset, $limit)
+    {
         $this->sendAllowHeaders();
         Header::sendPaginationHeaders(
             $limit,
@@ -242,17 +245,18 @@ class UserResource extends AuthenticatedResource {
      *
      * @param int $id Id of the desired user
      *
-     * @throws 400
-     * @throws 403
-     * @throws 404
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @return array {@type string}
      */
-    public function getMembership($id) {
+    public function getMembership($id)
+    {
         $this->checkAccess();
 
         $watchee = $this->getUserById($id);
-        $watcher = $this->rest_user_manager->getCurrentUser();
+        $watcher = $this->user_manager->getCurrentUser();
         if ($this->checkUserCanSeeOtherUser($watcher, $watchee)) {
             return $this->ugroup_literalizer->getUserGroupsForUser($watchee);
         }
@@ -266,7 +270,8 @@ class UserResource extends AuthenticatedResource {
      *
      * @access public
      */
-    public function optionPreferences($id) {
+    public function optionPreferences($id)
+    {
         Header::allowOptionsGetPatchDelete();
     }
 
@@ -280,17 +285,18 @@ class UserResource extends AuthenticatedResource {
      * @param int    $id  Id of the desired user
      * @param string $key Preference key
      *
-     * @throws 401
-     * @throws 403
-     * @throws 404
+     * @throws RestException 401
+     * @throws RestException 403
+     * @throws RestException 404
      *
      * @return UserPreferenceRepresentation
      */
-    public function getPreferences($id, $key) {
+    public function getPreferences($id, $key)
+    {
         $this->checkAccess();
         $this->optionPreferences($id);
 
-        if ($id != $this->rest_user_manager->getCurrentUser()->getId()) {
+        if ($id != $this->user_manager->getCurrentUser()->getId()) {
             throw new RestException(403, 'You can only access to your own preferences');
         }
 
@@ -364,14 +370,15 @@ class UserResource extends AuthenticatedResource {
      * @param int    $id Id of the desired user
      * @param string $key Preference key
      *
-     * @throws 401
-     * @throws 500
+     * @throws RestException 401
+     * @throws RestException 500
      */
-    public function deletePreferences($id, $key) {
+    public function deletePreferences($id, $key)
+    {
         $this->checkAccess();
         $this->optionPreferences($id);
 
-        if ($id != $this->rest_user_manager->getCurrentUser()->getId()) {
+        if ($id != $this->user_manager->getCurrentUser()->getId()) {
             throw new RestException(403, 'You can only set your own preferences');
         }
 
@@ -390,17 +397,22 @@ class UserResource extends AuthenticatedResource {
      * @param int $id Id of the desired user
      * @param UserPreferenceRepresentation $preference Preference representation {@from body}
      *
-     * @throws 401
-     * @throws 500
+     * @throws RestException 401
+     * @throws RestException 500
      *
      * @return UserPreferenceRepresentation
      */
-    public function patchPreferences($id, $preference) {
+    public function patchPreferences($id, $preference)
+    {
         $this->checkAccess();
         $this->optionPreferences($id);
 
-        if ($id != $this->rest_user_manager->getCurrentUser()->getId()) {
+        if ($id != $this->user_manager->getCurrentUser()->getId()) {
             throw new RestException(403, 'You can only set your own preferences');
+        }
+
+        if ($this->user_manager->getCurrentUser()->isAnonymous()) {
+            throw new RestException(404, 'User not found');
         }
 
         if (! $this->setUserPreference($id, $preference->key, $preference->value)) {
@@ -408,19 +420,23 @@ class UserResource extends AuthenticatedResource {
         }
     }
 
-    private function getUserPreference($user_id, $key) {
+    private function getUserPreference($user_id, $key)
+    {
         return $this->user_manager->getUserById($user_id)->getPreference($key);
     }
 
-    private function setUserPreference($user_id, $key, $value) {
+    private function setUserPreference($user_id, $key, $value)
+    {
         return $this->user_manager->getUserById($user_id)->setPreference($key, $value);
     }
 
-    private function deleteUserPreference($user_id, $key) {
+    private function deleteUserPreference($user_id, $key)
+    {
         return $this->user_manager->getUserById($user_id)->delPreference($key);
     }
 
-    private function checkUserCanSeeOtherUser(PFUser $watcher, PFuser $watchee) {
+    private function checkUserCanSeeOtherUser(PFUser $watcher, PFUser $watchee)
+    {
         if ($watcher->isSuperUser()) {
             return true;
         }
@@ -428,11 +444,16 @@ class UserResource extends AuthenticatedResource {
             return true;
         }
 
-        return ($this->forge_ugroup_permissions_manager->doesUserHavePermission(
-            $watcher, new User_ForgeUserGroupPermission_RetrieveUserMembershipInformation()
-        ) || $this->forge_ugroup_permissions_manager->doesUserHavePermission(
-            $watcher, new User_ForgeUserGroupPermission_UserManagement()
-        ));
+        return (
+            $this->forge_ugroup_permissions_manager->doesUserHavePermission(
+                $watcher,
+                new User_ForgeUserGroupPermission_RetrieveUserMembershipInformation()
+            )
+            || $this->forge_ugroup_permissions_manager->doesUserHavePermission(
+                $watcher,
+                new User_ForgeUserGroupPermission_UserManagement()
+            )
+        );
     }
 
 
@@ -460,28 +481,25 @@ class UserResource extends AuthenticatedResource {
      * @param Array   $values    User fields values
      *
      */
-    protected function patchUserDetails($id, array $values) {
+    protected function patchUserDetails($id, array $values)
+    {
         $watchee = $this->getUserById($id);
-        $watcher = $this->rest_user_manager->getCurrentUser();
+        $watcher = $this->user_manager->getCurrentUser();
         if ($this->checkUserCanUpdateOtherUser($watcher, $watchee)) {
-            foreach ($values as $key => $value){
+            foreach ($values as $key => $value) {
                 switch ($key) {
                     case "status":
                         $watchee->setStatus($value);
-                    break;
-
+                        break;
                     case "email":
                         $watchee->setEmail($value);
-                    break;
-
+                        break;
                     case "real_name":
                         $watchee->setRealName($value);
-                    break;
-
+                        break;
                     case "username":
                         $watchee->setUserName($value);
-                    break;
-
+                        break;
                     default:
                         break;
                 }
@@ -494,22 +512,25 @@ class UserResource extends AuthenticatedResource {
     /**
      * Check if user has permission to update user details
      * @param PFUser $watcher
-     * @param PFUSER $watchee
+     * @param PFUser $watchee
      *
-     * @return Boolean
+     * @return bool
      *
      */
-     private function checkUserCanUpdateOtherUser(PFUser $watcher, PFuser $watchee) {
+    private function checkUserCanUpdateOtherUser(PFUser $watcher, PFUser $watchee)
+    {
         if ($watcher->isSuperUser()) {
             return true;
         }
 
         return $this->forge_ugroup_permissions_manager->doesUserHavePermission(
-            $watcher, new User_ForgeUserGroupPermission_UserManagement()
+            $watcher,
+            new User_ForgeUserGroupPermission_UserManagement()
         );
     }
 
-    private function getUserById($id) {
+    private function getUserById($id)
+    {
         $user = $this->user_manager->getUserById($id);
 
         if (! $user) {
@@ -519,7 +540,8 @@ class UserResource extends AuthenticatedResource {
         return $user;
     }
 
-    private function sendAllowHeaders() {
+    private function sendAllowHeaders()
+    {
         Header::allowOptionsGetPatch();
     }
 
@@ -549,7 +571,7 @@ class UserResource extends AuthenticatedResource {
      *
      * @param int    $id  Id of the desired user
      *
-     * @throws 403
+     * @throws RestException 403
      *
      * @return UserHistoryRepresentation {@type UserHistoryRepresentation}
      */
@@ -559,7 +581,7 @@ class UserResource extends AuthenticatedResource {
 
         $this->checkAccess();
 
-        $current_user = $this->rest_user_manager->getCurrentUser();
+        $current_user = $this->user_manager->getCurrentUser();
         $this->checkUserCanAccessToTheHistory($current_user, $id);
 
         $history_representation = new UserHistoryRepresentation();
@@ -589,7 +611,7 @@ class UserResource extends AuthenticatedResource {
      * @param int    $id  Id of the desired user
      * @param UserHistoryEntryRepresentation[] $history_entries History entries representation {@from body}
      *
-     * @throws 403
+     * @throws RestException 403
      */
     public function putHistory($id, array $history_entries)
     {
@@ -597,7 +619,7 @@ class UserResource extends AuthenticatedResource {
 
         $this->checkAccess();
 
-        $current_user = $this->rest_user_manager->getCurrentUser();
+        $current_user = $this->user_manager->getCurrentUser();
         $this->checkUserCanAccessToTheHistory($current_user, $id);
 
         if (! empty($history_entries)) {
@@ -639,7 +661,7 @@ class UserResource extends AuthenticatedResource {
      *
      * @access protected
      *
-     * @throws 403
+     * @throws RestException 403
      *
      * @return array {@type \Tuleap\User\AccessKey\REST\UserAccessKeyRepresentation}
      */
@@ -648,7 +670,7 @@ class UserResource extends AuthenticatedResource {
         $this->optionAccessKey($id);
         $this->checkAccess();
 
-        $current_user = $this->rest_user_manager->getCurrentUser();
+        $current_user = $this->user_manager->getCurrentUser();
 
         if ($id != $current_user->getId()) {
             throw new RestException(403, 'You can only access to your own access keys');

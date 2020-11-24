@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,7 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Tuleap\Tracker\RecentlyVisited;
+namespace Tuleap\Tracker\Artifact\RecentlyVisited;
+
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutor;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
 
 class VisitRecorder
 {
@@ -26,17 +30,28 @@ class VisitRecorder
      * @var RecentlyVisitedDao
      */
     private $dao;
+    /**
+     * @var DBTransactionExecutor
+     */
+    private $transaction_executor;
 
-    public function __construct(RecentlyVisitedDao $dao)
+    public function __construct(RecentlyVisitedDao $dao, ?DBTransactionExecutor $transaction_executor = null)
     {
         $this->dao = $dao;
+        $this->transaction_executor = $transaction_executor ?? new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection());
     }
 
     /**
      * @throws \DataAccessException
      */
-    public function record(\PFUser $user, \Tracker_Artifact $artifact)
+    public function record(\PFUser $user, \Tracker_Artifact $artifact) : void
     {
-        $this->dao->save($user->getId(), $artifact->getId(), $_SERVER['REQUEST_TIME']);
+        if ($user->isAnonymous()) {
+            return;
+        }
+
+        $this->transaction_executor->execute(function () use ($user, $artifact) {
+            $this->dao->save($user->getId(), $artifact->getId(), $_SERVER['REQUEST_TIME']);
+        });
     }
 }

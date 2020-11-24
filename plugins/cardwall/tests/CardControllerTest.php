@@ -25,20 +25,24 @@
 require_once dirname(__FILE__) .'/bootstrap.php';
 require_once dirname(__FILE__) .'/../../agiledashboard/include/Planning/PlanningFactory.class.php';
 
-class Cardwall_CardControllerTest extends TuleapTestCase {
+class Cardwall_CardControllerTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         ForgeConfig::store();
         ForgeConfig::set('codendi_dir', dirname(__FILE__).'/../../..');
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         ForgeConfig::restore();
         parent::tearDown();
     }
 
-    public function itReturnsJson() {
+    public function itReturnsJson()
+    {
         $artifact_id    = 55;
         $artifact_title = 'bla';
         $cross_ref      = 'task #22';

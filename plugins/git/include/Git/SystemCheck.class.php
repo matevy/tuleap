@@ -23,7 +23,8 @@
  *
  * @see Event::PROCCESS_SYSTEM_CHECK
  */
-class Git_SystemCheck {
+class Git_SystemCheck
+{
 
     /**
      * @var Plugin
@@ -69,7 +70,8 @@ class Git_SystemCheck {
         $this->git_plugin           = $git_plugin;
     }
 
-    public function process() {
+    public function process()
+    {
         $this->gitolite->checkAuthorizedKeys();
         $this->gitgc->cleanUpGitoliteAdminWorkingCopy();
         $this->system_event_manager->queueGrokMirrorManifestCheck();
@@ -77,13 +79,14 @@ class Git_SystemCheck {
         $this->checkIncFolderAndFileOwnership();
     }
 
-    private function checkIncFolderAndFileOwnership() {
+    private function checkIncFolderAndFileOwnership()
+    {
         $this->config_checker->checkFolder($this->git_plugin);
         $this->config_checker->checkIncFile($this->getIncFile());
     }
 
-    private function getIncFile() {
+    private function getIncFile()
+    {
         return $this->git_plugin->getPluginEtcRoot() . '/config.inc';
     }
-
 }

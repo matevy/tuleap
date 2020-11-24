@@ -24,7 +24,8 @@ namespace Tuleap\ProFTPd\Directory;
 /**
  * This class is a representation of an item into a SFTP directory
  */
-class DirectoryItem {
+class DirectoryItem
+{
 
     /** @var String */
     private $name;
@@ -38,26 +39,31 @@ class DirectoryItem {
     /** @var int */
     private $last_modified_date;
 
-    public function __construct($name, $type, $size, $last_modified_date) {
+    public function __construct($name, $type, $size, $last_modified_date)
+    {
         $this->name               = $name;
         $this->type               = $type;
         $this->size               = $size;
         $this->last_modified_date = $last_modified_date;
     }
 
-    public function getName() {
+    public function getName()
+    {
         return $this->name;
     }
 
-    public function getSize() {
+    public function getSize()
+    {
         return $this->size;
     }
 
-    public function getType() {
+    public function getType()
+    {
         return $this->type;
     }
 
-    public function getLastModifiedDate() {
+    public function getLastModifiedDate()
+    {
         if (! $this->last_modified_date) {
             return '';
         }

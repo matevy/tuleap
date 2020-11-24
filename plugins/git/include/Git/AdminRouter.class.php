@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -141,7 +141,8 @@ class Git_AdminRouter implements \Tuleap\Request\DispatchableWithRequest, \Tulea
         $this->version_detector                 = $version_detector;
     }
 
-    public function process(HTTPRequest $request, \Tuleap\Layout\BaseLayout $layout, array $variables) {
+    public function process(HTTPRequest $request, \Tuleap\Layout\BaseLayout $layout, array $variables)
+    {
         \Tuleap\Project\ServiceInstrumentation::increment('git');
 
         if (! $request->getCurrentUser()->isSuperUser()) {
@@ -154,18 +155,19 @@ class Git_AdminRouter implements \Tuleap\Request\DispatchableWithRequest, \Tulea
         $layout->addCssAsset(
             new CssAsset(
                 new IncludeAssets(
-                    __DIR__ . '/../../www/themes/BurningParrot/assets',
-                    GIT_BASE_URL . '/themes/BurningParrot/assets'
+                    __DIR__ . '/../../../../src/www/assets/git/themes',
+                    '/assets/git/themes'
                 ),
-                'site-admin'
+                'bp-style-siteadmin'
             )
         );
 
         $controller->display($request);
     }
 
-    private function getControllerFromRequest(Codendi_Request $request) {
-        if ($request->get('pane') == 'gerrit_servers_admin'  || $request->get('view') === 'gerrit_servers_restriction' ) {
+    private function getControllerFromRequest(Codendi_Request $request)
+    {
+        if ($request->get('pane') == 'gerrit_servers_admin'  || $request->get('view') === 'gerrit_servers_restriction') {
             return new Git_AdminGerritController(
                 $this->csrf,
                 $this->gerrit_server_factory,
@@ -185,7 +187,7 @@ class Git_AdminRouter implements \Tuleap\Request\DispatchableWithRequest, \Tulea
                 $this->include_assets,
                 $this->version_detector
             );
-        } elseif ($request->get('pane') === 'mirrors_admin' || $request->get('view') === 'mirrors_restriction'){
+        } elseif ($request->get('pane') === 'mirrors_admin' || $request->get('view') === 'mirrors_restriction') {
             return new Git_AdminMirrorController(
                 $this->csrf,
                 $this->git_mirror_mapper,

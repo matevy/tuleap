@@ -25,14 +25,16 @@
 /**
  * Wrapper for ldap user
  */
-class LDAP_User {
+class LDAP_User
+{
     /** @var PFUser */
     private $user;
 
     /** @var LDAPResult */
     private $ldap_result;
 
-    public function __construct(PFUser $user, LDAPResult $ldap_result) {
+    public function __construct(PFUser $user, LDAPResult $ldap_result)
+    {
         $this->user        = $user;
         $this->ldap_result = $ldap_result;
     }
@@ -40,15 +42,18 @@ class LDAP_User {
     /**
      * @return String
      */
-    public function getUid() {
+    public function getUid()
+    {
         return strtolower($this->ldap_result->getLogin());
     }
 
-    public function getRealName() {
+    public function getRealName()
+    {
         return $this->user->getRealName();
     }
 
-    public function getEmail() {
+    public function getEmail()
+    {
         return $this->user->getEmail();
     }
 }

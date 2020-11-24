@@ -1,6 +1,6 @@
 <?php
-/*
- * Copyright Enalean (c) 2013 - 2018. All rights reserved.
+/**
+ * Copyright Enalean (c) 2013 - Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registrated trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -22,14 +22,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_SubmitRenderer extends Tracker_Artifact_SubmitAbstractRenderer {
+class Tracker_Artifact_SubmitRenderer extends Tracker_Artifact_SubmitAbstractRenderer
+{
 
     /**
      * @var Tracker_IDisplayTrackerLayout
      */
     private $layout;
 
-    public function __construct(Tracker $tracker, EventManager $event_manager, Tracker_IDisplayTrackerLayout $layout) {
+    public function __construct(Tracker $tracker, EventManager $event_manager, Tracker_IDisplayTrackerLayout $layout)
+    {
         parent::__construct($tracker, $event_manager);
         $this->layout = $layout;
     }
@@ -41,7 +43,8 @@ class Tracker_Artifact_SubmitRenderer extends Tracker_Artifact_SubmitAbstractRen
         );
     }
 
-    protected function displayHeader() {
+    protected function displayHeader()
+    {
         $breadcrumbs = array(
             array(
                 'title' => 'New artifact',
@@ -49,11 +52,19 @@ class Tracker_Artifact_SubmitRenderer extends Tracker_Artifact_SubmitAbstractRen
             ),
         );
 
-        $this->tracker->displayHeader($this->layout, $this->tracker->name, $breadcrumbs, null, array('body_class' => array('widgetable')));
+        $this->tracker->displayHeader(
+            $this->layout,
+            $this->tracker->name,
+            $breadcrumbs,
+            $this->tracker->getDefaultToolbar(),
+            array('body_class' => array('widgetable'))
+        );
+
         echo $this->fetchSubmitInstructions();
     }
 
-    private function fetchNewArtifactForm(Codendi_Request $request, PFUser $current_user) {
+    private function fetchNewArtifactForm(Codendi_Request $request, PFUser $current_user)
+    {
         $html = '';
 
         $html .= $this->fetchFormElements($request);
@@ -73,7 +84,8 @@ class Tracker_Artifact_SubmitRenderer extends Tracker_Artifact_SubmitAbstractRen
         return $html;
     }
 
-    protected function displayFooter() {
+    protected function displayFooter()
+    {
         $this->tracker->displayFooter($this->layout);
     }
 }

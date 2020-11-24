@@ -3,7 +3,7 @@
  * Copyright (c) STMicroelectronics, 2007. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2007
- * 
+ *
  * This file is a part of Codendi.
  *
  * Codendi is free software; you can redistribute it and/or modify
@@ -23,10 +23,11 @@
 require_once('Docman_Folder.class.php');
 require_once('Docman_ItemFactory.class.php');
 
-class Docman_FolderFactory
-extends Docman_ItemFactory {
-    
-    function __construct($groupId=null) {
+class Docman_FolderFactory extends Docman_ItemFactory
+{
+
+    function __construct($groupId = null)
+    {
         parent::__construct($groupId);
     }
 
@@ -37,7 +38,8 @@ extends Docman_ItemFactory {
      *
      * @param Folder
      */
-    function collapse($folder) {
+    function collapse($folder)
+    {
         user_del_preference(PLUGIN_DOCMAN_EXPAND_FOLDER_PREF.'_'.$folder->getGroupId().'_'.$folder->getId());
     }
 
@@ -46,10 +48,11 @@ extends Docman_ItemFactory {
      *
      * @param Folder
      */
-    function expand($folder) {
-        user_set_preference(PLUGIN_DOCMAN_EXPAND_FOLDER_PREF.'_'.$folder->getGroupId().'_'.$folder->getId(),
-                            PLUGIN_DOCMAN_EXPAND_FOLDER);
+    function expand($folder)
+    {
+        user_set_preference(
+            PLUGIN_DOCMAN_EXPAND_FOLDER_PREF.'_'.$folder->getGroupId().'_'.$folder->getId(),
+            PLUGIN_DOCMAN_EXPAND_FOLDER
+        );
     }
 }
-
-?>

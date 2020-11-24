@@ -1,5 +1,5 @@
 <?php
-/* 
+/*
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Mahmoud MAALEJ, 2006. STMicroelectronics.
@@ -23,13 +23,15 @@
 require_once('DataBuilderV5.class.php');
 require_once('ChartDataBuilderV5.class.php');
 
-class GraphOnTrackersV5_Chart_BarDataBuilder extends ChartDataBuilderV5 {
+class GraphOnTrackersV5_Chart_BarDataBuilder extends ChartDataBuilderV5
+{
     /**
      * build pie chart properties
      *
      * @param Pie_Engine $engine object
      */
-    function buildProperties($engine) {
+    function buildProperties($engine)
+    {
         parent::buildProperties($engine);
         $engine->data   = array();
         $engine->xaxis  = null;
@@ -47,7 +49,6 @@ class GraphOnTrackersV5_Chart_BarDataBuilder extends ChartDataBuilderV5 {
         if ($af->userCanRead()) {
             $select_group = $from_group = $group_group = $order_group = '';
             if ($this->chart->getField_group() != $this->chart->getField_base()) {
-
                 $gf = $ff->getFormElementById($this->chart->getField_group());
                 if ($gf && $gf->userCanRead()) {
                     $select_group = ', '. $gf->getQuerySelect();
@@ -58,14 +59,14 @@ class GraphOnTrackersV5_Chart_BarDataBuilder extends ChartDataBuilderV5 {
             }
             $select = " SELECT count(a.id) AS nb, ". $af->getQuerySelectWithDecorator() . $select_group;
             $from   = " FROM tracker_artifact AS a 
-                             INNER JOIN tracker_changeset AS c ON (c.artifact_id = a.id) " . 
+                             INNER JOIN tracker_changeset AS c ON (c.artifact_id = a.id) " .
                              $af->getQueryFromWithDecorator() .
                              $from_group;
             $where  = " WHERE a.id IN (". $this->artifacts['id'] .") 
                           AND c.id IN (". $this->artifacts['last_changeset_id'] .") ";
             $sql = $select . $from . $where . ' GROUP BY ' . $af->getQueryGroupBy() . $group_group . ' ORDER BY '. $af->getQueryOrderby() . $order_group;
             //echo($sql);
-            $none = $GLOBALS['Language']->getText('global','none');
+            $none = $GLOBALS['Language']->getText('global', 'none');
             $res = db_query($sql);
 
             while ($data = db_fetch_array($res)) {
@@ -75,7 +76,7 @@ class GraphOnTrackersV5_Chart_BarDataBuilder extends ChartDataBuilderV5 {
                     $engine->data[$data[$af->name]][$data[$gf->name]] = $data['nb'];
                     $engine->xaxis[$data[$gf->name]]  = $none;
                     $engine->labels[$data[$gf->name]] = $none;
-                    if($data[$gf->name] !== null) {
+                    if ($data[$gf->name] !== null) {
                         $engine->xaxis[$data[$gf->name]]  = $gf->fetchRawValue($data[$gf->name]);
                         $engine->labels[$data[$gf->name]] = $gf->fetchRawValue($data[$gf->name]);
                     }
@@ -92,4 +93,3 @@ class GraphOnTrackersV5_Chart_BarDataBuilder extends ChartDataBuilderV5 {
         return $result;
     }
 }
-?>

@@ -19,17 +19,20 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Docman_View_ParentsTree /* implements Visitor*/ {
+class Docman_View_ParentsTree /* implements Visitor*/
+{
     var $docman;
-    function __construct(&$docman) {
+    function __construct(&$docman)
+    {
         $this->docman = $docman;
     }
-    
-    
+
+
     //docman_icons
     //current
     //hierarchy
-    function fetch($params) {
+    function fetch($params)
+    {
         $html  = '';
         $html .= '<div id="docman_new_item_location_current_folder"></div>';
         $html .= '<div id="docman_new_item_location_other_folders">';
@@ -51,7 +54,8 @@ class Docman_View_ParentsTree /* implements Visitor*/ {
         $html .= '</div>';
         return $html;
     }
-    function fetchFolder($folder, $params) {
+    function fetchFolder($folder, $params)
+    {
         $hp = Codendi_HTMLPurifier::instance();
         $selected = '';
         if (!isset($params['selected']) || !$params['selected']) {
@@ -62,7 +66,7 @@ class Docman_View_ParentsTree /* implements Visitor*/ {
         }
         $disabled = ($this->docman->userCanWrite($folder['id'])) ? '' : 'disabled="disabled"';
         $label_classes = $selected ? 'docman_item_actual_parent' : '';
-        
+
         $h  = '<li  class="'. Docman_View_Browse::getItemClasses(array('is_last' => $params['is_last'])) .'">';
         $h .= '<label for="item_parent_id_'. $folder['id'] .'" class="'. $label_classes .'" >';
         $h .= '<input type="radio" '. $selected .' name="'. $params['input_name'] .'" value="'. $folder['id'] .'" id="item_parent_id_'. $folder['id'] .'" '. $disabled .' />';
@@ -70,11 +74,11 @@ class Docman_View_ParentsTree /* implements Visitor*/ {
         $h .=  $hp->purify($folder['title'], CODENDI_PURIFIER_CONVERT_HTML)  .'</label>';
         $h .= '<script type="text/javascript">docman.addParentFoldersForNewItem('. $folder['id'] .', '. $folder['parent_id'] .", '".  $hp->purify(addslashes($folder['title']), CODENDI_PURIFIER_CONVERT_HTML) ."');</script>\n";
         $h .= '<ul class="docman_items">';
-        
+
         $params['is_last'] = false;
         $nb = count($folder['items']);
         $i = 0;
-        foreach($folder['items'] as $item) {
+        foreach ($folder['items'] as $item) {
             $i++;
             if ($i == $nb) {
                 $params['is_last'] = true;
@@ -83,13 +87,15 @@ class Docman_View_ParentsTree /* implements Visitor*/ {
         }
         return $h.'</ul></li>';
     }
-    
-    function _itemCanBeFetched(&$item, $params) {
+
+    function _itemCanBeFetched(&$item, $params)
+    {
         $ok = !isset($params['excludes']) || !in_array($item->getId(), $params['excludes']);
         return $ok;
     }
-    
-    function visitFolder(&$item, $params = array()) {
+
+    function visitFolder(&$item, $params = array())
+    {
         $t = '';
         if ($this->docman->userCanRead($item->getId()) && $this->_itemCanBeFetched($item, $params)) {
             $t = array(
@@ -99,10 +105,10 @@ class Docman_View_ParentsTree /* implements Visitor*/ {
                 'items'     => array(),
                 'icon_src'  => $params['docman_icons']->getIconForItem($item, array('expanded' => true))
             );
-            
+
             $items = $item->getAllItems();
             $it = $items->iterator();
-            while($it->valid()) {
+            while ($it->valid()) {
                 $o = $it->current();
                 if ($this->_itemCanBeFetched($o, $params)) {
                     $r = $o->accept($this, $params);
@@ -115,23 +121,29 @@ class Docman_View_ParentsTree /* implements Visitor*/ {
         }
         return $t;
     }
-    function visitDocument(&$item, $params = array()) {
+    function visitDocument(&$item, $params = array())
+    {
         return false;
     }
-    function visitWiki(&$item, $params = array()) {
+    function visitWiki(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
-    function visitLink(&$item, $params = array()) {
+    function visitLink(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
-    function visitFile(&$item, $params = array()) {
+    function visitFile(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
-    function visitEmbeddedFile(&$item, $params = array()) {
+    function visitEmbeddedFile(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 
-    function visitEmpty(&$item, $params = array()) {
+    function visitEmpty(&$item, $params = array())
+    {
         return $this->visitDocument($item, $params);
     }
 }

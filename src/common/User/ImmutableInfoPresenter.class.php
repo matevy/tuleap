@@ -18,27 +18,33 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class User_ImmutableInfoPresenter {
+class User_ImmutableInfoPresenter
+{
     private $label;
     private $value;
 
-    public function __construct($label, $value) {
+    public function __construct($label, $value)
+    {
         $this->label = $label;
         $this->value = $value;
     }
 
-    public function label() {
+    public function label()
+    {
         return $this->label;
     }
 
-    public function value() {
+    public function value()
+    {
         return $this->value;
     }
 
-    public function can_change() {
+    public function can_change()
+    {
         return false;
     }
 
-    public function change() {
+    public function change()
+    {
     }
 }

@@ -26,7 +26,8 @@ use Tuleap\Tracker\Config\EmailGateWayPresenter;
 use Tuleap\Tracker\Config\SectionsPresenter;
 use CSRFSynchronizerToken;
 
-class MailGatewayConfigPresenter {
+class MailGatewayConfigPresenter
+{
 
     /** @var string */
     public $csrf_token;
@@ -78,7 +79,8 @@ class MailGatewayConfigPresenter {
         );
     }
 
-    private function isLocalIncObsolete($localinc_path) {
+    private function isLocalIncObsolete($localinc_path)
+    {
         include($localinc_path);
         $variables_in_local_inc = get_defined_vars();
 

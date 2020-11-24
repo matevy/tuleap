@@ -25,34 +25,37 @@
 
 /**
  * A class to handle mails attachments storage
- * 
+ *
  */
-class ForumML_FileStorage {
-    
-    // Root directory to host mails attachments 
-	var $root;
-    
+class ForumML_FileStorage
+{
+
+    // Root directory to host mails attachments
+    var $root;
+
     /**
      * ForumML_FileStorage Constructor
-     * 
-     * @param root: The ForumML attachments directory 
+     *
+     * @param root: The ForumML attachments directory
      */
-    function __construct($root) {
+    function __construct($root)
+    {
         $this->root = $root;
     }
-    
+
     /**
      * Store - stores attached files in the ForumML root dir
-     * 
+     *
      * @param filename: name of attached file
      * @param content: content of attached file
      * @param list: mailing-list name
      * @param date: date of attachment in YYYY_MM_DD format
      * @param encod: encoding of attachment
-     * 
+     *
      * @return int size of attached file
      */
-    function store($filename, $content, $list, $date, $encod="") {
+    function store($filename, $content, $list, $date, $encod = "")
+    {
         $path = $this->_getPath($filename, $list, $date, "store");
         $ret = file_put_contents($path, $content);
         if ($ret !== false) {
@@ -61,7 +64,7 @@ class ForumML_FileStorage {
             return false;
         }
     }
-    
+
     /**
     * Store:
     *  +---------------------------------------------------------------------------------+
@@ -69,10 +72,10 @@ class ForumML_FileStorage {
     *  |                             |                                         |         |
     * _|__              _______     _|__                                       |         |
     * name              list_id     date                                       v         v
-    * Attach.doc           7      2007_10_19              =>  foruuml_dir/<listname>/2007_10_19/Attach_doc 
-    *                      |                                              ^ 
+    * Attach.doc           7      2007_10_19              =>  foruuml_dir/<listname>/2007_10_19/Attach_doc
+    *                      |                                              ^
     *                      +---------------------------------------------+|
-    *                     
+    *
     *
     * Upload (to temporary location):
     *  +-----------------------------------------------------------------------+
@@ -80,21 +83,22 @@ class ForumML_FileStorage {
     *  |                                                                       |
     * _|__                                                                     |
     * name                                                                     v
-    * Attach.doc                                     =>  foruuml_dir/upload/Attach_doc     
-    * 
+    * Attach.doc                                     =>  foruuml_dir/upload/Attach_doc
+    *
     */
 
     /**
      * _getPath - Get the absolute path where to Upload/Store attached file
-     * 
+     *
      * @param name: basename of attached file
      * @param list: mailing-list name
      * @param date: attachment date (YYYY_MM_DD)
-     * @param string type: upload/store 
-     * 
+     * @param string type: upload/store
+     *
      * @return string path
      */
-    function _getPath($name, $list, $date, $type) {
+    function _getPath($name, $list, $date, $type)
+    {
         $name = trim($name);
 
         if (trim($name) == '') {
@@ -105,19 +109,19 @@ class ForumML_FileStorage {
             if (strlen($name) > 64) {
                 $name = substr($name, 0, 64);
             }
-    	
+
             $name = preg_replace('`[^a-z0-9_-]`i', '_', $name);
             $name = preg_replace('`_{2,}`', '_', $name);
         }
 
         if ($type == "upload") {
-        	$path_elements = array($this->root, $type);
-        } else if ($type == "store") {
-        	$path_elements = array($this->root, $list, $date);	
+            $path_elements = array($this->root, $type);
+        } elseif ($type == "store") {
+            $path_elements = array($this->root, $list, $date);
         }
-        
+
         $path = '';
-        foreach($path_elements as $elem) {
+        foreach ($path_elements as $elem) {
             $path .= $elem .'/';
             if (!is_dir($path)) {
                 mkdir($path, 0755);
@@ -127,7 +131,7 @@ class ForumML_FileStorage {
         // Ensure that same file doesn't exists yet
         $ext = '';
         $i   = 1;
-        while($this->fileExists($path.$name.$ext)) {
+        while ($this->fileExists($path.$name.$ext)) {
             $ext = '_'.$i;
             $i++;
         }
@@ -135,10 +139,8 @@ class ForumML_FileStorage {
         return $path.$name.$ext;
     }
 
-    function fileExists($path) {
+    function fileExists($path)
+    {
         return is_file($path);
     }
-    
 }
-
-?>

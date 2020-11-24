@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,11 +19,9 @@
  *
  */
 
-use org\bovigo\vfs\vfsStream;
-
 class BaseLanguageTest extends \PHPUnit\Framework\TestCase // phpcs:ignore
 {
-    use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+    use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration, \Tuleap\TemporaryTestDirectory;
 
     protected $cache_dir;
 
@@ -32,7 +30,7 @@ class BaseLanguageTest extends \PHPUnit\Framework\TestCase // phpcs:ignore
         parent::setUp();
         ForgeConfig::store();
 
-        $this->cache_dir = vfsStream::setup()->url();
+        $this->cache_dir = $this->getTmpDir();
 
         ForgeConfig::set('sys_pluginsroot', __DIR__ . '/_fixtures/tuleap/plugins');
         ForgeConfig::set('sys_extra_plugin_path', '');
@@ -138,7 +136,6 @@ class BaseLanguageTest extends \PHPUnit\Framework\TestCase // phpcs:ignore
             'Comments are ignored'
         );
 
-
         $result = [];
         $l->parseLanguageFile($GLOBALS['sys_incdir'] . '/en_US/empty-lines.tab', $result);
         $this->assertEquals(
@@ -147,7 +144,6 @@ class BaseLanguageTest extends \PHPUnit\Framework\TestCase // phpcs:ignore
             $result,
             'Empty lines are ignored'
         );
-
 
         $result = [
             'file' => ['key1' => 'old-value']
@@ -162,17 +158,6 @@ class BaseLanguageTest extends \PHPUnit\Framework\TestCase // phpcs:ignore
             ],
             $result,
             'Definitions are merged'
-        );
-
-        $result = [];
-        $l->parseLanguageFile($GLOBALS['sys_incdir'] . '/en_US/include.tab', $result);
-        $this->assertEquals(
-            [
-                'inc'    => ['key1' => 'value'],
-                'common' => ['key1' => 'value'],
-            ],
-            $result,
-            'Files are included'
         );
     }
 

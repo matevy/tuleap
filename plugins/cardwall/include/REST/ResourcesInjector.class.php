@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-class Cardwall_REST_ResourcesInjector {
+class Cardwall_REST_ResourcesInjector
+{
 
-     public function populate(Luracast\Restler\Restler $restler) {
+    public function populate(Luracast\Restler\Restler $restler)
+    {
         $restler->addAPIClass('\\Tuleap\\Cardwall\\REST\\v1\\CardsResource', AgileDashboard_CardRepresentation::ROUTE);
     }
 }

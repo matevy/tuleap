@@ -19,16 +19,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201504081720_allow_restricted_project_access extends ForgeUpgrade_Bucket {
-    public function description() {
+class b201504081720_allow_restricted_project_access extends ForgeUpgrade_Bucket
+{
+    public function description()
+    {
         return "Add column access";
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE groups
                 ADD COLUMN access VARCHAR(16) NOT NULL DEFAULT 'private' AFTER is_public";
         $res = $this->db->dbh->exec($sql);
@@ -58,6 +62,5 @@ class b201504081720_allow_restricted_project_access extends ForgeUpgrade_Bucket 
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while droping column is_public in table groups');
         }
-
     }
 }

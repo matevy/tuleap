@@ -18,21 +18,26 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Tracker\TrackerColor;
+
 require_once('bootstrap.php');
 Mock::generate('Tracker_HierarchyFactory');
 Mock::generate('Tracker_SharedFormElementFactory');
 Mock::generate('Tracker');
-Mock::generatePartial('TrackerFactory',
-                      'TrackerFactoryTestVersion',
-                      array('getCannedResponseFactory',
+Mock::generatePartial(
+    'TrackerFactory',
+    'TrackerFactoryTestVersion',
+    array('getCannedResponseFactory',
                             'getFormElementFactory',
                             'getTooltipFactory',
                             'getReportFactory',
                       )
 );
-Mock::generatePartial('TrackerFactory',
-                      'TrackerFactoryTestVersion2',
-                      array('getDao',
+Mock::generatePartial(
+    'TrackerFactory',
+    'TrackerFactoryTestVersion2',
+    array('getDao',
                             'getProjectManager',
                             'getTrackerById',
                             'isNameExists',
@@ -43,19 +48,16 @@ Mock::generatePartial('TrackerFactory',
 
 Mock::generate('TrackerDao');
 Mock::generate('ProjectManager');
-require_once('common/reference/ReferenceManager.class.php');
 Mock::generate('ReferenceManager');
 Mock::generate('Project');
 Mock::generate('Tracker_CannedResponseFactory');
 Mock::generate('Tracker_FormElementFactory');
-Mock::generate('Tracker_TooltipFactory');
 Mock::generate('Tracker_ReportFactory');
-require_once('common/include/Response.class.php');
 Mock::generate('response');
-require_once('common/language/BaseLanguage.class.php');
 Mock::generate('BaseLanguage');
 
-class TrackerFactoryTest extends TuleapTestCase {
+class TrackerFactoryTest extends TuleapTestCase
+{
 
 
     public function setUp()
@@ -72,7 +74,8 @@ class TrackerFactoryTest extends TuleapTestCase {
         parent::tearDown();
     }
 
-    public function testImpossibleToCreateTrackerWhenProjectHasAReferenceEqualsShortname() {
+    public function testImpossibleToCreateTrackerWhenProjectHasAReferenceEqualsShortname()
+    {
         $tracker_factory = new TrackerFactoryTestVersion2();
         $dao = new MockTrackerDao();
         $dao->setReturnValue('duplicate', 999);
@@ -98,10 +101,11 @@ class TrackerFactoryTest extends TuleapTestCase {
         $name = 'My New Tracker';
         $description = 'My New Tracker to manage my brand new artifacts';
         $itemname = 'existingreference';
-        $this->assertFalse($tracker_factory->create($project_id,$group_id_template,$id_template,$name,$description,$itemname));
+        $this->assertFalse($tracker_factory->create($project_id, $group_id_template, $id_template, $name, $description, $itemname));
     }
 
-    public function testImpossibleToCreateTrackerWithAlreadyUsedName() {
+    public function testImpossibleToCreateTrackerWithAlreadyUsedName()
+    {
         $tracker_factory = new TrackerFactoryTestVersion2();
         $dao = new MockTrackerDao();
         $dao->setReturnValue('duplicate', 999);
@@ -127,10 +131,11 @@ class TrackerFactoryTest extends TuleapTestCase {
         $name = 'My New Tracker With an existing name';
         $description = 'My New Tracker to manage my brand new artifacts';
         $itemname = 'mynewtracker';
-        $this->assertFalse($tracker_factory->create($project_id,$group_id_template,$id_template,$name,$description,$itemname));
+        $this->assertFalse($tracker_factory->create($project_id, $group_id_template, $id_template, $name, $description, $itemname));
     }
 
-    public function testImpossibleToCreateTrackerWithAlreadyUsedShortName() {
+    public function testImpossibleToCreateTrackerWithAlreadyUsedShortName()
+    {
         $tracker_factory = new TrackerFactoryTestVersion2();
         $dao = new MockTrackerDao();
         $dao->setReturnValue('duplicate', 999);
@@ -156,11 +161,12 @@ class TrackerFactoryTest extends TuleapTestCase {
         $name = 'My New Tracker';
         $description = 'My New Tracker to manage my brand new artifacts';
         $itemname = 'MyNewTracker';
-        $this->assertFalse($tracker_factory->create($project_id,$group_id_template,$id_template,$name,$description,$itemname));
+        $this->assertFalse($tracker_factory->create($project_id, $group_id_template, $id_template, $name, $description, $itemname));
     }
 
 
-    public function testGetPossibleChildrenShouldNotContainSelf() {
+    public function testGetPossibleChildrenShouldNotContainSelf()
+    {
         $current_tracker   = aTracker()->withId(1)->withName('Stories')->build();
         $expected_children = array(
             '2' => aTracker()->withId(2)->withName('Bugs')->build(),
@@ -176,25 +182,28 @@ class TrackerFactoryTest extends TuleapTestCase {
 
         $this->assertEqual($possible_children, $expected_children);
     }
-
 }
 
-class TrackerFactoryDuplicationTest extends TuleapTestCase {
+class TrackerFactoryDuplicationTest extends TuleapTestCase
+{
 
     /**
      * @var TrackerFactory
      */
     private $tracker_factory;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
-        $this->tracker_factory   = TestHelper::getPartialMock('TrackerFactory',
-                      array('create',
+        $this->tracker_factory   = TestHelper::getPartialMock(
+            'TrackerFactory',
+            array('create',
                             'getTrackersByGroupId',
                             'getHierarchyFactory',
                             'getFormElementFactory',
                             'getTriggerRulesManager',
-                      ));
+            )
+        );
         $this->hierarchy_factory     = new MockTracker_HierarchyFactory();
         $this->trigger_rules_manager = mock('Tracker_Workflow_Trigger_RulesManager');
         $this->formelement_factory   = mock('Tracker_FormElementFactory');
@@ -202,7 +211,6 @@ class TrackerFactoryDuplicationTest extends TuleapTestCase {
         $this->tracker_factory->setReturnValue('getHierarchyFactory', $this->hierarchy_factory);
         $this->tracker_factory->setReturnValue('getFormElementFactory', $this->formelement_factory);
         $this->tracker_factory->setReturnValue('getTriggerRulesManager', $this->trigger_rules_manager);
-
     }
 
 
@@ -245,12 +253,16 @@ class TrackerFactoryDuplicationTest extends TuleapTestCase {
         $full_field_mapping = array_merge($t_new1_field_mapping, $t_new2_field_mapping);
         $to_project_id   = 999;
         $from_project_id = 100;
-        $this->tracker_factory->setReturnValue('create',
-                                                array('tracker' => $t_new1, 'field_mapping' => $t_new1_field_mapping, 'report_mapping' => array()),
-                                                array($to_project_id, $from_project_id, 123, '*', '*', '*', null));
-        $this->tracker_factory->setReturnValue('create',
-                                                array('tracker' => $t_new2, 'field_mapping' => $t_new2_field_mapping, 'report_mapping' => array()),
-                                                array($to_project_id, $from_project_id, 567, '*', '*', '*', null)) ;
+        $this->tracker_factory->setReturnValue(
+            'create',
+            array('tracker' => $t_new1, 'field_mapping' => $t_new1_field_mapping, 'report_mapping' => array()),
+            array($to_project_id, $from_project_id, 123, '*', '*', '*', null)
+        );
+        $this->tracker_factory->setReturnValue(
+            'create',
+            array('tracker' => $t_new2, 'field_mapping' => $t_new2_field_mapping, 'report_mapping' => array()),
+            array($to_project_id, $from_project_id, 567, '*', '*', '*', null)
+        ) ;
 
         $this->formelement_factory->expectOnce('fixOriginalFieldIdsAfterDuplication', array($to_project_id, $from_project_id, $full_field_mapping));
         $this->tracker_factory->duplicate($from_project_id, $to_project_id, null);
@@ -269,7 +281,8 @@ class TrackerFactoryDuplicationTest extends TuleapTestCase {
         $this->tracker_factory->duplicate(100, 999, null);
     }
 
-    private function GivenADuplicatableTracker($tracker_id) {
+    private function GivenADuplicatableTracker($tracker_id)
+    {
         $t1 = new MockTracker();
         $t1->setReturnValue('mustBeInstantiatedForNewProjects', true);
         $t1->setReturnValue('getId', $tracker_id);
@@ -395,6 +408,6 @@ class TrackerFactoryCollectErrorWithoutImportingTest extends TuleapTestCase
      */
     private function getTracker($name, $description, $shortname)
     {
-        return new Tracker(1, self::PROJECT_ID, $name, $description, $shortname, 0, '', '', '', '', 0, 0, 0, '', 0);
+        return new Tracker(1, self::PROJECT_ID, $name, $description, $shortname, 0, '', '', '', '', 0, 0, 0, TrackerColor::default(), 0);
     }
 }

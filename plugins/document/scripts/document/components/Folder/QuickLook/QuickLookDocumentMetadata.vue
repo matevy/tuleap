@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2019. All Rights Reserved.
+  - Copyright (c) Enalean, 2019 - present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -36,12 +36,19 @@
                     <user-badge v-bind:user="item.owner"/>
                 </p>
             </div>
-            <quick-look-document-additional-metadata-list v-for="metadata in metadata_right_column" v-bind:metadata="metadata" v-bind:key="metadata.name"/>
+            <template v-if="is_document">
+                <quick-look-document-additional-metadata-list
+                    v-for="metadata in metadata_right_column"
+                    v-bind:metadata="metadata"
+                    v-bind:key="metadata.name"
+                    data-test="additional-metadata-right-list"
+                />
+            </template>
         </div>
         <div class="document-quick-look-properties-column">
             <div class="tlp-property">
                 <label for="document-creation-date" class="tlp-label" v-translate>
-                    Creation date
+                    Creation
                 </label>
                 <p id="document-creation-date" class="tlp-tooltip tlp-tooltip-left" v-bind:data-tlp-tooltip="getFormattedDate(item.creation_date)">
                     {{ getFormattedDateForDisplay(item.creation_date) }}
@@ -49,32 +56,34 @@
             </div>
             <div class="tlp-property">
                 <label for="document-last-update-date" class="tlp-label" v-translate>
-                    Last updated date
+                    Last update date
                 </label>
                 <p id="document-last-update-date" class="tlp-tooltip tlp-tooltip-left" v-bind:data-tlp-tooltip="getFormattedDate(item.last_update_date)">
                     {{ getFormattedDateForDisplay(item.last_update_date) }}
                 </p>
             </div>
-            <div class="tlp-property">
-                <label for="document-approval-status" class="tlp-label" v-translate>
-                    Approval status
+            <div class="tlp-property" v-if="has_an_approval_table" data-test="docman-item-approval-table-status-badge">
+                <label for="document-approval-table-status" class="tlp-label" v-translate>
+                    Approval table status
                 </label>
-                <p id="document-approval-status">
-                    <approval-table-badge v-bind:item="item" v-bind:is-in-folder-content-row="false" v-if="has_an_approval_table"/>
-                    <span class="document-quick-look-property-empty" v-else v-translate>
-                        Empty
-                    </span>
-                </p>
+                <approval-table-badge id="document-approval-table-status" v-bind:item="item" v-bind:is-in-folder-content-row="false"/>
             </div>
             <div v-if="is_file" class="tlp-property">
                 <label for="document-file-size" class="tlp-label" v-translate>
                     File size
                 </label>
-                <p id="document-file-size">
+                <p id="document-file-size" data-test="docman-file-size">
                     {{ file_size_in_mega_bytes }}
                 </p>
             </div>
-            <quick-look-document-additional-metadata-list v-for="metadata in metadata_left_column" v-bind:metadata="metadata" v-bind:key="metadata.name"/>
+            <template v-if="is_document">
+                <quick-look-document-additional-metadata-list
+                    v-for="metadata in metadata_left_column"
+                    v-bind:metadata="metadata"
+                    v-bind:key="metadata.name"
+                    data-test="additional-metadata-left-list"
+                />
+            </template>
         </div>
     </section>
 </template>
@@ -86,7 +95,7 @@ import {
     getElapsedTimeFromNow
 } from "../../../helpers/date-formatter.js";
 import UserBadge from "../../User/UserBadge.vue";
-import { TYPE_FILE } from "../../../constants.js";
+import { TYPE_FILE, TYPE_FOLDER } from "../../../constants.js";
 import QuickLookDocumentAdditionalMetadataList from "./QuickLookDocumentAdditionalMetadataList.vue";
 import ApprovalTableBadge from "../ApprovalTables/ApprovalTableBadge.vue";
 
@@ -98,17 +107,20 @@ export default {
     computed: {
         ...mapState(["date_time_format"]),
         metadata_right_column() {
-            const metadata_length = this.item.metadata.length;
+            const metadata_length = this.get_custom_metadata.length;
 
-            return this.item.metadata.slice(0, Math.ceil(metadata_length / 2));
+            return this.get_custom_metadata.slice(0, Math.ceil(metadata_length / 2));
         },
         metadata_left_column() {
-            const metadata_length = this.item.metadata.length;
+            const metadata_length = this.get_custom_metadata.length;
 
-            return this.item.metadata.slice(Math.ceil(metadata_length / 2), metadata_length);
+            return this.get_custom_metadata.slice(Math.ceil(metadata_length / 2), metadata_length);
         },
         is_file() {
             return this.item.type === TYPE_FILE;
+        },
+        is_document() {
+            return this.item.type !== TYPE_FOLDER;
         },
         file_size_in_mega_bytes() {
             if (!this.item.file_properties) {
@@ -118,6 +130,19 @@ export default {
         },
         has_an_approval_table() {
             return this.item.approval_table;
+        },
+        get_custom_metadata() {
+            const hardcoded_metadata = [
+                "title",
+                "description",
+                "owner",
+                "create_date",
+                "update_date"
+            ];
+
+            return this.item.metadata.filter(
+                ({ short_name }) => !hardcoded_metadata.includes(short_name)
+            );
         }
     },
     methods: {

@@ -1,5 +1,4 @@
 <?php
-
 /*
  * Copyright Enalean (c) 2013. All rights reserved.
  *
@@ -23,7 +22,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Cardwall_CardInCellPresenterFactory {
+class Cardwall_CardInCellPresenterFactory
+{
 
     /**
      * @var Cardwall_FieldProviders_IProvideFieldGivenAnArtifact
@@ -36,7 +36,8 @@ class Cardwall_CardInCellPresenterFactory {
     private $mappings;
 
 
-    public function __construct(Cardwall_FieldProviders_IProvideFieldGivenAnArtifact $field_provider, Cardwall_MappingCollection $mappings) {
+    public function __construct(Cardwall_FieldProviders_IProvideFieldGivenAnArtifact $field_provider, Cardwall_MappingCollection $mappings)
+    {
         $this->field_provider = $field_provider;
         $this->mappings       = $mappings;
     }
@@ -45,20 +46,20 @@ class Cardwall_CardInCellPresenterFactory {
      * Instanciate a new Cardwall_CardInCellPresenter
      *
      * @param Cardwall_CardPresenter $card_presenter
-     * 
+     *
      * @return Cardwall_CardInCellPresenter
      */
-    public function getCardInCellPresenter(Cardwall_CardPresenter $card_presenter) {
+    public function getCardInCellPresenter(Cardwall_CardPresenter $card_presenter)
+    {
         $card_field_id    = $this->getFieldId($card_presenter);
         $swim_line_values = $this->mappings->getSwimLineValues($card_field_id);
         return new Cardwall_CardInCellPresenter($card_presenter, $card_field_id, $card_presenter->getSwimlineId(), $swim_line_values);
     }
 
-    private function getFieldId(Cardwall_CardPresenter $card_presenter) {
+    private function getFieldId(Cardwall_CardPresenter $card_presenter)
+    {
         $artifact = $card_presenter->getArtifact();
         $field    = $this->field_provider->getField($artifact->getTracker());
         return $field ? $field->getId() : 0;
     }
 }
-
-?>

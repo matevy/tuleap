@@ -25,6 +25,9 @@ msgstr "Ajouter une action"
 msgid "Add another action"
 msgstr "Ajouter une nouvelle action"
 
+msgid "Advanced configuration is incompatible with this post-action"
+msgstr "La configuration avancée est incompatible avec cette post-action"
+
 msgid "An error occurred"
 msgstr "Une erreur est survenue"
 
@@ -74,8 +77,14 @@ msgstr "Modifier ou supprimer le champ"
 msgid "Change the value of a field"
 msgstr "Modifier la valeur d'un champ"
 
+msgid "Change the value of a field (incompatible)"
+msgstr "Modifier la valeur d'un champ (incompatible)"
+
 msgid "Choose a field"
 msgstr "Choisissez un champ"
+
+msgid "Choose a fieldset"
+msgstr "Choisissez un groupe de champs"
 
 msgid "Clear"
 msgstr "Effacer"
@@ -128,14 +137,45 @@ msgstr "Champ"
 msgid "Field(s) that must not be empty"
 msgstr "Le(s) champs suivant(s) doivent obligatoirement avoir une valeur"
 
+msgid "Fields that will be frozen"
+msgstr "Champs qui seront figés"
+
+msgid "Fieldsets that will be hidden by default"
+msgstr "Groupes de champs qui seront cachés par défaut"
+
 msgid "Floats"
 msgstr "Flottants"
+
+msgid "Freeze fields"
+msgstr "Figer des champs"
+
+msgid "Freeze fields (already used)"
+msgstr "Figer des champs (déjà utilisé)"
+
+msgid "Freeze fields (incompatible)"
+msgstr "Figer des champs (incompatible)"
 
 msgid "Fully deactivate the workflow"
 msgstr "Désactiver complètement le workflow"
 
 msgid "Groups that may process the transition"
 msgstr "Groupes autorisés à effectuer la transition"
+
+msgid "Hide fieldsets"
+msgstr "Cacher des groupes champs"
+
+msgid "Hide fieldsets (already used)"
+msgstr "Cacher des groupes champs (déjà utilisé)"
+
+msgid "Hide fieldsets (incompatible)"
+msgstr "Cacher des groupes champs (incompatible)"
+
+msgid ""
+"If you have any post actions of type \"Frozen Fields\" or \"Hidden Fieldsets"
+"\", they will be deleted."
+msgstr ""
+"Si vous avez configuré des post-actions de type \"Champs Figés\" ou "
+"\"Groupes de Champs Cachés\", elles seront supprimées."
 
 msgid ""
 "In order to configure transitions rules on this tracker, your first need to "
@@ -164,6 +204,9 @@ msgstr "Nouvelle valeur"
 msgid "No action is currently defined."
 msgstr "Aucune action n'est encore définie."
 
+msgid "Other actions"
+msgstr "Autres actions"
+
 msgid "Please choose"
 msgstr "Veuillez choisir"
 
@@ -175,6 +218,14 @@ msgstr "Sauvegarder et démarrer la configuration"
 
 msgid "Save configuration"
 msgstr "Sauvegarder la configuration"
+
+msgid ""
+"Selected fieldsets won't be displayed by default but users can make them "
+"visible if they want to. It's not an Access Control option."
+msgstr ""
+"Les groupes de champs sélectionnés ne seront pas affichés par défaut mais "
+"les utilisateurs pourront les rendre visibles s'ils le souhaitent. Il ne "
+"s'agit pas d'une fonctionnalité de contrôle d'accès."
 
 msgid "Start by adding one."
 msgstr "Commencez par en ajouter une."
@@ -191,7 +242,7 @@ msgstr ""
 
 msgid ""
 "There is no selectbox bound to static values in your tracker! Please\n"
-"        <a href=\"%{ url }\">add one</a> before configuring the workflow."
+"            <a href=\"%{ url }\">add one</a> before configuring the workflow."
 msgstr ""
 "Votre tracker n'a aucun champ \"Liste de choix\" associée à des valeurs "
 "statiques ! Veuillez en <a href=\"%{ url }\">ajouter un</a> avant de "
@@ -233,6 +284,9 @@ msgid "Tuleap will automatically pass the following parameters to the job:"
 msgstr ""
 "Tuleap va automatiquement transmettre les paramètres suivants à la tâche :"
 
+msgid "Unique actions"
+msgstr "Actions uniques"
+
 msgid "Use advanced configuration"
 msgstr "Utiliser la configuration avancée"
 
@@ -246,12 +300,15 @@ msgstr ""
 msgid "Wait a minute..."
 msgstr "Attendez une minute..."
 
+msgid "You can only have this post-action once."
+msgstr "Vous ne pouvez avoir cette post-action qu'une seule fois."
+
 msgid ""
 "You're about to switch to advanced configuration mode.\n"
 "                Each transition will be configurable independently.\n"
 "                They will copy their state configuration during the switch."
 msgstr ""
-"Vous êtes sur le point de passer à la configuration simple.\n"
+"Vous êtes sur le point de passer à la configuration avancée.\n"
 "Chaque transition sera configurable indépendamment. Lors du changement de "
 "mode, elles copieront la configuration de leur état. "
 
@@ -267,8 +324,17 @@ msgstr ""
 "Merci de bien vouloir vérifier les configurations mises en place pour chaque "
 "état."
 
+msgid "Your tracker doesn't seem to have available fieldsets"
+msgstr ""
+"Votre outil de suivi ne semble pas avoir de groupes de champs disponibles."
+
+msgid "Your tracker doesn't seem to have available writable fields"
+msgstr ""
+"Votre outil de suivi ne semble pas avoir de champs inscriptibles disponibles."
+
 msgid "Your tracker doesn't seem to have integer, float or date fields."
-msgstr "Votre tracker ne semble pas avoir de champs entier, flottant ou date."
+msgstr ""
+"Votre outil de suivi ne semble pas avoir de champs entier, flottant ou date."
 
 msgid ""
 "artifactId: identifier of the artifact where the transition happens (integer)"

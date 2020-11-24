@@ -28,11 +28,12 @@ use Docman_Item;
 use Docman_Link;
 use Docman_Wiki;
 use Tuleap\Docman\Item\ItemVisitor;
-use Tuleap\Docman\REST\v1\EmbeddedFiles\EmbeddedFilePropertiesRepresentation;
+use Tuleap\Docman\REST\v1\EmbeddedFiles\EmbeddedFilePropertiesFullRepresentation;
+use Tuleap\Docman\REST\v1\EmbeddedFiles\EmbeddedFilePropertiesMinimalRepresentation;
 use Tuleap\Docman\REST\v1\Files\FilePropertiesRepresentation;
-use Tuleap\Docman\View\DocmanViewURLBuilder;
-use Tuleap\Docman\REST\v1\Wiki\WikiPropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Links\LinkPropertiesRepresentation;
+use Tuleap\Docman\REST\v1\Wiki\WikiPropertiesRepresentation;
+use Tuleap\Docman\View\DocmanViewURLBuilder;
 
 class ItemRepresentationVisitor implements ItemVisitor
 {
@@ -51,14 +52,27 @@ class ItemRepresentationVisitor implements ItemVisitor
      */
     private $docman_link_version_factory;
 
+    /**
+     * @var \Docman_ItemFactory
+     */
+    private $item_factory;
+    /**
+     * @var \EventManager
+     */
+    private $event_manager;
+
     public function __construct(
         ItemRepresentationBuilder $item_representation_builder,
         \Docman_VersionFactory $docman_version_factory,
-        \Docman_LinkVersionFactory $docman_link_version_factory
+        \Docman_LinkVersionFactory $docman_link_version_factory,
+        \Docman_ItemFactory $item_factory,
+        \EventManager $event_manager
     ) {
         $this->item_representation_builder = $item_representation_builder;
         $this->docman_version_factory      = $docman_version_factory;
         $this->docman_link_version_factory = $docman_link_version_factory;
+        $this->item_factory                = $item_factory;
+        $this->event_manager               = $event_manager;
     }
 
     public function visitFolder(Docman_Folder $item, array $params = [])
@@ -77,8 +91,13 @@ class ItemRepresentationVisitor implements ItemVisitor
     {
         $wiki_representation = null;
         if ($item->getPagename() !== null) {
+            $wiki_page_id = $this->item_factory->getIdInWikiOfWikiPageItem(
+                $item->getPagename(),
+                $item->getGroupId()
+            );
+
             $wiki_representation = new WikiPropertiesRepresentation();
-            $wiki_representation->build($item);
+            $wiki_representation->build($item, $wiki_page_id);
         }
         return $this->item_representation_builder->buildItemRepresentation(
             $item,
@@ -93,13 +112,32 @@ class ItemRepresentationVisitor implements ItemVisitor
 
     public function visitLink(Docman_Link $item, array $params = [])
     {
+        $link_properties = null;
+        if ($this->isADirectAccessToDocument($params)) {
+            $link_properties = $this->buildLinkProperties($item);
+            $version = null;
+            if ($item->getCurrentVersion()) {
+                $version = $item->getCurrentVersion()->getNumber();
+            }
+
+            $this->event_manager->processEvent(
+                'plugin_docman_event_access',
+                [
+                    'group_id' => $item->getGroupId(),
+                    'item'     => $item,
+                    'version'  => $version,
+                    'user'     => $params['current_user']
+                ]
+            );
+        }
+
         return $this->item_representation_builder->buildItemRepresentation(
             $item,
             $params['current_user'],
             ItemRepresentation::TYPE_LINK,
             null,
             null,
-            $this->buildLinkProperties($item),
+            $link_properties,
             null
         );
     }
@@ -126,12 +164,32 @@ class ItemRepresentationVisitor implements ItemVisitor
 
     public function visitEmbeddedFile(Docman_EmbeddedFile $item, array $params = [])
     {
+        if ($this->isADirectAccessToDocument($params)) {
+            $version = null;
+            if ($item->getCurrentVersion()) {
+                $version = $item->getCurrentVersion()->getNumber();
+            }
+
+            $this->event_manager->processEvent(
+                'plugin_docman_event_access',
+                [
+                    'group_id' => $item->getGroupId(),
+                    'item'     => $item,
+                    'version'  => $version,
+                    'user'     => $params['current_user']
+                ]
+            );
+        }
+
         $item_version             = $this->docman_version_factory->getCurrentVersionForItem($item);
         $file_embedded_properties = null;
         if ($item_version) {
-            $file_embedded_properties = new EmbeddedFilePropertiesRepresentation();
             $content                  = file_get_contents($item_version->getPath());
-            $file_embedded_properties->build($item_version, $content);
+            if ($this->isADirectAccessToDocument($params)) {
+                $file_embedded_properties = EmbeddedFilePropertiesFullRepresentation::build($item_version, $content);
+            } else {
+                $file_embedded_properties = EmbeddedFilePropertiesMinimalRepresentation::build($item_version);
+            }
         }
         return $this->item_representation_builder->buildItemRepresentation(
             $item,
@@ -195,5 +253,10 @@ class ItemRepresentationVisitor implements ItemVisitor
         $link_properties->build($latest_link_version);
 
         return $link_properties;
+    }
+
+    private function isADirectAccessToDocument(array $params): bool
+    {
+        return isset($params['is_a_direct_access']) && (bool) $params['is_a_direct_access'] === true;
     }
 }

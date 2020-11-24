@@ -39,7 +39,8 @@ class AdminRouter implements DispatchableWithRequest
      */
     private $csrf_token;
 
-    public function __construct(Controller $controller, CSRFSynchronizerToken $csrf_token) {
+    public function __construct(Controller $controller, CSRFSynchronizerToken $csrf_token)
+    {
         $this->controller = $controller;
         $this->csrf_token = $csrf_token;
     }
@@ -51,11 +52,17 @@ class AdminRouter implements DispatchableWithRequest
 
         $action = $request->get('action');
         switch ($action) {
-            case 'create-provider':
-                $this->controller->createProvider($this->csrf_token, $request);
+            case 'create-generic-provider':
+                $this->controller->createGenericProvider($this->csrf_token, $request);
                 break;
-            case 'update-provider':
-                $this->controller->updateProvider($this->csrf_token, $request);
+            case 'create-azure-provider':
+                $this->controller->createAzureADProvider($this->csrf_token, $request);
+                break;
+            case 'update-generic-provider':
+                $this->controller->updateGenericProvider($this->csrf_token, $request);
+                break;
+            case 'update-azure-provider':
+                $this->controller->updateAzureProvider($this->csrf_token, $request);
                 break;
             case 'delete-provider':
                 $this->controller->removeProvider($this->csrf_token, $request->get('provider_id'), $current_user);
@@ -67,7 +74,7 @@ class AdminRouter implements DispatchableWithRequest
 
     private function checkUserIsSiteAdmin(PFUser $user, BaseLayout $layout)
     {
-        if(! $user->isSuperUser()) {
+        if (! $user->isSuperUser()) {
             $layout->addFeedback(
                 Feedback::ERROR,
                 $GLOBALS['Language']->getText('global', 'perm_denied')

@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ArtifactAttachmentFieldXMLExporter extends ArtifactFieldXMLExporter {
+class ArtifactAttachmentFieldXMLExporter extends ArtifactFieldXMLExporter
+{
     public const TV3_TYPE            = 'attachment';
     public const TV5_TYPE            = 'file';
     public const XML_FILE_PREFIX = 'File';
@@ -26,12 +27,14 @@ class ArtifactAttachmentFieldXMLExporter extends ArtifactFieldXMLExporter {
     /** @var ArtifactXMLExporterDao */
     private $dao;
 
-    public function __construct(ArtifactXMLNodeHelper $node_helper, ArtifactXMLExporterDao $dao) {
+    public function __construct(ArtifactXMLNodeHelper $node_helper, ArtifactXMLExporterDao $dao)
+    {
         parent::__construct($node_helper);
         $this->dao = $dao;
     }
 
-    public function appendNode(DOMElement $changeset_node, $tracker_id, $artifact_id, array $row) {
+    public function appendNode(DOMElement $changeset_node, $tracker_id, $artifact_id, array $row)
+    {
         $new_attachment = $this->extractFirstDifference($row['old_value'], $row['new_value']);
         if ($new_attachment) {
             $dar = $this->dao->searchFile($artifact_id, $new_attachment, $row['mod_by'], $row['date']);
@@ -53,7 +56,8 @@ class ArtifactAttachmentFieldXMLExporter extends ArtifactFieldXMLExporter {
         }
     }
 
-    private function appendPreviousAttachements(DOMElement $field_node, $artifact_id, $submitted_on, $old_value) {
+    private function appendPreviousAttachements(DOMElement $field_node, $artifact_id, $submitted_on, $old_value)
+    {
         $previous_attachements = array_filter(explode(',', $old_value));
         foreach ($previous_attachements as $attachement) {
             $dar = $this->dao->searchFileBefore($artifact_id, $attachement, $submitted_on);
@@ -64,7 +68,8 @@ class ArtifactAttachmentFieldXMLExporter extends ArtifactFieldXMLExporter {
         }
     }
 
-    private function getNodeValueForFile($file_id) {
+    private function getNodeValueForFile($file_id)
+    {
         $node = $this->node_helper->createElement('value');
         $node->setAttribute('ref', self::XML_FILE_PREFIX.$file_id);
 
@@ -82,7 +87,8 @@ class ArtifactAttachmentFieldXMLExporter extends ArtifactFieldXMLExporter {
      * @param string $reference_value
      * @param string $value_to_compare
      */
-    private function extractFirstDifference($reference_value, $value_to_compare) {
+    private function extractFirstDifference($reference_value, $value_to_compare)
+    {
         $old_values_array = array_filter(explode(',', $reference_value));
         $new_values_array = array_filter(explode(',', $value_to_compare));
 
@@ -99,7 +105,8 @@ class ArtifactAttachmentFieldXMLExporter extends ArtifactFieldXMLExporter {
         return '';
     }
 
-    public function getFieldValueIndex() {
+    public function getFieldValueIndex()
+    {
         throw new Exception_TV3XMLException('Try to get artifact_value on a non value field: attachment');
     }
 }

@@ -18,11 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+require_once __DIR__ . '/InjectSpanPadding.class.php';
 
-require_once 'common/TreeNode/InjectSpanPaddingInTreeNodeVisitor.class.php';
-require_once dirname(__FILE__).'/InjectSpanPadding.class.php';
-
-class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding {
+class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding
+{
 
     /**
      * Return this Tree
@@ -44,13 +43,14 @@ class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding {
      * |-Child 7 (id:18)
      * |
      * '-Child 8 (id:20, al:22, 24)
-     * 	 |
-     * 	 |-Child 9 (id:22)
-     * 	 |
+     *      |
+     *      |-Child 9 (id:22)
+     *      |
      *   '-Child 10 (id:24)
-     * 
+     *
      */
-    protected function given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children() {
+    protected function given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children()
+    {
         $parent  = $this->buildBaseTree();
         $child1  = $parent->getChild(0);
         $child2  = $child1->getChild(0);
@@ -62,56 +62,59 @@ class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding {
         $child8  = $this->getTreeNode(20, 'Child 8', '22, 24');
         $child9  = $this->getTreeNode(22, 'Child 9');
         $child10 = $this->getTreeNode(24, 'Child 10');
-        
+
         $this->setArtifactLinks($child1, '8, 14, 16');
         $this->setArtifactLinks($child2, '10, 12');
-        
+
         $child1->addChild($child5);
         $child1->addChild($child6);
-        
+
         $child2->addChild($child3);
         $child2->addChild($child4);
-        
+
         $child8->addChild($child9);
         $child8->addChild($child10);
-        
+
         $parent->addChild($child7);
         $parent->addChild($child8);
-        
+
         return $parent;
     }
     /**
      * Child 1
      */
-    public function itShouldSetDataToChild1ThatMatches_IndentPipeTreeIndentMinus_treeAndChild() {
+    public function itShouldSetDataToChild1ThatMatches_IndentPipeTreeIndentMinus_treeAndChild()
+    {
         $given = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
-        
+
         $pattern = $this->getPatternSuite(" indent pipe tree indent minus-tree");
         $givenChild = $given->getChild(0);
-        
+
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content child"));
     }
-    
+
     /**
      * Child 2
      */
-    public function itShouldSetDataToChild2ThatMatches_IndentPipeBlankIndentPipeTreeIndentMinus_treeAndChild() {
+    public function itShouldSetDataToChild2ThatMatches_IndentPipeBlankIndentPipeTreeIndentMinus_treeAndChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
-        
+
         $pattern    = $this->getPatternSuite(" indent pipe blank indent pipe tree indent minus-tree");
         $givenChild = $given->getChild(0)->getChild(0);
-        
+
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content child"));
     }
-    
+
     /**
      * Child 3
      */
-    public function itShouldSetDataToChild3ThatMatches_IndentPipeBlankIndentPipeBlankIndentPipeIndentMinusAndNoChild() {
+    public function itShouldSetDataToChild3ThatMatches_IndentPipeBlankIndentPipeBlankIndentPipeIndentMinusAndNoChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
 
@@ -121,11 +124,12 @@ class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding {
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content"));
     }
-    
+
     /**
      * Child 4
      */
-    public function itShouldSetDataToChild4ThatMatches_IndentPipeBlankIndentPipeBlankIndentLast_leftIndentLast_rightAndNoChild() {
+    public function itShouldSetDataToChild4ThatMatches_IndentPipeBlankIndentPipeBlankIndentLast_leftIndentLast_rightAndNoChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
 
@@ -135,11 +139,12 @@ class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding {
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content"));
     }
-    
+
     /**
      * Child 5
      */
-    public function itShouldSetDataToChild5ThatMatches_IndentPipeBlankIndentPipeIdentMinusAndNoChild() {
+    public function itShouldSetDataToChild5ThatMatches_IndentPipeBlankIndentPipeIdentMinusAndNoChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
 
@@ -149,11 +154,12 @@ class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding {
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content"));
     }
-    
+
     /**
      * Child 6
      */
-    public function itShouldSetDataToChild6ThatMatches_IndentPipeBlankIndentLast_leftIndentLast_rightAndNoChild() {
+    public function itShouldSetDataToChild6ThatMatches_IndentPipeBlankIndentLast_leftIndentLast_rightAndNoChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
 
@@ -163,11 +169,12 @@ class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding {
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content"));
     }
-    
+
     /**
      * Child 7
      */
-    public function itShouldSetDataToChild7ThatMatches_IndentPipeIndentMinusAndNoChild() {
+    public function itShouldSetDataToChild7ThatMatches_IndentPipeIndentMinusAndNoChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
 
@@ -180,43 +187,45 @@ class InjectSpanPaddingWithADepthOf3Test extends InjectSpanPadding {
     /**
      * Child 8
      */
-    public function itShouldSetDataToChild8ThatMatches_IndentLast_LeftTreeIndentMinus_TreeAndChild() {
+    public function itShouldSetDataToChild8ThatMatches_IndentLast_LeftTreeIndentMinus_TreeAndChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
-    
+
         $pattern    = $this->getPatternSuite(" indent last-left tree indent minus-tree");
         $givenChild = $given->getChild(2);
-    
+
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content child"));
     }
-    
+
     /**
      * Child 9
      */
-    public function itShouldSetDataToChild9ThatMatches_BlankBlankIndentPipeIndentMinusAndNoChild() {
+    public function itShouldSetDataToChild9ThatMatches_BlankBlankIndentPipeIndentMinusAndNoChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
-    
+
         $pattern    = $this->getPatternSuite(" blank blank indent pipe indent minus");
         $givenChild = $given->getChild(2)->getChild(0);
-    
+
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content"));
     }
-    
+
     /**
      * Child 10
      */
-    public function itShouldSetDataToChild10ThatMatches_BlankBlankIndentLast_leftIdentLast_rightAndNoChild() {
+    public function itShouldSetDataToChild10ThatMatches_BlankBlankIndentLast_leftIdentLast_rightAndNoChild()
+    {
         $given      = $this->given_3ChildrenWithTheFirstHavingAChildAndTheLastHaving2Children();
         $this->when_VisitTreeNodeWith_InjectSpanPadding($given);
-    
+
         $pattern    = $this->getPatternSuite(" blank blank indent last-left indent last-right");
         $givenChild = $given->getChild(2)->getChild(1);
-    
+
         $this->then_GivenTreeNodeData_TreePadding_AssertPattern($givenChild, $pattern);
         $this->then_GivenTreeNodeData_ContentTemplate_AssertPattern($givenChild, $this->getPatternSuite(" content"));
     }
 }
-?>

@@ -20,82 +20,96 @@
  */
 
 /**
- *  Data Access Object for PluginHudsonJob 
+ *  Data Access Object for PluginHudsonJob
  */
-class PluginHudsonJobDao extends DataAccessObject {
+class PluginHudsonJobDao extends DataAccessObject
+{
 
     /**
     * Gets all jobs in the db
     * @return DataAccessResult
     */
-    function searchAll() {
+    function searchAll()
+    {
         $sql = "SELECT * FROM plugin_hudson_job";
-        return $this->retrieve($sql);
-    }
-    
-    /**
-    * Searches PluginHudsonJob by Codendi group ID 
-    * @return DataAccessResult
-    */
-    function searchByGroupID($group_id) {
-        $sql = sprintf("SELECT *  
-                        FROM plugin_hudson_job
-                        WHERE group_id = %s",
-            $this->da->quoteSmart($group_id));
         return $this->retrieve($sql);
     }
 
     /**
-    * Searches PluginHudsonJob by job ID 
+    * Searches PluginHudsonJob by Codendi group ID
     * @return DataAccessResult
     */
-    function searchByJobID($job_id) {
-        $sql = sprintf("SELECT *  
+    function searchByGroupID($group_id)
+    {
+        $sql = sprintf(
+            "SELECT *  
+                        FROM plugin_hudson_job
+                        WHERE group_id = %s",
+            $this->da->quoteSmart($group_id)
+        );
+        return $this->retrieve($sql);
+    }
+
+    /**
+    * Searches PluginHudsonJob by job ID
+    * @return DataAccessResult
+    */
+    function searchByJobID($job_id)
+    {
+        $sql = sprintf(
+            "SELECT *  
                         FROM plugin_hudson_job
                         WHERE job_id = %s",
-            $this->da->quoteSmart($job_id));
+            $this->da->quoteSmart($job_id)
+        );
         return $this->retrieve($sql);
     }
-    
+
     /**
-    * Searches PluginHudsonJob by job name 
+    * Searches PluginHudsonJob by job name
     * @return DataAccessResult
     */
-    function searchByJobName($job_name) {
-        $sql = sprintf("SELECT *  
+    function searchByJobName($job_name)
+    {
+        $sql = sprintf(
+            "SELECT *  
                         FROM plugin_hudson_job
                         WHERE name = %s",
-            $this->da->quoteSmart($job_name));
+            $this->da->quoteSmart($job_name)
+        );
         return $this->retrieve($sql);
     }
-    
+
     /**
     * Searches PluginHudsonJob by user ID
-    * means "all the jobs of all projects the user is member of" 
+    * means "all the jobs of all projects the user is member of"
     * @return DataAccessResult
     */
-    function searchByUserID($user_id) {
-        $sql = sprintf("SELECT j.*  
+    function searchByUserID($user_id)
+    {
+        $sql = sprintf(
+            "SELECT j.*  
                         FROM plugin_hudson_job j, user u, user_group ug
                         WHERE ug.group_id = j.group_id AND
                               u.user_id = ug.user_id AND 
                               u.user_id = %s",
-            $this->da->quoteSmart($user_id));
+            $this->da->quoteSmart($user_id)
+        );
         return $this->retrieve($sql);
     }
-    
+
     /**
-    * create a row in the table plugin_hudson_job 
+    * create a row in the table plugin_hudson_job
     * @return inserted job id if there is no error
     */
     public function createHudsonJob(
-            $project_id,
-            $hudson_job_url,
-            $job_name,
-            $use_svn_trigger = false,
-            $use_cvs_trigger = false,
-            $token = null,
-            $svn_paths
+        $project_id,
+        $hudson_job_url,
+        $job_name,
+        $use_svn_trigger = false,
+        $use_cvs_trigger = false,
+        $token = null,
+        $svn_paths
     ) {
         $project_id      = $this->da->quoteSmart($project_id);
         $hudson_job_url  = $this->da->quoteSmart($hudson_job_url);
@@ -110,7 +124,7 @@ class PluginHudsonJobDao extends DataAccessObject {
 
         return $this->updateAndGetLastId($sql);
     }
-    
+
     public function updateHudsonJob(
         $job_id,
         $hudson_job_url,
@@ -140,16 +154,22 @@ class PluginHudsonJobDao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    function deleteHudsonJob($job_id) {
-        $sql = sprintf("DELETE FROM plugin_hudson_job WHERE job_id = %s",
-                $this->da->quoteSmart($job_id));
+    function deleteHudsonJob($job_id)
+    {
+        $sql = sprintf(
+            "DELETE FROM plugin_hudson_job WHERE job_id = %s",
+            $this->da->quoteSmart($job_id)
+        );
         $updated = $this->update($sql);
         return $updated;
     }
-    
-    function deleteHudsonJobsByGroupID($group_id) {
-        $sql = sprintf("DELETE FROM plugin_hudson_job WHERE group_id = %s",
-                $this->da->quoteSmart($group_id));
+
+    function deleteHudsonJobsByGroupID($group_id)
+    {
+        $sql = sprintf(
+            "DELETE FROM plugin_hudson_job WHERE group_id = %s",
+            $this->da->quoteSmart($group_id)
+        );
         $updated = $this->update($sql);
         return $updated;
     }
@@ -157,11 +177,12 @@ class PluginHudsonJobDao extends DataAccessObject {
     /**
     * Get jobs number
     *
-    * @param Integer $groupId Id of the project
+    * @param int $groupId Id of the project
     *
     * @return DataAccessResult
     */
-    function countJobs($groupId = null) {
+    function countJobs($groupId = null)
+    {
         $condition = '';
         if ($groupId) {
             $condition = "AND group_id = ".$this->da->escapeInt($groupId);

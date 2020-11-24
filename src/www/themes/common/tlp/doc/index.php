@@ -1,4 +1,22 @@
 <?php
+/**
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 require_once __DIR__ . '/../../../../include/pre.php';
 
@@ -51,19 +69,17 @@ $tlp_blue_css   = $include_asset_framework->getFileURL('tlp-blue.css');
 
 $include_asset_doc   = new IncludeAssets(__DIR__ . '/dist', 'dist');
 $main_doc_stylesheet = $include_asset_doc->getFileURL('style.css');
+$main_doc_script     = $include_asset_doc->getFileURL('script.js');
 
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Tuleap UI Framework</title>
+    <title>TLP</title>
 
     <link rel="stylesheet" id="tlp-stylesheet" href="<?php echo $tlp_blue_css ?>">
 
     <link rel="stylesheet" href="<?php echo $main_doc_stylesheet ?>">
-    <link rel="stylesheet" href="codemirror/5.12.2/codemirror.css">
-    <link rel="stylesheet" href="codemirror/5.12.2/addon/scroll/simplescrollbars.css">
-    <link rel="stylesheet" href="codemirror/5.12.2/theme/mdn-like.css">
 
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
 </head>
@@ -241,12 +257,9 @@ $main_doc_stylesheet = $include_asset_doc->getFileURL('style.css');
 </main>
 <?php echo $tlp_script_tag; ?>
 <script type="text/javascript">
-    const manifest_framework_file = <?php
+    window.manifest_framework_file = <?php
         echo (string) file_get_contents(__DIR__ . '/../dist/manifest.json');
     ?>
 </script>
-<script type="text/javascript" src="js/polyfills.js"></script>
-<script type="text/javascript" src="js/main.js"></script>
-<script src="codemirror/5.12.2/codemirror-compressed.js"></script>
-<script type="text/javascript" src="js/editors.js"></script>
+<script type="text/javascript" src="<?php echo $main_doc_script; ?>"></script>
 </body>

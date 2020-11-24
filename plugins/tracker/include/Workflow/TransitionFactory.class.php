@@ -22,9 +22,8 @@
 use Tuleap\Tracker\Workflow\Transition\TransitionCreationParameters;
 use Tuleap\Tracker\Workflow\TransitionDeletionException;
 
-require_once('common/permission/PermissionsManager.class.php');
-
-class TransitionFactory //phpcs:ignoreFile
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
+class TransitionFactory
 {
 
     /** @var Workflow_Transition_ConditionFactory */
@@ -43,7 +42,7 @@ class TransitionFactory //phpcs:ignoreFile
     /**
      * Hold an instance of the class
      */
-    protected static $_instance;
+    protected static $_instance; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
     /**
      * The singleton method
@@ -53,7 +52,7 @@ class TransitionFactory //phpcs:ignoreFile
     public static function instance()
     {
         if (!isset(self::$_instance)) {
-            $c = __CLASS__;
+            $c = self::class;
             self::$_instance = new $c(Workflow_Transition_ConditionFactory::build());
         }
         return self::$_instance;
@@ -67,7 +66,7 @@ class TransitionFactory //phpcs:ignoreFile
      *
      * @return Transition
      */
-    public function getInstanceFromRow($row, Workflow $workflow = null)
+    public function getInstanceFromRow($row, ?Workflow $workflow = null)
     {
         if (!$workflow) {
             $workflow = WorkflowFactory::instance()->getWorkflow($row['workflow_id']);
@@ -189,25 +188,70 @@ class TransitionFactory //phpcs:ignoreFile
      * @param SimpleXMLElement $xml         containing the structure of the imported workflow
      * @param array            &$xmlMapping containig the newly created formElements idexed by their XML IDs
      *
-     * @return Transition The transition object, or null if error
+     * @return Transition | null The transition object, or null if error
      */
     public function getInstanceFromXML($xml, &$xmlMapping, Project $project)
     {
         $from = null;
-        if ((string)$xml->from_id['REF'] != 'null') {
+        if (isset($xmlMapping[(string)$xml->from_id['REF']]) && (string)$xml->from_id['REF'] != 'null') {
             $from = $xmlMapping[(string)$xml->from_id['REF']];
+        }
+
+        if (! isset($xmlMapping[(string)$xml->to_id['REF']])) {
+            return null;
         }
         $to = $xmlMapping[(string)$xml->to_id['REF']];
 
-        $transition = new Transition(0, 0, $from, $to);
+        return $this->buildTransitionFromXML($xml, $project, $xmlMapping, $from, $to);
+    }
+
+    /**
+     * @return Transition[]
+     */
+    public function getInstancesFromStateXML(
+        SimpleXMLElement $state_xml,
+        array &$xml_mapping,
+        Project $project,
+        Tracker_FormElement_Field_List_Value $to_value
+    ) {
+        $transitions = [];
+        foreach ($state_xml->transitions->transition as $transition_xml) {
+            $from_value = null;
+            if ((string)$transition_xml->from_id['REF'] !== 'null') {
+                $from_value = $xml_mapping[(string)$transition_xml->from_id['REF']];
+            }
+
+            $transitions[] = $this->buildTransitionFromXML($state_xml, $project, $xml_mapping, $from_value, $to_value);
+        }
+
+        return $transitions;
+    }
+
+    /**
+     * @return Transition
+     */
+    private function buildTransitionFromXML(
+        SimpleXMLElement $xml,
+        Project $project,
+        array $xml_mapping,
+        ?Tracker_FormElement_Field_List_Value $from_value,
+        Tracker_FormElement_Field_List_Value $to_value
+    ) {
+        $transition = new Transition(0, 0, $from_value, $to_value);
         $postactions = array();
         if ($xml->postactions) {
-            $postactions = $this->getPostActionFactory()->getInstanceFromXML($xml->postactions, $xmlMapping, $transition);
+            $postactions = $this->getPostActionFactory()->getInstanceFromXML(
+                $xml->postactions,
+                $xml_mapping,
+                $transition
+            );
         }
         $transition->setPostActions($postactions);
 
         // Conditions on transition
-        $transition->setConditions($this->condition_factory->getAllInstancesFromXML($xml, $xmlMapping, $transition, $project));
+        $transition->setConditions(
+            $this->condition_factory->getAllInstancesFromXML($xml, $xml_mapping, $transition, $project)
+        );
 
         return $transition;
     }
@@ -217,7 +261,7 @@ class TransitionFactory //phpcs:ignoreFile
      *
      * @param Workflow $workflow
      *
-     * @return boolean
+     * @return bool
      */
     public function deleteWorkflow($workflow)
     {
@@ -263,6 +307,22 @@ class TransitionFactory //phpcs:ignoreFile
     }
 
     /**
+     * Get the transitions of the workflow for a given destination value
+     *
+     * @param Workflow $workflow The workflow
+     *
+     * @return Transition[]
+     */
+    public function getTransitionsForAGivenDestination(Workflow $workflow, int $to_id)
+    {
+        $transitions = [];
+        foreach ($this->getDao()->searchByWorkflowAndToId((int) $workflow->getId(), $to_id) as $row) {
+            $transitions[] = $this->getInstanceFromRow($row, $workflow);
+        }
+        return $transitions;
+    }
+
+    /**
      * Creates transition in the database
      *
      * @param int $workflow_id The workflow_id of the transitions to save
@@ -300,7 +360,7 @@ class TransitionFactory //phpcs:ignoreFile
     public function createAndSaveTransition(Workflow $workflow, TransitionCreationParameters $parameters)
     {
         $new_transition = $this->buildTransition($parameters->getFromId(), $parameters->getToId(), $workflow, null);
-        $this->saveObject($workflow->getId(), $new_transition);
+        $this->saveObject((int) $workflow->getId(), $new_transition);
 
         return $new_transition;
     }
@@ -311,7 +371,7 @@ class TransitionFactory //phpcs:ignoreFile
      * @param array $ugroups_ids the list of ugroups ids
      * @param int $transition_id  The transition id
      *
-     * @return boolean
+     * @return bool
      */
     public function addPermissions(array $ugroups_ids, $transition_id)
     {
@@ -344,7 +404,7 @@ class TransitionFactory //phpcs:ignoreFile
                 if ($transition->getFieldValueFrom() == null) {
                     $from_id = 'null';
                     $to      = $transition->getFieldValueTo()->getId();
-                    foreach ($values as $value=>$id_value) {
+                    foreach ($values as $value => $id_value) {
                         if ($value == $to) {
                             $to_id = $id_value;
                         }
@@ -352,7 +412,7 @@ class TransitionFactory //phpcs:ignoreFile
                 } else {
                     $from = $transition->getFieldValueFrom()->getId();
                     $to   = $transition->getFieldValueTo()->getId();
-                    foreach ($values as $value=>$id_value) {
+                    foreach ($values as $value => $id_value) {
                         if ($value == $from) {
                             $from_id = $id_value;
                         }
@@ -399,7 +459,8 @@ class TransitionFactory //phpcs:ignoreFile
             if (!$this->getDao()->deleteTransition(
                 $transition->getWorkflow()->getId(),
                 $transition->getIdFrom(),
-                $transition->getIdTo())
+                $transition->getIdTo()
+            )
             ) {
                 throw new TransitionDeletionException();
             }

@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class AgileDashboard_SequenceIdManager {
+class AgileDashboard_SequenceIdManager
+{
 
     /** @var AgileDashboard_Milestone_Backlog_BacklogFactory */
     private $backlog_factory;
@@ -35,13 +36,15 @@ class AgileDashboard_SequenceIdManager {
         $this->backlog_item_ids                = array();
     }
 
-    public function getSequenceId(PFUser $user, Planning_Milestone $milestone, $artifact_id) {
+    public function getSequenceId(PFUser $user, Planning_Milestone $milestone, $artifact_id)
+    {
         $this->loadBacklogForMilestoneIfNeeded($user, $milestone);
 
         return $this->getArtifactPosition((int) $milestone->getArtifactId(), $artifact_id);
     }
 
-    private function getArtifactPosition($milestone_id, $artifact_id) {
+    private function getArtifactPosition($milestone_id, $artifact_id)
+    {
         if (! isset($this->backlog_item_ids[$milestone_id][$artifact_id])) {
             return;
         }
@@ -49,7 +52,8 @@ class AgileDashboard_SequenceIdManager {
         return $this->backlog_item_ids[$milestone_id][$artifact_id];
     }
 
-    private function loadBacklogForMilestoneIfNeeded(PFUser $user, Planning_Milestone $milestone) {
+    private function loadBacklogForMilestoneIfNeeded(PFUser $user, Planning_Milestone $milestone)
+    {
         if (! $milestone->getArtifactId()) {
                 $this->loadTopBacklog($user, $milestone);
                 return;
@@ -64,7 +68,8 @@ class AgileDashboard_SequenceIdManager {
         }
     }
 
-    private function loadTopBacklog(PFUser $user, Planning_Milestone $milestone) {
+    private function loadTopBacklog(PFUser $user, Planning_Milestone $milestone)
+    {
         if (! isset($this->backlog_item_ids[(int) $milestone->getArtifactId()])) {
             $this->backlog_item_ids[(int) $milestone->getArtifactId()] = array();
 
@@ -75,7 +80,8 @@ class AgileDashboard_SequenceIdManager {
         }
     }
 
-    private function storeTopBacklogArtifacts($milestone_id, AgileDashboard_Milestone_Backlog_BacklogItemCollection $backlog_items) {
+    private function storeTopBacklogArtifacts($milestone_id, AgileDashboard_Milestone_Backlog_BacklogItemCollection $backlog_items)
+    {
         $artifact_position = 1;
         foreach ($backlog_items as $backlog_item) {
             $this->backlog_item_ids[$milestone_id][$backlog_item->getArtifact()->getId()] = $artifact_position;
@@ -83,7 +89,8 @@ class AgileDashboard_SequenceIdManager {
         }
     }
 
-    private function storeBacklogArtifacts($milestone_id,AgileDashboard_Milestone_Backlog_DescendantItemsCollection $backlog_artifacts) {
+    private function storeBacklogArtifacts($milestone_id, AgileDashboard_Milestone_Backlog_DescendantItemsCollection $backlog_artifacts)
+    {
         $artifact_position = 1;
         foreach ($backlog_artifacts as $backlog_artifact) {
             $this->backlog_item_ids[$milestone_id][$backlog_artifact->getId()] = $artifact_position;

@@ -22,7 +22,8 @@ namespace Tuleap\Tracker\REST\Artifact;
 
 use Tuleap\REST\JsonCast;
 
-class ArtifactFieldValueListRepresentation {
+class ArtifactFieldValueListRepresentation
+{
     /**
      * @var int ID of the field
      */
@@ -38,7 +39,8 @@ class ArtifactFieldValueListRepresentation {
      */
     public $bind_value_ids;
 
-    public function build($id, $label, array $values) {
+    public function build($id, $label, array $values)
+    {
         $this->field_id       = JsonCast::toInt($id);
         $this->label          = $label;
         $this->bind_value_ids = $values;

@@ -23,44 +23,46 @@
  *
  */
 
-require_once('common/include/Codendi_HTMLPurifier.class.php');
+class PluginViews
+{
 
-class PluginViews {
-    
     protected $request;
-    
+
     /**
      *
      * @var PluginController
      */
     protected $controller;
 
-    public function __construct($controller) {
-      $this->controller   = $controller;
-      $this->request      = $controller->getRequest();
-      $this->HTMLPurifier = Codendi_HTMLPurifier::instance();
-      $this->user         = $controller->getUser();
+    public function __construct($controller)
+    {
+        $this->controller   = $controller;
+        $this->request      = $controller->getRequest();
+        $this->HTMLPurifier = Codendi_HTMLPurifier::instance();
+        $this->user         = $controller->getUser();
     }
 
-    public function getController() {
+    public function getController()
+    {
         return $this->controller;
     }
 
-    public function getData() {
+    public function getData()
+    {
         return $this->controller->getData();
-    }  
+    }
 
-    public function display($name, $params=array()) {
-        if ( empty($name) ) {
+    public function display($name, $params = array())
+    {
+        if (empty($name)) {
             return false;
-        }        
+        }
         call_user_func_array(array($this,$name), $params);
     }
 
-    public static function linkTo($link, $href, $options='' ) {
+    public static function linkTo($link, $href, $options = '')
+    {
         $linkTo = '<a href="'.$href.'" '.$options.' >'.$link.'</a>';
         return $linkTo;
     }
-   
 }
-?>

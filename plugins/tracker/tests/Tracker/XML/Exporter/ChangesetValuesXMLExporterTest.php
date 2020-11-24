@@ -20,7 +20,8 @@
 
 require_once __DIR__.'/../../../bootstrap.php';
 
-class Tracker_XML_Exporter_ChangesetValuesXMLExporterTest extends TuleapTestCase {
+class Tracker_XML_Exporter_ChangesetValuesXMLExporterTest extends TuleapTestCase
+{
 
     /** @var Tracker_XML_Exporter_ChangesetValueXMLExporterVisitor */
     private $visitor;
@@ -43,7 +44,8 @@ class Tracker_XML_Exporter_ChangesetValuesXMLExporterTest extends TuleapTestCase
     /** @var Tracker_Artifact */
     private $artifact;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->artifact_xml    = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><artifact />');
         $this->changeset_xml   = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><changeset />');
@@ -62,7 +64,8 @@ class Tracker_XML_Exporter_ChangesetValuesXMLExporterTest extends TuleapTestCase
         $this->artifact = mock('Tracker_Artifact');
     }
 
-    public function itCallsTheVisitorForEachChangesetValue() {
+    public function itCallsTheVisitorForEachChangesetValue()
+    {
         expect($this->visitor)->export()->count(2);
         expect($this->visitor)->export($this->artifact_xml, $this->changeset_xml, $this->artifact, $this->int_changeset_value)->at(0);
         expect($this->visitor)->export($this->artifact_xml, $this->changeset_xml, $this->artifact, $this->float_changeset_value)->at(1);

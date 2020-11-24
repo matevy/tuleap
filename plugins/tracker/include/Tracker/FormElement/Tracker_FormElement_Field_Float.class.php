@@ -21,14 +21,15 @@
 
 use Tuleap\Tracker\FormElement\Field\FloatingPointNumber\ChangesChecker;
 
-class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric {
+class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric
+{
 
     public const FLOAT_DECIMALS = 4;
 
     public function getCriteriaFrom($criteria)
     {
         //Only filter query if field is used
-        if($this->isUsed()) {
+        if ($this->isUsed()) {
             //Only filter query if criteria is valuated
             $criteria_value = $this->getCriteriaValue($criteria);
 
@@ -60,11 +61,13 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
         return $html;
     }
 
-    public function getCriteriaWhere($criteria) {
+    public function getCriteriaWhere($criteria)
+    {
         return '';
     }
 
-    public function getQueryFrom() {
+    public function getQueryFrom()
+    {
         $R1 = 'R1_'. $this->id;
         $R2 = 'R2_'. $this->id;
 
@@ -79,14 +82,17 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
     }
 
     protected $pattern = '[+\-]?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?';
-    protected function cast($value) {
+    protected function cast($value)
+    {
         return (float)$value;
     }
-    protected function buildMatchExpression($field_name, $criteria_value) {
+    protected function buildMatchExpression($field_name, $criteria_value)
+    {
         return parent::buildMatchExpression($field_name, $criteria_value);
     }
 
-    protected function getCriteriaDao() {
+    protected function getCriteriaDao()
+    {
         return new Tracker_Report_Criteria_Float_ValueDao();
     }
 
@@ -99,7 +105,8 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
      *
      * @return string the string value of the float field (or '' if none)
      */
-    public function fetchChangesetValue($artifact_id, $changeset_id, $value, $report=null, $from_aid = null) {
+    public function fetchChangesetValue($artifact_id, $changeset_id, $value, $report = null, $from_aid = null)
+    {
         if ($value === null) {
             return '';
         } else {
@@ -107,38 +114,44 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
         }
     }
 
-    protected function getValueDao() {
+    protected function getValueDao()
+    {
         return new Tracker_FormElement_Field_Value_FloatDao();
     }
-    protected function getDao() {
+    protected function getDao()
+    {
         return new Tracker_FormElement_Field_FloatDao();
     }
 
     /**
      * @return the label of the field (mainly used in admin part)
      */
-    public static function getFactoryLabel() {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin','float');
+    public static function getFactoryLabel()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'float');
     }
 
     /**
      * @return the description of the field (mainly used in admin part)
      */
-    public static function getFactoryDescription() {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin','float_description');
+    public static function getFactoryDescription()
+    {
+        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'float_description');
     }
 
     /**
      * @return the path to the icon
      */
-    public static function getFactoryIconUseIt() {
+    public static function getFactoryIconUseIt()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/ui-text-field-float.png');
     }
 
     /**
      * @return the path to the icon
      */
-    public static function getFactoryIconCreate() {
+    public static function getFactoryIconCreate()
+    {
         return $GLOBALS['HTML']->getImagePath('ic/ui-text-field-float--plus.png');
     }
 
@@ -149,7 +162,8 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
      * @param Tracker_Artifact_ChangesetValue_Float $value The changeset value of this field
      * @return string The html code to display the field value in tooltip
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null) {
+    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    {
         $html = '';
         if ($value) {
             $html .= $value->getFloat();
@@ -160,7 +174,8 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
     /**
      * @return string the i18n error message to display if the value submitted by the user is not valid
      */
-    protected function getValidatorErrorMessage() {
+    protected function getValidatorErrorMessage()
+    {
         return $this->getLabel() . ' ' . $GLOBALS['Language']->getText('plugin_tracker_common_artifact', 'error_float_value');
     }
 
@@ -169,11 +184,12 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
      *
      * @param Tracker_Artifact_Changeset $changeset   The changeset (needed in only few cases like 'lud' field)
      * @param int                        $value_id    The id of the value
-     * @param boolean                    $has_changed If the changeset value has changed from the rpevious one
+     * @param bool $has_changed If the changeset value has changed from the rpevious one
      *
      * @return Tracker_Artifact_ChangesetValue or null if not found
      */
-    public function getChangesetValue($changeset, $value_id, $has_changed) {
+    public function getChangesetValue($changeset, $value_id, $has_changed)
+    {
         $changeset_value = null;
         if ($row = $this->getValueDao()->searchById($value_id, $this->id)->getRow()) {
             $float_row_value = $row['value'];
@@ -185,7 +201,8 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
         return $changeset_value;
     }
 
-    public function accept(Tracker_FormElement_FieldVisitor $visitor) {
+    public function accept(Tracker_FormElement_FieldVisitor $visitor)
+    {
         return $visitor->visitFloat($this);
     }
 
@@ -194,6 +211,7 @@ class Tracker_FormElement_Field_Float extends Tracker_FormElement_Field_Numeric 
      */
     public function hasChanges(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $old_value, $new_value)
     {
+        /** @var Tracker_Artifact_ChangesetValue_Float $old_value */
         return (new ChangesChecker())->hasChanges($old_value, $new_value);
     }
 }

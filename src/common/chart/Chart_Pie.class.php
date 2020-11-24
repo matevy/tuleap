@@ -21,20 +21,21 @@
 
 /**
 * PieChart
-* 
+*
 * Facade for jpgraph PieGraph
-* 
+*
 * @see jpgraph documentation for usage
 */
-class Chart_Pie extends Chart{
-    
+class Chart_Pie extends Chart
+{
+
     /**
      * Get the name of the jpgraph class to instantiate
      *
      * @return string
      */
-    protected function getGraphClass() {
+    protected function getGraphClass()
+    {
         return 'PieGraph';
     }
-    
 }

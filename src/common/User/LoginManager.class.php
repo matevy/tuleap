@@ -59,7 +59,8 @@ class User_LoginManager
      * @throws User_StatusPendingException
      * @throws User_PasswordExpiredException
      */
-    public function validateAndSetCurrentUser(PFUser $user) {
+    public function validateAndSetCurrentUser(PFUser $user)
+    {
         $status_manager = new User_UserStatusManager();
         $status_manager->checkStatus($user);
         $this->password_expiration_checker->checkPasswordLifetime($user);
@@ -76,7 +77,8 @@ class User_LoginManager
      * @throws User_InvalidPasswordException
      * @throws User_PasswordExpiredException
      */
-    public function authenticate($name, $password) {
+    public function authenticate($name, $password)
+    {
         $auth_success     = false;
         $auth_user_id     = null;
         $auth_user_status = null;
@@ -96,14 +98,14 @@ class User_LoginManager
             $user = $this->user_manager->getUserById($auth_user_id);
         } else {
             $user = $this->user_manager->getUserByUserName($name);
-            if(!is_null($user)) {
+            if (!is_null($user)) {
                 $auth_success = $this->authenticateFromDatabase($user, $password);
             }
         }
 
-        if(!$user) {
+        if (!$user) {
             throw new User_InvalidPasswordException();
-        } else if(!$auth_success) {
+        } elseif (!$auth_success) {
             throw new User_InvalidPasswordWithUserException($user);
         }
 
@@ -112,11 +114,11 @@ class User_LoginManager
         return $user;
     }
 
-    private function authenticateFromDatabase(PFUser $user, $password) {
+    private function authenticateFromDatabase(PFUser $user, $password)
+    {
         $is_auth_valid          = false;
 
         if ($this->password_verifier->verifyPassword($user, $password)) {
-
             $user->setPassword($password);
             $this->checkPasswordStorageConformity($user);
 
@@ -133,7 +135,8 @@ class User_LoginManager
         return $is_auth_valid;
     }
 
-    private function checkPasswordStorageConformity(PFUser $user) {
+    private function checkPasswordStorageConformity(PFUser $user)
+    {
         $hashed_password        = $user->getUserPw();
         $legacy_hashed_password = $user->getLegacyUserPw();
 
@@ -143,11 +146,13 @@ class User_LoginManager
         }
     }
 
-    private function isPasswordUpdatingNeeded($hashed_password) {
+    private function isPasswordUpdatingNeeded($hashed_password)
+    {
         return $this->password_handler->isPasswordNeedRehash($hashed_password);
     }
 
-    private function isLegacyPasswordRemovalNeeded($legacy_hashed_password) {
+    private function isLegacyPasswordRemovalNeeded($legacy_hashed_password)
+    {
         return !empty($legacy_hashed_password);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -27,14 +27,29 @@ use Project;
 use Tracker_FormElementFactory;
 use Tracker_REST_TrackerRestBuilder;
 use TrackerFactory;
+use TransitionFactory;
 use Tuleap\REST\Header;
 use Tuleap\REST\JsonDecoder;
+use Tuleap\Tracker\FormElement\Container\Fieldset\HiddenFieldsetChecker;
+use Tuleap\Tracker\FormElement\Container\FieldsExtractor;
+use Tuleap\Tracker\PermissionsFunctionsWrapper;
+use Tuleap\Tracker\REST\FormElementRepresentationsBuilder;
 use Tuleap\Tracker\REST\MinimalTrackerRepresentation;
 use Tuleap\Tracker\REST\PermissionsExporter;
+use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
+use Tuleap\Tracker\REST\Tracker\PermissionsRepresentationBuilder;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsRetriever;
+use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
+use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use Tuleap\Widget\Event\GetTrackersWithCriteria;
+use Workflow_Transition_ConditionFactory;
 
 /**
  * Wrapper for tracker related REST methods
@@ -68,7 +83,6 @@ class ProjectTrackersResource
                 $offset,
                 $filter_on_tracker_administration_permission
             );
-
         }
 
         return $this->getTrackersWithCriteria($project, $representation, $limit, $offset, $json_query);
@@ -94,22 +108,26 @@ class ProjectTrackersResource
         return true;
     }
 
-    private function limitValueIsAcceptable($limit) {
+    private function limitValueIsAcceptable($limit)
+    {
         return $limit <= self::MAX_LIMIT;
     }
 
-    public function options(PFUser $user, Project $project, $limit, $offset) {
+    public function options(PFUser $user, Project $project, $limit, $offset)
+    {
         $this->sendAllowHeaders();
     }
 
-    private function sendPaginationHeaders($limit, $offset, $size) {
+    private function sendPaginationHeaders($limit, $offset, $size)
+    {
         header('X-PAGINATION-LIMIT: '. $limit);
         header('X-PAGINATION-OFFSET: '. $offset);
         header('X-PAGINATION-SIZE: '. $size);
         header('X-PAGINATION-LIMIT-MAX: '. self::MAX_LIMIT);
     }
 
-    private function sendAllowHeaders() {
+    private function sendAllowHeaders()
+    {
         Header::allowOptionsGet();
     }
 
@@ -156,14 +174,52 @@ class ProjectTrackersResource
             $user
         );
         $trackers                = array_slice($all_trackers, $offset, $limit);
-        $builder                 = new Tracker_REST_TrackerRestBuilder(
+
+        $transition_retriever = new TransitionRetriever(
+            new StateFactory(
+                new TransitionFactory(
+                    Workflow_Transition_ConditionFactory::build()
+                ),
+                new SimpleWorkflowDao()
+            ),
+            new TransitionExtractor()
+        );
+
+        $frozen_fields_detector = new FrozenFieldDetector(
+            $transition_retriever,
+            new FrozenFieldsRetriever(
+                new FrozenFieldsDao(),
+                Tracker_FormElementFactory::instance()
+            )
+        );
+
+        $builder = new Tracker_REST_TrackerRestBuilder(
             Tracker_FormElementFactory::instance(),
-            new PermissionsExporter(
-                new FrozenFieldDetector(
-                    new FrozenFieldsRetriever(
-                        new FrozenFieldsDao()
-                    )
+            new FormElementRepresentationsBuilder(
+                Tracker_FormElementFactory::instance(),
+                new PermissionsExporter(
+                    $frozen_fields_detector
+                ),
+                new HiddenFieldsetChecker(
+                    new HiddenFieldsetsDetector(
+                        $transition_retriever,
+                        new HiddenFieldsetsRetriever(
+                            new HiddenFieldsetsDao(),
+                            Tracker_FormElementFactory::instance()
+                        ),
+                        Tracker_FormElementFactory::instance()
+                    ),
+                    new FieldsExtractor()
+                ),
+                new PermissionsForGroupsBuilder(
+                    new \UGroupManager(),
+                    $frozen_fields_detector,
+                    new PermissionsFunctionsWrapper()
                 )
+            ),
+            new PermissionsRepresentationBuilder(
+                new \UGroupManager(),
+                new PermissionsFunctionsWrapper()
             )
         );
         $tracker_representations = [];
@@ -177,7 +233,7 @@ class ProjectTrackersResource
                 $tracker_minimal_representation->build($tracker);
                 $tracker_representations[] = $tracker_minimal_representation;
             } else {
-                $tracker_representations[] = $builder->getTrackerRepresentationWithoutWorkflowComputedPermissions($user, $tracker);
+                $tracker_representations[] = $builder->getTrackerRepresentationInTrackerContext($user, $tracker);
             }
         }
 

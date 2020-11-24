@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class CustomToursFactoryTest extends TuleapTestCase {
+class CustomToursFactoryTest extends TuleapTestCase
+{
 
     /** @var Tuleap_CustomToursFactory */
     protected $factory;
@@ -34,7 +35,8 @@ class CustomToursFactoryTest extends TuleapTestCase {
     /** @var PFUser */
     protected $user;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->project_manager = mock('ProjectManager');
@@ -48,13 +50,16 @@ class CustomToursFactoryTest extends TuleapTestCase {
     }
 }
 
-class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
+class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
     }
 
-    public function itDoesNotGetToursIfCustomTourFolderDoesntExist() {
+    public function itDoesNotGetToursIfCustomTourFolderDoesntExist()
+    {
         $request_uri = '';
         ForgeConfig::set('sys_custom_incdir', $this->fixtures_dir.'/somewhereElse');
         $user = mock('PFUser');
@@ -64,7 +69,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertEqual(count($tours), 0);
     }
 
-    public function itgetsToursInCorrectLanguage() {
+    public function itgetsToursInCorrectLanguage()
+    {
         $user = mock('PFUser');
         stub($user)->getLocale()->returns('fr_FR');
         $request_uri = '/plugins/lala';
@@ -73,7 +79,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertEqual(count($tours), 0);
     }
 
-    public function itReturnsEmptyArrayIfNoAvailableTours() {
+    public function itReturnsEmptyArrayIfNoAvailableTours()
+    {
         $enabled_tours = array();
         $current_location = '/plugind/lala';
         stub($this->factory)->getTourListJson()->returns(json_encode($enabled_tours));
@@ -83,7 +90,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertArrayEmpty($valid_tours);
     }
 
-    public function itReturnsOnlyValidTours() {
+    public function itReturnsOnlyValidTours()
+    {
         stub($this->project_manager)->getValidProject()->returns(mock('Project'));
 
         $enabled_tours = array(
@@ -119,7 +127,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertIsA($valid_tours[1], 'Tuleap_Tour');
     }
 
-    public function itReturnsOnlyValidToursForCurrentLocation() {
+    public function itReturnsOnlyValidToursForCurrentLocation()
+    {
         stub($this->project_manager)->getValidProject()->returns(mock('Project'));
 
         $enabled_tours = array(
@@ -142,7 +151,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertIsA($valid_tours[0], 'Tuleap_Tour');
     }
 
-    public function itManagesThelocationWithoutPlaceholders() {
+    public function itManagesThelocationWithoutPlaceholders()
+    {
         stub($this->project_manager)->getValidProject()->returns(mock('Project'));
 
         $enabled_tours = array(
@@ -165,7 +175,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertIsA($valid_tours[0], 'Tuleap_Tour');
     }
 
-    public function itManagesThelocationWithProjectId() {
+    public function itManagesThelocationWithProjectId()
+    {
         stub($this->url_processor)->getGroupIdFromUrl()->returns(144);
         stub($this->project_manager)->getValidProject()->returns(mock('Project'));
 
@@ -185,7 +196,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertIsA($valid_tours[0], 'Tuleap_Tour');
     }
 
-    public function itManagesThelocationWithProjectName() {
+    public function itManagesThelocationWithProjectName()
+    {
         $project = mock('Project');
         stub($project)->getUnixName()->returns('jojo');
         stub($this->url_processor)->getGroupIdFromUrl()->returns(144);
@@ -207,7 +219,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertIsA($valid_tours[0], 'Tuleap_Tour');
     }
 
-    public function itManagesThelocationWithProjectNameAndId() {
+    public function itManagesThelocationWithProjectNameAndId()
+    {
         $project = mock('Project');
         stub($project)->getUnixName()->returns('jojo');
         stub($this->url_processor)->getGroupIdFromUrl()->returns(144);
@@ -229,7 +242,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertIsA($valid_tours[0], 'Tuleap_Tour');
     }
 
-    public function itManagesAttributes() {
+    public function itManagesAttributes()
+    {
         stub($this->project_manager)->getValidProject()->throws(new Project_NotFoundException());
         $placeholder = Tuleap_CustomToursFactory::PLACEHOLDER_ATTRIBUTE_VALUE;
 
@@ -249,7 +263,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertIsA($valid_tours[0], 'Tuleap_Tour');
     }
 
-    public function itManagesEverything() {
+    public function itManagesEverything()
+    {
         $project = mock('Project');
         stub($project)->getUnixName()->returns('jojo');
         stub($this->url_processor)->getGroupIdFromUrl()->returns(144);
@@ -275,7 +290,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertIsA($valid_tours[0], 'Tuleap_Tour');
     }
 
-    public function itFailsIfAttributeMissing() {
+    public function itFailsIfAttributeMissing()
+    {
         $project = mock('Project');
         stub($project)->getUnixName()->returns('jojo');
         stub($this->url_processor)->getGroupIdFromUrl()->returns(144);
@@ -298,7 +314,8 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
         $this->assertArrayEmpty($valid_tours);
     }
 
-    public function itIgnoresInvalidToursInEnabledList() {
+    public function itIgnoresInvalidToursInEnabledList()
+    {
         $bad_enabled_tours = array(
             array (
                 'url' => array(789),
@@ -322,9 +339,11 @@ class CustomTourFactoryTest_getToursForPage extends CustomToursFactoryTest {
     }
 }
 
-class CustomTourFactoryTest_getTour extends CustomToursFactoryTest {
+class CustomTourFactoryTest_getTour extends CustomToursFactoryTest
+{
 
-    public function itThrowsAnExceptionIfFileNotFound() {
+    public function itThrowsAnExceptionIfFileNotFound()
+    {
         $this->expectException('Tuleap_UnknownTourException');
 
         $enabled_tours = array(
@@ -338,7 +357,8 @@ class CustomTourFactoryTest_getTour extends CustomToursFactoryTest {
         $this->factory->getTour($this->user, 'woofwoof_tour');
     }
 
-    public function itThrowsAnExceptionIfInvalidJsonArray() {
+    public function itThrowsAnExceptionIfInvalidJsonArray()
+    {
         $this->expectException('Tuleap_InvalidTourException');
 
         $enabled_tours = array(
@@ -349,10 +369,11 @@ class CustomTourFactoryTest_getTour extends CustomToursFactoryTest {
         );
         stub($this->factory)->getTourListJson()->returns(json_encode($enabled_tours));
 
-        $this->factory->getTour($this->user,'my_second_invalid_tour');
+        $this->factory->getTour($this->user, 'my_second_invalid_tour');
     }
 
-    public function itThrowsAnExceptionIfTourDoesNotHaveSteps() {
+    public function itThrowsAnExceptionIfTourDoesNotHaveSteps()
+    {
         $this->expectException('Tuleap_InvalidTourException');
 
         $enabled_tours = array(
@@ -363,10 +384,11 @@ class CustomTourFactoryTest_getTour extends CustomToursFactoryTest {
         );
         stub($this->factory)->getTourListJson()->returns(json_encode($enabled_tours));
 
-        $this->factory->getTour($this->user,'my_invalid_tour');
+        $this->factory->getTour($this->user, 'my_invalid_tour');
     }
 
-    public function itValidatesAGoodTour() {
+    public function itValidatesAGoodTour()
+    {
         $enabled_tours = array(
             array(
                 'tour_name' => 'my_valid_tour',
@@ -375,7 +397,7 @@ class CustomTourFactoryTest_getTour extends CustomToursFactoryTest {
         );
         stub($this->factory)->getTourListJson()->returns(json_encode($enabled_tours));
 
-        $tour = $this->factory->getTour($this->user,'my_valid_tour');
+        $tour = $this->factory->getTour($this->user, 'my_valid_tour');
 
         $this->assertIsA($tour, 'Tuleap_Tour');
     }

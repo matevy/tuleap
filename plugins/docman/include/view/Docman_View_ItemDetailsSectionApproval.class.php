@@ -21,17 +21,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Docman\ApprovalTable\HasPotentiallyCorruptedApprovalTable;
 use Tuleap\Docman\View\DocmanViewURLBuilder;
 
-class Docman_View_ItemDetailsSectionApproval
-extends Docman_View_ItemDetailsSection {
+class Docman_View_ItemDetailsSectionApproval extends Docman_View_ItemDetailsSection
+{
     var $table;
     var $atf;
     var $themePath;
     var $version;
     var $notificationManager;
 
-    function __construct($item, $url, $themePath, $notificationManager) {
+    function __construct($item, $url, $themePath, $notificationManager)
+    {
         parent::__construct($item, $url, 'approval', $GLOBALS['Language']->getText('plugin_docman', 'details_approval'));
 
         $this->themePath = $themePath;
@@ -41,13 +43,14 @@ extends Docman_View_ItemDetailsSection {
         $this->notificationsManager = $notificationManager;
     }
 
-    function initDisplay() {
+    function initDisplay()
+    {
         $request = HTTPRequest::instance();
 
         // User may request a specific table id
         $vVersion = new Valid_UInt('version');
         $vVersion->required();
-        if($request->valid($vVersion)) {
+        if ($request->valid($vVersion)) {
             $this->version = $request->get('version');
         }
 
@@ -55,35 +58,35 @@ extends Docman_View_ItemDetailsSection {
         $this->table = $this->atf->getTable();
     }
 
-    function _getItemVersionLink($version, $noLink=false) {
+    function _getItemVersionLink($version, $noLink = false)
+    {
         $html = '';
-        if($version !== null) {
+        if ($version !== null) {
             $title = '';
             $url   = '';
 
             $itemType = Docman_ItemFactory::getItemTypeForItem($this->item);
-            if($itemType == PLUGIN_DOCMAN_ITEM_TYPE_EMBEDDEDFILE
+            if ($itemType == PLUGIN_DOCMAN_ITEM_TYPE_EMBEDDEDFILE
                || $itemType == PLUGIN_DOCMAN_ITEM_TYPE_FILE) {
                 $vFactory = new Docman_VersionFactory();
                 $v = $vFactory->getSpecificVersion($this->item, $version);
-                if($v) {
+                if ($v) {
                     $url = DocmanViewURLBuilder::buildActionUrl(
                         $this->item,
                         ['default_url' => $this->url],
                         ['action' => 'show', 'id' => $this->item->getId(), 'version_number' => $v->getNumber()]
                     );
-                    if($v->getLabel()) {
+                    if ($v->getLabel()) {
                         $title .= $this->hp->purify($v->getLabel()).' - ';
                     }
                 }
-            }
-            elseif($itemType == PLUGIN_DOCMAN_ITEM_TYPE_WIKI) {
+            } elseif ($itemType == PLUGIN_DOCMAN_ITEM_TYPE_WIKI) {
                 $project_id = $this->item->getGroupId();
                 $pagename   = urlencode($this->item->getPagename());
                 $url        = '/wiki/index.php?group_id='.$project_id.'&pagename='.$pagename.'&version='.$version;
             }
             $title .= $GLOBALS['Language']->getText('plugin_docman', 'details_approval_version_link').' '.$version;
-            if($noLink) {
+            if ($noLink) {
                 $html .= $title;
             } else {
                 $html .= '<a href="'.$url.'">'.$title.'</a>';
@@ -92,14 +95,15 @@ extends Docman_View_ItemDetailsSection {
         return $html;
     }
 
-    function getReviewerTable($forceReadOnly = false) {
+    function getReviewerTable($forceReadOnly = false)
+    {
         $html  = '';
         $uh    = UserHelper::instance();
         $rIter = $this->table->getReviewerIterator();
-        if($rIter !== null) {
+        if ($rIter !== null) {
             $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_table_title').'</h3>';
 
-            if(!$this->table->isCustomizable()) {
+            if (!$this->table->isCustomizable()) {
                 $html .= '<p>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_oldver').'</p>';
             }
 
@@ -115,7 +119,7 @@ extends Docman_View_ItemDetailsSection {
             $html .= '</tr>';
 
             // Version
-            if(is_a($this->table, 'Docman_ApprovalTableVersionned')) {
+            if ($this->table instanceof \Docman_ApprovalTableVersionned) {
                 $html .= '<tr>';
                 $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_table_version').'</td>';
                 $html .= '<td>';
@@ -135,11 +139,11 @@ extends Docman_View_ItemDetailsSection {
             $html .= '<tr>';
             $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_cycle_start_date').'</td>';
             $html .= '<td>';
-            $html .= util_timestamp_to_userdateformat($this->table->getDate(), true);
+            $html .= DateHelper::formatForLanguage($GLOBALS['Language'], $this->table->getDate(), true);
             $html .= '</td>';
             $html .= '</tr>';
 
-            if($this->table->isClosed()) {
+            if ($this->table->isClosed()) {
                 $html .= '<tr>';
                 $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_table_status').'</td>';
                 $html .= '<td>';
@@ -165,12 +169,12 @@ extends Docman_View_ItemDetailsSection {
             $userIsInTable = false;
             $rowColorIdx = 1;
             $rIter->rewind();
-            while($rIter->valid()) {
+            while ($rIter->valid()) {
                 $reviewer = $rIter->current();
 
                 $readOnly = true;
                 $_trClass = ' class="docman_approval_readonly"';
-                if(!$forceReadOnly && ($user->getId() == $reviewer->getId())) {
+                if (!$forceReadOnly && ($user->getId() == $reviewer->getId())) {
                     $_trClass = ' class="docman_approval_highlight"';
                     $readOnly = false;
                     $userIsInTable = true;
@@ -183,7 +187,7 @@ extends Docman_View_ItemDetailsSection {
 
                 // Review
                 $_reviewHtml = $this->atf->getReviewStateName($reviewer->getState());
-                if(!$readOnly) {
+                if (!$readOnly) {
                     $_reviewUrl = DocmanViewURLBuilder::buildActionUrl(
                         $this->item,
                         ['default_url' => $this->url],
@@ -199,8 +203,8 @@ extends Docman_View_ItemDetailsSection {
                 // Date
                 $date = $reviewer->getReviewDate();
                 $_dateHtml = '';
-                if($date) {
-                    $_dateHtml = util_timestamp_to_userdateformat($date, true);
+                if ($date) {
+                    $_dateHtml = DateHelper::formatForLanguage($GLOBALS['Language'], $date, true);
                 }
                 $html .= '<td'.$_trClass.'>'.$_dateHtml.'</td>';
 
@@ -210,35 +214,36 @@ extends Docman_View_ItemDetailsSection {
                 $html .= '</tr>';
                 $rIter->next();
             }
-            
+
             $html .= '</table>';
 
             $html .= '<div class="docman_help">'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_review_help').'</div>';
-
         }
         return $html;
     }
-    
 
-    function _getReviewCurrentVersion() {
+
+    function _getReviewCurrentVersion()
+    {
         $version = null;
         $itemFactory = Docman_ItemFactory::instance($this->item->getGroupId());
         $itemType = $itemFactory->getItemTypeForItem($this->item);
         // Get current version for file, embeddedfile and wiki
-        switch($itemType) {
-        case PLUGIN_DOCMAN_ITEM_TYPE_EMBEDDEDFILE:
-        case PLUGIN_DOCMAN_ITEM_TYPE_FILE:
-            $currentVersion = $this->item->getCurrentVersion();
-            $version = $currentVersion->getNumber();
-            break;
-        case PLUGIN_DOCMAN_ITEM_TYPE_WIKI:
-            $version = $itemFactory->getCurrentWikiVersion($this->item);
-            break;
+        switch ($itemType) {
+            case PLUGIN_DOCMAN_ITEM_TYPE_EMBEDDEDFILE:
+            case PLUGIN_DOCMAN_ITEM_TYPE_FILE:
+                $currentVersion = $this->item->getCurrentVersion();
+                $version = $currentVersion->getNumber();
+                break;
+            case PLUGIN_DOCMAN_ITEM_TYPE_WIKI:
+                $version = $itemFactory->getCurrentWikiVersion($this->item);
+                break;
         }
         return $version;
     }
-    
-    function getReviewForm($user) {
+
+    function getReviewForm($user)
+    {
         $html = '';
         $uh   = UserHelper::instance();
 
@@ -251,13 +256,13 @@ extends Docman_View_ItemDetailsSection {
         $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_doc_review_title').'</h3>';
 
         $html .= '<table>';
-        
+
         // Doc title
         $html .= '<tr>';
         $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_doc_review_name').'</td>';
         $html .= '<td>';
         $html .=  $this->hp->purify($this->item->getTitle(), CODENDI_PURIFIER_CONVERT_HTML) ;
-        if($itemCurrentVersion == null) {
+        if ($itemCurrentVersion == null) {
             $url = DocmanViewURLBuilder::buildActionUrl(
                 $this->item,
                 ['default_url' => $this->url],
@@ -273,9 +278,9 @@ extends Docman_View_ItemDetailsSection {
         $html .= '<tr>';
         $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_doc_review_version').'</td>';
         $html .= '<td>';
-        if($itemCurrentVersion !== null) {
+        if ($itemCurrentVersion !== null) {
             $html .= $this->_getItemVersionLink($itemCurrentVersion);
-            if(!$this->atf->userAccessedSinceLastUpdate($user)) {
+            if (!$this->atf->userAccessedSinceLastUpdate($user)) {
                 // Warn user if he didn't access the last version of document
                 $html .= '<span style="margin-left: 2em;">'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_review_wo_access').'</span>';
             }
@@ -310,7 +315,7 @@ extends Docman_View_ItemDetailsSection {
         $html .= '<tr>';
         $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_cycle_start_date').'</td>';
         $html .= '<td>';
-        $html .= util_timestamp_to_userdateformat($this->table->getDate(), true);
+        $html .= DateHelper::formatForLanguage($GLOBALS['Language'], $this->table->getDate(), true);
         $html .= '</td>';
         $html .= '</tr>';
 
@@ -321,7 +326,7 @@ extends Docman_View_ItemDetailsSection {
         $html .= $this->hp->purify($this->table->getDescription(), CODENDI_PURIFIER_BASIC, $this->item->getGroupId());
         $html .= '</td>';
         $html .= '</tr>';
-        
+
         $html .= '</table>';
 
         $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_review_title').'</h3>';
@@ -332,7 +337,7 @@ extends Docman_View_ItemDetailsSection {
         $html .= '<input type="hidden" name="group_id" value="'.$this->item->getGroupId().'" />';
         $html .= '<input type="hidden" name="id" value="'.$this->item->getId().'" />';
         $html .= '<input type="hidden" name="action" value="approval_user_commit" />';
-        if($itemCurrentVersion !== null) {
+        if ($itemCurrentVersion !== null) {
             // Add version here because someone can submit a new version while
             // current user is reviewing.
             $html .= '<input type="hidden" name="version" value="'.$itemCurrentVersion.'" />';
@@ -370,22 +375,22 @@ extends Docman_View_ItemDetailsSection {
         $html .= '</tr>';
 
         // If reviewer already approved or reject, display date
-        if($reviewer->getReviewDate()) {
+        if ($reviewer->getReviewDate()) {
             $html .= '<tr>';
             $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_review_date').'</td>';
             $html .= '<td>';
-            $html .= util_timestamp_to_userdateformat($reviewer->getReviewDate(), true);
+            $html .= DateHelper::formatForLanguage($GLOBALS['Language'], $reviewer->getReviewDate(), true);
             $html .= '</td>';
             $html .= '</tr>';
-        }   
+        }
 
         // Review version
-        if($reviewVersion) {
+        if ($reviewVersion) {
             $html .= '<tr>';
             $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_review_version').'</td>';
             $html .= '<td>';
             $html .= $this->_getItemVersionLink($reviewVersion, true);
-            if($reviewVersion != $itemCurrentVersion) {
+            if ($reviewVersion != $itemCurrentVersion) {
                 $html .= '<span style="margin-left: 2em;">'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_review_version_not_upd').'</span>';
             }
             $html .= '</td>';
@@ -423,10 +428,11 @@ extends Docman_View_ItemDetailsSection {
         return $html;
     }
 
-    function getTableHistory() {
+    function getTableHistory()
+    {
         $html = '';
         $uh   = UserHelper::instance();
-        if(is_a($this->table, 'Docman_ApprovalTableVersionned')) {
+        if (is_a($this->table, 'Docman_ApprovalTableVersionned')) {
             $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'details_approval_history_title').'</h3>';
             $html .= html_build_list_table_top(array($GLOBALS['Language']->getText('plugin_docman', 'details_approval_history_table_version'),
                                                      $GLOBALS['Language']->getText('plugin_docman', 'details_approval_history_table_owner'),
@@ -435,9 +441,9 @@ extends Docman_View_ItemDetailsSection {
                                                      ));
             $allTables = $this->atf->getAllApprovalTable();
             $rowColorIdx = 1;
-            foreach($allTables as $table) {
+            foreach ($allTables as $table) {
                 $html .= '<tr class="'.html_get_alt_row_color($rowColorIdx++).'">';
-                if($this->table->getVersionNumber() != $table->getVersionNumber()) {
+                if ($this->table->getVersionNumber() != $table->getVersionNumber()) {
                     $url = DocmanViewURLBuilder::buildActionUrl(
                         $this->item,
                         ['default_url' => $this->url],
@@ -455,7 +461,7 @@ extends Docman_View_ItemDetailsSection {
                 $html .= '<td>'.$href.'</td>';
                 $html .= '<td>'.$this->hp->purify($uh->getDisplayNameFromUserId($table->getOwner())).'</td>';
                 $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'approval_review_state_'.$table->getApprovalState()).'</td>';
-                $html .= '<td>'.util_timestamp_to_userdateformat($table->getDate()).'</td>';
+                $html .= '<td>'.DateHelper::formatForLanguage($GLOBALS['Language'], $table->getDate()) .'</td>';
                 $html .= '</tr>';
             }
             $html .= '</table>';
@@ -463,11 +469,12 @@ extends Docman_View_ItemDetailsSection {
         return $html;
     }
 
-    function getToolbar() {
+    function getToolbar()
+    {
         $html = '';
         $user = $this->_getCurrentUser();
         $dpm  = $this->_getPermissionsManager();
-        if($dpm->userCanWrite($user, $this->item->getId())) {
+        if ($dpm->userCanWrite($user, $this->item->getId())) {
             $url = DocmanViewURLBuilder::buildActionUrl(
                 $this->item,
                 ['default_url' => $this->url],
@@ -479,16 +486,17 @@ extends Docman_View_ItemDetailsSection {
         return $html;
     }
 
-    function getContent($params = []) {
+    function getContent($params = [])
+    {
         $html = '';
 
         $user = $this->_getCurrentUser();
         $dpm  = $this->_getPermissionsManager();
-        if(!$dpm->userCanRead($user, $this->item->getId())) {
+        if (!$dpm->userCanRead($user, $this->item->getId())) {
             return $html;
         }
 
-        if(is_a($this->item, 'Docman_Empty')) {
+        if (is_a($this->item, 'Docman_Empty')) {
             $html = $GLOBALS['Language']->getText('plugin_docman', 'details_approval_no_table_for_empty');
             return $html;
         }
@@ -500,11 +508,24 @@ extends Docman_View_ItemDetailsSection {
         // Show toolbar
         $html .= $this->getToolbar();
 
+        if ($this->item->accept(
+            new HasPotentiallyCorruptedApprovalTable(new Docman_ApprovalTableFileDao(), new Docman_LinkVersionFactory()),
+            ['approval_table' => $this->table, 'version_number' => $this->version]
+        )
+        ) {
+            $html .= '<div class="feedback_warning">' .
+                dgettext(
+                    'tuleap-docman',
+                    'This approval table has been detected has potentially corrupted, please reach out to the site administrators if you notice inconsistencies.'
+                )
+                . '</div>';
+        }
+
         // Show Content
-        if($this->table === null) {
+        if ($this->table === null) {
             $html .= '<p>';
             $html .= $GLOBALS['Language']->getText('plugin_docman', 'details_approval_no_table');
-            if($dpm->userCanWrite($user, $this->item->getId())) {
+            if ($dpm->userCanWrite($user, $this->item->getId())) {
                 $url = DocmanViewURLBuilder::buildActionUrl(
                     $this->item,
                     ['default_url' => $this->url],
@@ -514,25 +535,21 @@ extends Docman_View_ItemDetailsSection {
                 $html .= ' <strong>'.$adminLink.'</strong><br />';
             }
             $html .= '</p>';
-        }
-        elseif($this->table->isDisabled()) {
+        } elseif ($this->table->isDisabled()) {
             $html .= '<p>';
             $html .= $GLOBALS['Language']->getText('plugin_docman', 'details_approval_not_available');
             $html .= '</p>';
             $html .= $this->getTableHistory();
-        }
-        else {
+        } else {
             // '&user_id=XX' was used in CX_3_4 to identify users. Now it's '&review=1'
             // We should keep this part of the test until CX_3_8.
-            if(($request->exist('review') || $request->exist('user_id'))
+            if (($request->exist('review') || $request->exist('user_id'))
                 && $this->table->isReviewer($user->getId())
-                && $this->table->isEnabled()) 
-            {
+                && $this->table->isEnabled()) {
                 $html .= $this->getReviewForm($user);
-            }
-            else {
+            } else {
                 $forceReadOnly = false;
-                if($this->table->isClosed()) {
+                if ($this->table->isClosed()) {
                     $forceReadOnly = true;
                 }
                 $html .= $this->getReviewerTable($forceReadOnly);
@@ -543,48 +560,58 @@ extends Docman_View_ItemDetailsSection {
         return $html;
     }
 
-    function &_getDocmanIcons() {
+    function &_getDocmanIcons()
+    {
         $icons = new Docman_Icons($this->themePath.'/images/ic/');
         return $icons;
     }
 
-    function &_getUserManager() {
+    function &_getUserManager()
+    {
         $um = UserManager::instance();
         return $um;
     }
 
-    function &_getCurrentUser() {
+    function &_getCurrentUser()
+    {
         $um   = $this->_getUserManager();
         $user = $um->getCurrentUser();
         return $user;
     }
 
-    function &_getPermissionsManager() {
+    function &_getPermissionsManager()
+    {
         $dpm = Docman_PermissionsManager::instance($this->item->getGroupId());
         return $dpm;
     }
 
-    function visitFolder($item, $params = array()) {
+    function visitFolder($item, $params = array())
+    {
         return '';
     }
 
-    function visitWiki($item, $params = array()) {
+    function visitWiki($item, $params = array())
+    {
         return '';
     }
 
-    function visitLink($item, $params = array()) {
+    function visitLink($item, $params = array())
+    {
         return '';
     }
 
-    function visitFile($item, $params = array()) {
+    function visitFile($item, $params = array())
+    {
         return '';
     }
 
-    function visitEmbeddedFile($item, $params = array()) {
+    function visitEmbeddedFile($item, $params = array())
+    {
         return '';
     }
 
-    function visitEmpty($item, $params = array()) {
+    function visitEmpty($item, $params = array())
+    {
         return '';
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,8 +22,10 @@
  * Fake user to be used when one should have all read access on all trackers and
  * artifacts fields values.
  */
-class Tracker_UserWithReadAllPermission extends PFUser {
-    public function __construct(PFUser $user) {
+class Tracker_UserWithReadAllPermission extends PFUser
+{
+    public function __construct(PFUser $user)
+    {
         parent::__construct($user->toRow());
     }
 }

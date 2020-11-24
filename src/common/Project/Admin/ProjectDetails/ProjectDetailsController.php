@@ -24,7 +24,7 @@
 
 namespace Tuleap\Project\Admin\ProjectDetails;
 
-require_once('www/project/admin/project_admin_utils.php');
+require_once __DIR__ . '/../../../../www/project/admin/project_admin_utils.php';
 
 use Codendi_HTMLPurifier;
 use CSRFSynchronizerToken;
@@ -47,6 +47,8 @@ use Tuleap\Project\Admin\ProjectVisibilityPresenterBuilder;
 use Tuleap\Project\Admin\ProjectVisibilityUserConfigurationPermissions;
 use Tuleap\Project\Admin\ServicesUsingTruncatedMailRetriever;
 use Tuleap\Project\DescriptionFieldsFactory;
+use Tuleap\Project\ProjectDescriptionUsageRetriever;
+use Tuleap\Project\Registration\Template\TemplateFactory;
 use Tuleap\TroveCat\TroveCatLinkDao;
 use UGroupBinding;
 
@@ -92,11 +94,6 @@ class ProjectDetailsController
     private $project_visibility_configuration;
 
     /**
-     * @var ServicesUsingTruncatedMailRetriever
-     */
-    private $service_truncated_mails_retriever;
-
-    /**
      * @var UGroupBinding
      */
     private $ugroup_binding;
@@ -110,6 +107,10 @@ class ProjectDetailsController
      * @var CSRFSynchronizerToken
      */
     private $csrf_token;
+    /**
+     * @var TemplateFactory
+     */
+    private $template_factory;
 
     public function __construct(
         DescriptionFieldsFactory $description_fields_factory,
@@ -120,10 +121,10 @@ class ProjectDetailsController
         ProjectHistoryDao $project_history_dao,
         ProjectVisibilityPresenterBuilder $project_visibility_presenter_builder,
         ProjectVisibilityUserConfigurationPermissions $project_visibility_configuration,
-        ServicesUsingTruncatedMailRetriever $service_truncated_mails_retriever,
         UGroupBinding $ugroup_binding,
         TroveCatLinkDao $trove_cat_link_dao,
-        CSRFSynchronizerToken $csrf_token
+        CSRFSynchronizerToken $csrf_token,
+        TemplateFactory $template_factory
     ) {
         $this->description_fields_factory           = $description_fields_factory;
         $this->current_project                      = $current_project;
@@ -132,11 +133,11 @@ class ProjectDetailsController
         $this->event_manager                        = $event_manager;
         $this->project_history_dao                  = $project_history_dao;
         $this->project_visibility_configuration     = $project_visibility_configuration;
-        $this->service_truncated_mails_retriever    = $service_truncated_mails_retriever;
         $this->ugroup_binding                       = $ugroup_binding;
         $this->project_visibility_presenter_builder = $project_visibility_presenter_builder;
         $this->trove_cat_link_dao                   = $trove_cat_link_dao;
         $this->csrf_token                           = $csrf_token;
+        $this->template_factory                     = $template_factory;
     }
 
     public function display(HTTPRequest $request)
@@ -181,6 +182,7 @@ class ProjectDetailsController
             new ProjectDetailsPresenter(
                 $project,
                 $template_project,
+                $this->template_factory->getTemplateForProject($project),
                 $group_info,
                 $description_field_representations,
                 $hierarchy_presenter,
@@ -188,7 +190,8 @@ class ProjectDetailsController
                 $are_trove_categories_used,
                 $project_trove_categories,
                 $this->getProjectsCreatedFromTemplate($project),
-                $this->csrf_token
+                $this->csrf_token,
+                ProjectDescriptionUsageRetriever::isDescriptionMandatory()
             )
         );
     }
@@ -234,7 +237,13 @@ class ProjectDetailsController
         $form_group_name = trim($request->get('form_group_name'));
         $form_shortdesc  = $request->get('form_shortdesc');
 
-        if (! $form_group_name || ! $form_shortdesc) {
+        if (! $form_group_name) {
+            $GLOBALS['Response']->addFeedback(Feedback::ERROR, _('Missing Information. PLEASE fill in all required information.'));
+
+            return false;
+        }
+
+        if (ProjectDescriptionUsageRetriever::isDescriptionMandatory()  && ! $form_shortdesc) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, _('Missing Information. PLEASE fill in all required information.'));
 
             return false;
@@ -434,7 +443,6 @@ class ProjectDetailsController
                     break;
             }
         }
-
 
         return $parent_project_info;
     }

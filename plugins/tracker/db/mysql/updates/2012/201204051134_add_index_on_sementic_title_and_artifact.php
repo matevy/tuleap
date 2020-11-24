@@ -19,30 +19,34 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class b201204051134_add_index_on_sementic_title_and_artifact extends ForgeUpgrade_Bucket {
+class b201204051134_add_index_on_sementic_title_and_artifact extends ForgeUpgrade_Bucket
+{
 
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Tracker cross search needs new index on tracker_artifact and tracker_semantic_title to be efficient.
 EOT;
     }
 
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
-    public function up() {
+    public function up()
+    {
         $sql = "ALTER TABLE tracker_artifact ADD INDEX idx_last_changeset_id (last_changeset_id, id)";
         $msg = "adding index on `last_changeset_id` on `tracker_artifact`";
         $this->executeQuery($sql, $msg);
-        
-        
+
         $sql = "ALTER TABLE tracker_semantic_status ADD INDEX idx_ovi_fi (open_value_id, field_id)";
         $msg = "adding index on (`open_value_id`, `field_id`) on `tracker_semantic_status`";
         $this->executeQuery($sql, $msg);
     }
-    
-    private function executeQuery($sql, $msg) {
+
+    private function executeQuery($sql, $msg)
+    {
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
             $error_detail  = implode(', ', $this->db->dbh->errorInfo());
@@ -50,6 +54,4 @@ EOT;
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($error_message);
         }
     }
-    
 }
-?>

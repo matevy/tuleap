@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -17,6 +17,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* global tlp:readonly */
 !(function($) {
     function formatOptionIcon(option) {
         return $('<i class="fa fa-' + option.id + '"></i>');
@@ -56,14 +57,14 @@
         $(".provider-name").keyup(function() {
             $(this)
                 .parents(".tlp-modal-body")
-                .find("#provider-admin-modal-provider-button-preview > button > span")
+                .find(".provider-admin-modal-provider-button-preview > button > span")
                 .html($(this).val());
         });
 
         $(".provider-icon-selector").change(function() {
             var icon = $(this)
                 .parents(".tlp-modal-body")
-                .find("#provider-admin-modal-provider-button-preview > button > i");
+                .find(".provider-admin-modal-provider-button-preview > button > i");
             icon.removeClass();
             icon.addClass("tlp-button-icon fa fa-" + $(this).val());
         });
@@ -71,9 +72,11 @@
         $(".provider-color-selector").change(function() {
             var button = $(this)
                 .parents(".tlp-modal-body")
-                .find("#provider-admin-modal-provider-button-preview > button");
+                .find(".provider-admin-modal-provider-button-preview > button");
             button.removeClass();
-            button.addClass("tlp-button-primary tlp-button-large");
+            button.addClass(
+                "tlp-button-primary tlp-button-large provider-admin-modal-provider-button"
+            );
 
             if ($(this).val()) {
                 button.addClass($(this).val());
@@ -82,13 +85,28 @@
     }
 
     function initCreationModal() {
-        var modal_providers_config_element = document.getElementById(
-            "siteadmin-config-providers-modal-create"
+        var modal_generic_providers_config_element = document.getElementById(
+            "siteadmin-config-providers-modal-create-generic"
         );
-        var modal_providers_config = tlp.modal(modal_providers_config_element);
+        var modal_generic_providers_config = tlp.modal(modal_generic_providers_config_element);
 
-        document.querySelector(".add-provider-button").addEventListener("click", function() {
-            modal_providers_config.toggle();
+        document
+            .querySelector(".add-generic-provider-button")
+            .addEventListener("click", function() {
+                modal_generic_providers_config.toggle();
+            });
+
+        var modal_azure_providers_config_element = document.getElementById(
+            "siteadmin-config-providers-modal-create-azure"
+        );
+
+        var modal_azure_providers_config = tlp.modal(modal_azure_providers_config_element);
+
+        document.querySelector(".add-azure-provider-button").addEventListener("click", function() {
+            modal_azure_providers_config.toggle();
+        });
+        tlp.dropdown(document.getElementById("dropdown-specific-providers"), {
+            dropdown_menu: document.getElementById("dropdown-specific-providers-menu")
         });
     }
 
@@ -127,7 +145,6 @@
     $(document).ready(function() {
         initIconSelectors();
         initColorSelectors();
-
         syncPreviewButton();
         initCreationModal();
         initUpdateModals();

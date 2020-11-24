@@ -4,7 +4,7 @@
  * Copyright (c) STMicroelectronics, 2008. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2008
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -20,18 +20,16 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-require_once('Docman_Item.class.php');
-require_once('view/Docman_View_Browse.class.php');
-
-require_once('common/collection/PrioritizedList.class.php');
 
 /**
  * Folder is a transport object (aka container) used to share data between
  * Model/Controler and View layer of the application
  */
-class Docman_Folder extends Docman_Item {
-    
-    function __construct($data = null) {
+class Docman_Folder extends Docman_Item
+{
+
+    function __construct($data = null)
+    {
         parent::__construct($data);
         $this->_resetItems();
     }
@@ -41,27 +39,33 @@ class Docman_Folder extends Docman_Item {
         return $GLOBALS['Language']->getText('plugin_docman', 'doc_type_folder');
     }
 
-    function toRow() {
+    function toRow()
+    {
         $row = parent::toRow();
         $row['item_type'] = PLUGIN_DOCMAN_ITEM_TYPE_FOLDER;
         return $row;
     }
-    
-    function isRoot() {
+
+    function isRoot()
+    {
         return $this->parent_id == 0;
     }
-    
+
     var $_items;
-    function addItem(&$item) {
+    function addItem(&$item)
+    {
         $this->_items->add($item, -($item->getRank()));
     }
-    function &getAllItems() {
+    function &getAllItems()
+    {
         return $this->_items;
     }
-    function removeAllItems() {
+    function removeAllItems()
+    {
         $this->_resetItems();
     }
-    function _resetItems() {
+    function _resetItems()
+    {
         if (isset($this->_items)) {
             unset($this->_items);
         }
@@ -72,5 +76,3 @@ class Docman_Folder extends Docman_Item {
         return $visitor->visitFolder($this, $params);
     }
 }
-
-?>

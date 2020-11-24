@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2015 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,10 +19,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Project\REST\UserGroupRepresentation;
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValuePermissionsOnArtifactFullRepresentation;
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValuePermissionsOnArtifactRepresentation;
+
 /**
  * Manage values in changeset for date fields
  */
-class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Artifact_ChangesetValue {
+class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Artifact_ChangesetValue
+{
 
     /**
      * @var array
@@ -30,7 +35,8 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
     protected $perms;
     protected $used;
 
-    public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed, $used, $perms) {
+    public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed, $used, $perms)
+    {
         parent::__construct($id, $changeset, $field, $has_changed);
         $this->perms = $perms;
         $this->used = $used;
@@ -39,7 +45,8 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
     /**
      * @return mixed
      */
-    public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor) {
+    public function accept(Tracker_Artifact_ChangesetValueVisitor $visitor)
+    {
         return $visitor->visitPermissionsOnArtifact($this);
     }
 
@@ -48,14 +55,16 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
      *
      * @return Array the permissions
      */
-    public function getPerms() {
+    public function getPerms()
+    {
         return $this->perms;
     }
 
     /**
      * @return array
      */
-    public function getUgroupNamesFromPerms() {
+    public function getUgroupNamesFromPerms()
+    {
         $ugroup_names = array();
 
         foreach ($this->perms as $ugroup_id) {
@@ -70,13 +79,14 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
      *
      * @return bool true if the permissions are used
      */
-    public function getUsed() {
+    public function getUsed()
+    {
         return $this->used;
     }
 
-    public function getRESTValue(PFUser $user) {
-        $classname_with_namespace = 'Tuleap\Tracker\REST\Artifact\ArtifactFieldValuePermissionsOnArtifactRepresentation';
-        $representation = new $classname_with_namespace;
+    public function getRESTValue(PFUser $user)
+    {
+        $representation = new ArtifactFieldValuePermissionsOnArtifactRepresentation();
         $representation->build(
             $this->field->getId(),
             $this->field->getLabel(),
@@ -92,16 +102,16 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
         return $representation;
     }
 
-    protected function getUserGroupRESTId($user_group_id) {
+    protected function getUserGroupRESTId($user_group_id)
+    {
         $project_id = $this->getField()->getTracker()->getProject()->getID();
 
-        $representation_class = '\\Tuleap\\Project\\REST\\UserGroupRepresentation';
-        return call_user_func_array($representation_class.'::getRESTIdForProject', array($project_id, $user_group_id));
+        return UserGroupRepresentation::getRESTIdForProject($project_id, $user_group_id);
     }
 
-    public function getFullRESTValue(PFUser $user) {
-        $classname_with_namespace = 'Tuleap\Tracker\REST\Artifact\ArtifactFieldValuePermissionsOnArtifactFullRepresentation';
-        $representation = new $classname_with_namespace;
+    public function getFullRESTValue(PFUser $user)
+    {
+        $representation = new ArtifactFieldValuePermissionsOnArtifactFullRepresentation();
         $representation->build(
             $this->field->getId(),
             Tracker_FormElementFactory::instance()->getType($this->field),
@@ -119,14 +129,15 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
      *
      * @return string The value of this artifact changeset value for the web interface
      */
-    public function getValue() {
+    public function getValue()
+    {
         return '';
     }
 
     /**
      * Returns diff between current perms and perms in param
      *
-     * @return string The difference between another $changeset_value, false if no differneces
+     * @return string|false The difference between another $changeset_value, false if no differneces
      */
     public function diff($changeset_value, $format = 'html', ?PFUser $user = null, $ignore_perms = false)
     {
@@ -147,35 +158,35 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
             }
             $added   = $this->format(implode(', ', $added_arr), $format);
             if (empty($next)) {
-                $changes = ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact','cleared');
-            } else if (empty($previous)) {
-                $changes = $GLOBALS['Language']->getText('plugin_tracker_artifact','set_to').' '. $added;
-            } else if (count($previous) == 1 && count($next) == 1) {
-                $changes = ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact','changed_from'). ' '.$removed .' '.$GLOBALS['Language']->getText('plugin_tracker_artifact','to').' '.$added;
+                $changes = ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'cleared');
+            } elseif (empty($previous)) {
+                $changes = $GLOBALS['Language']->getText('plugin_tracker_artifact', 'set_to').' '. $added;
+            } elseif (count($previous) == 1 && count($next) == 1) {
+                $changes = ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'changed_from'). ' '.$removed .' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'to').' '.$added;
             } else {
                 if ($removed) {
-                    $changes = $removed .' '. $GLOBALS['Language']->getText('plugin_tracker_artifact','removed');
+                    $changes = $removed .' '. $GLOBALS['Language']->getText('plugin_tracker_artifact', 'removed');
                 }
                 if ($added) {
                     if ($changes) {
                         $changes .= PHP_EOL;
                     }
-                    $changes .= $added .' '. $GLOBALS['Language']->getText('plugin_tracker_artifact','added');
+                    $changes .= $added .' '. $GLOBALS['Language']->getText('plugin_tracker_artifact', 'added');
                 }
             }
-
         }
         return $changes;
     }
 
-    public function nodiff($format = 'html') {
+    public function nodiff($format = 'html')
+    {
         $next = $this->getPerms();
         $added_arr = array();
         foreach ($next as $element) {
                 $added_arr[] = $this->getUgroupLabel($element);
         }
         $added = $this->format(implode(', ', $added_arr), $format);
-        return ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact','set_to').' '.$added;
+        return ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'set_to').' '.$added;
     }
 
     private function format($value, $format)
@@ -186,20 +197,24 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
         return Codendi_HTMLPurifier::instance()->purify($value);
     }
 
-    protected function getDao() {
+    protected function getDao()
+    {
         return new UGroupDao(CodendiDataAccess::instance());
     }
 
-    private function getUgroupName($ugroup_id) {
+    private function getUgroupName($ugroup_id)
+    {
         $row = $this->getDao()->searchByUGroupId($ugroup_id)->getRow();
         return $row['name'];
     }
 
-    protected function getUgroupLabel($ugroup_id) {
+    protected function getUgroupLabel($ugroup_id)
+    {
         return util_translate_name_ugroup($this->getUgroupName($ugroup_id));
     }
 
-    protected function getUgroupRESTRepresentation($u_group_id) {
+    protected function getUgroupRESTRepresentation($u_group_id)
+    {
         $ugroup_manager = new UGroupManager($this->getDao());
         $u_group        = $ugroup_manager->getById($u_group_id);
 

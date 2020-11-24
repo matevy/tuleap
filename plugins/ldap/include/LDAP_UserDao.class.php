@@ -26,7 +26,8 @@
  * Interact with plugin_ldap_user table in database
  *
  */
-class LDAP_UserDao extends DataAccessObject {
+class LDAP_UserDao extends DataAccessObject
+{
 
     /**
      *
@@ -50,9 +51,9 @@ class LDAP_UserDao extends DataAccessObject {
     /**
      * Check if user has already logged in on Web platform
      *
-     * @param Integer $userId Id of the user
+     * @param int $userId Id of the user
      *
-     * @return Boolean
+     * @return bool
      */
     function alreadyLoggedInOnce($userId)
     {
@@ -75,12 +76,12 @@ class LDAP_UserDao extends DataAccessObject {
     /**
      * Create new entry for LDAP user.
      *
-     * @param Integer $userId Id of the user
-     * @param Integer $date   Date of creation (timestamp)
+     * @param int $userId Id of the user
+     * @param int $date Date of creation (timestamp)
      *
-     * @return Boolean
+     * @return bool
      */
-    function createLdapUser($userId, $date=0, $ldap_uid="")
+    function createLdapUser($userId, $date = 0, $ldap_uid = "")
     {
         $sql = 'INSERT INTO plugin_ldap_user'.
             '(user_id, login_confirmation_date, ldap_uid)'.
@@ -92,10 +93,10 @@ class LDAP_UserDao extends DataAccessObject {
     /**
      * Record when user log on Codendi
      *
-     * @param Integer $userId Id of the user
-     * @param Integer $date   Date of login (timestamp)
+     * @param int $userId Id of the user
+     * @param int $date Date of login (timestamp)
      *
-     * @return Boolean
+     * @return bool
      */
     function setLoginDate($userId, $date)
     {
@@ -117,9 +118,9 @@ class LDAP_UserDao extends DataAccessObject {
      *
      * @param String $name Name to test
      *
-     * @return Boolean
+     * @return bool
      */
-    function userNameIsAvailable($name)
+    public function userNameIsAvailable($name)
     {
         $sql = 'SELECT user_name'.
             ' FROM user'.
@@ -138,10 +139,10 @@ class LDAP_UserDao extends DataAccessObject {
     /**
      * Update LDAP login of given user
      *
-     * @param Integer $userId  User ID to update
-     * @param Integer $ldapUid LDAP login of the user
+     * @param int $userId User ID to update
+     * @param int $ldapUid LDAP login of the user
      *
-     * @return Boolean
+     * @return bool
      */
     function updateLdapUid($userId, $ldapUid)
     {
@@ -159,7 +160,8 @@ class LDAP_UserDao extends DataAccessObject {
      * @return int
      *
      */
-    public function getNbrActiveUsers() {
+    public function getNbrActiveUsers()
+    {
         $sql = 'SELECT count(u.user_id) as count
         FROM user u
          JOIN plugin_ldap_user ldap_user ON (ldap_user.user_id = u.user_id)
@@ -176,7 +178,8 @@ class LDAP_UserDao extends DataAccessObject {
      * @return DataAccessResult
      *
      */
-    public function getActiveUsers() {
+    public function getActiveUsers()
+    {
         $sql = 'SELECT u.user_id, user_name, email, ldap_id, status, realname, ldap_uid
         FROM user u
          JOIN plugin_ldap_user ldap_user ON (ldap_user.user_id = u.user_id)
@@ -187,7 +190,8 @@ class LDAP_UserDao extends DataAccessObject {
         return $this->retrieve($sql);
     }
 
-    public function searchNonUniqueLdapUid() {
+    public function searchNonUniqueLdapUid()
+    {
         $sql = "SELECT ldap_uid
                 FROM user
                     JOIN plugin_ldap_user ON (plugin_ldap_user.user_id=user.user_id)

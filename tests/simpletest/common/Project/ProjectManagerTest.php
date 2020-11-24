@@ -22,17 +22,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\Project\ProjectAccessChecker;
+
 Mock::generatePartial('ProjectManager', 'ProjectManagerTestVersion', array('createProjectInstance', '_getDao', '_getUserManager'));
 Mock::generatePartial('ProjectManager', 'ProjectManagerTestVersion2', array('getProject', 'getProjectByUnixName', 'checkRestrictedAccess'));
 Mock::generate('Project');
-require_once('common/dao/ProjectDao.class.php');
 Mock::generate('ProjectDao');
 Mock::generate('UserManager');
 Mock::generate('PFUser');
-require_once('common/language/BaseLanguage.class.php');
 Mock::generate('BaseLanguage');
 
-class ProjectManagerTest extends TuleapTestCase {
+class ProjectManagerTest extends TuleapTestCase
+{
 
     /** @var UserManager */
     private $user_manager;
@@ -40,7 +41,8 @@ class ProjectManagerTest extends TuleapTestCase {
     /** @var ProjectManager */
     private $project_manager_test_version;
 
-    function setUp() {
+    function setUp()
+    {
         parent::setUp();
         ForgeConfig::store();
 
@@ -50,12 +52,14 @@ class ProjectManagerTest extends TuleapTestCase {
         stub($this->project_manager_test_version)->_getUserManager()->returns($this->user_manager);
     }
 
-    function tearDown() {
+    function tearDown()
+    {
         ForgeConfig::restore();
         parent::tearDown();
     }
 
-    function testGetProject() {
+    function testGetProject()
+    {
         $p1 = new MockProject($this);
         $p1->setReturnValue('getId', '1');
         $p1->setReturnValue('getUnixName', 'one');
@@ -73,7 +77,8 @@ class ProjectManagerTest extends TuleapTestCase {
         $this->assertReference($o1, $o2);
         $this->assertNotEqual($o1, $o3);
     }
-    function testClear() {
+    function testClear()
+    {
         $p1 = new MockProject($this);
         $p1->setReturnValue('getId', '1');
         $p1->setReturnValue('getUnixName', 'one');
@@ -97,7 +102,8 @@ class ProjectManagerTest extends TuleapTestCase {
         $p->getProject(1);
     }
 
-    function testRename() {
+    function testRename()
+    {
         $p1 = new MockProject($this);
         $p1->setReturnValue('getId', '1');
         $p1->setReturnValue('getUnixName', 'one');
@@ -112,12 +118,12 @@ class ProjectManagerTest extends TuleapTestCase {
 
         $this->assertTrue($pm->renameProject($p1, 'TestProj'));
         $this->assertFalse($pm->isCached($p1->getId()));
-
     }
 
-    function testGetGroupByIdForSoapNoProject() {
-        if (!defined('get_group_fault')) {
-            define('get_group_fault', '3000');
+    function testGetGroupByIdForSoapNoProject()
+    {
+        if (!defined('GET_GROUP_FAULT')) {
+            define('GET_GROUP_FAULT', '3000');
         }
         $pm = new ProjectManagerTestVersion2();
         $pm->setReturnValue('getProject', null);
@@ -125,9 +131,10 @@ class ProjectManagerTest extends TuleapTestCase {
         $pm->getGroupByIdForSoap(1, '');
     }
 
-    function testGetGroupByIdForSoapProjectError() {
-        if (!defined('get_group_fault')) {
-            define('get_group_fault', '3000');
+    function testGetGroupByIdForSoapProjectError()
+    {
+        if (!defined('GET_GROUP_FAULT')) {
+            define('GET_GROUP_FAULT', '3000');
         }
         $pm = new ProjectManagerTestVersion2();
         $project = new MockProject();
@@ -137,9 +144,10 @@ class ProjectManagerTest extends TuleapTestCase {
         $pm->getGroupByIdForSoap(1, '');
     }
 
-    function testGetGroupByIdForSoapProjectNotActive() {
-        if (!defined('get_group_fault')) {
-            define('get_group_fault', '3000');
+    function testGetGroupByIdForSoapProjectNotActive()
+    {
+        if (!defined('GET_GROUP_FAULT')) {
+            define('GET_GROUP_FAULT', '3000');
         }
         $pm = new ProjectManagerTestVersion2();
         $project = new MockProject();
@@ -150,9 +158,10 @@ class ProjectManagerTest extends TuleapTestCase {
         $pm->getGroupByIdForSoap(1, '');
     }
 
-    function testGetGroupByIdForSoapRestricted() {
-        if (!defined('get_group_fault')) {
-            define('get_group_fault', '3000');
+    function testGetGroupByIdForSoapRestricted()
+    {
+        if (!defined('GET_GROUP_FAULT')) {
+            define('GET_GROUP_FAULT', '3000');
         }
         $pm = new ProjectManagerTestVersion2();
         $project = new MockProject();
@@ -164,9 +173,10 @@ class ProjectManagerTest extends TuleapTestCase {
         $pm->getGroupByIdForSoap(1, '');
     }
 
-    function testGetGroupByIdForSoapPass() {
-        if (!defined('get_group_fault')) {
-            define('get_group_fault', '3000');
+    function testGetGroupByIdForSoapPass()
+    {
+        if (!defined('GET_GROUP_FAULT')) {
+            define('GET_GROUP_FAULT', '3000');
         }
         $pm = new ProjectManagerTestVersion2();
         $project = new MockProject();
@@ -178,30 +188,35 @@ class ProjectManagerTest extends TuleapTestCase {
         $pm->getGroupByIdForSoap(1, '');
     }
 
-    function testCheckRestrictedAccessNoRestricted () {
+    function testCheckRestrictedAccessNoRestricted()
+    {
         $this->assertTrue($this->project_manager_test_version->checkRestrictedAccess(null, null));
     }
 
-    function testCheckRestrictedAccessRestrictedNotAllowed () {
+    function testCheckRestrictedAccessRestrictedNotAllowed()
+    {
         ForgeConfig::set(ForgeAccess::CONFIG, ForgeAccess::REGULAR);
 
         $this->assertTrue($this->project_manager_test_version->checkRestrictedAccess(null, null));
     }
 
-    function testCheckRestrictedAccessNoGroup () {
+    function testCheckRestrictedAccessNoGroup()
+    {
         ForgeConfig::set(ForgeAccess::CONFIG, ForgeAccess::RESTRICTED);
 
         $this->assertFalse($this->project_manager_test_version->checkRestrictedAccess(null, null));
     }
 
-    function testCheckRestrictedAccessNoUser () {
+    function testCheckRestrictedAccessNoUser()
+    {
         ForgeConfig::set(ForgeAccess::CONFIG, ForgeAccess::RESTRICTED);
         $project = \Mockery::mock(\Project::class);
 
         $this->assertFalse($this->project_manager_test_version->checkRestrictedAccess($project, null));
     }
 
-    function testCheckRestrictedAccessUserNotRestricted () {
+    function testCheckRestrictedAccessUserNotRestricted()
+    {
         ForgeConfig::set(ForgeAccess::CONFIG, ForgeAccess::RESTRICTED);
         $user = \Mockery::mock(\PFUser::class);
         $user->shouldReceive('isRestricted')->andReturn(false);
@@ -210,7 +225,8 @@ class ProjectManagerTest extends TuleapTestCase {
         $this->assertTrue($this->project_manager_test_version->checkRestrictedAccess($project, $user));
     }
 
-    function testCheckRestrictedAccessUserNotMember () {
+    function testCheckRestrictedAccessUserNotMember()
+    {
         ForgeConfig::set(ForgeAccess::CONFIG, ForgeAccess::RESTRICTED);
         $user = \Mockery::mock(\PFUser::class);
         $user->shouldReceive('isRestricted')->andReturn(true);
@@ -221,7 +237,8 @@ class ProjectManagerTest extends TuleapTestCase {
         $this->assertFalse($this->project_manager_test_version->checkRestrictedAccess($project, $user));
     }
 
-    function testCheckRestrictedAccessUserIsMember () {
+    function testCheckRestrictedAccessUserIsMember()
+    {
         ForgeConfig::set(ForgeAccess::CONFIG, ForgeAccess::RESTRICTED);
         $user = \Mockery::mock(\PFUser::class);
         $user->shouldReceive('isRestricted')->andReturn(true);
@@ -262,30 +279,39 @@ class ProjectManagerTest extends TuleapTestCase {
     }
 }
 
-class ProjectManager_GetValidProjectTest extends TuleapTestCase {
+class ProjectManager_GetValidProjectTest extends TuleapTestCase
+{
     private $dao;
     /** @var ProjectManager */
     private $project_manager;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->dao = mock('ProjectDao');
-        $this->project_manager = ProjectManager::testInstance($this->dao);
+        $this->project_manager = ProjectManager::testInstance(
+            Mockery::mock(ProjectAccessChecker::class),
+            Mockery::mock(ProjectHistoryDao::class),
+            $this->dao
+        );
     }
 
-    public function itFindsTheProjectWithItsID() {
+    public function itFindsTheProjectWithItsID()
+    {
         stub($this->dao)->searchById(112)->returnsDar(array('group_id' => 112, 'status' => 'A'));
         $project = $this->project_manager->getValidProjectByShortNameOrId(112);
         $this->assertEqual($project->getID(), 112);
     }
 
-    public function itFindsTheProjectWithItsUnixName() {
+    public function itFindsTheProjectWithItsUnixName()
+    {
         stub($this->dao)->searchByCaseInsensitiveUnixGroupName('1gpig')->returnsDar(array('group_id' => 112, 'status' => 'A'));
         $project = $this->project_manager->getValidProjectByShortNameOrId('1gpig');
         $this->assertEqual($project->getID(), 112);
     }
 
-    public function itThrowsAnExceptionWhenNoProjectMatches() {
+    public function itThrowsAnExceptionWhenNoProjectMatches()
+    {
         stub($this->dao)->searchById()->returnsEmptyDar();
         stub($this->dao)->searchByCaseInsensitiveUnixGroupName()->returnsEmptyDar();
 
@@ -293,7 +319,8 @@ class ProjectManager_GetValidProjectTest extends TuleapTestCase {
         $this->project_manager->getValidProjectByShortNameOrId('doesnt exist');
     }
 
-    public function itThrowsAnExceptionWhenProjectIsDeleted() {
+    public function itThrowsAnExceptionWhenProjectIsDeleted()
+    {
         $this->expectException('Project_NotFoundException');
         stub($this->dao)->searchById()->returnsEmptyDar();
         stub($this->dao)->searchByCaseInsensitiveUnixGroupName('1gpig')->returnsDar(array('group_id' => 112, 'status' => 'D'));

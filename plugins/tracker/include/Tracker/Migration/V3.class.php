@@ -22,19 +22,22 @@
 /**
  * This migrate trackers v3 into tracker v5
  */
-class Tracker_Migration_V3 {
+class Tracker_Migration_V3
+{
 
     /** @var TrackerFactory */
     private $tracker_factory;
 
-    public function __construct(TrackerFactory $tracker_factory) {
+    public function __construct(TrackerFactory $tracker_factory)
+    {
         $this->tracker_factory = $tracker_factory;
     }
 
     /**
      * @return Tracker (only the structure)
      */
-    public function createTV5FromTV3(Project $project, $name, $description, $itemname, ArtifactType $tv3) {
+    public function createTV5FromTV3(Project $project, $name, $description, $itemname, ArtifactType $tv3)
+    {
         $dao = new Tracker_Migration_V3_Dao();
         $logger = new BackendLogger(ForgeConfig::get('codendi_log').'/'.Tracker_Migration_MigrationManager::LOG_FILE);
 
@@ -63,7 +66,7 @@ class Tracker_Migration_V3 {
             $logger->info("$log_prefix 060 RenderersTable");
             $renderers_table_dao = new Tracker_Migration_V3_RenderersTableDao();
             $renderers_table_dao->create($tv3->getID(), $id);
-            
+
             $logger->info("$log_prefix 070 RenderersGraph");
             $renderers_graph_dao = new Tracker_Migration_V3_RenderersGraphDao();
             $renderers_graph_dao->create($tv3->getID(), $id);
@@ -119,4 +122,3 @@ class Tracker_Migration_V3 {
         }
     }
 }
-?>

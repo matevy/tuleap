@@ -21,13 +21,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class FakePluginDescriptor {
+class FakePluginDescriptor
+{
 
-    public function __construct($basedir) {
+    public function __construct($basedir)
+    {
         $this->basedir = $basedir;
-        ini_set('include_path', ini_get('include_path').':'.$basedir.'/src');
-
-        require('common/language/BaseLanguage.class.php');
 
         $GLOBALS['codendi_cache_dir']     = '/tmp';
         $GLOBALS['sys_incdir']            = $basedir.'/site-content';
@@ -40,13 +39,15 @@ class FakePluginDescriptor {
         $GLOBALS['Language']->compileLanguage('en_US');
     }
 
-    public function getDescriptor($pluginName) {
+    public function getDescriptor($pluginName)
+    {
         $plugin = $this->findPlugin($pluginName);
         $path   = $this->findDescriptor($plugin);
         return $this->instanciateDescriptor($pluginName, $path);
     }
 
-    protected function instanciateDescriptor($pluginName, $filePath) {
+    protected function instanciateDescriptor($pluginName, $filePath)
+    {
         include $filePath;
         $classesAfter = get_declared_classes();
         foreach ($classesAfter as $className) {
@@ -60,7 +61,8 @@ class FakePluginDescriptor {
         throw new Exception("No descriptor class found for plugin $pluginName");
     }
 
-    protected function findPlugin($pluginName) {
+    protected function findPlugin($pluginName)
+    {
         $it = new DirectoryIterator($this->basedir.'/plugins/');
         foreach ($it as $plugin) {
             if (strtolower($plugin->getFilename()) == strtolower($pluginName)) {
@@ -70,7 +72,8 @@ class FakePluginDescriptor {
         throw new Exception("No plugin found with given name: $pluginName in $this->basedir");
     }
 
-    public function findDescriptor($pluginPath) {
+    public function findDescriptor($pluginPath)
+    {
         $it = new DirectoryIterator($pluginPath.'/include');
         foreach ($it as $file) {
             if (preg_match('/PluginDescriptor\.class\.php$/', $file->getFilename())) {
@@ -80,10 +83,8 @@ class FakePluginDescriptor {
         throw new Exception("No descriptor found for plugin $pluginPath");
     }
 
-    public function getDescriptorFromFile($pluginName, $path) {
+    public function getDescriptorFromFile($pluginName, $path)
+    {
         return $this->instanciateDescriptor($pluginName, $path);
     }
-
 }
-
-?>

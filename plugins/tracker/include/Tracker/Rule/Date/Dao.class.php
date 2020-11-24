@@ -17,14 +17,15 @@
   * You should have received a copy of the GNU General Public License
   * along with Tuleap. If not, see <http://www.gnu.org/licenses/
   */
-require_once('common/dao/include/DataAccessObject.class.php');
 
 /**
  *  Data Access Object for Tracker_Rule
  */
-class Tracker_Rule_Date_Dao extends DataAccessObject {
+class Tracker_Rule_Date_Dao extends DataAccessObject
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_rule_date';
     }
@@ -33,7 +34,8 @@ class Tracker_Rule_Date_Dao extends DataAccessObject {
      * Searches Tracker_Rule by Id
      * @return DataAccessResult
      */
-    public function searchById($tracker_id, $id) {
+    public function searchById($tracker_id, $id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $id         = $this->da->escapeInt($id);
         $sql = "SELECT *
@@ -49,7 +51,8 @@ class Tracker_Rule_Date_Dao extends DataAccessObject {
      * Searches Tracker_Rule by TrackerId
      * @return DataAccessResult
      */
-    public function searchByTrackerId($tracker_id) {
+    public function searchByTrackerId($tracker_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT *
                 FROM tracker_rule
@@ -58,9 +61,9 @@ class Tracker_Rule_Date_Dao extends DataAccessObject {
                 WHERE tracker_rule.tracker_id = $tracker_id";
         return $this->retrieve($sql);
     }
-    
+
     /**
-     * 
+     *
      * @param int $tracker_id
      * @param int $source_field_id
      * @param int $target_field_id
@@ -68,7 +71,8 @@ class Tracker_Rule_Date_Dao extends DataAccessObject {
      * @return int The ID of the saved tracker_rule
      * @throws Exception
      */
-    public function insert($tracker_id, $source_field_id, $target_field_id, $comparator) {
+    public function insert($tracker_id, $source_field_id, $target_field_id, $comparator)
+    {
         $tracker_id      = $this->da->escapeInt($tracker_id);
         $source_field_id = $this->da->escapeInt($source_field_id);
         $target_field_id = $this->da->escapeInt($target_field_id);
@@ -76,7 +80,7 @@ class Tracker_Rule_Date_Dao extends DataAccessObject {
         $rule_type       = $this->da->escapeInt(Tracker_Rule::RULETYPE_DATE);
 
         $this->startTransaction();
-        try{
+        try {
             $sql = "INSERT INTO tracker_rule (tracker_id, rule_type)
                     VALUES ($tracker_id, $rule_type)";
             $id  = $this->updateAndGetLastId($sql);
@@ -92,7 +96,8 @@ class Tracker_Rule_Date_Dao extends DataAccessObject {
         return $id;
     }
 
-    public function deleteById($tracker_id, $rule_id) {
+    public function deleteById($tracker_id, $rule_id)
+    {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $rule_id    = $this->da->escapeInt($rule_id);
         $sql = "DELETE tracker_rule_date.*
@@ -109,7 +114,8 @@ class Tracker_Rule_Date_Dao extends DataAccessObject {
         }
     }
 
-    public function save($id, $source_field_id, $target_field_id, $comparator) {
+    public function save($id, $source_field_id, $target_field_id, $comparator)
+    {
         $id              = $this->da->escapeInt($id);
         $source_field_id = $this->da->escapeInt($source_field_id);
         $target_field_id = $this->da->escapeInt($target_field_id);
@@ -124,4 +130,3 @@ class Tracker_Rule_Date_Dao extends DataAccessObject {
         return $this->update($sql);
     }
 }
-?>

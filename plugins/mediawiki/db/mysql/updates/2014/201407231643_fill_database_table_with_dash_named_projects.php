@@ -16,14 +16,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class b201407231643_fill_database_table_with_dash_named_projects extends ForgeUpgrade_Bucket {
+class b201407231643_fill_database_table_with_dash_named_projects extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add projects with a dash in unix_name to plugin_mediawiki_database table
 EOT;
@@ -34,7 +36,8 @@ EOT;
      *
      * @return void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -43,7 +46,8 @@ EOT;
      *
      * @return void
      */
-    public function up() {
+    public function up()
+    {
         $sql = "DROP INDEX project_id_idx ON plugin_mediawiki_database";
 
         $this->execDB($sql, 'An error occured while attempting to delete index project_id_idx from plugin_mediawiki_database');
@@ -63,12 +67,11 @@ EOT;
         $this->execDB($sql, 'An error occured while filling plugin_mediawiki_database table (projects with dashed name): ');
     }
 
-    private function execDB($sql, $message) {
+    private function execDB($sql, $message)
+    {
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message.implode(', ', $this->db->dbh->errorInfo()));
         }
     }
 }
-
-?>

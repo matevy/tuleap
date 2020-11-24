@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'pre.php';
+require_once __DIR__ . '/../www/include/pre.php';
 
 $debug           = false;
 $overwrite       = false;
@@ -29,7 +29,7 @@ $overwrite_option= getopt('o');
 
 if (isset($debug_option['d'])) {
     $debug = true;
- }
+}
 
 if (isset($overwrite_option['o'])) {
     $overwrite = true;
@@ -57,7 +57,6 @@ if (! $overwrite && file_exists($archive_path)) {
 }
 
 try {
-
     $xml      = new DOMDocument("1.0", "UTF8");
     $logger   = new Log_ConsoleLogger();
     $archive  = new ZipArchive();

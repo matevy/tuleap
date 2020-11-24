@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: OrphanedPages.php,v 1.10 2004/07/09 13:05:34 rurban Exp $');
 /**
  This file is part of PhpWiki.
@@ -27,23 +28,29 @@ rcs_id('$Id: OrphanedPages.php,v 1.10 2004/07/09 13:05:34 rurban Exp $');
  **/
 require_once('lib/PageList.php');
 
-class WikiPlugin_OrphanedPages
-extends WikiPlugin
+class WikiPlugin_OrphanedPages extends WikiPlugin
 {
-    function getName () {
+    function getName()
+    {
         return _("OrphanedPages");
     }
 
-    function getDescription () {
+    function getDescription()
+    {
         return _("List pages which are not linked to by any other page.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.10 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.10 $"
+        );
     }
 
-    function getDefaultArguments() {
+    function getDefaultArguments()
+    {
         return array('noheader'      => false,
                      'include_empty' => false,
                      'exclude'       => '',
@@ -57,7 +64,8 @@ extends WikiPlugin
     // info=mtime,hits,summary,version,author,locked,minor,markup or all
     // exclude arg allows multiple pagenames exclude=HomePage,RecentChanges
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
         $args = $this->getArgs($argstr, $request);
         extract($args);
 
@@ -65,7 +73,7 @@ extends WikiPlugin
         // tailored SQL query via the backend, but this does the job
 
         $allpages_iter = $dbi->getAllPages($include_empty);
-	$pages = array();
+        $pages = array();
         while ($page = $allpages_iter->next()) {
             $links_iter = $page->getBackLinks();
             // Test for absence of backlinks. If a page is linked to
@@ -73,23 +81,27 @@ extends WikiPlugin
             $parent = $links_iter->next();
             if (!$parent               // page has no parents
                 or (($parent->getName() == $page->getName())
-                    and !$links_iter->next())) // or page has only itself as a parent
-            {
+                    and !$links_iter->next())) { // or page has only itself as a parent
                 $pages[] = $page;
             }
         }
         $args['count'] = count($pages);
         $pagelist = new PageList($info, $exclude, $args);
-        if (!$noheader)
+        if (!$noheader) {
             $pagelist->setCaption(_("Orphaned Pages in this wiki (%d total):"));
+        }
         // deleted pages show up as version 0.
-        if ($include_empty)
+        if ($include_empty) {
             $pagelist->_addColumn('version');
+        }
         list($offset,$pagesize) = $pagelist->limit($args['limit']);
-        if (!$pagesize) $pagelist->addPageList($pages);
-        else {
+        if (!$pagesize) {
+            $pagelist->addPageList($pages);
+        } else {
             for ($i=$offset; $i < $offset + $pagesize - 1; $i++) {
-            	if ($i >= $args['count']) break;
+                if ($i >= $args['count']) {
+                    break;
+                }
                 $pagelist->addPage($pages[$i]);
             }
         }
@@ -127,4 +139,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

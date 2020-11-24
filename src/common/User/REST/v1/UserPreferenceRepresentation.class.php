@@ -19,7 +19,8 @@
 
 namespace Tuleap\User\REST\v1;
 
-class UserPreferenceRepresentation {
+class UserPreferenceRepresentation
+{
 
     /**
      * @var string {@type string}
@@ -32,9 +33,9 @@ class UserPreferenceRepresentation {
     public $value;
 
 
-    public function build($key, $value) {
+    public function build($key, $value)
+    {
         $this->key   = $key;
         $this->value = $value;
     }
-
 }

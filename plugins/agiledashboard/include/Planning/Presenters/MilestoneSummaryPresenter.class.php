@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Planning_Presenter_MilestoneSummaryPresenter extends Planning_Presenter_MilestoneSummaryPresenterAbstract {
+class Planning_Presenter_MilestoneSummaryPresenter extends Planning_Presenter_MilestoneSummaryPresenterAbstract
+{
 
     /**
      * A status array. E.g.
@@ -31,30 +32,35 @@ class Planning_Presenter_MilestoneSummaryPresenter extends Planning_Presenter_Mi
      */
     private $status_count;
 
-    public function __construct(Planning_Milestone $milestone, $plugin_path, $has_cardwall, $status_count) {
+    public function __construct(Planning_Milestone $milestone, $plugin_path, $has_cardwall, $status_count)
+    {
         parent::__construct($milestone, $plugin_path, $has_cardwall);
 
         $this->status_count = $status_count;
     }
 
-    public function has_burndown() {
+    public function has_burndown()
+    {
         return false;
     }
 
-    public function count_closed_backlog_items() {
+    public function count_closed_backlog_items()
+    {
         return $this->status_count[Tracker_Artifact::STATUS_CLOSED];
     }
 
-    public function count_open_backlog_items() {
+    public function count_open_backlog_items()
+    {
         return $this->status_count[Tracker_Artifact::STATUS_OPEN];
     }
 
-    public function open() {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard','open');
+    public function open()
+    {
+        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'open');
     }
 
-    public function closed() {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard','closed');
+    public function closed()
+    {
+        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'closed');
     }
 }
-?>

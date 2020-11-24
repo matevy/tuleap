@@ -26,7 +26,8 @@
  * Analyze a push a provide a high level object (PushDetails) that knows if push
  * is a branch creation or a tag deletion, etc.
  */
-class Git_Hook_LogAnalyzer {
+class Git_Hook_LogAnalyzer
+{
     public const FAKE_EMPTY_COMMIT = '0000000000000000000000000000000000000000';
 
     /** @var Git_Exec */
@@ -34,8 +35,9 @@ class Git_Hook_LogAnalyzer {
 
     /** @var Logger */
     private $logger;
-    
-    public function __construct(Git_Exec $git_exec, Logger $logger) {
+
+    public function __construct(Git_Exec $git_exec, Logger $logger)
+    {
         $this->exec_repo = $git_exec;
         $this->logger    = $logger;
     }
@@ -51,7 +53,8 @@ class Git_Hook_LogAnalyzer {
      * @param type $refname
      * @return Git_Hook_PushDetails
      */
-    public function getPushDetails(GitRepository $repository, PFUser $user, $oldrev, $newrev, $refname) {
+    public function getPushDetails(GitRepository $repository, PFUser $user, $oldrev, $newrev, $refname)
+    {
         $change_type   = Git_Hook_PushDetails::ACTION_ERROR;
         $revision_list = array();
         $rev_type      = '';
@@ -72,7 +75,7 @@ class Git_Hook_LogAnalyzer {
                 $rev_type = $this->exec_repo->getObjectType($newrev);
             }
         } catch (Git_Command_Exception $exception) {
-            $this->logger->error(__CLASS__." {$repository->getFullName()} $refname $oldrev $newrev ".$exception->getMessage());
+            $this->logger->error(self::class." {$repository->getFullName()} $refname $oldrev $newrev ".$exception->getMessage());
         }
 
         return new Git_Hook_PushDetails(
@@ -85,5 +88,3 @@ class Git_Hook_LogAnalyzer {
         );
     }
 }
-
-?>

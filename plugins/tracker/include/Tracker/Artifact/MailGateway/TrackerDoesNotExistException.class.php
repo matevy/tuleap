@@ -17,8 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-class Tracker_Artifact_MailGateway_TrackerDoesNotExistException extends Tracker_Exception {
-    public function __construct() {
+class Tracker_Artifact_MailGateway_TrackerDoesNotExistException extends Tracker_Exception
+{
+    public function __construct()
+    {
         parent::__construct("Tracker does no exist");
     }
 }

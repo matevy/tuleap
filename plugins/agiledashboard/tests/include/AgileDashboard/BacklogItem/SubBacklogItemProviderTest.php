@@ -21,13 +21,15 @@
 
 require_once __DIR__.'/../../../bootstrap.php';
 
-class AgileDashboard_BacklogItem_SubBacklogItemProviderTest extends TuleapTestCase {
+class AgileDashboard_BacklogItem_SubBacklogItemProviderTest extends TuleapTestCase
+{
 
     private $backlog_factory;
     private $backlog_item_collection_factory;
     private $user;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->setUpGlobalsMockery();
 
@@ -59,7 +61,8 @@ class AgileDashboard_BacklogItem_SubBacklogItemProviderTest extends TuleapTestCa
         $this->planning_factory->shouldReceive('isTrackerIdUsedInAPlanning')->with(105)->andReturn(true);
     }
 
-    public function itReturnsTheMatchingIds() {
+    public function itReturnsTheMatchingIds()
+    {
         stub($this->dao)->getLinkedArtifactsByIds(array(3), array(3))->returnsDar(
             array('id' => 7,  'tracker_id' => 35),
             array('id' => 8,  'tracker_id' => 35),
@@ -72,7 +75,8 @@ class AgileDashboard_BacklogItem_SubBacklogItemProviderTest extends TuleapTestCa
         $this->assertEqual(array_keys($result), array(7, 8, 11));
     }
 
-    public function itReturnsAnEmptyResultIfThereIsNoMatchingId() {
+    public function itReturnsAnEmptyResultIfThereIsNoMatchingId()
+    {
         stub($this->dao)->getLinkedArtifactsByIds()->returnsEmptyDar();
 
         $result = $this->provider->getMatchingIds($this->milestone, $this->backlog_tracker, $this->user);

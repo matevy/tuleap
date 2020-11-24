@@ -18,7 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever {
+class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever
+{
 
     /** @var Tracker_Artifact_Changeset_IncomingMailDao */
     private $dao;
@@ -29,13 +30,15 @@ class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever {
     /** @var Tracker_Artifact_Changeset_IncomingMailGoldenRetriever */
     private static $instance;
 
-    public function __construct(Tracker_Artifact_Changeset_IncomingMailDao $dao) {
+    public function __construct(Tracker_Artifact_Changeset_IncomingMailDao $dao)
+    {
         $this->dao = $dao;
     }
 
-    public static function instance() {
+    public static function instance()
+    {
         if (!isset(self::$instance)) {
-            $c = __CLASS__;
+            $c = self::class;
             self::$instance = new $c(
                 new Tracker_Artifact_Changeset_IncomingMailDao()
             );
@@ -44,16 +47,19 @@ class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever {
     }
 
     /** @return string | null */
-    public function getRawMailThatCreatedArtifact(Tracker_Artifact $artifact) {
+    public function getRawMailThatCreatedArtifact(Tracker_Artifact $artifact)
+    {
         return $this->getRawMailForChangeset($artifact->getFirstChangeset());
     }
 
     /** @return string | null */
-    public function getRawMailThatCreatedChangeset(Tracker_Artifact_Changeset $changeset) {
+    public function getRawMailThatCreatedChangeset(Tracker_Artifact_Changeset $changeset)
+    {
         return $this->getRawMailForChangeset($changeset);
     }
 
-    private function getRawMailForChangeset(Tracker_Artifact_Changeset $changeset) {
+    private function getRawMailForChangeset(Tracker_Artifact_Changeset $changeset)
+    {
         $raw_mails = $this->getCachedRawMailByChangesetsForArtifact($changeset->getArtifact());
 
         $changeset_id = $changeset->getId();
@@ -64,7 +70,8 @@ class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever {
         return null;
     }
 
-    private function getCachedRawMailByChangesetsForArtifact(Tracker_Artifact $artifact) {
+    private function getCachedRawMailByChangesetsForArtifact(Tracker_Artifact $artifact)
+    {
         if (! isset($this->cache[$artifact->getId()])) {
             $this->cache[$artifact->getId()] = array();
             foreach ($this->dao->searchByArtifactId($artifact->getId()) as $row) {

@@ -20,19 +20,19 @@
 
 namespace Tuleap\Tracker\REST\v1;
 
-use \Luracast\Restler\RestException;
+use Luracast\Restler\RestException;
 use Tracker_FileInfo;
 use Tracker_FileInfo_InvalidFileInfoException;
 use Tracker_FileInfo_UnauthorisedException;
-use \Tuleap\Tracker\REST\Artifact\FileDataRepresentation;
-use \Tuleap\REST\Exceptions\LimitOutOfBoundsException;
-use \Tuleap\REST\Header;
-use \UserManager;
-use \PFUser;
-use \Tracker_ArtifactFactory;
-use \Tracker_FormElementFactory;
-use \Tracker_FileInfoFactory;
-use \Tracker_FileInfoDao;
+use Tuleap\Tracker\REST\Artifact\FileDataRepresentation;
+use Tuleap\REST\Exceptions\LimitOutOfBoundsException;
+use Tuleap\REST\Header;
+use UserManager;
+use PFUser;
+use Tracker_ArtifactFactory;
+use Tracker_FormElementFactory;
+use Tracker_FileInfoFactory;
+use Tracker_FileInfoDao;
 
 class ArtifactFilesResource
 {
@@ -41,14 +41,16 @@ class ArtifactFilesResource
     /** @var PFUser */
     private $user;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->user          = UserManager::instance()->getCurrentUser();
     }
 
     /**
      * @url OPTIONS {id}
      */
-    public function optionsId($id) {
+    public function optionsId($id)
+    {
         $this->sendAllowHeadersForArtifactFilesId();
     }
 
@@ -114,20 +116,23 @@ class ArtifactFilesResource
     }
 
     /**
-     * @throws 406
+     * @throws RestException 406
      */
-    private function checkLimitValue($limit) {
+    private function checkLimitValue($limit)
+    {
         if ($limit > self::DEFAULT_LIMIT) {
             throw new LimitOutOfBoundsException(self::DEFAULT_LIMIT);
         }
     }
 
-    private function sendAllowHeadersForArtifactFilesId() {
+    private function sendAllowHeadersForArtifactFilesId()
+    {
         Header::allowOptionsGet();
         Header::sendMaxFileChunkSizeHeaders(self::DEFAULT_LIMIT);
     }
 
-    private function sendPaginationHeaders($limit, $offset, $size) {
+    private function sendPaginationHeaders($limit, $offset, $size)
+    {
         Header::sendPaginationHeaders($limit, $offset, $size, self::DEFAULT_LIMIT);
     }
 }

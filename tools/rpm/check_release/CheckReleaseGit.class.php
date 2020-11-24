@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) Enalean, 2012. All Rights Reserved.
  *
@@ -19,20 +18,24 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class LastReleaseFinder {
+class LastReleaseFinder
+{
 
-    public function __construct(GitExec $git_exec) {
+    public function __construct(GitExec $git_exec)
+    {
         $this->git_exec = $git_exec;
     }
 
-    public function retrieveFrom($git_remote_name_or_url = 'origin') {
+    public function retrieveFrom($git_remote_name_or_url = 'origin')
+    {
         $version_list = $this->getReleaseList($git_remote_name_or_url);
         $maxVersion   = $this->maxVersion($version_list);
         echo "latest version : $maxVersion".PHP_EOL;
         return $maxVersion;
     }
 
-    public function getReleaseList($git_remote_name_or_url) {
+    public function getReleaseList($git_remote_name_or_url)
+    {
         $ls_remote_output = $this->git_exec->lsRemote($git_remote_name_or_url);
         $versions = array();
         $tags = preg_grep('%tags/[\d\.]{1,}$%', $ls_remote_output);
@@ -43,23 +46,28 @@ class LastReleaseFinder {
         return $versions;
     }
 
-    public function maxVersion($versions) {
+    public function maxVersion($versions)
+    {
         return array_reduce($versions, array($this, 'max'));
     }
-    
-    private function max($v1, $v2) {
+
+    private function max($v1, $v2)
+    {
         return version_compare($v1, $v2, '>') ? $v1 : $v2;
     }
 }
 
-class ChangeDetector {
-    
-    public function __construct(GitExec $git_exec, $candidate_paths) {
+class ChangeDetector
+{
+
+    public function __construct(GitExec $git_exec, $candidate_paths)
+    {
         $this->git_exec = $git_exec;
         $this->candidate_paths = $candidate_paths;
-    }    
+    }
 
-    public function findPathsThatChangedSince($revision) {
+    public function findPathsThatChangedSince($revision)
+    {
         $changedPaths = array();
         foreach ($this->candidate_paths as $path) {
             if ($this->git_exec->hasChangedSince($path, $revision)) {
@@ -71,23 +79,27 @@ class ChangeDetector {
 }
 
 /**
- * find() => given set of changed paths, removes the paths for which the VERSION file 
- * was properly incremented 
+ * find() => given set of changed paths, removes the paths for which the VERSION file
+ * was properly incremented
  */
-class NonIncrementedPathFinder {
+class NonIncrementedPathFinder
+{
 
-    public function __construct(GitExec $git_exec, $old_revision, ChangeDetector $changed_paths_finder) {
+    public function __construct(GitExec $git_exec, $old_revision, ChangeDetector $changed_paths_finder)
+    {
         $this->git_exec = $git_exec;
         $this->change_detector = $changed_paths_finder;
         $this->old_revision = $old_revision;
     }
 
-    public function pathsThatWereNotProperlyIncremented() {
+    public function pathsThatWereNotProperlyIncremented()
+    {
         $changed_paths = $this->change_detector->findPathsThatChangedSince($this->old_revision);
         return array_values(array_filter($changed_paths, array($this, 'incremented')));
     }
 
-    private function incremented($path) {
+    private function incremented($path)
+    {
         $last_declared_version    = $this->getContentOfVERSIONFileAt($path, $this->old_revision);
         $current_declared_version = $this->getContentOfVERSIONFileAt($path, 'HEAD');
 
@@ -96,22 +108,26 @@ class NonIncrementedPathFinder {
         return $incremented;
     }
 
-    private function getContentOfVERSIONFileAt($path, $revision) {
-        return $this->git_exec->fileContent($path."/VERSION", $revision);        
+    private function getContentOfVERSIONFileAt($path, $revision)
+    {
+        return $this->git_exec->fileContent($path."/VERSION", $revision);
     }
 }
 
-class CheckReleaseReporter {
+class CheckReleaseReporter
+{
 
-    public function __construct(NonIncrementedPathFinder $non_incremented_path_finder) {
+    public function __construct(NonIncrementedPathFinder $non_incremented_path_finder)
+    {
         $this->non_incremented_paths_finder = $non_incremented_path_finder;
     }
-    
-    public function reportViolations() {
+
+    public function reportViolations()
+    {
         $COLOR_RED     = "\033[31m";
         $COLOR_GREEN   = "\033[32m";
         $COLOR_NOCOLOR = "\033[0m";
-        
+
         $non_incremented_paths = $this->non_incremented_paths_finder->pathsThatWereNotProperlyIncremented();
         foreach ($non_incremented_paths as $non_incremented_path) {
             echo "$COLOR_RED $non_incremented_path changed but wasn't incremented $COLOR_NOCOLOR".PHP_EOL;
@@ -124,6 +140,3 @@ class CheckReleaseReporter {
         exit(count($non_incremented_paths));
     }
 }
-
-
-?>

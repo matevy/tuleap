@@ -19,14 +19,16 @@
 /**
  *Add anonymous column in filemodule_monitor table.
  */
-class b201208241130_add_anonymous_in_filemodule_monitor extends ForgeUpgrade_Bucket {
+class b201208241130_add_anonymous_in_filemodule_monitor extends ForgeUpgrade_Bucket
+{
 
     /**
      * Description of the bucket
      *
      * @return String
      */
-    public function description() {
+    public function description()
+    {
         return <<<EOT
 Add anonymous column in filemodule_monitor table.
 EOT;
@@ -37,7 +39,8 @@ EOT;
      *
      * @return Void
      */
-    public function preUp() {
+    public function preUp()
+    {
         $this->db = $this->getApi('ForgeUpgrade_Bucket_Db');
     }
 
@@ -46,7 +49,8 @@ EOT;
      *
      * @return Void
      */
-    public function up() {
+    public function up()
+    {
         $sql = 'ALTER TABLE filemodule_monitor ADD COLUMN anonymous TINYINT(1) NOT NULL DEFAULT 1';
         if ($this->db->tableNameExists('filemodule_monitor')) {
             $res = $this->db->dbh->exec($sql);
@@ -61,11 +65,10 @@ EOT;
      *
      * @return Void
      */
-    public function postUp() {
+    public function postUp()
+    {
         if (!$this->db->columnNameExists('filemodule_monitor', 'anonymous')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Column anonymous not created in filemodule_monitor');
         }
     }
 }
-
-?>

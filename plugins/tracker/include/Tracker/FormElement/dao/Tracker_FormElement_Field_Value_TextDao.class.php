@@ -18,14 +18,17 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_FormElement_Field_Value_TextDao extends Tracker_FormElement_Field_ValueDao {
-    
-    public function __construct() {
+class Tracker_FormElement_Field_Value_TextDao extends Tracker_FormElement_Field_ValueDao
+{
+
+    public function __construct()
+    {
         parent::__construct();
         $this->table_name = 'tracker_changeset_value_text';
     }
-    
-    public function create($changeset_value_id, $value) {
+
+    public function create($changeset_value_id, $value)
+    {
         $changeset_value_id = $this->da->escapeInt($changeset_value_id);
         $value              = $this->da->quoteSmart($value);
 
@@ -35,7 +38,8 @@ class Tracker_FormElement_Field_Value_TextDao extends Tracker_FormElement_Field_
         return $this->update($sql);
     }
 
-    public function createWithBodyFormat($changeset_value_id, $value, $body_format) {
+    public function createWithBodyFormat($changeset_value_id, $value, $body_format)
+    {
         $changeset_value_id = $this->da->escapeInt($changeset_value_id);
         $value              = $this->da->quoteSmart($value);
         $body_format        = $this->da->quoteSmart($body_format);
@@ -48,22 +52,24 @@ class Tracker_FormElement_Field_Value_TextDao extends Tracker_FormElement_Field_
 
     /**
      * create none value
-     * @param integer $tracker_id
-     * @param integer $field_id
+     * @param int $tracker_id
+     * @param int $field_id
      * @return
      */
-    public function  createNoneValue($tracker_id, $field_id) {
+    public function createNoneValue($tracker_id, $field_id)
+    {
         $changeset_value_ids = $this->createNoneChangesetValue($tracker_id, $field_id);
-        if ( $changeset_value_ids === false)  {
+        if ($changeset_value_ids === false) {
             return false;
         }
         $sql = " INSERT INTO $this->table_name(changeset_value_id, value)
                  VALUES
                   ( ".implode(' , \'\' ),'."\n".' ( ', $changeset_value_ids).", '')";
         return $this->update($sql);
-    } 
+    }
 
-    public function keep($from, $to) {
+    public function keep($from, $to)
+    {
         $from = $this->da->escapeInt($from);
         $to   = $this->da->escapeInt($to);
         $sql = "INSERT INTO $this->table_name(changeset_value_id, value, body_format)
@@ -73,4 +79,3 @@ class Tracker_FormElement_Field_Value_TextDao extends Tracker_FormElement_Field_
         return $this->update($sql);
     }
 }
-?>

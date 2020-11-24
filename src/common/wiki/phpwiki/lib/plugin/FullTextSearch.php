@@ -1,4 +1,5 @@
-<?php // -*-php-*-
+<?php
+// -*-php-*-
 rcs_id('$Id: FullTextSearch.php,v 1.26 2005/11/14 22:33:04 rurban Exp $');
 /*
 Copyright 1999,2000,2001,2002,2004 $ThePhpWikiProgrammingTeam
@@ -32,41 +33,49 @@ require_once("lib/PageList.php");
  * increased the memory limit of PHP4 from 8 MB to 32 MB
  * php.ini: memory_limit = 32 MB
  */
-class WikiPlugin_FullTextSearch
-extends WikiPlugin
+class WikiPlugin_FullTextSearch extends WikiPlugin
 {
-    function getName() {
+    function getName()
+    {
         return _("FullTextSearch");
     }
 
-    function getDescription() {
+    function getDescription()
+    {
         return _("Search the content of all pages in this wiki.");
     }
 
-    function getVersion() {
-        return preg_replace("/[Revision: $]/", '',
-                            "\$Revision: 1.26 $");
+    function getVersion()
+    {
+        return preg_replace(
+            "/[Revision: $]/",
+            '',
+            "\$Revision: 1.26 $"
+        );
     }
 
-    function getDefaultArguments() {
-        return array_merge
-            (
-             PageList::supportedArgs(), // paging and more.
-             array('s'        => false,
+    function getDefaultArguments()
+    {
+        return array_merge(
+            PageList::supportedArgs(), // paging and more.
+            array('s'        => false,
                    'hilight'  => true,
                    'case_exact' => false,
                    'regex'    => 'auto',
                    'noheader' => false,
                    'exclude'  => false,   //comma-seperated list of glob
                    'limit'    => false,
-                   'quiet'    => false));  // be less verbose
+            'quiet'    => false)
+        );  // be less verbose
     }
 
-    function run($dbi, $argstr, &$request, $basepage) {
+    function run($dbi, $argstr, &$request, $basepage)
+    {
 
         $args = $this->getArgs($argstr, $request);
-        if (empty($args['s']))
+        if (empty($args['s'])) {
             return '';
+        }
         extract($args);
 
         $query = new TextSearchQuery($s, $case_exact, $regex);
@@ -77,9 +86,9 @@ extends WikiPlugin
         $found = 0;
 
         if ($quiet) { // see how easy it is with PageList...
-            $list = new PageList(false,$exclude,$args);
+            $list = new PageList(false, $exclude, $args);
             while ($page = $pages->next() and (!$limit or ($count < $limit))) {
-                $list->addPage( $page );
+                $list->addPage($page);
             }
             return $list;
         }
@@ -88,47 +97,67 @@ extends WikiPlugin
         // But the new column types must have a callback then. (showhits)
         // See e.g. WikiAdminSearchReplace for custom pagelist columns
         $list = HTML::dl();
-        if (!$limit or !is_int($limit))
+        if (!$limit or !is_int($limit)) {
             $limit = 0;
+        }
         // expand all page wildcards to a list of pages which should be ignored
-        if ($exclude) $exclude = explodePageList($exclude); 
+        if ($exclude) {
+            $exclude = explodePageList($exclude);
+        }
         while ($page = $pages->next() and (!$limit or ($count < $limit))) {
             $name = $page->getName();
-            if ($exclude and in_array($name,$exclude)) continue;
+            if ($exclude and in_array($name, $exclude)) {
+                continue;
+            }
             $count++;
             $list->pushContent(HTML::dt(WikiLink($name)));
-            if ($hilight_re)
+            if ($hilight_re) {
                 $list->pushContent($this->showhits($page, $hilight_re));
+            }
             unset($page);
         }
-        if ($limit and $count >= $limit) //todo: pager link to list of next matches
-            $list->pushContent(HTML::dd(fmt("only %d pages displayed",$limit)));
-        if (!$list->getContent())
+        if ($limit and $count >= $limit) { //todo: pager link to list of next matches
+            $list->pushContent(HTML::dd(fmt("only %d pages displayed", $limit)));
+        }
+        if (!$list->getContent()) {
             $list->pushContent(HTML::dd(_("<no matches>")));
+        }
 
-        if (!empty($pages->stoplisted))
-            $list = HTML(HTML::p(fmt(_("Ignored stoplist words '%s'"), 
-                                     join(', ', $pages->stoplisted))), 
-                         $list);
-        if ($noheader)
+        if (!empty($pages->stoplisted)) {
+            $list = HTML(
+                HTML::p(fmt(
+                    _("Ignored stoplist words '%s'"),
+                    join(', ', $pages->stoplisted)
+                )),
+                $list
+            );
+        }
+        if ($noheader) {
             return $list;
-        return HTML(HTML::p(fmt("Full text search results for '%s'", $s)),
-                    $list);
+        }
+        return HTML(
+            HTML::p(fmt("Full text search results for '%s'", $s)),
+            $list
+        );
     }
 
-    function showhits($page, $hilight_re) {
+    function showhits($page, $hilight_re)
+    {
         $current = $page->getCurrentRevision();
         $matches = preg_grep("/$hilight_re/i", $current->getContent());
         $html = array();
         foreach ($matches as $line) {
             $line = $this->highlight_line($line, $hilight_re);
-            $html[] = HTML::dd(HTML::small(array('class' => 'search-context'),
-                                           $line));
+            $html[] = HTML::dd(HTML::small(
+                array('class' => 'search-context'),
+                $line
+            ));
         }
         return $html;
     }
 
-    function highlight_line ($line, $hilight_re) {
+    function highlight_line($line, $hilight_re)
+    {
         while (preg_match("/^(.*?)($hilight_re)/i", $line, $m)) {
             $line = substr($line, strlen($m[0]));
             $html[] = $m[1];    // prematch
@@ -199,4 +228,3 @@ extends WikiPlugin
 // c-hanging-comment-ender-p: nil
 // indent-tabs-mode: nil
 // End:
-?>

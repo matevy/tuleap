@@ -21,16 +21,13 @@
 
 namespace Tuleap\Tracker\Workflow\PostAction\Update;
 
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildValidator;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\FrozenFieldsValidator;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\InvalidPostActionException;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\PostActionIdCollection;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\PostActionsDiff;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildValueValidator;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\FrozenFieldsValueValidator;
+use Tuleap\Tracker\Workflow\PostAction\Update\Internal\HiddenFieldsetsValueValidator;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\PostActionVisitor;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\SetDateValueValidator;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\SetFloatValueValidator;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\SetIntValueValidator;
-use Tuleap\Tracker\Workflow\PostAction\Update\Internal\UnknownPostActionIdsException;
 use Tuleap\Tracker\Workflow\Update\PostAction;
 
 /**
@@ -39,7 +36,7 @@ use Tuleap\Tracker\Workflow\Update\PostAction;
 class PostActionCollection implements PostActionVisitor
 {
     /**
-     * @var CIBuild[]
+     * @var CIBuildValue[]
      */
     private $ci_build_actions = [];
 
@@ -59,23 +56,28 @@ class PostActionCollection implements PostActionVisitor
     private $set_float_value_actions = [];
 
     /**
-     * @var FrozenFields[]
+     * @var FrozenFieldsValue[]
      */
     private $frozen_fields_actions = [];
 
-    public function __construct(PostAction... $actions)
+    /**
+     * @var HiddenFieldsetsValue[]
+     */
+    private $hidden_fieldsets_actions = [];
+
+    public function __construct(PostAction ...$actions)
     {
         foreach ($actions as $action) {
             $action->accept($this);
         }
     }
 
-    public function visitFrozenFields(FrozenFields $frozen_fields_action)
+    public function visitFrozenFieldsValue(FrozenFieldsValue $frozen_fields_action)
     {
         $this->frozen_fields_actions[] = $frozen_fields_action;
     }
 
-    public function visitCIBuild(CIBuild $ci_build_action)
+    public function visitCIBuildValue(CIBuildValue $ci_build_action)
     {
         $this->ci_build_actions[] = $ci_build_action;
     }
@@ -95,10 +97,15 @@ class PostActionCollection implements PostActionVisitor
         $this->set_float_value_actions[] = $set_float_value_action;
     }
 
+    public function visitHiddenFieldsetsValue(HiddenFieldsetsValue $hidden_fieldsets_value)
+    {
+        $this->hidden_fieldsets_actions[] = $hidden_fieldsets_value;
+    }
+
     /**
      * @throws Internal\InvalidPostActionException
      */
-    public function validateFrozenFieldsActions(FrozenFieldsValidator $validator, \Tracker $tracker): void
+    public function validateFrozenFieldsActions(FrozenFieldsValueValidator $validator, \Tracker $tracker): void
     {
         $validator->validate($tracker, ...$this->frozen_fields_actions);
     }
@@ -106,7 +113,15 @@ class PostActionCollection implements PostActionVisitor
     /**
      * @throws Internal\InvalidPostActionException
      */
-    public function validateCIBuildActions(CIBuildValidator $validator): void
+    public function validateHiddenFieldsetsActions(HiddenFieldsetsValueValidator $validator, \Tracker $tracker): void
+    {
+        $validator->validate($tracker, ...$this->hidden_fieldsets_actions);
+    }
+
+    /**
+     * @throws Internal\InvalidPostActionException
+     */
+    public function validateCIBuildActions(CIBuildValueValidator $validator): void
     {
         $validator->validate(...$this->ci_build_actions);
     }
@@ -135,85 +150,33 @@ class PostActionCollection implements PostActionVisitor
         $validator->validate($tracker, ...$this->set_float_value_actions);
     }
 
-    /**
-     * Compare only CIBuild actions against a list of action ids:
-     * - Actions without id are marked as added
-     * - Actions whose id is in given list are marked as updated
-     * @throws UnknownPostActionIdsException
-     */
-    public function compareCIBuildActionsTo(PostActionIdCollection $our_ids): PostActionsDiff
-    {
-        return $this->compare($our_ids, $this->ci_build_actions);
-    }
-
-    /**
-     * Compare only Set Date Value actions against a list of action ids:
-     * - Actions without id are marked as added
-     * - Actions whose id is in given list are marked as updated
-     * @throws UnknownPostActionIdsException
-     */
-    public function compareSetDateValueActionsTo(PostActionIdCollection $our_ids): PostActionsDiff
-    {
-        return $this->compare($our_ids, $this->set_date_value_actions);
-    }
-
-    /**
-     * Compare only Set Int Value actions against a list of action ids:
-     * - Actions without id are marked as added
-     * - Actions whose id is in given list are marked as updated
-     * @throws UnknownPostActionIdsException
-     */
-    public function compareSetIntValueActionsTo(PostActionIdCollection $our_ids): PostActionsDiff
-    {
-        return $this->compare($our_ids, $this->set_int_value_actions);
-    }
-
-    /**
-     * Compare only Set Float Value actions against a list of action ids:
-     * - Actions without id are marked as added
-     * - Actions whose id is in given list are marked as updated
-     * @throws UnknownPostActionIdsException
-     */
-    public function compareSetFloatValueActionsTo(PostActionIdCollection $our_ids): PostActionsDiff
-    {
-        return $this->compare($our_ids, $this->set_float_value_actions);
-    }
-
-    /**
-     * @param PostActionIdCollection $our_ids ids of actions taken as reference
-     * @param PostAction[]           $theirs  actions to compare
-     *
-     * @return PostActionsDiff Comparison result
-     * @throws UnknownPostActionIdsException
-     */
-    private function compare(PostActionIdCollection $our_ids, array $theirs): PostActionsDiff
-    {
-        $added = [];
-        $updated = [];
-        $unknown_ids = [];
-
-        foreach ($theirs as $post_action) {
-            if ($post_action->getId() === null) {
-                $added[] = $post_action;
-            } elseif ($our_ids->contains($post_action->getId())) {
-                $updated[] = $post_action;
-            } else {
-                $unknown_ids[] = $post_action->getId();
-            }
-        }
-
-        if (count($unknown_ids) > 0) {
-            throw new UnknownPostActionIdsException($unknown_ids);
-        }
-
-        return new PostActionsDiff(
-            array_values($added),
-            array_values($updated)
-        );
-    }
-
     public function getFrozenFieldsPostActions() : array
     {
         return $this->frozen_fields_actions;
+    }
+
+    public function getHiddenFieldsetsPostActions() : array
+    {
+        return $this->hidden_fieldsets_actions;
+    }
+
+    public function getCIBuildPostActions() : array
+    {
+        return $this->ci_build_actions;
+    }
+
+    public function getSetDateValuePostActions() : array
+    {
+        return $this->set_date_value_actions;
+    }
+
+    public function getSetIntValuePostActions() : array
+    {
+        return $this->set_int_value_actions;
+    }
+
+    public function getSetFloatValuePostActions() : array
+    {
+        return $this->set_float_value_actions;
     }
 }

@@ -22,14 +22,16 @@ namespace Tuleap\ProFTPd\Xferlog;
 
 use DataAccessObject;
 
-class Dao extends DataAccessObject {
+class Dao extends DataAccessObject
+{
     public const DIRECTION_UPLOAD  = 'i';
     public const DIRECTION_DOWNLOAD = 'o';
     public const DIRECTION_DELETE = 'd';
 
     public const SERVICE_HTTP = 'http';
 
-    public function searchLatestEntryTimestamp() {
+    public function searchLatestEntryTimestamp()
+    {
         $sql = 'SELECT * FROM plugin_proftpd_xferlog WHERE service_name != "'.self::SERVICE_HTTP.'" ORDER BY id DESC LIMIT 1';
         $dar =  $this->retrieve($sql);
         if ($dar && $dar->rowCount() == 1) {
@@ -39,7 +41,8 @@ class Dao extends DataAccessObject {
         return 0;
     }
 
-    public function storeWebDownload($user_id, $group_id, $current_time, $file_path) {
+    public function storeWebDownload($user_id, $group_id, $current_time, $file_path)
+    {
         $user_id      = $this->da->escapeInt($user_id);
         $group_id     = $this->da->escapeInt($group_id);
         $time         = $this->da->escapeInt($current_time);
@@ -133,7 +136,8 @@ class Dao extends DataAccessObject {
         return $this->update($sql);
     }
 
-    public function getLogQuery($group_id, $where_conditions) {
+    public function getLogQuery($group_id, $where_conditions)
+    {
         $group_id = $this->da->escapeInt($group_id);
 
         $download = $this->da->quoteSmart("Download");

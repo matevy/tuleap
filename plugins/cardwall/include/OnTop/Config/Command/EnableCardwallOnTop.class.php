@@ -22,14 +22,16 @@
 /**
  * Activate or deactivate the cardwall on top of a tracker
  */
-class Cardwall_OnTop_Config_Command_EnableCardwallOnTop extends Cardwall_OnTop_Config_Command {
+class Cardwall_OnTop_Config_Command_EnableCardwallOnTop extends Cardwall_OnTop_Config_Command
+{
 
     /**
      * @var Cardwall_OnTop_Dao
      */
     private $dao;
 
-    public function __construct(Tracker $tracker, Cardwall_OnTop_Dao $dao) {
+    public function __construct(Tracker $tracker, Cardwall_OnTop_Dao $dao)
+    {
         parent::__construct($tracker);
         $this->dao = $dao;
     }
@@ -37,12 +39,13 @@ class Cardwall_OnTop_Config_Command_EnableCardwallOnTop extends Cardwall_OnTop_C
     /**
      * @see Cardwall_OnTop_Config_Command::execute()
      */
-    public function execute(Codendi_Request $request) {
+    public function execute(Codendi_Request $request)
+    {
         $please_enable = $request->get('cardwall_on_top');
         $tracker_id    = $this->tracker->getId();
         $is_enabled    = $this->dao->isEnabled($tracker_id);
         if ($please_enable) {
-            if ( ! $is_enabled) {
+            if (! $is_enabled) {
                 $this->dao->enable($tracker_id);
                 $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_cardwall', 'on_top_enabled'));
             }
@@ -54,4 +57,3 @@ class Cardwall_OnTop_Config_Command_EnableCardwallOnTop extends Cardwall_OnTop_C
         }
     }
 }
-?>

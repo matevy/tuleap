@@ -21,7 +21,8 @@ namespace Tuleap\AgileDashboard\REST\v1\Kanban;
 
 use Luracast\Restler\RestException;
 
-class KanbanAddRepresentation {
+class KanbanAddRepresentation
+{
     /**
      * @var {@type array}
      */
@@ -30,14 +31,16 @@ class KanbanAddRepresentation {
     /**
      * @throws RestException
      */
-    public function checkFormat() {
+    public function checkFormat()
+    {
         $this->isArrayOfInt('ids');
         if (count($this->ids) == 0) {
             throw new RestException(400, "invalid value specified for `ids`. Expected: array of integers");
         }
     }
 
-    private function isArrayOfInt($name) {
+    private function isArrayOfInt($name)
+    {
         if (! is_array($this->$name)) {
             throw new RestException(400, "invalid value specified for `$name`. Expected: array of integers");
         }

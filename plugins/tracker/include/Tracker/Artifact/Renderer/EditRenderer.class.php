@@ -25,7 +25,8 @@
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\ParentOfArtifactCollection;
 use Tuleap\Tracker\Artifact\View\Nature;
-use Tuleap\Tracker\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
 
 class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRenderer
 {
@@ -52,6 +53,11 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
     private $retriever;
 
     /**
+     * @var HiddenFieldsetsDetector
+     */
+    private $hidden_fieldsets_detector;
+
+    /**
      * @var Tracker_Artifact[]
      */
     private $hierarchy;
@@ -62,13 +68,14 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         Tracker_FormElementFactory $formelement_factory,
         Tracker_IDisplayTrackerLayout $layout,
         NatureIsChildLinkRetriever $retriever,
-        VisitRecorder $visit_recorder
-
+        VisitRecorder $visit_recorder,
+        HiddenFieldsetsDetector $hidden_fieldsets_detector
     ) {
         parent::__construct($artifact, $event_manager, $visit_recorder);
-        $this->formelement_factory = $formelement_factory;
-        $this->layout              = $layout;
-        $this->retriever           = $retriever;
+        $this->formelement_factory       = $formelement_factory;
+        $this->layout                    = $layout;
+        $this->retriever                 = $retriever;
+        $this->hidden_fieldsets_detector = $hidden_fieldsets_detector;
     }
 
     /**
@@ -80,7 +87,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
      *
      * @return void
      */
-    public function display(Codendi_Request $request, PFUser $current_user) {
+    public function display(Codendi_Request $request, PFUser $current_user)
+    {
         // the following statement needs to be called before displayHeader
         // in order to get the feedback, if any
         $this->hierarchy = $this->artifact->getAllAncestors($current_user);
@@ -106,7 +114,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         return $html;
     }
 
-    protected function enhanceRedirect(Codendi_Request $request) {
+    protected function enhanceRedirect(Codendi_Request $request)
+    {
         $from_aid = $request->get('from_aid');
         if ($from_aid != null) {
             $this->redirect->query_parameters['from_aid'] = $from_aid;
@@ -114,7 +123,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         parent::enhanceRedirect($request);
     }
 
-    protected function displayHeader() {
+    protected function displayHeader()
+    {
         $hp          = Codendi_HTMLPurifier::instance();
         $title       = $hp->purify($this->tracker->getItemName(), CODENDI_PURIFIER_CONVERT_HTML)  .' #'. $this->artifact->getId();
         $breadcrumbs = array(
@@ -133,7 +143,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         $this->tracker->displayHeader($this->layout, $title, $breadcrumbs, $toolbar, $params);
     }
 
-    protected function fetchView(Codendi_Request $request, PFUser $user) {
+    protected function fetchView(Codendi_Request $request, PFUser $user)
+    {
         $view_collection = new Tracker_Artifact_View_ViewCollection();
         $view_collection->add(new Tracker_Artifact_View_Edit($this->artifact, $request, $user, $this, $this->event_manager));
 
@@ -161,11 +172,13 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         return $view_collection->fetchRequestedView($request);
     }
 
-    protected function fetchTitle() {
+    protected function fetchTitle()
+    {
         return $this->artifact->fetchTitle();
     }
 
-    private function fetchTitleIsGraph(ParentOfArtifactCollection $parents) {
+    private function fetchTitleIsGraph(ParentOfArtifactCollection $parents)
+    {
         $html  = '';
         $html .= $this->artifact->fetchHiddenTrackerId();
         $html .= $this->fetchMultipleParentsTitle($this->artifact, $parents);
@@ -173,7 +186,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         return $html;
     }
 
-    private function fetchTitleInHierarchy(array $hierarchy) {
+    private function fetchTitleInHierarchy(array $hierarchy)
+    {
         $html  = '';
         $html .= $this->artifact->fetchHiddenTrackerId();
         if ($hierarchy) {
@@ -185,14 +199,15 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         return $html;
     }
 
-    private function fetchMultipleParentsTitle(Tracker_Artifact $artifact, ParentOfArtifactCollection $hierarchy) {
+    private function fetchMultipleParentsTitle(Tracker_Artifact $artifact, ParentOfArtifactCollection $hierarchy)
+    {
         $tab_level = 0;
         $html      = '';
         $html     .= '<ul class="tracker-hierarchy">';
         $parents = array_reverse($hierarchy->getArtifacts());
 
-        foreach($parents as $parent) {
-            foreach($parent as $father) {
+        foreach ($parents as $parent) {
+            foreach ($parent as $father) {
                 $html .= '<li>';
                 $html .= $this->displayANumberOfBlankTab($tab_level);
                 $html .= '<div class="tree-last">&nbsp;</div>';
@@ -211,11 +226,28 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         $html .= '</li>';
         $html .= '</ul>';
         $html .= $artifact->fetchActionButtons();
+        $html .= $this->fetchShowHideFieldSetsButton();
         $html .= '</div>';
         return $html;
     }
 
-    private function displayANumberOfBlankTab($number) {
+    private function fetchShowHideFieldSetsButton() : string
+    {
+        if (! $this->hidden_fieldsets_detector->doesArtifactContainHiddenFieldsets($this->artifact)) {
+            return '';
+        }
+
+        return '<div class="header-spacer"></div>
+            <div class="show-hide-fieldsets">'.dgettext('tuleap-tracker', 'Hidden fieldsets:').'
+                <div class="btn-group" data-toggle="buttons-radio">
+                    <button type="button" class="btn show-fieldsets"><i class="fa fa-eye"></i></button>
+                    <button type="button" class="btn active hide-fieldsets"><i class="fa fa-eye-slash"></i></button>
+                </div>
+            </div>';
+    }
+
+    private function displayANumberOfBlankTab($number)
+    {
         $html = "";
         for ($i = 1; $i <= $number; $i++) {
             $html .= '<div class="tree-blank">&nbsp;</div> ';
@@ -229,7 +261,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
      *
      * @return string
      */
-    private function fetchParentsTitle(array $parents, $padding_prefix = '') {
+    private function fetchParentsTitle(array $parents, $padding_prefix = '')
+    {
         $html   = '';
         $parent = array_pop($parents);
         if ($parent) {
@@ -259,7 +292,6 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
                     $padding_prefix . '<span class="tree-blank">&nbsp;</span>'
                 );
                 $html .= $div_suffix;
-
             } else {
                 $html .= $parent->fetchActionButtons();
             }
@@ -270,7 +302,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         return $html;
     }
 
-    protected function displayFooter() {
+    protected function displayFooter()
+    {
         $this->tracker->displayFooter($this->layout);
     }
 }

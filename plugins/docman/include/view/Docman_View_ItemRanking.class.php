@@ -21,28 +21,33 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Docman_View_ItemRanking {
+class Docman_View_ItemRanking
+{
     var $dropDownName;
     var $selectedValue;
 
-    function __construct() {
+    function __construct()
+    {
         $this->selectedValue = 'beginning';
     }
 
-    function setDropDownName($v) {
+    function setDropDownName($v)
+    {
         $this->dropDownName = $v;
     }
 
 
-    function setSelectedValue($v) {
-        if(is_numeric($v)) {
+    function setSelectedValue($v)
+    {
+        if (is_numeric($v)) {
             $this->selectedValue = (int) $v;
         } else {
             $this->selectedValue = $v;
         }
     }
 
-    function getDropDownWidget($parentItem) {
+    function getDropDownWidget($parentItem)
+    {
         $itemFactory = Docman_ItemFactory::instance($parentItem->getGroupId());
         $brotherIter = $itemFactory->getChildrenFromParent($parentItem);
 
@@ -58,7 +63,7 @@ class Docman_View_ItemRanking {
 
         $hp = Codendi_HTMLPurifier::instance();
         $brotherIter->rewind();
-        while($brotherIter->valid()) {
+        while ($brotherIter->valid()) {
             $item = $brotherIter->current();
             if ($pm->userCanWrite($user, $item->getId())) {
                 $vals[$i]  = $item->getRank()+1;
@@ -76,9 +81,9 @@ class Docman_View_ItemRanking {
 
         $html .= '<select name="'.$this->dropDownName.'">'."\n";
         $maxOpts = count($vals);
-        for($i = 0; $i < $maxOpts; $i++) {
+        for ($i = 0; $i < $maxOpts; $i++) {
             $selected = '';
-            if($vals[$i] === $this->selectedValue) {
+            if ($vals[$i] === $this->selectedValue) {
                 $selected = ' selected="selected"';
             }
             $html .= '<option value="'.$vals[$i].'"'.$selected.'>'.$texts[$i].'</option>'."\n";
@@ -87,7 +92,4 @@ class Docman_View_ItemRanking {
 
         return $html;
     }
-
 }
-
-?>

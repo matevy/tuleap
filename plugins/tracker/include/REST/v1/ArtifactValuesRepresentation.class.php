@@ -21,7 +21,8 @@
 
 namespace Tuleap\Tracker\REST\v1;
 
-class ArtifactValuesRepresentation {
+class ArtifactValuesRepresentation
+{
 
     /**
      * @var int {@type int} {@required true}
@@ -44,7 +45,7 @@ class ArtifactValuesRepresentation {
     public $links;
 
     /**
-     * @var boolean {@type boolean} {@required false}
+     * @var bool {@type boolean} {@required false}
      */
     public $is_autocomputed;
 
@@ -56,7 +57,8 @@ class ArtifactValuesRepresentation {
     /**
      * @return array
      */
-    public function toArray() {
+    public function toArray()
+    {
         $array_representation = array();
 
         $array_representation['field_id'] = $this->field_id;
@@ -83,5 +85,4 @@ class ArtifactValuesRepresentation {
 
         return $array_representation;
     }
-
 }

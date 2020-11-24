@@ -24,7 +24,8 @@
  * For a tracker, if a source field is selected to a specific value,
  * then target field will react, depending of the implementation of the rule.
  */
-abstract class Tracker_Rule {
+abstract class Tracker_Rule
+{
     public const RULETYPE_HIDDEN       = 1;
     public const RULETYPE_DISABLED     = 2;
     public const RULETYPE_MANDATORY    = 3;
@@ -50,7 +51,8 @@ abstract class Tracker_Rule {
      *
      * @return int
      */
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
@@ -59,7 +61,8 @@ abstract class Tracker_Rule {
      * @param int $id
      * @return \Tracker_Rule
      */
-    public function setId($id) {
+    public function setId($id)
+    {
         $this->id = (int) $id;
         return $this;
     }
@@ -69,7 +72,8 @@ abstract class Tracker_Rule {
      * @param int $tracker
      * @return \Tracker_Rule
      */
-    public function setTrackerId($tracker_id) {
+    public function setTrackerId($tracker_id)
+    {
         $this->tracker_id = $tracker_id;
         return $this;
     }
@@ -78,7 +82,8 @@ abstract class Tracker_Rule {
      *
      * @return int
      */
-    public function getTrackerId() {
+    public function getTrackerId()
+    {
         return $this->tracker_id;
     }
 
@@ -86,8 +91,9 @@ abstract class Tracker_Rule {
      *
      * @return int
      */
-    public function getSourceFieldId() {
-        if($this->source_field_obj instanceof Tracker_FormElement_Field){
+    public function getSourceFieldId()
+    {
+        if ($this->source_field_obj instanceof Tracker_FormElement_Field) {
             return $this->source_field_obj->getId();
         }
         return $this->source_field;
@@ -97,7 +103,8 @@ abstract class Tracker_Rule {
      *
      * @return Tracker_FormElement_Field
      */
-    public function getSourceField() {
+    public function getSourceField()
+    {
         return $this->source_field_obj;
     }
 
@@ -106,7 +113,8 @@ abstract class Tracker_Rule {
      * @param Tracker_FormElement_Field $field
      * @return \Tracker_Rule
      */
-    public function setSourceField(Tracker_FormElement_Field $field) {
+    public function setSourceField(Tracker_FormElement_Field $field)
+    {
         $this->source_field_obj = $field;
         $this->source_field = $field->getId();
         return $this;
@@ -116,7 +124,8 @@ abstract class Tracker_Rule {
      *
      * @return Tracker_FormElement_Field
      */
-    public function getTargetField() {
+    public function getTargetField()
+    {
         return $this->target_field_obj;
     }
 
@@ -125,7 +134,8 @@ abstract class Tracker_Rule {
      * @param Tracker_FormElement_Field $field
      * @return \Tracker_Rule
      */
-    public function setTargetField(Tracker_FormElement_Field $field) {
+    public function setTargetField(Tracker_FormElement_Field $field)
+    {
         $this->target_field_obj = $field;
         $this->target_field = $field->getId();
 
@@ -137,7 +147,8 @@ abstract class Tracker_Rule {
      * @param int $field_id
      * @return \Tracker_Rule
      */
-    public function setSourceFieldId($field_id) {
+    public function setSourceFieldId($field_id)
+    {
         $this->source_field = $field_id;
         return $this;
     }
@@ -146,8 +157,9 @@ abstract class Tracker_Rule {
      *
      * @return int
      */
-    public function getTargetFieldId() {
-        if($this->target_field_obj instanceof Tracker_FormElement_Field){
+    public function getTargetFieldId()
+    {
+        if ($this->target_field_obj instanceof Tracker_FormElement_Field) {
             return $this->target_field_obj->getId();
         }
         return $this->target_field;
@@ -158,13 +170,15 @@ abstract class Tracker_Rule {
      * @param int $field_id
      * @return \Tracker_Rule
      */
-    public function setTargetFieldId($field_id) {
+    public function setTargetFieldId($field_id)
+    {
         $this->target_field = $field_id;
         return $this;
     }
 
     /** @return bool */
-    public function isUsedInRule($field_id) {
+    public function isUsedInRule($field_id)
+    {
         return $this->source_field == $field_id || $this->target_field == $field_id;
     }
 }

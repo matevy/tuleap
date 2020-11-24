@@ -24,30 +24,36 @@
 // @see http://nat.truemesh.com/archives/000727.html
 
 require_once __DIR__.'/../bootstrap.php';
-function aTrackerReport() {
+function aTrackerReport()
+{
     return new Test_TrackerReport_Builder();
 }
 
-class Test_TrackerReport_Builder {
+class Test_TrackerReport_Builder
+{
     private $id;
     private $tracker;
     private $name;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->id = uniqid();
     }
 
-    public function withId($id) {
+    public function withId($id)
+    {
         $this->id = $id;
         return $this;
     }
 
-    public function withTracker(Tracker $tracker) {
+    public function withTracker(Tracker $tracker)
+    {
         $this->tracker = $tracker;
         return $this;
     }
 
-    public function withName($name) {
+    public function withName($name)
+    {
         $this->name = $name;
         return $this;
     }
@@ -55,7 +61,8 @@ class Test_TrackerReport_Builder {
     /**
      * @return \Tracker_Report
      */
-    public function build() {
+    public function build()
+    {
         $tracker_id = $description = $current_renderer_id = $parent_report_id = $user_id = $is_default = $is_query_displayed = $is_in_expert_mode = $expert_query = $updated_by = $updated_at = null;
         $report = new Tracker_Report(
             $this->id,
@@ -78,5 +85,3 @@ class Test_TrackerReport_Builder {
         return $report;
     }
 }
-
-?>

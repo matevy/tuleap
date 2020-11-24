@@ -21,12 +21,14 @@
 use Tuleap\FRS\FRSPackageController;
 use Tuleap\FRS\FRSReleaseController;
 use Tuleap\FRS\FRSValidator;
+use Tuleap\FRS\LicenseAgreement\LicenseAgreementDao;
+use Tuleap\FRS\LicenseAgreement\LicenseAgreementFactory;
+use Tuleap\JSONHeader;
 
 require_once __DIR__ . '/../../include/pre.php';
 require_once __DIR__ . '/../../project/admin/permissions.php';
-require_once __DIR__ . '/../../include/json.php';
 
-$vAction = new Valid_WhiteList('action',array('permissions_frs_package','permissions_frs_release','validator_frs_create','validator_frs_update','refresh_file_list'));
+$vAction = new Valid_WhiteList('action', array('permissions_frs_package','permissions_frs_release','validator_frs_create','validator_frs_update','refresh_file_list'));
 if ($request->valid($vAction)) {
     $action = $request->get('action');
 } else {
@@ -46,17 +48,19 @@ if ($action == 'permissions_frs_package') {
             FRSPackageFactory::instance(),
             FRSReleaseFactory::instance(),
             new User_ForgeUserGroupFactory(new UserGroupDao()),
-            PermissionsManager::instance()
+            PermissionsManager::instance(),
+            new LicenseAgreementFactory(
+                new LicenseAgreementDao()
+            ),
         );
 
         $package_controller->displayUserGroups($project, FRSPackage::PERM_READ, $object_id);
     }
 } else {
     if ($action == 'permissions_frs_release') {
-
-   	    $vReleaseId = new Valid_UInt('release_id');
+           $vReleaseId = new Valid_UInt('release_id');
         $vReleaseId->required();
-	    $vGroupId = new Valid_GroupId();
+        $vGroupId = new Valid_GroupId();
         $vGroupId->required();
         if ($request->valid($vReleaseId) && $request->valid($vGroupId)) {
             $group_id   = $request->get('group_id');
@@ -64,8 +68,7 @@ if ($action == 'permissions_frs_package') {
             $project    = ProjectManager::instance()->getProject($group_id);
             $release_controller = new FRSReleaseController(
                 FRSReleaseFactory::instance(),
-                new User_ForgeUserGroupFactory(new UserGroupDao()),
-                PermissionsManager::instance()
+                new User_ForgeUserGroupFactory(new UserGroupDao())
             );
 
             $release_controller->displayUserGroups($project, FRSRelease::PERM_READ, $object_id);
@@ -78,7 +81,7 @@ if ($action == 'permissions_frs_package') {
             $vDate = new Valid_String('date');
             $vDate->required();
             $vPackageId = new Valid_UInt('package_id');
-            $vPackageId->required();    	          
+            $vPackageId->required();
             $vGroupId = new Valid_GroupId();
             $vGroupId->required();
             if ($request->valid($vName) &&
@@ -105,17 +108,17 @@ if ($action == 'permissions_frs_package') {
                     $feedback->log('error', $errors[0]);
                     $header = array('valid' => false, 'msg' => $feedback->fetch());
                 }
-                header(json_header($header));
+                header(JSONHeader::getHeaderForPrototypeJS($header));
             }
         } else {
             if ($action == 'validator_frs_update') {
                 $vName = new Valid_String('name');
- 	            $vDate = new Valid_String('date');
- 	            $vDate->required();
+                $vDate = new Valid_String('date');
+                $vDate->required();
                 $vPackageId = new Valid_UInt('package_id');
-    	        $vPackageId->required();
+                $vPackageId->required();
                 $vReleaseId = new Valid_UInt('release_id');
-                $vReleaseId->required();    	          
+                $vReleaseId->required();
                 $vGroupId = new Valid_GroupId();
                 $vGroupId->required();
                 if ($request->valid($vName) &&
@@ -145,7 +148,7 @@ if ($action == 'permissions_frs_package') {
                         $feedback->log('error', $errors[0]);
                         $header = array('valid' => false, 'msg' => $feedback->fetch());
                     }
-                    header(json_header($header));
+                    header(JSONHeader::getHeaderForPrototypeJS($header));
                 }
             } else {
                 if ($action == 'refresh_file_list') {

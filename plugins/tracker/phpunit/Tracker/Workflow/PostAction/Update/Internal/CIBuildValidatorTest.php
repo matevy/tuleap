@@ -25,36 +25,32 @@ require_once __DIR__ . '/../../../../../bootstrap.php';
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
-use Tuleap\Tracker\Workflow\PostAction\Update\CIBuild;
+use Tuleap\Tracker\Workflow\PostAction\Update\CIBuildValue;
 
 class CIBuildValidatorTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
-    /** @var CIBuildValidator */
+    /** @var CIBuildValueValidator */
     private $ci_build_validator;
-    /** @var PostActionIdValidator | Mockery\MockInterface */
-    private $ids_validator;
 
     protected function setUp() : void
     {
-        $this->ids_validator      = Mockery::mock(PostActionIdValidator::class);
-        $this->ids_validator->shouldReceive('validate')->byDefault();
-        $this->ci_build_validator = new CIBuildValidator($this->ids_validator);
+        $this->ci_build_validator = new CIBuildValueValidator();
     }
 
+    /** @doesNotPerformAssertions */
     public function testValidateDoesNotThrowWhenValid()
     {
-        $first_ci_build  = new CIBuild(null, 'https://example.com');
-        $second_ci_build = new CIBuild(2, 'https://example.com/2');
-        $this->ids_validator->shouldReceive('validate');
+        $first_ci_build  = new CIBuildValue('https://example.com');
+        $second_ci_build = new CIBuildValue('https://example.com/2');
 
         $this->ci_build_validator->validate($first_ci_build, $second_ci_build);
     }
 
     public function testValidateThrowsWhenInvalidJobUrl()
     {
-        $invalid_ci_build = new CIBuild(null, 'not an URL');
+        $invalid_ci_build = new CIBuildValue('not an URL');
 
         $this->expectException(InvalidPostActionException::class);
 
@@ -63,22 +59,10 @@ class CIBuildValidatorTest extends TestCase
 
     public function testValidateThrowsWhenEmptyJobUrl()
     {
-        $invalid_ci_build = new CIBuild(null, '');
+        $invalid_ci_build = new CIBuildValue('');
 
         $this->expectException(InvalidPostActionException::class);
 
         $this->ci_build_validator->validate($invalid_ci_build);
-    }
-
-    public function testValidateWrapsDuplicatePostActionException()
-    {
-        $ci_build = new CIBuild(1, 'https://example.com');
-        $this->ids_validator
-            ->shouldReceive('validate')
-            ->andThrow(new DuplicatePostActionException());
-
-        $this->expectException(InvalidPostActionException::class);
-
-        $this->ci_build_validator->validate($ci_build);
     }
 }

@@ -25,8 +25,6 @@ use Mockery as M;
 
 require_once 'bootstrap.php';
 
-Mock::generate('EventManager');
-
 Mock::generate('Docman_ItemDao');
 Mock::generate('Docman_Folder');
 Mock::generate('Docman_File');
@@ -47,7 +45,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
      *
      * Find path to root for 113
      */
-    function testconnectOrphansToParentsStep1() {
+    function testconnectOrphansToParentsStep1()
+    {
         $fld113 = new Docman_Folder(array('item_id' => 113, 'parent_id' => 112,'title' => 'Folder 113'));
 
         $itemFactory = new Docman_ItemFactory(0);
@@ -62,7 +61,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $this->assertFalse($rootId);
     }
 
-    function testconnectOrphansToParentsStep2() {
+    function testconnectOrphansToParentsStep2()
+    {
         $fld112 = new Docman_Folder(array('item_id' => 112, 'parent_id' => 150,'title' => 'Folder 112'));
         $fld113 = new Docman_Folder(array('item_id' => 113, 'parent_id' => 112,'title' => 'Folder 113'));
 
@@ -81,11 +81,12 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $rootId = $itemFactory->connectOrphansToParents($itemList, $orphans, $wantedItems);
         $this->assertEqual($wantedItems, array(150));
         $this->assertEqual($orphans, array(112 => 112));
-        $this->assertEqual($itemList,    array(112 => $c_fld112, 113 => $c_fld113));
+        $this->assertEqual($itemList, array(112 => $c_fld112, 113 => $c_fld113));
         $this->assertFalse($rootId);
     }
 
-    function testconnectOrphansToParentsStep3() {
+    function testconnectOrphansToParentsStep3()
+    {
         $fld150 = new Docman_Folder(array('item_id' => 150, 'parent_id' => 140,'title' => 'Folder 150'));
         $fld112 = new Docman_Folder(array('item_id' => 112, 'parent_id' => 150,'title' => 'Folder 112'));
         $fld113 = new Docman_Folder(array('item_id' => 113, 'parent_id' => 112,'title' => 'Folder 113'));
@@ -111,7 +112,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $this->assertFalse($rootId);
     }
 
-    function testconnectOrphansToParentsStep4() {
+    function testconnectOrphansToParentsStep4()
+    {
         $fld140 = new Docman_Folder(array('item_id' => 140, 'parent_id' => 0, 'title' => 'Project documentation'));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'parent_id' => 140,'title' => 'Folder 150'));
         $fld112 = new Docman_Folder(array('item_id' => 112, 'parent_id' => 150,'title' => 'Folder 112'));
@@ -152,7 +154,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
      * Correspond to testconnectOrphansToParentsStep3.
      * but item 150 is to readable by user.
      */
-    function testconnectOrphansToParentsStep3PermissionDenied() {
+    function testconnectOrphansToParentsStep3PermissionDenied()
+    {
         $fld112 = new Docman_Folder(array('item_id' => 112, 'parent_id' => 150,'title' => 'Folder 112'));
         $fld113 = new Docman_Folder(array('item_id' => 113, 'parent_id' => 112,'title' => 'Folder 113'));
 
@@ -182,7 +185,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
      *         |-- 112
      *             |-- 113
      */
-    function testIsInSubTreeSuccess() {
+    function testIsInSubTreeSuccess()
+    {
         $itemFactory = new Docman_ItemFactoryTestVersion($this);
 
         $fld110 = new MockDocman_Folder($this);
@@ -207,8 +211,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $itemFactory->setReturnValue('isRoot', false, array($fld111));
         $itemFactory->setReturnValue('isRoot', true, array($fld110));
 
-        $itemFactory->expectCallCount('getItemFromDb',2);
-        $itemFactory->expectCallCount('isRoot',2);
+        $itemFactory->expectCallCount('getItemFromDb', 2);
+        $itemFactory->expectCallCount('isRoot', 2);
         $fld110->expectNever('getParentId');
         $fld111->expectNever('getParentId');
         $fld112->expectOnce('getParentId');
@@ -217,7 +221,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $this->assertTrue($itemFactory->isInSubTree(113, 111));
     }
 
-    function testIsInSubTreeFalse() {
+    function testIsInSubTreeFalse()
+    {
         $itemFactory = new Docman_ItemFactoryTestVersion($this);
 
         $fld110 = new MockDocman_Folder($this);
@@ -242,8 +247,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $itemFactory->setReturnValue('isRoot', false, array($fld111));
         $itemFactory->setReturnValue('isRoot', true, array($fld110));
 
-        $itemFactory->expectCallCount('getItemFromDb',3);
-        $itemFactory->expectCallCount('isRoot',3);
+        $itemFactory->expectCallCount('getItemFromDb', 3);
+        $itemFactory->expectCallCount('isRoot', 3);
         $fld110->expectNever('getParentId');
         $fld111->expectOnce('getParentId');
         $fld112->expectOnce('getParentId');
@@ -259,7 +264,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
      *         |-- 112
      *             |-- 113
      */
-    function testIsInSubTreeFailWithRootItem() {
+    function testIsInSubTreeFailWithRootItem()
+    {
         $itemFactory = new Docman_ItemFactoryTestVersion($this);
 
         $fld110 = new MockDocman_Folder($this);
@@ -283,7 +289,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
      *         |-- 112
      *             |-- 113
      */
-    function testGetParents() {
+    function testGetParents()
+    {
         $itemFactory = new Docman_ItemFactoryTestVersion();
 
         $fld110 = new MockDocman_Folder();
@@ -308,8 +315,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $itemFactory->setReturnValue('isRoot', false, array($fld111));
         $itemFactory->setReturnValue('isRoot', true, array($fld110));
 
-        $itemFactory->expectCallCount('getItemFromDb',3);
-        $itemFactory->expectCallCount('isRoot',3);
+        $itemFactory->expectCallCount('getItemFromDb', 3);
+        $itemFactory->expectCallCount('isRoot', 3);
         $fld110->expectNever('getParentId');
         $fld111->expectOnce('getParentId');
         $fld112->expectOnce('getParentId');
@@ -318,7 +325,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $this->assertEqual(array(111 => true, 110 => true), $itemFactory->getParents(112));
     }
 
-    function testGetParentsForRoot() {
+    function testGetParentsForRoot()
+    {
         $itemFactory = new Docman_ItemFactoryTestVersion();
 
         $fld110 = new MockDocman_Folder();
@@ -346,7 +354,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
      *
      * Find path to root for 113, 115 & 135
      */
-    function testBuildTreeFromLeavesMultipleStep1() {
+    function testBuildTreeFromLeavesMultipleStep1()
+    {
         $fld113 = new Docman_Folder(array('item_id' => 113, 'parent_id' => 112,'title' => 'Folder 113'));
         $fld115 = new Docman_Folder(array('item_id' => 115, 'parent_id' => 150,'title' => 'Folder 115'));
         $fld135 = new Docman_Folder(array('item_id' => 135, 'parent_id' => 140,'title' => 'Folder 135'));
@@ -368,7 +377,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
     }
 
 
-    function testBuildTreeFromLeavesMultipleStep2() {
+    function testBuildTreeFromLeavesMultipleStep2()
+    {
         $fld140 = new Docman_Folder(array('item_id' => 140, 'parent_id' => 0, 'title' => 'Project documentation', 'rank' => 0));
         $fld150 = new Docman_Folder(array('item_id' => 150, 'parent_id' => 140,'title' => 'Folder 150', 'rank' => -2));
         $fld112 = new Docman_Folder(array('item_id' => 112, 'parent_id' => 150,'title' => 'Folder 112', 'rank' => -2));
@@ -419,7 +429,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $this->assertEqual($rootId, 140);
     }
 
-    function testPurgeDeletedItemsWithNoItems() {
+    function testPurgeDeletedItemsWithNoItems()
+    {
         $itemFactory = new Docman_ItemFactoryTestVersion($this);
 
         $dao = mock('Docman_ItemDao');
@@ -434,7 +445,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $this->assertTrue($itemFactory->PurgeDeletedItems(1234567890));
     }
 
-    function testPurgeDeletedItems() {
+    function testPurgeDeletedItems()
+    {
         $itemFactory = new Docman_ItemFactoryTestVersion($this);
 
         $dao = mock('Docman_ItemDao');
@@ -462,7 +474,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $this->assertTrue($itemFactory->PurgeDeletedItems(1234567890));
     }
 
-    function testRestoreDeletedItemNonFile() {
+    function testRestoreDeletedItemNonFile()
+    {
         $itemFactory = new Docman_ItemFactoryTestRestore($this);
 
         $item = new MockDocman_Folder($this);
@@ -479,14 +492,15 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $um   = new MockUserManager($this);
         $um->setReturnValue('getCurrentUser', $user);
         $itemFactory->setReturnValue('_getUserManager', $um);
-        $em = new MockEventManager($this);
-        $em->expectOnce('processEvent', array('plugin_docman_event_restore', array('group_id' => 114, 'item' => $item, 'user' => $user)));
+        $em = \Mockery::mock(EventManager::class);
+        $em->shouldReceive('processEvent')->with('plugin_docman_event_restore', array('group_id' => 114, 'item' => $item, 'user' => $user));
         $itemFactory->setReturnValue('_getEventManager', $em);
 
         $this->assertTrue($itemFactory->restore($item));
     }
 
-    function testRestoreDeletedItemFile() {
+    function testRestoreDeletedItemFile()
+    {
         $itemFactory = new Docman_ItemFactoryTestRestore($this);
 
         $item = new MockDocman_File($this);
@@ -513,14 +527,15 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $um   = new MockUserManager($this);
         $um->setReturnValue('getCurrentUser', $user);
         $itemFactory->setReturnValue('_getUserManager', $um);
-        $em = new MockEventManager($this);
-        $em->expectOnce('processEvent', array('plugin_docman_event_restore', array('group_id' => 114, 'item' => $item, 'user' => $user)));
+        $em = \Mockery::mock(EventManager::class);
+        $em->shouldReceive('processEvent')->with('plugin_docman_event_restore', array('group_id' => 114, 'item' => $item, 'user' => $user));
         $itemFactory->setReturnValue('_getEventManager', $em);
 
         $this->assertTrue($itemFactory->restore($item));
     }
 
-    function testRestoreDeletedItemFileWithoutRestorableVersions() {
+    function testRestoreDeletedItemFileWithoutRestorableVersions()
+    {
         $itemFactory = new Docman_ItemFactoryTestRestore($this);
 
         $item = new MockDocman_File($this);
@@ -543,7 +558,8 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $this->assertFalse($itemFactory->restore($item));
     }
 
-    function testRestoreDeletedItemFileWithSomeVersionRestoreFailure() {
+    function testRestoreDeletedItemFileWithSomeVersionRestoreFailure()
+    {
         $itemFactory = new Docman_ItemFactoryTestRestore($this);
 
         $item = new MockDocman_File($this);
@@ -570,14 +586,15 @@ class Docman_ItemFactoryTest extends TuleapTestCase
         $um   = new MockUserManager($this);
         $um->setReturnValue('getCurrentUser', $user);
         $itemFactory->setReturnValue('_getUserManager', $um);
-        $em = new MockEventManager($this);
-        $em->expectOnce('processEvent', array('plugin_docman_event_restore', array('group_id' => 114, 'item' => $item, 'user' => $user)));
+        $em = \Mockery::mock(EventManager::class);
+        $em->shouldReceive('processEvent')->with('plugin_docman_event_restore', array('group_id' => 114, 'item' => $item, 'user' => $user));
         $itemFactory->setReturnValue('_getEventManager', $em);
 
         $this->assertTrue($itemFactory->restore($item));
     }
 
-    function testRestoreDeletedItemFileWithAllVersionRestoreFailure() {
+    function testRestoreDeletedItemFileWithAllVersionRestoreFailure()
+    {
         $itemFactory = new Docman_ItemFactoryTestRestore($this);
 
         $item = new MockDocman_File($this);

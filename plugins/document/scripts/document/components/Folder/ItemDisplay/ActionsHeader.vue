@@ -21,37 +21,37 @@
     <div class="document-header-actions">
         <div class="tlp-dropdown document-dropdown-menu-button">
             <div class="tlp-dropdown-split-button">
-                <update-item-button class="tlp-button-primary tlp-dropdown-split-button-main"
-                                    v-bind:item="item"
-                                    v-bind:icon-classes="'fa fa-mail-forward tlp-button-icon'"
-                                    data-test="item-action-update-button"
-                                    v-if="item.user_can_write"
+                <create-new-item-version-button class="tlp-button-primary tlp-dropdown-split-button-main"
+                                                v-bind:item="item"
+                                                v-bind:icon-classes="'fa fa-mail-forward tlp-button-icon'"
+                                                data-test="item-action-create-new-version-button"
+                                                v-if="item.user_can_write"
                 />
                 <details-item-button v-bind:item="item"
                                      v-bind:button-class="'tlp-dropdown-split-button-main'"
                                      v-else
                                      data-test="item-action-details-button"
                 />
-                <dropdown-button v-bind:is-in-large-mode="false">
-                    <dropdown-menu-for-item-quick-look v-bind:item="item"/>
-                </dropdown-button>
+                <drop-down-button v-bind:is-in-large-mode="false">
+                    <drop-down-displayed-embedded/>
+                </drop-down-button>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import UpdateItemButton from "../ActionsButton/UpdateItemButton.vue";
+import CreateNewItemVersionButton from "../ActionsButton/NewItemVersionButton.vue";
 import DetailsItemButton from "../ActionsButton/DetailsItemButton.vue";
-import DropdownButton from "../ActionsDropDown/DropdownButton.vue";
-import DropdownMenuForItemQuickLook from "../ActionsDropDown/DropdownMenuForItemQuickLook.vue";
+import DropDownButton from "../DropDown/DropDownButton.vue";
+import DropDownDisplayedEmbedded from "../DropDown/DropDownDisplayedEmbedded.vue";
 export default {
     name: "ActionsHeader",
     components: {
-        DropdownMenuForItemQuickLook,
-        DropdownButton,
+        DropDownDisplayedEmbedded,
+        DropDownButton,
         DetailsItemButton,
-        UpdateItemButton
+        CreateNewItemVersionButton
     },
     props: {
         item: Object

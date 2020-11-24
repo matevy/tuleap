@@ -20,7 +20,8 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Valid {
+class Valid
+{
     /**
      * @access private
      */
@@ -59,7 +60,8 @@ class Valid {
     /**
      * Constructor
      */
-    function __construct($key = null) {
+    function __construct($key = null)
+    {
         $this->key = $key;
         $this->errors = array();
         $this->rules = array();
@@ -74,7 +76,8 @@ class Valid {
      *
      * @access private
      */
-    function getKey() {
+    function getKey()
+    {
         return $this->key;
     }
 
@@ -86,7 +89,8 @@ class Valid {
      * @param Rule   Reference on rule.
      * @param String Error message.
      */
-    function addRule($rule, $message=false) {
+    function addRule($rule, $message = false)
+    {
         $this->rules[]  = $rule;
         $this->errors[] = $message;
     }
@@ -98,14 +102,16 @@ class Valid {
      * (raise an error). And all failure generate an error (instead of a
      * warning).
      */
-    function required() {
+    function required()
+    {
         $this->isRequired = true;
     }
 
     /**
      * Turn feedback off.
      */
-    function disableFeedback() {
+    function disableFeedback()
+    {
         $this->useFeedback = false;
     }
 
@@ -116,7 +122,8 @@ class Valid {
      * 'warning' or 'error' level according to required();
      * @param String Error message
      */
-    function setErrorMessage($msg) {
+    function setErrorMessage($msg)
+    {
         $this->globalErrorMessage = $msg;
     }
 
@@ -125,9 +132,10 @@ class Valid {
      *
      * @access private
      * @param mixed Value to test
-     * @return boolean
+     * @return bool
      */
-    function isValueEmpty($value) {
+    function isValueEmpty($value)
+    {
         return ($value === '' || $value === false || $value === null);
     }
 
@@ -135,7 +143,8 @@ class Valid {
      * Append feebback in the global Response object.
      * @access private
      */
-    function addFeedback($level, $error) {
+    function addFeedback($level, $error)
+    {
         $GLOBALS['Response']->addFeedback($level, $error);
     }
 
@@ -146,18 +155,19 @@ class Valid {
      * 'disableFeedback'. Empty error messages are disarded.
      * @access private
      */
-    function populateFeedback() {
-        if($this->useFeedback) {
+    function populateFeedback()
+    {
+        if ($this->useFeedback) {
             $level = 'warning';
-            if($this->isRequired) {
+            if ($this->isRequired) {
                 $level = 'error';
             }
-            if($this->globalErrorMessage !== null &&
+            if ($this->globalErrorMessage !== null &&
                !$this->isValid) {
                 $this->addFeedback($level, $this->globalErrorMessage);
             } else {
-                foreach($this->errors as $error) {
-                    if($error != '') {
+                foreach ($this->errors as $error) {
+                    if ($error != '') {
                         $this->addFeedback($level, $error);
                     }
                 }
@@ -174,11 +184,12 @@ class Valid {
      * @param Integer Index of the Rule that was applied.
      * @param Boolean Result of the test.
      */
-    function errorMessage($i, $result) {
-        if($result === true) {
+    function errorMessage($i, $result)
+    {
+        if ($result === true) {
             $this->errors[$i] = '';
         } else {
-            if($this->errors[$i] === false) {
+            if ($this->errors[$i] === false) {
                 $this->errors[$i] = $this->rules[$i]->getErrorMessage($this->key);
             }
         }
@@ -190,15 +201,16 @@ class Valid {
      * @access private
      * @param mixed Value to test.
      */
-    function checkEachRules($value) {
+    function checkEachRules($value)
+    {
         $isValid = true;
         $rCtr = count($this->rules);
-        for($i = 0; $i < $rCtr; $i++) {
+        for ($i = 0; $i < $rCtr; $i++) {
             $valid = $this->rules[$i]->isValid($value);
             $this->errorMessage($i, $valid);
             $isValid = $isValid && $valid;
         }
-        if($isValid && $this->isRequired && $this->isValueEmpty($value)) {
+        if ($isValid && $this->isRequired && $this->isValueEmpty($value)) {
             $this->isValid = false;
         } else {
             $this->isValid = $isValid;
@@ -211,8 +223,9 @@ class Valid {
      *
      * @param mixed Value to test.
      */
-    function validate($value) {
-        if($this->isRequired
+    function validate($value)
+    {
+        if ($this->isRequired
            || (!$this->isRequired && !$this->isValueEmpty($value))) {
             $this->checkEachRules($value);
             return $this->isValid;
@@ -220,5 +233,3 @@ class Valid {
         return true;
     }
 }
-
-?>

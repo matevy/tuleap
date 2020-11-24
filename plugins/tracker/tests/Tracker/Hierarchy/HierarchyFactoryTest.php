@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -17,13 +17,16 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Tracker\Hierarchy\HierarchyDAO;
+
 require_once __DIR__.'/../../bootstrap.php';
 
-Mock::generate('Tracker_Hierarchy_Dao');
+class Tracker_HierarchyFactoryTest extends TuleapTestCase
+{
 
-class Tracker_HierarchyFactoryTest extends TuleapTestCase {
-
-    public function itReturnsItselfWhenThereIsNoHierarchyAssociatedToTracker() {
+    public function itReturnsItselfWhenThereIsNoHierarchyAssociatedToTracker()
+    {
         $factory = $this->GivenAHierarchyFactory();
 
         $lonely_tracker                = array(115);
@@ -32,8 +35,9 @@ class Tracker_HierarchyFactoryTest extends TuleapTestCase {
         $this->assertEqual($lonely_tracker_hierarchy_list, $lonely_tracker);
     }
 
-    public function itRetrievesTheChildrenOfAGivenTracker() {
-        $hierarchy_dao        = mock('Tracker_Hierarchy_Dao');
+    public function itRetrievesTheChildrenOfAGivenTracker()
+    {
+        $hierarchy_dao        = Mockery::spy(HierarchyDAO::class);
         $tracker_factory      = mock('TrackerFactory');
         $child_link_retriever = mock('Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever');
         $hierarchy_factory    = new Tracker_HierarchyFactory(
@@ -59,12 +63,14 @@ class Tracker_HierarchyFactoryTest extends TuleapTestCase {
         $this->assertEqual($actual_children, $expected_children);
     }
 
-    public function testFactoryShouldCreateAHierarchy() {
+    public function testFactoryShouldCreateAHierarchy()
+    {
         $factory = $this->GivenAHierarchyFactory();
         $this->assertIsA($factory->getHierarchy(), 'Tracker_Hierarchy');
     }
 
-    public function testFactoryShouldReturnManyDifferentHierarchies() {
+    public function testFactoryShouldReturnManyDifferentHierarchies()
+    {
         $factory = $this->GivenAHierarchyFactory();
 
         $h1 = $factory->getHierarchy();
@@ -73,18 +79,19 @@ class Tracker_HierarchyFactoryTest extends TuleapTestCase {
         $this->assertTrue($h1 !== $h2);
     }
 
-    public function testFactoryShouldCallTheDatabaseToBuildHierarchy() {
-        $dao = new MockTracker_Hierarchy_Dao();
-        $dao->setReturnValue('searchTrackerHierarchy', array());
-        $dao->expectOnce('searchTrackerHierarchy');
+    public function testFactoryShouldCallTheDatabaseToBuildHierarchy()
+    {
+        $dao = Mockery::mock(HierarchyDAO::class);
+        $dao->shouldReceive('searchTrackerHierarchy')->andReturn([])->once();
 
         $factory = $this->GivenAHierarchyFactory($dao);
         $factory->getHierarchy(array(111));
     }
 
-    public function testFactoryShouldReturnARealHierarchyAccordingToDatabase() {
-        $dao     = new MockTracker_Hierarchy_Dao();
-        $dao->setReturnValue('searchTrackerHierarchy', TestHelper::arrayToDar(array('parent_id' => 111, 'child_id' => 112)));
+    public function testFactoryShouldReturnARealHierarchyAccordingToDatabase()
+    {
+        $dao     = Mockery::mock(HierarchyDAO::class);
+        $dao->shouldReceive('searchTrackerHierarchy')->andReturn([['parent_id' => 111, 'child_id' => 112]]);
 
         $factory = $this->GivenAHierarchyFactory($dao);
 
@@ -92,7 +99,8 @@ class Tracker_HierarchyFactoryTest extends TuleapTestCase {
         $this->assertEqual($hierarchy->getLevel(112), 1);
     }
 
-    public function testFactoryShouldReturnFullHierarchy() {
+    public function testFactoryShouldReturnFullHierarchy()
+    {
         /*
           111
           +- 112
@@ -106,7 +114,8 @@ class Tracker_HierarchyFactoryTest extends TuleapTestCase {
         $this->assertEqual($hierarchy->getLevel(114), 3);
     }
 
-    public function testDuplicateHierarchy() {
+    public function testDuplicateHierarchy()
+    {
         $dao = $this->GivenADaoThatContainsOneFullHierrachy();
 
         $factory = $this->GivenAHierarchyFactory($dao);
@@ -121,40 +130,41 @@ class Tracker_HierarchyFactoryTest extends TuleapTestCase {
         $dao->expectCallCount('duplicate', 3, 'Method duplicate from Dao should be called 3 times.');
 
         $factory->duplicate($tracker_mapping);
-
     }
 
-    private function GivenADaoThatContainsOneFullHierrachy() {
-        $dao = new MockTracker_Hierarchy_Dao();
-        $dar = TestHelper::arrayToDar(
+    private function GivenADaoThatContainsOneFullHierrachy()
+    {
+        $dao = Mockery::spy(HierarchyDAO::class);
+        $dar = [
             array('parent_id' => 111, 'child_id' => 112),
             array('parent_id' => 112, 'child_id' => 113),
             array('parent_id' => 113, 'child_id' => 114)
-        );
+        ];
         $dao->setReturnValue('searchTrackerHierarchy', $dar, array(array(111, 112, 113, 114)));
         return $dao;
     }
 
-    private function GivenADaoThatContainsFullHierarchy() {
-        $dao     = new MockTracker_Hierarchy_Dao();
-        $dar1 = TestHelper::arrayToDar(
+    private function GivenADaoThatContainsFullHierarchy()
+    {
+        $dao     = Mockery::spy(HierarchyDAO::class);
+        $dar1 = [
             array('parent_id' => 111, 'child_id' => 112),
             array('parent_id' => 113, 'child_id' => 114)
-        );
-        $dao->setReturnValue('searchTrackerHierarchy', $dar1, array(array(111, 114)));
-        $dar2 = TestHelper::arrayToDar(
+        ];
+        $dao->shouldReceive('searchTrackerHierarchy')->with([111, 114])->andReturn($dar1);
+        $dar2 = [
             array('parent_id' => 111, 'child_id' => 112),
             array('parent_id' => 112, 'child_id' => 113),
             array('parent_id' => 113, 'child_id' => 114)
-        );
-        $dao->setReturnValue('searchTrackerHierarchy', $dar2, array(array(112, 113)));
+         ];
+        $dao->shouldReceive('searchTrackerHierarchy')->with([112, 113])->andReturn($dar2);
         return $dao;
     }
 
     private function GivenAHierarchyFactory($dao = null)
     {
         if (! $dao) {
-            $dao = new MockTracker_Hierarchy_Dao();
+            $dao = Mockery::spy(HierarchyDAO::class);
             $dao->setReturnValue('searchTrackerHierarchy', array());
         }
         $child_link_retriever = mock(
@@ -169,7 +179,8 @@ class Tracker_HierarchyFactoryTest extends TuleapTestCase {
     }
 }
 
-class Tracker_HierarchyFactoryGetParentArtifactTest extends TuleapTestCase {
+class Tracker_HierarchyFactoryGetParentArtifactTest extends TuleapTestCase
+{
     private $dao;
     private $hierarchy_factory;
     private $user;
@@ -177,13 +188,14 @@ class Tracker_HierarchyFactoryGetParentArtifactTest extends TuleapTestCase {
     private $artifact_id;
     private $artifact_factory;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->artifact_id = 123;
         $this->artifact    = aMockArtifact()->withId($this->artifact_id)->build();
 
-        $this->dao               = mock('Tracker_Hierarchy_Dao');
+        $this->dao               = Mockery::spy(HierarchyDAO::class);
         $this->artifact_factory  = mock('Tracker_ArtifactFactory');
         $child_link_retriever    = mock(
             'Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever'
@@ -198,45 +210,33 @@ class Tracker_HierarchyFactoryGetParentArtifactTest extends TuleapTestCase {
         $this->user    = aUser()->build();
     }
 
-    public function itReturnsTheParent() {
+    public function itReturnsTheParent()
+    {
         $artifact_id  = 345;
-        $artifact_row = array('id' => "$artifact_id");
+        $artifact_row = array('id' => $artifact_id);
         stub($this->artifact_factory)->getInstanceFromRow($artifact_row)->returns(aMockArtifact()->withId($artifact_id)->build());
-        stub($this->dao)->getParentsInHierarchy($this->artifact_id)->returnsDar($artifact_row);
+        stub($this->dao)->getParentsInHierarchy($this->artifact_id)->returns([$artifact_row]);
 
         $parent = $this->hierarchy_factory->getParentArtifact($this->user, $this->artifact);
         $this->assertEqual($parent->getId(), $artifact_id);
     }
 
-    public function itReturnsNullWhenNoParents() {
-        stub($this->dao)->getParentsInHierarchy()->returnsEmptyDar();
+    public function itReturnsNullWhenNoParents()
+    {
+        stub($this->dao)->getParentsInHierarchy()->returns([]);
 
         $parent = $this->hierarchy_factory->getParentArtifact($this->user, $this->artifact);
         $this->assertEqual($parent, null);
     }
 
-    public function itReturnsNullWhenDatabaseReturnsCrap() {
-        stub($this->dao)->getParentsInHierarchy()->returns(false);
-
-        $parent = $this->hierarchy_factory->getParentArtifact($this->user, $this->artifact);
-        $this->assertEqual($parent, null);
-    }
-
-    public function itReturnsNullWhenDatabaseReturnsError() {
-        stub($this->dao)->getParentsInHierarchy()->returnsDarWithErrors();
-
-        $parent = $this->hierarchy_factory->getParentArtifact($this->user, $this->artifact);
-        $this->assertEqual($parent, null);
-    }
-
-    public function itGeneratesAWarningWhen2Parents() {
+    public function itGeneratesAWarningWhen2Parents()
+    {
         $artifact_345_row = array('id' => '345');
         $artifact_346_row = array('id' => '346');
-        stub($this->dao)->getParentsInHierarchy()->returnsDar($artifact_345_row, $artifact_346_row);
+        stub($this->dao)->getParentsInHierarchy()->returns([$artifact_345_row, $artifact_346_row]);
 
         $this->artifact_factory->setReturnValueAt(0, 'getInstanceFromRow', aMockArtifact()->withId(345)->build());
         $this->artifact_factory->setReturnValueAt(1, 'getInstanceFromRow', aMockArtifact()->withId(346)->build());
-
 
         stub($GLOBALS['Response'])->addFeedback('warning', '*', '*')->once();
 
@@ -244,25 +244,29 @@ class Tracker_HierarchyFactoryGetParentArtifactTest extends TuleapTestCase {
     }
 }
 
-class Tracker_HierarchyFactoryGetAllAncestorsTest extends TuleapTestCase {
+class Tracker_HierarchyFactoryGetAllAncestorsTest extends TuleapTestCase
+{
     private $hierarchy_factory;
     private $user;
     private $sprint;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->user              = aUser()->build();
         $this->hierarchy_factory = partial_mock('Tracker_HierarchyFactory', array('getParentArtifact'));
         $this->sprint            = anArtifact()->withId(1)->build();
     }
 
-    public function itReturnsEmptyArrayWhenNoAncestors() {
+    public function itReturnsEmptyArrayWhenNoAncestors()
+    {
         stub($this->hierarchy_factory)->getParentArtifact($this->user, $this->sprint)->returns(null);
 
         $this->assertEqual($this->hierarchy_factory->getAllAncestors($this->user, $this->sprint), array());
     }
 
-    public function itReturnsTheParentWhenThereIsOnlyOne() {
+    public function itReturnsTheParentWhenThereIsOnlyOne()
+    {
         $release = anArtifact()->build();
 
         $this->hierarchy_factory->setReturnValueAt(0, 'getParentArtifact', $release, array($this->user, $this->sprint));
@@ -270,13 +274,15 @@ class Tracker_HierarchyFactoryGetAllAncestorsTest extends TuleapTestCase {
         $this->assertEqual($this->hierarchy_factory->getAllAncestors($this->user, $this->sprint), array($release));
     }
 
-    public function itReturnsNothingWhenChildReferenceItselfAsParent() {
+    public function itReturnsNothingWhenChildReferenceItselfAsParent()
+    {
         stub($this->hierarchy_factory)->getParentArtifact($this->user, $this->sprint)->returns($this->sprint);
 
         $this->assertEqual($this->hierarchy_factory->getAllAncestors($this->user, $this->sprint), array());
     }
 
-    public function itReturnsParentsOnlyOnceWhenTheParentReferenceItself() {
+    public function itReturnsParentsOnlyOnceWhenTheParentReferenceItself()
+    {
         $release = anArtifact()->withId(3)->build();
 
         $this->hierarchy_factory->setReturnValueAt(0, 'getParentArtifact', $release, array($this->user, $this->sprint));
@@ -288,7 +294,8 @@ class Tracker_HierarchyFactoryGetAllAncestorsTest extends TuleapTestCase {
         $this->assertEqual($this->hierarchy_factory->getAllAncestors($this->user, $this->sprint), array($release));
     }
 
-    public function itReturnsParentsOnlyOnceWhenThereIsACycleBetweenParents() {
+    public function itReturnsParentsOnlyOnceWhenThereIsACycleBetweenParents()
+    {
         $product = anArtifact()->withId(2)->build();
         $release = anArtifact()->withId(3)->build();
 
@@ -299,7 +306,8 @@ class Tracker_HierarchyFactoryGetAllAncestorsTest extends TuleapTestCase {
         $this->assertEqual($this->hierarchy_factory->getAllAncestors($this->user, $this->sprint), array($release, $product));
     }
 
-    public function itReturnsParentsOnlyOnceWhenThereIsAFullCycle() {
+    public function itReturnsParentsOnlyOnceWhenThereIsAFullCycle()
+    {
         $product = anArtifact()->withId(2)->build();
         $release = anArtifact()->withId(3)->build();
 
@@ -310,7 +318,8 @@ class Tracker_HierarchyFactoryGetAllAncestorsTest extends TuleapTestCase {
         $this->assertEqual($this->hierarchy_factory->getAllAncestors($this->user, $this->sprint), array($release, $product));
     }
 
-    public function itReturnsSeveralParents() {
+    public function itReturnsSeveralParents()
+    {
         $product = anArtifact()->withId(2)->build();
         $release = anArtifact()->withId(3)->build();
 
@@ -321,7 +330,8 @@ class Tracker_HierarchyFactoryGetAllAncestorsTest extends TuleapTestCase {
     }
 }
 
-class Tracker_HierarchyFactory_getParentTest extends TuleapTestCase {
+class Tracker_HierarchyFactory_getParentTest extends TuleapTestCase
+{
 
     public function setUp()
     {
@@ -334,7 +344,7 @@ class Tracker_HierarchyFactory_getParentTest extends TuleapTestCase {
         stub($this->tracker_factory)->getTrackerById(111)->returns($this->epic_tracker);
         stub($this->tracker_factory)->getTrackerById(112)->returns($this->story_tracker);
 
-        $this->dao               = mock('Tracker_Hierarchy_Dao');
+        $this->dao               = Mockery::spy(HierarchyDAO::class);
         $child_link_retriever    = mock(
             'Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever'
         );
@@ -346,16 +356,17 @@ class Tracker_HierarchyFactory_getParentTest extends TuleapTestCase {
         );
     }
 
-    public function itReturnsTheParentTracker() {
-        stub($this->dao)->searchTrackerHierarchy()->returnsDar(
+    public function itReturnsTheParentTracker()
+    {
+        stub($this->dao)->searchTrackerHierarchy()->returns([
             array('parent_id' => 111, 'child_id' => 112)
-        );
+        ]);
         $this->assertEqual($this->epic_tracker, $this->hierarchy_factory->getParent($this->story_tracker));
     }
 
-    public function itReturnsNullIfNoParentTracker() {
-        stub($this->dao)->searchTrackerHierarchy()->returnsEmptyDar();
+    public function itReturnsNullIfNoParentTracker()
+    {
+        stub($this->dao)->searchTrackerHierarchy()->returns([]);
         $this->assertNull($this->hierarchy_factory->getParent($this->epic_tracker));
     }
 }
-?>

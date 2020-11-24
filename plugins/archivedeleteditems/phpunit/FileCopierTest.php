@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -80,7 +80,7 @@ class FileCopierTest extends TestCase
         $this->assertTrue($is_copy_successful);
     }
 
-    public function testItCopiesAFile()
+    public function testItCopiesAFile() : void
     {
         $content = random_bytes(64);
         file_put_contents($this->source_file, $content);

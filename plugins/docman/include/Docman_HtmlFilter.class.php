@@ -4,7 +4,7 @@
  * Copyright (c) STMicroelectronics, 2006. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2006
- * 
+ *
  * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -21,67 +21,67 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Docman_HtmlFilterFactory {
+class Docman_HtmlFilterFactory
+{
 
-    function __construct() {
-        
+    function __construct()
+    {
     }
 
-    function getFromFilter($filter) {
+    function getFromFilter($filter)
+    {
         $f = null;
-        if(is_a($filter, 'Docman_FilterDateAdvanced')) {
+        if (is_a($filter, 'Docman_FilterDateAdvanced')) {
             $f = new Docman_HtmlFilterDateAdvanced($filter);
-        }
-        elseif(is_a($filter, 'Docman_FilterDate')) {
+        } elseif (is_a($filter, 'Docman_FilterDate')) {
             $f = new Docman_HtmlFilterDate($filter);
-        }
-        elseif(is_a($filter, 'Docman_FilterListAdvanced')) {
+        } elseif (is_a($filter, 'Docman_FilterListAdvanced')) {
             $f = new Docman_HtmlFilterListAdvanced($filter);
-        }
-        elseif(is_a($filter, 'Docman_FilterList')) {
+        } elseif (is_a($filter, 'Docman_FilterList')) {
             $f = new Docman_HtmlFilterList($filter);
-        }
-        elseif(is_a($filter, 'Docman_FilterText')) {
+        } elseif (is_a($filter, 'Docman_FilterText')) {
             $f = new Docman_HtmlFilterText($filter);
-        }
-        elseif(is_a($filter, 'Docman_FilterOwner')) {
+        } elseif (is_a($filter, 'Docman_FilterOwner')) {
             $f = new Docman_HtmlFilterText($filter);
-        }
-        else {
+        } else {
             $f = new Docman_HtmlFilter($filter);
         }
         return $f;
     }
-
 }
 
-class Docman_HtmlFilter {
+class Docman_HtmlFilter
+{
     var $filter;
     var $hp;
 
-    function __construct($filter) {
+    function __construct($filter)
+    {
         $this->filter = $filter;
         $this->hp = Codendi_HTMLPurifier::instance();
     }
 
-    function _fieldName() {
+    function _fieldName()
+    {
         $html = $this->hp->purify($this->filter->md->getName());
         return $html;
     }
 
-    function _valueSelectorHtml($formName) {
+    function _valueSelectorHtml($formName)
+    {
         $html = '';
         $value = $this->filter->getValue();
-        if($value !== null) {
+        if ($value !== null) {
             $html .= '<input type="hidden" name="'.$this->filter->md->getLabel().'" value="'.$this->hp->purify($value).'" />';
             $html .= "\n";
         }
         return $html;
     }
 
-    function toHtml($formName, $trashLinkBase) {
+    function toHtml($formName, $trashLinkBase)
+    {
         $trashLink = '';
-        if($trashLinkBase) {
+        if ($trashLinkBase) {
             $trashLink = $trashLinkBase.$this->filter->md->getLabel();
             $trashWarn = $this->hp->purify($GLOBALS['Language']->getText('plugin_docman', 'report_remove_filter_warn'));
             $trashAlt  = $this->hp->purify($GLOBALS['Language']->getText('plugin_docman', 'report_remove_filter_alt'));
@@ -104,114 +104,133 @@ class Docman_HtmlFilter {
     }
 }
 
-class Docman_HtmlFilterDate extends Docman_HtmlFilter {
+class Docman_HtmlFilterDate extends Docman_HtmlFilter
+{
 
-    function __construct($filter) {
+    function __construct($filter)
+    {
         parent::__construct($filter);
     }
-    
-    function _valueSelectorHtml($formName) {
+
+    function _valueSelectorHtml($formName)
+    {
         $html = '';
         $html .= html_select_operator($this->filter->getFieldOperatorName(), $this->filter->getOperator());
-        $html .= html_field_date($this->filter->getFieldValueName(),
-                                 $this->filter->getValue(),
-                                 false,
-                                 '10',
-                                 '10',
-                                 $formName,
-                                 false);
+        $html .= html_field_date(
+            $this->filter->getFieldValueName(),
+            $this->filter->getValue(),
+            false,
+            '10',
+            '10',
+            $formName,
+            false
+        );
         return $html;
     }
 }
 
-class Docman_HtmlFilterDateAdvanced 
-extends Docman_HtmlFilterDate {
+class Docman_HtmlFilterDateAdvanced extends Docman_HtmlFilterDate
+{
 
-    function __construct($filter) {
+    function __construct($filter)
+    {
         parent::__construct($filter);
     }
 
-    function _valueSelectorHtml($formName) {
+    function _valueSelectorHtml($formName)
+    {
         $html = '';
 
         $html .= $GLOBALS['Language']->getText('plugin_docman', 'filters_html_date_start');
         $html .= '&nbsp;';
-        $html .= html_field_date($this->filter->getFieldStartValueName(),
-                                 $this->filter->getValueStart(),
-                                 false,
-                                 '10',
-                                 '10',
-                                 $formName,
-                                 false);
+        $html .= html_field_date(
+            $this->filter->getFieldStartValueName(),
+            $this->filter->getValueStart(),
+            false,
+            '10',
+            '10',
+            $formName,
+            false
+        );
         $html .= '&nbsp;';
         $html .= $GLOBALS['Language']->getText('plugin_docman', 'filters_html_date_end');
         $html .= '&nbsp;';
-        $html .= html_field_date($this->filter->getFieldEndValueName(),
-                                 $this->filter->getValueEnd(),
-                                 false,
-                                 '10',
-                                 '10',
-                                 $formName,
-                                 false);
+        $html .= html_field_date(
+            $this->filter->getFieldEndValueName(),
+            $this->filter->getValueEnd(),
+            false,
+            '10',
+            '10',
+            $formName,
+            false
+        );
         return $html;
     }
 }
 
 
-class Docman_HtmlFilterList extends Docman_HtmlFilter {
-    
-    function __construct($filter) {
+class Docman_HtmlFilterList extends Docman_HtmlFilter
+{
+
+    function __construct($filter)
+    {
         parent::__construct($filter);
     }
 
-    function buildSelectBox($vals, $txts) {
+    function buildSelectBox($vals, $txts)
+    {
         // Purifying is disabled as $txts already contains purified strings
         $html = html_build_select_box_from_arrays($vals, $txts, $this->filter->md->getLabel(), $this->filter->getValue(), false, '', true, $GLOBALS['Language']->getText('global', 'any'), false, '', CODENDI_PURIFIER_DISABLED);
         return $html;
     }
 
-    function _valueSelectorHtml($formName=0) {
+    function _valueSelectorHtml($formName = 0)
+    {
         $vIter = $this->filter->md->getListOfValueIterator();
         $vIter->rewind();
-        while($vIter->valid()) {
+        while ($vIter->valid()) {
             $e = $vIter->current();
-            
-            if($e->getStatus() == 'A' 
-               || $e->getStatus() == 'P') {                
+
+            if ($e->getStatus() == 'A'
+               || $e->getStatus() == 'P') {
                 $vals[]  = $e->getId();
                 $txts[] = Docman_MetadataHtmlList::_getElementName($e);
             }
-            
+
             $vIter->next();
         }
-        
+
         $html = $this->buildSelectBox($vals, $txts);
         return $html;
     }
 }
 
-class Docman_HtmlFilterListAdvanced 
-extends Docman_HtmlFilterList {
-    
-    function __construct($filter) {
+class Docman_HtmlFilterListAdvanced extends Docman_HtmlFilterList
+{
+
+    function __construct($filter)
+    {
         parent::__construct($filter);
     }
 
-    function buildSelectBox($vals, $txts) {
+    function buildSelectBox($vals, $txts)
+    {
         // Purifying is disabled as $txts already contains purified strings
         $html = html_build_select_box_from_arrays($vals, $txts, $this->filter->md->getLabel(), $this->filter->getValue(), false, '', true, $GLOBALS['Language']->getText('global', 'any'), false, '', CODENDI_PURIFIER_DISABLED);
         return $html;
     }
-
 }
 
-class Docman_HtmlFilterText extends Docman_HtmlFilter {
+class Docman_HtmlFilterText extends Docman_HtmlFilter
+{
 
-    function __construct($filter) {
+    function __construct($filter)
+    {
         parent::__construct($filter);
     }
 
-    function _valueSelectorHtml($formName=0) {
+    function _valueSelectorHtml($formName = 0)
+    {
         $html = '';
         $html .= '<input type="text" name="'.$this->filter->md->getLabel().'" value="'.$this->hp->purify($this->filter->getValue()).'" class="text_field"/>';
         return $html;

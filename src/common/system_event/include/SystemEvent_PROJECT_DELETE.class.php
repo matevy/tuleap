@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  *
- * 
+ *
  */
 
 use Tuleap\SVN\SVNAuthenticationCacheInvalidator;
@@ -41,33 +41,34 @@ class SystemEvent_PROJECT_DELETE extends SystemEvent
     }
 
     /**
-     * Verbalize the parameters so they are readable and much user friendly in 
+     * Verbalize the parameters so they are readable and much user friendly in
      * notifications
      *
-     * @param bool $with_link true if you want links to entities. The returned 
+     * @param bool $with_link true if you want links to entities. The returned
      * string will be html instead of plain/text
      *
      * @return string
      */
-    public function verbalizeParameters($with_link) {
+    public function verbalizeParameters($with_link)
+    {
         $txt = '';
         $txt .= 'project: '. $this->verbalizeProjectId($this->getIdFromParam($this->parameters), $with_link);
         return $txt;
     }
-    
+
     /**
      * Process stored event
      *
-     * @return Boolean
+     * @return bool
      */
-    public function process() {
+    public function process()
+    {
         // Check parameters
         $groupId=$this->getIdFromParam($this->parameters);
 
         $deleteState = true;
 
         if ($project = $this->getProject($groupId)) {
-
             if (!$this->removeProjectMembers($project)) {
                 $this->error("Could not remove project users");
                 $deleteState = false;
@@ -165,35 +166,38 @@ class SystemEvent_PROJECT_DELETE extends SystemEvent
      *
      * @param Project $project Project to be deleted
      *
-     * @return Boolean
+     * @return bool
      */
-    protected function removeProjectMembers($project) {
+    protected function removeProjectMembers($project)
+    {
         $pm = $this->getProjectManager();
         return $pm->removeProjectMembers($project);
     }
 
      /**
-     * Deletes ugroups assigned to recieve membership request notification 
+     * Deletes ugroups assigned to recieve membership request notification
      * And the message set from a given project.
      *
-     * @param Integer $groupId Id of the project to be deleted
+     * @param int $groupId Id of the project to be deleted
      *
-     * @return Boolean
+     * @return bool
      */
-    protected function deleteMembershipRequestNotificationEntries($groupId) {
+    protected function deleteMembershipRequestNotificationEntries($groupId)
+    {
         $pm = $this->getProjectManager();
         return $pm->deleteMembershipRequestNotificationEntries($groupId);
     }
-    
+
 
     /**
      * Remove Files, releases and packages for a given project.
      *
-     * @param Integer $groupId Id of the project to be deleted
+     * @param int $groupId Id of the project to be deleted
      *
-     * @return Boolean
+     * @return bool
      */
-    protected function cleanupProjectFRS($groupId) {
+    protected function cleanupProjectFRS($groupId)
+    {
         $frsff = $this->getFRSFileFactory();
         return $frsff->deleteProjectFRS($groupId, $this->getBackend('System'));
     }
@@ -205,7 +209,8 @@ class SystemEvent_PROJECT_DELETE extends SystemEvent
      *
      * @return ArtifactTypeFactory
      */
-    function getArtifactTypeFactory($project) {
+    function getArtifactTypeFactory($project)
+    {
         return new ArtifactTypeFactory($project);
     }
 
@@ -214,43 +219,45 @@ class SystemEvent_PROJECT_DELETE extends SystemEvent
      *
      * @return FRSFileFactory
      */
-    protected function getFRSFileFactory() {
+    protected function getFRSFileFactory()
+    {
         return new FRSFileFactory();
     }
 
     /**
      * Wrapper for tests
      *
-     * @param Integer $groupId Id of the deleted project
+     * @param int $groupId Id of the deleted project
      *
      * @return WikiAttachment
      */
-    protected function getWikiAttachment($groupId) {
+    protected function getWikiAttachment($groupId)
+    {
         return new WikiAttachment($groupId);
     }
 
     /**
      * Wrapper for ProjectManager
-     * 
+     *
      * @return ProjectManager
      */
-    protected function getProjectManager() {
+    protected function getProjectManager()
+    {
         return ProjectManager::instance();
     }
 
     /**
      * Remove all binding to user groups from a the given user group.
      *
-     * @param Integer $groupId Id of the deleted project
+     * @param int $groupId Id of the deleted project
      *
-     * @return Boolean
+     * @return bool
      */
-    protected function cleanupProjectUgroupsBinding($groupId) {
+    protected function cleanupProjectUgroupsBinding($groupId)
+    {
         $ugroupUserDao = new UGroupUserDao();
         $ugroupManager = new UGroupManager(new UGroupDao());
         $uGroupBinding = new UGroupBinding($ugroupUserDao, $ugroupManager);
         return $uGroupBinding->removeProjectUGroupsBinding($groupId);
     }
 }
-
-?>

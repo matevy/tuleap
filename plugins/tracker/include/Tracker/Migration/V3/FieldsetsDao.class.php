@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class Tracker_Migration_V3_FieldsetsDao extends DataAccessObject {
+class Tracker_Migration_V3_FieldsetsDao extends DataAccessObject
+{
 
-    public function create($tv3_id, $tv5_id) {
+    public function create($tv3_id, $tv5_id)
+    {
         $sql = "CREATE TABLE tracker_fieldset_$tv5_id (
                     id INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     tracker_id INT( 11 ) UNSIGNED NOT NULL default '0',
@@ -90,7 +92,8 @@ class Tracker_Migration_V3_FieldsetsDao extends DataAccessObject {
         $this->update($sql);
     }
 
-    public function nowFieldsetsAreStoredAsField($tv5_id) {
+    public function nowFieldsetsAreStoredAsField($tv5_id)
+    {
         $sql = "INSERT INTO tracker_field(old_id, tracker_id, parent_id, formElement_type, name, label, description, use_it, rank, scope, required)
                 SELECT id, tracker_id, 0, 'fieldset', CONCAT('fieldset_', rank), name, description, 1, rank, 'P', 1
                 FROM tracker_fieldset_$tv5_id";
@@ -108,4 +111,3 @@ class Tracker_Migration_V3_FieldsetsDao extends DataAccessObject {
         $this->update($sql);
     }
 }
-?>

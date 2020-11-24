@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -33,8 +33,6 @@ use Tuleap\Layout\IncludeAssets;
 
 class GitRepositoryHeaderDisplayer
 {
-    use \Tuleap\Git\Repository\View\FeatureFlag;
-
     /**
      * @var HeaderRenderer
      */
@@ -74,16 +72,16 @@ class GitRepositoryHeaderDisplayer
         $this->displayForBurningParrot($request, $current_user, $repository);
     }
 
-    private function includeAssetsForBurningParrot(HTTPRequest $request, BaseLayout $layout)
+    private function includeAssetsForBurningParrot(HTTPRequest $request, BaseLayout $layout) : void
     {
         $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../www/themes/BurningParrot/assets',
-            GIT_BASE_URL . '/themes/BurningParrot/assets'
+            __DIR__ . '/../../../../../src/www/assets/git/themes',
+            '/assets/git/themes'
         );
-        if ($this->isTuleapBeauGitActivated() && in_array($request->get('a'), ['blob', 'blame'], true)) {
+        if (in_array($request->get('a'), ['blob', 'blame'], true)) {
             $layout->addCssAsset(new CssAssetWithoutVariantDeclinaisons($include_assets, 'syntax-highlight'));
         }
-        $layout->addCssAsset(new CssAsset($include_assets, 'git'));
+        $layout->addCssAsset(new CssAsset($include_assets, 'bp-style'));
         $layout->includeFooterJavascriptFile($this->include_assets->getFileURL('repository.js'));
 
         $external_assets = new CollectAssets();

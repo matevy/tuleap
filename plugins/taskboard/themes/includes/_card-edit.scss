@@ -1,0 +1,276 @@
+/**
+ * Copyright (c) Enalean, 2019 - Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+@mixin pencil-background($color) {
+    background: $color;
+    box-shadow: 0 0 8px 2px $color;
+}
+
+:not(.gu-mirror) > .taskboard-card.taskboard-card-editable:not(.taskboard-card-edit-mode) {
+    > .taskboard-card-edit-trigger {
+        @include pencil-background(var(--secondary-color, #{$tlp-ui-white}));
+        display: flex;
+        position: absolute;
+        z-index: 10;
+        top: 6px;
+        right: 9px;
+        justify-content: center;
+        width: 27px;
+        height: 27px;
+        transition: opacity ease-in-out 100ms;
+        border-radius: 50%;
+        opacity: 0;
+        color: var(--text-color, var(--card-text-color, $tlp-ui-dimmed));
+        font-size: 14px;
+        cursor: pointer;
+
+        > .fa-pencil {
+            position: relative;
+            top: 5px;
+        }
+    }
+
+    &.taskboard-card-with-accessibility > .taskboard-card-edit-trigger {
+        right: 24px;
+    }
+
+    &:hover {
+        .taskboard-card-inital-effort {
+            opacity: 0;
+        }
+
+        > .taskboard-card-edit-trigger {
+            opacity: 1;
+        }
+    }
+}
+
+.taskboard-cell:first-child > .taskboard-cell-parent-card > .taskboard-card.taskboard-card-edit-mode,
+.taskboard-card.taskboard-card-edit-mode {
+    margin: 0;
+    border: 1px solid $tlp-theme-color;
+    background: transparentize($tlp-theme-color, .9);
+
+    &::before,
+    >.taskboard-card-progress {
+        background: $tlp-theme-color;
+    }
+
+    > .taskboard-card-edit-trigger {
+        display: none;
+    }
+
+    &.taskboard-card-with-accessibility {
+        padding: $tlp-half-spacing $tlp-half-spacing $tlp-half-spacing ($tlp-half-spacing + 2);
+    }
+
+    /* stylelint-disable-next-line selector-max-compound-selectors */
+    > .taskboard-card-content > .taskboard-card-xref-label > .taskboard-card-xref {
+        color: $tlp-theme-color;
+    }
+
+    /* stylelint-disable-next-line selector-max-compound-selectors */
+    > .taskboard-card-content > .taskboard-card-info > .taskboard-card-inital-effort {
+        border-color: $tlp-theme-color;
+        background: transparentize($tlp-theme-color, .9);
+        color: $tlp-theme-color;
+    }
+
+    > .taskboard-card-accessibility {
+        display: none;
+    }
+}
+
+.taskboard-cell:first-child > .taskboard-cell-parent-card > .taskboard-card:not([class*='taskboard-card-background-']) > .taskboard-card-edit-trigger {
+    @include pencil-background($tlp-theme-background-color);
+}
+
+.taskboard-cell:first-child > .taskboard-cell-parent-card > .taskboard-card,
+:not(.gu-mirror) > .taskboard-card {
+    transition: border-color 75ms ease-in-out, background-color 75ms ease-in-out;
+
+    &.taskboard-card-is-being-saved {
+        animation: blink-card 1200ms ease-in-out alternate infinite;
+    }
+
+
+    &.taskboard-card-is-just-saved {
+        animation: pulse-card 500ms ease-in-out;
+        border-color: $tlp-ui-success;
+        background: mix($tlp-ui-white, $tlp-ui-success, 90%);
+
+        &.taskboard-card-editable:not(.taskboard-card-edit-mode) > .taskboard-card-edit-trigger {
+            @include pencil-background(mix($tlp-ui-white, $tlp-ui-success, 90%));
+        }
+    }
+}
+
+.taskboard-card-cancel-save-buttons {
+    margin: ($tlp-half-spacing - 5px) 0 0;
+    text-align: right;
+
+    &.taskboard-card-cancel-save-buttons-for-child {
+        margin: ($tlp-half-spacing - 5px) 0 $tlp-spacing;
+    }
+}
+
+.taskboard-child:last-child > .taskboard-card-cancel-save-buttons-for-child {
+    margin: ($tlp-half-spacing - 5px) 0 0;
+}
+
+.taskboard-card-cancel-button {
+    margin: 5px 0 0;
+}
+
+.taskboard-card-save-button {
+    margin: 5px 0 0 5px;
+    float: right;
+}
+
+.taskboard-card-remaining-effort-editable {
+    cursor: pointer;
+
+    &::before {
+        content: '\f040'; // fa-pencil
+        display: flex;
+        position: absolute;
+        top: 0;
+        left: -$tlp-spacing;
+        align-items: center;
+        width: 20px;
+        height: 26px;
+        transition: opacity ease-in-out 100ms;
+        opacity: 0;
+        font-family: FontAwesome;
+        font-size: 14px;
+        font-weight: 300;
+    }
+
+    &:not(.taskboard-card-remaining-effort-edit-mode):hover::before {
+        opacity: 1;
+    }
+
+    &.taskboard-card-remaining-effort-edit-mode {
+        margin: 10px 16px 0 0;
+        border-top-left-radius: 20px;
+        border-bottom-left-radius: 20px;
+
+        &::after {
+            right: -16px;
+            border-width: 15px 0 15px 15px;
+        }
+    }
+
+    > .fa-long-arrow-right {
+        margin: 0 2px;
+    }
+
+    @each $color-name, $colors in $tlp-swatch-color-map {
+        &.tlp-badge-#{$color-name}::before {
+            color: darken(map-get($colors, 'primary'), 5%);
+        }
+
+        &.taskboard-card-remaining-effort-edit-mode,
+        &:focus,
+        &:hover {
+            &.tlp-badge-#{$color-name} {
+                border: 1px solid darken(map-get($colors, 'primary'), 5%);
+                background: darken(map-get($colors, 'primary'), 5%);
+
+                &::after {
+                    border-color: transparent transparent transparent darken(map-get($colors, 'primary'), 5%);
+                }
+            }
+        }
+    }
+}
+
+.taskboard-card-label-editor {
+    position: relative;
+    margin: $tlp-half-spacing 0 0;
+}
+
+.taskboard-card-label-input,
+.taskboard-card-label-input-mirror {
+    width: 100%;
+    overflow: hidden;
+    resize: none;
+
+    &:focus {
+        border-color: transparentize($tlp-theme-color, .65);
+    }
+}
+
+.taskboard-card-label-input-mirror {
+    visibility: hidden;
+    position: absolute;
+    pointer-events: none;
+}
+
+.taskboard-card-remaining-effort-input {
+    width: 30px;
+    padding: 1px 5px;
+    border: 0;
+    border-radius: 2px;
+    background: var(--secondary-color);
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 14px;
+}
+
+@for $width from 4 through 6 {
+    $width: $width * 10;
+
+    .taskboard-card-remaining-effort-input-width-#{$width} {
+        width: #{$width}px;
+    }
+}
+
+@keyframes blink-card {
+    0% {
+        border-color: $tlp-ui-info;
+        background: transparentize($tlp-ui-info, .9);
+    }
+
+    50% {
+        border-color: transparent;
+        background: $tlp-ui-white;
+    }
+
+    100% {
+        border-color: $tlp-ui-info;
+        background: transparentize($tlp-ui-info, .9);
+    }
+}
+
+@keyframes pulse-card {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}

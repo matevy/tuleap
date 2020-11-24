@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -26,6 +26,7 @@ use ForgeAccess;
 use ForgeAccess_ForgePropertiesManager;
 use ForgeConfig;
 use PermissionsManager;
+use ProjectHistoryDao;
 use ProjectManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
@@ -48,13 +49,13 @@ class PlatformAccessControlCommand extends Command
         $this->addArgument(self::ACCESS_CONTROL_ARGUMENT, InputArgument::OPTIONAL);
     }
 
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output): int
     {
         $current_platform_access_value = ForgeConfig::get(ForgeAccess::CONFIG);
         $new_access_value = $input->getArgument(self::ACCESS_CONTROL_ARGUMENT);
         if ($new_access_value === null) {
             $output->writeln($current_platform_access_value);
-            return;
+            return 0;
         }
 
         $forge_access_properties_manager = new ForgeAccess_ForgePropertiesManager(
@@ -64,7 +65,8 @@ class PlatformAccessControlCommand extends Command
             EventManager::instance(),
             new FRSPermissionCreator(
                 new FRSPermissionDao(),
-                new UGroupDao()
+                new UGroupDao(),
+                new ProjectHistoryDao()
             )
         );
 
@@ -73,5 +75,7 @@ class PlatformAccessControlCommand extends Command
         } catch (UnknownForgeAccessValueException $e) {
             throw new InvalidArgumentException($e->getMessage());
         }
+
+        return 0;
     }
 }

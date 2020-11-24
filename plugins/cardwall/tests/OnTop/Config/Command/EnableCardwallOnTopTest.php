@@ -21,9 +21,11 @@
 require_once dirname(__FILE__) .'/../../../bootstrap.php';
 require_once dirname(__FILE__) .'/../../../../../../tests/simpletest/common/include/builders/aRequest.php';
 
-class Cardwall_OnTop_Config_Command_EnableCardwallOnTopTest extends TuleapTestCase {
+class Cardwall_OnTop_Config_Command_EnableCardwallOnTopTest extends TuleapTestCase
+{
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
 
         $this->tracker_id = 666;
@@ -34,7 +36,8 @@ class Cardwall_OnTop_Config_Command_EnableCardwallOnTopTest extends TuleapTestCa
         $this->command = new Cardwall_OnTop_Config_Command_EnableCardwallOnTop($tracker, $this->dao);
     }
 
-    public function itEnablesIfItIsNotAlreadyTheCase() {
+    public function itEnablesIfItIsNotAlreadyTheCase()
+    {
         $request = aRequest()->with('cardwall_on_top', '1')->build();
         stub($this->dao)->isEnabled($this->tracker_id)->returns(false);
         stub($this->dao)->enable()->once($this->tracker_id);
@@ -42,7 +45,8 @@ class Cardwall_OnTop_Config_Command_EnableCardwallOnTopTest extends TuleapTestCa
         $this->command->execute($request);
     }
 
-    public function itDoesNotEnableIfItIsNotAlreadyTheCase() {
+    public function itDoesNotEnableIfItIsNotAlreadyTheCase()
+    {
         $request = aRequest()->with('cardwall_on_top', '1')->build();
         stub($this->dao)->isEnabled($this->tracker_id)->returns(true);
         stub($this->dao)->enable()->never();
@@ -50,7 +54,8 @@ class Cardwall_OnTop_Config_Command_EnableCardwallOnTopTest extends TuleapTestCa
         $this->command->execute($request);
     }
 
-    public function itDisablesIfItIsNotAlreadyTheCase() {
+    public function itDisablesIfItIsNotAlreadyTheCase()
+    {
         $request = aRequest()->with('cardwall_on_top', '0')->build();
         stub($this->dao)->isEnabled($this->tracker_id)->returns(true);
         stub($this->dao)->disable()->once($this->tracker_id);
@@ -58,7 +63,8 @@ class Cardwall_OnTop_Config_Command_EnableCardwallOnTopTest extends TuleapTestCa
         $this->command->execute($request);
     }
 
-    public function itDoesNotDisableIfItIsNotAlreadyTheCase() {
+    public function itDoesNotDisableIfItIsNotAlreadyTheCase()
+    {
         $request = aRequest()->with('cardwall_on_top', '0')->build();
         stub($this->dao)->isEnabled($this->tracker_id)->returns(false);
         stub($this->dao)->disable()->never();
@@ -66,4 +72,3 @@ class Cardwall_OnTop_Config_Command_EnableCardwallOnTopTest extends TuleapTestCa
         $this->command->execute($request);
     }
 }
-?>

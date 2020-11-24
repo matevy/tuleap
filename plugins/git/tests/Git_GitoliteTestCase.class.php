@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2011-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -26,7 +26,8 @@ Mock::generate('PermissionsManager');
 Mock::generate('DataAccessResult');
 Mock::generate('Git_PostReceiveMailManager');
 
-abstract class Git_GitoliteTestCase extends TuleapTestCase {
+abstract class Git_GitoliteTestCase extends TuleapTestCase
+{
 
     /** @var Git_GitoliteDriver */
     protected $driver;
@@ -53,7 +54,8 @@ abstract class Git_GitoliteTestCase extends TuleapTestCase {
     /** @var Logger */
     protected $logger;
 
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->cwd           = getcwd();
         $this->_fixDir       = dirname(__FILE__).'/_fixtures';
@@ -86,7 +88,7 @@ abstract class Git_GitoliteTestCase extends TuleapTestCase {
 
         $git_plugin = \Mockery::mock(GitPlugin::class);
         $git_plugin->shouldReceive('areFriendlyUrlsActivated')->andReturns(false);
-        $this->url_manager = new Git_GitRepositoryUrlManager($git_plugin);
+        $this->url_manager = new Git_GitRepositoryUrlManager($git_plugin, new \Tuleap\InstanceBaseURLBuilder());
 
         $this->mirror_data_mapper = mock('Git_Mirror_MirrorDataMapper');
         stub($this->mirror_data_mapper)->fetchAllRepositoryMirrors()->returns(array());
@@ -100,7 +102,6 @@ abstract class Git_GitoliteTestCase extends TuleapTestCase {
             mock('Tuleap\Git\Permissions\FineGrainedPermissionFactory'),
             mock('Tuleap\Git\Permissions\RegexpFineGrainedRetriever'),
             mock(EventManager::class)
-
         );
 
         $this->git_system_event_manager = mock('Git_SystemEventManager');
@@ -124,7 +125,8 @@ abstract class Git_GitoliteTestCase extends TuleapTestCase {
         );
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
         parent::tearDown();
         chdir($this->cwd);
 
@@ -133,21 +135,13 @@ abstract class Git_GitoliteTestCase extends TuleapTestCase {
         PermissionsManager::clearInstance();
     }
 
-    public function assertEmptyGitStatus() {
+    public function assertEmptyGitStatus()
+    {
         $cwd = getcwd();
         chdir($this->_glAdmDir);
         exec('git status --porcelain', $output, $ret_val);
         chdir($cwd);
         $this->assertEqual($output, array());
-        $this->assertEqual($ret_val, 0);
-    }
-
-    public function assertNotEmptyGitStatus() {
-        $cwd = getcwd();
-        chdir($this->_glAdmDir);
-        exec('git status --porcelain', $output, $ret_val);
-        chdir($cwd);
-        $this->assertArrayNotEmpty($output);
         $this->assertEqual($ret_val, 0);
     }
 }

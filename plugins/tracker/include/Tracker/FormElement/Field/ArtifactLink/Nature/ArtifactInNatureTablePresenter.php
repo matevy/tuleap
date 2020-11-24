@@ -22,7 +22,8 @@ namespace Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature;
 
 use Tracker_FormElement_Field_ArtifactLink;
 
-class ArtifactInNatureTablePresenter {
+class ArtifactInNatureTablePresenter
+{
 
     public $direct_link_to_artifact;
     public $project_public_name;
@@ -36,7 +37,8 @@ class ArtifactInNatureTablePresenter {
     public $html_classes;
     public $artifactlink_field_id;
 
-    public function __construct(\Tracker_Artifact $artifact, $html_classes, Tracker_FormElement_Field_ArtifactLink $field) {
+    public function __construct(\Tracker_Artifact $artifact, $html_classes, Tracker_FormElement_Field_ArtifactLink $field)
+    {
         $this->html_classes = $html_classes;
         $tracker            = $artifact->getTracker();
         $project            = $tracker->getProject();
@@ -54,31 +56,33 @@ class ArtifactInNatureTablePresenter {
 
         $assignees      = $artifact->getAssignedTo($current_user);
         $assignee_links = array();
-        foreach($assignees as $assignee) {
+        foreach ($assignees as $assignee) {
             $assignee_links[] = $user_helper->getLinkOnUser($assignee);
         }
         $this->artifact_assignees = implode(', ', $assignee_links);
 
-        if($this->userCanReadSubmitter($tracker, $current_user)) {
+        if ($this->userCanReadSubmitter($tracker, $current_user)) {
             $this->artifact_submitter = $user_helper->getLinkOnUser($artifact->getSubmittedByUser());
         } else {
             $this->artifact_submitter = '';
         }
     }
 
-    private function userCanReadSubmitter(\Tracker $tracker, \PFUser $current_user) {
+    private function userCanReadSubmitter(\Tracker $tracker, \PFUser $current_user)
+    {
         $formelement_factory = \Tracker_FormElementFactory::instance();
         $fields              = $formelement_factory->getUsedSubmittedByFields($tracker);
-        foreach($fields as $field) {
-            if($field->userCanRead($current_user)) {
+        foreach ($fields as $field) {
+            if ($field->userCanRead($current_user)) {
                 return true;
             }
         }
         return false;
     }
 
-    private function emptyStringIfNull($value) {
-        if($value === null) {
+    private function emptyStringIfNull($value)
+    {
+        if ($value === null) {
             return '';
         }
         return $value;
