@@ -77,8 +77,7 @@ class Tracker_FileInfoFactory
             $row['description'],
             $row['filename'],
             $row['filesize'],
-            $row['filetype'],
-            $row['use_file_permissions']
+            $row['filetype']
         );
 
         $cache[$file_info->getId()] = $file_info;

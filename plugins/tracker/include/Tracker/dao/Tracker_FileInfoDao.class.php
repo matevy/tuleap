@@ -59,16 +59,15 @@ class Tracker_FileInfoDao extends DataAccessObject
         return false;
     }
 
-    public function create($submitted_by, $description, $filename, $filesize, $filetype, $use_file_permissions)
+    public function create($submitted_by, $description, $filename, $filesize, $filetype)
     {
         $submitted_by = $this->da->escapeInt($submitted_by);
         $description  = $this->da->quoteSmart($description);
         $filename     = $this->da->quoteSmart($filename);
         $filesize     = $this->da->escapeInt($filesize);
         $filetype     = $this->da->quoteSmart($filetype);
-        $use_file_permissions = $this->da->escapeInt($use_file_permissions);
-        $sql = "INSERT INTO $this->table_name(submitted_by, description, filename, filesize, filetype, use_file_permissions)
-                VALUES ($submitted_by, $description, $filename, $filesize, $filetype, $use_file_permissions)";
+        $sql = "INSERT INTO $this->table_name(submitted_by, description, filename, filesize, filetype)
+                VALUES ($submitted_by, $description, $filename, $filesize, $filetype)";
         return $this->updateAndGetLastId($sql);
     }
 

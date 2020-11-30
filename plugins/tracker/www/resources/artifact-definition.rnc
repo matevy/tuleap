@@ -19,8 +19,7 @@ artifact =
         element path { xsd:string },
         element filesize { xsd:long },
         element filetype { xsd:string },
-        element description { xsd:string },
-        element use_file_permissions { xsd:string }
+        element description { xsd:string }
     }*
 
     comments =
@@ -29,7 +28,6 @@ artifact =
     comment_content =
         element submitted_by { tracker_user_content },
         element submitted_on { date_content },
-        element use_comment_permissions { xsd:string },
         element body { text_content }
 
     text_content =

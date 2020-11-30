@@ -118,16 +118,16 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
      *
      * @return \Tracker_Artifact_Attachment_TemporaryFile
      */
-    public function save(PFUser $user, $name, $description, $mimetype, $use_file_permissions)
+    public function save(PFUser $user, $name, $description, $mimetype)
     {
         $chunk_size = 0;
         $this->checkThatChunkSizeIsNotOverTheQuota($user, $chunk_size);
 
         $tempname  = $this->getUniqueFileName($user);
 
-        $temporary_file = $this->transaction_executor->execute(function () use ($user, $name, $description, $mimetype, $tempname, $use_file_permissions) {
+        $temporary_file = $this->transaction_executor->execute(function () use ($user, $name, $description, $mimetype, $tempname) {
             $timestamp = $_SERVER['REQUEST_TIME'];
-            $id = $this->dao->create($user->getId(), $name, $description, $mimetype, $timestamp, $tempname, $use_file_permissions);
+            $id = $this->dao->create($user->getId(), $name, $description, $mimetype, $timestamp, $tempname);
             if (! $id) {
                 throw new Tracker_Artifact_Attachment_CannotCreateException();
             }
@@ -141,8 +141,7 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
                 0,
                 $user->getId(),
                 0,
-                $mimetype,
-                $use_file_permissions
+                $mimetype
             );
         });
 
@@ -344,8 +343,7 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
             $row['offset'],
             $row['submitted_by'],
             $row['filesize'],
-            $row['filetype'],
-            $row['use_file_permissions']
+            $row['filetype']
         );
     }
 }

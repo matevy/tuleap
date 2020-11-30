@@ -54,7 +54,7 @@ class Tracker_Artifact_Changeset_CommentDao extends DataAccessObject
         return $result;
     }
 
-    public function createNewVersion($changeset_id, $body, $submitted_by, $submitted_on, $parent_id, $body_format, $use_comment_permissions)
+    public function createNewVersion($changeset_id, $body, $submitted_by, $submitted_on, $parent_id, $body_format)
     {
         $stripped_body = $this->extractStrippedBody($body, $body_format);
 
@@ -65,10 +65,9 @@ class Tracker_Artifact_Changeset_CommentDao extends DataAccessObject
         $submitted_on          = $this->da->escapeInt($submitted_on);
         $parent_id             = $this->da->escapeInt($parent_id);
         $escaped_stripped_body = $this->da->quoteSmart($stripped_body);
-        $use_comment_permissions = $this->da->escapeInt($use_comment_permissions);
 
-        $sql = "INSERT INTO $this->table_name (changeset_id, body, body_format, submitted_by, submitted_on, parent_id, use_comment_permissions)
-                VALUES ($changeset_id, $body, $body_format, $submitted_by, $submitted_on, $parent_id, $use_comment_permissions)";
+        $sql = "INSERT INTO $this->table_name (changeset_id, body, body_format, submitted_by, submitted_on, parent_id)
+                VALUES ($changeset_id, $body, $body_format, $submitted_by, $submitted_on, $parent_id)";
         $id  = $this->updateAndGetLastId($sql);
 
         if ($stripped_body !== "") {

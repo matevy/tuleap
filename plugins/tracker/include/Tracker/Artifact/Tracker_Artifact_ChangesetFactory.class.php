@@ -177,8 +177,7 @@ class Tracker_Artifact_ChangesetFactory
                 $row['submitted_on'],
                 $row['body'],
                 $row['body_format'],
-                $row['parent_id'],
-                $row['use_comment_permissions']
+                $row['parent_id']
             );
             $changeset->setLatestComment($comment);
         }

@@ -66,8 +66,7 @@ class AttachmentForTraditionalUploadCreator implements AttachmentCreator
             trim($submitted_value_info['description']),
             $submitted_value_info['name'],
             $submitted_value_info['size'],
-            $submitted_value_info['type'],
-            $submitted_value_info['use_file_permissions'] // TODO tukaj nastavimo permissione za formo
+            $submitted_value_info['type']
         );
 
         if (! $this->save($attachment)) {

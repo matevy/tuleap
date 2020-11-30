@@ -94,8 +94,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         int $submitted_on,
         bool $send_notification,
         string $comment_format,
-        CreatedFileURLMapping $url_mapping,
-        bool $use_comment_permissions
+        CreatedFileURLMapping $url_mapping
     ): ?Tracker_Artifact_Changeset {
         $comment = trim($comment);
 
@@ -105,7 +104,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         }
 
         try {
-            $new_changeset = $this->transaction_executor->execute(function () use ($artifact, $fields_data, $comment, $comment_format, $submitter, $submitted_on, $email, $url_mapping, $use_comment_permissions) {
+            $new_changeset = $this->transaction_executor->execute(function () use ($artifact, $fields_data, $comment, $comment_format, $submitter, $submitted_on, $email, $url_mapping) {
                 try {
                     $this->validateNewChangeset($artifact, $fields_data, $comment, $submitter, $email);
 
@@ -148,8 +147,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
                         $submitted_on,
                         $comment_format,
                         $changeset_id,
-                        $url_mapping,
-                        $use_comment_permissions
+                        $url_mapping
                     )) {
                         throw new Tracker_CommentNotStoredException();
                     }
@@ -261,8 +259,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         $submitted_on,
         $comment_format,
         $changeset_id,
-        CreatedFileURLMapping $url_mapping,
-        $use_comment_permissions
+        CreatedFileURLMapping $url_mapping
     ): bool {
         $comment_format = Tracker_Artifact_Changeset_Comment::checkCommentFormat($comment_format);
 
@@ -277,8 +274,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
             $submitter->getId(),
             $submitted_on,
             0,
-            $comment_format,
-            $use_comment_permissions
+            $comment_format
         );
         if (! $comment_added) {
             return false;
