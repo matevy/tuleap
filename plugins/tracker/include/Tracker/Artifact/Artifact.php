@@ -1292,7 +1292,8 @@ class Artifact implements Recent_Element_Interface, Tracker_Dispatchable_Interfa
             (bool) $send_notification,
             (string) $comment_format,
             new \Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping(),
-            new TrackerNoXMLImportLoggedConfig()
+            new TrackerNoXMLImportLoggedConfig(),
+           false       /* TODO: this is the place to dynamically set use_comment_permissions to true or false, based on web form settings for permissions */
         );
     }
 

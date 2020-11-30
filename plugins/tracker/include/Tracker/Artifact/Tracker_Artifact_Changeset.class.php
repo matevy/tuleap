@@ -535,7 +535,8 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
     public function getComment()
     {
         if (isset($this->latest_comment)) {
-            return $this->latest_comment;
+            if ($this->latest_comment->userCanView(null))
+                return $this->latest_comment;
         }
 
         if ($row = $this->getCommentDao()->searchLastVersion($this->id)->getRow()) {
@@ -548,10 +549,18 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
                 $row['submitted_on'],
                 $row['body'],
                 $row['body_format'],
-                $row['parent_id']
+                $row['parent_id'],
+                $row['use_comment_permissions']
             );
         }
-        return $this->latest_comment;
+        if (isset($this->latest_comment)) {
+            if ($this->latest_comment->userCanView(null))
+                return $this->latest_comment;
+        }
+        else
+        {
+            return $this->latest_comment;
+        }
     }
 
     /**

@@ -21,7 +21,7 @@
 class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObject
 {
 
-    public function create($user_id, $name, $description, $mimetype, $timestamp, $tempname)
+    public function create($user_id, $name, $description, $mimetype, $timestamp, $tempname, $use_file_permissions)
     {
         $user_id     = $this->da->escapeInt($user_id);
         $name        = $this->da->quoteSmart($name);
@@ -29,10 +29,11 @@ class Tracker_Artifact_Attachment_TemporaryFileManagerDao extends DataAccessObje
         $mimetype    = $this->da->quoteSmart($mimetype);
         $timestamp   = $this->da->escapeInt($timestamp);
         $tempname    = $this->da->quoteSmart($tempname);
+        $use_file_permissions = $this->da->escapeInt($use_file_permissions);
 
         $sql = "INSERT INTO tracker_fileinfo
-                    (submitted_by, description, filename, filetype)
-                VALUES ($user_id, $description, $name, $mimetype)";
+                    (submitted_by, description, filename, filetype, use_file_permissions)
+                VALUES ($user_id, $description, $name, $mimetype, $use_file_permissions)";
 
         $file_id = $this->updateAndGetLastId($sql);
 

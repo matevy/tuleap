@@ -104,7 +104,8 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         bool $send_notification,
         string $comment_format,
         CreatedFileURLMapping $url_mapping,
-        TrackerImportConfig $tracker_import_config
+        TrackerImportConfig $tracker_import_config,
+        bool $use_comment_permissions
     ): ?Tracker_Artifact_Changeset {
         $comment = trim($comment);
 
@@ -114,7 +115,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         }
 
         try {
-            $new_changeset = $this->transaction_executor->execute(function () use ($artifact, $fields_data, $comment, $comment_format, $submitter, $submitted_on, $email, $url_mapping, $tracker_import_config) {
+            $new_changeset = $this->transaction_executor->execute(function () use ($artifact, $fields_data, $comment, $comment_format, $submitter, $submitted_on, $email, $url_mapping, $tracker_import_config, $use_comment_permissions) {
                 try {
                     $this->validateNewChangeset($artifact, $fields_data, $comment, $submitter, $email);
 
@@ -159,7 +160,8 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
                             $submitted_on,
                             $comment_format,
                             $changeset_id,
-                            $url_mapping
+			    $url_mapping,
+			    $use_comment_permissions
                         )
                     ) {
                         throw new Tracker_CommentNotStoredException();
@@ -270,7 +272,8 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         $submitted_on,
         $comment_format,
         $changeset_id,
-        CreatedFileURLMapping $url_mapping
+        CreatedFileURLMapping $url_mapping,
+        $use_comment_permissions
     ): bool {
         $comment_format = Tracker_Artifact_Changeset_Comment::checkCommentFormat($comment_format);
 
@@ -285,7 +288,8 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
             $submitter->getId(),
             $submitted_on,
             0,
-            $comment_format
+            $comment_format,
+            $use_comment_permissions
         );
         if (! $comment_added) {
             return false;
