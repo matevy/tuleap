@@ -20,7 +20,6 @@
 
 namespace Tuleap\Tracker\FormElement;
 
-use Tracker;
 use Tracker_Artifact_ChangesetValue_List;
 use Tracker_FormElement_Field_List_BindValue;
 use TransitionFactory;
@@ -70,8 +69,10 @@ class TransitionListValidator
      */
     private function extractValueSwitchFieldType($value)
     {
-        if (is_a($value, Tracker_Artifact_ChangesetValue_List::class) ||
-            is_a($value, Tracker_FormElement_Field_List_BindValue::class)) {
+        if (
+            is_a($value, Tracker_Artifact_ChangesetValue_List::class) ||
+            is_a($value, Tracker_FormElement_Field_List_BindValue::class)
+        ) {
             return $value->getId();
         }
 

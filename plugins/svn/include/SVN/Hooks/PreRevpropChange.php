@@ -29,7 +29,6 @@ use ReferenceManager;
 use Tuleap\SVN\Commit\CommitMessageValidator;
 use Tuleap\SVN\Repository\HookConfig;
 use Tuleap\SVN\Repository\HookConfigRetriever;
-use Tuleap\SVN\Repository\HookDao;
 use Tuleap\SVN\Repository\Repository;
 use Tuleap\SVN\Repository\RepositoryManager;
 
@@ -45,15 +44,9 @@ class PreRevpropChange
      */
     private $hook_config;
 
-    /**
-     * @var RepositoryManager
-     */
-    private $repository_manager;
-
     private $action;
     private $propname;
     private $new_commit_message;
-    private $repository_path;
     /**
      * @var HookConfigRetriever
      */
@@ -67,13 +60,11 @@ class PreRevpropChange
         RepositoryManager $repository_manager,
         HookConfigRetriever $hook_config_retriever
     ) {
-        $this->repository_manager    = $repository_manager;
         $this->repository            = $repository_manager->getRepositoryFromSystemPath($repository_path);
         $this->hook_config           = $hook_config_retriever->getHookConfig($this->repository);
         $this->action                = $action;
         $this->propname              = $propname;
         $this->new_commit_message    = $new_commit_message;
-        $this->repository_path       = $repository_path;
         $this->hook_config_retriever = $hook_config_retriever;
     }
 

@@ -68,6 +68,10 @@ final class AzureADProvider implements Provider
      * @var string
      */
     private $tenant_id;
+    /**
+     * @var AcceptableTenantForAuthenticationConfiguration
+     */
+    private $acceptable_tenant_for_authentication_configuration;
 
     public function __construct(
         int $id,
@@ -77,16 +81,18 @@ final class AzureADProvider implements Provider
         bool $is_unique_authentication_endpoint,
         string $icon,
         string $color,
-        string $tenant_id
+        string $tenant_id,
+        AcceptableTenantForAuthenticationConfiguration $acceptable_tenant_for_authentication_configuration
     ) {
-        $this->id                                = $id;
-        $this->name                              = $name;
-        $this->client_id                         = $client_id;
-        $this->client_secret                     = $client_secret;
-        $this->is_unique_authentication_endpoint = $is_unique_authentication_endpoint;
-        $this->icon                              = $icon;
-        $this->color                             = $color;
-        $this->tenant_id                         = $tenant_id;
+        $this->id                                                 = $id;
+        $this->name                                               = $name;
+        $this->client_id                                          = $client_id;
+        $this->client_secret                                      = $client_secret;
+        $this->is_unique_authentication_endpoint                  = $is_unique_authentication_endpoint;
+        $this->icon                                               = $icon;
+        $this->color                                              = $color;
+        $this->tenant_id                                          = $tenant_id;
+        $this->acceptable_tenant_for_authentication_configuration = $acceptable_tenant_for_authentication_configuration;
     }
 
     public function getId(): int
@@ -99,19 +105,24 @@ final class AzureADProvider implements Provider
         return $this->name;
     }
 
-    public function getAuthorizationEndpoint() : string
+    public function getAuthorizationEndpoint(): string
     {
-        return self::BASE_AZURE_URL.urlencode($this->tenant_id)."/oauth2/v2.0/authorize";
+        return self::BASE_AZURE_URL . urlencode($this->acceptable_tenant_for_authentication_configuration->getValueForAuthenticationFlow()) . "/oauth2/v2.0/authorize";
     }
 
-    public function getTokenEndpoint() : string
+    public function getTokenEndpoint(): string
     {
-        return self::BASE_AZURE_URL.urlencode($this->tenant_id)."/oauth2/v2.0/token";
+        return self::BASE_AZURE_URL . urlencode($this->acceptable_tenant_for_authentication_configuration->getValueForAuthenticationFlow()) . "/oauth2/v2.0/token";
     }
 
-    public function getUserInfoEndpoint() : string
+    public function getUserInfoEndpoint(): string
     {
         return "https://graph.microsoft.com/oidc/userinfo";
+    }
+
+    public function getJWKSEndpoint(): ?string
+    {
+        return self::BASE_AZURE_URL . urlencode($this->acceptable_tenant_for_authentication_configuration->getValueForAuthenticationFlow()) . '/discovery/v2.0/keys?appid=' . urlencode($this->getClientId());
     }
 
     public function getClientId(): string
@@ -139,13 +150,26 @@ final class AzureADProvider implements Provider
         return $this->color;
     }
 
-    public function getTenantId() : string
+    public function getTenantId(): string
     {
         return $this->tenant_id;
     }
 
-    public function getRedirectUri() : string
+    /**
+     * @return string[]
+     */
+    public function getAcceptableIssuerTenantIDs(): array
     {
-        return 'https://'. ForgeConfig::get('sys_https_host') . '/plugins/openidconnectclient/azure/';
+        return $this->acceptable_tenant_for_authentication_configuration->getAcceptableIssuerTenantIDs();
+    }
+
+    public function getTenantSetup(): AzureADTenantSetup
+    {
+        return $this->acceptable_tenant_for_authentication_configuration->getTenantSetup();
+    }
+
+    public function getRedirectUri(): string
+    {
+        return 'https://' . ForgeConfig::get('sys_https_host') . '/plugins/openidconnectclient/azure/';
     }
 }

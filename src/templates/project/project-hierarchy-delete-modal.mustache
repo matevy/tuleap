@@ -6,9 +6,9 @@
 >
     <div class="tlp-modal-header">
         <h1 class="tlp-modal-title" id="project-administration-delete-confirmation-label">
-            <i class="fa fa-trash-o tlp-modal-title-icon"></i> {{ delete_modal_title }}
+            <i class="far fa-trash-alt tlp-modal-title-icon"></i> {{ delete_modal_title }}
         </h1>
-        <div class="tlp-modal-close" data-dismiss="modal" aria-label="{{ cancel_button }}">×</div>
+        <div class="tlp-modal-close" tabindex="0" role="button" data-dismiss="modal" aria-label="{{ cancel_button }}">×</div>
     </div>
     <div class="tlp-modal-body">
         <p>{{ delete_modal_desc }}</p>
@@ -27,7 +27,7 @@
             name="remove_parent_project"
             value="1"
         >
-            <i class="fa fa-trash-o tlp-button-icon"></i> {{ delete_button }}
+            <i class="far fa-trash-alt tlp-button-icon"></i> {{ delete_button }}
         </button>
     </div>
 </div>

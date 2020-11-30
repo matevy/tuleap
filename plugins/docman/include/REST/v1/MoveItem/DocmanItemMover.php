@@ -58,7 +58,6 @@ final class DocmanItemMover
         Docman_PermissionsManager $permissions_manager,
         EventManager $event_manager
     ) {
-
         $this->item_factory        = $item_factory;
         $this->before_move_visitor = $before_move_visitor;
         $this->permissions_manager = $permissions_manager;
@@ -70,7 +69,7 @@ final class DocmanItemMover
         Docman_Item $item_to_move,
         PFUser $user,
         DocmanMoveItemRepresentation $representation
-    ) : void {
+    ): void {
         $destination_item_id = $representation->destination_folder_id;
         $destination_folder  = $this->item_factory->getItemFromDb($representation->destination_folder_id);
         if ($destination_folder === null || ! $this->permissions_manager->userCanAccess($user, $destination_item_id)) {

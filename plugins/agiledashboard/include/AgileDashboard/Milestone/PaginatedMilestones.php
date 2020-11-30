@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,29 +18,46 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
 
-class AgileDashboard_Milestone_PaginatedMilestones
+namespace Tuleap\AgileDashboard\Milestone;
+
+final class PaginatedMilestones
 {
-
-    /** @var Planning_Milestone[] */
+    /**
+     * @var \Planning_Milestone[]
+     * @psalm-readonly
+     */
     private $milestones;
 
-    /** @var int */
+    /**
+     * @var int
+     * @psalm-readonly
+     */
     private $total_size;
 
-
-    public function __construct(array $milestones, $total_size)
+    /**
+     * @param \Planning_Milestone[] $milestones
+     */
+    public function __construct(array $milestones, int $total_size)
     {
         $this->milestones = $milestones;
         $this->total_size = $total_size;
     }
 
-    public function getMilestones()
+    /**
+     * @return \Planning_Milestone[]
+     * @psalm-mutation-free
+     */
+    public function getMilestones(): array
     {
         return $this->milestones;
     }
 
-    public function getTotalSize()
+    /**
+     * @psalm-mutation-free
+     */
+    public function getTotalSize(): int
     {
         return $this->total_size;
     }

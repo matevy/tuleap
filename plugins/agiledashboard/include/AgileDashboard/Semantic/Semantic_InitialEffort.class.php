@@ -62,7 +62,7 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
      */
     public function getLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_label');
+        return dgettext('tuleap-agiledashboard', 'Initial Effort');
     }
 
     /**
@@ -72,7 +72,7 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
      */
     public function getDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_description');
+        return dgettext('tuleap-agiledashboard', 'Define the initial effort of an artifact.');
     }
 
     /**
@@ -106,17 +106,13 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
      */
     public function display()
     {
-        echo $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_long_desc');
+        echo dgettext('tuleap-agiledashboard', 'This is used in the <b>Agile Dashboard</b> if enabled.');
 
         if ($field = Tracker_FormElementFactory::instance()->getUsedFormElementById($this->getFieldId())) {
             $purifier = Codendi_HTMLPurifier::instance();
-            echo $GLOBALS['Language']->getText(
-                'plugin_agiledashboard_admin_semantic',
-                'initial_effort_field',
-                array($purifier->purify($field->getLabel()))
-            );
+            echo sprintf(dgettext('tuleap-agiledashboard', '<p>The initial effort of this tracker will be represented in the Agile Dashboard by the field <strong>%1$s</strong>.</p>'), $purifier->purify($field->getLabel()));
         } else {
-            echo $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_no_field');
+            echo dgettext('tuleap-agiledashboard', '<p>This tracker does not have an <em>initial effort</em> field yet.</p>');
         }
     }
 
@@ -137,11 +133,11 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
         $html = '';
 
         if ($numeric_fields = Tracker_FormElementFactory::instance()->getUsedPotentiallyContainingNumericValueFields($this->tracker)) {
-            $html .= '<form method="POST" action="'. $this->getUrl() .'">';
+            $html .= '<form method="POST" action="' . $this->getUrl() . '">';
             $html .= $this->getCSRFToken()->fetchHTMLInput();
             $select = '<select name="initial_effort_field_id">';
             if (! $this->getFieldId()) {
-                $select .= '<option value="-1" selected="selected">' . $purify->purify($GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'choose_a_field')) . '</option>';
+                $select .= '<option value="-1" selected="selected">' . $purify->purify(dgettext('tuleap-tracker', 'Choose a field...')) . '</option>';
             }
 
             foreach ($numeric_fields as $numeric_field) {
@@ -155,24 +151,24 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
             $select .= '</select>';
 
             $unset_btn  = '<button type="submit" class="btn btn-danger" name="delete">';
-            $unset_btn .= $purify->purify($GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'unset')) .'</button>';
+            $unset_btn .= $purify->purify(dgettext('tuleap-tracker', 'Unset this semantic')) . '</button>';
 
             $submit_btn  = '<button type="submit" class="btn btn-primary" name="update">';
-            $submit_btn .= $purify->purify($GLOBALS['Language']->getText('global', 'save_change')) .'</button>';
+            $submit_btn .= $purify->purify($GLOBALS['Language']->getText('global', 'save_change')) . '</button>';
 
             if (! $this->getFieldId()) {
-                $html .= $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_no_field');
-                $html .= '<p>' . $purify->purify($GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'choose_one_advice'));
-                $html .= $select .' <br> '. $submit_btn .'</p>';
+                $html .= dgettext('tuleap-agiledashboard', '<p>This tracker does not have an <em>initial effort</em> field yet.</p>');
+                $html .= '<p>' . $purify->purify(dgettext('tuleap-tracker', 'Feel free to choose one:'));
+                $html .= $select . ' <br> ' . $submit_btn . '</p>';
             } else {
-                $html .= $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_field', array($select));
-                $html .= $submit_btn .' '. $purify->purify($GLOBALS['Language']->getText('global', 'or')) .' '. $unset_btn;
+                $html .= sprintf(dgettext('tuleap-agiledashboard', '<p>The initial effort of this tracker will be represented in the Agile Dashboard by the field <strong>%1$s</strong>.</p>'), $select);
+                $html .= $submit_btn . ' ' . $purify->purify($GLOBALS['Language']->getText('global', 'or')) . ' ' . $unset_btn;
             }
             $html .= '</form>';
         } else {
-            $html .= $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_impossible');
+            $html .= dgettext('tuleap-agiledashboard', 'You cannot define the <em>initial effort</em> semantic since there aren\'t any numeric fields in the tracker');
         }
-        $html .= '<p><a href="'.TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId() .'&amp;func=admin-semantic">&laquo; ' . $purify->purify($GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'go_back_overview')) . '</a></p>';
+        $html .= '<p><a href="' . TRACKER_BASE_URL . '/?tracker=' . $this->tracker->getId() . '&amp;func=admin-semantic">&laquo; ' . $purify->purify(dgettext('tuleap-tracker', 'go back to semantic overview')) . '</a></p>';
         echo $html;
 
         $semantic_manager->displaySemanticFooter($this, $tracker_manager);
@@ -199,21 +195,21 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
                 $this->initial_effort_field = $field;
 
                 if ($this->save()) {
-                    $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_now', array($field->getLabel())));
+                    $GLOBALS['Response']->addFeedback('info', sprintf(dgettext('tuleap-agiledashboard', 'The initial effort is now: %1$s'), $field->getLabel()));
                     $GLOBALS['Response']->redirect($this->getUrl());
                 } else {
-                    $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'unable_save_initial_effort'));
+                    $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-agiledashboard', 'Unable to save the <em>initial effort</em>'));
                 }
             } else {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'bad_field_initial_effort'));
+                $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-agiledashboard', 'The field you submitted is not a numeric field'));
             }
         } elseif ($request->exist('delete')) {
             $this->getCSRFToken()->check();
             if ($this->delete()) {
-                $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'deleted_initial_effort'));
+                $GLOBALS['Response']->addFeedback('info', dgettext('tuleap-agiledashboard', 'Initial effort semantic has been unset'));
                 $GLOBALS['Response']->redirect($this->getUrl());
             } else {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'unable_save_initial_effort'));
+                $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-agiledashboard', 'Unable to save the <em>initial effort</em>'));
             }
         }
 
@@ -243,13 +239,12 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
     /**
      * Load an instance of a AgileDashBoard_Semantic_InitialEffort
      *
-     * @param Tracker $tracker
      *
      * @return AgileDashBoard_Semantic_InitialEffort
      */
     public static function load(Tracker $tracker)
     {
-        if (!isset(self::$_instances[$tracker->getId()])) {
+        if (! isset(self::$_instances[$tracker->getId()])) {
             $field = self::getFieldFromTracker($tracker);
             self::$_instances[$tracker->getId()] = new AgileDashBoard_Semantic_InitialEffort($tracker, $field);
         }
@@ -257,7 +252,6 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
     }
 
     /**
-     * @param Tracker $tracker
      * @return Tracker_FormElement_Field | null
      */
     private static function getFieldFromTracker(Tracker $tracker)
@@ -280,19 +274,20 @@ class AgileDashBoard_Semantic_InitialEffort extends Tracker_Semantic
      * Export semantic to XML
      *
      * @param SimpleXMLElement &$root      the node to which the semantic is attached (passed by reference)
-     * @param array            $xmlMapping correspondance between real ids and xml IDs
+     * @param array            $xml_mapping correspondance between real ids and xml IDs
      *
      * @return void
      */
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping)
+    public function exportToXml(SimpleXMLElement $root, $xml_mapping)
     {
-        if ($this->getFieldId() && in_array($this->getFieldId(), $xmlMapping)) {
-             $child = $root->addChild('semantic');
-             $child->addAttribute('type', $this->getShortName());
-             $child->addChild('shortname', $this->getShortName());
-             $child->addChild('label', $this->getLabel());
-             $child->addChild('description', $this->getDescription());
-             $child->addChild('field')->addAttribute('REF', array_search($this->getFieldId(), $xmlMapping));
+        if ($this->getFieldId() && in_array($this->getFieldId(), $xml_mapping)) {
+            $child = $root->addChild('semantic');
+            $child->addAttribute('type', $this->getShortName());
+            $cdata = new XML_SimpleXMLCDATAFactory();
+            $cdata->insert($child, 'shortname', $this->getShortName());
+            $cdata->insert($child, 'label', $this->getLabel());
+            $cdata->insert($child, 'description', $this->getDescription());
+            $child->addChild('field')->addAttribute('REF', array_search($this->getFieldId(), $xml_mapping));
         }
     }
 

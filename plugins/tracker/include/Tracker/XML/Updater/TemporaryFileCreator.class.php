@@ -44,7 +44,7 @@ class Tracker_XML_Updater_TemporaryFileCreator
      */
     public function createTemporaryFile($path)
     {
-        $temporary_file_name = $this->copy_directory .'/'. basename($path);
+        $temporary_file_name = $this->copy_directory . '/' . basename($path);
         copy($path, $temporary_file_name);
 
         return $temporary_file_name;
@@ -74,7 +74,7 @@ class Tracker_XML_Updater_TemporaryFileCreator
             RecursiveIteratorIterator::CHILD_FIRST
         );
         foreach ($recursive_iterator as $path) {
-            if (in_array($path->getFilename(), array('.', '..'))) {
+            if (in_array($path->getFilename(), ['.', '..'])) {
                 continue;
             }
 

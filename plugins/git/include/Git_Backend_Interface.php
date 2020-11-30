@@ -44,7 +44,6 @@ interface Git_Backend_Interface
     /**
      * Return URL to access the respository for remote git commands
      *
-     * @param  GitRepository $repository
      * @return array
      */
     public function getAccessURL(GitRepository $repository);
@@ -106,7 +105,7 @@ interface Git_Backend_Interface
      * @param Project $project The project to rename
      * @param string  $newName The new name of the project
      *
-     * @return true if success, false otherwise
+     * @return bool true if success, false otherwise
      */
     public function renameProject(Project $project, $newName);
 
@@ -120,28 +119,24 @@ interface Git_Backend_Interface
     /**
      * Perform logical deletion repository in DB
      *
-     * @param GitRepository $repository
      */
     public function markAsDeleted(GitRepository $repository);
 
     /**
      * Physically delete a repository already marked for deletion
      *
-     * @param GitRepository $repository
      */
     public function delete(GitRepository $repository);
 
     /**
      * Purge archived repository
      *
-     * @param GitRepository $repository
      */
     public function deleteArchivedRepository(GitRepository $repository);
 
     /**
      * Move the archived gitolite repositories to the archiving area before purge
      *
-     * @param GitRepository $repository
      */
     public function archiveBeforePurge(GitRepository $repository);
 }

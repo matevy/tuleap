@@ -39,16 +39,16 @@ class Tracker_Report_CriteriaFactory
      */
     public static function instance()
     {
-        if (!isset(self::$_instance)) {
+        if (! isset(self::$_instance)) {
             $c = self::class;
-            self::$_instance = new $c;
+            self::$_instance = new $c();
         }
         return self::$_instance;
     }
 
     /**
      * @param array the row allowing the construction of a criteria
-     * @return Criteria Object
+     * @return Tracker_Report_Criteria Object
      */
     public function getInstanceFromRow($row)
     {
@@ -64,32 +64,22 @@ class Tracker_Report_CriteriaFactory
     /**
      * Creates a Tracker_Report_Criteria Object
      *
-     * @param SimpleXMLElement $xml         containing the structure of the imported criteria
-     * @param array            &$xmlMapping containig the newly created formElements idexed by their XML IDs
-     *
      * @return null | Tracker_Report_Criteria Object
      */
-    public function getInstanceFromXML($xml, &$xmlMapping)
+    public function getInstanceFromXML(SimpleXMLElement $xml, Tracker_Report $report, array &$xmlMapping)
     {
         $att  = $xml->attributes();
         $fatt = $xml->field->attributes();
-        if (! isset($xmlMapping[(string)$fatt['REF']])) {
+        if (! isset($xmlMapping[(string) $fatt['REF']])) {
             return null;
         }
-        $row                = array(
-            'field' => $xmlMapping[(string)$fatt['REF']],
-            'rank' => (int)$att['rank']
-        );
-        $row['is_advanced'] = isset($att['is_advanced']) ? (int)$att['is_advanced'] : 0;
-        // in case old id values are important modify code here
-        if (false) {
-            foreach ($xml->attributes() as $key => $value) {
-                $row[$key] = (int)$value;
-            }
-        } else {
-            $row['id']     = 0;
-            $row['report'] = null;
-        }
+        $row                = [
+            'field' => $xmlMapping[(string) $fatt['REF']],
+            'rank' => (int) $att['rank']
+        ];
+        $row['is_advanced'] = isset($att['is_advanced']) ? (int) $att['is_advanced'] : 0;
+        $row['id']          = 0;
+        $row['report']      = $report;
 
         return $this->getInstanceFromRow($row);
     }

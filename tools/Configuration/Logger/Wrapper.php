@@ -21,14 +21,17 @@
 
 namespace Tuleap\Configuration\Logger;
 
-class Wrapper implements LoggerInterface
+use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
+
+class Wrapper extends AbstractLogger
 {
     /**
      * @var LoggerInterface
      */
     private $logger;
 
-    private $prefix = array();
+    private $prefix = [];
 
     public function __construct(LoggerInterface $logger, $prefix)
     {
@@ -36,33 +39,13 @@ class Wrapper implements LoggerInterface
         $this->prefix[] = $prefix;
     }
 
-    public function debug($message, array $context = array())
-    {
-        $this->logger->debug($this->formatMessage($message), $context);
-    }
-
-    public function info($message, array $context = array())
-    {
-        $this->logger->info($this->formatMessage($message), $context);
-    }
-
-    public function warn($message, array $context = array())
-    {
-        $this->logger->warn($this->formatMessage($message), $context);
-    }
-
-    public function error($message, array $context = array())
-    {
-        $this->logger->error($this->formatMessage($message), $context);
-    }
-
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, array $context = [])
     {
         $this->logger->log($level, $this->formatMessage($message), $context);
     }
 
     private function formatMessage($message)
     {
-        return '['. implode('][', $this->prefix) .'] '.$message;
+        return '[' . implode('][', $this->prefix) . '] ' . $message;
     }
 }

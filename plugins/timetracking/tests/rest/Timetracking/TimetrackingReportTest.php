@@ -164,11 +164,11 @@ class TimetrackingReportTest extends TimetrackingBase
         $this->assertEquals($total, 200);
     }
 
-    private function getTotaltimeByTracker(array $times_per_user) : int
+    private function getTotaltimeByTracker(array $times_per_user): int
     {
         $minutes = 0;
         foreach ($times_per_user as $time_per_user) {
-            $minutes += (int)$time_per_user['minutes'];
+            $minutes += (int) $time_per_user['minutes'];
         }
 
         return $minutes;

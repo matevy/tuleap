@@ -42,7 +42,7 @@ class ArchivedeleteditemsPlugin extends Plugin //phpcs:ignore PSR1.Classes.Class
         bindtextdomain('tuleap-archivedeleteditems', __DIR__ . '/../site-content');
     }
 
-    private function getLogger()
+    private function getLogger(): \Psr\Log\LoggerInterface
     {
         return new ArchiveLogger();
     }
@@ -54,7 +54,7 @@ class ArchivedeleteditemsPlugin extends Plugin //phpcs:ignore PSR1.Classes.Class
      */
     public function getPluginInfo()
     {
-        if (!is_a($this->pluginInfo, 'ArchiveDeletedItemsPluginInfo')) {
+        if (! is_a($this->pluginInfo, 'ArchiveDeletedItemsPluginInfo')) {
             require_once('ArchiveDeletedItemsPluginInfo.class.php');
             $this->pluginInfo = new ArchiveDeletedItemsPluginInfo($this);
         }
@@ -76,14 +76,14 @@ class ArchivedeleteditemsPlugin extends Plugin //phpcs:ignore PSR1.Classes.Class
     /**
      * Copy files to the archiving directory
      */
-    public function archiveDeletedItem(ArchiveDeletedItemEvent $event) : void
+    public function archiveDeletedItem(ArchiveDeletedItemEvent $event): void
     {
         $logger           = $this->getLogger();
 
         $archive_path = $this->getWellFormattedArchivePath();
 
         if (! empty($archive_path)) {
-            if (!is_dir($archive_path)) {
+            if (! is_dir($archive_path)) {
                 $logger->error('Non-existing archive path');
                 $event->setFailure();
                 return;
@@ -95,10 +95,10 @@ class ArchivedeleteditemsPlugin extends Plugin //phpcs:ignore PSR1.Classes.Class
         }
 
         $source_path = $event->getSourcePath();
-        $destination_path = $archive_path.$event->getArchivePrefix().'_'.basename($source_path);
+        $destination_path = $archive_path . $event->getArchivePrefix() . '_' . basename($source_path);
 
         if (! file_exists($source_path)) {
-            $logger->error('Skipping file "'.$source_path.'": not found in file system.');
+            $logger->error('Skipping file "' . $source_path . '": not found in file system.');
             $event->setFailure();
             return;
         }

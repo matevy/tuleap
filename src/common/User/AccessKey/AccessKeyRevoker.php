@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\User\AccessKey;
 
 class AccessKeyRevoker
@@ -32,13 +34,14 @@ class AccessKeyRevoker
         $this->dao = $dao;
     }
 
-    public function revokeASetOfUserAccessKeys(\PFUser $user, array $access_key_ids)
+    public function revokeASetOfUserAccessKeys(\PFUser $user, array $access_key_ids): void
     {
-        $this->dao->deleteByUserIDAndKeyIDs($user->getId(), $access_key_ids);
+        $this->dao->deleteByUserIDAndKeyIDs((int) $user->getId(), $access_key_ids);
     }
 
-    public function revokeExpiredUserAccessKeys(int $timestamp)
+    public function revokeUnusableUserAccessKeys(\DateTimeImmutable $current_time): void
     {
-        $this->dao->deleteByExpirationDate($timestamp);
+        $this->dao->deleteByExpirationDate($current_time->getTimestamp());
+        $this->dao->deleteKeysWithNoScopes();
     }
 }

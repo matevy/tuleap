@@ -28,8 +28,7 @@ use Tuleap\Docman\Version\Version;
  */
 class Docman_Version implements Version
 {
-
-    function __construct($data = null)
+    public function __construct($data = null)
     {
         $this->id        = null;
         $this->authorId  = null;
@@ -39,7 +38,7 @@ class Docman_Version implements Version
         $this->changeLog = null;
         $this->date      = null;
         $this->filename  = null;
-        $this->filesize  = null;
+        $this->filesize  = 0;
         $this->filetype  = null;
         $this->path      = null;
         $this->_content  = null;
@@ -48,72 +47,72 @@ class Docman_Version implements Version
         }
     }
 
-    var $id;
-    function getId()
+    public $id;
+    public function getId()
     {
         return $this->id;
     }
-    function setId($id)
+    public function setId($id)
     {
         $this->id = $id;
     }
 
-    var $authorId;
-    function getAuthorId()
+    public $authorId;
+    public function getAuthorId()
     {
         return $this->authorId;
     }
-    function setAuthorId($authorId)
+    public function setAuthorId($authorId)
     {
         $this->authorId = $authorId;
     }
 
-    var $itemId;
-    function getItemId()
+    public $itemId;
+    public function getItemId()
     {
         return $this->itemId;
     }
-    function setItemId($itemId)
+    public function setItemId($itemId)
     {
         $this->itemId = $itemId;
     }
 
-    var $number;
-    function getNumber()
+    public $number;
+    public function getNumber()
     {
         return $this->number;
     }
-    function setNumber($number)
+    public function setNumber($number)
     {
         $this->number = $number;
     }
 
-    var $label;
-    function getLabel()
+    public $label;
+    public function getLabel()
     {
         return $this->label;
     }
-    function setLabel($label)
+    public function setLabel($label)
     {
         $this->label = $label;
     }
 
-    var $changelog;
-    function getChangelog()
+    public $changelog;
+    public function getChangelog()
     {
         return $this->changelog;
     }
-    function setChangelog($changelog)
+    public function setChangelog($changelog)
     {
         $this->changelog = $changelog;
     }
 
-    var $date;
-    function getDate()
+    public $date;
+    public function getDate()
     {
         return $this->date;
     }
-    function setDate($date)
+    public function setDate($date)
     {
         $this->date = $date;
     }
@@ -121,7 +120,7 @@ class Docman_Version implements Version
     /**
      * @var null|string
      */
-    var $filename;
+    public $filename;
     /**
      * @return string
      */
@@ -135,12 +134,15 @@ class Docman_Version implements Version
         $this->filename = $filename;
     }
 
-    var $filesize;
-    function getFilesize()
+    /**
+     * @var int
+     */
+    public $filesize;
+    public function getFilesize(): int
     {
         return $this->filesize;
     }
-    function setFilesize($filesize)
+    public function setFilesize(int $filesize)
     {
         $this->filesize = $filesize;
     }
@@ -148,10 +150,11 @@ class Docman_Version implements Version
     /**
      * @var null|string
      */
-    var $filetype;
+    public $filetype;
 
     /**
      * @return string
+     * @psalm-mutation-free
      */
     public function getFiletype()
     {
@@ -166,7 +169,7 @@ class Docman_Version implements Version
     /**
      * @var string|null
      */
-    var $path;
+    public $path;
 
     /**
      * @return string
@@ -194,7 +197,7 @@ class Docman_Version implements Version
         $this->_content = $content;
     }
 
-    function initFromRow($row)
+    public function initFromRow($row)
     {
         if (isset($row['id'])) {
             $this->setId($row['id']);
@@ -240,18 +243,18 @@ class Docman_Version implements Version
      *
      * @return void
      */
-    function preDownload($item, $user)
+    public function preDownload($item, $user)
     {
         $event_manager = EventManager::instance();
         $event_adder   = new DocmanItemsEventAdder($event_manager);
         $event_adder->addLogEvents();
 
-        $event_manager->processEvent('plugin_docman_event_access', array(
+        $event_manager->processEvent('plugin_docman_event_access', [
                     'group_id' => $item->getGroupId(),
                     'item'     => $item,
                     'version'  => $this->getNumber(),
                     'user'     => $user
-                ));
+                ]);
     }
 
     /**
@@ -262,16 +265,16 @@ class Docman_Version implements Version
      *
      * @return void
      */
-    function fireDeleteEvent($item, $user)
+    public function fireDeleteEvent($item, $user)
     {
         $value = $this->getNumber();
         if ($this->getLabel() != '') {
-            $value .= ' ('.$this->getLabel().')';
+            $value .= ' (' . $this->getLabel() . ')';
         }
-        $params = array('group_id'   => $item->getGroupId(),
+        $params = ['group_id'   => $item->getGroupId(),
                         'item'       => $item,
                         'old_value'  => $value,
-                        'user'       => $user);
+                        'user'       => $user];
         EventManager::instance()->processEvent('plugin_docman_event_del_version', $params);
     }
 }

@@ -21,22 +21,20 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_Document.class.php');
-
 class Docman_Empty extends Docman_Document
 {
 
-    function __construct($data = null)
+    public function __construct($data = null)
     {
         parent::__construct($data);
     }
 
-    public function accept($visitor, $params = array())
+    public function accept($visitor, $params = [])
     {
         return $visitor->visitEmpty($this, $params);
     }
 
-    function toRow()
+    public function toRow()
     {
         $row = parent::toRow();
         $row['item_type'] = PLUGIN_DOCMAN_ITEM_TYPE_EMPTY;
@@ -45,6 +43,6 @@ class Docman_Empty extends Docman_Document
 
     public function getType()
     {
-        return $GLOBALS['Language']->getText('plugin_docman', 'doc_type_empty');
+        return dgettext('tuleap-docman', 'Empty');
     }
 }

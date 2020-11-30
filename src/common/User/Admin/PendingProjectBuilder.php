@@ -64,21 +64,25 @@ class PendingProjectBuilder
      */
     public function build()
     {
-        $project_list = array();
-        $projects_id  = array();
+        $project_list = [];
+        $projects_id  = [];
 
         foreach ($this->project_manager->getAllPendingProjects() as $project) {
             $admin         = $this->getProjectAdminWhichIsFirstProjectMember($project);
+            if (! $admin) {
+                $admin = $this->user_manager->getUserAnonymous();
+            }
             $custom_fields = $this->field_builder->build($project);
             $trovecats     = $this->trove_cat_collection_retriever->getCollection($project->getID());
 
-            $project_list[] = array(
+            $project_list[] = [
                 'project_id'          => $project->getID(),
-                'project_public_name' => $project->getUnconvertedPublicName(),
+                'project_public_name' => $project->getPublicName(),
                 'project_unix_name'   => $project->getUnixNameMixedCase(),
                 'project_is_public'   => $project->isPublic(),
                 'project_get_access'  => $project->getAccess(),
                 'project_description' => $project->getDescription(),
+                'admin_is_anonymous'  => $admin->isAnonymous(),
                 'user_id'             => $admin->getId(),
                 'user_name'           => $admin->getRealName(),
                 'user_has_avatar'     => $admin->hasAvatar(),
@@ -88,15 +92,15 @@ class PendingProjectBuilder
                 'has_custom_fields'   => $this->hasCustomFields($custom_fields),
                 'access_presenter'    => new ProjectAccessPresenter($project->getAccess()),
                 'trovecats'           => $trovecats,
-            );
+            ];
 
             $projects_id[] = $project->getID();
         }
 
-        return array(
+        return [
             'project_list' => $project_list,
             'projects_id' => implode(',', $projects_id)
-        );
+        ];
     }
 
     private function hasCustomFields(array $custom_fields)

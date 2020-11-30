@@ -31,7 +31,7 @@ class GroupFactory
      *
      *    @return bool success.
      */
-    function __construct()
+    public function __construct()
     {
             return true;
     }
@@ -41,7 +41,7 @@ class GroupFactory
      *
      *    @return    resultset
      */
-    function getAllGroups()
+    public function getAllGroups()
     {
         global $Language;
         if (user_isloggedin()) {
@@ -61,7 +61,7 @@ class GroupFactory
             return false;
         }
 
-        $sql="SELECT group_id,group_name,unix_group_name FROM groups
+        $sql = "SELECT group_id,group_name,unix_group_name FROM groups
 			WHERE group_id <> 100 AND status = 'A'
 			$access_condition
 			ORDER BY group_name ASC";
@@ -72,7 +72,7 @@ class GroupFactory
 
         $rows = db_numrows($result);
 
-        if (!$result || $rows < 1) {
+        if (! $result || $rows < 1) {
             if (isset($GLOBALS['Language'])) {
                 $this->setError();
             }
@@ -86,20 +86,20 @@ class GroupFactory
      *
      *    @return    resultset
      */
-    function getMemberGroups()
+    public function getMemberGroups()
     {
                 global $Language;
-        if (!user_isloggedin()) {
+        if (! user_isloggedin()) {
             $this->setError();
             return false;
         }
 
         $db_escaped_user_id = db_ei(UserManager::instance()->getCurrentUser()->getId());
 
-        $sql="SELECT g.group_id,g.group_name ".
-        "FROM groups g, user_group ug ".
-        "WHERE g.group_id <> 100 AND g.status = 'A' AND g.group_id = ug.group_id ".
-        "AND ug.user_id=".$db_escaped_user_id." ".
+        $sql = "SELECT g.group_id,g.group_name " .
+        "FROM groups g, user_group ug " .
+        "WHERE g.group_id <> 100 AND g.status = 'A' AND g.group_id = ug.group_id " .
+        "AND ug.user_id=" . $db_escaped_user_id . " " .
         "ORDER BY g.group_name ASC";
 
      //echo $sql;
@@ -108,7 +108,7 @@ class GroupFactory
 
         $rows = db_numrows($result);
 
-        if (!$result || $rows < 1) {
+        if (! $result || $rows < 1) {
             $this->setError();
             return false;
         }
@@ -120,18 +120,18 @@ class GroupFactory
      *
      *    @return    array of {Group}
      */
-    function getMyGroups()
+    public function getMyGroups()
     {
         global $Language;
         $result_my_groups = $this->getMemberGroups();
-        if ($this->isError() || !$result_my_groups) {
+        if ($this->isError() || ! $result_my_groups) {
             return false;
         } else {
             $pm = ProjectManager::instance();
-            $my_groups = array();
+            $my_groups = [];
             while ($res_group = db_fetch_array($result_my_groups)) {
                 $group = $pm->getProject($res_group['group_id']);
-                if ($group && !$group->isError()) {
+                if ($group && ! $group->isError()) {
                     $my_groups[$group->getID()] = $group;
                 }
             }

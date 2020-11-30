@@ -22,7 +22,6 @@ class Tracker_XML_Updater_FieldChange_FieldChangeListXMLUpdater implements Track
 {
 
     /**
-     * @param SimpleXMLElement $field_change_xml
      * @param mixed            $submitted_value
      */
     public function update(SimpleXMLElement $field_change_xml, $submitted_value)
@@ -30,12 +29,12 @@ class Tracker_XML_Updater_FieldChange_FieldChangeListXMLUpdater implements Track
         $this->removeExistingValuesNodes($field_change_xml);
 
         if (! is_array($submitted_value)) {
-            $submitted_value = array($submitted_value);
+            $submitted_value = [$submitted_value];
         }
 
         array_walk(
             $submitted_value,
-            array($this, 'appendValuesToFieldChangeNode'),
+            [$this, 'appendValuesToFieldChangeNode'],
             $field_change_xml
         );
     }
@@ -45,8 +44,8 @@ class Tracker_XML_Updater_FieldChange_FieldChangeListXMLUpdater implements Track
         $index,
         SimpleXMLElement $field_xml
     ) {
-        $value_xml = $field_xml->addChild('value', $value);
-        $value_xml->addAttribute('format', 'id');
+        $cdata = new \XML_SimpleXMLCDATAFactory();
+        $cdata->insertWithAttributes($field_xml, 'value', $value, ['format' => 'id']);
     }
 
     protected function removeExistingValuesNodes($field_change_xml)

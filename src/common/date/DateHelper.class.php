@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2010. All rights reserved
- * Copyright (c) Enalean, 2017. All rights reserved
+ * Copyright (c) Enalean, 2017 - present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -19,35 +19,86 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
+use Tuleap\date\DefaultRelativeDatesDisplayPreferenceRetriever;
+
 class DateHelper
 {
-
-    public const INCLUDE_SECONDS = 1;
-    public const WITH_TITLE      = 1;
-
     public const SECONDS_IN_A_DAY = 86400;
 
+    public const PREFERENCE_NAME = "relative_dates_display";
+
+    public const PREFERENCE_RELATIVE_FIRST_ABSOLUTE_SHOWN   = "relative_first-absolute_shown";
+    public const PREFERENCE_ABSOLUTE_FIRST_RELATIVE_SHOWN   = "absolute_first-relative_shown";
+    public const PREFERENCE_RELATIVE_FIRST_ABSOLUTE_TOOLTIP = "relative_first-absolute_tooltip";
+    public const PREFERENCE_ABSOLUTE_FIRST_RELATIVE_TOOLTIP = "absolute_first-relative_tooltip";
+
     /**
-     * Give the apporximate distance between a time and now
-     *
-     * inspired from ActionView::Helpers::DateHelper in RubyOnRails
-     *
-     * @return string
+     * @deprecated Use \DateHelper::relativeDate() instead
      */
-    public static function timeAgoInWords($time, $include_seconds = false, $with_title = false)
+    public static function timeAgoInWords($time, $include_seconds = false, $with_title = false): string
     {
-        $str = '-';
-        if ($time) {
-            $string_key = 'time_ago';
-            if ($time > $_SERVER['REQUEST_TIME']) {
-                $string_key = 'time_in_future';
-            }
-            $str = $GLOBALS['Language']->getText('include_utils', $string_key, self::distanceOfTimeInWords($time, $_SERVER['REQUEST_TIME'], $include_seconds));
-            if ($with_title) {
-                $str = '<span title="'. date($GLOBALS['Language']->getText('system', 'datefmt'), $time) .'">'. $str .'</span>';
-            }
+        if (! $time) {
+            return '-';
         }
+
+        $distance_of_time_in_words = self::distanceOfTimeInWords($time, $_SERVER['REQUEST_TIME'], $include_seconds);
+        $str = sprintf(_('%s ago'), $distance_of_time_in_words);
+        if ($time > $_SERVER['REQUEST_TIME']) {
+            $str = sprintf(_('in %s'), $distance_of_time_in_words);
+        }
+
+        if ($with_title) {
+            return '<span title="' . date($GLOBALS['Language']->getText('system', 'datefmt'), $time) . '">' . $str . '</span>';
+        }
+
         return $str;
+    }
+
+    /**
+     * @param "top" | "right" $position
+     */
+    private static function relativeDate(int $time, PFUser $current_user, string $position): string
+    {
+        $purifier = Codendi_HTMLPurifier::instance();
+        switch ($current_user->getPreference(self::PREFERENCE_NAME)) {
+            case self::PREFERENCE_ABSOLUTE_FIRST_RELATIVE_SHOWN:
+                $preference = "absolute";
+                $placement = $position;
+                break;
+            case self::PREFERENCE_ABSOLUTE_FIRST_RELATIVE_TOOLTIP:
+                $preference = "absolute";
+                $placement = "tooltip";
+                break;
+            case self::PREFERENCE_RELATIVE_FIRST_ABSOLUTE_SHOWN:
+                $preference = "relative";
+                $placement = $position;
+                break;
+            case self::PREFERENCE_RELATIVE_FIRST_ABSOLUTE_TOOLTIP:
+                $preference = "relative";
+                $placement = "tooltip";
+                break;
+            default:
+                $default_display = DefaultRelativeDatesDisplayPreferenceRetriever::getDefaultPlacementAndPreference($position);
+                $preference      = $default_display->getPreference();
+                $placement       = $default_display->getPlacement();
+        }
+
+        return '<tlp-relative-date
+            date="' . $purifier->purify(date('c', $time)) . '"
+            absolute-date="' . $purifier->purify(date($GLOBALS['Language']->getText('system', 'datefmt'), $time)) . '"
+            preference="' . $purifier->purify($preference) . '"
+            locale="' . $purifier->purify($current_user->getLocale()) . '"
+            placement="' . $purifier->purify($placement) . '"></tlp-relative-date>';
+    }
+
+    public static function relativeDateBlockContext(int $time, PFUser $current_user): string
+    {
+        return self::relativeDate($time, $current_user, "top");
+    }
+
+    public static function relativeDateInlineContext(int $time, PFUser $current_user): string
+    {
+        return self::relativeDate($time, $current_user, "right");
     }
 
     /**
@@ -57,7 +108,7 @@ class DateHelper
      */
     public static function distanceOfTimeInWords($from_time, $to_time, $include_seconds = false)
     {
-        $distance_in_minutes = round((abs($to_time - $from_time))/60);
+        $distance_in_minutes = round((abs($to_time - $from_time)) / 60);
         $distance_in_seconds = round(abs($to_time - $from_time));
 
         return self::getFormattedDistance($distance_in_minutes, $distance_in_seconds, $include_seconds);
@@ -66,8 +117,12 @@ class DateHelper
     public static function getFormattedDistance($distance_in_minutes, $distance_in_seconds, $include_seconds)
     {
         if ($distance_in_minutes <= 1) {
-            if (!$include_seconds) {
-                return $GLOBALS['Language']->getText('include_utils', ($distance_in_minutes == 0) ? 'less_1_minute' : '1_minute');
+            if (! $include_seconds) {
+                if ($distance_in_minutes) {
+                    return $GLOBALS['Language']->getText('include_utils', 'less_1_minute');
+                }
+
+                return $GLOBALS['Language']->getText('include_utils', '1_minute');
             } else {
                 if ($distance_in_seconds < 1) {
                     return $GLOBALS['Language']->getText('include_utils', 'less_than_one_second', 1);
@@ -122,7 +177,7 @@ class DateHelper
         } else {
             $user_date = format_date($lang->getText('system', 'datefmt'), $date, null);
         }
-        return $user_date;
+        return (string) $user_date;
     }
 
     /**

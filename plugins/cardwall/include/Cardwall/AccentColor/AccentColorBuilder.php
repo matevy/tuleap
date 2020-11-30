@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,8 +22,8 @@ namespace Tuleap\Cardwall\AccentColor;
 
 use PFUser;
 use Tracker;
-use Tracker_Artifact;
 use Tracker_FormElementFactory;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\Exception\NoChangesetException;
 use Tuleap\Tracker\Artifact\Exception\NoChangesetValueException;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
@@ -47,12 +47,11 @@ class AccentColorBuilder
     }
 
     public function build(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $current_user
     ) {
         $no_color = new AccentColor('', true);
 
-        /** @var \Tracker_FormElement_Field_List $selectbox */
         $selectbox = $this->form_element_factory->getSelectboxFieldByNameForUser(
             $artifact->getTracker()->getId(),
             Tracker::TYPE_FIELD_NAME,
@@ -61,6 +60,7 @@ class AccentColorBuilder
         if (! $selectbox) {
             return $no_color;
         }
+        \assert($selectbox instanceof \Tracker_FormElement_Field_List);
 
         if (! $selectbox->userCanRead($current_user)) {
             return $no_color;

@@ -41,13 +41,13 @@ class NewsJSONPermissionsRetriever
 
     public function retrieve(Project $project, $selected_ugroup_id = null)
     {
-        if (!$project->usesService(Service::NEWS)) {
+        if (! $project->usesService(Service::NEWS)) {
             $GLOBALS['Response']->send400JSONErrors(
-                array(
+                [
                     'error' => _(
                         "Service news is disabled for this project."
                     )
-                )
+                ]
             );
         }
 

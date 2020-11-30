@@ -19,6 +19,7 @@
  */
 
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
+use Tuleap\Tracker\Artifact\Artifact;
 
 /**
  * A planning milestone (e.g.: Sprint, Release...)
@@ -47,7 +48,7 @@ class Planning_ArtifactMilestone implements Planning_Milestone
      *
      * For instance a Sprint or a Release
      *
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $artifact;
 
@@ -72,7 +73,7 @@ class Planning_ArtifactMilestone implements Planning_Milestone
      *
      * @var array of Planning_Milestone
      */
-    private $parent_milestones = array();
+    private $parent_milestones = [];
 
     /**
      * @var TimePeriodWithoutWeekEnd|null
@@ -106,11 +107,10 @@ class Planning_ArtifactMilestone implements Planning_Milestone
     public function __construct(
         Project $project,
         Planning $planning,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ScrumForMonoMilestoneChecker $scrum_mono_milestone_checker,
         ?ArtifactNode $planned_artifacts = null
     ) {
-
         $this->project                      = $project;
         $this->planning                     = $planning;
         $this->artifact                     = $artifact;
@@ -135,7 +135,7 @@ class Planning_ArtifactMilestone implements Planning_Milestone
     }
 
     /**
-     * @return Tracker_Artifact
+     * @return Artifact
      */
     public function getArtifact()
     {
@@ -171,7 +171,7 @@ class Planning_ArtifactMilestone implements Planning_Milestone
      */
     public function getArtifactTitle()
     {
-        return $this->artifact->getTitle();
+        return $this->artifact->getTitle() ?? '';
     }
 
     /**
@@ -207,9 +207,6 @@ class Planning_ArtifactMilestone implements Planning_Milestone
         return $this->planned_artifacts;
     }
 
-    /**
-     * @param ArtifactNode $node
-     */
     public function setPlannedArtifacts(ArtifactNode $node)
     {
         $this->planned_artifacts = $node;
@@ -217,8 +214,7 @@ class Planning_ArtifactMilestone implements Planning_Milestone
 
     /**
      * All artifacts linked by either the root artifact or any of the artifacts in plannedArtifacts()
-     * @param PFUser $user
-     * @return Tracker_Artifact[]
+     * @return Artifact[]
      */
     public function getLinkedArtifacts(PFUser $user)
     {
@@ -243,7 +239,7 @@ class Planning_ArtifactMilestone implements Planning_Milestone
 
     public function hasAncestors()
     {
-        return !empty($this->parent_milestones);
+        return ! empty($this->parent_milestones);
     }
 
     public function getAncestors()
@@ -328,7 +324,6 @@ class Planning_ArtifactMilestone implements Planning_Milestone
 
     /**
      * @param array $artifacts_ids
-     * @param PFUser $user
      * @return bool True if nothing went wrong
      */
     public function solveInconsistencies(PFUser $user, array $artifacts_ids)
@@ -368,7 +363,11 @@ class Planning_ArtifactMilestone implements Planning_Milestone
         }
 
         if ($potential_submilestone->getArtifact()->getTracker()->getParent()) {
-            return $potential_submilestone->getArtifact()->getTracker()->getParent()->getId() == $this->getArtifact()->getTracker()->getId();
+            $parent = $potential_submilestone->getArtifact()->getTracker()->getParent();
+            if ($parent === null) {
+                throw new RuntimeException('Tracker does not exist');
+            }
+            return $parent->getId() == $this->getArtifact()->getTracker()->getId();
         }
 
         return false;
@@ -380,7 +379,6 @@ class Planning_ArtifactMilestone implements Planning_Milestone
     }
 
     /**
-     * @param PFUser $user
      * @return bool
      */
     public function hasBurdownField(PFUser $user)

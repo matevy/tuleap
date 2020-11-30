@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,25 +20,18 @@
 namespace Tuleap\AgileDashboard\REST\v1\Kanban;
 
 use AgileDashboard_Kanban;
-use AgileDashboard_KanbanActionsChecker;
 use AgileDashboard_KanbanCannotAccessException;
-use AgileDashboard_KanbanColumnDao;
-use AgileDashboard_KanbanColumnFactory;
-use AgileDashboard_KanbanColumnManager;
 use AgileDashboard_KanbanDao;
 use AgileDashboard_KanbanFactory;
 use AgileDashboard_KanbanItemDao;
 use AgileDashboard_KanbanItemManager;
 use AgileDashboard_KanbanNotFoundException;
-use AgileDashboard_KanbanUserPreferences;
-use AgileDashboard_PermissionsManager;
 use AgileDashboardStatisticsAggregator;
 use Luracast\Restler\RestException;
 use PFUser;
 use Tracker;
 use Tracker_ArtifactFactory;
 use Tracker_FormElement_Field_List;
-use Tracker_FormElement_Field_List_Bind_Static_ValueDao;
 use Tracker_FormElementFactory;
 use Tracker_REST_Artifact_ArtifactCreator as ArtifactCreator;
 use Tracker_REST_Artifact_ArtifactValidator as ArtifactValidator;
@@ -58,12 +51,6 @@ class KanbanItemsResource extends AuthenticatedResource
 
     /** @var AgileDashboard_KanbanFactory */
     private $kanban_factory;
-
-    /** @var AgileDashboard_KankanColumnFactory */
-    private $kanban_column_factory;
-
-    /** @var AgileDashboard_KanbanColumnManager */
-    private $kanban_column_manager;
 
     /** @var TrackerFactory */
     private $tracker_factory;
@@ -94,22 +81,6 @@ class KanbanItemsResource extends AuthenticatedResource
         $this->kanban_factory = new AgileDashboard_KanbanFactory(
             $this->tracker_factory,
             new AgileDashboard_KanbanDao()
-        );
-
-        $kanban_column_dao           = new AgileDashboard_KanbanColumnDao();
-        $permissions_manager         = new AgileDashboard_PermissionsManager();
-        $this->kanban_column_factory = new AgileDashboard_KanbanColumnFactory(
-            $kanban_column_dao,
-            new AgileDashboard_KanbanUserPreferences()
-        );
-        $this->kanban_column_manager = new AgileDashboard_KanbanColumnManager(
-            $kanban_column_dao,
-            new Tracker_FormElement_Field_List_Bind_Static_ValueDao(),
-            new AgileDashboard_KanbanActionsChecker(
-                $this->tracker_factory,
-                $permissions_manager,
-                $this->form_element_factory
-            )
         );
 
         $kanban_item_dao                   = new AgileDashboard_KanbanItemDao();
@@ -164,6 +135,10 @@ class KanbanItemsResource extends AuthenticatedResource
         $kanban       = $this->getKanban($current_user, $item->kanban_id);
         $tracker      = $this->tracker_factory->getTrackerById($kanban->getTrackerId());
 
+        if ($tracker === null) {
+            throw new \RuntimeException('Tracker does not exist');
+        }
+
         ProjectStatusVerificator::build()->checkProjectStatusAllowsAllUsersToAccessIt(
             $tracker->getProject()
         );
@@ -176,12 +151,11 @@ class KanbanItemsResource extends AuthenticatedResource
             $this->tracker_factory
         );
 
-        $tracker_reference = new TrackerReference();
-        $tracker_reference->build($tracker);
+        $tracker_reference = TrackerReference::build($tracker);
 
         $artifact_fields = $this->buildFieldsData($tracker, $item);
 
-        $art_ref = $updater->create($current_user, $tracker_reference, $artifact_fields);
+        $art_ref = $updater->create($current_user, $tracker_reference, $artifact_fields, true);
 
         $artifact = $art_ref->getArtifact();
         if (! $artifact) {
@@ -260,7 +234,7 @@ class KanbanItemsResource extends AuthenticatedResource
 
     private function buildFieldsData(Tracker $tracker, KanbanItemPOSTRepresentation $item)
     {
-        $fields_data = array();
+        $fields_data = [];
 
         $this->addSummaryToFieldsData($tracker, $item, $fields_data);
         $this->addStatusToFieldsData($tracker, $item, $fields_data);
@@ -308,7 +282,7 @@ class KanbanItemsResource extends AuthenticatedResource
 
         $representation                 = new ArtifactValuesRepresentation();
         $representation->field_id       = (int) $status_field->getId();
-        $representation->bind_value_ids = array((int) $value);
+        $representation->bind_value_ids = [(int) $value];
 
         $fields_data[] = $representation;
     }

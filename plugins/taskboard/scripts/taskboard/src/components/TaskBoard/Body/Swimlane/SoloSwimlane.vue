@@ -20,66 +20,58 @@
 
 <template>
     <div class="taskboard-swimlane" v-if="should_solo_card_be_displayed">
-        <swimlane-header v-bind:swimlane="swimlane"/>
-        <drop-container-cell
+        <swimlane-header v-bind:swimlane="swimlane" />
+        <solo-swimlane-cell
             v-for="col of columns"
             v-bind:key="col.id"
             v-bind:column="col"
             v-bind:swimlane="swimlane"
-        >
-            <card-with-remaining-effort
-                v-if="column.id === col.id"
-                v-bind:card="swimlane.card"
-                class="taskboard-cell-solo-card"
-                v-bind:class="{'taskboard-draggable-item': ! swimlane.card.is_in_edit_mode}"
-                v-bind:data-card-id="swimlane.card.id"
-                v-bind:data-tracker-id="swimlane.card.tracker_id"
-                v-bind:data-is-draggable="! swimlane.card.is_in_edit_mode"
-            />
-            <add-card v-if="is_add_card_rendered" v-bind:column="col" v-bind:swimlane="swimlane"/>
-        </drop-container-cell>
+        />
     </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
 import { Component, Prop } from "vue-property-decorator";
-import { Getter, namespace } from "vuex-class";
+import { namespace } from "vuex-class";
 import { ColumnDefinition, Swimlane } from "../../../../type";
 import CardWithRemainingEffort from "./Card/CardWithRemainingEffort.vue";
 import SwimlaneHeader from "./Header/SwimlaneHeader.vue";
 import DropContainerCell from "./Cell/DropContainerCell.vue";
-import AddCard from "./Card/Add/AddCard.vue";
+import { getColumnOfCard } from "../../../../helpers/list-value-to-column-mapper";
+import SoloSwimlaneCell from "./Cell/SoloSwimlaneCell.vue";
 
 const column_store = namespace("column");
 
 @Component({
     components: {
-        AddCard,
+        SoloSwimlaneCell,
         CardWithRemainingEffort,
         DropContainerCell,
-        SwimlaneHeader
-    }
+        SwimlaneHeader,
+    },
 })
 export default class SoloSwimlane extends Vue {
     @Prop({ required: true })
     readonly swimlane!: Swimlane;
 
-    @Prop({ required: true })
-    readonly column!: ColumnDefinition;
-
     @column_store.State
     readonly columns!: Array<ColumnDefinition>;
-
-    @Getter
-    readonly can_add_in_place!: (swimlane: Swimlane) => boolean;
 
     get should_solo_card_be_displayed(): boolean {
         return !this.column.is_collapsed;
     }
 
-    get is_add_card_rendered(): boolean {
-        return this.can_add_in_place(this.swimlane);
+    get column(): ColumnDefinition {
+        return this.getColumnOfSoloCard(this.swimlane);
+    }
+
+    getColumnOfSoloCard(swimlane: Swimlane): ColumnDefinition {
+        const column = getColumnOfCard(this.columns, swimlane.card);
+        if (column === undefined) {
+            throw new Error("Solo card must have a mapping");
+        }
+        return column;
     }
 }
 </script>

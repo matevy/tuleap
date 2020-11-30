@@ -30,18 +30,18 @@ function generic_redirect($location, $aid, $group_id, $art_group_id, $atid, $atn
 {
     global $Language;
     $feed = '';
-    if (($group_id)&&($group_id != $art_group_id)) {
+    if (($group_id) && ($group_id != $art_group_id)) {
         // The link is coming from another project, add a warning msg
-        $group_name=util_get_group_name_from_id($art_group_id);
-        $feed="&feedback=".urlencode($Language->getText('tracker_gotoid', 'art_belongs_to', $group_name));
+        $group_name = util_get_group_name_from_id($art_group_id);
+        $feed = "&feedback=" . urlencode($Language->getText('tracker_gotoid', 'art_belongs_to', $group_name));
     }
-    if (($atn)&&(strtolower($atn) != strtolower($art_name))) {
-        if ((strtolower($atn)!="art")&&(strtolower($atn)!="artifact")) {
-            $feed.=urlencode($Language->getText('tracker_gotoid', 'art_is_a', array($art_name,$atn)));
+    if (($atn) && (strtolower($atn) != strtolower($art_name))) {
+        if ((strtolower($atn) != "art") && (strtolower($atn) != "artifact")) {
+            $feed .= urlencode($Language->getText('tracker_gotoid', 'art_is_a', [$art_name, $atn]));
         }
     }
 
-    $location .= "/tracker/?func=detail&aid=".(int)$aid."&group_id=".(int)$art_group_id."&atid=".((int)$atid).$feed;
+    $location .= "/tracker/?func=detail&aid=" . (int) $aid . "&group_id=" . (int) $art_group_id . "&atid=" . ((int) $atid) . $feed;
     header($location);
     exit;
 }
@@ -57,14 +57,14 @@ $atn = strtolower($request->get('atn'));
 
 // If group_name given as argument then infer group_id first
 $group_name = $request->get('group_name');
-if ($group_name && !$group_id) {
+if ($group_name && ! $group_id) {
     $grp = group_get_object_by_name($group_name);
     $group_id = $grp->getGroupId();
 }
 
 // Commit and patch are not ambiguous (not trackers)
-$svn_loc = "/svn/?func=detailrevision&rev_id=". (int)$aid ."&group_id=". (int)$group_id;
-$cvs_loc = "/cvs/?func=detailcommit&commit_id=". (int)$aid ."&group_id=". (int)$group_id;
+$svn_loc = "/svn/?func=detailrevision&rev_id=" . (int) $aid . "&group_id=" . (int) $group_id;
+$cvs_loc = "/cvs/?func=detailcommit&commit_id=" . (int) $aid . "&group_id=" . (int) $group_id;
 if (($atn == 'rev') || ($atn == 'revision')) {
     $location .= $svn_loc;
     header($location);
@@ -75,16 +75,16 @@ if ($atn == 'commit') {
     $res = svn_data_get_revision_detail($group_id, 0, $aid);
     $feed = '';
     if ($res && db_numrows($res) > 0) {
-        $location .= $svn_loc.$feed;
+        $location .= $svn_loc . $feed;
     } else {
         // Check that the commit belongs to the same project
-        $commit_group_id=util_get_group_from_commit_id($aid);
-        if (($commit_group_id)&&($group_id != $commit_group_id)) {
+        $commit_group_id = util_get_group_from_commit_id($aid);
+        if (($commit_group_id) && ($group_id != $commit_group_id)) {
             // The link is coming from another project, add a warning msg
-            $group_name=util_get_group_name_from_id($commit_group_id);
-            $feed="&feedback".urlencode($Language->getText('tracker_gotoid', 'commit_belongs_to', $group_name));
+            $group_name = util_get_group_name_from_id($commit_group_id);
+            $feed = "&feedback" . urlencode($Language->getText('tracker_gotoid', 'commit_belongs_to', $group_name));
         }
-        $location .= $cvs_loc.$feed;
+        $location .= $cvs_loc . $feed;
     }
     header($location);
     exit;
@@ -92,18 +92,18 @@ if ($atn == 'commit') {
 
 
 // Should we remove this one?
-if (!$group_id) {
+if (! $group_id) {
     // group_id is necessary for legacy trackers -> link to generic tracker
     $art_group_id = $request->get('art_group_id');
     $art_name     = $request->get('art_name');
-    if (!util_get_ids_from_aid($aid, $art_group_id, $atid, $art_name)) {
+    if (! util_get_ids_from_aid($aid, $art_group_id, $atid, $art_name)) {
         exit_error($Language->getText('global', 'error'), $Language->getText('tracker_gotoid', 'invalid_art_nb', $aid));
     }
     generic_redirect($location, $aid, $art_group_id, $art_group_id, $atid, $atn, $art_name);
 }
 
 // not standard atn -> generic tracker.
-if (!util_get_ids_from_aid($aid, $art_group_id, $atid, $art_name)) {
+if (! util_get_ids_from_aid($aid, $art_group_id, $atid, $art_name)) {
     exit_error($Language->getText('global', 'error'), $Language->getText('tracker_gotoid', 'invalid_art_nb', $aid));
 }
 generic_redirect($location, $aid, $group_id, $art_group_id, $atid, $atn, $art_name);

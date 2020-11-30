@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tuleap\Password\HaveIBeenPwned;
 
-use Logger;
+use Psr\Log\LoggerInterface;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
@@ -42,18 +42,18 @@ class PwnedPasswordRangeRetriever
      */
     private $request_factory;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
-    public function __construct(ClientInterface $http_client, RequestFactoryInterface $request_factory, Logger $logger)
+    public function __construct(ClientInterface $http_client, RequestFactoryInterface $request_factory, LoggerInterface $logger)
     {
         $this->http_client     = $http_client;
         $this->request_factory = $request_factory;
         $this->logger          = $logger;
     }
 
-    public function getHashSuffixesMatchingPrefix(string $sha1_password_prefix) : string
+    public function getHashSuffixesMatchingPrefix(string $sha1_password_prefix): string
     {
         if (strlen($sha1_password_prefix) !== PwnedPasswordChecker::PREFIX_SIZE) {
             throw new \LengthException(
@@ -63,7 +63,7 @@ class PwnedPasswordRangeRetriever
 
         $url = self::ENDPOINT . urlencode($sha1_password_prefix);
 
-        $request = $this->request_factory->createRequest('GET', $url);
+        $request = $this->request_factory->createRequest('GET', $url)->withHeader('Add-Padding', 'true');
 
         try {
             $response = $this->http_client->sendRequest($request);

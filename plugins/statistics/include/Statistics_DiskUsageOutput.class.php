@@ -42,9 +42,9 @@ class Statistics_DiskUsageOutput
     public function sizeReadable($size, $max = null, $system = 'bi', $retstring = 'auto')
     {
         // Pick units
-        $systems['si']['prefix'] = array('B', 'K', 'MB', 'GB', 'TB', 'PB');
+        $systems['si']['prefix'] = ['B', 'K', 'MB', 'GB', 'TB', 'PB'];
         $systems['si']['size']   = 1000;
-        $systems['bi']['prefix'] = array('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB');
+        $systems['bi']['prefix'] = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
         $systems['bi']['size']   = 1024;
         $sys = isset($systems[$system]) ? $systems[$system] : $systems['si'];
 
@@ -64,7 +64,7 @@ class Statistics_DiskUsageOutput
         // Adapt the decimal places to the number of digit:
         // 1.24 / 12.3 / 123
         if ($retstring == 'auto') {
-            $nbDigit = (int)(log(abs($size))/log(10)) + 1;
+            $nbDigit = (int) (log(abs($size)) / log(10)) + 1;
             switch ($nbDigit) {
                 case 1:
                     $retstring = '%.2f %s';

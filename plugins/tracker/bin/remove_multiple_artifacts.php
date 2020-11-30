@@ -24,13 +24,13 @@ use Tuleap\User\PasswordVerifier;
 require_once __DIR__ . '/../../../src/www/include/pre.php';
 
 if ($argc !== 5) {
-    fwrite(STDERR, "Usage: {$argv[0]} user_name tracker_id first_artifact_id last_artifact_id". PHP_EOL);
+    fwrite(STDERR, "Usage: {$argv[0]} user_name tracker_id first_artifact_id last_artifact_id" . PHP_EOL);
     exit(1);
 }
 
 $sys_user = getenv("USER");
 if ($sys_user !== 'root' && $sys_user !== 'codendiadm') {
-    fwrite(STDERR, 'Unsufficient privileges for user '.$sys_user.PHP_EOL);
+    fwrite(STDERR, 'Unsufficient privileges for user ' . $sys_user . PHP_EOL);
     exit(1);
 }
 
@@ -40,7 +40,7 @@ $first_artifact_id = $argv[3];
 $last_artifact_id  = $argv[4];
 $password          = null;
 
-if (!isset($password)) {
+if (! isset($password)) {
     echo "Password for $user_name: ";
 
     if (PHP_OS != 'WINNT') {
@@ -50,7 +50,7 @@ if (!isset($password)) {
     } else {
         $password = fgets(STDIN);
     }
-    $password = substr($password, 0, strlen($password)-1);
+    $password = substr($password, 0, strlen($password) - 1);
     echo PHP_EOL;
 }
 
@@ -65,7 +65,7 @@ $login_manager = new User_LoginManager(
 );
 
 try {
-    $tuleap_user = $login_manager->authenticate($user_name, $password);
+    $tuleap_user = $login_manager->authenticate($user_name, new \Tuleap\Cryptography\ConcealedString($password));
 } catch (Exception $exception) {
     fwrite(STDERR, 'Login or password invalid. Exit' . PHP_EOL);
     exit(1);
@@ -91,7 +91,7 @@ while ($current_artifact_id <= $last_artifact_id) {
     $artifact = Tracker_ArtifactFactory::instance()->getArtifactById($current_artifact_id);
 
     if (! $artifact) {
-        fwrite(STDERR, 'Artifact #'. $current_artifact_id . ' not found. Continuing remove other artifacts.' . PHP_EOL);
+        fwrite(STDERR, 'Artifact #' . $current_artifact_id . ' not found. Continuing remove other artifacts.' . PHP_EOL);
         $current_artifact_id++;
         continue;
     }
@@ -99,7 +99,7 @@ while ($current_artifact_id <= $last_artifact_id) {
     if ($artifact->getTrackerId() != $tracker_id) {
         fwrite(
             STDERR,
-            'Artifact #'. $current_artifact_id . ' is not in Tracker #' . $tracker_id . ' . Continuing remove other artifacts.' . PHP_EOL
+            'Artifact #' . $current_artifact_id . ' is not in Tracker #' . $tracker_id . ' . Continuing remove other artifacts.' . PHP_EOL
         );
         $current_artifact_id++;
         continue;

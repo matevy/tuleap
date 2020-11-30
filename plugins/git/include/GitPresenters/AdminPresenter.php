@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2016. All rights reserved
+ * Copyright (c) Enalean, 2013 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -18,24 +18,26 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
+use Tuleap\Git\GitPresenters\AdminExternalPanePresenter;
+
 abstract class GitPresenters_AdminPresenter
 {
 
     public $project_id;
 
     /** @var bool */
-    public $are_mirrors_defined;
-    public $manage_gerrit_templates                = false;
-    public $manage_git_admins                      = false;
-    public $manage_mass_update_select_repositories = false;
-    public $manage_mass_update                     = false;
-    public $manage_default_settings                = false;
-    public $manage_default_access_rights           = false;
+    public $are_mirrors_defined = false;
 
-    public function __construct($project_id, $are_mirrors_defined)
+    /**
+     * @var AdminExternalPanePresenter[]
+     */
+    public $external_pane_presenters = [];
+
+    public function __construct($project_id, bool $are_mirrors_defined, array $external_pane_presenters)
     {
-        $this->project_id          = $project_id;
-        $this->are_mirrors_defined = $are_mirrors_defined;
+        $this->project_id               = $project_id;
+        $this->are_mirrors_defined      = $are_mirrors_defined;
+        $this->external_pane_presenters = $external_pane_presenters;
     }
 
     public function git_admin()
@@ -61,10 +63,5 @@ abstract class GitPresenters_AdminPresenter
     public function tab_template_settings()
     {
         return dgettext('tuleap-git', 'Git settings template');
-    }
-
-    public function manage_mass_update_active()
-    {
-        return $this->manage_mass_update_select_repositories || $this->manage_mass_update;
     }
 }

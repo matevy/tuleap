@@ -14,51 +14,52 @@ rcs_id('$Id: CustomPrefs.php,v 1.1 2004/06/18 14:42:17 rurban Exp $');
 
 class _UserPreference_recengine extends _UserPreference // recommendation engine method
 {
-    var $valid_values = array('php','mysuggest','mymovielens','mycluto');
-    var $default_value = 'php';
+    public $valid_values = ['php', 'mysuggest', 'mymovielens', 'mycluto'];
+    public $default_value = 'php';
 
-    function sanify($value)
+    public function sanify($value)
     {
-        if (!in_array($value, $this->valid_values)) {
+        if (! in_array($value, $this->valid_values)) {
             return $this->default_value;
         } else {
             return $value;
         }
     }
-};
+}
 
 class _UserPreference_recalgo extends _UserPreference // recommendation engine algorithm
 {
-    var $valid_values = array
-        (
+    public $valid_values =
+        [
          'itemCos',  // Item-based Top-N recommendation algorithm with cosine-based similarity function
          'itemProb', // Item-based Top-N recommendation algorithm with probability-based similarity function.
                      // This algorithms tends to outperform the rest.
          'userCos',  // User-based Top-N recommendation algorithm with cosine-based similarity function.
-         'bayes');   // Naïve Bayesian Classifier
-    var $default_value = 'itemProb';
+         'bayes'];   // Naï¿½ve Bayesian Classifier
+    public $default_value = 'itemProb';
 
-    function sanify($value)
+    public function sanify($value)
     {
-        if (!in_array($value, $this->valid_values)) {
+        if (! in_array($value, $this->valid_values)) {
             return $this->default_value;
         } else {
             return $value;
         }
     }
-};
+}
 
 class _UserPreference_recnnbr extends _UserPreference_numeric
 {
-}; // recommendation engine key clustering, neighborhood size
+}
 
-$WikiTheme->customUserPreferences(array
-         (
+$WikiTheme->customUserPreferences(
+    [
           'recengine' => new _UserPreference_recengine('php'),
           'recalgo'   => new _UserPreference_recalgo('itemProb'),
           //recnnbr: typically 15-30 for item-based, 40-80 for user-based algos
           'recnnbr'   => new _UserPreference_recnnbr(10, 14, 80),
-));
+         ]
+);
 
 
 // $Log: CustomPrefs.php,v $

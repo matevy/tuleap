@@ -19,36 +19,42 @@
   -->
 
 <template>
-    <form class="tlp-modal"
-          role="dialog"
-          data-test="document-new-folder-modal"
-          aria-labelledby="document-new-folder-modal"
-          v-on:submit="addFolder"
+    <form
+        class="tlp-modal"
+        role="dialog"
+        data-test="document-new-folder-modal"
+        aria-labelledby="document-new-folder-modal"
+        v-on:submit="addFolder"
     >
-        <modal-header v-bind:modal-title="modal_title"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-header-class="'fa-plus'"
+        <modal-header
+            v-bind:modal-title="modal_title"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-header-class="'fa-plus'"
         />
-        <modal-feedback/>
+        <modal-feedback />
         <div class="tlp-modal-body document-item-modal-body" v-if="is_displayed">
-            <folder-global-metadata-for-create v-bind:currently-updated-item="item" v-bind:parent="parent"/>
+            <folder-global-metadata-for-create
+                v-bind:currently-updated-item="item"
+                v-bind:parent="parent"
+            />
             <creation-modal-permissions-section
                 v-if="item.permissions_for_groups"
                 v-model="item.permissions_for_groups"
                 v-bind:project_ugroups="project_ugroups"
             />
         </div>
-        <modal-footer v-bind:is-loading="is_loading"
-                      v-bind:submit-button-label="submit_button_label"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-submit-button-class="'fa-plus'"
+        <modal-footer
+            v-bind:is-loading="is_loading"
+            v-bind:submit-button-label="submit_button_label"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-submit-button-class="'fa-plus'"
         />
     </form>
 </template>
 
 <script>
 import { mapState } from "vuex";
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 import { TYPE_FOLDER } from "../../../constants.js";
 import ModalHeader from "../ModalCommon/ModalHeader.vue";
 import ModalFeedback from "../ModalCommon/ModalFeedback.vue";
@@ -67,7 +73,7 @@ export default {
         CreationModalPermissionsSection,
         ModalFeedback,
         ModalHeader,
-        ModalFooter
+        ModalFooter,
     },
     data() {
         return {
@@ -76,7 +82,7 @@ export default {
             is_displayed: false,
             modal: null,
             parent: {},
-            metadata: null
+            metadata: null,
         };
     },
     computed: {
@@ -90,7 +96,7 @@ export default {
         },
         aria_labelled_by() {
             return "document-new-item-modal";
-        }
+        },
     },
     mounted() {
         this.item = this.getDefaultItem();
@@ -113,8 +119,8 @@ export default {
                 permissions_for_groups: {
                     can_read: [],
                     can_write: [],
-                    can_manage: []
-                }
+                    can_manage: [],
+                },
             };
         },
         async show(event) {
@@ -146,7 +152,7 @@ export default {
             await this.$store.dispatch("createNewItem", [
                 this.item,
                 this.parent,
-                this.current_folder
+                this.current_folder,
             ]);
             this.is_loading = false;
             if (this.has_modal_error === false) {
@@ -166,10 +172,10 @@ export default {
                 return;
             }
             const item_metadata = this.item.metadata.find(
-                metadata => metadata.short_name === event.detail.id
+                (metadata) => metadata.short_name === event.detail.id
             );
             item_metadata.list_value = event.detail.value;
-        }
-    }
+        },
+    },
 };
 </script>

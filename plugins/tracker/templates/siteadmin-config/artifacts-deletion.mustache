@@ -7,7 +7,7 @@
         <section class="tlp-pane">
             <div class="tlp-pane-container">
                 <div class="tlp-pane-header">
-                    <h1 class="tlp-pane-title"><i class="fa fa-trash-o tlp-pane-title-icon"></i>{{# dgettext }} tuleap-tracker | Artifacts deletion configuration {{/ dgettext }}</h1>
+                    <h1 class="tlp-pane-title"><i class="far fa-trash-alt tlp-pane-title-icon"></i>{{# dgettext }} tuleap-tracker | Artifacts deletion configuration {{/ dgettext }}</h1>
                 </div>
                 <section class="tlp-pane-section">
                     <div class="tlp-alert-warning">
@@ -49,6 +49,7 @@
                             </label>
                             <input type="number"
                                    id="input-artifacts-limit"
+                                   data-test="input-artifacts-limit"
                                    class="tlp-input"
                                    name="artifacts_limit"
                                    placeholder="0"
@@ -65,7 +66,8 @@
                         </div>
 
                         <div class="tlp-pane-section-submit">
-                            <button type="submit" class="tlp-button-primary"><i class="fa fa-save tlp-button-icon"></i>
+                            <button type="submit" class="tlp-button-primary" data-test="artifact-deletion-button">
+                                <i class="fa fa-save tlp-button-icon"></i>
                                  {{# gettext }}Save configuration{{/ gettext }}
                             </button>
                         </div>

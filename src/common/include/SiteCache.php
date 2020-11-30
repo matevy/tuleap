@@ -25,9 +25,9 @@ class SiteCache
 
     private $logger;
 
-    public function __construct(?Logger $logger = null)
+    public function __construct(?\Psr\Log\LoggerInterface $logger = null)
     {
-        $this->logger = $logger ? $logger : new BackendLogger() ;
+        $this->logger = $logger ? $logger : BackendLogger::getDefaultLogger();
     }
 
     public function invalidatePluginBasedCaches()
@@ -38,6 +38,7 @@ class SiteCache
         $this->invalidateLanguage();
         $this->invalidateWSDL();
         $this->invalidatePlugin();
+        $this->invalidateCustomizedLogoCache();
     }
 
     private function invalidateTemplateEngine()
@@ -69,7 +70,7 @@ class SiteCache
     private function invalidateWSDL()
     {
         $this->logger->info('Invalidate WSDL');
-        foreach (glob(ForgeConfig::get('codendi_cache_dir').'/php/wsdlcache/wsdl*') as $file) {
+        foreach (glob(ForgeConfig::get('codendi_cache_dir') . '/php/wsdlcache/wsdl*') as $file) {
             unlink($file);
         }
     }
@@ -128,11 +129,17 @@ class SiteCache
             $language_cache_directory,
             ForgeConfig::getApplicationUserLogin(),
             ForgeConfig::getApplicationUserLogin(),
-            array('php')
+            ['php']
         );
 
         \Tuleap\Request\FrontRouter::restoreOwnership($this->logger, $backend);
 
         PluginLoader::restoreOwnershipOnCacheFile($this->logger, $backend);
+    }
+
+    private function invalidateCustomizedLogoCache(): void
+    {
+        $this->logger->info('Invalidate customized logo cache');
+        \Tuleap\Layout\Logo\CachedCustomizedLogoDetector::invalidateCache();
     }
 }

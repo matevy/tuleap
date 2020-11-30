@@ -33,11 +33,11 @@ require_once('lib/plugin/OrphanedPages.php');
 
 class WikiPlugin_DeadEndPages extends WikiPlugin_OrphanedPages
 {
-    function getName()
+    public function getName()
     {
         return _("DeadEndPages");
     }
-};
+}
 
 // $Log: DeadEndPages.php,v $
 // Revision 1.1  2004/05/27 12:10:31  rurban

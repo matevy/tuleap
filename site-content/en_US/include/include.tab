@@ -31,7 +31,6 @@ include_account	dns_error	Short name cannot contain underscore or dot.
 include_account	used_by_svn	This short name is not available: An SVN directory already exists with this name
 include_account	used_by_cvs	This short name is not available: An CVS directory already exists with this name
 include_account	used_by_sys	This short name is not available: A home project already exists with this name
-include_account	change_pwd_err	Please update your password first
 #
 #-----------------------------------------------
 # Script: SF/www/include/account.php
@@ -76,11 +75,6 @@ include_exit	project_suspended_cutom_message	All access to its resources are tem
 include_group	g_not_found	Group Not Found
 #
 #-----------------------------------------------
-# Script: SF/www/include/help.php
-#
-include_help	site_help_sys	Site Help System
-#
-#-----------------------------------------------
 # Script: SF/www/include/html.php
 #
 include_html	lowest	Lowest
@@ -89,7 +83,6 @@ include_html	highest	Highest
 include_html	g_not_exist	That group does not exist.
 include_html	invalid_g	Invalid Group
 include_html	unknown_value	*** unknown value ***
-include_html	no_trovcat	This project is not categorized please select <a href="$1">[Trove Categorization]</a>
 #
 #-----------------------------------------------
 # Script: SF/www/include/layout.php
@@ -107,7 +100,6 @@ include_layout	template_warning	Beware this project is a template project
 #-----------------------------------------------
 # Script: SF/www/include/menu.php
 #
-include_menu	site_admin	Administration
 include_menu	main_page	Main Page
 include_menu	user_admin	User Admin
 include_menu	group_admin	Group Admin
@@ -120,23 +112,12 @@ include_menu	trove_cat_add	Trove Cat. Add
 include_menu	bugs	Bugs
 include_menu	tasks	Tasks
 include_menu	supp_requ	Support Requests
-include_menu	this_forum	This Forum
-include_menu	this_tracker	This Tracker
 include_menu	all_trackers	All trackers
-include_menu	software_proj	Software Projects
-include_menu	people	People
-include_menu	this_wiki	This Wiki
 include_menu	wiki	Wiki
-include_menu	require_all_words	Require All Words
-include_menu	search	Search
-include_menu	software_map	Software Map
-include_menu	software	Software
 include_menu	new_releases	New Releases
 include_menu	other_site_mirrors	Other Site Mirrors
 include_menu	help_index	Help Index
 include_menu	site_doc	Site Documentation
-include_menu	dev_channel	Developers Channels
-include_menu	discussion_forum	Discussion Forums
 include_menu	contact_us	Contact Us
 include_menu	games	Games
 include_menu	printing	Printing
@@ -146,27 +127,19 @@ include_menu	proj_admin	Project Admin
 include_menu	summary_page	Summary Page
 include_menu	logged_in	Logged In
 include_menu	logout	Logout
-include_menu	register_new_proj	Register New Project
-include_menu	filter_project	Project...
 include_menu	account_maintenance	Account Maintenance
 include_menu	my_perso_page	My Personal Page
 include_menu	bookmark_this_page	Bookmark This Page
-include_menu	not_logged_in	NOT LOGGED IN
 include_menu	login	Login
 include_menu	new_user	New User
-include_menu	auth_prev_success	Previous successful log-on:
 include_menu	auth_last_failure	Last log-on failure:
 include_menu	auth_nb_failure	Number of bad attempts:
 include_menu	help	Help
 include_menu	api	API
-include_menu	extras	More
 include_menu	get_help	Get Help
-include_menu	projects	Projects
-include_menu	browse_projects	Browse all projects
 include_menu	browse_all	Browse all
 include_menu	filter_projects	Filter...
 include_menu	add_project	New project
-include_menu	join_community	Join Tuleap Community
 #
 #-----------------------------------------------
 # Script: SF/www/include/project.php
@@ -177,9 +150,7 @@ include_project	services_not_found	Services not found for this group
 # Script: SF/www/include/project_home.php
 #
 include_project_home	not_official_site	<P>NOTE: This project entry is maintained by the $1 staff. We are not \nthe official site for this product. Additional copyright information may be found on this project's homepage.\n
-include_project_home	more_info	More information
 include_project_home	no_short_desc	This project has not yet submitted a short description.You can <a href="$1"> submit it</a> now.
-include_project_home	other_info	Other information
 include_project_home	latest_file_releases	Latest File Releases
 include_project_home	package	Package
 include_project_home	version	Version
@@ -288,7 +259,6 @@ include_squal_pre	not_connect_db	Could Not Connect to Database
 # Script: SF/www/include/trove.php
 #
 include_trove	none_selected	None Selected
-include_trove	not_categorized_yet	This project has not yet categorized itself in the <A href="$1">Trove Software Map</A>. You can <a href=$2>categorize it</a> now.
 include_trove	now_filter	Now Filtering
 include_trove	filter	Filter
 
@@ -309,10 +279,8 @@ include_user	invalid_u_id	Invalid User ID
 #
 include_utils	prio_colors	Priority Colors
 include_utils	address_problem	There are problems with the following addresses
-include_utils	email_explain	Email addresses must either be valid user names (e.g., 'jdoe') or fully qualified email addresses (e.g., 'jill.doe@somewhere.xerox.com'). Lists of email addresses may be separated by either commas or semicolons.
+include_utils	email_explain	Email addresses must either be valid user names (e.g., 'jdoe') or fully qualified email addresses (e.g., 'jill.doe@example.com'). Lists of email addresses may be separated by either commas or semicolons.
 include_utils	invalid_email	Email format invalid
-include_utils	time_ago	$1 ago
-include_utils	time_in_future	in $1
 include_utils	1_minute	1 minute
 include_utils	less_1_minute	less than a minute
 include_utils	less_than_one_second	less than one second
@@ -349,6 +317,3 @@ include_common_template	test_project	Test Project
 # Script: SF/common/mvc/View.class.php
 #
 common_mvc_view	warn	** WARNING!! ** Please confirm you want to $1
-
-include_browser	ie_deprecated	Please remove Internet Explorer compatibility mode, upgrade to a newer version (at least IE11) or use an alternative.
-include_browser	ie_deprecated_button	Ok, got it. Remind me later.

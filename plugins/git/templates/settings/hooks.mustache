@@ -31,6 +31,10 @@
         {{/ has_reached_the_limit }}
     {{/ create_buttons }}
 
+    {{# additional_description }}
+        <p class="hooks-desc alert alert-info">{{ . }}</p>
+    {{/ additional_description }}
+
     <table class="table hooks-list">
         <thead>
             <tr>
@@ -49,6 +53,12 @@
             </tbody>
             <tbody>
                 {{# webhooks }}
+                    {{# isSimple }}
+                    <tr>
+                        <td colspan="3">{{ webhook_url }}</td>
+                    </tr>
+                    {{/ isSimple }}
+                    {{^ isSimple }}
                     <tr>
                         <td>{{ webhook_url }}</td>
                         <td class="last-push">{{{ purified_last_push_info }}}</td>
@@ -57,7 +67,7 @@
                                 <i class="fa fa-list"></i> {{ logs }}
                             </a>
                             <a role="button" data-toggle="modal" href="#modal-edit-{{ id }}">
-                                <i class="fa fa-pencil-square-o"></i> {{ edit_hook }}
+                                <i class="far fa-edit"></i> {{ edit_hook }}
                             </a>
                             <a href="javascript:;"
                                 class="remove-hook"
@@ -67,14 +77,20 @@
                                 data-html="true"
                                 data-popover-id="remove-{{ id }}-popover"
                             >
-                                <i class="fa fa-trash-o"></i> {{ remove }}
+                                <i class="far fa-trash-alt"></i> {{ remove }}
                             </a>
 
                             {{> modal-logs }}
                             {{> popover-remove-hook }}
                         </td>
                     </tr>
+                    {{/ isSimple }}
                 {{/ webhooks }}
+                {{# external_information }}
+                    <tr>
+                        <td colspan="3">{{ title }}</td>
+                    </tr>
+                {{/ external_information }}
             </tbody>
         {{/ sections }}
         {{^ has_sections }}

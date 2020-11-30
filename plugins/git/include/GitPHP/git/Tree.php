@@ -35,7 +35,7 @@ class Tree extends FilesystemObject
      *
      * @access protected
      */
-    protected $contents = array();
+    protected $contents = [];
 
     /**
      * contentsRead
@@ -83,7 +83,7 @@ class Tree extends FilesystemObject
     {
         parent::SetCommit($commit);
 
-        if ($this->contentsRead && !$this->contentsReferenced) {
+        if ($this->contentsRead && ! $this->contentsReferenced) {
             foreach ($this->contents as $obj) {
                 if (! $obj->isSubmodule()) {
                     $obj->SetCommit($commit);
@@ -102,7 +102,7 @@ class Tree extends FilesystemObject
      */
     public function GetContents() // @codingStandardsIgnoreLine
     {
-        if (!$this->contentsRead) {
+        if (! $this->contentsRead) {
             $this->ReadContents();
         }
 
@@ -142,14 +142,14 @@ class Tree extends FilesystemObject
         while ($start < $len) {
             $pos = strpos($treeData, "\0", $start);
 
-            list($mode, $path) = explode(' ', substr($treeData, $start, $pos-$start), 2);
+            list($mode, $path) = explode(' ', substr($treeData, $start, $pos - $start), 2);
             $mode = str_pad($mode, 6, '0', STR_PAD_LEFT);
-            $hash = bin2hex(substr($treeData, $pos+1, 20));
+            $hash = bin2hex(substr($treeData, $pos + 1, 20));
             $start = $pos + 21;
 
             $octmode = octdec($mode);
 
-            if (!empty($this->path)) {
+            if (! empty($this->path)) {
                 $path = $this->path . '/' . $path;
             }
 
@@ -167,7 +167,7 @@ class Tree extends FilesystemObject
                 $obj = $this->GetProject()->GetBlob($hash);
             }
 
-            if (!$obj) {
+            if (! $obj) {
                 continue;
             }
 
@@ -181,44 +181,6 @@ class Tree extends FilesystemObject
     }
 
     /**
-     * ReferenceContents
-     *
-     * Turns the contents objects into reference pointers
-     *
-     * @access private
-     */
-    private function ReferenceContents() // @codingStandardsIgnoreLine
-    {
-        if ($this->contentsReferenced) {
-            return;
-        }
-
-        if (!(isset($this->contents) && (count($this->contents) > 0))) {
-            return;
-        }
-
-        for ($i = 0; $i < count($this->contents); ++$i) {
-            $obj = $this->contents[$i];
-            $data = array();
-
-            $data['hash'] = $obj->GetHash();
-            $data['mode'] = $obj->GetMode();
-            $data['path'] = $obj->GetPath();
-
-            if ($obj instanceof Tree) {
-                $data['type'] = 'tree';
-            } elseif ($obj instanceof Blob) {
-                $data['type'] = 'blob';
-                $data['size'] = $obj->GetSize();
-            }
-
-            $this->contents[$i] = $data;
-        }
-
-        $this->contentsReferenced = true;
-    }
-
-    /**
      * DereferenceContents
      *
      * Turns the contents pointers back into objects
@@ -227,19 +189,18 @@ class Tree extends FilesystemObject
      */
     private function DereferenceContents() // @codingStandardsIgnoreLine
     {
-        if (!$this->contentsReferenced) {
+        if (! $this->contentsReferenced) {
             return;
         }
 
-        if (!(isset($this->contents) && (count($this->contents) > 0))) {
+        if (! (isset($this->contents) && (count($this->contents) > 0))) {
             return;
         }
 
-        for ($i = 0; $i < count($this->contents); ++$i) {
-            $data = $this->contents[$i];
+        foreach ($this->contents as $i => $data) {
             $obj = null;
 
-            if (!isset($data['hash']) || empty($data['hash'])) {
+            if (! isset($data['hash']) || empty($data['hash'])) {
                 continue;
             }
 
@@ -247,18 +208,18 @@ class Tree extends FilesystemObject
                 $obj = $this->GetProject()->GetTree($data['hash']);
             } elseif ($data['type'] == 'blob') {
                 $obj = $this->GetProject()->GetBlob($data['hash']);
-                if (isset($data['size']) && !empty($data['size'])) {
+                if (isset($data['size']) && ! empty($data['size'])) {
                     $obj->SetSize($data['size']);
                 }
             } else {
                 continue;
             }
 
-            if (isset($data['mode']) && !empty($data['mode'])) {
+            if (isset($data['mode']) && ! empty($data['mode'])) {
                 $obj->SetMode($data['mode']);
             }
 
-            if (isset($data['path']) && !empty($data['path'])) {
+            if (isset($data['path']) && ! empty($data['path'])) {
                 $obj->SetPath($data['path']);
             }
 

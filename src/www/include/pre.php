@@ -19,33 +19,23 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\BrowserDetection\DetectedBrowser;
 use Tuleap\BurningParrotCompatiblePageDetector;
 use Tuleap\CookieManager;
 use Tuleap\Event\Events\HitEvent;
+use Tuleap\Instrument\Prometheus\Prometheus;
 use Tuleap\Plugin\PluginLoader;
 use Tuleap\Request\CurrentPage;
+use Tuleap\Request\RequestInstrumentation;
 use Tuleap\TimezoneRetriever;
-
-if (PHP_VERSION_ID < 70300) {
-    die('Tuleap must be run on a PHP 7.3 (or greater) engine.');
-}
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 date_default_timezone_set(TimezoneRetriever::getServerTimezone());
 
 // Defines all of the settings first (hosts, databases, etc.)
-$locar_inc_finder = new Config_LocalIncFinder();
-$local_inc = $locar_inc_finder->getLocalIncPath();
-require($local_inc);
-require($GLOBALS['db_config_file']);
-ForgeConfig::loadFromFile($GLOBALS['codendi_dir'] .'/src/etc/local.inc.dist'); //load the default settings
-ForgeConfig::loadFromFile($local_inc);
-ForgeConfig::loadFromFile($GLOBALS['db_config_file']);
-if (isset($GLOBALS['DEBUG_MODE'])) {
-    ForgeConfig::loadFromFile($GLOBALS['codendi_dir'] .'/src/etc/development.inc.dist');
-    ForgeConfig::loadFromFile(dirname($local_inc).'/development.inc');
-}
+ForgeConfig::loadLocalInc();
+ForgeConfig::loadDatabaseInc();
 ForgeConfig::loadFromDatabase();
 ForgeConfig::loadFromFile(ForgeConfig::get('redis_config_file'));
 
@@ -56,11 +46,11 @@ $xml_security = new XML_Security();
 $xml_security->disableExternalLoadOfEntities();
 
 // Detect whether this file is called by a script running in cli mode, or in normal web mode
-if (!defined('IS_SCRIPT')) {
+if (! defined('IS_SCRIPT')) {
     if (php_sapi_name() == "cli") {
         // Backend scripts should never ends because of lack of time or memory
-        ini_set('max_execution_time', 0);
-        ini_set('memory_limit', -1);
+        ini_set('max_execution_time', '0');
+        ini_set('memory_limit', '-1');
 
         define('IS_SCRIPT', true);
     } else {
@@ -73,7 +63,7 @@ while (count($_REQUEST)) {
     array_pop($_REQUEST);
 }
 
-if (!ini_get('variables_order')) {
+if (! ini_get('variables_order')) {
         $_REQUEST = array_merge($_GET, $_POST);
 } else {
     $g_pos = strpos(strtolower(ini_get('variables_order')), 'g');
@@ -96,19 +86,21 @@ if (!ini_get('variables_order')) {
 }
 
 //Cast group_id as int.
-foreach (array(
+foreach (
+    [
         'group_id',
         'atid',
         'pv',
-    ) as $variable) {
+    ] as $variable
+) {
     if (isset($_REQUEST[$variable])) {
-        $$variable = $_REQUEST[$variable] = $_GET[$variable] = $_POST[$variable] = (int)$_REQUEST[$variable];
+        $$variable = $_REQUEST[$variable] = $_GET[$variable] = $_POST[$variable] = (int) $_REQUEST[$variable];
     }
 }
 //}}}
 
 //{{{ define undefined variables
-if (!isset($GLOBALS['feedback'])) {
+if (! isset($GLOBALS['feedback'])) {
     $GLOBALS['feedback'] = "";  //By default the feedbak is empty
 }
 
@@ -127,14 +119,14 @@ $plugin_manager = PluginManager::instance();
 $plugin_loader  = new PluginLoader(
     $event_manager,
     PluginFactory::instance(),
-    new BackendLogger()
+    BackendLogger::getDefaultLogger()
 );
 $cookie_manager = new CookieManager();
 
 $loader_scheduler = new LoaderScheduler($cookie_manager, $plugin_loader);
 $loader_scheduler->loadPluginsThenStartSession(IS_SCRIPT);
 
-if (!IS_SCRIPT) {
+if (! IS_SCRIPT) {
     header('X-UA-Compatible: IE=Edge');
     header('Referrer-Policy: no-referrer-when-downgrade, strict-origin, same-origin');
 
@@ -145,30 +137,31 @@ if (!IS_SCRIPT) {
     // XSS prevention
     header('X-Content-Type-Options: nosniff');
     header('X-XSS-Protection: 1; mode=block');
-    $whitelist_scripts = array();
+    $whitelist_scripts = [];
     $event_manager->processEvent(
         Event::CONTENT_SECURITY_POLICY_SCRIPT_WHITELIST,
-        array(
+        [
             'whitelist_scripts' => &$whitelist_scripts
-        )
+        ]
     );
     $csp_whitelist_script_scr  = implode(' ', $whitelist_scripts);
     $csp_whitelist_script_scr .= ' ' . ForgeConfig::get('sys_csp_script_scr_whitelist');
     $csp_rules                .= "script-src 'self' 'unsafe-inline' 'unsafe-eval' $csp_whitelist_script_scr; ";
+    $csp_rules                .= "upgrade-insecure-requests; ";
 
     header('Content-Security-Policy: ' . $csp_rules);
 }
 
-$feedback=''; // Initialize global var
+$feedback = ''; // Initialize global var
 
 $request = HTTPRequest::instance();
 $request->setTrustedProxies(array_map('trim', explode(',', ForgeConfig::get('sys_trusted_proxies'))));
 
 //Language
-if (!$GLOBALS['sys_lang']) {
-    $GLOBALS['sys_lang']="en_US";
+if (! ForgeConfig::get('sys_lang')) {
+    ForgeConfig::set('sys_lang', 'en_US');
 }
-$Language = new BaseLanguage($GLOBALS['sys_supported_languages'], $GLOBALS['sys_lang']);
+$Language = new BaseLanguage(ForgeConfig::get('sys_supported_languages'), ForgeConfig::get('sys_lang'));
 
 $user_manager = UserManager::instance();
 $current_user = $user_manager->getCurrentUser();
@@ -207,27 +200,33 @@ if (! defined('FRONT_ROUTER')) {
 
 // Check URL for valid hostname and valid protocol
 
-if (!IS_SCRIPT) {
+if (! IS_SCRIPT) {
     if (! defined('FRONT_ROUTER')) {
         $urlVerifFactory = new URLVerificationFactory($event_manager);
-        $urlVerif = $urlVerifFactory->getURLVerification($_SERVER);
-        $urlVerif->assertValidUrl($_SERVER, $request);
+        $global_server   = $_SERVER ?? [];
+        $urlVerif = $urlVerifFactory->getURLVerification($global_server);
+        $urlVerif->assertValidUrl($global_server, $request);
 
-        \Tuleap\Request\RequestInstrumentation::incrementLegacy();
+        (new RequestInstrumentation(Prometheus::instance()))->incrementLegacy(
+            DetectedBrowser::detectFromTuleapHTTPRequest($request)
+        );
     }
 
-    if (! $current_user->isAnonymous()) {
-        header('X-Tuleap-Username: '.$current_user->getUserName());
-    }
+    (static function () use ($current_user) {
+        if (! $current_user->isAnonymous()) {
+            /**
+             * @psalm-taint-escape text
+             */
+            $header = 'X-Tuleap-Username: ' . $current_user->getUserName();
+            header($header);
+        }
+    })();
 }
 
 //Check post max size
-if ($request->exist('postExpected') && !$request->exist('postReceived')) {
+if ($request->exist('postExpected') && ! $request->exist('postReceived')) {
     $e = 'You tried to upload a file that is larger than the Codendi post_max_size setting.';
     exit_error('Error', $e);
-}
-if (ForgeConfig::get('DEBUG_MODE')) {
-    $GLOBALS['DEBUG_TIME_IN_PRE'] = microtime(1) - $GLOBALS['debug_time_start'];
 }
 
 if ($request->isAjax()) {

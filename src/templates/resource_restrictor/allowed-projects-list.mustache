@@ -58,7 +58,7 @@
                         {{ getId }}
                     </td>
                     <td class="resource-restrictor-cell-project-name tlp-table-cell-filterable">
-                        <a href="/projects/{{ getUnixNameMixedCase }}">{{ getUnconvertedPublicName }}</a>
+                        <a href="/projects/{{ getUnixNameMixedCase }}">{{ getPublicName }}</a>
                     </td>
                 </tr>
                 {{/ allowed_projects }}
@@ -70,9 +70,9 @@
 <div id="revoke-modal" class="tlp-modal tlp-modal-danger">
     <div class="tlp-modal-header">
         <h1 class="tlp-modal-title">
-            <i class="fa fa-trash-o tlp-modal-title-icon"></i> {{ resource_allowed_project_revoke_title }}
+            <i class="far fa-trash-alt tlp-modal-title-icon"></i> {{ resource_allowed_project_revoke_title }}
         </h1>
-        <div class="tlp-modal-close" data-dismiss="modal">
+        <div class="tlp-modal-close" tabindex="0" role="button" data-dismiss="modal" aria-label="{{# gettext }}Close{{/ gettext }}">
             &times;
         </div>
     </div>
@@ -84,7 +84,7 @@
             {{ resource_allowed_project_revoke_no }}
         </button>
         <button id="revoke-confirm" type="button" class="tlp-button-danger tlp-modal-action">
-            <i class="fa fa-trash-o tlp-button-icon"></i> {{ resource_allowed_project_revoke_yes }}
+            <i class="far fa-trash-alt tlp-button-icon"></i> {{ resource_allowed_project_revoke_yes }}
         </button>
     </div>
 </div>

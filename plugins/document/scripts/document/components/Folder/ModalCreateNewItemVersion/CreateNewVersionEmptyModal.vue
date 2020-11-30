@@ -19,32 +19,46 @@
   -->
 
 <template>
-    <form class="tlp-modal" role="dialog" v-bind:aria-labelled-by="`document-new-empty-version-modal`"
-          v-on:submit="createNewVersion"
+    <form
+        class="tlp-modal"
+        role="dialog"
+        v-bind:aria-labelled-by="`document-new-empty-version-modal`"
+        v-on:submit="createNewVersion"
     >
-        <modal-header v-bind:modal-title="modal_title"
-                      v-bind:aria-labelled-by="`document-new-empty-version-modal`"
-                      v-bind:icon-header-class="'fa-plus'"
+        <modal-header
+            v-bind:modal-title="modal_title"
+            v-bind:aria-labelled-by="`document-new-empty-version-modal`"
+            v-bind:icon-header-class="'fa-plus'"
         />
-        <modal-feedback/>
+        <modal-feedback />
 
-        <type-selector-for-empty-modal v-model="new_item_version.type"/>
+        <type-selector-for-empty-modal v-model="new_item_version.type" />
         <div class="tlp-modal-body">
-            <link-properties v-model="new_item_version.link_properties" v-bind:item="new_item_version"/>
-            <embedded-properties v-model="new_item_version.embedded_properties" v-bind:item="new_item_version"/>
-            <file-properties v-model="new_item_version.file_properties" v-bind:item="new_item_version"/>
+            <link-properties
+                v-model="new_item_version.link_properties"
+                v-bind:item="new_item_version"
+            />
+            <embedded-properties
+                v-model="new_item_version.embedded_properties"
+                v-bind:item="new_item_version"
+            />
+            <file-properties
+                v-model="new_item_version.file_properties"
+                v-bind:item="new_item_version"
+            />
         </div>
-        <modal-footer v-bind:is-loading="is_loading"
-                      v-bind:submit-button-label="submit_button_label"
-                      v-bind:aria-labelled-by="`document-new-empty-version-modal`"
-                      v-bind:icon-submit-button-class="'fa-plus'"
+        <modal-footer
+            v-bind:is-loading="is_loading"
+            v-bind:submit-button-label="submit_button_label"
+            v-bind:aria-labelled-by="`document-new-empty-version-modal`"
+            v-bind:icon-submit-button-class="'fa-plus'"
         />
     </form>
 </template>
 
 <script>
 import { mapState } from "vuex";
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 import { sprintf } from "sprintf-js";
 import { TYPE_FILE } from "../../../constants.js";
 import { redirectToUrl } from "../../../helpers/location-helper.js";
@@ -65,10 +79,10 @@ export default {
         ModalFeedback,
         ModalHeader,
         ModalFooter,
-        EmbeddedProperties
+        EmbeddedProperties,
     },
     props: {
-        item: Object
+        item: Object,
     },
     data() {
         return {
@@ -76,15 +90,15 @@ export default {
             new_item_version: {
                 type: TYPE_FILE,
                 link_properties: {
-                    link_url: ""
+                    link_url: "",
                 },
                 file_properties: {
-                    file: ""
+                    file: "",
                 },
                 embedded_properties: {
-                    content: ""
-                }
-            }
+                    content: "",
+                },
+            },
         };
     },
     computed: {
@@ -95,7 +109,7 @@ export default {
         },
         modal_title() {
             return sprintf(this.$gettext('New version for "%s"'), this.item.title);
-        }
+        },
     },
     mounted() {
         this.modal = createModal(this.$el);
@@ -113,9 +127,7 @@ export default {
         },
         redirectToLegacyUrl() {
             return redirectToUrl(
-                `/plugins/docman/index.php?group_id=${this.project_id}&id=${
-                    this.item.id
-                }&action=action_update`
+                `/plugins/docman/index.php?group_id=${this.project_id}&id=${this.item.id}&action=action_update`
             );
         },
         async createNewVersion(event) {
@@ -126,14 +138,14 @@ export default {
             await this.$store.dispatch("createNewVersionFromEmpty", [
                 this.new_item_version.type,
                 this.item,
-                this.new_item_version
+                this.new_item_version,
             ]);
 
             this.is_loading = false;
             if (this.has_modal_error === false) {
                 this.modal.hide();
             }
-        }
-    }
+        },
+    },
 };
 </script>

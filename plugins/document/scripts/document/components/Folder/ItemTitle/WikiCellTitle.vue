@@ -21,10 +21,10 @@
 
 <template>
     <div>
-        <fake-caret v-bind:item="item"/>
+        <fake-caret v-bind:item="item" />
         <i class="fa fa-fw document-folder-content-icon" v-bind:class="icon"></i>
         <a v-bind:href="wiki_url" class="document-folder-subitem-link">
-            {{ title }}
+            {{ item.title }}
         </a>
     </div>
 </template>
@@ -33,13 +33,12 @@
 import { mapState } from "vuex";
 import FakeCaret from "./FakeCaret.vue";
 import { ICON_WIKI } from "../../../constants.js";
-import { getTitleWithElipsisIfNeeded } from "../../../helpers/cell-title-formatter.js";
 
 export default {
     name: "WikiCellTitle",
     components: { FakeCaret },
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
         ...mapState(["project_id"]),
@@ -49,9 +48,6 @@ export default {
         icon() {
             return ICON_WIKI;
         },
-        title() {
-            return getTitleWithElipsisIfNeeded(this.item);
-        }
-    }
+    },
 };
 </script>

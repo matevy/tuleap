@@ -24,6 +24,7 @@ require_once('HTML_Element_Option.class.php');
 /**
  * Define a html selectbox
  */
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class HTML_Element_Selectbox extends HTML_Element
 {
     protected $options;
@@ -31,19 +32,19 @@ class HTML_Element_Selectbox extends HTML_Element
     public function __construct($label, $name, $value, $with_none = false, $onchange = "", $desc = "")
     {
         parent::__construct($label, $name, $value, $desc);
-        $this->options = array();
+        $this->options = [];
 
         $this->onchange = $onchange;
         if ($with_none) {
-            $this->addOption(new HTML_Element_Option($GLOBALS['Language']->getText('global', 'none_dashed'), "", ($this->value === "" || $this->value === null)));
+            $this->addOption(new HTML_Element_Option(dgettext('tuleap-core', '-- None --'), "", ($this->value === "" || $this->value === null)));
         }
     }
     public function renderValue()
     {
         $hp = Codendi_HTMLPurifier::instance();
-        $html = '<select id="'. $this->id .'" name="'.  $hp->purify($this->name, CODENDI_PURIFIER_CONVERT_HTML) .'" ';
+        $html = '<select id="' . $this->id . '" name="' .  $hp->purify($this->name, CODENDI_PURIFIER_CONVERT_HTML) . '" ';
         if ($this->onchange) {
-            $html .= 'onchange="'. $this->onchange .'" ';
+            $html .= 'onchange="' . $this->onchange . '" ';
         }
         $html .= '>';
         foreach ($this->options as $o) {

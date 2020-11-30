@@ -26,24 +26,24 @@ require_once('PropertyDescriptor.class.php');
 class PropertyDescriptor
 {
 
-    var $name;
-    var $value;
+    public $name;
+    public $value;
 
-    function __construct($name, $value)
+    public function __construct($name, $value)
     {
         $this->name = $name;
         $this->setValue($value);
     }
 
-    function getName()
+    public function getName()
     {
         return $this->name;
     }
-    function getValue()
+    public function getValue()
     {
         return $this->value;
     }
-    function setValue($value)
+    public function setValue($value)
     {
         $this->value = $value;
     }

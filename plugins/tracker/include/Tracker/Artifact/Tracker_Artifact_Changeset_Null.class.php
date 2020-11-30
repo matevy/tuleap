@@ -45,7 +45,7 @@ class Tracker_Artifact_Changeset_Null extends Tracker_Artifact_Changeset
      *
      * @param Tracker_FormElement_Field $field The field
      *
-     * @return Tracker_Artifact_ChangesetValue, or null if not found
+     * @return null|Tracker_Artifact_ChangesetValue or null if not found
      */
     public function getValue(Tracker_FormElement_Field $field)
     {
@@ -67,7 +67,7 @@ class Tracker_Artifact_Changeset_Null extends Tracker_Artifact_Changeset
      *
      * @return string
      */
-    public function fetchFollowUp($diff_to_previous)
+    public function fetchFollowUp($diff_to_previous, PFUser $current_user)
     {
         return '';
     }
@@ -138,8 +138,7 @@ class Tracker_Artifact_Changeset_Null extends Tracker_Artifact_Changeset
         $format = 'html',
         $user = null,
         $ignore_perms = false,
-        $for_mail = false,
-        $for_modal = false
+        $for_mail = false
     ) {
         return false;
     }

@@ -86,21 +86,21 @@ class GraphOnTrackersV5_Chart_Pie extends GraphOnTrackersV5_Chart
     {
         return array_merge(
             parent::getProperties(),
-            array(
+            [
                 'field_base' => new HTML_Element_Selectbox_TrackerFields_SelectboxesV5(
                     $this->getTracker(),
-                    $GLOBALS['Language']->getText('plugin_graphontrackersv5_pie_property', 'pie_field_base'),
+                    dgettext('tuleap-graphontrackersv5', 'Source Data'),
                     'chart[field_base]',
                     $this->getField_base()
                 ),
-            )
+            ]
         );
     }
 
     public function createDb($id)
     {
         $field_base = $this->getField_base();
-        if (!is_string($field_base) && !is_int($field_base) && $field_base) {
+        if (! is_string($field_base) && ! is_int($field_base) && $field_base) {
             $field_base = $field_base->getid();
         }
         return $this->getDao()->save($id, $field_base);
@@ -123,7 +123,7 @@ class GraphOnTrackersV5_Chart_Pie extends GraphOnTrackersV5_Chart
         return true;
     }
 
-    function userCanVisualize()
+    public function userCanVisualize()
     {
         $ff = Tracker_FormElementFactory::instance();
         $artifact_field_base = $ff->getFormElementById($this->field_base);
@@ -142,9 +142,9 @@ class GraphOnTrackersV5_Chart_Pie extends GraphOnTrackersV5_Chart
 
     public function getSpecificRow()
     {
-        return array(
+        return [
             'field_base'  => $this->getField_base(),
-        );
+        ];
     }
 
     public function getGraphicReport()
@@ -159,9 +159,9 @@ class GraphOnTrackersV5_Chart_Pie extends GraphOnTrackersV5_Chart
      */
     public function arrayOfSpecificProperties()
     {
-        return array(
+        return [
             'field_base'  => $this->getField_base(),
-        );
+        ];
     }
 
     /**
@@ -172,15 +172,15 @@ class GraphOnTrackersV5_Chart_Pie extends GraphOnTrackersV5_Chart
      */
     public function setSpecificPropertiesFromXML($xml, $formsMapping)
     {
-        if (isset($formsMapping[(string)$xml['base']])) {
-            $this->setField_base($formsMapping[(string)$xml['base']]);
+        if (isset($formsMapping[(string) $xml['base']])) {
+            $this->setField_base($formsMapping[(string) $xml['base']]);
         }
     }
 
     public function exportToXml(SimpleXMLElement $root, $formsMapping)
     {
         parent::exportToXML($root, $formsMapping);
-        if ($mapping = (string)array_search($this->field_base, $formsMapping)) {
+        if ($mapping = (string) array_search($this->field_base, $formsMapping)) {
             $root->addAttribute('base', $mapping);
         }
     }

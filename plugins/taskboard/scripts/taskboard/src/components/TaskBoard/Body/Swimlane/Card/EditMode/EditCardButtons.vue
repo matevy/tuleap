@@ -20,6 +20,7 @@
 <template>
     <cancel-save-buttons
         v-if="should_display_buttons"
+        v-bind:is_action_ongoing="is_action_ongoing"
         v-on:cancel="cancel"
         v-on:save="save"
     />
@@ -32,7 +33,7 @@ import { Card, TaskboardEvent } from "../../../../../../type";
 import EventBus from "../../../../../../helpers/event-bus";
 
 @Component({
-    components: { CancelSaveButtons }
+    components: { CancelSaveButtons },
 })
 export default class EditCardButtons extends Vue {
     @Prop({ required: true })
@@ -48,6 +49,18 @@ export default class EditCardButtons extends Vue {
         }
 
         return this.card.remaining_effort.is_in_edit_mode;
+    }
+
+    get is_action_ongoing(): boolean {
+        if (this.card.is_being_saved) {
+            return true;
+        }
+
+        if (!this.card.remaining_effort) {
+            return false;
+        }
+
+        return this.card.remaining_effort.is_being_saved;
     }
 
     cancel(): void {

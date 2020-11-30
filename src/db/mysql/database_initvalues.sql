@@ -110,20 +110,8 @@ INSERT INTO groups SET \
   svn_box = 'svn1', \
   register_time = 940000000, \
   rand_hash = '', \
-  new_bug_address = 'codendi-admin@_DOMAIN_NAME_', \
-  new_patch_address = 'codendi-admin@_DOMAIN_NAME_', \
-  new_support_address = 'codendi-admin@_DOMAIN_NAME_', \
   type = '1', \
-  send_all_bugs = '1', \
-  send_all_patches = '1', \
-  send_all_support = '1', \
-  bug_preamble = '', \
-  support_preamble = '', \
-  patch_preamble = '', \
-  pm_preamble = '', \
-  xrx_export_ettm = '0', \
   built_from_template = '100', \
-  bug_allow_anon = '1', \
   cvs_tracker = '1', \
   cvs_events_mailing_list = '', \
   cvs_events_mailing_header = '', \
@@ -147,20 +135,8 @@ INSERT INTO groups SET \
   svn_box = 'svn1', \
   register_time = 940000000, \
   rand_hash = '', \
-  new_bug_address = '', \
-  new_patch_address = '', \
-  new_support_address = '', \
   type = '1', \
-  send_all_bugs = '0', \
-  send_all_patches = '0', \
-  send_all_support = '0', \
-  bug_preamble = '', \
-  support_preamble = '', \
-  patch_preamble = '', \
-  pm_preamble = '', \
-  xrx_export_ettm = '0', \
   built_from_template = '100', \
-  bug_allow_anon = '1', \
   cvs_tracker = '0', \
   cvs_events_mailing_list = '', \
   cvs_events_mailing_header = '', \
@@ -185,20 +161,8 @@ INSERT INTO groups SET \
   svn_box = '', \
   register_time = 940000000, \
   rand_hash = '', \
-  new_bug_address = '', \
-  new_patch_address = '', \
-  new_support_address = '', \
   type = '2', \
-  send_all_bugs = '0', \
-  send_all_patches = '0', \
-  send_all_support = '0', \
-  bug_preamble = '', \
-  support_preamble = '', \
-  patch_preamble = '', \
-  pm_preamble = '', \
-  xrx_export_ettm = '0', \
   built_from_template = '100', \
-  bug_allow_anon = '1', \
   cvs_tracker = '1', \
   cvs_events_mailing_list = '', \
   cvs_events_mailing_header = '', \
@@ -592,6 +556,9 @@ INSERT INTO forgeconfig (name, value) VALUES ('display_homepage_news', '1');
 INSERT INTO forgeconfig (name, value) VALUES ('default_project_visibility', 'public');
 INSERT INTO forgeconfig (name, value) VALUES ('sys_suspend_inactive_accounts_notification_delay', '0');
 INSERT INTO forgeconfig (name, value) VALUES ('enable_not_mandatory_description', '1');
+INSERT INTO forgeconfig (name, value) VALUES ('force_new_project_creation_usage', '1');
+INSERT INTO forgeconfig (name, value) VALUES ('can_use_default_site_template', '0');
+INSERT INTO forgeconfig (name, value) VALUES ('sys_suspend_send_account_suspension_email', '0');
 
 INSERT INTO password_configuration (breached_password_enabled) VALUES (1);
 

@@ -26,13 +26,13 @@ class SVN_Svnlook
 
     public function getDirectoryListing(Project $project, $svn_path)
     {
-        $command = 'tree --non-recursive --full-paths '.escapeshellarg($project->getSVNRootPath()).' '.escapeshellarg($svn_path);
+        $command = 'tree --non-recursive --full-paths ' . escapeshellarg($project->getSVNRootPath()) . ' ' . escapeshellarg($svn_path);
         return $this->execute($command);
     }
 
     public function getTree(Project $project)
     {
-        $command = 'tree --full-paths '.escapeshellarg($project->getSVNRootPath());
+        $command = 'tree --full-paths ' . escapeshellarg($project->getSVNRootPath());
         return $this->execute($command);
     }
 
@@ -43,14 +43,13 @@ class SVN_Svnlook
      */
     public function getPathLastHistory(Project $project, $svn_path)
     {
-        $command = 'history --limit 1 '.escapeshellarg($project->getSVNRootPath()).' '.escapeshellarg($svn_path);
+        $command = 'history --limit 1 ' . escapeshellarg($project->getSVNRootPath()) . ' ' . escapeshellarg($svn_path);
         return $this->execute($command);
     }
 
     /**
      * Returns transaction path
      *
-     * @param Project $project
      * @param int $transaction
      *
      * @throw SVN_SvnlookException
@@ -59,7 +58,7 @@ class SVN_Svnlook
      */
     public function getTransactionPath(Project $project, $transaction)
     {
-        $command = 'changed -t ' . escapeshellarg($transaction) . ' ' .escapeshellarg($project->getSVNRootPath());
+        $command = 'changed -t ' . escapeshellarg($transaction) . ' ' . escapeshellarg($project->getSVNRootPath());
         return $this->execute($command);
     }
 
@@ -71,7 +70,6 @@ class SVN_Svnlook
      *      'my message',   //log message
      *  );
      *
-     * @param Project $project
      * @param int $revision
      *
      * @throw SVN_SvnlookException
@@ -86,7 +84,7 @@ class SVN_Svnlook
 
     private function execute($command)
     {
-        $output  = array();
+        $output  = [];
         $ret_val = 1;
         exec("$this->timeout $this->svnlook $command 2>&1", $output, $ret_val);
         if ($ret_val == 0) {

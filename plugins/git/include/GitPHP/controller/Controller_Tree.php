@@ -22,7 +22,10 @@
 namespace Tuleap\Git\GitPHP;
 
 use GitPHP\Commit\TreePresenter;
-use Tuleap\Markdown\ContentInterpretor;
+use Tuleap\Git\CommonMarkExtension\LinkToGitFileBlobFinder;
+use Tuleap\Git\CommonMarkExtension\LinkToGitFileExtension;
+use Tuleap\Layout\IncludeAssets;
+use Tuleap\Markdown\CommonMarkInterpreter;
 
 class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
 {
@@ -31,7 +34,7 @@ class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
     public function __construct()
     {
         parent::__construct();
-        if (!$this->project) {
+        if (! $this->project) {
             throw new MessageException(dgettext("gitphp", 'Project is required'), true);
         }
     }
@@ -85,7 +88,7 @@ class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
             $this->params['hashbase'] = $_GET['hb'];
         }
 
-        if (!(isset($this->params['hashbase']) || isset($this->params['hash']))) {
+        if (! (isset($this->params['hashbase']) || isset($this->params['hash']))) {
             $this->params['hashbase'] = 'HEAD';
         }
     }
@@ -99,7 +102,7 @@ class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
      */
     protected function LoadData() // @codingStandardsIgnoreLine
     {
-        if (!isset($this->params['hashbase'])) {
+        if (! isset($this->params['hashbase'])) {
             // TODO: write a lookup for hash (tree) -> hashbase (commithash) and remove this
             throw new \Exception('Hashbase is required');
         }
@@ -130,7 +133,7 @@ class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
             return;
         }
 
-        if (!isset($this->params['hash'])) {
+        if (! isset($this->params['hash'])) {
             if (isset($this->params['file'])) {
                 $this->params['hash'] = $commit->PathToHash($this->params['file']);
             } else {
@@ -146,16 +149,23 @@ class Controller_Tree extends ControllerBase // @codingStandardsIgnoreLine
         $readme_tree_item = $this->getReadmeTreeItem($tree);
         $this->tpl->assign('readme_content', $readme_tree_item);
         if ($readme_tree_item !== null) {
-            $content_interpretor = new ContentInterpretor();
+            $content_interpretor = CommonMarkInterpreter::build(
+                \Codendi_HTMLPurifier::instance(),
+                new LinkToGitFileExtension(new LinkToGitFileBlobFinder($readme_tree_item->GetFullPath(), $commit))
+            );
             $this->tpl->assign(
                 'readme_content_interpreted',
                 $content_interpretor->getInterpretedContent(
                     $readme_tree_item->GetData()
                 )
             );
+            $include_assets = new IncludeAssets(__DIR__ . '/../../../../../src/www/assets/git', '/assets/git');
+            $GLOBALS['Response']->includeFooterJavascriptFile(
+                $include_assets->getFileURL('repository-blob.js')
+            );
         }
 
-        if (!$tree->GetCommit()) {
+        if (! $tree->GetCommit()) {
             $tree->SetCommit($commit);
         }
         if (isset($this->params['file'])) {

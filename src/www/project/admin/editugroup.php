@@ -40,7 +40,7 @@ require_once __DIR__ . '/../../include/pre.php';
 $request = HTTPRequest::instance();
 
 $group_id = $request->getValidated('group_id', 'GroupId', 0);
-session_require(array('group' => $group_id, 'admin_flags' => 'A'));
+session_require(['group' => $group_id, 'admin_flags' => 'A']);
 
 $event_manager                            = EventManager::instance();
 $ugroup_manager                           = new UGroupManager();
@@ -64,9 +64,6 @@ $membership_delegation_dao = new MembershipDelegationDao();
 
 $index_controller = new IndexController(
     new ProjectUGroupPresenterBuilder(
-        PermissionsManager::instance(),
-        $event_manager,
-        new FRSReleaseFactory(),
         new BindingPresenterBuilder(
             $ugroup_binding,
             $project_manager,
@@ -76,7 +73,7 @@ $index_controller = new IndexController(
         new MembersPresenterBuilder($event_manager, new UserHelper(), $synchronized_project_membership_detector),
         new PermissionsDelegationPresenterBuilder($membership_delegation_dao)
     ),
-    new IncludeAssets(ForgeConfig::get('tuleap_dir') . '/src/www/assets', '/assets'),
+    new IncludeAssets(__DIR__ . '/../../assets/core', '/assets/core'),
     new HeaderNavigationDisplayer()
 );
 

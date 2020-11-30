@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\layout\HomePage;
 
@@ -38,9 +38,6 @@ class StatisticsCollectorSVN implements Dispatchable
         return $this->svn_commits;
     }
 
-    /**
-     * @param int $svn_commits
-     */
     public function setSvnCommits(int $svn_commits)
     {
         $this->svn_commits = $svn_commits;

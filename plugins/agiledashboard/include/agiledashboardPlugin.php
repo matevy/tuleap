@@ -24,7 +24,15 @@ use Tuleap\AgileDashboard\BreadCrumbDropdown\AgileDashboardCrumbBuilder;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\MilestoneCrumbBuilder;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\VirtualTopMilestoneCrumbBuilder;
 use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
+use Tuleap\AgileDashboard\ExplicitBacklog\ConfigurationUpdater;
+use Tuleap\AgileDashboard\ExplicitBacklog\CreateTrackerFromXMLChecker;
+use Tuleap\AgileDashboard\ExplicitBacklog\DirectArtifactLinkCleaner;
 use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
+use Tuleap\AgileDashboard\ExplicitBacklog\ProjectNotUsingExplicitBacklogException;
+use Tuleap\AgileDashboard\ExplicitBacklog\UnplannedArtifactsAdder;
+use Tuleap\AgileDashboard\ExplicitBacklog\UnplannedCriterionOptionsProvider;
+use Tuleap\AgileDashboard\ExplicitBacklog\UnplannedReportCriterionChecker;
+use Tuleap\AgileDashboard\ExplicitBacklog\UnplannedReportCriterionMatchingIdsRetriever;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsCacheDao;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsCalculator;
 use Tuleap\AgileDashboard\FormElement\Burnup\ProjectsCountModeDao;
@@ -45,21 +53,22 @@ use Tuleap\AgileDashboard\Kanban\RecentlyVisited\VisitRetriever;
 use Tuleap\AgileDashboard\Kanban\TrackerReport\TrackerReportDao;
 use Tuleap\AgileDashboard\Kanban\TrackerReport\TrackerReportUpdater;
 use Tuleap\AgileDashboard\KanbanJavascriptDependenciesProvider;
+use Tuleap\AgileDashboard\Masschange\AdditionalMasschangeActionProcessor;
 use Tuleap\AgileDashboard\Milestone\AllBreadCrumbsForMilestoneBuilder;
 use Tuleap\AgileDashboard\Milestone\Pane\Details\DetailsPaneInfo;
-use Tuleap\AgileDashboard\Milestone\ParentTrackerRetriever;
 use Tuleap\AgileDashboard\MonoMilestone\MonoMilestoneBacklogItemDao;
 use Tuleap\AgileDashboard\MonoMilestone\MonoMilestoneItemsFinder;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneDao;
 use Tuleap\AgileDashboard\Planning\PlanningJavascriptDependenciesProvider;
+use Tuleap\AgileDashboard\Planning\PlanningTrackerBacklogChecker;
 use Tuleap\AgileDashboard\RealTime\RealTimeArtifactMessageController;
 use Tuleap\AgileDashboard\RemainingEffortValueRetriever;
-use Tuleap\AgileDashboard\REST\v1\BacklogItemRepresentationFactory;
 use Tuleap\AgileDashboard\Semantic\Dao\SemanticDoneDao;
 use Tuleap\AgileDashboard\Semantic\MoveChangesetXMLUpdater;
 use Tuleap\AgileDashboard\Semantic\MoveSemanticInitialEffortChecker;
 use Tuleap\AgileDashboard\Semantic\SemanticDone;
+use Tuleap\AgileDashboard\Semantic\SemanticDoneDuplicator;
 use Tuleap\AgileDashboard\Semantic\SemanticDoneFactory;
 use Tuleap\AgileDashboard\Semantic\SemanticDoneValueChecker;
 use Tuleap\AgileDashboard\Widget\MyKanban;
@@ -71,38 +80,71 @@ use Tuleap\AgileDashboard\Widget\WidgetKanbanCreator;
 use Tuleap\AgileDashboard\Widget\WidgetKanbanDao;
 use Tuleap\AgileDashboard\Widget\WidgetKanbanDeletor;
 use Tuleap\AgileDashboard\Widget\WidgetKanbanRetriever;
+use Tuleap\AgileDashboard\Workflow\AddToTopBacklog;
+use Tuleap\AgileDashboard\Workflow\AddToTopBacklogPostActionDao;
+use Tuleap\AgileDashboard\Workflow\AddToTopBacklogPostActionFactory;
+use Tuleap\AgileDashboard\Workflow\PostAction\Update\AddToTopBacklogValue;
+use Tuleap\AgileDashboard\Workflow\PostAction\Update\Internal\AddToTopBacklogValueRepository;
+use Tuleap\AgileDashboard\Workflow\PostAction\Update\Internal\AddToTopBacklogValueUpdater;
+use Tuleap\AgileDashboard\Workflow\REST\v1\AddToTopBacklogJsonParser;
+use Tuleap\AgileDashboard\Workflow\REST\v1\AddToTopBacklogRepresentation;
 use Tuleap\BurningParrotCompatiblePageEvent;
 use Tuleap\Cardwall\Agiledashboard\CardwallPaneInfo;
-use Tuleap\Cardwall\BackgroundColor\BackgroundColorBuilder;
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\Http\HttpClientFactory;
 use Tuleap\Http\HTTPFactoryBuilder;
 use Tuleap\layout\HomePage\StatisticsCollectionCollector;
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Layout\JavascriptAsset;
 use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupDisplayEvent;
 use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupPaneCollector;
+use Tuleap\Project\Event\ProjectXMLImportPreChecksEvent;
+use Tuleap\Project\XML\Import\ImportNotValidException;
+use Tuleap\Project\XML\ServiceEnableForXmlImportRetriever;
 use Tuleap\RealTime\NodeJSClient;
 use Tuleap\Tracker\Artifact\ActionButtons\AdditionalArtifactActionButtonsFetcher;
 use Tuleap\Tracker\Artifact\ActionButtons\MoveArtifactActionAllowedByPluginRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\Event\ArtifactCreated;
 use Tuleap\Tracker\Artifact\Event\ArtifactsReordered;
+use Tuleap\Tracker\Artifact\Event\ArtifactUpdated;
 use Tuleap\Tracker\Artifact\RecentlyVisited\HistoryQuickLinkCollection;
 use Tuleap\Tracker\Artifact\RecentlyVisited\RecentlyVisitedDao;
 use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\Artifact\RedirectAfterArtifactCreationOrUpdateEvent;
+use Tuleap\Tracker\Artifact\Renderer\BuildArtifactFormActionEvent;
+use Tuleap\Tracker\CreateTrackerFromXMLEvent;
+use Tuleap\Tracker\Creation\DefaultTemplatesXMLFileCollection;
 use Tuleap\Tracker\Events\MoveArtifactGetExternalSemanticCheckers;
 use Tuleap\Tracker\Events\MoveArtifactParseFieldChangeNodes;
 use Tuleap\Tracker\FormElement\Event\MessageFetcherAdditionalWarnings;
-use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\CanValueBeHiddenStatementsCollection;
 use Tuleap\Tracker\FormElement\Field\ListFields\FieldValueMatcher;
+use Tuleap\Tracker\Masschange\TrackerMasschangeGetExternalActionsEvent;
+use Tuleap\Tracker\Masschange\TrackerMasschangeProcessExternalActionsEvent;
 use Tuleap\Tracker\RealTime\RealTimeArtifactMessageSender;
 use Tuleap\Tracker\Report\Event\TrackerReportDeleted;
+use Tuleap\Tracker\Report\Event\TrackerReportProcessAdditionalQuery;
 use Tuleap\Tracker\Report\Event\TrackerReportSetToPrivate;
+use Tuleap\Tracker\REST\v1\Event\GetExternalPostActionJsonParserEvent;
+use Tuleap\Tracker\REST\v1\Event\PostActionVisitExternalActionsEvent;
+use Tuleap\Tracker\REST\v1\Workflow\PostAction\CheckPostActionsForTracker;
 use Tuleap\Tracker\Semantic\SemanticStatusCanBeDeleted;
 use Tuleap\Tracker\Semantic\SemanticStatusFieldCanBeUpdated;
 use Tuleap\Tracker\Semantic\SemanticStatusGetDisabledValues;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
 use Tuleap\Tracker\TrackerCrumbInContext;
+use Tuleap\Tracker\Workflow\Event\GetWorkflowExternalPostActionsValuesForUpdate;
+use Tuleap\Tracker\Workflow\Event\GetWorkflowExternalPostActionsValueUpdater;
+use Tuleap\Tracker\Workflow\Event\TransitionDeletionEvent;
+use Tuleap\Tracker\Workflow\Event\WorkflowDeletionEvent;
+use Tuleap\Tracker\Workflow\PostAction\ExternalPostActionSaveObjectEvent;
+use Tuleap\Tracker\Workflow\PostAction\GetExternalPostActionPluginsEvent;
+use Tuleap\Tracker\Workflow\PostAction\GetExternalSubFactoriesEvent;
+use Tuleap\Tracker\Workflow\PostAction\GetExternalSubFactoryByNameEvent;
+use Tuleap\Tracker\Workflow\PostAction\GetPostActionShortNameFromXmlTagNameEvent;
 use Tuleap\User\History\HistoryEntryCollection;
 use Tuleap\User\History\HistoryQuickLink;
 use Tuleap\User\History\HistoryRetriever;
@@ -119,10 +161,14 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
 {
     public const PLUGIN_NAME = 'agiledashboard';
     public const PLUGIN_SHORTNAME = 'plugin_agiledashboard';
-    public const HTTP_CLIENT_UUID = 'HTTP_X_CLIENT_UUID';
 
     /** @var AgileDashboard_SequenceIdManager */
     private $sequence_id_manager;
+
+    /**
+     * @var AddToTopBacklogPostActionFactory
+     */
+    private $add_to_top_backlog_post_action_factory;
 
     /**
      * Plugin constructor
@@ -146,9 +192,9 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             $this->addHook(\Tuleap\Widget\Event\ConfigureAtXMLImport::NAME);
             $this->addHook(TRACKER_EVENT_INCLUDE_CSS_FILE);
             $this->addHook(TRACKER_EVENT_TRACKERS_DUPLICATED, 'tracker_event_trackers_duplicated', false);
-            $this->addHook(TRACKER_EVENT_BUILD_ARTIFACT_FORM_ACTION, 'tracker_event_build_artifact_form_action', false);
+            $this->addHook(BuildArtifactFormActionEvent::NAME);
             $this->addHook(TRACKER_EVENT_ARTIFACT_ASSOCIATION_EDITED, 'tracker_event_artifact_association_edited', false);
-            $this->addHook(TRACKER_EVENT_REDIRECT_AFTER_ARTIFACT_CREATION_OR_UPDATE, 'tracker_event_redirect_after_artifact_creation_or_update', false);
+            $this->addHook(RedirectAfterArtifactCreationOrUpdateEvent::NAME);
             $this->addHook(TRACKER_EVENT_ARTIFACT_PARENTS_SELECTOR, 'event_artifact_parents_selector', false);
             $this->addHook(TRACKER_EVENT_MANAGE_SEMANTICS, 'tracker_event_manage_semantics', false);
             $this->addHook(TRACKER_EVENT_SEMANTIC_FROM_XML, 'tracker_event_semantic_from_xml');
@@ -156,30 +202,20 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             $this->addHook(TRACKER_EVENT_GET_SEMANTIC_DUPLICATORS);
             $this->addHook('plugin_statistics_service_usage');
             $this->addHook(TRACKER_EVENT_REPORT_DISPLAY_ADDITIONAL_CRITERIA);
-            $this->addHook(TRACKER_EVENT_REPORT_PROCESS_ADDITIONAL_QUERY);
             $this->addHook(TRACKER_EVENT_REPORT_SAVE_ADDITIONAL_CRITERIA);
             $this->addHook(TRACKER_EVENT_REPORT_LOAD_ADDITIONAL_CRITERIA);
             $this->addHook(TRACKER_EVENT_FIELD_AUGMENT_DATA_FOR_REPORT);
             $this->addHook(TRACKER_USAGE);
             $this->addHook(Event::SERVICE_CLASSNAMES);
             $this->addHook(Event::SERVICES_ALLOWED_FOR_PROJECT);
+            $this->addHook(Event::SERVICE_IS_USED);
             $this->addHook(Event::REGISTER_PROJECT_CREATION);
             $this->addHook(TRACKER_EVENT_PROJECT_CREATION_TRACKERS_REQUIRED);
             $this->addHook(TRACKER_EVENT_GENERAL_SETTINGS);
             $this->addHook(Event::IMPORT_XML_PROJECT_CARDWALL_DONE);
             $this->addHook(Event::REST_RESOURCES);
-            $this->addHook(Event::REST_RESOURCES_V2);
             $this->addHook(Event::REST_PROJECT_ADDITIONAL_INFORMATIONS);
-            $this->addHook(Event::REST_PROJECT_AGILE_ENDPOINTS);
-            $this->addHook(Event::REST_GET_PROJECT_PLANNINGS);
-            $this->addHook(Event::REST_OPTIONS_PROJECT_PLANNINGS);
             $this->addHook(Event::REST_PROJECT_RESOURCES);
-            $this->addHook(Event::REST_GET_PROJECT_MILESTONES);
-            $this->addHook(Event::REST_OPTIONS_PROJECT_MILESTONES);
-            $this->addHook(Event::REST_GET_PROJECT_BACKLOG);
-            $this->addHook(Event::REST_PUT_PROJECT_BACKLOG);
-            $this->addHook(Event::REST_PATCH_PROJECT_BACKLOG);
-            $this->addHook(Event::REST_OPTIONS_PROJECT_BACKLOG);
             $this->addHook(Event::GET_PROJECTID_FROM_URL);
             $this->addHook(Event::COLLECT_ERRORS_WITHOUT_IMPORTING_XML_PROJECT);
             $this->addHook(ITEM_PRIORITY_CHANGE);
@@ -196,7 +232,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             $this->addHook(Event::USER_HISTORY_CLEAR);
             $this->addHook(ArtifactCreated::NAME);
             $this->addHook(ArtifactsReordered::NAME);
-            $this->addHook(TRACKER_EVENT_ARTIFACT_POST_UPDATE);
+            $this->addHook(ArtifactUpdated::NAME);
             $this->addHook(TrackerReportDeleted::NAME);
             $this->addHook(TrackerReportSetToPrivate::NAME);
             $this->addHook(Tracker_FormElementFactory::GET_CLASSNAMES);
@@ -216,6 +252,25 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             $this->addHook(StatisticsCollectionCollector::NAME);
             $this->addHook('project_is_deleted');
             $this->addHook(AdditionalArtifactActionButtonsFetcher::NAME);
+            $this->addHook(TrackerMasschangeGetExternalActionsEvent::NAME);
+            $this->addHook(TrackerMasschangeProcessExternalActionsEvent::NAME);
+            $this->addHook(ServiceEnableForXmlImportRetriever::NAME);
+            $this->addHook(TrackerReportProcessAdditionalQuery::NAME);
+            $this->addHook(GetExternalSubFactoriesEvent::NAME);
+            $this->addHook(WorkflowDeletionEvent::NAME);
+            $this->addHook(TransitionDeletionEvent::NAME);
+            $this->addHook(PostActionVisitExternalActionsEvent::NAME);
+            $this->addHook(GetExternalPostActionJsonParserEvent::NAME);
+            $this->addHook(GetWorkflowExternalPostActionsValueUpdater::NAME);
+            $this->addHook(GetExternalSubFactoryByNameEvent::NAME);
+            $this->addHook(ExternalPostActionSaveObjectEvent::NAME);
+            $this->addHook(GetPostActionShortNameFromXmlTagNameEvent::NAME);
+            $this->addHook(CreateTrackerFromXMLEvent::NAME);
+            $this->addHook(ProjectXMLImportPreChecksEvent::NAME);
+            $this->addHook(GetExternalPostActionPluginsEvent::NAME);
+            $this->addHook(CheckPostActionsForTracker::NAME);
+            $this->addHook(GetWorkflowExternalPostActionsValuesForUpdate::NAME);
+            $this->addHook(DefaultTemplatesXMLFileCollection::NAME);
         }
 
         if (defined('CARDWALL_BASE_URL')) {
@@ -262,7 +317,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
      */
     public function getDependencies()
     {
-        return array('tracker', 'cardwall');
+        return ['tracker', 'cardwall'];
     }
 
     public function getServiceShortname()
@@ -283,6 +338,16 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
                 $params['template_id']
             );
 
+            $explicit_backlog_configuration_updater = $this->getExplicitBacklogConfigurationUpdater();
+
+            $project = ProjectManager::instance()->getProject((int) $params['group_id']);
+            $user    = UserManager::instance()->getCurrentUser();
+
+            $explicit_backlog_configuration_updater->activateExplicitBacklogManagement(
+                $project,
+                $user
+            );
+
             (new ProjectsCountModeDao())->inheritBurnupCountMode(
                 (int) $params['template_id'],
                 (int) $params['group_id']
@@ -297,10 +362,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         );
 
         if ($is_mono_milestone_enabled && count($params['xml_content']->agiledashboard->plannings->planning) > 1) {
-            $params['errors'] = $GLOBALS['Language']->getText(
-                'plugin_agiledashboard',
-                'cannot_import_planning_in_scrum_v2'
-            );
+            $params['errors'] = dgettext('tuleap-agiledashboard', 'You cannot import more than one planning in scrum V2, please check your XML.');
         }
     }
 
@@ -348,7 +410,9 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
                 $planning_factory,
                 TrackerFactory::instance(),
                 Tracker_ArtifactFactory::instance()
-            )
+            ),
+            new UnplannedCriterionOptionsProvider(new ExplicitBacklogDao()),
+            new UnplannedReportCriterionChecker($params['additional_criteria'])
         );
         $additional_criterion = $provider->getCriterion($backlog_tracker, $user);
 
@@ -359,17 +423,33 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         $params['array_of_html_criteria'][] = $additional_criterion;
     }
 
-    /**
-     * @see TRACKER_EVENT_REPORT_PROCESS_ADDITIONAL_QUERY
-     */
-    public function tracker_event_report_process_additional_query($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    public function trackerReportProcessAdditionalQuery(TrackerReportProcessAdditionalQuery $event)
     {
-        $backlog_tracker = $params['tracker'];
+        $backlog_tracker = $event->getTracker();
 
-        $user    = $params['user'];
+        $user    = $event->getUser();
         $project = $backlog_tracker->getProject();
 
-        $milestone_provider = new AgileDashboard_Milestone_SelectedMilestoneProvider($params['additional_criteria'], $this->getMilestoneFactory(), $user, $project);
+        $unplanned_report_criterion_checker = new UnplannedReportCriterionChecker($event->getAdditionalCriteria());
+        if ($unplanned_report_criterion_checker->isUnplannedValueSelected()) {
+            $retriever = new UnplannedReportCriterionMatchingIdsRetriever(
+                new ExplicitBacklogDao(),
+                new ArtifactsInExplicitBacklogDao(),
+                new PlannedArtifactDao(),
+                $this->getArtifactFactory()
+            );
+
+            try {
+                $event->addResult($retriever->getMatchingIds($backlog_tracker, $user));
+                $event->setSearchIsPerformed();
+            } catch (ProjectNotUsingExplicitBacklogException $exception) {
+                //Do nothing
+            } finally {
+                return;
+            }
+        }
+
+        $milestone_provider = new AgileDashboard_Milestone_SelectedMilestoneProvider($event->getAdditionalCriteria(), $this->getMilestoneFactory(), $user, $project);
         $milestone          = $milestone_provider->getMilestone();
 
         if ($milestone) {
@@ -380,11 +460,13 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
                     $this->getMilestoneFactory(),
                     new AgileDashboard_Milestone_Backlog_BacklogItemBuilder()
                 ),
-                $this->getPlanningFactory()
+                $this->getPlanningFactory(),
+                new ExplicitBacklogDao(),
+                new ArtifactsInExplicitBacklogDao()
             );
 
-            $params['result'][]         = $provider->getMatchingIds($milestone, $backlog_tracker, $user);
-            $params['search_performed'] = true;
+            $event->addResult($provider->getMatchingIds($milestone, $backlog_tracker, $user));
+            $event->setSearchIsPerformed();
         }
     }
 
@@ -397,8 +479,13 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         $project = $params['report']->getTracker()->getProject();
         $user    = $this->getCurrentUser();
 
-        $milestone_provider = new AgileDashboard_Milestone_SelectedMilestoneProvider($params['additional_criteria'], $this->getMilestoneFactory(), $user, $project);
+        $unplanned_report_criterion_checker = new UnplannedReportCriterionChecker($params['additional_criteria']);
+        if ($unplanned_report_criterion_checker->isUnplannedValueSelected()) {
+            $dao->save($params['report']->getId(), AgileDashboard_Milestone_MilestoneReportCriterionProvider::UNPLANNED);
+            return;
+        }
 
+        $milestone_provider = new AgileDashboard_Milestone_SelectedMilestoneProvider($params['additional_criteria'], $this->getMilestoneFactory(), $user, $project);
         if ($milestone_provider->getMilestone()) {
             $dao->save($params['report']->getId(), $milestone_provider->getMilestoneId());
         } else {
@@ -448,7 +535,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             $this->getKanbanFactory(),
             $this->getTrackerFactory()
         );
-        $params['cannot_configure_instantiate_for_new_projects']= $hierarchyChecker->isPartOfScrumOrKanbanHierarchy($params['tracker']);
+        $params['cannot_configure_instantiate_for_new_projects'] = $hierarchyChecker->isPartOfScrumOrKanbanHierarchy($params['tracker']);
     }
 
     public function tracker_event_project_creation_trackers_required($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
@@ -479,15 +566,17 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         );
     }
 
-    public function tracker_event_redirect_after_artifact_creation_or_update($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    public function redirectAfterArtifactCreationOrUpdateEvent(RedirectAfterArtifactCreationOrUpdateEvent $event): void
     {
         $params_extractor        = new AgileDashboard_PaneRedirectionExtractor();
         $artifact_linker         = new Planning_ArtifactLinker($this->getArtifactFactory(), PlanningFactory::build());
-        $last_milestone_artifact = $artifact_linker->linkBacklogWithPlanningItems($params['request'], $params['artifact']);
-        $requested_planning      = $params_extractor->extractParametersFromRequest($params['request']);
+        $request                 = $event->getRequest();
+        $artifact                = $event->getArtifact();
+        $last_milestone_artifact = $artifact_linker->linkBacklogWithPlanningItems($request, $artifact);
+        $requested_planning      = $params_extractor->extractParametersFromRequest($request);
 
         if ($requested_planning) {
-            $this->redirectOrAppend($params['request'], $params['artifact'], $params['redirect'], $requested_planning, $last_milestone_artifact);
+            $this->redirectOrAppend($request, $artifact, $event->getRedirect(), $requested_planning, $last_milestone_artifact);
         }
     }
 
@@ -588,7 +677,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         }
     }
 
-    private function redirectOrAppend(Codendi_Request $request, Tracker_Artifact $artifact, Tracker_Artifact_Redirect $redirect, $requested_planning, ?Tracker_Artifact $last_milestone_artifact = null)
+    private function redirectOrAppend(Codendi_Request $request, Artifact $artifact, Tracker_Artifact_Redirect $redirect, $requested_planning, ?Artifact $last_milestone_artifact = null)
     {
         $planning = PlanningFactory::build()->getPlanning($requested_planning['planning_id']);
 
@@ -600,57 +689,60 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
              $this->setQueryParametersFromRequest($request, $redirect);
              // Pass the right parameters so parent can be created in the right milestone (see updateBacklogs)
             if ($planning && $last_milestone_artifact && $redirect->mode == Tracker_Artifact_Redirect::STATE_CREATE_PARENT) {
-                $redirect->query_parameters['child_milestone'] = $last_milestone_artifact->getId();
+                $redirect->query_parameters['child_milestone'] = (string) $last_milestone_artifact->getId();
             }
         }
     }
 
-    private function redirectToPlanning(Tracker_Artifact $artifact, $requested_planning, Planning $planning, Tracker_Artifact_Redirect $redirect)
+    private function redirectToPlanning(Artifact $artifact, $requested_planning, Planning $planning, Tracker_Artifact_Redirect $redirect)
     {
         $redirect_to_artifact = $requested_planning[AgileDashboard_PaneRedirectionExtractor::ARTIFACT_ID];
         if ($redirect_to_artifact == -1) {
             $redirect_to_artifact = $artifact->getId();
         }
         $redirect->base_url = '/plugins/agiledashboard/';
-        $redirect->query_parameters = array(
+        $redirect->query_parameters = [
             'group_id'    => $planning->getGroupId(),
             'planning_id' => $planning->getId(),
             'action'      => 'show',
             'aid'         => $redirect_to_artifact,
             'pane'        => $requested_planning[AgileDashboard_PaneRedirectionExtractor::PANE],
-        );
+        ];
     }
 
-    private function redirectToTopPlanning(Tracker_Artifact $artifact, $requested_planning, Tracker_Artifact_Redirect $redirect)
+    private function redirectToTopPlanning(Artifact $artifact, $requested_planning, Tracker_Artifact_Redirect $redirect)
     {
         $redirect->base_url = '/plugins/agiledashboard/';
         $group_id = null;
 
-        if ($artifact->getTracker() &&  $artifact->getTracker()->getProject()) {
+        if ($artifact->getTracker() && $artifact->getTracker()->getProject()) {
             $group_id = $artifact->getTracker()->getProject()->getID();
         }
 
-        $redirect->query_parameters = array(
+        $redirect->query_parameters = [
             'group_id'    => $group_id,
             'action'      => 'show-top',
             'pane'        => $requested_planning['pane'],
-        );
+        ];
     }
 
-    public function tracker_event_build_artifact_form_action($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    public function buildArtifactFormActionEvent(BuildArtifactFormActionEvent $event): void
     {
-        $this->setQueryParametersFromRequest($params['request'], $params['redirect']);
-        if ($params['request']->exist('child_milestone')) {
-            $params['redirect']->query_parameters['child_milestone'] = $params['request']->getValidated('child_milestone', 'uint', 0);
+        $request = $event->getRequest();
+        $redirect = $event->getRedirect();
+
+        $this->setQueryParametersFromRequest($request, $redirect);
+        if ($request->exist('child_milestone')) {
+            $redirect->query_parameters['child_milestone'] = $request->getValidated('child_milestone', 'uint', 0);
         }
     }
 
-    private function setQueryParametersFromRequest(Codendi_Request $request, Tracker_Artifact_Redirect $redirect)
+    private function setQueryParametersFromRequest(Codendi_Request $request, Tracker_Artifact_Redirect $redirect): void
     {
         $params_extractor   = new AgileDashboard_PaneRedirectionExtractor();
         $requested_planning = $params_extractor->extractParametersFromRequest($request);
         if ($requested_planning) {
-            $key   = 'planning['. $requested_planning[AgileDashboard_PaneRedirectionExtractor::PANE] .']['. $requested_planning[AgileDashboard_PaneRedirectionExtractor::PLANNING_ID] .']';
+            $key   = 'planning[' . $requested_planning[AgileDashboard_PaneRedirectionExtractor::PANE] . '][' . $requested_planning[AgileDashboard_PaneRedirectionExtractor::PLANNING_ID] . ']';
             $value = $requested_planning[AgileDashboard_PaneRedirectionExtractor::ARTIFACT_ID];
             $redirect->query_parameters[$key] = $value;
         }
@@ -661,7 +753,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
      */
     public function getPluginInfo()
     {
-        if (!$this->pluginInfo) {
+        if (! $this->pluginInfo) {
             $this->pluginInfo = new AgileDashboardPluginInfo($this);
         }
         return $this->pluginInfo;
@@ -670,11 +762,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
     public function cssfile($params)
     {
         if ($this->isAnAgiledashboardRequest()) {
-            $theme_include_assets = new IncludeAssets(
-                AGILEDASHBOARD_BASE_DIR . '/../www/themes/FlamingParrot/assets',
-                $this->getThemePath() . '/assets'
-            );
-            $css_file_url = $theme_include_assets->getFileURL('style.css');
+            $css_file_url = $this->getIncludeAssets()->getFileURL('style-fp.css');
             echo '<link rel="stylesheet" type="text/css" href="' . $css_file_url . '" />';
         }
     }
@@ -682,38 +770,25 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
     public function javascript_file() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($this->isAnAgiledashboardRequest()) {
-            echo $this->getMinifiedAssetHTML()."\n";
-
-            $include_assets = new IncludeAssets(
-                $this->getFilesystemPath() . '/www/assets',
-                $this->getPluginPath() . '/assets'
-            );
-
-            echo $include_assets->getHTMLSnippet("home-burndowns.js");
+            echo $this->getIncludeAssets()->getHTMLSnippet('home-burndowns.js');
         }
     }
 
     /** @see Event::BURNING_PARROT_GET_STYLESHEETS */
     public function burning_parrot_get_stylesheets(array $params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $theme_include_assets = new IncludeAssets(
-            AGILEDASHBOARD_BASE_DIR . '/../www/themes/BurningParrot/assets',
-            AGILEDASHBOARD_BASE_URL . '/themes/BurningParrot/assets'
-        );
-
         $variant = $params['variant'];
         if ($this->isInOverviewTab() || $this->isPlanningV2URL()) {
-            $params['stylesheets'][] = $theme_include_assets->getFileURL('scrum-' . $variant->getName() . '.css');
+            $params['stylesheets'][] = $this->getIncludeAssets()->getFileURL('scrum-' . $variant->getName() . '.css');
         } elseif ($this->isScrumAdminURL()) {
-            $params['stylesheets'][] = $theme_include_assets->getFileURL('administration-' . $variant->getName() . '.css');
+            $params['stylesheets'][] = $this->getIncludeAssets()->getFileURL('administration-' . $variant->getName() . '.css');
         }
     }
 
     public function burning_parrot_get_javascript_files(array $params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($this->isInOverviewTab()) {
-            $assets = $this->getIncludeAssets();
-            $params['javascript_files'][] = $assets->getFileURL('scrum-header.js');
+            $params['javascript_files'][] = $this->getIncludeAssets()->getFileURL('scrum-header.js');
             return;
         }
 
@@ -733,12 +808,8 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
 
     public function permissionPerGroupDisplayEvent(PermissionPerGroupDisplayEvent $event)
     {
-        $include_assets = new IncludeAssets(
-            AGILEDASHBOARD_BASE_DIR . '/../www/assets',
-            $this->getPluginPath() . '/assets'
-        );
-
-        $event->addJavascript($include_assets->getFileURL('permission-per-group.js'));
+        $script = $this->getScriptAssetByName('permission-per-group.js');
+        $event->addJavascript($script->getFileURL());
     }
 
     /**
@@ -747,9 +818,9 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
     private function getJavascriptDependenciesProvider()
     {
         if (KanbanURL::isKanbanURL(HTTPRequest::instance())) {
-            return new KanbanJavascriptDependenciesProvider();
+            return new KanbanJavascriptDependenciesProvider($this->getIncludeAssets());
         } elseif ($this->isPlanningV2URL()) {
-            return new PlanningJavascriptDependenciesProvider();
+            return new PlanningJavascriptDependenciesProvider($this->getIncludeAssets());
         }
 
         return null;
@@ -837,10 +908,10 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             $remaining_effort = $milestone_with_contextual_info->getRemainingEffort();
 
             header('Content-type: application/json');
-            echo json_encode(array(
+            echo json_encode([
                 'remaining_effort' => $remaining_effort,
                 'is_over_capacity' => $capacity !== null && $remaining_effort !== null && $capacity < $remaining_effort,
-            ));
+            ]);
         }
     }
 
@@ -850,8 +921,8 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
     public function tracker_event_manage_semantics($parameters) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $tracker   = $parameters['tracker'];
-        /** @var Tracker_SemanticCollection $semantics */
         $semantics = $parameters['semantics'];
+        \assert($semantics instanceof Tracker_SemanticCollection);
 
         $semantics->add(AgileDashBoard_Semantic_InitialEffort::load($tracker));
         $semantics->insertAfter(Tracker_Semantic_Status::NAME, SemanticDone::load($tracker));
@@ -891,7 +962,11 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
      */
     public function tracker_event_get_semantic_duplicators($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $params['factories'][] = $this->getSemanticInitialEffortFactory();
+        $params['duplicators'][] = $this->getSemanticInitialEffortFactory();
+        $params['duplicators'][] = new SemanticDoneDuplicator(
+            new SemanticDoneDao(),
+            new Tracker_Semantic_StatusDao()
+        );
     }
 
     protected function getSemanticInitialEffortFactory()
@@ -911,7 +986,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
 
     /**
      *
-     * @param array $param
+     * @param array $params
      *  Expected key/ values:
      *      project_id  int             The ID of the project for the import
      *      xml_content SimpleXmlObject A string of valid xml
@@ -920,10 +995,12 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
      */
     public function import_xml_project_cardwall_done($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $request = new HTTPRequest($params);
+        $request = new HTTPRequest();
         $request->set('action', 'import');
         $request->set('xml_content', $params['xml_content']);
         $request->set('mapping', $params['mapping']);
+        $request->set('artifact_id_mapping', $params['artifact_id_mapping']);
+        $request->set('logger', $params['logger']);
         $request->set('project_id', $params['project_id']);
         $request->set('group_id', $params['project_id']);
 
@@ -976,164 +1053,12 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
     }
 
     /**
-     * @see REST_RESOURCES_V2
-     */
-    public function rest_resources_v2($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $injector = new AgileDashboard_REST_v2_ResourcesInjector();
-        $injector->populate($params['restler']);
-    }
-
-    /**
-     * @see REST_GET_PROJECT_PLANNINGS
-     */
-    public function rest_get_project_plannings($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $user              = $this->getCurrentUser();
-        $planning_resource = $this->buildRightVersionOfProjectPlanningsResource($params['version']);
-
-        $params['result'] = $planning_resource->get(
-            $user,
-            $params['project'],
-            $params['limit'],
-            $params['offset']
-        );
-    }
-
-    /**
-     * @see REST_OPTIONS_PROJECT_PLANNINGS
-     */
-    public function rest_options_project_plannings($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $user              = $this->getCurrentUser();
-        $planning_resource = $this->buildRightVersionOfProjectPlanningsResource($params['version']);
-
-        $params['result'] = $planning_resource->options(
-            $user,
-            $params['project'],
-            $params['limit'],
-            $params['offset']
-        );
-    }
-
-    private function buildRightVersionOfProjectPlanningsResource($version)
-    {
-        $class_with_right_namespace = '\\Tuleap\\AgileDashboard\\REST\\'.$version.'\\ProjectPlanningsResource';
-        return new $class_with_right_namespace;
-    }
-
-    /**
      * @see Event::REST_PROJECT_RESOURCES
      */
     public function rest_project_resources(array $params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $injector = new AgileDashboard_REST_ResourcesInjector();
         $injector->declareProjectPlanningResource($params['resources'], $params['project']);
-    }
-
-    /**
-     * @see REST_GET_PROJECT_MILESTONES
-     */
-    public function rest_get_project_milestones($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $user               = $this->getCurrentUser();
-        $milestone_resource = $this->buildRightVersionOfProjectMilestonesResource($params['version']);
-
-        $params['result'] = $milestone_resource->get(
-            $user,
-            $params['project'],
-            $params['representation_type'],
-            $params['query'],
-            $params['limit'],
-            $params['offset'],
-            $params['order']
-        );
-    }
-
-    /**
-     * @see REST_OPTIONS_PROJECT_MILESTONES
-     */
-    public function rest_options_project_milestones($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $user               = $this->getCurrentUser();
-        $milestone_resource = $this->buildRightVersionOfProjectMilestonesResource($params['version']);
-
-        $params['result'] = $milestone_resource->options(
-            $user,
-            $params['project'],
-            $params['limit'],
-            $params['offset']
-        );
-    }
-
-    private function buildRightVersionOfProjectMilestonesResource($version)
-    {
-        $class_with_right_namespace = '\\Tuleap\\AgileDashboard\\REST\\'.$version.'\\ProjectMilestonesResource';
-        return new $class_with_right_namespace;
-    }
-
-    /**
-     * @see REST_GET_PROJECT_BACKLOG
-     */
-    public function rest_get_project_backlog($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $user                     = $this->getCurrentUser();
-        $project_backlog_resource = $this->buildRightVersionOfProjectBacklogResource($params['version']);
-
-        $params['result'] = $project_backlog_resource->get(
-            $user,
-            $params['project'],
-            $params['limit'],
-            $params['offset']
-        );
-    }
-
-    /**
-     * @see REST_OPTIONS_PROJECT_BACKLOG
-     */
-    public function rest_options_project_backlog($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $user                     = $this->getCurrentUser();
-        $project_backlog_resource = $this->buildRightVersionOfProjectBacklogResource($params['version']);
-
-        $params['result'] = $project_backlog_resource->options(
-            $user,
-            $params['project'],
-            $params['limit'],
-            $params['offset']
-        );
-    }
-
-    /**
-     * @see REST_PUT_PROJECT_BACKLOG
-     */
-    public function rest_put_project_backlog($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $user                     = $this->getCurrentUser();
-        $project_backlog_resource = $this->buildRightVersionOfProjectBacklogResource($params['version']);
-
-        $params['result'] = $project_backlog_resource->put(
-            $user,
-            $params['project'],
-            $params['ids']
-        );
-    }
-
-    /**
-     * @see REST_PATCH_PROJECT_BACKLOG
-     */
-    public function rest_patch_project_backlog($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $user                     = UserManager::instance()->getCurrentUser();
-        $project_backlog_resource = $this->buildRightVersionOfProjectBacklogResource($params['version']);
-
-        $params['result'] = $project_backlog_resource->patch(
-            $user,
-            $params['project'],
-            $params['order'],
-            $params['add'],
-            $params['remove'],
-        );
     }
 
     /**
@@ -1166,21 +1091,6 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         $milestone   = $this->getMilestoneFactory()->getMilestoneFromArtifact($artifact);
 
         return $milestone->getPlanningId();
-    }
-
-    private function buildRightVersionOfProjectBacklogResource($version)
-    {
-        $class_with_right_namespace = '\\Tuleap\\AgileDashboard\\REST\\'.$version.'\\ProjectBacklogResource';
-        return new $class_with_right_namespace;
-    }
-
-    private function getStatusCounter()
-    {
-        return new AgileDashboard_Milestone_MilestoneStatusCounter(
-            new AgileDashboard_BacklogItemDao(),
-            new Tracker_ArtifactDao(),
-            $this->getArtifactFactory()
-        );
     }
 
     /** @see Event::GET_PROJECTID_FROM_URL */
@@ -1245,12 +1155,6 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         }
     }
 
-
-    public function rest_project_agile_endpoints($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    {
-        $params['available'] = true;
-    }
-
     /** @see Tracker_Artifact_EditRenderer::EVENT_ADD_VIEW_IN_COLLECTION */
     public function tracker_artifact_editrenderer_add_view_in_collection(array $params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
@@ -1267,7 +1171,8 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
 
     public function burning_parrot_compatible_page(BurningParrotCompatiblePageEvent $event) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        if (KanbanURL::isKanbanURL(HTTPRequest::instance()) ||
+        if (
+            KanbanURL::isKanbanURL(HTTPRequest::instance()) ||
             $this->isInOverviewTab() ||
             $this->isPlanningV2URL() ||
             $this->isScrumAdminURL()
@@ -1291,12 +1196,11 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
     {
         return new AgileDashboard_KanbanManager(
             new AgileDashboard_KanbanDao(),
-            $this->getTrackerFactory(),
-            $this->getHierarchyChecker()
+            $this->getTrackerFactory()
         );
     }
 
-    private function getCurrentUser()
+    private function getCurrentUser(): PFUser
     {
         return UserManager::instance()->getCurrentUser();
     }
@@ -1304,18 +1208,6 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
     private function getPlanningPermissionsManager()
     {
         return new PlanningPermissionsManager();
-    }
-
-    /**
-     * @return AgileDashboard_HierarchyChecker
-     */
-    private function getHierarchyChecker()
-    {
-        return new AgileDashboard_HierarchyChecker(
-            $this->getPlanningFactory(),
-            $this->getKanbanFactory(),
-            $this->getTrackerFactory()
-        );
     }
 
     /**
@@ -1345,9 +1237,6 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         );
     }
 
-    /**
-     * @psalm-suppress UndefinedClass
-     */
     public function testmanagementGetMilestone(\Tuleap\TestManagement\Event\GetMilestone $event)
     {
         $milestone_factory = $this->getMilestoneFactory();
@@ -1355,9 +1244,6 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         $event->setMilestone($milestone);
     }
 
-    /**
-     * @psalm-suppress UndefinedClass
-     */
     public function testmanagementGetItemsFromMilestone(\Tuleap\TestManagement\Event\GetItemsFromMilestone $event)
     {
         $milestone_factory               = $this->getMilestoneFactory();
@@ -1393,7 +1279,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         $tracker_artifact_dao = new Tracker_ArtifactDao();
 
         $children = $tracker_artifact_dao->getChildren($item->getArtifact()->getId())
-            ->instanciateWith(array($this->getArtifactFactory(), 'getInstanceFromRow'));
+            ->instanciateWith([$this->getArtifactFactory(), 'getInstanceFromRow']);
 
         foreach ($children as $child) {
             if ($child->userCanView($user)) {
@@ -1417,7 +1303,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         $tracker = $field->getTracker();
         $dao     = new SemanticDoneDao();
 
-        $disabled_values = array();
+        $disabled_values = [];
         foreach ($dao->getSelectedValues($tracker->getId()) as $value_row) {
             $disabled_values[] = $value_row['value_id'];
         }
@@ -1458,21 +1344,13 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             HttpClientFactory::createClient(),
             HTTPFactoryBuilder::requestFactory(),
             HTTPFactoryBuilder::streamFactory(),
-            new BackendLogger()
+            BackendLogger::getDefaultLogger()
         );
         $realtime_artifact_message_builder = new KanbanArtifactMessageBuilder(
             $kanban_item_dao,
-            new Tracker_Artifact_ChangesetFactory(
-                new Tracker_Artifact_ChangesetDao(),
-                new Tracker_Artifact_Changeset_ValueDao(),
-                new Tracker_Artifact_Changeset_CommentDao(),
-                new Tracker_Artifact_ChangesetJsonFormatter(
-                    TemplateRendererFactory::build()->getRenderer(dirname(TRACKER_BASE_DIR).'/templates')
-                ),
-                Tracker_FormElementFactory::instance()
-            )
+            Tracker_Artifact_ChangesetFactoryBuilder::build()
         );
-        $backend_logger                    = new BackendLogger(ForgeConfig::get('codendi_log') .'/realtime_syslog');
+        $backend_logger                    = BackendLogger::getDefaultLogger('realtime_syslog');
         $realtime_artifact_message_sender  = new RealTimeArtifactMessageSender($node_js_client, $permissions_serializer);
 
         return new KanbanArtifactMessageSender(
@@ -1495,22 +1373,38 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
 
     public function trackerArtifactCreated(ArtifactCreated $event)
     {
-        $artifact  = $event->getArtifact();
+        $artifact = $event->getArtifact();
         $this->getRealtimeMessageController()->sendMessageForKanban(
             $this->getCurrentUser(),
             $artifact,
             RealTimeArtifactMessageController::EVENT_NAME_ARTIFACT_CREATED
         );
+
+        $cleaner = new DirectArtifactLinkCleaner(
+            $this->getMilestoneFactory(),
+            new ExplicitBacklogDao(),
+            new ArtifactsInExplicitBacklogDao()
+        );
+
+        $cleaner->cleanDirectlyMadeArtifactLinks($artifact, $this->getCurrentUser());
     }
 
-    public function tracker_event_artifact_post_update(array $params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    public function trackerArtifactUpdated(ArtifactUpdated $event)
     {
-        $artifact  = $params['artifact'];
+        $artifact = $event->getArtifact();
         $this->getRealtimeMessageController()->sendMessageForKanban(
             $this->getCurrentUser(),
             $artifact,
             RealTimeArtifactMessageController::EVENT_NAME_ARTIFACT_UPDATED
         );
+
+        $cleaner = new DirectArtifactLinkCleaner(
+            $this->getMilestoneFactory(),
+            new ExplicitBacklogDao(),
+            new ArtifactsInExplicitBacklogDao()
+        );
+
+        $cleaner->cleanDirectlyMadeArtifactLinks($artifact, $event->getUser());
     }
 
     public function trackerArtifactsReordered(ArtifactsReordered $event)
@@ -1570,7 +1464,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         switch ($params['type']) {
             case SystemEvent_BURNUP_DAILY::class:
                 $params['class']        = SystemEvent_BURNUP_DAILY::class;
-                $params['dependencies'] = array(
+                $params['dependencies'] = [
                     $this->getBurnupDao(),
                     $this->getBurnupCalculator(),
                     $this->getBurnupCountElementsCalculator(),
@@ -1578,11 +1472,11 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
                     new CountElementsCacheDao(),
                     $this->getLogger(),
                     new BurnupCacheDateRetriever()
-                );
+                ];
                 break;
             case SystemEvent_BURNUP_GENERATE::class:
                 $params['class']        = SystemEvent_BURNUP_GENERATE::class;
-                $params['dependencies'] = array(
+                $params['dependencies'] = [
                     Tracker_ArtifactFactory::instance(),
                     new SemanticTimeframeBuilder(new SemanticTimeframeDao(), Tracker_FormElementFactory::instance()),
                     new BurnupDao(),
@@ -1592,7 +1486,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
                     new CountElementsCacheDao(),
                     $this->getLogger(),
                     new BurnupCacheDateRetriever()
-                );
+                ];
                 break;
             default:
                 break;
@@ -1613,12 +1507,9 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         return new BurnupDao();
     }
 
-    /**
-     * @return BackendLogger
-     */
-    private function getLogger()
+    private function getLogger(): \Psr\Log\LoggerInterface
     {
-        return new BackendLogger();
+        return BackendLogger::getDefaultLogger();
     }
 
     /**
@@ -1728,9 +1619,6 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             && $request->get('pane') === DetailsPaneInfo::IDENTIFIER;
     }
 
-    /**
-     * @param PermissionPerGroupPaneCollector $event
-     */
     public function permissionPerGroupPaneCollector(PermissionPerGroupPaneCollector $event)
     {
         $project = $event->getProject();
@@ -1743,18 +1631,18 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
 
         $ugroup_manager = new UGroupManager();
         $ugroup         = $ugroup_manager->getUGroup($project, $ugroup_id);
-        $ugroup_name    = ($ugroup)? $ugroup->getTranslatedName() : "";
+        $ugroup_name    = ($ugroup) ? $ugroup->getTranslatedName() : "";
 
         $template_factory      = TemplateRendererFactory::build();
         $admin_permission_pane = $template_factory
             ->getRenderer(AGILEDASHBOARD_TEMPLATE_DIR)
             ->renderToString(
                 'project-admin-permission-per-group',
-                array(
+                [
                     "ugroup_id"            => $ugroup_id,
                     "project_id"           => $project->getID(),
                     "selected_ugroup_name" => $ugroup_name
-                )
+                ]
             );
 
         $service = $project->getService($this->getServiceShortname());
@@ -1795,10 +1683,11 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
 
     public function moveArtifactParseFieldChangeNodes(MoveArtifactParseFieldChangeNodes $event)
     {
-        if (! $this->getMoveSemanticInitialEffortChecker()->areSemanticsAligned(
-            $event->getSourceTracker(),
-            $event->getTargetTracker()
-        )
+        if (
+            ! $this->getMoveSemanticInitialEffortChecker()->areSemanticsAligned(
+                $event->getSourceTracker(),
+                $event->getTargetTracker()
+            )
         ) {
             return;
         }
@@ -1809,13 +1698,15 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             new FieldValueMatcher(new XMLImportHelper(UserManager::instance()))
         );
 
-        if ($updater->parseFieldChangeNodesAtGivenIndex(
-            $event->getSourceTracker(),
-            $event->getTargetTracker(),
-            $event->getChangesetXml(),
-            $event->getIndex(),
-            $event->getFeedbackFieldCollector()
-        )) {
+        if (
+            $updater->parseFieldChangeNodesAtGivenIndex(
+                $event->getSourceTracker(),
+                $event->getTargetTracker(),
+                $event->getChangesetXml(),
+                $event->getIndex(),
+                $event->getFeedbackFieldCollector()
+            )
+        ) {
             $event->setModifiedByPlugin();
         }
     }
@@ -1835,7 +1726,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
     {
         if ($this->getSemanticInitialEffortFactory()->getByTracker($event->getTracker())->getFieldId() !== 0) {
             $event->hasExternalSemanticDefined();
-        };
+        }
     }
 
     public function collectRoutesEvent(\Tuleap\Request\CollectRoutesEvent $event)
@@ -1845,7 +1736,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         });
     }
 
-    public function routeLegacyController() : \Tuleap\AgileDashboard\AgileDashboardLegacyController
+    public function routeLegacyController(): \Tuleap\AgileDashboard\AgileDashboardLegacyController
     {
         return new \Tuleap\AgileDashboard\AgileDashboardLegacyController(
             new AgileDashboardRouterBuilder(
@@ -1884,7 +1775,7 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
 
         $pane_factory = $this->getMilestonePaneFactory();
 
-        foreach ($pane_factory->getListOfPaneInfo($milestone) as $pane) {
+        foreach ($pane_factory->getListOfPaneInfo($milestone, $collection->getCurrentUser()) as $pane) {
             $collection->add(
                 new HistoryQuickLink(
                     $pane->getTitle(),
@@ -1913,37 +1804,6 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         );
     }
 
-    private function getMilestoneRepresentationBuilder(): AgileDashboard_Milestone_MilestoneRepresentationBuilder
-    {
-        return new AgileDashboard_Milestone_MilestoneRepresentationBuilder(
-            $this->getMilestoneFactory(),
-            $this->getBacklogFactory(),
-            EventManager::instance(),
-            $this->getMonoMileStoneChecker(),
-            new ParentTrackerRetriever($this->getPlanningFactory())
-        );
-    }
-
-    private function getPaginatedBacklogItemsRepresentationsBuilder(): AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentationsBuilder
-    {
-        $color_builder = new BackgroundColorBuilder(new BindDecoratorRetriever());
-        $item_factory  = new BacklogItemRepresentationFactory(
-            $color_builder,
-            UserManager::instance(),
-            EventManager::instance()
-        );
-
-        return new AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentationsBuilder(
-            $item_factory,
-            $this->getBacklogItemCollectionFactory(
-                $this->getMilestoneFactory(),
-                new AgileDashboard_Milestone_Backlog_BacklogItemBuilder()
-            ),
-            $this->getBacklogFactory(),
-            new ExplicitBacklogDao()
-        );
-    }
-
     public function getMilestonePaneFactory(): Planning_MilestonePaneFactory
     {
         $request = HTTPRequest::instance();
@@ -1955,20 +1815,16 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         $submilestone_finder    = new AgileDashboard_Milestone_Pane_Planning_SubmilestoneFinder(
             $hierarchy_factory,
             $planning_factory,
-            $mono_milestone_checker,
-            $this->getTrackerFactory()
+            $mono_milestone_checker
         );
-
-        $milestone_representation_builder                = $this->getMilestoneRepresentationBuilder();
-        $paginated_backlog_items_representations_builder = $this->getPaginatedBacklogItemsRepresentationsBuilder();
 
         $pane_info_factory = new AgileDashboard_PaneInfoFactory(
-            $request->getCurrentUser(),
-            $submilestone_finder,
-            $this->getThemePath()
+            $submilestone_finder
         );
 
-        $pane_factory = new Planning_MilestonePaneFactory(
+        $event_manager = EventManager::instance();
+
+        return new Planning_MilestonePaneFactory(
             $request,
             $milestone_factory,
             new AgileDashboard_Milestone_Pane_PanePresenterBuilderFactory(
@@ -1978,22 +1834,19 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
                     new AgileDashboard_Milestone_Backlog_BacklogItemPresenterBuilder()
                 ),
                 new BurnupFieldRetriever(Tracker_FormElementFactory::instance()),
-                EventManager::instance()
+                $event_manager
             ),
             $submilestone_finder,
             $pane_info_factory,
-            $milestone_representation_builder,
-            $paginated_backlog_items_representations_builder
+            $event_manager
         );
-
-        return $pane_factory;
     }
 
     public function getIncludeAssets(): IncludeAssets
     {
         return new IncludeAssets(
-            AGILEDASHBOARD_BASE_DIR . '/../www/assets',
-            $this->getPluginPath() . '/assets'
+            __DIR__ . '/../../../src/www/assets/agiledashboard',
+            '/assets/agiledashboard'
         );
     }
 
@@ -2041,7 +1894,8 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
             $this->getPlanningPermissionsManager(),
             new ArtifactsInExplicitBacklogDao(),
             new PlannedArtifactDao(),
-            $this->getIncludeAssets()
+            $this->getScriptAssetByName('artifact-additional-action.js'),
+            new PlanningTrackerBacklogChecker($this->getPlanningFactory())
         );
 
         $action = $builder->buildArtifactAction($artifact, $user);
@@ -2049,5 +1903,287 @@ class AgileDashboardPlugin extends Plugin  // phpcs:ignore PSR1.Classes.ClassDec
         if ($action !== null) {
             $event->addAction($action);
         }
+    }
+
+    public function trackerMasschangeGetExternalActionsEvent(TrackerMasschangeGetExternalActionsEvent $event): void
+    {
+        $builder = new \Tuleap\AgileDashboard\Masschange\AdditionalMasschangeActionBuilder(
+            new ExplicitBacklogDao(),
+            $this->getPlanningFactory(),
+            TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../templates/masschange')
+        );
+
+        $additional_action = $builder->buildMasschangeAction($event->getTracker(), $event->getUser());
+        if ($additional_action !== null) {
+            $event->addExternalActions($additional_action);
+        }
+    }
+
+    public function serviceEnableForXmlImportRetriever(ServiceEnableForXmlImportRetriever $event): void
+    {
+        $event->addServiceIfPluginIsNotRestricted($this, $this->getServiceShortname());
+    }
+
+    public function trackerMasschangeProcessExternalActionsEvent(TrackerMasschangeProcessExternalActionsEvent $event): void
+    {
+        $processor = new AdditionalMasschangeActionProcessor(
+            new ArtifactsInExplicitBacklogDao(),
+            new PlannedArtifactDao(),
+            $this->getUnplannedArtifactsAdder()
+        );
+
+        $processor->processAction(
+            $event->getUser(),
+            $event->getTracker(),
+            $event->getRequest(),
+            $event->getMasschangeAids()
+        );
+    }
+
+    public function getExternalSubFactoriesEvent(GetExternalSubFactoriesEvent $event)
+    {
+        $event->addFactory(
+            $this->getAddToTopBacklogPostActionFactory()
+        );
+    }
+
+    public function workflowDeletionEvent(WorkflowDeletionEvent $event): void
+    {
+        $workflow_id = (int) $event->getWorkflow()->getId();
+
+        (new AddToTopBacklogPostActionDao())->deleteWorkflowPostActions($workflow_id);
+    }
+
+    private function getUnplannedArtifactsAdder(): UnplannedArtifactsAdder
+    {
+        return new UnplannedArtifactsAdder(
+            new ExplicitBacklogDao(),
+            new ArtifactsInExplicitBacklogDao(),
+            new PlannedArtifactDao()
+        );
+    }
+
+    public function transitionDeletionEvent(TransitionDeletionEvent $event)
+    {
+        $transition_id = (int) $event->getTransition()->getId();
+
+        (new AddToTopBacklogPostActionDao())->deleteTransitionPostActions($transition_id);
+    }
+
+    public function postActionVisitExternalActionsEvent(PostActionVisitExternalActionsEvent $event)
+    {
+        $post_action = $event->getPostAction();
+
+        if (! $post_action instanceof AddToTopBacklog) {
+            return;
+        }
+
+        $representation = AddToTopBacklogRepresentation::buildFromObject($post_action);
+        $event->setRepresentation($representation);
+    }
+
+    public function getExternalPostActionJsonParserEvent(GetExternalPostActionJsonParserEvent $event): void
+    {
+        $event->addParser(
+            new AddToTopBacklogJsonParser(new ExplicitBacklogDao())
+        );
+    }
+
+    public function getWorkflowExternalPostActionsValueUpdater(GetWorkflowExternalPostActionsValueUpdater $event): void
+    {
+        $event->addValueUpdater(
+            new AddToTopBacklogValueUpdater(
+                new AddToTopBacklogValueRepository(
+                    new AddToTopBacklogPostActionDao()
+                )
+            )
+        );
+    }
+
+    public function getExternalSubFactoryByNameEvent(GetExternalSubFactoryByNameEvent $event): void
+    {
+        if ($event->getPostActionShortName() === AddToTopBacklog::SHORT_NAME) {
+            $event->setFactory(
+                $this->getAddToTopBacklogPostActionFactory()
+            );
+        }
+    }
+
+    public function externalPostActionSaveObjectEvent(ExternalPostActionSaveObjectEvent $event): void
+    {
+        $post_action = $event->getPostAction();
+        if (! $post_action instanceof AddToTopBacklog) {
+            return;
+        }
+
+        $factory = $this->getAddToTopBacklogPostActionFactory();
+        $factory->saveObject($post_action);
+    }
+
+    public function getPostActionShortNameFromXmlTagNameEvent(GetPostActionShortNameFromXmlTagNameEvent $event): void
+    {
+        if ($event->getXmlTagName() === AddToTopBacklog::XML_TAG_NAME) {
+            $event->setPostActionShortName(AddToTopBacklog::SHORT_NAME);
+        }
+    }
+
+    private function getAddToTopBacklogPostActionFactory(): AddToTopBacklogPostActionFactory
+    {
+        if (! $this->add_to_top_backlog_post_action_factory) {
+            $this->add_to_top_backlog_post_action_factory = new AddToTopBacklogPostActionFactory(
+                new AddToTopBacklogPostActionDao(),
+                $this->getUnplannedArtifactsAdder(),
+                new ExplicitBacklogDao()
+            );
+        }
+        return $this->add_to_top_backlog_post_action_factory;
+    }
+
+    /**
+     * @throws TrackerFromXmlException
+     */
+    public function createTrackerFromXMLEvent(CreateTrackerFromXMLEvent $event): void
+    {
+        $checker = new CreateTrackerFromXMLChecker(new ExplicitBacklogDao());
+        $checker->checkTrackerCanBeCreatedInTrackerCreationContext(
+            $event->getProject(),
+            $event->getTrackerXml()
+        );
+    }
+
+    /**
+     * @throws ImportNotValidException
+     */
+    public function projectXMLImportPreChecksEvent(ProjectXMLImportPreChecksEvent $event): void
+    {
+        $xml_content = $event->getXmlElement();
+        $checker = new CreateTrackerFromXMLChecker(new ExplicitBacklogDao());
+
+        try {
+            $checker->checkTrackersCanBeCreatedInProjectImportContext($xml_content);
+        } catch (ProjectNotUsingExplicitBacklogException $exception) {
+            throw new ImportNotValidException(
+                'Explicit backlog management is not used and some "AddToTopBacklog" workflow post actions are defined.'
+            );
+        }
+    }
+
+    public function getExternalPostActionPluginsEvent(GetExternalPostActionPluginsEvent $event): void
+    {
+        $tracker    = $event->getTracker();
+        $project_id = (int) $tracker->getGroupId();
+
+        $is_agile_dashboard_used  = $this->isAllowed($project_id);
+        $is_explicit_backlog_used = (new ExplicitBacklogDao())->isProjectUsingExplicitBacklog($project_id);
+
+        $planning_tracker_backlog_checker = new PlanningTrackerBacklogChecker($this->getPlanningFactory());
+        $is_tracker_backlog_of_root_planning = $planning_tracker_backlog_checker->isTrackerBacklogOfProjectRootPlanning(
+            $tracker,
+            $this->getCurrentUser()
+        );
+
+        if (! $is_agile_dashboard_used || ! $is_explicit_backlog_used || ! $is_tracker_backlog_of_root_planning) {
+            return;
+        }
+
+        $event->addServiceNameUsed('agile_dashboard');
+    }
+
+    private function getScriptAssetByName(string $name): JavascriptAsset
+    {
+        return new JavascriptAsset($this->getIncludeAssets(), $name);
+    }
+
+    public function checkPostActionsForTracker(CheckPostActionsForTracker $event): void
+    {
+        $planning_tracker_backlog_checker = new PlanningTrackerBacklogChecker($this->getPlanningFactory());
+        $tracker = $event->getTracker();
+        $external_post_actions = $event->getPostActions()->getExternalPostActionsValue();
+        foreach ($external_post_actions as $post_action) {
+            if (
+                $post_action instanceof AddToTopBacklogValue &&
+                ! $planning_tracker_backlog_checker->isTrackerBacklogOfProjectRootPlanning(
+                    $tracker,
+                    $this->getCurrentUser(),
+                )
+            ) {
+                $message = dgettext(
+                    'tuleap-agiledashboard',
+                    'The post actions cannot be saved because this tracker not a top backlog tracker and a "AddToTopBacklog" is defined.'
+                );
+
+                $event->setErrorMessage($message);
+                $event->setPostActionsNonEligible();
+            }
+        }
+    }
+
+    public function getWorkflowExternalPostActionsValuesForUpdate(GetWorkflowExternalPostActionsValuesForUpdate $event): void
+    {
+        $project_id = (int) $event->getTransition()->getGroupId();
+        if (! (new ExplicitBacklogDao())->isProjectUsingExplicitBacklog($project_id)) {
+            return;
+        }
+
+        $add_to_top_backlog_post_actions = $this->getAddToTopBacklogPostActionFactory()->loadPostActions(
+            $event->getTransition()
+        );
+
+        if (count($add_to_top_backlog_post_actions) > 0) {
+            $event->addExternalValue(new AddToTopBacklogValue());
+        }
+    }
+
+    public function defaultTemplatesXMLFileCollection(DefaultTemplatesXMLFileCollection $collection): void
+    {
+        $this->addKanbanTemplates($collection);
+    }
+
+    private function addKanbanTemplates(DefaultTemplatesXMLFileCollection $collection): void
+    {
+        $collection->add(__DIR__ . '/../resources/templates/Tracker_activity.xml');
+    }
+
+    //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    public function service_is_used(array $params): void
+    {
+        if (! isset($params['shortname']) || ! isset($params['is_used'])) {
+            return;
+        }
+
+        $service_short_name = (string) $params['shortname'];
+        $service_is_used    = (bool) $params['is_used'];
+
+        if ($service_short_name !== $this->getServiceShortname() || ! $service_is_used) {
+            return;
+        }
+
+        $explicit_backlog_configuration_updater = $this->getExplicitBacklogConfigurationUpdater();
+
+        $project = ProjectManager::instance()->getProject((int) $params['group_id']);
+        $user    = UserManager::instance()->getCurrentUser();
+
+        $explicit_backlog_configuration_updater->activateExplicitBacklogManagement(
+            $project,
+            $user
+        );
+    }
+
+    private function getExplicitBacklogConfigurationUpdater(): ConfigurationUpdater
+    {
+        return new ConfigurationUpdater(
+            new ExplicitBacklogDao(),
+            new MilestoneReportCriterionDao(),
+            new AgileDashboard_BacklogItemDao(),
+            Planning_MilestoneFactory::build(),
+            new ArtifactsInExplicitBacklogDao(),
+            new UnplannedArtifactsAdder(
+                new ExplicitBacklogDao(),
+                new ArtifactsInExplicitBacklogDao(),
+                new PlannedArtifactDao()
+            ),
+            new AddToTopBacklogPostActionDao(),
+            new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection())
+        );
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,7 @@
 
 namespace Tuleap\Configuration\Apache;
 
-use Tuleap\Configuration\Logger\LoggerInterface;
+use Psr\Log\LoggerInterface;
 use Tuleap\Configuration\Logger\Wrapper;
 
 class BackendSVN
@@ -31,17 +31,15 @@ class BackendSVN
      * @var LoggerInterface
      */
     private $logger;
-    private $pidOne;
     /**
      * @var LogrotateDeployer
      */
     private $logrotate_deployer;
 
-    public function __construct(LoggerInterface $logger, $application_user, $pidOne, LogrotateDeployer $logrotate_deployer)
+    public function __construct(LoggerInterface $logger, $application_user, LogrotateDeployer $logrotate_deployer)
     {
         $this->application_user   = $application_user;
         $this->logger             = new Wrapper($logger, 'Apache');
-        $this->pidOne             = $pidOne;
         $this->logrotate_deployer = $logrotate_deployer;
     }
 
@@ -54,22 +52,22 @@ class BackendSVN
     private function apacheListenOnLocalAsApplicationUser()
     {
         if (file_exists('/etc/httpd/conf/httpd.conf.orig')) {
-            $this->logger->warn('/etc/httpd/conf/httpd.conf.orig already exists, skip apache configuration');
+            $this->logger->warning('/etc/httpd/conf/httpd.conf.orig already exists, skip apache configuration');
             return;
         }
         $this->backupOriginalFile('/etc/httpd/conf/httpd.conf');
         $httpd_conf = file_get_contents('/etc/httpd/conf/httpd.conf.orig');
 
-        $searches = array(
+        $searches = [
             'Listen 80',
             'User apache',
             'Group apache',
-        );
-        $replaces = array(
+        ];
+        $replaces = [
             'Listen 127.0.0.1:8080',
-            'User '.$this->application_user,
-            'Group '.$this->application_user,
-        );
+            'User ' . $this->application_user,
+            'Group ' . $this->application_user,
+        ];
 
         $conf = str_replace($searches, $replaces, $httpd_conf);
         file_put_contents('/etc/httpd/conf/httpd.conf', $conf);
@@ -78,8 +76,8 @@ class BackendSVN
 
     private function backupOriginalFile($file)
     {
-        if (! file_exists($file.'.orig')) {
-            copy($file, $file.'.orig');
+        if (! file_exists($file . '.orig')) {
+            copy($file, $file . '.orig');
         }
     }
 }

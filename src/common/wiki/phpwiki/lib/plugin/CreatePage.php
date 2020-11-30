@@ -35,17 +35,17 @@ rcs_id('$Id: CreatePage.php,v 1.7 2004/09/06 10:22:15 rurban Exp $');
  */
 class WikiPlugin_CreatePage extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("CreatePage");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Create a Wiki page by the provided name.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -54,31 +54,31 @@ class WikiPlugin_CreatePage extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('s'            => false,
+        return ['s'            => false,
                      'initial_content' => '',
                      'template'     => false,
                      'vars'         => false,
                      'overwrite'    => false,
                      //'buttontext' => false,
                      //'method'     => 'POST'
-                     );
+                     ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
-        if (!$s) {
+        if (! $s) {
             return '';
         }
         // Prevent spaces at the start and end of a page name
         $s = trim($s);
 
-        $param = array('action' => 'edit');
+        $param = ['action' => 'edit'];
         if ($template and $dbi->isWikiPage($template)) {
             $param['template'] = $template;
-        } elseif (!empty($initial_content)) {
+        } elseif (! empty($initial_content)) {
             // Warning! Potential URI overflow here on the GET redirect. Better use template.
             $param['initial_content'] = $initial_content;
         }
@@ -88,21 +88,23 @@ class WikiPlugin_CreatePage extends WikiPlugin
         //   http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.2.1
         $url = WikiURL($s, $param, 'absurl');
         // FIXME: expand vars in templates here.
-        if (strlen($url) > 255
-            or (!empty($vars) and !empty($param['template']))
-            or preg_match('/%%\w+%%/', $initial_content)) { // need variable expansion
+        if (
+            strlen($url) > 255
+            or (! empty($vars) and ! empty($param['template']))
+            or preg_match('/%%\w+%%/', $initial_content)
+        ) { // need variable expansion
             unset($param['initial_content']);
             $url = WikiURL($s, $param, 'absurl');
             $page = $dbi->getPage($s);
             $current = $page->getCurrentRevision();
             $version = $current->getVersion();
-            if ($version and !$overwrite) {
+            if ($version and ! $overwrite) {
                 return $this->error(fmt("%s already exists", WikiLink($s)));
             } else {
                 $user = $request->getUser();
-                $meta = array('markup' => 2.0,
-                              'author' => $user->getId());
-                if (!empty($param['template']) and !$initial_content) {
+                $meta = ['markup' => 2.0,
+                              'author' => $user->getId()];
+                if (! empty($param['template']) and ! $initial_content) {
                     $tmplpage = $dbi->getPage($template);
                     $currenttmpl = $tmplpage->getCurrentRevision();
                     $initial_content = $currenttmpl->getPackedContent();
@@ -111,8 +113,8 @@ class WikiPlugin_CreatePage extends WikiPlugin
                 $meta['summary'] = _("Created by CreatePage");
                 // expand variables in $initial_content
                 if (preg_match('/%%\w+%%/', $initial_content)) {
-                    $var = array();
-                    if (!empty($vars)) {
+                    $var = [];
+                    if (! empty($vars)) {
                         foreach (preg_split("/&/D", $vars) as $pair) {
                             list($key,$val) = preg_split("/=/D", $pair);
                             $var[$key] = $val;
@@ -135,12 +137,12 @@ class WikiPlugin_CreatePage extends WikiPlugin
                     unset($param['template']);
                     $url = WikiURL($s, $param, 'absurl');
                 }
-                $page->save($initial_content, $version+1, $meta);
+                $page->save($initial_content, $version + 1, $meta);
             }
         }
         return HTML($request->redirect($url, true));
     }
-};
+}
 
 // $Log: CreatePage.php,v $
 // Revision 1.7  2004/09/06 10:22:15  rurban

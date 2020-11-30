@@ -21,25 +21,30 @@
 
 <template>
     <div>
-        <i class="document-folder-icon-color fa fa-fw document-folder-toggle document-folder-content-icon"
-           v-bind:class="{ 'fa-caret-down': !is_closed, 'fa-caret-right': is_closed }"
-           v-on:click="toggle"
-           data-test="toggle"
+        <i
+            class="document-folder-icon-color fa fa-fw document-folder-toggle document-folder-content-icon"
+            v-bind:class="{ 'fa-caret-down': !is_closed, 'fa-caret-right': is_closed }"
+            v-on:click="toggle"
+            v-on:keyup.enter="toggle"
+            data-test="toggle"
+            tabindex="0"
         ></i>
-        <i class="document-folder-icon-color fa fa-fw document-folder-content-icon"
-           data-test="document-folder-icon-open"
-           v-bind:class="{
-               'fa-folder': is_closed,
-               'fa-folder-open': is_folder_open,
-               'fa-circle-o-notch fa-spin': is_loading
-           }"
+        <i
+            class="document-folder-icon-color fa fa-fw document-folder-content-icon"
+            data-test="document-folder-icon-open"
+            v-bind:class="{
+                'fa-folder': is_closed,
+                'fa-folder-open': is_folder_open,
+                'fa-circle-o-notch fa-spin': is_loading,
+            }"
         ></i>
-        <a v-on:click.prevent="goToFolder"
-           v-bind:href="folder_href"
-           class="document-folder-subitem-link"
-           data-test="document-go-to-folder-link"
+        <a
+            v-on:click.prevent="goToFolder"
+            v-bind:href="folder_href"
+            class="document-folder-subitem-link"
+            data-test="document-go-to-folder-link"
         >
-            {{ title }}
+            {{ item.title }}
         </a>
     </div>
 </template>
@@ -47,18 +52,17 @@
 <script>
 import { mapState, mapGetters } from "vuex";
 import { abortCurrentUploads } from "../../../helpers/abort-current-uploads.js";
-import { getTitleWithElipsisIfNeeded } from "../../../helpers/cell-title-formatter.js";
 
 export default {
     name: "FolderCellTitle",
     props: {
-        item: Object
+        item: Object,
     },
     data() {
         return {
             is_closed: true,
             is_loading: false,
-            have_children_been_loaded: false
+            have_children_been_loaded: false,
         };
     },
     computed: {
@@ -67,7 +71,7 @@ export default {
         folder_href() {
             const { href } = this.$router.resolve({
                 name: "folder",
-                params: { item_id: this.item.id }
+                params: { item_id: this.item.id },
             });
 
             return href;
@@ -78,16 +82,13 @@ export default {
         is_folded() {
             return this.folded_items_ids.includes(this.item.id);
         },
-        title() {
-            return getTitleWithElipsisIfNeeded(this.item);
-        },
         has_uploading_content() {
             const uploading_content = this.files_uploads_list.find(
-                file => file.parent_id === this.item.id && file.progress > 0
+                (file) => file.parent_id === this.item.id && file.progress > 0
             );
 
             return uploading_content;
-        }
+        },
     },
     mounted() {
         this.$store.commit("initializeFolderProperties", this.item);
@@ -130,14 +131,14 @@ export default {
                 this.$store.commit("foldFolderContent", this.item.id);
                 this.$store.commit("toggleCollapsedFolderHasUploadingContent", [
                     this.item,
-                    this.has_uploading_content
+                    this.has_uploading_content,
                 ]);
 
                 this.is_closed = true;
             }
 
             this.$store.dispatch("setUserPreferenciesForFolder", [this.item.id, this.is_closed]);
-        }
-    }
+        },
+    },
 };
 </script>

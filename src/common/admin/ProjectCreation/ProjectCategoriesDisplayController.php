@@ -27,7 +27,6 @@ use TroveCatDao;
 use Tuleap\Admin\AdminPageRenderer;
 use Tuleap\Admin\ProjectCreationNavBarPresenter;
 use Tuleap\Layout\BaseLayout;
-use Tuleap\Layout\CssAsset;
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
@@ -41,8 +40,6 @@ class ProjectCategoriesDisplayController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
      * @param array $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -54,8 +51,7 @@ class ProjectCategoriesDisplayController implements DispatchableWithRequest
             throw new ForbiddenException();
         }
 
-        $assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-        $include_assets = new IncludeAssets($assets_path, '/assets');
+        $include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets/core', '/assets/core');
 
         $layout->includeFooterJavascriptFile($include_assets->getFileURL('trovecat-admin.js'));
 
@@ -63,10 +59,10 @@ class ProjectCategoriesDisplayController implements DispatchableWithRequest
         $trove_dao = new TroveCatDao();
         $list_builder = new TroveCatHierarchyRetriever($trove_dao);
 
-        $last_parent    = array();
-        $already_seen   = array();
-        $trove_cat_list = array();
-        $hierarchy_ids  = array();
+        $last_parent    = [];
+        $already_seen   = [];
+        $trove_cat_list = [];
+        $hierarchy_ids  = [];
 
         $list_builder->retrieveFullHierarchy(0, $last_parent, $already_seen, $trove_cat_list, $hierarchy_ids);
 

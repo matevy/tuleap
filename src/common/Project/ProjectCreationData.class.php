@@ -18,11 +18,17 @@
  */
 
 use Tuleap\Project\DefaultProjectVisibilityRetriever;
+use Tuleap\Project\ProjectCreationDataServiceFromXmlInheritor;
 use Tuleap\Project\Registration\Template\TemplateFromProjectForCreation;
+use Tuleap\Project\XML\Import\ExternalFieldsExtractor;
 
 class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
 
+    /**
+     * @var bool
+     */
+    private $is_built_from_xml = false;
     private $logger;
     /**
      * @var DefaultProjectVisibilityRetriever
@@ -43,13 +49,14 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
     private $inherit_from_template = true;
     private $access;
 
-    public function __construct(DefaultProjectVisibilityRetriever $default_project_visibility_retriever, ?Logger $logger = null)
+    public function __construct(DefaultProjectVisibilityRetriever $default_project_visibility_retriever, ?\Psr\Log\LoggerInterface $logger = null)
     {
         if ($logger === null) {
-            $this->logger = new Log_NoopLogger();
+            $this->logger = new \Psr\Log\NullLogger();
         } else {
             $this->logger = new WrapperLogger($logger, self::class);
         }
+
         $this->default_project_visibility_retriever = $default_project_visibility_retriever;
     }
 
@@ -127,7 +134,7 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
      */
     public function getField($group_desc_id)
     {
-        if (!isset($this->data_fields['form_' . $group_desc_id])) {
+        if (! isset($this->data_fields['form_' . $group_desc_id])) {
             return null;
         }
         return $this->data_fields['form_' . $group_desc_id];
@@ -137,7 +144,7 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
      * @return array with:
      *     is_used => boolean telling if the service is used
      */
-    public function getServiceInfo($service_id)
+    public function getServiceInfo($service_id): ?array
     {
         return isset($this->data_services[$service_id]) ?
             $this->data_services[$service_id] :
@@ -167,7 +174,7 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
 
     private function fromForm(TemplateFromProjectForCreation $template_from_project_for_creation, array $data)
     {
-        $project = isset($data['project']) ? $data['project'] : array();
+        $project = isset($data['project']) ? $data['project'] : [];
 
         $this->unix_name           = isset($project['form_unix_name'])         ? $project['form_unix_name']         : null;
         $this->full_name           = isset($project['form_full_name'])         ? $project['form_full_name']         : null;
@@ -176,13 +183,13 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
         $this->is_test             = isset($project['is_test'])                ? $project['is_test']                : null;
         $this->setAccessFromProjectData($project);
         $this->trove_data          = isset($project['trove']) ? $project['trove'] : [];
-        $this->data_services       = isset($project['services'])               ? $project['services']               : array();
+        $this->data_services       = isset($project['services'])               ? $project['services']               : [];
         $this->data_fields         = $project;
     }
 
     private function getAccessFromProjectArrayData(array $project)
     {
-        if ((int) ForgeConfig::get('sys_user_can_choose_project_privacy') === 0) {
+        if ((int) ForgeConfig::get(ProjectManager::SYS_USER_CAN_CHOOSE_PROJECT_PRIVACY) === 0) {
             return $this->default_project_visibility_retriever->getDefaultProjectVisibility();
         }
 
@@ -201,7 +208,7 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
             return Project::ACCESS_PUBLIC;
         }
 
-        if ($are_restricted_enabled && !$should_project_allow_restricted) {
+        if ($are_restricted_enabled && ! $should_project_allow_restricted) {
             return Project::ACCESS_PRIVATE_WO_RESTRICTED;
         }
 
@@ -212,20 +219,23 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
         SimpleXMLElement $xml,
         ?XML_RNGValidator $xml_validator = null,
         ?ServiceManager $service_manager = null,
-        ?Logger $logger = null,
-        ?DefaultProjectVisibilityRetriever $default_project_visibility_retriever = null
+        ?\Psr\Log\LoggerInterface $logger = null,
+        ?DefaultProjectVisibilityRetriever $default_project_visibility_retriever = null,
+        ?ExternalFieldsExtractor $external_fields_extractor = null
     ) {
         $default_project_visibility_retriever = $default_project_visibility_retriever ?? new DefaultProjectVisibilityRetriever();
 
         $instance = new ProjectCreationData($default_project_visibility_retriever, $logger);
-        $instance->fromXML($xml, $xml_validator, $service_manager);
+        $instance->fromXML($xml, $xml_validator, $service_manager, $external_fields_extractor);
         return $instance;
     }
 
     private function fromXML(
         SimpleXMLElement $xml,
         ?XML_RNGValidator $xml_validator = null,
-        ?ServiceManager $service_manager = null
+        ?ServiceManager $service_manager = null,
+        ?ExternalFieldsExtractor $external_fields_extractor = null,
+        ?ProjectCreationDataServiceFromXmlInheritor $service_inheritor = null
     ) {
         if (empty($xml_validator)) {
             $xml_validator = new XML_RNGValidator();
@@ -233,10 +243,20 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
         if (empty($service_manager)) {
             $service_manager = ServiceManager::instance();
         }
+        if (empty($external_fields_extractor)) {
+            $external_fields_extractor = new ExternalFieldsExtractor(new EventManager());
+        }
+
+        if (empty($service_inheritor)) {
+            $service_inheritor = new ProjectCreationDataServiceFromXmlInheritor($service_manager);
+        }
 
         $this->logger->debug("Start import from XML, validate RNG");
-        $rng_path = realpath(dirname(__FILE__).'/../xml/resources/project/project.rng');
-        $xml_validator->validate($xml, $rng_path);
+        $rng_path = realpath(dirname(__FILE__) . '/../xml/resources/project/project.rng');
+
+        $partial_element = new SimpleXMLElement((string) $xml->asXML());
+        $external_fields_extractor->extractExternalFieldFromProjectElement($partial_element);
+        $xml_validator->validate($partial_element, $rng_path);
         $this->logger->debug("RNG validated, feed the data");
 
         $long_description_tagname = 'long-description';
@@ -247,11 +267,12 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
         $this->short_description   = (string) $attrs['description'];
         $this->built_from_template = TemplateFromProjectForCreation::fromGlobalProjectAdminTemplate();
         $this->is_test       = (bool) false;
-        $this->trove_data    = array();
-        $this->data_services = array();
-        $this->data_fields   = array(
-            'form_101' => (string)$xml->$long_description_tagname
-        );
+        $this->trove_data    = [];
+        $this->data_services = [];
+        $this->data_fields   = [
+            'form_101' => (string) $xml->$long_description_tagname
+        ];
+        $this->is_built_from_xml = true;
 
         switch ($attrs['access']) {
             case 'unrestricted':
@@ -277,43 +298,10 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
                 $this->access = $this->default_project_visibility_retriever->getDefaultProjectVisibility();
         }
 
-        $this->markUsedServicesFromXML($xml, $this->built_from_template->getProject(), $service_manager);
+        $this->data_services = $service_inheritor->markUsedServicesFromXML($xml, $this->built_from_template->getProject());
 
         $this->inherit_from_template = isset($attrs['inherit-from-template']) && (bool) $attrs['inherit-from-template'] === true;
         $this->logger->debug("Data gathered from XML");
-    }
-
-    /**
-     * Read the template and XML and mark services as being in use if they are
-     * allowed in the template and enabled in the XML.
-     */
-    private function markUsedServicesFromXML(
-        SimpleXMLElement $xml,
-        Project $template,
-        ServiceManager $service_manager
-    ) {
-        $services_by_name = array();
-        foreach ($service_manager->getListOfAllowedServicesForProject($template) as $service) {
-            $services_by_name[$service->getShortName()] = $service;
-        }
-
-        foreach ($xml->services->children() as $service) {
-            if (!($service instanceof SimpleXMLElement)) {
-                continue;
-            }
-            if ($service->getName() !== "service") {
-                continue;
-            }
-            $attrs   = $service->attributes();
-            $name    = (string) $attrs['shortname'];
-            $enabled = \Tuleap\XML\PHPCast::toBoolean($attrs['enabled']);
-            if (isset($services_by_name[$name])) {
-                $service_id = $services_by_name[$name]->getId();
-                $this->data_services[$service_id] = array(
-                    'is_used' => $enabled
-                );
-            }
-        }
     }
 
     public function unsetProjectServiceUsage($service_id)
@@ -338,10 +326,19 @@ class ProjectCreationData //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
     /**
      * @param array $project
      *
-     * @return string
      */
     public function setAccessFromProjectData(array $project): string
     {
         return $this->access = $this->getAccessFromProjectArrayData($project);
+    }
+
+    public function isIsBuiltFromXml(): bool
+    {
+        return $this->is_built_from_xml;
+    }
+
+    public function getDataServices(): ?array
+    {
+        return $this->data_services;
     }
 }

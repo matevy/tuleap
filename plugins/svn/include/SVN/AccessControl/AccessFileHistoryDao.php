@@ -25,37 +25,39 @@ use DataAccessObject;
 class AccessFileHistoryDao extends DataAccessObject
 {
 
-    public function create(AccessFileHistory $access_file)
+    /**
+     * @return false|int
+     */
+    public function create(int $version_number, int $repository_id, string $content, int $version_date)
     {
         $this->da->startTransaction();
 
-        $version_number = $this->da->escapeInt($access_file->getVersionNumber());
-        $repository_id  = $this->da->escapeInt($access_file->getRepository()->getId());
-        $content        = $this->da->quoteSmart($access_file->getContent());
-        $version_date   = $this->da->escapeInt($access_file->getVersionDate());
+        $version_number = $this->da->escapeInt($version_number);
+        $repository_id  = $this->da->escapeInt($repository_id);
+        $content        = $this->da->quoteSmart($content);
+        $version_date   = $this->da->escapeInt($version_date);
 
         $sql = "INSERT INTO plugin_svn_accessfile_history
                     (version_number, repository_id, content, version_date)
                   VALUES ($version_number, $repository_id, $content, $version_date)";
 
         $id = $this->updateAndGetLastId($sql);
-        if (!$id) {
+        if (! $id) {
             $this->rollBack();
-            return null;
+            return false;
         }
-        $access_file->setId($id);
 
         $sql = "UPDATE plugin_svn_repositories
                 SET accessfile_id = $id
                 WHERE id = $repository_id";
 
-        if (!$this->update($sql)) {
+        if (! $this->update($sql)) {
             $this->rollBack();
-            return null;
+            return false;
         }
 
         $this->commit();
-        return true;
+        return (int) $id;
     }
 
     public function searchByRepositoryId($repository_id)

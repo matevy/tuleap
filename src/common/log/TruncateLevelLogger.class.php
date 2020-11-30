@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,22 +18,24 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class TruncateLevelLogger implements Logger
+class TruncateLevelLogger implements \Psr\Log\LoggerInterface
 {
 
     /**
-     * @var Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
-    private $level_weight = array(
-        Logger::DEBUG => 0,
-        Logger::INFO  => 10,
-        Logger::WARN  => 20,
-        Logger::ERROR => 30,
-    );
+    private $level_weight = [
+        \Psr\Log\LogLevel::DEBUG => 0,
+        \Psr\Log\LogLevel::INFO  => 10,
+        \Psr\Log\LogLevel::WARNING  => 20,
+        \Psr\Log\LogLevel::ERROR => 30,
+    ];
 
-    public function __construct(Logger $logger, $level)
+    private $should_log;
+
+    public function __construct(\Psr\Log\LoggerInterface $logger, $level)
     {
         $this->logger = $logger;
         $this->setLevel($level);
@@ -41,63 +43,87 @@ class TruncateLevelLogger implements Logger
 
     private function setLevel($min_level)
     {
-        $min_weight = $this->level_weight[$min_level];
+        $min_weight = $this->level_weight[$min_level] ?? $this->level_weight[\Psr\Log\LogLevel::WARNING];
         foreach ($this->level_weight as $level_label => $weight) {
             $this->should_log[$level_label] = $weight >= $min_weight;
         }
     }
 
-    public function debug($message)
+    public function debug($message, array $context = [])
     {
-        if ($this->should_log[Logger::DEBUG]) {
-            $this->logger->debug($message);
+        if ($this->should_log[\Psr\Log\LogLevel::DEBUG]) {
+            $this->logger->debug($message, $context);
         }
     }
 
-    public function info($message)
+    public function info($message, array $context = [])
     {
-        if ($this->should_log[Logger::INFO]) {
-            $this->logger->info($message);
+        if ($this->should_log[\Psr\Log\LogLevel::INFO]) {
+            $this->logger->info($message, $context);
         }
     }
 
-    public function warn($message, ?Exception $exception = null)
+    public function warning($message, array $context = [])
     {
-        if ($this->should_log[Logger::WARN]) {
-            $this->logger->warn($message, $exception);
+        if ($this->should_log[\Psr\Log\LogLevel::WARNING]) {
+            $this->logger->warning($message, $context);
         }
     }
 
-    public function error($message, ?Exception $exception = null)
+    public function error($message, array $context = [])
     {
-        $this->logger->error($message, $exception);
+        $this->logger->error($message, $context);
     }
 
-    public function log($message, $level = null)
+    public function log($level, $message, array $context = [])
     {
         switch ($level) {
-            case Logger::DEBUG:
-                $this->debug($message);
+            case \Psr\Log\LogLevel::DEBUG:
+                $this->debug($message, $context);
                 break;
-            case Logger::INFO:
-                $this->info($message);
+            case \Psr\Log\LogLevel::NOTICE:
+                $this->notice($message, $context);
                 break;
-            case Logger::WARN:
-                $this->warn($message);
+            case \Psr\Log\LogLevel::INFO:
+                $this->info($message, $context);
                 break;
-            case Logger::ERROR:
-                $this->error($message);
+            case \Psr\Log\LogLevel::WARNING:
+                $this->warning($message, $context);
+                break;
+            case \Psr\Log\LogLevel::ERROR:
+                $this->error($message, $context);
+                break;
+            case \Psr\Log\LogLevel::CRITICAL:
+                $this->critical($message, $context);
+                break;
+            case \Psr\Log\LogLevel::ALERT:
+                $this->alert($message, $context);
+                break;
+            case \Psr\Log\LogLevel::EMERGENCY:
+                $this->emergency($message, $context);
                 break;
         }
     }
 
-    public function createLogFileForAppUser($file_path)
+    public function emergency($message, array $context = [])
     {
-        if (! is_file($file_path)) {
-            $http_user = ForgeConfig::get('sys_http_user');
-            touch($file_path);
-            chown($file_path, $http_user);
-            chgrp($file_path, $http_user);
+        $this->logger->emergency($message, $context);
+    }
+
+    public function alert($message, array $context = [])
+    {
+        $this->logger->alert($message, $context);
+    }
+
+    public function critical($message, array $context = [])
+    {
+        $this->logger->critical($message, $context);
+    }
+
+    public function notice($message, array $context = [])
+    {
+        if ($this->should_log[\Psr\Log\LogLevel::DEBUG]) {
+            $this->logger->notice($message, $context);
         }
     }
 }

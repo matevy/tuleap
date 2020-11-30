@@ -20,21 +20,24 @@
 
 namespace Tuleap\Git;
 
+use EventManager;
 use Git;
 use Git_LogDao;
 use GitPermissionsManager;
 use GitRepository;
 use GitRepositoryFactory;
-use Logger;
+use Psr\Log\LoggerInterface;
 use Project;
 use ProjectUGroup;
 use SimpleXMLElement;
-use System_Command;
+use Tuleap\Git\Events\XMLExportExternalContentEvent;
 use Tuleap\GitBundle;
 use Tuleap\Project\UGroups\InvalidUGroupException;
 use Tuleap\Project\XML\Export\ArchiveInterface;
 use UGroupManager;
 use UserManager;
+use UserXMLExporter;
+use XML_SimpleXMLCDATAFactory;
 
 class GitXmlExporter
 {
@@ -61,14 +64,9 @@ class GitXmlExporter
     private $repository_factory;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
-
-    /**
-     * @var System_Command
-     */
-    private $command;
     /**
      * @var GitBundle
      */
@@ -82,38 +80,44 @@ class GitXmlExporter
      */
     private $user_manager;
     /**
-     * @var \UserXMLExporter
+     * @var UserXMLExporter
      */
     private $user_exporter;
+
+    /**
+     * @var EventManager
+     */
+    private $event_manager;
 
     public function __construct(
         Project $project,
         GitPermissionsManager $permission_manager,
         UGroupManager $ugroup_manager,
         GitRepositoryFactory $repository_factory,
-        Logger $logger,
-        System_Command $command,
+        LoggerInterface $logger,
         GitBundle $git_bundle,
         Git_LogDao $git_log_dao,
         UserManager $user_manager,
-        \UserXMLExporter $user_exporter
+        UserXMLExporter $user_exporter,
+        EventManager $event_manager
     ) {
         $this->project            = $project;
         $this->permission_manager = $permission_manager;
         $this->ugroup_manager     = $ugroup_manager;
         $this->repository_factory = $repository_factory;
         $this->logger             = $logger;
-        $this->command            = $command;
         $this->git_bundle         = $git_bundle;
         $this->git_log_dao        = $git_log_dao;
         $this->user_manager       = $user_manager;
         $this->user_exporter      = $user_exporter;
+        $this->event_manager      = $event_manager;
     }
 
     public function exportToXml(SimpleXMLElement $xml_content, ArchiveInterface $archive, $temporary_dump_path_on_filesystem)
     {
         $root_node = $xml_content->addChild("git");
         $this->exportGitAdministrators($root_node);
+        $this->exportExternalGitAdministrationContent($root_node);
 
         $this->exportGitRepositories($root_node, $temporary_dump_path_on_filesystem, $archive);
     }
@@ -125,7 +129,8 @@ class GitXmlExporter
         $admin_ugroups = $this->permission_manager->getCurrentGitAdminUgroups($this->project->getId());
 
         foreach ($admin_ugroups as $ugroup) {
-            $root_node->addChild("ugroup", $this->getLabelForUgroup($ugroup));
+            $cdata = new XML_SimpleXMLCDATAFactory();
+            $cdata->insert($root_node, "ugroup", $this->getLabelForUgroup($ugroup));
         }
     }
 
@@ -144,6 +149,17 @@ class GitXmlExporter
             throw new InvalidUGroupException($ugroup);
         }
         return $ugroup_object->getTranslatedName();
+    }
+
+    private function exportExternalGitAdministrationContent(SimpleXMLElement $xml_content): void
+    {
+        $this->event_manager->processEvent(
+            new XMLExportExternalContentEvent(
+                $this->project,
+                $xml_content,
+                $this->logger
+            )
+        );
     }
 
     private function exportGitRepositories(
@@ -226,8 +242,9 @@ class GitXmlExporter
 
     private function exportPermission(SimpleXMLElement $xml_content, $permissions)
     {
+        $cdata = new XML_SimpleXMLCDATAFactory();
         foreach ($permissions as $permission) {
-            $xml_content->addChild("ugroup", $this->getLabelForUgroup($permission));
+            $cdata->insert($xml_content, "ugroup", $this->getLabelForUgroup($permission));
         }
     }
 }

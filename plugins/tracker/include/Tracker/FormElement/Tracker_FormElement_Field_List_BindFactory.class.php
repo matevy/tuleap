@@ -42,7 +42,7 @@ class Tracker_FormElement_Field_List_BindFactory
 
     private function getUgroupsValueDao()
     {
-        if (!$this->ugroups_value_dao) {
+        if (! $this->ugroups_value_dao) {
             $this->ugroups_value_dao = new Tracker_FormElement_Field_List_Bind_Ugroups_ValueDao();
         }
         return $this->ugroups_value_dao;
@@ -60,12 +60,12 @@ class Tracker_FormElement_Field_List_BindFactory
      */
     public function getBind($field, $type)
     {
-        $default_value = array();
+        $default_value = [];
         $dao = new Tracker_FormElement_Field_List_Bind_DefaultvalueDao();
         foreach ($dao->searchByFieldId($field->id) as $row) {
             $default_value[$row['value_id']] = true;
         }
-        $decorators = array();
+        $decorators = [];
         $dao = new Tracker_FormElement_Field_List_BindDecoratorDao();
         foreach ($dao->searchByFieldId($field->id) as $row) {
             $decorators[$row['value_id']] = new Tracker_FormElement_Field_List_BindDecorator(
@@ -83,7 +83,7 @@ class Tracker_FormElement_Field_List_BindFactory
             case self::STATIK:
                 $dao = new Tracker_FormElement_Field_List_Bind_StaticDao();
                 if ($row = $dao->searchByFieldId($field->id)->getRow()) {
-                    $values = array();
+                    $values = [];
                     $dao = new Tracker_FormElement_Field_List_Bind_Static_ValueDao();
                     foreach ($dao->searchByFieldId($field->id, $row['is_rank_alpha']) as $row_value) {
                         $values[$row_value['id']] = $this->getStaticValueInstance(
@@ -104,7 +104,7 @@ class Tracker_FormElement_Field_List_BindFactory
                 }
                 break;
             case self::UGROUPS:
-                $values = array();
+                $values = [];
                 foreach ($this->getUgroupsValueDao()->searchByFieldId($field->id) as $row_value) {
                     $values[$row_value['id']] = $this->getUgroupsValueInstance(
                         $row_value['id'],
@@ -116,7 +116,7 @@ class Tracker_FormElement_Field_List_BindFactory
                 $bind = new Tracker_FormElement_Field_List_Bind_Ugroups($field, array_filter($values), $default_value, $decorators, $this->ugroup_manager, $this->getUgroupsValueDao());
                 break;
             default:
-                trigger_error('Unknown bind "'. $type .'"', E_USER_WARNING);
+                trigger_error('Unknown bind "' . $type . '"', E_USER_WARNING);
                 break;
         }
         return $bind;
@@ -146,7 +146,6 @@ class Tracker_FormElement_Field_List_BindFactory
 
     private function _duplicate($from_field_id, $to_field_id, $by_reference)
     {
-
         //duplicate users info, if any
         $dao = new Tracker_FormElement_Field_List_Bind_UsersDao();
         $dao->duplicate($from_field_id, $to_field_id);
@@ -155,7 +154,7 @@ class Tracker_FormElement_Field_List_BindFactory
         $dao = new Tracker_FormElement_Field_List_Bind_StaticDao();
         $dao->duplicate($from_field_id, $to_field_id);
 
-        $value_mapping = array();
+        $value_mapping = [];
         //duplicate Static value, if any
         $dao = new Tracker_FormElement_Field_List_Bind_Static_ValueDao();
         foreach ($dao->searchByFieldId($from_field_id, 0) as $row) {
@@ -183,7 +182,7 @@ class Tracker_FormElement_Field_List_BindFactory
 
     /**
      * @param array the row allowing the construction of a bind
-     * @return Field_List_Bind Object
+     * @return Tracker_FormElement_Field_List_Bind Object
      */
     public function getInstanceFromRow($row)
     {
@@ -209,11 +208,11 @@ class Tracker_FormElement_Field_List_BindFactory
                     $row['values'],
                     $row['default_values'],
                     $row['decorators'],
-                    $this->ugroup_manager,
+                    $this->getUgroupManager(),
                     $this->getUgroupsValueDao()
                 );
             default:
-                trigger_error('Unknown bind "'. $row['type'] .'"', E_USER_WARNING);
+                trigger_error('Unknown bind "' . $row['type'] . '"', E_USER_WARNING);
                 return new Tracker_FormElement_Field_List_Bind_Null($row['field']);
         }
     }
@@ -225,22 +224,26 @@ class Tracker_FormElement_Field_List_BindFactory
      * @param Tracker_FormElement_Field $field       to which the bind is attached
      * @param array                     &$xmlMapping where the newly created formElements indexed by their XML IDs are stored
      *
-     * @return Tooltip Object
+     * @return Tracker_FormElement_Field_List_Bind Object
      */
     public function getInstanceFromXML(
-        $xml,
-        $field,
-        &$xmlMapping,
+        SimpleXMLElement $xml,
+        Tracker_FormElement_Field $field,
+        array &$xmlMapping,
         User\XML\Import\IFindUserFromXMLReference $user_finder
     ) {
-        $row = array('type' => (string)$xml['type'],
+        $row = ['type' => (string) $xml['type'],
                      'field' => $field,
                      'default_values' => null,
-                     'decorators' => null);
+                     'decorators' => null];
         if (isset($xml->decorators)) {
-            $row['decorators'] = array();
+            $row['decorators'] = [];
             foreach ($xml->decorators->decorator as $deco) {
-                $ID = (string)$deco['REF'];
+                if (isset($deco['REF'])) {
+                    $ID = (string) $deco['REF'];
+                } else {
+                    $ID = Tracker_FormElement_Field_List::NONE_VALUE;
+                }
                 $row['decorators'][$ID] = $this->getDecoratorInstance(
                     $field,
                     $ID,
@@ -251,21 +254,21 @@ class Tracker_FormElement_Field_List_BindFactory
                 );
             }
         }
-        $type = (string)$xml['type'];
+        $type = (string) $xml['type'];
         switch ($type) {
             case self::STATIK:
-                $row['is_rank_alpha'] = (int)$xml['is_rank_alpha'];
-                $values = array();
+                $row['is_rank_alpha'] = (int) $xml['is_rank_alpha'];
+                $values = [];
                 if ($xml->items->item) {
                     $i = 0;
                     foreach ($xml->items->item as $item) {
-                        $ID = (string)$item['ID'];
+                        $ID = (string) $item['ID'];
                         $description = '';
                         if (isset($item->description)) {
-                            $description = (string)$item->description;
+                            $description = (string) $item->description;
                         }
-                        $is_hidden = isset($item['is_hidden']) && (int)$item['is_hidden'] ? 1 : 0;
-                        $values[$ID] = $this->getStaticValueInstance($ID, (string)$item['label'], $description, $i++, $is_hidden);
+                        $is_hidden = isset($item['is_hidden']) && (int) $item['is_hidden'] ? 1 : 0;
+                        $values[$ID] = $this->getStaticValueInstance($ID, (string) $item['label'], $description, $i++, $is_hidden);
 
                         $xmlMapping[$ID] = $values[$ID];
                     }
@@ -274,23 +277,23 @@ class Tracker_FormElement_Field_List_BindFactory
                 break;
 
             case self::USERS:
-                $values = array();
+                $values = [];
                 if ($xml->items->item) {
                     foreach ($xml->items->item as $item) {
-                        $values[] = (string)$item['label'];
+                        $values[] = (string) $item['label'];
                     }
                 }
                 $row['value_function'] = implode(',', $values);
                 break;
 
             case self::UGROUPS:
-                $values = array();
+                $values = [];
                 if ($xml->items->item) {
                     foreach ($xml->items->item as $item) {
-                        $ugroup = $this->ugroup_manager->getUGroupByName($field->getTracker()->getProject(), (string)$item['label']);
+                        $ugroup = $this->getUgroupManager()->getUGroupByName($field->getTracker()->getProject(), (string) $item['label']);
                         if ($ugroup) {
-                            $ID              = (string)$item['ID'];
-                            $is_hidden       = isset($item['is_hidden']) && (int)$item['is_hidden'] ? 1 : 0;
+                            $ID              = (string) $item['ID'];
+                            $is_hidden       = isset($item['is_hidden']) && (int) $item['is_hidden'] ? 1 : 0;
                             $values[$ID]     = new Tracker_FormElement_Field_List_Bind_UgroupsValue($ID, $ugroup, $is_hidden);
                             $xmlMapping[$ID] = $values[$ID];
                         }
@@ -303,10 +306,10 @@ class Tracker_FormElement_Field_List_BindFactory
                 break;
         }
         if (isset($xml->default_values)) {
-            $row['default_values'] = array();
+            $row['default_values'] = [];
             foreach ($xml->default_values->value as $default_value) {
                 if (isset($default_value['REF'])) {
-                    $ID = (string)$default_value['REF'];
+                    $ID = (string) $default_value['REF'];
                     if (isset($xmlMapping[$ID])) {
                         $row['default_values'][$ID] = $xmlMapping[$ID];
                     }
@@ -328,7 +331,7 @@ class Tracker_FormElement_Field_List_BindFactory
      *
      * @return Tracker_FormElement_Field_List_Bind_StaticValue
      */
-    function getStaticValueInstance($id, $label, $description, $rank, $is_hidden)
+    public function getStaticValueInstance($id, $label, $description, $rank, $is_hidden)
     {
         return new Tracker_FormElement_Field_List_Bind_StaticValue($id, $label, $description, $rank, $is_hidden);
     }
@@ -351,7 +354,7 @@ class Tracker_FormElement_Field_List_BindFactory
      *
      * @return Tracker_FormElement_Field_List_BindDecorator
      */
-    function getDecoratorInstance($field, $id, $r, $g, $b, $tlp_color_name)
+    public function getDecoratorInstance($field, $id, $r, $g, $b, $tlp_color_name)
     {
         return new Tracker_FormElement_Field_List_BindDecorator(
             $field,
@@ -369,11 +372,11 @@ class Tracker_FormElement_Field_List_BindFactory
     public function fetchCreateABind($field)
     {
         $html = '';
-        $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'values').'</h3>';
+        $html .= '<h3>' . dgettext('tuleap-tracker', 'Values') . '</h3>';
         $html .= '<dl id="tracker-bind-factory">';
 
         $html .= '<dt class="tracker-bind-type">';
-        $h = new HTML_Element_Input_Radio($GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'choose_values'), 'formElement_data[bind-type]', self::STATIK, 'checked');
+        $h = new HTML_Element_Input_Radio(dgettext('tuleap-tracker', 'Choose values'), 'formElement_data[bind-type]', self::STATIK, 'checked');
         $h->addParam('autocomplete', 'off');
         $html .= $h->render();
         $html .= '</dt>';
@@ -383,7 +386,7 @@ class Tracker_FormElement_Field_List_BindFactory
         $html .= '</dd>';
 
         $html .= '<dt class="tracker-bind-type">';
-        $h = new HTML_Element_Input_Radio($GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'bind_to_users'), 'formElement_data[bind-type]', self::USERS, '');
+        $h = new HTML_Element_Input_Radio(dgettext('tuleap-tracker', 'Bind to users'), 'formElement_data[bind-type]', self::USERS, '');
         $h->addParam('autocomplete', 'off');
         $html .= $h->render();
         $html .= '</dt>';
@@ -393,7 +396,7 @@ class Tracker_FormElement_Field_List_BindFactory
         $html .= '</dd>';
 
         $html .= '<dt class="tracker-bind-type">';
-        $h = new HTML_Element_Input_Radio($GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'bind_to_ugroups'), 'formElement_data[bind-type]', self::UGROUPS, '');
+        $h = new HTML_Element_Input_Radio(dgettext('tuleap-tracker', 'Bind to user groups'), 'formElement_data[bind-type]', self::UGROUPS, '');
         $h->addParam('autocomplete', 'off');
         $html .= $h->render();
         $html .= '</dt>';
@@ -423,19 +426,19 @@ class Tracker_FormElement_Field_List_BindFactory
             case self::STATIK:
                 $dao = new Tracker_FormElement_Field_List_Bind_StaticDao();
                 if ($dao->save($field->getId(), 0)) {
-                    $bind = new Tracker_FormElement_Field_List_Bind_Static($field, 0, array(), array(), array());
+                    $bind = new Tracker_FormElement_Field_List_Bind_Static($field, 0, [], [], []);
                     $bind->process($bind_data, 'no redirect');
                 }
                 break;
             case self::USERS:
                 $dao = new Tracker_FormElement_Field_List_Bind_UsersDao();
-                if ($dao->save($field->getId(), array())) {
-                    $bind = new Tracker_FormElement_Field_List_Bind_Users($field, '', array(), array());
+                if ($dao->save($field->getId(), [])) {
+                    $bind = new Tracker_FormElement_Field_List_Bind_Users($field, '', [], []);
                     $bind->process($bind_data, 'no redirect');
                 }
                 break;
             case self::UGROUPS:
-                $bind = new Tracker_FormElement_Field_List_Bind_Ugroups($field, array(), array(), array(), $this->ugroup_manager, $this->getUgroupsValueDao());
+                $bind = new Tracker_FormElement_Field_List_Bind_Ugroups($field, [], [], [], $this->ugroup_manager, $this->getUgroupsValueDao());
                 $bind->process($bind_data, 'no redirect');
                 break;
             default:
@@ -450,5 +453,13 @@ class Tracker_FormElement_Field_List_BindFactory
                 (is_a($bind, 'Tracker_FormElement_Field_List_Bind_Users') ? self::USERS :
                     (is_a($bind, 'Tracker_FormElement_Field_List_Bind_Ugroups') ? self::UGROUPS : '')
                 );
+    }
+
+    /**
+     * for testing purpose
+     */
+    protected function getUgroupManager(): UGroupManager
+    {
+        return $this->ugroup_manager;
     }
 }

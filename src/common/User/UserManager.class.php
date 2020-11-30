@@ -20,8 +20,12 @@
  */
 
 use Tuleap\CookieManager;
+use Tuleap\Cryptography\ConcealedString;
 use Tuleap\Dashboard\User\AtUserCreationDefaultWidgetsCreator;
 use Tuleap\Dashboard\Widget\DashboardWidgetDao;
+use Tuleap\HelpDropdown\ReleaseNoteManager;
+use Tuleap\User\Account\AccountCreated;
+use Tuleap\User\Account\DisplaySecurityController;
 use Tuleap\User\ForgeUserGroupPermission\RESTReadOnlyAdmin\RestReadOnlyAdminPermission;
 use Tuleap\User\InvalidSessionException;
 use Tuleap\User\SessionManager;
@@ -39,9 +43,9 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public const SPECIAL_USERS_LIMIT = 100;
 
-    public $_users           = array(); // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
-    public $_userid_bynames  = array(); // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
-    public $_userid_byldapid = array(); // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
+    public $_users           = []; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
+    public $_userid_bynames  = []; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
+    public $_userid_byldapid = []; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
     private $_userdao         = null; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
     private $_currentuser     = null; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
@@ -62,7 +66,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public static function instance()
     {
-        if (!isset(self::$_instance)) {
+        if (! isset(self::$_instance)) {
             $userManager = self::class;
             self::$_instance = new $userManager(
                 new User_PendingUserNotifier()
@@ -111,10 +115,10 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getUserById($user_id)
     {
-        if (!isset($this->_users[$user_id])) {
+        if (! isset($this->_users[$user_id])) {
             if (is_numeric($user_id)) {
                 if ($user_id == 0) {
-                    $this->_users[$user_id] = $this->getUserInstanceFromRow(array('user_id' => 0));
+                    $this->_users[$user_id] = $this->getUserInstanceFromRow(['user_id' => 0]);
                 } else {
                     $u = $this->getUserByIdWithoutCache($user_id);
                     if ($u) {
@@ -169,7 +173,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getUserByUserName($user_name)
     {
-        if (!isset($this->_userid_bynames[$user_name])) {
+        if (! isset($this->_userid_bynames[$user_name])) {
             $dar = $this->getDao()->searchByUserName($user_name);
             if ($row = $dar->getRow()) {
                 $u = $this->getUserInstanceFromRow($row);
@@ -179,9 +183,10 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
                 $this->_userid_bynames[$user_name] = null;
             }
         }
-        $user = null;
-        if ($this->_userid_bynames[$user_name] !== null) {
-            $user = $this->_users[$this->_userid_bynames[$user_name]];
+        $user    = null;
+        $user_id = $this->_userid_bynames[$user_name];
+        if ($user_id !== null) {
+            $user = $this->_users[$user_id];
         }
         return $user;
     }
@@ -195,7 +200,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     {
         if (isset($row['user_id']) && $row['user_id'] < self::SPECIAL_USERS_LIMIT) {
             $user = null;
-            EventManager::instance()->processEvent(Event::USER_MANAGER_GET_USER_INSTANCE, array('row' => $row, 'user' => &$user));
+            EventManager::instance()->processEvent(Event::USER_MANAGER_GET_USER_INSTANCE, ['row' => $row, 'user' => &$user]);
             if ($user) {
                 return $user;
             }
@@ -205,14 +210,14 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
     /**
      * @param  string Ldap identifier
-     * @return PFUser or null if the user is not found
+     * @return PFUser|null null if the user is not found
      */
     public function getUserByLdapId($ldapId)
     {
         if ($ldapId == null) {
             return null;
         }
-        if (!isset($this->_userid_byldapid[$ldapId])) {
+        if (! isset($this->_userid_byldapid[$ldapId])) {
             $dar = $this->getDao()->searchByLdapId($ldapId);
             if ($row = $dar->getRow()) {
                 $u = $this->getUserInstanceFromRow($row);
@@ -222,9 +227,10 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
                 $this->_userid_byldapid[$ldapId] = null;
             }
         }
-        $user = null;
-        if ($this->_userid_byldapid[$ldapId] !== null) {
-            $user = $this->_users[$this->_userid_byldapid[$ldapId]];
+        $user    = null;
+        $user_id = $this->_userid_byldapid[$ldapId];
+        if ($user_id !== null) {
+            $user = $this->_users[$user_id];
         }
         return $user;
     }
@@ -234,7 +240,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      *
      * @param String $ident A user identifier
      *
-     * @return PFUser
+     * @return PFUser|null
      */
     public function findUser($ident)
     {
@@ -242,10 +248,10 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         if (! $ident) {
             return $user;
         }
-        $eParams = array('ident' => $ident,
-                         'user'  => &$user);
+        $eParams = ['ident' => $ident,
+                         'user'  => &$user];
         $this->_getEventManager()->processEvent('user_manager_find_user', $eParams);
-        if (!$user) {
+        if (! $user) {
             // No valid user found, try an internal lookup for username
             if (preg_match('/^(.*) \((.*)\)$/', $ident, $matches)) {
                 if (trim($matches[2]) != '') {
@@ -292,7 +298,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public function getUserIdsList($search)
     {
         $userArray = explode(',', $search);
-        $users = array();
+        $users = [];
         foreach ($userArray as $user) {
             $user = $this->findUser($user);
             if ($user) {
@@ -307,7 +313,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getPaginatedUsersByUsernameOrRealname($words, $exact, $offset, $limit)
     {
-        $users = array();
+        $users = [];
         foreach ($this->getDao()->searchGlobalPaginated($words, $exact, $offset, $limit) as $user) {
             $users[] = $this->getUserInstanceFromRow($user);
         }
@@ -328,10 +334,25 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         return $this->getUserCollectionByEmails([$email])->getUserByEmail($email);
     }
 
-    public function getAllUsersByEmail($email)
+    /**
+     * @return PFUser[]
+     */
+    public function getAllUsersByEmail($email): array
     {
-        $users = array();
+        $users = [];
         foreach ($this->getDao()->searchByEmail($email) as $user) {
+            $users[] = $this->getUserInstanceFromRow($user);
+        }
+        return $users;
+    }
+
+    /**
+     * @return PFUser[]
+     */
+    public function getAllUsersByLdapID(string $ldap_id): array
+    {
+        $users = [];
+        foreach ($this->getDao()->searchByLdapId($ldap_id) as $user) {
             $users[] = $this->getUserInstanceFromRow($user);
         }
         return $users;
@@ -360,7 +381,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      *
      * @param string $identifier User identifier
      *
-     * @return PFUser
+     * @return PFUser|null
      */
     public function getUserByIdentifier($identifier)
     {
@@ -368,12 +389,12 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
         $em = $this->_getEventManager();
         $tokenFoundInPlugins = false;
-        $params = array('identifier' => $identifier,
+        $params = ['identifier' => $identifier,
                         'user'       => &$user,
-                        'tokenFound' => &$tokenFoundInPlugins);
+                        'tokenFound' => &$tokenFoundInPlugins];
         $em->processEvent('user_manager_get_user_by_identifier', $params);
 
-        if (!$tokenFoundInPlugins) {
+        if (! $tokenFoundInPlugins) {
             // Guess identifier type
             $separatorPosition = strpos($identifier, ':');
             if ($separatorPosition === false) {
@@ -434,7 +455,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getCurrentUser($session_hash = false)
     {
-        if (!isset($this->_currentuser) || $session_hash !== false) {
+        if (! isset($this->_currentuser) || $session_hash !== false) {
             if ($session_hash === false) {
                 $session_hash = $this->getCookieManager()->getCookie('session_hash');
             }
@@ -462,7 +483,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
             if (! isset($this->_currentuser)) {
                 //No valid session_hash/ip found. User is anonymous
-                $this->_currentuser = $this->getUserInstanceFromRow(array('user_id' => 0));
+                $this->_currentuser = $this->getUserInstanceFromRow(['user_id' => 0]);
             }
             //cache the user
             $this->_users[$this->_currentuser->getId()] = $this->_currentuser;
@@ -476,7 +497,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getUsersWithSshKey()
     {
-        return $this->getDao()->searchSSHKeys()->instanciateWith(array($this, 'getUserInstanceFromRow'));
+        return $this->getDao()->searchSSHKeys()->instanciateWith([$this, 'getUserInstanceFromRow']);
     }
 
     /**
@@ -484,7 +505,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getPaginatedUsersWithSshKey($offset, $limit)
     {
-        $users = array();
+        $users = [];
         foreach ($this->getDao()->searchPaginatedSSHKeys($offset, $limit) as $user) {
             $users[] = $this->getUserInstanceFromRow($user);
         }
@@ -518,7 +539,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      *
      * @param PFUser $user
      *
-     * @return Array
+     * @return array{last_auth_success: string, last_auth_failure: string, nb_auth_failure: string, prev_auth_success: string}
      */
     public function getUserAccessInfo($user)
     {
@@ -530,11 +551,11 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      *
      * @deprected
      * @param $name string The login name submitted by the user
-     * @param $pwd string The password submitted by the user
+     * @param ConcealedString $pwd The password submitted by the user
      * @param $allowpending boolean True if pending users are allowed (for verify.php). Default is false
      * @return PFUser Registered user or anonymous if the authentication failed
      */
-    public function login($name, $pwd, $allowpending = false)
+    public function login($name, ConcealedString $pwd, $allowpending = false)
     {
         try {
             $password_expiration_checker = new User_PasswordExpirationChecker();
@@ -572,7 +593,16 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
         } catch (User_PasswordExpiredException $exception) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
-            $GLOBALS['Response']->redirect('/account/change_pw.php?user_id=' . $exception->getUser()->getId());
+            $GLOBALS['Response']->redirect(DisplaySecurityController::URL);
+        } catch (User_StatusSuspendedException $exception) {
+            $GLOBALS['Response']->addFeedback(
+                Feedback::ERROR,
+                sprintf(
+                    _('Your account has been suspended. If you have questions regarding your suspension, please email <a href="mailto:%s">the site administrators</a>.'),
+                    ForgeConfig::get('sys_email_admin')
+                ),
+                CODENDI_PURIFIER_LIGHT
+            );
         } catch (User_StatusInvalidException $exception) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $exception->getMessage());
         } catch (SessionNotCreatedException $exception) {
@@ -590,10 +620,10 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     private function createAnonymousUser()
     {
-        return $this->_getUserInstanceFromRow(array('user_id' => 0));
+        return $this->_getUserInstanceFromRow(['user_id' => 0]);
     }
 
-    private function openWebSession(PFUser $user)
+    private function openWebSession(PFUser $user): void
     {
         $session_manager    = $this->getSessionManager();
         $request            = HTTPRequest::instance();
@@ -604,6 +634,8 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
             $session_identifier,
             $this->getExpireTimestamp($user)
         );
+
+        $this->markReleaseNoteAsSeenTheFirstTimeTheWebSessionIsOpened($user);
     }
 
     private function getExpireTimestamp(PFUser $user)
@@ -640,7 +672,6 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      * error. Moreover, in case of errors, messages are displayed as warning
      * instead of info.
      *
-     * @param PFUser $user
      */
     private function warnUserAboutAuthenticationAttempts(PFUser $user)
     {
@@ -650,10 +681,6 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
             $level = 'warning';
             $GLOBALS['Response']->addFeedback($level, $GLOBALS['Language']->getText('include_menu', 'auth_last_failure') . ' ' . format_date($GLOBALS['Language']->getText('system', 'datefmt'), $access_info['last_auth_failure']));
             $GLOBALS['Response']->addFeedback($level, $GLOBALS['Language']->getText('include_menu', 'auth_nb_failure') . ' ' . $access_info['nb_auth_failure']);
-        }
-        // Display nothing if no previous record.
-        if ($access_info['last_auth_success'] > 0) {
-            $GLOBALS['Response']->addFeedback($level, $GLOBALS['Language']->getText('include_menu', 'auth_prev_success') . ' ' . format_date($GLOBALS['Language']->getText('system', 'datefmt'), $access_info['last_auth_success']));
         }
     }
 
@@ -672,10 +699,18 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         }
     }
 
+    private function markReleaseNoteAsSeenTheFirstTimeTheWebSessionIsOpened(PFUser $user): void
+    {
+        $access_info = $this->getUserAccessInfo($user);
+        if ($access_info['last_auth_success'] === '0') {
+            $user->setPreference(ReleaseNoteManager::USER_PREFERENCE_NAME_RELEASE_NOTE_SEEN, '1');
+        }
+    }
+
     /**
     * loginAs allows the siteadmin to log as someone else
     *
-    * @param string $username
+    * @param string $name
     *
     * @return string a session hash
     */
@@ -686,7 +721,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         }
 
         $user_login_as = $this->findUser($name);
-        if (!$user_login_as) {
+        if (! $user_login_as) {
             throw new UserNotExistException();
         }
         $status_manager = new User_UserStatusManager();
@@ -703,7 +738,6 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Open a session for user
      *
-     * @param PFUser $user
      * @return type
      * @throws UserNotExistException
      * @throws UserNotActiveException
@@ -711,7 +745,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function openSessionForUser(PFUser $user)
     {
-        if (!$user) {
+        if (! $user) {
             throw new UserNotExistException();
         }
         try {
@@ -739,7 +773,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function forceLogin($name)
     {
-        if (!IS_SCRIPT) {
+        if (! IS_SCRIPT) {
             throw new Exception("Can't log in the user when not is script");
         }
 
@@ -747,7 +781,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         if ($row = $this->getDao()->searchByUserName($name)->getRow()) {
             $this->_currentuser = $this->getUserInstanceFromRow($row);
         } else {
-            $this->_currentuser = $this->getUserInstanceFromRow(array('user_id' => 0));
+            $this->_currentuser = $this->getUserInstanceFromRow(['user_id' => 0]);
         }
 
         //cache the user
@@ -813,22 +847,26 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
     protected function _getPasswordLifetime() // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
     {
-        return $GLOBALS['sys_password_lifetime'];
+        return ForgeConfig::get('sys_password_lifetime');
     }
 
     /**
      * Update db entry of 'user' table with values in object
-     * @param PFUser $user
      */
     public function updateDb(PFUser $user)
     {
-        if (!$user->isAnonymous()) {
+        if (! $user->isAnonymous()) {
             $old_user = $this->getUserByIdWithoutCache($user->getId());
             $userRow = $user->toRow();
-            if ($user->getPassword() != '') {
+            $user_password = $user->getPassword();
+            if ($user_password !== null) {
+                $user_password_hash = $user->getUserPw();
                 $password_handler = PasswordHandlerFactory::getPasswordHandler();
-                if (!$password_handler->verifyHashPassword($user->getPassword(), $user->getUserPw()) ||
-                        $password_handler->isPasswordNeedRehash($user->getUserPw())) {
+                if (
+                    $user_password_hash === null ||
+                    ! $password_handler->verifyHashPassword($user_password, $user_password_hash) ||
+                        $password_handler->isPasswordNeedRehash($user_password_hash)
+                ) {
                     // Update password
                     $userRow['clear_password'] = $user->getPassword();
                 }
@@ -842,7 +880,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
                     $session_manager = $this->getSessionManager();
                     $session_manager->destroyAllSessions($user);
                 }
-                $this->_getEventManager()->processEvent(Event::USER_MANAGER_UPDATE_DB, array('old_user' => $old_user, 'new_user' => &$user));
+                $this->_getEventManager()->processEvent(Event::USER_MANAGER_UPDATE_DB, ['old_user' => $old_user, 'new_user' => &$user]);
             }
             return $result;
         }
@@ -884,7 +922,6 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      * Should probably be merged with updateDb but I don't know the impact of
      * validating keys each time we update a user
      *
-     * @param PFUser $user
      * @param string[] $keys
      */
     public function updateUserSSHKeys(PFUser $user, array $keys)
@@ -896,10 +933,10 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         if ($this->updateDb($user)) {
             $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('account_editsshkeys', 'update_filesystem'));
 
-            $event_parameters = array(
+            $event_parameters = [
                 'user_id'       => $user->getId(),
                 'original_keys' => $original_authorised_keys,
-            );
+            ];
 
             $this->_getEventManager()->processEvent(Event::EDIT_SSH_KEYS, $event_parameters);
         }
@@ -930,12 +967,8 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
     /**
      * Create new account
-     *
-     * @param PFUser $user
-     *
-     * @return PFUser
      */
-    public function createAccount($user)
+    public function createAccount(PFUser $user): ?PFUser
     {
         $dao = $this->getDao();
         $user_id = $dao->create(
@@ -955,23 +988,23 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
             $user->getMailSiteUpdates(),
             $user->getMailVA(),
             $user->getStickyLogin(),
-            $user->getAuthorizedKeys(),
+            $user->getAuthorizedKeysRaw(),
             $user->getNewMail(),
             $user->getTimezone(),
             $user->getLanguageID(),
             $user->getExpiryDate(),
             $_SERVER['REQUEST_TIME']
         );
-        if (!$user_id) {
+        if (! $user_id) {
             $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('include_exit', 'error'));
-            return 0;
+            return null;
         } else {
             $user->setId($user_id);
             $this->assignNextUnixUid($user);
 
             $em = $this->_getEventManager();
 
-            $em->processEvent(Event::USER_MANAGER_CREATE_ACCOUNT, array('user' => $user));
+            $em->dispatch(new AccountCreated($user));
 
             $this->getDefaultWidgetCreator()->createDefaultDashboard($user);
 
@@ -983,7 +1016,7 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
                     break;
                 case PFUser::STATUS_ACTIVE:
                 case PFUser::STATUS_RESTRICTED:
-                    $em->processEvent('project_admin_activate_user', array('user_id' => $user_id));
+                    $em->processEvent('project_admin_activate_user', ['user_id' => $user_id]);
                     break;
             }
 
@@ -1007,7 +1040,6 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
             new DashboardWidgetDao(
                 $factory
             ),
-            $factory,
             EventManager::instance()
         );
     }
@@ -1021,65 +1053,6 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         return new User_ForgeUserGroupPermissionsManager(
             new User_ForgeUserGroupPermissionsDao()
         );
-    }
-
-    /**
-     * Check user account validity against several rules
-     * - Account expiry date
-     * - Last user access
-     * - User not member of a project
-     */
-    public function checkUserAccountValidity()
-    {
-        // All rules applies at midnight
-        $current_date = format_date('Y-m-d', $_SERVER['REQUEST_TIME']);
-        $date_list    = explode("-", $current_date, 3);
-        $midnightTime = mktime(0, 0, 0, $date_list[1], $date_list[2], $date_list[0]);
-
-        $this->suspendExpiredAccounts($midnightTime);
-        $this->suspendInactiveAccounts($midnightTime);
-        $this->suspendUserNotProjectMembers($midnightTime);
-    }
-
-    /**
-     * Change account status to suspended when the account expiry date is passed
-     *
-     * @param int $time Timestamp of the date when this apply
-     *
-     * @return bool
-     */
-    private function suspendExpiredAccounts($time)
-    {
-        return $this->getDao()->suspendExpiredAccounts($time);
-    }
-
-    /**
-     * Suspend accounts that without activity since date defined in configuration
-     *
-     * @param int $time Timestamp of the date when this apply
-     *
-     * @return bool
-     */
-    public function suspendInactiveAccounts($time)
-    {
-        if (isset($GLOBALS['sys_suspend_inactive_accounts_delay']) && $GLOBALS['sys_suspend_inactive_accounts_delay'] > 0) {
-            $lastValidAccess = $time - ($GLOBALS['sys_suspend_inactive_accounts_delay'] * 24 * 3600);
-            return $this->getDao()->suspendInactiveAccounts($lastValidAccess);
-        }
-        return true;
-    }
-
-    /**
-     * Change account status to suspended when user is no more member of any project
-     * @return bool
-     *
-     */
-    public function suspendUserNotProjectMembers($time)
-    {
-        if (isset($GLOBALS['sys_suspend_non_project_member_delay']) && $GLOBALS['sys_suspend_non_project_member_delay'] > 0) {
-            $lastRemove = $time - ($GLOBALS['sys_suspend_non_project_member_delay'] * 24 * 3600);
-            return $this->getDao()->suspendUserNotProjectMembers($lastRemove);
-        }
     }
 
     /**
@@ -1105,10 +1078,5 @@ class UserManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     {
         $dao = $this->getDao();
         $dao->removeConfirmHash($confirm_hash);
-    }
-
-    public function setEmailChangeConfirm($user_id, $confirm_hash, $email_new)
-    {
-        return $this->getDao()->setEmailChangeConfirm($user_id, $confirm_hash, $email_new);
     }
 }

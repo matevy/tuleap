@@ -23,13 +23,13 @@ use Tuleap\Tracker\Hierarchy\HierarchyDAO;
 
 class TrackerDao extends DataAccessObject
 {
-    function __construct()
+    public function __construct()
     {
         parent::__construct();
         $this->table_name = 'tracker';
     }
 
-    function searchById($id)
+    public function searchById($id)
     {
         $id      = $this->da->escapeInt($id);
         $sql = "SELECT *
@@ -38,7 +38,7 @@ class TrackerDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function searchByGroupId($group_id)
+    public function searchByGroupId($group_id)
     {
         $group_id = $this->da->escapeInt($group_id);
         $sql = "SELECT *
@@ -95,8 +95,8 @@ class TrackerDao extends DataAccessObject
                 WHERE item_name = $item_name
                   AND group_id = $group_id
                   AND deletion_date IS NULL
-                ".$search_tv3;
-        return count($this->retrieve($sql));
+                " . $search_tv3;
+        return count($this->retrieve($sql))  > 0;
     }
 
    /**
@@ -118,6 +118,20 @@ class TrackerDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
+    public function doesTrackerNameAlreadyExist(string $public_name, int $project_id): bool
+    {
+        $public_name = $this->da->quoteSmart($public_name);
+        $project_id = $this->da->escapeInt($project_id);
+
+        $sql = "SELECT *
+                FROM tracker
+                WHERE name = $public_name
+                  AND group_id = $project_id
+                  AND deletion_date IS NULL";
+        $res = $this->retrieve($sql);
+        return $res && count($res) > 0;
+    }
+
     public function markAsDeleted($id)
     {
         $id = $this->da->escapeInt($id);
@@ -135,7 +149,7 @@ class TrackerDao extends DataAccessObject
         }
     }
 
-    function duplicate($atid_template, $group_id, $name, $description, $item_name)
+    public function duplicate($atid_template, $group_id, $name, $description, $item_name, ?string $color)
     {
         $atid_template = $this->da->escapeInt($atid_template);
         $group_id      = $this->da->escapeInt($group_id);
@@ -144,8 +158,12 @@ class TrackerDao extends DataAccessObject
         $item_name     = $this->da->quoteSmart($item_name);
 
         $id_sharing = new TrackerIdSharingDao();
-        if ($id = $id_sharing->generateTrackerId()) {
-            $sql = "INSERT INTO $this->table_name
+        $id         = $id_sharing->generateTrackerId();
+        if (! $id) {
+            return false;
+        }
+
+        $insert = "INSERT INTO tracker
                        (id,
                         group_id,
                         name,
@@ -160,7 +178,28 @@ class TrackerDao extends DataAccessObject
                         notifications_level,
                         color,
                         enable_emailgateway)
-                    SELECT
+                    ";
+        if ($color) {
+            $color_name  = $this->da->quoteSmart($color);
+            $from_select = "SELECT
+                        $id,
+                        $group_id,
+                        $name,
+                        $description,
+                        $item_name,
+                        1,
+                        log_priority_changes,
+                        allow_copy,
+                        submit_instructions,
+                        browse_instructions,
+                        status,
+                        notifications_level,
+                        $color_name,
+                        enable_emailgateway
+                    FROM tracker
+                    WHERE id = $atid_template";
+        } else {
+            $from_select = "SELECT
                         $id,
                         $group_id,
                         $name,
@@ -175,16 +214,19 @@ class TrackerDao extends DataAccessObject
                         notifications_level,
                         color,
                         enable_emailgateway
-                    FROM $this->table_name
+                    FROM tracker
                     WHERE id = $atid_template";
-            if ($this->update($sql)) {
-                return $id;
-            }
         }
+
+        $sql = $insert . $from_select;
+        if ($this->update($sql)) {
+            return $id;
+        }
+
         return false;
     }
 
-    function create(
+    public function create(
         $group_id,
         $name,
         $description,
@@ -255,7 +297,7 @@ class TrackerDao extends DataAccessObject
         return false;
     }
 
-    function save(Tracker $tracker)
+    public function save(Tracker $tracker)
     {
         $id                  = $this->da->escapeInt($tracker->id);
         $group_id                     = $this->da->escapeInt($tracker->group_id);
@@ -291,17 +333,17 @@ class TrackerDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function delete($id)
+    public function delete($id)
     {
-        $sql = "DELETE FROM $this->table_name WHERE id = ". $this->da->escapeInt($id);
+        $sql = "DELETE FROM $this->table_name WHERE id = " . $this->da->escapeInt($id);
         return $this->update($sql);
     }
 
     public function updateItemName($group_id, $oldItemname, $itemname)
     {
         $group_id = $this->da->quoteSmart($group_id);
-        $itemname= $this->da->quoteSmart($itemname);
-        $oldItemname= $this->da->quoteSmart($oldItemname);
+        $itemname = $this->da->quoteSmart($itemname);
+        $oldItemname = $this->da->quoteSmart($oldItemname);
         $sql = "UPDATE $this->table_name SET
 			item_name=$itemname
             WHERE item_name=$oldItemname AND group_id=$group_id";
@@ -310,7 +352,7 @@ class TrackerDao extends DataAccessObject
 
     private function restrict($restriction_clause, $excluded_tracker_ids)
     {
-        if (!$excluded_tracker_ids) {
+        if (! $excluded_tracker_ids) {
             return "";
         }
         $id_enumeration = implode(',', $excluded_tracker_ids);

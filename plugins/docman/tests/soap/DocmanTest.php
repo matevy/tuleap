@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-require_once __DIR__ .'/../bootstrap.php';
+require_once __DIR__ . '/../bootstrap.php';
 
 /**
  * @group DocmanTest
@@ -28,7 +28,7 @@ class DocmanTest extends SOAPBase
     private $content    = 'Content of the file';
     private $content_v2 = 'Updated content of the file';
 
-    public function setUp() : void
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -37,7 +37,7 @@ class DocmanTest extends SOAPBase
         $_SERVER['SCRIPT_NAME'] = $this->base_wsdl;
     }
 
-    public function tearDown() : void
+    public function tearDown(): void
     {
         unset($_SERVER['SERVER_NAME']);
         unset($_SERVER['SERVER_PORT']);
@@ -78,8 +78,8 @@ class DocmanTest extends SOAPBase
             'end',
             null,
             null,
-            array(),
-            array(),
+            [],
+            [],
             strlen($this->content),
             'file.txt',
             'text/plain',
@@ -153,7 +153,7 @@ class DocmanTest extends SOAPBase
      * @depends testGetDocumentRootFolder
      * @param $root_folder_id
      */
-    public function testCreateFileWithTheWrongSizeFail($root_folder_id) : void
+    public function testCreateFileWithTheWrongSizeFail($root_folder_id): void
     {
         $session_hash = $this->getSessionHash();
 
@@ -168,8 +168,8 @@ class DocmanTest extends SOAPBase
             'end',
             null,
             null,
-            array(),
-            array(),
+            [],
+            [],
             strlen($this->content) + 10,
             'filefail.txt',
             'text/plain',
@@ -221,8 +221,8 @@ class DocmanTest extends SOAPBase
         $description = 'My Folder';
         $ordering    = 'begin';
         $status      = 'approved';
-        $permissions = array();
-        $metadata    = array();
+        $permissions = [];
+        $metadata    = [];
         $owner       = SOAP_TestDataBuilder::TEST_USER_1_NAME;
         $create_date = '1438953065';
         $update_date = '';
@@ -259,8 +259,8 @@ class DocmanTest extends SOAPBase
         $description = 'My Folder';
         $ordering    = 'begin';
         $status      = 'approved';
-        $permissions = array();
-        $metadata    = array();
+        $permissions = [];
+        $metadata    = [];
         $owner       = SOAP_TestDataBuilder::TEST_USER_1_NAME;
         $create_date = '1438953065';
         $update_date = '';

@@ -71,7 +71,7 @@ class ProjectLabeledItems extends Widget
         parent::__construct(self::NAME);
 
         $this->renderer = \TemplateRendererFactory::build()->getRenderer(
-            LABEL_BASE_DIR . '/templates/widgets'
+            __DIR__ . '/../../../templates/widgets'
         );
 
         $this->dao = new Dao();
@@ -103,7 +103,7 @@ class ProjectLabeledItems extends Widget
         return Codendi_HTMLPurifier::instance()->purify(
             $this->renderer->renderToString(
                 'project-labeled-items-config',
-                array('labels' => $config_labels)
+                ['labels' => $config_labels]
             ),
             CODENDI_PURIFIER_FULL
         );
@@ -148,7 +148,7 @@ class ProjectLabeledItems extends Widget
 
     public function getInstallPreferences()
     {
-        $selected_labels = array();
+        $selected_labels = [];
         $project_id      = $this->getProject()->getID();
 
         return $this->renderer->renderToString(
@@ -244,13 +244,9 @@ class ProjectLabeledItems extends Widget
         $this->dao->removeLabelByContentId($id);
     }
 
-    public function getJavascriptDependencies()
+    public function getJavascriptDependencies(): array
     {
-        $labeled_items_include_assets = new IncludeAssets(
-            __DIR__ . '/../../../www/assets',
-            LABEL_BASE_URL . '/assets'
-        );
-
+        $labeled_items_include_assets = $this->getAssets();
         return [
             [
                 'file' => $labeled_items_include_assets->getFileURL('widget-project-labeled-items.js'),
@@ -259,6 +255,19 @@ class ProjectLabeledItems extends Widget
                 'file' => $labeled_items_include_assets->getFileURL('configure-widget.js')
             ]
         ];
+    }
+
+    public function getStylesheetDependencies(): CssAssetCollection
+    {
+        return new CssAssetCollection([new CssAsset($this->getAssets(), 'style')]);
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../../../src/www/assets/label',
+            '/assets/label'
+        );
     }
 
     /**
@@ -272,12 +281,12 @@ class ProjectLabeledItems extends Widget
     public function cloneContent(
         Project $template_project,
         Project $new_project,
-        $template_content_id,
+        $id,
         $owner_id,
         $owner_type
     ) {
         $this->storeContentId();
-        $this->duplicateContent($template_project, $new_project, $template_content_id);
+        $this->duplicateContent($template_project, $new_project, $id);
 
         return $this->content_id;
     }

@@ -21,7 +21,6 @@
 class Tracker_XML_Updater_FieldChange_FieldChangeOpenListXMLUpdater extends Tracker_XML_Updater_FieldChange_FieldChangeListXMLUpdater
 {
      /**
-     * @param SimpleXMLElement $field_change_xml
      * @param string            $submitted_value
      */
     public function update(SimpleXMLElement $field_change_xml, $submitted_value)
@@ -32,7 +31,7 @@ class Tracker_XML_Updater_FieldChange_FieldChangeOpenListXMLUpdater extends Trac
 
         array_walk(
             $submitted_value,
-            array($this, 'appendValuesToFieldChangeNode'),
+            [$this, 'appendValuesToFieldChangeNode'],
             $field_change_xml
         );
     }

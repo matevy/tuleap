@@ -2,28 +2,18 @@
 
 set -euxo pipefail
 
-if [ -z "$MYSQL_DAEMON" ]; then
-    MYSQL_DAEMON=mysqld
-fi
-
-if [ -z "$FPM_DAEMON" ]; then
-    echo 'FPM_DAEMON environment variable must be specified' 1>&2
+if [ -z "${PHP_FPM:-}" ]; then
+    echo 'PHP_FPM environment variable must be specified' 1>&2
     exit 1
 fi
 
-if [ -z "$PHP_CLI" ]; then
+if [ -z "${PHP_CLI:-}" ]; then
     echo 'PHP_CLI environment variable must be specified' 1>&2
     exit 1
 fi
 
 setup_tuleap() {
     echo "Setup Tuleap"
-    cat /usr/share/tuleap/src/etc/database.inc.dist | \
-        sed \
-	     -e "s/%sys_dbname%/tuleap/" \
-	     -e "s/%sys_dbuser%/tuleapadm/" \
-	     -e "s/%sys_dbpasswd%/welcome0/" > /etc/tuleap/conf/database.inc
-    chgrp runner /etc/tuleap/conf/database.inc
 
     cat /usr/share/tuleap/src/etc/local.inc.dist | \
 	sed \
@@ -40,9 +30,6 @@ setup_tuleap() {
 	-e 's#/home/groups##' \
 	> /etc/tuleap/conf/local.inc
 
-	cp /usr/share/tuleap/src/utils/svn/Tuleap.pm /usr/share/perl5/vendor_perl/Apache/Tuleap.pm
-	install -m 04755 -o root -g root /usr/share/tuleap/src/utils/fileforge.pl /usr/lib/tuleap/bin/fileforge
-
 	install -m 00755 -o codendiadm -g codendiadm /usr/share/tuleap/src/utils/tuleap /usr/bin/tuleap
 	ln -s /usr/share/tuleap/src/tuleap-cfg/tuleap-cfg.php /usr/bin/tuleap-cfg
 
@@ -50,36 +37,34 @@ setup_tuleap() {
 }
 
 setup_database() {
-    MYSQL_HOST=localhost
     MYSQL_USER=tuleapadm
     MYSQL_PASSWORD=welcome0
     MYSQL_DBNAME=tuleap
-    MYSQL="mysql -h$MYSQL_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD"
+    MYSQL="mysql -h$DB_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD"
 
-    echo "Setup database $MYSQL_DAEMON"
-    if [ "$MYSQL_DAEMON" = "rh-mysql57-mysqld" ]; then
-        mkdir -p /tmp/mysql
-        chown mysql:mysql /tmp/mysql
-        cp /usr/share/tuleap/tests/rest/etc/mysql-server.cnf /etc/opt/rh/rh-mysql57/my.cnf.d/mysql-server.cnf
-    fi
+    MYSQLROOT="mysql -h$DB_HOST -uroot -pwelcome0"
+    echo "Use remote db $DB_HOST"
 
-    service $MYSQL_DAEMON start
-    mysql -e "GRANT ALL PRIVILEGES on *.* to '$MYSQL_USER'@'$MYSQL_HOST' identified by '$MYSQL_PASSWORD'"
-    $MYSQL -e "DROP DATABASE IF EXISTS $MYSQL_DBNAME"
-    $MYSQL -e "CREATE DATABASE $MYSQL_DBNAME CHARACTER SET utf8"
-    $MYSQL $MYSQL_DBNAME < "/usr/share/tuleap/src/db/mysql/database_structure.sql"
-    $MYSQL $MYSQL_DBNAME < "/usr/share/tuleap/src/db/mysql/database_initvalues.sql"
+    # runner should have access to Tuleap conf, esp. database.inc because some tests pre-cond changes values directly
+    # into the db (@see \Test\Rest\TuleapConfig)
+    usermod -a -G codendiadm runner
+
+    /usr/share/tuleap/src/tuleap-cfg/tuleap-cfg.php setup:mysql-init \
+        --host="$DB_HOST" \
+        --admin-user=root \
+        --admin-password=welcome0 \
+        --db-name="$MYSQL_DBNAME" \
+        --app-user="$MYSQL_USER" \
+        --app-password="$MYSQL_PASSWORD"
+
+    $MYSQLROOT $MYSQL_DBNAME < /usr/share/tuleap/src/db/mysql/database_structure.sql
+    $MYSQLROOT $MYSQL_DBNAME < /usr/share/tuleap/src/db/mysql/database_initvalues.sql
+
     $MYSQL $MYSQL_DBNAME -e "LOAD DATA LOCAL INFILE '/usr/share/tuleap/tests/rest/_fixtures/phpwiki/rest-test-wiki-group-list' INTO TABLE wiki_group_list CHARACTER SET ascii"
     $MYSQL $MYSQL_DBNAME -e "LOAD DATA LOCAL INFILE '/usr/share/tuleap/tests/rest/_fixtures/phpwiki/rest-test-wiki-page' INTO TABLE wiki_page CHARACTER SET ascii"
     $MYSQL $MYSQL_DBNAME -e "LOAD DATA LOCAL INFILE '/usr/share/tuleap/tests/rest/_fixtures/phpwiki/rest-test-wiki-nonempty' INTO TABLE wiki_nonempty CHARACTER SET ascii"
     $MYSQL $MYSQL_DBNAME -e "LOAD DATA LOCAL INFILE '/usr/share/tuleap/tests/rest/_fixtures/phpwiki/rest-test-wiki-version' INTO TABLE wiki_version CHARACTER SET ascii"
     $MYSQL $MYSQL_DBNAME -e "LOAD DATA LOCAL INFILE '/usr/share/tuleap/tests/rest/_fixtures/phpwiki/rest-test-wiki-recent' INTO TABLE wiki_recent CHARACTER SET ascii"
-
-    mysql -e "GRANT SELECT ON $MYSQL_DBNAME.user to dbauthuser@'localhost' identified by '$MYSQL_PASSWORD';"
-    mysql -e "GRANT SELECT ON $MYSQL_DBNAME.groups to dbauthuser@'localhost';"
-    mysql -e "GRANT SELECT ON $MYSQL_DBNAME.user_group to dbauthuser@'localhost';"
-    mysql -e "GRANT SELECT,UPDATE ON $MYSQL_DBNAME.svn_token to dbauthuser@'localhost';"
-    mysql -e "FLUSH PRIVILEGES;"
 
     echo "Execute additional setup scripts"
     for setup_script in $(find /usr/share/tuleap/plugins/*/tests/rest/setup_db.sh -maxdepth 1 -type f)
@@ -117,6 +102,9 @@ seed_data() {
     su -c "PHP='$PHP_CLI' DISPLAY_ERRORS=true /usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php crosstracker" -l codendiadm
     su -c "PHP='$PHP_CLI' DISPLAY_ERRORS=true /usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php create_test_env" -l codendiadm
     su -c "PHP='$PHP_CLI' DISPLAY_ERRORS=true /usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php docman" -l codendiadm
+    su -c "PHP='$PHP_CLI' DISPLAY_ERRORS=true /usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php hudson" -l codendiadm
+    su -c "PHP='$PHP_CLI' DISPLAY_ERRORS=true /usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php hudson_git" -l codendiadm
+    su -c "PHP='$PHP_CLI' DISPLAY_ERRORS=true /usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php gitlab" -l codendiadm
 
     load_project /usr/share/tuleap/tests/rest/_fixtures/01-private-member
     load_project /usr/share/tuleap/tests/rest/_fixtures/02-private
@@ -135,7 +123,7 @@ seed_data() {
     load_project /usr/share/tuleap/tests/rest/_fixtures/15-future-releases
 
     echo "Load initial data"
-    "$PHP_CLI" /usr/share/tuleap/tests/rest/bin/init_data.php
+    PHP="$PHP_CLI" "$PHP_CLI" /usr/share/tuleap/tests/rest/bin/init_data.php
 
     seed_plugin_data
 }
@@ -157,18 +145,22 @@ seed_plugin_data() {
     done
 
     echo "Load plugins initial data"
-    "$PHP_CLI" /usr/share/tuleap/tests/rest/bin/init_data_plugins.php
+    PHP="$PHP_CLI" "$PHP_CLI" /usr/share/tuleap/tests/rest/bin/init_data_plugins.php
 }
 
 setup_tuleap
-if [ "$FPM_DAEMON" == 'php73-php-fpm' ]; then
+setup_database
+case "$PHP_FPM" in
+    '/opt/remi/php73/root/usr/sbin/php-fpm')
     echo "Deploy PHP FPM 7.3"
     "$PHP_CLI" /usr/share/tuleap/tools/utils/php73/run.php --modules=nginx,fpm
-fi
-service "$FPM_DAEMON" start
-service nginx start
-setup_database
+    ;;
+    '/opt/remi/php74/root/usr/sbin/php-fpm')
+    echo "Deploy PHP FPM 7.4"
+    "$PHP_CLI" /usr/share/tuleap/tools/utils/php74/run.php --modules=nginx,fpm
+    ;;
+esac
 tuleap_db_config
 seed_data
-service "$FPM_DAEMON" restart
-service nginx reload
+$PHP_FPM --daemonize
+nginx

@@ -39,13 +39,13 @@ EOT;
                 ADD COLUMN use_freestyle_columns tinyint(4) default 0 AFTER tracker_id";
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
-            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding column use_freestyle_columns to plugin_cardwall_on_top: '.implode(', ', $this->db->dbh->errorInfo()));
+            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding column use_freestyle_columns to plugin_cardwall_on_top: ' . implode(', ', $this->db->dbh->errorInfo()));
         }
     }
 
     public function postUp()
     {
-        if (!$this->db->columnNameExists('plugin_cardwall_on_top', 'use_freestyle_columns')) {
+        if (! $this->db->columnNameExists('plugin_cardwall_on_top', 'use_freestyle_columns')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('use_freestyle_columns field is missing in plugin_cardwall_on_top table table');
         }
     }

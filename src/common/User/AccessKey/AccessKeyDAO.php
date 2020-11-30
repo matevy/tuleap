@@ -18,18 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\User\AccessKey;
 
-use DateTimeImmutable;
 use ParagonIE\EasyDB\EasyStatement;
 use Tuleap\DB\DataAccessObject;
 
 class AccessKeyDAO extends DataAccessObject
 {
-    /**
-     * @return int
-     */
-    public function create($user_id, $hashed_verification_string, $current_time, $description, $expiration_date_timestamp)
+    public function create(int $user_id, string $hashed_verification_string, int $current_time, string $description, ?int $expiration_date_timestamp): int
     {
         return (int) $this->getDB()->insertReturnId(
             'user_access_key',
@@ -43,15 +41,12 @@ class AccessKeyDAO extends DataAccessObject
         );
     }
 
-    /**
-     * @return null|array
-     */
-    public function searchAccessKeyVerificationAndTraceabilityDataByID($key_id)
+    public function searchAccessKeyVerificationAndTraceabilityDataByID(int $key_id): ?array
     {
         return $this->getDB()->row('SELECT verifier, user_id, last_usage, last_ip, expiration_date FROM user_access_key WHERE id = ?', $key_id);
     }
 
-    public function searchMetadataByUserIDAtCurrentTime(int $user_id, int $current_timestamp)
+    public function searchMetadataByUserIDAtCurrentTime(int $user_id, int $current_timestamp): array
     {
         return $this->getDB()->run(
             'SELECT id, creation_date, expiration_date, description, last_usage, last_ip
@@ -63,27 +58,36 @@ class AccessKeyDAO extends DataAccessObject
         );
     }
 
-    public function deleteByUserIDAndKeyIDs($user_id, array $key_ids)
+    public function deleteByUserIDAndKeyIDs(int $user_id, array $key_ids): void
     {
         if (empty($key_ids)) {
             return;
         }
 
-        $this->getDB()->delete(
-            'user_access_key',
-            EasyStatement::open()->with('user_id = ?', $user_id)->andIn('id IN (?*)', $key_ids)
+        $this->deleteByCondition(
+            EasyStatement::open()->with('user_access_key.user_id = ?', $user_id)->andIn('user_access_key.id IN (?*)', $key_ids)
         );
     }
 
     public function deleteByExpirationDate(int $timestamp): void
     {
-        $this->getDB()->delete(
-            'user_access_key',
+        $this->deleteByCondition(
             EasyStatement::open()->with('expiration_date <= ?', $timestamp)->andWith('expiration_date IS NOT NULL')
         );
     }
 
-    public function updateAccessKeyUsageByID($id, $current_time, $ip_address)
+    private function deleteByCondition(EasyStatement $condition): void
+    {
+        $this->getDB()->run(
+            "DELETE user_access_key, user_access_key_scope
+            FROM user_access_key
+            LEFT JOIN user_access_key_scope ON (user_access_key_scope.access_key_id = user_access_key.id)
+            WHERE $condition",
+            ...$condition->values()
+        );
+    }
+
+    public function updateAccessKeyUsageByID(int $id, $current_time, $ip_address): void
     {
         $sql = 'UPDATE user_access_key
                 JOIN user_access ON (user_access_key.user_id = user_access.user_id)
@@ -91,5 +95,15 @@ class AccessKeyDAO extends DataAccessObject
                 WHERE user_access_key.id = ?';
 
         $this->getDB()->run($sql, $current_time, $ip_address, $current_time, $id);
+    }
+
+    public function deleteKeysWithNoScopes(): void
+    {
+        $this->getDB()->run(
+            'DELETE user_access_key.*
+                    FROM user_access_key
+                    LEFT JOIN user_access_key_scope ON user_access_key.id = user_access_key_scope.access_key_id
+                    WHERE user_access_key_scope.access_key_id IS NULL'
+        );
     }
 }

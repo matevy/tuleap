@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2016-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -31,8 +31,7 @@ ini_set('max_execution_time', 1800);
 $request = HTTPRequest::instance();
 $request->checkUserIsSuperUser();
 
-$assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-$include_assets = new IncludeAssets($assets_path, '/assets');
+$include_assets = new IncludeAssets(__DIR__ . '/../../assets/core', '/assets/core');
 
 $GLOBALS['HTML']->includeFooterJavascriptFile(
     $include_assets->getFileURL('site-admin-trackers-pending-removal.js')
@@ -99,22 +98,22 @@ $renderer->header($GLOBALS['Language']->getText('tracker_admin_restore', 'pendin
 
 EventManager::instance()->processEvent(
     Event::LIST_DELETED_TRACKERS,
-    array()
+    []
 );
 
-$tracker_list = array();
+$tracker_list = [];
 if (TrackerV3::instance()->available()) {
     $tracker_factory = new ArtifactTypeFactory($group);
     $trackers        = $tracker_factory->getPendingArtifactTypes();
 
     while ($tracker = db_fetch_array($trackers)) {
-        $tracker_list[] = array(
+        $tracker_list[] = [
            'group_artifact_id' => $tracker['group_artifact_id'],
            'project_name'      => $tracker['project_name'],
            'name'              => $tracker['name'],
            'deletion_date'     => date("Y-m-d", $tracker['deletion_date']),
            'group_id'          => $tracker['group_id'],
-        );
+        ];
     }
 
     $tv3_presenter = new ArtifactPendingDeletionPresenter($tracker_list);

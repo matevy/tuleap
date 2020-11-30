@@ -6,11 +6,13 @@
 >
     <description>Tuleap coding standard.</description>
 
-    <rule ref="PSR2">
+    <rule ref="PSR12">
         <exclude name="Generic.Files.LineLength.TooLong"/>
         <exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
         <!-- checked by SlevomatCodingStandard.Namespaces.UseSpacing -->
         <exclude name="PSR2.Namespaces.UseDeclaration.SpaceAfterLastUse"/>
+        <!-- conflict and mostly checked by TuleapCodingStandard.Sniffs.Commenting.FileCopyrightSniff -->
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
     </rule>
     <!-- Forbid superfluous whitespaces -->
     <rule ref="Squiz.WhiteSpace.SuperfluousWhitespace">

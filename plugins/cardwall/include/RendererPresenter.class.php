@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -67,14 +67,13 @@ class Cardwall_RendererPresenter extends Cardwall_BoardPresenter
     ) {
         parent::__construct($board, $redirect_parameter);
         $hp                        = Codendi_HTMLPurifier::instance();
-        $this->nifty               = Toggler::getClassname('cardwall_board-nifty') == 'toggler' ? 'nifty' : false;
         $this->swimline_title      = '';
         $this->has_swimline_header = false;
         $this->field               = $field ? $field : false;
         $this->form                = $form  ? $form  : false;
         $this->has_columns         = count($this->board->columns) > 0;
-        $this->warn_please_choose  = $GLOBALS['Language']->getText('plugin_cardwall', 'warn_please_choose');
+        $this->warn_please_choose  = dgettext('tuleap-cardwall', 'Please select a field to group artifacts in columns.');
         $field_label               = $field ? $hp->purify($this->field->getLabel()) : '###';
-        $this->warn_no_values      = $GLOBALS['Language']->getText('plugin_cardwall', 'warn_no_values', $field_label);
+        $this->warn_no_values      = sprintf(dgettext('tuleap-cardwall', 'There is no values in the field %1$s. Please choose another one.'), $field_label);
     }
 }

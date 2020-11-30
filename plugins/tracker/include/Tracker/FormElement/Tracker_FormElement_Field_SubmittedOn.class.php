@@ -19,16 +19,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\FormElement\Field\Date\DateFieldDao;
 use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 
 class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Date implements Tracker_FormElement_Field_ReadOnly
 {
 
-    public $default_properties = array();
+    public $default_properties = [];
 
     protected function getDao()
     {
-        return new Tracker_FormElement_Field_DateDao();
+        return new DateFieldDao();
     }
 
     /**
@@ -62,12 +64,13 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
                 'artifact.submitted_on'
             );
         }
+        return '';
     }
 
     public function getQuerySelect()
     {
         // SubmittedOn is stored in the artifact
-        return "a.submitted_on AS `" .$this->name ."`";
+        return "a.submitted_on AS `" . $this->name . "`";
     }
 
     public function getQueryFrom()
@@ -112,33 +115,21 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
         return $artifact_field_value_full_representation;
     }
 
-    /**
-     * @return the label of the field (mainly used in admin part)
-     */
     public static function getFactoryLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'submittedon_label');
+        return dgettext('tuleap-tracker', 'Submitted On');
     }
 
-    /**
-     * @return the description of the field (mainly used in admin part)
-     */
     public static function getFactoryDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'submittedon_description');
+        return dgettext('tuleap-tracker', 'Display the date the artifact was submitted on');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconUseIt()
     {
         return $GLOBALS['HTML']->getImagePath('calendar/cal.png');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconCreate()
     {
         return $GLOBALS['HTML']->getImagePath('calendar/cal--plus.png');
@@ -158,7 +149,7 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     /**
      * Keep the value
      *
-     * @param Tracker_Artifact                $artifact                The artifact
+     * @param Artifact                        $artifact                The artifact
      * @param int                             $changeset_value_id      The id of the changeset_value
      * @param Tracker_Artifact_ChangesetValue $previous_changesetvalue The data previously stored in the db
      *
@@ -188,7 +179,7 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     /**
      * @see Tracker_FormElement_Field::hasChanges()
      */
-    public function hasChanges(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $old_value, $new_value)
+    public function hasChanges(Artifact $artifact, Tracker_Artifact_ChangesetValue $old_value, $new_value)
     {
         // Submitted On is never updated
         return false;
@@ -209,14 +200,14 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     /**
      * Fetch the html code to display the field value in artifact
      *
-     * @param Tracker_Artifact                $artifact         The artifact
+     * @param Artifact                        $artifact         The artifact
      * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
      * @param array                           $submitted_values The value already submitted by the user
      *
      * @return string
      */
     protected function fetchArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -226,15 +217,15 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     /**
      * Fetch the html code to display the field value in artifact in read only mode
      *
-     * @param Tracker_Artifact                $artifact The artifact
+     * @param Artifact                        $artifact The artifact
      * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
      *
      * @return string
      */
-    public function fetchArtifactValueReadOnly(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    public function fetchArtifactValueReadOnly(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         $html = '';
-        if (!$value) {
+        if (! $value) {
             $value = new Tracker_Artifact_ChangesetValue_Date(null, $artifact->getFirstChangeset(), $this, false, $artifact->getSubmittedOn());
         }
         assert($value instanceof Tracker_Artifact_ChangesetValue_Date);
@@ -246,7 +237,7 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     }
 
     public function fetchArtifactValueWithEditionFormIfEditable(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -256,42 +247,39 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     /**
      * Fetch the html code to display the field value in tooltip
      *
-     * @param Tracker_Artifact $artifact
      * @param Tracker_Artifact_ChangesetValue $value The changeset value for this field
      * @return string
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    protected function fetchTooltipValue(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
-        $html = '';
-        if (!$value) {
+        if (! $value) {
             $value = new Tracker_Artifact_ChangesetValue_Date(null, $artifact->getFirstChangeset(), $this, false, $artifact->getSubmittedOn());
         }
         assert($value instanceof Tracker_Artifact_ChangesetValue_Date);
-        $value = $value->getTimestamp();
-        $value = $value ? DateHelper::timeAgoInWords($value) : '';
-        $html .= $value;
-        return $html;
+
+        return parent::fetchTooltipValue($artifact, $value);
     }
 
      /**
      * Validate a field
      *
-     * @param Tracker_Artifact                $artifact             The artifact to check
-     * @param mixed                           $submitted_value      The submitted value
-     * @param Tracker_Artifact_ChangesetValue $last_changeset_value The last changeset value of the field (give null if no old value)
-     *
-     * @return bool true on success or false on failure
+     * @param mixed $submitted_value      The submitted value
      */
-    public function validateFieldWithPermissionsAndRequiredStatus(Tracker_Artifact $artifact, $submitted_value, ?Tracker_Artifact_ChangesetValue $last_changeset_value = null, $is_submission = null)
-    {
+    public function validateFieldWithPermissionsAndRequiredStatus(
+        Artifact $artifact,
+        $submitted_value,
+        PFUser $user,
+        ?Tracker_Artifact_ChangesetValue $last_changeset_value = null,
+        ?bool $is_submission = null
+    ): bool {
         $is_valid = true;
         if ($last_changeset_value === null && $submitted_value === null && $this->isRequired()) {
             $is_valid = false;
             $this->setHasErrors(true);
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_common_artifact', 'err_required', $this->getLabel(). ' ('. $this->getName() .')'));
-        } elseif ($submitted_value !== null &&  ! $this->userCanUpdate()) {
+            $GLOBALS['Response']->addFeedback('error', sprintf(dgettext('tuleap-tracker', 'The field %1$s is required.'), $this->getLabel() . ' (' . $this->getName() . ')'));
+        } elseif ($submitted_value !== null && ! $this->userCanUpdate()) {
             $is_valid = true;
-            $GLOBALS['Response']->addFeedback('warning', $GLOBALS['Language']->getText('plugin_tracker_admin_import', 'field_not_taken_account', array($this->getName())));
+            $GLOBALS['Response']->addFeedback('warning', sprintf(dgettext('tuleap-tracker', 'The field "%1$s" will not be taken into account.'), $this->getName()));
         }
         return $is_valid;
     }
@@ -299,16 +287,16 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     /**
      * Fetch data to display the field value in mail
      *
-     * @param Tracker_Artifact                $artifact         The artifact
-     * @param PFUser                          $user             The user who will receive the email
-     * @param bool $ignore_perms
-     * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
-     * @param string                          $format           output format
+     * @param Artifact                        $artifact The artifact
+     * @param PFUser                          $user     The user who will receive the email
+     * @param bool                            $ignore_perms
+     * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
+     * @param string                          $format   output format
      *
      * @return string
      */
     public function fetchMailArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         $ignore_perms,
         ?Tracker_Artifact_ChangesetValue $value = null,
@@ -334,12 +322,12 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     /**
      * Say if the value is valid. If not valid set the internal has_error to true.
      *
-     * @param Tracker_Artifact $artifact The artifact
-     * @param mixed            $value    data coming from the request. May be string or array.
+     * @param Artifact $artifact The artifact
+     * @param mixed    $value    data coming from the request. May be string or array.
      *
      * @return bool true if the value is considered ok
      */
-    public function isValid(Tracker_Artifact $artifact, $value)
+    public function isValid(Artifact $artifact, $value)
     {
         // this field is always valid as it is not filled by users.
         return true;
@@ -353,9 +341,9 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     protected function fetchAdminFormElement()
     {
         $html = '';
-        $html .= '<div>'. $this->formatDateTime(time()) . '</div>';
+        $html .= '<div>' . $this->formatDateTime(time()) . '</div>';
         $html .= '<span class="tracker-admin-form-element-help">';
-        $html .= $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'submittedon_help');
+        $html .= dgettext('tuleap-tracker', 'The field is automatically set to artifact submission date');
         $html .= '</span>';
         return $html;
     }
@@ -367,11 +355,11 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
     /**
      * Retreive The last date Field value
      *
-     * @param Tracker_Artifact $artifact The artifact
+     * @param Artifact $artifact The artifact
      *
-     * @return date
+     * @return string|false
      */
-    public function getLastValue(Tracker_Artifact $artifact)
+    public function getLastValue(Artifact $artifact)
     {
         return date(Tracker_FormElement_DateFormatter::DATE_FORMAT, $artifact->getSubmittedOn());
     }
@@ -386,11 +374,11 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
      */
     public function getArtifactsByCriterias($date, $trackerId = null)
     {
-        $artifacts = array();
+        $artifacts = [];
         $dao = new Tracker_ArtifactDao();
         $dar = $dao->getArtifactsBySubmittedOnDate($trackerId, $date);
 
-        if ($dar && !$dar->isError()) {
+        if ($dar && ! $dar->isError()) {
             $artifactFactory = Tracker_ArtifactFactory::instance();
             foreach ($dar as $row) {
                 $artifacts[] = $artifactFactory->getArtifactById($row['artifact_id']);
@@ -409,7 +397,7 @@ class Tracker_FormElement_Field_SubmittedOn extends Tracker_FormElement_Field_Da
         return true;
     }
 
-    public function getFieldDataFromRESTValue(array $value, ?Tracker_Artifact $artifact = null)
+    public function getFieldDataFromRESTValue(array $value, ?Artifact $artifact = null)
     {
          return null;
     }

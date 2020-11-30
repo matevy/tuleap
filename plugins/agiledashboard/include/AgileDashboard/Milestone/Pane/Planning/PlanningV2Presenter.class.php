@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2014 - present. All rights reserved.
+ * Copyright Enalean (c) 2014 - Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registrated trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -22,8 +22,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\AgileDashboard\REST\v1\MilestoneRepresentation;
-use Tuleap\REST\JsonCast;
+use Tuleap\Tracker\Artifact\Renderer\ListPickerIncluder;
 
 class AgileDashboard_Milestone_Pane_Planning_PlanningV2Presenter
 {
@@ -43,46 +42,60 @@ class AgileDashboard_Milestone_Pane_Planning_PlanningV2Presenter
     /** @var string */
     public $view_mode;
 
-    /** @var MilestoneRepresentation */
-    public $milestone_representation;
-
-    /** @var AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentations */
-    public $paginated_backlog_items_representations;
-
-    /** @var AgileDashboard_Milestone_PaginatedMilestonesRepresentations */
-    public $paginated_milestones_representations;
-
     /** @var string */
     public $user_accessibility_mode;
     /**
      * @var bool
      */
     public $is_in_explicit_top_backlog;
+    /**
+     * @var string
+     */
+    public $allowed_additional_panes_to_display;
 
+    /**
+     * @var string
+     */
+    public $create_milestone_allowed;
+
+    /**
+     * @var string
+     */
+    public $backlog_add_item_allowed;
+
+    /**
+     * @var string
+     */
+    public $is_list_picker_enabled;
+
+    /**
+     * @param string[] $allowed_additional_panes_to_display
+     */
     public function __construct(
         PFUser $current_user,
         Project $project,
         $milestone_id,
-        $milestone_representation,
-        $paginated_backlog_items_representations,
-        $paginated_milestones_representations,
-        bool $is_in_explicit_top_backlog
+        bool $is_in_explicit_top_backlog,
+        array $allowed_additional_panes_to_display,
+        bool $create_milestone_allowed,
+        bool $backlog_add_item_allowed
     ) {
-        $this->user_id                                 = $current_user->getId();
-        $this->lang                                    = $this->getLanguageAbbreviation($current_user);
-        $this->project_id                              = $project->getId();
-        $this->milestone_id                            = $milestone_id;
-        $this->view_mode                               = $current_user->getPreference('agiledashboard_planning_item_view_mode_' . $this->project_id);
-        $this->milestone_representation                = json_encode($milestone_representation);
-        $this->paginated_backlog_items_representations = json_encode($paginated_backlog_items_representations);
-        $this->paginated_milestones_representations    = json_encode($paginated_milestones_representations);
-        $this->user_accessibility_mode                 = json_encode((bool) $current_user->getPreference(PFUser::ACCESSIBILITY_MODE));
-        $this->is_in_explicit_top_backlog              = $is_in_explicit_top_backlog;
+        $this->user_id                             = $current_user->getId();
+        $this->lang                                = $this->getLanguageAbbreviation($current_user);
+        $this->project_id                          = $project->getId();
+        $this->milestone_id                        = $milestone_id;
+        $this->view_mode                           = (string) $current_user->getPreference('agiledashboard_planning_item_view_mode_' . $this->project_id);
+        $this->user_accessibility_mode             = json_encode((bool) $current_user->getPreference(PFUser::ACCESSIBILITY_MODE));
+        $this->is_in_explicit_top_backlog          = $is_in_explicit_top_backlog;
+        $this->allowed_additional_panes_to_display = json_encode($allowed_additional_panes_to_display);
+        $this->create_milestone_allowed            = json_encode($create_milestone_allowed);
+        $this->backlog_add_item_allowed            = json_encode($backlog_add_item_allowed);
+        $this->is_list_picker_enabled              = json_encode((bool) ListPickerIncluder::isListPickerEnabledAndBrowserNotIE11());
     }
 
     private function getLanguageAbbreviation(PFUser $current_user)
     {
-        list($lang, $country) = explode('_', $current_user->getLocale());
+        [$lang, $country] = explode('_', $current_user->getLocale());
 
         return $lang;
     }

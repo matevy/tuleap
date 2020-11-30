@@ -47,13 +47,10 @@ class BreadCrumbBuilder
     }
 
     /**
-     * @param \PFUser $current_user
-     * @param int     $kanban_id
-     * @return BreadCrumb
      * @throws \AgileDashboard_KanbanCannotAccessException
      * @throws \AgileDashboard_KanbanNotFoundException
      */
-    public function build(\PFUser $current_user, int $kanban_id) : BreadCrumb
+    public function build(\PFUser $current_user, int $kanban_id): BreadCrumb
     {
         $kanban  = $this->kanban_factory->getKanban($current_user, $kanban_id);
         $tracker = $this->tracker_factory->getTrackerById($kanban->getTrackerId());
@@ -77,7 +74,7 @@ class BreadCrumbBuilder
                     new TrackerCrumbLinkInContext(
                         $kanban->getName(),
                         sprintf(dgettext('tuleap-agiledashboard', '%s Kanban'), $kanban->getName()),
-                        AGILEDASHBOARD_BASE_URL.'?'. http_build_query(
+                        AGILEDASHBOARD_BASE_URL . '?' . http_build_query(
                             [
                                 'group_id' => $tracker->getProject()->getID(),
                                 'action'   => 'showKanban',

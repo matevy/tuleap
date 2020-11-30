@@ -12,7 +12,7 @@ Main methods to use:
 class Fortune
 {
 
-    function quoteFromDir($dir)
+    public function quoteFromDir($dir)
     {
         $amount = 0;
         $index = 0;
@@ -31,15 +31,14 @@ class Fortune
                 }
             }
 
-            srand((double)microtime()*1000000);
-            $index = rand(0, $amount);
+            $index = random_int(0, $amount);
             $i = 0;
 
             while ($quotes[$i] < $index) {
                 $i++;
             }
 
-            return $this->getRandomQuote($dir . "/" .$files[$i]);
+            return $this->getRandomQuote($dir . "/" . $files[$i]);
         }
         return -1;
     }
@@ -47,7 +46,7 @@ class Fortune
     /*
      Reads the number of quotes in the file.
     */
-    function getNumberOfQuotes($file)
+    public function getNumberOfQuotes($file)
     {
         $fd = fopen($file, "rb");
         $this->readLong($fd); // Just move over the first long. Might as well be fseek.
@@ -58,7 +57,7 @@ class Fortune
     /*
      Picks quote number $index from the dat-file in $file.
     */
-    function getExactQuote($file, $index)
+    public function getExactQuote($file, $index)
     {
         if (is_file($file) == false) {
             echo "Input must be a file!<br/>";
@@ -90,11 +89,11 @@ class Fortune
     /*
      Returns a random quote from $file.
     */
-    function getRandomQuote($file)
+    public function getRandomQuote($file)
     {
         $number = $this->getNumberOfQuotes($file);
 
-        $index = rand(0, $number - 1);
+        $index = random_int(0, $number - 1);
 
         return $this->getExactQuote($file, $index);
     }
@@ -102,15 +101,15 @@ class Fortune
     /*
      Reads a quote from the specified index.
     */
-    function getQuote($fd, $index)
+    public function getQuote($fd, $index)
     {
         fseek($fd, $index);
-        $line="";
+        $line = "";
         $res = "";
         do {
             $res = $res . $line;
             $line = fgets($fd, 1024) . "<br>";
-        } while (($line[0] != "%") && (!feof($fd)));
+        } while (($line[0] != "%") && (! feof($fd)));
 
         return $res;
     }
@@ -118,7 +117,7 @@ class Fortune
     /*
      Gets indexes from the file pointed to by the filedescriptor $fd.
     */
-    function getIndices($fd)
+    public function getIndices($fd)
     {
         fseek($fd, 24, SEEK_SET);
         $i = 0;
@@ -130,7 +129,7 @@ class Fortune
         return $res;
     }
 
-    function readLong($fd)
+    public function readLong($fd)
     {
         $res = fread($fd, 4);
         $l = ord($res[3]);
@@ -141,7 +140,7 @@ class Fortune
     }
 
 
-    function createIndexFile($file)
+    public function createIndexFile($file)
     {
         $fd = @fopen($file, "r");
         if ($fd == false) {
@@ -154,7 +153,7 @@ class Fortune
         $longest = 0;
         $shortest = 100000;
         $indices[0] = 0;
-        while (!feof($fd)) {
+        while (! feof($fd)) {
             $line = fgets($fd);
             if ($line == "%\n") {
                 $indices[$i] = ftell($fd);
@@ -197,11 +196,11 @@ class Fortune
         fclose($fd);
     }
 
-    function writeLong($fd, $l)
+    public function writeLong($fd, $l)
     {
         fwrite($fd, chr(($l >> 24) & 255));
         fwrite($fd, chr(($l >> 16) & 255));
         fwrite($fd, chr(($l >> 8) & 255));
         fwrite($fd, chr($l & 255));
     }
-} // End of class
+}

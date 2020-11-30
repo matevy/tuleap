@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -28,68 +28,67 @@ class Git_Driver_Gerrit_ProjectCreator
     public const NO_PERMISSIONS_MIGRATION      = 'none';
     public const DEFAULT_PERMISSIONS_MIGRATION = 'default';
 
-    /** @var array */
-    static $MIGRATION_MINIMAL_PERMISSIONS = array(
-        array(
+    public static $MIGRATION_MINIMAL_PERMISSIONS = [
+        [
             'reference'  => 'refs/tags',
             'permission' => 'pushTag',
             'group'      => 'group Administrators'
-        ),
-        array(
+        ],
+        [
             'reference'  => 'refs/tags',
             'permission' => 'create',
             'group'      => 'group Administrators'
-        ),
-        array(
+        ],
+        [
             'reference'  => 'refs/tags',
             'permission' => 'forgeCommitter',
             'group'      => 'group Administrators'
-        ),
-        array(
+        ],
+        [
             'reference'  => 'refs/heads',
             'permission' => 'create',
             'group'      => 'group Administrators'
-        ),
-        array(
+        ],
+        [
             'reference'  => 'refs/heads',
             'permission' => 'forgeCommitter',
             'group'      => 'group Administrators'
-        ),
+        ],
         // To be able to push merge commit on master, we need pushMerge on refs/for/*
         // http://code.google.com/p/gerrit/issues/detail?id=1072
-        array(
+        [
             'reference'  => 'refs/for',
             'permission' => 'pushMerge',
             'group'      => 'group Administrators'
-        ),
+        ],
         // Reset explicitely some access rigths for Administrators
         // To deal with the case they were removed
-        array(
+        [
             'reference'  => 'refs/for/refs',
             'permission' => 'push',
             'group'      => 'group Administrators'
-        ),
-        array(
+        ],
+        [
             'reference'  => 'refs/for/refs',
             'permission' => 'pushMerge',
             'group'      => 'group Administrators'
-        ),
-        array(
+        ],
+        [
             'reference'  => 'refs/heads',
             'permission' => 'push',
             'group'      => 'group Administrators'
-        ),
-        array(
+        ],
+        [
             'reference'  => 'refs/tags',
             'permission' => 'pushSignedTag',
             'group'      => 'group Administrators'
-        ),
-        array(
+        ],
+        [
             'reference'  => 'refs/tags',
             'permission' => 'pushAnnotatedTag',
             'group'      => 'group Administrators'
-        )
-    );
+        ]
+    ];
 
     /** @var Git_Driver_Gerrit_GerritDriverFactory */
     private $driver_factory;
@@ -162,7 +161,7 @@ class Git_Driver_Gerrit_ProjectCreator
 
         $migrated_ugroups = $this->membership_manager->createArrayOfGroupsForServer($gerrit_server, $ugroups);
 
-        $this->umbrella_manager->recursivelyCreateUmbrellaProjects(array($gerrit_server), $project);
+        $this->umbrella_manager->recursivelyCreateUmbrellaProjects([$gerrit_server], $project);
 
         $gerrit_project_name = $driver->createProject($gerrit_server, $repository, $project_name);
 
@@ -173,7 +172,7 @@ class Git_Driver_Gerrit_ProjectCreator
             $repository,
             $gerrit_server,
             $migrated_ugroups,
-            ForgeConfig::get('sys_default_domain') .'-'. self::GROUP_REPLICATION,
+            ForgeConfig::get('sys_default_domain') . '-' . self::GROUP_REPLICATION,
             $template_id
         );
 
@@ -231,7 +230,7 @@ class Git_Driver_Gerrit_ProjectCreator
 
     private function dumpTemplateContent($template_content)
     {
-        file_put_contents($this->dir.'/project.config', $template_content);
+        file_put_contents($this->dir . '/project.config', $template_content);
     }
 
     private function noAccessRightsMigrationRequested($template_id)
@@ -255,7 +254,7 @@ class Git_Driver_Gerrit_ProjectCreator
     private function pushFullTuleapAccessRightsToGerrit(GitRepository $repository, Git_RemoteServer_GerritServer $gerrit_server, array $ugroups, $replication_group, $template_id)
     {
         foreach ($ugroups as $ugroup) {
-            $this->addGroupToGroupFile($gerrit_server, $repository->getProject()->getUnixName().'/'.$ugroup->getNormalizedName());
+            $this->addGroupToGroupFile($gerrit_server, $repository->getProject()->getUnixName() . '/' . $ugroup->getNormalizedName());
         }
         $this->addGroupToGroupFile($gerrit_server, $replication_group);
         $this->addRegisteredUsersGroupToGroupFile();
@@ -278,7 +277,7 @@ class Git_Driver_Gerrit_ProjectCreator
         if (! is_dir($this->dir)) {
             mkdir($this->dir);
             $this->git_exec->init();
-            $this->git_exec->setLocalCommiter($gerrit_server->getLogin(), 'codendiadm@'. ForgeConfig::get('sys_default_domain'));
+            $this->git_exec->setLocalCommiter($gerrit_server->getLogin(), 'codendiadm@' . ForgeConfig::get('sys_default_domain'));
             $this->git_exec->remoteAdd($gerrit_project_url);
         }
         $this->git_exec->pullBranch('origin', 'refs/meta/config');
@@ -287,7 +286,6 @@ class Git_Driver_Gerrit_ProjectCreator
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $gerrit_server
      * @param string $gerrit_project_url
      * @return string file contents
      *
@@ -333,19 +331,19 @@ class Git_Driver_Gerrit_ProjectCreator
         $ugroup_ids_write = $this->user_finder->getUgroups($repository->getId(), Git::PERM_WRITE);
         $ugroup_ids_rewind = $this->user_finder->getUgroups($repository->getId(), Git::PERM_WPLUS);
 
-        $ugroups_read   = array();
-        $ugroups_write  = array();
-        $ugroups_rewind = array();
+        $ugroups_read   = [];
+        $ugroups_write  = [];
+        $ugroups_rewind = [];
 
         foreach ($ugroups as $ugroup) {
             if (in_array($ugroup->getId(), $ugroup_ids_read)) {
-                $ugroups_read[] = $repository->getProject()->getUnixName().'/'.$ugroup->getNormalizedName();
+                $ugroups_read[] = $repository->getProject()->getUnixName() . '/' . $ugroup->getNormalizedName();
             }
             if (in_array($ugroup->getId(), $ugroup_ids_write)) {
-                $ugroups_write[] = $repository->getProject()->getUnixName().'/'.$ugroup->getNormalizedName();
+                $ugroups_write[] = $repository->getProject()->getUnixName() . '/' . $ugroup->getNormalizedName();
             }
             if (in_array($ugroup->getId(), $ugroup_ids_rewind)) {
-                $ugroups_rewind[] = $repository->getProject()->getUnixName().'/'.$ugroup->getNormalizedName();
+                $ugroups_rewind[] = $repository->getProject()->getUnixName() . '/' . $ugroup->getNormalizedName();
             }
         }
 
@@ -363,7 +361,7 @@ class Git_Driver_Gerrit_ProjectCreator
 
         foreach ($ugroups_read as $ugroup_read) {
             $this->addToSection('refs/heads', 'read', "group $ugroup_read");
-            if (!in_array($ugroup_read, $ugroups_write)) {
+            if (! in_array($ugroup_read, $ugroups_write)) {
                 $this->addToSection('refs/heads', 'label-Code-Review', "-1..+1 group $ugroup_read");
             }
         }
@@ -419,7 +417,7 @@ class Git_Driver_Gerrit_ProjectCreator
 
     private function shouldAddRegisteredUsersToGroup(GitRepository $repository, $permission, $group)
     {
-        return array_intersect(array(ProjectUGroup::ANONYMOUS, ProjectUGroup::REGISTERED, ProjectUGroup::AUTHENTICATED), $group) &&
+        return array_intersect([ProjectUGroup::ANONYMOUS, ProjectUGroup::REGISTERED, ProjectUGroup::AUTHENTICATED], $group) &&
             $repository->getProject()->isPublic() &&
             $this->user_finder->areRegisteredUsersAllowedTo($permission, $repository);
     }
@@ -427,19 +425,19 @@ class Git_Driver_Gerrit_ProjectCreator
     private function removeFromSection($section, $permission, $value)
     {
         $this->git_exec->setWorkTree($this->dir);
-        $this->git_exec->configFile($this->dir.'/project.config', "--unset access.$section/*.$permission '$value'");
+        $this->git_exec->configFile($this->dir . '/project.config', "--unset access.$section/*.$permission '$value'");
     }
 
     private function addToSection($section, $permission, $value)
     {
         $this->git_exec->setWorkTree($this->dir);
-        $this->git_exec->configFile($this->dir.'/project.config', "--add access.$section/*.$permission '$value'");
+        $this->git_exec->configFile($this->dir . '/project.config', "--add access.$section/*.$permission '$value'");
     }
     private function pushToServer()
     {
         $this->git_exec->setWorkTree($this->dir);
-        $this->git_exec->add($this->dir.'/project.config');
-        $this->git_exec->add($this->dir.'/groups');
+        $this->git_exec->add($this->dir . '/project.config');
+        $this->git_exec->add($this->dir . '/groups');
         $this->git_exec->commit('Updated project config and access rights');
         $this->git_exec->push('origin HEAD:refs/meta/config');
     }

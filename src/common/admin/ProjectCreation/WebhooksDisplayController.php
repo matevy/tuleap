@@ -44,8 +44,6 @@ class WebhooksDisplayController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
      * @param array $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -64,7 +62,7 @@ class WebhooksDisplayController implements DispatchableWithRequest
         $webhook_retriever        = new Retriever($webhook_dao);
         $webhooks                 = $webhook_retriever->getWebhooks();
         $webhook_status_retriever = new StatusRetriever(new WebhookLoggerDao());
-        $webhooks_presenter       = array();
+        $webhooks_presenter       = [];
 
         foreach ($webhooks as $webhook) {
             $webhooks_presenter[] = new WebhookPresenter(
@@ -81,8 +79,7 @@ class WebhooksDisplayController implements DispatchableWithRequest
             $csrf_token
         );
 
-        $assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-        $include_assets = new IncludeAssets($assets_path, '/assets');
+        $include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets/core', '/assets/core');
 
         $GLOBALS['HTML']->includeFooterJavascriptFile(
             $include_assets->getFileURL('site-admin-project-configuration.js')
@@ -91,7 +88,7 @@ class WebhooksDisplayController implements DispatchableWithRequest
         $admin_page = new AdminPageRenderer();
         $admin_page->renderANoFramedPresenter(
             $title,
-            ForgeConfig::get('codendi_dir') .'/src/templates/admin/projects/',
+            ForgeConfig::get('codendi_dir') . '/src/templates/admin/projects/',
             'configuration',
             $presenter
         );

@@ -1,0 +1,18 @@
+paths:
+  - ./src/common
+  - ./plugins
+exclude_files:
+  - tests
+  - node_modules
+layers:
+  - name: Core
+    collectors:
+      - type: directory
+        regex: src/common/.*
+  - name: Plugins
+    collectors:
+      - type: directory
+        regex: plugins/\w+/include/.*
+ruleset:
+  Plugins:
+    - Core

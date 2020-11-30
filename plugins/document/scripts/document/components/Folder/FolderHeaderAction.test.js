@@ -20,14 +20,14 @@
 import { shallowMount } from "@vue/test-utils";
 import localVue from "../../helpers/local-vue.js";
 import FolderHeaderAction from "./FolderHeaderAction.vue";
-import { createStoreMock } from "../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 
 describe("FolderHeaderAction", () => {
     let dropdown_factory, state, store, store_options;
     beforeEach(() => {
         state = {};
         store_options = {
-            state
+            state,
         };
         store = createStoreMock(store_options);
 
@@ -35,7 +35,7 @@ describe("FolderHeaderAction", () => {
             return shallowMount(FolderHeaderAction, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -46,13 +46,15 @@ describe("FolderHeaderAction", () => {
         const item = {
             id: 42,
             title: "current folder title",
-            user_can_write: false
+            user_can_write: false,
         };
 
         const wrapper = dropdown_factory({ item });
 
-        expect(wrapper.contains("[data-test=document-item-action-new-button]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-item-action-details-button]")).toBeTruthy();
+        expect(wrapper.find("[data-test=document-item-action-new-button]").exists()).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-item-action-details-button]").exists()
+        ).toBeTruthy();
     });
 
     it(`Given user has write permission on current folder
@@ -61,12 +63,14 @@ describe("FolderHeaderAction", () => {
         const item = {
             id: 42,
             title: "current folder title",
-            user_can_write: true
+            user_can_write: true,
         };
 
         const wrapper = dropdown_factory({ item });
 
-        expect(wrapper.contains("[data-test=document-item-action-new-button]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=document-item-action-details-button]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-item-action-new-button]").exists()).toBeTruthy();
+        expect(
+            wrapper.find("[data-test=document-item-action-details-button]").exists()
+        ).toBeFalsy();
     });
 });

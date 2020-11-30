@@ -23,9 +23,11 @@ declare(strict_types=1);
 namespace Tuleap\Docman\DocmanSettingsSiteAdmin\FilesUploadLimits;
 
 use CSRFSynchronizerToken;
+use DocmanPlugin;
 use Feedback;
 use HTTPRequest;
 use Tuleap\Admin\AdminPageRenderer;
+use Tuleap\Docman\DocmanSettingsSiteAdmin\DocmanSettingsTabsPresenterCollectionBuilder;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithBurningParrot;
 use Tuleap\Request\DispatchableWithRequest;
@@ -36,22 +38,25 @@ class DocmanFilesUploadLimitsAdminController implements DispatchableWithRequest,
      * @var AdminPageRenderer
      */
     private $admin_page_renderer;
+    /**
+     * @var DocmanSettingsTabsPresenterCollectionBuilder
+     */
+    private $tabs_presenter_collection_builder;
 
     public function __construct(
-        AdminPageRenderer $admin_page_renderer
+        AdminPageRenderer $admin_page_renderer,
+        DocmanSettingsTabsPresenterCollectionBuilder $tabs_presenter_collection_builder
     ) {
-        $this->admin_page_renderer = $admin_page_renderer;
+        $this->admin_page_renderer               = $admin_page_renderer;
+        $this->tabs_presenter_collection_builder = $tabs_presenter_collection_builder;
     }
 
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
      * @param array $variables
-     * @return void
      */
-    public function process(HTTPRequest $request, BaseLayout $layout, array $variables) : void
+    public function process(HTTPRequest $request, BaseLayout $layout, array $variables): void
     {
         if (! $request->getCurrentUser()->isSuperUser()) {
             $layout->addFeedback(
@@ -59,6 +64,7 @@ class DocmanFilesUploadLimitsAdminController implements DispatchableWithRequest,
                 dgettext('tuleap-docman', 'You should be site administrator to access this page')
             );
             $layout->redirect('/');
+
             return;
         }
 
@@ -70,8 +76,9 @@ class DocmanFilesUploadLimitsAdminController implements DispatchableWithRequest,
             'document-settings',
             new DocmanFilesUploadLimitsAdminPresenter(
                 $csrf_token,
-                (int) \ForgeConfig::get(PLUGIN_DOCMAN_MAX_NB_FILE_UPLOADS_SETTING),
-                (int) \ForgeConfig::get(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING)
+                (int) \ForgeConfig::get(DocmanPlugin::PLUGIN_DOCMAN_MAX_NB_FILE_UPLOADS_SETTING),
+                (int) \ForgeConfig::get(DocmanPlugin::PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING),
+                $this->tabs_presenter_collection_builder->build()
             )
         );
     }

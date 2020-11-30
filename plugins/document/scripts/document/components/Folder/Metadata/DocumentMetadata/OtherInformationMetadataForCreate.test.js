@@ -18,7 +18,7 @@
  */
 
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import localVue from "../../../../helpers/local-vue.js";
 import OtherInformationMetadataForCreate from "./OtherInformationMetadataForCreate.vue";
 import { TYPE_FILE } from "../../../../constants.js";
@@ -36,7 +36,7 @@ describe("OtherInformationMetadataForCreate", () => {
             return shallowMount(OtherInformationMetadataForCreate, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -48,14 +48,14 @@ describe("OtherInformationMetadataForCreate", () => {
                     metadata: [
                         {
                             short_name: "obsolescence_date",
-                            value: null
-                        }
+                            value: null,
+                        },
                     ],
                     obsolescence_date: null,
                     type: TYPE_FILE,
-                    title: "title"
+                    title: "title",
                 },
-                value: ""
+                value: "",
             },
             { parent: 102 }
         );
@@ -65,8 +65,8 @@ describe("OtherInformationMetadataForCreate", () => {
         store.state = {
             is_obsolescence_date_metadata_used: true,
             metadata: {
-                has_loaded_metadata: true
-            }
+                has_loaded_metadata: true,
+            },
         };
 
         expect(wrapper.find("[data-test=document-other-information]").exists()).toBeTruthy();
@@ -80,16 +80,16 @@ describe("OtherInformationMetadataForCreate", () => {
                 metadata: null,
                 status: 100,
                 type: TYPE_FILE,
-                title: "title"
+                title: "title",
             },
-            value: ""
+            value: "",
         });
 
         store.state = {
             is_obsolescence_date_metadata_used: false,
             metadata: {
-                has_loaded_metadata: true
-            }
+                has_loaded_metadata: true,
+            },
         };
 
         expect(wrapper.find("[data-test=document-other-information]").exists()).toBeFalsy();
@@ -97,23 +97,24 @@ describe("OtherInformationMetadataForCreate", () => {
     });
 
     it(`Given custom component are loading
-        Then it displays spinner`, () => {
+        Then it displays spinner`, async () => {
         const wrapper = factory({
             currentlyUpdatedItem: {
                 metadata: [],
                 status: 100,
                 type: TYPE_FILE,
-                title: "title"
+                title: "title",
             },
-            value: ""
+            value: "",
         });
 
         store.state = {
             is_obsolescence_date_metadata_used: true,
             metadata: {
-                has_loaded_metadata: false
-            }
+                has_loaded_metadata: false,
+            },
         };
+        await wrapper.vm.$nextTick();
 
         expect(wrapper.find("[data-test=document-other-information]").exists()).toBeTruthy();
         expect(
@@ -123,7 +124,7 @@ describe("OtherInformationMetadataForCreate", () => {
 
     it("Load project metadata at first load", async () => {
         store.state.metadata = {
-            has_loaded_metadata: false
+            has_loaded_metadata: false,
         };
 
         const wrapper = factory({
@@ -131,13 +132,13 @@ describe("OtherInformationMetadataForCreate", () => {
                 metadata: [],
                 status: 100,
                 type: TYPE_FILE,
-                title: "title"
+                title: "title",
             },
-            value: ""
+            value: "",
         });
 
         EventBus.$emit("show-new-document-modal", {
-            detail: { parent: store.state.current_folder }
+            detail: { parent: store.state.current_folder },
         });
         await wrapper.vm.$nextTick().then(() => {});
 

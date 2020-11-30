@@ -54,7 +54,7 @@ class SCMUsageCollector
 
     private function collectAccessesByMonth(Statistics_Formatter $formatter)
     {
-        $accesses_by_month = array();
+        $accesses_by_month = [];
 
         $global_accesses = $this->dao->searchAccessesCount(
             $formatter->startDate,
@@ -64,12 +64,12 @@ class SCMUsageCollector
 
         $accesses_by_month['month'][]            = dgettext('tuleap-svn', 'Month');
         $accesses_by_month['nb_browse'][]        = dgettext('tuleap-svn', 'Total number of SVN browse operations');
-        $accesses_by_month['nb_read'] []         = dgettext('tuleap-svn', 'Total number of SVN read operations');
-        $accesses_by_month['nb_write'] []        = dgettext('tuleap-svn', 'Total number of SVN write operations');
-        $accesses_by_month['nb_project_read'] [] = dgettext('tuleap-svn', 'Total number of projects with SVN read operations');
-        $accesses_by_month['nb_user_read'] []    = dgettext('tuleap-svn', 'Total number of users with SVN read operations');
+        $accesses_by_month['nb_read'][]         = dgettext('tuleap-svn', 'Total number of SVN read operations');
+        $accesses_by_month['nb_write'][]        = dgettext('tuleap-svn', 'Total number of SVN write operations');
+        $accesses_by_month['nb_project_read'][] = dgettext('tuleap-svn', 'Total number of projects with SVN read operations');
+        $accesses_by_month['nb_user_read'][]    = dgettext('tuleap-svn', 'Total number of users with SVN read operations');
         $accesses_by_month['nb_project_write'][] = dgettext('tuleap-svn', 'Total number of projects with SVN write operations');
-        $accesses_by_month['nb_user_write'] []   = dgettext('tuleap-svn', 'Total number of users with SVN write operations');
+        $accesses_by_month['nb_user_write'][]   = dgettext('tuleap-svn', 'Total number of users with SVN write operations');
 
         foreach ($global_accesses as $access) {
             $month_key                                         = $access['month'] . ' ' . $access['year'];
@@ -115,13 +115,13 @@ class SCMUsageCollector
         $top_users = $this->dao->searchTopUser($formatter->startDate, $formatter->endDate, $formatter->groupId);
         foreach ($top_users as $top_user) {
             $formatter->addLine(
-                array(dgettext('tuleap-svn', 'Top user'), $top_user['user'])
+                [dgettext('tuleap-svn', 'Top user'), $top_user['user']]
             );
             $formatter->addLine(
-                array(
+                [
                     dgettext('tuleap-svn', 'Top user (number of write operations)'),
                     $top_user['nb_write']
-                )
+                ]
             );
         }
     }
@@ -131,12 +131,12 @@ class SCMUsageCollector
         $top_projects = $this->dao->searchTopProject($formatter->startDate, $formatter->endDate, $formatter->groupId);
         foreach ($top_projects as $top_project) {
             $formatter->addLine(
-                array(dgettext('tuleap-svn', 'Top project'), $top_project['project'])
+                [dgettext('tuleap-svn', 'Top project'), $top_project['project']]
             );
             $formatter->addLine(
-                array(
+                [
                     dgettext('tuleap-svn', 'Top project (number of write operations)'),
-                    $top_project['nb_write'])
+                    $top_project['nb_write']]
             );
         }
     }

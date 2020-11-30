@@ -1,10 +1,11 @@
 <template>
-    <div class="taskboard-header-collapsed-label"
-         v-on:mouseover="mouseEntersCollapsedColumn"
-         v-on:mouseout="mouseLeavesCollapsedColumn"
-         v-on:click="expandCollapsedColumn"
+    <div
+        class="taskboard-header-collapsed-label"
+        v-on:pointerenter="pointerEntersCollapsedColumn"
+        v-on:pointerleave="pointerLeavesCollapsedColumn"
+        v-on:click="expandCollapsedColumn"
     >
-        <cards-in-column-count v-bind:column="column"/>
+        <cards-in-column-count v-bind:column="column" />
         <span class="taskboard-header-label" data-test="label">{{ column.label }}</span>
     </div>
 </template>
@@ -15,7 +16,7 @@ import ExpandCollapsedColumnMixin from "../../Body/Swimlane/Cell/expand-collapse
 import HoveringStateForCollapsedColumnMixin from "../../Body/Swimlane/Cell/hovering-state-for-collapsed-column-mixin";
 
 @Component({
-    components: { CardsInColumnCount }
+    components: { CardsInColumnCount },
 })
 export default class CollapsedLabel extends Mixins(
     ExpandCollapsedColumnMixin,

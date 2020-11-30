@@ -35,8 +35,6 @@ class InvertCommentsController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -47,7 +45,7 @@ class InvertCommentsController implements DispatchableWithRequest
         $valid = new Valid_UInt('tracker');
         $valid->required();
         if ($request->valid($valid)) {
-            $preference_name = 'tracker_comment_invertorder_'.$request->get('tracker');
+            $preference_name = 'tracker_comment_invertorder_' . $request->get('tracker');
             $request->getCurrentUser()->togglePreference($preference_name, 0, 1);
         }
     }

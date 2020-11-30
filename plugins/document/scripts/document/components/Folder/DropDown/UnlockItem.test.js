@@ -19,17 +19,17 @@
 
 import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import UnlockItem from "./UnlockItem.vue";
 
 describe("UnlockItem", () => {
     let unlock_factory, state, store, store_options;
     beforeEach(() => {
         state = {
-            user_id: 101
+            user_id: 101,
         };
         store_options = {
-            state
+            state,
         };
         store = createStoreMock(store_options);
 
@@ -37,7 +37,7 @@ describe("UnlockItem", () => {
             return shallowMount(UnlockItem, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -51,11 +51,11 @@ describe("UnlockItem", () => {
                 title: "my item title",
                 type: "file",
                 user_can_write: true,
-                lock_info: null
-            }
+                lock_info: null,
+            },
         });
 
-        expect(wrapper.contains("[data-test=document-dropdown-menu-unlock-item]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-dropdown-menu-unlock-item]").exists()).toBeFalsy();
     });
 
     it(`Given an other user has locked a document, and given I don't have admin permission
@@ -69,13 +69,13 @@ describe("UnlockItem", () => {
                 user_can_write: false,
                 lock_info: {
                     locked_by: {
-                        id: 105
-                    }
-                }
-            }
+                        id: 105,
+                    },
+                },
+            },
         });
 
-        expect(wrapper.contains("[data-test=document-dropdown-menu-unlock-item]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-dropdown-menu-unlock-item]").exists()).toBeFalsy();
     });
 
     it(`Given user can write
@@ -89,13 +89,15 @@ describe("UnlockItem", () => {
                 user_can_write: true,
                 lock_info: {
                     locked_by: {
-                        id: 105
-                    }
-                }
-            }
+                        id: 105,
+                    },
+                },
+            },
         });
 
-        expect(wrapper.contains("[data-test=document-dropdown-menu-unlock-item]")).toBeTruthy();
+        expect(
+            wrapper.find("[data-test=document-dropdown-menu-unlock-item]").exists()
+        ).toBeTruthy();
     });
 
     it(`Given item is a file and given user can write
@@ -107,12 +109,14 @@ describe("UnlockItem", () => {
                 type: "file",
                 user_can_write: true,
                 lock_info: {
-                    id: 101
-                }
-            }
+                    id: 101,
+                },
+            },
         });
 
-        expect(wrapper.contains("[data-test=document-dropdown-menu-unlock-item]")).toBeTruthy();
+        expect(
+            wrapper.find("[data-test=document-dropdown-menu-unlock-item]").exists()
+        ).toBeTruthy();
     });
 
     it(`unlock document on click`, () => {
@@ -123,15 +127,15 @@ describe("UnlockItem", () => {
             user_can_write: true,
             lock_info: {
                 locked_by: {
-                    id: 105
-                }
-            }
+                    id: 105,
+                },
+            },
         };
         const wrapper = unlock_factory({
-            item
+            item,
         });
 
-        wrapper.find("[data-test=document-dropdown-menu-unlock-item]").trigger("click");
+        wrapper.get("[data-test=document-dropdown-menu-unlock-item]").trigger("click");
 
         expect(store.dispatch).toHaveBeenCalledWith("unlockDocument", item);
     });

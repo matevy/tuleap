@@ -25,19 +25,19 @@ class URL
     /**
     * @see http://www.ietf.org/rfc/rfc2396.txt Annex B
     */
-    /* static */ function parse($url)
+    /* static */ public function parse($url)
     {
-        $components = array();
+        $components = [];
         preg_match('`^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?`i', $url, $components);
         return $components;
     }
-    /* static */ function getHost($url)
+    /* static */ public function getHost($url)
     {
         $components = URL::parse($url);
         return $components[4];
     }
 
-    static function getScheme($url)
+    public static function getScheme($url)
     {
         $components = URL::parse($url);
         return $components[2];
@@ -49,7 +49,7 @@ class URL
      *
      * @return String
      */
-    function getGroupNameFromSVNUrl($uri)
+    public function getGroupNameFromSVNUrl($uri)
     {
         $pieces = explode('&', $uri);
         foreach ($pieces as $piece) {
@@ -58,7 +58,7 @@ class URL
                 break;
             }
         }
-        if (!isset($parts)) {
+        if (! isset($parts)) {
             return false;
         }
         $group = explode('=', $parts);
@@ -68,7 +68,7 @@ class URL
     /**
      * Wrapper for Rule_ProjectName
      */
-    function getProjectNameRule()
+    public function getProjectNameRule()
     {
         return new Rule_ProjectName();
     }
@@ -76,14 +76,15 @@ class URL
     public function getGroupIdFromUrl($url)
     {
         $request = HTTPRequest::instance();
-        $req_uri = '/'.trim($url, "/");
+        $req_uri = '/' . trim($url, "/");
         // /projects/ and /viewvc/
         if ((strpos($req_uri, '/projects/') === 0) || (strpos($req_uri, '/viewvc.php/') !== false)) {
+            $this_proj_name = '';
             if (strpos($req_uri, '/viewvc.php/') !== false) {
                 $this_proj_name = $this->getGroupNameFromSVNUrl($req_uri);
             } elseif (strpos($req_uri, '/projects/') !== false) {
                 $pieces = explode("/", $url);
-                $this_proj_name=$pieces[2];
+                $this_proj_name = $pieces[2];
             }
             //Project short name validation
             $rule = $this->getProjectNameRule();
@@ -91,12 +92,12 @@ class URL
                 return false;
             }
             $dao = $this->getProjectDao();
-            $dao_results=$dao->searchByUnixGroupName($this_proj_name);
+            $dao_results = $dao->searchByUnixGroupName($this_proj_name);
             if ($dao_results->rowCount() < 1) {// project does not exist
                 return false;
             }
-            $group_id=$dao_results->getRow();
-            $group_id=$group_id['group_id'];
+            $group_id = $dao_results->getRow();
+            $group_id = $group_id['group_id'];
         }
         // Forum and news. Each published news is a special forum of project 'news'
         if (strpos($req_uri, '/forum/') === 0) {
@@ -104,11 +105,11 @@ class URL
                 // Get corresponding project
                 $dao = $this->getForumDao();
                 $result = $dao->searchByGroupForumId($_REQUEST['forum_id']);
-                $group_id=$result->getRow();
-                $group_id=$group_id['group_id'];
+                $group_id = $result->getRow();
+                $group_id = $group_id['group_id'];
 
                 // News
-                if ($group_id == $GLOBALS['sys_news_group']) {
+                if ($group_id == ForgeConfig::get('sys_news_group')) {
                     $group_id = $this->getGroupIdForNewsFromForumId($_REQUEST['forum_id']);
                 }
             }
@@ -117,11 +118,11 @@ class URL
                 // Get corresponding project
                 $dao = $this->getForumDao();
                 $row = $dao->getMessageProjectIdAndForumId($_REQUEST['msg_id']);
-                $group_id=$row['group_id'];
-                $forum_id=$row['group_forum_id'];
+                $group_id = $row['group_id'];
+                $forum_id = $row['group_forum_id'];
 
                 // News
-                if ($group_id == $GLOBALS['sys_news_group']) {
+                if ($group_id == ForgeConfig::get('sys_news_group')) {
                     // Otherwise, get group_id of corresponding news
                     $group_id = $this->getGroupIdForNewsFromForumId($forum_id);
                 }
@@ -133,22 +134,22 @@ class URL
             if (isset($_REQUEST['artifact_id'])) {
                 $dao = $this->getArtifactDao();
                 $result = $dao->searchArtifactId($_REQUEST['artifact_id']);
-                $group_id=$result->getRow();
-                $group_id=$group_id['group_id'];
+                $group_id = $result->getRow();
+                $group_id = $group_id['group_id'];
             }
         }
 
         EventManager::instance()->processEvent(
             Event::GET_PROJECTID_FROM_URL,
-            array(
+            [
                 'url'         => $req_uri,
                 'project_id'  => &$group_id,
                 'project_dao' => $this->getProjectDao(),
                 'request'     => new Codendi_Request($_REQUEST)
-            )
+            ]
         );
 
-        if ($group_id) {
+        if (isset($group_id) && $group_id) {
             return $group_id;
         } elseif (isset($_REQUEST['group_id'])) {
             return $_REQUEST['group_id'];
@@ -165,22 +166,22 @@ class URL
         return $group_id['group_id'];
     }
 
-    function getProjectDao()
+    public function getProjectDao()
     {
         return new ProjectDao(CodendiDataAccess::instance());
     }
 
-    function getForumDao()
+    public function getForumDao()
     {
         return new ForumDao(CodendiDataAccess::instance());
     }
 
-    function getNewsBytesDao()
+    public function getNewsBytesDao()
     {
         return new NewsBytesDao(CodendiDataAccess::instance());
     }
 
-    function getArtifactDao()
+    public function getArtifactDao()
     {
         return new ArtifactDao(CodendiDataAccess::instance());
     }

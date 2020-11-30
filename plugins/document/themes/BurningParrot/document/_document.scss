@@ -32,12 +32,14 @@
 @import 'modal-common';
 @import 'clipboard';
 @import 'permissions-modal';
-@import '../../../../../src/www/themes/BurningParrot/css/includes/global-variables';
+@import '../../../../../src/themes/BurningParrot/css/includes/global-variables';
+@import 'download-as-zip';
+@import 'project_background_header';
 
 .document-app {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - #{$navbar-height});
+    height: 100vh;
 
     > .breadcrumb {
         flex: 0 0 auto;
@@ -45,5 +47,17 @@
 }
 
 .has-visible-project-banner .document-app {
-    height: calc(100vh - #{$navbar-height} - #{$project-banner-base-height});
+    height: calc(100vh - #{$project-banner-base-height});
+}
+
+.has-visible-platform-banner .document-app {
+    height: calc(100vh - #{$platform-banner-base-height});
+}
+
+.has-visible-project-banner.has-visible-platform-banner .document-app {
+    height: calc(100vh - #{$project-banner-base-height + $platform-banner-base-height + $extra-platform-banner-white-space-height});
+}
+
+.document-error-modal-link {
+    cursor: pointer;
 }

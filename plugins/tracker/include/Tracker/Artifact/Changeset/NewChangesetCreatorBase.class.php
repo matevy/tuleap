@@ -21,9 +21,13 @@
 declare(strict_types=1);
 
 use Tuleap\DB\DBTransactionExecutor;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\ArtifactInstrumentation;
+use Tuleap\Tracker\Artifact\Changeset\ArtifactChangesetSaver;
 use Tuleap\Tracker\Artifact\Changeset\FieldsToBeSavedInSpecificOrderRetriever;
+use Tuleap\Tracker\Artifact\Event\ArtifactUpdated;
 use Tuleap\Tracker\Artifact\Exception\FieldValidationException;
+use Tuleap\Tracker\Artifact\XMLImport\TrackerImportConfig;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SourceOfAssociationCollectionBuilder;
 use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 
@@ -49,6 +53,10 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
      * @var DBTransactionExecutor
      */
     private $transaction_executor;
+    /**
+     * @var \Tuleap\Tracker\Artifact\Changeset\ArtifactChangesetSaver
+     */
+    private $artifact_changeset_saver;
 
     public function __construct(
         Tracker_Artifact_Changeset_FieldsValidator $fields_validator,
@@ -60,7 +68,8 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         ReferenceManager $reference_manager,
         SourceOfAssociationCollectionBuilder $source_of_association_collection_builder,
         Tracker_Artifact_Changeset_ChangesetDataInitializator $field_initializator,
-        DBTransactionExecutor $transaction_executor
+        DBTransactionExecutor $transaction_executor,
+        ArtifactChangesetSaver $artifact_changeset_saver
     ) {
         parent::__construct(
             $fields_validator,
@@ -75,26 +84,27 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         $this->reference_manager                        = $reference_manager;
         $this->source_of_association_collection_builder = $source_of_association_collection_builder;
         $this->transaction_executor                     = $transaction_executor;
+        $this->artifact_changeset_saver                 = $artifact_changeset_saver;
     }
 
     /**
      * Update an artifact (means create a new changeset)
      *
-     * @return Tracker_Artifact_Changeset|null
      * @throws Tracker_NoChangeException In the validation
      * @throws FieldValidationException
      *
      * @throws Tracker_Exception In the validation
      */
     public function create(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $fields_data,
         string $comment,
         PFUser $submitter,
         int $submitted_on,
         bool $send_notification,
         string $comment_format,
-        CreatedFileURLMapping $url_mapping
+        CreatedFileURLMapping $url_mapping,
+        TrackerImportConfig $tracker_import_config
     ): ?Tracker_Artifact_Changeset {
         $comment = trim($comment);
 
@@ -104,7 +114,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         }
 
         try {
-            $new_changeset = $this->transaction_executor->execute(function () use ($artifact, $fields_data, $comment, $comment_format, $submitter, $submitted_on, $email, $url_mapping) {
+            $new_changeset = $this->transaction_executor->execute(function () use ($artifact, $fields_data, $comment, $comment_format, $submitter, $submitted_on, $email, $url_mapping, $tracker_import_config) {
                 try {
                     $this->validateNewChangeset($artifact, $fields_data, $comment, $submitter, $email);
 
@@ -117,16 +127,17 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
                      */
                     $artifact->getWorkflow()->before($fields_data, $submitter, $artifact);
 
-                    $changeset_id = $this->changeset_dao->create(
-                        $artifact->getId(),
-                        $submitter->getId(),
-                        $email,
-                        $submitted_on
-                    );
-                    if (! $changeset_id) {
+                    try {
+                        $changeset_id = $this->artifact_changeset_saver->saveChangeset(
+                            $artifact,
+                            $submitter,
+                            $submitted_on,
+                            $tracker_import_config
+                        );
+                    } catch (Tracker_Artifact_Exception_CannotCreateNewChangeset $exception) {
                         $GLOBALS['Response']->addFeedback(
                             'error',
-                            $GLOBALS['Language']->getText('plugin_tracker_artifact', 'unable_update')
+                            dgettext('tuleap-tracker', 'Unable to update the artifact')
                         );
                         throw new Tracker_ChangesetNotCreatedException();
                     }
@@ -140,15 +151,17 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
                         $url_mapping
                     );
 
-                    if (! $this->storeComment(
-                        $artifact,
-                        $comment,
-                        $submitter,
-                        $submitted_on,
-                        $comment_format,
-                        $changeset_id,
-                        $url_mapping
-                    )) {
+                    if (
+                        ! $this->storeComment(
+                            $artifact,
+                            $comment,
+                            $submitter,
+                            $submitted_on,
+                            $comment_format,
+                            $changeset_id,
+                            $url_mapping
+                        )
+                    ) {
                         throw new Tracker_CommentNotStoredException();
                     }
 
@@ -199,7 +212,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
                 $artifact->getChangeset($new_changeset->getId())->executePostCreationActions();
             }
 
-            $this->event_manager->processEvent(TRACKER_EVENT_ARTIFACT_POST_UPDATE, ['artifact' => $artifact]);
+            $this->event_manager->processEvent(new ArtifactUpdated($artifact, $submitter));
 
             return $new_changeset;
         } catch (PDOException $exception) {
@@ -209,7 +222,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
 
     abstract protected function saveNewChangesetForField(
         Tracker_FormElement_Field $field,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         $previous_changeset,
         array $fields_data,
         PFUser $submitter,
@@ -221,7 +234,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
      * @throws Tracker_FieldValueNotStoredException
      */
     private function storeFieldsValues(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         $previous_changeset,
         array $fields_data,
         PFUser $submitter,
@@ -229,22 +242,20 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         CreatedFileURLMapping $url_mapping
     ): bool {
         foreach ($this->fields_retriever->getFields($artifact) as $field) {
-            if (! $this->saveNewChangesetForField(
-                $field,
-                $artifact,
-                $previous_changeset,
-                $fields_data,
-                $submitter,
-                $changeset_id,
-                $url_mapping
-            )) {
+            if (
+                ! $this->saveNewChangesetForField(
+                    $field,
+                    $artifact,
+                    $previous_changeset,
+                    $fields_data,
+                    $submitter,
+                    $changeset_id,
+                    $url_mapping
+                )
+            ) {
                 $purifier = Codendi_HTMLPurifier::instance();
                 throw new Tracker_FieldValueNotStoredException(
-                    $GLOBALS['Language']->getText(
-                        'plugin_tracker',
-                        'field_not_stored_exception',
-                        [$purifier->purify($field->getLabel())]
-                    )
+                    sprintf(dgettext('tuleap-tracker', 'The field "%1$s" cannot be stored.'), $purifier->purify($field->getLabel()))
                 );
             }
         }
@@ -253,7 +264,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
     }
 
     private function storeComment(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         $comment,
         PFUser $submitter,
         $submitted_on,
@@ -283,7 +294,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         $this->reference_manager->extractCrossRef(
             $comment,
             $artifact->getId(),
-            Tracker_Artifact::REFERENCE_NATURE,
+            Artifact::REFERENCE_NATURE,
             $artifact->getTracker()->getGroupID(),
             $submitter->getId(),
             $artifact->getTracker()->getItemName()
@@ -293,18 +304,24 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
     }
 
     private function validateNewChangeset(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $fields_data,
         $comment,
         PFUser $submitter,
         $email
     ): bool {
         if ($submitter->isAnonymous() && ($email == null || $email == '')) {
-            $message = $GLOBALS['Language']->getText('plugin_tracker_artifact', 'email_required');
+            $message = dgettext('tuleap-tracker', 'You are not logged in.');
             throw new Tracker_Exception($message);
         }
 
-        if (! $this->fields_validator->validate($artifact, $submitter, $fields_data)) {
+        $are_fields_valid = $this->fields_validator->validate(
+            $artifact,
+            $submitter,
+            $fields_data,
+            new \Tuleap\Tracker\Changeset\Validation\NullChangesetValidationContext()
+        );
+        if (! $are_fields_valid) {
             $errors_from_feedback = $GLOBALS['Response']->getFeedbackErrors();
             $GLOBALS['Response']->clearFeedbackErrors();
 
@@ -320,7 +337,7 @@ abstract class Tracker_Artifact_Changeset_NewChangesetCreatorBase extends Tracke
         $workflow    = $artifact->getWorkflow();
         $fields_data = $this->field_initializator->process($artifact, $fields_data);
 
-        $workflow->validate($fields_data, $artifact, $comment);
+        $workflow->validate($fields_data, $artifact, $comment, $submitter);
         /*
          * We need to run the post actions to validate the data
          */

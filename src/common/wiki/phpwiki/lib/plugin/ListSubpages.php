@@ -30,17 +30,17 @@ require_once('lib/PageList.php');
 
 class WikiPlugin_ListSubpages extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("ListSubpages");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Lists the names of all SubPages of the current page.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -49,24 +49,24 @@ class WikiPlugin_ListSubpages extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array('noheader' => false, // no header
+            ['noheader' => false, // no header
                      'basepage' => false, // subpages of which page, default: current
                      'maxpages' => '',    // maximum number of pages to include, change that to limit
                      //'exclude'  => '',
                      /*'relative' => false, */
                      'info'     => ''
-            )
+            ]
         );
     }
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor,count
     // exclude arg allows multiple pagenames exclude=HomePage,RecentChanges
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         if ($args['basepage']) {
@@ -101,13 +101,13 @@ class WikiPlugin_ListSubpages extends WikiPlugin
             }
         }
         $pagelist = new PageList($info, $exclude, $args);
-        if (!$noheader) {
+        if (! $noheader) {
             $pagelist->setCaption($descrip);
         }
 
         foreach ($subpages as $page) {
             // A page cannot include itself. Avoid doublettes.
-            static $included_pages = array();
+            static $included_pages = [];
             if (in_array($page, $included_pages)) {
                 $content->pushContent(HTML::p(sprintf(
                     _("recursive inclusion of page %s ignored"),
@@ -126,12 +126,12 @@ class WikiPlugin_ListSubpages extends WikiPlugin
         $content->pushContent($pagelist);
         return $content;
     }
-};
+}
 
 // how many backlinks for this subpage
 class _PageList_Column_ListSubpages_count extends _PageList_Column
 {
-    function _getValue($page, &$revision_handle)
+    public function _getValue($page, &$revision_handle)
     {
         $iter = $page->getBackLinks();
         $count = $iter->count();

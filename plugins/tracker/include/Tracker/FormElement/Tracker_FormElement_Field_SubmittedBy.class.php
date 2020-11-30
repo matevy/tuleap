@@ -19,12 +19,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 
 class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_List implements Tracker_FormElement_Field_ReadOnly
 {
 
-    public $default_properties = array();
+    public $default_properties = [];
 
     /**
      * The field is permanently deleted from the db
@@ -47,17 +48,18 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     public function getCriteriaWhere($criteria)
     {
         //Only filter query if criteria is valuated
-        if ($criteria_value= $this->getCriteriaValue($criteria)) {
-            $a = 'A_'. $this->id;
-            $b = 'B_'. $this->id;
-            $ids_to_search = array_intersect(
+        if ($criteria_value = $this->getCriteriaValue($criteria)) {
+            $a = 'A_' . $this->id;
+            $b = 'B_' . $this->id;
+            $ids_to_search = array_values(array_intersect(
                 array_values($criteria_value),
-                array_merge(array(100), array_keys($this->getBind()->getAllValues()))
-            );
+                array_merge([100], array_keys($this->getBind()->getAllValues()))
+            ));
             if (count($ids_to_search) > 1) {
-                return " artifact.submitted_by IN(". $this->getCriteriaDao()->getDa()->escapeIntImplode($ids_to_search) .") ";
-            } elseif (count($ids_to_search)) {
-                return " artifact.submitted_by = ". $this->getCriteriaDao()->getDa()->escapeInt($ids_to_search[0]) ." ";
+                return " artifact.submitted_by IN(" . $this->getCriteriaDao()->getDa()->escapeIntImplode($ids_to_search) . ") ";
+            } else {
+                $id_to_search = isset($ids_to_search[0]) ? $ids_to_search[0] : null;
+                return " artifact.submitted_by = " . $this->getCriteriaDao()->getDa()->escapeInt($id_to_search) . " ";
             }
         }
         return '';
@@ -66,7 +68,7 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     public function getQuerySelect()
     {
         // SubmittedOn is stored in the artifact
-        return "a.submitted_by AS `". $this->name ."`";
+        return "a.submitted_by AS `" . $this->name . "`";
     }
 
     public function getQueryFrom()
@@ -76,8 +78,8 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     }
     public function getQueryFromAggregate()
     {
-        $R1 = 'R1_'. $this->id;
-        $R2 = 'R2_'. $this->id;
+        $R1 = 'R1_' . $this->id;
+        $R2 = 'R2_' . $this->id;
         return " LEFT JOIN  user AS $R2 ON ($R2.user_id = a.submitted_by ) ";
     }
 
@@ -98,33 +100,21 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
         return $this->name;
     }
 
-    /**
-     * @return the label of the field (mainly used in admin part)
-     */
     public static function getFactoryLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'submittedby_label');
+        return dgettext('tuleap-tracker', 'Submitted By');
     }
 
-    /**
-     * @return the description of the field (mainly used in admin part)
-     */
     public static function getFactoryDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'submittedby_description');
+        return dgettext('tuleap-tracker', 'Display the user who submitted the artifact');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconUseIt()
     {
         return $GLOBALS['HTML']->getImagePath('ic/user-female.png');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconCreate()
     {
         return $GLOBALS['HTML']->getImagePath('ic/user-female--plus.png');
@@ -144,7 +134,7 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     /**
      * Keep the value
      *
-     * @param Tracker_Artifact                $artifact                The artifact
+     * @param Artifact                        $artifact                The artifact
      * @param int                             $changeset_value_id      The id of the changeset_value
      * @param Tracker_Artifact_ChangesetValue $previous_changesetvalue The data previously stored in the db
      *
@@ -167,11 +157,11 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     {
         //force the bind
         $form_element_data['bind-type'] = 'users';
-        $form_element_data['bind'] = array(
-            'value_function' => array(
+        $form_element_data['bind'] = [
+            'value_function' => [
                 'artifact_submitters',
-            )
-        );
+            ]
+        ];
         parent::afterCreate($form_element_data, $tracker_is_empty);
     }
 
@@ -204,14 +194,14 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     /**
      * Fetch the html code to display the field value in artifact
      *
-     * @param Tracker_Artifact                $artifact         The artifact
+     * @param Artifact                        $artifact         The artifact
      * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
      * @param array                           $submitted_values The value already submitted by the user
      *
      * @return string
      */
     protected function fetchArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -221,12 +211,12 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     /**
      * Fetch the html code to display the field value in artifact in read only mode
      *
-     * @param Tracker_Artifact                $artifact The artifact
+     * @param Artifact                        $artifact The artifact
      * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
      *
      * @return string
      */
-    public function fetchArtifactValueReadOnly(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    public function fetchArtifactValueReadOnly(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         $purifier = Codendi_HTMLPurifier::instance();
         $html     = '';
@@ -236,13 +226,13 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
         return $html;
     }
 
-    public function fetchArtifactCopyMode(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactCopyMode(Artifact $artifact, array $submitted_values)
     {
         return '';
     }
 
     public function fetchArtifactValueWithEditionFormIfEditable(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -252,16 +242,16 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
      /**
      * Fetch the field value in artifact to be displayed in mail
      *
-     * @param Tracker_Artifact                $artifact         The artifact
-     * @param PFUser                          $user             The user who will receive the email
-     * @param bool $ignore_perms
-     * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
-     * @param string                          $format           mail format
+     * @param Artifact                        $artifact The artifact
+     * @param PFUser                          $user     The user who will receive the email
+     * @param bool                            $ignore_perms
+     * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
+     * @param string                          $format   mail format
      *
      * @return string
      */
     public function fetchMailArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         $ignore_perms,
         ?Tracker_Artifact_ChangesetValue $value = null,
@@ -285,12 +275,12 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     /**
      * Say if the value is valid. If not valid set the internal has_error to true.
      *
-     * @param Tracker_Artifact $artifact The artifact
-     * @param mixed            $value    data coming from the request. May be string or array.
+     * @param Artifact $artifact The artifact
+     * @param mixed    $value    data coming from the request. May be string or array.
      *
      * @return bool true if the value is considered ok
      */
-    public function isValid(Tracker_Artifact $artifact, $value)
+    public function isValid(Artifact $artifact, $value)
     {
         // this field is always valid as it is not filled by users.
         return true;
@@ -299,26 +289,23 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
      /**
      * Validate a field
      *
-     * @param Tracker_Artifact                $artifact             The artifact to check
-     * @param mixed                           $submitted_value      The submitted value
-     * @param Tracker_Artifact_ChangesetValue $last_changeset_value The last changeset value of the field (give null if no old value)
-     *
-     * @return bool true on success or false on failure
+     * @param mixed $submitted_value      The submitted value
      */
     public function validateFieldWithPermissionsAndRequiredStatus(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         $submitted_value,
+        PFUser $user,
         ?Tracker_Artifact_ChangesetValue $last_changeset_value = null,
-        $is_submission = null
-    ) {
+        ?bool $is_submission = null
+    ): bool {
         $is_valid = true;
         if ($last_changeset_value === null && $submitted_value === null && $this->isRequired()) {
             $is_valid = false;
             $this->setHasErrors(true);
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_common_artifact', 'err_required', $this->getLabel(). ' ('. $this->getName() .')'));
-        } elseif ($submitted_value !== null &&  ! $this->userCanUpdate()) {
+            $GLOBALS['Response']->addFeedback('error', sprintf(dgettext('tuleap-tracker', 'The field %1$s is required.'), $this->getLabel() . ' (' . $this->getName() . ')'));
+        } elseif ($submitted_value !== null && ! $this->userCanUpdate()) {
             $is_valid = true;
-            $GLOBALS['Response']->addFeedback('warning', $GLOBALS['Language']->getText('plugin_tracker_admin_import', 'field_not_taken_account', array($this->getName())));
+            $GLOBALS['Response']->addFeedback('warning', sprintf(dgettext('tuleap-tracker', 'The field "%1$s" will not be taken into account.'), $this->getName()));
         }
         return $is_valid;
     }
@@ -335,7 +322,7 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
         $fake_value = new Tracker_FormElement_Field_List_Bind_UsersValue(UserManager::instance()->getCurrentUser()->getId());
         $html      .= $purifier->purify($fake_value->getLabel()) . '<br />';
         $html      .= '<span class="tracker-admin-form-element-help">';
-        $html      .= $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'submittedby_help');
+        $html      .= dgettext('tuleap-tracker', 'The field is automatically set to artifact submission user');
         $html      .= '</span>';
         return $html;
     }
@@ -358,7 +345,7 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     /**
      * @see Tracker_FormElement_Field::fetchTooltipValue()
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    protected function fetchTooltipValue(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         return $this->fetchArtifactValueReadOnly($artifact, $value);
     }
@@ -366,7 +353,7 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
     /**
      * @see Tracker_FormElement_Field::fetchCardValue()
      */
-    public function fetchCardValue(Tracker_Artifact $artifact, ?Tracker_CardDisplayPreferences $display_preferences = null)
+    public function fetchCardValue(Artifact $artifact, ?Tracker_CardDisplayPreferences $display_preferences = null)
     {
         $value = new Tracker_FormElement_Field_List_Bind_UsersValue($artifact->getSubmittedBy());
         return $value->fetchCard($display_preferences);
@@ -445,7 +432,7 @@ class Tracker_FormElement_Field_SubmittedBy extends Tracker_FormElement_Field_Li
         return Tracker_FormElement_Field_List_Bind::NONE_VALUE;
     }
 
-    public function getFieldDataFromRESTValue(array $value, ?Tracker_Artifact $artifact = null)
+    public function getFieldDataFromRESTValue(array $value, ?Artifact $artifact = null)
     {
          return null;
     }

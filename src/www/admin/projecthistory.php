@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright 1999-2000 (c) The SourceForge Crew
- * Copyright (c) Enalean, 2016 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2016 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -32,14 +32,13 @@ require_once __DIR__ . '/../project/admin/project_history.php';
 $request = HTTPRequest::instance();
 $request->checkUserIsSuperUser();
 
-$assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-$include_assets = new IncludeAssets($assets_path, '/assets');
+$include_assets = new IncludeAssets(__DIR__ . '/../assets/core', '/assets/core');
 
 $GLOBALS['HTML']->includeFooterJavascriptFile(
     $include_assets->getFileURL('site-admin-project-history.js')
 );
 
-$project = ProjectManager::instance()->getProject($group_id);
+$project = ProjectManager::instance()->getProject($group_id ?? 0);
 
 if (! $project || $project->isError()) {
     $GLOBALS['Response']->addFeedback(Feedback::ERROR, $Language->getText('admin_groupedit', 'error_group'));

@@ -58,16 +58,15 @@
  *   pcre_fix_posix_classes (probably with redefines()).
  */
 
-include_once(dirname(__FILE__)."/config.php");
-include_once(dirname(__FILE__)."/FileFinder.php");
+include_once(dirname(__FILE__) . "/config.php");
+include_once(dirname(__FILE__) . "/FileFinder.php");
 
 function IniConfig($file)
 {
-
     // List of all valid config options to be define()d which take "values" (not
     // booleans). Needs to be categorised, and generally made a lot tidier.
-    $_IC_VALID_VALUE = array
-        ('WIKI_NAME', 'ADMIN_USER', 'ADMIN_PASSWD',
+    $_IC_VALID_VALUE =
+        ['WIKI_NAME', 'ADMIN_USER', 'ADMIN_PASSWD',
          'DEFAULT_DUMP_DIR', 'HTML_DUMP_DIR',
          'HTML_DUMP_SUFFIX', 'MAX_UPLOAD_SIZE', 'MINOR_EDIT_TIMEOUT',
          'CACHE_CONTROL', 'CACHE_CONTROL_MAX_AGE',
@@ -86,12 +85,12 @@ function IniConfig($file)
          'PLUGIN_CACHED_MAXARGLEN', 'PLUGIN_CACHED_IMGTYPES',
          // extra logic:
          'SERVER_NAME','SERVER_PORT','SCRIPT_NAME', 'DATA_PATH', 'PHPWIKI_DIR', 'VIRTUAL_PATH',
-         );
+         ];
 
     // Optional values which need to be defined.
     // These are not defined in config-default.ini and empty if not defined.
-    $_IC_OPTIONAL_VALUE = array
-        (
+    $_IC_OPTIONAL_VALUE =
+        [
          'DEBUG', 'TEMP_DIR', 'DEFAULT_LANGUAGE',
          'LDAP_AUTH_HOST','LDAP_SET_OPTION','LDAP_BASE_DN', 'LDAP_AUTH_USER',
          'LDAP_AUTH_PASSWORD','LDAP_SEARCH_FIELD','LDAP_OU_GROUP','LDAP_OU_USERS',
@@ -102,11 +101,11 @@ function IniConfig($file)
          'DISABLE_GETIMAGESIZE','DBADMIN_USER','DBADMIN_PASSWD',
          'SESSION_SAVE_PATH', 'TOOLBAR_PAGELINK_PULLDOWN', 'TOOLBAR_TEMPLATE_PULLDOWN',
          'EXTERNAL_LINK_TARGET', 'ENABLE_MARKUP_TEMPLATE'
-         );
+         ];
 
     // List of all valid config options to be define()d which take booleans.
-    $_IC_VALID_BOOL = array
-        ('ENABLE_USER_NEW', 'ENABLE_PAGEPERM', 'ENABLE_EDIT_TOOLBAR', 'JS_SEARCHREPLACE',
+    $_IC_VALID_BOOL =
+        ['ENABLE_USER_NEW', 'ENABLE_PAGEPERM', 'ENABLE_EDIT_TOOLBAR', 'JS_SEARCHREPLACE',
          'ENABLE_XHTML_XML', 'ENABLE_DOUBLECLICKEDIT', 'ENABLE_LIVESEARCH',
          'USECACHE', 'WIKIDB_NOCACHE_MARKUP',
          'ENABLE_REVERSE_DNS', 'ZIPDUMP_AUTH',
@@ -119,14 +118,14 @@ function IniConfig($file)
          'WARN_NONPUBLIC_INTERWIKIMAP', 'USE_PATH_INFO',
          'DISABLE_HTTP_REDIRECT',
          'BLOG_EMPTY_DEFAULT_PREFIX', 'ENABLE_DISCUSSION_LINK'
-         );
+         ];
 
     $rs = @parse_ini_file($file);
-    $rsdef = @parse_ini_file(dirname(__FILE__)."/../config/config-default.ini");
+    $rsdef = @parse_ini_file(dirname(__FILE__) . "/../config/config-default.ini");
     foreach ($rsdef as $k => $v) {
         if (defined($k)) {
             $rs[$k] = constant($k);
-        } elseif (!isset($rs[$k])) {
+        } elseif (! isset($rs[$k])) {
             $rs[$k] = $v;
         }
     }
@@ -144,15 +143,16 @@ function IniConfig($file)
         //} elseif (array_key_exists($item, $rsdef)) {
         //    define($item, $rsdef[$item]);
         // calculate them later or not at all:
-        } elseif (in_array(
-            $item,
-            array('DATABASE_PREFIX', 'SERVER_NAME', 'SERVER_PORT',
+        } elseif (
+            in_array(
+                $item,
+                ['DATABASE_PREFIX', 'SERVER_NAME', 'SERVER_PORT',
                                  'SCRIPT_NAME', 'DATA_PATH', 'PHPWIKI_DIR', 'VIRTUAL_PATH',
                                  'LDAP_AUTH_HOST','IMAP_AUTH_HOST','POP3_AUTH_HOST',
-            'PLUGIN_CACHED_CACHE_DIR')
-        )) {
-            ;
-        } elseif (!defined("_PHPWIKI_INSTALL_RUNNING")) {
+                'PLUGIN_CACHED_CACHE_DIR']
+            )
+        ) {
+        } elseif (! defined("_PHPWIKI_INSTALL_RUNNING")) {
             trigger_error(sprintf("missing config setting for %s", $item));
         }
     }
@@ -177,22 +177,25 @@ function IniConfig($file)
         }
 
         // calculate them later: old or dynamic constants
-        if (!array_key_exists($item, $rs) and
-            in_array($item, array('USE_PATH_INFO',
+        if (
+            ! array_key_exists($item, $rs) and
+            in_array($item, ['USE_PATH_INFO',
                                   'ALLOW_HTTP_AUTH_LOGIN', 'ALLOW_LDAP_LOGIN',
                                   'ALLOW_IMAP_LOGIN', 'ALLOW_USER_LOGIN',
                                   'REQUIRE_SIGNIN_BEFORE_EDIT',
                                   'WIKIDB_NOCACHE_MARKUP',
                                   'COMPRESS_OUTPUT'
-                                  ))) {
-            ;
-        } elseif (!$val) {
+                                  ])
+        ) {
+        } elseif (! $val) {
             define($item, false);
-        } elseif (strtolower($val) == 'false' ||
+        } elseif (
+            strtolower($val) == 'false' ||
                 strtolower($val) == 'no' ||
                 $val == '' ||
                 $val == false ||
-                $val == '0') {
+                $val == '0'
+        ) {
             define($item, false);
         } else {
             define($item, true);
@@ -204,9 +207,9 @@ function IniConfig($file)
 
     // Expiry stuff
     global $ExpireParams;
-    foreach (array('major','minor','author') as $major) {
-        foreach (array('max_age','min_age','min_keep','keep','max_keep') as $max) {
-            $item = strtoupper($major) . '_'. strtoupper($max);
+    foreach (['major', 'minor', 'author'] as $major) {
+        foreach (['max_age', 'min_age', 'min_keep', 'keep', 'max_keep'] as $max) {
+            $item = strtoupper($major) . '_' . strtoupper($max);
             if (defined($item)) {
                 $val = constant($item);
             } elseif (array_key_exists($item, $rs)) {
@@ -214,8 +217,8 @@ function IniConfig($file)
             } elseif (array_key_exists($item, $rsdef)) {
                 $val = $rsdef[$item];
             }
-            if (!isset($ExpireParams[$major])) {
-                $ExpireParams[$major] = array();
+            if (! isset($ExpireParams[$major])) {
+                $ExpireParams[$major] = [];
             }
             $ExpireParams[$major][$max] = $val;
             unset($rs[$item]);
@@ -226,14 +229,14 @@ function IniConfig($file)
     unset($max);
 
     // User authentication
-    if (!isset($GLOBALS['USER_AUTH_ORDER'])) {
+    if (! isset($GLOBALS['USER_AUTH_ORDER'])) {
         if (isset($rs['USER_AUTH_ORDER'])) {
             $GLOBALS['USER_AUTH_ORDER'] = preg_split(
                 '/\s*:\s*/',
                 $rs['USER_AUTH_ORDER']
             );
         } else {
-            $GLOBALS['USER_AUTH_ORDER'] = array("PersonalPage");
+            $GLOBALS['USER_AUTH_ORDER'] = ["PersonalPage"];
         }
     }
 
@@ -279,22 +282,22 @@ function IniConfig($file)
     // (different LC_CHAR need different posix classes)
     global $WikiNameRegexp;
     $WikiNameRegexp = constant('WIKI_NAME_REGEXP');
-    if (!trim($WikiNameRegexp)) {
+    if (! trim($WikiNameRegexp)) {
         $WikiNameRegexp = '(?<![[:alnum:]])(?:[[:upper:]][[:lower:]]+){2,}(?![[:alnum:]])';
     }
 
     // Got rid of global $KeywordLinkRegexp by using a TextSearchQuery instead
     // of "Category:Topic"
-    if (!isset($rs['KEYWORDS'])) {
+    if (! isset($rs['KEYWORDS'])) {
         $rs['KEYWORDS'] = @$rsdef['KEYWORDS'];
     }
-    if (!isset($rs['KEYWORDS'])) {
+    if (! isset($rs['KEYWORDS'])) {
         $rs['KEYWORDS'] = "Category* OR Topic*";
     }
     if ($rs['KEYWORDS'] == 'Category:Topic') {
         $rs['KEYWORDS'] = "Category* OR Topic*";
     }
-    if (!defined('KEYWORDS')) {
+    if (! defined('KEYWORDS')) {
         define('KEYWORDS', $rs['KEYWORDS']);
     }
     //if (empty($keywords)) $keywords = array("Category","Topic");
@@ -302,8 +305,10 @@ function IniConfig($file)
 
     // TODO: can this be a constant?
     global $DisabledActions;
-    if (!array_key_exists('DISABLED_ACTIONS', $rs)
-        and array_key_exists('DISABLED_ACTIONS', $rsdef)) {
+    if (
+        ! array_key_exists('DISABLED_ACTIONS', $rs)
+        and array_key_exists('DISABLED_ACTIONS', $rsdef)
+    ) {
         $rs['DISABLED_ACTIONS'] = @$rsdef['DISABLED_ACTIONS'];
     }
     if (array_key_exists('DISABLED_ACTIONS', $rs)) {
@@ -313,11 +318,11 @@ function IniConfig($file)
     global $PLUGIN_CACHED_IMGTYPES;
     $PLUGIN_CACHED_IMGTYPES = preg_split('/\s*[|:]\s*/', PLUGIN_CACHED_IMGTYPES);
 
-    if (empty($rs['PLUGIN_CACHED_CACHE_DIR']) and !empty($rsdef['PLUGIN_CACHED_CACHE_DIR'])) {
+    if (empty($rs['PLUGIN_CACHED_CACHE_DIR']) and ! empty($rsdef['PLUGIN_CACHED_CACHE_DIR'])) {
         $rs['PLUGIN_CACHED_CACHE_DIR'] = $rsdef['PLUGIN_CACHED_CACHE_DIR'];
     }
     if (empty($rs['PLUGIN_CACHED_CACHE_DIR'])) {
-        if (!empty($rs['INCLUDE_PATH'])) {
+        if (! empty($rs['INCLUDE_PATH'])) {
             @ini_set('include_path', $rs['INCLUDE_PATH']);
         }
         if (empty($rs['TEMP_DIR'])) {
@@ -327,14 +332,14 @@ function IniConfig($file)
             }
         }
         $rs['PLUGIN_CACHED_CACHE_DIR'] = $rs['TEMP_DIR'] . '/cache';
-        if (!FindFile($rs['PLUGIN_CACHED_CACHE_DIR'], 1)) { // [29ms]
+        if (! FindFile($rs['PLUGIN_CACHED_CACHE_DIR'], 1)) { // [29ms]
             FindFile($rs['TEMP_DIR'], false, 1);            // TEMP must exist!
             mkdir($rs['PLUGIN_CACHED_CACHE_DIR'], 777);
         }
         // will throw an error if not exists.
         define('PLUGIN_CACHED_CACHE_DIR', FindFile($rs['PLUGIN_CACHED_CACHE_DIR'], false, 1));
     } else {
-        if (!defined('PLUGIN_CACHED_CACHE_DIR')) {
+        if (! defined('PLUGIN_CACHED_CACHE_DIR')) {
             define('PLUGIN_CACHED_CACHE_DIR', $rs['PLUGIN_CACHED_CACHE_DIR']);
         }
         // will throw an error if not exists.
@@ -386,26 +391,26 @@ function fixup_static_configs($file)
     $AllActionPages = explode(
         ':',
         'AllPages:BackLinks:CreatePage:DebugInfo:EditMetaData:FindPage:'
-                              .'FullRecentChanges:FullTextSearch:FuzzyPages:InterWikiSearch:'
-                              .'LikePages:MostPopular:'
-                              .'OrphanedPages:PageDump:PageHistory:PageInfo:RandomPage:'
-                              .'RecentChanges:RecentEdits:RecentComments:RelatedChanges:TitleSearch:'
-                              .'UpLoad:UserPreferences:WantedPages:'
-                              .'PhpWikiAdministration/Remove:'
-                              .'PhpWikiAdministration/Rename:PhpWikiAdministration/Replace'
+                              . 'FullRecentChanges:FullTextSearch:FuzzyPages:InterWikiSearch:'
+                              . 'LikePages:MostPopular:'
+                              . 'OrphanedPages:PageDump:PageHistory:PageInfo:RandomPage:'
+                              . 'RecentChanges:RecentEdits:RecentComments:RelatedChanges:TitleSearch:'
+                              . 'UpLoad:UserPreferences:WantedPages:'
+                              . 'PhpWikiAdministration/Remove:'
+                              . 'PhpWikiAdministration/Rename:PhpWikiAdministration/Replace'
     );
 
     // If user has not defined PHPWIKI_DIR, and we need it
-    if (!defined('PHPWIKI_DIR') and !file_exists("themes/default")) {
+    if (! defined('PHPWIKI_DIR') and ! file_exists("themes/default")) {
         $themes_dir = FindFile("themes");
         define('PHPWIKI_DIR', dirname($themes_dir));
     }
 
     // If user has not defined DATA_PATH, we want to use relative URLs.
-    if (!defined('DATA_PATH')) {
+    if (! defined('DATA_PATH')) {
         // fix similar to the one suggested by jkalmbach for
         // installations in the webrootdir, like "http://phpwiki.org/HomePage"
-        if (!defined('SCRIPT_NAME')) {
+        if (! defined('SCRIPT_NAME')) {
             define('SCRIPT_NAME', deduce_script_name());
         }
         $temp = dirname(SCRIPT_NAME);
@@ -425,20 +430,22 @@ function fixup_static_configs($file)
         $DBParams['dbtype'] = 'dba';
     }
 
-    if (!defined('THEME')) {
+    if (! defined('THEME')) {
         define('THEME', 'default');
     }
 
     // Basic configurator validation
-    if (!defined('ADMIN_USER') or ADMIN_USER == '') {
+    if (! defined('ADMIN_USER') or ADMIN_USER == '') {
         $error = sprintf(
             "%s may not be empty. Please update your configuration.",
             "ADMIN_USER"
         );
         // protect against recursion
-        if (!preg_match("/config\-(dist|default)\.ini$/", $file)
-            and !defined("_PHPWIKI_INSTALL_RUNNING")) {
-            include_once(dirname(__FILE__)."/install.php");
+        if (
+            ! preg_match("/config\-(dist|default)\.ini$/", $file)
+            and ! defined("_PHPWIKI_INSTALL_RUNNING")
+        ) {
+            include_once(dirname(__FILE__) . "/install.php");
             run_install("_part1");
             trigger_error($error, E_USER_ERROR);
             exit();
@@ -447,15 +454,17 @@ function fixup_static_configs($file)
             trigger_error($error, E_USER_WARNING);
         }
     }
-    if (!defined('ADMIN_PASSWD') or ADMIN_PASSWD == '') {
+    if (! defined('ADMIN_PASSWD') or ADMIN_PASSWD == '') {
         $error = sprintf(
             "%s may not be empty. Please update your configuration.",
             "ADMIN_PASSWD"
         );
         // protect against recursion
-        if (!preg_match("/config\-(dist|default)\.ini$/", $file)
-           and !defined("_PHPWIKI_INSTALL_RUNNING")) {
-            include_once(dirname(__FILE__)."/install.php");
+        if (
+            ! preg_match("/config\-(dist|default)\.ini$/", $file)
+            and ! defined("_PHPWIKI_INSTALL_RUNNING")
+        ) {
+            include_once(dirname(__FILE__) . "/install.php");
             run_install("_part1");
             trigger_error($error, E_USER_ERROR);
             exit();
@@ -466,37 +475,37 @@ function fixup_static_configs($file)
     }
 
     // legacy:
-    if (!defined('ENABLE_USER_NEW')) {
+    if (! defined('ENABLE_USER_NEW')) {
         define('ENABLE_USER_NEW', true);
     }
-    if (!defined('ALLOW_USER_LOGIN')) {
+    if (! defined('ALLOW_USER_LOGIN')) {
         define('ALLOW_USER_LOGIN', defined('ALLOW_USER_PASSWORDS') && ALLOW_USER_PASSWORDS);
     }
-    if (!defined('ALLOW_ANON_USER')) {
+    if (! defined('ALLOW_ANON_USER')) {
         define('ALLOW_ANON_USER', true);
     }
-    if (!defined('ALLOW_ANON_EDIT')) {
+    if (! defined('ALLOW_ANON_EDIT')) {
         define('ALLOW_ANON_EDIT', false);
     }
-    if (!defined('REQUIRE_SIGNIN_BEFORE_EDIT')) {
+    if (! defined('REQUIRE_SIGNIN_BEFORE_EDIT')) {
         define('REQUIRE_SIGNIN_BEFORE_EDIT', ! ALLOW_ANON_EDIT);
     }
-    if (!defined('ALLOW_BOGO_LOGIN')) {
+    if (! defined('ALLOW_BOGO_LOGIN')) {
         define('ALLOW_BOGO_LOGIN', true);
     }
-    if (!ENABLE_USER_NEW) {
-        if (!defined('ALLOW_HTTP_AUTH_LOGIN')) {
+    if (! ENABLE_USER_NEW) {
+        if (! defined('ALLOW_HTTP_AUTH_LOGIN')) {
             define('ALLOW_HTTP_AUTH_LOGIN', false);
         }
-        if (!defined('ALLOW_LDAP_LOGIN')) {
+        if (! defined('ALLOW_LDAP_LOGIN')) {
             define('ALLOW_LDAP_LOGIN', function_exists('ldap_connect') and defined('LDAP_AUTH_HOST'));
         }
-        if (!defined('ALLOW_IMAP_LOGIN')) {
+        if (! defined('ALLOW_IMAP_LOGIN')) {
             define('ALLOW_IMAP_LOGIN', function_exists('imap_open') and defined('IMAP_AUTH_HOST'));
         }
     }
 
-    if (ALLOW_USER_LOGIN and !empty($DBAuthParams) and empty($DBAuthParams['auth_dsn'])) {
+    if (ALLOW_USER_LOGIN and ! empty($DBAuthParams) and empty($DBAuthParams['auth_dsn'])) {
         if (isset($DBParams['dsn'])) {
             $DBAuthParams['auth_dsn'] = $DBParams['dsn'];
         }
@@ -519,13 +528,13 @@ function fixup_dynamic_configs($file)
     if (defined('SESSION_SAVE_PATH') and SESSION_SAVE_PATH) {
         @ini_set('session.save_path', SESSION_SAVE_PATH);
     }
-    if (!defined('DEFAULT_LANGUAGE')) {   // not needed anymore
+    if (! defined('DEFAULT_LANGUAGE')) {   // not needed anymore
         define('DEFAULT_LANGUAGE', ''); // detect from client
     }
 
     update_locale(isset($LANG) ? $LANG : DEFAULT_LANGUAGE);
     if (empty($LANG)) {
-        if (!defined("DEFAULT_LANGUAGE") or !DEFAULT_LANGUAGE) {
+        if (! defined("DEFAULT_LANGUAGE") or ! DEFAULT_LANGUAGE) {
             // TODO: defer this to WikiRequest::initializeLang()
             $LANG = guessing_lang();
             guessing_setlocale(LC_ALL, $LANG);
@@ -560,32 +569,32 @@ function fixup_dynamic_configs($file)
 
     // language dependent updates:
     //if ($KeywordLinkRegexp) $KeywordLinkRegexp = pcre_fix_posix_classes($KeywordLinkRegexp);
-    if (!defined('CATEGORY_GROUP_PAGE')) {
+    if (! defined('CATEGORY_GROUP_PAGE')) {
         define('CATEGORY_GROUP_PAGE', _("CategoryGroup"));
     }
-    if (!defined('WIKI_NAME')) {
+    if (! defined('WIKI_NAME')) {
         define('WIKI_NAME', _("An unnamed PhpWiki"));
     }
-    if (!defined('HOME_PAGE')) {
+    if (! defined('HOME_PAGE')) {
         define('HOME_PAGE', _("HomePage"));
     }
 
     //////////////////////////////////////////////////////////////////
     // Autodetect URL settings:
-    foreach (array('SERVER_NAME','SERVER_PORT') as $var) {
+    foreach (['SERVER_NAME', 'SERVER_PORT'] as $var) {
         //FIXME: for CGI without _SERVER
-        if (!defined($var) and !empty($_SERVER[$var])) {
+        if (! defined($var) and ! empty($_SERVER[$var])) {
             define($var, $_SERVER[$var]);
         }
     }
     $tuleap_request = HTTPRequest::instance();
-    if (!defined('SERVER_NAME')) {
+    if (! defined('SERVER_NAME')) {
         define('SERVER_NAME', '127.0.0.1');
     }
-    if (!defined('SERVER_PORT')) {
+    if (! defined('SERVER_PORT')) {
         define('SERVER_PORT', 80);
     }
-    if (!defined('SERVER_PROTOCOL')) {
+    if (! defined('SERVER_PROTOCOL')) {
         if ($tuleap_request->isSecure()) {
             define('SERVER_PROTOCOL', 'https');
         } else {
@@ -593,11 +602,11 @@ function fixup_dynamic_configs($file)
         }
     }
 
-    if (!defined('SCRIPT_NAME')) {
+    if (! defined('SCRIPT_NAME')) {
         define('SCRIPT_NAME', deduce_script_name());
     }
 
-    if (!defined('USE_PATH_INFO')) {
+    if (! defined('USE_PATH_INFO')) {
         if (isCGI()) {
             define('USE_PATH_INFO', false);
         } else {
@@ -628,7 +637,7 @@ function fixup_dynamic_configs($file)
 
     define('SERVER_URL', $tuleap_request->getServerUrl());
 
-    if (!defined('VIRTUAL_PATH')) {
+    if (! defined('VIRTUAL_PATH')) {
         // We'd like to auto-detect when the cases where apaches
         // 'Action' directive (or similar means) is used to
         // redirect page requests to a cgi-handler.
@@ -648,8 +657,10 @@ function fixup_dynamic_configs($file)
         // proper VIRTUAL_PATH is '/wikidir/index.php', since the
         // pages will appear at e.g. '/wikidir/index.php/HomePage'.
         $REDIRECT_URL = &$_SERVER['REDIRECT_URL'];
-        if (USE_PATH_INFO and isset($REDIRECT_URL)
-            and ! IsProbablyRedirectToIndex()) {
+        if (
+            USE_PATH_INFO and isset($REDIRECT_URL)
+            and ! IsProbablyRedirectToIndex()
+        ) {
             // FIXME: This is a hack, and won't work if the requested
             // pagename has a slash in it.
             $temp = strtr(dirname($REDIRECT_URL . 'x'), "\\", '/');
@@ -676,14 +687,14 @@ function fixup_dynamic_configs($file)
 
     // Detect PrettyWiki setup (not loading index.php directly)
     // $SCRIPT_FILENAME should be the same as __FILE__ in index.php
-    if (!isset($SCRIPT_FILENAME)) {
+    if (! isset($SCRIPT_FILENAME)) {
         $SCRIPT_FILENAME = @$_SERVER['SCRIPT_FILENAME'];
     }
-    if (!isset($SCRIPT_FILENAME)) {
+    if (! isset($SCRIPT_FILENAME)) {
         $SCRIPT_FILENAME = @$_ENV['SCRIPT_FILENAME'];
     }
-    if (!isset($SCRIPT_FILENAME)) {
-        $SCRIPT_FILENAME = dirname(__FILE__.'/../') . '/index.php';
+    if (! isset($SCRIPT_FILENAME)) {
+        $SCRIPT_FILENAME = dirname(__FILE__ . '/../') . '/index.php';
     }
     if (isWindows()) {
         $SCRIPT_FILENAME = str_replace('\\\\', '\\', strtr($SCRIPT_FILENAME, '/', '\\'));
@@ -691,9 +702,11 @@ function fixup_dynamic_configs($file)
     define('SCRIPT_FILENAME', $SCRIPT_FILENAME);
 
     // Get remote host name, if apache hasn't done it for us
-    if (empty($_SERVER['REMOTE_HOST'])
-        and !empty($_SERVER['REMOTE_ADDR'])
-        and ENABLE_REVERSE_DNS) {
+    if (
+        empty($_SERVER['REMOTE_HOST'])
+        and ! empty($_SERVER['REMOTE_ADDR'])
+        and ENABLE_REVERSE_DNS
+    ) {
         $_SERVER['REMOTE_HOST'] = gethostbyaddr($_SERVER['REMOTE_ADDR']);
     }
 }

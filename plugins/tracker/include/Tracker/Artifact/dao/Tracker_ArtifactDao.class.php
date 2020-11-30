@@ -19,6 +19,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface;
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\ArtifactLinkFieldValueDao;
 
 class Tracker_ArtifactDao extends DataAccessObject
 {
@@ -93,16 +96,16 @@ class Tracker_ArtifactDao extends DataAccessObject
 
         $sql = " SELECT tracker_id, GROUP_CONCAT(id) AS id, GROUP_CONCAT(last_changeset_id) AS last_changeset_id";
         $from = " FROM $this->table_name AS artifact";
-        $where = " WHERE id IN (" .$artifact_ids. ")";
+        $where = " WHERE id IN (" . $artifact_ids . ")";
         $group = " GROUP BY tracker_id";
 
-        if (!$user_is_admin) {
+        if (! $user_is_admin) {
             $ugroups = $this->da->escapeIntImplode($ugroups);
             $from   .= " LEFT JOIN permissions ON (permissions.object_id = CAST(artifact.id AS CHAR CHARACTER SET utf8) AND permissions.permission_type = 'PLUGIN_TRACKER_ARTIFACT_ACCESS')";
-            $where  .= " AND (artifact.use_artifact_permissions = 0 OR  (permissions.ugroup_id IN (". $ugroups.")))";
+            $where  .= " AND (artifact.use_artifact_permissions = 0 OR  (permissions.ugroup_id IN (" . $ugroups . ")))";
         }
 
-        $sql .= $from.$where.$group;
+        $sql .= $from . $where . $group;
 
         return $this->retrieve($sql);
     }
@@ -404,7 +407,7 @@ class Tracker_ArtifactDao extends DataAccessObject
         $criteria   = $criteria === 'OR' ? 'OR' : 'AND'; //make sure that the request is not forged
         $offset     = $this->da->escapeInt($offset);
         $limit      = $this->da->escapeInt($limit);
-        $keywords_array = array_map(array($this, 'quote_keyword'), explode(" ", $keywords));
+        $keywords_array = array_map([$this, 'quote_keyword'], explode(" ", $keywords));
 
         // search in all text fields
         $search_query1 = implode(" $criteria cvt.value LIKE ", $keywords_array);
@@ -479,7 +482,7 @@ class Tracker_ArtifactDao extends DataAccessObject
                 (id, tracker_id, per_tracker_artifact_id, submitted_by, submitted_on, use_artifact_permissions)
                 VALUES ($artifact_id, $tracker_id, $per_tracker_id, $submitted_by, $submitted_on, $use_artifact_permissions)";
             if ($this->update($sql)) {
-                return $artifact_id;
+                return (int) $artifact_id;
             }
         }
 
@@ -501,13 +504,13 @@ class Tracker_ArtifactDao extends DataAccessObject
 
     public function delete($id)
     {
-        $sql = "DELETE FROM $this->table_name WHERE id = ". $this->da->escapeInt($id);
+        $sql = "DELETE FROM $this->table_name WHERE id = " . $this->da->escapeInt($id);
         return $this->update($sql);
     }
 
     public function deleteArtifactLinkReference($id)
     {
-        $dao = new Tracker_FormElement_Field_Value_ArtifactLinkDao();
+        $dao = new ArtifactLinkFieldValueDao();
         return $dao->deleteReference($id);
     }
 
@@ -533,8 +536,8 @@ class Tracker_ArtifactDao extends DataAccessObject
         $maxDate    = $date + $halfDay;
         $sql        = "SELECT id AS artifact_id FROM
                        tracker_artifact
-                       WHERE DATE(FROM_UNIXTIME(submitted_on)) BETWEEN DATE(FROM_UNIXTIME(".$minDate.")) AND DATE(FROM_UNIXTIME(".$maxDate."))
-                         AND tracker_id = ".$trackerId;
+                       WHERE DATE(FROM_UNIXTIME(submitted_on)) BETWEEN DATE(FROM_UNIXTIME(" . $minDate . ")) AND DATE(FROM_UNIXTIME(" . $maxDate . "))
+                         AND tracker_id = " . $trackerId;
         return $this->retrieve($sql);
     }
 
@@ -549,7 +552,7 @@ class Tracker_ArtifactDao extends DataAccessObject
     {
         $per_tracker_id = 0;
         $aid = $this->da->escapeInt($aid);
-        $sql = "SELECT per_tracker_artifact_id FROM tracker_artifact where id = '". $aid . "';";
+        $sql = "SELECT per_tracker_artifact_id FROM tracker_artifact where id = '" . $aid . "';";
         $res = $this->retrieveFirstRow($sql);
         $per_tracker_id = $res['per_tracker_artifact_id'] | 0;
 
@@ -561,7 +564,7 @@ class Tracker_ArtifactDao extends DataAccessObject
      */
     public function getChildren($artifact_id)
     {
-        return $this->getChildrenForArtifacts(array($artifact_id));
+        return $this->getChildrenForArtifacts([$artifact_id]);
     }
 
     /**
@@ -573,12 +576,12 @@ class Tracker_ArtifactDao extends DataAccessObject
      */
     public function getChildrenCount(array $artifact_ids)
     {
-        $sql = "SELECT parent_art.id, count(*) AS nb".
-               $this->getFromStatementForChildrenOfArtifacts().
-               "WHERE parent_art.id IN (".$this->da->escapeIntImplode($artifact_ids).")
+        $sql = "SELECT parent_art.id, count(*) AS nb" .
+               $this->getFromStatementForChildrenOfArtifacts() .
+               "WHERE parent_art.id IN (" . $this->da->escapeIntImplode($artifact_ids) . ")
                 GROUP BY parent_art.id";
 
-        $children_count = array();
+        $children_count = [];
         foreach ($this->retrieve($sql) as $row) {
             $children_count[$row['id']] = $row['nb'];
         }
@@ -593,14 +596,14 @@ class Tracker_ArtifactDao extends DataAccessObject
     public function getChildrenNatureMode($artifact_id)
     {
         $escaped_id = $this->da->escapeInt($artifact_id);
-        $is_child_shortname =$this->da->quoteSmart(Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD);
-        $sql = "SELECT child_art.*, parent_art.id as parent_id ".
-               "FROM tracker_artifact parent_art ".
-               "INNER JOIN tracker_field AS f ON (f.tracker_id = parent_art.tracker_id AND f.formElement_type = 'art_link' AND use_it = 1) ".
-               "INNER JOIN tracker_changeset_value AS cv ON (cv.changeset_id = parent_art.last_changeset_id AND cv.field_id = f.id) ".
-               "INNER JOIN tracker_changeset_value_artifactlink AS artlink ON (artlink.changeset_value_id = cv.id) ".
-               "INNER JOIN tracker_artifact AS child_art ON (child_art.id = artlink.artifact_id) ".
-               "WHERE artlink.nature=$is_child_shortname ".
+        $is_child_shortname = $this->da->quoteSmart(Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD);
+        $sql = "SELECT child_art.*, parent_art.id as parent_id " .
+               "FROM tracker_artifact parent_art " .
+               "INNER JOIN tracker_field AS f ON (f.tracker_id = parent_art.tracker_id AND f.formElement_type = 'art_link' AND use_it = 1) " .
+               "INNER JOIN tracker_changeset_value AS cv ON (cv.changeset_id = parent_art.last_changeset_id AND cv.field_id = f.id) " .
+               "INNER JOIN tracker_changeset_value_artifactlink AS artlink ON (artlink.changeset_value_id = cv.id) " .
+               "INNER JOIN tracker_artifact AS child_art ON (child_art.id = artlink.artifact_id) " .
+               "WHERE artlink.nature=$is_child_shortname " .
                "AND parent_art.id=$escaped_id";
         return $this->retrieve($sql);
     }
@@ -610,14 +613,14 @@ class Tracker_ArtifactDao extends DataAccessObject
      */
     public function getPaginatedChildren($artifact_id, $limit, $offset)
     {
-        return $this->getPaginatedChildrenForArtifacts(array($artifact_id), $limit, $offset);
+        return $this->getPaginatedChildrenForArtifacts([$artifact_id], $limit, $offset);
     }
 
     public function getChildrenForArtifacts(array $artifact_ids)
     {
         $artifact_ids = $this->da->escapeIntImplode($artifact_ids);
 
-        $sql = "SELECT child_art.*, parent_art.id as parent_id".
+        $sql = "SELECT child_art.*, parent_art.id as parent_id" .
                $this->getSortedFromStatementForChildrenOfArtifacts($artifact_ids);
         return $this->retrieve($sql);
     }
@@ -628,8 +631,8 @@ class Tracker_ArtifactDao extends DataAccessObject
         $limit        = $this->da->escapeInt($limit);
         $offset       = $this->da->escapeInt($offset);
 
-        $sql  = "SELECT SQL_CALC_FOUND_ROWS child_art.*, parent_art.id as parent_id, tracker_artifact_priority_rank.rank as rank".
-                $this->getSortedFromStatementForChildrenOfArtifacts($artifact_ids).
+        $sql  = "SELECT SQL_CALC_FOUND_ROWS child_art.*, parent_art.id as parent_id, tracker_artifact_priority_rank.rank as rank" .
+                $this->getSortedFromStatementForChildrenOfArtifacts($artifact_ids) .
                 "LIMIT $limit
                  OFFSET $offset";
         return $this->retrieve($sql);
@@ -637,7 +640,7 @@ class Tracker_ArtifactDao extends DataAccessObject
 
     private function getSortedFromStatementForChildrenOfArtifacts($artifact_ids)
     {
-        return $this->getFromStatementForChildrenOfArtifacts().
+        return $this->getFromStatementForChildrenOfArtifacts() .
                 "INNER JOIN tracker_artifact_priority_rank ON (tracker_artifact_priority_rank.artifact_id = child_art.id)
                  WHERE parent_art.id IN ($artifact_ids)
                  ORDER BY tracker_artifact_priority_rank.rank ASC ";
@@ -752,7 +755,7 @@ class Tracker_ArtifactDao extends DataAccessObject
      */
     public function getLinkedArtifacts($artifact_id)
     {
-        return $this->getLinkedArtifactsByIds(array($artifact_id));
+        return $this->getLinkedArtifactsByIds([$artifact_id]);
     }
 
     public function getLinkedOpenArtifactsOfTrackersNotLinkedToOthers($artifact_id, array $tracker_ids, array $excluded_linked_ids, array $additional_artifacts)
@@ -762,7 +765,7 @@ class Tracker_ArtifactDao extends DataAccessObject
 
         $additional_artifacts_sql = '';
         if (! empty($additional_artifacts)) {
-            $additional_artifacts_sql = 'OR linked_art.id IN ('. $this->da->escapeIntImplode($additional_artifacts) .')';
+            $additional_artifacts_sql = 'OR linked_art.id IN (' . $this->da->escapeIntImplode($additional_artifacts) . ')';
         }
 
         $exclude      = '';
@@ -825,13 +828,13 @@ class Tracker_ArtifactDao extends DataAccessObject
 
         $additional_artifacts_sql = '';
         if (! empty($additional_artifacts)) {
-            $additional_artifacts_sql = 'OR linked_art.id IN ('. $this->da->escapeIntImplode($additional_artifacts) .')';
+            $additional_artifacts_sql = 'OR linked_art.id IN (' . $this->da->escapeIntImplode($additional_artifacts) . ')';
         }
 
         $exclude       = '';
         $exclude_where = '';
         if (count($excluded_linked_ids) > 0) {
-            $exclude        = 'AND submile.id IN ('.$this->da->escapeIntImplode($excluded_linked_ids).')';
+            $exclude        = 'AND submile.id IN (' . $this->da->escapeIntImplode($excluded_linked_ids) . ')';
             $exclude_where  = 'AND submile.id IS NULL';
         }
 
@@ -878,7 +881,7 @@ class Tracker_ArtifactDao extends DataAccessObject
 
         $additional_artifacts_sql = '';
         if (! empty($additional_artifacts)) {
-            $additional_artifacts_sql = 'OR linked_art.id IN ('. $this->da->escapeIntImplode($additional_artifacts) .')';
+            $additional_artifacts_sql = 'OR linked_art.id IN (' . $this->da->escapeIntImplode($additional_artifacts) . ')';
         }
 
         $exclude       = '';
@@ -928,7 +931,7 @@ class Tracker_ArtifactDao extends DataAccessObject
 
         $additional_artifacts_sql = '';
         if (! empty($additional_artifacts)) {
-            $additional_artifacts_sql = 'OR linked_art.id IN ('. $this->da->escapeIntImplode($additional_artifacts) .')';
+            $additional_artifacts_sql = 'OR linked_art.id IN (' . $this->da->escapeIntImplode($additional_artifacts) . ')';
         }
 
         $sql = "SELECT SQL_CALC_FOUND_ROWS linked_art.*
@@ -975,7 +978,8 @@ class Tracker_ArtifactDao extends DataAccessObject
      * Retrieve all artifacts linked by the given one that are of a specific tracker type
      *
      * @param int $artifact_id
-     * @return DataAccessResult
+     * @return array|false
+     * @psalm-ignore-falsable-return
      */
     public function getLinkedArtifactsOfTrackerTypeAsString($artifact_id, $tracker_id)
     {
@@ -998,8 +1002,8 @@ class Tracker_ArtifactDao extends DataAccessObject
      * Retrieve all artifacts linked to any of the given ones that are of a specific tracker type
      *
      * @param string $artifact_ids string of comma separated list of artifact IDs e.g '12,568,12,4589'
-     * @param int $artifact_ids comma separated list of artifact IDs
-     * @return DataAccessResult
+     * @return array|false
+     * @psalm-ignore-falsable-return
      */
     public function getLinkedArtifactsOfArtifactsOfTrackerTypeAsString($artifact_ids, $tracker_id)
     {
@@ -1073,7 +1077,7 @@ class Tracker_ArtifactDao extends DataAccessObject
 
         $additional_artifacts_sql = '';
         if (! empty($additional_artifacts)) {
-            $additional_artifacts_sql = 'OR linked_art.id IN ('. $this->da->escapeIntImplode($additional_artifacts) .')';
+            $additional_artifacts_sql = 'OR linked_art.id IN (' . $this->da->escapeIntImplode($additional_artifacts) . ')';
         }
 
         $sql = "SELECT SQL_CALC_FOUND_ROWS linked_art.*
@@ -1121,6 +1125,57 @@ class Tracker_ArtifactDao extends DataAccessObject
         $limit,
         $offset
     ) {
+        $filter = 'AND (
+                        SS.field_id IS NULL
+                        OR
+                        CVL2.bindvalue_id = SS.open_value_id
+                     )';
+
+        return $this->getLinkedArtifactsToTrackerWithWhereConditionAndLimitAndOffset(
+            $artifact_id,
+            $tracker_ids,
+            $excluded_linked_ids,
+            $additional_artifacts,
+            $limit,
+            $offset,
+            $filter
+        );
+    }
+
+    /**
+     * @return LegacyDataAccessResultInterface|false
+     */
+    public function getLinkedOpenClosedArtifactsOfTrackersNotLinkedToOthersWithLimitAndOffset(
+        int $artifact_id,
+        array $tracker_ids,
+        array $excluded_linked_ids,
+        array $additional_artifacts,
+        ?int $limit,
+        ?int $offset
+    ) {
+        return $this->getLinkedArtifactsToTrackerWithWhereConditionAndLimitAndOffset(
+            $artifact_id,
+            $tracker_ids,
+            $excluded_linked_ids,
+            $additional_artifacts,
+            $limit,
+            $offset,
+            ''
+        );
+    }
+
+    /**
+     * @return LegacyDataAccessResultInterface|false
+     */
+    private function getLinkedArtifactsToTrackerWithWhereConditionAndLimitAndOffset(
+        int $artifact_id,
+        array $tracker_ids,
+        array $excluded_linked_ids,
+        array $additional_artifacts,
+        ?int $limit,
+        ?int $offset,
+        string $filter
+    ) {
         $artifact_id  = $this->da->escapeInt($artifact_id);
         $tracker_ids  = $this->da->escapeIntImplode($tracker_ids);
         $limit        = $this->da->escapeInt($limit);
@@ -1129,13 +1184,13 @@ class Tracker_ArtifactDao extends DataAccessObject
         $exclude       = '';
         $exclude_where = '';
         if (count($excluded_linked_ids) > 0) {
-            $exclude       = 'AND submile.id IN ('.$this->da->escapeIntImplode($excluded_linked_ids).')';
+            $exclude       = 'AND submile.id IN (' . $this->da->escapeIntImplode($excluded_linked_ids) . ')';
             $exclude_where = 'AND submile.id IS NULL';
         }
 
         $additional_artifacts_sql = '';
         if (! empty($additional_artifacts)) {
-            $additional_artifacts_sql = 'OR linked_art.id IN ('. $this->da->escapeIntImplode($additional_artifacts) .')';
+            $additional_artifacts_sql = 'OR linked_art.id IN (' . $this->da->escapeIntImplode($additional_artifacts) . ')';
         }
 
         $sql = "SELECT SQL_CALC_FOUND_ROWS linked_art.*
@@ -1167,11 +1222,7 @@ class Tracker_ArtifactDao extends DataAccessObject
                         INNER JOIN tracker_changeset_value_text AS CVT ON (CV2.id = CVT.changeset_value_id)
                     ) ON (C.id = CV2.changeset_id)
                 WHERE parent_art.id = $artifact_id
-                    AND (
-                        SS.field_id IS NULL
-                        OR
-                        CVL2.bindvalue_id = SS.open_value_id
-                     )
+                    $filter
                     $exclude_where
                     AND linked_art.tracker_id IN ($tracker_ids)
                 GROUP BY (linked_art.id)
@@ -1188,12 +1239,12 @@ class Tracker_ArtifactDao extends DataAccessObject
      * @param array $excluded_ids Exclude those ids from the results
      * @return DataAccessResult
      */
-    public function getLinkedArtifactsByIds(array $artifact_ids, array $excluded_ids = array())
+    public function getLinkedArtifactsByIds(array $artifact_ids, array $excluded_ids = [])
     {
         $artifact_ids = $this->da->escapeIntImplode($artifact_ids);
         $exclude      = '';
         if (count($excluded_ids) > 0) {
-            $exclude = 'AND linked_art.id NOT IN ('.$this->da->escapeIntImplode($excluded_ids).')';
+            $exclude = 'AND linked_art.id NOT IN (' . $this->da->escapeIntImplode($excluded_ids) . ')';
         }
         $sql = "SELECT linked_art.*
                 FROM tracker_artifact parent_art
@@ -1231,7 +1282,7 @@ class Tracker_ArtifactDao extends DataAccessObject
     public function getArtifactsStatusByIds(array $artifact_ids)
     {
         $artifact_ids = $this->da->escapeIntImplode($artifact_ids);
-        $sql = "SELECT A.id, IF(CVL.bindvalue_id IS NULL, '".Tracker_Artifact::STATUS_CLOSED."', '".Tracker_Artifact::STATUS_OPEN."') AS status
+        $sql = "SELECT A.id, IF(CVL.bindvalue_id IS NULL, '" . Artifact::STATUS_CLOSED . "', '" . Artifact::STATUS_OPEN . "') AS status
                 FROM tracker_artifact AS A
                 LEFT JOIN (
                     tracker_changeset_value AS CV
@@ -1259,7 +1310,7 @@ class Tracker_ArtifactDao extends DataAccessObject
         if ($row && $row['sorted_ids'] != null) {
             return explode(',', $row['sorted_ids']);
         }
-        return array();
+        return [];
     }
 
     public function doesUserHaveUnsubscribedFromArtifactNotifications($artifact_id, $user_id)
@@ -1298,7 +1349,7 @@ class Tracker_ArtifactDao extends DataAccessObject
         $this->update($sql);
     }
 
-    public function deleteUnsubscribeNotificationForArtifact($artifact_id)
+    public function deleteUnsubscribeNotificationForArtifact(int $artifact_id)
     {
         $artifact_id = $this->da->escapeInt($artifact_id);
 
@@ -1350,5 +1401,16 @@ class Tracker_ArtifactDao extends DataAccessObject
         $row = $this->retrieve($sql)->getRow();
 
         return (int) $row['nb'];
+    }
+
+    public function updateLastChangsetId(int $changeset_id, int $artifact_id): void
+    {
+        $changeset_id = $this->da->escapeInt($changeset_id);
+        $artifact_id = $this->da->escapeInt($artifact_id);
+
+        $sql = "UPDATE tracker_artifact
+                SET last_changeset_id = $changeset_id
+                WHERE id = $artifact_id";
+        $this->update($sql);
     }
 }

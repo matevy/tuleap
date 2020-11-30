@@ -24,17 +24,17 @@ class PermissionsManager implements IPermissionsManagerNG
     /**
      * @var PermissionsDao
      */
-    var $_permission_dao;
-    var $_permissions;
-    var $_ugroups_for_user;
+    public $_permission_dao;
+    public $_permissions;
+    public $_ugroups_for_user;
 
     private static $_permissionmanager_instance;
 
     public function __construct($permission_dao)
     {
         $this->_permission_dao   = $permission_dao;
-        $this->_permissions      = array();
-        $this->_ugroups_for_user = array();
+        $this->_permissions      = [];
+        $this->_ugroups_for_user = [];
     }
 
     /**
@@ -44,7 +44,7 @@ class PermissionsManager implements IPermissionsManagerNG
      */
     public static function instance()
     {
-        if (!self::$_permissionmanager_instance) {
+        if (! self::$_permissionmanager_instance) {
             self::$_permissionmanager_instance = new PermissionsManager(new PermissionsDao(CodendiDataAccess::instance()));
         }
         return self::$_permissionmanager_instance;
@@ -74,8 +74,8 @@ class PermissionsManager implements IPermissionsManagerNG
     */
     public function userHasPermission($object_id, $permission_type, array $ugroups)
     {
-        if (!isset($this->_permissions[$object_id])) {
-            $this->_permissions[$object_id] = array();
+        if (! isset($this->_permissions[$object_id])) {
+            $this->_permissions[$object_id] = [];
         }
 
         if (count(array_diff($ugroups, array_keys($this->_permissions[$object_id]))) > 0) {
@@ -83,8 +83,10 @@ class PermissionsManager implements IPermissionsManagerNG
         }
         //now we search for $permission_type
         foreach ($ugroups as $ugroup) {
-            if (isset($this->_permissions[$object_id][$ugroup]) &&
-                in_array($permission_type, $this->_permissions[$object_id][$ugroup])) {
+            if (
+                isset($this->_permissions[$object_id][$ugroup]) &&
+                in_array($permission_type, $this->_permissions[$object_id][$ugroup])
+            ) {
                 return true;
             }
         }
@@ -105,47 +107,18 @@ class PermissionsManager implements IPermissionsManagerNG
     public function getPermissionsAndUgroupsByObjectid($object_id)
     {
         $this->retrievePermissions($object_id);
-        $perms = array();
+        $perms = [];
         if (isset($this->_permissions[$object_id])) {
             foreach ($this->_permissions[$object_id] as $ugroup_id => $permissions) {
                 foreach ($permissions as $perm) {
-                    if (!isset($perms[$perm])) {
-                        $perms[$perm] = array();
+                    if (! isset($perms[$perm])) {
+                        $perms[$perm] = [];
                     }
                     $perms[$perm][] = $ugroup_id;
                 }
             }
         }
         return $perms;
-    }
-
-    /**
-     * Returns all ugroup name for a given object_id and permission_type
-     * @param  int     $object_id       The id of the object
-     * @param  string  $permission_type The type of permission asked
-     */
-    public function getUgroupNameByObjectIdAndPermissionType($object_id, $permission_type)
-    {
-        $dar =& $this->_permission_dao->searchUgroupByObjectIdAndPermissionType($object_id, $permission_type);
-        if ($dar->isError()) {
-            return;
-        }
-
-        if (!$dar->valid()) {
-            return;
-        }
-
-        $ugroups_name = array ();
-        while ($dar->valid()) {
-            $ugroup = $dar->current();
-            $new_name = $ugroup['name'];
-            if (strpos($new_name, "ugroup_") === 0 && strpos($new_name, "_name_key")+strlen("_name_key") === strlen($new_name)) {
-                $new_name = $GLOBALS['Language']->getText('project_ugroup', $new_name);
-            }
-            $ugroups_name[] = $new_name;
-            $dar->next();
-        }
-        return $ugroups_name;
     }
 
     /**
@@ -213,11 +186,11 @@ class PermissionsManager implements IPermissionsManagerNG
     public function getAuthorizedUgroupIds($objectId, $permissionType, $withName = true)
     {
         $dar = $this->getAuthorizedUgroups($objectId, $permissionType, $withName);
-        if (!$dar || $dar->isError()) {
-            return array();
+        if (! $dar || $dar->isError()) {
+            return [];
         }
 
-        $ugroups = array();
+        $ugroups = [];
         foreach ($dar as $row) {
             $ugroups[] = $row['ugroup_id'];
         }
@@ -226,7 +199,7 @@ class PermissionsManager implements IPermissionsManagerNG
 
     public function getAuthorizedUGroupIdsForProject(Project $project, $object_id, $permission_type)
     {
-        $ugroups = array();
+        $ugroups = [];
         $dar = $this->getAuthorizedUgroups($object_id, $permission_type, false);
         if ($dar && ! $dar->isError()) {
             $normalizer = new PermissionsUGroupMapper($project);
@@ -254,7 +227,6 @@ class PermissionsManager implements IPermissionsManagerNG
     }
 
     /**
-     * @param Project $project
      * @param type $object_id
      * @param type $permission_type
      * @param array $ugroup_ids
@@ -279,12 +251,12 @@ class PermissionsManager implements IPermissionsManagerNG
         $normalized_ugroup_ids = $normalizer->getNormalizedUGroupIds($project, $ugroup_ids, $override_collection);
         $cleared = $this->_permission_dao->clearPermission($permission_type, $object_id);
         if (! $cleared) {
-            throw new PermissionDaoException("Database issue while clearPermission $permission_type, $object_id: ".$this->_permission_dao->getDa()->getErrorMessage());
+            throw new PermissionDaoException("Database issue while clearPermission $permission_type, $object_id: " . $this->_permission_dao->getDa()->getErrorMessage());
         }
         foreach ($normalized_ugroup_ids as $ugroup_id) {
             $added = $this->_permission_dao->addPermission($permission_type, $object_id, $ugroup_id);
             if (! $added) {
-                throw new PermissionDaoException("Database issue while addPermission $permission_type, $object_id, $ugroup_id: ".$this->_permission_dao->getDa()->getErrorMessage());
+                throw new PermissionDaoException("Database issue while addPermission $permission_type, $object_id, $ugroup_id: " . $this->_permission_dao->getDa()->getErrorMessage());
             }
         }
 
@@ -298,18 +270,18 @@ class PermissionsManager implements IPermissionsManagerNG
     protected function buildPermissionsCache(&$dar, &$ugroups)
     {
         while ($row = $dar->getRow()) {
-            if (!isset($this->_permissions[$row['object_id']])) {
-                $this->_permissions[$row['object_id']] = array();
+            if (! isset($this->_permissions[$row['object_id']])) {
+                $this->_permissions[$row['object_id']] = [];
             }
             foreach ($ugroups as $ugroup) {
-                if (!isset($this->_permissions[$row['object_id']][$ugroup])) {
-                    $this->_permissions[$row['object_id']][$ugroup] = array();
+                if (! isset($this->_permissions[$row['object_id']][$ugroup])) {
+                    $this->_permissions[$row['object_id']][$ugroup] = [];
                 }
             }
-            if (!isset($this->_permissions[$row['object_id']][$row['ugroup_id']])) {
-                $this->_permissions[$row['object_id']][$row['ugroup_id']] = array();
+            if (! isset($this->_permissions[$row['object_id']][$row['ugroup_id']])) {
+                $this->_permissions[$row['object_id']][$row['ugroup_id']] = [];
             }
-            if (!in_array($row['permission_type'], $this->_permissions[$row['object_id']][$row['ugroup_id']])) {
+            if (! in_array($row['permission_type'], $this->_permissions[$row['object_id']][$row['ugroup_id']])) {
                 $this->_permissions[$row['object_id']][$row['ugroup_id']][] = $row['permission_type'];
             }
         }
@@ -323,7 +295,7 @@ class PermissionsManager implements IPermissionsManagerNG
     * @param  int     $object_id  The id of the object
     * @param  array   $ugroups    A list of ugroups we want to see in permissions
     */
-    protected function retrievePermissions($object_id, $ugroups = array())
+    protected function retrievePermissions($object_id, $ugroups = [])
     {
         $tracker_field_id = explode('#', $object_id); //An artifact field ?
         if (count($tracker_field_id) > 1) {
@@ -402,7 +374,7 @@ class PermissionsManager implements IPermissionsManagerNG
 
     public function isPermissionExist($object_id, $ptype)
     {
-        $dar = $this->_permission_dao->searchPermissionsByObjectId($object_id, array($ptype));
+        $dar = $this->_permission_dao->searchPermissionsByObjectId($object_id, [$ptype]);
         return $dar->valid();
     }
 

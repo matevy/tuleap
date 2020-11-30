@@ -20,11 +20,11 @@
 import {
     getPostArtifactBody,
     getPutArtifactBody,
-    getPutArtifactBodyToAddChild
+    getPutArtifactBodyToAddChild,
 } from "./update-artifact";
 import { NewCardPayload, UpdateCardPayload } from "../store/swimlane/card/type";
 import { ListValue, Mapping, Tracker } from "../type";
-import { Values } from "../store/swimlane/card/api-artifact-type";
+import { ListField, TextField, Values } from "../store/swimlane/card/api-artifact-type";
 
 describe("update-artifact", () => {
     describe("getPutArtifactBody", () => {
@@ -37,39 +37,39 @@ describe("update-artifact", () => {
         it("Sets the value of a string field", () => {
             const body = getPutArtifactBody({
                 tracker: { title_field: { id: 123, is_string_field: true } },
-                label: "Lorem ipsum"
+                label: "Lorem ipsum",
             } as UpdateCardPayload);
 
             expect(body).toStrictEqual({
                 values: [
                     {
                         field_id: 123,
-                        value: "Lorem ipsum"
-                    }
-                ]
+                        value: "Lorem ipsum",
+                    },
+                ],
             });
         });
 
         it("Remove linebreak characters for string field", () => {
             const body = getPutArtifactBody({
                 tracker: { title_field: { id: 123, is_string_field: true } },
-                label: "Lorem\n\nipsum\n"
+                label: "Lorem\n\nipsum\n",
             } as UpdateCardPayload);
 
             expect(body).toStrictEqual({
                 values: [
                     {
                         field_id: 123,
-                        value: "Lorem ipsum "
-                    }
-                ]
+                        value: "Lorem ipsum ",
+                    },
+                ],
             });
         });
 
         it("Sets the value of a text field", () => {
             const body = getPutArtifactBody({
                 tracker: { title_field: { id: 123, is_string_field: false } },
-                label: "Lorem ipsum"
+                label: "Lorem ipsum",
             } as UpdateCardPayload);
 
             expect(body).toStrictEqual({
@@ -78,17 +78,17 @@ describe("update-artifact", () => {
                         field_id: 123,
                         value: {
                             content: "Lorem ipsum",
-                            format: "text"
-                        }
-                    }
-                ]
+                            format: "text",
+                        },
+                    },
+                ],
             });
         });
 
         it("Keeps linebreak characters for text field", () => {
             const body = getPutArtifactBody({
                 tracker: { title_field: { id: 123, is_string_field: false } },
-                label: "Lorem\n\nipsum\n"
+                label: "Lorem\n\nipsum\n",
             } as UpdateCardPayload);
 
             expect(body).toStrictEqual({
@@ -97,10 +97,37 @@ describe("update-artifact", () => {
                         field_id: 123,
                         value: {
                             content: "Lorem\n\nipsum\n",
-                            format: "text"
-                        }
-                    }
-                ]
+                            format: "text",
+                        },
+                    },
+                ],
+            });
+        });
+
+        it("Sets the value of assigned to field", () => {
+            const body = getPutArtifactBody({
+                tracker: {
+                    title_field: { id: 123, is_string_field: false },
+                    assigned_to_field: { id: 124 },
+                } as Tracker,
+                assignees: [{ id: 1001 }, { id: 1002 }],
+                label: "Lorem ipsum",
+            } as UpdateCardPayload);
+
+            expect(body).toStrictEqual({
+                values: [
+                    {
+                        field_id: 123,
+                        value: {
+                            content: "Lorem ipsum",
+                            format: "text",
+                        },
+                    } as TextField,
+                    {
+                        field_id: 124,
+                        bind_value_ids: [1001, 1002],
+                    } as ListField,
+                ],
             });
         });
     });
@@ -110,7 +137,7 @@ describe("update-artifact", () => {
             expect(() =>
                 getPostArtifactBody(
                     {
-                        swimlane: { card: { tracker_id: 42 } }
+                        swimlane: { card: { tracker_id: 42 } },
                     } as NewCardPayload,
                     [] as Tracker[]
                 )
@@ -121,7 +148,7 @@ describe("update-artifact", () => {
             expect(() =>
                 getPostArtifactBody(
                     {
-                        swimlane: { card: { tracker_id: 42 } }
+                        swimlane: { card: { tracker_id: 42 } },
                     } as NewCardPayload,
                     [{ id: 42, add_in_place: null } as Tracker]
                 )
@@ -132,16 +159,16 @@ describe("update-artifact", () => {
             expect(() =>
                 getPostArtifactBody(
                     {
-                        swimlane: { card: { tracker_id: 42 } }
+                        swimlane: { card: { tracker_id: 42 } },
                     } as NewCardPayload,
                     [
                         {
                             id: 42,
                             add_in_place: {
                                 child_tracker_id: 69,
-                                parent_artifact_link_field_id: 103
-                            }
-                        } as Tracker
+                                parent_artifact_link_field_id: 103,
+                            },
+                        } as Tracker,
                     ]
                 )
             ).toThrow();
@@ -151,17 +178,17 @@ describe("update-artifact", () => {
             expect(() =>
                 getPostArtifactBody(
                     {
-                        swimlane: { card: { tracker_id: 42 } }
+                        swimlane: { card: { tracker_id: 42 } },
                     } as NewCardPayload,
                     [
                         {
                             id: 42,
                             add_in_place: {
                                 child_tracker_id: 69,
-                                parent_artifact_link_field_id: 103
-                            }
+                                parent_artifact_link_field_id: 103,
+                            },
                         } as Tracker,
-                        { id: 69, title_field: null } as Tracker
+                        { id: 69, title_field: null } as Tracker,
                     ]
                 )
             ).toThrow();
@@ -173,18 +200,18 @@ describe("update-artifact", () => {
                     {
                         swimlane: { card: { tracker_id: 42 } },
                         column: {
-                            mappings: [] as Mapping[]
-                        }
+                            mappings: [] as Mapping[],
+                        },
                     } as NewCardPayload,
                     [
                         {
                             id: 42,
                             add_in_place: {
                                 child_tracker_id: 69,
-                                parent_artifact_link_field_id: 103
-                            }
+                                parent_artifact_link_field_id: 103,
+                            },
                         } as Tracker,
-                        { id: 69, title_field: { id: 123, is_string_field: true } } as Tracker
+                        { id: 69, title_field: { id: 123, is_string_field: true } } as Tracker,
                     ]
                 )
             ).toThrow();
@@ -196,22 +223,22 @@ describe("update-artifact", () => {
                     {
                         swimlane: { card: { tracker_id: 42 } },
                         column: {
-                            mappings: [] as Mapping[]
-                        }
+                            mappings: [] as Mapping[],
+                        },
                     } as NewCardPayload,
                     [
                         {
                             id: 42,
                             add_in_place: {
                                 child_tracker_id: 69,
-                                parent_artifact_link_field_id: 103
-                            }
+                                parent_artifact_link_field_id: 103,
+                            },
                         } as Tracker,
                         {
                             id: 69,
                             title_field: { id: 123, is_string_field: true },
-                            artifact_link_field: null
-                        } as Tracker
+                            artifact_link_field: null,
+                        } as Tracker,
                     ]
                 )
             ).toThrow();
@@ -223,22 +250,22 @@ describe("update-artifact", () => {
                     {
                         swimlane: { card: { tracker_id: 42 } },
                         column: {
-                            mappings: [{ tracker_id: 69, field_id: null }]
-                        }
+                            mappings: [{ tracker_id: 69, field_id: null }],
+                        },
                     } as NewCardPayload,
                     [
                         {
                             id: 42,
                             add_in_place: {
                                 child_tracker_id: 69,
-                                parent_artifact_link_field_id: 103
-                            }
+                                parent_artifact_link_field_id: 103,
+                            },
                         } as Tracker,
                         {
                             id: 69,
                             title_field: { id: 123, is_string_field: true },
-                            artifact_link_field: { id: 111 }
-                        } as Tracker
+                            artifact_link_field: { id: 111 },
+                        } as Tracker,
                     ]
                 )
             ).toThrow();
@@ -251,23 +278,23 @@ describe("update-artifact", () => {
                         swimlane: { card: { tracker_id: 42 } },
                         column: {
                             mappings: [
-                                { tracker_id: 69, field_id: 666, accepts: [] as ListValue[] }
-                            ]
-                        }
+                                { tracker_id: 69, field_id: 666, accepts: [] as ListValue[] },
+                            ],
+                        },
                     } as NewCardPayload,
                     [
                         {
                             id: 42,
                             add_in_place: {
                                 child_tracker_id: 69,
-                                parent_artifact_link_field_id: 103
-                            }
+                                parent_artifact_link_field_id: 103,
+                            },
                         } as Tracker,
                         {
                             id: 69,
                             title_field: { id: 123, is_string_field: true },
-                            artifact_link_field: { id: 111 }
-                        } as Tracker
+                            artifact_link_field: { id: 111 },
+                        } as Tracker,
                     ]
                 )
             ).toThrow();
@@ -278,37 +305,37 @@ describe("update-artifact", () => {
                 {
                     swimlane: { card: { id: 74, tracker_id: 42 } },
                     column: {
-                        mappings: [{ tracker_id: 69, field_id: 666, accepts: [{ id: 101 }] }]
+                        mappings: [{ tracker_id: 69, field_id: 666, accepts: [{ id: 101 }] }],
                     },
-                    label: "Lorem ipsum"
+                    label: "Lorem ipsum",
                 } as NewCardPayload,
                 [
                     {
                         id: 42,
-                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 }
+                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 },
                     } as Tracker,
                     {
                         id: 69,
                         title_field: { id: 123, is_string_field: true },
-                        artifact_link_field: { id: 111 }
-                    } as Tracker
+                        artifact_link_field: { id: 111 },
+                    } as Tracker,
                 ]
             );
 
             expect(body).toStrictEqual({
                 tracker: {
-                    id: 69
+                    id: 69,
                 },
                 values: [
                     {
                         field_id: 123,
-                        value: "Lorem ipsum"
+                        value: "Lorem ipsum",
                     },
                     {
                         field_id: 666,
-                        bind_value_ids: [101]
-                    }
-                ]
+                        bind_value_ids: [101],
+                    },
+                ],
             });
         });
 
@@ -317,37 +344,37 @@ describe("update-artifact", () => {
                 {
                     swimlane: { card: { id: 74, tracker_id: 42 } },
                     column: {
-                        mappings: [{ tracker_id: 69, field_id: 666, accepts: [{ id: 101 }] }]
+                        mappings: [{ tracker_id: 69, field_id: 666, accepts: [{ id: 101 }] }],
                     },
-                    label: "Lorem\n\nipsum\n"
+                    label: "Lorem\n\nipsum\n",
                 } as NewCardPayload,
                 [
                     {
                         id: 42,
-                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 }
+                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 },
                     } as Tracker,
                     {
                         id: 69,
                         title_field: { id: 123, is_string_field: true },
-                        artifact_link_field: { id: 111 }
-                    } as Tracker
+                        artifact_link_field: { id: 111 },
+                    } as Tracker,
                 ]
             );
 
             expect(body).toStrictEqual({
                 tracker: {
-                    id: 69
+                    id: 69,
                 },
                 values: [
                     {
                         field_id: 123,
-                        value: "Lorem ipsum "
+                        value: "Lorem ipsum ",
                     },
                     {
                         field_id: 666,
-                        bind_value_ids: [101]
-                    }
-                ]
+                        bind_value_ids: [101],
+                    },
+                ],
             });
         });
 
@@ -356,40 +383,40 @@ describe("update-artifact", () => {
                 {
                     swimlane: { card: { id: 74, tracker_id: 42 } },
                     column: {
-                        mappings: [{ tracker_id: 69, field_id: 666, accepts: [{ id: 101 }] }]
+                        mappings: [{ tracker_id: 69, field_id: 666, accepts: [{ id: 101 }] }],
                     },
-                    label: "Lorem ipsum"
+                    label: "Lorem ipsum",
                 } as NewCardPayload,
                 [
                     {
                         id: 42,
-                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 }
+                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 },
                     } as Tracker,
                     {
                         id: 69,
                         title_field: { id: 123, is_string_field: false },
-                        artifact_link_field: { id: 111 }
-                    } as Tracker
+                        artifact_link_field: { id: 111 },
+                    } as Tracker,
                 ]
             );
 
             expect(body).toStrictEqual({
                 tracker: {
-                    id: 69
+                    id: 69,
                 },
                 values: [
                     {
                         field_id: 123,
                         value: {
                             content: "Lorem ipsum",
-                            format: "text"
-                        }
+                            format: "text",
+                        },
                     },
                     {
                         field_id: 666,
-                        bind_value_ids: [101]
-                    }
-                ]
+                        bind_value_ids: [101],
+                    },
+                ],
             });
         });
 
@@ -398,40 +425,40 @@ describe("update-artifact", () => {
                 {
                     swimlane: { card: { id: 74, tracker_id: 42 } },
                     column: {
-                        mappings: [{ tracker_id: 69, field_id: 666, accepts: [{ id: 101 }] }]
+                        mappings: [{ tracker_id: 69, field_id: 666, accepts: [{ id: 101 }] }],
                     },
-                    label: "Lorem\n\nipsum\n"
+                    label: "Lorem\n\nipsum\n",
                 } as NewCardPayload,
                 [
                     {
                         id: 42,
-                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 }
+                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 },
                     } as Tracker,
                     {
                         id: 69,
                         title_field: { id: 123, is_string_field: false },
-                        artifact_link_field: { id: 111 }
-                    } as Tracker
+                        artifact_link_field: { id: 111 },
+                    } as Tracker,
                 ]
             );
 
             expect(body).toStrictEqual({
                 tracker: {
-                    id: 69
+                    id: 69,
                 },
                 values: [
                     {
                         field_id: 123,
                         value: {
                             content: "Lorem\n\nipsum\n",
-                            format: "text"
-                        }
+                            format: "text",
+                        },
                     },
                     {
                         field_id: 666,
-                        bind_value_ids: [101]
-                    }
-                ]
+                        bind_value_ids: [101],
+                    },
+                ],
             });
         });
     });
@@ -441,7 +468,7 @@ describe("update-artifact", () => {
             expect(() =>
                 getPutArtifactBodyToAddChild(
                     {
-                        swimlane: { card: { tracker_id: 42 } }
+                        swimlane: { card: { tracker_id: 42 } },
                     } as NewCardPayload,
                     [] as Tracker[],
                     1001,
@@ -454,7 +481,7 @@ describe("update-artifact", () => {
             expect(() =>
                 getPutArtifactBodyToAddChild(
                     {
-                        swimlane: { card: { tracker_id: 42 } }
+                        swimlane: { card: { tracker_id: 42 } },
                     } as NewCardPayload,
                     [{ id: 42, add_in_place: null } as Tracker],
                     1001,
@@ -466,13 +493,13 @@ describe("update-artifact", () => {
         it("Sets the value for artifact link field", () => {
             const body = getPutArtifactBodyToAddChild(
                 {
-                    swimlane: { card: { tracker_id: 42 } }
+                    swimlane: { card: { tracker_id: 42 } },
                 } as NewCardPayload,
                 [
                     {
                         id: 42,
-                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 }
-                    } as Tracker
+                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 },
+                    } as Tracker,
                 ],
                 1001,
                 [] as Values
@@ -485,24 +512,24 @@ describe("update-artifact", () => {
                         links: [
                             {
                                 id: 1001,
-                                type: "_is_child"
-                            }
-                        ]
-                    }
-                ]
+                                type: "_is_child",
+                            },
+                        ],
+                    },
+                ],
             });
         });
 
         it("Keeps the existing links so that we don't loose them while updating the artifact", () => {
             const body = getPutArtifactBodyToAddChild(
                 {
-                    swimlane: { card: { tracker_id: 42 } }
+                    swimlane: { card: { tracker_id: 42 } },
                 } as NewCardPayload,
                 [
                     {
                         id: 42,
-                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 }
-                    } as Tracker
+                        add_in_place: { child_tracker_id: 69, parent_artifact_link_field_id: 103 },
+                    } as Tracker,
                 ],
                 1001,
                 [{ field_id: 103, links: [{ id: 999, type: "custom" }] }] as Values
@@ -515,15 +542,15 @@ describe("update-artifact", () => {
                         links: [
                             {
                                 id: 999,
-                                type: "custom"
+                                type: "custom",
                             },
                             {
                                 id: 1001,
-                                type: "_is_child"
-                            }
-                        ]
-                    }
-                ]
+                                type: "_is_child",
+                            },
+                        ],
+                    },
+                ],
             });
         });
     });

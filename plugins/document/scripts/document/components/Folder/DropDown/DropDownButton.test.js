@@ -21,26 +21,30 @@ import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue.js";
 import DropDownButton from "./DropDownButton.vue";
 import EventBus from "../../../helpers/event-bus.js";
+import * as tlp from "tlp";
+
+jest.mock("tlp");
 
 describe("DropDownButton", () => {
     let dropdown_factory;
     beforeEach(() => {
+        jest.spyOn(tlp, "createDropdown");
         dropdown_factory = (props = {}) => {
             return shallowMount(DropDownButton, {
                 localVue,
-                propsData: { ...props }
+                propsData: { ...props },
             });
         };
     });
 
     it(`Given drop down button is appended (aka user has write permissions)
         When we display the button
-        Then it should display the button action and the dropdown option ( | update | v |) `, () => {
+        Then it should display the button action and the dropdown option ( | update | v |)`, () => {
         const wrapper = dropdown_factory({ isAppended: true, isInQuickLookMode: false });
 
-        expect(wrapper.contains(".tlp-append")).toBeTruthy();
-        expect(wrapper.contains(".tlp-button-icon-right")).toBeFalsy();
-        expect(wrapper.contains(".fa-ellipsis-h")).toBeFalsy();
+        expect(wrapper.find(".tlp-append").exists()).toBeTruthy();
+        expect(wrapper.find(".tlp-button-icon-right").exists()).toBeFalsy();
+        expect(wrapper.find(".fa-ellipsis-h").exists()).toBeFalsy();
     });
 
     it(`Given drop down button is not appended (aka user has read permissions)
@@ -48,9 +52,9 @@ describe("DropDownButton", () => {
         Then it should display an ellipsis and the dropdown option (|... v|)`, () => {
         const wrapper = dropdown_factory({ isAppended: false, isInQuickLookMode: false });
 
-        expect(wrapper.contains(".tlp-append")).toBeFalsy();
-        expect(wrapper.contains(".fa-ellipsis-h")).toBeTruthy();
-        expect(wrapper.contains(".tlp-button-icon-right")).toBeTruthy();
+        expect(wrapper.find(".tlp-append").exists()).toBeFalsy();
+        expect(wrapper.find(".fa-ellipsis-h").exists()).toBeTruthy();
+        expect(wrapper.find(".tlp-button-icon-right").exists()).toBeTruthy();
     });
 
     it(`Given drop down button is in quick look mode
@@ -58,7 +62,7 @@ describe("DropDownButton", () => {
         Then it should be displayed outlined`, () => {
         const wrapper = dropdown_factory({ isAppended: true, isInQuickLookMode: true });
 
-        expect(wrapper.contains(".tlp-button-outline")).toBeTruthy();
+        expect(wrapper.find(".tlp-button-outline").exists()).toBeTruthy();
     });
 
     it(`Given drop down button is in large mode
@@ -67,10 +71,10 @@ describe("DropDownButton", () => {
         const wrapper = dropdown_factory({
             isAppended: true,
             isInQuickLookMode: true,
-            isInLargeMode: true
+            isInLargeMode: true,
         });
 
-        expect(wrapper.contains(".tlp-button-large")).toBeTruthy();
+        expect(wrapper.find(".tlp-button-large").exists()).toBeTruthy();
     });
 
     it(`Hide the dropdown
@@ -78,7 +82,7 @@ describe("DropDownButton", () => {
         const wrapper = dropdown_factory({
             isAppended: true,
             isInQuickLookMode: true,
-            isInLargeMode: true
+            isInLargeMode: true,
         });
 
         const event_bus_off = jest.spyOn(EventBus, "$off");

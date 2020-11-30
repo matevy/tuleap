@@ -21,25 +21,28 @@
     <div class="cross-tracker-writing-mode">
         <tracker-selection
             v-bind:selected-trackers="selected_trackers"
-            v-on:trackerAdded="addTrackerToSelection"
+            v-on:tracker-added="addTrackerToSelection"
         />
         <tracker-list-writing-mode
             v-bind:trackers="selected_trackers"
-            v-on:trackerRemoved="removeTrackerFromSelection"
+            v-on:tracker-removed="removeTrackerFromSelection"
         />
         <query-editor
             v-bind:writing-cross-tracker-report="writingCrossTrackerReport"
-            v-on:triggerSearch="search"
+            v-on:trigger-search="search"
         />
         <div class="writing-mode-actions">
             <button
                 class="tlp-button-primary tlp-button-outline writing-mode-actions-cancel"
                 v-on:click="cancel"
                 v-translate
-            >Cancel</button>
+            >
+                Cancel
+            </button>
             <button
                 class="tlp-button-primary writing-mode-actions-search"
                 v-on:click="search"
+                data-test="search-report-button"
             >
                 <i class="fa fa-search tlp-button-icon"></i>
                 <translate>Search</translate>
@@ -58,14 +61,14 @@ export default {
     components: {
         QueryEditor,
         TrackerSelection,
-        TrackerListWritingMode
+        TrackerListWritingMode,
     },
     props: {
-        writingCrossTrackerReport: Object
+        writingCrossTrackerReport: Object,
     },
     data() {
         return {
-            selected_trackers: []
+            selected_trackers: [],
         };
     },
     mounted() {
@@ -73,10 +76,10 @@ export default {
     },
     methods: {
         cancel() {
-            this.$emit("switchToReadingMode", { saved_state: true });
+            this.$emit("switch-to-reading-mode", { saved_state: true });
         },
         search() {
-            this.$emit("switchToReadingMode", { saved_state: false });
+            this.$emit("switch-to-reading-mode", { saved_state: false });
         },
 
         addTrackerToSelection({ selected_project, selected_tracker }) {
@@ -107,10 +110,10 @@ export default {
                 return {
                     tracker_id: tracker.id,
                     tracker_label: tracker.label,
-                    project_label: project.label
+                    project_label: project.label,
                 };
             });
-        }
-    }
+        },
+    },
 };
 </script>

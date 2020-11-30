@@ -73,7 +73,7 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
 
         $old_files = $this->dao
             ->searchTemporaryFilesOlderThan($timestamp)
-            ->instanciateWith(array($this, 'getInstanceFromRow'));
+            ->instanciateWith([$this, 'getInstanceFromRow']);
 
         foreach ($old_files as $file) {
             $this->removeTemporaryFile($file);
@@ -93,10 +93,15 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
     /**
      * Return full path to the file on filesystem
      *
-     * @return String
+     * @psalm-taint-escape shell
+     * @psalm-taint-escape text
      */
-    public function getPath(PFUser $user, $attachment_name)
+    public function getPath(PFUser $user, $attachment_name): string
     {
+        $attachment_name = (string) $attachment_name;
+        if (strpos($attachment_name, DIRECTORY_SEPARATOR) !== false) {
+            throw new \RuntimeException('$attachment_name is not expected to contain a directory separator, got ' . $attachment_name);
+        }
         return ForgeConfig::get('codendi_cache_dir') . DIRECTORY_SEPARATOR . $this->getUserTemporaryFilePrefix($user) . $attachment_name;
     }
 
@@ -137,7 +142,6 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
                 $name,
                 $tempname,
                 $description,
-                $timestamp,
                 0,
                 $user->getId(),
                 0,
@@ -151,7 +155,6 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
     /**
      * Returns encoded content chunk of file
      *
-     * @param Tracker_Artifact_Attachment_TemporaryFile $file
      * @param int $offset Where to start reading
      * @param int $size   How much to read
      *
@@ -175,7 +178,6 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
      * Append some content (base64 encoded) to the file
      *
      * @param String $content
-     * @param Tracker_Artifact_Attachment_TemporaryFile $file
      * @param int $offset
      *
      * @return bool
@@ -209,7 +211,7 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
     {
         $files = $this->dao
             ->searchPaginatedUserTemporaryFiles($user->getId(), $offset, $limit)
-            ->instanciateWith(array($this, 'getInstanceFromRow'));
+            ->instanciateWith([$this, 'getInstanceFromRow']);
 
         return new PaginatedTemporaryFiles($files, $this->dao->foundRows());
     }
@@ -339,7 +341,6 @@ class Tracker_Artifact_Attachment_TemporaryFileManager
             $row['filename'],
             $row['tempname'],
             $row['description'],
-            $row['last_modified'],
             $row['offset'],
             $row['submitted_by'],
             $row['filesize'],

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,10 +20,8 @@
 namespace User\XML\Import;
 
 use UserManager;
-use Logger;
 use SimpleXMLElement;
 use PFUser;
-use XML_Security;
 use XML_RNGValidator;
 use Tuleap\Project\XML\Import\ArchiveInterface;
 
@@ -35,26 +33,14 @@ class UsersToBeImportedCollectionBuilder
      */
     private $xml_validator;
 
-    /**
-     * @var XML_Security
-     */
-    private $security;
-
     /** @var UserManager */
     private $user_manager;
 
-    /** @var Logger */
-    private $logger;
-
     public function __construct(
         UserManager $user_manager,
-        Logger $logger,
-        XML_Security $security,
         XML_RNGValidator $xml_validator
     ) {
         $this->user_manager  = $user_manager;
-        $this->logger        = $logger;
-        $this->security      = $security;
         $this->xml_validator = $xml_validator;
     }
 
@@ -86,7 +72,6 @@ class UsersToBeImportedCollectionBuilder
 
     /**
      *
-     * @param ArchiveInterface $archive
      * @return SimpleXMLElement
      * @throws UsersXMLNotFoundException
      */
@@ -97,9 +82,9 @@ class UsersToBeImportedCollectionBuilder
             throw new UsersXMLNotFoundException();
         }
 
-        $xml_element = $this->security->loadString($xml_contents);
+        $xml_element = \simplexml_load_string($xml_contents);
 
-        $rng_path = realpath(__DIR__ .'/../../../xml/resources/users.rng');
+        $rng_path = realpath(__DIR__ . '/../../../xml/resources/users.rng');
         $this->xml_validator->validate($xml_element, $rng_path);
 
         return $xml_element;
@@ -170,7 +155,7 @@ class UsersToBeImportedCollectionBuilder
         );
     }
 
-    /** @return \PFUser */
+    /** @return \PFUser|null */
     private function getExistingUserFromXML(SimpleXMLElement $user)
     {
         $ldap_id = (string) $user->ldapid;

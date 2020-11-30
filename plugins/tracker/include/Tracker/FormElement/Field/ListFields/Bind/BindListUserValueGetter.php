@@ -19,7 +19,7 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Tracker\FormElement\Field\ListFields\Bind;
 
@@ -99,9 +99,6 @@ class BindListUserValueGetter
         }
 
         $sql = [];
-        /**
-         * @var \Tracker $tracker
-         */
         $tracker_id  = $da->escapeInt($tracker->getId());
         $user_id_sql = $bindvalue_ids ? 'WHERE user.user_id IN (' . $da->escapeIntImplode($bindvalue_ids) . ')' : '';
 
@@ -140,7 +137,7 @@ class BindListUserValueGetter
                     $keyword_sql = ($keyword ? "HAVING full_name LIKE $keyword" : "");
 
                     $sql[] = "(
-                        SELECT DISTINCT user.user_id, $display_name_sql, user.realname, user.user_name
+                        SELECT DISTINCT user.user_id, $display_name_sql, user.realname, user.user_name, user.email, user.status
                             FROM tracker_artifact AS a
                             INNER JOIN user
                                 ON ( user.user_id = a.submitted_by AND a.tracker_id = $tracker_id )
@@ -158,7 +155,7 @@ class BindListUserValueGetter
                     $keyword_sql = ($keyword ? "HAVING full_name LIKE $keyword" : "");
 
                     $sql[] = "(
-                        SELECT DISTINCT user.user_id, $display_name_sql, user.realname, user.user_name
+                        SELECT DISTINCT user.user_id, $display_name_sql, user.realname, user.user_name, user.email, user.status
                             FROM tracker_artifact AS a
                             INNER JOIN tracker_changeset c ON a.id = c.artifact_id
                             INNER JOIN user
@@ -200,7 +197,7 @@ class BindListUserValueGetter
         $query = $this->getUsersSorted($sql, $order_by_sql);
         $rows  = $this->bind_defaultvalue_dao->retrieve($query);
 
-        if (!$rows) {
+        if (! $rows) {
             return [];
         }
 

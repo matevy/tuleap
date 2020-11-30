@@ -24,7 +24,6 @@ include_account	dns_error	Les noms de projet ne peuvent comporter de caractères
 include_account	used_by_svn	Ce nom n'est pas disponible : Un répertoire SVN existe déjà avec ce nom.
 include_account	used_by_cvs	Ce nom n'est pas disponible : Un répertoire CVS existe déjà avec ce nom.
 include_account	used_by_sys	Ce nom n'est pas disponible : Un home projet  existe déjà avec ce nom.
-include_account	change_pwd_err	Merci de mettre à jour votre mot de passe d'abord
 
 #
 #-----------------------------------------------
@@ -70,11 +69,6 @@ include_exit	project_suspended_cutom_message	Tous les accès à ses ressources s
 include_group	g_not_found	Groupe introuvable
 #
 #-----------------------------------------------
-# Script: SF/www/include/help.php
-#
-include_help	site_help_sys	Système d'aide du site
-#
-#-----------------------------------------------
 # Script: SF/www/include/html.php
 #
 include_html	lowest	Minimum
@@ -83,7 +77,6 @@ include_html	highest	Maximum
 include_html	g_not_exist	Ce groupe n'existe pas.
 include_html	invalid_g	Groupe invalide
 include_html	unknown_value	*** valeur inconnue ***
-include_html	no_trovcat	Ce projet n'est pas categorisé prière de selectionner <a href="$1">[Catégorisation]</a>
 #
 #-----------------------------------------------
 # Script: SF/www/include/layout.php
@@ -96,12 +89,11 @@ include_layout	banner	Bannière
 include_layout	logo	Logo
 include_layout	counter	Compteur
 include_layout	Help	Aide
-include_layout	template_warning	Attention ce projet est un patron de projet
+include_layout	template_warning	Attention ce projet est un modèle de projet
 #
 #-----------------------------------------------
 # Script: SF/www/include/menu.php
 #
-include_menu	site_admin	Administration
 include_menu	main_page	Page principale
 include_menu	user_admin	Admin. utilisateur
 include_menu	group_admin	Admin. groupe
@@ -114,23 +106,12 @@ include_menu	trove_cat_add	Ajout des catégories
 include_menu	bugs	Bugs
 include_menu	tasks	Tâches
 include_menu	supp_requ	Demande de support
-include_menu	this_forum	Ce forum
 include_menu	wiki	Wiki
-include_menu	this_tracker	Cet outil de suivi
 include_menu	all_trackers	Tous les outils de suivi
-include_menu	software_proj	Projets logiciel
-include_menu	people	Utilisateurs
-include_menu	this_wiki	Ce wiki
-include_menu	require_all_words	Tous les mots
-include_menu	search	Rechercher
-include_menu	software_map	Arbre des projets
-include_menu	software	Logiciels
 include_menu	new_releases	Nouvelles versions
 include_menu	other_site_mirrors	Autres sites miroirs
 include_menu	help_index	Index de l'aide
 include_menu	site_doc	Documentation site
-include_menu	dev_channel	Canaux développeurs
-include_menu	discussion_forum	Forums de discussions
 include_menu	contact_us	Contactez-nous
 include_menu	about_foudries	À propos des fonderies
 include_menu	games	Jeux
@@ -141,27 +122,18 @@ include_menu	proj_admin	Administration du projet
 include_menu	summary_page	Sommaire
 include_menu	logged_in	Connecté
 include_menu	logout	Se déconnecter
-include_menu	register_new_proj	Enregistrer un projet
-include_menu	filter_project	Projet...
 include_menu	account_maintenance	Mon compte
 include_menu	my_perso_page	Ma page personnelle
 include_menu	bookmark_this_page	Cette page en favori
-include_menu	not_logged_in	Déconnecté
 include_menu	login	Se connecter
 include_menu	new_user	Nouveau compte
-include_menu	auth_prev_success	Dernière connexion:
 include_menu	auth_last_failure	Dernière tentative de connexion:
 include_menu	auth_nb_failure	Nombre de tentatives:
 include_menu	help	Aide
-include_menu	api	API
-include_menu	extras	Plus
 include_menu	get_help	Rubriques d'aide
-include_menu	projects	Projets
-include_menu	browse_projects	Afficher l'ensemble des projets
 include_menu	browse_all	Voir tous les projets
 include_menu	filter_projects	Filtrer ...
 include_menu	add_project	Nouveau projet
-include_menu	join_community	Rejoindre la communauté Tuleap
 #
 #-----------------------------------------------
 # Script: SF/www/include/project.php
@@ -172,9 +144,7 @@ include_project	services_not_found	Services introuvable pour ce groupe
 # Script: SF/www/include/project_home.php
 #
 include_project_home	not_official_site	<P>NOTE: This project entry is maintained by the $1 staff. We are not \nthe official site for this product. Additional copyright information may be found on this project's homepage.\n
-include_project_home	more_info	Plus d'information
 include_project_home	no_short_desc	Ce projet n'a pas encore soumis une description courte. Vous pouvez <a href="$1">la soumettre</a> maintenant.
-include_project_home	other_info	Autre information
 include_project_home	latest_file_releases	Derniers fichiers publiés
 include_project_home	package	Paquet
 include_project_home	version	Version
@@ -283,7 +253,6 @@ include_squal_pre	not_connect_db	Connexion à la base de données impossible
 # Script: SF/www/include/trove.php
 #
 include_trove	none_selected	Aucune sélection
-include_trove	not_categorized_yet	Ce projet n'est pas encore catégorisé dans <A href="$1">l'arbre des projets</A>. Vous pouvez <a href=$2>le catégoriser</a> maintenant.
 include_trove	now_filter	Filtrage en cours
 include_trove	filter	Filtrer
 
@@ -304,10 +273,8 @@ include_user	invalid_u_id	ID utilisateur invalide
 #
 include_utils	prio_colors	Échelle de couleurs des priorités
 include_utils	address_problem	Les adresses suivantes présentent une anomalie
-include_utils	email_explain	Les adresses e-mail doivent être soit des noms de login utilisateur (par exemple 'jmartin') ou une adresse e-mail complète (par exemple jean.martin@mon.domaine.com). Plusieurs adresses e-mail peuvent être saisies si elles sont séparées par une virgule ou un point-virgule.
+include_utils	email_explain	Les adresses e-mail doivent être soit des noms de login utilisateur (par exemple 'jmartin') ou une adresse e-mail complète (par exemple jean.martin@example.com). Plusieurs adresses e-mail peuvent être saisies si elles sont séparées par une virgule ou un point-virgule.
 include_utils	invalid_email	Format d'email invalide
-include_utils	time_ago	il y a $1
-include_utils	time_in_future	dans $1
 include_utils	1_minute	1 minute
 include_utils	less_1_minute	moins d'une minute
 include_utils	less_than_one_second	moins d'une seconde
@@ -337,7 +304,7 @@ include_common_groupfactory	none_found	Rien n'a été trouvé
 # Script: SF/common/include/Template.class.php
 #
 include_common_template	project	Projet
-include_common_template	template	Patron de projet
+include_common_template	template	Modèle de projet
 include_common_template	test_project	Projet de test
 #
 #-----------------------------------------------
@@ -345,6 +312,3 @@ include_common_template	test_project	Projet de test
 #
 common_mvc_view	warn	** WARNING !! ** Please confirm you want to $1
 #common_mvc_view	warn	** Attention !! ** Merci de confirmer que vous voulez $1
-
-include_browser	ie_deprecated	Veuillez enlever le mode compatibilité d'Internet Explorer, mettre à jour à une version plus récente (IE11 minimum) ou utiliser une alternative (Firefox, Chrome, etc).
-include_browser	ie_deprecated_button	Ok, j'ai compris. Me le rappeler plus tard.

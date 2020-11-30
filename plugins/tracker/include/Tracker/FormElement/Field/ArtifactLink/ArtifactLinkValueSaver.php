@@ -21,16 +21,15 @@
 namespace Tuleap\Tracker\FormElement\Field\ArtifactLink;
 
 use EventManager;
-use Tracker_Artifact;
-use Tracker_ArtifactLinkInfo;
-use Tracker_ArtifactFactory;
-use Tracker_FormElement_Field_Value_ArtifactLinkDao;
-use Tracker_ReferenceManager;
-use Tracker_FormElement_Field_ArtifactLink;
-use Tracker;
 use Feedback;
 use PFUser;
+use Tracker;
+use Tracker_ArtifactFactory;
+use Tracker_ArtifactLinkInfo;
+use Tracker_FormElement_Field_ArtifactLink;
+use Tracker_ReferenceManager;
 use Tuleap\Tracker\Admin\ArtifactLinksUsageDao;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class ArtifactLinkValueSaver
 {
@@ -41,7 +40,7 @@ class ArtifactLinkValueSaver
     private $reference_manager;
 
     /**
-     * @var Tracker_FormElement_Field_Value_ArtifactLinkDao
+     * @var ArtifactLinkFieldValueDao
      */
     private $dao;
 
@@ -61,7 +60,7 @@ class ArtifactLinkValueSaver
 
     public function __construct(
         Tracker_ArtifactFactory $artifact_factory,
-        Tracker_FormElement_Field_Value_ArtifactLinkDao $dao,
+        ArtifactLinkFieldValueDao $dao,
         Tracker_ReferenceManager $reference_manager,
         EventManager $event_manager,
         ArtifactLinksUsageDao $artifact_links_usage_dao
@@ -78,14 +77,14 @@ class ArtifactLinkValueSaver
      *
      * @param Tracker_FormElement_Field_ArtifactLink $field              The field in which we save the value
      * @param PFUser                                 $user               The current user
-     * @param Tracker_Artifact                       $artifact           The artifact
+     * @param Artifact                               $artifact           The artifact
      * @param int                                    $changeset_value_id The id of the changeset_value
      * @param mixed                                  $submitted_value    The value submitted by the user
      */
     public function saveValue(
         Tracker_FormElement_Field_ArtifactLink $field,
         PFUser $user,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         $changeset_value_id,
         array $submitted_value
     ) {
@@ -112,7 +111,7 @@ class ArtifactLinkValueSaver
     }
 
     private function getNature(
-        Tracker_Artifact $from_artifact,
+        Artifact $from_artifact,
         Tracker_ArtifactLinkInfo $artifactlinkinfo,
         Tracker $from_tracker,
         Tracker $to_tracker,
@@ -158,11 +157,15 @@ class ArtifactLinkValueSaver
         Tracker $to_tracker,
         $existing_nature
     ) {
-        if (in_array($to_tracker, $from_tracker->getChildren())) {
-            if ($this->artifact_links_usage_dao->isTypeDisabledInProject(
-                $from_tracker->getProject()->getID(),
-                Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD
-            )) {
+        $is_child = $this->isTrackerChildrenOfTheOtherTracker($to_tracker, $from_tracker);
+
+        if ($is_child) {
+            if (
+                $this->artifact_links_usage_dao->isTypeDisabledInProject(
+                    $from_tracker->getProject()->getID(),
+                    Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD
+                )
+            ) {
                 return Tracker_FormElement_Field_ArtifactLink::NO_NATURE;
             }
 
@@ -171,8 +174,9 @@ class ArtifactLinkValueSaver
             return Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD;
         }
 
-        if ($from_tracker->getChildren()
-            && ! in_array($to_tracker, $from_tracker->getChildren())
+        if (
+            $from_tracker->getChildren()
+            && ! $is_child
             && $existing_nature === Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD
         ) {
             $this->warnForceUsageOfNoneType($artifactlinkinfo, $from_tracker);
@@ -183,16 +187,23 @@ class ArtifactLinkValueSaver
         return null;
     }
 
+    private function isTrackerChildrenOfTheOtherTracker(Tracker $to_tracker, Tracker $from_tracker): bool
+    {
+        foreach ($from_tracker->getChildren() as $child_tracker) {
+            if ((int) $child_tracker->getId() === (int) $to_tracker->getId()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function warnForceUsageOfNoneType(Tracker_ArtifactLinkInfo $artifactlinkinfo, Tracker $from_tracker)
     {
         if ($from_tracker->isProjectAllowedToUseNature()) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker_artifact_links_natures',
-                    'no_child',
-                    $artifactlinkinfo->getArtifactId()
-                )
+                sprintf(dgettext('tuleap-tracker', 'As per config (hierarchy), the type _is_child cannot be used for the link to artifact #%1$s'), $artifactlinkinfo->getArtifactId())
             );
         }
     }
@@ -202,34 +213,31 @@ class ArtifactLinkValueSaver
         Tracker $from_tracker,
         $existing_nature
     ) {
-        if ($existing_nature !== Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD
+        if (
+            $existing_nature !== Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD
             && $from_tracker->isProjectAllowedToUseNature()
         ) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker_artifact_links_natures',
-                    'force_child',
-                    $artifactlinkinfo->getArtifactId()
-                )
+                sprintf(dgettext('tuleap-tracker', 'As per config (hierarchy), force use of _is_child type for the link to artifact #%1$s'), $artifactlinkinfo->getArtifactId())
             );
         }
     }
 
     private function getNatureDefinedByPlugin(
         Tracker_ArtifactLinkInfo $artifactlinkinfo,
-        Tracker_Artifact $from_artifact,
-        Tracker_Artifact $to_artifact,
+        Artifact $from_artifact,
+        Artifact $to_artifact,
         $existing_nature,
         array $submitted_value
     ) {
         $nature_by_plugin = null;
-        $this->event_manager->processEvent(TRACKER_EVENT_ARTIFACT_LINK_NATURE_REQUESTED, array(
+        $this->event_manager->processEvent(TRACKER_EVENT_ARTIFACT_LINK_NATURE_REQUESTED, [
             'project_id'      => $artifactlinkinfo->getGroupId(),
             'to_artifact'     => $to_artifact,
             'submitted_value' => $submitted_value,
             'nature'          => &$nature_by_plugin
-        ));
+        ]);
 
         if (! empty($nature_by_plugin) && $existing_nature !== $nature_by_plugin) {
             $this->warnOverrideOfExistingNature(
@@ -251,11 +259,7 @@ class ArtifactLinkValueSaver
         if ($from_tracker->isProjectAllowedToUseNature()) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker_artifact_links_natures',
-                    'override_nature',
-                    array($artifactlinkinfo->getArtifactId(), $existing_nature, $nature_by_plugin)
-                )
+                sprintf(dgettext('tuleap-tracker', 'Override link type "%2$s" to artifact #%1$s with type "%3$s" returned by another service'), $artifactlinkinfo->getArtifactId(), $existing_nature, $nature_by_plugin)
             );
         }
     }
@@ -263,12 +267,12 @@ class ArtifactLinkValueSaver
     /**
      * Update cross references of this field
      *
-     * @param Tracker_Artifact $artifact the artifact that is currently updated
-     * @param array            $submitted_value   the array of added and removed artifact links ($values['added_values'] is a string and $values['removed_values'] is an array of artifact ids
+     * @param Artifact $artifact        the artifact that is currently updated
+     * @param array    $submitted_value the array of added and removed artifact links ($values['added_values'] is a string and $values['removed_values'] is an array of artifact ids
      *
      * @return boolean
      */
-    private function updateCrossReferences(PFUser $user, Tracker_Artifact $artifact, array $submitted_value)
+    private function updateCrossReferences(PFUser $user, Artifact $artifact, array $submitted_value)
     {
         $update_ok = true;
 
@@ -282,14 +286,14 @@ class ArtifactLinkValueSaver
         return $update_ok;
     }
 
-    private function canLinkArtifacts(Tracker_Artifact $src_artifact, Tracker_Artifact $artifact_to_link)
+    private function canLinkArtifacts(Artifact $src_artifact, Artifact $artifact_to_link)
     {
         return ($src_artifact->getId() != $artifact_to_link->getId()) && $artifact_to_link->getTracker();
     }
 
     private function getAddedArtifactIds(array $values)
     {
-        $ids = array();
+        $ids = [];
         foreach ($values['list_of_artifactlinkinfo'] as $artifactlinkinfo) {
             $ids[] = (int) $artifactlinkinfo->getArtifactId();
         }
@@ -302,10 +306,10 @@ class ArtifactLinkValueSaver
         if (array_key_exists('removed_values', $values)) {
             return array_map('intval', array_keys($values['removed_values']));
         }
-        return array();
+        return [];
     }
 
-    private function insertCrossReference(PFUser $user, Tracker_Artifact $source_artifact, $target_artifact_id)
+    private function insertCrossReference(PFUser $user, Artifact $source_artifact, $target_artifact_id)
     {
         return $this->reference_manager->insertBetweenTwoArtifacts(
             $source_artifact,
@@ -314,7 +318,7 @@ class ArtifactLinkValueSaver
         );
     }
 
-    private function removeCrossReference(PFUser $user, Tracker_Artifact $source_artifact, $target_artifact_id)
+    private function removeCrossReference(PFUser $user, Artifact $source_artifact, $target_artifact_id)
     {
         return $this->reference_manager->removeBetweenTwoArtifacts(
             $source_artifact,
@@ -323,13 +327,12 @@ class ArtifactLinkValueSaver
         );
     }
 
-    /** @return {'tracker' => Tracker, 'ids' => int[]}[] */
     private function getArtifactIdsToLink(
         Tracker $from_tracker,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $submitted_value
     ) {
-        $all_artifact_to_be_linked = array();
+        $all_artifact_to_be_linked = [];
         foreach ($submitted_value['list_of_artifactlinkinfo'] as $artifactlinkinfo) {
             $artifact_to_link = $artifactlinkinfo->getArtifact();
             if ($this->canLinkArtifacts($artifact, $artifact_to_link)) {
@@ -337,14 +340,14 @@ class ArtifactLinkValueSaver
                 $nature  = $this->getNature($artifact, $artifactlinkinfo, $from_tracker, $tracker, $submitted_value);
 
                 if (! isset($all_artifact_to_be_linked[$tracker->getId()])) {
-                    $all_artifact_to_be_linked[$tracker->getId()] = array(
+                    $all_artifact_to_be_linked[$tracker->getId()] = [
                         'tracker' => $tracker,
-                        'natures' => array()
-                    );
+                        'natures' => []
+                    ];
                 }
 
                 if (! isset($all_artifact_to_be_linked[$tracker->getId()]['natures'][$nature])) {
-                    $all_artifact_to_be_linked[$tracker->getId()]['natures'][$nature] = array();
+                    $all_artifact_to_be_linked[$tracker->getId()]['natures'][$nature] = [];
                 }
 
                 $all_artifact_to_be_linked[$tracker->getId()]['natures'][$nature][] = $artifact_to_link->getId();

@@ -35,16 +35,16 @@ EOT;
 
     public function up()
     {
-        $sql = 'CREATE TABLE groups_notif_delegation ('.
-               ' group_id int(11) NOT NULL default 0,'.
-               ' ugroup_id int(11) NOT NULL,'.
+        $sql = 'CREATE TABLE groups_notif_delegation (' .
+               ' group_id int(11) NOT NULL default 0,' .
+               ' ugroup_id int(11) NOT NULL,' .
                ' KEY (group_id, ugroup_id))';
         $this->db->createTable('groups_notif_delegation', $sql);
     }
 
     public function postUp()
     {
-        if (!$this->db->tableNameExists('groups_notif_delegation')) {
+        if (! $this->db->tableNameExists('groups_notif_delegation')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('groups_notif_delegation table is missing');
         }
     }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,6 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Chart\Chart;
+
 /**
 * PieChart
 *
@@ -28,14 +30,8 @@
 */
 class Chart_Pie extends Chart
 {
-
-    /**
-     * Get the name of the jpgraph class to instantiate
-     *
-     * @return string
-     */
-    protected function getGraphClass()
+    protected function getGraphClass(): string
     {
-        return 'PieGraph';
+        return \PieGraph::class;
     }
 }

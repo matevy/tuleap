@@ -2,10 +2,10 @@
     "baseUrl": "https://tuleap",
     "reporter": "junit",
     "reporterOptions": {
-        "mochaFile": "/output/results-[hash].xml"
+        "mochaFile": "/output/core-results-[hash].xml"
     },
-    "screenshotsFolder": "/output/screenshots",
-    "videosFolder": "/output/videos",
+    "screenshotsFolder": "/output/core-screenshots",
+    "videosFolder": "/output/core-videos",
     "video": true,
     "videoUploadOnPasses": false,
     "pluginsFile": false,

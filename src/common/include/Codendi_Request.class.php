@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -59,6 +59,8 @@ class Codendi_Request
      * @param string $variable Name of the parameter to get.
      * @return mixed If the variable exist, the value is returned (string)
      * otherwise return false;
+     *
+     * @psalm-taint-source input
      */
     public function get($variable)
     {
@@ -87,6 +89,8 @@ class Codendi_Request
      *
      * @return mixed If the variable exist, the value is returned (string)
      * otherwise return false;
+     *
+     * @psalm-taint-source input
      */
     public function getInArray($idx, $variable)
     {
@@ -103,8 +107,10 @@ class Codendi_Request
      * @access protected
      * @param string $variable Name of the parameter to get.
      * @param array $array Name of the parameter to get.
+     *
+     * @psalm-taint-source input
      */
-    function _get($variable, $array)
+    public function _get($variable, $array)
     {
         if ($this->_exist($variable, $array)) {
             return $array[$variable];
@@ -169,9 +175,9 @@ class Codendi_Request
         $isValid = true;
         $array = $this->get($validator->getKey());
         if (is_array($array)) {
-            if (count($array)>0) {
+            if (count($array) > 0) {
                 foreach ($array as $key => $v) {
-                    if (!$validator->validate($v)) {
+                    if (! $validator->validate($v)) {
                         $isValid = false;
                     }
                 }
@@ -214,6 +220,8 @@ class Codendi_Request
      * @param string $variable Name of the parameter to get.
      * @param mixed $validator Name of the validator (string, uint, email) or an instance of a validator
      * @param mixed $default_value Value return if the validator is not valid. Optional, default is null.
+     *
+     * @psalm-taint-source input
      */
     public function getValidated($variable, $validator = 'string', $default_value = null)
     {
@@ -221,7 +229,7 @@ class Codendi_Request
         if ($v = ValidFactory::getInstance($validator, $variable)) {
             $is_valid = $this->valid($v);
         } else {
-            trigger_error('Validator '. $validator .' is not found', E_USER_ERROR);
+            trigger_error('Validator ' . $validator . ' is not found', E_USER_ERROR);
         }
         return $is_valid ? $this->get($variable) : $default_value;
     }
@@ -241,7 +249,7 @@ class Codendi_Request
      */
     public function getCurrentUser()
     {
-        if (!$this->current_user) {
+        if (! $this->current_user) {
             $this->current_user = UserManager::instance()->getCurrentUser();
         }
         return $this->current_user;
@@ -260,7 +268,6 @@ class Codendi_Request
     /**
      * Set a current user (should be used only for tests)
      *
-     * @param PFUser $user
      */
     public function setCurrentUser(PFUser $user)
     {
@@ -274,15 +281,7 @@ class Codendi_Request
      */
     public function getProject()
     {
-        return $this->project_manager->getProject((int)$this->get('group_id'));
-    }
-
-    /**
-     * For debug only
-     */
-    public function dump()
-    {
-        var_dump($this->params);
+        return $this->project_manager->getProject((int) $this->get('group_id'));
     }
 
     /**

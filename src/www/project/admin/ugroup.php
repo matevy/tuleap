@@ -22,7 +22,6 @@
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
 use Tuleap\Project\Admin\ProjectUGroup\CannotCreateUGroupException;
-use Tuleap\Project\Admin\ProjectUGroup\SynchronizedProjectMembership\ActivationController;
 use Tuleap\Project\Admin\ProjectUGroup\UGroupListPresenterBuilder;
 use Tuleap\Project\Admin\ProjectUGroup\UGroupRouter;
 use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
@@ -38,7 +37,7 @@ $group_id = $request->getValidated('group_id', 'GroupId', 0);
 
 $ugroup_delete_token = new CSRFSynchronizerToken('/project/admin/ugroup.php');
 
-session_require(array('group' => $group_id, 'admin_flags' => 'A'));
+session_require(['group' => $group_id, 'admin_flags' => 'A']);
 
 if ($request->existAndNonEmpty('func')) {
     $ugroup_id   = $request->getValidated('ugroup_id', 'UInt', 0);
@@ -68,15 +67,15 @@ if ($request->existAndNonEmpty('func')) {
             }
             break;
     }
-    $GLOBALS['Response']->redirect('/project/admin/ugroup.php?group_id='. urlencode($group_id));
+    $GLOBALS['Response']->redirect('/project/admin/ugroup.php?group_id=' . urlencode($group_id));
 }
 
 $pm = ProjectManager::instance();
-$project=$pm->getProject($group_id);
+$project = $pm->getProject($group_id);
 
 $title = $Language->getText('project_admin_ugroup', 'manage_ug');
 
-$include_assets = new IncludeAssets(ForgeConfig::get('tuleap_dir') . '/src/www/assets', '/assets');
+$include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets/core', '/assets/core');
 $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL('project-admin-ugroups.js'));
 
 $navigation_displayer = new HeaderNavigationDisplayer();
@@ -97,4 +96,4 @@ TemplateRendererFactory::build()
         $presenter_builder->build($project, $ugroup_delete_token, $synchronized_membership_token)
     );
 
-project_admin_footer(array());
+project_admin_footer([]);

@@ -20,11 +20,11 @@
 <template>
     <div class="document-file-upload-cell-title document-file-upload-fake-item-cell-title">
         <span>
-            <fake-caret v-bind:item="item"/>
+            <fake-caret v-bind:item="item" />
             <i class="fa fa-fw document-folder-content-icon" v-bind:class="icon_class"></i>
-            {{ title }}
+            {{ item.title }}
         </span>
-        <upload-progress-bar v-bind:item="item"/>
+        <upload-progress-bar v-bind:item="item" />
     </div>
 </template>
 
@@ -33,21 +33,17 @@ import { mapState } from "vuex";
 import FakeCaret from "./FakeCaret.vue";
 import { iconForMimeType } from "../../../helpers/icon-for-mime-type.js";
 import UploadProgressBar from "../ProgressBar/UploadProgressBar.vue";
-import { getTitleWithElipsisIfNeeded } from "../../../helpers/cell-title-formatter.js";
 
 export default {
     components: { FakeCaret, UploadProgressBar },
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
         ...mapState(["current_folder"]),
         icon_class() {
             return iconForMimeType(this.item.file_type);
         },
-        title() {
-            return getTitleWithElipsisIfNeeded(this.item);
-        }
-    }
+    },
 };
 </script>

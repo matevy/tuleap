@@ -35,7 +35,7 @@ EOT;
 
     public function up()
     {
-        $sql = "ALTER TABLE plugin_git ".
+        $sql = "ALTER TABLE plugin_git " .
                " ADD `repository_events_mailing_prefix` varchar(64) DEFAULT '[SCM]'";
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
@@ -45,7 +45,7 @@ EOT;
 
     public function postUp()
     {
-        if (!$this->db->columnNameExists('plugin_git', 'repository_events_mailing_prefix')) {
+        if (! $this->db->columnNameExists('plugin_git', 'repository_events_mailing_prefix')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Column repository_events_mailing_prefix in table plugin_git is missing');
         }
     }

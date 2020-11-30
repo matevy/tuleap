@@ -31,9 +31,9 @@ async function getWrapper(
         propsData: {
             card: {
                 remaining_effort,
-                color: "lake-placid-blue"
-            } as Card
-        }
+                color: "lake-placid-blue",
+            } as Card,
+        },
     });
 }
 
@@ -59,14 +59,14 @@ describe("ParentCardRemainingEffort", () => {
         const wrapper = await getWrapper({ value: 666, is_in_edit_mode: true } as RemainingEffort);
 
         expect(wrapper.text()).toBe("");
-        expect(wrapper.contains(EditRemainingEffort)).toBe(true);
+        expect(wrapper.findComponent(EditRemainingEffort).exists()).toBe(true);
     });
 
     it("is a focusable button if remaining effort can be updated", async () => {
         const wrapper = await getWrapper({
             value: 666,
             can_update: true,
-            is_in_edit_mode: false
+            is_in_edit_mode: false,
         } as RemainingEffort);
 
         expect(wrapper.attributes("tabindex")).toBe("0");
@@ -79,7 +79,7 @@ describe("ParentCardRemainingEffort", () => {
         const wrapper = await getWrapper({
             value: 666,
             can_update: false,
-            is_in_edit_mode: false
+            is_in_edit_mode: false,
         } as RemainingEffort);
 
         expect(wrapper.attributes("tabindex")).toBe("-1");
@@ -91,12 +91,12 @@ describe("ParentCardRemainingEffort", () => {
     it("displays nothing if the parent card has no remaining effort field", async () => {
         const wrapper = await getWrapper(null);
 
-        expect(wrapper.isEmpty()).toBe(true);
+        expect(wrapper.html()).toEqual("");
     });
 
     it("displays nothing if the parent card has no remaining effort value", async () => {
         const wrapper = await getWrapper({ value: null } as RemainingEffort);
 
-        expect(wrapper.isEmpty()).toBe(true);
+        expect(wrapper.html()).toEqual("");
     });
 });

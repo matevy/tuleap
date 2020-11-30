@@ -20,7 +20,7 @@
 <template>
     <div class="tlp-alert-info document-preview-item-is-locked-icon">
         <translate>This document is currently locked by</translate>
-        <user-name v-bind:user="currently_previewed_item.lock_info.locked_by"/>
+        <user-name v-bind:user="currently_previewed_item.lock_info.locked_by" />
     </div>
 </template>
 
@@ -32,7 +32,7 @@ export default {
     name: "UserBadge",
     components: { UserName },
     computed: {
-        ...mapState(["currently_previewed_item"])
-    }
+        ...mapState(["currently_previewed_item"]),
+    },
 };
 </script>

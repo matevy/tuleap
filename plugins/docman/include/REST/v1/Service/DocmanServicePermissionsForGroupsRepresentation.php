@@ -22,15 +22,18 @@ declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Service;
 
+/**
+ * @psalm-immutable
+ */
 final class DocmanServicePermissionsForGroupsRepresentation
 {
     /**
-     * @var array {@type \Tuleap\Project\REST\UserGroupRepresentation}
+     * @var array {@type \Tuleap\Project\REST\MinimalUserGroupRepresentation}
      * @psalm-var \Tuleap\Project\REST\UserGroupRepresentation[]
      */
     public $can_admin = [];
 
-    public static function build(array $can_admin) : self
+    public static function build(array $can_admin): self
     {
         $representation            = new self();
         $representation->can_admin = $can_admin;

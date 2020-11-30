@@ -59,10 +59,6 @@ class GitRepositoryBrowserController implements DispatchableWithRequest, Dispatc
      */
     private $access_logger;
     /**
-     * @var \ThemeManager
-     */
-    private $theme_manager;
-    /**
      * @var GitRepositoryHeaderDisplayer
      */
     private $header_displayer;
@@ -81,7 +77,6 @@ class GitRepositoryBrowserController implements DispatchableWithRequest, Dispatc
         \ProjectManager $project_manager,
         \Git_Mirror_MirrorDataMapper $mirror_data_mapper,
         History\GitPhpAccessLogger $access_logger,
-        \ThemeManager $theme_manager,
         GitRepositoryHeaderDisplayer $header_displayer,
         FilesHeaderPresenterBuilder $files_header_presenter_builder,
         EventManager $event_manager
@@ -90,7 +85,6 @@ class GitRepositoryBrowserController implements DispatchableWithRequest, Dispatc
         $this->project_manager                = $project_manager;
         $this->mirror_data_mapper             = $mirror_data_mapper;
         $this->access_logger                  = $access_logger;
-        $this->theme_manager                  = $theme_manager;
         $this->header_displayer               = $header_displayer;
         $this->files_header_presenter_builder = $files_header_presenter_builder;
         $this->event_manager                  = $event_manager;
@@ -101,7 +95,7 @@ class GitRepositoryBrowserController implements DispatchableWithRequest, Dispatc
      *
      * @throws NotFoundException
      */
-    public function getProject(array $variables) : Project
+    public function getProject(array $variables): Project
     {
         $project = $this->project_manager->getProjectByCaseInsensitiveUnixName($variables['project_name']);
         if (! $project || $project->isError()) {
@@ -114,8 +108,6 @@ class GitRepositoryBrowserController implements DispatchableWithRequest, Dispatc
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      *
      * @throws NotFoundException
@@ -125,7 +117,7 @@ class GitRepositoryBrowserController implements DispatchableWithRequest, Dispatc
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
         $project = $this->getProject($variables);
-        if (! $project->usesService(gitPlugin::SERVICE_SHORTNAME)) {
+        if (! $project->usesService(GitPlugin::SERVICE_SHORTNAME)) {
             throw new NotFoundException(dgettext("tuleap-git", "Git service is disabled."));
         }
 
@@ -149,7 +141,7 @@ class GitRepositoryBrowserController implements DispatchableWithRequest, Dispatc
         $event = new ProjectProviderEvent($project);
         $this->event_manager->processEvent($event);
 
-        $git_php_viewer = new GitViews_GitPhpViewer($repository, $request->getCurrentUser());
+        $git_php_viewer = new GitViews_GitPhpViewer($repository);
 
         $url = $this->getURL($request, $repository);
         if ($url->isADownload($request)) {
@@ -220,12 +212,10 @@ class GitRepositoryBrowserController implements DispatchableWithRequest, Dispatc
                 return;
         }
 
-        $response->permanentRedirect($parsed_url['path'] . '?' . http_build_query($query_parameters));
+        $response->permanentRedirect(($parsed_url['path'] ?? '') . '?' . http_build_query($query_parameters));
     }
 
     /**
-     * @param HTTPRequest   $request
-     * @param GitRepository $repository
      *
      * @return Git_URL
      */

@@ -41,14 +41,12 @@ class UserLogRouter
 
     public function __construct(UserLogExporter $user_log_exporter, UserLogManager $user_log_manager)
     {
-
         $this->user_log_exporter = $user_log_exporter;
         $this->user_log_manager  = $user_log_manager;
     }
 
     /**
      * Routes the request to the correct controller
-     * @param HTTPRequest $request
      * @return void
      */
     public function route(HTTPRequest $request)

@@ -29,8 +29,14 @@ interface DBTransactionExecutor
     /**
      * Execute given callable within a transaction.
      *
+     * @template T
+     *
+     * @psalm-param callable():T $atomic_operations
+     *
      * @throws Throwable
      * @return mixed
+     *
+     * @psalm-return T
      */
     public function execute(callable $atomic_operations);
 }

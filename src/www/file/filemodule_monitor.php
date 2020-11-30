@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  * Copyright 1999-2000 (c) The SourceForge Crew
  *
  * This file is a part of Tuleap.
@@ -20,15 +20,20 @@
  */
 
 use Tuleap\FRS\PackagePermissionManager;
-use Tuleap\FRS\FRSPermissionDao;
-use Tuleap\FRS\FRSPermissionFactory;
 use Tuleap\FRS\FRSPermissionManager;
 
 require_once __DIR__ . '/../include/pre.php';
+require_once __DIR__ . '/file_utils.php';
 
 if (! user_isloggedin()) {
     exit_not_logged_in();
 }
+if (! isset($group_id)) {
+    $group_id = 0;
+}
+
+$request  = HTTPRequest::instance();
+
 $vFilemodule_id = new Valid_UInt('filemodule_id');
 $vFilemodule_id->required();
 if ($request->valid($vFilemodule_id)) {
@@ -48,24 +53,24 @@ if ($request->valid($vFilemodule_id)) {
         $fmmf->processMonitoringActions($request, $current_user, $group_id, $filemodule_id, $um, $userHelper);
 
         file_utils_header(
-            array(
+            [
                 'title' => $GLOBALS['Language']->getText(
                     'file_showfiles',
                     'file_p_for',
                     $pm->getProject($group_id)->getPublicName()
                 )
-            )
+            ]
         );
         echo $fmmf->getMonitoringHTML($current_user, $group_id, $filemodule_id, $um, $userHelper);
-        file_utils_footer(array());
+        file_utils_footer([]);
     } else {
         $GLOBALS['Response']->addFeedback(
             'error',
             $GLOBALS['Language']->getText('file_filemodule_monitor', 'no_permission')
         );
-        $GLOBALS['Response']->redirect('showfiles.php?group_id=' . $group_id);
+        $GLOBALS['Response']->redirect($request->getFromServer('REQUEST_URI'));
     }
 } else {
     $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('file_filemodule_monitor', 'choose_p'));
-    $GLOBALS['Response']->redirect('showfiles.php?group_id=' . $GLOBALS['Language']);
+    $GLOBALS['Response']->redirect($request->getFromServer('REQUEST_URI'));
 }

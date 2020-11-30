@@ -31,15 +31,9 @@ class Cardwall_OnTop_Config_ColumnFactory
      */
     private $dao;
 
-    /**
-     * @var Cardwall_OnTop_Dao
-     */
-    private $on_top_dao;
-
-    public function __construct(Cardwall_OnTop_ColumnDao $dao, Cardwall_OnTop_Dao $on_top_dao)
+    public function __construct(Cardwall_OnTop_ColumnDao $dao)
     {
         $this->dao        = $dao;
-        $this->on_top_dao = $on_top_dao;
     }
 
     /**
@@ -82,7 +76,7 @@ class Cardwall_OnTop_Config_ColumnFactory
     }
 
     private function fillColumnsFor(
-        Cardwall_OnTop_Config_ColumnCollection&$columns,
+        Cardwall_OnTop_Config_ColumnCollection &$columns,
         Tracker_FormElement_Field_List $field,
         array $filter
     ) {
@@ -98,10 +92,10 @@ class Cardwall_OnTop_Config_ColumnFactory
         array $filter
     ) {
         if (count($filter) === 0) {
-            return  $field->getVisibleValuesPlusNoneIfAny();
+            return $field->getVisibleValuesPlusNoneIfAny();
         }
 
-        $field_values = array();
+        $field_values = [];
 
         foreach ($filter as $value_id) {
             if ($field->isNone($value_id)) {
@@ -131,7 +125,7 @@ class Cardwall_OnTop_Config_ColumnFactory
 
     private function getColumnHeaderColor($value, $decorators)
     {
-        $id           = (int)$value->getId();
+        $id           = (int) $value->getId();
         $header_color = self::DEFAULT_HEADER_COLOR;
 
         if (isset($decorators[$id])) {

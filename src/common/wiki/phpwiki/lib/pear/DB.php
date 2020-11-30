@@ -276,7 +276,7 @@ class DB
      *
      * @access public
      */
-    function apiVersion()
+    public function apiVersion()
     {
         return 2;
     }
@@ -293,7 +293,7 @@ class DB
      *
      * @access public
      */
-    function isError($value)
+    public function isError($value)
     {
         return is_a($value, 'DB_Error');
     }
@@ -310,7 +310,7 @@ class DB
      *
      * @access public
      */
-    function isConnection($value)
+    public function isConnection($value)
     {
         return (is_object($value) &&
                 is_subclass_of($value, 'db_common') &&
@@ -333,9 +333,9 @@ class DB
      */
     public static function isManip($query)
     {
-        $manips = 'INSERT|UPDATE|DELETE|LOAD DATA|'.'REPLACE|CREATE|DROP|'.
-                  'ALTER|GRANT|REVOKE|'.'LOCK|UNLOCK';
-        if (preg_match('/^\s*"?('.$manips.')\s+/i', $query)) {
+        $manips = 'INSERT|UPDATE|DELETE|LOAD DATA|' . 'REPLACE|CREATE|DROP|' .
+                  'ALTER|GRANT|REVOKE|' . 'LOCK|UNLOCK';
+        if (preg_match('/^\s*"?(' . $manips . ')\s+/i', $query)) {
             return true;
         }
         return false;
@@ -352,18 +352,18 @@ class DB
      * @return string error message, or false if the error code was
      * not recognized
      */
-    function errorMessage($value)
+    public function errorMessage($value)
     {
         static $errorMessages;
-        if (!isset($errorMessages)) {
-            $errorMessages = array(
+        if (! isset($errorMessages)) {
+            $errorMessages = [
                 DB_ERROR                    => 'unknown error',
                 DB_ERROR_ALREADY_EXISTS     => 'already exists',
                 DB_ERROR_CANNOT_CREATE      => 'can not create',
                 DB_ERROR_CANNOT_DELETE      => 'can not delete',
                 DB_ERROR_CANNOT_DROP        => 'can not drop',
                 DB_ERROR_CONSTRAINT         => 'constraint violation',
-                DB_ERROR_CONSTRAINT_NOT_NULL=> 'null value violates not-null constraint',
+                DB_ERROR_CONSTRAINT_NOT_NULL => 'null value violates not-null constraint',
                 DB_ERROR_DIVZERO            => 'division by zero',
                 DB_ERROR_INVALID            => 'invalid',
                 DB_ERROR_INVALID_DATE       => 'invalid date or time',
@@ -382,11 +382,11 @@ class DB
                 DB_ERROR_CONNECT_FAILED     => 'connect failed',
                 DB_OK                       => 'no error',
                 DB_ERROR_NEED_MORE_DATA     => 'insufficient data supplied',
-                DB_ERROR_EXTENSION_NOT_FOUND=> 'extension not found',
+                DB_ERROR_EXTENSION_NOT_FOUND => 'extension not found',
                 DB_ERROR_NOSUCHDB           => 'no such database',
                 DB_ERROR_ACCESS_VIOLATION   => 'insufficient permissions',
                 DB_ERROR_TRUNCATED          => 'truncated'
-            );
+            ];
         }
 
         if (DB::isError($value)) {
@@ -410,7 +410,7 @@ class DB
      * @return bool true if the extension was already or successfully
  * loaded, false if it could not be loaded
      */
-    function assertExtension($name)
+    public function assertExtension($name)
     {
         return extension_loaded($name);
     }
@@ -441,7 +441,7 @@ class DB_Error extends PEAR_Error
      *
      * @see PEAR_Error
      */
-    function __construct(
+    public function __construct(
         $code = DB_ERROR,
         $mode = PEAR_ERROR_RETURN,
         $level = E_USER_NOTICE,
@@ -469,21 +469,21 @@ class DB_result
 {
     // {{{ properties
 
-    var $dbh;
-    var $result;
-    var $row_counter = null;
+    public $dbh;
+    public $result;
+    public $row_counter = null;
 
     /**
      * for limit queries, the row to start fetching
      * @var int
      */
-    var $limit_from  = null;
+    public $limit_from  = null;
 
     /**
      * for limit queries, the number of rows to fetch
      * @var int
      */
-    var $limit_count = null;
+    public $limit_count = null;
 
     // }}}
     // {{{ constructor
@@ -494,7 +494,7 @@ class DB_result
      * @param resource $result  result resource id
      * @param array    $options assoc array with optional result options
      */
-    function __construct(&$dbh, $result, $options = array())
+    public function __construct(&$dbh, $result, $options = [])
     {
         $this->dbh = &$dbh;
         $this->result = $result;
@@ -507,7 +507,7 @@ class DB_result
         $this->fetchmode_object_class = $dbh->fetchmode_object_class;
     }
 
-    function setOption($key, $value = null)
+    public function setOption($key, $value = null)
     {
         switch ($key) {
             case 'limit_from':
@@ -549,7 +549,7 @@ class DB_result
      * @see DB_common::setOption(), DB_common::setFetchMode()
      * @access public
      */
-    function &fetchRow($fetchmode = DB_FETCHMODE_DEFAULT, $rownum = null)
+    public function &fetchRow($fetchmode = DB_FETCHMODE_DEFAULT, $rownum = null)
     {
         if ($fetchmode === DB_FETCHMODE_DEFAULT) {
             $fetchmode = $this->fetchmode;
@@ -569,8 +569,10 @@ class DB_result
                     }
                 }
             }
-            if ($this->row_counter >= (
-                    $this->limit_from + $this->limit_count)) {
+            if (
+                $this->row_counter >= (
+                    $this->limit_from + $this->limit_count)
+            ) {
                 if ($this->autofree) {
                     $this->free();
                 }
@@ -632,7 +634,7 @@ class DB_result
      * @see DB_common::setOption(), DB_common::setFetchMode()
      * @access public
      */
-    function fetchInto(&$arr, $fetchmode = DB_FETCHMODE_DEFAULT, $rownum = null)
+    public function fetchInto(&$arr, $fetchmode = DB_FETCHMODE_DEFAULT, $rownum = null)
     {
         if ($fetchmode === DB_FETCHMODE_DEFAULT) {
             $fetchmode = $this->fetchmode;
@@ -652,8 +654,10 @@ class DB_result
                     }
                 }
             }
-            if ($this->row_counter >= (
-                    $this->limit_from + $this->limit_count)) {
+            if (
+                $this->row_counter >= (
+                    $this->limit_from + $this->limit_count)
+            ) {
                 if ($this->autofree) {
                     $this->free();
                 }
@@ -693,7 +697,7 @@ class DB_result
      *
      * @access public
      */
-    function numCols()
+    public function numCols()
     {
         return $this->dbh->numCols($this->result);
     }
@@ -708,7 +712,7 @@ class DB_result
      *
      * @access public
      */
-    function numRows()
+    public function numRows()
     {
         return $this->dbh->numRows($this->result);
     }
@@ -723,7 +727,7 @@ class DB_result
      *
      * @access public
      */
-    function nextResult()
+    public function nextResult()
     {
         return $this->dbh->nextResult($this->result);
     }
@@ -737,7 +741,7 @@ class DB_result
      *
      * @access public
      */
-    function free()
+    public function free()
     {
         $err = $this->dbh->freeResult($this->result);
         if (DB::isError($err)) {
@@ -754,7 +758,7 @@ class DB_result
      * returns the actual row number
      * @return int
      */
-    function getRowCounter()
+    public function getRowCounter()
     {
         return $this->row_counter;
     }
@@ -777,7 +781,7 @@ class DB_row
      *
      * @param resource row data as array
      */
-    function __construct(&$arr)
+    public function __construct(&$arr)
     {
         foreach ($arr as $key => $value) {
             $this->$key = &$arr[$key];

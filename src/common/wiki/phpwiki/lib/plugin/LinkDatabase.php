@@ -37,19 +37,19 @@ require_once('lib/WikiPluginCached.php');
  */
 class WikiPlugin_LinkDatabase extends WikiPluginCached
 {
-    function getName()
+    public function getName()
     {
         return _("LinkDatabase");
     }
-    function getPluginType()
+    public function getPluginType()
     {
         return PLUGIN_CACHED_HTML;
     }
-    function getDescription()
+    public function getDescription()
     {
         return _("List all pages with all links in various formats for some Java Visualization tools");
     }
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -57,37 +57,37 @@ class WikiPlugin_LinkDatabase extends WikiPluginCached
             "\$Revision: 1.7 $"
         );
     }
-    function getExpire($dbi, $argarray, $request)
+    public function getExpire($dbi, $argarray, $request)
     {
         return '+900'; // 15 minutes
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array(
+            [
                    'format'        => 'html', // 'html', 'text', 'xml'
                    'noheader'      => false,
                    'include_empty' => false,
                    'exclude_from'  => false,
                    'info'          => '',
-            )
+            ]
         );
     }
 
-    function getHtml($dbi, $argarray, $request, $basepage)
+    public function getHtml($dbi, $argarray, $request, $basepage)
     {
         $this->run($dbi, WikiPluginCached::glueArgs($argarray), $request, $basepage);
     }
 
-    function run($dbi, $argstr, $request, $basepage)
+    public function run($dbi, $argstr, $request, $basepage)
     {
         global $WikiTheme;
         $args = $this->getArgs($argstr, $request);
         $caption = _("All pages with all links in this wiki (%d total):");
 
-        if (!empty($args['owner'])) {
+        if (! empty($args['owner'])) {
             $pages = PageList::allPagesByOwner(
                 $args['owner'],
                 $args['include_empty'],
@@ -101,7 +101,7 @@ class WikiPlugin_LinkDatabase extends WikiPluginCached
                     count($pages)
                 );
             }
-        } elseif (!empty($args['author'])) {
+        } elseif (! empty($args['author'])) {
             $pages = PageList::allPagesByAuthor(
                 $args['author'],
                 $args['include_empty'],
@@ -115,7 +115,7 @@ class WikiPlugin_LinkDatabase extends WikiPluginCached
                     count($pages)
                 );
             }
-        } elseif (!empty($args['creator'])) {
+        } elseif (! empty($args['creator'])) {
             $pages = PageList::allPagesByCreator(
                 $args['creator'],
                 $args['include_empty'],
@@ -146,14 +146,14 @@ class WikiPlugin_LinkDatabase extends WikiPluginCached
             $args['types']['links'] =
                 new _PageList_Column_LinkDatabase_links('links', _("Links"), 'left');
             $pagelist = new PageList($args['info'], $args['exclude_from'], $args);
-            if (!$args['noheader']) {
+            if (! $args['noheader']) {
                 $pagelist->setCaption($caption);
             }
             return $pagelist;
         } elseif ($args['format'] == 'text') {
             $request->discardOutput();
             $request->buffer_output(false);
-            if (!headers_sent()) {
+            if (! headers_sent()) {
                 header("Content-Type: text/plain");
             }
             $request->checkValidators();
@@ -180,7 +180,7 @@ class WikiPlugin_LinkDatabase extends WikiPluginCached
             $currpage = $request->getArg('pagename');
             $request->discardOutput();
             $request->buffer_output(false);
-            if (!headers_sent()) {
+            if (! headers_sent()) {
                 header("Content-Type: text/xml");
             }
             $request->checkValidators();
@@ -217,11 +217,11 @@ class WikiPlugin_LinkDatabase extends WikiPluginCached
             return $this->error(fmt("Unsupported format argument %s", $args['format']));
         }
     }
-};
+}
 
 class _PageList_Column_LinkDatabase_links extends _PageList_Column
 {
-    function _getValue($page, &$revision_handle)
+    public function _getValue($page, &$revision_handle)
     {
         $out = HTML();
         $links = $page->getPageLinks();

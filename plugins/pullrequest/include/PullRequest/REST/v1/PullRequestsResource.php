@@ -37,6 +37,7 @@ use Project_AccessException;
 use Project_AccessProjectNotFoundException;
 use ProjectHistoryDao;
 use ProjectManager;
+use Psr\Log\LoggerInterface;
 use ReferenceManager;
 use Tuleap\Git\CommitMetadata\CommitMetadataRetriever;
 use Tuleap\Git\CommitStatus\CommitStatusDAO;
@@ -92,8 +93,6 @@ use Tuleap\PullRequest\Label\LabelsCurlyCoatedRetriever;
 use Tuleap\PullRequest\Label\PullRequestLabelDao;
 use Tuleap\PullRequest\MergeSetting\MergeSettingDAO;
 use Tuleap\PullRequest\MergeSetting\MergeSettingRetriever;
-use Tuleap\PullRequest\Notification\EventDispatcherWithFallback;
-use Tuleap\PullRequest\Notification\EventSubjectToNotificationAsynchronousRedisDispatcher;
 use Tuleap\PullRequest\Notification\PullRequestNotificationSupport;
 use Tuleap\PullRequest\PullRequest;
 use Tuleap\PullRequest\PullRequestCloser;
@@ -113,7 +112,6 @@ use Tuleap\PullRequest\Reviewer\UserCannotBeAddedAsReviewerException;
 use Tuleap\PullRequest\Timeline\Dao as TimelineDao;
 use Tuleap\PullRequest\Timeline\Factory as TimelineFactory;
 use Tuleap\PullRequest\Timeline\TimelineEventCreator;
-use Tuleap\Queue\QueueFactory;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\ProjectAuthorization;
@@ -169,7 +167,7 @@ class PullRequestsResource extends AuthenticatedResource
     /** @var EventManager */
     private $event_manager;
 
-    /** @var BackendLogger */
+    /** @var LoggerInterface */
     private $logger;
 
     /**
@@ -190,7 +188,7 @@ class PullRequestsResource extends AuthenticatedResource
      */
     private $git_pull_request_reference_updater;
     /**
-     * @var gitPlugin
+     * @var GitPlugin
      */
     private $git_plugin;
     /**
@@ -213,7 +211,7 @@ class PullRequestsResource extends AuthenticatedResource
         $reference_manager          = ReferenceManager::instance();
         $this->pull_request_factory = new PullRequestFactory($pull_request_dao, $reference_manager);
 
-        $this->logger               = new BackendLogger();
+        $this->logger               = BackendLogger::getDefaultLogger();
 
         $event_dispatcher = PullRequestNotificationSupport::buildDispatcher($this->logger);
 
@@ -253,8 +251,8 @@ class PullRequestsResource extends AuthenticatedResource
             $this->pull_request_merger,
             $this->event_manager,
             new GitPullRequestReferenceCreator(
-                new GitPullRequestReferenceDAO,
-                new GitPullRequestReferenceNamespaceAvailabilityChecker
+                new GitPullRequestReferenceDAO(),
+                new GitPullRequestReferenceNamespaceAvailabilityChecker()
             )
         );
         $this->pull_request_closer  = new PullRequestCloser(
@@ -265,7 +263,7 @@ class PullRequestsResource extends AuthenticatedResource
         );
 
         $dao = new \Tuleap\PullRequest\InlineComment\Dao();
-        $this->inline_comment_creator = new InlineCommentCreator($dao, $reference_manager);
+        $this->inline_comment_creator = new InlineCommentCreator($dao, $reference_manager, $event_dispatcher);
 
         $this->access_control_verifier = new AccessControlVerifier(
             new FineGrainedRetriever(new FineGrainedDao()),
@@ -288,7 +286,7 @@ class PullRequestsResource extends AuthenticatedResource
             $this->access_control_verifier
         );
 
-        $git_pull_request_reference_dao             = new GitPullRequestReferenceDAO;
+        $git_pull_request_reference_dao             = new GitPullRequestReferenceDAO();
         $this->git_pull_request_reference_retriever = new GitPullRequestReferenceRetriever($git_pull_request_reference_dao);
         $this->git_pull_request_reference_updater   = new GitPullRequestReferenceUpdater(
             $git_pull_request_reference_dao,
@@ -298,7 +296,7 @@ class PullRequestsResource extends AuthenticatedResource
         $this->git_plugin  = PluginFactory::instance()->getPluginByName('git');
         $url_manager = new Git_GitRepositoryUrlManager($this->git_plugin, new \Tuleap\InstanceBaseURLBuilder());
 
-        $this->status_retriever = new CommitStatusRetriever(new CommitStatusDAO);
+        $this->status_retriever = new CommitStatusRetriever(new CommitStatusDAO());
         $metadata_retriever     = new CommitMetadataRetriever($this->status_retriever, $this->user_manager);
         $this->commit_representation_builder = new GitCommitRepresentationBuilder(
             $metadata_retriever,
@@ -497,9 +495,9 @@ class PullRequestsResource extends AuthenticatedResource
         $this->sendAllowHeadersForLabels();
         Header::sendPaginationHeaders($limit, $offset, $collection->getTotalSize(), self::MAX_LIMIT);
 
-        return array(
+        return [
             'labels' => $labels_representation
-        );
+        ];
     }
 
     /**
@@ -551,7 +549,6 @@ class PullRequestsResource extends AuthenticatedResource
      * @access protected
      *
      * @param int $id pull request ID
-     * @param LabelsPATCHRepresentation $body
      *
      * @throws RestException 400
      * @throws RestException 403
@@ -694,7 +691,7 @@ class PullRequestsResource extends AuthenticatedResource
 
         if ($charset === "binary" || $special_format !== '') {
             $diff = new FileUniDiff();
-            $inline_comments = array();
+            $inline_comments = [];
         } else {
             $executor_repo_destination = $this->getExecutor($git_repository_destination);
             $unidiff_builder           = new FileUniDiffBuilder();
@@ -776,8 +773,7 @@ class PullRequestsResource extends AuthenticatedResource
             $git_repository_source->getProjectId()
         );
 
-        $user_representation = new MinimalUserRepresentation();
-        $user_representation->build($this->user_manager->getUserById($user->getId()));
+        $user_representation = MinimalUserRepresentation::build($this->user_manager->getUserById($user->getId()));
 
         return new PullRequestInlineCommentRepresentation(
             $comment_data->unidiff_offset,
@@ -867,8 +863,7 @@ class PullRequestsResource extends AuthenticatedResource
             throw new RestException(500);
         }
 
-        $pull_request_reference = new PullRequestReference();
-        $pull_request_reference->build($generated_pull_request);
+        $pull_request_reference = PullRequestReference::fromPullRequest($generated_pull_request);
 
         $this->sendLocationHeader($pull_request_reference->uri);
 
@@ -962,7 +957,7 @@ class PullRequestsResource extends AuthenticatedResource
 
         $pr_representation_factory = new PullRequestRepresentationFactory(
             $this->access_control_verifier,
-            new CommitStatusRetriever(new CommitStatusDAO),
+            new CommitStatusRetriever(new CommitStatusDAO()),
             $this->getGitoliteAccessURLGenerator()
         );
 
@@ -1038,19 +1033,17 @@ class PullRequestsResource extends AuthenticatedResource
      * @access protected
      *
      * @param int    $id     Pull request id
-     * @param int    $limit  Number of fetched comments {@from path}
-     * @param int    $offset Position of the first comment to fetch {@from path}
+     * @param int    $limit  Number of fetched comments {@from path} {@min 0} {@max 50}
+     * @param int    $offset Position of the first comment to fetch {@from path} {@min 0}
      *
      * @return array {@type Tuleap\PullRequest\REST\v1\TimelineRepresentation}
      *
      * @throws RestException 403
      * @throws RestException 404
-     * @throws RestException 406
      */
     protected function getTimeline($id, $limit = 10, $offset = 0)
     {
         $this->checkAccess();
-        $this->checkLimit($limit);
         $this->sendAllowHeadersForTimeline();
 
         $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
@@ -1095,20 +1088,18 @@ class PullRequestsResource extends AuthenticatedResource
      * @access protected
      *
      * @param int    $id     Pull request id
-     * @param int    $limit  Number of fetched comments {@from path}
-     * @param int    $offset Position of the first comment to fetch {@from path}
+     * @param int    $limit  Number of fetched comments {@from path} {@min 0} {@max 50}
+     * @param int    $offset Position of the first comment to fetch {@from path} {@min 0}
      * @param string $order  In which order comments are fetched. Default is asc. {@from path}{@choice asc,desc}
      *
      * @return array {@type Tuleap\PullRequest\REST\v1\CommentRepresentation}
      *
      * @throws RestException 403
      * @throws RestException 404
-     * @throws RestException 406
      */
     protected function getComments($id, $limit = 10, $offset = 0, $order = 'asc')
     {
         $this->checkAccess();
-        $this->checkLimit($limit);
         $this->sendAllowHeadersForComments();
 
         $pull_request_with_git_reference = $this->getAccessiblePullRequestWithGitReferenceForCurrentUser($id);
@@ -1174,13 +1165,9 @@ class PullRequestsResource extends AuthenticatedResource
         $comment        = new Comment(0, $id, $user->getId(), $current_time, $comment_data->content);
         $new_comment_id = $this->comment_factory->save($comment, $user, $project_id);
 
-        $user_representation = new MinimalUserRepresentation();
-        $user_representation->build($user);
+        $user_representation = MinimalUserRepresentation::build($user);
 
-        $comment_representation = new CommentRepresentation();
-        $comment_representation->build($new_comment_id, $project_id, $user_representation, $comment->getPostDate(), $comment->getContent());
-
-        return $comment_representation;
+        return new CommentRepresentation($new_comment_id, $project_id, $user_representation, $comment->getPostDate(), $comment->getContent());
     }
 
     /**
@@ -1204,7 +1191,6 @@ class PullRequestsResource extends AuthenticatedResource
      *
      * @param int $id Pull request ID
      *
-     * @return ReviewersRepresentation
      *
      * @throws RestException 403
      * @throws RestException 404
@@ -1229,7 +1215,6 @@ class PullRequestsResource extends AuthenticatedResource
      * @status 204
      *
      * @param int $id Pull request ID
-     * @param ReviewersPUTRepresentation $representation
      *
      * @throws RestException 400
      * @throws RestException 403
@@ -1269,13 +1254,6 @@ class PullRequestsResource extends AuthenticatedResource
                 403,
                 'This pull request is already closed, the reviewers can not be updated'
             );
-        }
-    }
-
-    private function checkLimit($limit)
-    {
-        if ($limit > self::MAX_LIMIT) {
-             throw new RestException(406, 'Maximum value for limit exceeded');
         }
     }
 
@@ -1410,28 +1388,28 @@ class PullRequestsResource extends AuthenticatedResource
 
     private function sendAllowHeadersForTimeline()
     {
-        HEADER::allowOptionsGet();
+        Header::allowOptionsGet();
     }
 
     private function sendAllowHeadersForCommits()
     {
-        HEADER::allowOptionsGet();
+        Header::allowOptionsGet();
     }
 
 
     private function sendAllowHeadersForLabels()
     {
-        HEADER::allowOptionsGetPatch();
+        Header::allowOptionsGetPatch();
     }
 
     private function sendAllowHeadersForComments()
     {
-        HEADER::allowOptionsGetPost();
+        Header::allowOptionsGetPost();
     }
 
     private function sendAllowHeadersForInlineComments()
     {
-        HEADER::allowOptionsGetPost();
+        Header::allowOptionsGetPost();
     }
 
     /**

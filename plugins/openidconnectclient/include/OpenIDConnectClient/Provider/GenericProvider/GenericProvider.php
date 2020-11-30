@@ -48,6 +48,11 @@ final class GenericProvider implements Provider
     private $token_endpoint;
 
     /**
+     * @var string|null
+     */
+    private $jwks_endpoint;
+
+    /**
      * @var string
      */
     private $user_info_endpoint;
@@ -82,6 +87,7 @@ final class GenericProvider implements Provider
         string $name,
         string $authorization_endpoint,
         string $token_endpoint,
+        ?string $jwks_endpoint,
         string $user_info_endpoint,
         string $client_id,
         string $client_secret,
@@ -93,6 +99,7 @@ final class GenericProvider implements Provider
         $this->name                              = $name;
         $this->authorization_endpoint            = $authorization_endpoint;
         $this->token_endpoint                    = $token_endpoint;
+        $this->jwks_endpoint                     = $jwks_endpoint;
         $this->user_info_endpoint                = $user_info_endpoint;
         $this->client_id                         = $client_id;
         $this->client_secret                     = $client_secret;
@@ -106,53 +113,61 @@ final class GenericProvider implements Provider
         return $this->id;
     }
 
-    public function getName() : string
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function getAuthorizationEndpoint() : string
+    public function getAuthorizationEndpoint(): string
     {
         return $this->authorization_endpoint;
     }
 
-    public function getTokenEndpoint() : string
+    public function getTokenEndpoint(): string
     {
         return $this->token_endpoint;
     }
 
-    public function getUserInfoEndpoint() : string
+    public function getUserInfoEndpoint(): string
     {
         return $this->user_info_endpoint;
     }
 
-    public function getClientId() : string
+    public function getJWKSEndpoint(): ?string
+    {
+        if ($this->jwks_endpoint === '') {
+            return null;
+        }
+        return $this->jwks_endpoint;
+    }
+
+    public function getClientId(): string
     {
         return $this->client_id;
     }
 
-    public function getClientSecret() : string
+    public function getClientSecret(): string
     {
         return $this->client_secret;
     }
 
-    public function isUniqueAuthenticationEndpoint() : bool
+    public function isUniqueAuthenticationEndpoint(): bool
     {
         return $this->is_unique_authentication_endpoint;
     }
 
-    public function getIcon() : string
+    public function getIcon(): string
     {
         return $this->icon;
     }
 
-    public function getColor() : string
+    public function getColor(): string
     {
         return $this->color;
     }
 
-    public function getRedirectUri() : string
+    public function getRedirectUri(): string
     {
-        return 'https://'. ForgeConfig::get('sys_https_host') . '/plugins/openidconnectclient/';
+        return 'https://' . ForgeConfig::get('sys_https_host') . '/plugins/openidconnectclient/';
     }
 }

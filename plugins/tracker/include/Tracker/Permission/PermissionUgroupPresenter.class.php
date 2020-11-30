@@ -24,7 +24,7 @@ class Tracker_Permission_PermissionUgroupPresenter
     private $id;
     private $name;
     private $url;
-    private $permissions_list = array();
+    private $permissions_list = [];
 
     public function __construct($id, $name, $url, array $permissions_list)
     {
@@ -51,7 +51,7 @@ class Tracker_Permission_PermissionUgroupPresenter
 
     public function permission_name()
     {
-        return Tracker_Permission_Command::PERMISSION_PREFIX.$this->id;
+        return Tracker_Permission_Command::PERMISSION_PREFIX . $this->id;
     }
 
     public function permissions_list()

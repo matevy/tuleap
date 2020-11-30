@@ -20,7 +20,7 @@
 <template>
     <div class="cross-tracker-artifacts-table">
         <div class="tlp-table-actions" v-if="should_show_export_button">
-            <export-button/>
+            <export-button />
         </div>
         <table class="tlp-table">
             <thead>
@@ -38,14 +38,14 @@
                     <td colspan="6"><div class="cross-tracker-loader"></div></td>
                 </tr>
             </tbody>
-            <tbody v-if="is_table_empty">
+            <tbody v-if="is_table_empty" data-test="cross-tracker-no-results">
                 <tr>
                     <td colspan="6" class="tlp-table-cell-empty" v-translate>
                         No matching artifacts found
                     </td>
                 </tr>
             </tbody>
-            <tbody v-else>
+            <tbody v-else data-test="cross-tracker-results">
                 <artifact-table-row
                     v-for="artifact of artifacts"
                     v-bind:artifact="artifact"
@@ -54,13 +54,14 @@
             </tbody>
         </table>
         <div class="tlp-pagination">
-            <button class="tlp-button-primary tlp-button-outline tlp-button-small"
-                    type="button"
-                    v-if="is_load_more_displayed === true"
-                    v-on:click="loadMoreArtifacts()"
-                    v-bind:disabled="is_loading_more"
+            <button
+                class="tlp-button-primary tlp-button-outline tlp-button-small"
+                type="button"
+                v-if="is_load_more_displayed === true"
+                v-on:click="loadMoreArtifacts()"
+                v-bind:disabled="is_loading_more"
             >
-                <i v-if="is_loading_more" class="tlp-button-icon fa fa-circle-o-notch fa-spin"></i>
+                <i v-if="is_loading_more" class="tlp-button-icon fas fa-circle-notch fa-spin"></i>
                 <translate>Load more</translate>
             </button>
         </div>
@@ -79,7 +80,7 @@ export default {
     name: "ArtifactTable",
     components: { ArtifactTableRow, ExportButton },
     props: {
-        writingCrossTrackerReport: Object
+        writingCrossTrackerReport: Object,
     },
     data() {
         return {
@@ -88,7 +89,7 @@ export default {
             is_load_more_displayed: false,
             is_loading_more: false,
             current_offset: 0,
-            limit: 30
+            limit: 30,
         };
     },
     computed: {
@@ -102,14 +103,14 @@ export default {
         },
         should_show_export_button() {
             return this.reading_mode && this.is_report_saved && !this.is_table_empty;
-        }
+        },
     },
     watch: {
         report_state() {
             if (this.reading_mode === true) {
                 this.refreshArtifactList();
             }
-        }
+        },
     },
     mounted() {
         this.is_loading = true;
@@ -174,14 +175,14 @@ export default {
         },
 
         formatArtifacts(artifacts) {
-            return artifacts.map(artifact => {
+            return artifacts.map((artifact) => {
                 artifact.formatted_last_update_date = moment(artifact.last_update_date).format(
                     getUserPreferredDateFormat()
                 );
 
                 return artifact;
             });
-        }
-    }
+        },
+    },
 };
 </script>

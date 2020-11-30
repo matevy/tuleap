@@ -26,85 +26,85 @@ class Docman_ApprovalTableItemDao extends DataAccessObject
 
     public function getTableByItemId($item_id, $fields = '*')
     {
-        $sql = 'SELECT '.$fields.
-            ' FROM plugin_docman_approval'.
-            ' WHERE item_id = '.$this->da->escapeInt($item_id);
+        $sql = 'SELECT ' . $fields .
+            ' FROM plugin_docman_approval' .
+            ' WHERE item_id = ' . $this->da->escapeInt($item_id);
 
         return $this->retrieve($sql);
     }
 
-    function tableExist($tableId)
+    public function tableExist($tableId)
     {
         $dar = $this->getTableById($tableId, 'NULL');
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             return true;
         }
         return false;
     }
 
-    /*static*/ function getTableStatusFields($table = 'app_u')
+    /*static*/ public function getTableStatusFields($table = 'app_u')
     {
-        $fields = 'COUNT('.$table.'.reviewer_id) AS nb_reviewers, '.
-            'COUNT(IF('.$table.'.state = '.PLUGIN_DOCMAN_APPROVAL_STATE_REJECTED.',1,NULL)) AS rejected, '.
-            'COUNT(IF('.$table.'.state = '.PLUGIN_DOCMAN_APPROVAL_STATE_APPROVED.',1,NULL)) AS nb_approved, '.
-            'COUNT(IF('.$table.'.state = '.PLUGIN_DOCMAN_APPROVAL_STATE_DECLINED.',1,NULL)) AS nb_declined';
+        $fields = 'COUNT(' . $table . '.reviewer_id) AS nb_reviewers, ' .
+            'COUNT(IF(' . $table . '.state = ' . PLUGIN_DOCMAN_APPROVAL_STATE_REJECTED . ',1,NULL)) AS rejected, ' .
+            'COUNT(IF(' . $table . '.state = ' . PLUGIN_DOCMAN_APPROVAL_STATE_APPROVED . ',1,NULL)) AS nb_approved, ' .
+            'COUNT(IF(' . $table . '.state = ' . PLUGIN_DOCMAN_APPROVAL_STATE_DECLINED . ',1,NULL)) AS nb_declined';
         return $fields;
     }
 
-    /*static*/ function getTableStatusJoin($tableUser = 'app_u', $tableApproval = 'app')
+    /*static*/ public function getTableStatusJoin($tableUser = 'app_u', $tableApproval = 'app')
     {
-        $join = 'plugin_docman_approval_user '.$tableUser
-            .' ON ('.$tableUser.'.table_id = '.$tableApproval.'.table_id) ';
+        $join = 'plugin_docman_approval_user ' . $tableUser
+            . ' ON (' . $tableUser . '.table_id = ' . $tableApproval . '.table_id) ';
         return $join;
     }
 
-    /*static*/ function getTableStatusGroupBy($table = 'app_u')
+    /*static*/ public function getTableStatusGroupBy($table = 'app_u')
     {
-        $groupBy  = $table.'.table_id ';
+        $groupBy  = $table . '.table_id ';
         return $groupBy;
     }
 
-    function getTableWithStatus($status, $fields, $where, $join = '', $orderBy = '', $limit = '')
+    public function getTableWithStatus($status, $fields, $where, $join = '', $orderBy = '', $limit = '')
     {
         $groupBy = '';
         if ($status) {
-            $fields  .= ','.$this->getTableStatusFields();
-            $join    .= ' LEFT JOIN '.$this->getTableStatusJoin();
-            $groupBy  = ' GROUP BY '.$this->getTableStatusGroupBy();
+            $fields  .= ',' . $this->getTableStatusFields();
+            $join    .= ' LEFT JOIN ' . $this->getTableStatusJoin();
+            $groupBy  = ' GROUP BY ' . $this->getTableStatusGroupBy();
         }
 
-        $sql = ' SELECT '.$fields.
-            ' FROM plugin_docman_approval app'.
-            $join.
-            ' WHERE '.$where.
-            $groupBy.
-            $orderBy.
+        $sql = ' SELECT ' . $fields .
+            ' FROM plugin_docman_approval app' .
+            $join .
+            ' WHERE ' . $where .
+            $groupBy .
+            $orderBy .
             $limit;
         return $this->retrieve($sql);
     }
 
-    function createTable($field, $id, $userId, $description, $date, $status, $notification)
+    public function createTable($field, $id, $userId, $description, $date, $status, $notification)
     {
-        $sql = 'INSERT INTO plugin_docman_approval'.
-            '('.$field.', table_owner, date, description, status, notification)'.
-            ' VALUES ('.
-            $this->da->escapeInt($id).', '.
-            $this->da->escapeInt($userId).', '.
-            $this->da->escapeInt($date).', '.
-            $this->da->quoteSmart($description).', '.
-            $this->da->escapeInt($status).', '.
-            $this->da->escapeInt($notification).')';
+        $sql = 'INSERT INTO plugin_docman_approval' .
+            '(' . $field . ', table_owner, date, description, status, notification)' .
+            ' VALUES (' .
+            $this->da->escapeInt($id) . ', ' .
+            $this->da->escapeInt($userId) . ', ' .
+            $this->da->escapeInt($date) . ', ' .
+            $this->da->quoteSmart($description) . ', ' .
+            $this->da->escapeInt($status) . ', ' .
+            $this->da->escapeInt($notification) . ')';
         return $this->_createAndReturnId($sql);
     }
 
-    function deleteTable($tableId)
+    public function deleteTable($tableId)
     {
-        $sql = 'DELETE FROM plugin_docman_approval'.
-            ' WHERE table_id = '.$this->da->escapeInt($tableId);
+        $sql = 'DELETE FROM plugin_docman_approval' .
+            ' WHERE table_id = ' . $this->da->escapeInt($tableId);
         return $this->update($sql);
     }
 
-    function updateTable($tableId, $description = null, $status = null, $notification = null, $notificationOccurence = null, $owner = null)
+    public function updateTable($tableId, $description = null, $status = null, $notification = null, $notificationOccurence = null, $owner = null)
     {
         $_updStmt = '';
         if ($description !== null) {
@@ -138,15 +138,15 @@ class Docman_ApprovalTableItemDao extends DataAccessObject
             if ($_updStmt != '') {
                 $_updStmt .= ',';
             }
-            $_updStmt .= 'table_owner = '.$this->da->escapeInt($owner);
+            $_updStmt .= 'table_owner = ' . $this->da->escapeInt($owner);
         }
 
         if ($_updStmt != '') {
-            $_whereStmt = 'table_id = '.$this->da->escapeInt($tableId);
+            $_whereStmt = 'table_id = ' . $this->da->escapeInt($tableId);
 
-            $sql = 'UPDATE plugin_docman_approval'.
-                ' SET '.$_updStmt.
-                ' WHERE '.$_whereStmt;
+            $sql = 'UPDATE plugin_docman_approval' .
+                ' SET ' . $_updStmt .
+                ' WHERE ' . $_whereStmt;
 
             $res = $this->update($sql);
             if ($res && $this->da->affectedRows() > 0) {
@@ -159,7 +159,7 @@ class Docman_ApprovalTableItemDao extends DataAccessObject
         }
     }
 
-    function _createAndReturnId($sql)
+    public function _createAndReturnId($sql)
     {
         $inserted = $this->update($sql);
         if ($inserted) {
@@ -178,7 +178,7 @@ class Docman_ApprovalTableItemDao extends DataAccessObject
      *
      * @return DataAccessResult
      */
-    function getTablesForReminder()
+    public function getTablesForReminder()
     {
         $sql  = 'SELECT plugin_docman_approval.*, plugin_docman_link_version.item_id AS link_item_id
                  FROM plugin_docman_approval

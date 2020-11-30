@@ -19,12 +19,15 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
 use Tuleap\REST\JsonCast;
 
+/**
+ * @psalm-immutable
+ */
 class ItemMetadataRepresentation
 {
     /**
@@ -45,6 +48,7 @@ class ItemMetadataRepresentation
     public $post_processed_value;
     /**
      * @var array|null {@type Tuleap\Docman\REST\v1\Metadata\MetadataListValueRepresentation}
+     * @psalm-var \Tuleap\Docman\REST\v1\Metadata\MetadataListValueRepresentation[]|null
      */
     public $list_value;
     /**
@@ -74,7 +78,7 @@ class ItemMetadataRepresentation
         $this->type                      = $type;
         $this->value                     = $value;
         $this->post_processed_value      = $post_processed_value;
-        $this->is_required               = JsonCast::toBoolean(!$is_empty_allowed);
+        $this->is_required               = JsonCast::toBoolean(! $is_empty_allowed);
         $this->is_multiple_value_allowed = $is_multiple_value_allowed;
         $this->list_value                = $list_value;
         $this->short_name                = $short_name;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2014 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -54,11 +54,11 @@ class GitPresenters_AdminGerritTemplatesPresenter extends GitPresenters_AdminPre
         $parent_templates_list,
         $project_id,
         $are_mirrors_defined,
+        array $external_pane_presenters,
         $has_gerrit_servers_set_up
     ) {
-        parent::__construct($project_id, $are_mirrors_defined);
+        parent::__construct($project_id, $are_mirrors_defined, $external_pane_presenters);
 
-        $this->manage_gerrit_templates   = true;
         $this->repository_list           = $repository_list;
         $this->templates_list            = $templates_list;
         $this->parent_templates_list     = $parent_templates_list;
@@ -107,7 +107,7 @@ class GitPresenters_AdminGerritTemplatesPresenter extends GitPresenters_AdminPre
 
     public function templates_form_action()
     {
-        return '/plugins/git/?group_id='. $this->project_id .'&action=admin-gerrit-templates';
+        return '/plugins/git/?group_id=' . $this->project_id . '&action=admin-gerrit-templates';
     }
 
     public function template_action_text()

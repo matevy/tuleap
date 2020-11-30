@@ -36,7 +36,7 @@ use Tuleap\Request\DispatchableWithRequestNoAuthz;
 use Tuleap\Request\NotFoundException;
 use Tuleap\User\REST\MinimalUserRepresentation;
 use UserManager;
-use Zend\HttpHandlerRunner\Emitter\EmitterInterface;
+use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 
 final class ReviewerAutocompleterController extends DispatchablePSR15Compatible implements DispatchableWithRequestNoAuthz
 {
@@ -84,7 +84,7 @@ final class ReviewerAutocompleterController extends DispatchablePSR15Compatible 
         $this->json_response_builder           = $json_response_builder;
     }
 
-    public function handle(ServerRequestInterface $request) : ResponseInterface
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         \Tuleap\Project\ServiceInstrumentation::increment('pullrequest');
 
@@ -100,7 +100,7 @@ final class ReviewerAutocompleterController extends DispatchablePSR15Compatible 
 
         try {
             $this->pull_request_permission_checker->checkPullRequestIsMergeableByUser($pull_request, $current_user);
-        } catch (GitRepoNotFoundException|UserCannotMergePullRequestException $e) {
+        } catch (GitRepoNotFoundException | UserCannotMergePullRequestException $e) {
             throw new NotFoundException();
         }
 
@@ -121,8 +121,7 @@ final class ReviewerAutocompleterController extends DispatchablePSR15Compatible 
         $potential_reviewer_representations = [];
 
         foreach ($potential_reviewers as $potential_reviewer) {
-            $representation = new MinimalUserRepresentation();
-            $representation->build($potential_reviewer);
+            $representation = MinimalUserRepresentation::build($potential_reviewer);
             $potential_reviewer_representations[] = $representation;
         }
 

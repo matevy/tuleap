@@ -29,7 +29,7 @@ use Tuleap\News\NewsDao;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
-use Zend\Feed\Writer\Feed;
+use Laminas\Feed\Writer\Feed;
 
 class LatestNewsController implements DispatchableWithRequest
 {
@@ -52,8 +52,6 @@ class LatestNewsController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -72,7 +70,7 @@ class LatestNewsController implements DispatchableWithRequest
         foreach ($this->dao->getNewsForSitePublicRSSFeed() as $row) {
             $entry = $feed->createEntry();
             $entry->setTitle($this->html_purifier->purify($row['summary']));
-            $entry->setLink($request->getServerUrl().'/forum/forum.php?forum_id='.(int)$row['forum_id']);
+            $entry->setLink($request->getServerUrl() . '/forum/forum.php?forum_id=' . (int) $row['forum_id']);
             $entry->setDescription($this->html_purifier->purify($row['details']));
             $feed->addEntry($entry);
         }

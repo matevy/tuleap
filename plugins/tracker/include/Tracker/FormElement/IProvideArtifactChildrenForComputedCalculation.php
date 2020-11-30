@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\Tracker\FormElement;
 
 interface IProvideArtifactChildrenForComputedCalculation
@@ -25,8 +27,9 @@ interface IProvideArtifactChildrenForComputedCalculation
     public function fetchChildrenAndManualValuesOfArtifacts(
         array $artifact_ids_to_fetch,
         $timestamp,
-        $stop_on_manual_value,
-        $target_field_name,
-        $computed_field_id
-    );
+        bool $stop_on_manual_value,
+        string $target_field_name,
+        string $computed_field_id,
+        ArtifactsAlreadyProcessedDuringComputationCollection $already_seen
+    ): array;
 }

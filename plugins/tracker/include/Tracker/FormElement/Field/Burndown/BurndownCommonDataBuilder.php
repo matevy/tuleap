@@ -20,18 +20,18 @@
 
 namespace Tuleap\Tracker\FormElement\Field\Burndown;
 
-use Logger;
 use PFUser;
+use Psr\Log\LoggerInterface;
 use TimePeriodWithoutWeekEnd;
-use Tracker_Artifact;
 use Tuleap\TimezoneRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\ChartConfigurationFieldRetriever;
 use Tuleap\Tracker\FormElement\ChartConfigurationValueRetriever;
 
 class BurndownCommonDataBuilder
 {
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -51,7 +51,7 @@ class BurndownCommonDataBuilder
     private $cache_checker;
 
     public function __construct(
-        Logger $logger,
+        LoggerInterface $logger,
         ChartConfigurationFieldRetriever $field_retriever,
         ChartConfigurationValueRetriever $value_retriever,
         BurndownCacheGenerationChecker $cache_checker
@@ -66,7 +66,7 @@ class BurndownCommonDataBuilder
      * @return bool
      */
     public function getBurndownCalculationStatus(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         TimePeriodWithoutWeekEnd $time_period,
         $capacity,
@@ -95,7 +95,7 @@ class BurndownCommonDataBuilder
     /**
      * @return int|null
      */
-    public function getCapacity(Tracker_Artifact $artifact, PFUser $user)
+    public function getCapacity(Artifact $artifact, PFUser $user)
     {
         $capacity = null;
 
@@ -106,7 +106,7 @@ class BurndownCommonDataBuilder
         return $capacity;
     }
 
-    public function getTimePeriod(TimePeriodWithoutWeekEnd $time_period) : TimePeriodWithoutWeekEnd
+    public function getTimePeriod(TimePeriodWithoutWeekEnd $time_period): TimePeriodWithoutWeekEnd
     {
         if ($time_period->getStartDate() === null) {
             return TimePeriodWithoutWeekEnd::buildFromDuration($_SERVER['REQUEST_TIME'], $time_period->getDuration());

@@ -19,26 +19,47 @@
   -->
 
 <template>
-    <form class="tlp-modal"
-          role="dialog"
-          aria-labelledby="document-new-item-modal"
-          v-on:submit="addDocument"
-          enctype="multipart/form-data"
-          data-test="document-new-item-modal"
+    <form
+        class="tlp-modal"
+        role="dialog"
+        aria-labelledby="document-new-item-modal"
+        v-on:submit="addDocument"
+        enctype="multipart/form-data"
+        data-test="document-new-item-modal"
     >
-        <modal-header v-bind:modal-title="modal_title"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-header-class="'fa-plus'"
+        <modal-header
+            v-bind:modal-title="modal_title"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-header-class="'fa-plus'"
         />
-        <modal-feedback/>
+        <modal-feedback />
         <div class="tlp-modal-body document-item-modal-body" v-if="is_displayed">
-            <type-selector v-model="item.type"/>
+            <type-selector v-model="item.type" />
 
-            <document-global-metadata-for-create v-bind:currently-updated-item="item" v-bind:parent="parent">
-                <link-properties v-model="item.link_properties" v-bind:item="item" name="properties"/>
-                <wiki-properties v-model="item.wiki_properties" v-bind:item="item" name="properties"/>
-                <embedded-properties v-model="item.embedded_properties" v-bind:item="item" name="properties"/>
-                <file-properties v-model="item.file_properties" v-bind:item="item" name="properties"/>
+            <document-global-metadata-for-create
+                v-bind:currently-updated-item="item"
+                v-bind:parent="parent"
+            >
+                <link-properties
+                    v-model="item.link_properties"
+                    v-bind:item="item"
+                    name="properties"
+                />
+                <wiki-properties
+                    v-model="item.wiki_properties"
+                    v-bind:item="item"
+                    name="properties"
+                />
+                <embedded-properties
+                    v-model="item.embedded_properties"
+                    v-bind:item="item"
+                    name="properties"
+                />
+                <file-properties
+                    v-model="item.file_properties"
+                    v-bind:item="item"
+                    name="properties"
+                />
             </document-global-metadata-for-create>
             <other-information-metadata-for-create
                 v-bind:currently-updated-item="item"
@@ -51,17 +72,18 @@
             />
         </div>
 
-        <modal-footer v-bind:is-loading="is_loading"
-                      v-bind:submit-button-label="submit_button_label"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-submit-button-class="'fa-plus'"
+        <modal-footer
+            v-bind:is-loading="is_loading"
+            v-bind:submit-button-label="submit_button_label"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-submit-button-class="'fa-plus'"
         />
     </form>
 </template>
 
 <script>
 import { mapState } from "vuex";
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 import { TYPE_FILE } from "../../../constants.js";
 import DocumentGlobalMetadataForCreate from "../Metadata/DocumentMetadata/DocumentGlobalMetadataForCreate.vue";
 import LinkProperties from "../Property/LinkProperties.vue";
@@ -92,7 +114,7 @@ export default {
         WikiProperties,
         TypeSelector,
         CreationModalPermissionsSection,
-        ModalFeedback
+        ModalFeedback,
     },
     data() {
         return {
@@ -100,7 +122,7 @@ export default {
             is_displayed: false,
             is_loading: false,
             modal: null,
-            parent: {}
+            parent: {},
         };
     },
     computed: {
@@ -109,7 +131,7 @@ export default {
             "is_obsolescence_date_metadata_used",
             "is_item_status_metadata_used",
             "project_id",
-            "project_ugroups"
+            "project_ugroups",
         ]),
         ...mapState("error", ["has_modal_error"]),
         ...mapState("metadata", ["has_loaded_metadata"]),
@@ -121,7 +143,7 @@ export default {
         },
         aria_labelled_by() {
             return "document-new-item-modal";
-        }
+        },
     },
     mounted() {
         this.modal = createModal(this.$el);
@@ -141,24 +163,24 @@ export default {
                 description: "",
                 type: TYPE_FILE,
                 link_properties: {
-                    link_url: ""
+                    link_url: "",
                 },
                 wiki_properties: {
-                    page_name: ""
+                    page_name: "",
                 },
                 file_properties: {
-                    file: ""
+                    file: "",
                 },
                 embedded_properties: {
-                    content: ""
+                    content: "",
                 },
                 obsolescence_date: "",
                 metadata: null,
                 permissions_for_groups: {
                     can_read: [],
                     can_write: [],
-                    can_manage: []
-                }
+                    can_manage: [],
+                },
             };
         },
         async show(event) {
@@ -195,7 +217,7 @@ export default {
             await this.$store.dispatch("createNewItem", [
                 this.item,
                 this.parent,
-                this.current_folder
+                this.current_folder,
             ]);
 
             this.is_loading = false;
@@ -216,10 +238,10 @@ export default {
                 return;
             }
             const item_metadata = this.item.metadata.find(
-                metadata => metadata.short_name === event.detail.id
+                (metadata) => metadata.short_name === event.detail.id
             );
             item_metadata.list_value = event.detail.value;
-        }
-    }
+        },
+    },
 };
 </script>

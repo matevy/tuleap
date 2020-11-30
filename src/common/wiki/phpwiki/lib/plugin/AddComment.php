@@ -35,17 +35,17 @@ include_once("lib/plugin/WikiBlog.php");
 
 class WikiPlugin_AddComment extends WikiPlugin_WikiBlog
 {
-    function getName()
+    public function getName()
     {
         return _("AddComment");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return sprintf(_("Show and add comments for %s"), '[pagename]');
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -68,21 +68,21 @@ class WikiPlugin_AddComment extends WikiPlugin_WikiBlog
     //  jshide - boolean  - quick javascript expansion of the comments
     //                      and addcomment box
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('pagename'   => '[pagename]',
+        return ['pagename'   => '[pagename]',
                      'order'      => 'normal',
                      'mode'       => 'add,show',
                      'jshide'     => '0',
                      'noheader'   => false,
                      //'sortby'     => '-pagename' // oldest first. reverse by order=reverse
-                    );
+                    ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
-        if (!$args['pagename']) {
+        if (! $args['pagename']) {
             return $this->error(_("No pagename specified"));
         }
 
@@ -90,7 +90,7 @@ class WikiPlugin_AddComment extends WikiPlugin_WikiBlog
         $comment = $request->getArg("comment");
         $request->setArg('comment', false);
 
-        if ($request->isPost() and !empty($comment['addcomment'])) {
+        if ($request->isPost() and ! empty($comment['addcomment'])) {
             $this->add($request, $comment, 'comment'); // noreturn
         }
         if ($args['jshide'] and isBrowserIE() and browserDetect("Mac")) {
@@ -102,31 +102,31 @@ class WikiPlugin_AddComment extends WikiPlugin_WikiBlog
         // for new comments
         $html = HTML();
         if ($args['jshide']) {
-            $div = HTML::div(array('id'=>'comments','style'=>'display:none;'));
+            $div = HTML::div(['id' => 'comments', 'style' => 'display:none;']);
             //$list->setAttr('style','display:none;');
             $div->pushContent(Javascript("
 function togglecomments(a) {
   comments=document.getElementById('comments');
   if (comments.style.display=='none') {
     comments.style.display='block';
-    a.title='"._("Click to hide the comments")."';
+    a.title='" . _("Click to hide the comments") . "';
   } else {
     comments.style.display='none';
-    a.title='"._("Click to display all comments")."';
+    a.title='" . _("Click to display all comments") . "';
   }
 }"));
             $html->pushContent(HTML::h4(HTML::a(
-                array('name'=>'comment-header',
-                                                      'class'=>'wikiaction',
-                                                      'title'=>_("Click to display"),
-                                                      'onclick'=>"togglecomments(this)"),
+                ['name' => 'comment-header',
+                                                      'class' => 'wikiaction',
+                                                      'title' => _("Click to display"),
+                                                      'onclick' => "togglecomments(this)"],
                 _("Comments")
             )));
         } else {
-            $div = HTML::div(array('id'=>'comments'));
+            $div = HTML::div(['id' => 'comments']);
         }
         foreach (explode(',', $args['mode']) as $show) {
-            if (!empty($seen[$show])) {
+            if (! empty($seen[$show])) {
                 continue;
             }
             $seen[$show] = 1;
@@ -148,7 +148,7 @@ function togglecomments(a) {
         $html->pushContent($div);
         return $html;
     }
-};
+}
 
 // $Log: AddComment.php,v $
 // Revision 1.8  2004/06/13 09:45:23  rurban

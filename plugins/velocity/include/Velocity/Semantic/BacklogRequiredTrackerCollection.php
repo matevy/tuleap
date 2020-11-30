@@ -20,9 +20,7 @@
 
 namespace Tuleap\Velocity\Semantic;
 
-use AgileDashBoard_Semantic_InitialEffort;
 use Tracker;
-use Tuleap\AgileDashboard\Semantic\SemanticDone;
 
 class BacklogRequiredTrackerCollection
 {
@@ -110,7 +108,7 @@ class BacklogRequiredTrackerCollection
         }
 
         if ($this->areAllBacklogTrackersMissingInitialEffortSemantic()) {
-            $misconfigured_semantic_names[] = $GLOBALS['Language']->getText('plugin_agiledashboard_admin_semantic', 'initial_effort_label');
+            $misconfigured_semantic_names[] = dgettext('tuleap-agiledashboard', 'Initial Effort');
         }
 
         return $misconfigured_semantic_names;

@@ -25,6 +25,7 @@ use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneDao;
 use Tuleap\AgileDashboard\RemainingEffortValueRetriever;
 use Tuleap\Cardwall\Agiledashboard\CardwallPaneInfo;
+use Tuleap\Tracker\Artifact\Artifact;
 
 /**
  * A pane to be displayed in AgileDashboard
@@ -119,7 +120,7 @@ class Cardwall_Pane extends AgileDashboard_Pane
     private function getPaneContent($template)
     {
         $columns = $this->config->getDashboardColumns();
-        $renderer  = TemplateRendererFactory::build()->getRenderer(dirname(__FILE__).'/../templates');
+        $renderer  = TemplateRendererFactory::build()->getRenderer(dirname(__FILE__) . '/../templates');
         $html = $renderer->renderToString($template, $this->getPresenterUsingMappedFields($columns));
         // TODO what if no semantic status and no mapping????
 
@@ -139,7 +140,7 @@ class Cardwall_Pane extends AgileDashboard_Pane
         $column_autostack    = new Cardwall_UserPreferences_UserPreferencesAutostackFactory();
         $column_autostack->setAutostack($columns, $column_preferences);
 
-        $redirect_parameter  = 'cardwall[agile]['. $planning->getId() .']='. $this->milestone->getArtifactId();
+        $redirect_parameter  = 'cardwall[agile][' . $planning->getId() . ']=' . $this->milestone->getArtifactId();
 
         $this->milestone = $this->milestone_factory->updateMilestoneContextualInfo($this->user, $this->milestone);
         $board = $raw_board_builder->buildBoardUsingMappedFields($this->user, $this->artifact_factory, $this->milestone, $this->config, $columns);
@@ -173,8 +174,8 @@ class Cardwall_Pane extends AgileDashboard_Pane
         } catch (InitialEffortNotDefinedException $exception) {
             $status_count = $this->milestone_factory->getMilestoneStatusCount($this->user, $this->milestone);
             return new Cardwall_OpenClosedEffortProgressPresenter(
-                $status_count[Tracker_Artifact::STATUS_OPEN],
-                $status_count[Tracker_Artifact::STATUS_CLOSED]
+                $status_count[Artifact::STATUS_OPEN],
+                $status_count[Artifact::STATUS_CLOSED]
             );
         }
     }

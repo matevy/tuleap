@@ -6,7 +6,7 @@
     font-size: smaller;
     font-style: italic;
 }
-
+/* stylelint-disable selector-no-qualifying-type, selector-class-pattern, selector-id-pattern */
 table#jobs_table {
     margin-bottom: 20px;
 }
@@ -17,7 +17,6 @@ span.job_action {
 }
 
 td.widget_lastbuilds_weather {
-    align: right;
     text-align: right;
 }
 
@@ -37,4 +36,18 @@ img.widget-lastbuilds-weather-img {
         width: 300px;
         height: 90px;
     }
+}
+
+body.continuous-integration-body .main .content {
+    padding: 0;
+}
+
+body.continuous-integration-body #feedback:empty {
+    padding: 0;
+}
+
+/* stylelint-enable */
+
+.continuous-integration-content {
+    padding: 0 12px;
 }

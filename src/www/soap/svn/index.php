@@ -33,12 +33,10 @@ if ($request->isSecure() || ForgeConfig::get('sys_https_host')) {
 }
 $default_domain = ForgeConfig::get('sys_default_domain');
 
-$uri = $protocol.'://'.$default_domain.'/soap/svn';
-
-$serviceClass = 'SVN_SOAPServer';
+$uri = $protocol . '://' . $default_domain . '/soap/svn';
 
 if ($request->exist('wsdl')) {
-    $wsdlGen = new SOAP_NusoapWSDL($serviceClass, 'TuleapSubversionAPI', $uri);
+    $wsdlGen = new SOAP_NusoapWSDL(SVN_SOAPServer::class, 'TuleapSubversionAPI', $uri);
     $wsdlGen->dumpWSDL();
 } else {
     $user_manager = UserManager::instance();
@@ -54,10 +52,10 @@ if ($request->exist('wsdl')) {
     $svn_repository_listing = new SVN_RepositoryListing(new SVN_PermissionsManager(), new SVN_Svnlook(), $user_manager);
 
     $server = new TuleapSOAPServer(
-        $uri.'/?wsdl',
-        array('cache_wsdl' => WSDL_CACHE_NONE)
+        $uri . '/?wsdl',
+        ['cache_wsdl' => WSDL_CACHE_NONE]
     );
-    $server->setClass($serviceClass, $soap_request_validator, $svn_repository_listing);
+    $server->setClass(SVN_SOAPServer::class, $soap_request_validator, $svn_repository_listing, EventManager::instance());
     $xml_security = new XML_Security();
     $xml_security->enableExternalLoadOfEntities();
     $server->handle();

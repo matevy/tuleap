@@ -26,13 +26,11 @@ namespace Tuleap\LDAP;
 use HTTPRequest;
 use LDAP_GroupManager;
 use LDAP_ProjectGroupManager;
-use LDAP_UserGroupManager;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Project\Admin\MembershipDelegationDao;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
-use UGroupManager;
 use UserHelper;
 use UserManager;
 use Valid_GroupId;
@@ -40,10 +38,6 @@ use Valid_String;
 
 class BindMembersConfirmController implements DispatchableWithRequest
 {
-    /**
-     * @var UGroupManager
-     */
-    private $ugroup_manager;
     /**
      * @var LDAP_ProjectGroupManager
      */
@@ -72,8 +66,6 @@ class BindMembersConfirmController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @return void
      * @throws ForbiddenException
@@ -125,36 +117,36 @@ class BindMembersConfirmController implements DispatchableWithRequest
             return;
         }
 
-        $to_remove = array();
+        $to_remove = [];
         foreach ($this->ldap_project_group_manager->getUsersToBeRemoved($bind_option) as $user_id) {
             $user = $this->user_manager->getUserById($user_id);
             if ($user) {
-                $to_remove[] = array(
+                $to_remove[] = [
                     'display_name' => $this->user_helper->getDisplayNameFromUser($user),
                     'has_avatar'   => $user->hasAvatar(),
                     'avatar_url'   => $user->getAvatarUrl()
-                );
+                ];
             }
         }
 
-        $to_add = array();
+        $to_add = [];
         foreach ($this->ldap_project_group_manager->getUsersToBeAdded($bind_option) as $user_id) {
             $user = $this->user_manager->getUserById($user_id);
             if ($user) {
-                $to_add[] = array(
+                $to_add[] = [
                     'display_name' => $this->user_helper->getDisplayNameFromUser($user),
                     'has_avatar'   => $user->hasAvatar(),
                     'avatar_url'   => $user->getAvatarUrl()
-                );
+                ];
             }
         }
 
         $layout->sendJSON(
-            array(
+            [
                 'users_to_remove' => $to_remove,
                 'users_to_add'    => $to_add,
                 'nb_not_impacted' => count($this->ldap_project_group_manager->getUsersNotImpacted($bind_option)),
-            )
+            ]
         );
     }
 }

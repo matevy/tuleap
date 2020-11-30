@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2005. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2005
@@ -22,168 +22,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-/**
- * This class is an implementation of Iterator pattern to easily browse an LDAP
- * result set.
- *
- * @see LDAPResult
- */
-class LDAPResultIterator implements SeekableIterator, Countable
-{
-
-    var $list;
-    var $key;
-    var $valid;
-    protected $ldapParams;
-
-    /**
-     * Constructor
-     */
-    function __construct($info, $ldapParams)
-    {
-        $this->list  = $info;
-        $this->key   = 0;
-        $this->valid = ($this->count() > 0);
-        $this->ldapParams = $ldapParams;
-    }
-
-
-    /**
-     * Return the number of entries in a result set.
-     *
-     * @return int
-     */
-    function count()
-    {
-        if ($this->list && array_key_exists('count', $this->list)) {
-            return $this->list['count'];
-        } else {
-            return 0;
-        }
-    }
-
-
-    /**
-     * Return true if there is no entries in the result set.
-     *
-     * @return int
-     */
-    function isEmpty()
-    {
-        return empty($this->list);
-    }
-
-
-    /**
-     * Move key to the position given in parameter.
-     *
-     * @param $pos int
-     */
-    function seek($pos)
-    {
-        $this->key = $pos;
-        $this->valid = true;
-        if ($this->key >= $this->count()) {
-            $this->valid = false;
-        }
-        if ($this->key < 0) {
-            $this->valid = false;
-        }
-    }
-
-
-    /**
-     * Move key to the position given in parameter.
-     *
-     * @param $pos int
-     */
-    function get($pos)
-    {
-        $this->seek($pos);
-        if ($this->valid) {
-            return $this->current();
-        } else {
-            return false;
-        }
-    }
-
-
-    /**
-     * Return true if result set is not empty.
-     *
-     * @return bool
-     */
-    function exist()
-    {
-        return !$this->isEmpty();
-    }
-
-
-    /**
-     * Return the current element.
-     *
-     * Standard function implemented from Iterator interface
-     *
-     * @return LDAPResult
-     */
-    function current()
-    {
-        return new LDAPResult($this->list[$this->key], $this->ldapParams);
-    }
-
-
-    /**
-     * Return the key of the current element.
-     *
-     * Standard function implemented from Iterator interface
-     *
-     * @return int
-     */
-    function key()
-    {
-        return $this->key;
-    }
-
-
-    /**
-     * Move forward to next element.
-     *
-     * Standard function implemented from Iterator interface
-     */
-    function next()
-    {
-        $this->valid = (++$this->key < $this->count());
-    }
-
-
-    /**
-     * Rewind the Iterator to the first element.
-     *
-     * Standard function implemented from Iterator interface
-     */
-    function rewind()
-    {
-        $this->valid = true;
-        $this->key   = 0;
-    }
-
-
-    /**
-     * Check if there is a current element after calls to rewind() or next().
-     *
-     * Standard function implemented from Iterator interface
-     *
-     * @return bool
-     */
-    function valid()
-    {
-        return $this->valid;
-    }
-}
-
-
-
 /**
  * This class is wrapper to access to an LDAP entry
  *
@@ -197,25 +35,25 @@ class LDAPResultIterator implements SeekableIterator, Countable
  *
  * @see LDAPResultIterator
  */
-class LDAPResult implements Iterator, Countable
+class LDAPResult implements Iterator, Countable // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     protected $ldapParams;
     protected $info;
     protected $index;
 
-    function __construct($info, $ldapParams)
+    public function __construct($info, $ldapParams)
     {
         $this->ldapParams = $ldapParams;
         $this->info  = $info;
         $this->index = 0;
     }
 
-    function getEmail()
+    public function getEmail()
     {
         return $this->get($this->ldapParams['mail']);
     }
 
-    function getCommonName()
+    public function getCommonName()
     {
         return $this->get($this->ldapParams['cn']);
     }
@@ -252,22 +90,22 @@ class LDAPResult implements Iterator, Countable
         return $this->getGroupCommonName();
     }
 
-    function getLogin()
+    public function getLogin()
     {
         return $this->get($this->ldapParams['uid']);
     }
 
-    function getEdUid()
+    public function getEdUid()
     {
         return $this->get($this->ldapParams['eduid']);
     }
 
-    function getDn()
+    public function getDn()
     {
         return $this->info['dn'];
     }
 
-    function getGroupMembers()
+    public function getGroupMembers()
     {
         $memberAttr = strtolower($this->ldapParams['grp_member']);
         if (isset($this->info[$memberAttr])) {
@@ -276,7 +114,7 @@ class LDAPResult implements Iterator, Countable
             unset($members['count']);
             return $members;
         } else {
-            return array();
+            return [];
         }
     }
 
@@ -291,7 +129,7 @@ class LDAPResult implements Iterator, Countable
      *
      * @return String
      */
-    function get($arg)
+    public function get($arg)
     {
         $v = $this->getAll($arg);
         if ($v) {
@@ -307,7 +145,7 @@ class LDAPResult implements Iterator, Countable
      *
      * @return Array
      */
-    function getAll($arg)
+    public function getAll($arg)
     {
         $arg = strtolower($arg);
         if (isset($this->info[$arg])) {
@@ -317,42 +155,42 @@ class LDAPResult implements Iterator, Countable
         }
     }
 
-    function isEmpty()
+    public function isEmpty()
     {
         return empty($this->info);
     }
 
-    function exist()
+    public function exist()
     {
-        return !$this->isEmpty();
+        return ! $this->isEmpty();
     }
 
-    function count()
+    public function count()
     {
         return $this->info['count'];
     }
 
-    function valid()
+    public function valid()
     {
         return $this->index < $this->info['count'];
     }
 
-    function next()
+    public function next()
     {
         $this->index++;
     }
 
-    function rewind()
+    public function rewind()
     {
         $this->index = 0;
     }
 
-    function current()
+    public function current()
     {
         return $this->info[$this->index];
     }
 
-    function key()
+    public function key()
     {
         return $this->index;
     }

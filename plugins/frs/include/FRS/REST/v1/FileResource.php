@@ -76,7 +76,6 @@ class FileResource extends AuthenticatedResource
      *
      * @param int $id ID of the file
      *
-     * @return \Tuleap\FRS\REST\v1\FileRepresentation
      *
      * @throws RestException 403
      */
@@ -87,10 +86,7 @@ class FileResource extends AuthenticatedResource
         $user = $this->user_manager->getCurrentUser();
         $file = $this->getFile($id, $user);
 
-        $file_representation = new FileRepresentation();
-        $file_representation->build($file);
-
-        return $file_representation;
+        return new FileRepresentation($file);
     }
 
     /**
@@ -181,9 +177,7 @@ class FileResource extends AuthenticatedResource
      * to call this endpoint.
      * Note: If the file is empty, then no URL will be returned.
      *
-     * @param FilePOSTRepresentation $file_post_representation
      *
-     * @return CreatedFileRepresentation
      *
      * @status 201
      * @throws RestException 400
@@ -213,7 +207,7 @@ class FileResource extends AuthenticatedResource
 
         $file_ongoing_upload_dao = new FileOngoingUploadDao();
 
-        $logger                = new \BackendLogger();
+        $logger                = \BackendLogger::getDefaultLogger();
         $upload_path_allocator = new UploadPathAllocator();
         $file_item_creator     = new FileCreator(
             new FileToUploadCreator(

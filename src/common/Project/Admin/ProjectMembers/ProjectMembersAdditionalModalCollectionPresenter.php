@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2017. All rights reserved.
+ * Copyright Enalean (c) 2017-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -40,10 +40,10 @@ class ProjectMembersAdditionalModalCollectionPresenter implements Dispatchable
     private $project;
     private $csrf_token;
 
-    public $modals_buttons = array();
-    public $modals_content = array();
+    public $modals_buttons = [];
+    public $modals_content = [];
     /**
-     * @var
+     * @var string
      */
     private $user_locale;
     /**
@@ -96,32 +96,32 @@ class ProjectMembersAdditionalModalCollectionPresenter implements Dispatchable
         return $this->user_locale;
     }
 
-    public function setJavascriptFile(string $path) : void
+    public function setJavascriptFile(string $path): void
     {
         $this->javascript_file = $path;
     }
 
-    public function getJavascriptFile() : string
+    public function getJavascriptFile(): string
     {
         return $this->javascript_file;
     }
 
-    public function setCssAsset(CssAsset $css_asset) : void
+    public function setCssAsset(CssAsset $css_asset): void
     {
         $this->css_asset = $css_asset;
     }
 
-    public function getCssAsset() : CssAsset
+    public function getCssAsset(): CssAsset
     {
         return $this->css_asset;
     }
 
-    public function hasJavascriptFile() : bool
+    public function hasJavascriptFile(): bool
     {
         return $this->javascript_file !== null;
     }
 
-    public function hasCssAsset() : bool
+    public function hasCssAsset(): bool
     {
         return $this->css_asset !== null;
     }

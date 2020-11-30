@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -27,8 +27,6 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
     public const DEFAULT_GERRIT_USERNAME = 'gerrit_username';
     public const GERRIT_VERSION_2_5      = '2.5';
     public const GERRIT_VERSION_2_8_PLUS = '2.8+';
-    public const AUTH_TYPE_DIGEST        = 'Digest';
-    public const AUTH_TYPE_BASIC         = 'Basic';
     public const GENERIC_USER_PREFIX     = 'gerrit_';
 
     private $id;
@@ -45,8 +43,6 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
     /** @var String */
     private $gerrit_version;
     /** @var String */
-    private $auth_type;
-    /** @var String */
     private $replication_password;
 
     public function __construct(
@@ -60,8 +56,7 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
         $use_ssl,
         $gerrit_version,
         $http_password,
-        $replication_password,
-        $auth_type
+        $replication_password
     ) {
         $this->id                   = $id;
         $this->host                 = $host;
@@ -74,7 +69,6 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
         $this->http_password        = $http_password;
         $this->replication_password = $replication_password;
         $this->gerrit_version       = $gerrit_version;
-        $this->auth_type            = $auth_type;
     }
 
     public function __toString()
@@ -115,11 +109,6 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
     public function usesSSL()
     {
         return $this->use_ssl;
-    }
-
-    public function getAuthType()
-    {
-        return $this->auth_type;
     }
 
     public function setId($id)
@@ -163,12 +152,6 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
         return $this;
     }
 
-    public function setAuthType($auth_type)
-    {
-        $this->auth_type = $auth_type;
-        return $this;
-    }
-
     public function getCloneSSHUrl($gerrit_project)
     {
         return "ext::ssh -p $this->ssh_port -i $this->identity_file $this->login@$this->host %S $gerrit_project";
@@ -180,17 +163,17 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
         if ($user !== null) {
             $login = $user->getSSHUserName();
         }
-        return 'ssh://'.$login.'@'.$this->host.':'.$this->ssh_port.'/'.$gerrit_project.'.git';
+        return 'ssh://' . $login . '@' . $this->host . ':' . $this->ssh_port . '/' . $gerrit_project . '.git';
     }
 
     public function getProjectAdminUrl($gerrit_project)
     {
-        return $this->getBaseUrl()."/#/admin/projects/$gerrit_project";
+        return $this->getBaseUrl() . "/#/admin/projects/$gerrit_project";
     }
 
     public function getProjectUrl($gerrit_project)
     {
-        return $this->getBaseUrl()."/#/q/project:$gerrit_project,n,z";
+        return $this->getBaseUrl() . "/#/q/project:$gerrit_project,n,z";
     }
 
     /**
@@ -215,6 +198,8 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
 
     /**
      * @return string The base url of the server. Eg: http://gerrit.example.com:8080/
+     *
+     * @psalm-mutation-free
      */
     public function getBaseUrl()
     {
@@ -225,6 +210,9 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
         return $url;
     }
 
+    /**
+     * @psalm-mutation-free
+     */
     private function getHTTPProtocol()
     {
         if ($this->usesSSL()) {
@@ -256,7 +244,7 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
      */
     public function getHTTPPassword()
     {
-        return (string)$this->http_password;
+        return (string) $this->http_password;
     }
 
     /**
@@ -264,7 +252,7 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
      */
     public function getReplicationPassword()
     {
-        return (string)$this->replication_password;
+        return (string) $this->replication_password;
     }
 
     /**
@@ -277,7 +265,7 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
     }
 
     /**
-     * @param String $http_password
+     * @param string $replication_password
      */
     public function setReplicationPassword($replication_password)
     {
@@ -287,6 +275,6 @@ class Git_RemoteServer_GerritServer implements Git_Driver_Gerrit_RemoteSSHConfig
 
     public function getGenericUserName()
     {
-        return Rule_UserName::RESERVED_PREFIX.self::GENERIC_USER_PREFIX.$this->getId();
+        return Rule_UserName::RESERVED_PREFIX . self::GENERIC_USER_PREFIX . $this->getId();
     }
 }

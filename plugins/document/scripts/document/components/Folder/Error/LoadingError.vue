@@ -20,10 +20,10 @@
 <template>
     <div class="empty-page document-folder-with-error">
         <div class="empty-page-illustration">
-            <loading-error-svg/>
+            <loading-error-svg />
         </div>
-        <show-error-details/>
-        <go-back-to-root-button/>
+        <show-error-details />
+        <go-back-to-root-button />
     </div>
 </template>
 
@@ -34,6 +34,6 @@ import GoBackToRootButton from "./GoBackToRootButton.vue";
 
 export default {
     name: "LoadingError",
-    components: { GoBackToRootButton, LoadingErrorSvg, ShowErrorDetails }
+    components: { GoBackToRootButton, LoadingErrorSvg, ShowErrorDetails },
 };
 </script>

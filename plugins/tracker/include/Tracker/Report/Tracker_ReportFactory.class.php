@@ -40,9 +40,9 @@ class Tracker_ReportFactory
      */
     public static function instance()
     {
-        if (!isset(self::$_instance)) {
+        if (! isset(self::$_instance)) {
             $c = self::class;
-            self::$_instance = new $c;
+            self::$_instance = new $c();
         }
         return self::$_instance;
     }
@@ -71,7 +71,7 @@ class Tracker_ReportFactory
      */
     public function getReportsByTrackerId($tracker_id, $user_id)
     {
-        $reports = array();
+        $reports = [];
         foreach ($this->getDao()->searchByTrackerId($tracker_id, $user_id) as $row) {
             $reports[$row['id']] = $this->getInstanceFromRow($row);
         }
@@ -79,7 +79,7 @@ class Tracker_ReportFactory
     }
     /**
      * @param int $tracker_id the id of the tracker
-     * @param array
+     * @return Tracker_Report|null
      */
     public function getDefaultReportsByTrackerId($tracker_id)
     {
@@ -92,7 +92,7 @@ class Tracker_ReportFactory
 
     /**
      * @param int $tracker_id the id of the tracker
-     * @param Tracker_Report
+     * @return Tracker_Report|null
      */
     public function getDefaultReportByTrackerId($tracker_id)
     {
@@ -109,7 +109,7 @@ class Tracker_ReportFactory
      */
     public function getReportsByUserId($user_id)
     {
-        $reports = array();
+        $reports = [];
         foreach ($this->getDao()->searchByUserId($user_id) as $row) {
             $reports[$row['id']] = $this->getInstanceFromRow($row);
         }
@@ -119,7 +119,7 @@ class Tracker_ReportFactory
     /**
      * Save a report
      *
-     * @param Report $report the report to save
+     * @param Tracker_Report $report the report to save
      *
      * @return bool true if the save succeed
      */
@@ -144,7 +144,7 @@ class Tracker_ReportFactory
 
     public function duplicate($from_tracker_id, $to_tracker_id, $field_mapping)
     {
-        $report_mapping = array();
+        $report_mapping = [];
         foreach ($this->getReportsByTrackerId($from_tracker_id, null) as $from_report) {
             $new_report = $this->duplicateReport($from_report, $to_tracker_id, $field_mapping, null);
             $report_mapping[$from_report->getId()] = $new_report->getId();
@@ -157,9 +157,9 @@ class Tracker_ReportFactory
      * Duplicate a report. The new report will have $from_report as parent.
      *
      * @param Tracker_Report $from_report   The report to copy
-     * @param int            $tracker_id    The id of the target tracker
+     * @param int            $to_tracker_id    The id of the target tracker
      * @param array          $field_mapping The mapping of the field, if any
-     * @param int            $current_user  The id of the current user
+     * @param int|null       $current_user_id  The id of the current user
      *
      * @return Tracker_Report the new report
      */
@@ -193,7 +193,7 @@ class Tracker_ReportFactory
      */
     protected function getDao()
     {
-        if (!$this->dao) {
+        if (! $this->dao) {
             $this->dao = new Tracker_ReportDao();
         }
         return $this->dao;
@@ -261,46 +261,46 @@ class Tracker_ReportFactory
         $group_id
     ) {
         $att = $xml->attributes();
-        $row = array('name' => (string)$xml->name,
-                     'description' => (string)$xml->description);
-        $row['is_default'] = isset($att['is_default']) ? (int)$att['is_default'] : 0;
-        $row['is_query_displayed'] = isset($att['is_query_displayed']) ? (int)$att['is_query_displayed'] : 1;
-        $row['is_in_expert_mode']  = isset($att['is_in_expert_mode']) ? (int)$att['is_in_expert_mode'] : 0;
-        $row['expert_query']       = isset($att['expert_query']) ? (string)$att['expert_query'] : "";
-        // in case old id values are important modify code here
-        if (false) {
-            foreach ($xml->attributes() as $key => $value) {
-                $row[$key] = (int)$value;
-            }
-        } else {
-            $row['id'] = 0;
-            $row['current_renderer_id'] = 0;
-            $row['parent_report_id'] = 0;
-            $row['tracker_id'] = 0;
-            $row['user_id'] = null;
-            $row['group_id'] = $group_id;
-        }
+        $row = ['name' => (string) $xml->name,
+                     'description' => (string) $xml->description];
+        $row['is_default'] = isset($att['is_default']) ? (int) $att['is_default'] : 0;
+        $row['is_query_displayed'] = isset($att['is_query_displayed']) ? (int) $att['is_query_displayed'] : 1;
+        $row['is_in_expert_mode']  = isset($att['is_in_expert_mode']) ? (int) $att['is_in_expert_mode'] : 0;
+        $row['expert_query']       = isset($att['expert_query']) ? (string) $att['expert_query'] : "";
+        $row['id'] = 'XML_IMPORT_REPORT_' . bin2hex(random_bytes(32));
+        $row['current_renderer_id'] = 0;
+        $row['parent_report_id'] = 0;
+        $row['tracker_id'] = 0;
+        $row['user_id'] = null;
+        $row['group_id'] = $group_id;
         $row['updated_by'] = null;
         $row['updated_at'] = null;
         $report = $this->getInstanceFromRow($row);
         // create criteria
-        $report->criterias = array();
+        $report->criterias = [];
         foreach ($xml->criterias->criteria as $criteria) {
-            $report_criteria = $this->getCriteriaFactory()->getInstanceFromXML($criteria, $xmlMapping);
+            $report_criteria = $this->getCriteriaFactory()->getInstanceFromXML($criteria, $report, $xmlMapping);
             if (! $report_criteria) {
                 continue;
+            }
+            if (isset($criteria->criteria_value)) {
+                $report_criteria->getField()->setCriteriaValueFromXML(
+                    $report_criteria,
+                    $criteria->criteria_value,
+                    $xmlMapping
+                );
             }
 
             $report->criterias[] = $report_criteria;
         }
         // create renderers
-        $report->renderers = array();
+        $report->renderers = [];
         foreach ($xml->renderers->renderer as $renderer) {
             $rend = $this->getRendererFactory()->getInstanceFromXML($renderer, $report, $xmlMapping);
             $report->renderers[] = $rend;
 
             if (isset($renderer['ID'])) {
-                $renderers_xml_mapping[(string)$renderer['ID']] = $rend;
+                $renderers_xml_mapping[(string) $renderer['ID']] = $rend;
             }
         }
 
@@ -313,7 +313,7 @@ class Tracker_ReportFactory
      * @param int trackerId of the created tracker
      * @param Object report
      *
-     * @return id of the newly created Report
+     * @return int id of the newly created Report
      */
     public function saveObject($trackerId, $report)
     {
@@ -333,7 +333,11 @@ class Tracker_ReportFactory
         $reportDB = Tracker_ReportFactory::instance()->getReportById($reportId, null);
         if ($report->criterias) {
             foreach ($report->criterias as $criteria) {
-                $reportDB->addCriteria($criteria);
+                assert($criteria instanceof Tracker_Report_Criteria);
+                $criteria_id = $reportDB->addCriteria($criteria);
+                $criteria->setId($criteria_id);
+                // Add criteria value
+                $criteria->getField()->saveCriteriaValueFromXML($criteria);
             }
         }
         //create renderers
@@ -347,7 +351,7 @@ class Tracker_ReportFactory
                 }
             }
         }
-        return $reportDB->id;
+        return (int) $reportDB->id;
     }
 
     /**

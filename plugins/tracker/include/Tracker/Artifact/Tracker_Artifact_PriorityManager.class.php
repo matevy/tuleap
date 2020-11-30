@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class Tracker_Artifact_PriorityManager
 {
@@ -175,17 +177,17 @@ class Tracker_Artifact_PriorityManager
     private function getGlobalRanks($list_of_artifact_ids)
     {
         $rows  = $this->priority_dao->getGlobalRanks($list_of_artifact_ids);
-        $ranks = array();
+        $ranks = [];
         foreach ($rows as $row) {
             $ranks[$row['artifact_id']] = $row['rank'];
         }
         return $ranks;
     }
 
-    public function getArtifactPriorityHistory(Tracker_Artifact $artifact)
+    public function getArtifactPriorityHistory(Artifact $artifact)
     {
         $rows                     = $this->priority_history_dao->getArtifactPriorityHistory($artifact->getId());
-        $priority_history_changes = array();
+        $priority_history_changes = [];
 
         foreach ($rows as $row) {
             $priority_history_changes[] = $this->getInstanceFromRow($row);
@@ -229,19 +231,19 @@ class Tracker_Artifact_PriorityManager
             $this->tracker_artifact_factory->getArtifactById($row['artifact_id_lower']),
             $row['context'],
             ProjectManager::instance()->getProject($row['project_id']),
-            (bool)$row['has_been_raised'],
+            (bool) $row['has_been_raised'],
             $this->user_manager->getUserById($row['prioritized_by']),
             $row['prioritized_on']
         );
     }
 
-    public function deletePriority(Tracker_Artifact $artifact)
+    public function deletePriority(Artifact $artifact)
     {
         return $this->priority_dao->remove($artifact->getId()) &&
         $this->priority_history_dao->deletePriorityChangesHistory($artifact->getId());
     }
 
-    public function putArtifactAtAGivenRank(Tracker_Artifact $artifact, $rank)
+    public function putArtifactAtAGivenRank(Artifact $artifact, $rank)
     {
         $this->priority_dao->putArtifactAtAGivenRank($artifact->getId(), $rank);
     }

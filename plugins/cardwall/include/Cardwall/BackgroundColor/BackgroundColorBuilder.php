@@ -22,8 +22,8 @@ namespace Tuleap\Cardwall\BackgroundColor;
 
 use Cardwall_Semantic_CardFields;
 use PFUser;
-use Tracker_Artifact;
 use Tuleap\Cardwall\Semantic\BackgroundColorSemanticFieldNotFoundException;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\Exception\NoChangesetException;
 use Tuleap\Tracker\Artifact\Exception\NoChangesetValueException;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
@@ -34,9 +34,6 @@ class BackgroundColorBuilder
     /** @var BindDecoratorRetriever */
     private $decorator_retriever;
 
-    /**
-     * @param BindDecoratorRetriever $decorator_retriever
-     */
     public function __construct(BindDecoratorRetriever $decorator_retriever)
     {
         $this->decorator_retriever = $decorator_retriever;
@@ -44,7 +41,7 @@ class BackgroundColorBuilder
 
     public function build(
         Cardwall_Semantic_CardFields $card_fields_semantic,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $current_user
     ) {
         $background_color_name = $this->getBackgroundColor($card_fields_semantic, $artifact, $current_user);
@@ -53,7 +50,7 @@ class BackgroundColorBuilder
 
     private function getBackgroundColor(
         Cardwall_Semantic_CardFields $card_fields_semantic,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $current_user
     ) {
         try {

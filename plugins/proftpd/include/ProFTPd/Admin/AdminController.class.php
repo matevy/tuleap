@@ -49,7 +49,6 @@ class AdminController
     }
 
     /**
-     * @param HTTPRequest $request
      * @return bool
      */
     private function userIsAdmin(HTTPRequest $request)
@@ -114,11 +113,11 @@ class AdminController
             dgettext('tuleap-proftpd', 'Permissions will be propagated on filesystem shortly')
         );
 
-        $GLOBALS['Response']->redirect('?'.http_build_query(array(
+        $GLOBALS['Response']->redirect('?' . http_build_query([
             'group_id'   => $project->getID(),
             'controller' => self::NAME,
             'action'     => 'index',
-        )));
+        ]));
     }
 
     private function savePermissions(Project $project, HTTPRequest $request)
@@ -143,8 +142,8 @@ class AdminController
 
     private function getUGroupsForPermission(HTTPRequest $request, $permission)
     {
-        return array(
+        return [
             (int) $request->getInArray('permissions', $permission)
-        );
+        ];
     }
 }

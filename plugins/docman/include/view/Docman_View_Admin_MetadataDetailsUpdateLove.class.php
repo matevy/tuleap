@@ -27,24 +27,22 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
 class Docman_View_Admin_MetadataDetailsUpdateLove extends Docman_View_Extra
 {
 
-    function _title($params)
+    public function _title($params)
     {
-        echo '<h2>'. $this->_getTitle($params) .' - '. $GLOBALS['Language']->getText('plugin_docman', 'admin_md_detupdlove_title', array($params['md']->getName(), Docman_MetadataHtmlList::_getElementName($params['love']))) .'</h2>';
+        echo '<h2 class="project-header-title">' . $this->_getTitle($params) . ' - ' . sprintf(dgettext('tuleap-docman', 'Update value "%2$s" in "%1$s" property'), $params['md']->getName(), Docman_MetadataHtmlList::_getElementName($params['love'])) . '</h2>';
     }
 
-    function _content($params)
+    public function _content($params)
     {
         $md = $params['md'];
         $love = $params['love'];
         $html = '';
 
-        //$html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'admin_md_detupdlove_title').'</h3>';
-
         $loveDetailsHtml = new Docman_View_LoveDetails($md);
 
-        $act_url = DocmanViewURLBuilder::buildUrl($params['default_url'], array('action' => 'admin_update_love'));
+        $act_url = DocmanViewURLBuilder::buildUrl($params['default_url'], ['action' => 'admin_update_love']);
 
-        $html .= '<form name="md_update_love" method="POST" action="'.$act_url.'" class="docman_form">';
+        $html .= '<form name="md_update_love" method="POST" action="' . $act_url . '" class="docman_form">';
         $html .= $loveDetailsHtml->getHiddenFields($love->getId());
 
         $html .= '<table>';
@@ -53,16 +51,16 @@ class Docman_View_Admin_MetadataDetailsUpdateLove extends Docman_View_Extra
         $html .= $loveDetailsHtml->getRankField('--');
         $html .= '</table>';
 
-        $html .= '<input type="submit" name="submit" value="'.$GLOBALS['Language']->getText('plugin_docman', 'admin_md_detupdlove_update').'" />';
+        $html .= '<input type="submit" name="submit" value="' . dgettext('tuleap-docman', 'Update') . '" />';
 
         $html .= '</form>';
 
         $backUrl  = DocmanViewURLBuilder::buildUrl(
             $params['default_url'],
-            array('action' => 'admin_md_details',
-            'md' => $md->getLabel())
+            ['action' => 'admin_md_details',
+            'md' => $md->getLabel()]
         );
-        $html .= '<p><a href="'.$backUrl.'">'.$GLOBALS['Language']->getText('plugin_docman', 'admin_md_detupdlove_backtomenu').'</a></p>';
+        $html .= '<p><a href="' . $backUrl . '">' . dgettext('tuleap-docman', 'Back to property details') . '</a></p>';
 
         echo $html;
     }

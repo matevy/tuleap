@@ -18,7 +18,7 @@
  */
 
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import localVue from "../../../../helpers/local-vue.js";
 import FolderDefaultPropertiesForUpdate from "./FolderDefaultPropertiesForUpdate.vue";
 import { TYPE_FILE } from "../../../../constants.js";
@@ -36,18 +36,18 @@ describe("FolderDefaultPropertiesForUpdate", () => {
             return shallowMount(FolderDefaultPropertiesForUpdate, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
 
-    describe("Component loading - ", () => {
+    describe("Component loading -", () => {
         it("Load project metadata at first load", () => {
             store.state = {
                 is_item_status_metadata_used: true,
                 metadata: {
-                    has_loaded_metadata: false
-                }
+                    has_loaded_metadata: false,
+                },
             };
 
             default_property({
@@ -55,32 +55,33 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     metadata: [],
                     status: 100,
                     type: TYPE_FILE,
-                    title: "title"
+                    title: "title",
                 },
-                itemMetadata: []
+                itemMetadata: [],
             });
 
             expect(store.dispatch).toHaveBeenCalledWith("metadata/loadProjectMetadata", [store]);
         });
 
         it(`Given custom component are loading
-            Then it displays spinner`, () => {
+            Then it displays spinner`, async () => {
             const wrapper = default_property({
                 currentlyUpdatedItem: {
                     metadata: [],
                     status: 100,
                     type: TYPE_FILE,
-                    title: "title"
+                    title: "title",
                 },
-                itemMetadata: []
+                itemMetadata: [],
             });
 
             store.state = {
                 is_item_status_metadata_used: true,
                 metadata: {
-                    has_loaded_metadata: false
-                }
+                    has_loaded_metadata: false,
+                },
             };
+            await wrapper.vm.$nextTick();
 
             expect(
                 wrapper.find("[data-test=document-folder-default-properties-container]").exists()
@@ -91,13 +92,13 @@ describe("FolderDefaultPropertiesForUpdate", () => {
         });
     });
 
-    describe("Component display - ", () => {
+    describe("Component display -", () => {
         it(`Given project uses status, default properties are rendered`, () => {
             store.state = {
                 is_item_status_metadata_used: true,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             const wrapper = default_property({
@@ -106,24 +107,24 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     title: "My title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     metadata: [
                         {
                             short_name: "status",
                             list_value: [
                                 {
-                                    id: 103
-                                }
-                            ]
-                        }
+                                    id: 103,
+                                },
+                            ],
+                        },
                     ],
                     status: {
                         value: "rejected",
-                        recursion: "none"
-                    }
+                        recursion: "none",
+                    },
                 },
-                itemMetadata: []
+                itemMetadata: [],
             });
 
             expect(
@@ -134,8 +135,8 @@ describe("FolderDefaultPropertiesForUpdate", () => {
             store.state = {
                 is_item_status_metadata_used: false,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             const wrapper = default_property({
@@ -144,20 +145,20 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     title: "My title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     metadata: [
                         {
                             short_name: "field_",
                             list_value: [
                                 {
-                                    id: 103
-                                }
-                            ]
-                        }
-                    ]
+                                    id: 103,
+                                },
+                            ],
+                        },
+                    ],
                 },
-                itemMetadata: [{ id: 100 }]
+                itemMetadata: [{ id: 100 }],
             });
 
             expect(
@@ -168,8 +169,8 @@ describe("FolderDefaultPropertiesForUpdate", () => {
             store.state = {
                 is_item_status_metadata_used: false,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             const wrapper = default_property({
@@ -178,11 +179,11 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     title: "My title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
-                    metadata: null
+                    metadata: null,
                 },
-                itemMetadata: []
+                itemMetadata: [],
             });
 
             expect(
@@ -191,13 +192,13 @@ describe("FolderDefaultPropertiesForUpdate", () => {
         });
     });
 
-    describe("Apply bindings - ", () => {
+    describe("Apply bindings -", () => {
         it(`Given recursion option is updated Then the props used for document creation is updated`, () => {
             store.state = {
                 is_item_status_metadata_used: true,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             const wrapper = default_property({
@@ -206,24 +207,24 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     title: "My title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     metadata: [
                         {
                             short_name: "field_",
                             list_value: [
                                 {
-                                    id: 103
-                                }
-                            ]
-                        }
+                                    id: 103,
+                                },
+                            ],
+                        },
                     ],
                     status: {
                         value: "rejected",
-                        recursion: "none"
-                    }
+                        recursion: "none",
+                    },
                 },
-                itemMetadata: []
+                itemMetadata: [],
             });
 
             wrapper.vm.recursion_option = "all_items";
@@ -239,8 +240,8 @@ describe("FolderDefaultPropertiesForUpdate", () => {
             store.state = {
                 is_item_status_metadata_used: false,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             const event_bus_emit = jest.spyOn(EventBus, "$emit");
@@ -251,25 +252,25 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     title: "My title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     metadata: [
                         {
                             short_name: "field_",
                             list_value: [
                                 {
-                                    id: 103
-                                }
-                            ]
-                        }
-                    ]
+                                    id: 103,
+                                },
+                            ],
+                        },
+                    ],
                 },
                 itemMetadata: [
                     {
                         short_name: "field_",
-                        list_value: [103]
-                    }
-                ]
+                        list_value: [103],
+                    },
+                ],
             });
 
             store.state.is_item_status_metadata_used = true;
@@ -278,22 +279,22 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                 wrapper.find("[data-test=document-folder-default-properties-container]").exists()
             ).toBeTruthy();
 
-            const input = wrapper.find("[data-test=document-custom-metadata-checkbox]");
+            const input = wrapper.get("[data-test=document-custom-metadata-checkbox]");
             input.trigger("change");
 
             expect(event_bus_emit).toHaveBeenCalledWith("metadata-recursion-metadata-list", {
-                detail: { metadata_list: [] }
+                detail: { metadata_list: [] },
             });
         });
     });
-    describe("The checkbox value according to the recursion option - ", () => {
+    describe("The checkbox value according to the recursion option -", () => {
         it(`Given "all_items" recursion option
-        then all metadata should be checked `, async () => {
+        then all metadata should be checked`, async () => {
             store.state = {
                 is_item_status_metadata_used: true,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             const wrapper = default_property({
@@ -302,54 +303,54 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     title: "My title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     metadata: [
                         {
                             short_name: "field_1",
                             list_value: [
                                 {
-                                    id: 103
-                                }
-                            ]
+                                    id: 103,
+                                },
+                            ],
                         },
                         {
                             short_name: "field_2",
-                            value: "non"
+                            value: "non",
                         },
                         {
                             short_name: "field_3",
                             list_value: [
                                 {
-                                    id: 100
-                                }
-                            ]
-                        }
+                                    id: 100,
+                                },
+                            ],
+                        },
                     ],
                     status: {
                         value: "rejected",
-                        recursion: "none"
-                    }
+                        recursion: "none",
+                    },
                 },
                 itemMetadata: [
                     {
                         short_name: "field_1",
-                        list_value: [103]
+                        list_value: [103],
                     },
                     {
                         short_name: "field_2",
-                        value: "non"
+                        value: "non",
                     },
                     {
                         short_name: "field_3",
-                        list_value: [100]
-                    }
-                ]
+                        list_value: [100],
+                    },
+                ],
             });
 
             wrapper.vm.recursion_option = "all_items";
 
-            const input = wrapper.find("[data-test=document-custom-metadata-recursion-option]");
+            const input = wrapper.get("[data-test=document-custom-metadata-recursion-option]");
             input.element.value = "all_items";
 
             expect(wrapper.vm.metadata_list_to_update).toEqual([]);
@@ -360,7 +361,7 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                 "field_1",
                 "field_2",
                 "field_3",
-                "status"
+                "status",
             ]);
         });
 
@@ -369,8 +370,8 @@ describe("FolderDefaultPropertiesForUpdate", () => {
             store.state = {
                 is_item_status_metadata_used: false,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             const wrapper = default_property({
@@ -379,54 +380,54 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     title: "My title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     metadata: [
                         {
                             short_name: "field_1",
                             list_value: [
                                 {
-                                    id: 103
-                                }
-                            ]
+                                    id: 103,
+                                },
+                            ],
                         },
                         {
                             short_name: "field_2",
-                            value: "non"
+                            value: "non",
                         },
                         {
                             short_name: "field_3",
                             list_value: [
                                 {
-                                    id: 100
-                                }
-                            ]
-                        }
+                                    id: 100,
+                                },
+                            ],
+                        },
                     ],
                     status: {
                         value: "rejected",
-                        recursion: "none"
-                    }
+                        recursion: "none",
+                    },
                 },
                 itemMetadata: [
                     {
                         short_name: "field_1",
-                        list_value: [103]
+                        list_value: [103],
                     },
                     {
                         short_name: "field_2",
-                        value: "non"
+                        value: "non",
                     },
                     {
                         short_name: "field_3",
-                        list_value: [100]
-                    }
-                ]
+                        list_value: [100],
+                    },
+                ],
             });
 
             wrapper.vm.recursion_option = "all_items";
 
-            const input = wrapper.find("[data-test=document-custom-metadata-recursion-option]");
+            const input = wrapper.get("[data-test=document-custom-metadata-recursion-option]");
             input.element.value = "all_items";
 
             expect(wrapper.vm.metadata_list_to_update).toEqual([]);
@@ -441,8 +442,8 @@ describe("FolderDefaultPropertiesForUpdate", () => {
             store.state = {
                 is_item_status_metadata_used: true,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             const wrapper = default_property({
@@ -451,43 +452,43 @@ describe("FolderDefaultPropertiesForUpdate", () => {
                     title: "My title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     metadata: [
                         {
                             short_name: "field_1",
                             list_value: [
                                 {
-                                    id: 103
-                                }
-                            ]
+                                    id: 103,
+                                },
+                            ],
                         },
                         {
                             short_name: "field_2",
-                            value: "non"
+                            value: "non",
                         },
                         {
                             short_name: "field_3",
                             list_value: [
                                 {
-                                    id: 100
-                                }
-                            ]
-                        }
+                                    id: 100,
+                                },
+                            ],
+                        },
                     ],
                     status: {
                         value: "rejected",
-                        recursion: "none"
-                    }
+                        recursion: "none",
+                    },
                 },
-                itemMetadata: []
+                itemMetadata: [],
             });
 
             wrapper.vm.recursion_option = "none";
 
             wrapper.vm.metadata_list_to_update = ["field_1", "field_3"];
 
-            const input = wrapper.find("[data-test=document-custom-metadata-recursion-option]");
+            const input = wrapper.get("[data-test=document-custom-metadata-recursion-option]");
             input.element.value = "none";
 
             expect(wrapper.vm.metadata_list_to_update).toEqual(["field_1", "field_3"]);

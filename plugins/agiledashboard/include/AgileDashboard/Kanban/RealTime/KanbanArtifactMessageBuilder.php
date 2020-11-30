@@ -21,10 +21,10 @@
 namespace Tuleap\AgileDashboard\Kanban\RealTime;
 
 use AgileDashboard_KanbanItemDao;
-use Tracker_Artifact;
 use Tracker_Artifact_ChangesetFactory;
 use Tracker_Semantic_Status;
 use Tuleap\AgileDashboard\Kanban\ColumnIdentifier;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\RealTime\RealTimeArtifactMessageException;
 
 class KanbanArtifactMessageBuilder
@@ -45,10 +45,9 @@ class KanbanArtifactMessageBuilder
     }
 
     /**
-     * @param Tracker_Artifact $artifact
      * @return KanbanArtifactUpdatedMessageRepresentation
      */
-    public function buildArtifactUpdated(Tracker_Artifact $artifact)
+    public function buildArtifactUpdated(Artifact $artifact)
     {
         return new KanbanArtifactUpdatedMessageRepresentation(
             $artifact->getId()
@@ -56,11 +55,10 @@ class KanbanArtifactMessageBuilder
     }
 
     /**
-     * @param Tracker_Artifact $artifact
      * @return KanbanArtifactMovedMessageRepresentation
      * @throws RealTimeArtifactMessageException
      */
-    public function buildArtifactMoved(Tracker_Artifact $artifact)
+    public function buildArtifactMoved(Artifact $artifact)
     {
         $tracker_semantic = Tracker_Semantic_Status::load($artifact->getTracker());
         $status_field     = $tracker_semantic->getField();
@@ -72,7 +70,7 @@ class KanbanArtifactMessageBuilder
             );
         }
 
-        $has_changed = $last_changeset->hasChanges(array($status_field->getId() => $artifact->getStatusForChangeset($last_changeset)));
+        $has_changed = $last_changeset->hasChanges([$status_field->getId() => $artifact->getStatusForChangeset($last_changeset)]);
         if (! $has_changed) {
             throw new RealTimeArtifactMessageException(
                 'Field ' . $status_field->getLabel() . ' of the last changeset has not changed for the artifact id ' . $artifact->getId() . '.'
@@ -112,7 +110,7 @@ class KanbanArtifactMessageBuilder
      * @return KanbanArtifactMovedMessageRepresentation
      * @throws RealTimeArtifactMessageException
      */
-    public function buildArtifactReordered(Tracker_Artifact $artifact)
+    public function buildArtifactReordered(Artifact $artifact)
     {
         $tracker_semantic = Tracker_Semantic_Status::load($artifact->getTracker());
         $status_field     = $tracker_semantic->getField();
@@ -173,9 +171,9 @@ class KanbanArtifactMessageBuilder
     /**
      * @return array
      */
-    private function getItemsIdsInColumn(Tracker_Artifact $artifact, array $values, $in_column, $status)
+    private function getItemsIdsInColumn(Artifact $artifact, array $values, $in_column, $status)
     {
-        $column_item_ids = array();
+        $column_item_ids = [];
 
         if ($in_column === ColumnIdentifier::BACKLOG_COLUMN) {
             $items_in_column = $this->kanban_item_dao->getKanbanBacklogItemIds($artifact->getTracker()->getId());

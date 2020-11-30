@@ -21,9 +21,9 @@
 use Tuleap\AgileDashboard\Milestone\Pane\Details\DetailsChartPresentersRetriever;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneDao;
-use Tuleap\AgileDashboard\Planning\AdditionalPlanningConfigurationWarningsRetriever;
+use Tuleap\AgileDashboard\Planning\Admin\AdditionalPlanningConfigurationWarningsRetriever;
+use Tuleap\AgileDashboard\Planning\Admin\PlanningWarningPossibleMisconfigurationPresenter;
 use Tuleap\AgileDashboard\Planning\MilestoneBurndownFieldChecker;
-use Tuleap\AgileDashboard\Planning\Presenters\PlanningWarningPossibleMisconfigurationPresenter;
 use Tuleap\AgileDashboard\Semantic\Dao\SemanticDoneDao;
 use Tuleap\AgileDashboard\Semantic\SemanticDone;
 use Tuleap\AgileDashboard\Semantic\SemanticDoneFactory;
@@ -34,7 +34,6 @@ use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
 use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
 use Tuleap\Tracker\Workflow\BeforeEvent;
-use Tuleap\Velocity\Semantic\BacklogRequiredTrackerCollectionFormatter;
 use Tuleap\Velocity\Semantic\SemanticVelocity;
 use Tuleap\Velocity\Semantic\SemanticVelocityFactory;
 use Tuleap\Velocity\VelocityChartPresenter;
@@ -79,7 +78,7 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
 
     public function getDependencies()
     {
-        return array('tracker', 'agiledashboard');
+        return ['tracker', 'agiledashboard'];
     }
 
     public function getPluginInfo()
@@ -97,8 +96,8 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
     public function tracker_event_manage_semantics($parameters) // @codingStandardsIgnoreLine
     {
         $tracker = $parameters['tracker'];
-        /** @var Tracker_SemanticCollection $semantics */
         $semantics = $parameters['semantics'];
+        \assert($semantics instanceof Tracker_SemanticCollection);
 
         if (! $this->isAPlanningTrackers($tracker)) {
             return;
@@ -133,7 +132,7 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
                 ]
             );
             $semantic_name = dgettext('tuleap-velocity', 'Velocity semantic');
-            $event->addWarnings(
+            $event->addWarning(
                 new PlanningWarningPossibleMisconfigurationPresenter($semantic_url, $semantic_name)
             );
         }
@@ -142,11 +141,7 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
     public function cssfile($params)
     {
         if ($this->isInAdminSemantics()) {
-            $theme_include_assets = new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/velocity/FlamingParrot',
-                '/assets/velocity/FlamingParrot'
-            );
-            $css_file_url         = $theme_include_assets->getFileURL('style.css');
+            $css_file_url         = $this->getAssets()->getFileURL('style-fp.css');
 
             echo '<link rel="stylesheet" type="text/css" href="' . $css_file_url . '" />';
         }
@@ -154,28 +149,18 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
 
     public function burningParrotGetJavascriptFiles(array $params)
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . "/../../../src/www/assets/velocity/scripts",
-            "/assets/velocity/scripts"
-        );
-
         if ($this->isAPlanningOverviewRequest()) {
-            $params['javascript_files'][] = $include_assets->getFileURL('velocity-chart.js');
+            $params['javascript_files'][] = $this->getAssets()->getFileURL('velocity-chart.js');
         }
     }
 
     /** @see Event::BURNING_PARROT_GET_STYLESHEETS */
     public function burningParrotGetStylesheets(array $params)
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/velocity/BurningParrot',
-            '/assets/velocity/BurningParrot'
-        );
-
         $variant = $params['variant'];
 
         if ($this->isAPlanningOverviewRequest()) {
-            $params['stylesheets'][] = $include_assets ->getFileURL('velocity-' . $variant->getName() . '.css');
+            $params['stylesheets'][] = $this->getAssets()->getFileURL('velocity-' . $variant->getName() . '.css');
         }
     }
 
@@ -246,7 +231,7 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
         $mapping = $parameters['xml_mapping'];
 
         if ($type == SemanticVelocity::NAME) {
-            $factory                = new SemanticVelocityFactory(new BacklogRequiredTrackerCollectionFormatter());
+            $factory                = new SemanticVelocityFactory();
             $parameters['semantic'] = $factory->getInstanceFromXML($xml, $tracker, $mapping);
         }
     }
@@ -256,9 +241,7 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
         $form_element_factory = Tracker_FormElementFactory::instance();
 
         $builder = new VelocityRepresentationBuilder(
-            new SemanticVelocityFactory(
-                new BacklogRequiredTrackerCollectionFormatter()
-            ),
+            new SemanticVelocityFactory(),
             new SemanticDoneFactory(
                 new SemanticDoneDao(),
                 new SemanticDoneValueChecker()
@@ -268,7 +251,6 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
                 PlanningFactory::build(),
                 Tracker_ArtifactFactory::instance(),
                 $form_element_factory,
-                TrackerFactory::instance(),
                 new AgileDashboard_Milestone_MilestoneStatusCounter(
                     new AgileDashboard_BacklogItemDao(),
                     new Tracker_ArtifactDao(),
@@ -281,9 +263,8 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
                     PlanningFactory::build()
                 ),
                 new TimeframeBuilder(
-                    $form_element_factory,
                     $this->getSemanticTimeframeBuilder($form_element_factory),
-                    new \BackendLogger()
+                    \BackendLogger::getDefaultLogger()
                 ),
                 new MilestoneBurndownFieldChecker($form_element_factory)
             )
@@ -301,7 +282,7 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
         $event->addEscapedChart($string_representation);
     }
 
-    private function getSemanticTimeframeBuilder(Tracker_FormElementFactory $form_element_factory) : SemanticTimeframeBuilder
+    private function getSemanticTimeframeBuilder(Tracker_FormElementFactory $form_element_factory): SemanticTimeframeBuilder
     {
         return new SemanticTimeframeBuilder(
             new SemanticTimeframeDao(),
@@ -309,12 +290,20 @@ class velocityPlugin extends Plugin // @codingStandardsIgnoreLine
         );
     }
 
-    public function doesAPluginRenderAChartBasedOnSemanticTimeframeForTracker(DoesAPluginRenderAChartBasedOnSemanticTimeframeForTrackerEvent $event) : void
+    public function doesAPluginRenderAChartBasedOnSemanticTimeframeForTracker(DoesAPluginRenderAChartBasedOnSemanticTimeframeForTrackerEvent $event): void
     {
         $semantic_velocity = SemanticVelocity::load($event->getTracker());
 
         if ($semantic_velocity->getVelocityField() !== null) {
             $event->setItRendersAChartForTracker();
         }
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/velocity',
+            '/assets/velocity'
+        );
     }
 }

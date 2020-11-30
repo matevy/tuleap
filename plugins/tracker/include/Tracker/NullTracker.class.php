@@ -30,9 +30,17 @@ class NullTracker extends Tracker
         parent::__construct(null, null, null, null, null, null, null, null, null, null, null, null, null, TrackerColor::default(), null);
     }
 
-    public function getId()
+    /**
+     * @psalm-mutation-free
+     */
+    public function getId(): int
     {
+        return 0;
     }
+
+    /**
+     * @psalm-mutation-free
+     */
     public function getName()
     {
     }

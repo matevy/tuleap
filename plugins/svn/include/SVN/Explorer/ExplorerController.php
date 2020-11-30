@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,11 +24,12 @@ use CSRFSynchronizerToken;
 use Feedback;
 use HTTPRequest;
 use Project;
-use SystemEventManager;
+use Tuleap\date\RelativeDatesAssetsRetriever;
+use Tuleap\Layout\IncludeAssets;
 use Tuleap\SVN\Repository\Exception\CannotCreateRepositoryException;
 use Tuleap\SVN\Repository\Exception\RepositoryNameIsInvalidException;
 use Tuleap\SVN\Repository\Exception\UserIsNotSVNAdministratorException;
-use Tuleap\SVN\Repository\Repository;
+use Tuleap\SVN\Repository\SvnRepository;
 use Tuleap\SVN\Repository\RepositoryCreator;
 use Tuleap\SVN\Repository\RepositoryManager;
 use Tuleap\SVN\ServiceSvn;
@@ -43,9 +44,6 @@ class ExplorerController
 
     /** @var RepositoryManager */
     private $repository_manager;
-
-    /** @var SystemEventManager */
-    private $system_event_manager;
     /**
      * @var RepositoryBuilder
      */
@@ -63,7 +61,6 @@ class ExplorerController
     ) {
         $this->repository_manager   = $repository_manager;
         $this->permissions_manager  = $permissions_manager;
-        $this->system_event_manager = SystemEventManager::instance();
         $this->repository_builder   = $repository_builder;
         $this->repository_creator   = $repository_creator;
     }
@@ -73,14 +70,21 @@ class ExplorerController
         $this->renderIndex($service, $request);
     }
 
-    private function renderIndex(ServiceSvn $service, HTTPRequest $request)
+    private function renderIndex(ServiceSvn $service, HTTPRequest $request): void
     {
         $project = $request->getProject();
         $token   = $this->generateTokenForCeateRepository($request->getProject());
 
         $repository_list = $this->repository_manager->getRepositoriesInProjectWithLastCommitInfo($request->getProject());
-        $repositories    = $this->repository_builder->build($repository_list);
+        $repositories    = $this->repository_builder->build($repository_list, $request->getCurrentUser());
         $is_admin        = $this->permissions_manager->isAdmin($project, $request->getCurrentUser());
+
+        $GLOBALS['HTML']->addJavascriptAsset(RelativeDatesAssetsRetriever::getAsJavascriptAssets());
+        $include_assets = new IncludeAssets(
+            __DIR__ . '/../../../../../src/www/assets/svn',
+            '/assets/svn'
+        );
+        $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL("homepage.js"));
 
         $service->renderInPage(
             $request,
@@ -89,11 +93,14 @@ class ExplorerController
             new ExplorerPresenter(
                 $project,
                 $token,
-                $request->get('name'),
                 $repositories,
                 $is_admin
             )
         );
+
+        if (count($repositories) > 0) {
+            RelativeDatesAssetsRetriever::includeAssetsInSnippet();
+        }
     }
 
     private function generateTokenForCeateRepository(Project $project)
@@ -108,22 +115,37 @@ class ExplorerController
 
         $repo_name = $request->get("repo_name");
 
-        $repository_to_create = new Repository("", $repo_name, "", "", $request->getProject());
+        $repository_to_create = SvnRepository::buildToBeCreatedRepository($repo_name, $request->getProject());
         try {
             $this->repository_creator->create($repository_to_create, $user);
 
-            $GLOBALS['Response']->addFeedback('info', $repo_name . ' ' . dgettext('tuleap-svn', 'Successfully Updated'));
-            $GLOBALS['Response']->redirect(SVN_BASE_URL . '/?' . http_build_query(array('group_id' => $request->getProject()->getid())));
+            $GLOBALS['Response']->addFeedback(
+                Feedback::INFO,
+                sprintf(
+                    dgettext('tuleap-svn', 'Repository %s successfully created'),
+                    $repo_name
+                )
+            );
         } catch (CannotCreateRepositoryException $e) {
-            $GLOBALS['Response']->addFeedback(Feedback::ERROR, $repo_name . ' ' . dgettext('tuleap-svn', 'Unable to update Repository data'));
-            $GLOBALS['Response']->redirect(SVN_BASE_URL . '/?' . http_build_query(array('group_id' => $request->getProject()->getid(), 'name' => $repo_name)));
+            $GLOBALS['Response']->addFeedback(
+                Feedback::ERROR,
+                sprintf(
+                    dgettext('tuleap-svn', 'Unable to create repository %s'),
+                    $repo_name
+                )
+            );
         } catch (UserIsNotSVNAdministratorException $e) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, dgettext('tuleap-svn', "User doesn't have permission to create a repository"));
-            $GLOBALS['Response']->redirect(SVN_BASE_URL . '/?' . http_build_query(array('group_id' => $request->getProject()->getid(), 'name' => $repo_name)));
         } catch (RepositoryNameIsInvalidException $e) {
-            $GLOBALS['Response']->addFeedback(Feedback::ERROR, dgettext('tuleap-svn', 'The repository name is invalid'));
+            $GLOBALS['Response']->addFeedback(
+                Feedback::ERROR,
+                sprintf(
+                    dgettext('tuleap-svn', 'The repository name %s is invalid'),
+                    $repo_name
+                )
+            );
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $e->getMessage());
-            $GLOBALS['Response']->redirect(SVN_BASE_URL . '/?' . http_build_query(array('group_id' => $request->getProject()->getid(), 'name' => $repo_name)));
         }
+        $GLOBALS['Response']->redirect(SVN_BASE_URL . '/?' . http_build_query(['group_id' => $request->getProject()->getid()]));
     }
 }

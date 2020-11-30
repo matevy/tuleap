@@ -23,9 +23,9 @@ namespace Tuleap\SVN;
 use DataAccessObject;
 use SystemEvent;
 use Tuleap\SVN\Events\SystemEvent_SVN_RESTORE_REPOSITORY;
+use Tuleap\SVN\Repository\CoreRepository;
 use Tuleap\SVN\Repository\Repository;
 use Project;
-use ForgeConfig;
 
 class Dao extends DataAccessObject
 {
@@ -36,7 +36,7 @@ class Dao extends DataAccessObject
                 FROM plugin_svn_repositories
                 LEFT JOIN plugin_svn_last_access
                   ON plugin_svn_repositories.id = plugin_svn_last_access.repository_id
-                WHERE project_id=' . $project_id .'
+                WHERE project_id=' . $project_id . '
                 AND repository_deletion_date IS NULL
                 ORDER BY name ASC';
 
@@ -102,23 +102,21 @@ class Dao extends DataAccessObject
         return count($this->retrieve($sql)) > 0;
     }
 
-    public function getListRepositoriesSqlFragment()
+    /**
+     * @return \DataAccessResult|false
+     * @throws \DataAccessQueryException
+     */
+    public function getAllRepositoriesInActiveProjects()
     {
-        $sys_dir  = $this->da->quoteSmart(ForgeConfig::get('sys_data_dir'));
-
-        $sql = "SELECT groups.*, service.*,
-                CONCAT('/svnplugin/', unix_group_name, '/', name) AS public_path,
-                CONCAT($sys_dir,'/svn_plugin/', groups.group_id, '/', name) AS system_path,
-                backup_path, repository_deletion_date
-                FROM groups, service, plugin_svn_repositories
-                WHERE groups.group_id = service.group_id
-                  AND service.is_used = '1'
+        $sql = "SELECT groups.*, plugin_svn_repositories.*
+                FROM groups
+                    INNER JOIN service ON (service.group_id = groups.group_id AND service.short_name = 'plugin_svn')
+                    INNER JOIN plugin_svn_repositories ON (plugin_svn_repositories.project_id = groups.group_id)
+                WHERE service.is_used = '1'
                   AND groups.status = 'A'
-                  AND plugin_svn_repositories.project_id = groups.group_id
-                  AND service.short_name = 'plugin_svn'
                   AND repository_deletion_date IS NULL";
 
-        return $sql;
+        return $this->retrieve($sql);
     }
 
     public function searchRepositoryByName(Project $project, $name)
@@ -127,7 +125,7 @@ class Dao extends DataAccessObject
         $name         = $this->da->quoteSmart($name);
 
         $sql = "SELECT groups.*, id, name, CONCAT(unix_group_name, '/', name) AS repository_name,
-                    backup_path, repository_deletion_date
+                    backup_path, repository_deletion_date, is_core
                 FROM groups, plugin_svn_repositories
                 WHERE project_id = groups.group_id
                 AND groups.unix_group_name = $project_name
@@ -140,9 +138,10 @@ class Dao extends DataAccessObject
     {
         $name       = $this->da->quoteSmart($repository->getName());
         $project_id = $this->da->escapeInt($repository->getProject()->getId());
+        $is_core    = $repository instanceof CoreRepository ? '1' : '0';
 
         $query = "INSERT INTO plugin_svn_repositories
-            (name,  project_id ) values ($name, $project_id)";
+            (name,  project_id, is_core) values ($name, $project_id, $is_core)";
 
         return $this->updateAndGetLastId($query);
     }
@@ -300,10 +299,47 @@ class Dao extends DataAccessObject
                 FROM plugin_svn_repositories
                     INNER JOIN groups AS project
                     ON plugin_svn_repositories.project_id = project.group_id
-                WHERE project.status <> ' . $status_deleted .'
+                WHERE project.status <> ' . $status_deleted . '
                 AND repository_deletion_date IS NULL
                 ORDER BY project_id, name ASC';
 
         return $this->retrieve($sql);
+    }
+
+    public function getCoreLastCommitDate(Project $project): ?\DateTimeImmutable
+    {
+        $sql = sprintf('SELECT date FROM svn_commits WHERE group_id = %d ORDER BY date DESC LIMIT 1', $this->da->escapeInt($project->getID()));
+        $dar = $this->retrieve($sql);
+        if ($dar && count($dar) === 1) {
+            $row = $dar->getRow();
+            return new \DateTimeImmutable('@' . $row['date']);
+        }
+        return null;
+    }
+
+    public function getCoreRepositoryId(Project $project): ?int
+    {
+        $sql = sprintf('SELECT id FROM plugin_svn_repositories WHERE project_id = %d and is_core = 1', $this->da->escapeInt($project->getID()));
+        $dar = $this->retrieve($sql);
+        if ($dar && count($dar) === 1) {
+            $row = $dar->getRow();
+            return (int) $row['id'];
+        }
+        return null;
+    }
+
+    /**
+     * @throws \DataAccessQueryException
+     */
+    public function getCoreRepositories(): \Generator
+    {
+        $sql = 'SELECT * FROM plugin_svn_repositories WHERE is_core = 1';
+        $dar = $this->retrieve($sql);
+        if (! $dar || $dar->isError()) {
+            return;
+        }
+        foreach ($dar as $row) {
+            yield (int) $row['project_id'];
+        }
     }
 }

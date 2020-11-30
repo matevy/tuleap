@@ -115,13 +115,13 @@ class PackageResource extends AuthenticatedResource
             throw new RestException(409, "Package with the same label already exists in this project");
         }
 
-        $package_array  = array(
+        $package_array  = [
             'group_id'        => $project->getID(),
             'name'            => $label,
             'status_id'       => \FRSPackage::STATUS_ACTIVE,
             'rank'            => 'beginning',
             'approve_license' => 1
-        );
+        ];
         $new_package_id = $this->package_factory->create($package_array);
         if (! $new_package_id) {
             throw new RestException(500, "Unable to create the package");
@@ -209,10 +209,9 @@ class PackageResource extends AuthenticatedResource
         );
         $total_size         = $paginated_releases->getTotalSize();
 
-        $releases = array();
+        $releases = [];
         foreach ($paginated_releases->getReleases() as $release) {
-            $representation = new ReleaseRepresentation();
-            $representation->build($release, $this->retriever, $current_user, $this->uploaded_link_retriever, $this->release_permissions_for_groups_builder);
+            $representation = new ReleaseRepresentation($release, $this->retriever, $current_user, $this->uploaded_link_retriever, $this->release_permissions_for_groups_builder);
 
             $releases[] = $representation;
         }
@@ -220,10 +219,7 @@ class PackageResource extends AuthenticatedResource
         $this->sendOptionsHeadersForReleases();
         $this->sendPaginationHeaders($limit, $offset, $total_size);
 
-        $collection = new ReleaseRepresentationPaginatedCollectionRepresentation();
-        $collection->build($releases, $total_size);
-
-        return $collection;
+        return new ReleaseRepresentationPaginatedCollectionRepresentation($releases, $total_size);
     }
 
     /**
@@ -241,17 +237,17 @@ class PackageResource extends AuthenticatedResource
     {
         $package = $this->package_factory->getFRSPackageFromDb($id);
 
-        if (!$package) {
+        if (! $package) {
             throw new RestException(404, "Package not found");
         }
 
         $user = $this->user_manager->getCurrentUser();
 
-        if (!$this->package_factory->userCanRead($package->getGroupID(), $package->getPackageID(), $user->getId())) {
+        if (! $this->package_factory->userCanRead($package->getGroupID(), $package->getPackageID(), $user->getId())) {
             throw new RestException(403, "Access to package denied");
         }
 
-        if (!$package->isActive()) {
+        if (! $package->isActive()) {
             throw new RestException(403, "Package is not active");
         }
 

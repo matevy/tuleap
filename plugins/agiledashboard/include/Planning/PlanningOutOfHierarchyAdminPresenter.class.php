@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -26,10 +26,20 @@ class Planning_PlanningOutOfHierarchyAdminPresenter extends Planning_PlanningAdm
     public $is_planning_removal_dangerous;
     private $root_planning_name;
 
-    public function __construct(Planning $planning, $root_planning_name, bool $is_planning_removal_dangerous)
-    {
-        parent::__construct($planning, $is_planning_removal_dangerous);
-        $this->root_planning_name            = $root_planning_name;
+    public function __construct(
+        EventManager $event_manager,
+        Planning $planning,
+        ?Planning $root_planning,
+        bool $is_planning_removal_dangerous
+    ) {
+        parent::__construct($event_manager, $planning, $root_planning, $is_planning_removal_dangerous);
+
+        if ($root_planning) {
+            $this->root_planning_name = $root_planning->getName();
+        } else {
+            $this->root_planning_name = '';
+        }
+
         $this->is_planning_removal_dangerous = $is_planning_removal_dangerous;
     }
 
@@ -40,8 +50,6 @@ class Planning_PlanningOutOfHierarchyAdminPresenter extends Planning_PlanningAdm
 
     public function extra_message()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_out_of_hierarchy', array(
-            $this->root_planning_name
-        ));
+        return sprintf(dgettext('tuleap-agiledashboard', 'This planning doesn\'t belong to root planning (%1$s) hierarchy. This configuration is not supported. You should remove this planning.'), $this->root_planning_name);
     }
 }

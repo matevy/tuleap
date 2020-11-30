@@ -64,11 +64,11 @@ class ForgeUpgradeConfig
      */
     public function loadDefaults()
     {
-        if (isset($GLOBALS['forgeupgrade_file']) && is_file($GLOBALS['forgeupgrade_file'])) {
-            $this->setFilePath($GLOBALS['forgeupgrade_file']);
+        if (ForgeConfig::exists('forgeupgrade_file') && is_file(ForgeConfig::get('forgeupgrade_file'))) {
+            $this->setFilePath(ForgeConfig::get('forgeupgrade_file'));
         } else {
-            $localInc = getenv('CODENDI_LOCAL_INC')?getenv('CODENDI_LOCAL_INC'):'/etc/tuleap/conf/local.inc';
-            throw new Exception('$forgeupgrade_file variable not defined in '.$localInc);
+            $localInc = getenv('CODENDI_LOCAL_INC') ? getenv('CODENDI_LOCAL_INC') : '/etc/tuleap/conf/local.inc';
+            throw new Exception('$forgeupgrade_file variable not defined in ' . $localInc);
         }
     }
 
@@ -94,7 +94,7 @@ class ForgeUpgradeConfig
      */
     public function recordOnlyPath($path)
     {
-        $this->command->exec(self::FORGEUPGRADE_PATH.' --dbdriver='.escapeshellarg($this->config['core']['dbdriver']).' --path='.escapeshellarg($path).' record-only');
+        $this->command->exec(self::FORGEUPGRADE_PATH . ' --dbdriver=' . escapeshellarg($this->config['core']['dbdriver']) . ' --path=' . escapeshellarg($path) . ' record-only');
     }
 
     /**
@@ -104,11 +104,11 @@ class ForgeUpgradeConfig
      */
     public function addPath($path)
     {
-        if (!isset($this->config['core'])) {
-            $this->config['core'] = array();
+        if (! isset($this->config['core'])) {
+            $this->config['core'] = [];
         }
-        if (!isset($this->config['core']['path'])) {
-            $this->config['core']['path'] = array();
+        if (! isset($this->config['core']['path'])) {
+            $this->config['core']['path'] = [];
         }
         $this->config['core']['path'][] = $path;
         $this->write();
@@ -146,16 +146,16 @@ class ForgeUpgradeConfig
         $content = '';
 
         foreach ($this->config as $key => $elem) {
-            $content .= '['.$key.']'.PHP_EOL;
+            $content .= '[' . $key . ']' . PHP_EOL;
             foreach ($elem as $key2 => $elem2) {
                 if (is_array($elem2)) {
                     foreach ($elem2 as $value) {
-                        $content .= $key2.'[] = "'.$value.'"'.PHP_EOL;
+                        $content .= $key2 . '[] = "' . $value . '"' . PHP_EOL;
                     }
-                } elseif ($elem2=="") {
-                    $content .= $key2.' = '.PHP_EOL;
+                } elseif ($elem2 == "") {
+                    $content .= $key2 . ' = ' . PHP_EOL;
                 } else {
-                    $content .= $key2.' = "'.$elem2.'"'.PHP_EOL;
+                    $content .= $key2 . ' = "' . $elem2 . '"' . PHP_EOL;
                 }
             }
         }
@@ -186,6 +186,6 @@ class ForgeUpgradeConfig
 
     private function execute($cmd)
     {
-        return $this->command->exec(self::FORGEUPGRADE_PATH.' --config='.escapeshellarg($this->filePath).' '.escapeshellarg($cmd));
+        return $this->command->exec(self::FORGEUPGRADE_PATH . ' --config=' . escapeshellarg($this->filePath) . ' ' . escapeshellarg($cmd));
     }
 }

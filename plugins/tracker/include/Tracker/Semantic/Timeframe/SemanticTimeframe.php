@@ -55,6 +55,9 @@ class SemanticTimeframe extends Tracker_Semantic
      */
     private $end_date_field;
 
+    /**
+     * @throws TimeframeBrokenConfigurationException
+     */
     public function __construct(
         Tracker $tracker,
         ?Tracker_FormElement_Field_Date $start_date_field,
@@ -108,12 +111,12 @@ class SemanticTimeframe extends Tracker_Semantic
     }
 
     public function displayAdmin(
-        Tracker_SemanticManager $sm,
+        Tracker_SemanticManager $semantic_manager,
         TrackerManager $tracker_manager,
         Codendi_Request $request,
         PFUser $current_user
     ): void {
-        $sm->displaySemanticHeader($this, $tracker_manager);
+        $semantic_manager->displaySemanticHeader($this, $tracker_manager);
 
         $builder = new SemanticTimeframeAdministrationPresenterBuilder(
             \Tracker_FormElementFactory::instance()
@@ -133,20 +136,17 @@ class SemanticTimeframe extends Tracker_Semantic
 
         $renderer->renderToPage('timeframe-semantic-admin', $presenter);
 
-        $js_assets = new IncludeAssets(
-            __DIR__ . '/../../../../www/assets',
-            TRACKER_BASE_URL . '/assets'
-        );
+        $assets = new IncludeAssets(__DIR__ . '/../../../../../../src/www/assets/trackers', '/assets/trackers');
 
         $GLOBALS['HTML']->includeFooterJavascriptFile(
-            $js_assets->getFileURL("tracker-semantic-timeframe-option-selector.js")
+            $assets->getFileURL("tracker-semantic-timeframe-option-selector.js")
         );
 
-        $sm->displaySemanticFooter($this, $tracker_manager);
+        $semantic_manager->displaySemanticFooter($this, $tracker_manager);
     }
 
     public function process(
-        Tracker_SemanticManager $sm,
+        Tracker_SemanticManager $semantic_manager,
         TrackerManager $tracker_manager,
         Codendi_Request $request,
         PFUser $current_user
@@ -168,7 +168,7 @@ class SemanticTimeframe extends Tracker_Semantic
             $this->redirectToSemanticTimeframeAdmin();
         }
 
-        $this->displayAdmin($sm, $tracker_manager, $request, $current_user);
+        $this->displayAdmin($semantic_manager, $tracker_manager, $request, $current_user);
     }
 
     private function redirectToSemanticTimeframeAdmin()
@@ -176,14 +176,14 @@ class SemanticTimeframe extends Tracker_Semantic
         $GLOBALS['Response']->redirect($this->getUrl());
     }
 
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping): void
+    public function exportToXml(SimpleXMLElement $root, $xml_mapping): void
     {
         if (! $this->isDefined()) {
             return;
         }
 
         $start_date_field_id = (int) $this->start_date_field->getId();
-        $start_date_ref      = array_search($start_date_field_id, $xmlMapping);
+        $start_date_ref      = array_search($start_date_field_id, $xml_mapping);
 
         if (! $start_date_ref) {
             return;
@@ -191,7 +191,7 @@ class SemanticTimeframe extends Tracker_Semantic
 
         if ($this->duration_field !== null) {
             $duration_field_id = (int) $this->duration_field->getId();
-            $duration_ref      = array_search($duration_field_id, $xmlMapping);
+            $duration_ref      = array_search($duration_field_id, $xml_mapping);
 
             if (! $duration_ref) {
                 return;
@@ -203,7 +203,7 @@ class SemanticTimeframe extends Tracker_Semantic
 
         if ($this->end_date_field !== null) {
             $end_date_field_id = (int) $this->end_date_field->getId();
-            $end_date_ref      = array_search($end_date_field_id, $xmlMapping);
+            $end_date_ref      = array_search($end_date_field_id, $xml_mapping);
 
             if (! $end_date_ref) {
                 return;
@@ -214,7 +214,7 @@ class SemanticTimeframe extends Tracker_Semantic
         }
     }
 
-    public function buildXMLExport(SimpleXMLElement $root, string $start_date_ref) : SimpleXMLElement
+    public function buildXMLExport(SimpleXMLElement $root, string $start_date_ref): SimpleXMLElement
     {
         $semantic_child = $root->addChild('semantic');
         $semantic_child->addAttribute('type', $this->getShortName());
@@ -231,19 +231,19 @@ class SemanticTimeframe extends Tracker_Semantic
     public function isEndDateField(Tracker_FormElement_Field $field): bool
     {
         return $this->end_date_field !== null &&
-            (int)$field->getId() === (int)$this->end_date_field->getId();
+            (int) $field->getId() === (int) $this->end_date_field->getId();
     }
 
     public function isDurationField(Tracker_FormElement_Field $field): bool
     {
         return $this->duration_field !== null &&
-            (int)$field->getId() === (int)$this->duration_field->getId();
+            (int) $field->getId() === (int) $this->duration_field->getId();
     }
 
     public function isStartDateField(Tracker_FormElement_Field $field): bool
     {
         return $this->start_date_field !== null &&
-            (int)$field->getId() === (int)$this->start_date_field->getId();
+            (int) $field->getId() === (int) $this->start_date_field->getId();
     }
 
     public function save(): bool
@@ -313,7 +313,7 @@ class SemanticTimeframe extends Tracker_Semantic
         );
     }
 
-    private function resetSemantic() : void
+    private function resetSemantic(): void
     {
         (new SemanticTimeframeDao())->deleteTimeframeSemantic(
             (int) $this->tracker->getId()

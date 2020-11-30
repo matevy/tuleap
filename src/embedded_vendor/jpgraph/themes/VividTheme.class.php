@@ -9,9 +9,9 @@ class VividTheme extends Theme
     private $axis_color       = '#0066CC';
     private $grid_color       = '#3366CC';
 
-    function GetColorList()
+    public function GetColorList()
     {
-        return array(
+        return [
             '#FFFB11',
             '#005EBC',
             '#9AEB67',
@@ -24,12 +24,11 @@ class VividTheme extends Theme
             '#2E97E0',
             '#02927F',
             '#FF005A',
-        );
+        ];
     }
 
-    function SetupGraph($graph)
+    public function SetupGraph($graph)
     {
-
         // graph
         /*
         $img = $graph->img;
@@ -77,9 +76,8 @@ class VividTheme extends Theme
     }
 
 
-    function SetupPieGraph($graph)
+    public function SetupPieGraph($graph)
     {
-
         // graph
         $graph->SetFrame(false);
 
@@ -103,7 +101,7 @@ class VividTheme extends Theme
     }
 
 
-    function PreStrokeApply($graph)
+    public function PreStrokeApply($graph)
     {
         if ($graph->legend->HasItems()) {
             $img = $graph->img;
@@ -116,9 +114,8 @@ class VividTheme extends Theme
         }
     }
 
-    function ApplyPlot($plot)
+    public function ApplyPlot($plot)
     {
-
         switch (get_class($plot)) {
             case 'GroupBarPlot':
                 foreach ($plot->plots as $_plot) {
@@ -143,7 +140,7 @@ class VividTheme extends Theme
 
             case 'LinePlot':
                 $plot->Clear();
-                $plot->SetColor($this->GetNextColor().'@0.4');
+                $plot->SetColor($this->GetNextColor() . '@0.4');
                 $plot->SetWeight(2);
 //                $plot->SetBarCenter();
                 break;

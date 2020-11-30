@@ -37,6 +37,7 @@ class GitViews_GitPhpViewer
         'shortlog',
         'search',
         'tree',
+        'tag',
         false
     ];
 
@@ -44,15 +45,10 @@ class GitViews_GitPhpViewer
      * @var GitRepository
      */
     private $repository;
-    /**
-     * @var PFUser
-     */
-    private $current_user;
 
-    public function __construct(GitRepository $repository, PFUser $current_user)
+    public function __construct(GitRepository $repository)
     {
         $this->repository   = $repository;
-        $this->current_user = $current_user;
     }
 
     public function displayContent(HTTPRequest $request)
@@ -62,7 +58,7 @@ class GitViews_GitPhpViewer
                 <section class="tlp-pane">
                     <div class="tlp-pane-container">
                         <div class="tlp-pane-header">
-                            <h1 class="tlp-pane-title"><i class="tlp-pane-title-icon fa fa-files-o"></i> Files</h1>
+                            <h1 class="tlp-pane-title"><i class="tlp-pane-title-icon far fa-copy"></i> Files</h1>
                         </div>
                         <section class="tlp-pane-section">
                             <div id="gitphp" class="plugin_git_gitphp">';

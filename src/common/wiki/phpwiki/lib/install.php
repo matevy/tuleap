@@ -32,8 +32,8 @@ function init_install()
     // prevent from recursion
     static $already = 0;
     // setup default settings
-    if (!$already) {
-        IniConfig(dirname(__FILE__)."/../config/config-dist.ini");
+    if (! $already) {
+        IniConfig(dirname(__FILE__) . "/../config/config-dist.ini");
     }
     $already = 1;
 }
@@ -51,7 +51,7 @@ function run_install($part = '')
         $_GET['show'] = $part;
     }
     // setup default settings
-    if (!$already and !defined("_PHPWIKI_INSTALL_RUNNING")) {
+    if (! $already and ! defined("_PHPWIKI_INSTALL_RUNNING")) {
         define("_PHPWIKI_INSTALL_RUNNING", true);
     }
     $already = 1;

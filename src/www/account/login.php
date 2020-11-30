@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015-2018. All rights reserved
+ * Copyright (c) Enalean, 2015-Present. All rights reserved
  * Copyright 1999-2000 (c) The SourceForge Crew
  *
  * This file is a part of Tuleap.
@@ -35,9 +35,9 @@ $em = EventManager::instance();
 
 // Validate input
 // Clean variables
-$_cVar = array();
+$_cVar = [];
 // Raw variables
-$_rVar = array();
+$_rVar = [];
 $request = HTTPRequest::instance();
 
 $_rVar['form_loginname'] = null;
@@ -70,11 +70,13 @@ $status  = null;
 $user    = null;
 if ($request->isPost()) {
     $login_csrf->check();
-    if (!$_rVar['form_loginname'] || !$_rVar['form_pw']) {
+    if (! $_rVar['form_loginname'] || ! $_rVar['form_pw']) {
         $GLOBALS['Response']->addFeedback('error', $Language->getText('include_session', 'missing_pwd'));
     } else {
-        $user = $um->login($_rVar['form_loginname'], $_rVar['form_pw']);
-        $status = $user->getStatus();
+        $user    = $um->login($_rVar['form_loginname'], new \Tuleap\Cryptography\ConcealedString($_rVar['form_pw']));
+        sodium_memzero($_rVar['form_pw']);
+        $status  = $user->getStatus();
+        $success = true;
     }
 }
 
@@ -88,8 +90,8 @@ if ($request->isPost()) {
 if ($user === null) {
     $user = $um->getCurrentUser();
 }
-if ($user->isLoggedIn()) {
-    account_redirect_after_login($_rVar['return_to']);
+if ($user->isLoggedIn() && ($success === true || $request->get('prompt') !== 'login')) {
+    account_redirect_after_login($user, $_rVar['return_to'] ?? '');
 }
 
 // Display login page
@@ -105,19 +107,20 @@ $presenter = $presenter_builder->build(
     $_cVar['pv'],
     $_rVar['form_loginname'],
     $request->isSecure(),
-    $login_csrf
+    $login_csrf,
+    (string) $request->get('prompt')
 );
 
 if ($pvMode) {
-    $GLOBALS['HTML']->pv_header(array('title'=>$presenter->account_login_page_title()));
+    $GLOBALS['HTML']->pv_header(['title' => $presenter->account_login_page_title()]);
 } else {
-    $GLOBALS['HTML']->header(array('title'=>$presenter->account_login_page_title(), 'body_class' => array('login-page')));
+    $GLOBALS['HTML']->header(['title' => $presenter->account_login_page_title(), 'body_class' => ['login-page']]);
 }
 
 $login_controller->index($presenter);
 
 if ($pvMode) {
-    $GLOBALS['HTML']->pv_footer(array());
+    $GLOBALS['HTML']->pv_footer([]);
 } else {
-    $GLOBALS['HTML']->footer(array('without_content' => true));
+    $GLOBALS['HTML']->footer(['without_content' => true]);
 }

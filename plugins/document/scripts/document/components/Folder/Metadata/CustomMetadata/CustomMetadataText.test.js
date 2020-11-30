@@ -27,41 +27,45 @@ describe("CustomMetadataText", () => {
         factory = (props = {}) => {
             return shallowMount(CustomMetadataText, {
                 localVue,
-                propsData: { ...props }
+                propsData: { ...props },
             });
         };
     });
 
-    it(`It renders an input with a required value`, () => {
+    it(`renders an input with a required value`, () => {
         const currentlyUpdatedItemMetadata = {
             value: "text value",
             is_required: true,
             name: "field",
             type: "text",
-            short_name: "short_name"
+            short_name: "short_name",
         };
         const wrapper = factory({ currentlyUpdatedItemMetadata });
-        const date_input = wrapper.find("[data-test=document-text-input]");
+        const date_input = wrapper.get("[data-test=document-text-input]");
 
         expect(date_input.element.value).toEqual("text value");
         expect(date_input.element.required).toBe(true);
-        expect(wrapper.contains("[data-test=document-custom-metadata-is-required]")).toBeTruthy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-is-required]").exists()
+        ).toBeTruthy();
     });
 
-    it(`It renders an input with an empty value`, () => {
+    it(`renders an input with an empty value`, () => {
         const currentlyUpdatedItemMetadata = {
             value: "",
             is_required: false,
             name: "field",
             type: "text",
-            short_name: "short_name"
+            short_name: "short_name",
         };
         const wrapper = factory({ currentlyUpdatedItemMetadata });
-        const date_input = wrapper.find("[data-test=document-text-input]");
+        const date_input = wrapper.get("[data-test=document-text-input]");
 
         expect(date_input.element.value).toEqual("");
         expect(date_input.element.required).toBe(false);
-        expect(wrapper.contains("[data-test=document-custom-metadata-is-required]")).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-is-required]").exists()
+        ).toBeFalsy();
     });
 
     it(`Given custom text metadata
@@ -71,10 +75,10 @@ describe("CustomMetadataText", () => {
             is_required: false,
             name: "field",
             short_name: "text",
-            type: "text"
+            type: "text",
         };
         const wrapper = factory({ currentlyUpdatedItemMetadata });
 
-        expect(wrapper.contains("[data-test=document-custom-metadata-text]")).toBeTruthy();
+        expect(wrapper.find("[data-test=document-custom-metadata-text]").exists()).toBeTruthy();
     });
 });

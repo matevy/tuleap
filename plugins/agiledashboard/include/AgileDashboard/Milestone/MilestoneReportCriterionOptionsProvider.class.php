@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,9 +21,8 @@
 /**
  * I am a helper to build selectbox options of all milestones of a given tracker
  */
-class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends DataAccessObject
+class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider
 {
-
     public const TOP_BACKLOG_IDENTIFIER   = "0";
     public const TOP_BACKLOG_OPTION_ENTRY = "Top Backlog";
 
@@ -70,7 +69,7 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends D
     {
         $nearest_planning_tracker = $this->nearest_planning_tracker_provider->getNearestPlanningTracker($backlog_tracker, $this->hierarchy_factory);
         if (! $nearest_planning_tracker) {
-            return array();
+            return [];
         }
 
         $planning_trackers_ids = $this->getPlanningTrackersIds($nearest_planning_tracker);
@@ -82,8 +81,8 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends D
     private function formatAllMilestonesAsSelectboxOptions(array $planning_trackers_ids, $selected_milestone_id, Tracker $backlog_tracker, PFUser $user)
     {
         $hp = Codendi_HTMLPurifier::instance();
-        $options = array();
-        $current_milestone = array();
+        $options = [];
+        $current_milestone = [];
 
         $options[] = $this->addTopBacklogPlanningEntry($selected_milestone_id, $backlog_tracker, $user);
 
@@ -95,8 +94,8 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends D
             foreach ($planning_trackers_ids as $index => $id) {
                 $tracker = $this->tracker_factory->getTrackerById($id);
                 if ($tracker->userCanView($user)) {
-                    $milestone_id    = $row['m'. $id .'_id'];
-                    $milestone_title = $row['m'. $id .'_title'];
+                    $milestone_id    = $row['m' . $id . '_id'];
+                    $milestone_title = $row['m' . $id . '_title'];
 
                     if (! $milestone_id) {
                         continue;
@@ -106,10 +105,10 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends D
                         continue;
                     }
 
-                    $milestone               = $this->artifact_factory->getArtifactById((int)$milestone_id);
-                    $user_can_view_milestone = $milestone->userCanView($user);
+                    $milestone               = $this->artifact_factory->getArtifactById((int) $milestone_id);
+                    $user_can_view_milestone = $milestone !== null && $milestone->userCanView($user);
                     if ($user_can_view_milestone) {
-                        $content                = str_pad('', $index, '-') .' '. $hp->purify($milestone_title);
+                        $content                = str_pad('', $index, '-') . ' ' . $hp->purify($milestone_title);
                         $options[]              = $this->getOptionForSelectBox($selected_milestone_id, $milestone_id, $content);
                         $current_milestone[$id] = $milestone_id;
                     }
@@ -128,7 +127,7 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends D
             $selected = 'selected="selected"';
         }
 
-        $option  = '<option value="'.$milestone_id.'" '. $selected .'>';
+        $option  = '<option value="' . $milestone_id . '" ' . $selected . '>';
         $option .= $content;
         $option .= '</option>';
 
@@ -137,7 +136,6 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends D
 
     private function addTopBacklogPlanningEntry($selected_milestone_id, Tracker $backlog_tracker, PFUser $user)
     {
-
         try {
             $top_planning  = $this->planning_factory->getVirtualTopPlanning($user, $backlog_tracker->getGroupId());
         } catch (Planning_NoPlanningsException $exception) {
@@ -154,18 +152,23 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends D
         return;
     }
 
-    /** @return Tracker[] */
+    /** @return int[] */
     private function getPlanningTrackersIds(Tracker $nearest_planning_tracker)
     {
         $parents = $this->getParentsWithPlanningAndOrderedFromTopToBottom($nearest_planning_tracker);
 
-        return array_map(array($this, 'extractTrackerId'), $parents);
+        return array_map(
+            static function (Tracker $tracker) {
+                return $tracker->getId();
+            },
+            $parents
+        );
     }
 
     /** @return Tracker[] */
     private function keepsTrackersUntilThereIsNoPlanning(array $list_of_trackers)
     {
-        $trackers = array();
+        $trackers = [];
         foreach ($list_of_trackers as $tracker) {
             if (! $this->planning_factory->getPlanningByPlanningTracker($tracker)) {
                 break;
@@ -184,11 +187,5 @@ class AgileDashboard_Milestone_MilestoneReportCriterionOptionsProvider extends D
         $parents[] = $nearest_planning_tracker;
 
         return $parents;
-    }
-
-    /** @return int */
-    private function extractTrackerId(Tracker $tracker)
-    {
-        return $tracker->getId();
     }
 }

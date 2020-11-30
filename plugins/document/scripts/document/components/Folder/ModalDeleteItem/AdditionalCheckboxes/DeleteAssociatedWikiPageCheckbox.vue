@@ -25,11 +25,14 @@
                     type="checkbox"
                     data-test="delete-associated-wiki-page-checkbox"
                     v-on:click="processInput"
-                >
+                />
                 <span v-translate>Propagate deletion to wiki service</span>
             </label>
             <p class="tlp-text-warning">
-                <translate>Please note that if you check this option, the referenced wiki page will no longer exist in the wiki service too.</translate>
+                <translate>
+                    Please note that if you check this option, the referenced wiki page will no
+                    longer exist in the wiki service too.
+                </translate>
             </p>
         </div>
         <div
@@ -40,7 +43,13 @@
             <p>{{ wiki_deletion_warning }}</p>
             <ul>
                 <li v-for="referencer in wikiPageReferencers" v-bind:key="referencer.id">
-                    <a v-bind:href="getWikiPageUrl(referencer)" class="wiki-page-referencer-link" data-test="wiki-page-referencer-link">{{ referencer.path }}</a>
+                    <a
+                        v-bind:href="getWikiPageUrl(referencer)"
+                        class="wiki-page-referencer-link"
+                        data-test="wiki-page-referencer-link"
+                    >
+                        {{ referencer.path }}
+                    </a>
                 </li>
             </ul>
         </div>
@@ -55,11 +64,11 @@ export default {
     props: {
         item: Object,
         model: Object,
-        wikiPageReferencers: Array
+        wikiPageReferencers: Array,
     },
     data() {
         return {
-            is_option_checked: false
+            is_option_checked: false,
         };
     },
     computed: {
@@ -71,7 +80,7 @@ export default {
                 ),
                 this.item.wiki_properties.page_name
             );
-        }
+        },
     },
     methods: {
         processInput($event) {
@@ -85,7 +94,7 @@ export default {
             return `/plugins/docman/?group_id=${encodeURIComponent(
                 this.project_id
             )}&action=show&id=${encodeURIComponent(referencer.id)}`;
-        }
-    }
+        },
+    },
 };
 </script>

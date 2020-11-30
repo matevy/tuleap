@@ -18,19 +18,27 @@
  */
 import { ActionContext } from "vuex";
 import { RootState } from "../../type";
-import { UpdateCardPayload, NewRemainingEffortPayload, NewCardPayload } from "./type";
+import { NewCardPayload, NewRemainingEffortPayload, UpdateCardPayload } from "./type";
 import { get, patch, post, put } from "tlp";
-import { SwimlaneState } from "../type";
+import { RefreshCardMutationPayload, SwimlaneState } from "../type";
 import {
     getPostArtifactBody,
     getPutArtifactBody,
-    getPutArtifactBodyToAddChild
+    getPutArtifactBodyToAddChild,
 } from "../../../helpers/update-artifact";
 import { injectDefaultPropertiesInCard } from "../../../helpers/card-default";
-import { Card, Swimlane } from "../../../type";
+import { Card, Swimlane, Tracker, User } from "../../../type";
+import pRetry from "p-retry";
+import { UserForPeoplePicker } from "./type";
 
 const headers = {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+};
+
+const retry_options = {
+    minTimeout: 100,
+    maxTimeout: 10000,
+    randomize: true,
 };
 
 export async function saveRemainingEffort(
@@ -38,13 +46,13 @@ export async function saveRemainingEffort(
     new_remaining_effort: NewRemainingEffortPayload
 ): Promise<void> {
     const card = new_remaining_effort.card;
-    context.commit("startSavingRemainingEffort", card);
+    context.commit("startSavingRemainingEffort", new_remaining_effort);
     try {
         await patch(`/api/v1/taskboard_cards/${encodeURIComponent(card.id)}`, {
             headers,
-            body: JSON.stringify({ remaining_effort: new_remaining_effort.value })
+            body: JSON.stringify({ remaining_effort: new_remaining_effort.value }),
         });
-        context.commit("finishSavingRemainingEffort", new_remaining_effort);
+        context.commit("resetSavingRemainingEffort", card);
     } catch (error) {
         context.commit("resetSavingRemainingEffort", card);
         await context.dispatch("error/handleModalError", error, { root: true });
@@ -60,9 +68,15 @@ export async function saveCard(
     try {
         await put(`/api/v1/artifacts/${encodeURIComponent(card.id)}`, {
             headers,
-            body: JSON.stringify(getPutArtifactBody(payload))
+            body: JSON.stringify(getPutArtifactBody(payload)),
         });
         context.commit("finishSavingCard", payload);
+        const refreshed_card_response = await get(`/api/v1/taskboard_cards/${card.id}`, {
+            params: { milestone_id: context.rootState.milestone_id },
+        });
+        const refreshed_card = await refreshed_card_response.json();
+        const refresh_payload: RefreshCardMutationPayload = { refreshed_card };
+        context.commit("refreshCard", refresh_payload);
     } catch (error) {
         context.commit("resetSavingCard", card);
         await context.dispatch("error/handleModalError", error, { root: true });
@@ -75,18 +89,15 @@ export async function addCard(
 ): Promise<void> {
     context.commit("startCreatingCard");
     try {
-        const [new_artifact_response, parent_artifact_response] = await Promise.all([
-            post(`/api/v1/artifacts`, {
-                headers,
-                body: JSON.stringify(getPostArtifactBody(payload, context.rootState.trackers))
-            }),
-            get(`/api/v1/artifacts/${encodeURIComponent(payload.swimlane.card.id)}`)
-        ]);
+        const new_artifact_response = await post(`/api/v1/artifacts`, {
+            headers,
+            body: JSON.stringify(getPostArtifactBody(payload, context.rootState.trackers)),
+        });
         const new_artifact = await new_artifact_response.json();
 
         const [new_card] = await Promise.all([
             injectNewCardInStore(context, new_artifact.id, payload.swimlane),
-            linkCardToItsParent(context, new_artifact.id, payload, parent_artifact_response)
+            linkCardToItsParent(context, new_artifact.id, payload),
         ]);
         context.commit("finishCreatingCard", new_card);
     } catch (error) {
@@ -109,22 +120,49 @@ async function injectNewCardInStore(
     card.is_being_saved = true;
     context.commit("addChildrenToSwimlane", {
         swimlane,
-        children_cards: [card]
+        children_cards: [card],
     });
     context.commit("cardIsHalfwayCreated");
 
     return card;
 }
 
-async function linkCardToItsParent(
+function linkCardToItsParent(
     context: ActionContext<SwimlaneState, RootState>,
     new_artifact_id: number,
-    payload: NewCardPayload,
-    parent_artifact_response: Response
+    payload: NewCardPayload
 ): Promise<void> {
+    return pRetry(
+        () =>
+            tryToLinkCardToItsParent(context, new_artifact_id, payload).catch((error) => {
+                if (error.response.status !== 412) {
+                    throw new pRetry.AbortError(error);
+                }
+
+                throw error;
+            }),
+        retry_options
+    );
+}
+
+async function tryToLinkCardToItsParent(
+    context: ActionContext<SwimlaneState, RootState>,
+    new_artifact_id: number,
+    payload: NewCardPayload
+): Promise<void> {
+    const parent_artifact_response = await get(
+        `/api/v1/artifacts/${encodeURIComponent(payload.swimlane.card.id)}`
+    );
     const { values } = await parent_artifact_response.json();
+
+    const put_headers: Record<string, string> = { ...headers };
+    const last_modified = parent_artifact_response.headers.get("Last-Modified");
+    if (last_modified) {
+        put_headers["If-Unmodified-Since"] = last_modified;
+    }
+
     await put(`/api/v1/artifacts/${encodeURIComponent(payload.swimlane.card.id)}`, {
-        headers,
+        headers: put_headers,
         body: JSON.stringify(
             getPutArtifactBodyToAddChild(
                 payload,
@@ -132,6 +170,40 @@ async function linkCardToItsParent(
                 new_artifact_id,
                 values
             )
-        )
+        ),
     });
+}
+
+export async function loadPossibleAssignees(
+    context: ActionContext<SwimlaneState, RootState>,
+    tracker: Tracker
+): Promise<void> {
+    if (
+        tracker.assigned_to_field === null ||
+        context.getters.have_possible_assignees_been_loaded_for_tracker(tracker)
+    ) {
+        return;
+    }
+
+    try {
+        const response = await get(
+            `/plugins/tracker/?func=get-values&formElement=${encodeURIComponent(
+                tracker.assigned_to_field.id
+            )}`
+        );
+        const users: User[] = await response.json();
+
+        context.commit("setPossibleAssigneesForFieldId", {
+            assigned_to_field_id: tracker.assigned_to_field.id,
+            users: users.map(
+                (user): UserForPeoplePicker => ({
+                    ...user,
+                    text: user.display_name,
+                    id: Number(user.id),
+                })
+            ),
+        });
+    } catch (error) {
+        await context.dispatch("error/handleModalError", error, { root: true });
+    }
 }

@@ -42,13 +42,13 @@ class TemplatePresenter
     public function __construct(Project $template)
     {
         $this->id        = $template->getId();
-        $this->name      = $template->getUnconvertedPublicName();
+        $this->name      = $template->getPublicName();
         $this->unix_name = $template->getUnixNameMixedCase();
 
-        $this->additional_buttons = array();
-        EventManager::instance()->processEvent(self::EVENT_ADDITIONAL_ADMIN_BUTTONS, array(
+        $this->additional_buttons = [];
+        EventManager::instance()->processEvent(self::EVENT_ADDITIONAL_ADMIN_BUTTONS, [
             'template' => $template,
             'buttons'  => &$this->additional_buttons
-        ));
+        ]);
     }
 }

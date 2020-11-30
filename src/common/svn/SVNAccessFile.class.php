@@ -72,7 +72,7 @@ class SVNAccessFile
     public function isGroupDefined($groups, $line, $verbose = false)
     {
         preg_match($this->getGroupMatcher(self::GROUPNAME_PATTERN), $line, $matches);
-        if (!empty($matches)) {
+        if (! empty($matches)) {
             $match = $matches[1];
             if ($match == 'members') {
                 return true;
@@ -88,7 +88,7 @@ class SVNAccessFile
                             $GLOBALS['Language']->getText(
                                 'svn_admin_access_control',
                                 'ugroup_name_case_sensitivity',
-                                array($match, $group)
+                                [$match, $group]
                             )
                         );
 
@@ -120,7 +120,7 @@ class SVNAccessFile
     public function validateUGroupLine($groups, $line, $verbose = null)
     {
         $trimmedLine = ltrim($line);
-        if (!empty($this->ugroupNewName) && preg_match($this->getGroupMatcher($this->ugroupOldName), $trimmedLine)) {
+        if (! empty($this->ugroupNewName) && preg_match($this->getGroupMatcher($this->ugroupOldName), $trimmedLine)) {
             return $this->renameGroup($groups, $line);
         } else {
             return $this->commentInvalidLine($groups, $line, $verbose);
@@ -164,8 +164,8 @@ class SVNAccessFile
     public function commentInvalidLine($groups, $line, $verbose = false)
     {
         $trimmedLine = ltrim($line);
-        if ($trimmedLine && substr($trimmedLine, 0, 1) == '@' && !$this->isGroupDefined($groups, $trimmedLine, $verbose)) {
-            return "# ".$line;
+        if ($trimmedLine && substr($trimmedLine, 0, 1) == '@' && ! $this->isGroupDefined($groups, $trimmedLine, $verbose)) {
+            return "# " . $line;
         } else {
             return $line;
         }
@@ -193,7 +193,7 @@ class SVNAccessFile
     private function parseGroup($svn_dir, $contents, $verbose = false)
     {
         $defaultLines = explode("\n", $this->getPlatformBlock($svn_dir));
-        $groups = array();
+        $groups = [];
         $currentSection = -1;
         foreach ($defaultLines as $line) {
             $currentSection = $this->getCurrentSection($line, $currentSection);
@@ -208,10 +208,10 @@ class SVNAccessFile
             switch ($currentSection) {
                 case 'groups':
                     $groups = $this->accumulateDefinedGroups($groups, $line, false);
-                    $validContents .= $line.PHP_EOL;
+                    $validContents .= $line . PHP_EOL;
                     break;
                 default:
-                    $validContents .= $this->validateUGroupLine($groups, $line, $verbose).PHP_EOL;
+                    $validContents .= $this->validateUGroupLine($groups, $line, $verbose) . PHP_EOL;
                     break;
             }
         }
@@ -235,9 +235,9 @@ class SVNAccessFile
     {
         $trimmedLine = ltrim($line);
         if ($trimmedLine != '') {
-            preg_match('/^'.self::GROUPNAME_PATTERN.'\s*=/', $trimmedLine, $matches);
-            if (!empty($matches)) {
-                if (!$defaultSection) {
+            preg_match('/^' . self::GROUPNAME_PATTERN . '\s*=/', $trimmedLine, $matches);
+            if (! empty($matches)) {
+                if (! $defaultSection) {
                     $groups[$matches[1]] = self::UGROUP_REDEFINED;
                 } else {
                     $groups[$matches[1]] = self::UGROUP_DEFAULT;
@@ -289,7 +289,7 @@ class SVNAccessFile
      */
     protected function getGroupMatcher($groupPattern)
     {
-        return '/^@'.$groupPattern.'\s*=/i';
+        return '/^@' . $groupPattern . '\s*=/i';
     }
 
     /**
@@ -301,7 +301,7 @@ class SVNAccessFile
      */
     protected function getPlatformBlock($project_svnroot)
     {
-        if (!$this->platformBlock) {
+        if (! $this->platformBlock) {
             $this->platformBlock = svn_utils_read_svn_access_file_defaults($project_svnroot, true);
         }
         return $this->platformBlock;

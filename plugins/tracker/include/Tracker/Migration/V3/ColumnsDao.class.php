@@ -74,7 +74,7 @@ class Tracker_Migration_V3_ColumnsDao extends DataAccessObject
                 $right = null;
                 $nb    = 0;
                 $rank  = 1;
-                $this->trace('Creating columns for '. $parent_id);
+                $this->trace('Creating columns for ' . $parent_id);
             }
 
             if ($data['pos'] == '2') {
@@ -89,7 +89,7 @@ class Tracker_Migration_V3_ColumnsDao extends DataAccessObject
                 $this->update($sql);
             } else {
                 if ($data['pos'] == 'L') {
-                    if (!$left) {
+                    if (! $left) {
                         $left = $this->createColumn($nb++, $parent_id, $rank++);
                         $left_rank  = 1;
                     }
@@ -97,7 +97,7 @@ class Tracker_Migration_V3_ColumnsDao extends DataAccessObject
                     $new_rank   = $left_rank++;
                     $this->trace("{$data['id']} will be moved to the left in #$new_parent.");
                 } else { //pos = R
-                    if (!$right) {
+                    if (! $right) {
                         $right = $this->createColumn($nb++, $parent_id, $rank++);
                         $right_rank = 1;
                     }

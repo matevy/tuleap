@@ -21,7 +21,6 @@
 
 namespace Tuleap\FRS;
 
-use Tuleap\Sanitizer\FTPSanitizer;
 use Tuleap\Sanitizer\URISanitizer;
 use Valid_FTPURI;
 use Valid_LocalURI;
@@ -57,9 +56,6 @@ class UploadedLinkPresenter
         return substr($this->link, 0, 23) . '...' . substr($this->link, -23);
     }
 
-    /**
-     * @param UploadedLink $uploaded_link
-     */
     protected function extractLink(UploadedLink $uploaded_link)
     {
         $uri_sanitizer = new URISanitizer(new Valid_LocalURI(), new Valid_FTPURI());

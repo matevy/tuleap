@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,26 +24,42 @@ namespace Tuleap\User;
 use PFUser;
 use Tuleap\Event\Dispatchable;
 
-class UserAuthenticationSucceeded implements Dispatchable
+final class UserAuthenticationSucceeded implements Dispatchable
 {
     public const NAME = 'userAuthenticationSucceeded';
 
     /**
      * @var PFUser
+     * @psalm-readonly
      */
-    private $user;
+    public $user;
+    /**
+     * @var bool
+     */
+    private $is_login_allowed = true;
+    /**
+     * @var string
+     */
+    private $feedback_message = '';
 
     public function __construct(PFUser $user)
     {
-
         $this->user = $user;
     }
 
-    /**
-     * @return PFUser
-     */
-    public function getUser()
+    public function refuseLogin(string $feedback = ''): void
     {
-        return $this->user;
+        $this->is_login_allowed = false;
+        $this->feedback_message = $feedback;
+    }
+
+    public function isLoginAllowed(): bool
+    {
+        return $this->is_login_allowed;
+    }
+
+    public function getFeedbackMessage(): string
+    {
+        return $this->feedback_message;
     }
 }

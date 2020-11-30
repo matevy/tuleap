@@ -1,5 +1,7 @@
-/**
- * Copyright (c) Enalean SAS - 2017. All rights reserved
+/*
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +17,31 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var tuleap = tuleap || {};
-tuleap.ckeditor = tuleap.ckeditor || {};
+/* global module:readonly */
 
-tuleap.ckeditor.toolbar = [
-    ["Bold", "Italic", "Underline"],
-    ["NumberedList", "BulletedList", "-", "Blockquote", "Format"],
-    ["Link", "Unlink", "Anchor", "Image"],
-    ["Source"]
-];
+const config = {
+    toolbar: [
+        ["Bold", "Italic"],
+        ["NumberedList", "BulletedList", "-", "Blockquote", "Styles", "Format"],
+        ["Link", "Unlink", "Anchor", "Image"],
+        ["Source"],
+    ],
+    stylesSet: [
+        { name: "Bold", element: "strong", overrides: "b" },
+        { name: "Italic", element: "em", overrides: "i" },
+        { name: "Code", element: "code" },
+        { name: "Subscript", element: "sub" },
+        { name: "Superscript", element: "sup" },
+    ],
+    disableNativeSpellChecker: false,
+};
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+    module.exports = {
+        config: config,
+    };
+} else {
+    var tuleap = tuleap || {};
+    tuleap.ckeditor = tuleap.ckeditor || {};
+    tuleap.ckeditor.config = config;
+}

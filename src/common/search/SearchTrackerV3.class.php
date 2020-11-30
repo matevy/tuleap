@@ -48,14 +48,14 @@ class Search_SearchTrackerV3
         ob_start();
         //      Create the ArtifactType object
         $ath = new ArtifactTypeHtml($project, $atid);
-        if (!$ath || !is_object($ath)) {
+        if (! $ath || ! is_object($ath)) {
             exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('global', 'error'));
         }
         if ($ath->isError()) {
             exit_error($GLOBALS['Language']->getText('global', 'error'), $ath->getErrorMessage());
         }
         // Check if this tracker is valid (not deleted)
-        if (!$ath->isValid()) {
+        if (! $ath->isValid()) {
             exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('global', 'error'));
         }
 
@@ -69,9 +69,9 @@ class Search_SearchTrackerV3
             // Create field factory
             $art_field_fact = new ArtifactFieldFactory($ath);
 
-            echo '<H3>' . $GLOBALS['Language']->getText('search_index', 'search_res', array(htmlentities(stripslashes($words), ENT_QUOTES, 'UTF-8'), $rows_returned)) . "</H3><P>\n";
+            echo '<H3>' . $GLOBALS['Language']->getText('search_index', 'search_res', [htmlentities(stripslashes($words), ENT_QUOTES, 'UTF-8'), $rows_returned]) . "</H3><P>\n";
 
-            $title_arr = array();
+            $title_arr = [];
 
             $summary_field = $art_field_fact->getFieldFromName("summary");
             if ($summary_field->userCanRead($group_id, $atid)) {
@@ -94,6 +94,7 @@ class Search_SearchTrackerV3
 
             echo "\n";
 
+            $purifier = Codendi_HTMLPurifier::instance();
             $rows = 0;
             foreach ($results as $arr) {
                 $rows++;
@@ -107,18 +108,18 @@ class Search_SearchTrackerV3
                 if ($curArtifact->userCanView()) {
                     print "\n<TR class=\"" . html_get_alt_row_color($art_displayed) . "\">";
                     if ($summary_field->userCanRead($group_id, $atid)) {
-                        print "<TD><A HREF=\"/tracker/?group_id=$group_id&func=detail&atid=$atid&aid="
-                                . $arr['artifact_id'] . "\"><IMG SRC=\"" . util_get_image_theme('msg.png') . "\" BORDER=0 HEIGHT=12 WIDTH=10> "
-                                . $arr['summary'] . "</A></TD>";
+                        print "<TD><A HREF=\"/tracker/?group_id=" . $purifier->purify(urlencode($group_id)) . "&func=detail&atid=" . $purifier->purify(urlencode($atid)) . "&aid="
+                                . $purifier->purify($arr['artifact_id']) . "\"><IMG SRC=\"" . util_get_image_theme('msg.png') . "\" BORDER=0 HEIGHT=12 WIDTH=10> "
+                                . $purifier->purify($arr['summary']) . "</A></TD>";
                     }
                     if ($submitted_field->userCanRead($group_id, $atid)) {
-                        print "<TD>" . $arr['user_name'] . "</TD>";
+                        print "<TD>" . $purifier->purify($arr['user_name']) . "</TD>";
                     }
                     if ($date_field->userCanRead($group_id, $atid)) {
                         print "<TD>" . format_date($GLOBALS['Language']->getText('system', 'datefmt'), $arr['open_date']) . "</TD>";
                     }
                     if ($status_field->userCanRead($group_id, $atid)) {
-                        print "<TD>" . $status . "</TD>";
+                        print "<TD>" . $purifier->purify($status) . "</TD>";
                     }
                     print "</TR>";
                     $art_displayed++;
@@ -140,16 +141,16 @@ class Search_SearchTrackerV3
     public function getFacets(Project $project)
     {
         $trackers_v3 = $this->getTrackersV3ForProject($project);
-        $facets      = array();
+        $facets      = [];
 
         foreach ($trackers_v3 as $tracker_v3) {
-            $facets[] = array(
+            $facets[] = [
                 'title'                => $tracker_v3->getName(),
-                'extra-parameters'     => array(
+                'extra-parameters'     => [
                     'key'   => 'data-atid',
                     'value' => $tracker_v3->getID()
-                )
-            );
+                ]
+            ];
         }
 
         return new Search_SearchTypePresenter(

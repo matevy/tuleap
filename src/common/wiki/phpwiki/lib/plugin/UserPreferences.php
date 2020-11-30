@@ -32,14 +32,14 @@ rcs_id('$Id: UserPreferences.php,v 1.35 2004/10/13 14:13:55 rurban Exp $');
  */
 class WikiPlugin_UserPreferences extends WikiPlugin
 {
-    var $bool_args;
+    public $bool_args;
 
-    function getName()
+    public function getName()
     {
         return _("UserPreferences");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -48,19 +48,21 @@ class WikiPlugin_UserPreferences extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         global $request;
         $pagename = $request->getArg('pagename');
         $user = $request->getUser();
-        if (isset($user->_prefs) and
+        if (
+            isset($user->_prefs) and
              isset($user->_prefs->_prefs) and
-             isset($user->_prefs->_method) ) {
+             isset($user->_prefs->_method)
+        ) {
             $pref = $user->_prefs;
         } else {
             $pref = $user->getPreferences();
         }
-        $prefs = array();
+        $prefs = [];
         //we need a hash of pref => default_value
         foreach ($pref->_prefs as $name => $obj) {
             $prefs[$name] = $obj->default_value;
@@ -68,18 +70,20 @@ class WikiPlugin_UserPreferences extends WikiPlugin
         return $prefs;
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         $user = $request->_user;
         if (isa($request, 'MockRequest')) {
             return '';
         }
-        if ((!$request->isActionPage($request->getArg('pagename'))
-             and (!isset($user->_prefs->_method)
-                  or !in_array($user->_prefs->_method, array('ADODB','SQL'))))
-            or (in_array($request->getArg('action'), array('zip','ziphtml')))
-            or (isa($user, '_ForbiddenUser'))) {
+        if (
+            (! $request->isActionPage($request->getArg('pagename'))
+             and (! isset($user->_prefs->_method)
+                  or ! in_array($user->_prefs->_method, ['ADODB', 'SQL'])))
+            or (in_array($request->getArg('action'), ['zip', 'ziphtml']))
+            or (isa($user, '_ForbiddenUser'))
+        ) {
             $no_args = $this->getDefaultArguments();
 // ?
 //            foreach ($no_args as $key => $value) {
@@ -90,8 +94,10 @@ class WikiPlugin_UserPreferences extends WikiPlugin
             return Template('userprefs', $no_args);
         }
         $userid = $user->UserName();
-        if (// ((defined('ALLOW_BOGO_LOGIN') && ALLOW_BOGO_LOGIN && $user->isSignedIn()) ||
-             $user->isAuthenticated() and !empty($userid)) {
+        if (
+// ((defined('ALLOW_BOGO_LOGIN') && ALLOW_BOGO_LOGIN && $user->isSignedIn()) ||
+             $user->isAuthenticated() and ! empty($userid)
+        ) {
             $pref = &$request->_prefs;
             $args['isForm'] = true;
             //trigger_error("DEBUG: reading prefs from getPreferences".print_r($pref));
@@ -113,11 +119,11 @@ class WikiPlugin_UserPreferences extends WikiPlugin
                     );
                     $alert->show();
                     return;
-                } elseif ($delete and !$request->getArg('verify')) {
+                } elseif ($delete and ! $request->getArg('verify')) {
                     return HTML::form(
-                        array('action' => $request->getPostURL(),
-                                            'method' => 'post'),
-                        HiddenInputs(array('verify' => 1)),
+                        ['action' => $request->getPostURL(),
+                                            'method' => 'post'],
+                        HiddenInputs(['verify' => 1]),
                         HiddenInputs($request->getArgs()),
                         HTML::p(_("Do you really want to delete all your UserPreferences?")),
                         HTML::p(
@@ -128,7 +134,7 @@ class WikiPlugin_UserPreferences extends WikiPlugin
                     );
                 } elseif ($rp = $request->getArg('pref')) {
                     // replace only changed prefs in $pref with those from request
-                    if (!empty($rp['passwd']) and ($rp['passwd2'] != $rp['passwd'])) {
+                    if (! empty($rp['passwd']) and ($rp['passwd2'] != $rp['passwd'])) {
                         $errmsg = _("Wrong password. Try again.");
                     } else {
                         //trigger_error("DEBUG: reading prefs from request".print_r($rp));
@@ -144,13 +150,13 @@ class WikiPlugin_UserPreferences extends WikiPlugin
                             $rp['lang']  = '';
                         }
                         $num = $user->setPreferences($rp);
-                        if (!empty($rp['passwd'])) {
+                        if (! empty($rp['passwd'])) {
                             $passchanged = false;
                             if ($user->mayChangePass()) {
                                 if (method_exists($user, 'storePass')) {
                                     $passchanged = $user->storePass($rp['passwd']);
                                 }
-                                if (!$passchanged and method_exists($user, 'changePass')) {
+                                if (! $passchanged and method_exists($user, 'changePass')) {
                                     $passchanged = $user->changePass($rp['passwd']);
                                 }
                                 if ($passchanged) {
@@ -162,8 +168,8 @@ class WikiPlugin_UserPreferences extends WikiPlugin
                                 $errmsg = _("Password cannot be changed.");
                             }
                         }
-                        if (!$num) {
-                            $errmsg .= " " ._("No changes.");
+                        if (! $num) {
+                            $errmsg .= " " . _("No changes.");
                         } else {
                             $request->_setUser($user);
                             $pref = $user->_prefs;
@@ -183,7 +189,7 @@ class WikiPlugin_UserPreferences extends WikiPlugin
             //return $user->PrintLoginForm ($request, $args, false, false);
         }
     }
-};
+}
 
 // $Log: UserPreferences.php,v $
 // Revision 1.35  2004/10/13 14:13:55  rurban

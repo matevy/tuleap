@@ -25,7 +25,6 @@ use Codendi_HTMLPurifier;
 use Embed\Embed;
 use Exception;
 use Reference;
-use ForgeConfig;
 
 class ReferenceOpenGraph
 {
@@ -53,7 +52,7 @@ class ReferenceOpenGraph
         $this->dispatcher = $dispatcher;
     }
 
-    public function getContent() : string
+    public function getContent(): string
     {
         $html = '';
         try {

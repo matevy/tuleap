@@ -56,24 +56,24 @@ class AccessControlController
 
     private function getUrl(Repository $repository)
     {
-        return SVN_BASE_URL . '/?' . http_build_query(array(
+        return SVN_BASE_URL . '/?' . http_build_query([
                 'group_id' => $repository->getProject()->getId(),
                 'repo_id' => $repository->getId(),
                 'action' => 'access-control'
-            ));
+            ]);
     }
 
     public function displayAuthFile(ServiceSvn $service, HTTPRequest $request)
     {
         $repository = $this->repository_manager->getByIdAndProject($request->get('repo_id'), $request->getProject());
 
-        $versions = array();
+        $versions = [];
         foreach ($this->access_file_factory->getByRepository($repository) as $historised_accessfile) {
-            $versions[] = array(
+            $versions[] = [
                 'file_id' => $historised_accessfile->getId(),
                 'version' => $historised_accessfile->getVersionNumber(),
                 'date' => format_date("Y-m-d", $historised_accessfile->getVersionDate())
-            );
+            ];
         }
 
         $current_version_number = $this->access_file_factory->getCurrentVersion($repository)->getVersionNumber();
@@ -88,7 +88,11 @@ class AccessControlController
             $content = $accessfile_reader->readContentBlock($repository);
         }
 
-        $service->renderInPage(
+        $GLOBALS['HTML']->includeJavascriptSnippet(
+            file_get_contents($GLOBALS['Language']->getContent('script_locale', null, 'svn', '.js'))
+        );
+
+        $service->renderInPageRepositoryAdministration(
             $request,
             $title,
             'admin/edit_authfile',
@@ -101,7 +105,9 @@ class AccessControlController
                 $versions,
                 $current_version_number,
                 $last_version_number
-            )
+            ),
+            '',
+            $repository,
         );
     }
 
@@ -112,7 +118,7 @@ class AccessControlController
 
         $access_file = $this->access_file_factory->getById($id, $repository);
 
-        $GLOBALS['Response']->sendJSON(array('content' => $access_file->getContent()));
+        $GLOBALS['Response']->sendJSON(['content' => $access_file->getContent()]);
     }
 
     public function saveAuthFile(ServiceSvn $service, HTTPRequest $request)

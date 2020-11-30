@@ -18,12 +18,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 
 class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field_List implements Tracker_FormElement_Field_ReadOnly
 {
 
-    public $default_properties = array();
+    public $default_properties = [];
 
     /**
      * Dynamic value does not really get deleted
@@ -41,27 +42,27 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
     public function afterCreate(array $form_element_data, $tracker_is_empty)
     {
         $form_element_data['bind-type'] = 'users';
-        $form_element_data['bind'] = array(
-            'value_function' => array(
+        $form_element_data['bind'] = [
+            'value_function' => [
                 'artifact_modifiers',
-            )
-        );
+            ]
+        ];
         parent::afterCreate($form_element_data, $tracker_is_empty);
     }
 
     public function getCriteriaWhere($criteria)
     {
-        if ($criteria_value= $this->getCriteriaValue($criteria)) {
-            $a = 'A_'. $this->id;
-            $b = 'B_'. $this->id;
+        if ($criteria_value = $this->getCriteriaValue($criteria)) {
+            $a = 'A_' . $this->id;
+            $b = 'B_' . $this->id;
             $ids_to_search = array_intersect(
                 array_values($criteria_value),
-                array_merge(array(100), array_keys($this->getBind()->getAllValues()))
+                array_merge([100], array_keys($this->getBind()->getAllValues()))
             );
             if (count($ids_to_search) > 1) {
-                return " c.submitted_by IN(". $this->getCriteriaDao()->getDa()->escapeIntImplode($ids_to_search) .") ";
+                return " c.submitted_by IN(" . $this->getCriteriaDao()->getDa()->escapeIntImplode($ids_to_search) . ") ";
             } elseif (count($ids_to_search)) {
-                return " c.submitted_by = ". $this->getCriteriaDao()->getDa()->escapeInt($ids_to_search[0]) ." ";
+                return " c.submitted_by = " . $this->getCriteriaDao()->getDa()->escapeInt($ids_to_search[0]) . " ";
             }
         }
         return '';
@@ -69,7 +70,7 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
 
     public function getQuerySelect()
     {
-        return "c.submitted_by AS `". $this->name ."`";
+        return "c.submitted_by AS `" . $this->name . "`";
     }
 
     public function getQueryFrom()
@@ -79,8 +80,8 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
 
     public function getQueryFromAggregate()
     {
-        $R1 = 'R1_'. $this->id;
-        $R2 = 'R2_'. $this->id;
+        $R1 = 'R1_' . $this->id;
+        $R2 = 'R2_' . $this->id;
         return " LEFT JOIN  user AS $R2 ON ($R2.user_id = c.submitted_by ) ";
     }
 
@@ -91,17 +92,17 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
 
     public function getQueryOrderby()
     {
-        return '';
+        return $this->name;
     }
 
     public static function getFactoryLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'lastmodifiedby_label');
+        return dgettext('tuleap-tracker', 'Last Updated By');
     }
 
     public static function getFactoryDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'lastmodifiedby_description');
+        return dgettext('tuleap-tracker', 'The last person to update the artifact');
     }
 
     public static function getFactoryIconUseIt()
@@ -163,14 +164,14 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
     /**
      * Fetch the html code to display the field value in artifact
      *
-     * @param Tracker_Artifact                $artifact         The artifact
+     * @param Artifact                        $artifact         The artifact
      * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
      * @param array                           $submitted_values The value already submitted by the user
      *
      * @return string
      */
     protected function fetchArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -180,12 +181,12 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
     /**
      * Fetch the html code to display the field value in artifact in read only mode
      *
-     * @param Tracker_Artifact                $artifact The artifact
+     * @param Artifact                        $artifact The artifact
      * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
      *
      * @return string
      */
-    public function fetchArtifactValueReadOnly(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    public function fetchArtifactValueReadOnly(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         $purifier = Codendi_HTMLPurifier::instance();
 
@@ -199,13 +200,13 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
         return $label;
     }
 
-    public function fetchArtifactCopyMode(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactCopyMode(Artifact $artifact, array $submitted_values)
     {
         return '';
     }
 
     public function fetchArtifactValueWithEditionFormIfEditable(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -215,16 +216,16 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
      /**
      * Fetch the field value in artifact to be displayed in mail
      *
-     * @param Tracker_Artifact                $artifact         The artifact
-     * @param PFUser                          $user             The user who will receive the email
-     * @param bool $ignore_perms
-     * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
-     * @param string                          $format           mail format
+     * @param Artifact                        $artifact The artifact
+     * @param PFUser                          $user     The user who will receive the email
+     * @param bool                            $ignore_perms
+     * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
+     * @param string                          $format   mail format
      *
      * @return string
      */
     public function fetchMailArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         $ignore_perms,
         ?Tracker_Artifact_ChangesetValue $value = null,
@@ -243,19 +244,20 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
         return $output;
     }
 
-    public function isValid(Tracker_Artifact $artifact, $value)
+    public function isValid(Artifact $artifact, $value)
     {
         return true;
     }
 
     public function validateFieldWithPermissionsAndRequiredStatus(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         $submitted_value,
+        PFUser $user,
         ?Tracker_Artifact_ChangesetValue $last_changeset_value = null,
-        $is_submission = null
-    ) {
+        ?bool $is_submission = null
+    ): bool {
         if ($submitted_value !== null) {
-            $GLOBALS['Response']->addFeedback('warning', $GLOBALS['Language']->getText('plugin_tracker_admin_import', 'field_not_taken_account', array($this->getName())));
+            $GLOBALS['Response']->addFeedback('warning', sprintf(dgettext('tuleap-tracker', 'The field "%1$s" will not be taken into account.'), $this->getName()));
         }
 
         return true;
@@ -268,7 +270,7 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
         $fake_value = new Tracker_FormElement_Field_List_Bind_UsersValue(UserManager::instance()->getCurrentUser()->getId());
         $html      .= $purifier->purify($fake_value->getLabel()) . '<br />';
         $html      .= '<span class="tracker-admin-form-element-help">';
-        $html      .= $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'lastmodifiedby_help');
+        $html      .= dgettext('tuleap-tracker', 'The field is automatically set to the last person who modified the artifact');
         $html      .= '</span>';
         return $html;
     }
@@ -304,7 +306,7 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
     /**
      * @see Tracker_FormElement_Field::fetchTooltipValue()
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    protected function fetchTooltipValue(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         return $this->fetchArtifactValueReadOnly($artifact, $value);
     }
@@ -312,7 +314,7 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
     /**
      * @see Tracker_FormElement_Field::fetchCardValue()
      */
-    public function fetchCardValue(Tracker_Artifact $artifact, ?Tracker_CardDisplayPreferences $display_preferences = null)
+    public function fetchCardValue(Artifact $artifact, ?Tracker_CardDisplayPreferences $display_preferences = null)
     {
         $value = new Tracker_FormElement_Field_List_Bind_UsersValue($artifact->getLastModifiedBy());
         return $value->fetchCard($display_preferences);
@@ -364,7 +366,7 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
      *
      * @param string the user name
      *
-     * @return int the user id
+     * @return null|int the user id
      */
     public function getFieldData($value)
     {
@@ -392,7 +394,7 @@ class Tracker_FormElement_Field_LastModifiedBy extends Tracker_FormElement_Field
         return Tracker_FormElement_Field_List_Bind::NONE_VALUE;
     }
 
-    public function getFieldDataFromRESTValue(array $value, ?Tracker_Artifact $artifact = null)
+    public function getFieldDataFromRESTValue(array $value, ?Artifact $artifact = null)
     {
          return null;
     }

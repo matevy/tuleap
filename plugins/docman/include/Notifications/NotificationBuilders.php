@@ -55,13 +55,11 @@ class NotificationBuilders
      * @var Project
      */
     private $project;
-    private $base_url;
 
-    public function __construct(ResponseFeedbackWrapper $feedback, Project $project, string $base_url)
+    public function __construct(ResponseFeedbackWrapper $feedback, Project $project)
     {
         $this->feedback = $feedback;
         $this->project  = $project;
-        $this->base_url = $base_url;
     }
 
     public function buildNotificationManager()
@@ -235,7 +233,7 @@ class NotificationBuilders
     private function getProvider(Project $project): ILinkUrlProvider
     {
         $provider = new LegacyLinkProvider(
-            HTTPRequest::instance()->getServerUrl(). '/plugins/docman/?group_id=' . urlencode((string) $project->getID())
+            HTTPRequest::instance()->getServerUrl() . '/plugins/docman/?group_id=' . urlencode((string) $project->getID())
         );
         $link_provider = new DocmanLinkProvider($project, $provider);
         EventManager::instance()->processEvent($link_provider);

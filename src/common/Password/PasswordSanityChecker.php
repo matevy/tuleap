@@ -22,12 +22,20 @@
 namespace Tuleap\Password;
 
 use PasswordStrategy;
+use Tuleap\Cryptography\ConcealedString;
 use Tuleap\Password\Configuration\PasswordConfigurationDAO;
 use Tuleap\Password\Configuration\PasswordConfigurationRetriever;
 
 class PasswordSanityChecker
 {
+    /**
+     * @var Configuration\PasswordConfiguration
+     */
     private $password_configuration;
+    /**
+     * @psalm-var list<string>
+     * @var array
+     */
     private $errors = [];
     /**
      * @var \BaseLanguage
@@ -40,7 +48,7 @@ class PasswordSanityChecker
         $this->language               = $language;
     }
 
-    public static function build()
+    public static function build(): self
     {
         return new self(
             new PasswordConfigurationRetriever(new PasswordConfigurationDAO()),
@@ -48,17 +56,34 @@ class PasswordSanityChecker
         );
     }
 
-    public function check($password)
+    public function check(ConcealedString $password): bool
     {
-        $password_strategy = new PasswordStrategy($this->password_configuration);
-        include($this->language->getContent('account/password_strategy'));
-        $valid  = $password_strategy->validate($password);
+        $password_strategy = $this->getStrategy();
+        $valid  = $password_strategy->validate($password->getString());
         $this->errors = $password_strategy->errors;
         return $valid;
     }
 
-    public function getErrors()
+    /**
+     * @psalm-return list<string>
+     */
+    public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    /**
+     * @return \PasswordValidator[]
+     */
+    public function getValidators(): array
+    {
+        return $this->getStrategy()->validators;
+    }
+
+    private function getStrategy(): PasswordStrategy
+    {
+        $password_strategy = new PasswordStrategy($this->password_configuration);
+        include($this->language->getContent('account/password_strategy'));
+        return $password_strategy;
     }
 }

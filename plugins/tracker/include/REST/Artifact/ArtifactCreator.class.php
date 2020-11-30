@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -39,13 +39,11 @@ class Tracker_REST_Artifact_ArtifactCreator
 
     /**
      *
-     * @param PFUser $user
-     * @param Tuleap\Tracker\REST\TrackerReference $tracker_reference
      * @param array $values
      * @return Tuleap\Tracker\REST\Artifact\ArtifactReference
      * @throws \Luracast\Restler\RestException
      */
-    public function create(PFUser $user, Tuleap\Tracker\REST\TrackerReference $tracker_reference, array $values)
+    public function create(PFUser $user, Tuleap\Tracker\REST\TrackerReference $tracker_reference, array $values, bool $should_visit_be_recorded)
     {
         $tracker     = $this->getTracker($tracker_reference);
         $fields_data = $this->artifact_validator->getFieldsDataOnCreate($values, $tracker);
@@ -53,15 +51,13 @@ class Tracker_REST_Artifact_ArtifactCreator
         $this->checkUserCanSubmit($user, $tracker);
 
         return $this->returnReferenceOrError(
-            $this->artifact_factory->createArtifact($tracker, $fields_data, $user, ''),
+            $this->artifact_factory->createArtifact($tracker, $fields_data, $user, '', $should_visit_be_recorded),
             ''
         );
     }
 
     /**
      *
-     * @param PFUser $user
-     * @param Tuleap\Tracker\REST\TrackerReference $tracker_reference
      * @param array $values
      * @return Tuleap\Tracker\REST\Artifact\ArtifactReference
      * @throws \Luracast\Restler\RestException
@@ -74,7 +70,7 @@ class Tracker_REST_Artifact_ArtifactCreator
         $this->checkUserCanSubmit($user, $tracker);
 
         return $this->returnReferenceOrError(
-            $this->artifact_factory->createArtifact($tracker, $fields_data, $user, ''),
+            $this->artifact_factory->createArtifact($tracker, $fields_data, $user, '', true),
             'by_field'
         );
     }
@@ -91,9 +87,7 @@ class Tracker_REST_Artifact_ArtifactCreator
     private function returnReferenceOrError($artifact, $format)
     {
         if ($artifact) {
-            $reference = new Tuleap\Tracker\REST\Artifact\ArtifactReference();
-            $reference->build($artifact, $format);
-            return $reference;
+            return Tuleap\Tracker\REST\Artifact\ArtifactReference::build($artifact, $format);
         } else {
             if ($GLOBALS['Response']->feedbackHasErrors()) {
                 throw new \Luracast\Restler\RestException(400, $GLOBALS['Response']->getRawFeedback());
@@ -105,7 +99,7 @@ class Tracker_REST_Artifact_ArtifactCreator
     public function checkUserCanSubmit(PFUser $user, Tracker $tracker)
     {
         if (! $tracker->userCanSubmitArtifact($user)) {
-            throw new \Luracast\Restler\RestException(403, $GLOBALS['Language']->getText('plugin_tracker', 'submit_at_least_one_field'));
+            throw new \Luracast\Restler\RestException(403, dgettext('tuleap-tracker', 'You can\'t submit an artifact because you do not have the right to submit all required fields'));
         }
     }
 }

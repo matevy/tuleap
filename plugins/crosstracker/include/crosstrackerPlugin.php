@@ -19,7 +19,6 @@
  */
 
 use Tuleap\CrossTracker\CrossTrackerArtifactReportDao;
-use Tuleap\CrossTracker\CrossTrackerArtifactRepresentationFactory;
 use Tuleap\CrossTracker\CrossTrackerReportDao;
 use Tuleap\CrossTracker\CrossTrackerReportFactory;
 use Tuleap\CrossTracker\Permission\CrossTrackerPermissionGate;
@@ -69,11 +68,7 @@ use Tuleap\CrossTracker\Report\SimilarField\SimilarFieldsMatcher;
 use Tuleap\CrossTracker\Report\SimilarField\SupportedFieldsDao;
 use Tuleap\CrossTracker\REST\ResourcesInjector;
 use Tuleap\CrossTracker\Widget\ProjectCrossTrackerSearch;
-use Tuleap\Layout\CssAsset;
-use Tuleap\Layout\IncludeAssets;
-use Tuleap\Layout\ThemeVariation;
 use Tuleap\Request\CollectRoutesEvent;
-use Tuleap\Request\CurrentPage;
 use Tuleap\Tracker\FormElement\Field\Date\CSVFormatter;
 use Tuleap\Tracker\Report\Query\Advanced\DateFormat;
 use Tuleap\Tracker\Report\Query\Advanced\ExpertQueryValidator;
@@ -98,7 +93,7 @@ class crosstrackerPlugin extends Plugin // phpcs:ignore
         parent::__construct($id);
         $this->setScope(self::SCOPE_SYSTEM);
 
-        bindtextdomain('tuleap-crosstracker', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-crosstracker', __DIR__ . '/../site-content');
     }
 
     public function getHooksAndCallbacks()
@@ -120,7 +115,7 @@ class crosstrackerPlugin extends Plugin // phpcs:ignore
      */
     public function getDependencies()
     {
-        return array('tracker');
+        return ['tracker'];
     }
 
     /**
@@ -154,7 +149,7 @@ class crosstrackerPlugin extends Plugin // phpcs:ignore
 
     public function uninstall()
     {
-        $this->removeOrphanWidgets(array(ProjectCrossTrackerSearch::NAME));
+        $this->removeOrphanWidgets([ProjectCrossTrackerSearch::NAME]);
     }
 
     /** @see Event::REST_RESOURCES */

@@ -24,28 +24,28 @@
 class Docman_ApprovalTableFileDao extends Docman_ApprovalTableItemDao
 {
 
-    function getTableById($versionId, $fields = '*')
+    public function getTableById($versionId, $fields = '*')
     {
-        $sql = 'SELECT '.$fields.
-            ' FROM plugin_docman_approval'.
-            ' WHERE version_id = '.$this->da->escapeInt($versionId);
+        $sql = 'SELECT ' . $fields .
+            ' FROM plugin_docman_approval' .
+            ' WHERE version_id = ' . $this->da->escapeInt($versionId);
         return $this->retrieve($sql);
     }
 
-    function getTableByItemId($itemId, $fields = '*')
+    public function getTableByItemId($item_id, $fields = '*')
     {
-        return $this->getLatestTableByItemId($itemId, $fields);
+        return $this->getLatestTableByItemId($item_id, $fields);
     }
 
-    function getLatestTableByItemId($itemId, $fields = 'app.*')
+    public function getLatestTableByItemId($itemId, $fields = 'app.*')
     {
         return $this->getApprovalTableItemId($itemId, $fields, ' LIMIT 1', true);
     }
 
-    function getApprovalTableItemId($itemId, $fields = 'app.*', $limit = '', $tableStatus = false)
+    public function getApprovalTableItemId($itemId, $fields = 'app.*', $limit = '', $tableStatus = false)
     {
         $fields .= ', ver.number as version_number';
-        $where = ' ver.item_id = '.$this->da->escapeInt($itemId).
+        $where = ' ver.item_id = ' . $this->da->escapeInt($itemId) .
             ' AND app.wiki_version_id IS NULL';
         $join = ' JOIN plugin_docman_version ver ON (ver.id = app.version_id)';
         $orderBy = ' ORDER BY ver.number DESC ';

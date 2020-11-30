@@ -19,9 +19,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_NotificationsManager.class.php');
-require_once('Docman_Path.class.php');
-
 class Docman_NotificationsManager_Move extends Docman_NotificationsManager
 {
 
@@ -29,7 +26,7 @@ class Docman_NotificationsManager_Move extends Docman_NotificationsManager
     public const MESSAGE_MOVED_FROM = 'moved_from'; // X has been moved from
     public const MESSAGE_MOVED_TO   = 'moved_to';   // X has been moved to
 
-    function somethingHappen($event, $params)
+    public function somethingHappen($event, $params)
     {
         if ($event == 'plugin_docman_event_move') {
             if ($params['item']->getParentId() != $params['parent']->getId()) {
@@ -44,9 +41,9 @@ class Docman_NotificationsManager_Move extends Docman_NotificationsManager
         }
     }
 
-    var $do_not_send_notifications_to;
+    public $do_not_send_notifications_to;
 
-    function _buildMessagesForUsers(&$users, $type, $params)
+    public function _buildMessagesForUsers(&$users, $type, $params)
     {
         if ($users) {
             $um = $this->_getUserManager();
@@ -55,8 +52,8 @@ class Docman_NotificationsManager_Move extends Docman_NotificationsManager
                 $user = $um->getUserById($u['user_id']);
                 $dpm  = $this->_getPermissionsManager();
                 if ($dpm->userCanRead($user, $params['item']->getId()) && ($dpm->userCanAccess($user, $params['parent']->getId()) || $dpm->userCanAccess($user, $params['item']->getParentId())) && ($u['item_id'] == $params['item']->getId() || $dpm->userCanAccess($user, $u['item_id']))) {
-                    if (!isset($this->do_not_send_notifications_to[$user->getId()])) {
-                        $this->_buildMessage(array_merge($params, array('user_monitor' => &$user)), $user, $type);
+                    if (! isset($this->do_not_send_notifications_to[$user->getId()])) {
+                        $this->_buildMessage(array_merge($params, ['user_monitor' => &$user]), $user, $type);
                         $this->do_not_send_notifications_to[$user->getId()] = true;
                     }
                 }
@@ -65,7 +62,7 @@ class Docman_NotificationsManager_Move extends Docman_NotificationsManager
         }
     }
 
-    function _buildMessage($params, $user, $type)
+    public function _buildMessage($params, $user, $type)
     {
         $params['old_parent'] = $this->_item_factory->getItemFromDb($params['item']->getParentId());
         $this->_addMessage(
@@ -79,7 +76,7 @@ class Docman_NotificationsManager_Move extends Docman_NotificationsManager
             $this->getMessageLink($type, $params)
         );
     }
-    function _getMessageForUser($user, $message_type, $params)
+    public function _getMessageForUser($user, $message_type, $params)
     {
         $msg = '';
         switch ($message_type) {

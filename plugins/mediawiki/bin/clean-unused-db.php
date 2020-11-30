@@ -22,7 +22,7 @@
 
 require_once __DIR__ . '/../../../src/www/include/pre.php';
 
-if (isset($argv[1]) && in_array($argv[1], array('help', '-h', '--help'))) {
+if (isset($argv[1]) && in_array($argv[1], ['help', '-h', '--help'])) {
     echo <<<EOT
 USAGE: clean-unused-db.php [go] [id] [id]
 
@@ -74,13 +74,13 @@ $is_go_option = isset($argv[1]) && $argv[1] === 'go';
 $dry_run      = true;
 $force_all    = false;
 $limit        = null;
-if ($is_go_option && !isset($argv[2])) {
+if ($is_go_option && ! isset($argv[2])) {
     $dry_run = false;
 } elseif ($is_go_option && $argv[2] === "force") {
     $dry_run   = false;
     $force_all = true;
     if (isset($argv[3]) && is_numeric($argv[3])) {
-        $limit = (int)$argv[3];
+        $limit = (int) $argv[3];
         if ($limit < 0) {
             echo "limit can't be negative" . PHP_EOL;
             exit(1);
@@ -92,7 +92,7 @@ $force = [];
 if (! $force_all) {
     foreach ($argv as $arg) {
         if (is_numeric($arg)) {
-            $force[] = (int)$arg;
+            $force[] = (int) $arg;
         }
     }
 }

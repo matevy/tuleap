@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TestDefinitionCard Display a test definition as a card 1`] = `
+<div
+  class="tlp-card test-plan-test-definition-card"
+>
+  <test-definition-card-xref-title-stub
+    backlog_item="[object Object]"
+    test_definition="[object Object]"
+  />
+   
+  <div
+    class="test-plan-test-definition-card-category-status"
+  >
+    <div
+      class="test-plan-test-definition-category"
+      data-test="test-category"
+    >
+      
+            Some category
+        
+    </div>
+     
+    <div
+      class="test-plan-test-definition-icons"
+    >
+      <!---->
+       
+      <test-definition-card-status-stub
+        test_definition="[object Object]"
+      />
+    </div>
+  </div>
+</div>
+`;

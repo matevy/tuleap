@@ -30,17 +30,17 @@ rcs_id('$Id: IncludePage.php,v 1.27 2004/11/17 20:07:18 rurban Exp $');
 
 class WikiPlugin_IncludePage extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("IncludePage");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Include text from another wiki page.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -49,19 +49,19 @@ class WikiPlugin_IncludePage extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array( 'page'    => false, // the page to include
+        return [ 'page'    => false, // the page to include
                       'rev'     => false, // the revision (defaults to most recent)
                       'quiet'   => false, // if set, inclusion appears as normal content
                       'words'   => false, // maximum number of words to include
                       'lines'   => false, // maximum number of lines to include
                       'section' => false, // include a named section
                       'sectionhead' => false // when including a named section show the heading
-                      );
+                      ];
     }
 
-    function getWikiPageLinks($argstr, $basepage)
+    public function getWikiPageLinks($argstr, $basepage)
     {
         extract($this->getArgs($argstr));
 
@@ -69,13 +69,13 @@ class WikiPlugin_IncludePage extends WikiPlugin
             // Expand relative page names.
             $page = new WikiPageName($page, $basepage);
         }
-        if (!isset($page) or !$page or !$page->name) {
+        if (! isset($page) or ! $page or ! $page->name) {
             return false;
         }
-        return array($page->name);
+        return [$page->name];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
         if ($page) {
@@ -83,13 +83,13 @@ class WikiPlugin_IncludePage extends WikiPlugin
             $page = new WikiPageName($page, $basepage);
             $page = $page->name;
         }
-        if (!$page) {
+        if (! $page) {
             return $this->error(_("no page specified"));
         }
 
         // A page can include itself once (this is needed, e.g.,  when editing
         // TextFormattingRules).
-        static $included_pages = array();
+        static $included_pages = [];
         if (in_array($page, $included_pages)) {
             return $this->error(sprintf(
                 _("recursive inclusion of page %s"),
@@ -100,7 +100,7 @@ class WikiPlugin_IncludePage extends WikiPlugin
         $p = $dbi->getPage($page);
         if ($rev) {
             $r = $p->getRevision($rev);
-            if (!$r) {
+            if (! $r) {
                 return $this->error(sprintf(
                     _("%s(%d): no such revision"),
                     $page,
@@ -135,11 +135,11 @@ class WikiPlugin_IncludePage extends WikiPlugin
 
         return HTML(
             HTML::p(
-                array('class' => 'transclusion-title'),
+                ['class' => 'transclusion-title'],
                 fmt("Included from %s", WikiLink($page))
             ),
             HTML::div(
-                array('class' => 'transclusion'),
+                ['class' => 'transclusion'],
                 false,
                 $content
             )
@@ -150,7 +150,7 @@ class WikiPlugin_IncludePage extends WikiPlugin
      * handles the arguments: section, sectionhead, lines, words, bytes,
      * for UnfoldSubpages, IncludePage, ...
      */
-    function extractParts($c, $pagename, $args)
+    public function extractParts($c, $pagename, $args)
     {
         extract($args);
 
@@ -174,13 +174,13 @@ class WikiPlugin_IncludePage extends WikiPlugin
             $ct = implode("\n", $c); // one string
             if (strlen($ct) > $bytes) {
                 $ct = substr($c, 0, $bytes);
-                $c = array($ct, sprintf(_(" ... first %d bytes"), $bytes));
+                $c = [$ct, sprintf(_(" ... first %d bytes"), $bytes)];
             }
         }
         $ct = implode("\n", $c); // one string
         return $ct;
     }
-};
+}
 
 // This is an excerpt from the css file I use:
 //

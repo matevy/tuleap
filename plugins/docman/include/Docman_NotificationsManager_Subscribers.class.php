@@ -20,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once('Docman_NotificationsManager.class.php');
-
 class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManager
 {
 
@@ -36,7 +34,7 @@ class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManage
      *
      * @return void
      */
-    function somethingHappen($event, $params)
+    public function somethingHappen($event, $params)
     {
         $um = $this->_getUserManager();
         $users = new ArrayIterator($params['listeners']);
@@ -50,7 +48,7 @@ class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManage
                 }
             }
         }
-        $this->sendNotifications('', array());
+        $this->sendNotifications('', []);
     }
 
     /**
@@ -62,7 +60,7 @@ class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManage
     *
     * @return void
     */
-    function _buildMessage($event, $params, $user)
+    public function _buildMessage($event, $params, $user)
     {
         $type = '';
         switch ($event) {
@@ -107,7 +105,7 @@ class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManage
     *
     * @return String
     */
-    function _getMessageForUser($user, $message_type, $params)
+    public function _getMessageForUser($user, $message_type, $params)
     {
         $msg = '';
         $separator = "\n\n--------------------------------------------------------------------\n";
@@ -117,22 +115,22 @@ class Docman_NotificationsManager_Subscribers extends Docman_NotificationsManage
                 $msg .= dgettext(
                     'tuleap-docman',
                     "You are receiving this message because you were added to the monitoring list of this item:"
-                )."\n";
+                ) . "\n";
                 $msg .= $itemUrl;
                 $msg .= $separator;
-                $msg .= dgettext('tuleap-docman', 'To stop monitoring, please visit:')."\n";
+                $msg .= dgettext('tuleap-docman', 'To stop monitoring, please visit:') . "\n";
                 break;
             case self::MESSAGE_REMOVED:
                 $msg .= dgettext(
                     'tuleap-docman',
                     "You are receiving this message because you were removed from the monitoring list of this item:"
-                )."\n";
+                ) . "\n";
                 $msg .= $itemUrl;
                 $msg .= $separator;
-                $msg .= dgettext('tuleap-docman', 'To restore monitoring, please visit:')."\n";
+                $msg .= dgettext('tuleap-docman', 'To restore monitoring, please visit:') . "\n";
                 break;
             default:
-                $msg .= dgettext('tuleap-docman', 'Something happen!')."\n";
+                $msg .= dgettext('tuleap-docman', 'Something happen!') . "\n";
                 break;
         }
         $msg .= $this->getUrlProvider()->getNotificationLinkUrl($params['item']);

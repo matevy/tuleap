@@ -22,7 +22,7 @@ import { shallowMount } from "@vue/test-utils";
 import QuickLookDocumentPreview from "./QuickLookDocumentAdditionalMetadataList.vue";
 
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 
 describe("QuickLookDocumentAdditionalMetadataList", () => {
     let metadata_factory, state, store;
@@ -38,11 +38,11 @@ describe("QuickLookDocumentAdditionalMetadataList", () => {
             return shallowMount(QuickLookDocumentPreview, {
                 localVue,
                 propsData: { metadata: props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
-    describe(`Metadata name `, () => {
+    describe(`Metadata name`, () => {
         it(`Given an Obsolescence Date metadata
              Then it displays "Validity" for the label`, () => {
             const metadata_date = {
@@ -52,19 +52,19 @@ describe("QuickLookDocumentAdditionalMetadataList", () => {
                 type: "date",
                 list_value: null,
                 value: "2019-08-02",
-                post_processed_value: "2019-08-02"
+                post_processed_value: "2019-08-02",
             };
             store.state.date_time_format = "d/m/Y H:i";
 
             const wrapper = metadata_factory(metadata_date);
 
-            const label_element = wrapper.find("[data-test=metadata-list-label]");
+            const label_element = wrapper.get("[data-test=metadata-list-label]");
             expect(label_element).toBeTruthy();
             expect(label_element.text()).toBe("Validity");
         });
     });
 
-    describe(`List type metadata `, () => {
+    describe(`List type metadata`, () => {
         it(`Given a list value with several value
              Then it displays the list value in a ul tag`, () => {
             const metadata_list = {
@@ -74,10 +74,10 @@ describe("QuickLookDocumentAdditionalMetadataList", () => {
                 list_value: [
                     { id: 1, name: "value 1" },
                     { id: 2, name: "fail" },
-                    { id: 3, name: "Tea" }
+                    { id: 3, name: "Tea" },
                 ],
                 value: null,
-                post_processed_value: null
+                post_processed_value: null,
             };
             const wrapper = metadata_factory(metadata_list);
 
@@ -96,12 +96,12 @@ describe("QuickLookDocumentAdditionalMetadataList", () => {
                 type: "list",
                 list_value: [{ id: 1, name: "value 1" }],
                 value: null,
-                post_processed_value: null
+                post_processed_value: null,
             };
             const wrapper = metadata_factory(metadata_list);
 
-            expect(wrapper.contains("ul")).toBeFalsy();
-            expect(wrapper.find("p").text()).toBe("value 1");
+            expect(wrapper.find("ul").exists()).toBeFalsy();
+            expect(wrapper.get("p").text()).toBe("value 1");
         });
     });
 
@@ -116,15 +116,15 @@ describe("QuickLookDocumentAdditionalMetadataList", () => {
                 list_value: null,
                 value: "The mer-custo wants ref #1 that ... mmmmmh, mmmmh ...",
                 post_processed_value:
-                    'The mer-custo wants <a href="https://example.com/goto">ref #1</a> that ... mmmmmh, mmmmh ...'
+                    'The mer-custo wants <a href="https://example.com/goto">ref #1</a> that ... mmmmmh, mmmmh ...',
             };
 
             const wrapper = metadata_factory(metadata_string);
 
-            const displayed_metadata = wrapper.find("[id=document-bad-lyrics]");
+            const displayed_metadata = wrapper.get("[id=document-bad-lyrics]");
 
-            expect(wrapper.contains("ul")).toBeFalsy();
-            expect(wrapper.contains("[data-test=metadata-list-date]")).toBeFalsy();
+            expect(wrapper.find("ul").exists()).toBeFalsy();
+            expect(wrapper.find("[data-test=metadata-list-date]").exists()).toBeFalsy();
             expect(displayed_metadata).toBeTruthy();
             expect(displayed_metadata.text()).toEqual(metadata_string.value);
             expect(displayed_metadata.html()).toContain(metadata_string.post_processed_value);
@@ -139,15 +139,15 @@ describe("QuickLookDocumentAdditionalMetadataList", () => {
             type: "text",
             list_value: null,
             value: "",
-            post_processed_value: ""
+            post_processed_value: "",
         };
 
         const wrapper = metadata_factory(metadata_empty);
 
-        const displayed_metadata = wrapper.find("[id=document-silence]");
+        const displayed_metadata = wrapper.get("[id=document-silence]");
 
-        expect(wrapper.contains("ul")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-list-date]")).toBeFalsy();
+        expect(wrapper.find("ul").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-list-date]").exists()).toBeFalsy();
         expect(displayed_metadata.text()).toBeTruthy();
         expect(displayed_metadata).not.toEqual("Permanent");
         expect(displayed_metadata.text()).toEqual("Empty");

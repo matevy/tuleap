@@ -21,20 +21,20 @@
 namespace Tuleap\AgileDashboard\FormElement;
 
 use DateTime;
-use Logger;
+use Psr\Log\LoggerInterface;
 use TimePeriodWithoutWeekEnd;
-use Tracker_Artifact;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsCacheDao;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsCalculator;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsInfo;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsModeChecker;
 use Tuleap\TimezoneRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\ChartConfigurationValueRetriever;
 
 class BurnupDataBuilder
 {
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -74,7 +74,7 @@ class BurnupDataBuilder
     private $count_elements_calculator;
 
     public function __construct(
-        Logger $logger,
+        LoggerInterface $logger,
         BurnupCacheChecker $cache_checker,
         ChartConfigurationValueRetriever $chart_configuration_value_retriever,
         BurnupCacheDao $burnup_cache_dao,
@@ -96,7 +96,7 @@ class BurnupDataBuilder
     /**
      * @return BurnupData
      */
-    public function buildBurnupData(Tracker_Artifact $artifact, \PFUser $user)
+    public function buildBurnupData(Artifact $artifact, \PFUser $user)
     {
         $time_period = $this->chart_configuration_value_retriever->getTimePeriod($artifact, $user);
 
@@ -110,13 +110,13 @@ class BurnupDataBuilder
     /**
      * @return BurnupData
      */
-    private function getBurnupData(Tracker_Artifact $artifact, TimePeriodWithoutWeekEnd $time_period, \PFUser $user)
+    private function getBurnupData(Artifact $artifact, TimePeriodWithoutWeekEnd $time_period, \PFUser $user)
     {
         $user_timezone   = date_default_timezone_get();
         $server_timezone = TimezoneRetriever::getServerTimezone();
         date_default_timezone_set($server_timezone);
 
-        $start = new  DateTime();
+        $start = new DateTime();
         $start->setTimestamp((int) $time_period->getStartDate());
         $start->setTime(0, 0, 0);
 
@@ -140,7 +140,7 @@ class BurnupDataBuilder
         return $burnup_data;
     }
 
-    private function addEfforts(Tracker_Artifact $artifact, BurnupData $burnup_data)
+    private function addEfforts(Artifact $artifact, BurnupData $burnup_data)
     {
         $cached_days_result = $this->burnup_cache_dao->searchCachedDaysValuesByArtifactId(
             $artifact->getId(),
@@ -159,7 +159,7 @@ class BurnupDataBuilder
         }
     }
 
-    private function addCountElements(Tracker_Artifact $artifact, BurnupData $burnup_data): void
+    private function addCountElements(Artifact $artifact, BurnupData $burnup_data): void
     {
         $cached_days_result = $this->count_elements_cache_dao->searchCachedDaysValuesByArtifactId(
             (int) $artifact->getId(),

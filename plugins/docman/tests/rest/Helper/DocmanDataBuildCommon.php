@@ -27,6 +27,7 @@ use Docman_MetadataValueFactory;
 use PluginManager;
 use ProjectUGroup;
 use REST_TestDataBuilder;
+use Tuleap\Cryptography\ConcealedString;
 use Tuleap\Docman\Test\rest\DocmanDatabaseInitialization;
 
 class DocmanDataBuildCommon extends REST_TestDataBuilder
@@ -69,12 +70,6 @@ class DocmanDataBuildCommon extends REST_TestDataBuilder
     }
 
     /**
-     * @param int    $user_id
-     * @param int    $docman_root_id
-     * @param string $title
-     * @param int    $item_type
-     * @param string $link_url
-     * @param string $wiki_page
      *
      * @return bool|int
      */
@@ -120,7 +115,7 @@ class DocmanDataBuildCommon extends REST_TestDataBuilder
         string $link_url = '',
         string $wiki_page = ''
     ) {
-        $item = array(
+        $item = [
             'parent_id'         => $docman_root_id,
             'group_id'          => $this->project->getID(),
             'title'             => $title,
@@ -135,7 +130,7 @@ class DocmanDataBuildCommon extends REST_TestDataBuilder
             'link_url'          => $link_url,
             'wiki_page'         => $wiki_page,
             'file_is_embedded'  => ''
-        );
+        ];
 
         return $this->docman_item_factory->create($item, 1);
     }
@@ -161,9 +156,6 @@ class DocmanDataBuildCommon extends REST_TestDataBuilder
         return $version_factory->create($version);
     }
 
-    /**
-     * @return \Project
-     */
     public function getProject(): \Project
     {
         return $this->project;
@@ -182,7 +174,7 @@ class DocmanDataBuildCommon extends REST_TestDataBuilder
     public function generateDocmanRegularUser(): void
     {
         $this->user = $this->user_manager->getUserByUserName(self::DOCMAN_REGULAR_USER_NAME);
-        $this->user->setPassword(self::DOCMAN_REGULAR_USER_PASSWORD);
+        $this->user->setPassword(new ConcealedString(self::DOCMAN_REGULAR_USER_PASSWORD));
         $this->user_manager->updateDb($this->user);
     }
 
@@ -280,7 +272,7 @@ class DocmanDataBuildCommon extends REST_TestDataBuilder
         $file_path       = __DIR__ . '/../_fixtures/docmanFile/embeddedFile';
         $version_id = $this->addFileVersion($item_id, $file_version_title, 'application/pdf', $file_path);
 
-        $this->addApprovalTable($file_name, (int)$version_id, $approval_status, 'version_id');
+        $this->addApprovalTable($file_name, (int) $version_id, $approval_status, 'version_id');
     }
 
     /**

@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Metadata;
 
@@ -82,8 +82,6 @@ class MetadataValueStore
     }
 
     /**
-     * @param \Docman_MetadataValue $metadata_value
-     * @param int                   $project_id
      *
      * @throws MetadataDoesNotExistException
      */

@@ -37,14 +37,13 @@ class TreeNodeMapper
     /**
      * Create a new node by applying the function to the node and recursively over its children
      *
-     * @param TreeNode $node
      *
      * @return TreeNode
      */
     public function map(TreeNode $node)
     {
         $new_node = $this->function->apply($node);
-        $children = array_map(array($this, 'map'), $node->getChildren());
+        $children = array_map([$this, 'map'], $node->getChildren());
         $new_node->setChildren($children);
         return $new_node;
     }

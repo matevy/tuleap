@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,28 +20,39 @@
 
 namespace Tuleap\OpenIDConnectClient\AccountLinker;
 
-use ForgeConfig;
+use Tuleap\OpenIDConnectClient\Login\ConnectorPresenter;
+use Tuleap\User\Account\AuthenticationMeanName;
 
 class Presenter
 {
-    private $link_id;
     private $return_to;
     private $provider_name;
     private $link_to_register_page;
     private $is_registering_possible;
+    /**
+     * @var ConnectorPresenter
+     * @psalm-readonly
+     */
+    public $provider_login_presenter;
+    /**
+     * @var string
+     */
+    private $authentication_mean_name;
 
-    public function __construct($link_id, $return_to, $provider_name, $link_to_register_page, $is_registering_possible)
-    {
-        $this->link_id                 = $link_id;
-        $this->return_to               = $return_to;
-        $this->provider_name           = $provider_name;
-        $this->link_to_register_page   = $link_to_register_page;
-        $this->is_registering_possible = $is_registering_possible;
-    }
-
-    public function link_id()
-    {
-        return $this->link_id;
+    public function __construct(
+        $return_to,
+        $provider_name,
+        $link_to_register_page,
+        $is_registering_possible,
+        ConnectorPresenter $provider_login_presenter,
+        AuthenticationMeanName $authentication_mean_name
+    ) {
+        $this->return_to                = $return_to;
+        $this->provider_name            = $provider_name;
+        $this->link_to_register_page    = $link_to_register_page;
+        $this->is_registering_possible  = $is_registering_possible;
+        $this->provider_login_presenter = $provider_login_presenter;
+        $this->authentication_mean_name = $authentication_mean_name->getName();
     }
 
     public function return_to()
@@ -51,7 +62,7 @@ class Presenter
 
     public function account_login_name()
     {
-        return $GLOBALS['Language']->getText('account_login', 'name');
+        return $GLOBALS['Language']->getOverridableText('account_login', 'name');
     }
 
     public function account_login_password()
@@ -76,12 +87,12 @@ class Presenter
 
     public function link_page_header_with_registration()
     {
-        return sprintf(dgettext('tuleap-openidconnectclient', 'You have successfully been authenticated by %1$s. The only remaining step is to create a link with an existing %2$s account or register a new one.'), $this->provider_name, ForgeConfig::get('sys_name'));
+        return sprintf(dgettext('tuleap-openidconnectclient', 'You have successfully been authenticated by %1$s. The only remaining step is to create a link with an existing %2$s account or register a new one.'), $this->provider_name, $this->authentication_mean_name);
     }
 
     public function link_page_header_without_registration()
     {
-        return sprintf(dgettext('tuleap-openidconnectclient', 'You have successfully been authenticated by %1$s. The only remaining step is to create a link with an existing %2$s account.'), $this->provider_name, ForgeConfig::get('sys_name'));
+        return sprintf(dgettext('tuleap-openidconnectclient', 'You have successfully been authenticated by %1$s. The only remaining step is to create a link with an existing %2$s account.'), $this->provider_name, $this->authentication_mean_name);
     }
 
     public function action()

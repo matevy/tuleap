@@ -1,0 +1,364 @@
+/**
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* stylelint-disable selector-class-pattern, selector-no-qualifying-type */
+.sidebar-nav {
+    display: flex;
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    flex-direction: column;
+    width: $sidebar-width;
+    max-width: $sidebar-width;
+    height: 100vh;
+    overflow: hidden;
+    background: $sidebar-background;
+    @media screen and (max-width: 880px) {
+        padding: $navbar-height 0 0;
+    }
+
+    @media screen and (max-width: 650px) {
+        padding: $navbar-height * 2 0 0;
+    }
+
+    .jspDrag {
+        width: 9px;
+        border-radius: 0;
+        background: lighten($sidebar-background, 13%);
+    }
+
+    .jspPane {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+
+    li > a {
+        display: flex;
+        position: relative;
+        box-sizing: border-box;
+        align-items: center;
+        width: $sidebar-width;
+        height: $navbar-height;
+        padding: 0 $tlp-medium-spacing;
+        border-left: 3px solid transparent;
+        color: transparentize(#ffffff, .2);
+        text-shadow: none;
+
+        > i {
+            -webkit-font-smoothing: antialiased;
+        }
+    }
+
+    .nav-list > .active > a,
+    .nav-list > .active > a:hover,
+    .nav-list > .active > a:focus {
+        border-left: 3px solid $main;
+        background: darken($sidebar-background, 2%);
+        color: lighten($grey, 25%);
+        font-weight: normal;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 0;
+            height: 0;
+            transform: translateY(-50%);
+            border-width: 10px 10px 10px 0;
+            border-style: solid;
+            border-color: transparent $main-background transparent transparent;
+        }
+    }
+
+    .nav > li > a:hover,
+    .nav > li > a:focus {
+        border-left: 3px solid transparent;
+        background: darken($sidebar-background, 2%);
+    }
+
+    .project-sidebar-nav-item-new-tab {
+        position: relative;
+        top: -7px;
+        left: 3px;
+        transform: rotate(-45deg);
+        transition: transform ease-in-out 100ms, opacity ease-in-out 100ms;
+        opacity: .5;
+        font-size: 10px;
+    }
+
+    .nav > li > a:hover > .project-sidebar-nav-item-new-tab {
+        transform: rotate(-45deg) translate(3px, 0);
+        opacity: 1;
+    }
+
+    i.sidebar-collapse {
+        display: block;
+        box-sizing: border-box;
+        flex: 0 0 auto;
+        width: 30px;
+        height: 30px;
+        margin: 20px auto;
+        padding: 8px 2px 0 0;
+        border-radius: 50%;
+        background: darken($sidebar-background, 2%);
+        color: transparentize(#ffffff, .3);
+        font-size: 1em;
+        text-align: center;
+        cursor: pointer;
+
+        &.fa-chevron-right {
+            padding: 8px 0 0;
+        }
+
+        &:hover {
+            background: darken($sidebar-background, 4%);
+            color: lighten($grey, 10%);
+        }
+    }
+}
+
+.sidebar-spacer {
+    flex: 1 1 auto;
+}
+
+.sidebar-about {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: auto;
+    padding: 20px 0 10px;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: none;
+
+        > .sidebar-about-logo > .tuleap-logo,
+        > .sidebar-about-logo-without-product-name > .tuleap-logo {
+            fill: lighten($main-color-tuleap-orange, 5%);
+        }
+    }
+
+    &:last-child {
+        padding: 20px 0;
+    }
+
+    > .sidebar-about-logo,
+    .sidebar-about-logo-without-product-name {
+        height: 25px;
+
+        > .tuleap-logo {
+            transition: fill 100ms;
+            fill: $main-color-tuleap-orange;
+        }
+    }
+
+    > .sidebar-about-logo-without-product-name {
+        display: none;
+    }
+
+    > .sidebar-about-version {
+        margin: 7px 0 5px;
+        text-align: center;
+
+        &:last-child {
+            margin: 7px 0 0;
+        }
+    }
+}
+
+.sidebar-copyright {
+    align-self: center;
+    margin: 0 0 10px;
+}
+
+.sidebar-about > .sidebar-about-version,
+.sidebar-copyright,
+.sidebar-copyright a {
+    transition: color 100ms;
+    color: transparentize($grey, .2);
+    font-size: 13px;
+    line-height: 20px;
+}
+
+.sidebar-about:hover > .sidebar-about-version,
+.sidebar-copyright a:hover {
+    color: transparentize($white, .2);
+    text-decoration: none;
+}
+
+.project-sidebar-nav-item-icon {
+    margin: 0 $tlp-small-spacing 0 0;
+    font-size: .875rem;
+}
+
+.project-sidebar-nav-item-label {
+    max-width: $sidebar-width - 60px;
+    overflow: hidden;
+    font-size: .8125rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-sidebar-header-name {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $tlp-medium-spacing $tlp-small-spacing;
+}
+
+.project-title-container {
+    flex: 1 1 auto;
+}
+
+.project-title {
+    display: flex;
+    align-items: center;
+    padding: $tlp-small-spacing;
+    transition: background 100ms;
+    border-radius: 4px;
+    color: transparentize($white, .2);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3125rem;
+    text-decoration: none;
+
+    &:hover {
+        background: darken($sidebar-background, 5%);
+    }
+
+    > .fas {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        margin: 0 $tlp-small-spacing 0 0;
+        border-radius: 50%;
+        color: $white;
+        font-size: .6rem;
+        line-height: 0;
+        cursor: help;
+
+        &.fa-lock,
+        &.fa-tlp-lock-plus-r {
+            background: $main;
+            text-shadow: 0 0 1px rgba(0, 0, 0, .2);
+        }
+
+        &.fa-lock-open,
+        &.fa-tlp-unlock-plus-r {
+            background: darken($sidebar-background, 5%);
+        }
+
+        &.fa-tlp-lock-plus-r,
+        &.fa-tlp-unlock-plus-r {
+            font-size: .75rem;
+        }
+    }
+}
+
+.project-sidebar-banner-button {
+    flex: 0 0 auto;
+    margin: 0 $tlp-small-spacing;
+    transition: opacity ease-in-out 100ms;
+
+    .fa-bullhorn {
+        box-sizing: border-box;
+        width: 24px;
+        height: 24px;
+        padding: 6.5px;
+        border-radius: 50%;
+        background-color: $ui-color-warning;
+        color: $white;
+        font-size: .6rem;
+        text-shadow: 0 0 1px rgba(0, 0, 0, .5);
+    }
+
+    &:hover {
+        opacity: .8;
+    }
+}
+
+.project-sidebar-project-flags {
+    display: flex;
+    align-items: center;
+    margin: 0 0 $tlp-medium-spacing $tlp-medium-spacing;
+    color: #d4d7e1;
+    cursor: help;
+
+    > .project-sidebar-project-flags-icon {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: $ui-dimmed;
+
+        > .tuleap-svg {
+            height: 12px;
+
+            > path {
+                fill: $ui-border-normal;
+            }
+        }
+    }
+}
+
+.project-sidebar-project-flags-labels {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    margin: 0 0 0 $tlp-small-spacing;
+}
+
+.project-sidebar-project-flags-label {
+    max-width: 185px;
+    overflow: hidden;
+    font-size: .6rem;
+    font-weight: 600;
+    letter-spacing: .2px;
+    line-height: .7rem;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+&.sidebar-collapsed {
+    .project-sidebar-header-name {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .project-sidebar-banner-button {
+        margin: $tlp-medium-spacing 0 $tlp-small-spacing;
+    }
+
+    .project-sidebar-project-flags {
+        display: none;
+    }
+}

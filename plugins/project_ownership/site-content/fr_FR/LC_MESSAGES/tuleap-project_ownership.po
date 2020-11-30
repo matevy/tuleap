@@ -26,20 +26,40 @@ msgstr "Erreur lors de l'envoi de la notification à l'utilisateur %s."
 msgid "Owner"
 msgstr "Responsable"
 
-msgid "Project does not exist."
-msgstr "Ce projet n'existe pas."
-
 msgid "Project owner"
 msgstr "Responsable du projet"
 
+msgid ""
+"Project owner is accountable for project visibility, permissions & groups "
+"membership."
+msgstr ""
+"Le responsable du projet s'engage sur la conformité du projet: visibilité, "
+"permissions et groupes d'utilisateurs."
+
 msgid "Project ownership"
 msgstr "Responsable de projet"
+
+msgid "Project status updated"
+msgstr "Statut de projet mis à jour"
+
+#, php-format
+msgid "The project %1$s is now active."
+msgstr "Le projet %1$s a été activé."
+
+#, php-format
+msgid "The project %1$s is now deleted."
+msgstr "Le projet %1$s a été supprimé."
+
+#, php-format
+msgid "The project %1$s is now pending."
+msgstr "Le projet %1$s a été mis en attente."
+
+#, php-format
+msgid "The project %1$s is now suspended."
+msgstr "Le projet %1$s a été suspendu."
 
 msgid "The project owner cannot be removed."
 msgstr "Il n'est pas possible de supprimer le responsable du projet."
 
 msgid "This project has no owner."
 msgstr "Ce projet n'a pas de responsable."
-
-msgid "You must be project administrator to access this page."
-msgstr "Vous devez être administrateur du projet pour accéder à cette page."

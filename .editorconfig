@@ -15,12 +15,10 @@ indent_style = tab
 [*.tab]
 indent_style = tab
 
-[{bower.json,package.json}]
-indent_style = space
+[{package.json,composer.json}]
 indent_size = 2
 
-[*.yml]
-indent_style = space
+[*.{yml,xml}]
 indent_size = 2
 
 [*.{md,mkd,snap}]

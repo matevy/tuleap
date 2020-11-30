@@ -24,12 +24,12 @@ use Codendi_Request;
 use CSRFSynchronizerToken;
 use PFUser;
 use timetrackingPlugin;
-use Tracker_Artifact;
 use Tuleap\Timetracking\Admin\TimetrackingEnabler;
 use Tuleap\Timetracking\Permissions\PermissionsRetriever;
 use Tuleap\Timetracking\Time\DateFormatter;
 use Tuleap\Timetracking\Time\TimePresenterBuilder;
 use Tuleap\Timetracking\Time\TimeRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class ArtifactViewBuilder
 {
@@ -82,7 +82,7 @@ class ArtifactViewBuilder
     /**
      * @return ArtifactView | null
      */
-    public function build(PFUser $user, Codendi_Request $request, Tracker_Artifact $artifact)
+    public function build(PFUser $user, Codendi_Request $request, Artifact $artifact)
     {
         $tracker = $artifact->getTracker();
         $project = $tracker->getProject();
@@ -97,7 +97,8 @@ class ArtifactViewBuilder
 
         $user_can_add_time = $this->permissions_retriever->userCanAddTimeInTracker($user, $tracker);
 
-        if (! $user_can_add_time &&
+        if (
+            ! $user_can_add_time &&
             ! $this->permissions_retriever->userCanSeeAggregatedTimesInTracker($user, $tracker)
         ) {
             return null;
@@ -124,7 +125,7 @@ class ArtifactViewBuilder
      */
     private function getTimePresenters(PFUser $user, array $times_for_user)
     {
-        $presenters = array();
+        $presenters = [];
 
         foreach ($times_for_user as $time) {
             $presenters[] = $this->time_presenter_builder->buildPresenter($time, $user);

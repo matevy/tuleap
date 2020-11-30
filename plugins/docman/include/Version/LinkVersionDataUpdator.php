@@ -25,7 +25,6 @@ namespace Tuleap\Docman\Version;
 
 use Docman_Empty;
 use Docman_Link;
-use Tuleap\Docman\REST\v1\Links\DocmanLinksValidityChecker;
 
 class LinkVersionDataUpdator
 {
@@ -52,8 +51,8 @@ class LinkVersionDataUpdator
             ]
         );
 
-        /** @var Docman_Link $link */
         $link = $this->item_factory->getItemFromDb($empty->getId());
+        \assert($link instanceof Docman_Link);
 
         $this->item_factory->createNewLinkVersion($link, $version_data);
 

@@ -55,7 +55,7 @@ class XmlParser
     public $root;
     public $current;
 
-    function __construct($encoding = '')
+    public function __construct($encoding = '')
     {
  //  "ISO-8859-1"
         if ($encoding) {
@@ -67,12 +67,12 @@ class XmlParser
         //xml_set_object($this->_parser, &$this);
         xml_set_element_handler(
             $this->_parser,
-            array(&$this, 'tag_open'),
-            array(&$this, 'tag_close' )
+            [&$this, 'tag_open'],
+            [&$this, 'tag_close']
         );
         xml_set_character_data_handler(
             $this->_parser,
-            array(&$this, 'cdata')
+            [&$this, 'cdata']
         );
         //xml_set_element_handler($this->_parser, "tag_open", "tag_close");
         //xml_set_character_data_handler($this->_parser, "cdata");
@@ -81,11 +81,11 @@ class XmlParser
         unset($GLOBALS['xml_parser_root']);
     }
 
-    function __destruct()
+    public function __destruct()
     {
         global $xml_parser_root, $xml_parser_current;
 
-        if (!empty($this->_parser)) {
+        if (! empty($this->_parser)) {
             xml_parser_free($this->_parser);
         }
         unset($this->_parser);
@@ -97,31 +97,31 @@ class XmlParser
         unset($xml_parser_current);
     }
 
-    function tag_open($parser, $name, $attrs = '')
+    public function tag_open($parser, $name, $attrs = '')
     {
         $this->_tag = strtolower($name);
         $node = new XmlElement($this->_tag);
-        if (is_string($attrs) and !empty($attrs)) {
+        if (is_string($attrs) and ! empty($attrs)) {
             // lowercase attr names
             foreach (preg_split('/ /D', $attrs) as $pair) {
                 if (strstr($pair, "=")) {
                     list($key,$val) = preg_split('/=/D', $pair);
                     $key = strtolower(trim($key));
-                    $val = str_replace(array('"',"'"), '', trim($val));
+                    $val = str_replace(['"', "'"], '', trim($val));
                     $node->_attr[$key] = $val;
                 } else {
-                    $key = str_replace(array('"',"'"), '', strtolower(trim($pair)));
+                    $key = str_replace(['"', "'"], '', strtolower(trim($pair)));
                     $node->_attr[$key] = $key;
                 }
             }
-        } elseif (!empty($attrs) and is_array($attrs)) {
+        } elseif (! empty($attrs) and is_array($attrs)) {
             foreach ($attrs as $key => $val) {
                 $key = strtolower(trim($key));
-                $val = str_replace(array('"',"'"), '', trim($val));
+                $val = str_replace(['"', "'"], '', trim($val));
                 $node->_attr[$key] = $val;
             }
         }
-        if (!is_null($this->current)) {
+        if (! is_null($this->current)) {
             $this->current->_content[] = $node;    // copy or ref?
             $node->parent = $this->current;       // ref
         }
@@ -132,13 +132,13 @@ class XmlParser
         }
     }
 
-    function tag_close($parser, $name, $attrs = '')
+    public function tag_close($parser, $name, $attrs = '')
     {
         //$this->parent = $this->current;   // copy!
         //unset($this->current);
     }
 
-    function cdata($parser, $data)
+    public function cdata($parser, $data)
     {
         if (isset($this->current)) {
             $this->current->_content[] = $data;
@@ -151,7 +151,7 @@ class XmlParser
         }
     }
 
-    function parse($content, $is_final = true)
+    public function parse($content, $is_final = true)
     {
         xml_parse($this->_parser, $content, $is_final) or
             trigger_error(
@@ -164,10 +164,10 @@ class XmlParser
             );
     }
 
-    function parse_url($file, $debug = false)
+    public function parse_url($file, $debug = false)
     {
         if (get_cfg_var('allow_url_fopen')) {
-            if (!($fp = fopen("$file", "r"))) {
+            if (! ($fp = fopen("$file", "r"))) {
                 trigger_error("Error parse url $file");
                 return;
             }

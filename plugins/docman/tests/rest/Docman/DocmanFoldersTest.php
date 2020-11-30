@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Test\rest\Docman;
 
@@ -104,7 +104,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testPostFileDocument(int $root_id) : int
+    public function testPostFileDocument(int $root_id): int
     {
         $file_size = 123;
         $query     = json_encode(
@@ -180,7 +180,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostFileDocument
      */
-    public function testPostCopyFileDocument(int $root_id, int $file_document_id) : void
+    public function testPostCopyFileDocument(int $root_id, int $file_document_id): void
     {
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -203,7 +203,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostFileDocument
      */
-    public function testPostCopyFileDocumentWithUserRESTReadOnlyAdmin(int $root_id, int $file_document_id) : void
+    public function testPostCopyFileDocumentWithUserRESTReadOnlyAdmin(int $root_id, int $file_document_id): void
     {
         $response = $this->getResponse(
             $this->client->post(
@@ -234,7 +234,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
             $this->client->post('docman_folders/' . $root_id . '/files', null, $query)
         );
         $this->assertEquals(201, $response1->getStatusCode());
-        $this->assertEmpty($response1->json()['file_properties']['upload_href']);
+        $this->assertNull($response1->json()['file_properties']);
 
         $file_item_response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -422,7 +422,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testPostMoveFolderItem(int $root_id) : void
+    public function testPostMoveFolderItem(int $root_id): void
     {
         $response_folder_to_cut_with_rest_read_only_user = $this->getResponseByName(
             REST_TestDataBuilder::TEST_BOT_USER_NAME,
@@ -508,7 +508,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostFolderItem
      */
-    public function testPostCopyFolderItem(int $root_id, int $folder_id) : void
+    public function testPostCopyFolderItem(int $root_id, int $folder_id): void
     {
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -553,7 +553,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostFolderItem
      */
-    public function testPostCopyFolderItemWithUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id, int $folder_id) : void
+    public function testPostCopyFolderItemWithUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id, int $folder_id): void
     {
         $response = $this->getResponse(
             $this->client->post(
@@ -593,7 +593,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostEmptyDocument
      */
-    public function testPostCopyEmptyDocument(int $root_id, int $empty_document_id) : void
+    public function testPostCopyEmptyDocument(int $root_id, int $empty_document_id): void
     {
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -644,7 +644,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testPostWikiDocument(int $root_id) : int
+    public function testPostWikiDocument(int $root_id): int
     {
         $headers = ['Content-Type' => 'application/json'];
         $wiki_properties = ['page_name' => 'Ten steps to become a Tuleap'];
@@ -658,7 +658,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
 
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
-            $this->client->post('docman_folders/' . $root_id ."/wikis", $headers, $query)
+            $this->client->post('docman_folders/' . $root_id . "/wikis", $headers, $query)
         );
 
         $this->assertEquals(201, $response->getStatusCode());
@@ -669,7 +669,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testPostWikiDocumentDenidedForUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id) : void
+    public function testPostWikiDocumentDenidedForUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id): void
     {
         $headers = ['Content-Type' => 'application/json'];
         $wiki_properties = ['page_name' => 'Ten steps to become a Tuleap'];
@@ -682,7 +682,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
         );
 
         $response = $this->getResponse(
-            $this->client->post('docman_folders/' . $root_id ."/wikis", $headers, $query),
+            $this->client->post('docman_folders/' . $root_id . "/wikis", $headers, $query),
             REST_TestDataBuilder::TEST_BOT_USER_NAME
         );
 
@@ -693,7 +693,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostWikiDocument
      */
-    public function testPostCopyWikiDocument(int $root_id, int $wiki_document_id) : void
+    public function testPostCopyWikiDocument(int $root_id, int $wiki_document_id): void
     {
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -716,7 +716,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostWikiDocument
      */
-    public function testPostCopyWikiDocumentDenidedForUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id, int $wiki_document_id) : void
+    public function testPostCopyWikiDocumentDenidedForUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id, int $wiki_document_id): void
     {
         $response = $this->getResponse(
             $this->client->post(
@@ -747,7 +747,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
 
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
-            $this->client->post('docman_folders/'.$root_id.'/embedded_files', $headers, $query)
+            $this->client->post('docman_folders/' . $root_id . '/embedded_files', $headers, $query)
         );
 
         $this->assertEquals(201, $response->getStatusCode());
@@ -771,7 +771,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
         );
 
         $response = $this->getResponse(
-            $this->client->post('docman_folders/'.$root_id.'/embedded_files', $headers, $query),
+            $this->client->post('docman_folders/' . $root_id . '/embedded_files', $headers, $query),
             REST_TestDataBuilder::TEST_BOT_USER_NAME
         );
 
@@ -782,7 +782,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostEmbeddedDocument
      */
-    public function testPostCopyEmbeddedDocument(int $root_id, int $embedded_document_id) : void
+    public function testPostCopyEmbeddedDocument(int $root_id, int $embedded_document_id): void
     {
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -805,7 +805,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostEmbeddedDocument
      */
-    public function testPostCopyEmbeddedDocumentDenidedForUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id, int $embedded_document_id) : void
+    public function testPostCopyEmbeddedDocumentDenidedForUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id, int $embedded_document_id): void
     {
         $response = $this->getResponse(
             $this->client->post(
@@ -836,7 +836,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
 
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
-            $this->client->post('docman_folders/' . $root_id ."/links", $headers, $query)
+            $this->client->post('docman_folders/' . $root_id . "/links", $headers, $query)
         );
 
         $this->assertEquals(201, $response->getStatusCode());
@@ -860,7 +860,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
         );
 
         $response = $this->getResponse(
-            $this->client->post('docman_folders/' . $root_id ."/links", $headers, $query),
+            $this->client->post('docman_folders/' . $root_id . "/links", $headers, $query),
             REST_TestDataBuilder::TEST_BOT_USER_NAME
         );
 
@@ -871,7 +871,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostLinkDocument
      */
-    public function testPostCopyLinkDocument(int $root_id, int $link_document_id) : void
+    public function testPostCopyLinkDocument(int $root_id, int $link_document_id): void
     {
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -894,7 +894,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
      * @depends testGetRootId
      * @depends testPostLinkDocument
      */
-    public function testPostCopyLinkDocumentDenidedForUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id, int $link_document_id) : void
+    public function testPostCopyLinkDocumentDenidedForUserRESTReadOnlyAdminNotInvolvedInProject(int $root_id, int $link_document_id): void
     {
         $response = $this->getResponse(
             $this->client->post(
@@ -959,7 +959,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testUpdatePermissionsFolder(int $root_id) : void
+    public function testUpdatePermissionsFolder(int $root_id): void
     {
         $response_folder_updater_permissions = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -1017,7 +1017,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testUpdatePermissionsFolderAndChildren(int $root_id) : void
+    public function testUpdatePermissionsFolderAndChildren(int $root_id): void
     {
         $response_folder_update_permissions = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
@@ -1033,7 +1033,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
         $response_child_update_permissions = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,
             $this->client->post(
-                'docman_folders/' . urlencode((string)$folder_id) . '/empties',
+                'docman_folders/' . urlencode((string) $folder_id) . '/empties',
                 null,
                 json_encode(['title' => 'Child update permissions'])
             )
@@ -1083,7 +1083,7 @@ class DocmanFoldersTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testItThrowsAnErrorWhenWeTryToDeleteTheRootFolder(int $root_id) : void
+    public function testItThrowsAnErrorWhenWeTryToDeleteTheRootFolder(int $root_id): void
     {
         $response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,

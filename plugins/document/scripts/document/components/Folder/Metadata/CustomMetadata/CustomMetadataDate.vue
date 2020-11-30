@@ -19,18 +19,21 @@
   -->
 
 <template>
-    <div class="tlp-form-element" v-if="currentlyUpdatedItemMetadata.type === 'date'" data-test="document-custom-metadata-date">
-        <label class="tlp-label"
-               v-bind:for="`document-${currentlyUpdatedItemMetadata.short_name}`"
-        >
+    <div
+        class="tlp-form-element"
+        v-if="currentlyUpdatedItemMetadata.type === 'date'"
+        data-test="document-custom-metadata-date"
+    >
+        <label class="tlp-label" v-bind:for="`document-${currentlyUpdatedItemMetadata.short_name}`">
             {{ currentlyUpdatedItemMetadata.name }}
-            <i class="fa fa-asterisk" v-if="currentlyUpdatedItemMetadata.is_required"
-               data-test="document-custom-metadata-is-required"
-            >
-            </i>
+            <i
+                class="fa fa-asterisk"
+                v-if="currentlyUpdatedItemMetadata.is_required"
+                data-test="document-custom-metadata-is-required"
+            ></i>
         </label>
         <div class="tlp-form-element tlp-form-element-prepend">
-            <span class="tlp-prepend"><i class="fa fa-calendar"></i></span>
+            <span class="tlp-prepend"><i class="fas fa-calendar-alt"></i></span>
             <date-flat-picker
                 v-bind:id="`${currentlyUpdatedItemMetadata.short_name}`"
                 v-bind:required="currentlyUpdatedItemMetadata.is_required"
@@ -50,13 +53,13 @@ export default {
         currentlyUpdatedItemMetadata: {
             type: Object,
             required: true,
-            readonly: true
+            readonly: true,
         },
         value: {
             type: String,
             required: true,
-            readonly: true
-        }
+            readonly: true,
+        },
     },
     computed: {
         custom_metadata_date: {
@@ -65,8 +68,8 @@ export default {
             },
             set(value) {
                 this.$emit("input", value);
-            }
-        }
-    }
+            },
+        },
+    },
 };
 </script>

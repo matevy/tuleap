@@ -43,13 +43,13 @@ class ConfigureApache
             || $this->configureSSLConf($this->base_directory . '/etc/httpd/conf.d/ssl.conf');
     }
 
-    private function configureHTTPDConf(string $file_path) : bool
+    private function configureHTTPDConf(string $file_path): bool
     {
         if (! file_exists($file_path)) {
             return false;
         }
         if (! is_writable($file_path)) {
-            throw new PermissionsDeniedException($file_path.' is not writable by current user (uid '.posix_getuid().')');
+            throw new PermissionsDeniedException($file_path . ' is not writable by current user (uid ' . posix_getuid() . ')');
         }
 
         $content = file_get_contents($file_path);
@@ -73,13 +73,13 @@ class ConfigureApache
         return false;
     }
 
-    private function configureSSLConf(string $file_path) : bool
+    private function configureSSLConf(string $file_path): bool
     {
         if (! file_exists($file_path)) {
             return false;
         }
         if (! is_writable($file_path)) {
-            throw new PermissionsDeniedException($file_path.' is not writable by current user (uid '.posix_getuid().')');
+            throw new PermissionsDeniedException($file_path . ' is not writable by current user (uid ' . posix_getuid() . ')');
         }
 
         $content = file_get_contents($file_path);

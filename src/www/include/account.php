@@ -20,6 +20,10 @@
  *
  */
 
+use Tuleap\Cryptography\ConcealedString;
+use Tuleap\InviteBuddy\AccountCreationFeedback;
+use Tuleap\User\Account\RedirectAfterLogin;
+
 // adduser.php - All the forms and functions to manage unix users
 // Add user to an existing project
 function account_add_user_to_group($group_id, &$user_unix_name)
@@ -46,72 +50,23 @@ function account_make_login_from_email($email)
 {
     $pattern = "/^(.*)@.*$/";
     $replacement = "$1";
-    $name=preg_replace($pattern, $replacement, $email);
+    $name = preg_replace($pattern, $replacement, $email);
     $name = substr($name, 0, 32);
     $name = strtr($name, ".:;,?%^*(){}[]<>+=$", "___________________");
     $name = strtr($name, "�a��e�u�", "aaeeeuuc");
     return strtolower($name);
 }
 
-/**
- * Check username validity. DEPRECATED
- *
- * @deprecated
- * @see Valid_UserNameFormat
- * @param String $name
- * @return int
- */
-function account_namevalid($name, $key = '')
-{
-    $rule = new Rule_UserName();
-    if (!$rule->isValid($name)) {
-        $GLOBALS['register_error'] = $rule->getErrorMessage();
-        return 0;
-    }
-    return 1;
-}
-
-/**
- * Check groupname validity. DEPRECATED
- *
- * @deprecated
- * @see Rule_ProjectName
- * @param String $name
- * @return int
- */
-function account_groupnamevalid($name)
-{
-    $rule = new Rule_ProjectName();
-    if (!$rule->isValid($name)) {
-        $GLOBALS['register_error'] = $rule->getErrorMessage();
-        return 0;
-    }
-    return 1;
-}
-
-
-// print out shell selects
-function account_shellselects($current)
-{
-    if (!$current) {
-        $current = '/sbin/nologin';
-    }
-    foreach (PFUser::getAllUnixShells() as $shell) {
-        $selected = '';
-        if ($current == $shell) {
-            $selected = ' selected="selected"';
-        }
-        echo '<option value="'.$shell.'"'.$selected.'>'.$shell.'</option>'.PHP_EOL;
-    }
-}
 // Set user password (Unix, Web)
-function account_create($loginname = '', $pw = '', $ldap_id = '', $realname = '', $register_purpose = '', $email = '', $status = 'P', $confirm_hash = '', $mail_site = 0, $mail_va = 0, $timezone = 'GMT', $lang_id = 'en_US', $unix_status = 'N', $expiry_date = 0)
+function account_create(string $loginname, ?ConcealedString $pw, $ldap_id = '', $realname = '', $register_purpose = '', $email = '', $status = 'P', $confirm_hash = '', $mail_site = 0, $mail_va = 0, $timezone = 'GMT', $lang_id = 'en_US', $unix_status = 'N', $expiry_date = 0)
 {
     $um   = UserManager::instance();
     $user = new PFUser();
     $user->setUserName($loginname);
     $user->setRealName($realname);
-    $user->setPassword($pw);
+    if ($pw !== null) {
+        $user->setPassword($pw);
+    }
     $user->setLdapId($ldap_id);
     $user->setRegisterPurpose($register_purpose);
     $user->setEmail($email);
@@ -126,27 +81,32 @@ function account_create($loginname = '', $pw = '', $ldap_id = '', $realname = ''
 
     $u = $um->createAccount($user);
     if ($u) {
+        $account_creation_feedback = new AccountCreationFeedback(
+            new \Tuleap\InviteBuddy\InvitationDao(),
+            $um,
+            new \Tuleap\InviteBuddy\AccountCreationFeedbackEmailNotifier(),
+            BackendLogger::getDefaultLogger(),
+        );
+        $account_creation_feedback->accountHasJustBeenCreated($u);
+
         return $u->getId();
     } else {
         return $u;
     }
 }
-function account_create_mypage($user_id)
-{
-    $um   = UserManager::instance();
-    return $um->accountCreateMyPage($user_id);
-}
 
-function account_redirect_after_login($return_to)
+function account_redirect_after_login(PFUser $user, string $return_to): void
 {
     global $pv;
 
     $event_manager = EventManager::instance();
-    $event_manager->processEvent('account_redirect_after_login', array('return_to' => &$return_to));
+    $redirect_after_login = $event_manager->dispatch(new RedirectAfterLogin($user, $return_to, isset($pv) && $pv == 2));
+    assert($redirect_after_login instanceof RedirectAfterLogin);
+    $return_to = $redirect_after_login->getReturnTo();
 
     if ($return_to) {
         $returnToToken = parse_url($return_to);
-        if (preg_match('{/my(/|/index.php|)}i', $returnToToken['path'])) {
+        if (preg_match('{/my(/|/index.php|)}i', $returnToToken['path'] ?? '')) {
             $url = '/my/index.php';
         } else {
             $url = '/my/redirect.php';

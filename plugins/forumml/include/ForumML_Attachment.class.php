@@ -24,11 +24,11 @@ class ForumML_Attachment
 {
     private $_dao;
 
-    function getById($id)
+    public function getById($id)
     {
         $attach = null;
         $dar    = $this->getDao()->getById($id);
-        if ($dar && !$dar->isError()) {
+        if ($dar && ! $dar->isError()) {
             $attch = $dar->current();
             $attch['type'] = $this->getType($attch);
         }
@@ -40,7 +40,7 @@ class ForumML_Attachment
      *
      * Try to get it from the db and if it fails, try with filename
      */
-    function getType($row)
+    public function getType($row)
     {
         if (preg_match('/^[ ]*(.*\/.*)[ ]*;?.*$/', $row['file_type'], $matches)) {
             $type = $matches[1];
@@ -85,9 +85,9 @@ class ForumML_Attachment
         return $type;
     }
 
-    function getDao()
+    public function getDao()
     {
-        if (!isset($this->_dao)) {
+        if (! isset($this->_dao)) {
             $this->_dao = new ForumML_AttachmentDao(CodendiDataAccess::instance());
         }
         return $this->_dao;

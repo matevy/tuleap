@@ -36,25 +36,25 @@ function RemovePage(&$request)
 
     $current = $page->getCurrentRevision();
 
-    if (!$current or !($version = $current->getVersion())) {
+    if (! $current or ! ($version = $current->getVersion())) {
         $html = HTML(
             HTML::h2(_("Already deleted")),
             HTML::p(_("Sorry, this page is not in the database."))
         );
-    } elseif (!$request->isPost() || !$request->getArg('verify')) {
+    } elseif (! $request->isPost() || ! $request->getArg('verify')) {
         $removeB = Button('submit:verify', _("Remove Page"), 'wikiadmin');
         $cancelB = Button('submit:cancel', _("Cancel"), 'button'); // use generic wiki button look
 
         $html = HTML(
             HTML::h2(fmt("You are about to remove '%s'!", $pagelink)),
             HTML::form(
-                array('method' => 'post',
-                                      'action' => $request->getPostURL()),
-                HiddenInputs(array('currentversion' => $version,
+                ['method' => 'post',
+                                      'action' => $request->getPostURL()],
+                HiddenInputs(['currentversion' => $version,
                                                    'pagename' => $page->getName(),
-                                                   'action' => 'remove')),
+                                                   'action' => 'remove']),
                 HTML::div(
-                    array('class' => 'toolbar'),
+                    ['class' => 'toolbar'],
                     $removeB,
                     $WikiTheme->getButtonSeparator(),
                     $cancelB
@@ -62,13 +62,13 @@ function RemovePage(&$request)
             ),
             HTML::hr()
         );
-        $sample = HTML::div(array('class' => 'transclusion'));
+        $sample = HTML::div(['class' => 'transclusion']);
         // simple and fast preview expanding only newlines
         foreach (explode("\n", firstNWordsOfContent(100, $current->getPackedContent())) as $s) {
             $sample->pushContent($s, HTML::br());
         }
         $html->pushContent(HTML::div(
-            array('class' => 'wikitext'),
+            ['class' => 'wikitext'],
             $sample
         ));
     } elseif ($request->getArg('currentversion') != $version) {
@@ -78,11 +78,11 @@ function RemovePage(&$request)
         );
     } else {
         // Codendi specific: remove the deleted wiki page from ProjectWantedPages
-        $projectPageName='ProjectWantedPages';
+        $projectPageName = 'ProjectWantedPages';
         $pagename = $page->getName();
 
         $dbi = $request->getDbh();
-        require_once(PHPWIKI_DIR."/lib/loadsave.php");
+        require_once(PHPWIKI_DIR . "/lib/loadsave.php");
         $pagehandle = $dbi->getPage($projectPageName);
         if ($pagehandle->exists()) {// don't replace default contents
             $current = $pagehandle->getCurrentRevision();
@@ -96,7 +96,7 @@ function RemovePage(&$request)
         $meta['summary'] =  $GLOBALS['Language']->getText(
             'wiki_lib_wikipagewrap',
             'page_added',
-            array($pagename)
+            [$pagename]
         );
         $meta['author'] = user_getname();
         $pagehandle->save($text, $version + 1, $meta);
@@ -116,16 +116,16 @@ function RemovePage(&$request)
         $user          = $user_manager->getCurrentUser();
         $event_manager->processEvent(
             "wiki_page_deleted",
-            array(
+            [
                 'group_id'  => GROUP_ID,
                 'wiki_page' => $pagename,
                 'user'      => $user,
                 'version'   => $version
-            )
+            ]
         );
 
         $link = HTML::a(
-            array('href' => 'javascript:history.go(-2)'),
+            ['href' => 'javascript:history.go(-2)'],
             _("Back to the previous page.")
         );
         $html = HTML(

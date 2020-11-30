@@ -76,7 +76,10 @@ abstract class Transition_PostAction_Field_Numeric extends Transition_PostAction
         if ($this->isDefined()) {
             $field = $this->getField();
             if ($field->userCanRead($current_user)) {
-                $this->addFeedback('info', 'workflow_postaction', 'field_value_set', array($field->getLabel(), $this->value));
+                $this->addFeedback(
+                    'info',
+                    sprintf(dgettext('tuleap-tracker', 'The field \'%1$s\' will be automatically set to %2$s'), $field->getLabel(), $this->value)
+                );
             }
 
             $fields_data[$this->field->getId()] = $this->value;

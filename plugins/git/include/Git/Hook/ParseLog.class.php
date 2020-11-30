@@ -30,10 +30,10 @@ class Git_Hook_ParseLog
     /** @var Git_Hook_LogPushes */
     private $log_pushes;
 
-    /** @var Logger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
-    public function __construct(Git_Hook_LogPushes $log_pushes, Git_Hook_ExtractCrossReferences $extract_cross_ref, Logger $logger)
+    public function __construct(Git_Hook_LogPushes $log_pushes, Git_Hook_ExtractCrossReferences $extract_cross_ref, \Psr\Log\LoggerInterface $logger)
     {
         $this->log_pushes        = $log_pushes;
         $this->extract_cross_ref = $extract_cross_ref;
@@ -48,7 +48,7 @@ class Git_Hook_ParseLog
             try {
                 $this->extract_cross_ref->execute($push_details, $commit);
             } catch (Git_Command_Exception $exception) {
-                $this->logger->error(self::class.": cannot extract references for {$push_details->getRepository()->getFullPath()} {$push_details->getRefname()} $commit: $exception");
+                $this->logger->error(self::class . ": cannot extract references for {$push_details->getRepository()->getFullPath()} {$push_details->getRefname()} $commit: $exception");
             }
         }
     }

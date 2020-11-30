@@ -16,6 +16,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_DateReminder_Role_Commenter implements Tracker_DateReminder_Role
 {
 
@@ -35,21 +37,20 @@ class Tracker_DateReminder_Role_Commenter implements Tracker_DateReminder_Role
      *
      * @return String
      */
-    function getLabel()
+    public function getLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'role_COMMENTER');
+        return dgettext('tuleap-tracker', 'Commenter');
     }
 
     /**
      * Retrieve commentator recipients for a given artifact
      *
-     * @param Tracker_Artifact $artifact
      *
      * @return Array of PFUser
      */
-    function getRecipientsFromArtifact(Tracker_Artifact $artifact)
+    public function getRecipientsFromArtifact(Artifact $artifact)
     {
-        $recipients   = array();
+        $recipients   = [];
         $userManager  = $artifact->getUserManager();
         $recipientIds = $artifact->getCommentators();
         foreach ($recipientIds as $recipientId) {

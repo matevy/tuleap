@@ -20,8 +20,6 @@
 
 namespace Tuleap\ProFTPd\Xferlog;
 
-use Exception;
-use PFUser;
 use ProjectManager;
 use UserDao;
 use UserManager;
@@ -138,7 +136,7 @@ class FileImporter
         $project_name = $this->getProjectUnixName($entry);
         if ($project_name) {
             $project = $this->project_manager->getProjectByUnixName($project_name);
-            if ($project && !$project->isError()) {
+            if ($project && ! $project->isError()) {
                 return $project->getId();
             }
         }
@@ -151,7 +149,7 @@ class FileImporter
         if (strpos($entry->filename, $this->base_dir) === 0) {
             $entry->filename = substr($entry->filename, strlen($this->base_dir));
         }
-        $matches = array();
+        $matches = [];
         if (preg_match('%^/([^/]+)/.*%', $entry->filename, $matches)) {
             return $matches[1];
         }

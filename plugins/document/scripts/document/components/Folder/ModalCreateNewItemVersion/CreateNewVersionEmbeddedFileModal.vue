@@ -18,28 +18,45 @@
   -->
 
 <template>
-    <form class="tlp-modal" role="dialog" v-bind:aria-labelled-by="aria_labelled_by" v-on:submit="createNewEmbeddedFileVersion">
-        <modal-header v-bind:modal-title="modal_title"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-header-class="'fa-plus'"
+    <form
+        class="tlp-modal"
+        role="dialog"
+        v-bind:aria-labelled-by="aria_labelled_by"
+        v-on:submit="createNewEmbeddedFileVersion"
+    >
+        <modal-header
+            v-bind:modal-title="modal_title"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-header-class="'fa-plus'"
         />
-        <modal-feedback/>
+        <modal-feedback />
         <div class="tlp-modal-body">
-            <item-update-properties v-bind:version="version" v-bind:item="item" v-on:approvalTableActionChange="setApprovalUpdateAction">
-                <embedded-properties v-if="embedded_file_model" v-model="embedded_file_model" v-bind:item="item" key="embedded-props"/>
+            <item-update-properties
+                v-bind:version="version"
+                v-bind:item="item"
+                v-on:approval-table-action-change="setApprovalUpdateAction"
+            >
+                <embedded-properties
+                    v-if="embedded_file_model"
+                    v-model="embedded_file_model"
+                    v-bind:item="item"
+                    key="embedded-props"
+                />
             </item-update-properties>
         </div>
-        <modal-footer v-bind:is-loading="is_loading"
-                      v-bind:submit-button-label="submit_button_label"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-submit-button-class="'fa-plus'"
+        <modal-footer
+            v-bind:is-loading="is_loading"
+            v-bind:submit-button-label="submit_button_label"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-submit-button-class="'fa-plus'"
         />
     </form>
 </template>
 
+<!-- eslint-disable vue/no-mutating-props -->
 <script>
 import { mapState } from "vuex";
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 import { sprintf } from "sprintf-js";
 import ModalHeader from "../ModalCommon/ModalHeader.vue";
 import ModalFeedback from "../ModalCommon/ModalFeedback.vue";
@@ -54,17 +71,17 @@ export default {
         ModalFeedback,
         ModalHeader,
         ModalFooter,
-        EmbeddedProperties
+        EmbeddedProperties,
     },
     props: {
-        item: Object
+        item: Object,
     },
     data() {
         return {
             embedded_file_model: null,
             version: {},
             is_loading: false,
-            modal: null
+            modal: null,
         };
     },
     computed: {
@@ -77,7 +94,7 @@ export default {
         },
         aria_labelled_by() {
             return "document-new-item-version-modal";
-        }
+        },
     },
     mounted() {
         this.modal = createModal(this.$el);
@@ -96,7 +113,7 @@ export default {
             this.version = {
                 title: "",
                 changelog: "",
-                is_file_locked: this.item.lock_info !== null
+                is_file_locked: this.item.lock_info !== null,
             };
 
             this.embedded_file_model = this.item.embedded_file_properties;
@@ -120,7 +137,7 @@ export default {
                 this.version.title,
                 this.version.changelog,
                 this.version.is_file_locked,
-                this.approval_table_action
+                this.approval_table_action,
             ]);
 
             this.is_loading = false;
@@ -134,7 +151,7 @@ export default {
         },
         hide() {
             this.$emit("hidden");
-        }
-    }
+        },
+    },
 };
 </script>

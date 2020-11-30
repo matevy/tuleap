@@ -21,11 +21,7 @@
 
 use Tuleap\Git\PathJoinUtil;
 
-/**
- * Description of GitRepositoryclass
- */
-
-class GitRepository implements DVCSRepository
+class GitRepository
 {
     public const REPO_EXT       = '.git';
 
@@ -54,10 +50,6 @@ class GitRepository implements DVCSRepository
     private $mailPrefix;
     private $notifiedMails;
 
-    private $hooks;
-    private $branches;
-    private $config;
-
     private $parent;
     private $loaded;
     private $dao;
@@ -77,7 +69,6 @@ class GitRepository implements DVCSRepository
 
     public function __construct()
     {
-
         $this->hash            = '';
         $this->rootPath        = '';
         $this->path            = '';
@@ -91,11 +82,6 @@ class GitRepository implements DVCSRepository
         $this->access          = 'private';
         $this->mailPrefix      = self::DEFAULT_MAIL_PREFIX;
         $this->notifiedMails;
-
-        $this->hooks           = array();
-        $this->branches        = array();
-
-        $this->config          = array();
         $this->parent          = null;
         $this->parentId        = 0;
         $this->loaded          = false;
@@ -108,7 +94,7 @@ class GitRepository implements DVCSRepository
      *
      * @return UserManager
      */
-    function _getUserManager()
+    public function _getUserManager()
     {
         return UserManager::instance();
     }
@@ -118,7 +104,7 @@ class GitRepository implements DVCSRepository
      *
      * @return ProjectManager
      */
-    function _getProjectManager()
+    public function _getProjectManager()
     {
         return ProjectManager::instance();
     }
@@ -223,15 +209,15 @@ class GitRepository implements DVCSRepository
     public function getBackend()
     {
         if (empty($this->backend)) {
-            /** @var GitPlugin $git_plugin */
             $git_plugin  = PluginManager::instance()->getPluginByName('git');
+            \assert($git_plugin instanceof GitPlugin);
             $url_manager = new Git_GitRepositoryUrlManager($git_plugin, new \Tuleap\InstanceBaseURLBuilder());
             switch ($this->getBackendType()) {
                 case GitDao::BACKEND_GITOLITE:
                     $this->backend = $git_plugin->getBackendGitolite();
                     break;
                 default:
-                    $this->backend = Backend::instance('Git', 'GitBackend', array($url_manager));
+                    $this->backend = Backend::instance('Git', 'GitBackend', [$url_manager]);
             }
         }
         return $this->backend;
@@ -287,7 +273,7 @@ class GitRepository implements DVCSRepository
     /**
      * Gives the parent GitRepository object of this
      * Look into the database
-     * @return GitRepository
+     * @return GitRepository|null
      */
     public function getParent()
     {
@@ -344,7 +330,7 @@ class GitRepository implements DVCSRepository
         if ($project) {
             $projectId = $project->getID();
             $row = $this->getDao()->getProjectRepositoryByName($repositoryName, $projectId);
-            if ($row && !empty($row)) {
+            if ($row && ! empty($row)) {
                      $repoId = $row[GitDao::REPOSITORY_ID];
             }
         }
@@ -395,7 +381,7 @@ class GitRepository implements DVCSRepository
      */
     public function getFullName()
     {
-        return PathJoinUtil::unixPathJoin(array($this->getNamespace(), $this->getName()));
+        return PathJoinUtil::unixPathJoin([$this->getNamespace(), $this->getName()]);
     }
 
 
@@ -420,7 +406,7 @@ class GitRepository implements DVCSRepository
     }
     /**
      *  Check repo status, if it is not initialized
-     * @return <type>
+     * @return bool
      */
     public function isInitialized()
     {
@@ -468,7 +454,7 @@ class GitRepository implements DVCSRepository
 
     public function getCreatorId()
     {
-        if (!empty($this->creator)) {
+        if (! empty($this->creator)) {
             return $this->creator->getId();
         }
         return 0;
@@ -507,7 +493,7 @@ class GitRepository implements DVCSRepository
      */
     public function getRootPath()
     {
-        if (!$this->exists()) {
+        if (! $this->exists()) {
             $this->rootPath = $this->project->getUnixName();
         }
         return $this->rootPath;
@@ -554,7 +540,7 @@ class GitRepository implements DVCSRepository
             if (empty($rootPath) || empty($name)) {
                 $this->path = '';
             } else {
-                $this->path = $this->getPathFromProjectAndName($this->project, $name);
+                $this->path = self::getPathFromProjectAndName($this->project, $name);
             }
         }
         return $this->path;
@@ -562,7 +548,7 @@ class GitRepository implements DVCSRepository
 
     public function getSSHForMirror(Git_Mirror_Mirror $mirror)
     {
-        return 'ssh://gitolite@'.$mirror->url.'/'.$this->getPath();
+        return 'ssh://gitolite@' . $mirror->url . '/' . $this->getPath();
     }
 
     /**
@@ -576,15 +562,15 @@ class GitRepository implements DVCSRepository
      */
     public function getPathWithoutLazyLoading()
     {
-        if (!$this->path) {
-            $this->path = $this->getPathFromProjectAndName($this->getProject(), $this->getName());
+        if (! $this->path) {
+            $this->path = self::getPathFromProjectAndName($this->getProject(), $this->getName());
         }
         return $this->path;
     }
 
     public static function getPathFromProjectAndName(Project $project, $name)
     {
-        return $project->getUnixName().DIRECTORY_SEPARATOR.$name.self::REPO_EXT;
+        return $project->getUnixName() . DIRECTORY_SEPARATOR . $name . self::REPO_EXT;
     }
 
     /**
@@ -596,7 +582,7 @@ class GitRepository implements DVCSRepository
     {
         $root_path = $this->getGitRootPath();
         if (is_string($root_path) && strlen($root_path) > 0) {
-            $root_path = ($root_path[strlen($root_path) - 1] === DIRECTORY_SEPARATOR) ? $root_path : $root_path.DIRECTORY_SEPARATOR ;
+            $root_path = ($root_path[strlen($root_path) - 1] === DIRECTORY_SEPARATOR) ? $root_path : $root_path . DIRECTORY_SEPARATOR;
         }
 
         return $root_path . $this->getPathWithoutLazyLoading();
@@ -655,12 +641,12 @@ class GitRepository implements DVCSRepository
     {
         $url  = $this->getDiffLink($url_manager, '%%H');
 
-        $format = 'format:URL:    '.$url.'%%nAuthor: %%an <%%ae>%%nDate:   %%aD%%n%%n%%s%%n%%b';
+        $format = 'format:URL:    ' . $url . '%%nAuthor: %%an <%%ae>%%nDate:   %%aD%%n%%n%%s%%n%%b';
 
-        $showrev = "t=%s; ".
-            "git show ".
-            "--name-status ".
-            "--pretty='".$format."' ".
+        $showrev = "t=%s; " .
+            "git show " .
+            "--name-status " .
+            "--pretty='" . $format . "' " .
             "\$t";
         return $showrev;
     }
@@ -784,7 +770,7 @@ class GitRepository implements DVCSRepository
      */
     public function isAlreadyNotified($mail)
     {
-        return (in_array($mail, $this->getNotifiedMails())) ;
+        return (in_array($mail, $this->getNotifiedMails()));
     }
 
     /**
@@ -827,12 +813,12 @@ class GitRepository implements DVCSRepository
     public function getNonMemberMails()
     {
         $mails = $this->getNotifiedMails();
-        $mailsToDelete = array();
+        $mailsToDelete = [];
         $um = UserManager::instance();
         foreach ($mails as $mail) {
             try {
                 $user = $um->getUserByEmail($mail);
-                if (!$user || !$user->isMember($this->getProjectId())) {
+                if (! $user || ! $user->isMember($this->getProjectId())) {
                     $mailsToDelete[] = $mail;
                 }
             } catch (Exception $e) {
@@ -875,10 +861,10 @@ class GitRepository implements DVCSRepository
      */
     public function isSubPath($referencePath, $repositoryPath)
     {
-        if (strpos(realpath($repositoryPath), realpath($referencePath)) === 0) {
-            return true;
-        }
-        return false;
+        $repository_path = realpath($repositoryPath);
+        $reference_path  = realpath($referencePath);
+
+        return $reference_path !== false && $repository_path !== false && strpos(realpath($repository_path), realpath($reference_path)) === 0;
     }
 
     /**
@@ -901,8 +887,8 @@ class GitRepository implements DVCSRepository
     public function canBeDeleted()
     {
         if ($this->getPath() && $this->getBackend()->canBeDeleted($this)) {
-            $referencePath  = $this->getBackend()->getGitRootPath().'/'.$this->getProject()->getUnixName();
-            $repositoryPath = $this->getBackend()->getGitRootPath().'/'.$this->getPath();
+            $referencePath  = $this->getBackend()->getGitRootPath() . '/' . $this->getProject()->getUnixName();
+            $repositoryPath = $this->getBackend()->getGitRootPath() . '/' . $this->getPath();
             return ($this->isSubPath($referencePath, $repositoryPath) && $this->isDotGit($repositoryPath));
         }
         return false;
@@ -978,14 +964,15 @@ class GitRepository implements DVCSRepository
      */
     public function getHTMLLink(Git_GitRepositoryUrlManager $url_manager)
     {
-        $href  = $url_manager->getRepositoryBaseUrl($this);
-        $label = $this->getName();
-        return '<a href="'. $href .'">'. $label .'</a>';
+        $purifier = Codendi_HTMLPurifier::instance();
+        $href     = $url_manager->getRepositoryBaseUrl($this);
+        $label    = $this->getName();
+        return '<a href="' . $purifier->purify($href) . '">' . $purifier->purify($label) . '</a>';
     }
 
     public function setIsMirrored($is_mirrored)
     {
-        $this->is_mirrored = (boolean)$is_mirrored;
+        $this->is_mirrored = (bool) $is_mirrored;
     }
 
     public function getIsMirrored()
@@ -1015,6 +1002,8 @@ class GitRepository implements DVCSRepository
 
     /**
      * @return string
+     *
+     * @psalm-mutation-free
      */
     public function getPathWithoutProject()
     {
@@ -1025,6 +1014,9 @@ class GitRepository implements DVCSRepository
         return implode("/", $split_path);
     }
 
+    /**
+     * @psalm-mutation-free
+     */
     public function getLabel()
     {
         return basename($this->getName());
@@ -1035,7 +1027,7 @@ class GitRepository implements DVCSRepository
      */
     public function getFullHTTPUrlWithDotGit()
     {
-        return HTTPRequest::instance()->getServerUrl().$this->getRelativeHTTPUrl().'.git';
+        return HTTPRequest::instance()->getServerUrl() . $this->getRelativeHTTPUrl() . '.git';
     }
 
     /**
@@ -1043,6 +1035,6 @@ class GitRepository implements DVCSRepository
      */
     public function getRelativeHTTPUrl()
     {
-        return GIT_BASE_URL .'/'. $this->getProject()->getUnixName() .'/'. $this->getFullName();
+        return GIT_BASE_URL . '/' . $this->getProject()->getUnixName() . '/' . $this->getFullName();
     }
 }

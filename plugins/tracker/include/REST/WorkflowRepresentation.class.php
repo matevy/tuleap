@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,6 +23,9 @@ namespace Tuleap\Tracker\REST;
 use Tuleap\REST\JsonCast;
 use Workflow;
 
+/**
+ * @psalm-immutable
+ */
 class WorkflowRepresentation
 {
 
@@ -32,7 +35,7 @@ class WorkflowRepresentation
     public $field_id;
 
     /**
-     * @var bool
+     * @var string
      */
     public $is_used;
 
@@ -54,12 +57,12 @@ class WorkflowRepresentation
     /**
      * @var \Tuleap\Tracker\REST\WorkflowTransitionRepresentation[]
      */
-    public $transitions = array();
+    public $transitions = [];
 
-    public function build(Workflow $workflow, WorkflowRulesRepresentation $rules, array $transitions)
+    public function __construct(Workflow $workflow, WorkflowRulesRepresentation $rules, array $transitions)
     {
         $this->field_id    = JsonCast::toInt($workflow->getFieldId());
-        $this->is_used     = $workflow->is_used;
+        $this->is_used     = (string) $workflow->is_used;
         $this->is_legacy   = JsonCast::toBoolean($workflow->isLegacy());
         $this->is_advanced = JsonCast::toBoolean($workflow->isAdvanced());
         $this->rules       = $rules;

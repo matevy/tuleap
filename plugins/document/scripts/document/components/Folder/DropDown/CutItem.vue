@@ -18,8 +18,9 @@
   -->
 
 <template>
-    <a
+    <button
         class="tlp-dropdown-menu-item"
+        type="button"
         role="menuitem"
         v-on:click="cutItem(item)"
         v-bind:class="{ 'tlp-dropdown-menu-item-disabled': pasting_in_progress }"
@@ -28,7 +29,7 @@
     >
         <i class="fa fa-fw fa-cut tlp-dropdown-menu-item-icon"></i>
         <translate>Cut</translate>
-    </a>
+    </button>
 </template>
 <script>
 import { mapState } from "vuex";
@@ -37,13 +38,13 @@ import EventBus from "../../../helpers/event-bus.js";
 export default {
     name: "CutItem",
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
         ...mapState("clipboard", ["pasting_in_progress"]),
         can_cut_item() {
             return this.item.user_can_write && this.item.parent_id !== 0;
-        }
+        },
     },
     methods: {
         cutItem() {
@@ -51,7 +52,7 @@ export default {
                 EventBus.$emit("hide-action-menu");
             }
             this.$store.commit("clipboard/cutItem", this.item);
-        }
-    }
+        },
+    },
 };
 </script>

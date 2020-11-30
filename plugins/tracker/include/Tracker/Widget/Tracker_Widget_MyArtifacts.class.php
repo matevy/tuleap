@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2011-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,6 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\date\RelativeDatesAssetsRetriever;
 use Tuleap\Layout\CssAsset;
 use Tuleap\Layout\CssAssetCollection;
 use Tuleap\Layout\IncludeAssets;
@@ -29,6 +30,7 @@ use Tuleap\Tracker\Artifact\MyArtifactsCollection;
  *
  * Artifact assigned to or submitted by this person
  */
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class Tracker_Widget_MyArtifacts extends Widget
 {
     public const ID        = 'plugin_tracker_myartifacts';
@@ -36,7 +38,7 @@ class Tracker_Widget_MyArtifacts extends Widget
 
     protected $artifact_show;
 
-    function __construct()
+    public function __construct()
     {
         parent::__construct(self::ID);
         $this->artifact_show = user_get_preference(self::PREF_SHOW);
@@ -46,17 +48,30 @@ class Tracker_Widget_MyArtifacts extends Widget
         }
     }
 
-    function getTitle()
+    public function getTitle()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 'my_arts') . ' [' . $GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', strtolower($this->artifact_show)) . ']';
+        switch (strtolower($this->artifact_show)) {
+            case 'a':
+                $abbreviation = dgettext('tuleap-tracker', 'A');
+                break;
+            case 's':
+                $abbreviation = dgettext('tuleap-tracker', 'S');
+                break;
+            case 'as':
+            default:
+                $abbreviation = dgettext('tuleap-tracker', 'AS');
+                break;
+        }
+
+        return dgettext('tuleap-tracker', 'My Artifacts') . ' [' . $abbreviation . ']';
     }
 
-    function updatePreferences(Codendi_Request $request)
+    public function updatePreferences(Codendi_Request $request)
     {
         $request->valid(new Valid_String('cancel'));
-        $vShow = new Valid_WhiteList('show', array('A', 'S', 'AS'));
+        $vShow = new Valid_WhiteList('show', ['A', 'S', 'AS']);
         $vShow->required();
-        if (!$request->exist('cancel')) {
+        if (! $request->exist('cancel')) {
             if ($request->valid($vShow)) {
                 switch ($request->get('show')) {
                     case 'A':
@@ -89,34 +104,34 @@ class Tracker_Widget_MyArtifacts extends Widget
 
         return '
             <div class="tlp-form-element">
-                <label class="tlp-label" for="show-'. (int)$widget_id .'">
-                    '. $purifier->purify($GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 'display_arts')) .'
+                <label class="tlp-label" for="show-' . (int) $widget_id . '">
+                    ' . $purifier->purify(dgettext('tuleap-tracker', 'Display artifacts:')) . '
                 </label>
                 <select type="text"
                     class="tlp-select"
-                    id="show-'. (int)$widget_id .'"
+                    id="show-' . (int) $widget_id . '"
                     name="show"
                 >
-                    <option value="A" '. $selected_a .'>
-                        '. $purifier->purify($GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 'a_info')) .'
+                    <option value="A" ' . $selected_a . '>
+                        ' . $purifier->purify(dgettext('tuleap-tracker', 'assigned to me [A]')) . '
                     </option>
-                    <option value="S" '. $selected_s .'>
-                        '. $purifier->purify($GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 's_info')) .'
+                    <option value="S" ' . $selected_s . '>
+                        ' . $purifier->purify(dgettext('tuleap-tracker', 'submitted by me [S]')) . '
                     </option>
-                    <option value="AS" '. $selected_as .'>
-                        '. $purifier->purify($GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 'as_info')) .'
+                    <option value="AS" ' . $selected_as . '>
+                        ' . $purifier->purify(dgettext('tuleap-tracker', 'assigned to or submitted by me [AS]')) . '
                     </option>
                 </select>
             </div>
             ';
     }
 
-    function isAjax()
+    public function isAjax()
     {
         return true;
     }
 
-    function getContent()
+    public function getContent()
     {
         $html_my_artifacts = '';
 
@@ -165,7 +180,7 @@ class Tracker_Widget_MyArtifacts extends Widget
                     </svg>
                 </div>
                 <p class="empty-pane-text">' .
-                $GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 'no_artifacts')
+                dgettext('tuleap-tracker', 'You don\'t have any </br> artifacts yet')
                 . '</p>
                 </div>';
         }
@@ -173,7 +188,8 @@ class Tracker_Widget_MyArtifacts extends Widget
         return $html_my_artifacts;
     }
 
-    function _display_artifacts(MyArtifactsCollection $my_artifacts)
+
+    public function _display_artifacts(MyArtifactsCollection $my_artifacts) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $hp = Codendi_HTMLPurifier::instance();
 
@@ -186,9 +202,9 @@ class Tracker_Widget_MyArtifacts extends Widget
                 $classname           = Toggler::getClassname($div_id);
                 $group_id            = $tracker->getGroupId();
                 $project             = ProjectManager::instance()->getProject($group_id);
-                $project_and_tracker = $project->getUnconvertedPublicName() . ' - ' . $tracker->getName();
+                $project_and_tracker = $project->getPublicName() . ' - ' . $tracker->getName();
 
-                $html_my_artifacts .= '<div>';
+                $html_my_artifacts .= '<div data-test="dashboard-my-artifacts-content">';
                 $html_my_artifacts .= '<div class="' . $classname . ' tracker-widget-artifacts-toggler" id="' . $div_id . '">';
                 $html_my_artifacts .= '<a href="/plugins/tracker/?tracker=' . $tracker->getId() . '" class="tracker-widget-artifacts">';
                 $html_my_artifacts .= '<strong>' . $hp->purify($project_and_tracker, CODENDI_PURIFIER_CONVERT_HTML) . '</strong>';
@@ -218,22 +234,29 @@ class Tracker_Widget_MyArtifacts extends Widget
         return $ajax_url;
     }
 
-    function getCategory()
+    public function getCategory()
     {
         return dgettext('tuleap-tracker', 'Trackers');
     }
 
-    function getDescription()
+    public function getDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_widget_myartifacts', 'description');
+        return dgettext('tuleap-tracker', 'List artifacts you have submitted or assigned to you, by project.');
     }
 
-    public function getStylesheetDependencies()
+    public function getStylesheetDependencies(): CssAssetCollection
     {
         $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../www/themes/BurningParrot/assets',
-            TRACKER_BASE_URL . '/themes/BurningParrot/assets'
+            __DIR__ . '/../../../../../src/www/assets/trackers',
+            '/assets/trackers'
         );
-        return new CssAssetCollection([new CssAsset($include_assets, 'style')]);
+        return new CssAssetCollection([new CssAsset($include_assets, 'tracker-bp')]);
+    }
+
+    public function getJavascriptDependencies(): array
+    {
+        return [
+            ['file' => RelativeDatesAssetsRetriever::retrieveAssetsUrl(), 'unique-name' => 'tlp-relative-dates']
+        ];
     }
 }

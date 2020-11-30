@@ -21,7 +21,7 @@ import { ColumnDefinition, Swimlane } from "../../../../type";
 import InvalidMappingSwimlane from "./InvalidMappingSwimlane.vue";
 import { Wrapper, shallowMount } from "@vue/test-utils";
 import { createTaskboardLocalVue } from "../../../../helpers/local-vue-for-test";
-import { createStoreMock } from "../../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import ParentCell from "./ParentCell.vue";
 import { RootState } from "../../../../store/type";
 import InvalidMappingCell from "./Cell/InvalidMappingCell.vue";
@@ -33,7 +33,7 @@ async function createWrapper(
     return shallowMount(InvalidMappingSwimlane, {
         localVue: await createTaskboardLocalVue(),
         mocks: { $store: createStoreMock({ state: { column: { columns } } as RootState }) },
-        propsData: { swimlane }
+        propsData: { swimlane },
     });
 }
 
@@ -41,13 +41,13 @@ describe(`InvalidMappingSwimlane`, () => {
     it("displays the parent card in its own cell when status does not map to a column", async () => {
         const columns = [
             { id: 2, label: "To do" } as ColumnDefinition,
-            { id: 3, label: "Done" } as ColumnDefinition
+            { id: 3, label: "Done" } as ColumnDefinition,
         ];
         const swimlane = { card: { id: 43, mapped_list_value: null } } as Swimlane;
 
         const wrapper = await createWrapper(columns, swimlane);
 
-        expect(wrapper.contains(ParentCell)).toBe(true);
-        expect(wrapper.findAll(InvalidMappingCell).length).toBe(2);
+        expect(wrapper.findComponent(ParentCell).exists()).toBe(true);
+        expect(wrapper.findAllComponents(InvalidMappingCell).length).toBe(2);
     });
 });

@@ -21,9 +21,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Chart\Chart;
 use Tuleap\Chart\ColorsForCharts;
 use Tuleap\Dashboard\Project\ProjectDashboardController;
 
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class Widget_ProjectSvnStats extends Widget
 {
     public function __construct()
@@ -36,13 +38,15 @@ class Widget_ProjectSvnStats extends Widget
         return $GLOBALS['Language']->getText('svn_widget', 'svnstats');
     }
 
-    function getCategory()
+    public function getCategory()
     {
         return _('Source code management');
     }
 
     public function getContent()
     {
+        return _('This widget is deprecated, you should remove it.');
+
         $request = HTTPRequest::instance();
 
         return '<div style="text-align:center">
@@ -66,8 +70,8 @@ class Widget_ProjectSvnStats extends Widget
         $week = 7 * $day;
 
         //compute the stats
-        $stats = array();
-        $nb_of_commits = array();
+        $stats = [];
+        $nb_of_commits = [];
         foreach ($dao->statsByGroupId($owner_id, $duration) as $row) {
             $stats[$row['whoid']]['by_day'][$row['day'] * $day] = $row['nb_commits'];
             $stats[$row['whoid']]['by_week'][$row['week']]      = $row['nb_commits'];
@@ -75,24 +79,24 @@ class Widget_ProjectSvnStats extends Widget
         }
         if (count($stats)) {
             //sort the results
-            uksort($stats, array($this, 'sortByTop'));
+            uksort($stats, [$this, 'sortByTop']);
 
             $today           = $_SERVER['REQUEST_TIME'];
             $start_of_period = strtotime("-$nb_weeks weeks");
 
             //fill-in the holes
-            $tmp_stats = array();
+            $tmp_stats = [];
             foreach ($stats as $whoid => $stat) {
-                $tmp_stats = array();
+                $tmp_stats = [];
                 for ($i = $start_of_period; $i <= $today; $i += $week) {
-                    $w = (int)date('W', $i);
+                    $w = (int) date('W', $i);
                     $tmp_stats[$w] = isset($stat['by_week'][$w]) ? $stat['by_week'][$w] : '0';
                 }
                 $stats[$whoid]['by_week'] = $tmp_stats;
             }
 
             //fill-in the labels
-            $dates = array();
+            $dates = [];
             for ($i = $start_of_period; $i <= $today; $i += $week) {
                 $dates[] = date('M d', $i);
             }
@@ -121,17 +125,20 @@ class Widget_ProjectSvnStats extends Widget
 
             $colors = array_reverse(array_slice($colors_for_charts->getChartColors(), 0, $nb_commiters));
             $nb_colors = count($colors);
-            $bars = array();
+            $bars = [];
             $i = 0;
             foreach ($stats as $whoid => $stat) {
+                if (! array_key_exists('by_week', $stat)) {
+                    continue;
+                }
                 $l = new BarPlot(array_values($stat['by_week']));
                 $color = $colors[$i++ % $nb_colors];
-                $l->SetColor($color.':0.7');
+                $l->SetColor($color . ':0.7');
                 $l->setFillColor($color);
                 if ($user = UserManager::instance()->getUserById($whoid)) {
                     $l->SetLegend(UserHelper::instance()->getDisplayNameFromUser($user));
                 } else {
-                    $l->SetLegend('Unknown user ('. (int)$whoid .')');
+                    $l->SetLegend('Unknown user (' . (int) $whoid . ')');
                 }
                 $bars[] = $l;
             }

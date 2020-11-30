@@ -50,7 +50,7 @@ class PaginatedTimelineRepresentationBuilder
     public function getPaginatedTimelineRepresentation(PullRequest $pull_request, $project_id, $limit, $offset)
     {
         $paginated_events        = $this->timeline_factory->getPaginatedTimelineByPullRequestId($pull_request, $limit, $offset);
-        $timeline_representation = array();
+        $timeline_representation = [];
 
         foreach ($paginated_events->getEvents() as $event) {
             $timeline_representation[] = $this->buildEventRepresentation($event, $project_id);
@@ -66,18 +66,15 @@ class PaginatedTimelineRepresentationBuilder
     {
         switch (get_class($event)) {
             case Comment::class:
-                $event_representation = new CommentRepresentation();
-                $event_representation->build(
+                return new CommentRepresentation(
                     $event->getId(),
                     $project_id,
                     $this->buildMinimalUserRepresentation($event->getUserId()),
                     $event->getPostDate(),
                     $event->getContent()
                 );
-                return $event_representation;
             case InlineComment::class:
-                $event_representation = new TimelineInlineCommentRepresentation();
-                $event_representation->build(
+                return new TimelineInlineCommentRepresentation(
                     $event->getFilePath(),
                     $event->getUnidiffOffset(),
                     $this->buildMinimalUserRepresentation($event->getUserId()),
@@ -86,14 +83,12 @@ class PaginatedTimelineRepresentationBuilder
                     $event->isOutdated(),
                     $project_id
                 );
-                return $event_representation;
             case TimelineGlobalEvent::class:
-                $event_representation = new TimelineEventRepresentation(
+                return new TimelineEventRepresentation(
                     $this->buildMinimalUserRepresentation($event->getUserId()),
                     $event->getPostDate(),
                     $event->getType()
                 );
-                return $event_representation;
             case ReviewerChange::class:
                 return ReviewerChangeTimelineEventRepresentation::fromReviewerChange($event);
         }
@@ -103,13 +98,10 @@ class PaginatedTimelineRepresentationBuilder
 
     private function buildMinimalUserRepresentation(int $user_id): MinimalUserRepresentation
     {
-        $user_representation = new MinimalUserRepresentation();
-        $user                = $this->user_manager->getUserById($user_id);
+        $user = $this->user_manager->getUserById($user_id);
         if ($user === null) {
-            $user_representation->build($this->user_manager->getUserAnonymous());
-        } else {
-            $user_representation->build($user);
+            return MinimalUserRepresentation::build($this->user_manager->getUserAnonymous());
         }
-        return $user_representation;
+        return MinimalUserRepresentation::build($user);
     }
 }

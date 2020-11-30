@@ -17,15 +17,15 @@ include_once("lib/RssWriter.php");
  */
 class RssWriter2 extends RssWriter
 {
-    function __construct()
+    public function __construct()
     {
         $this->XmlElement(
             'rss',
-            array('version' => "2.0")
+            ['version' => "2.0"]
         );
 
         // not used. no namespaces should be used.
-        $this->_modules = array(
+        $this->_modules = [
             //Standards
         'content'    => "http://purl.org/rss/1.0/modules/content/",
         'dc'    => "http://purl.org/dc/elements/1.1/",
@@ -40,24 +40,24 @@ class RssWriter2 extends RssWriter
         'slash'    => "http://purl.org/rss/1.0/modules/slash/",
         'taxo'    => "http://purl.org/rss/1.0/modules/taxonomy/",
         'thr'    => "http://purl.org/rss/1.0/modules/threading/"
-        );
-        $this->_uris_seen = array();
-        $this->_items = array();
+        ];
+        $this->_uris_seen = [];
+        $this->_items = [];
     }
 
     // Required args: (applying defaults)
     //  'domain', 'port', 'path', 'protocol'
     // Optional args:
     //  none
-    function cloud($properties)
+    public function cloud($properties)
     {
         // soap or http-post
-        if (!isset($properties['port'])) {
-            $properties['port'] = !SERVER_PORT
+        if (! isset($properties['port'])) {
+            $properties['port'] = ! SERVER_PORT
                 ? '80'
                 : (SERVER_PROTOCOL == 'https' ? '443' : '80');
         }
-        if (!isset($properties['domain'])) {
+        if (! isset($properties['domain'])) {
             $properties['domain'] = SERVER_NAME;
         }
         $this->_cloud = $this->node('cloud', $properties);
@@ -66,7 +66,7 @@ class RssWriter2 extends RssWriter
     /**
      * Write output to HTTP client.
      */
-    function spew()
+    public function spew()
     {
         header("Content-Type: application/rss+xml; charset=" . RSS_ENCODING);
         printf("<?xml version=\"1.0\" encoding=\"%s\"?>\n", RSS_ENCODING);
@@ -77,7 +77,7 @@ class RssWriter2 extends RssWriter
         echo "              %HTMLlat1;]>\n";
         $this->printXML();
     }
-};
+}
 
 // (c-file-style: "gnu")
 // Local Variables:

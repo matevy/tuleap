@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,14 +20,16 @@
 
 namespace Tuleap\ArchiveDeletedItems;
 
+use Psr\Log\LoggerInterface;
+
 class FileCopier
 {
     /**
-     * @var ArchiveLogger
+     * @var LoggerInterface
      */
     private $logger;
 
-    public function __construct(ArchiveLogger $logger)
+    public function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
     }
@@ -46,7 +48,7 @@ class FileCopier
 
         if (file_exists($destination_file)) {
             if ($skip_duplicated) {
-                $this->logger->warn("Destination file $destination_file already exists. Skipping");
+                $this->logger->warning("Destination file $destination_file already exists. Skipping");
                 return true;
             } else {
                 $this->logger->error("Destination file $destination_file already exists");

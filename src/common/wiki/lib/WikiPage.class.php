@@ -40,10 +40,10 @@ require_once __DIR__ . '/../../../www/project/admin/permissions.php';
  */
 class WikiPage
 {
- /* private int */   var $id;       /* wiki_page.id */
- /* private string*/ var $pagename; /* wiki_page.pagename */
- /* private int */   static $gid;      /* wiki_page.group_id */
- /* private bool */  var $empty;
+ /* private int */   public $id;       /* wiki_page.id */
+ /* private string*/ public $pagename; /* wiki_page.pagename */
+ /* private int */   public static $gid;      /* wiki_page.group_id */
+ /* private bool */  public $empty;
 
     /** @var WikiPageWrapper */
     private $wrapper;
@@ -57,7 +57,7 @@ class WikiPage
     /*
      * Constructor
      */
-    function __construct($id = 0, $pagename = '')
+    public function __construct($id = 0, $pagename = '')
     {
         $this->empty = null;
 
@@ -106,7 +106,7 @@ class WikiPage
         $res = db_query(
             'SELECT version
             FROM wiki_version
-            WHERE id='. db_ei($this->id) .' ORDER BY version DESC LIMIT 1'
+            WHERE id=' . db_ei($this->id) . ' ORDER BY version DESC LIMIT 1'
         );
 
         if (db_numrows($res) !== 1) {
@@ -121,7 +121,7 @@ class WikiPage
     public function getMetadata()
     {
         if ($this->isEmpty()) {
-            return array('mtime' => time());
+            return ['mtime' => time()];
         }
 
         $current_revision_metadata = $this->wrapper->getRequest()->getPage($this->pagename)
@@ -129,12 +129,12 @@ class WikiPage
 
         $this->convertAuthorIdToUserId($current_revision_metadata);
 
-        $content = array(
+        $content = [
             'content' => $this->getLastVersionContent()
-        );
-        $summary = array(
+        ];
+        $summary = [
             'summary' => $this->getSummaryForCurrentRevision()
-        );
+        ];
 
         return $current_revision_metadata + $content + $summary;
     }
@@ -148,7 +148,7 @@ class WikiPage
             $author = $user_manager->getUserByUserName($current_revision_metadata['author']);
 
             if ($author) {
-                $last_author_id = (int)$author->getId();
+                $last_author_id = (int) $author->getId();
             }
         }
 
@@ -195,7 +195,7 @@ class WikiPage
         $res = db_query(
             'SELECT content
             FROM wiki_version
-            WHERE id='. db_ei($this->id) .' ORDER BY version DESC LIMIT 1'
+            WHERE id=' . db_ei($this->id) . ' ORDER BY version DESC LIMIT 1'
         );
 
         if (db_numrows($res) !== 1) {
@@ -209,9 +209,9 @@ class WikiPage
 
     private function findPageId()
     {
-        $res = db_query(' SELECT id FROM wiki_page'.
-                        ' WHERE group_id="'.db_ei(self::$gid).'"'.
-                        ' AND pagename="'.db_es($this->pagename).'"');
+        $res = db_query(' SELECT id FROM wiki_page' .
+                        ' WHERE group_id="' . db_ei(self::$gid) . '"' .
+                        ' AND pagename="' . db_es($this->pagename) . '"');
         if (db_numrows($res) > 1) {
             exit_error(
                 $GLOBALS['Language']->getText('global', 'error'),
@@ -228,8 +228,8 @@ class WikiPage
 
     private function initFromDb()
     {
-        $res = db_query(' SELECT id, pagename, group_id FROM wiki_page'.
-                        ' WHERE id="'.db_ei($this->id).'"');
+        $res = db_query(' SELECT id, pagename, group_id FROM wiki_page' .
+                        ' WHERE id="' . db_ei($this->id) . '"');
         if (db_numrows($res) > 1) {
             exit_error(
                 $GLOBALS['Language']->getText('global', 'error'),
@@ -249,7 +249,7 @@ class WikiPage
     /**
      * @todo transfer to Wrapper
      */
-    function isEmpty()
+    public function isEmpty()
     {
         // If this value is already computed, return now !
         if ($this->empty != null) {
@@ -257,13 +257,13 @@ class WikiPage
         }
 
         // Else compute
-        $this->empty=true;
+        $this->empty = true;
         if ($this->exist()) {
             $res = db_query(' SELECT wiki_page.id'
-                          .' FROM wiki_page, wiki_nonempty'
-                          .' WHERE wiki_page.group_id="'.db_ei(self::$gid).'"'
-                          .' AND wiki_page.id="'.db_ei($this->id).'"'
-                          .' AND wiki_nonempty.id=wiki_page.id');
+                          . ' FROM wiki_page, wiki_nonempty'
+                          . ' WHERE wiki_page.group_id="' . db_ei(self::$gid) . '"'
+                          . ' AND wiki_page.id="' . db_ei($this->id) . '"'
+                          . ' AND wiki_nonempty.id=wiki_page.id');
             if (db_numrows($res) == 1) {
                 $this->empty = false;
             }
@@ -289,11 +289,11 @@ class WikiPage
         $eM = EventManager::instance();
         $eM->processEvent(
             'isWikiPageReferenced',
-            array(
+            [
                 'referenced' => &$referenced,
                 'wiki_page'  => $this->pagename,
                 'group_id'   => self::$gid
-            )
+            ]
         );
 
         return $referenced;
@@ -304,18 +304,18 @@ class WikiPage
         if ($this->referenced == true) {
             $userCanAccess = false;
             $eM = EventManager::instance();
-            $eM->processEvent('userCanAccessWikiDocument', array(
+            $eM->processEvent('userCanAccessWikiDocument', [
                             'canAccess' => &$userCanAccess,
                             'wiki_page'  => $this->pagename,
                             'group_id' => self::$gid
-                            ));
-            if (!$userCanAccess) {
+                            ]);
+            if (! $userCanAccess) {
                 return false;
             }
         } else {
             // Check if user is authorized.
             if ($this->permissionExist()) {
-                if (!permission_is_authorized(Wiki_PermissionsManager::WIKI_PERMISSION_READ, $this->id, $uid, self::$gid)) {
+                if (! permission_is_authorized(Wiki_PermissionsManager::WIKI_PERMISSION_READ, $this->id, $uid, self::$gid)) {
                     return false;
                 }
             }
@@ -349,7 +349,7 @@ class WikiPage
     /**
      * @todo transfer to Wrapper
      */
-    function exist()
+    public function exist()
     {
         return($this->id != 0);
     }
@@ -357,7 +357,7 @@ class WikiPage
     public function log($user_id)
     {
         $sql = "INSERT INTO wiki_log(user_id,group_id,pagename,time) "
-            ."VALUES ('".db_ei($user_id)."','".db_ei(self::$gid)."','".db_es($this->pagename)."','".db_ei(time())."')";
+            . "VALUES ('" . db_ei($user_id) . "','" . db_ei(self::$gid) . "','" . db_es($this->pagename) . "','" . db_ei(time()) . "')";
         db_query($sql);
     }
 
@@ -397,11 +397,13 @@ class WikiPage
     public function delete()
     {
         if ($this->exist()) {
-            if ($this->wiki_dao->deleteWikiPage($this->id)
+            if (
+                $this->wiki_dao->deleteWikiPage($this->id)
                 && $this->wiki_dao->deleteWikiPageVersion($this->id)
                 && $this->wiki_dao->deleteLinksFromToWikiPage($this->id)
                 && $this->wiki_dao->deleteWikiPageFromNonEmptyList($this->id)
-                && $this->wiki_dao->deleteWikiPageRecentInfos($this->id)) {
+                && $this->wiki_dao->deleteWikiPageRecentInfos($this->id)
+            ) {
                 $this->id = 0;
                 return true;
             } else {
@@ -422,15 +424,15 @@ class WikiPage
             $admin_pages_db_escaped[] = '"' . db_es($admin_page) . '"';
         }
 
-        $allPages = array();
+        $allPages = [];
 
         $res = db_query(' SELECT pagename'
-                        .' FROM wiki_page, wiki_nonempty'
-                        .' WHERE wiki_page.group_id="'.db_ei(self::$gid).'"'
-                        .' AND wiki_nonempty.id=wiki_page.id'
-                        .' AND wiki_page.pagename IN ('.implode(',', $admin_pages_db_escaped).')');
+                        . ' FROM wiki_page, wiki_nonempty'
+                        . ' WHERE wiki_page.group_id="' . db_ei(self::$gid) . '"'
+                        . ' AND wiki_nonempty.id=wiki_page.id'
+                        . ' AND wiki_page.pagename IN (' . implode(',', $admin_pages_db_escaped) . ')');
         while ($row = db_fetch_array($res)) {
-            $allPages[]=$row[0];
+            $allPages[] = $row[0];
         }
 
         return $allPages;
@@ -447,15 +449,15 @@ class WikiPage
             $default_pages_db_escaped[] = '"' . db_es($default_page) . '"';
         }
 
-        $allPages = array();
+        $allPages = [];
 
         $res = db_query(' SELECT pagename'
-                        .' FROM wiki_page, wiki_nonempty'
-                        .' WHERE wiki_page.group_id="'.db_ei(self::$gid).'"'
-                        .' AND wiki_nonempty.id=wiki_page.id'
-                        .' AND wiki_page.pagename IN ('.implode(',', $default_pages_db_escaped).')');
+                        . ' FROM wiki_page, wiki_nonempty'
+                        . ' WHERE wiki_page.group_id="' . db_ei(self::$gid) . '"'
+                        . ' AND wiki_nonempty.id=wiki_page.id'
+                        . ' AND wiki_page.pagename IN (' . implode(',', $default_pages_db_escaped) . ')');
         while ($row = db_fetch_array($res)) {
-            $allPages[]=$row[0];
+            $allPages[] = $row[0];
         }
 
         return $allPages;
@@ -472,15 +474,15 @@ class WikiPage
             $excluded_pages_db_escaped[] = '"' . db_es($excluded_page) . '"';
         }
 
-        $allPages = array();
+        $allPages = [];
 
         $res = db_query(' SELECT pagename'
-                        .' FROM wiki_page, wiki_nonempty'
-                        .' WHERE wiki_page.group_id="'.db_ei(self::$gid).'"'
-                        .' AND wiki_nonempty.id=wiki_page.id'
-                        .' AND wiki_page.pagename NOT IN (' . implode(',', $excluded_pages_db_escaped) . ')');
+                        . ' FROM wiki_page, wiki_nonempty'
+                        . ' WHERE wiki_page.group_id="' . db_ei(self::$gid) . '"'
+                        . ' AND wiki_nonempty.id=wiki_page.id'
+                        . ' AND wiki_page.pagename NOT IN (' . implode(',', $excluded_pages_db_escaped) . ')');
         while ($row = db_fetch_array($res)) {
-            $allPages[]=$row[0];
+            $allPages[] = $row[0];
         }
 
         return $allPages;
@@ -490,7 +492,7 @@ class WikiPage
     {
         $this->setGid($project_id);
 
-        $indexable_pages = array();
+        $indexable_pages = [];
         $this->getIndexablePageFromAllUserPages($indexable_pages);
         $this->getIndexablePageFromDefaultAndAdminPages($indexable_pages);
 
@@ -533,8 +535,7 @@ class WikiPage
    */
     public static function getDefaultPages()
     {
-        return array
-            ( // Plugin documentation pages
+        return [ // Plugin documentation pages
              "AddCommentPlugin","AppendTextPlugin","AuthorHistoryPlugin"
              ,"CalendarListPlugin","CommentPlugin","CreatePagePlugin"
              ,"CreateTocPlugin","EditMetaDataPlugin","FrameIncludePlugin"
@@ -603,7 +604,7 @@ class WikiPage
              ,"ProjectSummary","RecentVisitors","ReleaseNotes","SystemInfoPlugin"
              ,"HomePageAlias","PhpWeatherPlugin","RateIt","RawHtmlPlugin"
 
-             );
+             ];
     }
 
   /**
@@ -614,7 +615,7 @@ class WikiPage
    */
     public static function getAdminPages()
     {
-        return array(
+        return [
             "HomePage" ,"PhpWikiAdministration","WikiAdminSelect"
             ,"PhpWikiAdministration/Remove"
             ,"PhpWikiAdministration/Rename", "PhpWikiAdministration/Replace"
@@ -625,6 +626,6 @@ class WikiPage
             ,"AdministrationDePhpWiki/Remplacer"
             ,"AdministrationDePhpWiki/Renommer", "AdministrationDePhpWiki/Droits"
             ,"BacÀSable",
-        );
+        ];
     }
 }

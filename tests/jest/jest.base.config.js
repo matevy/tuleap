@@ -23,23 +23,19 @@ module.exports = {
     transform: {
         "^.+\\.vue$": "vue-jest",
         "^.+\\.ts$": "ts-jest",
-        "^.+\\.js$": path.resolve(__dirname, "./babel-jest-process.js")
+        "^.+\\.js$": path.resolve(__dirname, "./babel-jest-process.js"),
     },
     moduleNameMapper: {
         "^.+\\.po$": "identity-obj-proxy",
-        "^tlp$": path.resolve(__dirname, "../../src/www/themes/common/tlp/src/js/index.js"),
-        "^tlp-fetch$": path.resolve(
-            __dirname,
-            "../../src/www/themes/common/tlp/src/js/fetch-wrapper.js"
-        )
+        "^tlp$": path.resolve(__dirname, "../../src/themes/tlp/src/js/index.ts"),
+        "^tlp-fetch$": path.resolve(__dirname, "../../src/themes/tlp/src/js/fetch-wrapper.ts"),
     },
-    testEnvironment: "jest-environment-jsdom-fifteen",
     setupFiles: [path.resolve(__dirname, "./fail-unhandled-promise-rejection.js")],
     setupFilesAfterEnv: [path.resolve(__dirname, "./fail-console-error-warning.js")],
     globals: {
         "vue-jest": {
-            babelConfig: path.resolve(__dirname, "./babel.config.js")
-        }
+            babelConfig: path.resolve(__dirname, "./babel.config.js"),
+        },
     },
     snapshotSerializers: ["jest-serializer-vue"],
     testMatch: ["**/?(*.)+(test).{js,ts}"],
@@ -54,8 +50,8 @@ module.exports = {
         "!**/webpack*js",
         "!**/gulpfile.js",
         "!**/jest.config.js",
-        "!**/*.d.ts"
+        "!**/*.d.ts",
     ],
     resetModules: true,
-    restoreMocks: true
+    restoreMocks: true,
 };

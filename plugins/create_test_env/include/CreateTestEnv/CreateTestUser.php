@@ -41,7 +41,7 @@ class CreateTestUser
     {
         $this->email = trim($email);
 
-        $realname = trim($firstname).' '.trim($lastname);
+        $realname = trim($firstname) . ' ' . trim($lastname);
         $valid = new \Valid_RealNameFormat();
         if (! $valid->validate($realname)) {
             throw new Exception\InvalidRealNameException("Invalid realname $realname");
@@ -79,6 +79,9 @@ class CreateTestUser
     {
         $parent = $node->addChild($name);
         $dom = dom_import_simplexml($parent);
+        if ($dom->ownerDocument === null) {
+            return;
+        }
         $dom->appendChild($dom->ownerDocument->createCDATASection($value));
     }
 

@@ -17,7 +17,7 @@ class XMLExport
     protected $packagePath;
     protected $logger;
 
-    public function __construct(Logger $logger)
+    public function __construct(\Psr\Log\LoggerInterface $logger)
     {
         $this->logger = new WrapperLogger($logger, 'Export Docman');
     }
@@ -40,7 +40,7 @@ class XMLExport
     public function createDomDocument()
     {
         $impl = new DOMImplementation();
-        $dtd = $impl->createDocumentType('docman', '', HTTPRequest::instance()->getServerUrl().'/plugins/docman/docman-1.0.dtd');
+        $dtd = $impl->createDocumentType('docman', '', HTTPRequest::instance()->getServerUrl() . '/plugins/docman/docman-1.0.dtd');
         $doc = $impl->createDocument('', '', $dtd);
         $doc->encoding     = 'UTF-8';
         $doc->standalone   = 'no';
@@ -51,11 +51,11 @@ class XMLExport
 
     public function dumpPackage()
     {
-        $this->logger->info("Exporting documents of project [".$this->groupId."] in [".$this->packagePath."]");
+        $this->logger->info("Exporting documents of project [" . $this->groupId . "] in [" . $this->packagePath . "]");
         if ($this->createDirectories()) {
             $doc = $this->dump();
-            $doc->save($this->packagePath.'/'.$this->archiveName.'.xml');
-            $this->logger->info("Documents of project [".$this->groupId."] dumped in [".$this->packagePath."]");
+            $doc->save($this->packagePath . '/' . $this->archiveName . '.xml');
+            $this->logger->info("Documents of project [" . $this->groupId . "] dumped in [" . $this->packagePath . "]");
         }
     }
 
@@ -77,43 +77,43 @@ class XMLExport
     private function createDirectories()
     {
         return $this->createDirectory($this->packagePath) &&
-               $this->createDirectory($this->packagePath.'/'.$this->archiveName);
+               $this->createDirectory($this->packagePath . '/' . $this->archiveName);
     }
 
     private function createDirectory($directoryPath)
     {
         try {
             if (is_dir($directoryPath)) {
-                if (!is_writable($directoryPath)) {
-                    throw new DocmanExportException("Folder [".$directoryPath."] already exist and is not writable");
+                if (! is_writable($directoryPath)) {
+                    throw new DocmanExportException("Folder [" . $directoryPath . "] already exist and is not writable");
                 } else {
                     return true;
                 }
             }
 
             $parentDirectory = dirname($directoryPath);
-            if (!is_dir($parentDirectory)) {
-                throw new DocmanExportException("Folder [".$parentDirectory."] does not exist");
+            if (! is_dir($parentDirectory)) {
+                throw new DocmanExportException("Folder [" . $parentDirectory . "] does not exist");
                 return false;
             }
 
-            if (!is_writable($parentDirectory)) {
-                throw new DocmanExportException("Folder [".$parentDirectory."] is not writable");
+            if (! is_writable($parentDirectory)) {
+                throw new DocmanExportException("Folder [" . $parentDirectory . "] is not writable");
                 return false;
             }
 
             $dirCreated = mkdir($directoryPath, 0755, true);
             if ($dirCreated == true) {
                 $this->dataPath = $directoryPath;
-                $this->logger->info("Folder [".$directoryPath."] created for project [".$this->groupId."]");
+                $this->logger->info("Folder [" . $directoryPath . "] created for project [" . $this->groupId . "]");
                 return true;
             } else {
-                throw new DocmanExportException("Unable to create folder [".$directoryPath."]");
+                throw new DocmanExportException("Unable to create folder [" . $directoryPath . "]");
                 return false;
             }
         } catch (Exception $exception) {
-            $this->logger->error("Unable to create folder [".$directoryPath."] for project [".$this->groupId."] Error message: ".$exception->getMessage());
-            throw new DocmanExportException("Unable to create folder [".$directoryPath."] for project [".$this->groupId."] Error message: ".$exception->getMessage());
+            $this->logger->error("Unable to create folder [" . $directoryPath . "] for project [" . $this->groupId . "] Error message: " . $exception->getMessage());
+            throw new DocmanExportException("Unable to create folder [" . $directoryPath . "] for project [" . $this->groupId . "] Error message: " . $exception->getMessage());
             return false;
         }
     }

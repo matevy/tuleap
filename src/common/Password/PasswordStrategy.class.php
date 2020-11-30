@@ -26,28 +26,19 @@ use Tuleap\Password\HaveIBeenPwned\PwnedPasswordChecker;
 use Tuleap\Password\HaveIBeenPwned\PwnedPasswordRangeRetriever;
 use Tuleap\Password\PasswordCompromiseValidator;
 
-/**
-* PasswordStrategy
-*/
-class PasswordStrategy
+class PasswordStrategy // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
 
-    var $validators;
-    var $errors;
+    public $validators = [];
+    public $errors = [];
 
-    /**
-    * Constructor
-    */
     public function __construct(PasswordConfiguration $password_configuration)
     {
-        $this->validators = array();
-        $this->errors     = array();
-
         if ($password_configuration->isBreachedPasswordVerificationEnabled()) {
             $pwned_password_range_retriever = new PwnedPasswordRangeRetriever(
                 HttpClientFactory::createClient(),
                 HTTPFactoryBuilder::requestFactory(),
-                new BackendLogger()
+                BackendLogger::getDefaultLogger()
             );
             $pwned_password_checker         = new PwnedPasswordChecker($pwned_password_range_retriever);
             $password_compromise_validator  = new PasswordCompromiseValidator($pwned_password_checker);
@@ -59,14 +50,12 @@ class PasswordStrategy
     * validate
     *
     * validate a password with the help of validators
-    *
-    * @param  pwd
     */
-    function validate($pwd)
+    public function validate($pwd)
     {
         $valid = true;
         foreach ($this->validators as $key => $nop) {
-            if (!$this->validators[$key]->validate($pwd)) {
+            if (! $this->validators[$key]->validate($pwd)) {
                 $valid = false;
                 $this->errors[$key] = $this->validators[$key]->description();
             }
@@ -74,11 +63,6 @@ class PasswordStrategy
         return $valid;
     }
 
-    /**
-    * add
-    *
-    * @param  v
-    */
     public function add($v)
     {
         $this->validators[] = $v;

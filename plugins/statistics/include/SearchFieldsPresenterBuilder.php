@@ -120,9 +120,9 @@ class SearchFieldsPresenterBuilder
         $group_by_date_with_selected,
         $relative_y_axis_value
     ) {
-        $params = array(
-            'services' => array()
-        );
+        $params = [
+            'services' => []
+        ];
 
         foreach ($service_values as $service) {
             if ($service['is_selected']) {
@@ -147,9 +147,9 @@ class SearchFieldsPresenterBuilder
         $start_date_value,
         $end_date_value
     ) {
-        $params = array(
-            'services' => array()
-        );
+        $params = [
+            'services' => []
+        ];
 
         foreach ($service_values as $service) {
             if ($service['is_selected']) {
@@ -176,17 +176,17 @@ class SearchFieldsPresenterBuilder
 
     private function getListOfGroupByValuePresenter($group_by_value)
     {
-        $all_group_by = array(
-            'day'   => $GLOBALS['Language']->getText('plugin_statistics', 'day'),
-            'week'  => $GLOBALS['Language']->getText('plugin_statistics', 'week'),
-            'month' => $GLOBALS['Language']->getText('plugin_statistics', 'month'),
-            'year'  => $GLOBALS['Language']->getText('plugin_statistics', 'year')
-        );
+        $all_group_by = [
+            'day'   => dgettext('tuleap-statistics', 'Day'),
+            'week'  => dgettext('tuleap-statistics', 'Week'),
+            'month' => dgettext('tuleap-statistics', 'Month'),
+            'year'  => dgettext('tuleap-statistics', 'Year')
+        ];
 
-        $group_by_options = array();
+        $group_by_options = [];
 
         foreach ($all_group_by as $group_by => $label) {
-            $group_by_options[] = $this->getValuePresenter($group_by, array($group_by_value), $label);
+            $group_by_options[] = $this->getValuePresenter($group_by, [$group_by_value], $label);
         }
 
         return $group_by_options;
@@ -194,24 +194,24 @@ class SearchFieldsPresenterBuilder
 
     private function getListOfTypeValuePresenter(array $type_values)
     {
-        $all_data = array(
-            'session'   => $GLOBALS['Language']->getText('plugin_statistics', 'session_type'),
-            'user'      => $GLOBALS['Language']->getText('plugin_statistics', 'user_type'),
-            'forum'     => $GLOBALS['Language']->getText('plugin_statistics', 'forum_type'),
-            'filedl'    => $GLOBALS['Language']->getText('plugin_statistics', 'filedl_type'),
-            'file'      => $GLOBALS['Language']->getText('plugin_statistics', 'file_type'),
-            'groups'    => $GLOBALS['Language']->getText('plugin_statistics', 'groups_type'),
-            'wikidl'    => $GLOBALS['Language']->getText('plugin_statistics', 'wikidl_type'),
-            'oartifact' => $GLOBALS['Language']->getText('plugin_statistics', 'oartifact_type'),
-            'cartifact' => $GLOBALS['Language']->getText('plugin_statistics', 'cartifact_type'),
-        );
+        $all_data = [
+            'session'   => dgettext('tuleap-statistics', 'Sessions'),
+            'user'      => dgettext('tuleap-statistics', 'Users'),
+            'forum'     => dgettext('tuleap-statistics', 'Messages in forums'),
+            'filedl'    => dgettext('tuleap-statistics', 'Files downloaded'),
+            'file'      => dgettext('tuleap-statistics', 'Files released'),
+            'groups'    => dgettext('tuleap-statistics', 'Project created'),
+            'wikidl'    => dgettext('tuleap-statistics', 'Wiki pages viewed'),
+            'oartifact' => dgettext('tuleap-statistics', 'Opened Artifacts (V3)'),
+            'cartifact' => dgettext('tuleap-statistics', 'Closed (or wished end date) Artifacts (V3)'),
+        ];
 
         EventManager::instance()->processEvent(
             Statistics_Event::FREQUENCE_STAT_ENTRIES,
-            array('entries' => &$all_data)
+            ['entries' => &$all_data]
         );
 
-        $type_options = array();
+        $type_options = [];
 
         foreach ($all_data as $type => $label) {
             $type_options[] = $this->getValuePresenter($type, $type_values, $label);
@@ -222,18 +222,18 @@ class SearchFieldsPresenterBuilder
 
     private function getListOfFilterValuePresenter($filter_value)
     {
-        $all_filter = array(
-            'month'  => $GLOBALS['Language']->getText('plugin_statistics', 'frequencies_filter_group_month'),
-            'day'    => $GLOBALS['Language']->getText('plugin_statistics', 'frequencies_filter_group_day'),
-            'hour'   => $GLOBALS['Language']->getText('plugin_statistics', 'frequencies_filter_group_hour'),
-            'month1' => $GLOBALS['Language']->getText('plugin_statistics', 'frequencies_filter_month'),
-            'day1'   => $GLOBALS['Language']->getText('plugin_statistics', 'frequencies_filter_day'),
-        );
+        $all_filter = [
+            'month'  => dgettext('tuleap-statistics', 'Group by month'),
+            'day'    => dgettext('tuleap-statistics', 'Group by day'),
+            'hour'   => dgettext('tuleap-statistics', 'Group by hour'),
+            'month1' => dgettext('tuleap-statistics', 'Month'),
+            'day1'   => dgettext('tuleap-statistics', 'Day'),
+        ];
 
-        $filter_options = array();
+        $filter_options = [];
 
         foreach ($all_filter as $filter => $label) {
-            $filter_options[] = $this->getValuePresenter($filter, array($filter_value), $label);
+            $filter_options[] = $this->getValuePresenter($filter, [$filter_value], $label);
         }
 
         return $filter_options;
@@ -241,11 +241,11 @@ class SearchFieldsPresenterBuilder
 
     private function getValuePresenter($value, array $selected_values, $label)
     {
-        return array(
+        return [
             'value'       => $value,
             'is_selected' => in_array($value, $selected_values),
             'label'       => $label
-        );
+        ];
     }
 
     private function getDate($date, $format, $sub_interval = null)

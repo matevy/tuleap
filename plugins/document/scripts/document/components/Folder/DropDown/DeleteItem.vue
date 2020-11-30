@@ -17,7 +17,6 @@
   - along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
   -->
 
-
 <template>
     <button
         type="button"
@@ -26,7 +25,7 @@
         v-if="item.user_can_write && is_deletion_allowed"
         data-test="document-delete-item"
     >
-        <i class="fa fa-trash-o fa-fw tlp-dropdown-menu-item-icon"></i>
+        <i class="far fa-trash-alt fa-fw tlp-dropdown-menu-item-icon"></i>
         <translate>Delete</translate>
     </button>
 </template>
@@ -38,17 +37,17 @@ import { mapState } from "vuex";
 export default {
     name: "DeleteItem",
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
-        ...mapState(["is_deletion_allowed"])
+        ...mapState(["is_deletion_allowed"]),
     },
     methods: {
         processDeletion() {
             EventBus.$emit("show-confirm-item-deletion-modal", {
-                detail: { current_item: this.item }
+                detail: { current_item: this.item },
             });
-        }
-    }
+        },
+    },
 };
 </script>

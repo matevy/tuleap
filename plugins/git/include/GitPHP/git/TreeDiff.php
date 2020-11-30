@@ -68,7 +68,7 @@ class TreeDiff implements \Iterator, \Countable
      *
      * @access protected
      */
-    protected $fileDiffs = array();
+    protected $fileDiffs = [];
 
     /**
      * dataRead
@@ -123,11 +123,11 @@ class TreeDiff implements \Iterator, \Countable
     {
         $this->dataRead = true;
 
-        $this->fileDiffs = array();
+        $this->fileDiffs = [];
 
         $exe = new GitExe($this->project);
 
-        $args = array();
+        $args = [];
 
         $args[] = '-r';
         if ($this->renames) {
@@ -224,11 +224,11 @@ class TreeDiff implements \Iterator, \Countable
      */
     public function rewind()
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
-        return reset($this->fileDiffs);
+        reset($this->fileDiffs);
     }
 
     /**
@@ -238,7 +238,7 @@ class TreeDiff implements \Iterator, \Countable
      */
     public function current()
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -252,7 +252,7 @@ class TreeDiff implements \Iterator, \Countable
      */
     public function key()
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -266,11 +266,11 @@ class TreeDiff implements \Iterator, \Countable
      */
     public function next()
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
-        return next($this->fileDiffs);
+        next($this->fileDiffs);
     }
 
     /**
@@ -280,7 +280,7 @@ class TreeDiff implements \Iterator, \Countable
      */
     public function valid()
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -297,7 +297,7 @@ class TreeDiff implements \Iterator, \Countable
      */
     public function Count() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -305,7 +305,6 @@ class TreeDiff implements \Iterator, \Countable
     }
 
     /**
-     * @param GitExe $exe
      * @param array  $stat_args
      *
      * @return array

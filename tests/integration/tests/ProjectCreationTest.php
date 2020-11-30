@@ -23,61 +23,55 @@ declare(strict_types=1);
 
 namespace Tuleap\Tests\Integration;
 
-use EventManager;
 use ForgeConfig;
 use PHPUnit\Framework\TestCase;
 use ProjectCreator;
-use ProjectHistoryDao;
 use ProjectManager;
-use ReferenceManager;
-use ServiceDao;
-use Tuleap\Dashboard\Project\ProjectDashboardDao;
-use Tuleap\Dashboard\Project\ProjectDashboardDuplicator;
-use Tuleap\Dashboard\Project\ProjectDashboardRetriever;
-use Tuleap\Dashboard\Widget\DashboardWidgetDao;
-use Tuleap\Dashboard\Widget\DashboardWidgetRetriever;
 use Tuleap\DB\DBFactory;
-use Tuleap\FRS\FRSPermissionCreator;
-use Tuleap\FRS\FRSPermissionDao;
-use Tuleap\FRS\LicenseAgreement\LicenseAgreementDao;
-use Tuleap\FRS\LicenseAgreement\LicenseAgreementFactory;
 use Tuleap\GlobalLanguageMock;
 use Tuleap\GlobalSVNPollution;
-use Tuleap\Project\DefaultProjectVisibilityRetriever;
-use Tuleap\Project\Label\LabelDao;
 use Tuleap\Project\Registration\Template\TemplateFromProjectForCreation;
-use Tuleap\Project\UgroupDuplicator;
-use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithoutStatusCheckAndNotifications;
-use Tuleap\Project\UGroups\Membership\MemberAdder;
-use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
-use Tuleap\Project\UGroups\SynchronizedProjectMembershipDuplicator;
-use Tuleap\Service\ServiceCreator;
-use Tuleap\Widget\WidgetFactory;
-use UGroupBinding;
-use UGroupDao;
-use UGroupManager;
-use UGroupUserDao;
-use User_ForgeUserGroupPermissionsDao;
-use User_ForgeUserGroupPermissionsManager;
-use UserManager;
+use Tuleap\TemporaryTestDirectory;
 
 class ProjectCreationTest extends TestCase
 {
-    use GlobalLanguageMock, GlobalSVNPollution;
+    use GlobalLanguageMock;
+    use GlobalSVNPollution;
+    use TemporaryTestDirectory;
+
+    private $backup_project_can_be_created;
+    private $backup_codendi_log;
+    private $backup_plogger_level;
+    private $backup_svn_prefix;
+    private $backup_cvs_prefix;
+    private $backup_sys_default_domain;
 
     public function setUp(): void
     {
-        $GLOBALS['svn_prefix'] = '/tmp';
-        $GLOBALS['cvs_prefix'] = '/tmp';
-        $GLOBALS['sys_default_domain'] = '';
+        $this->backup_project_can_be_created = ForgeConfig::get(ProjectManager::CONFIG_PROJECTS_CAN_BE_CREATED);
+        $this->backup_codendi_log = ForgeConfig::get('codendi_log');
+        $this->backup_plogger_level = ForgeConfig::get('sys_logger_level');
+
+        $this->backup_svn_prefix = ForgeConfig::get('svn_prefix');
+        ForgeConfig::set('svn_prefix', $this->getTmpDir());
+        $this->backup_cvs_prefix = ForgeConfig::get('cvs_prefix');
+        ForgeConfig::set('cvs_prefix', $this->getTmpDir());
+        $this->backup_sys_default_domain = ForgeConfig::get('sys_default_domain');
+        ForgeConfig::set('sys_default_domain', '');
     }
 
     public function tearDown(): void
     {
+        ProjectManager::clearInstance();
+
+        ForgeConfig::set(ProjectManager::CONFIG_PROJECTS_CAN_BE_CREATED, $this->backup_project_can_be_created);
+        ForgeConfig::set('codendi_log', $this->backup_codendi_log);
+        ForgeConfig::set('sys_logger_level', $this->backup_plogger_level);
+        ForgeConfig::set('svn_prefix', $this->backup_svn_prefix);
+        ForgeConfig::set('cvs_prefix', $this->backup_cvs_prefix);
+        ForgeConfig::set('sys_default_domain', $this->backup_sys_default_domain);
+
         DBFactory::getMainTuleapDBConnection()->getDB()->run('DELETE FROM groups WHERE unix_group_name = "short-name"');
-        unset($GLOBALS['svn_prefix']);
-        unset($GLOBALS['cvs_prefix']);
-        unset($GLOBALS['sys_default_domain']);
         unset($GLOBALS['feedback']);
         $_GET = [];
         $_REQUEST = [];

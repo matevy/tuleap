@@ -21,13 +21,13 @@
 namespace Tuleap\Velocity;
 
 use Tracker;
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class VelocityCollection
 {
     public const NB_MAX_VELOCITIES = 7;
     /**
-     * @var Tracker_Artifact[]
+     * @var Artifact[]
      */
     private $invalid_artifacts = [];
     /**
@@ -62,12 +62,12 @@ class VelocityCollection
 
     public function addVelocityRepresentation(VelocityRepresentation $velocity_representation)
     {
-        $ordering_key =  $velocity_representation->start_date . $velocity_representation->id ;
-        $this->velocity_representations[ $ordering_key ] = $velocity_representation;
+        $ordering_key =  $velocity_representation->start_date . $velocity_representation->id;
+        $this->velocity_representations[$ordering_key] = $velocity_representation;
     }
 
     /**
-     * @return Tracker_Artifact[]
+     * @return Artifact[]
      */
     public function getInvalidArtifacts()
     {

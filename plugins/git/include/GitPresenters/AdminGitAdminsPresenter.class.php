@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2015. All rights reserved
+ * Copyright (c) Enalean, 2014 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -33,12 +33,12 @@ class GitPresenters_AdminGitAdminsPresenter extends GitPresenters_AdminPresenter
     public function __construct(
         $project_id,
         $are_mirrors_defined,
+        array $external_pane_presenters,
         $static_ugroups,
         $selected_ugroups
     ) {
-        parent::__construct($project_id, $are_mirrors_defined);
+        parent::__construct($project_id, $are_mirrors_defined, $external_pane_presenters);
 
-        $this->manage_git_admins = true;
         $this->static_ugroups    = $static_ugroups;
         $this->selected_ugroups  = $selected_ugroups;
     }
@@ -60,7 +60,7 @@ class GitPresenters_AdminGitAdminsPresenter extends GitPresenters_AdminPresenter
 
     public function git_admins_form_action()
     {
-        return '/plugins/git/?group_id='. $this->project_id .'&action=admin-git-admins';
+        return '/plugins/git/?group_id=' . $this->project_id . '&action=admin-git-admins';
     }
 
     public function git_admins_selectbox_name()
@@ -80,23 +80,23 @@ class GitPresenters_AdminGitAdminsPresenter extends GitPresenters_AdminPresenter
 
     private function getSelectorOptions()
     {
-        $options = array($this->getProjectMembersOption());
+        $options = [$this->getProjectMembersOption()];
         foreach ($this->static_ugroups as $group) {
-            $options[] = array(
+            $options[] = [
                 'value'    => $group->getId(),
                 'label'    => $group->getTranslatedName(),
                 'selected' => isset($this->selected_ugroups) ? in_array($group->getId(), $this->selected_ugroups) : false
-            );
+            ];
         }
         return $options;
     }
 
     private function getProjectMembersOption()
     {
-        return array(
+        return [
             'value'    => ProjectUGroup::PROJECT_MEMBERS,
             'label'    => $GLOBALS['Language']->getText('project_admin_editugroup', 'proj_members'),
             'selected' => isset($this->selected_ugroups) ? in_array(ProjectUGroup::PROJECT_MEMBERS, $this->selected_ugroups) : false
-        );
+        ];
     }
 }

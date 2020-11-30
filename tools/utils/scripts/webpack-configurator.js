@@ -18,15 +18,17 @@
  */
 
 const webpack = require("webpack");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 const WebpackAssetsManifest = require("webpack-assets-manifest");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const FixStyleOnlyEntriesPlugin = require("webpack-fix-style-only-entries");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const { VueLoaderPlugin } = require("vue-loader");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+const MergeIntoSingleFilePlugin = require("webpack-merge-and-include-globally");
+const { SuppressNullNamedEntryPlugin } = require("./webpack-custom-plugins.js");
 
 const rule_configurations = require("./webpack-rule-configs.js");
 const aliases = require("./webpack-aliases.js");
@@ -35,7 +37,7 @@ function getManifestPlugin() {
     return new WebpackAssetsManifest({
         output: "manifest.json",
         merge: true,
-        writeToDisk: true
+        writeToDisk: true,
     });
 }
 
@@ -47,7 +49,7 @@ function getMomentLocalePlugin() {
 function configureOutput(assets_dir_path, public_path) {
     const output = {
         path: assets_dir_path,
-        filename: "[name]-[chunkhash].js"
+        filename: "[name]-[chunkhash].js",
     };
 
     if (public_path) {
@@ -59,7 +61,7 @@ function configureOutput(assets_dir_path, public_path) {
 
 function getCleanWebpackPlugin() {
     return new CleanWebpackPlugin({
-        cleanAfterEveryBuildPatterns: ["!css-assets/", "!css-assets/**"]
+        cleanAfterEveryBuildPatterns: ["!css-assets/", "!css-assets/**"],
     });
 }
 
@@ -69,65 +71,81 @@ function getVueLoaderPlugin() {
 
 function getTypescriptCheckerPlugin(use_vue) {
     return new ForkTsCheckerWebpackPlugin({
-        vue: use_vue,
-        reportFiles: ["**", "!**/*.test.ts"]
+        typescript: {
+            configOverwrite: {
+                exclude: ["**/*.test.ts"],
+            },
+            extensions: {
+                vue: use_vue,
+            },
+        },
     });
 }
 
 function getCopyPlugin(patterns = [], options = {}) {
-    return new CopyWebpackPlugin(patterns, options);
+    return new CopyWebpackPlugin({ patterns, options });
 }
 
 function getCSSExtractionPlugins() {
     return [
         new FixStyleOnlyEntriesPlugin({
             extensions: ["scss", "css"],
-            silent: true
+            silent: true,
         }),
         new MiniCssExtractPlugin({
-            filename: "[name]-[chunkhash].css"
-        })
+            filename: "[name]-[chunkhash].css",
+        }),
     ];
 }
 
 function getCSSOptimizerPlugin() {
-    return new OptimizeCssAssetsPlugin({
-        cssProcessor: require("cssnano"),
-        cssProcessorPluginOptions: {
+    return new CssMinimizerPlugin({
+        minimizerOptions: {
             preset: [
                 "default",
                 {
-                    discardComments: {
-                        removeAll: true
-                    }
-                }
-            ]
-        }
+                    discardComments: { removeAll: true },
+                },
+            ],
+        },
     });
 }
 
+function getLegacyConcatenatedScriptsPlugins(concatenated_files_configuration) {
+    return [
+        new SuppressNullNamedEntryPlugin(),
+        new MergeIntoSingleFilePlugin({ files: concatenated_files_configuration, hash: true }),
+    ];
+}
+
+function getIgnorePlugin() {
+    return new webpack.IgnorePlugin(/\.(?:pot|mo|po~)$/);
+}
+
 function extendDevConfiguration(webpack_configs) {
-    return webpack_configs.map(webpack_config =>
+    return webpack_configs.map((webpack_config) =>
         merge(webpack_config, {
             mode: "development",
-            devtool: "inline-source-map"
+            devtool: "inline-source-map",
+            plugins: [getIgnorePlugin()],
         })
     );
 }
 
 function extendProdConfiguration(webpack_configs) {
-    return webpack_configs.map(webpack_config =>
+    return webpack_configs.map((webpack_config) =>
         merge(webpack_config, {
             mode: "production",
-            plugins: [getCSSOptimizerPlugin()],
+            plugins: [getCSSOptimizerPlugin(), getIgnorePlugin()],
             stats: {
                 all: false,
                 assets: true,
                 errors: true,
                 errorDetails: true,
                 performance: true,
-                timings: true
-            }
+                timings: true,
+                excludeAssets: [/polyfill-/],
+            },
         })
     );
 }
@@ -141,8 +159,9 @@ const configurator = {
     getTypescriptCheckerPlugin,
     getCleanWebpackPlugin,
     getCSSExtractionPlugins,
+    getLegacyConcatenatedScriptsPlugins,
     extendDevConfiguration,
-    extendProdConfiguration
+    extendProdConfiguration,
 };
 Object.assign(configurator, rule_configurations, aliases);
 

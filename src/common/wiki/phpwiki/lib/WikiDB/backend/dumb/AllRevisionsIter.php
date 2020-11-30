@@ -17,7 +17,7 @@ class WikiDB_backend_dumb_AllRevisionsIter extends WikiDB_backend_iterator
      * @param $backend object A WikiDB_backend.
      * @param $pagename string Page whose revisions to get.
      */
-    function __construct(&$backend, $pagename)
+    public function __construct(&$backend, $pagename)
     {
         $this->_backend = &$backend;
         $this->_pagename = $pagename;
@@ -29,7 +29,7 @@ class WikiDB_backend_dumb_AllRevisionsIter extends WikiDB_backend_iterator
      *
      * @see WikiDB_backend_iterator_next;
      */
-    function next()
+    public function next()
     {
         $backend = &$this->_backend;
         $pagename = &$this->_pagename;
@@ -51,17 +51,17 @@ class WikiDB_backend_dumb_AllRevisionsIter extends WikiDB_backend_iterator
             return false;
         }
 
-        $rev = array('versiondata' => $vdata,
+        $rev = ['versiondata' => $vdata,
                      'pagename' => $pagename,
-                     'version' => $version);
+                     'version' => $version];
 
-        if (!empty($vdata['%pagedata'])) {
+        if (! empty($vdata['%pagedata'])) {
             $rev['pagedata'] = &$vdata['%pagedata'];
         }
 
         return $rev;
     }
-};
+}
 
 // (c-file-style: "gnu")
 // Local Variables:

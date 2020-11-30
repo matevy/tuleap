@@ -20,17 +20,23 @@
 <template>
     <div class="cross-tracker-reading-mode-trackers-list">
         <div class="cross-tracker-reading-mode-trackers">
-            <div class="cross-tracker-reading-mode-tracker"
-                 v-for="{ id, tracker_label, project_label } of trackers"
-                 v-bind:key="id"
+            <div
+                class="cross-tracker-reading-mode-tracker"
+                v-for="{ id, tracker_label, project_label } of trackers"
+                v-bind:key="id"
             >
                 <span>{{ tracker_label }}</span>
                 <span class="cross-tracker-reading-mode-tracker-project-name">
-                    <i class="fa fa-archive cross-tracker-report-archive-icon"></i>{{ project_label }}
+                    <i class="fa fa-archive cross-tracker-report-archive-icon"></i>
+                    {{ project_label }}
                 </span>
             </div>
         </div>
-        <div class="cross-tracker-reading-mode-trackers-empty" v-if="no_trackers_in_report" v-translate>
+        <div
+            class="cross-tracker-reading-mode-trackers-empty"
+            v-if="no_trackers_in_report"
+            v-translate
+        >
             No trackers selected
         </div>
     </div>
@@ -39,7 +45,7 @@
 export default {
     name: "TrackerListReadingMode",
     props: {
-        readingCrossTrackerReport: Object
+        readingCrossTrackerReport: Object,
     },
     computed: {
         no_trackers_in_report() {
@@ -51,10 +57,10 @@ export default {
                 return {
                     id: tracker.id,
                     tracker_label: tracker.label,
-                    project_label: project.label
+                    project_label: project.label,
                 };
             });
-        }
-    }
+        },
+    },
 };
 </script>

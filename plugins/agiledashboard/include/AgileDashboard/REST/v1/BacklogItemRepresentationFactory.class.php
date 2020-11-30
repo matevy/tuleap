@@ -23,8 +23,8 @@ use AgileDashboard_Milestone_Backlog_IBacklogItem;
 use Cardwall_Semantic_CardFields;
 use EventManager;
 use PFUser;
-use Tracker_Artifact;
 use Tuleap\Cardwall\BackgroundColor\BackgroundColorBuilder;
+use Tuleap\Tracker\Artifact\Artifact;
 use UserManager;
 
 class BacklogItemRepresentationFactory
@@ -71,14 +71,11 @@ class BacklogItemRepresentationFactory
     }
 
     /**
-     * @param Cardwall_Semantic_CardFields $card_fields_semantic
-     * @param Tracker_Artifact $artifact
-     * @param PFUser $current_user
      * @return array
      */
     private function getCardFields(
         Cardwall_Semantic_CardFields $card_fields_semantic,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $current_user
     ) {
         $card_fields = [];
@@ -97,19 +94,18 @@ class BacklogItemRepresentationFactory
     }
 
     /**
-     * @param Tracker_Artifact $artifact
      * @return Cardwall_Semantic_CardFields
      */
-    private function getCardFieldsSemantic(Tracker_Artifact $artifact)
+    private function getCardFieldsSemantic(Artifact $artifact)
     {
         $card_fields_semantic = null;
 
         $this->event_manager->processEvent(
             AGILEDASHBOARD_EVENT_GET_CARD_FIELDS,
-            array(
+            [
                 'tracker'              => $artifact->getTracker(),
                 'card_fields_semantic' => &$card_fields_semantic
-            )
+            ]
         );
 
         return $card_fields_semantic;

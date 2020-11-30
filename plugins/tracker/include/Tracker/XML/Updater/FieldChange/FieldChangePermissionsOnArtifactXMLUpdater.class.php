@@ -22,19 +22,20 @@ class Tracker_XML_Updater_FieldChange_FieldChangePermissionsOnArtifactXMLUpdater
 {
 
     /**
-     * @param SimpleXMLElement $field_change_xml
      * @param mixed            $submitted_value
      */
     public function update(SimpleXMLElement $field_change_xml, $submitted_value)
     {
         $this->removeExistingUgroupNodes($field_change_xml);
 
-        $field_change_xml['use_perm'] = (int)$submitted_value['use_artifact_permissions'];
+        $field_change_xml['use_perm'] = (int) $submitted_value['use_artifact_permissions'];
 
         if (isset($submitted_value['u_groups'])) {
             array_walk(
                 $submitted_value['u_groups'],
-                array($this, 'appendUgroupToFieldChangeNode'),
+                function ($ugroup_id, $index, SimpleXMLElement $field_xml) {
+                    $this->appendUgroupToFieldChangeNode($ugroup_id, $index, $field_xml);
+                },
                 $field_change_xml
             );
         }

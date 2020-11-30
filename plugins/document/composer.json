@@ -2,10 +2,17 @@
   "name": "tuleap/plugin-document",
   "autoload": {
     "psr-4": {
-      "Tuleap\\Document\\": "include/"
+      "Tuleap\\Document\\": ["include/", "tests/unit"]
     }
   },
   "config": {
+    "platform": {
+      "php": "7.3",
+      "ext-mbstring": "0"
+    },
     "sort-packages": true
+  },
+  "require": {
+    "maennchen/zipstream-php": "^2.0"
   }
 }

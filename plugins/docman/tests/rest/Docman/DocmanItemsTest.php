@@ -20,7 +20,7 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Test\rest\Docman;
 
@@ -177,7 +177,7 @@ class DocmanItemsTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testGetId($root_id) : void
+    public function testGetId($root_id): void
     {
         $response = $this->getResponse(
             $this->client->get('docman_items/' . $root_id),
@@ -194,7 +194,7 @@ class DocmanItemsTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testGetIdWithUserRESTReadOnlyAdmin($root_id) : void
+    public function testGetIdWithUserRESTReadOnlyAdmin($root_id): void
     {
         $response = $this->getResponse(
             $this->client->get('docman_items/' . $root_id),
@@ -206,6 +206,31 @@ class DocmanItemsTest extends DocmanTestExecutionHelper
         $this->assertEquals($root_id, $item['id']);
         $this->assertEquals('folder', $item['type']);
         $this->assertIsArray($item['permissions_for_groups']);
+    }
+
+    /**
+     * @depends testGetRootId
+     */
+    public function testGetFolderWithSize(int $root_id): void
+    {
+        $root_folder = $this->loadRootFolderContent($root_id);
+        $folder_to_download = $this->findItemByTitle($root_folder, 'Download me as a zip');
+
+        $request  = $this->client->get('docman_items/' . $folder_to_download['id'] . '/?with_size=true');
+        $response = $this->getResponse(
+            $request,
+            REST_TestDataBuilder::TEST_BOT_USER_NAME
+        );
+
+        $folder = $response->json();
+
+        $this->assertEquals(
+            $folder['folder_properties'],
+            [
+                'total_size' => 6,
+                'nb_files' => 3
+            ]
+        );
     }
 
     /**
@@ -283,7 +308,7 @@ class DocmanItemsTest extends DocmanTestExecutionHelper
         $this->assertEquals($file['file_properties']['file_type'], 'application/pdf');
         $this->assertEquals(
             $file['file_properties']['download_href'],
-            '/plugins/docman/download/' . urlencode((string)$file['id']) . '/1'
+            '/plugins/docman/download/' . urlencode((string) $file['id']) . '/1'
         );
         $this->assertEquals($file['file_properties']['file_size'], 3);
         $this->assertEquals($link['file_properties'], null);

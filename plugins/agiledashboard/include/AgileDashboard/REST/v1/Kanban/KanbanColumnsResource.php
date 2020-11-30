@@ -72,6 +72,14 @@ class KanbanColumnsResource
 
     /** @var TrackerFactory */
     private $tracker_factory;
+    /**
+     * @var NodeJSClient
+     */
+    private $node_js_client;
+    /**
+     * @var Tracker_Permission_PermissionsSerializer
+     */
+    private $permissions_serializer;
 
     public function __construct()
     {
@@ -104,7 +112,7 @@ class KanbanColumnsResource
             HttpClientFactory::createClient(),
             HTTPFactoryBuilder::requestFactory(),
             HTTPFactoryBuilder::streamFactory(),
-            new BackendLogger()
+            BackendLogger::getDefaultLogger()
         );
         $this->permissions_serializer = new Tracker_Permission_PermissionsSerializer(
             new Tracker_Permission_PermissionRetrieveAssignee(UserManager::instance())
@@ -174,12 +182,15 @@ class KanbanColumnsResource
 
         if (isset($_SERVER[self::HTTP_CLIENT_UUID]) && $_SERVER[self::HTTP_CLIENT_UUID]) {
             $tracker = $this->tracker_factory->getTrackerById($kanban->getTrackerId());
+            if ($tracker === null) {
+                throw new \RuntimeException('Tracker does not exist');
+            }
             $rights  = new KanbanRightsPresenter($tracker, $this->permissions_serializer);
-            $data    = array(
+            $data    = [
                 'id'        => $id,
                 'label'     => $updated_column_properties->label,
                 'wip_limit' => $updated_column_properties->wip_limit
-            );
+            ];
             $message = new MessageDataPresenter(
                 $current_user->getId(),
                 $_SERVER[self::HTTP_CLIENT_UUID],
@@ -246,6 +257,9 @@ class KanbanColumnsResource
 
         if (isset($_SERVER[self::HTTP_CLIENT_UUID]) && $_SERVER[self::HTTP_CLIENT_UUID]) {
             $tracker = $this->tracker_factory->getTrackerById($kanban->getTrackerId());
+            if ($tracker === null) {
+                throw new \RuntimeException('Tracker does not exist');
+            }
             $rights  = new KanbanRightsPresenter($tracker, $this->permissions_serializer);
             $message = new MessageDataPresenter(
                 $current_user->getId(),
@@ -291,6 +305,9 @@ class KanbanColumnsResource
     private function getKanbanProject(AgileDashboard_Kanban $kanban)
     {
         $kanban_tracker = $this->tracker_factory->getTrackerById($kanban->getTrackerId());
+        if ($kanban_tracker === null) {
+            throw new \RuntimeException('Tracker does not exist');
+        }
 
         return $kanban_tracker->getProject();
     }

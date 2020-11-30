@@ -21,7 +21,7 @@
 class FRSLog
 {
 
-    var $dao;
+    public $dao;
 
     /**
      * Constructor of the class.
@@ -32,27 +32,27 @@ class FRSLog
     protected function __construct()
     {
         $em = EventManager::instance();
-        $packageEventToListen = array('frs_create_package',
+        $packageEventToListen = ['frs_create_package',
                                       'frs_update_package',
                                       'frs_delete_package'
-        );
+        ];
         foreach ($packageEventToListen as $event) {
             $em->addListener($event, $this, 'addLogPackage', true);
         }
 
-        $releaseEventToListen = array('frs_create_release',
+        $releaseEventToListen = ['frs_create_release',
                                       'frs_update_release',
                                       'frs_delete_release'
-        );
+        ];
         foreach ($releaseEventToListen as $event) {
             $em->addListener($event, $this, 'addLogRelease', true);
         }
 
-        $fileEventToListen = array('frs_create_file',
+        $fileEventToListen = ['frs_create_file',
                                    'frs_update_file',
                                    'frs_delete_file',
                                    'frs_restore_file'
-        );
+        ];
         foreach ($fileEventToListen as $event) {
             $em->addListener($event, $this, 'addLogFile', true);
         }
@@ -67,9 +67,9 @@ class FRSLog
      */
     public static function instance()
     {
-        if (!isset(self::$_instance)) {
+        if (! isset(self::$_instance)) {
             $c = self::class;
-            self::$_instance = new $c;
+            self::$_instance = new $c();
         }
         return self::$_instance;
     }
@@ -82,7 +82,7 @@ class FRSLog
      *
      * @return void
      */
-    function addLogPackage($event, $params)
+    public function addLogPackage($event, $params)
     {
         $userID    = $this->_getCurrentUser()->getId();
         $projectID = $params['group_id'];
@@ -109,7 +109,7 @@ class FRSLog
      *
      * @return void
      */
-    function addLogRelease($event, $params)
+    public function addLogRelease($event, $params)
     {
         $userID    = $this->_getCurrentUser()->getId();
         $projectID = $params['group_id'];
@@ -136,7 +136,7 @@ class FRSLog
      *
      * @return void
      */
-    function addLogFile($event, $params)
+    public function addLogFile($event, $params)
     {
         $userID    = $this->_getCurrentUser()->getId();
         $projectID = $params['group_id'];
@@ -163,9 +163,9 @@ class FRSLog
      *
      * @return FRSLogDao
      */
-    function _getFRSLogDao()
+    public function _getFRSLogDao()
     {
-        if (!$this->dao) {
+        if (! $this->dao) {
             $this->dao = new FRSLogDao();
         }
         return $this->dao;
@@ -181,7 +181,7 @@ class FRSLog
      *
      * @return void
      */
-    function addLog($userID, $projectID, $itemID, $actionID)
+    public function addLog($userID, $projectID, $itemID, $actionID)
     {
         $dao = $this->_getFRSLogDao();
         $dao->addLog($userID, $projectID, $itemID, $actionID);
@@ -192,7 +192,7 @@ class FRSLog
      *
      * @return PFUser
      */
-    function _getCurrentUser()
+    public function _getCurrentUser()
     {
         $um = UserManager::instance();
         return $um->getCurrentUser();

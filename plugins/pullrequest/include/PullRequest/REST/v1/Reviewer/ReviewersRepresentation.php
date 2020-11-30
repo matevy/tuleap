@@ -33,6 +33,7 @@ final class ReviewersRepresentation
     /**
      * @var MinimalUserRepresentation[]
      * @psalm-var list<MinimalUserRepresentation>
+     * @psalm-readonly
      */
     public $users;
 
@@ -46,8 +47,7 @@ final class ReviewersRepresentation
         $representations = [];
 
         foreach ($users as $user) {
-            $representation = new MinimalUserRepresentation();
-            $representation->build($user);
+            $representation = MinimalUserRepresentation::build($user);
             $representations[] = $representation;
         }
 

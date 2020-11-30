@@ -28,7 +28,7 @@ use IPermissionsManagerNG;
 use PFUser;
 use Project;
 use ProjectManager;
-use Tuleap\Project\REST\UserGroupRepresentation;
+use Tuleap\Project\REST\MinimalUserGroupRepresentation;
 use UGroupManager;
 
 class DocmanItemPermissionsForGroupsBuilder
@@ -62,7 +62,7 @@ class DocmanItemPermissionsForGroupsBuilder
         $this->ugroup_manager             = $ugroup_manager;
     }
 
-    public function getRepresentation(PFUser $user, Docman_Item $item) : ?DocmanItemPermissionsForGroupsRepresentation
+    public function getRepresentation(PFUser $user, Docman_Item $item): ?DocmanItemPermissionsForGroupsRepresentation
     {
         if (! $this->docman_permissions_manager->userCanManage($user, $item->getId())) {
             return null;
@@ -79,9 +79,9 @@ class DocmanItemPermissionsForGroupsBuilder
 
     /**
      * @psalm-param value-of<Docman_PermissionsManager::ITEM_PERMISSION_TYPES> $permission_type
-     * @return UserGroupRepresentation[]
+     * @return MinimalUserGroupRepresentation[]
      */
-    private function buildUGroupsRepresentationForPermission(Project $project, Docman_Item $item, string $permission_type) : array
+    private function buildUGroupsRepresentationForPermission(Project $project, Docman_Item $item, string $permission_type): array
     {
         $user_group_representations = [];
 
@@ -93,7 +93,7 @@ class DocmanItemPermissionsForGroupsBuilder
         foreach ($ugroup_ids as $ugroup_id) {
             $ugroup = $this->ugroup_manager->getUGroup($project, $ugroup_id);
             if ($ugroup !== null) {
-                $user_group_representations[] = (new UserGroupRepresentation())->build((int) $project->getID(), $ugroup);
+                $user_group_representations[] = new MinimalUserGroupRepresentation((int) $project->getID(), $ugroup);
             }
         }
 

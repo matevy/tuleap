@@ -25,7 +25,7 @@
         v-on:click="processDeletion"
         data-test="document-quick-look-delete-button"
     >
-        <i class="fa fa-trash-o tlp-button-icon"></i>
+        <i class="far fa-trash-alt tlp-button-icon"></i>
         <translate>Delete</translate>
     </button>
 </template>
@@ -37,17 +37,17 @@ import { mapState } from "vuex";
 export default {
     name: "QuickLookDeleteButton",
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
-        ...mapState(["is_deletion_allowed"])
+        ...mapState(["is_deletion_allowed"]),
     },
     methods: {
         processDeletion() {
             EventBus.$emit("show-confirm-item-deletion-modal", {
-                detail: { current_item: this.item }
+                detail: { current_item: this.item },
             });
-        }
-    }
+        },
+    },
 };
 </script>

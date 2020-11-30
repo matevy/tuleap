@@ -19,13 +19,26 @@
 
 namespace Tuleap\REST;
 
+use Luracast\Restler\Data\ApiMethodInfo;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Tuleap\Authentication\Scope\AggregateAuthenticationScopeBuilder;
+use Tuleap\Authentication\SplitToken\PrefixedSplitTokenSerializer;
 use Tuleap\Authentication\SplitToken\SplitTokenIdentifierTranslator;
 use Tuleap\Authentication\SplitToken\SplitTokenVerificationStringHasher;
-use Tuleap\Cryptography\ConcealedString;
 use Tuleap\User\AccessKey\AccessKeyDAO;
-use Tuleap\User\AccessKey\AccessKeySerializer;
 use Tuleap\User\AccessKey\AccessKeyVerifier;
+use Tuleap\User\AccessKey\PrefixAccessKey;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeDAO;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeRetriever;
+use Tuleap\User\AccessKey\Scope\CoreAccessKeyScopeBuilderFactory;
+use Tuleap\User\AccessKey\Scope\RESTAccessKeyScope;
 use Tuleap\User\ForgeUserGroupPermission\RESTReadOnlyAdmin\RestReadOnlyAdminUserBuilder;
+use Tuleap\User\OAuth2\AccessToken\PrefixOAuth2AccessToken;
+use Tuleap\User\OAuth2\AccessToken\VerifyOAuth2AccessTokenEvent;
+use Tuleap\User\OAuth2\BearerTokenHeaderParser;
+use Tuleap\User\OAuth2\Scope\CoreOAuth2ScopeBuilderFactory;
+use Tuleap\User\OAuth2\Scope\OAuth2ScopeBuilderCollector;
+use Tuleap\User\OAuth2\Scope\OAuth2ScopeExtractorRESTEndpoint;
 use Tuleap\User\PasswordVerifier;
 use User_ForgeUserGroupPermissionsDao;
 use User_ForgeUserGroupPermissionsManager;
@@ -49,9 +62,9 @@ class UserManager
     private $login_manager;
 
     /**
-     * @var SplitTokenIdentifierTranslator
+     * @var AccessKeyHeaderExtractor
      */
-    private $access_key_identifier_unserializer;
+    private $access_key_header_extractor;
 
     /**
      * @var AccessKeyVerifier
@@ -65,42 +78,84 @@ class UserManager
     public const PHP_HTTP_USER_HEADER  = 'HTTP_X_AUTH_USERID';
 
     public const HTTP_ACCESS_KEY_HEADER     = 'X-Auth-AccessKey';
-    public const PHP_HTTP_ACCESS_KEY_HEADER = 'HTTP_X_AUTH_ACCESSKEY';
 
+    /**
+     * @var BearerTokenHeaderParser
+     */
+    private $bearer_token_header_parser;
     /**
      * @var RestReadOnlyAdminUserBuilder
      */
     private $read_only_admin_user_builder;
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $event_dispatcher;
+    /**
+     * @var SplitTokenIdentifierTranslator
+     */
+    private $access_token_identifier_unserializer;
+    /**
+     * @var OAuth2ScopeExtractorRESTEndpoint
+     */
+    private $oauth2_scope_extractor_endpoint;
 
     public function __construct(
         \UserManager $user_manager,
         User_LoginManager $login_manager,
-        SplitTokenIdentifierTranslator $access_key_identifier_unserializer,
+        AccessKeyHeaderExtractor $access_key_header_extractor,
         AccessKeyVerifier $access_key_verifier,
+        BearerTokenHeaderParser $bearer_token_header_parser,
+        SplitTokenIdentifierTranslator $access_token_identifier_unserializer,
+        OAuth2ScopeExtractorRESTEndpoint $oauth2_scope_extractor_endpoint,
+        EventDispatcherInterface $event_dispatcher,
         RestReadOnlyAdminUserBuilder $read_only_admin_user_builder
     ) {
-        $this->user_manager                       = $user_manager;
-        $this->login_manager                      = $login_manager;
-        $this->access_key_identifier_unserializer = $access_key_identifier_unserializer;
-        $this->access_key_verifier                = $access_key_verifier;
-        $this->read_only_admin_user_builder       = $read_only_admin_user_builder;
+        $this->user_manager                         = $user_manager;
+        $this->login_manager                        = $login_manager;
+        $this->access_key_header_extractor          = $access_key_header_extractor;
+        $this->access_key_verifier                  = $access_key_verifier;
+        $this->bearer_token_header_parser           = $bearer_token_header_parser;
+        $this->access_token_identifier_unserializer = $access_token_identifier_unserializer;
+        $this->oauth2_scope_extractor_endpoint      = $oauth2_scope_extractor_endpoint;
+        $this->event_dispatcher                     = $event_dispatcher;
+        $this->read_only_admin_user_builder         = $read_only_admin_user_builder;
     }
 
-    public static function build()
+    public static function build(): self
     {
+        $event_manager    = EventManager::instance();
         $user_manager     = \UserManager::instance();
         $password_handler = PasswordHandlerFactory::getPasswordHandler();
+
+        $oauth2_scope_builder = AggregateAuthenticationScopeBuilder::fromBuildersList(
+            CoreOAuth2ScopeBuilderFactory::buildCoreOAuth2ScopeBuilder(),
+            AggregateAuthenticationScopeBuilder::fromEventDispatcher(\EventManager::instance(), new OAuth2ScopeBuilderCollector())
+        );
+
         return new self(
             $user_manager,
             new User_LoginManager(
-                EventManager::instance(),
+                $event_manager,
                 $user_manager,
                 new PasswordVerifier($password_handler),
                 new User_PasswordExpirationChecker(),
                 $password_handler
             ),
-            new AccessKeySerializer(),
-            new AccessKeyVerifier(new AccessKeyDAO(), new SplitTokenVerificationStringHasher(), $user_manager),
+            new AccessKeyHeaderExtractor(new PrefixedSplitTokenSerializer(new PrefixAccessKey()), $_SERVER),
+            new AccessKeyVerifier(
+                new AccessKeyDAO(),
+                new SplitTokenVerificationStringHasher(),
+                $user_manager,
+                new AccessKeyScopeRetriever(
+                    new AccessKeyScopeDAO(),
+                    CoreAccessKeyScopeBuilderFactory::buildCoreAccessKeyScopeBuilder()
+                )
+            ),
+            new BearerTokenHeaderParser(),
+            new PrefixedSplitTokenSerializer(new PrefixOAuth2AccessToken()),
+            new OAuth2ScopeExtractorRESTEndpoint($oauth2_scope_builder),
+            $event_manager,
             new RestReadOnlyAdminUserBuilder(
                 new User_ForgeUserGroupPermissionsManager(
                     new User_ForgeUserGroupPermissionsDao()
@@ -113,7 +168,7 @@ class UserManager
      * Return user of current request in REST context
      *
      * Tries to get authentication scheme from cookie if any, fallback on token
-     * or access key authentication
+     * or access key authentication or OAuth2 access token
      *
      * @throws \Rest_Exception_InvalidTokenException
      * @throws \User_StatusDeletedException
@@ -121,10 +176,8 @@ class UserManager
      * @throws \User_StatusInvalidException
      * @throws \User_StatusPendingException
      * @throws \User_PasswordExpiredException
-     *
-     * @return \PFUser
      */
-    public function getCurrentUser()
+    public function getCurrentUser(?ApiMethodInfo $api_method_info): \PFUser
     {
         $user = $this->getUserFromCookie();
         if (! $user->isAnonymous()) {
@@ -133,7 +186,7 @@ class UserManager
             return $user;
         }
         try {
-            $user = $this->getUserFromTuleapRESTAuthenticationFlows();
+            $user = $this->getUserFromTuleapRESTAuthenticationFlows($api_method_info);
         } catch (NoAuthenticationHeadersException $exception) {
             return $this->user_manager->getUserAnonymous();
         }
@@ -161,14 +214,16 @@ class UserManager
     }
 
     /**
-     * @return null|\PFUser
      * @throws NoAuthenticationHeadersException
      * @throws \Rest_Exception_InvalidTokenException
      */
-    private function getUserFromTuleapRESTAuthenticationFlows()
+    private function getUserFromTuleapRESTAuthenticationFlows(?ApiMethodInfo $api_method_info): ?\PFUser
     {
         if ($this->isTryingToUseAccessKeyAuthentication()) {
             return $this->getUserFromAccessKey();
+        }
+        if ($this->isTryingToUseOAuth2AccessToken($api_method_info)) {
+            return $this->getUserFromOAuth2AccessToken($api_method_info);
         }
         if ($this->isTryingToUseTokenAuthentication()) {
             return $this->getUserFromToken();
@@ -176,12 +231,9 @@ class UserManager
         return null;
     }
 
-    /**
-     * @return bool
-     */
-    private function isTryingToUseAccessKeyAuthentication()
+    private function isTryingToUseAccessKeyAuthentication(): bool
     {
-        return isset($_SERVER[self::PHP_HTTP_ACCESS_KEY_HEADER]);
+        return $this->access_key_header_extractor->isAccessKeyHeaderPresent();
     }
 
     /**
@@ -192,17 +244,44 @@ class UserManager
         return isset($_SERVER[self::PHP_HTTP_TOKEN_HEADER]);
     }
 
-    private function getUserFromAccessKey()
+    private function getUserFromAccessKey(): \PFUser
     {
-        if (! isset($_SERVER[self::PHP_HTTP_ACCESS_KEY_HEADER])) {
+        $access_key = $this->access_key_header_extractor->extractAccessKey();
+        if ($access_key === null) {
             throw new NoAuthenticationHeadersException(self::HTTP_ACCESS_KEY_HEADER);
         }
 
-        $access_key_identifier = $_SERVER[self::PHP_HTTP_ACCESS_KEY_HEADER];
-        $access_key            = $this->access_key_identifier_unserializer->getSplitToken(new ConcealedString($access_key_identifier));
-
         $request = \HTTPRequest::instance();
-        return $this->access_key_verifier->getUser($access_key, $request->getIPAddress());
+        return $this->access_key_verifier->getUser($access_key, RESTAccessKeyScope::fromItself(), $request->getIPAddress());
+    }
+
+    /**
+     * @psalm-assert-if-true !null $api_method_info
+     */
+    private function isTryingToUseOAuth2AccessToken(?ApiMethodInfo $api_method_info): bool
+    {
+        return $api_method_info !== null &&
+            $this->bearer_token_header_parser->doesHeaderLineContainsBearerTokenInformation($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+    }
+
+    private function getUserFromOAuth2AccessToken(ApiMethodInfo $api_method_info): \PFUser
+    {
+        $authorization_header_line = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+
+        $access_token = $this->bearer_token_header_parser->parseHeaderLine($authorization_header_line);
+
+        if ($access_token === null) {
+            throw new NoAuthenticationHeadersException('Authorization');
+        }
+
+        $required_scope = $this->oauth2_scope_extractor_endpoint->extractRequiredScope($api_method_info);
+
+        $event = new VerifyOAuth2AccessTokenEvent(
+            $this->access_token_identifier_unserializer->getSplitToken($access_token),
+            $required_scope
+        );
+
+        return $this->event_dispatcher->dispatch($event)->getGrantedAuthorization()->getUser();
     }
 
     /**

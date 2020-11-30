@@ -46,18 +46,17 @@ class Git_ReferenceManager
 
     /**
      * Return a reference that match keyword and value
-     * @param Project $project
      * @param String $keyword
      * @param String $value
-     * @return Reference
+     * @return Reference|false
      */
     public function getReference(Project $project, $keyword, $value)
     {
         $reference = false;
         list($repository_name, $sha1) = $this->splitRepositoryAndSha1($value);
-        $repository = $this->repository_factory->getRepositoryByPath($project->getId(), $project->getUnixName().'/'.$repository_name.'.git');
+        $repository = $this->repository_factory->getRepositoryByPath($project->getId(), $project->getUnixName() . '/' . $repository_name . '.git');
         if ($repository) {
-            $args = array($repository->getId(), $sha1);
+            $args = [$repository->getId(), $sha1];
             $reference = $this->reference_manager->loadReferenceFromKeywordAndNumArgs($keyword, $project->getID(), count($args), $value);
             if ($reference) {
                 $reference->replaceLink($args);
@@ -71,6 +70,6 @@ class Git_ReferenceManager
         $last_slash_position  = strrpos($value, '/');
         $repository_name      = substr($value, 0, $last_slash_position);
         $sha1                 = substr($value, $last_slash_position + 1);
-        return array($repository_name, $sha1);
+        return [$repository_name, $sha1];
     }
 }

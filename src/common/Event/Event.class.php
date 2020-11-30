@@ -62,15 +62,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public const DUMP_SSH_KEYS = 'dump_ssh_keys';
 
     /**
-     * The user is accessing a list of their keys
-     *
-     * Parameters:
-     *   'user' => PFUser
-     *   'html' => string An emty string of html output- passed by reference
-     */
-    public const LIST_SSH_KEYS = 'list_ssh_keys';
-
-    /**
      * Force aliases database update.
      *
      * No Parameters.
@@ -464,23 +455,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public const SERVICE_REPLACE_TEMPLATE_NAME_IN_LINK = 'service_replace_template_name_in_link';
 
     /**
-     * Event launched while exporting a project into xml format
-     *
-     * Parameters:
-     *   'project'                           => The given project
-     *   'options'                           => The given options
-     *   'into_xml'                          => The SimpleXMLElement to fill in
-     *   'user'                              => The user that does the export
-     *   'user_xml_exporter'                 => The user_xml_exporter object
-     *   'archive'                           => The archive to add element in it
-     *   'temporary_dump_path_on_filesystem' => the temporary dump path for export
-     *
-     * Expected Results:
-     *   The various plugins inject stuff in the given xml element
-     */
-    public const EXPORT_XML_PROJECT = 'export_xml_project';
-
-    /**
      * Event launched while importing a project from a xml content
      *
      * Parameters:
@@ -618,7 +592,7 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      * Expected results:
      *     Void
      */
-    public const PROJECT_SET_PARENT_PROJECT= 'project_set_parent_project';
+    public const PROJECT_SET_PARENT_PROJECT = 'project_set_parent_project';
 
     /**
      *  Event raised when project parent is removed
@@ -629,7 +603,7 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      * Expected results:
      *     Void
      */
-    public const PROJECT_UNSET_PARENT_PROJECT= 'project_unset_parent_project';
+    public const PROJECT_UNSET_PARENT_PROJECT = 'project_unset_parent_project';
 
     /**
      * Build search entries in Layout
@@ -666,15 +640,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public const REST_RESOURCES = 'rest_resources';
 
     /**
-     * Register REST resources for v2
-     *
-     * Parameters:
-     *  'restler' => \Luracast\Restler\Restler
-     */
-    public const REST_RESOURCES_V2 = 'rest_resources_v2';
-
-
-    /**
      * Register REST Additional informations for project
      *
      * Parameters:
@@ -683,35 +648,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      *  'informations  => array
      */
     public const REST_PROJECT_ADDITIONAL_INFORMATIONS = 'rest_project_additional_informations';
-
-    /**
-     * Check if the old password is required to change the current password
-     *
-     * Parameters:
-     *   'old_password_required' => Boolean (OUT)
-     */
-    public const IS_OLD_PASSWORD_REQUIRED_FOR_PASSWORD_CHANGE = 'old_password_required_for_password_change';
-
-    /**
-     * Allow plugin to deal with authentication
-     *
-     * Parameters:
-     * 'loginname'        => String  (IN)
-     * 'passwd'           => String  (IN)
-     * 'auth_success'     => Boolean (OUT)
-     * 'auth_user_id'     => Boolean (OUT)
-     * 'auth_user_status' => String  (OUT)
-     */
-    public const SESSION_BEFORE_LOGIN = 'session_before_login';
-
-    /**
-     * Allow plugin to deal after authentication
-     *
-     * Parameters:
-     * 'user'                => PFUser  (IN)
-     * 'allow_codendi_login' => Boolean (OUT)
-     */
-    public const SESSION_AFTER_LOGIN = 'session_after_login';
 
     /**
      * Allow plugin to add another ways to log in
@@ -756,30 +692,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public const AFTER_USER_REGISTRATION = 'after_user_registration';
 
     /**
-     * Event raised to get plannings from a project with REST
-     *
-     * Parameters:
-     *     'version' => String
-     *     'project' => Project
-     *     'limit'   => int
-     *     'offset'  => int
-     *     'result'  => array
-     */
-    public const REST_GET_PROJECT_PLANNINGS = 'rest_get_project_plannings';
-
-    /**
-     * Event raised to get plannings options from a project with REST
-     *
-     * Parameters:
-     *     'version' => String
-     *     'project' => Project
-     *     'limit'   => int
-     *     'offset'  => int
-     *     'result'  => array
-     */
-    public const REST_OPTIONS_PROJECT_PLANNINGS = 'rest_options_project_plannings';
-
-    /**
      * Event raised to get the list of resources associated with a project
      *
      * Parameters:
@@ -788,114 +700,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      *     'resources' => array
      */
     public const REST_PROJECT_RESOURCES = 'rest_project_resources';
-
-    /**
-     * Event raised to get top milestones from a project with REST
-     *
-     * Parameters:
-     *     'version'             => String
-     *     'query'               => String
-     *     'representation_type' => String
-     *     'project'             => Project
-     *     'limit'               => int
-     *     'offset'              => int
-     *     'order'               => string
-     *     'result'              => array
-     */
-    public const REST_GET_PROJECT_MILESTONES = 'rest_get_project_milestones';
-
-    /**
-     * Event raised to get trackers from a project with REST
-     *
-     * Parameters:
-     *     'version'        => String
-     *     'representation' => String
-     *     'project'        => Project
-     *     'limit'          => int
-     *     'offset'         => int
-     *     'result'         => array
-     */
-    public const REST_GET_PROJECT_TRACKERS = 'rest_get_project_trackers';
-
-    /**
-     * Event raised to get top backlog items from a project with REST
-     *
-     * Parameters:
-     *     'version' => String
-     *     'project' => Project
-     *     'limit'   => int
-     *     'offset'  => int
-     *     'result'  => array
-     */
-    public const REST_GET_PROJECT_BACKLOG = 'rest_get_project_backlog';
-
-    /**
-     * Event raised to get top milestones options from a project with REST
-     *
-     * Parameters:
-     *     'version' => String
-     *     'project' => Project
-     *     'limit'   => int
-     *     'offset'  => int
-     *     'result'  => array
-     */
-    public const REST_OPTIONS_PROJECT_MILESTONES = 'rest_options_project_milestones';
-
-    /**
-     * Event raised to get trackers options from a project with REST
-     *
-     * Parameters:
-     *     'version' => String
-     *     'project' => Project
-     *     'limit'   => int
-     *     'offset'  => int
-     *     'result'  => array
-     */
-    public const REST_OPTIONS_PROJECT_TRACKERS = 'rest_options_project_trackers';
-
-    /**
-     * Event raised to get top backlog items options from a project with REST
-     *
-     * Parameters:
-     *     'version' => String
-     *     'project' => Project
-     *     'limit'   => int
-     *     'offset'  => int
-     *     'result'  => array
-     */
-    public const REST_OPTIONS_PROJECT_BACKLOG = 'rest_options_project_backlog';
-
-    /**
-     * Event raised to order top backlog items from a project with REST
-     *
-     * Parameters:
-     *     'version' => String
-     *     'project' => Project
-     *     'limit'   => int
-     *     'offset'  => int
-     *     'result'  => array
-     */
-    public const REST_PUT_PROJECT_BACKLOG = 'rest_put_project_backlog';
-
-    /**
-     * Event raised to order top backlog items from a project with REST
-     *
-     * Parameters:
-     *     'version' => String
-     *     'project' => Project
-     *     'order'   => OrderRepresentation
-     *     'result'  => array
-     */
-    public const REST_PATCH_PROJECT_BACKLOG = 'rest_patch_project_backlog';
-
-    /**
-     * Fetch interface html to manage 3rd party apps
-     *
-     * Parameters:
-     *     'user' => PFUser
-     *     'html' => string
-     */
-    public const MANAGE_THIRD_PARTY_APPS = 'manage_third_party_apps';
 
     /**
      * Detect the project id in a url
@@ -988,33 +792,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public const REST_PROJECT_GET_GIT = 'rest_project_get_git';
 
     /**
-     * Event raised to know if Git plugin is activated for REST
-     *
-     * Parameters:
-     *     'activated' => boolean
-     */
-    public const REST_PROJECT_OPTIONS_GIT = 'rest_project_options_git';
-
-    /**
-     * Event raised to know if agiledashboard plugin is activated for REST
-     *
-     * Parameters:
-     *     'available' => boolean
-     */
-    public const REST_PROJECT_AGILE_ENDPOINTS = 'rest_project_agile_endpoints';
-
-    /**
-     * Throw an event to allow a plugin to refdefine the type of search
-     *
-     * Parameters:
-     *     'type'         => (string) current type,
-     *     'service_name' => string,
-     *     'project_id'   => int,
-     *     'user'         => PFUser,
-     */
-    public const REDEFINE_SEARCH_TYPE = 'redefine_search_type';
-
-    /**
      * When access level of project changes
      *
      * Parameters:
@@ -1029,14 +806,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      * When access level of platform changes
      */
     public const SITE_ACCESS_CHANGE = 'site_access_change';
-
-    /**
-     * When a user account is created
-     *
-     * Parameter:
-     *     'user' => PFUser
-     */
-    public const USER_MANAGER_CREATE_ACCOUNT = 'user_manager_create_account';
 
     /**
      * When a user account is created
@@ -1067,55 +836,14 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public const SERVICES_TRUNCATED_EMAILS = 'services_truncated_emails';
 
     /**
-     * Allow plugins to insert links in the builded navbar
-     *
-     * Parameters:
-     *   'items'            => FlamingParrot_NavBarItemPresentersCollection
-     *   'selected_top_tab' => (string) current tab, to know if added item can be flaged as active
-     *   'request_uri'      => (string)
-     */
-    public const NAVBAR_ITEMS = 'navbar_items';
-
-    /**
-     * Retrieve sql fragments in ordoer to retrieve all repositories of all projects.
-     *
-     * Sql fragments should be in the form of:
-     *
-     *  SELECT groups.*, service.*, repository_name
-     *  FROM ...
-     *
-     * Where repository_name is "my_project" or "my_project/my_repo"
-     *
-     * Parameters:
-     *      'sql_fragments' => array
-     */
-    public const GET_SVN_LIST_REPOSITORIES_SQL_FRAGMENTS = 'get_svn_list_repositories_sql_fragments';
-
-    /**
      * When a user group is modified
      *
      * Parameters:
      *   'project'         => Project
-     *   'new_ugroup_name' => String|null
-     *   'old_ugroup_name' => String|null
+     *   'new_ugroup_name' => string
+     *   'old_ugroup_name' => string
      */
-    public const UGROUP_MODIFY = 'ugroup_modify';
-
-    /**
-     * When a user is added to a project
-     *
-     * Paramters:
-     *   'project'         => Project
-     */
-    public const MEMBERSHIP_CREATE = 'membership_create';
-
-    /**
-     * When a user is removed to a project
-     *
-     * Paramters:
-     *   'project' => Project
-     */
-    public const MEMBERSHIP_DELETE = 'membership_delete';
+    public const UGROUP_RENAME = 'ugroup_rename';
 
     /**
      * Retrieve project_id for an artifact reference
@@ -1137,15 +865,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public const SERVICE_IS_USED = 'service_is_used';
 
     /**
-     * Allow plugins to add user actions in the navbar
-     *
-     * Parameters:
-     *  - user    => (input)  PFUser
-     *  - actions => (output) Tuleap\User\UserActionPresenter[]
-     */
-    public const USER_ACTIONS = "user_actions";
-
-    /**
      * When an SVN repository is created
      *
      * Parameters:
@@ -1163,14 +882,6 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      *
      */
     public const UGROUP_DUPLICATION = 'ugroup_duplication';
-    /**
-     * When a project is created, ask plugins if they authorized project creation
-     *
-     * Parameters:
-     *  - xml_content => (input) SimpleXmlElement
-     *
-     */
-    public const IMPORT_XML_IS_PROJECT_VALID = 'import_xml_is_project_valid';
 
     /**
      * CSS stylesheets that will be added to the page's <head>
@@ -1178,6 +889,7 @@ class Event // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      * Parameters:
      *    - variant: ThemeVariantColor Theme variant color
      *    - stylesheets: String[] css paths to be added
+     *    - theme_variation: \Tuleap\Layout\ThemeVariation
      *
      * @deprecated
      */

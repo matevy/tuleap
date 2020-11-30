@@ -22,7 +22,7 @@ if (! defined('MEDIAWIKI')) {
 class SkinFusionForge extends SkinTemplate
 {
     /** Using fusionforge. */
-    function initPage(OutputPage $out)
+    public function initPage(OutputPage $out)
     {
         parent::initPage($out);
         $this->skinname  = 'fusionforge';
@@ -30,7 +30,7 @@ class SkinFusionForge extends SkinTemplate
         $this->template  = 'FusionForgeTemplate';
     }
 
-    function setupSkinUserCss(OutputPage $out)
+    public function setupSkinUserCss(OutputPage $out)
     {
         global $wgHandheldStyle;
 
@@ -59,7 +59,7 @@ class SkinFusionForge extends SkinTemplate
  */
 class FusionForgeTemplate extends QuickTemplate
 {
-    var $skin;
+    public $skin;
     /**
      * Template filter callback for FusionForge skin.
      * Takes an associative array of data set from a SkinTemplate-based
@@ -68,7 +68,7 @@ class FusionForgeTemplate extends QuickTemplate
      *
      * @access private
      */
-    function execute()
+    public function execute()
     {
         global $wgRequest, $sysDTDs;
         $this->skin = $skin = $this->data['skin'];
@@ -116,7 +116,7 @@ foreach ($this->data['xhtmlnamespaces'] as $tag => $ns) {
         }
         ?>
             <!-- FUSIONFORGE Stylesheet BEGIN -->
-        <?php if (! $GLOBALS['sys_use_mwframe']) {
+        <?php if (! ForgeConfig::get('sys_use_mwframe')) {
             $GLOBALS['HTML']->displayStylesheetElements();
         } ?>
             <!-- FUSIONFORGE Stylesheet END -->
@@ -130,12 +130,12 @@ foreach ($this->data['xhtmlnamespaces'] as $tag => $ns) {
  class="mediawiki <?php $this->text('dir') ?> <?php $this->text('pageclass') ?> <?php $this->text('skinnameclass') ?>">
         <!-- FUSIONFORGE BodyHeader BEGIN -->
            <?php
-            if (! $GLOBALS['sys_use_mwframe']) {
-                 $project=group_get_object_by_name($GLOBALS['fusionforgeproject']);
+            if (! ForgeConfig::get('sys_use_mwframe')) {
+                 $project = group_get_object_by_name($GLOBALS['fusionforgeproject']);
                 if ($project) {
-                    $GLOBALS['group_id']=$project->getID();
-                    $params['group']=$GLOBALS['group_id'];
-                    $params['toptab']='mediawiki';
+                    $GLOBALS['group_id'] = $project->getID();
+                    $params['group'] = $GLOBALS['group_id'];
+                    $params['toptab'] = 'mediawiki';
                     $GLOBALS['HTML']->bodyHeader($params);
                 }
             }
@@ -148,7 +148,7 @@ foreach ($this->data['xhtmlnamespaces'] as $tag => $ns) {
         <?php if ($this->data['sitenotice']) {
             ?><div id="siteNotice"><?php $this->html('sitenotice') ?></div><?php
         } ?>
-        <h1 id="firstHeading" class="firstHeading"><?php $this->data['displaytitle']!=""?$this->html('title'):$this->text('title') ?></h1>
+        <h1 id="firstHeading" class="firstHeading"><?php $this->data['displaytitle'] != "" ? $this->html('title') : $this->text('title') ?></h1>
         <div id="bodyContent">
             <h3 id="siteSub"><?php $this->msg('tagline') ?></h3>
             <div id="contentSub"><?php $this->html('subtitle') ?></div>
@@ -183,22 +183,24 @@ foreach ($this->data['xhtmlnamespaces'] as $tag => $ns) {
             echo '
 				 <li id="' . Sanitizer::escapeId("ca-$key") . '"';
             if ($tab['class']) {
-                echo ' class="'.htmlspecialchars($tab['class']).'"';
+                echo ' class="' . htmlspecialchars($tab['class']) . '"';
             }
-            echo'><a href="'.htmlspecialchars($tab['href']).'"';
+            echo '><a href="' . htmlspecialchars($tab['href']) . '"';
                     // We don't want to give the watch tab an accesskey if the
                     // page is being edited, because that conflicts with the
                     // accesskey on the watch checkbox.  We also don't want to
                     // give the edit tab an accesskey, because that's fairly su-
                     // perfluous and conflicts with an accesskey (Ctrl-E) often
                     // used for editing in Safari.
-            if (in_array($action, array( 'edit', 'submit'))
-                && in_array($key, array('edit', 'watch', 'unwatch'))) {
+            if (
+                in_array($action, ['edit', 'submit'])
+                && in_array($key, ['edit', 'watch', 'unwatch'])
+            ) {
                 echo $skin->tooltip("ca-$key");
             } else {
                 echo $skin->tooltipAndAccesskey("ca-$key");
             }
-            echo '>'.htmlspecialchars($tab['text']).'</a></li>';
+            echo '>' . htmlspecialchars($tab['text']) . '</a></li>';
         } ?>
             </ul>
         </div>
@@ -213,7 +215,7 @@ foreach ($this->data['xhtmlnamespaces'] as $tag => $ns) {
                     ?> class="active"
                 <?php }
                 ?>><a href="<?php
-                echo htmlspecialchars($item['href']) ?>"<?php echo $skin->tooltipAndAccesskey('pt-'.$key) ?><?php
+                echo htmlspecialchars($item['href']) ?>"<?php echo $skin->tooltipAndAccesskey('pt-' . $key) ?><?php
 if (! empty($item['class'])) {
     ?> class="<?php
 echo htmlspecialchars($item['class']) ?>"
@@ -264,11 +266,11 @@ echo htmlspecialchars($item['class']) ?>"
         <?php	}
 
      // Generate additional footer links
-        $footerlinks = array(
+        $footerlinks = [
         'lastmod', 'viewcount', 'numberofwatchingusers', 'credits', 'copyright',
         'privacy', 'about', 'disclaimer', 'tagline',
-        );
-        $validFooterLinks = array();
+        ];
+        $validFooterLinks = [];
         foreach ($footerlinks as $aLink) {
             if (isset($this->data[$aLink]) && $this->data[$aLink]) {
                 $validFooterLinks[] = $aLink;
@@ -279,7 +281,7 @@ echo htmlspecialchars($item['class']) ?>"
             <?php
             foreach ($validFooterLinks as $aLink) {
                 if (isset($this->data[$aLink]) && $this->data[$aLink]) {
-                    ?>                    <li id="<?php echo$aLink?>"><?php $this->html($aLink) ?></li>
+                    ?>                    <li id="<?php echo $aLink?>"><?php $this->html($aLink) ?></li>
                 <?php }
             }
             ?>
@@ -297,16 +299,16 @@ echo htmlspecialchars($item['class']) ?>"
 -->
         <?php endif; ?>
         <!-- FUSIONFORGE Footer BEGIN -->
-        <?php	if (!$GLOBALS['sys_use_mwframe']) {
+        <?php	if (! ForgeConfig::get('sys_use_mwframe')) {
             $GLOBALS['HTML']->footer($params);
         } else { ?>
 </body></html>
         <?php	} ?>
         <?php
         wfRestoreWarnings();
-    } // end of execute() method
+    }
 
-    function searchBox()
+    public function searchBox()
     {
         global $wgUseTwoButtonsSearchForm;
         ?>
@@ -322,8 +324,7 @@ echo htmlspecialchars($item['class']) ?>"
                 <input type='submit' name="go" class="searchButton" id="searchGoButton"    value="<?php $this->msg('searcharticle') ?>"<?php echo $this->skin->tooltipAndAccesskey('search-go'); ?> /><?php if ($wgUseTwoButtonsSearchForm) {
                     ?>&nbsp;
                 <input type='submit' name="fulltext" class="searchButton" id="mw-searchButton" value="<?php $this->msg('searchbutton') ?>"<?php echo $this->skin->tooltipAndAccesskey('search-fulltext'); ?> />
-                    <?php } // phpcs:ignore Squiz.WhiteSpace.ScopeClosingBrace.Indent
-                    else { //phpcs:ignore Generic.WhiteSpace.ScopeIndent.IncorrectExact ?>
+                    <?php } else { ?>
                 <div><a href="<?php $this->text('searchaction') ?>" rel="search"><?php $this->msg('powersearch-legend') ?></a></div>
             <?php } // phpcs:ignore Squiz.WhiteSpace.ScopeClosingBrace.Indent ?>
 
@@ -333,7 +334,7 @@ echo htmlspecialchars($item['class']) ?>"
         <?php
     }
 
-    function toolbox()
+    public function toolbox()
     {
         ?>
     <div class="portlet" id="p-tb">
@@ -360,13 +361,13 @@ echo htmlspecialchars($item['class']) ?>"
         if ($this->data['feeds']) { ?>
             <li id="feedlinks"><?php foreach ($this->data['feeds'] as $key => $feed) {
                 ?><a id="<?php echo Sanitizer::escapeId("feed-$key"); ?>" href="<?php
-                    echo htmlspecialchars($feed['href']) ?>" rel="alternate" type="application/<?php echo $key ?>+xml" class="feedlink"<?php echo $this->skin->tooltipAndAccesskey('feed-'.$key) ?>><?php echo htmlspecialchars($feed['text'])?></a>&nbsp;
+                    echo htmlspecialchars($feed['href']) ?>" rel="alternate" type="application/<?php echo $key ?>+xml" class="feedlink"<?php echo $this->skin->tooltipAndAccesskey('feed-' . $key) ?>><?php echo htmlspecialchars($feed['text'])?></a>&nbsp;
             <?php } // phpcs:ignore Squiz.WhiteSpace.ScopeClosingBrace.Indent ?></li><?php
         }
-        foreach (array('contributions', 'log', 'blockip', 'emailuser', 'upload', 'specialpages') as $special) {
+        foreach (['contributions', 'log', 'blockip', 'emailuser', 'upload', 'specialpages'] as $special) {
             if ($this->data['nav_urls'][$special]) {
                 ?><li id="t-<?php echo $special ?>"><a href="<?php echo htmlspecialchars($this->data['nav_urls'][$special]['href'])
-?>"<?php echo $this->skin->tooltipAndAccesskey('t-'.$special) ?>><?php $this->msg($special) ?></a></li>
+?>"<?php echo $this->skin->tooltipAndAccesskey('t-' . $special) ?>><?php $this->msg($special) ?></a></li>
             <?php	    }
         }
 
@@ -382,8 +383,8 @@ echo htmlspecialchars($item['class']) ?>"
                 <li id="t-ispermalink"<?php echo $this->skin->tooltip('t-ispermalink') ?>><?php $this->msg('permalink') ?></li><?php
         }
 
-        wfRunHooks('FusionForgeTemplateToolboxEnd', array(&$this));
-        wfRunHooks('SkinTemplateToolboxEnd', array(&$this));
+        wfRunHooks('FusionForgeTemplateToolboxEnd', [&$this]);
+        wfRunHooks('SkinTemplateToolboxEnd', [&$this]);
         ?>
             </ul>
         </div>
@@ -391,7 +392,7 @@ echo htmlspecialchars($item['class']) ?>"
         <?php
     }
 
-    function languageBox()
+    public function languageBox()
     {
         if ($this->data['language_urls']) {
             ?>
@@ -410,10 +411,10 @@ echo htmlspecialchars($item['class']) ?>"
         }
     }
 
-    function customBox($bar, $cont)
+    public function customBox($bar, $cont)
     {
         ?>
-    <div class='generated-sidebar portlet' id='<?php echo Sanitizer::escapeId("p-$bar") ?>'<?php echo $this->skin->tooltip('p-'.$bar) ?>>
+    <div class='generated-sidebar portlet' id='<?php echo Sanitizer::escapeId("p-$bar") ?>'<?php echo $this->skin->tooltip('p-' . $bar) ?>>
         <h5>
         <?php
         $out = wfMsg($bar);

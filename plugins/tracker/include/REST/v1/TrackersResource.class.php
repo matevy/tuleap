@@ -24,7 +24,6 @@ use Luracast\Restler\RestException;
 use PermissionsManager;
 use PFUser;
 use Tracker;
-use Tracker_Artifact;
 use Tracker_Artifact_PossibleParentsRetriever;
 use Tracker_ArtifactFactory;
 use Tracker_FormElementFactory;
@@ -39,7 +38,6 @@ use TransitionFactory;
 use Tuleap\DB\DBFactory;
 use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\REST\AuthenticatedResource;
-use Tuleap\REST\Exceptions\LimitOutOfBoundsException;
 use Tuleap\REST\Header;
 use Tuleap\REST\I18NRestException;
 use Tuleap\REST\InvalidParameterTypeException;
@@ -47,6 +45,7 @@ use Tuleap\REST\JsonDecoder;
 use Tuleap\REST\MissingMandatoryParameterException;
 use Tuleap\REST\ProjectStatusVerificator;
 use Tuleap\REST\QueryParameterParser;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Container\Fieldset\HiddenFieldsetChecker;
 use Tuleap\Tracker\FormElement\Container\FieldsExtractor;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
@@ -59,28 +58,27 @@ use Tuleap\Tracker\REST\Artifact\ArtifactRepresentation;
 use Tuleap\Tracker\REST\Artifact\ArtifactRepresentationBuilder;
 use Tuleap\Tracker\REST\Artifact\ParentArtifactReference;
 use Tuleap\Tracker\REST\CompleteTrackerRepresentation;
+use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
 use Tuleap\Tracker\REST\FormElementRepresentationsBuilder;
 use Tuleap\Tracker\REST\MinimalTrackerRepresentation;
 use Tuleap\Tracker\REST\PermissionsExporter;
-use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
 use Tuleap\Tracker\REST\ReportRepresentation;
 use Tuleap\Tracker\REST\Tracker\PermissionsRepresentationBuilder;
 use Tuleap\Tracker\REST\v1\Workflow\ModeUpdater;
-use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsRetriever;
 use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
-use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
 use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
+use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use Tuleap\Tracker\Workflow\SimpleMode\TransitionReplicator;
 use Tuleap\Tracker\Workflow\SimpleMode\TransitionReplicatorBuilder;
-use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use UserManager;
 use Workflow_Dao;
-use Workflow_Transition_ConditionFactory;
 use WorkflowFactory;
 
 /**
@@ -158,6 +156,7 @@ class TrackersResource extends AuthenticatedResource
      *
      * @url GET {id}
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id Id of the tracker
      *
@@ -171,9 +170,7 @@ class TrackersResource extends AuthenticatedResource
 
         $transition_retriever = new TransitionRetriever(
             new StateFactory(
-                new TransitionFactory(
-                    Workflow_Transition_ConditionFactory::build()
-                ),
+                TransitionFactory::instance(),
                 new SimpleWorkflowDao()
             ),
             new TransitionExtractor()
@@ -247,9 +244,10 @@ class TrackersResource extends AuthenticatedResource
      *
      * @url GET {id}/tracker_reports
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id Id of the tracker
-     * @param int $limit Number of elements displayed per page {@from path}{@min 1}
+     * @param int $limit Number of elements displayed per page {@from path}{@min 1}{@max 1000}
      * @param int $offset Position of the first element to display {@from path}{@min 0}
      *
      * @return array {@type Tuleap\Tracker\REST\ReportRepresentation}
@@ -259,7 +257,6 @@ class TrackersResource extends AuthenticatedResource
     public function getReports($id, $limit = 10, $offset = self::DEFAULT_OFFSET)
     {
         $this->checkAccess();
-        $this->checkLimitValue($limit);
 
         $user        = $this->user_manager->getCurrentUser();
         $tracker     = $this->getTrackerById($user, $id);
@@ -279,10 +276,7 @@ class TrackersResource extends AuthenticatedResource
 
         return array_map(
             function (Tracker_Report $report) {
-                $rest_report = new ReportRepresentation();
-                $rest_report->build($report);
-
-                return $rest_report;
+                return new ReportRepresentation($report);
             },
             $reports
         );
@@ -326,10 +320,11 @@ class TrackersResource extends AuthenticatedResource
      *
      * @url GET {id}/artifacts
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int    $id             ID of the tracker
      * @param string $values         Which fields to include in the response. Default is no field values {@from path}{@choice ,all}
-     * @param int    $limit          Number of elements displayed per page {@from path}{@min 1}
+     * @param int    $limit          Number of elements displayed per page {@from path}{@min 1}{@max 1000}
      * @param int    $offset         Position of the first element to display {@from path}{@min 0}
      * @param string $query          JSON object of search criteria properties {@from path}
      * @param string $expert_query   Query with AND, OR, BETWEEN(), NOW(), IN(), NOT IN(), MYSELF(), parenthesis
@@ -353,7 +348,6 @@ class TrackersResource extends AuthenticatedResource
         $order = self::ORDER_ASC
     ) {
         $this->checkAccess();
-        $this->checkLimitValue($limit);
 
         $user          = $this->user_manager->getCurrentUser();
         $valid_tracker = $this->getTrackerById($user, $id);
@@ -475,7 +469,7 @@ class TrackersResource extends AuthenticatedResource
             new NatureDao()
         );
 
-        $build_artifact_representation = function (?Tracker_Artifact $artifact) use (
+        $build_artifact_representation = function (?Artifact $artifact) use (
             $builder,
             $user,
             $with_all_field_values
@@ -485,8 +479,7 @@ class TrackersResource extends AuthenticatedResource
             }
 
             if ($with_all_field_values) {
-                $tracker_representation = new MinimalTrackerRepresentation();
-                $tracker_representation->build($artifact->getTracker());
+                $tracker_representation = MinimalTrackerRepresentation::build($artifact->getTracker());
 
                 return $builder->getArtifactRepresentationWithFieldValues($user, $artifact, $tracker_representation);
             } else {
@@ -516,9 +509,10 @@ class TrackersResource extends AuthenticatedResource
      *
      * @url GET {id}/parent_artifacts
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id
-     * @param int $limit Number of elements displayed per page {@from path}{@min 1}
+     * @param int $limit Number of elements displayed per page {@from path}{@min 1}{@max 1000}
      * @param int $offset Position of the first element to display {@from path}{@min 0}
      *
      * @return array {@type Tuleap\Tracker\REST\Artifact\ParentArtifactReference}
@@ -528,7 +522,6 @@ class TrackersResource extends AuthenticatedResource
     public function getParentArtifacts($id, $limit = self::DEFAULT_LIMIT, $offset = self::DEFAULT_OFFSET)
     {
         $this->checkAccess();
-        $this->checkLimitValue($limit);
 
         $user    = $this->user_manager->getCurrentUser();
         $tracker = $this->getTrackerById($user, $id);
@@ -541,15 +534,14 @@ class TrackersResource extends AuthenticatedResource
         $parent = $this->getParentTracker($user, $tracker);
 
         $possible_parents_getr                       = new Tracker_Artifact_PossibleParentsRetriever($this->tracker_artifact_factory);
-        list($label, $pagination, $display_selector) = $possible_parents_getr->getPossibleArtifactParents($parent, $user, $limit, $offset);
+        [$label, $pagination, $display_selector] = $possible_parents_getr->getPossibleArtifactParents($parent, $user, $limit, $offset);
 
         if ($display_selector) {
             $nb_matching = $pagination->getTotalSize();
             Header::sendPaginationHeaders($limit, $offset, $nb_matching, self::MAX_LIMIT);
-            $collection = array();
+            $collection = [];
             foreach ($pagination->getArtifacts() as $artifact) {
-                $reference    = new ParentArtifactReference();
-                $reference->build($artifact);
+                $reference    = ParentArtifactReference::build($artifact);
                 $collection[] = $reference;
             }
             return $collection;
@@ -682,9 +674,7 @@ class TrackersResource extends AuthenticatedResource
 
             $transition_retriever = new TransitionRetriever(
                 new StateFactory(
-                    new TransitionFactory(
-                        Workflow_Transition_ConditionFactory::build()
-                    ),
+                    TransitionFactory::instance(),
                     new SimpleWorkflowDao()
                 ),
                 new TransitionExtractor()
@@ -738,7 +728,6 @@ class TrackersResource extends AuthenticatedResource
 
     /**
      * @param array $workflow_query
-     * @param Tracker $tracker
      *
      * @throws I18NRestException 500
      * @throws I18NRestException 400
@@ -786,10 +775,7 @@ class TrackersResource extends AuthenticatedResource
         throw new I18NRestException(400, dgettext('tuleap-tracker', 'Please provide a valid query.'));
     }
 
-    /**
-     * @return ModeUpdater
-     */
-    private function getModeUpdater() : ModeUpdater
+    private function getModeUpdater(): ModeUpdater
     {
         return new ModeUpdater(
             new Workflow_Dao(),
@@ -804,21 +790,20 @@ class TrackersResource extends AuthenticatedResource
         );
     }
 
-    private function getTransitionReplicator() : TransitionReplicator
+    private function getTransitionReplicator(): TransitionReplicator
     {
         return TransitionReplicatorBuilder::build();
     }
 
-    private function deactivateLegacyTransitions(Tracker $tracker) : void
+    private function deactivateLegacyTransitions(Tracker $tracker): void
     {
         $workflow_id = $tracker->getWorkflow()->getId();
 
-        (new \Workflow_Dao())->removeWorkflowLegacyState($workflow_id);
+        (new \Workflow_Dao())->removeWorkflowLegacyState((int) $workflow_id);
     }
 
     /**
-     * @param array $new_properties
-     * @param Tracker $tracker
+     * @param array $set_transitions_rules_query
      *
      * @return int Created workflow id
      * @throws I18NRestException 500
@@ -828,7 +813,7 @@ class TrackersResource extends AuthenticatedResource
     private function setTransitionsRules(array $set_transitions_rules_query, Tracker $tracker)
     {
         if (isset($set_transitions_rules_query['field_id'])) {
-            if (!is_int($set_transitions_rules_query['field_id'])) {
+            if (! is_int($set_transitions_rules_query['field_id'])) {
                 throw new I18NRestException(400, dgettext('tuleap-tracker', 'Please provide a valid query.'));
             }
             $field_id = $set_transitions_rules_query['field_id'];
@@ -836,7 +821,7 @@ class TrackersResource extends AuthenticatedResource
         }
 
         if (isset($set_transitions_rules_query['is_used'])) {
-            if (!is_bool($set_transitions_rules_query['is_used'])) {
+            if (! is_bool($set_transitions_rules_query['is_used'])) {
                 throw new I18NRestException(400, dgettext('tuleap-tracker', 'Please provide a valid query.'));
             }
             $is_used = $set_transitions_rules_query['is_used'];
@@ -852,11 +837,11 @@ class TrackersResource extends AuthenticatedResource
         $tracker_id = $tracker->getId();
         $workflow_factory = $this->getWorkflowFactory();
         $workflow = $workflow_factory->getWorkflowByTrackerId($tracker_id);
-        if (!$workflow) {
+        if (! $workflow) {
             throw new I18NRestException(400, dgettext('tuleap-tracker', "This tracker has no workflow."));
         }
 
-        if (!$workflow_factory->deleteWorkflow($workflow->getId())) {
+        if (! $workflow_factory->deleteWorkflow($workflow->getId())) {
             throw new I18NRestException(500, dgettext('tuleap-tracker', "An error has occurred, the workflow couldn't be reset."));
         }
     }
@@ -873,12 +858,12 @@ class TrackersResource extends AuthenticatedResource
         }
 
         $field = $this->formelement_factory->getFieldById($field_id);
-        if (!$field) {
+        if (! $field) {
             throw new I18NRestException(404, dgettext('tuleap-tracker', 'Field not found.'));
         }
 
         $new_workflow_id = $workflow_factory->create($tracker->getId(), $field->getId());
-        if (!$new_workflow_id) {
+        if (! $new_workflow_id) {
             throw new I18NRestException(500, dgettext('tuleap-tracker', "An error has occurred, the workflow couldn't be created."));
         }
 
@@ -893,12 +878,12 @@ class TrackersResource extends AuthenticatedResource
     {
         $workflow_factory = $this->getWorkflowFactory();
         $workflow = $workflow_factory->getWorkflowByTrackerId($tracker->getId());
-        if (!$workflow) {
+        if (! $workflow) {
             throw new I18NRestException(400, dgettext('tuleap-tracker', "No workflow defined on the given tracker."));
         }
 
         $workflow_id = $workflow_factory->updateActivation($workflow->getId(), $is_used);
-        if (!$workflow_id) {
+        if (! $workflow_id) {
             throw new I18NRestException(500, dgettext('tuleap-tracker', "An error has occurred, the workflow couldn't be updated."));
         }
 
@@ -934,13 +919,6 @@ class TrackersResource extends AuthenticatedResource
     private function sendAllowHeaderForTracker()
     {
         Header::allowOptionsGetPatch();
-    }
-
-    private function checkLimitValue($limit)
-    {
-        if ($limit > self::MAX_LIMIT) {
-            throw new LimitOutOfBoundsException(self::MAX_LIMIT);
-        }
     }
 
     private function getJsonDecoder()

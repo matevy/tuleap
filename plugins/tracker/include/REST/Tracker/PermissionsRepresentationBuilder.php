@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Tuleap\Tracker\REST\Tracker;
 
 use Tracker;
-use Tuleap\Project\REST\UserGroupRepresentation;
+use Tuleap\Project\REST\MinimalUserGroupRepresentation;
 use Tuleap\Tracker\PermissionsFunctionsWrapper;
 
 class PermissionsRepresentationBuilder
@@ -44,7 +44,7 @@ class PermissionsRepresentationBuilder
         $this->permissions_functions_wrapper = $permissions_functions_wrapper;
     }
 
-    public function getPermissionsRepresentation(Tracker $tracker, \PFUser $user) : ?PermissionsRepresentation
+    public function getPermissionsRepresentation(Tracker $tracker, \PFUser $user): ?PermissionsRepresentation
     {
         if ($tracker->userIsAdmin($user)) {
             $ugroups = $this->permissions_functions_wrapper->getTrackerUGroupsPermissions($tracker);
@@ -70,20 +70,16 @@ class PermissionsRepresentationBuilder
                     $this->addUserGroupRepresentation($can_access_submitted_by_user, $tracker, $ugroup);
                 }
             }
-            $representation = new PermissionsRepresentation();
-            $representation->build($can_access, $can_access_submitted_by_user, $can_access_assigned_to_group, $can_access_submitted_by_group, $can_admin);
-
-            return $representation;
+            return new PermissionsRepresentation($can_access, $can_access_submitted_by_user, $can_access_assigned_to_group, $can_access_submitted_by_group, $can_admin);
         }
         return null;
     }
 
-    private function addUserGroupRepresentation(array &$ugroup_representations, Tracker $tracker, array $result_array) : void
+    private function addUserGroupRepresentation(array &$ugroup_representations, Tracker $tracker, array $result_array): void
     {
         $ugroup = $this->ugroup_manager->getUGroup($tracker->getProject(), $result_array['ugroup']['id']);
         if ($ugroup) {
-            $representation = new UserGroupRepresentation();
-            $representation->build((int) $tracker->getProject()->getID(), $ugroup);
+            $representation = new MinimalUserGroupRepresentation((int) $ugroup->getProjectId(), $ugroup);
             $ugroup_representations[] = $representation;
         }
     }

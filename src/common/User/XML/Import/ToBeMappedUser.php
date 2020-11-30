@@ -26,7 +26,7 @@ class ToBeMappedUser extends ActionToBeTakenForUser
 
     public const ACTION = 'map';
 
-    /** @var PFUser[] */
+    /** @var \PFUser[] */
     private $matching_users;
 
     public function __construct(
@@ -50,16 +50,16 @@ class ToBeMappedUser extends ActionToBeTakenForUser
     /** @return array */
     public function getCSVData()
     {
-        $matching = array();
-        $actions  = array();
+        $matching = [];
+        $actions  = [];
         foreach ($this->matching_users as $user) {
-            $matching[] = $user->getRealName() .' ('. $user->getUserName() .') ['. $user->getStatus() .']';
-            $actions[]  = '"'. self::ACTION .':'. $user->getUserName() .'"';
+            $matching[] = $user->getRealName() . ' (' . $user->getUserName() . ') [' . $user->getStatus() . ']';
+            $actions[]  = '"' . self::ACTION . ':' . $user->getUserName() . '"';
         }
 
-        return array(
+        return [
             $this->username,
-            self::ACTION .':',
+            self::ACTION . ':',
             sprintf(
                 'User %s (%s) has the same email address than following users: %s.'
                 . ' Use one of the following actions to confirm the mapping: %s.',
@@ -68,7 +68,7 @@ class ToBeMappedUser extends ActionToBeTakenForUser
                 implode(', ', $matching),
                 implode(', ', $actions)
             )
-        );
+        ];
     }
 
     public function isActionAllowed($action)

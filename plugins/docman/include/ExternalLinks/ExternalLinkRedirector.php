@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\ExternalLinks;
 
@@ -82,9 +82,6 @@ class ExternalLinkRedirector implements Dispatchable
         return "/plugins/document/" . urlencode($this->project->getUnixNameLowerCase()) . "/" . $this->folder_id;
     }
 
-    /**
-     * @return bool
-     */
     public function shouldRedirectUserOnNewUI(): bool
     {
         return $this->should_redirect_user;
@@ -107,9 +104,6 @@ class ExternalLinkRedirector implements Dispatchable
         $this->useUserPreferencesWhenUserTryToAccessToDocument($should_use_document_url);
     }
 
-    /**
-     * @return \Project
-     */
     public function getProject(): \Project
     {
         return $this->project;

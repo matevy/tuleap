@@ -21,30 +21,28 @@
 
 <template>
     <div>
-        <fake-caret v-bind:item="item"/>
+        <fake-caret v-bind:item="item" />
         <i class="fa fa-fw document-folder-content-icon" v-bind:class="icon_class"></i>
-        {{ title }}
+        <span tabindex="0" class="document-folder-subitem-link">
+            {{ item.title }}
+        </span>
     </div>
 </template>
 
 <script>
 import { ICON_EMPTY } from "../../../constants.js";
 import FakeCaret from "./FakeCaret.vue";
-import { getTitleWithElipsisIfNeeded } from "../../../helpers/cell-title-formatter.js";
 
 export default {
     name: "DocumentCellTitle",
     components: { FakeCaret },
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
         icon_class() {
             return ICON_EMPTY;
         },
-        title() {
-            return getTitleWithElipsisIfNeeded(this.item);
-        }
-    }
+    },
 };
 </script>

@@ -21,15 +21,14 @@
 namespace Tuleap\Tracker\REST\Artifact;
 
 use Tracker;
-use Luracast\Restler\RestException;
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Exception\SemanticTitleNotDefinedException;
 use Tuleap\Tracker\REST\v1\ArtifactValuesRepresentation;
 
 class MovedArtifactValueBuilder
 {
     /** @return  ArtifactValuesRepresentation[] */
-    public function getValues(Tracker_Artifact $artifact, Tracker $tracker_destination)
+    public function getValues(Artifact $artifact, Tracker $tracker_destination)
     {
         $this->checkSemantic($artifact, $tracker_destination);
 
@@ -37,10 +36,10 @@ class MovedArtifactValueBuilder
         $representation->field_id = (int) $tracker_destination->getTitleField()->getId();
         $representation->value    = $artifact->getTitle();
 
-        return array($representation);
+        return [$representation];
     }
 
-    private function checkSemantic(Tracker_Artifact $artifact, Tracker $tracker)
+    private function checkSemantic(Artifact $artifact, Tracker $tracker)
     {
         if (! $artifact->getTitle()) {
             throw new SemanticTitleNotDefinedException("No semantic found for title artifact");

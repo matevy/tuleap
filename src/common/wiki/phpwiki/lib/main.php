@@ -24,7 +24,7 @@ rcs_id('$Id: main.php,v 1.216 2005/08/27 09:40:46 rurban Exp $');
 define('USE_PREFS_IN_PAGE', true);
 
 //include "lib/config.php";
-require_once(dirname(__FILE__)."/stdlib.php");
+require_once(dirname(__FILE__) . "/stdlib.php");
 require_once('lib/Request.php');
 require_once('lib/WikiDB.php');
 if (ENABLE_USER_NEW) {
@@ -54,7 +54,7 @@ class WikiRequest extends Request
 {
     // var $_dbi;
 
-    function __construct()
+    public function __construct()
     {
         $this->_dbi = WikiDB::open();
          // first mysql request costs [958ms]! [670ms] is mysql_connect()
@@ -86,30 +86,38 @@ class WikiRequest extends Request
         // Restore auth state. This doesn't check for proper authorization!
         $userid = $this->_deduceUsername();
         if (ENABLE_USER_NEW) {
-            if (isset($this->_user) and
-                !empty($this->_user->_authhow) and
-                $this->_user->_authhow == 'session') {
+            if (
+                isset($this->_user) and
+                ! empty($this->_user->_authhow) and
+                $this->_user->_authhow == 'session'
+            ) {
                 // users might switch in a session between the two objects.
                 // restore old auth level here or in updateAuthAndPrefs?
                 //$user = $this->getSessionVar('wiki_user');
                 // revive db handle, because these don't survive sessions
-                if (isset($this->_user) and
+                if (
+                    isset($this->_user) and
                      ( ! isa($this->_user, WikiUserClassname())
-                       or (strtolower(get_class($this->_user)) == '_passuser'))) {
+                       or (strtolower(get_class($this->_user)) == '_passuser'))
+                ) {
                     $this->_user = WikiUser($userid, $this->_user->_prefs);
                 }
             // revive other db handle
-                if (isset($this->_user->_prefs->_method)
+                if (
+                    isset($this->_user->_prefs->_method)
                     and ($this->_user->_prefs->_method == 'SQL'
                          or $this->_user->_prefs->_method == 'ADODB'
                          or $this->_user->_prefs->_method == 'PDO'
-                         or $this->_user->_prefs->_method == 'HomePage')) {
+                         or $this->_user->_prefs->_method == 'HomePage')
+                ) {
                     $this->_user->_HomePagehandle = $this->getPage($userid);
                 }
             // need to update the lockfile filehandle
-                if (isa($this->_user, '_FilePassUser')
+                if (
+                    isa($this->_user, '_FilePassUser')
                      and $this->_user->_file->lockfile
-                     and !$this->_user->_file->fplock ) {
+                     and ! $this->_user->_file->fplock
+                ) {
                     //$level = $this->_user->_level;
                     $this->_user = UpgradeUser(
                         $this->_user,
@@ -133,7 +141,7 @@ class WikiRequest extends Request
         }
     }
 
-    function initializeLang()
+    public function initializeLang()
     {
         // check non-default pref lang
         $_lang = @$this->_prefs->_prefs['lang'];
@@ -149,7 +157,7 @@ class WikiRequest extends Request
         }
     }
 
-    function initializeTheme()
+    public function initializeTheme()
     {
         global $WikiTheme;
 
@@ -162,11 +170,13 @@ class WikiRequest extends Request
         }
         //check changed LANG and THEME inside a session.
         // (e.g. by using another baseurl)
-        if (isset($this->_user->_authhow)
+        if (
+            isset($this->_user->_authhow)
             and $this->_user->_authhow == 'session'
-            and !isset($_theme->theme)
+            and ! isset($_theme->theme)
             and defined('THEME')
-            and $user_theme != THEME) {
+            and $user_theme != THEME
+        ) {
             include_once("themes/" . THEME . "/themeinfo.php");
         }
         if (empty($WikiTheme) and isset($user_theme)) {
@@ -185,26 +195,27 @@ class WikiRequest extends Request
         if (empty($WikiTheme)) {
             include_once("themes/default/themeinfo.php");
         }
-        assert(!empty($WikiTheme));
+        assert(! empty($WikiTheme));
     }
 
     // This really maybe should be part of the constructor, but since it
     // may involve HTML/template output, the global $request really needs
     // to be initialized before we do this stuff.
     // [50ms]: 36ms if wikidb_page::exists
-    function updateAuthAndPrefs()
+    public function updateAuthAndPrefs()
     {
-
-        if (isset($this->_user) and (!isa($this->_user, WikiUserClassname()))) {
+        if (isset($this->_user) and (! isa($this->_user, WikiUserClassname()))) {
             $this->_user = false;
         }
         // Handle authentication request, if any.
         if ($auth_args = $this->getArg('auth')) {
             $this->setArg('auth', false);
             $this->_handleAuthRequest($auth_args); // possible NORETURN
-        } elseif (! $this->_user
+        } elseif (
+            ! $this->_user
                  or (isa($this->_user, WikiUserClassname())
-                     and ! $this->_user->isSignedIn())) {
+                     and ! $this->_user->isSignedIn())
+        ) {
             // If not auth request, try to sign in as saved user.
             if (($saved_user = $this->getPref('userid')) != false) {
                 $this->_signIn($saved_user);
@@ -215,7 +226,7 @@ class WikiRequest extends Request
 
         // Save preferences in session and cookie
         if (isset($this->_user)) {
-            if (!isset($this->_user->_authhow) or $this->_user->_authhow != 'session') {
+            if (! isset($this->_user->_authhow) or $this->_user->_authhow != 'session') {
                 $this->_user->setPreferences($this->_prefs, true);
             }
         }
@@ -248,7 +259,7 @@ class WikiRequest extends Request
         }
     }
 
-    function & getUser()
+    public function & getUser()
     {
         if (isset($this->_user)) {
             return $this->_user;
@@ -257,7 +268,7 @@ class WikiRequest extends Request
         }
     }
 
-    function & getGroup()
+    public function & getGroup()
     {
         if (isset($this->_user) and isset($this->_user->_group)) {
             return $this->_user->_group;
@@ -268,19 +279,19 @@ class WikiRequest extends Request
         }
     }
 
-    function & getPrefs()
+    public function & getPrefs()
     {
         return $this->_prefs;
     }
 
     // Convenience function:
-    function getPref($key)
+    public function getPref($key)
     {
         if (isset($this->_prefs)) {
             return $this->_prefs->get($key);
         }
     }
-    function & getDbh()
+    public function & getDbh()
     {
         return $this->_dbi;
     }
@@ -294,10 +305,10 @@ class WikiRequest extends Request
      * @return WikiDB_Page Object with methods to pull data from
      * database for the page requested.
      */
-    function getPage($pagename = false)
+    public function getPage($pagename = false)
     {
         //if (!isset($this->_dbi)) $this->getDbh();
-        if (!$pagename) {
+        if (! $pagename) {
             $pagename = $this->getArg('pagename');
         }
         return $this->_dbi->getPage($pagename);
@@ -316,28 +327,27 @@ class WikiRequest extends Request
      * the URL.  (These should be ignored when we receive the POST
      * request.)
      */
-    function getPostURL($pagename = false)
+    public function getPostURL($pagename = false)
     {
-
         if ($pagename === false) {
             $pagename = $this->getArg('pagename');
         }
         $action = $this->getArg('action');
-        if (!empty($_GET['start_debug'])) { // zend ide support
-            return WikiURL($pagename, array('action' => $action, 'start_debug' => 1));
+        if (! empty($_GET['start_debug'])) { // zend ide support
+            return WikiURL($pagename, ['action' => $action, 'start_debug' => 1]);
         } else {
-            return WikiURL($pagename, array('action' => $action));
+            return WikiURL($pagename, ['action' => $action]);
         }
     }
 
-    function _handleAuthRequest($auth_args)
+    public function _handleAuthRequest($auth_args)
     {
-        if (!is_array($auth_args)) {
+        if (! is_array($auth_args)) {
             return;
         }
 
         // Ignore password unless POST'ed.
-        if (!$this->isPost()) {
+        if (! $this->isPost()) {
             unset($auth_args['passwd']);
         }
 
@@ -351,14 +361,16 @@ class WikiRequest extends Request
             $fail_message = $user;
             $auth_args['pass_required'] = true;
             // if clicked just on to the "sign in as:" button dont print invalid username.
-            if (!empty($auth_args['login']) and empty($auth_args['userid'])) {
+            if (! empty($auth_args['login']) and empty($auth_args['userid'])) {
                 $fail_message = '';
             }
             // If no password was submitted, it's not really
             // a failure --- just need to prompt for password...
-            if (!ALLOW_USER_PASSWORDS
+            if (
+                ! ALLOW_USER_PASSWORDS
                 and ALLOW_BOGO_LOGIN
-                and !isset($auth_args['passwd'])) {
+                and ! isset($auth_args['passwd'])
+            ) {
                 $fail_message = false;
             }
             $olduser->PrintLoginForm($this, $auth_args, $fail_message, 'newpage');
@@ -376,7 +388,7 @@ class WikiRequest extends Request
      * @param $userid string Userid to attempt to sign in as.
      * @access private
      */
-    function _signIn($userid)
+    public function _signIn($userid)
     {
         if (ENABLE_USER_NEW) {
             if (! $this->_user) {
@@ -387,14 +399,14 @@ class WikiRequest extends Request
                 $this->_user = new _PassUser($userid);
             }
         }
-        $user = $this->_user->AuthCheck(array('userid' => $userid));
+        $user = $this->_user->AuthCheck(['userid' => $userid]);
         if (isa($user, WikiUserClassname())) {
             $this->_setUser($user); // success!
         }
     }
 
     // login or logout or restore state
-    function _setUser($user)
+    public function _setUser($user)
     {
         $this->_user = $user;
         if (defined('MAIN_SETUSER')) {
@@ -420,28 +432,28 @@ class WikiRequest extends Request
     }
 
     /* Permission system */
-    function getLevelDescription($level)
+    public function getLevelDescription($level)
     {
         static $levels = false;
-        if (!$levels) { // This looks like a Visual Basic hack. For the very same reason. "0"
-            $levels = array('x-1' => _("FORBIDDEN"),
+        if (! $levels) { // This looks like a Visual Basic hack. For the very same reason. "0"
+            $levels = ['x-1' => _("FORBIDDEN"),
                             'x0'  => _("ANON"),
                             'x1'  => _("BOGO"),
                             'x2'  => _("USER"),
                             'x10' => _("ADMIN"),
-                            'x100'=> _("UNOBTAINABLE"));
+                            'x100' => _("UNOBTAINABLE")];
         }
-        if (!empty($level)) {
+        if (! empty($level)) {
             $level = '0';
         }
-        if (!empty($levels["x".$level])) {
-            return $levels["x".$level];
+        if (! empty($levels["x" . $level])) {
+            return $levels["x" . $level];
         } else {
             return _("ANON");
         }
     }
 
-    function _notAuthorized($require_level)
+    public function _notAuthorized($require_level)
     {
         // Display the authority message in the Wiki's default
         // language, in case it is not english.
@@ -511,12 +523,12 @@ class WikiRequest extends Request
 
     // Fixme: for PagePermissions we'll need other strings,
     // relevant to the requested page, not just for the action on the whole wiki.
-    function getActionDescription($action)
+    public function getActionDescription($action)
     {
         static $actionDescriptions;
         if (! $actionDescriptions) {
             $actionDescriptions
-            = array('browse'     => _("view this page"),
+            = ['browse'     => _("view this page"),
                     'diff'       => _("diff this page"),
                     'edit'       => _("edit this page"),
                     'revert'     => _("revert to a previous version of this page"),
@@ -530,7 +542,7 @@ class WikiRequest extends Request
                     'viewsource' => _("view the source of this page"),
                     'zip'        => _("download a zip dump from this wiki"),
                     'ziphtml'    => _("download an html zip dump from this wiki")
-                    );
+                    ];
         }
         if (in_array($action, array_keys($actionDescriptions))) {
             return $actionDescriptions[$action];
@@ -549,13 +561,13 @@ class WikiRequest extends Request
 
 => Browsing pages is disallowed on this wiki for authenticated user 'rurban' (level: BOGO).
     */
-    function getDisallowedActionDescription($action)
+    public function getDisallowedActionDescription($action)
     {
         static $disallowedActionDescriptions;
 
         if (! $disallowedActionDescriptions) {
             $disallowedActionDescriptions
-            = array('browse'     => _("Browsing pages"),
+            = ['browse'     => _("Browsing pages"),
                     'diff'       => _("Diffing pages"),
                     'edit'       => _("Editing pages"),
                     'revert'     => _("Reverting to a previous version of pages"),
@@ -569,7 +581,7 @@ class WikiRequest extends Request
                     'viewsource' => _("Viewing the source of pages"),
                     'zip'        => _("Downloading zip dumps"),
                     'ziphtml'    => _("Downloading html zip dumps")
-                    );
+                    ];
         }
         if (in_array($action, array_keys($disallowedActionDescriptions))) {
             return $disallowedActionDescriptions[$action];
@@ -578,10 +590,10 @@ class WikiRequest extends Request
         }
     }
 
-    function requiredAuthority($action)
+    public function requiredAuthority($action)
     {
         $auth = $this->requiredAuthorityForAction($action);
-        if (!ALLOW_ANON_USER) {
+        if (! ALLOW_ANON_USER) {
             return WIKIAUTH_USER;
         }
 
@@ -603,7 +615,7 @@ class WikiRequest extends Request
         return $auth;
     }
 
-    function requiredAuthorityForAction($action)
+    public function requiredAuthorityForAction($action)
     {
         global $DisabledActions;
 
@@ -678,7 +690,7 @@ class WikiRequest extends Request
     }
     /* End of Permission system */
 
-    function possiblyDeflowerVirginWiki()
+    public function possiblyDeflowerVirginWiki()
     {
         if ($this->getArg('action') != 'browse') {
             return;
@@ -699,10 +711,10 @@ class WikiRequest extends Request
     }
 
     // [574ms] mainly template:printexpansion: 393ms and template::expandsubtemplate [100+70+60ms]
-    function handleAction()
+    public function handleAction()
     {
         $action = $this->getArg('action');
-        if ($this->isPost() and !$this->_user->isAdmin() and $action != 'browse') {
+        if ($this->isPost() and ! $this->_user->isAdmin() and $action != 'browse') {
             $page = $this->getPage();
             if ($page->get('moderation')) {
                 require_once("lib/WikiPlugin.php");
@@ -710,7 +722,7 @@ class WikiRequest extends Request
                 $plugin = $loader->getPlugin("ModeratedPage");
                 if ($plugin->handler($this, $page)) {
                     $CONTENT = HTML::div(
-                        array('class' => 'wiki-edithelp'),
+                        ['class' => 'wiki-edithelp'],
                         fmt(
                             "%s: action forwarded to a moderator.",
                             $action
@@ -718,7 +730,7 @@ class WikiRequest extends Request
                         HTML::br(),
                         _("This action requires moderator approval. Please be patient.")
                     );
-                    if (!empty($plugin->_tokens['CONTENT'])) {
+                    if (! empty($plugin->_tokens['CONTENT'])) {
                         $plugin->_tokens['CONTENT']->pushContent(
                             HTML::br(),
                             _("You must wait for moderator approval.")
@@ -748,7 +760,7 @@ class WikiRequest extends Request
         }
     }
 
-    function finish($errormsg = false)
+    public function finish($errormsg = false)
     {
         static $in_exit = 0;
 
@@ -760,7 +772,7 @@ class WikiRequest extends Request
         global $ErrorManager;
         $ErrorManager->flushPostponedErrors();
 
-        if (!empty($errormsg)) {
+        if (! empty($errormsg)) {
             PrintXML(
                 HTML::br(),
                 HTML::hr(),
@@ -788,7 +800,7 @@ class WikiRequest extends Request
      * If false, we support either "/index.php?pagename=PageName&arg=value",
      * or the first arg (1.2.x style): "/index.php?PageName&arg=value"
      */
-    function _deducePagename()
+    public function _deducePagename()
     {
         if (trim(rawurldecode($this->getArg('pagename')))) {
             return fixTitleEncoding(rawurldecode($this->getArg('pagename')));
@@ -837,9 +849,9 @@ class WikiRequest extends Request
         return fixTitleEncoding(HOME_PAGE);
     }
 
-    function _deduceAction()
+    public function _deduceAction()
     {
-        if (!($action = $this->getArg('action'))) {
+        if (! ($action = $this->getArg('action'))) {
             return 'browse';    // Default if no action specified.
         }
 
@@ -867,10 +879,9 @@ class WikiRequest extends Request
         return 'browse';
     }
 
-    function _deduceUsername()
+    public function _deduceUsername()
     {
-
-        if (!empty($this->args['auth']) and !empty($this->args['auth']['userid'])) {
+        if (! empty($this->args['auth']) and ! empty($this->args['auth']['userid'])) {
             return $this->args['auth']['userid'];
         }
 
@@ -878,11 +889,11 @@ class WikiRequest extends Request
         return user_getname();
     }
 
-    function _isActionPage($pagename)
+    public function _isActionPage($pagename)
     {
         $dbi = $this->getDbh();
         $page = $dbi->getPage($pagename);
-        if (!$page) {
+        if (! $page) {
             return false;
         }
         $rev = $page->getCurrentRevision();
@@ -890,13 +901,13 @@ class WikiRequest extends Request
         if (strstr($rev->getPackedContent(), '<?plugin')) {
             return true;
         }
-        if (!$rev->hasDefaultContents()) {
+        if (! $rev->hasDefaultContents()) {
             trigger_error("$pagename: Does not appear to be an 'action page'", E_USER_NOTICE);
         }
         return false;
     }
 
-    function findActionPage($action)
+    public function findActionPage($action)
     {
         static $cache;
 
@@ -914,7 +925,7 @@ class WikiRequest extends Request
         }
 
         // Allow for, e.g. action=LikePages
-        if (!isWikiWord($action)) {
+        if (! isWikiWord($action)) {
             return $cache[$action] = false;
         }
 
@@ -944,33 +955,33 @@ class WikiRequest extends Request
         return $cache[$action] = false;
     }
 
-    function isActionPage($pagename)
+    public function isActionPage($pagename)
     {
         return $this->findActionPage($pagename);
     }
 
-    function action_browse()
+    public function action_browse()
     {
         $this->buffer_output();
         include_once("lib/display.php");
         displayPage($this);
     }
 
-    function action_verify()
+    public function action_verify()
     {
         $this->action_browse();
     }
 
-    function actionpage($action)
+    public function actionpage($action)
     {
         $this->buffer_output();
         include_once("lib/display.php");
         actionPage($this, $action);
     }
 
-    function adminActionSubpage($subpage)
+    public function adminActionSubpage($subpage)
     {
-        $page = _("PhpWikiAdministration")."/".$subpage;
+        $page = _("PhpWikiAdministration") . "/" . $subpage;
         $action = $this->findActionPage($page);
         if ($action) {
             $this->setArg('s', $this->getArg('pagename'));
@@ -978,44 +989,44 @@ class WikiRequest extends Request
             $this->setArg('action', $action);
             $this->actionpage($action);
         } else {
-            trigger_error($page.": Cannot find action page", E_USER_WARNING);
+            trigger_error($page . ": Cannot find action page", E_USER_WARNING);
         }
     }
 
-    function action_chown()
+    public function action_chown()
     {
         $this->adminActionSubpage(_("Chown"));
     }
 
-    function action_setacl()
+    public function action_setacl()
     {
         $this->adminActionSubpage(_("SetAcl"));
     }
 
-    function action_rename()
+    public function action_rename()
     {
         $this->adminActionSubpage(_("Rename"));
     }
 
-    function action_dump()
+    public function action_dump()
     {
         $action = $this->findActionPage(_("PageDump"));
         if ($action) {
             $this->actionpage($action);
         } else {
             // redirect to action=upgrade if admin?
-            trigger_error(_("PageDump").": Cannot find action page", E_USER_WARNING);
+            trigger_error(_("PageDump") . ": Cannot find action page", E_USER_WARNING);
         }
     }
 
-    function action_diff()
+    public function action_diff()
     {
         $this->buffer_output();
         include_once "lib/diff.php";
         showDiff($this);
     }
 
-    function action_search()
+    public function action_search()
     {
         // This is obsolete: reformulate URL and redirect.
         // FIXME: this whole section should probably be deleted.
@@ -1026,23 +1037,23 @@ class WikiRequest extends Request
         }
         $this->redirect(WikiURL(
             $search_page,
-            array('s' => $this->getArg('searchterm')),
+            ['s' => $this->getArg('searchterm')],
             'absolute_url'
         ));
     }
 
-    function action_edit()
+    public function action_edit()
     {
         // {{{ Codendi hook to check if this wiki page is editable
         $em = EventManager::instance();
         $response = false;
         $html = HTML();
-        $em->processEvent('isWikiPageEditable', array(
+        $em->processEvent('isWikiPageEditable', [
                         'action'    => 'is_wiki_page_editable',
                         'group_id'  => GROUP_ID,
                         'wiki_page' => $this->getArg('pagename'),
                         'response'  => &$response,
-            ));
+            ]);
         // }}} /Codendi hook
 
         if ($response) {
@@ -1055,12 +1066,12 @@ class WikiRequest extends Request
         }
     }
 
-    function action_create()
+    public function action_create()
     {
         $this->action_edit();
     }
 
-    function action_viewsource()
+    public function action_viewsource()
     {
         $this->buffer_output();
         include "lib/editpage.php";
@@ -1068,7 +1079,7 @@ class WikiRequest extends Request
         $e->viewSource();
     }
 
-    function action_lock()
+    public function action_lock()
     {
         $page = $this->getPage();
         $page->set('locked', true);
@@ -1080,9 +1091,7 @@ class WikiRequest extends Request
             if ($retval = $plugin->lock_check($this, $page, $moderated)) {
                 $this->setArg('errormsg', $retval);
             }
-        }
-        // check if a link to ModeratedPage exists
-        elseif ($action_page = $page->existLink(_("ModeratedPage"))) {
+        } elseif ($action_page = $page->existLink(_("ModeratedPage"))) { // check if a link to ModeratedPage exists
             require_once("lib/WikiPlugin.php");
             $plugin = WikiPluginLoader::getPlugin("ModeratedPage");
             if ($retval = $plugin->lock_add($this, $page, $action_page)) {
@@ -1092,7 +1101,7 @@ class WikiRequest extends Request
         $this->action_browse();
     }
 
-    function action_unlock()
+    public function action_unlock()
     {
         $page = $this->getPage();
         $page->set('locked', false);
@@ -1100,7 +1109,7 @@ class WikiRequest extends Request
         $this->action_browse();
     }
 
-    function action_remove()
+    public function action_remove()
     {
         // This check is now redundant.
         //$user->requireAuth(WIKIAUTH_ADMIN);
@@ -1113,13 +1122,13 @@ class WikiRequest extends Request
         }
     }
 
-    function action_revert()
+    public function action_revert()
     {
         include_once "lib/loadsave.php";
         RevertPage($this);
     }
 
-    function action_zip()
+    public function action_zip()
     {
         include_once("lib/loadsave.php");
         MakeWikiZip($this);
@@ -1128,7 +1137,7 @@ class WikiRequest extends Request
         //echo "PhpWiki " . PHPWIKI_VERSION . " source:\n$GLOBALS[RCS_IDS]\n";
     }
 
-    function action_ziphtml()
+    public function action_ziphtml()
     {
         include_once("lib/loadsave.php");
         MakeWikiZipHtml($this);
@@ -1137,20 +1146,20 @@ class WikiRequest extends Request
         echo "PhpWiki " . PHPWIKI_VERSION . " source:\n$GLOBALS[RCS_IDS]\n";
     }
 
-    function action_upload()
+    public function action_upload()
     {
         include_once("lib/loadsave.php");
         LoadPostFile($this);
     }
 
-    function action_upgrade()
+    public function action_upgrade()
     {
         include_once("lib/loadsave.php");
         include_once("lib/upgrade.php");
         DoUpgrade($this);
     }
 
-    function action_loadfile()
+    public function action_loadfile()
     {
         include_once("lib/loadsave.php");
         RakeSandboxAtUserRequest($this);
@@ -1171,7 +1180,7 @@ function validateSessionPath()
     // page (due to its strict mode while parsing a page?).
     if (! is_writeable(ini_get('session.save_path'))) {
         $tmpdir = (defined('SESSION_SAVE_PATH') and SESSION_SAVE_PATH) ? SESSION_SAVE_PATH : '/tmp';
-        if (!is_writeable($tmpdir)) {
+        if (! is_writeable($tmpdir)) {
             $tmpdir = '/tmp';
         }
         trigger_error(
@@ -1220,9 +1229,9 @@ function main()
     // Postpone warnings
     global $ErrorManager;
     if (defined('E_STRICT')) { // and (E_ALL & E_STRICT)) // strict php5?
-        $ErrorManager->setPostponedErrorMask(E_NOTICE|E_USER_NOTICE|E_USER_WARNING|E_WARNING|E_STRICT);
+        $ErrorManager->setPostponedErrorMask(E_NOTICE | E_USER_NOTICE | E_USER_WARNING | E_WARNING | E_STRICT);
     } else {
-        $ErrorManager->setPostponedErrorMask(E_NOTICE|E_USER_NOTICE|E_USER_WARNING|E_WARNING);
+        $ErrorManager->setPostponedErrorMask(E_NOTICE | E_USER_NOTICE | E_USER_WARNING | E_WARNING);
     }
     $request = new WikiRequest();
 
@@ -1232,7 +1241,7 @@ function main()
      *
      * See also <?plugin WikiAdminUtils action=purge-cache ?>
      */
-    if (!defined('WIKIDB_NOCACHE_MARKUP')) {
+    if (! defined('WIKIDB_NOCACHE_MARKUP')) {
         if ($request->getArg('nocache')) { // 1 or purge
             define('WIKIDB_NOCACHE_MARKUP', $request->getArg('nocache'));
         } else {
@@ -1254,19 +1263,19 @@ function main()
     // Memory optimization:
     // http://www.procata.com/blog/archives/2004/05/27/rephlux-and-php-memory-usage/
     // kill the global PEAR _PEAR_destructor_object_list
-    if (!empty($_PEAR_destructor_object_list)) {
-        $_PEAR_destructor_object_list = array();
+    if (! empty($_PEAR_destructor_object_list)) {
+        $_PEAR_destructor_object_list = [];
     }
     $request->possiblyDeflowerVirginWiki();
 
-    $validators = array('wikiname' => WIKI_NAME,
+    $validators = ['wikiname' => WIKI_NAME,
                         'args'     => wikihash($request->getArgs()),
-                        'prefs'    => wikihash($request->getPrefs()));
+                        'prefs'    => wikihash($request->getPrefs())];
     if (CACHE_CONTROL == 'STRICT') {
         $dbi = $request->getDbh();
         $timestamp = $dbi->getTimestamp();
         $validators['mtime'] = $timestamp;
-        $validators['%mtime'] = (int)$timestamp;
+        $validators['%mtime'] = (int) $timestamp;
     }
     // FIXME: we should try to generate strong validators when possible,
     // but for now, our validator is weak, since equal validators do not
@@ -1286,7 +1295,7 @@ function main()
 }
 
 // don't run the main loop for special requests (test, getimg, soap, ...)
-if (!defined('PHPWIKI_NOMAIN') or !PHPWIKI_NOMAIN) {
+if (! defined('PHPWIKI_NOMAIN') or ! PHPWIKI_NOMAIN) {
     main();
 }
 

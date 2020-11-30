@@ -46,14 +46,12 @@ class WebDAVPlugin extends Plugin
     /**
      * Returns information about the plugin
      *
-     * @return String
      *
      * @see src/common/plugin/Plugin#getPluginInfo()
      */
     public function getPluginInfo()
     {
-
-        if (!$this->pluginInfo instanceof WebDAVPluginInfo) {
+        if (! $this->pluginInfo instanceof WebDAVPluginInfo) {
             $this->pluginInfo = new WebDAVPluginInfo($this);
         }
         return $this->pluginInfo;
@@ -61,7 +59,7 @@ class WebDAVPlugin extends Plugin
 
     public function getDependencies()
     {
-        return [ 'docman' ];
+        return ['docman'];
     }
 
     /**
@@ -69,7 +67,6 @@ class WebDAVPlugin extends Plugin
      *
      * @param Array $params
      *
-     * @return void
      */
     public function urlVerification(&$params): void
     {
@@ -87,7 +84,7 @@ class WebDAVPlugin extends Plugin
         $webdav_base_uri = $this->getPluginInfo()->getPropertyValueForName('webdav_base_uri');
         $http_host       = HTTPRequest::instance()->getFromServer('HTTP_HOST');
 
-        return strpos($http_host.$server['REQUEST_URI'], $webdav_host.$webdav_base_uri) !== false;
+        return strpos($http_host . $server['REQUEST_URI'], $webdav_host . $webdav_base_uri) !== false;
     }
 
     /**
@@ -97,7 +94,6 @@ class WebDAVPlugin extends Plugin
      */
     public function getServer()
     {
-
         // Authentication
         $auth = new WebDAVAuthentication(new HeadersSender());
         $user = $auth->authenticate();
@@ -117,7 +113,7 @@ class WebDAVPlugin extends Plugin
 
         // The lock manager is reponsible for making sure users don't overwrite each others changes.
         // The locks repository is where temporary data related to locks is stored.
-        $locks_path = $GLOBALS['codendi_cache_dir'].'/plugins/webdav/locks';
+        $locks_path = ForgeConfig::get('codendi_cache_dir') . '/plugins/webdav/locks';
         if (! is_dir($locks_path)) {
             mkdir($locks_path, 0750, true);
         }

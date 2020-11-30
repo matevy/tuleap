@@ -22,7 +22,7 @@ namespace Tuleap\Tracker\REST\Artifact;
 
 use Tuleap\REST\JsonCast;
 
-class ArtifactFieldValuePermissionsOnArtifactRepresentation
+class ArtifactFieldValuePermissionsOnArtifactRepresentation extends ArtifactFieldValueRepresentationData
 {
     /**
      * @var int ID of the field
@@ -37,12 +37,12 @@ class ArtifactFieldValuePermissionsOnArtifactRepresentation
     /**
      * @var string[]
      */
-    public $granted_groups = array();
+    public $granted_groups = [];
 
     /**
      * @var Tuleap\Project\REST\UserGroupRepresentation[]
      */
-    public $granted_groups_details = array();
+    public $granted_groups_details = [];
 
     public function build($id, $label, array $granted_groups, array $granted_groups_details)
     {

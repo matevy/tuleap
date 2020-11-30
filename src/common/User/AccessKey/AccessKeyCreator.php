@@ -18,12 +18,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\User\AccessKey;
 
 use DateTimeImmutable;
+use Tuleap\Authentication\Scope\AuthenticationScope;
 use Tuleap\Authentication\SplitToken\SplitToken;
 use Tuleap\Authentication\SplitToken\SplitTokenVerificationString;
 use Tuleap\Authentication\SplitToken\SplitTokenVerificationStringHasher;
+use Tuleap\DB\DBTransactionExecutor;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeSaver;
+use Tuleap\User\AccessKey\Scope\NoValidAccessKeyScopeException;
 
 class AccessKeyCreator
 {
@@ -40,6 +46,14 @@ class AccessKeyCreator
      */
     private $hasher;
     /**
+     * @var AccessKeyScopeSaver
+     */
+    private $access_key_scope_saver;
+    /**
+     * @var DBTransactionExecutor
+     */
+    private $transaction_executor;
+    /**
      * @var AccessKeyCreationNotifier
      */
     private $notifier;
@@ -48,19 +62,29 @@ class AccessKeyCreator
         LastAccessKeyIdentifierStore $last_access_key_identifier_store,
         AccessKeyDAO $dao,
         SplitTokenVerificationStringHasher $hasher,
+        AccessKeyScopeSaver $access_key_scope_saver,
+        DBTransactionExecutor $transaction_executor,
         AccessKeyCreationNotifier $notifier
     ) {
         $this->last_access_key_identifier_store = $last_access_key_identifier_store;
         $this->dao                              = $dao;
         $this->hasher                           = $hasher;
+        $this->access_key_scope_saver           = $access_key_scope_saver;
+        $this->transaction_executor             = $transaction_executor;
         $this->notifier                         = $notifier;
     }
 
     /**
+     *
      * @throws AccessKeyAlreadyExpiredException
+     * @throws NoValidAccessKeyScopeException
      */
-    public function create(\PFUser $user, $description, ?DateTimeImmutable $expiration_date)
-    {
+    public function create(
+        \PFUser $user,
+        string $description,
+        ?DateTimeImmutable $expiration_date,
+        AuthenticationScope ...$access_key_scopes
+    ): void {
         $verification_string = SplitTokenVerificationString::generateNewSplitTokenVerificationString();
         $current_time        = new DateTimeImmutable();
 
@@ -73,16 +97,28 @@ class AccessKeyCreator
             throw new AccessKeyAlreadyExpiredException();
         }
 
-        $key_id = $this->dao->create(
-            $user->getId(),
-            $this->hasher->computeHash($verification_string),
-            $current_time->getTimestamp(),
-            $description,
-            $expiration_date_timestamp
+        $key_id = $this->transaction_executor->execute(
+            function () use ($expiration_date_timestamp, $description, $current_time, $verification_string, $user, $access_key_scopes): int {
+                $key_id = $this->dao->create(
+                    (int) $user->getId(),
+                    $this->hasher->computeHash($verification_string),
+                    $current_time->getTimestamp(),
+                    $description,
+                    $expiration_date_timestamp
+                );
+                $this->access_key_scope_saver->saveKeyScopes(
+                    $key_id,
+                    ...$access_key_scopes
+                );
+
+                return $key_id;
+            }
         );
+
         $access_key = new SplitToken($key_id, $verification_string);
 
-        $this->notifier->notifyCreation($user, $description);
+        assert(! empty($access_key_scopes));
+        $this->notifier->notifyCreation($user, $description, $access_key_scopes);
         $this->last_access_key_identifier_store->storeLastGeneratedAccessKeyIdentifier($access_key);
     }
 }

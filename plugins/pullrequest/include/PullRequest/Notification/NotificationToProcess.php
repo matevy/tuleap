@@ -24,19 +24,26 @@ namespace Tuleap\PullRequest\Notification;
 
 use Tuleap\PullRequest\PullRequest;
 
-/**
- * @psalm-immutable
- */
 interface NotificationToProcess
 {
+    /**
+     * @psalm-mutation-free
+     */
     public function getPullRequest(): PullRequest;
 
     /**
      * @return \PFUser[]
+     * @psalm-mutation-free
      */
     public function getRecipients(): array;
 
+    /**
+     * @psalm-mutation-free
+     */
     public function asPlaintext(): string;
 
+    /**
+     * @psalm-mutation-free
+     */
     public function asEnhancedContent(): NotificationEnhancedContent;
 }

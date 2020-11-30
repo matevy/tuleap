@@ -54,7 +54,6 @@ use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
 use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
 use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use UserManager;
-use Workflow_Transition_ConditionFactory;
 
 class ProjectResource
 {
@@ -90,9 +89,7 @@ class ProjectResource
 
         $transition_retriever = new TransitionRetriever(
             new StateFactory(
-                new TransitionFactory(
-                    Workflow_Transition_ConditionFactory::build()
-                ),
+                TransitionFactory::instance(),
                 new SimpleWorkflowDao()
             ),
             new TransitionExtractor()
@@ -165,7 +162,6 @@ class ProjectResource
     /**
      * @param array   $query
      * @param String  $representation
-     * @param Project $project
      * @param int     $limit
      * @param int     $offset
      *

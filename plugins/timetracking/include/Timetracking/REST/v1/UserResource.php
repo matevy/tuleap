@@ -24,9 +24,7 @@
 
 namespace Tuleap\Timetracking\REST\v1;
 
-use DateTime;
 use Luracast\Restler\RestException;
-use TrackerFactory;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\JsonDecoder;
@@ -58,7 +56,7 @@ class UserResource extends AuthenticatedResource
      * @param String $query
      * @param int $limit
      * @param int $offset
-     * @return TimetrackingRepresentation[]
+     * @return TimetrackingRepresentation[][]
      * @throws RestException
      * @throws \Rest_Exception_InvalidTokenException
      * @throws \Tuleap\REST\Exceptions\InvalidJsonException
@@ -74,8 +72,8 @@ class UserResource extends AuthenticatedResource
         $query_checker = new TimetrackingQueryChecker();
 
         try {
-            $start_date = $query_parameter_parser ->getString($query, 'start_date');
-            $end_date   = $query_parameter_parser ->getString($query, 'end_date');
+            $start_date = $query_parameter_parser->getString($query, 'start_date');
+            $end_date   = $query_parameter_parser->getString($query, 'end_date');
         } catch (QueryParameterException $ex) {
             throw new RestException(400, $ex->getMessage());
         }

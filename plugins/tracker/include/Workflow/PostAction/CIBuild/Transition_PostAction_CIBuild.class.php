@@ -80,59 +80,13 @@ class Transition_PostAction_CIBuild extends Transition_PostAction
     /** @return string */
     public static function getLabel()
     {
-        return $GLOBALS['Language']->getText('workflow_postaction', 'ci_build');
-    }
-
-    /** @return string html */
-    public function fetch()
-    {
-        $purifier = Codendi_HTMLPurifier::instance();
-        $html  = '';
-        $title = $GLOBALS['Language']->getText('workflow_admin', 'ci_url');
-        $text_field = '<input type="text"
-            title="'. $purifier->purify($title) .'"
-            required
-            class="required"
-            pattern="' . $purifier->purify(self::JOB_URL_PATTERN) . '"
-            name="workflow_postaction_ci_build['. $purifier->purify($this->id) .']"
-            value="'. $purifier->purify($this->getJobUrl()) .'"
-            size="50"
-            maxsize="255" />';
-        $html    .= $GLOBALS['Language']->getText('workflow_admin', 'ci_build', array($text_field));
-
-        $trigger_field_value_label = $GLOBALS['Language']->getText(
-            'workflow_admin',
-            'ci_build_help_trigger_field_value',
-            array(
-                $purifier->purify($this->getTransition()->getFieldValueTo()->getLabel())
-            )
-        );
-
-        $html    .= '<p class="help">'.$GLOBALS['Language']->getText('workflow_admin', 'ci_build_help', array(ForgeConfig::get('sys_name'))).'
-            <ul class="help">
-            <li>'.$GLOBALS['Language']->getText('workflow_admin', 'ci_build_help_userid', array(ForgeConfig::get('sys_name'))).'</li>
-            <li>'.$GLOBALS['Language']->getText('workflow_admin', 'ci_build_help_projectid', array($this->getTransition()->getGroupId())).'</li>
-            <li>'.$GLOBALS['Language']->getText('workflow_admin', 'ci_build_help_trackerid', array($this->getTransition()->getWorkflow()->getTrackerId())).'</li>
-            <li>'.$GLOBALS['Language']->getText('workflow_admin', 'ci_build_help_artifactid').'</li>
-            <li>'. $trigger_field_value_label .'</li>
-            </ul></p>';
-        return $html;
+        return dgettext('tuleap-tracker', 'Launch a continuous integration build');
     }
 
     /** @return bool */
     public function isDefined()
     {
-        return !empty($this->job_url);
-    }
-
-    public function process(Codendi_Request $request)
-    {
-        if ($request->getInArray('remove_postaction', $this->id)) {
-            $this->getDao()->deletePostAction($this->id);
-        } else {
-            $value = $request->getInArray('workflow_postaction_ci_build', $this->id);
-            $this->updateJobUrl($value);
-        }
+        return ! empty($this->job_url);
     }
 
     /**
@@ -153,7 +107,6 @@ class Transition_PostAction_CIBuild extends Transition_PostAction
 
     /**
      * @see Transition_PostAction::after()
-     * @param Tracker_Artifact_Changeset $changeset
      */
     public function after(Tracker_Artifact_Changeset $changeset)
     {
@@ -161,17 +114,17 @@ class Transition_PostAction_CIBuild extends Transition_PostAction
             return;
         }
 
-        $build_parameters = array(
+        $build_parameters = [
             self::BUILD_PARAMETER_USER                => $changeset->getSubmittedBy(),
             self::BUILD_PARAMETER_PROJECT_ID          => $changeset->getArtifact()->getTracker()->getProject()->getID(),
             self::BUILD_PARAMETER_ARTIFACT_ID         => $changeset->getArtifact()->getId(),
             self::BUILD_PARAMETER_TRACKER_ID          => $changeset->getArtifact()->getTracker()->getId(),
             self::BUILD_PARAMETER_TRIGGER_FIELD_VALUE => $this->getTransition()->getFieldValueTo()->getLabel(),
-        );
+        ];
 
         try {
             $this->ci_client->launchJobBuild($this->job_url, $build_parameters);
-            $feedback = $GLOBALS['Language']->getText('workflow_postaction', 'ci_build_succeeded', array($this->job_url));
+            $feedback = sprintf(dgettext('tuleap-tracker', 'Job build launch succeeded (%1$s)'), $this->job_url);
             $GLOBALS['Response']->addFeedback('info', $feedback);
         } catch (Jenkins_ClientUnableToLaunchBuildException $exception) {
             $GLOBALS['Response']->addFeedback('error', $exception->getMessage());
@@ -182,22 +135,6 @@ class Transition_PostAction_CIBuild extends Transition_PostAction
     protected function getDao()
     {
         return new Transition_PostAction_CIBuildDao();
-    }
-
-    private function urlIsValid($url)
-    {
-        return preg_match('#' . self::JOB_URL_PATTERN . '#', $url) > 0;
-    }
-
-    private function updateJobUrl($new_job_url)
-    {
-        if ($new_job_url != $this->job_url) {
-            if ($this->urlIsValid($new_job_url)) {
-                $this->getDao()->updatePostAction($this->id, $new_job_url);
-            } else {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('workflow_postaction', 'invalid_job_url', array($new_job_url)));
-            }
-        }
     }
 
     public function bypassPermissions(Tracker_FormElement_Field $field)

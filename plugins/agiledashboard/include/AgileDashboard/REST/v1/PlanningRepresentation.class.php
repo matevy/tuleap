@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,13 +37,11 @@ class PlanningRepresentation extends PlanningRepresentationBase
         $this->id                = JsonCast::toInt($planning->getId());
         $this->uri               = ResourceReference::NO_ROUTE;
         $this->label             = $planning->getName();
-        $this->milestones_uri    = self::ROUTE .'/'. $this->id .'/'. MilestoneRepresentation::ROUTE;
+        $this->milestones_uri    = self::ROUTE . '/' . $this->id . '/' . MilestoneRepresentation::ROUTE;
 
-        $this->milestone_tracker = new TrackerReference();
-        $this->milestone_tracker->build($planning->getPlanningTracker());
+        $this->milestone_tracker = TrackerReference::build($planning->getPlanningTracker());
 
-        $this->project = new ProjectReference();
-        $this->project->build($planning->getGroupId());
+        $this->project = new ProjectReference($planning->getGroupId());
 
         $this->backlog_trackers = array_map(
             function ($id) {

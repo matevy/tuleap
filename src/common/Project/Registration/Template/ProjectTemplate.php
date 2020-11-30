@@ -27,7 +27,7 @@ use Tuleap\Glyph\Glyph;
 
 interface ProjectTemplate
 {
-    public function getName(): string;
+    public function getId(): string;
 
     public function getTitle(): string;
 
@@ -35,7 +35,5 @@ interface ProjectTemplate
 
     public function getGlyph(): Glyph;
 
-    public function getXMLPath(): string;
-
-    public function isAvailable(): bool;
+    public function isBuiltIn(): bool;
 }

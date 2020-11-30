@@ -19,8 +19,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_Document.class.php');
-
 /**
  * Wiki is a transport object (aka container) used to share data between
  * Model/Controler and View layer of the application
@@ -28,32 +26,32 @@ require_once('Docman_Document.class.php');
 class Docman_Wiki extends Docman_Document
 {
 
-    function __construct($data = null)
+    public function __construct($data = null)
     {
         parent::__construct($data);
     }
 
-    var $pagename;
-    function getPagename()
+    public $pagename;
+    public function getPagename()
     {
         return $this->pagename;
     }
-    function setPagename($pagename)
+    public function setPagename($pagename)
     {
         $this->pagename = $pagename;
     }
 
     public function getType()
     {
-        return $GLOBALS['Language']->getText('plugin_docman', 'doc_type_wiki');
+        return dgettext('tuleap-docman', 'Wiki');
     }
 
-    function initFromRow($row)
+    public function initFromRow($row)
     {
         parent::initFromRow($row);
         $this->setPagename($row['wiki_page']);
     }
-    function toRow()
+    public function toRow()
     {
         $row = parent::toRow();
         $row['wiki_page'] = $this->getPagename();
@@ -61,7 +59,7 @@ class Docman_Wiki extends Docman_Document
         return $row;
     }
 
-    public function accept($visitor, $params = array())
+    public function accept($visitor, $params = [])
     {
         return $visitor->visitWiki($this, $params);
     }

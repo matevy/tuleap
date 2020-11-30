@@ -20,6 +20,7 @@
  */
 
 use Tuleap\PHPWiki\WikiPage;
+use Tuleap\Project\UGroupLiteralizer;
 
 /*
  * I extract permissions according wiki page rights, wiki service rights
@@ -116,7 +117,7 @@ class Wiki_PermissionsManager
             $comparable_wiki_page_ugroup_id    = $this->getComparableUGroupId($wiki_page_ugroup_id);
             $comparable_wiki_service_ugroup_id = $this->getComparableUGroupId($wiki_service_ugroup_id);
 
-            if ((int)$comparable_wiki_service_ugroup_id > (int)$comparable_wiki_page_ugroup_id) {
+            if ((int) $comparable_wiki_service_ugroup_id > (int) $comparable_wiki_page_ugroup_id) {
                 unset($wiki_page_ugroup_ids[$key]);
             }
         }
@@ -138,7 +139,7 @@ class Wiki_PermissionsManager
 
     private function getNonProjectMembersGroups()
     {
-        return array(ProjectUGroup::REGISTERED, ProjectUGroup::ANONYMOUS);
+        return [ProjectUGroup::REGISTERED, ProjectUGroup::ANONYMOUS];
     }
 
     /**
@@ -146,7 +147,7 @@ class Wiki_PermissionsManager
      */
     public function getWikiAdminsGroups()
     {
-        return array(ProjectUGroup::PROJECT_ADMIN, ProjectUGroup::WIKI_ADMIN);
+        return [ProjectUGroup::PROJECT_ADMIN, ProjectUGroup::WIKI_ADMIN];
     }
 
     /**

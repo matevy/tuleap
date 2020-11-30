@@ -18,16 +18,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Links;
 
 use Tuleap\Docman\REST\v1\CopyItem\CanContainACopyRepresentation;
 use Tuleap\Docman\REST\v1\CopyItem\DocmanCopyItemRepresentation;
 use Tuleap\Docman\REST\v1\ItemRepresentation;
-use Tuleap\Docman\REST\v1\Metadata\ItemStatusMapper;
 use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsSetRepresentation;
 
+/**
+ * @psalm-immutable
+ */
 class DocmanLinkPOSTRepresentation implements CanContainACopyRepresentation
 {
     private const REQUIRED_NON_COPY_PROPERTIES = ['title', 'link_properties'];
@@ -68,7 +70,7 @@ class DocmanLinkPOSTRepresentation implements CanContainACopyRepresentation
      */
     public $copy;
 
-    public static function getNonCopyRequiredObjectProperties() : array
+    public static function getNonCopyRequiredObjectProperties(): array
     {
         return self::REQUIRED_NON_COPY_PROPERTIES;
     }

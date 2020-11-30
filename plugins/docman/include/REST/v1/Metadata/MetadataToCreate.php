@@ -19,7 +19,7 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
@@ -36,7 +36,6 @@ class MetadataToCreate
 
     private function __construct(array $metadata_list_values, bool $should_inherit_from_parent)
     {
-
         $this->metadata_list_values = $metadata_list_values;
         $this->should_inherit_from_parent = $should_inherit_from_parent;
     }
@@ -54,9 +53,6 @@ class MetadataToCreate
         return $this->metadata_list_values;
     }
 
-    /**
-     * @return bool
-     */
     public function isInheritedFromParent(): bool
     {
         return $this->should_inherit_from_parent;

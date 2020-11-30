@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2011 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -19,8 +19,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Workflow\BeforeEvent;
-use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
+use Tuleap\Tracker\Workflow\Transition\TransitionRetriever;
 use Tuleap\Tracker\Workflow\WorkflowBackendLogger;
 
 class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
@@ -42,7 +43,7 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     public $is_used;
 
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     protected $artifact = null;
 
@@ -109,14 +110,14 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Set artifact
      *
-     * @param Tracker_Artifact $artifact artifact the workflow control
+     * @param Artifact $artifact artifact the workflow control
      */
-    public function setArtifact(Tracker_Artifact $artifact)
+    public function setArtifact(Artifact $artifact)
     {
         $this->artifact = $artifact;
     }
 
-    /** @return Tracker_Artifact */
+    /** @return Artifact */
     public function getArtifact()
     {
         return $this->artifact;
@@ -162,7 +163,7 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getField()
     {
-        if (!$this->field) {
+        if (! $this->field) {
             $this->field = Tracker_FormElementFactory::instance()->getUsedFormElementById($this->getFieldId());
         }
         return $this->field;
@@ -175,7 +176,7 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getAllFieldValues()
     {
-        if (!$this->field_values) {
+        if (! $this->field_values) {
             $this->field_values = $this->getField()->getBind()->getAllValues();
         }
         return $this->field_values;
@@ -188,7 +189,11 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function getTracker()
     {
-        return TrackerFactory::instance()->getTrackerByid($this->tracker_id);
+        $tracker = TrackerFactory::instance()->getTrackerById($this->tracker_id);
+        if ($tracker === null) {
+            throw new RuntimeException('Tracker does not exist');
+        }
+        return $tracker;
     }
 
     /**
@@ -273,7 +278,7 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
     public function hasTransitions()
     {
-        if ($this->getTransitions() === array()) {
+        if ($this->getTransitions() === []) {
             return false;
         } else {
             return true;
@@ -302,10 +307,11 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function exportToXml(SimpleXMLElement $root, $xmlMapping)
     {
-           $root->addChild('field_id')->addAttribute('REF', array_search($this->field_id, $xmlMapping));
-           $root->addChild('is_used', $this->is_used);
-           $child = $root->addChild('transitions');
-           $transitions = $this->getTransitions($this->workflow_id);
+        $root->addChild('field_id')->addAttribute('REF', array_search($this->field_id, $xmlMapping));
+        $cdata = new \XML_SimpleXMLCDATAFactory();
+        $cdata->insert($root, 'is_used', $this->is_used);
+        $child = $root->addChild('transitions');
+        $transitions = $this->getTransitions();
         foreach ($transitions as $transition) {
             $transition->exportToXml($child, $xmlMapping);
         }
@@ -314,23 +320,21 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Execute actions before transition happens (if there is one)
      *
-     * @param Array $fields_data  Request field data (array[field_id] => data)
-     * @param PFUser  $current_user The user who are performing the update
-     * @param Tracker_Artifact  $artifact The artifact
+     * @param array    $fields_data  Request field data (array[field_id] => data)
+     * @param PFUser   $current_user The user who are performing the update
+     * @param Artifact $artifact     The artifact
      *
      * @return void
      */
-    public function before(array &$fields_data, PFUser $current_user, Tracker_Artifact $artifact)
+    public function before(array &$fields_data, PFUser $current_user, Artifact $artifact)
     {
         $artifact_id = $artifact->getId();
         if (! $this->is_used && ! $this->is_legacy) {
             $this->logger->debug("Workflow for artifact #$artifact_id is disabled, skipping transitions.");
         } else {
-            if (isset($fields_data[$this->getFieldId()])) {
-                $transition = $this->getCurrentTransition($fields_data, $artifact->getLastChangeset());
-                if ($transition) {
-                    $transition->before($fields_data, $current_user);
-                }
+            $transition = $this->getCurrentTransition($fields_data, $artifact->getLastChangeset());
+            if ($transition) {
+                $transition->before($fields_data, $current_user);
             }
         }
 
@@ -345,7 +349,7 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      * Execute actions after transition happens (if there is one)
      *
      * @param PFUser                     $user               The user who changed things
-     * @param Array                      $fields_data        Request field data (array[field_id] => data)
+     * @param array                      $fields_data        Request field data (array[field_id] => data)
      * @param Tracker_Artifact_Changeset $new_changeset      The changeset that has just been created
      * @param Tracker_Artifact_Changeset $previous_changeset The changeset just before (null for a new artifact)
      *
@@ -364,11 +368,9 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         if (! $this->is_used && ! $this->is_legacy) {
             $this->logger->debug("Workflow for artifact #$artifact_id is disabled, skipping transitions.");
         } else {
-            if (isset($fields_data[$this->getFieldId()])) {
-                $transition = $this->getCurrentTransition($fields_data, $previous_changeset);
-                if ($transition) {
-                    $transition->after($new_changeset);
-                }
+            $transition = $this->getCurrentTransition($fields_data, $previous_changeset);
+            if ($transition) {
+                $transition->after($new_changeset);
             }
         }
 
@@ -379,10 +381,8 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
     /**
      * @throws Tracker_Workflow_Transition_InvalidConditionForTransitionException
-     *
-     * @return void
      */
-    public function validate($fields_data, Tracker_Artifact $artifact, $comment_body)
+    public function validate($fields_data, Artifact $artifact, string $comment_body, PFUser $current_user): void
     {
         if (! $this->is_used) {
             return;
@@ -390,31 +390,29 @@ class Workflow // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
         $transition = $this->getCurrentTransition($fields_data, $artifact->getLastChangeset());
         if (isset($transition)) {
-            if (! $transition->validate($fields_data, $artifact, $comment_body)) {
+            if (! $transition->validate($fields_data, $artifact, $comment_body, $current_user)) {
                 throw new Tracker_Workflow_Transition_InvalidConditionForTransitionException($transition);
             }
         }
     }
 
-    private function getCurrentTransition($fields_data, ?Tracker_Artifact_Changeset $changeset = null)
+    private function getCurrentTransition(
+        array $fields_data,
+        ?Tracker_Artifact_Changeset $previous_changeset = null
+    ): ?Transition {
+        return $this->getTransitionRetriever()->retrieveTransition(
+            $this,
+            $fields_data,
+            $previous_changeset
+        );
+    }
+
+    /**
+     * For testing purpose
+     */
+    protected function getTransitionRetriever(): TransitionRetriever
     {
-        $oldValues = null;
-        if ($changeset) {
-            $oldValues = $changeset->getValue($this->getField());
-        }
-        $from      = null;
-        if ($oldValues) {
-            if ($v = $oldValues->getValue()) {
-                // Todo: what about multiple values in the changeset?
-                $from = (int) current($v);
-            }
-        }
-        if (isset($fields_data[$this->getFieldId()])) {
-            $to         = (int)$fields_data[$this->getFieldId()];
-            $transition = $this->getTransition($from, $to);
-            return $transition;
-        }
-        return null;
+        return new TransitionRetriever();
     }
 
     /**

@@ -19,9 +19,10 @@
  */
 namespace User\XML\Import;
 
+use PFUser;
 use SimpleXMLElement;
 use UserManager;
-use Logger;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 class Mapping implements IFindUserFromXMLReference
@@ -38,31 +39,31 @@ class Mapping implements IFindUserFromXMLReference
     public function __construct(
         UserManager $user_manager,
         ReadyToBeImportedUsersCollection $collection,
-        Logger $logger
+        LoggerInterface $logger
     ) {
         $this->user_manager = $user_manager;
         $this->collection   = $collection;
         $this->logger       = $logger;
     }
 
-    /**
-     * @return PFUser
-     */
-    public function getUser(SimpleXMLElement $xml_element)
+    public function getUser(SimpleXMLElement $xml_element): PFUser
     {
         try {
             return $this->getUserFromXML($xml_element);
         } catch (UserNotFoundException $exception) {
             $this->logger->error(
-                'It seems that the user referenced by '. (string) $xml_element
-                .' (format = '. (string) $xml_element['format'] .')'
-                .' does not match an existing user.'
+                'It seems that the user referenced by ' . (string) $xml_element
+                . ' (format = ' . (string) $xml_element['format'] . ')'
+                . ' does not match an existing user.'
             );
             throw $exception;
         }
     }
 
-    private function getUserFromXML(SimpleXMLElement $xml_element)
+    /**
+     * @throws UserNotFoundException
+     */
+    private function getUserFromXML(SimpleXMLElement $xml_element): PFUser
     {
         $format = (string) $xml_element['format'];
 

@@ -22,19 +22,19 @@
 
 class Docman_ApprovalTableFile extends Docman_ApprovalTableVersionned
 {
-    var $versionId = null;
+    public $versionId = null;
 
-    function setVersionId($v)
+    public function setVersionId($v)
     {
         $this->versionId = $v;
     }
 
-    function getVersionId()
+    public function getVersionId()
     {
         return $this->versionId;
     }
 
-    function initFromRow($row)
+    public function initFromRow($row)
     {
         parent::initFromRow($row);
         if (isset($row['version_id'])) {

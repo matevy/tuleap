@@ -65,7 +65,7 @@ class Git_Widget_ProjectPushes extends Widget
             $weeksNumber =  $plugin->getPluginInfo()->getPropVal('weeks_number');
         }
         $content = '<div style="text-align:center"><p>
-                        <img src="'.$this->pluginPath.'/index.php?group_id='.$groupId.'&weeks_number='.$weeksNumber.'&action=view_last_git_pushes" title="'.dgettext('tuleap-git', 'Last Git pushes').'" />
+                        <img src="' . $this->pluginPath . '/index.php?group_id=' . $groupId . '&weeks_number=' . $weeksNumber . '&action=view_last_git_pushes" title="' . dgettext('tuleap-git', 'Last Git pushes') . '" />
                     </div>';
         return $content;
     }
@@ -75,7 +75,7 @@ class Git_Widget_ProjectPushes extends Widget
      *
      * @return string
      */
-    function getCategory()
+    public function getCategory()
     {
         return _('Source code management');
     }
@@ -85,7 +85,7 @@ class Git_Widget_ProjectPushes extends Widget
      *
      * @return String
      */
-    function getDescription()
+    public function getDescription()
     {
         return dgettext('tuleap-git', 'Display last Git pushes of the project.');
     }

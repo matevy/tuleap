@@ -19,11 +19,10 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\AgileDashboard\REST\v1\Milestone;
 
-use Luracast\Restler\RestException;
 use Project;
 use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
 use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
@@ -73,7 +72,7 @@ class MilestoneElementRemover
     {
         $ids = [];
         foreach ($removed_items as $removed_item) {
-            $ids[] = (int)$removed_item->id;
+            $ids[] = (int) $removed_item->id;
         }
 
         return $ids;

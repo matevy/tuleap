@@ -19,13 +19,7 @@
 
 <template>
     <div class="tlp-form-element">
-        <label
-            class="tlp-label"
-            for="document-update-changelog"
-            v-translate
-        >
-            Changelog
-        </label>
+        <label class="tlp-label" for="document-update-changelog" v-translate>Changelog</label>
         <textarea
             class="tlp-textarea"
             id="document-update-changelog"
@@ -39,12 +33,12 @@
 <script>
 export default {
     props: {
-        value: String
+        value: String,
     },
     computed: {
         placeholder() {
             return this.$gettext("Please describe the changes of the new version here");
-        }
-    }
+        },
+    },
 };
 </script>

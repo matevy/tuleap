@@ -20,11 +20,11 @@
 
 namespace Tuleap\Tracker\FormElement;
 
-use Logger;
 use PFUser;
+use Psr\Log\LoggerInterface;
 use TimePeriodWithoutWeekEnd;
-use Tracker_Artifact;
 use Tracker_FormElement_Chart_Field_Exception;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
 
 class ChartConfigurationValueRetriever
@@ -34,7 +34,7 @@ class ChartConfigurationValueRetriever
      */
     private $configuration_field_retriever;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
     /**
@@ -45,7 +45,7 @@ class ChartConfigurationValueRetriever
     public function __construct(
         ChartConfigurationFieldRetriever $configuration_field_retriever,
         TimeframeBuilder $timeframe_builder,
-        Logger $logger
+        LoggerInterface $logger
     ) {
         $this->configuration_field_retriever = $configuration_field_retriever;
         $this->timeframe_builder = $timeframe_builder;
@@ -53,11 +53,10 @@ class ChartConfigurationValueRetriever
     }
 
     /**
-     * @param Tracker_Artifact $artifact
      *
      * @return null|int
      */
-    public function getCapacity(Tracker_Artifact $artifact, PFUser $user)
+    public function getCapacity(Artifact $artifact, PFUser $user)
     {
         try {
             $field = $this->configuration_field_retriever->getCapacityField($artifact->getTracker());
@@ -67,17 +66,16 @@ class ChartConfigurationValueRetriever
             return null;
         }
 
-        $artifact_list = array($artifact->getId());
+        $artifact_list = [$artifact->getId()];
 
         return $field->getComputedValue($user, $artifact, null, $artifact_list, true);
     }
 
     /**
-     * @return TimePeriodWithoutWeekEnd
      *
      * @throws Tracker_FormElement_Chart_Field_Exception
      */
-    public function getTimePeriod(Tracker_Artifact $artifact, PFUser $user) : TimePeriodWithoutWeekEnd
+    public function getTimePeriod(Artifact $artifact, PFUser $user): TimePeriodWithoutWeekEnd
     {
         return $this->timeframe_builder->buildTimePeriodWithoutWeekendForArtifactChartRendering(
             $artifact,

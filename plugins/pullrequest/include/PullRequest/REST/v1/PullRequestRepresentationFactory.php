@@ -20,7 +20,6 @@
 
 namespace Tuleap\PullRequest\REST\v1;
 
-use Tuleap\Git\CommitStatus\CommitStatus;
 use Tuleap\Git\CommitStatus\CommitStatusRetriever;
 use Tuleap\Git\Gitolite\GitoliteAccessURLGenerator;
 use Tuleap\Git\Permissions\AccessControlVerifier;
@@ -70,8 +69,7 @@ class PullRequestRepresentationFactory
             $pull_request->getSha1Dest(),
             $pull_request->getSha1Src()
         );
-        $short_stat_repres = new PullRequestShortStatRepresentation();
-        $short_stat_repres->build($short_stat);
+        $short_stat_repres = new PullRequestShortStatRepresentation($short_stat);
 
         $user_can_merge   = $this->access_control_verifier->canWrite($user, $repository_dest, $pull_request->getBranchDest());
         $user_can_abandon = $user_can_merge ||
@@ -101,7 +99,7 @@ class PullRequestRepresentationFactory
     /**
      * @return array{string, int|null}
      */
-    private function getLastBuildInformation(PullRequest $pull_request, \GitRepository $repository_destination) : array
+    private function getLastBuildInformation(PullRequest $pull_request, \GitRepository $repository_destination): array
     {
         $commit_status = $this->commit_status_retriever->getLastCommitStatus(
             $repository_destination,

@@ -20,7 +20,6 @@
 
 namespace Tuleap\Tracker\Workflow;
 
-use Exception;
 use TruncateLevelLogger;
 
 /**
@@ -44,30 +43,30 @@ final class WorkflowBackendLogger extends TruncateLevelLogger
     /** @var string */
     private $indentation_prefix    = '';
 
-    /** @var string */
+    /** @var string|int */
     private $fingerprint = '';
 
-    public function debug($message) : void
+    public function debug($message, array $context = []): void
     {
-        parent::debug($this->getDecoratedMessage($message));
+        parent::debug($this->getDecoratedMessage($message), $context);
     }
 
-    public function info($message) : void
+    public function info($message, array $context = []): void
     {
-        parent::info($this->getDecoratedMessage($message));
+        parent::info($this->getDecoratedMessage($message), $context);
     }
 
-    public function warn($message, ?Exception $exception = null) : void
+    public function warning($message, array $context = []): void
     {
-        parent::warn($this->getDecoratedMessage($message), $exception);
+        parent::warning($this->getDecoratedMessage($message), $context);
     }
 
-    public function error($message, ?Exception $exception = null) : void
+    public function error($message, array $context = []): void
     {
-        parent::error($this->getDecoratedMessage($message), $exception);
+        parent::error($this->getDecoratedMessage($message), $context);
     }
 
-    private function getDecoratedMessage(string $message) : string
+    private function getDecoratedMessage(string $message): string
     {
         $prefix  = self::WF_PREFIX;
         if ($this->fingerprint) {
@@ -83,7 +82,7 @@ final class WorkflowBackendLogger extends TruncateLevelLogger
      * @param string $calling_method
      * @param mixed  ...              Parameters of the calling method
      */
-    public function start($calling_method) : void
+    public function start($calling_method): void
     {
         $arguments = func_get_args();
         array_unshift($arguments, __FUNCTION__);
@@ -98,7 +97,7 @@ final class WorkflowBackendLogger extends TruncateLevelLogger
      * @param string $calling_method
      * @param mixed  ...              Parameters of the calling method
      */
-    public function end($calling_method) : void
+    public function end($calling_method): void
     {
         $this->unindent();
         $arguments = func_get_args();
@@ -112,16 +111,16 @@ final class WorkflowBackendLogger extends TruncateLevelLogger
      *
      * At the name implies, once defined, a fingerprint cannot be changed.
      *
-     * @param string $the_fingerprint
+     * @param string|int $fingerprint
      */
-    public function defineFingerprint($fingerprint) : void
+    public function defineFingerprint($fingerprint): void
     {
         if (! $this->fingerprint) {
             $this->fingerprint = $fingerprint;
         }
     }
 
-    private function logMethodAndItsArguments() : void
+    private function logMethodAndItsArguments(): void
     {
         $arguments      = func_get_args();
         $prefix         = array_shift($arguments);
@@ -131,12 +130,12 @@ final class WorkflowBackendLogger extends TruncateLevelLogger
         $this->debug("$prefix$method $calling_method($arguments)");
     }
 
-    private function indent() : void
+    private function indent(): void
     {
         $this->indentation_prefix .= self::INDENTATION_INCREMENT;
     }
 
-    private function unindent() : void
+    private function unindent(): void
     {
         $this->indentation_prefix = mb_substr(
             $this->indentation_prefix,

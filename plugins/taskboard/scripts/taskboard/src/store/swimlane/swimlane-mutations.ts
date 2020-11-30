@@ -23,7 +23,7 @@ import {
     MoveCardsPayload,
     RefreshCardMutationPayload,
     ReorderCardsPayload,
-    SwimlaneState
+    SwimlaneState,
 } from "./type";
 import { findCard, findSwimlane, replaceSwimlane } from "./swimlane-helpers";
 
@@ -44,7 +44,14 @@ export function addSwimlanes(state: SwimlaneState, swimlanes: Array<Swimlane>): 
 
 export function refreshCard(state: SwimlaneState, payload: RefreshCardMutationPayload): void {
     const state_card = findCard(state, payload.refreshed_card);
-    Object.assign(state_card, payload.refreshed_card);
+    let remaining_effort = null;
+    if (state_card.remaining_effort !== null) {
+        remaining_effort = Object.assign(
+            state_card.remaining_effort,
+            payload.refreshed_card.remaining_effort
+        );
+    }
+    Object.assign(state_card, payload.refreshed_card, { remaining_effort });
 }
 
 export function beginLoadingSwimlanes(state: SwimlaneState): void {
@@ -62,7 +69,7 @@ export function addChildrenToSwimlane(
     const state_swimlane = findSwimlane(state, payload.swimlane);
     const new_swimlane: Swimlane = {
         ...state_swimlane,
-        children_cards: state_swimlane.children_cards.concat(payload.children_cards)
+        children_cards: state_swimlane.children_cards.concat(payload.children_cards),
     };
     if (new_swimlane.children_cards.length > 0) {
         new_swimlane.card.has_children = true;
@@ -91,7 +98,7 @@ export function expandSwimlane(state: SwimlaneState, swimlane: Swimlane): void {
 }
 
 function getCardIndex(swimlane: Swimlane, card_id: number): number {
-    return swimlane.children_cards.findIndex(child => child.id === card_id);
+    return swimlane.children_cards.findIndex((child) => child.id === card_id);
 }
 
 export function changeCardPosition(state: SwimlaneState, payload: ReorderCardsPayload): void {
@@ -119,7 +126,7 @@ export function moveCardToColumn(state: SwimlaneState, payload: MoveCardsPayload
         const reorder_payload: ReorderCardsPayload = {
             swimlane: payload.swimlane,
             column: payload.column,
-            position: payload.position
+            position: payload.position,
         };
 
         changeCardPosition(state, reorder_payload);
@@ -127,7 +134,7 @@ export function moveCardToColumn(state: SwimlaneState, payload: MoveCardsPayload
 }
 
 export function setColumnOfCard(state: SwimlaneState, payload: MoveCardsPayload): void {
-    const mapping = payload.column.mappings.find(mapping => {
+    const mapping = payload.column.mappings.find((mapping) => {
         return mapping.tracker_id === payload.card.tracker_id;
     });
 
@@ -140,7 +147,7 @@ export function setColumnOfCard(state: SwimlaneState, payload: MoveCardsPayload)
 
     card_state.mapped_list_value = {
         id,
-        label: payload.column.label
+        label: payload.column.label,
     };
 }
 

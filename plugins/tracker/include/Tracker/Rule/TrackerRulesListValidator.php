@@ -24,13 +24,9 @@ namespace Tuleap\Tracker\Rule;
 
 use Feedback;
 use Tracker;
-use Tracker_FormElement_Field;
 use Tracker_FormElement_Field_List;
-use Tracker_FormElement_Field_List_Bind_StaticValue_None;
 use Tracker_FormElementFactory;
 use Tracker_Rule_List;
-use Tracker_RuleFactory;
-use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 
 class TrackerRulesListValidator
 {
@@ -48,7 +44,7 @@ class TrackerRulesListValidator
     {
         $values = [];
         foreach ($value_field_list as $field_id => $value) {
-            $field = $this->form_element_factory->getFormElementListById((int)$field_id);
+            $field = $this->form_element_factory->getFormElementListById((int) $field_id);
             if ($field) {
                 $values[$field->getID()] = ['field' => $field, 'values' => is_array($value) ? $value : [$value]];
             }
@@ -74,15 +70,15 @@ class TrackerRulesListValidator
                 );
             }
         }
-        return !$error_occured;
+        return ! $error_occured;
     }
 
     private function getDependencies(Tracker_Rule_List $rule, array $dependencies): array
     {
-        if (!isset($dependencies[$rule->source_field])) {
+        if (! isset($dependencies[$rule->source_field])) {
             $dependencies[$rule->source_field] = [];
         }
-        if (!isset($dependencies[$rule->source_field][$rule->target_field])) {
+        if (! isset($dependencies[$rule->source_field][$rule->target_field])) {
             $dependencies[$rule->source_field][$rule->target_field] = [];
         }
         $dependencies[$rule->source_field][$rule->target_field][] = $rule;
@@ -90,7 +86,7 @@ class TrackerRulesListValidator
         return $dependencies;
     }
 
-    private function checkFieldsValidityForAllDependencies(Tracker $tracker, array $dependencies, array $values, int $source, array $value_field_list) : bool
+    private function checkFieldsValidityForAllDependencies(Tracker $tracker, array $dependencies, array $values, int $source, array $value_field_list): bool
     {
         $error_occured = false;
         foreach ($dependencies[$source] as $target => $not_used_target) {
@@ -124,7 +120,7 @@ class TrackerRulesListValidator
 
             $valid = $this->areRulesValid($tracker, $source_values, $target_value, $dependencies, $source, $target);
 
-            if (!$valid) {
+            if (! $valid) {
                 $error_occured = true;
                 $this->dealDependencesProblems($source, $target, $values, $target_value, $value_field_list);
             }
@@ -161,14 +157,14 @@ class TrackerRulesListValidator
         return $valid;
     }
 
-    private function dealDependencesProblems(int $source, int $target, array $values, $target_value, array $value_field_list) : void
+    private function dealDependencesProblems(int $source, int $target, array $values, $target_value, array $value_field_list): void
     {
         $source_field = $this->form_element_factory->getFormElementListById($source);
         if ($source_field !== null) {
             if ($value_field_list[$source] === null) {
                 $pb_source_values = [];
             } else {
-                if (!is_array($value_field_list[$source])) {
+                if (! is_array($value_field_list[$source])) {
                     $value_field_list[$source] = [$value_field_list[$source]];
                 }
 
@@ -180,7 +176,7 @@ class TrackerRulesListValidator
             $target_field = $this->form_element_factory->getFormElementListById($target);
 
             if ($target_field !== null) {
-                if ($target_value !== null && !is_array($target_value)) {
+                if ($target_value !== null && ! is_array($target_value)) {
                     $target_value = [$target_value];
                 }
 
@@ -199,7 +195,7 @@ class TrackerRulesListValidator
         }
     }
 
-    private function sendFeedbackError(String $target_label, String $source_label, array $pb_source_values, array $pb_target_values) : void
+    private function sendFeedbackError(string $target_label, string $source_label, array $pb_source_values, array $pb_target_values): void
     {
         $GLOBALS['Response']->addFeedback(
             Feedback::ERROR,

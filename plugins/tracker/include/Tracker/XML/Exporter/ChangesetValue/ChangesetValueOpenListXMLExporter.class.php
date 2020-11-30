@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter extends Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter
 {
 
@@ -39,7 +41,7 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter exte
     public function export(
         SimpleXMLElement $artifact_xml,
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_Artifact_ChangesetValue $changeset_value
     ) {
         $field_change = $this->createFieldChangeNodeInChangesetNode(
@@ -94,14 +96,14 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter exte
 
     private function appendValueToFieldChangeNode($value, SimpleXMLElement $field_xml)
     {
-        $value_xml = $field_xml->addChild('value', $value);
-        $value_xml->addAttribute('format', 'id');
+        $cdata = new \XML_SimpleXMLCDATAFactory();
+        $cdata->insertWithAttributes($field_xml, 'value', $value, ['format' => 'id']);
     }
 
     private function appendOpenValueLabelToFieldChangeNode($value, SimpleXMLElement $field_xml)
     {
-        $value_xml = $field_xml->addChild('value', $value);
-        $value_xml->addAttribute('format', 'label');
+        $cdata = new \XML_SimpleXMLCDATAFactory();
+        $cdata->insertWithAttributes($field_xml, 'value', $value, ['format' => 'label']);
     }
 
     private function isValueAnOpenValue($value)

@@ -70,11 +70,6 @@ class LFSLockCreateController implements DispatchableWithRequestNoAuthz
      * @var UserRetriever
      */
     private $user_retriever;
-
-    /**
-     * @var \PFUser
-     */
-    private $user;
     /**
      * @var Prometheus
      */
@@ -108,8 +103,10 @@ class LFSLockCreateController implements DispatchableWithRequestNoAuthz
             $variables['project_name'],
             $variables['path']
         );
-        if ($repository === null || ! $repository->isCreated() ||
-            ! $repository->getProject()->isActive() || ! $this->plugin->isAllowed($repository->getProject()->getID())) {
+        if (
+            $repository === null || ! $repository->isCreated() ||
+            ! $repository->getProject()->isActive() || ! $this->plugin->isAllowed($repository->getProject()->getID())
+        ) {
             throw new NotFoundException(dgettext('tuleap-git', 'Repository does not exist'));
         }
 
@@ -133,7 +130,7 @@ class LFSLockCreateController implements DispatchableWithRequestNoAuthz
         $this->createLock($lock_create_request, $repository, $user);
     }
 
-    private function createLock(LockCreateRequest $lock_create_request, \GitRepository $repository, \PFUser $user) : void
+    private function createLock(LockCreateRequest $lock_create_request, \GitRepository $repository, \PFUser $user): void
     {
         $locks = $this->lock_retriever->retrieveLocks(
             null,

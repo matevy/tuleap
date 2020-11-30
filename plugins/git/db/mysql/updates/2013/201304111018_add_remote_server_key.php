@@ -63,24 +63,24 @@ EOT;
     {
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
-            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message.implode(', ', $this->db->dbh->errorInfo()));
+            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message . implode(', ', $this->db->dbh->errorInfo()));
         }
     }
 
     private function importFileKeys()
     {
         $update_sql = 'UPDATE plugin_git_remote_servers SET ssh_key = :ssh_key WHERE id = :id';
-        $update_stm = $this->db->dbh->prepare($update_sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        $update_stm = $this->db->dbh->prepare($update_sql, [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY]);
 
         $key_prefix_path = '/var/lib/codendi/gitolite/admin/keydir/forge__gerrit_';
         $sql = 'SELECT * FROM plugin_git_remote_servers';
         foreach ($this->db->dbh->query($sql)->fetchAll() as $row) {
-            $key_path = $key_prefix_path.$row['id'].'@0.pub';
+            $key_path = $key_prefix_path . $row['id'] . '@0.pub';
             if (is_file($key_path)) {
-                $this->log->info("Import key for server ".$row['id']."(".$key_path.")");
-                $update_stm->execute(array(
+                $this->log->info("Import key for server " . $row['id'] . "(" . $key_path . ")");
+                $update_stm->execute([
                     ':ssh_key' => file_get_contents($key_path),
-                    ':id' => $row['id']));
+                    ':id' => $row['id']]);
             }
         }
     }

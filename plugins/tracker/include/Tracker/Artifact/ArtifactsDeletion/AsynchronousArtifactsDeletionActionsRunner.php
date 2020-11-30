@@ -21,12 +21,13 @@
 namespace Tuleap\Tracker\Artifact\ArtifactsDeletion;
 
 use Exception;
-use Logger;
+use ForgeConfig;
 use PFUser;
-use Tracker_Artifact;
+use Psr\Log\LoggerInterface;
 use Tuleap\Queue\QueueFactory;
 use Tuleap\Queue\Worker;
 use Tuleap\Queue\WorkerEvent;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class AsynchronousArtifactsDeletionActionsRunner
 {
@@ -36,7 +37,7 @@ class AsynchronousArtifactsDeletionActionsRunner
      */
     private $pending_artifact_removal_dao;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
     /**
@@ -47,17 +48,23 @@ class AsynchronousArtifactsDeletionActionsRunner
      * @var QueueFactory
      */
     private $queue_factory;
+    /**
+     * @var ArchiveAndDeleteArtifactTaskBuilder
+     */
+    private $task_builder;
 
     public function __construct(
         PendingArtifactRemovalDao $pending_artifact_removal_dao,
-        Logger $logger,
+        LoggerInterface $logger,
         \UserManager $user_manager,
-        QueueFactory $queue_factory
+        QueueFactory $queue_factory,
+        ArchiveAndDeleteArtifactTaskBuilder $task_builder
     ) {
         $this->pending_artifact_removal_dao = $pending_artifact_removal_dao;
         $this->logger                       = $logger;
         $this->user_manager                 = $user_manager;
         $this->queue_factory                = $queue_factory;
+        $this->task_builder                 = $task_builder;
     }
 
     public function addListener(WorkerEvent $event)
@@ -66,7 +73,7 @@ class AsynchronousArtifactsDeletionActionsRunner
             $message = $event->getPayload();
 
             $pending_artifact = $this->pending_artifact_removal_dao->getPendingArtifactById($message['artifact_id']);
-            $artifact         = new Tracker_Artifact(
+            $artifact         = new Artifact(
                 $pending_artifact['id'],
                 $pending_artifact['tracker_id'],
                 $pending_artifact['submitted_by'],
@@ -80,23 +87,27 @@ class AsynchronousArtifactsDeletionActionsRunner
         }
     }
 
-    private function processArchiveAndArtifactDeletion(Tracker_Artifact $artifact, PFUser $user)
+    private function processArchiveAndArtifactDeletion(Artifact $artifact, PFUser $user): void
     {
-        $task_builder = new ArchiveAndDeleteArtifactTaskBuilder();
-        $task         = $task_builder->build($this->logger);
+        $task = $this->task_builder->build($this->logger);
 
         $task->archive($artifact, $user);
     }
 
-    public function executeArchiveAndArtifactDeletion(Tracker_Artifact $artifact, PFUser $user)
+    public function executeArchiveAndArtifactDeletion(Artifact $artifact, PFUser $user): void
     {
+        if (ForgeConfig::getInt('sys_nb_backend_workers') <= 0) {
+            $this->processArchiveAndArtifactDeletion($artifact, $user);
+            return;
+        }
+
         try {
             $queue = $this->queue_factory->getPersistentQueue(Worker::EVENT_QUEUE_NAME, QueueFactory::REDIS);
             $queue->pushSinglePersistentMessage(
                 AsynchronousArtifactsDeletionActionsRunner::TOPIC,
                 [
-                    'artifact_id' => (int)$artifact->getId(),
-                    'user_id'     => (int)$user->getId(),
+                    'artifact_id' => (int) $artifact->getId(),
+                    'user_id'     => (int) $user->getId(),
                 ]
             );
         } catch (Exception $exception) {

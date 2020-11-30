@@ -1,9 +1,9 @@
 <?php
 /**
+ * Copyright Enalean (c) 2015-Present. All rights reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright Enalean (c) 2015. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -23,6 +23,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 /**
  * The base class for static fields in trackers.
  * Static Fields are not real fields, as they don't have a specific value for each artifact.
@@ -30,91 +32,30 @@
  */
 abstract class Tracker_FormElement_StaticField extends Tracker_FormElement
 {
-
-    /**
-     * getLabel - the label of this Tracker_FormElement_Line_Break
-     * The tracker label can be internationalized.
-     * To do this, fill the name field with the ad-hoc format.
-     *
-     * @return string label, the name if the name is not internationalized, or the localized text if so
-     */
-    function getLabel()
-    {
-        global $Language;
-        if ($this->isLabelMustBeLocalized()) {
-            return $Language->getText('plugin_tracker_common_staticfield', $this->label);
-        } else {
-            return $this->label;
-        }
-    }
-
-    /**
-     * Returns if the static field name must be localized or not.
-     * The 'form element static field' name must be localized if the name looks like staticfield_{$field_id}_lbl_key
-     *
-     * @return true if the static field name must be localized, false otherwise.
-     */
-    function isLabelMustBeLocalized()
-    {
-        $pattern = "/staticfield_(.*)_lbl_key/";
-        return preg_match($pattern, $this->label);
-    }
-
-    /**
-     * getDescriptionText - the text of the description of this Tracker_FormElement_FieldSet
-     * The tracker descripiton can be internationalized.
-     * To do this, fill the description field with the ad-hoc format.
-     *
-     * @return string description, the description text if the description is not internationalized, or the localized text if so
-     */
-    function getDescriptionText()
-    {
-        global $Language;
-        if ($this->isDescriptionMustBeLocalized()) {
-            return $Language->getText('plugin_tracker_common_staticfield', $this->description);
-        } else {
-            return $this->description;
-        }
-    }
-
-    /**
-     * Returns if the static field description must be localized or not.
-     * The static field description must be localized if the name looks like staticfield_{$field_id}_desc_key
-     *
-     * @return true if the static field description must be localized, false otherwise.
-     */
-    function isDescriptionMustBeLocalized()
-    {
-        $pattern = "/staticfield_(.*)_desc_key/";
-        return preg_match($pattern, $this->description);
-    }
-
-
     // TODO : remove these functions (no need for that kind of "fields"
     public function fetchAddCriteria($used, $prefix = '')
     {
-        return null;
+        return '';
     }
 
     public function fetchAddColumn($used, $prefix = '')
     {
-        return null;
+        return '';
     }
 
     public function fetchAddTooltip($used, $prefix = '')
     {
-        return null;
+        return '';
     }
 
     /**
      * Fetch the element for the update artifact form
      *
-     * @param Tracker_Artifact $artifact
      *
      * @return string html
      */
     public function fetchArtifact(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $submitted_values,
         array $additional_classes
     ) {
@@ -123,10 +64,9 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement
 
     /**
      *
-     * @param Tracker_Artifact $artifact
      * @return string html
      */
-    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactForOverlay(Artifact $artifact, array $submitted_values)
     {
         return $this->fetchArtifact($artifact, $submitted_values, []);
     }
@@ -139,11 +79,10 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement
     /**
      * Fetch the element for the artifact in read only mode
      *
-     * @param Tracker_Artifact $artifact
      *
      * @return string html
      */
-    public function fetchArtifactReadOnly(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactReadOnly(Artifact $artifact, array $submitted_values)
     {
         return $this->fetchReadOnly();
     }
@@ -220,7 +159,7 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement
     /**
      * @see Tracker_FormElement::fetchArtifactCopyMode
      */
-    public function fetchArtifactCopyMode(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactCopyMode(Artifact $artifact, array $submitted_values)
     {
         return $this->fetchArtifactReadOnly($artifact, $submitted_values);
     }
@@ -228,7 +167,6 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement
     /**
      * Accessor for visitors
      *
-     * @param Tracker_FormElement_Visitor $visitor
      */
     public function accept(Tracker_FormElement_Visitor $visitor)
     {
@@ -243,11 +181,6 @@ abstract class Tracker_FormElement_StaticField extends Tracker_FormElement
     public function getRESTAvailableValues()
     {
         return null;
-    }
-
-    public function isCollapsed()
-    {
-        return false;
     }
 
     public function getDefaultValue()

@@ -27,19 +27,19 @@ require_once('WikiPage.class.php');
 
 class WikiEntry
 {
-  /* private int(11) */     var $id;
-  /* private int(11) */     var $gid;
-  /* private int(11) */     var $rank;
-  /* private string */      var $language_id;
-  /* private string(255) */ var $name;
-  /* private string(255) */ var $page;
-  /* private string(255) */ var $desc;
-  /* private WikiPage */    var $wikiPage;
+  /* private int(11) */     public $id;
+  /* private int(11) */     public $gid;
+  /* private int(11) */     public $rank;
+  /* private string */      public $language_id;
+  /* private string(255) */ public $name;
+  /* private string(255) */ public $page;
+  /* private string(255) */ public $desc;
+  /* private WikiPage */    public $wikiPage;
 
   /**
    * Constructor
    */
-    function __construct($id = null)
+    public function __construct($id = null)
     {
         if (empty($id)) {
             $this->id   = 0;
@@ -60,44 +60,44 @@ class WikiEntry
    * Set
    */
 
-    function setId($id)
+    public function setId($id)
     {
         $this->id = (int) $id;
     }
 
-    function setGid($gid)
+    public function setGid($gid)
     {
         $this->gid = (int) $gid;
     }
 
-    function setRank($rank)
+    public function setRank($rank)
     {
         $this->rank = (int) $rank;
     }
 
-    function setLanguage_id($language_id)
+    public function setLanguage_id($language_id)
     {
         $this->language_id = $language_id;
     }
 
-    function setName($name)
+    public function setName($name)
     {
         $this->name = $name;
     }
 
-    function setPage($page)
+    public function setPage($page)
     {
         $page       = str_replace('&', '', $page);
         $page       = str_replace('&amp;', '', $page);
         $this->page = $page;
     }
 
-    function setDesc($desc)
+    public function setDesc($desc)
     {
         $this->desc = $desc;
     }
 
-    function setFromRow($row)
+    public function setFromRow($row)
     {
         $this->id   = $row['id'];
         $this->gid  = $row['group_id'];
@@ -110,10 +110,10 @@ class WikiEntry
         $this->wikiPage = new WikiPage($this->gid, $this->page);
     }
 
-    function _setFromDb()
+    public function _setFromDb()
     {
-        $res = db_query(' SELECT * FROM wiki_group_list'.
-        ' WHERE id='.db_ei($this->id));
+        $res = db_query(' SELECT * FROM wiki_group_list' .
+        ' WHERE id=' . db_ei($this->id));
         $row = db_fetch_array($res);
         $this->setFromRow($row);
     }
@@ -123,37 +123,37 @@ class WikiEntry
    * Get
    */
 
-    function getId()
+    public function getId()
     {
         return $this->id;
     }
 
-    function getGid()
+    public function getGid()
     {
         return $this->gid;
     }
 
-    function getRank()
+    public function getRank()
     {
         return $this->rank;
     }
 
-    function getLanguage_id()
+    public function getLanguage_id()
     {
         return $this->language_id;
     }
 
-    function getName()
+    public function getName()
     {
         return $this->name;
     }
 
-    function getPage()
+    public function getPage()
     {
         return $this->page;
     }
 
-    function getDesc()
+    public function getDesc()
     {
         return $this->desc;
     }
@@ -161,7 +161,7 @@ class WikiEntry
     /**
      * Return an iterator on WikiEntries
      */
-    function getEntryIterator($gid = null)
+    public function getEntryIterator($gid = null)
     {
         if ($gid !== null) {
             $gid = (int) $gid;
@@ -171,12 +171,12 @@ class WikiEntry
 
         //@todo: transfer to a DAO
         $qry = ' SELECT * FROM wiki_group_list'
-            .' WHERE group_id='.db_ei($gid)
-            .' ORDER BY rank';
+            . ' WHERE group_id=' . db_ei($gid)
+            . ' ORDER BY rank';
 
         $res = db_query($qry);
 
-        $weArray = array();
+        $weArray = [];
         while ($row = db_fetch_array($res)) {
             $we = new WikiEntry();
             $we->setFromRow($row);
@@ -190,15 +190,15 @@ class WikiEntry
   /**
    * Data handle
    */
-    function add()
+    public function add()
     {
-        $res = db_query(' INSERT INTO wiki_group_list SET'.
-        ' group_id='.db_ei($this->gid).','.
-        ' rank='.db_ei($this->rank).','.
-        " language_id='".db_es($this->language_id)."',".
-        ' wiki_name="'.db_es($this->name).'",'.
-        ' wiki_link="'.db_es($this->page).'",'.
-        ' description="'.db_es($this->desc).'"');
+        $res = db_query(' INSERT INTO wiki_group_list SET' .
+        ' group_id=' . db_ei($this->gid) . ',' .
+        ' rank=' . db_ei($this->rank) . ',' .
+        " language_id='" . db_es($this->language_id) . "'," .
+        ' wiki_name="' . db_es($this->name) . '",' .
+        ' wiki_link="' . db_es($this->page) . '",' .
+        ' description="' . db_es($this->desc) . '"');
 
         if ($res === false) {
             trigger_error(
@@ -215,11 +215,11 @@ class WikiEntry
         }
     }
 
-    function del()
+    public function del()
     {
-        $res = db_query(' DELETE FROM wiki_group_list'.
-        ' WHERE id='.db_ei($this->id).
-        ' AND group_id='.db_ei($this->gid));
+        $res = db_query(' DELETE FROM wiki_group_list' .
+        ' WHERE id=' . db_ei($this->id) .
+        ' AND group_id=' . db_ei($this->gid));
 
         if ($res === false) {
             trigger_error(
@@ -236,17 +236,17 @@ class WikiEntry
         }
     }
 
-    function update()
+    public function update()
     {
         global $feedback;
         $sql = ' UPDATE wiki_group_list SET'
-          . ' group_id='.db_ei($this->gid).','
-          . ' rank='.db_ei($this->rank).','
-          . " language_id='".db_es($this->language_id)."',"
-          . ' wiki_name="'.db_es($this->name).'",'
-          . ' wiki_link="'.db_es($this->page).'",'
-          . ' description="'.db_es($this->desc).'"'
-          . ' WHERE id='.db_ei($this->id);
+          . ' group_id=' . db_ei($this->gid) . ','
+          . ' rank=' . db_ei($this->rank) . ','
+          . " language_id='" . db_es($this->language_id) . "',"
+          . ' wiki_name="' . db_es($this->name) . '",'
+          . ' wiki_link="' . db_es($this->page) . '",'
+          . ' description="' . db_es($this->desc) . '"'
+          . ' WHERE id=' . db_ei($this->id);
 
         $res = db_query($sql);
         $err = db_error();

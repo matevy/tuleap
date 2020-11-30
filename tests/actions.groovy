@@ -1,12 +1,15 @@
 #!/usr/bin/env groovy
 
-def prepareSources(def credentialsId) {
-    withCredentials([usernamePassword(
-        credentialsId: credentialsId,
-        passwordVariable: 'NPM_PASSWORD',
-        usernameVariable: 'NPM_USER'
-    )]) {
-        sh 'docker run --rm -e NPM_REGISTRY="$NPM_REGISTRY" -e NPM_USER="$NPM_USER" -e NPM_PASSWORD="$NPM_PASSWORD" -e NPM_EMAIL="$NPM_EMAIL" -v "$WORKSPACE/sources/":/tuleap -v "$WORKSPACE/sources/":/output --tmpfs /tmp/tuleap_build:rw,noexec,nosuid --read-only $DOCKER_REGISTRY/tuleap-generated-files-builder dev'
+def prepareSources(def credentialsIdNexus, def credentialsIdComposerGitHub) {
+    withCredentials([
+        usernamePassword(
+            credentialsId: credentialsIdNexus,
+            passwordVariable: 'NPM_PASSWORD',
+            usernameVariable: 'NPM_USER'
+        ),
+        string(credentialsId: credentialsIdComposerGitHub, variable: 'COMPOSER_GITHUB_AUTH')
+    ]) {
+        sh 'docker run --rm -e NPM_REGISTRY="$NPM_REGISTRY" -e NPM_USER="$NPM_USER" -e NPM_PASSWORD="$NPM_PASSWORD" -e NPM_EMAIL="$NPM_EMAIL" -e COMPOSER_GITHUB_AUTH="$COMPOSER_GITHUB_AUTH" -v "$WORKSPACE/sources/":/tuleap -v "$WORKSPACE/sources/":/output --tmpfs /tmp/tuleap_build:rw,noexec,nosuid --read-only $DOCKER_REGISTRY/tuleap-generated-files-builder dev'
     }
 }
 
@@ -16,45 +19,46 @@ def runFilesStatusChangesDetection(String repository_to_inspect, String name_of_
     }
 }
 
-def runSimpleTestTests(String version) {
-    sh "make -C $WORKSPACE/sources simpletest-${version}-ci"
+def runPHPUnitTests(String version, Boolean with_coverage = false) {
+    def coverage_enabled='0'
+    if (with_coverage) {
+        coverage_enabled='1'
+    }
+    sh "make -C $WORKSPACE/sources phpunit-ci-${version} COVERAGE_ENABLED=${coverage_enabled}"
 }
 
-def runPHPUnitTests(String version) {
-    sh "make -C $WORKSPACE/sources phpunit-ci-${version}"
-}
-
-def runJestTests(String name, String path) {
+def runJestTests(String name, String path, Boolean with_coverage = false) {
+    def coverage_params=''
+    if (with_coverage) {
+        coverage_params="--coverage --coverageReporters=text-summary --coverageReporters=cobertura --coverageDirectory='\$WORKSPACE/results/jest/coverage/'"
+    }
     sh """
     mkdir -p 'results/jest/coverage/'
     export JEST_JUNIT_OUTPUT_DIR="\$WORKSPACE/results/jest/"
     export JEST_JUNIT_OUTPUT_NAME="test-${name}-results.xml"
     export JEST_SUITE_NAME="Jest ${name} test suite"
-    npm --prefix "sources/" test -- '${path}' --ci --runInBand --reporters=default --reporters=jest-junit --coverage --coverageDirectory="\$WORKSPACE/results/jest/coverage/"
+    npm --prefix "sources/" test -- '${path}' --ci --maxWorkers=2 --reporters=default --reporters=jest-junit ${coverage_params}
     """
 }
 
-def runRESTTests(String version) {
+def runRESTTests(String db, String php) {
     sh """
-    mkdir -p results/api-rest/${version}
-    docker run --rm -v \$WORKSPACE/sources:/usr/share/tuleap:ro --mount type=tmpfs,destination=/tmp -v \$WORKSPACE/results/api-rest/${version}:/output --network none \$DOCKER_REGISTRY/enalean/tuleap-test-rest:${version}
+    mkdir -p \$WORKSPACE/results/api-rest/php${php}-${db}
+    TESTS_RESULT=\$WORKSPACE/results/api-rest/php${php}-${db} sources/tests/rest/bin/run-compose.sh "${php}" "${db}"
     """
 }
 
-def runDBTests(String version) {
+def runDBTests(String db, String php) {
     sh """
-    mkdir -p results/db/${version}
-    docker run --rm -v \$WORKSPACE/sources:/usr/share/tuleap:ro --mount type=tmpfs,destination=/tmp -v \$WORKSPACE/results/db/${version}:/output --network none \$DOCKER_REGISTRY/enalean/tuleap-test-rest:${version} /usr/share/tuleap/tests/integration/bin/run.sh
+    mkdir -p \$WORKSPACE/results/db/php${php}-${db}
+    TESTS_RESULT=\$WORKSPACE/results/db/php${php}-${db} sources/tests/integration/bin/run-compose.sh "${php}" "${db}"
     """
 }
 
-def runSOAPTests(String name, String imageVersion) {
+def runSOAPTests(String db, String php) {
     sh """
-    cid="\$(docker create -v \$WORKSPACE/sources:/usr/share/tuleap:ro --network none \$DOCKER_REGISTRY/enalean/tuleap-test-soap:${imageVersion})"
-    docker start --attach "\$cid" || true
-    mkdir -p 'results/api-soap/${name}/'
-    docker cp "\$cid":/output/soap_tests.xml results/api-soap/${name}/soap_tests.xml || true
-    docker rm -fv "\$cid"
+    mkdir -p \$WORKSPACE/results/soap/php${php}-${db}
+    TESTS_RESULT=\$WORKSPACE/results/soap/php${php}-${db} sources/tests/soap/bin/run-compose.sh "${php}" "${db}"
     """
 }
 
@@ -70,36 +74,63 @@ def runBuildAndRun(String os) {
     }
 }
 
-def runJavascriptCodingStandards() {
-    sh 'docker run --rm -v $WORKSPACE/sources:/sources:ro $DOCKER_REGISTRY/prettier-checker "**/*.{js,ts,vue}"'
-}
-
 def runESLint() {
     dir ('sources') {
         sh 'npm run eslint -- --quiet --format=checkstyle --output-file=../results/eslint/checkstyle.xml .'
     }
 }
 
-def runPsalm(String configPath, String filesToAnalyze) {
+def runStylelint() {
     dir ('sources') {
-        if (filesToAnalyze == '' || filesToAnalyze == '.') {
+        sh 'npm run stylelint **/*.scss'
+    }
+}
+
+def runPsalm(String configPath, String filesToAnalyze, String root='.') {
+    withEnv(['XDG_CACHE_HOME=/tmp/psalm_cache/']) {
+        dir ('sources') {
+            if (filesToAnalyze == '' || filesToAnalyze == '.') {
+                sh """
+                mkdir -p ../results/psalm/
+                scl enable php73 "src/vendor/bin/psalm --show-info=false --report-show-info=false --config='${configPath}' --root='${root}' --report=../results/psalm/checkstyle.xml"
+                """
+            } else {
+                sh """
+                scl enable php73 "tests/psalm/psalm-ci-launcher.php --config='${configPath}' --report-folder=../results/psalm/ ${filesToAnalyze}"
+                """
+            }
+        }
+    }
+}
+
+def runPsalmTaintAnalysis(String configPath, String root='.') {
+    withEnv(['XDG_CACHE_HOME=/tmp/psalm_cache/']) {
+        dir ('sources') {
             sh """
             mkdir -p ../results/psalm/
-            scl enable php73 "src/vendor/bin/psalm --show-info=false --report-show-info=false --config='${configPath}' --report=../results/psalm/checkstyle.xml"
-            """
-        } else {
-            sh """
-            scl enable php73 "tests/psalm/psalm-ci-launcher.php --config='${configPath}' --report-folder=../results/psalm/ ${filesToAnalyze}"
+            scl enable php73 "src/vendor/bin/psalm --taint-analysis --config='${configPath}' --root='${root}' --report=../results/psalm/checkstyle.xml"
             """
         }
     }
 }
 
 def runPHPCodingStandards(String phpcsPath, String rulesetPath, String filesToAnalyze) {
+    if (filesToAnalyze == '') {
+        return;
+    }
     sh """
-    docker run --rm -v $WORKSPACE/sources:/sources:ro -w /sources --network none php:7.3-cli-alpine -d memory_limit=256M \
-        ${phpcsPath} --extensions=php --encoding=utf-8 --standard="${rulesetPath}" -p ${filesToAnalyze}
+    docker run --rm -v $WORKSPACE/sources:/sources:ro -w /sources --network none $DOCKER_REGISTRY/enalean/tuleap-test-phpunit:c7-php73 \
+        scl enable php73 "php -d memory_limit=512M ${phpcsPath} --extensions=php,phpstub --encoding=utf-8 --standard="${rulesetPath}" -p ${filesToAnalyze}"
     """
+}
+
+def runDeptrac(String configPath, String reportName) {
+    dir ('sources') {
+        sh """
+        mkdir -p ../results/deptrac/
+        scl enable php73 "src/vendor/bin/deptrac analyze --formatter-junit=true --formatter-junit-dump-xml='../results/deptrac/${reportName}.xml' -- ${configPath}"
+        """
+    }
 }
 
 return this;

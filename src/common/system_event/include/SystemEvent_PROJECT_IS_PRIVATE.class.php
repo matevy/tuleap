@@ -23,7 +23,6 @@
 
 use Tuleap\admin\ProjectCreation\ProjectVisibility\ProjectVisibilityConfigManager;
 use Tuleap\Project\UserRemover;
-use Tuleap\SVN\SVNAuthenticationCacheInvalidator;
 
 /**
 * System Event classes
@@ -31,10 +30,6 @@ use Tuleap\SVN\SVNAuthenticationCacheInvalidator;
 */
 class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
 {
-    /**
-     * @var SVNAuthenticationCacheInvalidator
-     */
-    private $svn_authentication_cache_invalidator;
     /**
      * @var UserRemover
      */
@@ -45,11 +40,9 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
     private $ugroup_manager;
 
     public function injectDependencies(
-        SVNAuthenticationCacheInvalidator $svn_authentication_cache_invalidator,
         UserRemover $user_remover,
         UGroupManager $ugroup_manager
     ) {
-        $this->svn_authentication_cache_invalidator = $svn_authentication_cache_invalidator;
         $this->user_remover                         = $user_remover;
         $this->ugroup_manager                       = $ugroup_manager;
     }
@@ -67,7 +60,7 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
     {
         $txt = '';
         list($group_id, $project_is_private) = $this->getParametersAsArray();
-        $txt .= 'project: '. $this->verbalizeProjectId($group_id, $with_link) .', project is private: '. ($project_is_private ? 'true' : 'false');
+        $txt .= 'project: ' . $this->verbalizeProjectId($group_id, $with_link) . ', project is private: ' . ($project_is_private ? 'true' : 'false');
         return $txt;
     }
 
@@ -86,7 +79,7 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
         $this->cleanRestrictedUsersIfNecessary($project);
 
         if ($project->usesCVS()) {
-            if (!Backend::instance('CVS')->setCVSPrivacy($project, $project_is_private)) {
+            if (! Backend::instance('CVS')->setCVSPrivacy($project, $project_is_private)) {
                 $this->error("Could not set cvs privacy for project $group_id");
                 return false;
             }
@@ -94,11 +87,11 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
 
         if ($project->usesSVN()) {
             $backendSVN    = Backend::instance('SVN');
-            if (!$backendSVN->setSVNPrivacy($project, $project_is_private)) {
+            if (! $backendSVN->setSVNPrivacy($project, $project_is_private)) {
                 $this->error("Could not set svn privacy for project $group_id");
                 return false;
             }
-            if (!$backendSVN->updateSVNAccess($group_id, $project->getSVNRootPath())) {
+            if (! $backendSVN->updateSVNAccess($group_id, $project->getSVNRootPath())) {
                 $this->error("Could not update svn access file for project $group_id");
                 return false;
             }
@@ -120,7 +113,7 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
         return true;
     }
 
-    private function cleanRestrictedUsersIfNecessary(Project $project) : void
+    private function cleanRestrictedUsersIfNecessary(Project $project): void
     {
         if (! ForgeConfig::areRestrictedUsersAllowed() || $project->getAccess() !== Project::ACCESS_PRIVATE_WO_RESTRICTED) {
             return;
@@ -150,12 +143,12 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
         }
     }
 
-    private function notifyUser(Project $project, PFUser $user) : void
+    private function notifyUser(Project $project, PFUser $user): void
     {
         $user_language = $user->getLanguage();
         $purifier      = Codendi_HTMLPurifier::instance();
 
-        $title = $user_language->getText(
+        $title = $user_language->getOverridableText(
             'project_privacy',
             'email_visibility_change_title',
             $project->getUnixName()
@@ -175,40 +168,32 @@ class SystemEvent_PROJECT_IS_PRIVATE extends SystemEvent
 
     private function getBody(Project $project, BaseLanguage $user_language): string
     {
-        if (ForgeConfig::areRestrictedUsersAllowed()) {
-            switch ($project->getAccess()) {
-                case Project::ACCESS_PUBLIC:
-                    return $user_language->getText(
-                        'project_privacy',
-                        'email_visibility_change_body_public',
-                        $project->getUnconvertedPublicName()
-                    );
-                case Project::ACCESS_PUBLIC_UNRESTRICTED:
-                    return $user_language->getText(
-                        'project_privacy',
-                        'email_visibility_change_body_unrestricted',
-                        $project->getUnconvertedPublicName()
-                    );
-                case Project::ACCESS_PRIVATE_WO_RESTRICTED:
-                    return $user_language->getText(
-                        'project_privacy',
-                        'email_visibility_change_body_private',
-                        $project->getUnconvertedPublicName()
-                    );
-                case Project::ACCESS_PRIVATE:
-                default:
-                    return $user_language->getText(
-                        'project_privacy',
-                        'email_visibility_change_body_private_unrestricted',
-                        $project->getUnconvertedPublicName()
-                    );
-            }
-        } else {
-            return $user_language->getText(
-                'project_privacy',
-                'email_visibility_change_body_' . $project->getAccess(),
-                $project->getUnconvertedPublicName()
-            );
+        switch ($project->getAccess()) {
+            case Project::ACCESS_PUBLIC:
+                return $user_language->getOverridableText(
+                    'project_privacy',
+                    'email_visibility_change_body_public',
+                    $project->getPublicName()
+                );
+            case Project::ACCESS_PUBLIC_UNRESTRICTED:
+                return $user_language->getOverridableText(
+                    'project_privacy',
+                    'email_visibility_change_body_unrestricted',
+                    $project->getPublicName()
+                );
+            case Project::ACCESS_PRIVATE_WO_RESTRICTED:
+                return $user_language->getOverridableText(
+                    'project_privacy',
+                    'email_visibility_change_body_private',
+                    $project->getPublicName()
+                );
+            case Project::ACCESS_PRIVATE:
+            default:
+                return $user_language->getText(
+                    'project_privacy',
+                    'email_visibility_change_body_private_unrestricted',
+                    $project->getPublicName()
+                );
         }
     }
 }

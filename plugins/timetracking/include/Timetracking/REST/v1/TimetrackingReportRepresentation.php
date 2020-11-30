@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2019. All rights reserved.
+ * Copyright Enalean (c) 2019-Present. All rights reserved.
  *
- *  Tuleap and Enalean names and logos are registrated trademarks owned by
+ *  Tuleap and Enalean names and logos are registered trademarks owned by
  *  Enalean SAS. All other trademarks or names are properties of their respective
  *  owners.
  *
@@ -31,6 +31,9 @@ use Tuleap\REST\JsonCast;
 use Tuleap\Timetracking\Time\TimetrackingReport;
 use Tuleap\Tracker\REST\TrackerReference;
 
+/**
+ * @psalm-immutable
+ */
 class TimetrackingReportRepresentation
 {
     public const NAME = "timetracking_reports";
@@ -45,32 +48,43 @@ class TimetrackingReportRepresentation
     public $uri;
 
     /**
-     * @var array {@type Tuleap\Tracker\REST\TrackerReference}
+     * @var TrackerReference[] {@type TrackerReference}
      */
     public $trackers = [];
 
     /**
-     * @var array {@type Tuleap\Tracker\REST\TrackerReference}
+     * @var TrackerReference[] {@type TrackerReference}
      */
     public $invalid_trackers = [];
 
-    public function build(TimetrackingReport $report)
+    /**
+     * @param TrackerReference[] $trackers
+     * @param TrackerReference[] $invalid_trackers
+     */
+    private function __construct(int $id, array $trackers, array $invalid_trackers)
     {
-        $this->id = JsonCast::toInt($report->getId());
+        $this->id               = $id;
+        $this->uri              = self::NAME . '/' . $this->id;
+        $this->trackers         = $trackers;
+        $this->invalid_trackers = $invalid_trackers;
+    }
+
+    public static function fromReport(TimetrackingReport $report): self
+    {
+        $trackers = [];
         foreach ($report->getTrackers() as $tracker) {
-            $tracker_reference = new TrackerReference();
-            $tracker_reference->build($tracker);
-
-            $this->trackers[] = $tracker_reference;
+            $trackers[] = TrackerReference::build($tracker);
         }
 
+        $invalid_trackers = [];
         foreach ($report->getInvalidTrackers() as $invalid_tracker) {
-            $tracker_reference = new TrackerReference();
-            $tracker_reference->build($invalid_tracker);
-
-            $this->invalid_trackers[] = $tracker_reference;
+            $invalid_trackers[] = TrackerReference::build($invalid_tracker);
         }
 
-        $this->uri = self::NAME . '/' . $this->id;
+        return new self(
+            JsonCast::toInt($report->getId()),
+            $trackers,
+            $invalid_trackers,
+        );
     }
 }

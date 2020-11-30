@@ -37,7 +37,7 @@ class JsonCast
     public static function toInt($value)
     {
         if (! is_null($value) && $value !== '') {
-            return (int)$value;
+            return (int) $value;
         }
 
         return null;
@@ -59,6 +59,7 @@ class JsonCast
 
     /**
      * Cast a value to float if it's not null
+     * @psalm-ignore-nullable-return
      * @return float|null
      */
     public static function toFloat($value)

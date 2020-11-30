@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,6 +18,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\AgileDashboard\Planning\Presenters\AlternativeBoardLinkPresenter;
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Planning_Presenter_MilestoneSummaryPresenter extends Planning_Presenter_MilestoneSummaryPresenterAbstract
 {
 
@@ -32,9 +35,13 @@ class Planning_Presenter_MilestoneSummaryPresenter extends Planning_Presenter_Mi
      */
     private $status_count;
 
-    public function __construct(Planning_Milestone $milestone, $plugin_path, $has_cardwall, $status_count)
-    {
-        parent::__construct($milestone, $plugin_path, $has_cardwall);
+    public function __construct(
+        Planning_Milestone $milestone,
+        $plugin_path,
+        ?AlternativeBoardLinkPresenter $alternative_board_link,
+        $status_count
+    ) {
+        parent::__construct($milestone, $plugin_path, $alternative_board_link);
 
         $this->status_count = $status_count;
     }
@@ -46,21 +53,21 @@ class Planning_Presenter_MilestoneSummaryPresenter extends Planning_Presenter_Mi
 
     public function count_closed_backlog_items()
     {
-        return $this->status_count[Tracker_Artifact::STATUS_CLOSED];
+        return $this->status_count[Artifact::STATUS_CLOSED];
     }
 
     public function count_open_backlog_items()
     {
-        return $this->status_count[Tracker_Artifact::STATUS_OPEN];
+        return $this->status_count[Artifact::STATUS_OPEN];
     }
 
     public function open()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'open');
+        return dgettext('tuleap-agiledashboard', 'open');
     }
 
     public function closed()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'closed');
+        return dgettext('tuleap-agiledashboard', 'closed');
     }
 }

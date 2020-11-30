@@ -22,7 +22,7 @@ import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue.js";
 
 import UpdateFolderMetadataModal from "./UpdateFolderMetadataModal.vue";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import EventBus from "../../../helpers/event-bus.js";
 import * as tlp from "tlp";
 
@@ -44,7 +44,7 @@ describe("UpdateFolderMetadataModal", () => {
                             list_value: "My current folder",
                             is_multiple_value_allowed: false,
                             type: "text",
-                            is_required: false
+                            is_required: false,
                         },
                         {
                             short_name: "custom metadata",
@@ -52,12 +52,12 @@ describe("UpdateFolderMetadataModal", () => {
                             value: "value",
                             is_multiple_value_allowed: false,
                             type: "text",
-                            is_required: false
-                        }
-                    ]
+                            is_required: false,
+                        },
+                    ],
                 },
-                project_id: 102
-            }
+                project_id: 102,
+            },
         };
 
         store = createStoreMock(general_store, { error: { has_modal_error: false } });
@@ -66,17 +66,17 @@ describe("UpdateFolderMetadataModal", () => {
             return shallowMount(UpdateFolderMetadataModal, {
                 localVue,
                 mocks: { $store: store },
-                propsData: { ...props }
+                propsData: { ...props },
             });
         };
 
-        jest.spyOn(tlp, "modal").mockReturnValue({
+        jest.spyOn(tlp, "createModal").mockReturnValue({
             addEventListener: () => {},
             show: () => {},
-            hide: () => {}
+            hide: () => {},
         });
     });
-    describe("Events received by the modal - ", () => {
+    describe("Events received by the modal -", () => {
         it(`Receives the metadata-recursion-metadata-list event,
        Then the metadata_list_to_update  data is updated`, () => {
             const item = {
@@ -87,16 +87,16 @@ describe("UpdateFolderMetadataModal", () => {
                         short_name: "status",
                         list_value: [
                             {
-                                id: 103
-                            }
-                        ]
-                    }
-                ]
+                                id: 103,
+                            },
+                        ],
+                    },
+                ],
             };
 
             const wrapper = factory({ item });
             EventBus.$emit("metadata-recursion-metadata-list", {
-                detail: { metadata_list: ["field_1"] }
+                detail: { metadata_list: ["field_1"] },
             });
 
             expect(wrapper.vm.metadata_list_to_update).toEqual(["field_1"]);
@@ -111,16 +111,16 @@ describe("UpdateFolderMetadataModal", () => {
                         short_name: "status",
                         list_value: [
                             {
-                                id: 103
-                            }
-                        ]
-                    }
-                ]
+                                id: 103,
+                            },
+                        ],
+                    },
+                ],
             };
 
             const wrapper = factory({ item });
             EventBus.$emit("metadata-recursion-option", {
-                detail: { recursion_option: "all_items" }
+                detail: { recursion_option: "all_items" },
             });
 
             expect(wrapper.vm.recursion_option).toEqual("all_items");
@@ -128,7 +128,7 @@ describe("UpdateFolderMetadataModal", () => {
     });
     it("Transform item metadata rest representation", () => {
         store.state.metadata = {
-            has_loaded_metadata: false
+            has_loaded_metadata: false,
         };
 
         const metadata_list_to_update = {
@@ -136,11 +136,11 @@ describe("UpdateFolderMetadataModal", () => {
             list_value: [
                 {
                     id: 103,
-                    value: "my custom displayed value"
-                }
+                    value: "my custom displayed value",
+                },
             ],
             type: "list",
-            is_multiple_value_allowed: false
+            is_multiple_value_allowed: false,
         };
 
         const item = {
@@ -151,12 +151,12 @@ describe("UpdateFolderMetadataModal", () => {
                     short_name: "status",
                     list_value: [
                         {
-                            id: 103
-                        }
-                    ]
+                            id: 103,
+                        },
+                    ],
                 },
-                metadata_list_to_update
-            ]
+                metadata_list_to_update,
+            ],
         };
 
         const wrapper = factory({ item });

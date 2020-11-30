@@ -40,17 +40,17 @@ rcs_id('$Id: PageGroup.php,v 1.9 2004/09/25 16:35:09 rurban Exp $');
  */
 class WikiPlugin_PageGroup extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("PageGroup");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return sprintf(_("PageGroup for %s"), '[pagename]');
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -59,30 +59,32 @@ class WikiPlugin_PageGroup extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array(
+        return [
                      'parent'  => '',
                      'rev'     => false,
                      'section' => _("Contents"),
                      'label'   => '',
                      'loop'    => false,
-                     );
+                     ];
     }
 
     // Stolen from IncludePage.php
-    function extractGroupSection($section, $content, $page)
+    public function extractGroupSection($section, $content, $page)
     {
         $qsection = preg_replace('/\s+/', '\s+', preg_quote($section, '/'));
-        if (preg_match(
-            "/ ^(!{1,})\\s*$qsection" // section header
+        if (
+            preg_match(
+                "/ ^(!{1,})\\s*$qsection" // section header
                        . "  \\s*$\\n?"           // possible blank lines
                        . "  ( (?: ^.*\\n? )*? )" // some lines
                        . "  (?= ^\\1 | \\Z)/xm", // sec header (same or higher level) (or EOF)
-            implode("\n", $content),
-            $match
-        )) {
-            $result = array();
+                implode("\n", $content),
+                $match
+            )
+        ) {
+            $result = [];
             //FIXME: return list of Wiki_Pagename objects
             foreach (explode("\n", $match[2]) as $line) {
                 $text = trim($line);
@@ -93,48 +95,47 @@ class WikiPlugin_PageGroup extends WikiPlugin
                 // Strip surrounding []
                 // FIXME: parse [ name | link ]
                 $text = preg_replace("/^\[\s*(\S.+)\s*\]$/", "\\1", $text);
-                if (!empty($text)) {
+                if (! empty($text)) {
                     $result[] = $text;
                 }
             }
             return $result;
         }
-        return array(sprintf(_("<%s: no such section>"), $page ." ". $section));
+        return [sprintf(_("<%s: no such section>"), $page . " " . $section)];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
-
         $args = $this->getArgs($argstr, $request);
         extract($args);
-        $html="";
+        $html = "";
         if (empty($parent)) {
             // FIXME: WikiPlugin has no way to report when
             // required args are missing?
             $error_text = fmt(
                 "%s: %s",
-                "WikiPlugin_" .$this->getName(),
+                "WikiPlugin_" . $this->getName(),
                 $error_text
             );
             $error_text .= " " . sprintf(_("A required argument '%s' is missing."), 'parent');
             $html = $error_text;
             return $html;
         }
-        $directions = array ('next'     => _("Next"),
+        $directions =  ['next'     => _("Next"),
                              'previous' => _("Previous"),
                              'contents' => _("Contents"),
                              'first'    => _("First"),
                              'last'     => _("Last")
-                             );
+                             ];
 
         global $WikiTheme;
         $sep = $WikiTheme->getButtonSeparator();
-        if (!$sep) {
+        if (! $sep) {
             $sep = " | "; // force some kind of separator
         }
 
         // default label
-        if (!$label) {
+        if (! $label) {
             $label = $WikiTheme->makeLinkButton($parent);
         }
 
@@ -144,7 +145,7 @@ class WikiPlugin_PageGroup extends WikiPlugin
         $p = $dbi->getPage($parent);
         if ($rev) {
             $r = $p->getRevision($rev);
-            if (!$r) {
+            if (! $r) {
                 $this->error(sprintf(
                     _("%s(%d): no such revision"),
                     $parent,
@@ -167,7 +168,7 @@ class WikiPlugin_PageGroup extends WikiPlugin
 
         $thispage = array_search($pagename, $c);
 
-        $go = array ('previous','next');
+        $go =  ['previous', 'next'];
         $links = HTML();
         $links->pushcontent($label);
         $links->pushcontent(" [ "); // an experiment
@@ -239,7 +240,7 @@ class WikiPlugin_PageGroup extends WikiPlugin
         $links->pushcontent(" ] "); // an experiment
         return $links;
     }
-};
+}
 
 // $Log: PageGroup.php,v $
 // Revision 1.9  2004/09/25 16:35:09  rurban

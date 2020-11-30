@@ -48,7 +48,6 @@ class GitPluginDefaultController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
      * @param array       $variables
      *
      * @return void
@@ -56,7 +55,7 @@ class GitPluginDefaultController implements DispatchableWithRequest
      */
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
-        if (! $request->getProject()->usesService(gitPlugin::SERVICE_SHORTNAME)) {
+        if (! $request->getProject()->usesService(GitPlugin::SERVICE_SHORTNAME)) {
             throw new \Tuleap\Request\NotFoundException(dgettext("tuleap-git", "Git service is disabled."));
         }
 

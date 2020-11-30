@@ -43,28 +43,28 @@ require_once('lib/PageList.php');
  */
 class _PageList_Column_numbacklinks extends _PageList_Column_custom
 {
-    function _getValue($page_handle, &$revision_handle)
+    public function _getValue($page_handle, &$revision_handle)
     {
         $theIter = $page_handle->getBackLinks();
         return $theIter->count();
     }
 
-    function _getSortableValue($page_handle, &$revision_handle)
+    public function _getSortableValue($page_handle, &$revision_handle)
     {
         return $this->_getValue($page_handle, $revision_handle);
     }
-};
+}
 
 class _PageList_Column_coagreement extends _PageList_Column_custom
 {
-    function __construct($params)
+    public function __construct($params)
     {
         $this->_pagelist = $params[3];
         $this->_PageList_Column($params[0], $params[1], $params[2]);
         $this->_selectedBuddies = $this->_pagelist->getOption('selectedBuddies');
     }
 
-    function _getValue($page_handle, &$revision_handle)
+    public function _getValue($page_handle, &$revision_handle)
     {
         global $request;
 
@@ -84,20 +84,20 @@ class _PageList_Column_coagreement extends _PageList_Column_custom
             $p = "error";
         }
         //FIXME: $WikiTheme->getImageURL()
-        return HTML::img(array('src' => "../images/" . $p . ".gif"));
+        return HTML::img(['src' => "../images/" . $p . ".gif"]);
     }
 }
 
 class _PageList_Column_minmisery extends _PageList_Column_custom
 {
-    function __construct($params)
+    public function __construct($params)
     {
         $this->_pagelist = $params[3];
         $this->_PageList_Column($params[0], $params[1], $params[2]);
         $this->_selectedBuddies = $this->_pagelist->getOption('selectedBuddies');
     }
 
-    function _getValue($page_handle, &$revision_handle)
+    public function _getValue($page_handle, &$revision_handle)
     {
         global $request;
 
@@ -109,21 +109,22 @@ class _PageList_Column_minmisery extends _PageList_Column_custom
         $p = MinMisery($dbi, $pagename, $this->_selectedBuddies, $active_userId);
            $imgFix = floor($p * 2) / 2;
         //FIXME: $WikiTheme->getImageURL()
-        return HTML::img(array('src' => "../images/" . $imgFix . ".png"));
+        return HTML::img(['src' => "../images/" . $imgFix . ".png"]);
     }
 }
 
 // register custom PageList type
 global $WikiTheme;
-$WikiTheme->addPageListColumn(array
-    (
+$WikiTheme->addPageListColumn(
+    [
     'numbacklinks'
-    => array('_PageList_Column_numbacklinks','custom:numbacklinks', _("# things"), false),
+    => ['_PageList_Column_numbacklinks','custom:numbacklinks', _("# things"), false],
     'coagreement'
-    => array('_PageList_Column_coagreement','custom:coagreement', _("Go?"), 'center'),
+    => ['_PageList_Column_coagreement','custom:coagreement', _("Go?"), 'center'],
     'minmisery'
-    => array('_PageList_Column_minmisery','custom:minmisery', _("MinMisery"), 'center'),
-));
+    => ['_PageList_Column_minmisery','custom:minmisery', _("MinMisery"), 'center'],
+    ]
+);
 
 // $Log: PageListColumns.php,v $
 // Revision 1.10  2005/09/30 18:41:39  uckelman

@@ -21,7 +21,7 @@
 class Git_Mirror_ManifestFileGenerator
 {
 
-    /** @var Logger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
     /** @var string */
@@ -32,7 +32,7 @@ class Git_Mirror_ManifestFileGenerator
 
     public const FILE_PREFIX = 'manifest_mirror_';
 
-    public function __construct(Logger $logger, $manifest_directory)
+    public function __construct(\Psr\Log\LoggerInterface $logger, $manifest_directory)
     {
         $this->manifest_directory = $manifest_directory;
         $this->logger             = $logger;
@@ -92,7 +92,7 @@ class Git_Mirror_ManifestFileGenerator
             }
         }
 
-        $expected_keys = array_flip(array_map(array($this, 'getRepositoryKey'), $expected_repositories));
+        $expected_keys = array_flip(array_map([$this, 'getRepositoryKey'], $expected_repositories));
         foreach ($list_of_repositories as $key => $nop) {
             if (! isset($expected_keys[$key])) {
                 $this->removeRepository($mirror, $list_of_repositories, $key);
@@ -158,44 +158,44 @@ class Git_Mirror_ManifestFileGenerator
             return;
         }
 
-        $list_of_repositories[$this->gladm_path] = array(
+        $list_of_repositories[$this->gladm_path] = [
             "owner"       => null,
             "description" => '',
             "reference"   => null,
             'modified'    => $_SERVER['REQUEST_TIME']
-        );
+        ];
     }
 
     private function getRepositoryInformation(GitRepository $repository)
     {
-        return array(
+        return [
             "owner"       => null,
             "description" => $repository->getDescription(),
             "reference"   => null,
             'modified'    => $_SERVER['REQUEST_TIME']
-        );
+        ];
     }
 
     private function getRepositoryKey(GitRepository $repository)
     {
-        return '/'. $repository->getPath();
+        return '/' . $repository->getPath();
     }
 
     private function getRepositoryKeyFromPathName($path_name)
     {
-        return '/'. $path_name;
+        return '/' . $path_name;
     }
 
     private function getListOfRepositoriesFromManifest($filename)
     {
         if (! is_file($filename)) {
-            return array();
+            return [];
         }
 
         $content = file_get_contents("compress.zlib://$filename");
         $list_of_repositories = json_decode($content, true);
         if (! $list_of_repositories) {
-            return array();
+            return [];
         }
 
         return $list_of_repositories;

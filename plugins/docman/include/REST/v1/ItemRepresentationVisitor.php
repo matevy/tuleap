@@ -31,6 +31,7 @@ use Tuleap\Docman\Item\ItemVisitor;
 use Tuleap\Docman\REST\v1\EmbeddedFiles\EmbeddedFilePropertiesFullRepresentation;
 use Tuleap\Docman\REST\v1\EmbeddedFiles\EmbeddedFilePropertiesMinimalRepresentation;
 use Tuleap\Docman\REST\v1\Files\FilePropertiesRepresentation;
+use Tuleap\Docman\REST\v1\Folders\FolderPropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Links\LinkPropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Wiki\WikiPropertiesRepresentation;
 use Tuleap\Docman\View\DocmanViewURLBuilder;
@@ -83,7 +84,9 @@ class ItemRepresentationVisitor implements ItemVisitor
             ItemRepresentation::TYPE_FOLDER,
             null,
             null,
-            null
+            null,
+            null,
+            $this->buildFolderProperties($item, $params)
         );
     }
 
@@ -96,8 +99,7 @@ class ItemRepresentationVisitor implements ItemVisitor
                 $item->getGroupId()
             );
 
-            $wiki_representation = new WikiPropertiesRepresentation();
-            $wiki_representation->build($item, $wiki_page_id);
+            $wiki_representation = WikiPropertiesRepresentation::build($item, $wiki_page_id);
         }
         return $this->item_representation_builder->buildItemRepresentation(
             $item,
@@ -147,9 +149,8 @@ class ItemRepresentationVisitor implements ItemVisitor
         $item_version    = $this->docman_version_factory->getCurrentVersionForItem($item);
         $file_properties = null;
         if ($item_version) {
-            $file_properties = new FilePropertiesRepresentation();
             $download_href    = $this->buildFileDirectAccessURL($item);
-            $file_properties->build($item_version, $download_href);
+            $file_properties = FilePropertiesRepresentation::build($item_version, $download_href);
         }
         return $this->item_representation_builder->buildItemRepresentation(
             $item,
@@ -220,7 +221,7 @@ class ItemRepresentationVisitor implements ItemVisitor
         return $this->item_representation_builder->buildItemRepresentation($item, null, null);
     }
 
-    private function buildFileDirectAccessURL(Docman_Item $item) : string
+    private function buildFileDirectAccessURL(Docman_Item $item): string
     {
         $parameters = ['action' => 'show', 'switcholdui' => 'true', 'group_id' => $item->getGroupId(), 'id' => $item->getId()];
         $version    = $this->docman_version_factory->getCurrentVersionForItem($item);
@@ -236,27 +237,33 @@ class ItemRepresentationVisitor implements ItemVisitor
         );
     }
 
-    /**
-     * @param Docman_Link $item
-     *
-     * @return LinkPropertiesRepresentation
-     */
     private function buildLinkProperties(Docman_Link $item): LinkPropertiesRepresentation
     {
         $latest_link_version = $this->docman_link_version_factory->getLatestVersion($item);
-        $link_properties     = new LinkPropertiesRepresentation();
         if (! $latest_link_version) {
-            $link_properties->build(null);
-            return $link_properties;
+            return LinkPropertiesRepresentation::build(null);
         }
 
-        $link_properties->build($latest_link_version);
-
-        return $link_properties;
+        return LinkPropertiesRepresentation::build($latest_link_version);
     }
 
     private function isADirectAccessToDocument(array $params): bool
     {
         return isset($params['is_a_direct_access']) && (bool) $params['is_a_direct_access'] === true;
+    }
+
+    private function buildFolderProperties(Docman_Folder $item, array $params): ?FolderPropertiesRepresentation
+    {
+        if (! isset($params['with_size']) || $params['with_size'] === false) {
+            return null;
+        }
+
+        $this->item_factory->getItemTree(
+            $item,
+            $params['current_user'],
+            false,
+            true
+        );
+        return FolderPropertiesRepresentation::build($item);
     }
 }

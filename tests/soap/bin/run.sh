@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-set -x
-
-if [ -z "$PHP_VERSION" ]; then
-    echo 'PHP_VERSION environment variable must be specified' 1>&2
-    exit 1
-fi
+set -euxo pipefail
 
 setup_runner_account() {
     USER_ID=$(stat -c '%u' /usr/share/tuleap)
@@ -30,4 +25,4 @@ setup_runner_account
 
 /usr/share/tuleap/tests/soap/bin/setup.sh
 
-su -c "PHP_VERSION='$PHP_VERSION' /usr/share/tuleap/tests/soap/bin/test_suite.sh" -l runner
+sudo -E -u runner "/usr/share/tuleap/tests/soap/bin/test_suite.sh"

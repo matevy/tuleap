@@ -42,7 +42,7 @@ class Git_Gitolite_ProjectSerializer
      */
     private $repository_factory;
 
-    /** @var Logger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
     /**
@@ -56,7 +56,7 @@ class Git_Gitolite_ProjectSerializer
     private $version_detector;
 
     public function __construct(
-        Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         GitRepositoryFactory $repository_factory,
         Git_Gitolite_ConfigPermissionsSerializer $permissions_serializer,
         Git_GitRepositoryUrlManager $url_manager,
@@ -74,7 +74,6 @@ class Git_Gitolite_ProjectSerializer
     /**
      * Save on filesystem all permission configuration for a project
      *
-     * @param Project $project
      */
     public function dumpProjectRepoConf(Project $project)
     {
@@ -133,26 +132,26 @@ class Git_Gitolite_ProjectSerializer
     private function fetchSuspendedRepositoryConfiguration(Project $project, GitRepository $repository)
     {
         $repo_full_name = $this->repoFullName($repository, $project->getUnixName());
-        $repo_config  = 'repo '. $repo_full_name . PHP_EOL;
+        $repo_config  = 'repo ' . $repo_full_name . PHP_EOL;
         $repo_config .= $this->permissions_serializer->denyAccessForRepository();
 
-        return $repo_config. PHP_EOL;
+        return $repo_config . PHP_EOL;
     }
 
     protected function fetchReposConfig(Project $project, GitRepository $repository)
     {
         $repo_full_name   = $this->repoFullName($repository, $project->getUnixName());
-        $repo_config  = 'repo '. $repo_full_name . PHP_EOL;
+        $repo_config  = 'repo ' . $repo_full_name . PHP_EOL;
         $repo_config .= $this->fetchMailHookConfig($project, $repository);
         $repo_config .= $this->permissions_serializer->getForRepository($repository);
         $repo_config .= $this->fetchObjectSizeLimit($project);
 
-        return $repo_config. PHP_EOL;
+        return $repo_config . PHP_EOL;
     }
 
     public function repoFullName(GitRepository $repo, $unix_name)
     {
-        return PathJoinUtil::unixPathJoin(array($unix_name, $repo->getFullName()));
+        return PathJoinUtil::unixPathJoin([$unix_name, $repo->getFullName()]);
     }
 
     /**
@@ -169,14 +168,13 @@ class Git_Gitolite_ProjectSerializer
         $conf .= '"';
         $conf .= PHP_EOL;
         if ($repository->getMailPrefix() != GitRepository::DEFAULT_MAIL_PREFIX) {
-            $conf .= ' config hooks.emailprefix = "'. $repository->getMailPrefix() .'"';
+            $conf .= ' config hooks.emailprefix = "' . $repository->getMailPrefix() . '"';
             $conf .= PHP_EOL;
         }
         return $conf;
     }
 
     /**
-     * @param Project $project
      * @return string
      */
     private function fetchObjectSizeLimit(Project $project)
@@ -189,11 +187,10 @@ class Git_Gitolite_ProjectSerializer
             return "";
         }
 
-        return ' - VREF/TULEAP_MAX_NEWBIN_SIZE/' . self::OBJECT_SIZE_LIMIT ." = @all" . PHP_EOL;
+        return ' - VREF/TULEAP_MAX_NEWBIN_SIZE/' . self::OBJECT_SIZE_LIMIT . " = @all" . PHP_EOL;
     }
 
     /**
-     * @param Project $project
      * @return bool
      */
     private function bigObjectsAreAuthorizedForProject(Project $project)

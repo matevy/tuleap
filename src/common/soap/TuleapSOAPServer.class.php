@@ -28,7 +28,7 @@ class TuleapSOAPServer extends SoapServer
         }
 
         if ($options === null) {
-            $options = array();
+            $options = [];
         }
         $options['soap_version'] = SOAP_1_2;
         $xml_security = new XML_Security();
@@ -60,7 +60,7 @@ class TuleapSOAPServer extends SoapServer
         if ($wsdl_content == "") {
             throw new SoapFault(255, "Unable to fetch WSDL");
         }
-        $wsdl_file_path = ForgeConfig::get('codendi_cache_dir').'/wsdl-'.md5($wsdl_url);
+        $wsdl_file_path = ForgeConfig::get('codendi_cache_dir') . '/wsdl-' . md5($wsdl_url);
         file_put_contents($wsdl_file_path, $wsdl_content);
         return $wsdl_file_path;
     }

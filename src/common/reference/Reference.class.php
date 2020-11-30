@@ -29,54 +29,54 @@ class Reference
     /**
      * @var int the ID as stored in the 'Reference' DB table.
      */
-    var $id;
+    public $id;
     /**
      * @var string the keyword to extract.
      */
-    var $keyword;
+    public $keyword;
     /**
      * @var string description of this reference
      */
-    var $description;
+    public $description;
 
     /**
      * Originally, the 'link' contains parameters (like $1, $2) that are later converted with replaceLink()
      * @var string link pointed by this reference
      */
-    var $link;
+    public $link;
 
     /**
      * @var string is either 'S' for system references, or 'P' for project-defined references.
      */
-    var $scope;
+    public $scope;
 
     /**
      * Service short name is useful to automate reference (de-)activation when (de-)activating a service.
      * @var string
      */
-    var $service_short_name;
+    public $service_short_name;
 
     /**
      * Nature of the referenced item.
      * List of available natures is ReferenceManager : getAvailableNatures()
      * @var string
      */
-    var $nature;
+    public $nature;
 
     /**
      * @var bool
      */
-    var $is_active;
+    public $is_active;
     /**
      * @var int
      */
-    var $group_id;
+    public $group_id;
 
     /**
      * This parameter is computed from the 'link' param.
      * @var int when set
      */
-    var $num_param=null;
+    public $num_param = null;
 
     /**
      *
@@ -84,61 +84,61 @@ class Reference
      */
     public function __construct($myid, $mykeyword, $mydescription, $mylink, $myscope, $myservice_short_name, $nature, $myis_active, $mygroup_id)
     {
-        $this->id=$myid;
-        $this->keyword=strtolower($mykeyword);
-        $this->description=$mydescription;
-        $this->link=$mylink;
-        $this->scope=$myscope;
-        $this->service_short_name=$myservice_short_name;
-        $this->nature=$nature;
-        $this->is_active=$myis_active;
-        $this->group_id=$mygroup_id;
-        $this->num_param=$this->computeNumParam($this->link);
+        $this->id = $myid;
+        $this->keyword = strtolower($mykeyword);
+        $this->description = $mydescription;
+        $this->link = $mylink;
+        $this->scope = $myscope;
+        $this->service_short_name = $myservice_short_name;
+        $this->nature = $nature;
+        $this->is_active = $myis_active;
+        $this->group_id = $mygroup_id;
+        $this->num_param = $this->computeNumParam($this->link);
     }
 
     /**
      * Accessors
      */
-    function getId()
+    public function getId()
     {
         return $this->id;
     }
-    function getKeyword()
+    public function getKeyword()
     {
         return $this->keyword;
     }
-    function getDescription()
+    public function getDescription()
     {
         return $this->description;
     }
-    function getLink()
+    public function getLink()
     {
         return $this->link;
     }
-    function getScope()
+    public function getScope()
     {
         return $this->scope;
     }
-    function getServiceShortName()
+    public function getServiceShortName()
     {
         return $this->service_short_name;
     }
-    function getNature()
+    public function getNature()
     {
         return $this->nature;
     }
-    function isActive()
+    public function isActive()
     {
         return $this->is_active;
     }
-    function getGroupId()
+    public function getGroupId()
     {
         return $this->group_id;
     }
     /**
      * @return bool true if this is a system reference (false if project reference)
      */
-    function isSystemReference()
+    public function isSystemReference()
     {
         return ($this->scope == 'S');
     }
@@ -148,33 +148,33 @@ class Reference
     /**
      * @see computeNumParam()
      */
-    function getNumParam()
+    public function getNumParam()
     {
         // Compute number of parameters if not already done
         if ($this->num_param == false) {
-            $this->num_param=$this->computeNumParam($this->link);
+            $this->num_param = $this->computeNumParam($this->link);
         }
         return $this->num_param;
     }
 
-    function setIsActive($my_is_active)
+    public function setIsActive($my_is_active)
     {
-        $this->is_active=$my_is_active;
+        $this->is_active = $my_is_active;
     }
 
-    function setGroupId($my_group_id)
+    public function setGroupId($my_group_id)
     {
-        $this->group_id=$my_group_id;
+        $this->group_id = $my_group_id;
     }
 
-    function setId($my_id)
+    public function setId($my_id)
     {
-        $this->id=$my_id;
+        $this->id = $my_id;
     }
 
-    function setDescription($my_description)
+    public function setDescription($my_description)
     {
-        $this->description=$my_description;
+        $this->description = $my_description;
     }
 
     public function setLink($link)
@@ -195,7 +195,7 @@ class Reference
      * @param array $args array of arguments (optional)
      * @param string $projname contains the project name (optional)
     */
-    function replaceLink($args = null, $projname = null)
+    public function replaceLink($args = null, $projname = null)
     {
         $this->link = str_replace('$0', $this->keyword, $this->link);
         if ($projname) {
@@ -203,12 +203,12 @@ class Reference
         }
         $this->link = str_replace('$group_id', $this->group_id, $this->link);
         if (is_array($args)) {
-            $count=count($args);
-            if ($count>9) {
-                $count=9;
+            $count = count($args);
+            if ($count > 9) {
+                $count = 9;
             }
-            for ($i=1; $i<=$count; $i++) {
-                $this->link = str_replace('$'.$i, urlencode($args[$i-1]), $this->link);
+            for ($i = 1; $i <= $count; $i++) {
+                $this->link = str_replace('$' . $i, urlencode($args[$i - 1]), $this->link);
             }
         }
     }
@@ -225,10 +225,10 @@ class Reference
      * @return int number of parameters needed to compute the link
      * @static
      */
-    function computeNumParam($link)
+    public function computeNumParam($link)
     {
-        for ($i=9; $i>0; $i--) {
-            if (strpos($link, '$'.$i)!==false) {
+        for ($i = 9; $i > 0; $i--) {
+            if (strpos($link, '$' . $i) !== false) {
                 return $i;
             }
         }
@@ -238,9 +238,9 @@ class Reference
     /**
      * @return ReferenceDao instance
      */
-    function &_getReferenceDao()
+    public function &_getReferenceDao()
     {
-        if (!is_a($this->referenceDao, 'ReferenceDao')) {
+        if (! is_a($this->referenceDao, 'ReferenceDao')) {
             $this->referenceDao = new ReferenceDao(CodendiDataAccess::instance());
         }
         return $this->referenceDao;

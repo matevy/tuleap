@@ -24,22 +24,22 @@ class FeedbackFormatter
     /**
      * @return string html
      */
-    function format(array $logs)
+    public function format(array $logs)
     {
         $html      = '';
         $old_level = null;
         $hp        = Codendi_HTMLPurifier::instance();
         foreach ($logs as $log) {
-            if (!is_null($old_level) && $old_level != $log['level']) {
+            if (! is_null($old_level) && $old_level != $log['level']) {
                 $html .= '</ul>';
             }
             if (is_null($old_level) || $old_level != $log['level']) {
                 $old_level = $log['level'];
-                $html .= '<ul class="feedback_'. $log['level'] .'">';
+                $html .= '<ul class="feedback_' . $log['level'] . '">';
             }
-            $html .= '<li>'. $hp->purify($log['msg'], $log['purify']) .'</li>';
+            $html .= '<li>' . $hp->purify($log['msg'], $log['purify']) . '</li>';
         }
-        if (!is_null($old_level)) {
+        if (! is_null($old_level)) {
             $html .= '</ul>';
         }
         return $html;

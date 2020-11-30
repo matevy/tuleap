@@ -18,6 +18,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class Tracker_Workflow_Trigger_FieldValue
 {
     private $field;
@@ -52,13 +55,13 @@ class Tracker_Workflow_Trigger_FieldValue
      */
     public function fetchFormattedForJson()
     {
-        return array(
+        return [
             'tracker_name' => $this->getField()->getTracker()->getName(),
             'field_id' => $this->getField()->getId(),
             'field_label' => $this->getField()->getLabel(),
             'field_value_id' => $this->getValue()->getId(),
             'field_value_label' => $this->getValue()->getLabel(),
-        );
+        ];
     }
 
     /**
@@ -68,21 +71,20 @@ class Tracker_Workflow_Trigger_FieldValue
      */
     public function getFieldData()
     {
-        return array(
+        return [
             $this->getField()->getId() => $this->getValue()->getId()
-        );
+        ];
     }
 
     /**
      * Return true if given artifact has the same value than current object
      *
-     * @param Tracker_Artifact $artifact
      * @return bool
      */
-    public function isSetForArtifact(Tracker_Artifact $artifact)
+    public function isSetForArtifact(Artifact $artifact)
     {
         $artifact_value = $artifact->getValue($this->getField());
-        if ($artifact_value && $artifact_value->getValue() == array($this->getValue()->getId())) {
+        if ($artifact_value && $artifact_value->getValue() == [$this->getValue()->getId()]) {
             return true;
         }
         return false;
@@ -97,14 +99,12 @@ class Tracker_Workflow_Trigger_FieldValue
      */
     public function getAsChangesetComment($condition)
     {
-        return $GLOBALS['Language']->getText(
-            'workflow_trigger_rules_processor',
-            'rule_comment_'.$condition,
-            array(
-                $this->getField()->getTracker()->getName(),
-                $this->getField()->getLabel(),
-                $this->getValue()->getLabel(),
-            )
-        );
+        $tracker = $this->getField()->getTracker();
+        assert($tracker instanceof \Tracker);
+        if ($condition === 'all_of') {
+            return sprintf(dgettext('tuleap-tracker', 'all of <strong>%1$s %2$s</strong> are set to <strong>%3$s</strong>'), $tracker->getName(), $this->getField()->getLabel(), $this->getValue()->getLabel());
+        }
+
+        return sprintf(dgettext('tuleap-tracker', 'at least one <strong>%1$s %2$s</strong> equals <strong>%3$s</strong>'), $tracker->getName(), $this->getField()->getLabel(), $this->getValue()->getLabel());
     }
 }

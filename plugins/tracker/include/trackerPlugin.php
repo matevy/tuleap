@@ -17,33 +17,53 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Laminas\HttpHandlerRunner\Emitter\SapiStreamEmitter;
 use Tuleap\Admin\AdminPageRenderer;
+use Tuleap\Admin\SiteAdministrationAddOption;
+use Tuleap\Admin\SiteAdministrationPluginOption;
+use Tuleap\Authentication\Scope\AuthenticationScopeBuilderFromClassNames;
 use Tuleap\BurningParrotCompatiblePageEvent;
 use Tuleap\CLI\CLICommandsCollector;
+use Tuleap\CLI\Events\GetWhitelistedKeys;
+use Tuleap\Cryptography\KeyFactory;
 use Tuleap\Dashboard\User\AtUserCreationDefaultWidgetsCreator;
 use Tuleap\DB\DBFactory;
 use Tuleap\DB\DBTransactionExecutorWithConnection;
+use Tuleap\Event\Events\ExportXmlProject;
 use Tuleap\Glyph\GlyphLocation;
 use Tuleap\Glyph\GlyphLocationsCollector;
 use Tuleap\Http\HTTPFactoryBuilder;
 use Tuleap\Http\Response\BinaryFileResponseBuilder;
 use Tuleap\Http\Server\SessionWriteCloseMiddleware;
+use Tuleap\InstanceBaseURLBuilder;
 use Tuleap\Instrument\Prometheus\CollectTuleapComputedMetrics;
+use Tuleap\Language\LocaleSwitcher;
 use Tuleap\layout\HomePage\StatisticsCollectionCollector;
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\layout\NewDropdown\NewDropdownProjectLinksCollector;
+use Tuleap\Mail\MailFilter;
+use Tuleap\Mail\MailLogger;
 use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupDisplayEvent;
 use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupPaneCollector;
 use Tuleap\Project\Admin\TemplatePresenter;
 use Tuleap\Project\Event\GetProjectWithTrackerAdministrationPermission;
+use Tuleap\Project\Event\GetUriFromCrossReference;
 use Tuleap\Project\Event\ProjectRegistrationActivateService;
+use Tuleap\Project\Event\ProjectXMLImportPreChecksEvent;
 use Tuleap\Project\HeartbeatsEntryCollection;
 use Tuleap\Project\PaginatedProjects;
+use Tuleap\Project\ProjectAccessChecker;
+use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
+use Tuleap\Project\XML\Export\ArchiveInterface;
 use Tuleap\Project\XML\Export\NoArchive;
+use Tuleap\Project\XML\Import\ExternalFieldsExtractor;
+use Tuleap\Project\XML\Import\ImportNotValidException;
+use Tuleap\Project\XML\ServiceEnableForXmlImportRetriever;
+use Tuleap\Queue\QueueFactory;
 use Tuleap\Queue\WorkerEvent;
 use Tuleap\Request\CurrentPage;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\REST\BasicAuthentication;
-use Tuleap\REST\ProjectAuthorization;
 use Tuleap\REST\RESTCurrentUserMiddleware;
 use Tuleap\REST\TuleapRESTCORSMiddleware;
 use Tuleap\REST\UserManager as RESTUserManager;
@@ -54,7 +74,9 @@ use Tuleap\Tracker\Admin\ArtifactDeletion\ArtifactsDeletionConfigDAO;
 use Tuleap\Tracker\Admin\ArtifactLinksUsageDao;
 use Tuleap\Tracker\Admin\ArtifactLinksUsageDuplicator;
 use Tuleap\Tracker\Admin\ArtifactLinksUsageUpdater;
-use Tuleap\Tracker\Admin\GlobalAdminController;
+use Tuleap\Tracker\Admin\GlobalAdmin\ArtifactLinks\ArtifactLinksController;
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\Artifact\ArtifactsDeletion\ArchiveAndDeleteArtifactTaskBuilder;
 use Tuleap\Tracker\Artifact\ArtifactsDeletion\ArtifactDeletor;
 use Tuleap\Tracker\Artifact\ArtifactsDeletion\ArtifactsDeletionDAO;
 use Tuleap\Tracker\Artifact\ArtifactsDeletion\ArtifactsDeletionRemover;
@@ -63,6 +85,9 @@ use Tuleap\Tracker\Artifact\ArtifactsDeletion\PendingArtifactRemovalDao;
 use Tuleap\Tracker\Artifact\Changeset\PostCreation\ActionsRunnerDao;
 use Tuleap\Tracker\Artifact\Changeset\PostCreation\AsynchronousActionsRunner;
 use Tuleap\Tracker\Artifact\Changeset\PostCreation\AsynchronousSupervisor;
+use Tuleap\Tracker\Artifact\Changeset\TextDiff\ChangesetsForDiffRetriever;
+use Tuleap\Tracker\Artifact\Changeset\TextDiff\DiffProcessor;
+use Tuleap\Tracker\Artifact\Changeset\TextDiff\TextDiffRetriever;
 use Tuleap\Tracker\Artifact\InvertCommentsController;
 use Tuleap\Tracker\Artifact\InvertDisplayChangesController;
 use Tuleap\Tracker\Artifact\LatestHeartbeatsCollector;
@@ -70,7 +95,33 @@ use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfig;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfigController;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfigDao;
 use Tuleap\Tracker\Artifact\RecentlyVisited\RecentlyVisitedDao;
+use Tuleap\Tracker\Artifact\Renderer\ListPickerIncluder;
 use Tuleap\Tracker\Config\ConfigController;
+use Tuleap\Tracker\Creation\DefaultTemplatesCollectionBuilder;
+use Tuleap\Tracker\Creation\JiraImporter\AsynchronousJiraRunner;
+use Tuleap\Tracker\Creation\JiraImporter\AsyncJiraScheduler;
+use Tuleap\Tracker\Creation\JiraImporter\ClientWrapperBuilder;
+use Tuleap\Tracker\Creation\JiraImporter\FromJiraTrackerCreator;
+use Tuleap\Tracker\Creation\JiraImporter\Import\Artifact\Attachment\AttachmentCleaner;
+use Tuleap\Tracker\Creation\JiraImporter\Import\Artifact\JiraTuleapUsersMapping;
+use Tuleap\Tracker\Creation\JiraImporter\Import\Artifact\JiraUserOnTuleapCache;
+use Tuleap\Tracker\Creation\JiraImporter\Import\ImportNotifier\CancellationOfJiraImportNotifier;
+use Tuleap\Tracker\Creation\JiraImporter\Import\ImportNotifier\JiraErrorImportNotifier;
+use Tuleap\Tracker\Creation\JiraImporter\Import\ImportNotifier\JiraImportNotifier;
+use Tuleap\Tracker\Creation\JiraImporter\Import\ImportNotifier\JiraSuccessImportNotifier;
+use Tuleap\Tracker\Creation\JiraImporter\JiraProjectListController;
+use Tuleap\Tracker\Creation\JiraImporter\JiraRunner;
+use Tuleap\Tracker\Creation\JiraImporter\JiraTrackersListController;
+use Tuleap\Tracker\Creation\JiraImporter\PendingJiraImportBuilder;
+use Tuleap\Tracker\Creation\JiraImporter\PendingJiraImportCleaner;
+use Tuleap\Tracker\Creation\JiraImporter\PendingJiraImportDao;
+use Tuleap\Tracker\Creation\TrackerCreationBreadCrumbsBuilder;
+use Tuleap\Tracker\Creation\TrackerCreationController;
+use Tuleap\Tracker\Creation\TrackerCreationDataChecker;
+use Tuleap\Tracker\Creation\TrackerCreationPermissionChecker;
+use Tuleap\Tracker\Creation\TrackerCreationPresenterBuilder;
+use Tuleap\Tracker\Creation\TrackerCreationProcessorController;
+use Tuleap\Tracker\Creation\TrackerCreator;
 use Tuleap\Tracker\ForgeUserGroupPermission\TrackerAdminAllProjects;
 use Tuleap\Tracker\FormElement\BurndownCacheDateRetriever;
 use Tuleap\Tracker\FormElement\BurndownCalculator;
@@ -82,6 +133,9 @@ use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureEditor;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenterFactory;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureUsagePresenterFactory;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureValidator;
+use Tuleap\Tracker\FormElement\Field\Burndown\BurndownFieldDao;
+use Tuleap\Tracker\FormElement\Field\Computed\ComputedFieldDao;
+use Tuleap\Tracker\FormElement\Field\Computed\ComputedFieldDaoCache;
 use Tuleap\Tracker\FormElement\Field\File\AttachmentController;
 use Tuleap\Tracker\FormElement\Field\File\Upload\FileOngoingUploadDao;
 use Tuleap\Tracker\FormElement\Field\File\Upload\FileUploadCleaner;
@@ -96,6 +150,8 @@ use Tuleap\Tracker\FormElement\SystemEvent\SystemEvent_BURNDOWN_GENERATE;
 use Tuleap\Tracker\Hierarchy\HierarchyDAO;
 use Tuleap\Tracker\Import\Spotter;
 use Tuleap\Tracker\Legacy\Inheritor;
+use Tuleap\Tracker\NewDropdown\TrackerInNewDropdownDao;
+use Tuleap\Tracker\NewDropdown\TrackerInNewDropdownRetriever;
 use Tuleap\Tracker\Notifications\CollectionOfUgroupToBeNotifiedPresenterBuilder;
 use Tuleap\Tracker\Notifications\CollectionOfUserInvolvedInNotificationPresenterBuilder;
 use Tuleap\Tracker\Notifications\GlobalNotificationsAddressesBuilder;
@@ -127,6 +183,7 @@ use Tuleap\Tracker\Reference\ReferenceCreator;
 use Tuleap\Tracker\Report\TrackerReportConfig;
 use Tuleap\Tracker\Report\TrackerReportConfigController;
 use Tuleap\Tracker\Report\TrackerReportConfigDao;
+use Tuleap\Tracker\REST\OAuth2\OAuth2TrackerReadScope;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
 use Tuleap\Tracker\Service\ServiceActivator;
@@ -139,16 +196,16 @@ use Tuleap\Tracker\Webhook\WebhookFactory;
 use Tuleap\Tracker\Widget\ProjectRendererWidgetXMLImporter;
 use Tuleap\Tracker\Workflow\WorkflowMenuTabPresenterBuilder;
 use Tuleap\Tracker\Workflow\WorkflowTransitionController;
-use Tuleap\Tracker\XMLTemplatesController;
+use Tuleap\Tracker\XML\Importer\TrackerImporterUser;
 use Tuleap\Upload\FileBeingUploadedLocker;
 use Tuleap\Upload\FileBeingUploadedWriter;
 use Tuleap\Upload\FileUploadController;
 use Tuleap\User\History\HistoryEntryCollection;
 use Tuleap\User\History\HistoryRetriever;
+use Tuleap\User\OAuth2\Scope\OAuth2ScopeBuilderCollector;
 use Tuleap\User\User_ForgeUserGroupPermissionsFactory;
 use Tuleap\Widget\Event\ConfigureAtXMLImport;
 use Tuleap\Widget\Event\GetPublicAreas;
-use Zend\HttpHandlerRunner\Emitter\SapiStreamEmitter;
 
 require_once __DIR__ . '/constants.php';
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -157,7 +214,7 @@ require_once __DIR__ . '/../include/manual_autoload.php';
 /**
  * trackerPlugin
  */
-class trackerPlugin extends Plugin
+class trackerPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 {
 
     public const EMAILGATEWAY_TOKEN_ARTIFACT_UPDATE      = 'forge__artifacts';
@@ -170,7 +227,7 @@ class trackerPlugin extends Plugin
     {
         parent::__construct($id);
         $this->setScope(self::SCOPE_PROJECT);
-        bindtextdomain('tuleap-tracker', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-tracker', __DIR__ . '/../site-content');
 
         $this->addHook('javascript_file');
         $this->addHook('cssfile', 'cssFile', false);
@@ -186,7 +243,6 @@ class trackerPlugin extends Plugin
         $this->addHook('permission_get_name', 'permission_get_name', false);
         $this->addHook('permission_get_object_type', 'permission_get_object_type', false);
         $this->addHook('permission_get_object_name', 'permission_get_object_name', false);
-        $this->addHook('permission_get_object_fullname', 'permission_get_object_fullname', false);
         $this->addHook('permission_user_allowed_to_change', 'permission_user_allowed_to_change', false);
         $this->addHook(Event::SYSTEM_EVENT_GET_CUSTOM_QUEUES);
         $this->addHook(Event::SYSTEM_EVENT_GET_TYPES_FOR_CUSTOM_QUEUE);
@@ -207,25 +263,23 @@ class trackerPlugin extends Plugin
         $this->addHook('codendi_daily_start', 'codendi_daily_start', false);
         $this->addHook('fill_project_history_sub_events', 'fillProjectHistorySubEvents', false);
         $this->addHook(Event::IMPORT_XML_PROJECT);
-        $this->addHook(Event::IMPORT_XML_IS_PROJECT_VALID);
+        $this->addHook(ProjectXMLImportPreChecksEvent::NAME);
         $this->addHook(Event::COLLECT_ERRORS_WITHOUT_IMPORTING_XML_PROJECT);
         $this->addHook(Event::USER_MANAGER_GET_USER_INSTANCE);
         $this->addHook('plugin_statistics_service_usage');
         $this->addHook(Event::REST_RESOURCES);
-        $this->addHook(Event::REST_GET_PROJECT_TRACKERS);
-        $this->addHook(Event::REST_OPTIONS_PROJECT_TRACKERS);
         $this->addHook(Event::REST_PROJECT_RESOURCES);
+        $this->addHook(GetUriFromCrossReference::NAME);
 
         $this->addHook(Event::BACKEND_ALIAS_GET_ALIASES);
         $this->addHook(Event::GET_PROJECTID_FROM_URL);
-        $this->addHook(Event::EXPORT_XML_PROJECT);
+        $this->addHook(ExportXmlProject::NAME);
         $this->addHook(Event::GET_REFERENCE);
         $this->addHook(Event::CAN_USER_ACCESS_UGROUP_INFO);
         $this->addHook(Event::SERVICES_TRUNCATED_EMAILS);
-        $this->addHook('site_admin_option_hook');
+        $this->addHook(SiteAdministrationAddOption::NAME);
         $this->addHook(BurningParrotCompatiblePageEvent::NAME);
         $this->addHook(Event::BURNING_PARROT_GET_STYLESHEETS);
-        $this->addHook(Event::BURNING_PARROT_GET_JAVASCRIPT_FILES);
         $this->addHook(PermissionPerGroupDisplayEvent::NAME);
         $this->addHook(Event::SYSTEM_EVENT_GET_TYPES_FOR_DEFAULT_QUEUE);
         $this->addHook(User_ForgeUserGroupPermissionsFactory::GET_PERMISSION_DELEGATION);
@@ -270,19 +324,24 @@ class trackerPlugin extends Plugin
             $this->addHook(Statistics_Event::FREQUENCE_STAT_SAMPLE);
         }
 
+        $this->addHook(GetWhitelistedKeys::NAME);
+
         $this->addHook(Event::LIST_DELETED_TRACKERS);
         $this->addHook(TemplatePresenter::EVENT_ADDITIONAL_ADMIN_BUTTONS);
 
         $this->addHook(GlyphLocationsCollector::NAME);
         $this->addHook(HeartbeatsEntryCollection::NAME);
         $this->addHook(StatisticsCollectionCollector::NAME);
+        $this->addHook(ServiceEnableForXmlImportRetriever::NAME);
+        $this->addHook(OAuth2ScopeBuilderCollector::NAME);
+        $this->addHook(NewDropdownProjectLinksCollector::NAME);
 
         return parent::getHooksAndCallbacks();
     }
 
     public function getPluginInfo()
     {
-        if (!is_a($this->pluginInfo, 'trackerPluginInfo')) {
+        if (! is_a($this->pluginInfo, 'trackerPluginInfo')) {
             include_once('trackerPluginInfo.class.php');
             $this->pluginInfo = new trackerPluginInfo($this);
         }
@@ -308,7 +367,7 @@ class trackerPlugin extends Plugin
         $this->getAsynchronousSupervisor($params['logger'])->runSystemCheck();
     }
 
-    private function getAsynchronousSupervisor(Logger $logger)
+    private function getAsynchronousSupervisor(\Psr\Log\LoggerInterface $logger)
     {
         return new AsynchronousSupervisor(
             $logger,
@@ -319,110 +378,110 @@ class trackerPlugin extends Plugin
     /**
      * @see Statistics_Event::FREQUENCE_STAT_ENTRIES
      */
-    public function plugin_statistics_frequence_stat_entries($params)
+    public function plugin_statistics_frequence_stat_entries($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['entries'][$this->getServiceShortname()] = 'Opened artifacts';
+    }
+
+    public function getUriFromCrossReference(GetUriFromCrossReference $event): void
+    {
+        if ($event->getTargetType() === Artifact::REFERENCE_NATURE) {
+            $artifact = Tracker_ArtifactFactory::instance()->getArtifactById($event->getSourceId());
+            if ($artifact) {
+                $event->setUri($artifact->getUri());
+            }
+        }
     }
 
     /**
      * @see Statistics_Event::FREQUENCE_STAT_SAMPLE
      */
-    public function plugin_statistics_frequence_stat_sample($params)
+    public function plugin_statistics_frequence_stat_sample($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($params['character'] === $this->getServiceShortname()) {
             $params['sample'] = new Tracker_Sample();
         }
     }
 
-    public function site_admin_option_hook($params)
+    public function siteAdministrationAddOption(SiteAdministrationAddOption $site_administration_add_option): void
     {
-        $params['plugins'][] = array(
-            'label' => $GLOBALS['Language']->getText('plugin_tracker', 'descriptor_name'),
-            'href'  => $this->getPluginPath() . '/config.php'
+        $site_administration_add_option->addPluginOption(
+            SiteAdministrationPluginOption::withShortname(
+                dgettext('tuleap-tracker', 'Tracker'),
+                $this->getPluginPath() . '/config.php',
+                'admin-tracker'
+            )
         );
     }
 
     public function burningParrotCompatiblePage(BurningParrotCompatiblePageEvent $event)
     {
-        if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath().'/config.php') === 0 ||
+        $request = HTTPRequest::instance();
+
+        if (
+            strpos($_SERVER['REQUEST_URI'], $this->getPluginPath() . '/config.php') === 0 ||
+            $this->isInTrackersHomepage() ||
             $this->isInDashboard()
         ) {
             $event->setIsInBurningParrotCompatiblePage();
         }
     }
 
+    private function isInTrackersHomepage(): bool
+    {
+        if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) !== 0) {
+            return false;
+        }
+
+        parse_str($_SERVER['QUERY_STRING'], $output);
+
+        return array_keys($output) === ['group_id'];
+    }
+
     public function cssFile()
     {
         $include_tracker_css_file = false;
-        EventManager::instance()->processEvent(TRACKER_EVENT_INCLUDE_CSS_FILE, array('include_tracker_css_file' => &$include_tracker_css_file));
+        EventManager::instance()->processEvent(TRACKER_EVENT_INCLUDE_CSS_FILE, ['include_tracker_css_file' => &$include_tracker_css_file]);
         // Only show the stylesheet if we're actually in the tracker pages.
         // This stops styles inadvertently clashing with the main site.
-        if ($include_tracker_css_file ||
+        if (
+            $include_tracker_css_file ||
             strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0 ||
             strpos($_SERVER['REQUEST_URI'], '/my/') === 0 ||
             strpos($_SERVER['REQUEST_URI'], '/projects/') === 0 ||
             strpos($_SERVER['REQUEST_URI'], '/widgets/') === 0
         ) {
-            $include_assets = new IncludeAssets(
-                TRACKER_BASE_DIR . '/../www/themes/FlamingParrot/assets',
-                TRACKER_BASE_URL . '/themes/FlamingParrot/assets'
-            );
+            $style_css_url = $this->getAssets()->getFileURL('style-fp.css');
+            $print_css_url = $this->getAssets()->getFileURL('print.css');
 
-            $style_css_url = $include_assets->getFileURL('style.css');
-            $print_css_url = $include_assets->getFileURL('print.css');
-
-            echo '<link rel="stylesheet" type="text/css" href="'.$style_css_url.'" />';
-            echo '<link rel="stylesheet" type="text/css" href="'.$print_css_url.'" media="print" />';
-            if (file_exists($this->getThemePath().'/css/ieStyle.css')) {
-                $ie_style_css_url = $include_assets->getFileURL('ieStyle.css');
-                echo '<!--[if lte IE 8]><link rel="stylesheet" type="text/css" href="'.$ie_style_css_url.'" /><![endif]-->';
-            }
+            echo '<link rel="stylesheet" type="text/css" href="' . $style_css_url . '" />';
+            echo '<link rel="stylesheet" type="text/css" href="' . $print_css_url . '" media="print" />';
         }
     }
 
-    public function burning_parrot_get_stylesheets($params)
+    public function burning_parrot_get_stylesheets($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $include_tracker_css_file = false;
-        EventManager::instance()->processEvent(TRACKER_EVENT_INCLUDE_CSS_FILE, array('include_tracker_css_file' => &$include_tracker_css_file));
+        EventManager::instance()->processEvent(TRACKER_EVENT_INCLUDE_CSS_FILE, ['include_tracker_css_file' => &$include_tracker_css_file]);
 
-        if ($include_tracker_css_file ||
-            strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0
-        ) {
-            $theme_include_assets    = new IncludeAssets(
-                __DIR__ . '/../www/themes/BurningParrot/assets',
-                $this->getThemePath() . '/assets'
-            );
+        if ($include_tracker_css_file || strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0) {
             $variant                 = $params['variant'];
-            $params['stylesheets'][] = $theme_include_assets->getFileURL('style-' . $variant->getName() . '.css');
+            $params['stylesheets'][] = $this->getAssets()->getFileURL(
+                'tracker-bp-' . $variant->getName() . '.css'
+            );
         }
     }
 
-    public function javascript_file($params)
+    public function javascript_file($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath() . '/config.php') === 0) {
-            echo '<script type="text/javascript" src="'.$this->getPluginPath().'/scripts/admin-nature.js"></script>'.PHP_EOL;
-        }
         if ($this->currentRequestIsForPlugin()) {
-            echo $this->getMinifiedAssetHTML().PHP_EOL;
-        }
-    }
-
-    public function burning_parrot_get_javascript_files(array $params)
-    {
-        if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath() . '/config.php') === 0) {
-            $params['javascript_files'][] = $this->getPluginPath() .'/scripts/admin-nature.js';
-            $params['javascript_files'][] = '/scripts/tuleap/manage-allowed-projects-on-resource.js';
+            echo $this->getAssets()->getHTMLSnippet('tracker.js');
         }
     }
 
     public function permissionPerGroupDisplayEvent(PermissionPerGroupDisplayEvent $event)
     {
-        $include_assets = new IncludeAssets(
-            TRACKER_BASE_DIR . '/../www/assets',
-            $this->getPluginPath() . '/assets'
-        );
-
-        $event->addJavascript($include_assets->getFileURL('tracker-permissions-per-group.js'));
+        $event->addJavascript($this->getAssets()->getFileURL('tracker-permissions-per-group.js'));
     }
 
     /**
@@ -433,38 +492,38 @@ class trackerPlugin extends Plugin
         switch ($params['type']) {
             case SystemEvent_TRACKER_V3_MIGRATION::NAME:
                 $params['class']        = 'SystemEvent_TRACKER_V3_MIGRATION';
-                $params['dependencies'] = array(
+                $params['dependencies'] = [
                     $this->getMigrationManager(),
-                );
+                ];
                 break;
             case 'Tuleap\\Tracker\\FormElement\\SystemEvent\\' . SystemEvent_BURNDOWN_DAILY::NAME:
                 $params['class']        = 'Tuleap\\Tracker\\FormElement\\SystemEvent\\' . SystemEvent_BURNDOWN_DAILY::NAME;
-                $params['dependencies'] = array(
-                    new Tracker_FormElement_Field_BurndownDao(),
-                    new FieldCalculator(new BurndownCalculator(new Tracker_FormElement_Field_ComputedDao())),
-                    new Tracker_FormElement_Field_ComputedDaoCache(new Tracker_FormElement_Field_ComputedDao()),
-                    new BackendLogger(),
+                $params['dependencies'] = [
+                    new BurndownFieldDao(),
+                    new FieldCalculator(new BurndownCalculator(new ComputedFieldDao())),
+                    new ComputedFieldDaoCache(new ComputedFieldDao()),
+                    BackendLogger::getDefaultLogger(),
                     new BurndownCacheDateRetriever()
-                );
+                ];
                 break;
             case 'Tuleap\\Tracker\\FormElement\\SystemEvent\\' . SystemEvent_BURNDOWN_GENERATE::NAME:
                 $params['class']        = 'Tuleap\\Tracker\\FormElement\\SystemEvent\\' . SystemEvent_BURNDOWN_GENERATE::NAME;
-                $params['dependencies'] = array(
+                $params['dependencies'] = [
                     Tracker_ArtifactFactory::instance(),
                     new SemanticTimeframeBuilder(new SemanticTimeframeDao(), Tracker_FormElementFactory::instance()),
-                    new Tracker_FormElement_Field_BurndownDao(),
-                    new FieldCalculator(new BurndownCalculator(new Tracker_FormElement_Field_ComputedDao())),
-                    new Tracker_FormElement_Field_ComputedDaoCache(new Tracker_FormElement_Field_ComputedDao()),
-                    new BackendLogger(),
+                    new BurndownFieldDao(),
+                    new FieldCalculator(new BurndownCalculator(new ComputedFieldDao())),
+                    new ComputedFieldDaoCache(new ComputedFieldDao()),
+                    BackendLogger::getDefaultLogger(),
                     new BurndownCacheDateRetriever()
-                );
+                ];
                 break;
             default:
                 break;
         }
     }
 
-    public function service_classnames(&$params)
+    public function service_classnames(&$params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['classnames'][$this->getServiceShortname()] = ServiceTracker::class;
     }
@@ -479,8 +538,8 @@ class trackerPlugin extends Plugin
         // TODO: Move this in ServiceTracker::displayHeader()
         include $GLOBALS['Language']->getContent('script_locale', null, 'tracker');
         echo PHP_EOL;
-        echo "codendi.tracker = codendi.tracker || { };".PHP_EOL;
-        echo "codendi.tracker.base_url = '". TRACKER_BASE_URL ."/';".PHP_EOL;
+        echo "codendi.tracker = codendi.tracker || { };" . PHP_EOL;
+        echo "codendi.tracker.base_url = '" . TRACKER_BASE_URL . "/';" . PHP_EOL;
     }
 
     public function toggle($params)
@@ -489,7 +548,7 @@ class trackerPlugin extends Plugin
             Toggler::togglePreference($params['user'], $params['id']);
             $params['done'] = true;
         } elseif (strpos($params['id'], 'tracker_report_query_') === 0) {
-            $report_id = (int)substr($params['id'], strlen('tracker_report_query_'));
+            $report_id = (int) substr($params['id'], strlen('tracker_report_query_'));
             $report_factory = Tracker_ReportFactory::instance();
             if (($report = $report_factory->getReportById($report_id, $params['user']->getid())) && $report->userCanUpdate($params['user'])) {
                 $report->toggleQueryDisplay();
@@ -509,7 +568,7 @@ class trackerPlugin extends Plugin
     *
     * @param Array $params
     */
-    public function register_project_creation($params)
+    public function register_project_creation($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($params['project_creation_data']->projectShouldInheritFromTemplate()) {
             $tracker_manager = new TrackerManager();
@@ -520,9 +579,10 @@ class trackerPlugin extends Plugin
             $project         = $project_manager->getProject($params['group_id']);
             $legacy_services = $params['legacy_service_usage'];
 
-            if (! $this->isRestricted() &&
-                ! $this->isLegacyTrackerV3StillUsed($legacy_services)
-                && TrackerV3::instance()->available()
+            if (
+                ! $this->isRestricted() &&
+                ! $this->isLegacyTrackerV3StillUsed($legacy_services) &&
+                TrackerV3::instance()->available()
             ) {
                 $inheritor = new Inheritor(
                     new ArtifactTypeFactory($template),
@@ -537,39 +597,39 @@ class trackerPlugin extends Plugin
         }
     }
 
-    function permission_get_name($params)
+    public function permission_get_name($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        if (!$params['name']) {
+        if (! $params['name']) {
             switch ($params['permission_type']) {
                 case 'PLUGIN_TRACKER_FIELD_SUBMIT':
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_field_submit');
+                    $params['name'] = dgettext('tuleap-tracker', 'Can submit tracker field');
                     break;
                 case 'PLUGIN_TRACKER_FIELD_READ':
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_field_read');
+                    $params['name'] = dgettext('tuleap-tracker', 'Can read tracker field');
                     break;
                 case 'PLUGIN_TRACKER_FIELD_UPDATE':
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_field_update');
+                    $params['name'] = dgettext('tuleap-tracker', 'Can update tracker field');
                     break;
                 case Tracker::PERMISSION_SUBMITTER_ONLY:
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_submitter_only_access');
+                    $params['name'] = dgettext('tuleap-tracker', 'Access to tracker artifacts the user submitted');
                     break;
                 case Tracker::PERMISSION_SUBMITTER:
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_submitter_access');
+                    $params['name'] = dgettext('tuleap-tracker', 'Access to tracker artifacts submitted by group');
                     break;
                 case Tracker::PERMISSION_ASSIGNEE:
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_assignee_access');
+                    $params['name'] = dgettext('tuleap-tracker', 'Access to tracker artifacts assigned to group');
                     break;
                 case Tracker::PERMISSION_FULL:
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_full_access');
+                    $params['name'] = dgettext('tuleap-tracker', 'Access to all tracker artifacts');
                     break;
                 case Tracker::PERMISSION_ADMIN:
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_admin');
+                    $params['name'] = dgettext('tuleap-tracker', 'Admin of the tracker');
                     break;
                 case 'PLUGIN_TRACKER_ARTIFACT_ACCESS':
-                    $params['name'] = $GLOBALS['Language']->getText('plugin_tracker_permissions', 'plugin_tracker_artifact_access');
+                    $params['name'] = dgettext('tuleap-tracker', 'Access to an artifact');
                     break;
                 case 'PLUGIN_TRACKER_WORKFLOW_TRANSITION':
-                    $params['name'] = $GLOBALS['Language']->getText('workflow_admin', 'permissions_transition');
+                    $params['name'] = dgettext('tuleap-tracker', 'Can make the transition');
                     break;
                 default:
                     break;
@@ -577,7 +637,7 @@ class trackerPlugin extends Plugin
         }
     }
 
-    function permission_get_object_type($params)
+    public function permission_get_object_type($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $type = $this->getObjectTypeFromPermissions($params);
         if ($type != false) {
@@ -585,7 +645,7 @@ class trackerPlugin extends Plugin
         }
     }
 
-    function getObjectTypeFromPermissions($params)
+    public function getObjectTypeFromPermissions($params)
     {
         switch ($params['permission_type']) {
             case 'PLUGIN_TRACKER_FIELD_SUBMIT':
@@ -606,31 +666,31 @@ class trackerPlugin extends Plugin
         return false;
     }
 
-    function permission_get_object_name($params)
+    public function permission_get_object_name($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        if (!$params['object_name']) {
+        if (! $params['object_name']) {
             $type = $this->getObjectTypeFromPermissions($params);
-            if (in_array($params['permission_type'], array(Tracker::PERMISSION_ADMIN, Tracker::PERMISSION_FULL, Tracker::PERMISSION_SUBMITTER, Tracker::PERMISSION_ASSIGNEE, Tracker::PERMISSION_SUBMITTER_ONLY, 'PLUGIN_TRACKER_FIELD_SUBMIT', 'PLUGIN_TRACKER_FIELD_READ', 'PLUGIN_TRACKER_FIELD_UPDATE', 'PLUGIN_TRACKER_ARTIFACT_ACCESS'))) {
+            if (in_array($params['permission_type'], [Tracker::PERMISSION_ADMIN, Tracker::PERMISSION_FULL, Tracker::PERMISSION_SUBMITTER, Tracker::PERMISSION_ASSIGNEE, Tracker::PERMISSION_SUBMITTER_ONLY, 'PLUGIN_TRACKER_FIELD_SUBMIT', 'PLUGIN_TRACKER_FIELD_READ', 'PLUGIN_TRACKER_FIELD_UPDATE', 'PLUGIN_TRACKER_ARTIFACT_ACCESS'])) {
                 $object_id = $params['object_id'];
                 if ($type == 'tracker') {
-                    $ret = (string)$object_id;
+                    $ret = (string) $object_id;
                     if ($tracker = TrackerFactory::instance()->getTrackerById($object_id)) {
                         $params['object_name'] = $tracker->getName();
                     }
                 } elseif ($type == 'field') {
-                    $ret = (string)$object_id;
+                    $ret = (string) $object_id;
                     if ($field = Tracker_FormElementFactory::instance()->getFormElementById($object_id)) {
                         $ret     = $field->getLabel();
                         $tracker = $field->getTracker();
                         if ($tracker !== null) {
-                            $ret .= ' ('. $tracker->getName() .')';
+                            $ret .= ' (' . $tracker->getName() . ')';
                         }
                     }
                     $params['object_name'] =  $ret;
                 } elseif ($type == 'artifact') {
-                    $ret = (string)$object_id;
+                    $ret = (string) $object_id;
                     if ($a  = Tracker_ArtifactFactory::instance()->getArtifactById($object_id)) {
-                        $ret = 'art #'. $a->getId();
+                        $ret = 'art #' . $a->getId();
                         $semantics = $a->getTracker()
                                        ->getTrackerSemanticManager()
                                        ->getSemantics();
@@ -649,16 +709,12 @@ class trackerPlugin extends Plugin
         }
     }
 
-    function permission_get_object_fullname($params)
+    //phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
+    public $_cached_permission_user_allowed_to_change;
+    public function permission_user_allowed_to_change($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $this->permission_get_object_name($params);
-    }
-
-    var $_cached_permission_user_allowed_to_change;
-    function permission_user_allowed_to_change($params)
-    {
-        if (!$params['allowed']) {
-            $allowed = array(
+        if (! $params['allowed']) {
+            $allowed = [
                 Tracker::PERMISSION_ADMIN,
                 Tracker::PERMISSION_FULL,
                 Tracker::PERMISSION_SUBMITTER,
@@ -669,12 +725,12 @@ class trackerPlugin extends Plugin
                 'PLUGIN_TRACKER_FIELD_UPDATE',
                 'PLUGIN_TRACKER_ARTIFACT_ACCESS',
                 'PLUGIN_TRACKER_WORKFLOW_TRANSITION',
-            );
+            ];
             if (in_array($params['permission_type'], $allowed)) {
                 $group_id  = $params['group_id'];
                 $object_id = $params['object_id'];
                 $type      = $this->getObjectTypeFromPermissions($params);
-                if (!isset($this->_cached_permission_user_allowed_to_change[$type][$object_id])) {
+                if (! isset($this->_cached_permission_user_allowed_to_change[$type][$object_id])) {
                     switch ($type) {
                         case 'tracker':
                             if ($tracker = TrackerFactory::instance()->getTrackerById($object_id)) {
@@ -706,14 +762,14 @@ class trackerPlugin extends Plugin
         }
     }
 
-    public function get_available_reference_natures($params)
+    public function get_available_reference_natures($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $natures = array(Tracker_Artifact::REFERENCE_NATURE => array('keyword' => 'artifact',
-                                                                     'label'   => 'Artifact Tracker v5'));
+        $natures = [Artifact::REFERENCE_NATURE => ['keyword' => 'artifact',
+                                                   'label'   => 'Artifact Tracker v5']];
         $params['natures'] = array_merge($params['natures'], $natures);
     }
 
-    public function get_artifact_reference_group_id($params)
+    public function get_artifact_reference_group_id($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $artifact = Tracker_ArtifactFactory::instance()->getArtifactByid($params['artifact_id']);
         if ($artifact) {
@@ -722,7 +778,7 @@ class trackerPlugin extends Plugin
         }
     }
 
-    public function set_artifact_reference_group_id($params)
+    public function set_artifact_reference_group_id($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $reference = $params['reference'];
         if ($this->isDefaultReferenceUrl($reference)) {
@@ -736,10 +792,10 @@ class trackerPlugin extends Plugin
 
     private function isDefaultReferenceUrl(Reference $reference)
     {
-        return $reference->getLink() === TRACKER_BASE_URL. '/?&aid=$1&group_id=$group_id';
+        return $reference->getLink() === TRACKER_BASE_URL . '/?&aid=$1&group_id=$group_id';
     }
 
-    public function build_reference($params)
+    public function build_reference($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $row           = $params['row'];
         $params['ref'] = new Reference(
@@ -749,7 +805,7 @@ class trackerPlugin extends Plugin
             $row['link'],
             $row['scope'],
             $this->getServiceShortname(),
-            Tracker_Artifact::REFERENCE_NATURE,
+            Artifact::REFERENCE_NATURE,
             $row['is_active'],
             $row['group_id']
         );
@@ -757,28 +813,29 @@ class trackerPlugin extends Plugin
 
     public function referenceGetTooltipContentEvent(Tuleap\Reference\ReferenceGetTooltipContentEvent $event)
     {
-        if ($event->getReference()->getServiceShortName() === self::SERVICE_SHORTNAME && $event->getReference()->getNature() === Tracker_Artifact::REFERENCE_NATURE) {
+        if ($event->getReference()->getServiceShortName() === self::SERVICE_SHORTNAME && $event->getReference()->getNature() === Artifact::REFERENCE_NATURE) {
             $aid = (int) $event->getValue();
             if ($artifact = Tracker_ArtifactFactory::instance()->getArtifactById($aid)) {
                 if ($artifact && $artifact->getTracker()->isActive()) {
                     $event->setOutput($artifact->fetchTooltip($event->getUser()));
                 } else {
-                    $event->setOutput($GLOBALS['Language']->getText('plugin_tracker_common_type', 'artifact_not_exist'));
+                    $event->setOutput(dgettext('tuleap-tracker', 'This artifact does not exist.'));
                 }
             }
         }
     }
 
-    public function url_verification_instance($params)
+    public function url_verification_instance($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $request_uri = $_SERVER['REQUEST_URI'];
-        if (strpos($request_uri, $this->getPluginPath()) === 0 &&
-            strpos($request_uri, $this->getPluginPath().'/notifications/') !== 0 &&
-            strpos($request_uri, $this->getPluginPath().'/webhooks/') !== 0 &&
-            strpos($request_uri, $this->getPluginPath().'/workflow/') !== 0 &&
-            strpos($request_uri, $this->getPluginPath().ByGroupController::URL.'/') !== 0 &&
-            strpos($request_uri, $this->getPluginPath().ByFieldController::URL.'/') !== 0 &&
-            strpos($request_uri, $this->getPluginPath().PermissionsOnFieldsUpdateController::URL.'/') !== 0
+        if (
+            strpos($request_uri, $this->getPluginPath()) === 0 &&
+            strpos($request_uri, $this->getPluginPath() . '/notifications/') !== 0 &&
+            strpos($request_uri, $this->getPluginPath() . '/webhooks/') !== 0 &&
+            strpos($request_uri, $this->getPluginPath() . '/workflow/') !== 0 &&
+            strpos($request_uri, $this->getPluginPath() . ByGroupController::URL . '/') !== 0 &&
+            strpos($request_uri, $this->getPluginPath() . ByFieldController::URL . '/') !== 0 &&
+            strpos($request_uri, $this->getPluginPath() . PermissionsOnFieldsUpdateController::URL . '/') !== 0
         ) {
             $params['url_verification'] = new Tracker_URLVerification();
         }
@@ -787,7 +844,6 @@ class trackerPlugin extends Plugin
     /**
      * Hook: event raised when widget are instanciated
      *
-     * @param \Tuleap\Widget\Event\GetWidget $get_widget_event
      */
     public function widgetInstance(\Tuleap\Widget\Event\GetWidget $get_widget_event)
     {
@@ -817,15 +873,15 @@ class trackerPlugin extends Plugin
 
     public function uninstall()
     {
-        $this->removeOrphanWidgets(array(
+        $this->removeOrphanWidgets([
             Tracker_Widget_MyArtifacts::ID,
             Tracker_Widget_MyRenderer::ID,
             Tracker_Widget_ProjectRenderer::ID
-        ));
+        ]);
     }
 
     /** @see AtUserCreationDefaultWidgetsCreator::DEFAULT_WIDGETS_FOR_NEW_USER */
-    public function default_widgets_for_new_user(array $params)
+    public function default_widgets_for_new_user(array $params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['widgets'][] = Tracker_Widget_MyArtifacts::ID;
     }
@@ -833,13 +889,13 @@ class trackerPlugin extends Plugin
     /**
      * @see Event::REST_PROJECT_RESOURCES
      */
-    public function rest_project_resources(array $params)
+    public function rest_project_resources(array $params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $injector = new Tracker_REST_ResourcesInjector();
         $injector->declareProjectPlanningResource($params['resources'], $params['project']);
     }
 
-    public function service_public_areas(GetPublicAreas $event)
+    public function service_public_areas(GetPublicAreas $event)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project = $event->getProject();
         if ($project->usesService($this->getServiceShortname())) {
@@ -850,22 +906,22 @@ class trackerPlugin extends Plugin
             $trackers = $tf->getTrackersByGroupId($project->getGroupId());
 
             if ($trackers) {
-                $entries  = array();
+                $entries  = [];
                 $purifier = Codendi_HTMLPurifier::instance();
                 foreach ($trackers as $t) {
                     if ($t->userCanView()) {
                         $name      = $purifier->purify($t->name, CODENDI_PURIFIER_CONVERT_HTML);
-                        $entries[] = '<a href="'. TRACKER_BASE_URL .'/?tracker='. $t->id .'">'. $name .'</a>';
+                        $entries[] = '<a href="' . TRACKER_BASE_URL . '/?tracker=' . $t->id . '">' . $name . '</a>';
                     }
                 }
                 if ($service !== null && $entries) {
                     $area = '';
-                    $area .= '<a href="'. TRACKER_BASE_URL .'/?group_id='. urlencode($project->getGroupId()) .'">';
-                    $area .= '<i class="dashboard-widget-content-projectpublicareas '.$purifier->purify($service->getIcon()).'"></i>';
-                    $area .= $GLOBALS['Language']->getText('plugin_tracker', 'service_lbl_key');
+                    $area .= '<a href="' . TRACKER_BASE_URL . '/?group_id=' . urlencode($project->getGroupId()) . '">';
+                    $area .= '<i class="dashboard-widget-content-projectpublicareas ' . $purifier->purify($service->getIcon()) . '"></i>';
+                    $area .= dgettext('tuleap-tracker', 'Trackers');
                     $area .= '</a>';
 
-                    $area .= '<ul><li>'. implode('</li><li>', $entries) .'</li></ul>';
+                    $area .= '<ul><li>' . implode('</li><li>', $entries) . '</li></ul>';
 
                     $event->addArea($area);
                 }
@@ -873,14 +929,14 @@ class trackerPlugin extends Plugin
         }
     }
 
-    public function project_creation_remove_legacy_services($params)
+    public function project_creation_remove_legacy_services($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if (! $this->isRestricted()) {
             $this->getServiceActivator()->unuseLegacyService($params);
         }
     }
 
-    public function project_registration_activate_service(ProjectRegistrationActivateService $event)
+    public function project_registration_activate_service(ProjectRegistrationActivateService $event)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $this->getServiceActivator()->forceUsageOfService($event->getProject(), $event->getTemplate(), $event->getLegacy());
         $this->getReferenceCreator()->insertArtifactsReferencesFromLegacy($event->getProject());
@@ -913,7 +969,7 @@ class trackerPlugin extends Plugin
      *
      * @return void
      */
-    public function project_is_deleted($params)
+    public function project_is_deleted($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $group_id = $params['group_id'];
         if ($group_id) {
@@ -924,7 +980,7 @@ class trackerPlugin extends Plugin
         }
     }
 
-    public function display_deleted_trackers(array &$params)
+    public function display_deleted_trackers(array &$params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $tracker_manager = new TrackerManager();
         $tracker_manager->displayDeletedTrackers();
@@ -937,11 +993,11 @@ class trackerPlugin extends Plugin
      *
      * @return Void
      */
-    public function codendi_daily_start($params)
+    public function codendi_daily_start($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         include_once 'Tracker/TrackerManager.class.php';
         $trackerManager = new TrackerManager();
-        $logger = new BackendLogger();
+        $logger = BackendLogger::getDefaultLogger();
         $logger->debug("[TDR] Tuleap daily start event: launch date reminder");
 
         $this->getSystemEventManager()->createEvent(
@@ -979,7 +1035,7 @@ class trackerPlugin extends Plugin
     /**
      * @param array $params
      */
-    public function agiledashboard_export_xml($params)
+    public function agiledashboard_export_xml($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $can_bypass_threshold = true;
         $user_xml_exporter    = new UserXMLExporter(
@@ -999,8 +1055,9 @@ class trackerPlugin extends Plugin
      */
     private function getTrackerXmlExport(UserXMLExporter $user_xml_exporter, $can_bypass_threshold)
     {
-        $rng_validator           = new XML_RNGValidator();
-        $artifact_link_usage_dao = new ArtifactLinksUsageDao();
+        $rng_validator            = new XML_RNGValidator();
+        $artifact_link_usage_dao  = new ArtifactLinksUsageDao();
+        $external_field_extractor = new ExternalFieldsExtractor(EventManager::instance());
 
         return new TrackerXmlExport(
             $this->getTrackerFactory(),
@@ -1010,12 +1067,14 @@ class trackerPlugin extends Plugin
                 $rng_validator,
                 $this->getArtifactFactory(),
                 $can_bypass_threshold,
-                $user_xml_exporter
+                $user_xml_exporter,
+                $external_field_extractor
             ),
             $user_xml_exporter,
             EventManager::instance(),
             new NaturePresenterFactory(new NatureDao(), $artifact_link_usage_dao),
-            $artifact_link_usage_dao
+            $artifact_link_usage_dao,
+            $external_field_extractor
         );
     }
 
@@ -1024,40 +1083,52 @@ class trackerPlugin extends Plugin
      * @param array $params
      * @see Event::IMPORT_XML_PROJECT
      */
-    public function import_xml_project($params)
+    public function import_xml_project($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $import_spotter = Spotter::instance();
         $import_spotter->startImport();
+
+        $user = UserManager::instance()->getCurrentUser();
+
+        if (! $user) {
+            $import_spotter->endImport();
+        }
 
         TrackerXmlImport::build($params['user_finder'], $params['logger'])->import(
             $params['configuration'],
             $params['project'],
             $params['xml_content'],
             $params['mappings_registery'],
-            $params['extraction_path']
+            $params['extraction_path'],
+            $user
         );
 
         $import_spotter->endImport();
     }
 
-    public function import_xml_is_project_valid($params)
+    /**
+     * @throws ImportNotValidException
+     */
+    public function projectXMLImportPreChecksEvent(ProjectXMLImportPreChecksEvent $event): void
     {
-        if (! $this->checkNaturesExistsOnPlateform($params['xml_content'])) {
-            $params['error'] = true;
+        if (! $this->checkNaturesExistsOnPlateform($event->getXmlElement())) {
+            throw new ImportNotValidException(
+                "Some natures used in trackers are not created on plateform."
+            );
         }
     }
 
     private function checkNaturesExistsOnPlateform(SimpleXMLElement $xml)
     {
-        if (! $xml->trackers['use-natures'][0]) {
+        if (! isset($xml->trackers['use-natures'][0]) || ! $xml->trackers['use-natures'][0]) {
             return true;
         }
 
-        if (! (array)$xml->natures) {
+        if (! (array) $xml->natures) {
             return true;
         }
 
-        $plateform_natures["nature"] = array(Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD);
+        $plateform_natures["nature"] = [Tracker_FormElement_Field_ArtifactLink::NATURE_IS_CHILD];
         foreach ($this->getNatureDao()->searchAll() as $nature) {
             $plateform_natures["nature"][] = $nature['shortname'];
         }
@@ -1065,7 +1136,7 @@ class trackerPlugin extends Plugin
         $this->addCustomNatures($plateform_natures["nature"]);
 
         foreach ($xml->natures->nature as $nature) {
-            if (! in_array((string)$nature, $plateform_natures['nature'])) {
+            if (! in_array((string) $nature, $plateform_natures['nature'])) {
                 return false;
             }
         }
@@ -1090,7 +1161,7 @@ class trackerPlugin extends Plugin
     /**
      * @see Event::COLLECT_ERRORS_WITHOUT_IMPORTING_XML_PROJECT
      */
-    public function collect_errors_without_importing_xml_project($params)
+    public function collect_errors_without_importing_xml_project($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $tracker_xml_import = TrackerXmlImport::build($params['user_finder'], $params['logger']);
         $params['errors'] = $tracker_xml_import->collectErrorsWithoutImporting(
@@ -1099,15 +1170,14 @@ class trackerPlugin extends Plugin
         );
     }
 
-    public function user_manager_get_user_instance(array $params)
+    public function user_manager_get_user_instance(array $params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($params['row']['user_id'] == Tracker_Workflow_WorkflowUser::ID) {
             $params['user'] = new Tracker_Workflow_WorkflowUser($params['row']);
         }
     }
-    public function plugin_statistics_service_usage($params)
+    public function plugin_statistics_service_usage($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-
         $dao = $this->getArtifactDao();
 
         $start_date      = strtotime($params['start_date']);
@@ -1123,84 +1193,37 @@ class trackerPlugin extends Plugin
     /**
      * @see REST_RESOURCES
      */
-    public function rest_resources($params)
+    public function rest_resources($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $injector = new Tracker_REST_ResourcesInjector();
         $injector->populate($params['restler']);
     }
 
-    /**
-     * @see REST_GET_PROJECT_TRACKERS
-     */
-    public function rest_get_project_trackers($params)
-    {
-        $user             = UserManager::instance()->getCurrentUser();
-        $tracker_resource = $this->buildRightVersionOfProjectTrackersResource($params['version']);
-        $project          = $params['project'];
-
-        $this->checkProjectRESTAccess($project, $user);
-
-        $params['result'] = $tracker_resource->get(
-            $user,
-            $project,
-            $params['representation'],
-            $params['query'],
-            $params['limit'],
-            $params['offset']
-        );
-    }
-
-    /**
-     * @see REST_OPTIONS_PROJECT_TRACKERS
-     */
-    public function rest_options_project_trackers($params)
-    {
-        $user             = UserManager::instance()->getCurrentUser();
-        $project          = $params['project'];
-        $tracker_resource = $this->buildRightVersionOfProjectTrackersResource($params['version']);
-
-        $this->checkProjectRESTAccess($project, $user);
-
-        $params['result'] = $tracker_resource->options(
-            $user,
-            $project,
-            $params['limit'],
-            $params['offset']
-        );
-    }
-
-    private function checkProjectRESTAccess(Project $project, PFUser $user)
-    {
-        ProjectAuthorization::userCanAccessProject($user, $project, new Tracker_URLVerification());
-    }
-
-    private function buildRightVersionOfProjectTrackersResource($version)
-    {
-        $class_with_right_namespace = '\\Tuleap\\Tracker\\REST\\'.$version.'\\ProjectTrackersResource';
-        return new $class_with_right_namespace;
-    }
-
-    public function agiledashboard_event_rest_get_milestone($params)
+    public function agiledashboard_event_rest_get_milestone($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($this->buildRightVersionOfMilestonesBurndownResource($params['version'])->hasBurndown($params['user'], $params['milestone'])) {
-            $params['milestone_representation']->enableBurndown();
+            $milestone_representation_reference_holder                           = $params['milestone_representation_reference_holder'];
+            $milestone_representation_reference_holder->milestone_representation = \Tuleap\AgileDashboard\REST\v1\MilestoneRepresentation::buildWithBurndownEnabled($milestone_representation_reference_holder->milestone_representation);
         }
     }
 
-    public function agiledashboard_event_rest_options_burndown($params)
+    public function agiledashboard_event_rest_options_burndown($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $this->buildRightVersionOfMilestonesBurndownResource($params['version'])->options($params['user'], $params['milestone']);
     }
 
-    public function agiledashboard_event_rest_get_burndown($params)
+    public function agiledashboard_event_rest_get_burndown($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['burndown'] = $this->buildRightVersionOfMilestonesBurndownResource($params['version'])->get($params['user'], $params['milestone']);
     }
 
     private function buildRightVersionOfMilestonesBurndownResource($version)
     {
-        $class_with_right_namespace = '\\Tuleap\\Tracker\\REST\\'.$version.'\\MilestonesBurndownResource';
-        return new $class_with_right_namespace;
+        $class_with_right_namespace = '\\Tuleap\\Tracker\\REST\\' . $version . '\\MilestonesBurndownResource';
+        if (! class_exists($class_with_right_namespace)) {
+            throw new LogicException($class_with_right_namespace . ' does not exist');
+        }
+        return new $class_with_right_namespace();
     }
 
     private function getTrackerSystemEventManager()
@@ -1221,7 +1244,8 @@ class trackerPlugin extends Plugin
             $this->getArtifactFactory(),
             $this->getTrackerFormElementFactory(),
             $this->getUserManager(),
-            $this->getProjectManager()
+            $this->getProjectManager(),
+            $this->getTrackerChecker()
         );
     }
 
@@ -1253,14 +1277,14 @@ class trackerPlugin extends Plugin
     /**
      * @see Event::BACKEND_ALIAS_GET_ALIASES
      */
-    public function backend_alias_get_aliases($params)
+    public function backend_alias_get_aliases($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $config = new MailGatewayConfig(
             new MailGatewayConfigDao()
         );
 
         $src_dir  = ForgeConfig::get('codendi_dir');
-        $script   = $src_dir .'/plugins/tracker/bin/emailgateway-wrapper.sh';
+        $script   = $src_dir . '/plugins/tracker/bin/emailgateway-wrapper.sh';
 
         $command = "sudo -u codendiadm $script";
 
@@ -1273,7 +1297,7 @@ class trackerPlugin extends Plugin
             $params['aliases'][] = new System_Alias(self::EMAILGATEWAY_INSECURE_ARTIFACT_UPDATE, "\"|$command\"");
         }
     }
-    public function get_projectid_from_url($params)
+    public function get_projectid_from_url($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $url = $params['url'];
         if (strpos($url, '/plugins/tracker/') === 0) {
@@ -1289,20 +1313,20 @@ class trackerPlugin extends Plugin
     }
 
     /** @see Event::SYSTEM_EVENT_GET_CUSTOM_QUEUES */
-    public function system_event_get_custom_queues(array $params)
+    public function system_event_get_custom_queues(array $params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['queues'][Tracker_SystemEvent_Tv3Tv5Queue::NAME] = new Tracker_SystemEvent_Tv3Tv5Queue();
     }
 
     /** @see Event::SYSTEM_EVENT_GET_TYPES_FOR_CUSTOM_QUEUE */
-    public function system_event_get_types_for_custom_queue($params)
+    public function system_event_get_types_for_custom_queue($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($params['queue'] === Tracker_SystemEvent_Tv3Tv5Queue::NAME) {
             $params['types'][] = SystemEvent_TRACKER_V3_MIGRATION::NAME;
         }
     }
 
-    public function system_event_get_types_for_default_queue($params)
+    public function system_event_get_types_for_default_queue($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['types'][] = 'Tuleap\\Tracker\\FormElement\\SystemEvent\\' . SystemEvent_BURNDOWN_DAILY::NAME;
         $params['types'][] = 'Tuleap\\Tracker\\FormElement\\SystemEvent\\' . SystemEvent_BURNDOWN_GENERATE::NAME;
@@ -1310,41 +1334,51 @@ class trackerPlugin extends Plugin
 
 
     /** @see Event::SERVICES_TRUNCATED_EMAILS */
-    public function services_truncated_emails(array $params)
+    public function services_truncated_emails(array $params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project = $params['project'];
         if ($project->usesService($this->getServiceShortname())) {
-            $params['services'][] = $GLOBALS['Language']->getText('plugin_tracker', 'service_lbl_key');
+            $params['services'][] = dgettext('tuleap-tracker', 'Trackers');
         }
     }
 
-    public function export_xml_project($params)
+    public function exportXmlProject(ExportXmlProject $event): void
     {
-        if (! isset($params['options']['tracker_id']) && ! isset($params['options']['all'])) {
+        if (! isset($event->getOptions()['tracker_id']) && ! isset($event->getOptions()['all'])) {
             return;
         }
 
-        $project              = $params['project'];
-        $can_bypass_threshold = $params['options']['force'] === true;
-        $user_xml_exporter    = $params['user_xml_exporter'];
-        $user                 = $params['user'];
+        $project              = $event->getProject();
+        $can_bypass_threshold = $event->getOptions()['force'] === true;
+        $user_xml_exporter    = $event->getUserXMLExporter();
+        $user                 = $event->getUser();
 
-        if ($params['options']['all'] === true) {
+        if ($event->getOptions()['all'] === true) {
             $this->getTrackerXmlExport($user_xml_exporter, $can_bypass_threshold)
-            ->exportToXmlFull($project, $params['into_xml'], $user, $params['archive']);
-        } elseif (isset($params['options']['tracker_id'])) {
-            $this->exportSingleTracker($params, $project, $user_xml_exporter, $user, $can_bypass_threshold);
+            ->exportToXmlFull($project, $event->getIntoXml(), $user, $event->getArchive());
+        } elseif (isset($event->getOptions()['tracker_id'])) {
+            $this->exportSingleTracker(
+                $event->getOptions(),
+                $project,
+                $user_xml_exporter,
+                $user,
+                $can_bypass_threshold,
+                $event->getArchive(),
+                $event->getIntoXml()
+            );
         }
     }
 
     private function exportSingleTracker(
-        array $params,
+        array $options,
         Project $project,
         UserXMLExporter $user_xml_exporter,
         PFUser $user,
-        $can_bypass_threshold
+        $can_bypass_threshold,
+        ArchiveInterface $archive,
+        SimpleXMLElement $into_xml
     ) {
-        $tracker_id = $params['options']['tracker_id'];
+        $tracker_id = $options['tracker_id'];
         $tracker    = $this->getTrackerFactory()->getTrackerById($tracker_id);
 
         if (! $tracker) {
@@ -1356,10 +1390,10 @@ class trackerPlugin extends Plugin
         }
 
         $this->getTrackerXmlExport($user_xml_exporter, $can_bypass_threshold)
-            ->exportSingleTrackerToXml($params['into_xml'], $tracker_id, $user, $params['archive']);
+            ->exportSingleTrackerToXml($into_xml, $tracker_id, $user, $archive);
     }
 
-    public function get_reference($params)
+    public function get_reference($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($this->isArtifactReferenceInMultipleTrackerServicesContext($params['keyword'])) {
             $artifact_id       = $params['value'];
@@ -1395,7 +1429,7 @@ class trackerPlugin extends Plugin
         );
     }
 
-    public function can_user_access_ugroup_info($params)
+    public function can_user_access_ugroup_info($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project = $params['project'];
         $user    = $params['user'];
@@ -1410,30 +1444,30 @@ class trackerPlugin extends Plugin
     }
 
     /** @see TemplatePresenter::EVENT_ADDITIONAL_ADMIN_BUTTONS */
-    public function event_additional_admin_buttons(array $params)
+    public function event_additional_admin_buttons(array $params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        /** @var Project $template */
         $template = $params['template'];
+        \assert($template instanceof Project);
 
         $is_service_used = $template->usesService($this->getServiceShortname());
 
-        $params['buttons'][] = array(
+        $params['buttons'][] = [
             'icon'        => 'fa-list',
             'label'       => dgettext('tuleap-tracker', 'Configure trackers'),
-            'uri'         => TRACKER_BASE_URL . '/?group_id=' . (int)$template->getID(),
+            'uri'         => TRACKER_BASE_URL . '/?group_id=' . (int) $template->getID(),
             'is_disabled' => ! $is_service_used,
             'title'       => ! $is_service_used ? dgettext('tuleap-tracker', 'This template does not use trackers') : ''
-        );
+        ];
     }
 
-    public function get_permission_delegation($params)
+    public function get_permission_delegation($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $permission = new TrackerAdminAllProjects();
 
         $params['plugins_permission'][TrackerAdminAllProjects::ID] = $permission;
     }
 
-    public function project_admin_ugroup_deletion($params)
+    public function project_admin_ugroup_deletion($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project_id = $params['group_id'];
         $ugroup     = $params['ugroup'];
@@ -1442,7 +1476,7 @@ class trackerPlugin extends Plugin
         $ugroups_to_notify_dao->deleteByUgroupId($project_id, $ugroup->getId());
     }
 
-    public function project_admin_remove_user($params)
+    public function project_admin_remove_user($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project_id = $params['group_id'];
         $user_id    = $params['user_id'];
@@ -1463,7 +1497,7 @@ class trackerPlugin extends Plugin
         $updater->updateProjectAccess($params['project_id'], $params['old_access'], $params['access']);
     }
 
-    public function site_access_change(array $params)
+    public function site_access_change(array $params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $updater = $this->getUgroupToNotifyUpdater();
         $updater->updateSiteAccess($params['old_value']);
@@ -1482,7 +1516,7 @@ class trackerPlugin extends Plugin
      */
     private function getNotificationForProjectMemberCleaner()
     {
-        return  new NotificationsForProjectMemberCleaner(
+        return new NotificationsForProjectMemberCleaner(
             $this->getTrackerFactory(),
             $this->getTrackerNotificationManager(),
             $this->getUserToNotifyDao()
@@ -1513,7 +1547,7 @@ class trackerPlugin extends Plugin
         $user_manager                   = UserManager::instance();
         $user_to_notify_dao             = $this->getUserToNotifyDao();
         $ugroup_to_notify_dao           = $this->getUgroupToNotifyDao();
-        $unsubscribers_notification_dao = new UnsubscribersNotificationDAO;
+        $unsubscribers_notification_dao = new UnsubscribersNotificationDAO();
         $notification_list_builder      = new NotificationListBuilder(
             new UGroupDao(),
             new CollectionOfUserInvolvedInNotificationPresenterBuilder(
@@ -1529,7 +1563,7 @@ class trackerPlugin extends Plugin
             $notification_list_builder,
             $user_to_notify_dao,
             $ugroup_to_notify_dao,
-            new UserNotificationSettingsDAO,
+            new UserNotificationSettingsDAO(),
             new GlobalNotificationsAddressesBuilder(),
             $user_manager,
             new UGroupManager(),
@@ -1556,8 +1590,8 @@ class trackerPlugin extends Plugin
      */
     public function clearRecentlyVisitedArtifacts(array $params)
     {
-        /** @var PFUser $user */
         $user = $params['user'];
+        \assert($user instanceof PFUser);
 
         $visit_cleaner = new \Tuleap\Tracker\Artifact\RecentlyVisited\VisitCleaner(
             new RecentlyVisitedDao()
@@ -1573,14 +1607,15 @@ class trackerPlugin extends Plugin
         );
     }
 
-    public function collect_heartbeats_entries(HeartbeatsEntryCollection $collection)
+    public function collectHeartbeatsEntries(HeartbeatsEntryCollection $collection): void
     {
         $collector = new LatestHeartbeatsCollector(
             $this->getArtifactDao(),
             $this->getArtifactFactory(),
             new \Tuleap\Glyph\GlyphFinder(EventManager::instance()),
             $this->getUserManager(),
-            UserHelper::instance()
+            UserHelper::instance(),
+            EventManager::instance()
         );
         $collector->collect($collection);
     }
@@ -1594,6 +1629,26 @@ class trackerPlugin extends Plugin
 
     public function workerEvent(WorkerEvent $event)
     {
+        $user_manager              = $this->getUserManager();
+        $forge_user                = $user_manager->getUserById(TrackerImporterUser::ID);
+        $jira_user_on_tuleap_cache = new JiraUserOnTuleapCache(
+            new JiraTuleapUsersMapping(),
+            $forge_user
+        );
+
+        AsynchronousJiraRunner::addListener(
+            $event,
+            new QueueFactory($event->getLogger()),
+            new KeyFactory(),
+            new PendingJiraImportDao(),
+            new PendingJiraImportBuilder(ProjectManager::instance(), $user_manager),
+            FromJiraTrackerCreator::build($jira_user_on_tuleap_cache),
+            $this->getJiraSuccessImportNotifier(),
+            $this->getJiraErrorImportNotifier(),
+            $user_manager,
+            $jira_user_on_tuleap_cache
+        );
+
         AsynchronousActionsRunner::addListener($event);
 
         $logger = new WrapperLogger(BackendLogger::getDefaultLogger(), self::class);
@@ -1601,8 +1656,9 @@ class trackerPlugin extends Plugin
         $async_artifact_archive_runner = new AsynchronousArtifactsDeletionActionsRunner(
             new PendingArtifactRemovalDao(),
             $logger,
-            $this->getUserManager(),
-            new \Tuleap\Queue\QueueFactory($logger)
+            $user_manager,
+            new QueueFactory($logger),
+            new ArchiveAndDeleteArtifactTaskBuilder()
         );
         $async_artifact_archive_runner->addListener($event);
     }
@@ -1639,10 +1695,12 @@ class trackerPlugin extends Plugin
         $event->addPane($admin_permission_pane, $rank_in_project);
     }
 
-    private function dailyCleanup(Logger $logger)
+    private function dailyCleanup(\Psr\Log\LoggerInterface $logger)
     {
         $deletions_remover = new ArtifactsDeletionRemover(new ArtifactsDeletionDAO());
         $deletions_remover->deleteOutdatedArtifactsDeletions();
+
+        $current_time = new \DateTimeImmutable();
 
         $cleaner = new FileUploadCleaner(
             $logger,
@@ -1650,7 +1708,28 @@ class trackerPlugin extends Plugin
             Tracker_FormElementFactory::instance(),
             new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection())
         );
-        $cleaner->deleteDanglingFilesToUpload(new \DateTimeImmutable());
+        $cleaner->deleteDanglingFilesToUpload($current_time);
+
+        $base_url_builder     = new InstanceBaseURLBuilder();
+        $pending_jira_cleaner = new PendingJiraImportCleaner(
+            $logger,
+            new PendingJiraImportDao(),
+            new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
+            new PendingJiraImportBuilder(ProjectManager::instance(), UserManager::instance()),
+            new CancellationOfJiraImportNotifier(
+                new JiraImportNotifier(
+                    $base_url_builder,
+                    $this->getMailNotificationBuilder(),
+                ),
+                $base_url_builder,
+                new LocaleSwitcher(),
+                TemplateRendererFactory::build(),
+            )
+        );
+        $pending_jira_cleaner->deleteDanglingPendingJiraImports($current_time);
+
+        $jira_attachment_cleaner = new AttachmentCleaner();
+        $jira_attachment_cleaner->deleteDownloadedAttachmentOlderThanOneDay($current_time);
     }
 
     /**
@@ -1673,7 +1752,7 @@ class trackerPlugin extends Plugin
         foreach ($autocompleted_user_list as $autocompleted_user) {
             $autocompleted_user_id_list[] = $autocompleted_user['user_id'];
         }
-        $global_notification_subscribers_filter = new GlobalNotificationSubscribersFilter(new UnsubscribersNotificationDAO);
+        $global_notification_subscribers_filter = new GlobalNotificationSubscribersFilter(new UnsubscribersNotificationDAO());
         $autocompleted_user_id_list_filtered    = $global_notification_subscribers_filter->filterInvalidUserIDs(
             $tracker,
             $autocompleted_user_id_list
@@ -1691,14 +1770,14 @@ class trackerPlugin extends Plugin
 
     public function routeLegacyController(): \Tuleap\Tracker\TrackerPluginDefaultController
     {
-        return new \Tuleap\Tracker\TrackerPluginDefaultController(new TrackerManager);
+        return new \Tuleap\Tracker\TrackerPluginDefaultController(new TrackerManager());
     }
 
     public function routeGetNotifications(): NotificationsAdminSettingsDisplayController
     {
         return new NotificationsAdminSettingsDisplayController(
             $this->getTrackerFactory(),
-            new TrackerManager,
+            new TrackerManager(),
             $this->getUserManager()
         );
     }
@@ -1716,11 +1795,11 @@ class trackerPlugin extends Plugin
         return new NotificationsUserSettingsDisplayController(
             TemplateRendererFactory::build()->getRenderer(TRACKER_TEMPLATE_DIR . '/notifications/'),
             $this->getTrackerFactory(),
-            new TrackerManager,
+            new TrackerManager(),
             new UserNotificationSettingsRetriever(
-                new Tracker_GlobalNotificationDao,
-                new UnsubscribersNotificationDAO,
-                new UserNotificationOnlyStatusChangeDAO,
+                new Tracker_GlobalNotificationDao(),
+                new UnsubscribersNotificationDAO(),
+                new UserNotificationOnlyStatusChangeDAO(),
                 new InvolvedNotificationDao()
             )
         );
@@ -1730,8 +1809,8 @@ class trackerPlugin extends Plugin
     {
         return new NotificationsUserSettingsUpdateController(
             $this->getTrackerFactory(),
-            new UserNotificationSettingsDAO,
-            new ProjectHistoryDao
+            new UserNotificationSettingsDAO(),
+            new ProjectHistoryDao()
         );
     }
 
@@ -1767,8 +1846,9 @@ class trackerPlugin extends Plugin
     {
         return new WorkflowTransitionController(
             $this->getTrackerFactory(),
-            new TrackerManager,
-            new WorkflowMenuTabPresenterBuilder()
+            new TrackerManager(),
+            new WorkflowMenuTabPresenterBuilder(),
+            EventManager::instance()
         );
     }
 
@@ -1784,7 +1864,6 @@ class trackerPlugin extends Plugin
 
     public function routeConfig(): ConfigController
     {
-        $project_manager         = ProjectManager::instance();
         $nature_dao              = new NatureDao();
         $nature_validator        = new NatureValidator($nature_dao);
         $admin_page_renderer     = new AdminPageRenderer();
@@ -1792,7 +1871,7 @@ class trackerPlugin extends Plugin
         $artifact_deletion_dao   = new ArtifactsDeletionConfigDAO();
 
         return new ConfigController(
-            new CSRFSynchronizerToken(TRACKER_BASE_URL.'/config.php'),
+            new CSRFSynchronizerToken(TRACKER_BASE_URL . '/config.php'),
             new MailGatewayConfigController(
                 new MailGatewayConfig(
                     new MailGatewayConfigDao()
@@ -1802,7 +1881,6 @@ class trackerPlugin extends Plugin
                 $admin_page_renderer
             ),
             new NatureConfigController(
-                $project_manager,
                 new NatureCreator(
                     $nature_dao,
                     $nature_validator
@@ -1841,19 +1919,14 @@ class trackerPlugin extends Plugin
         );
     }
 
-    public function routeGetTemplates() : DispatchableWithRequest
+    public function routeGetFieldsPermissionsByField(): DispatchableWithRequest
     {
-        return new XMLTemplatesController();
+        return new ByFieldController(TrackerFactory::instance(), TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../templates/permission'));
     }
 
-    public function routeGetFieldsPermissionsByField() : DispatchableWithRequest
+    public function routeGetFieldsPermissionsByGroup(): DispatchableWithRequest
     {
-        return new ByFieldController(TrackerFactory::instance(), TemplateRendererFactory::build()->getRenderer(__DIR__.'/../templates/permission'));
-    }
-
-    public function routeGetFieldsPermissionsByGroup() : DispatchableWithRequest
-    {
-        return new ByGroupController(TrackerFactory::instance(), TemplateRendererFactory::build()->getRenderer(__DIR__.'/../templates/permission'));
+        return new ByGroupController(TrackerFactory::instance(), TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../templates/permission'));
     }
 
     public function routePostFieldsPermissions(): DispatchableWithRequest
@@ -1861,12 +1934,42 @@ class trackerPlugin extends Plugin
         return new PermissionsOnFieldsUpdateController(TrackerFactory::instance());
     }
 
+    public function routeJiraProjectListController(): DispatchableWithRequest
+    {
+        return new JiraProjectListController(
+            $this->getProjectManager(),
+            $this->getTrackerCreationPermissionChecker(),
+            new \Tuleap\Tracker\Creation\JiraImporter\JiraProjectBuilder(),
+            new ClientWrapperBuilder()
+        );
+    }
+
+    public function routeJiraTrackerListController(): DispatchableWithRequest
+    {
+        return new JiraTrackersListController(
+            $this->getProjectManager(),
+            $this->getTrackerCreationPermissionChecker(),
+            new \Tuleap\Tracker\Creation\JiraImporter\JiraTrackerBuilder(),
+            new ClientWrapperBuilder()
+        );
+    }
+
+    public function routeChangesetContentRetriever(): TextDiffRetriever
+    {
+        return new TextDiffRetriever(
+            $this->getArtifactFactory(),
+            new ChangesetsForDiffRetriever(
+                Tracker_Artifact_ChangesetFactoryBuilder::build(),
+                $this->getTrackerFormElementFactory()
+            ),
+            new DiffProcessor(new Codendi_UnifiedDiffFormatter())
+        );
+    }
+
     public function collectRoutesEvent(\Tuleap\Request\CollectRoutesEvent $event)
     {
         $event->getRouteCollector()->addGroup(TRACKER_BASE_URL, function (FastRoute\RouteCollector $r) {
             $r->addRoute(['GET', 'POST'], '[/[index.php]]', $this->getRouteHandler('routeLegacyController'));
-
-            $r->get('/resources/templates/[index.php]', $this->getRouteHandler('routeGetTemplates'));
 
             $r->post('/invert_comments_order.php', $this->getRouteHandler('routePostInvertCommentsOrder'));
             $r->post('/invert_display_changes.php', $this->getRouteHandler('routePostInvertDisplayChanges'));
@@ -1878,9 +1981,9 @@ class trackerPlugin extends Plugin
             $r->get('/notifications/my/{id:\d+}/', $this->getRouteHandler('routeGetNotificationsMy'));
             $r->post('/notifications/my/{id:\d+}/', $this->getRouteHandler('routePostNotificationsMy'));
 
-            $r->get(ByFieldController::URL.'/{id:\d+}', $this->getRouteHandler('routeGetFieldsPermissionsByField'));
-            $r->get(ByGroupController::URL.'/{id:\d+}', $this->getRouteHandler('routeGetFieldsPermissionsByGroup'));
-            $r->post(PermissionsOnFieldsUpdateController::URL.'/{id:\d+}', $this->getRouteHandler('routePostFieldsPermissions'));
+            $r->get(ByFieldController::URL . '/{id:\d+}', $this->getRouteHandler('routeGetFieldsPermissionsByField'));
+            $r->get(ByGroupController::URL . '/{id:\d+}', $this->getRouteHandler('routeGetFieldsPermissionsByGroup'));
+            $r->post(PermissionsOnFieldsUpdateController::URL . '/{id:\d+}', $this->getRouteHandler('routePostFieldsPermissions'));
 
             $r->post('/webhooks/delete', $this->getRouteHandler('routePostWebhooksDelete'));
             $r->post('/webhooks/create', $this->getRouteHandler('routePostWebhooksCreate'));
@@ -1891,7 +1994,16 @@ class trackerPlugin extends Plugin
             $r->get('/attachments/{id:\d+}-{filename}', $this->getRouteHandler('routeAttachments'));
             $r->get('/attachments/{preview:preview}/{id:\d+}-{filename}', $this->getRouteHandler('routeAttachments'));
 
-            $r->addRoute(['GET', 'POST'], GlobalAdminController::URL . '/{id:\d+}', $this->getRouteHandler('routeGlobalAdmin'));
+            $r->addRoute(['GET', 'POST'], '/' . Tracker::GLOBAL_ADMIN_URL . '/{id:\d+}', $this->getRouteHandler('routeGlobalAdminArtifactLinks'));
+            $r->addRoute(['GET', 'POST'], '/' . Tracker::GLOBAL_ADMIN_URL . '/{id:\d+}/' . ArtifactLinksController::URL, $this->getRouteHandler('routeGlobalAdminArtifactLinks'));
+
+            $r->post('/{project_name:[A-z0-9-]+}/jira/project_list', $this->getRouteHandler('routeJiraProjectListController'));
+            $r->post('/{project_name:[A-z0-9-]+}/jira/{jira_project_key:[A-z]+}/tracker_list', $this->getRouteHandler('routeJiraTrackerListController'));
+            $r->get('/{project_name:[A-z0-9-]+}/new', $this->getRouteHandler('routeCreateNewTracker'));
+            $r->get('/{project_name:[A-z0-9-]+}/new-information', $this->getRouteHandler('routeCreateNewTracker'));
+            $r->post('/{project_name:[A-z0-9-]+}/new-information', $this->getRouteHandler('routeProcessNewTrackerCreation'));
+
+            $r->get('/changeset/{changeset_id:[0-9]+}/diff/{format:html|text|strip-html}/{artifact_id:[0-9]+}/{field_id:[0-9]+}', $this->getRouteHandler('routeChangesetContentRetriever'));
         });
 
         $event->getRouteCollector()->addRoute(
@@ -1901,7 +2013,7 @@ class trackerPlugin extends Plugin
         );
     }
 
-    public function routeGlobalAdmin(): GlobalAdminController
+    public function routeGlobalAdminArtifactLinks(): ArtifactLinksController
     {
         $dao                     = new ArtifactLinksUsageDao();
         $hierarchy_dao           = new HierarchyDAO();
@@ -1909,7 +2021,7 @@ class trackerPlugin extends Plugin
         $types_presenter_factory = new NaturePresenterFactory(new NatureDao(), $dao);
         $event_manager           = EventManager::instance();
 
-        return new GlobalAdminController(
+        return new ArtifactLinksController(
             ProjectManager::instance(),
             new TrackerManager(),
             $dao,
@@ -1973,11 +2085,11 @@ class trackerPlugin extends Plugin
         );
     }
 
-    public function collectCLICommands(CLICommandsCollector $commands_collector) : void
+    public function collectCLICommands(CLICommandsCollector $commands_collector): void
     {
         $commands_collector->addCommand(
             TrackerForceNotificationsLevelCommand::NAME,
-            function () : TrackerForceNotificationsLevelCommand {
+            function (): TrackerForceNotificationsLevelCommand {
                 return new TrackerForceNotificationsLevelCommand(
                     $this->getForceUsageUpdater(),
                     ProjectManager::instance(),
@@ -1986,6 +2098,48 @@ class trackerPlugin extends Plugin
                     new TrackerDao()
                 );
             }
+        );
+    }
+
+    public function routeCreateNewTracker(): TrackerCreationController
+    {
+        return new TrackerCreationController(
+            new TrackerCreationBreadCrumbsBuilder(),
+            TemplateRendererFactory::build(),
+            \UserManager::instance(),
+            \ProjectManager::instance(),
+            new TrackerCreationPresenterBuilder(
+                $this->getProjectManager(),
+                new TrackerDao(),
+                new PendingJiraImportDao(),
+                \TrackerFactory::instance(),
+                new DefaultTemplatesCollectionBuilder(\EventManager::instance()),
+                $this->getJiraRunner(BackendLogger::getDefaultLogger())
+            ),
+            $this->getTrackerCreationPermissionChecker()
+        );
+    }
+
+    public function routeProcessNewTrackerCreation(): TrackerCreationProcessorController
+    {
+        $user_manager = UserManager::instance();
+
+        $logger = BackendLogger::getDefaultLogger();
+
+        $tracker_creator = TrackerCreator::build();
+
+        return new TrackerCreationProcessorController(
+            $user_manager,
+            \ProjectManager::instance(),
+            $tracker_creator,
+            $this->getTrackerCreationPermissionChecker(),
+            new DefaultTemplatesCollectionBuilder(\EventManager::instance()),
+            new AsyncJiraScheduler(
+                $logger,
+                new KeyFactory(),
+                new PendingJiraImportDao(),
+                $this->getJiraRunner($logger)
+            )
         );
     }
 
@@ -2014,7 +2168,7 @@ class trackerPlugin extends Plugin
     public function getProjectWithTrackerAdministrationPermission(GetProjectWithTrackerAdministrationPermission $event)
     {
         $user = $event->getUser();
-        $dao  = new \Tuleap\Tracker\dao\ProjectDao(new TrackerManager);
+        $dao  = new \Tuleap\Tracker\dao\ProjectDao(new TrackerManager());
 
         $matching_projects_rows = $dao->searchProjectsForREST($user, $event->getLimit(), $event->getOffset());
         $total_size             = $dao->foundRows();
@@ -2055,7 +2209,7 @@ class trackerPlugin extends Plugin
     /**
      * @see CollectTuleapComputedMetrics
      */
-    public function collectComputedMetrics(CollectTuleapComputedMetrics $collect_tuleap_computed_metrics) : void
+    public function collectComputedMetrics(CollectTuleapComputedMetrics $collect_tuleap_computed_metrics): void
     {
         $prometheus = $collect_tuleap_computed_metrics->getPrometheus();
         $prometheus->gaugeSet(
@@ -2075,5 +2229,120 @@ class trackerPlugin extends Plugin
         if ($event->getWidget()->getId() === Tracker_Widget_ProjectRenderer::ID) {
             (new ProjectRendererWidgetXMLImporter())->import($event);
         }
+    }
+
+    public function serviceEnableForXmlImportRetriever(ServiceEnableForXmlImportRetriever $event): void
+    {
+        $event->addServiceIfPluginIsNotRestricted($this, $this->getServiceShortname());
+    }
+
+    private function getTrackerChecker(): TrackerCreationDataChecker
+    {
+        return TrackerCreationDataChecker::build();
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(__DIR__ . '/../../../src/www/assets/trackers', '/assets/trackers');
+    }
+
+    public function collectOAuth2ScopeBuilder(OAuth2ScopeBuilderCollector $collector): void
+    {
+        $collector->addOAuth2ScopeBuilder(
+            new AuthenticationScopeBuilderFromClassNames(
+                OAuth2TrackerReadScope::class
+            )
+        );
+    }
+
+    private function getTrackerCreationPermissionChecker(): TrackerCreationPermissionChecker
+    {
+        return new TrackerCreationPermissionChecker(new TrackerManager());
+    }
+
+    public function getWhitelistedKeys(GetWhitelistedKeys $event): void
+    {
+        $event->addConfigClass(JiraRunner::class);
+        $event->addConfigClass(ListPickerIncluder::class);
+    }
+
+    private function getMailNotificationBuilder(): MailNotificationBuilder
+    {
+        return new MailNotificationBuilder(
+            new MailBuilder(
+                TemplateRendererFactory::build(),
+                new MailFilter(
+                    UserManager::instance(),
+                    new ProjectAccessChecker(
+                        PermissionsOverrider_PermissionsOverriderManager::instance(),
+                        new RestrictedUserCanAccessProjectVerifier(),
+                        EventManager::instance()
+                    ),
+                    new MailLogger()
+                )
+            )
+        );
+    }
+
+    private function getJiraSuccessImportNotifier(): JiraSuccessImportNotifier
+    {
+        $base_url_builder = new InstanceBaseURLBuilder();
+
+        return new JiraSuccessImportNotifier(
+            new JiraImportNotifier(
+                $base_url_builder,
+                $this->getMailNotificationBuilder(),
+            ),
+            $base_url_builder,
+            new LocaleSwitcher(),
+            TemplateRendererFactory::build(),
+        );
+    }
+
+    private function getJiraErrorImportNotifier(): JiraErrorImportNotifier
+    {
+        $base_url_builder = new InstanceBaseURLBuilder();
+
+        return new JiraErrorImportNotifier(
+            new JiraImportNotifier(
+                $base_url_builder,
+                $this->getMailNotificationBuilder(),
+            ),
+            $base_url_builder,
+            new LocaleSwitcher(),
+            TemplateRendererFactory::build(),
+        );
+    }
+
+    private function getJiraRunner(\Psr\Log\LoggerInterface $logger): JiraRunner
+    {
+        $user_manager              = $this->getUserManager();
+        $forge_user                = $user_manager->getUserById(TrackerImporterUser::ID);
+        $jira_user_on_tuleap_cache = new JiraUserOnTuleapCache(
+            new JiraTuleapUsersMapping(),
+            $forge_user
+        );
+
+        return new JiraRunner(
+            $logger,
+            new QueueFactory($logger),
+            new KeyFactory(),
+            FromJiraTrackerCreator::build($jira_user_on_tuleap_cache),
+            new PendingJiraImportDao(),
+            $this->getJiraSuccessImportNotifier(),
+            $this->getJiraErrorImportNotifier(),
+            $this->getUserManager(),
+            $jira_user_on_tuleap_cache
+        );
+    }
+
+    public function collectNewDropdownLinksForProject(NewDropdownProjectLinksCollector $collector): void
+    {
+        (new \Tuleap\Tracker\NewDropdown\TrackerLinksInNewDropdownCollector(
+            new TrackerInNewDropdownRetriever(
+                new TrackerInNewDropdownDao(),
+                TrackerFactory::instance()
+            )
+        ))->collect($collector);
     }
 }

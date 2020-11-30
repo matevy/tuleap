@@ -22,14 +22,13 @@ namespace Tuleap\SVN;
 
 use Feedback;
 use HTTPRequest;
-use PluginManager;
 use ProjectManager;
 use SvnPlugin;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\SVN\AccessControl\AccessControlController;
 use Tuleap\SVN\Admin\AdminController;
-use Tuleap\SVN\Admin\GlobalAdminController;
+use Tuleap\SVN\Admin\GlobalAdministratorsUpdater;
 use Tuleap\SVN\Admin\ImmutableTagController;
 use Tuleap\SVN\Admin\RestoreController;
 use Tuleap\SVN\Explorer\ExplorerController;
@@ -37,7 +36,6 @@ use Tuleap\SVN\Explorer\RepositoryDisplayController;
 use Tuleap\SVN\PermissionsPerGroup\SVNJSONPermissionsRetriever;
 use Tuleap\SVN\Repository\Exception\CannotFindRepositoryException;
 use Tuleap\SVN\Repository\RepositoryManager;
-use UGroupManager;
 
 class SvnRouter implements DispatchableWithRequest
 {
@@ -57,16 +55,13 @@ class SvnRouter implements DispatchableWithRequest
     /** @var RepositoryManager */
     private $repository_manager;
 
-    /** @var UGroupManager */
-    private $ugroup_manager;
-
     /** @var SvnPermissionManager */
     private $permissions_manager;
 
     /** @var ImmutableTagController */
     private $immutable_tag_controller;
 
-    /** @var GlobalAdminController */
+    /** @var GlobalAdministratorsUpdater */
     private $global_admin_controller;
 
     /** @var RestoreController */
@@ -86,14 +81,13 @@ class SvnRouter implements DispatchableWithRequest
 
     public function __construct(
         RepositoryManager $repository_manager,
-        UGroupManager $ugroup_manager,
         SvnPermissionManager $permissions_manager,
         AccessControlController $access_control_controller,
         AdminController $notification_controller,
         ExplorerController $explorer_controller,
         RepositoryDisplayController $display_controller,
         ImmutableTagController $immutable_tag_controller,
-        GlobalAdminController $global_admin_controller,
+        GlobalAdministratorsUpdater $global_admin_controller,
         RestoreController $restore_controller,
         SVNJSONPermissionsRetriever $json_retriever,
         SvnPlugin $plugin,
@@ -101,7 +95,6 @@ class SvnRouter implements DispatchableWithRequest
     ) {
         $this->repository_manager        = $repository_manager;
         $this->permissions_manager       = $permissions_manager;
-        $this->ugroup_manager            = $ugroup_manager;
         $this->access_control_controller = $access_control_controller;
         $this->admin_controller          = $notification_controller;
         $this->explorer_controller       = $explorer_controller;
@@ -116,7 +109,6 @@ class SvnRouter implements DispatchableWithRequest
 
     /**
      * Routes the request to the correct controller
-     * @param HTTPRequest $request
      * @return void
      */
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
@@ -126,7 +118,7 @@ class SvnRouter implements DispatchableWithRequest
 
             $this->useAViewVcRoadIfRootValid($request, $variables);
 
-            if (!$request->get('action')) {
+            if (! $request->get('action')) {
                 $this->useDefaultRoute($request);
 
                 return;
@@ -174,7 +166,7 @@ class SvnRouter implements DispatchableWithRequest
                     $this->admin_controller->deleteRepository($request);
                     break;
                 case 'restore':
-                    if (!$request->getCurrentUser()->isSuperUser()) {
+                    if (! $request->getCurrentUser()->isSuperUser()) {
                         throw new UserCannotAdministrateRepositoryException();
                     }
                     $this->restore_controller->restoreRepository($request);
@@ -202,26 +194,19 @@ class SvnRouter implements DispatchableWithRequest
                 case 'save-admin-groups':
                     $this->checkUserCanAdministrateARepository($request);
                     $this->global_admin_controller->saveAdminGroups(
-                        $this->getService($request),
-                        $request
-                    );
-                    break;
-                case 'admin-groups':
-                    $this->checkUserCanAdministrateARepository($request);
-                    $this->global_admin_controller->showAdminGroups(
-                        $this->getService($request),
-                        $request
+                        $request,
+                        $GLOBALS['Response'],
                     );
                     break;
                 case 'permission-per-group':
-                    if (!$request->getCurrentUser()->isAdmin($request->getProject()->getID())) {
+                    if (! $request->getCurrentUser()->isAdmin($request->getProject()->getID())) {
                         $GLOBALS['Response']->send400JSONErrors(
-                            array(
+                            [
                                 'error' => dgettext(
                                     'tuleap-svn',
                                     "You don't have permissions to see user groups."
                                 )
-                            )
+                            ]
                         );
                     }
 
@@ -244,7 +229,7 @@ class SvnRouter implements DispatchableWithRequest
 
     private function checkUserCanAdministrateARepository(HTTPRequest $request)
     {
-        if (!$this->permissions_manager->isAdmin($request->getProject(), $request->getCurrentUser())) {
+        if (! $this->permissions_manager->isAdmin($request->getProject(), $request->getCurrentUser())) {
             throw new UserCannotAdministrateRepositoryException();
         }
     }
@@ -262,9 +247,6 @@ class SvnRouter implements DispatchableWithRequest
         }
     }
 
-    /**
-     * @param HTTPRequest $request
-     */
     private function useDefaultRoute(HTTPRequest $request)
     {
         $this->explorer_controller->index($this->getService($request), $request);
@@ -273,7 +255,6 @@ class SvnRouter implements DispatchableWithRequest
     /**
      * Retrieves the SVN Service instance matching the request group id.
      *
-     * @param HTTPRequest $request
      *
      * @return ServiceSvn
      */
@@ -289,21 +270,23 @@ class SvnRouter implements DispatchableWithRequest
             $GLOBALS['Response']->redirect('/');
         }
 
-        return $request->getProject()->getService('plugin_svn');
+        $service = $request->getProject()->getService('plugin_svn');
+        assert($service instanceof ServiceSvn);
+        return $service;
     }
 
     private function getProjectFromViewVcURL(HTTPRequest $request)
     {
         $svn_root          = $request->get('root');
-        $project_shortname = substr($svn_root, 0, strpos($svn_root, '/'));
-        $project           = $this->project_manager->getProjectByCaseInsensitiveUnixName($project_shortname);
-
-        return $project;
+        if (strpos($svn_root, '/') !== false) {
+            $project_shortname = substr($svn_root, 0, strpos($svn_root, '/'));
+        } else {
+            $project_shortname = $svn_root;
+        }
+        return $this->project_manager->getProjectByCaseInsensitiveUnixName($project_shortname);
     }
 
     /**
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @throws CannotFindRepositoryException
      */
     private function checkAccessToProject(HTTPRequest $request, BaseLayout $layout): void
@@ -323,7 +306,7 @@ class SvnRouter implements DispatchableWithRequest
         } elseif ($project->isDeleted()) {
             $layout->addFeedback(
                 Feedback::ERROR,
-                $GLOBALS['Language']->getText('include_exit', 'project_status_' . $project->getStatus())
+                $GLOBALS['Language']->getText('include_exit', 'project_status_D')
             );
 
             $layout->redirect('/');

@@ -27,23 +27,23 @@ require_once('Widget.class.php');
 * Display an image
 *
 */
-class Widget_ImageViewer extends Widget
+class Widget_ImageViewer extends Widget //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 {
-    var $image_title;
-    var $image_url;
-    function __construct($id, $owner_id, $owner_type)
+    public $image_title;
+    public $image_url;
+    public function __construct($id, $owner_id, $owner_type)
     {
         parent::__construct($id);
         $this->setOwner($owner_id, $owner_type);
     }
-    function getTitle()
+    public function getTitle()
     {
         return $this->image_title ?: 'Image';
     }
 
     public function getContent()
     {
-        if (!$this->image_url) {
+        if (! $this->image_url) {
             return '';
         }
 
@@ -65,25 +65,25 @@ class Widget_ImageViewer extends Widget
 
         return '
             <div class="tlp-form-element">
-                <label class="tlp-label" for="title-'. (int)$widget_id .'">'. $purifier->purify(_('Title')) .'</label>
+                <label class="tlp-label" for="title-' . (int) $widget_id . '">' . $purifier->purify(_('Title')) . '</label>
                 <input type="text"
                        class="tlp-input"
-                       id="title-'. (int)$widget_id .'"
+                       id="title-' . (int) $widget_id . '"
                        name="image[title]"
-                       value="'. $purifier->purify($this->getTitle()) .'"
-                       placeholder="'. $purifier->purify(_('Image')) .'">
+                       value="' . $purifier->purify($this->getTitle()) . '"
+                       placeholder="' . $purifier->purify(_('Image')) . '">
             </div>
             <div class="tlp-form-element">
-                <label class="tlp-label" for="url-'. (int)$widget_id .'">
+                <label class="tlp-label" for="url-' . (int) $widget_id . '">
                     URL <i class="fa fa-asterisk"></i>
                 </label>
                 <input type="text"
                        class="tlp-input"
-                       id="url-'. (int)$widget_id .'"
+                       id="url-' . (int) $widget_id . '"
                        name="image[url]"
-                       value="'. $purifier->purify($this->image_url) .'"
+                       value="' . $purifier->purify($this->image_url) . '"
                        pattern="https?://.*"
-                       title="'. $purifier->purify(_('Please, enter a http:// or https:// link')) .'"
+                       title="' . $purifier->purify(_('Please, enter a http:// or https:// link')) . '"
                        required
                        placeholder="https://example.com/image.png">
             </div>
@@ -96,13 +96,13 @@ class Widget_ImageViewer extends Widget
 
         return '
             <div class="tlp-form-element">
-                <label class="tlp-label" for="widget-imageviewer-install-title">'. $purifier->purify(_('Title')) .'</label>
+                <label class="tlp-label" for="widget-imageviewer-install-title">' . $purifier->purify(_('Title')) . '</label>
                 <input type="text"
                        class="tlp-input"
                        id="widget-imageviewer-install-title"
                        name="image[title]"
-                       value="'. $purifier->purify($this->getTitle()) .'"
-                       placeholder="'. $purifier->purify(_('Image')) .'">
+                       value="' . $purifier->purify($this->getTitle()) . '"
+                       placeholder="' . $purifier->purify(_('Image')) . '">
             </div>
             <div class="tlp-form-element">
                 <label class="tlp-label" for="widget-imageviewer-install-url">
@@ -113,8 +113,9 @@ class Widget_ImageViewer extends Widget
                        id="widget-imageviewer-install-url"
                        name="image[url]"
                        pattern="https?://.*"
-                       title="'. $purifier->purify(_('Please, enter a http:// or https:// link')) .'"
+                       title="' . $purifier->purify(_('Please, enter a http:// or https:// link')) . '"
                        required
+                       data-test="dashboard-widget-image-input-url"
                        placeholder="https://example.com/image.png">
             </div>
             ';
@@ -134,7 +135,7 @@ class Widget_ImageViewer extends Widget
         $owner_id          = $da->escapeInt($owner_id);
         $owner_type        = $da->quoteSmart($owner_type);
 
-        $sql = "INSERT INTO widget_image (owner_id, owner_type, title, url) 
+        $sql = "INSERT INTO widget_image (owner_id, owner_type, title, url)
                 SELECT  $owner_id, $owner_type, title, url
                 FROM widget_image
                 WHERE id = $id AND owner_id = $template_owner_id AND owner_type = $template_type
@@ -143,9 +144,9 @@ class Widget_ImageViewer extends Widget
         return db_insertid($res);
     }
 
-    function loadContent($id)
+    public function loadContent($id)
     {
-        $sql = "SELECT * FROM widget_image WHERE owner_id = ". db_ei($this->owner_id) ." AND owner_type = '". db_es($this->owner_type) ."' AND id = ". db_ei($id);
+        $sql = "SELECT * FROM widget_image WHERE owner_id = " . db_ei($this->owner_id) . " AND owner_type = '" . db_es($this->owner_type) . "' AND id = " . db_ei($id);
         $res = db_query($sql);
         if ($res && db_numrows($res)) {
             $data = db_fetch_array($res);
@@ -154,7 +155,7 @@ class Widget_ImageViewer extends Widget
             $this->content_id = $id;
         }
     }
-    function create(Codendi_Request $request)
+    public function create(Codendi_Request $request)
     {
         $content_id = false;
         $vUrl = new Valid_HTTPURI('url');
@@ -164,16 +165,16 @@ class Widget_ImageViewer extends Widget
             $image = $request->get('image');
             $vTitle = new Valid_String('title');
             $vTitle->required();
-            if (!$request->validInArray('image', $vTitle)) {
+            if (! $request->validInArray('image', $vTitle)) {
                 $image['title'] = 'Image';
             }
-            $sql = 'INSERT INTO widget_image (owner_id, owner_type, title, url) VALUES ('. db_ei($this->owner_id) .", '". db_es($this->owner_type) ."', '". db_escape_string($image['title']) ."', '". db_escape_string($image['url']) ."')";
+            $sql = 'INSERT INTO widget_image (owner_id, owner_type, title, url) VALUES (' . db_ei($this->owner_id) . ", '" . db_es($this->owner_type) . "', '" . db_escape_string($image['title']) . "', '" . db_escape_string($image['url']) . "')";
             $res = db_query($sql);
             $content_id = db_insertid($res);
         }
         return $content_id;
     }
-    function updatePreferences(Codendi_Request $request)
+    public function updatePreferences(Codendi_Request $request)
     {
         $done = false;
         $vContentId = new Valid_UInt('content_id');
@@ -181,32 +182,32 @@ class Widget_ImageViewer extends Widget
         if (($image = $request->get('image')) && $request->valid($vContentId)) {
             $vUrl = new Valid_String('url');
             if ($request->validInArray('image', $vUrl)) {
-                $url = " url   = '". db_escape_string($image['url']) ."' ";
+                $url = " url   = '" . db_escape_string($image['url']) . "' ";
             } else {
                 $url = '';
             }
 
             $vTitle = new Valid_String('title');
             if ($request->validInArray('image', $vTitle)) {
-                $title = " title = '". db_escape_string($image['title']) ."' ";
+                $title = " title = '" . db_escape_string($image['title']) . "' ";
             } else {
                 $title = '';
             }
 
             if ($url || $title) {
-                $sql = "UPDATE widget_image SET ". $title .", ". $url ." WHERE owner_id = ". db_ei($this->owner_id) ." AND owner_type = '". db_es($this->owner_type) ."' AND id = ". db_ei($request->get('content_id'));
+                $sql = "UPDATE widget_image SET " . $title . ", " . $url . " WHERE owner_id = " . db_ei($this->owner_id) . " AND owner_type = '" . db_es($this->owner_type) . "' AND id = " . db_ei($request->get('content_id'));
                 $res = db_query($sql);
                 $done = true;
             }
         }
         return $done;
     }
-    function destroy($id)
+    public function destroy($id)
     {
-        $sql = 'DELETE FROM widget_image WHERE id = '. db_ei($id) .' AND owner_id = '. db_ei($this->owner_id) ." AND owner_type = '". db_es($this->owner_type) ."'";
+        $sql = 'DELETE FROM widget_image WHERE id = ' . db_ei($id) . ' AND owner_id = ' . db_ei($this->owner_id) . " AND owner_type = '" . db_es($this->owner_type) . "'";
         db_query($sql);
     }
-    function isUnique()
+    public function isUnique()
     {
         return false;
     }

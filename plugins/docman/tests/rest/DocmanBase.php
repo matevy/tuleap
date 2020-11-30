@@ -25,8 +25,6 @@ namespace Tuleap\Docman\Test\rest;
 use RestBase;
 use TestDataBuilder;
 
-require_once __DIR__ . '/../../../../src/vendor/autoload.php';
-
 class DocmanBase extends RestBase
 {
     public const PROJECT_NAME     = 'docmanproject';
@@ -36,7 +34,7 @@ class DocmanBase extends RestBase
     protected $docman_user_id;
     protected $test_user_1_id;
 
-    public function setUp() : void
+    public function setUp(): void
     {
         parent::setUp();
         $this->project_id = $this->getProjectId(self::PROJECT_NAME);

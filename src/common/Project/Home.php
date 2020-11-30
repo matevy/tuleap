@@ -26,6 +26,8 @@ use EventManager;
 use HTTPRequest;
 use ProjectManager;
 use Tuleap\Dashboard\AssetsIncluder;
+use Tuleap\Dashboard\Project\DisabledProjectWidgetsChecker;
+use Tuleap\Dashboard\Project\DisabledProjectWidgetsDao;
 use Tuleap\Dashboard\Project\ProjectDashboardController;
 use Tuleap\Dashboard\Project\ProjectDashboardDao;
 use Tuleap\Dashboard\Project\ProjectDashboardRetriever;
@@ -57,13 +59,13 @@ use UserManager;
 class Home implements DispatchableWithRequest
 {
     /**
-     * @param array $args
+     * @param array $variables
      * @throws NotFoundException
      */
-    public function process(HTTPRequest $request, BaseLayout $layout, array $args)
+    public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
-        $project = ProjectManager::instance()->getProjectFromAutocompleter($args['name']);
-        if ($project && !$project->isError()) {
+        $project = ProjectManager::instance()->getProjectFromAutocompleter($variables['name']);
+        if ($project && ! $project->isError()) {
             $group_id = $project->getId();
 
             //set up the group_id
@@ -73,10 +75,10 @@ class Home implements DispatchableWithRequest
             if ($request->isAjax() && ! $request->existAndNonEmpty('action')) {
                 header('Content-type: application/json');
                 echo json_encode(
-                    array(
+                    [
                         'id' => $group_id,
                         'name' => $project->getPublicName(),
-                    )
+                    ]
                 );
                 exit;
             }
@@ -91,24 +93,20 @@ class Home implements DispatchableWithRequest
                     EventManager::instance()
                 );
 
-                $project_registration_creation_javascript_asset = new IncludeAssets(
-                    __DIR__ . '/../../www/assets/project-registration/creation/scripts',
-                    '/assets/project-registration/creation/scripts'
+                $core_assets                              = new IncludeAssets(
+                    __DIR__ . '/../../www/assets/core',
+                    '/assets/core'
                 );
-
                 $project_registration_creation_css_assets = new CssAsset(
-                    new IncludeAssets(
-                        __DIR__ . '/../../www/assets/project-registration/creation/themes',
-                        '/assets/project-registration/creation/themes'
-                    ),
-                    'project-registration-creation'
+                    $core_assets,
+                    'project/project-registration-creation'
                 );
 
-                $csrf_token                   = new CSRFSynchronizerToken('/project/');
-                $dashboard_widget_dao         = new DashboardWidgetDao($widget_factory);
-                $dashboard_widget_retriever   = new DashboardWidgetRetriever($dashboard_widget_dao);
-                $project_dashboard_dao        = new ProjectDashboardDao($dashboard_widget_dao);
-                $router                       = new ProjectDashboardRouter(
+                $csrf_token                 = new CSRFSynchronizerToken('/project/');
+                $dashboard_widget_dao       = new DashboardWidgetDao($widget_factory);
+                $dashboard_widget_retriever = new DashboardWidgetRetriever($dashboard_widget_dao);
+                $project_dashboard_dao      = new ProjectDashboardDao($dashboard_widget_dao);
+                $router                     = new ProjectDashboardRouter(
                     new ProjectDashboardController(
                         $csrf_token,
                         $project,
@@ -117,26 +115,21 @@ class Home implements DispatchableWithRequest
                         new DashboardWidgetRetriever(
                             $dashboard_widget_dao
                         ),
-                        new DashboardWidgetPresenterBuilder($widget_factory),
+                        new DashboardWidgetPresenterBuilder(
+                            $widget_factory,
+                            new DisabledProjectWidgetsChecker(new DisabledProjectWidgetsDao())
+                        ),
                         new WidgetDeletor($dashboard_widget_dao),
                         new WidgetMinimizor($dashboard_widget_dao),
                         new AssetsIncluder(
                             $layout,
-                            new IncludeAssets(__DIR__ .'/../../www/assets', '/assets'),
-                            new CssAssetCollection(
-                                [new CssAsset(
-                                    new IncludeAssets(
-                                        __DIR__ . '/../../www/assets/dashboards/themes',
-                                        '/assets/dashboards/themes'
-                                    ),
-                                    'dashboards'
-                                )]
-                            )
+                            $core_assets,
+                            new CssAssetCollection([new CssAsset($core_assets, 'dashboards/dashboards')])
                         ),
                         EventManager::instance(),
                         $layout,
-                        $project_registration_creation_javascript_asset,
-                        $project_registration_creation_css_assets
+                        $core_assets,
+                        $project_registration_creation_css_assets,
                     ),
                     new WidgetDashboardController(
                         $csrf_token,
@@ -146,7 +139,6 @@ class Home implements DispatchableWithRequest
                         $dashboard_widget_retriever,
                         new DashboardWidgetReorder(
                             $dashboard_widget_dao,
-                            $dashboard_widget_retriever,
                             new DashboardWidgetRemoverInList()
                         ),
                         new DashboardWidgetChecker($dashboard_widget_dao),
@@ -158,35 +150,20 @@ class Home implements DispatchableWithRequest
                 );
                 $router->route($request);
             } else {
-                $val = array_values($project->getServices());
-                foreach ($val as $containedSrv) {
+                $service = null;
+
+                foreach ($project->getServices() as $containedSrv) {
                     if ($containedSrv->isUsed()) {
                         $service = $containedSrv;
                         break;
                     }
                 }
-                if ($service->isIFrame()) {
-                    $label = $service->getLabel();
-                    if ($label == "service_" . $service->getShortName() . "_lbl_key") {
-                        $label = $GLOBALS['Language']->getText('project_admin_editservice', $label);
-                    } elseif (preg_match('/(.*):(.*)/', $label, $matches)) {
-                        $label = $GLOBALS['Language']->getText($matches[1], $matches[2]);
-                    }
-                    $title = $label . ' - ' . $project->getPublicName();
-                    site_project_header(array(
-                        'title'  => $title,
-                        'group'  => $request->get('group_id'),
-                        'toptab' => $service->getId()
-                    ));
 
-                    $GLOBALS['HTML']->iframe(
-                        $service->getUrl(),
-                        array('class' => 'iframe_service', 'width' => '100%', 'height' => '650px')
-                    );
-
-                    site_project_footer(array());
+                if ($service === null || $service->isIFrame()) {
+                    $layout->addFeedback(\Feedback::ERROR, _('A service displayed in a iframe cannot be the first service of a project'));
+                    $layout->redirect('/project/' . urlencode((string) $project->getID()) . '/admin/services');
                 } else {
-                    $GLOBALS['Response']->redirect($service->getUrl());
+                    $layout->redirect($service->getUrl());
                 }
             }
         } else {

@@ -131,7 +131,8 @@ abstract class Kanban extends Widget
         $kanban_name     = $this->kanban_title ? : 'Kanban';
         $selected_report = $this->getSelectedReport();
 
-        if ($this->tracker_report_id
+        if (
+            $this->tracker_report_id
             && $selected_report
             && $this->isCurrentReportSelectable($selected_report)
         ) {
@@ -181,6 +182,9 @@ abstract class Kanban extends Widget
         try {
             $kanban     = $this->kanban_factory->getKanban($this->getCurrentUser(), $this->kanban_id);
             $tracker    = $this->tracker_factory->getTrackerByid($kanban->getTrackerId());
+            if ($tracker === null) {
+                throw new \RuntimeException('Tracker does not exist');
+            }
             $project_id = $tracker->getProject()->getID();
             $is_empty   = ! $kanban;
 
@@ -205,7 +209,7 @@ abstract class Kanban extends Widget
         } catch (AgileDashboard_KanbanNotFoundException $exception) {
             $widget_kanban_presenter = new WidgetKanbanPresenter(
                 $is_empty,
-                $GLOBALS['Language']->getText('plugin_agiledashboard', 'kanban_not_found')
+                dgettext('tuleap-agiledashboard', 'Kanban not found.')
             );
         } catch (AgileDashboard_KanbanCannotAccessException $exception) {
             $widget_kanban_presenter = new WidgetKanbanPresenter(
@@ -247,20 +251,20 @@ abstract class Kanban extends Widget
         return dgettext('tuleap-agiledashboard', 'Add Kanban to dashboard');
     }
 
-    public function getJavascriptDependencies()
+    private function getIncludeAssets(): IncludeAssets
     {
-        $provider = new KanbanJavascriptDependenciesProvider();
+        return new IncludeAssets(__DIR__ . '/../../../../../src/www/assets/agiledashboard', '/assets/agiledashboard');
+    }
 
+    public function getJavascriptDependencies(): array
+    {
+        $provider = new KanbanJavascriptDependenciesProvider($this->getIncludeAssets());
         return $provider->getDependencies();
     }
 
-    public function getStylesheetDependencies()
+    public function getStylesheetDependencies(): CssAssetCollection
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../www/themes/BurningParrot/assets',
-            AGILEDASHBOARD_BASE_URL . '/themes/BurningParrot/assets'
-        );
-        return new CssAssetCollection([new CssAsset($include_assets, 'kanban')]);
+        return new CssAssetCollection([new CssAsset($this->getIncludeAssets(), 'kanban')]);
     }
 
     public function hasPreferences($widget_id)
@@ -364,10 +368,12 @@ abstract class Kanban extends Widget
         );
     }
 
-    private function getKanbanTrackerShortname(AgileDashboard_Kanban $kanban) : string
+    private function getKanbanTrackerShortname(AgileDashboard_Kanban $kanban): string
     {
-        return $this->tracker_factory->getTrackerById(
-            $kanban->getTrackerId()
-        )->getItemName();
+        $tracker = $this->tracker_factory->getTrackerById($kanban->getTrackerId());
+        if ($tracker === null) {
+            throw new \RuntimeException('Tracker does not exist');
+        }
+        return $tracker->getItemName();
     }
 }

@@ -26,16 +26,16 @@ export function collapseColumn(state: ColumnState, column: ColumnDefinition): vo
 export function expandColumn(state: ColumnState, column: ColumnDefinition): void {
     findColumn(state, column).is_collapsed = false;
 }
-export function mouseEntersColumn(state: ColumnState, column: ColumnDefinition): void {
+export function pointerEntersColumn(state: ColumnState, column: ColumnDefinition): void {
     findColumn(state, column).has_hover = true;
 }
-export function mouseLeavesColumn(state: ColumnState, column: ColumnDefinition): void {
+export function pointerLeavesColumn(state: ColumnState, column: ColumnDefinition): void {
     findColumn(state, column).has_hover = false;
 }
 
 function findColumn(state: ColumnState, column: ColumnDefinition): ColumnDefinition {
     const column_state: ColumnDefinition | undefined = state.columns.find(
-        col => col.id === column.id
+        (col) => col.id === column.id
     );
     if (!column_state) {
         throw new Error("Could not find column with id=" + column.id);

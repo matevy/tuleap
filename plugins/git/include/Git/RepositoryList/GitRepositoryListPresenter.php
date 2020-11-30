@@ -20,26 +20,55 @@
 
 namespace Tuleap\Git\RepositoryList;
 
+use Tuleap\Project\ProjectPrivacyPresenter;
+
 class GitRepositoryListPresenter
 {
     public $repositories_administration_url;
     public $repositories_fork_url;
     public $repositories_list_url;
     public $project_id;
-    /**
-     * @var bool
-     */
+    /** @var bool */
     public $is_admin;
     /** @var string */
     public $json_encoded_repositories_owners;
     /** @var string */
     public $display_mode;
+    /** @var string */
+    public $external_plugins;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
+    public $project_url;
+    /**
+     * @var mixed
+     * @psalm-readonly
+     */
+    public $project_public_name;
+    /**
+     * @var false|string
+     * @psalm-readonly
+     */
+    public $privacy;
+    /**
+     * @var false|string
+     * @psalm-readonly
+     */
+    public $project_flags;
+    /**
+     * @var string
+     */
+    public $external_services_name_used;
 
     public function __construct(
         \PFUser $current_user,
         \Project $project,
         $is_git_administrator,
-        array $repositories_owners
+        array $repositories_owners,
+        array $external_plugins,
+        array $project_flags,
+        array $external_services_name_used
     ) {
         $this->repositories_administration_url = GIT_BASE_URL . "/?" . http_build_query(
             [
@@ -61,6 +90,14 @@ class GitRepositoryListPresenter
 
         $this->json_encoded_repositories_owners = json_encode($repositories_owners);
 
-        $this->display_mode = $current_user->getPreference("are_git_repositories_sorted_by_path");
+        $this->display_mode = (string) $current_user->getPreference("are_git_repositories_sorted_by_path");
+        $this->external_plugins = json_encode($external_plugins);
+        $this->external_services_name_used = json_encode($external_services_name_used);
+
+        $this->project_url         = $project->getUrl();
+        $this->project_public_name = $project->getPublicName();
+
+        $this->privacy       = json_encode(ProjectPrivacyPresenter::fromProject($project), JSON_THROW_ON_ERROR);
+        $this->project_flags = json_encode($project_flags, JSON_THROW_ON_ERROR);
     }
 }

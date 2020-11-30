@@ -18,35 +18,62 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\User\AccessKey;
 
 use DateTimeImmutable;
 use HTTPRequest;
+use Tuleap\Authentication\Scope\AggregateAuthenticationScopeBuilder;
+use Tuleap\Authentication\Scope\AuthenticationScope;
+use Tuleap\Authentication\SplitToken\PrefixedSplitTokenSerializer;
 use Tuleap\Authentication\SplitToken\SplitTokenVerificationStringHasher;
 use Tuleap\Cryptography\KeyFactory;
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeBuilderCollector;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeDAO;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeIdentifier;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeSaver;
+use Tuleap\User\AccessKey\Scope\CoreAccessKeyScopeBuilderFactory;
+use Tuleap\User\AccessKey\Scope\InvalidScopeIdentifierKeyException;
+use Tuleap\User\AccessKey\Scope\NoValidAccessKeyScopeException;
+use Tuleap\User\Account\DisplayKeysTokensController;
 
 class AccessKeyCreationController implements DispatchableWithRequest
 {
-    public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
+    /**
+     * @var \CSRFSynchronizerToken
+     */
+    private $csrf_token;
+
+    public function __construct(\CSRFSynchronizerToken $csrf_token)
+    {
+        $this->csrf_token = $csrf_token;
+    }
+
+    public function process(HTTPRequest $request, BaseLayout $layout, array $variables): void
     {
         $current_user = $request->getCurrentUser();
         if ($current_user->isAnonymous()) {
             throw new ForbiddenException(_('Unauthorized action for anonymous'));
         }
 
-        (new \CSRFSynchronizerToken('/account/index.php'))->check();
+        $this->csrf_token->check(DisplayKeysTokensController::URL);
 
         $access_key_creator = new AccessKeyCreator(
             new LastAccessKeyIdentifierStore(
-                new AccessKeySerializer(),
-                (new KeyFactory)->getEncryptionKey(),
+                new PrefixedSplitTokenSerializer(new PrefixAccessKey()),
+                (new KeyFactory())->getEncryptionKey(),
                 $_SESSION
             ),
             new AccessKeyDAO(),
             new SplitTokenVerificationStringHasher(),
+            new AccessKeyScopeSaver(new AccessKeyScopeDAO()),
+            new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
             new AccessKeyCreationNotifier($request->getServerUrl(), \Codendi_HTMLPurifier::instance())
         );
 
@@ -54,16 +81,71 @@ class AccessKeyCreationController implements DispatchableWithRequest
         $expiration_date = $this->getExpirationDate($request, $layout);
 
         try {
-            $access_key_creator->create($current_user, $description, $expiration_date);
-            $layout->redirect('/account/#account-access-keys');
+            $access_key_creator->create(
+                $current_user,
+                $description,
+                $expiration_date,
+                ...$this->getAccessKeyScopes($request, $layout)
+            );
+            $layout->redirect(DisplayKeysTokensController::URL);
         } catch (AccessKeyAlreadyExpiredException $exception) {
             $layout->addFeedback(
                 \Feedback::ERROR,
                 _("You cannot create an already expired access key.")
             );
 
-            $layout->redirect('/account/');
+            $layout->redirect(DisplayKeysTokensController::URL);
+        } catch (NoValidAccessKeyScopeException $exception) {
+            $this->rejectMalformedAccessKeyScopes($layout);
         }
+    }
+
+    /**
+     * @return AuthenticationScope[]
+     */
+    private function getAccessKeyScopes(HTTPRequest $request, BaseLayout $layout): array
+    {
+        $access_key_scope_builder = AggregateAuthenticationScopeBuilder::fromBuildersList(
+            CoreAccessKeyScopeBuilderFactory::buildCoreAccessKeyScopeBuilder(),
+            AggregateAuthenticationScopeBuilder::fromEventDispatcher(\EventManager::instance(), new AccessKeyScopeBuilderCollector())
+        );
+
+        $scope_identifier_keys = $request->get('access-key-scopes');
+        if (! is_array($scope_identifier_keys)) {
+            $this->rejectMalformedAccessKeyScopes($layout);
+        }
+
+        $access_key_scopes = [];
+
+        foreach ($scope_identifier_keys as $scope_identifier_key) {
+            try {
+                $access_key_scope_identifier = AccessKeyScopeIdentifier::fromIdentifierKey($scope_identifier_key);
+            } catch (InvalidScopeIdentifierKeyException $ex) {
+                $this->rejectMalformedAccessKeyScopes($layout);
+            }
+            $access_key_scope = $access_key_scope_builder->buildAuthenticationScopeFromScopeIdentifier(
+                $access_key_scope_identifier
+            );
+            if ($access_key_scope === null) {
+                $this->rejectMalformedAccessKeyScopes($layout);
+            }
+            $access_key_scopes[] = $access_key_scope;
+        }
+
+        return $access_key_scopes;
+    }
+
+    /**
+     * @psalm-return never-return
+     */
+    private function rejectMalformedAccessKeyScopes(BaseLayout $layout): void
+    {
+        $layout->addFeedback(
+            \Feedback::ERROR,
+            _('Access key scopes are not well formed.')
+        );
+
+        $layout->redirect(DisplayKeysTokensController::URL);
     }
 
     private function getExpirationDate(HTTPRequest $request, BaseLayout $layout): ?DateTimeImmutable
@@ -80,7 +162,7 @@ class AccessKeyCreationController implements DispatchableWithRequest
                     _("Expiration date is not well formed.")
                 );
 
-                $layout->redirect('/account/');
+                $layout->redirect(DisplayKeysTokensController::URL);
             }
 
             $expiration_date = $expiration_date->setTime(23, 59, 59);

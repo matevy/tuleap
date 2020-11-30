@@ -26,17 +26,17 @@ require_once('lib/PageList.php');
 
 class WikiPlugin_MostPopular extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("MostPopular");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("List the most popular pages.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -45,18 +45,18 @@ class WikiPlugin_MostPopular extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array('pagename' => '[pagename]', // hackish
+            ['pagename' => '[pagename]', // hackish
                    //'exclude'  => '',
                    'limit'    => 20, // limit <0 returns least popular pages
                    'noheader' => 0,
                    'sortby'   => '-hits',
                    'info'     => false,
                    //'paging'   => 'auto'
-            )
+            ]
         );
     }
 
@@ -65,7 +65,7 @@ class WikiPlugin_MostPopular extends WikiPlugin
     // exclude arg allows multiple pagenames exclude=HomePage,RecentChanges
     // sortby: only pagename or hits. mtime not!
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         extract($args);
@@ -76,7 +76,7 @@ class WikiPlugin_MostPopular extends WikiPlugin
             );
             $sortby = '';
         }
-        $columns = $info ? explode(",", $info) : array();
+        $columns = $info ? explode(",", $info) : [];
         array_unshift($columns, 'hits');
 
         if (! $request->getArg('count')) {
@@ -114,7 +114,7 @@ class WikiPlugin_MostPopular extends WikiPlugin
 
         return $pagelist;
     }
-};
+}
 
 // $Log: MostPopular.php,v $
 // Revision 1.32  2004/12/26 17:14:03  rurban

@@ -50,7 +50,7 @@ class SystemControlTuleapCron implements SystemControlInterface
         $this->action         = $action;
     }
 
-    public function run() : void
+    public function run(): void
     {
         switch ($this->action) {
             case 'reload':
@@ -78,17 +78,11 @@ class SystemControlTuleapCron implements SystemControlInterface
         }
     }
 
-    /**
-     * @return bool
-     */
     public function isSuccessful(): bool
     {
         return $this->isSuccessful;
     }
 
-    /**
-     * @return int
-     */
     public function getExitCode(): int
     {
         return $this->exitCode;

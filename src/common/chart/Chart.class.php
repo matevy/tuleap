@@ -19,7 +19,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\Chart\ColorsForCharts;
+namespace Tuleap\Chart;
+
+use Chart_TTFFactory;
+use Feedback;
+use TTF;
 
 /**
 * Chart
@@ -34,9 +38,6 @@ class Chart
      * @var ColorsForCharts
      */
     protected $colors_for_charts;
-
-    private $width  = null;
-    private $height = null;
 
     protected $jpgraph_instance;
 
@@ -53,9 +54,6 @@ class Chart
     */
     public function __construct($aWidth = 600, $aHeight = 400, $aCachedName = "", $aTimeOut = 0, $aInline = true)
     {
-        $this->width  = $aWidth;
-        $this->height = $aHeight;
-
         $this->colors_for_charts = new ColorsForCharts();
 
         $classname = $this->getGraphClass();
@@ -72,7 +70,7 @@ class Chart
         //Fix margin
         try {
             $this->jpgraph_instance->img->SetMargin(70, 160, 30, 70);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // do nothing, JPGraph displays the error by itself
         }
 
@@ -98,11 +96,11 @@ class Chart
     /**
      * Get the name of the jpgraph class to instantiate
      *
-     * @return string
+     * @psalm-return class-string
      */
-    protected function getGraphClass()
+    protected function getGraphClass(): string
     {
-        return 'Graph';
+        return \Graph::class;
     }
 
     /**
@@ -170,8 +168,8 @@ class Chart
     public function __call($method, $args)
     {
         try {
-            $result = call_user_func_array(array($this->jpgraph_instance, $method), $args);
-        } catch (Exception $exc) {
+            $result = call_user_func_array([$this->jpgraph_instance, $method], $args);
+        } catch (\Exception $exc) {
             $error_message = sprintf(
                 _('JpGraph error for graph "%s": %s'),
                 $this->title->t,
@@ -187,7 +185,7 @@ class Chart
             }
             return false;
         }
-        if (!strnatcasecmp($method, 'SetScale')) {
+        if (! strnatcasecmp($method, 'SetScale')) {
             $this->jpgraph_instance->xaxis->SetColor($this->getMainColor(), $this->getMainColor());
             $this->jpgraph_instance->xaxis->SetFont($this->getFont(), FS_NORMAL, 8);
             $this->jpgraph_instance->xaxis->SetLabelAngle(45);
@@ -252,21 +250,30 @@ class Chart
      * Diplay a given message as png image
      *
      * @param String $msg Message to display
-     *
-     * @return Void
      */
-    public function displayMessage($msg)
+    public function displayMessage($msg): void
     {
         //ttf from jpgraph
         $ttf = new TTF();
         Chart_TTFFactory::setUserFont($ttf);
+
+        if ($msg === '') { // Workaround for an issue with gd 2.3.0, see https://tuleap.net/plugins/tracker/?aid=14721
+            $im = @imagecreate(2, 2);
+            if ($im !== false) {
+                header('Content-type: image/png');
+                imagecolorallocate($im, 0, 0, 0);
+                imagepng($im);
+                imagedestroy($im);
+            }
+            return;
+        }
 
         //Calculate the baseline
         // @see http://www.php.net/manual/fr/function.imagettfbbox.php#75333
         //this should be above baseline
         $test2    = "H";
         //some of these additional letters should go below it
-        $test3    ="Hjgqp";
+        $test3    = "Hjgqp";
         //get the dimension for these two:
         $box2     = imageTTFBbox(10, 0, $ttf->File(FF_USERFONT), $test2);
         $box3     = imageTTFBbox(10, 0, $ttf->File(FF_USERFONT), $test3);

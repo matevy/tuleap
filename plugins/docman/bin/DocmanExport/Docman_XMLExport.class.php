@@ -30,7 +30,7 @@ class Docman_XMLExport
     protected $dataPath;
     protected $logger;
 
-    public function __construct(Logger $logger)
+    public function __construct(\Psr\Log\LoggerInterface $logger)
     {
         $this->logger = $logger;
     }
@@ -56,7 +56,6 @@ class Docman_XMLExport
 
     /**
      * Should be transfered in Docman_Metadata
-     * @param DOMDocument $doc
      * @return DOMNode
      */
     public function getMetadataDef(DOMDocument $doc)

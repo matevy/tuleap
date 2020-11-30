@@ -49,8 +49,6 @@ class GitLegacyURLRedirectController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
      * @param array $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -62,7 +60,7 @@ class GitLegacyURLRedirectController implements DispatchableWithRequest
         if (! $project || $project->isError()) {
             throw new NotFoundException();
         }
-        if (! $project->usesService(gitPlugin::SERVICE_SHORTNAME)) {
+        if (! $project->usesService(GitPlugin::SERVICE_SHORTNAME)) {
             throw new NotFoundException(dgettext("tuleap-git", "Git service is disabled."));
         }
 
@@ -74,9 +72,9 @@ class GitLegacyURLRedirectController implements DispatchableWithRequest
             throw new ForbiddenException();
         }
 
-        $redirect_url = GIT_BASE_URL.'/'.$repository->getProject()->getUnixName().'/'.$repository->getFullName();
+        $redirect_url = GIT_BASE_URL . '/' . $repository->getProject()->getUnixName() . '/' . $repository->getFullName();
         if ($_SERVER['QUERY_STRING'] !== '') {
-            $redirect_url .= '?'.$_SERVER['QUERY_STRING'];
+            $redirect_url .= '?' . $_SERVER['QUERY_STRING'];
         }
 
         $layout->permanentRedirect($redirect_url);

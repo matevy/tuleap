@@ -21,15 +21,15 @@
 namespace Tuleap\Tracker\FormElement\Field\Burndown;
 
 use DateTime;
-use Logger;
 use PFUser;
+use Psr\Log\LoggerInterface;
 use TimePeriodWithoutWeekEnd;
-use Tracker_Artifact;
 use Tracker_Chart_Data_Burndown;
-use Tracker_FormElement_Field_ComputedDao;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\ChartCachedDaysComparator;
 use Tuleap\Tracker\FormElement\ChartConfigurationFieldRetriever;
 use Tuleap\Tracker\FormElement\ChartConfigurationValueChecker;
+use Tuleap\Tracker\FormElement\Field\Computed\ComputedFieldDao;
 use Tuleap\Tracker\FormElement\SystemEvent\SystemEvent_BURNDOWN_GENERATE;
 
 class BurndownCacheGenerationChecker
@@ -39,7 +39,7 @@ class BurndownCacheGenerationChecker
      */
     private $cached_days_comparator;
     /**
-     * @var Tracker_FormElement_Field_ComputedDao
+     * @var ComputedFieldDao
      */
     private $computed_dao;
     /**
@@ -55,7 +55,7 @@ class BurndownCacheGenerationChecker
      */
     private $cache_generator;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
     /**
@@ -68,12 +68,12 @@ class BurndownCacheGenerationChecker
     private $remaining_effort_adder;
 
     public function __construct(
-        Logger $logger,
+        LoggerInterface $logger,
         BurndownCacheGenerator $cache_generator,
         \SystemEventManager $event_manager,
         ChartConfigurationFieldRetriever $field_retriever,
         ChartConfigurationValueChecker $value_checker,
-        Tracker_FormElement_Field_ComputedDao $computed_dao,
+        ComputedFieldDao $computed_dao,
         ChartCachedDaysComparator $cached_days_comparator,
         BurndownRemainingEffortAdderForREST $remaining_effort_adder
     ) {
@@ -87,7 +87,7 @@ class BurndownCacheGenerationChecker
         $this->remaining_effort_adder = $remaining_effort_adder;
     }
 
-    public function isCacheBurndownAlreadyAsked(Tracker_Artifact $artifact)
+    public function isCacheBurndownAlreadyAsked(Artifact $artifact)
     {
         return $this->event_manager->areThereMultipleEventsQueuedMatchingFirstParameter(
             SystemEvent_BURNDOWN_GENERATE::class,
@@ -96,7 +96,7 @@ class BurndownCacheGenerationChecker
     }
 
     public function isBurndownUnderCalculationBasedOnServerTimezone(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         TimePeriodWithoutWeekEnd $time_period,
         $capacity
@@ -113,7 +113,8 @@ class BurndownCacheGenerationChecker
         $server_burndown_data = new Tracker_Chart_Data_Burndown($time_period_with_start_date_from_midnight, $capacity);
 
         $this->remaining_effort_adder->addRemainingEffortDataForREST($server_burndown_data, $artifact, $user);
-        if ($this->isCacheCompleteForBurndown($time_period_with_start_date_from_midnight, $artifact, $user) === false
+        if (
+            $this->isCacheCompleteForBurndown($time_period_with_start_date_from_midnight, $artifact, $user) === false
             && $this->isCacheBurndownAlreadyAsked($artifact) === false
         ) {
             $this->cache_generator->forceBurndownCacheGeneration($artifact->getId());
@@ -127,11 +128,13 @@ class BurndownCacheGenerationChecker
 
     private function isCacheCompleteForBurndown(
         TimePeriodWithoutWeekEnd $time_period,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user
     ) {
-        if ($this->value_checker->doesUserCanReadRemainingEffort($artifact, $user) === true
-            && $this->value_checker->hasStartDate($artifact, $user) === true) {
+        if (
+            $this->value_checker->doesUserCanReadRemainingEffort($artifact, $user) === true
+            && $this->value_checker->hasStartDate($artifact, $user) === true
+        ) {
             $cached_days = $this->computed_dao->getCachedDays(
                 $artifact->getId(),
                 $this->field_retriever->getBurndownRemainingEffortField($artifact, $user)->getId()

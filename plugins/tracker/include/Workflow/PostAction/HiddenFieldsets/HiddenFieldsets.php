@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets;
 
-use Codendi_Request;
 use SimpleXMLElement;
 use Tracker_FormElement_Container_Fieldset;
 use Tracker_FormElement_Field;
@@ -57,9 +56,8 @@ class HiddenFieldsets extends Transition_PostAction
     /**
      * Get the shortname of the post action
      *
-     * @return string
      */
-    public function getShortName() : string
+    public function getShortName(): string
     {
         return self::SHORT_NAME;
     }
@@ -76,17 +74,6 @@ class HiddenFieldsets extends Transition_PostAction
     }
 
     /**
-     * Get the html code needed to display the post action in workflow admin
-     *
-     * @return string html
-     */
-    public function fetch()
-    {
-        /// Not implemented. We do not support the legacy UI for this new post action
-        return '';
-    }
-
-    /**
      * Say if the action is well defined
      *
      * @return bool
@@ -95,18 +82,6 @@ class HiddenFieldsets extends Transition_PostAction
     {
         // Since we do not support the legacy UI, it is always well defined
         return true;
-    }
-
-    /**
-     * Update/Delete action
-     *
-     * @param Codendi_Request $request The request
-     *
-     * @return void
-     */
-    public function process(Codendi_Request $request)
-    {
-        // Not implemented. We do not support the legacy UI for this new post action
     }
 
     /**
@@ -119,7 +94,7 @@ class HiddenFieldsets extends Transition_PostAction
      */
     public function exportToXml(SimpleXMLElement $root, $xmlMapping)
     {
-        if (count($this->getFieldsets()) >0) {
+        if (count($this->getFieldsets()) > 0) {
             $child = $root->addChild(self::XML_TAG_NAME);
             foreach ($this->getFieldsets() as $fieldset) {
                 $fieldset_id = array_search((int) $fieldset->getID(), $xmlMapping);
@@ -133,7 +108,6 @@ class HiddenFieldsets extends Transition_PostAction
     /**
      * Get the value of bypass_permissions
      *
-     * @param Tracker_FormElement_Field $field
      *
      * @return bool
      */

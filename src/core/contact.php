@@ -19,9 +19,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-$HTML->header(array(
-    'title'=>$Language->getText('contact', 'title'),
-    'main_classes' => array('tlp-framed')
-));
+$HTML->header([
+    'title' => $Language->getText('contact', 'title'),
+    'main_classes' => ['tlp-framed']
+]);
 $HTML->displayContactPage();
-$HTML->footer(array());
+$HTML->footer([]);

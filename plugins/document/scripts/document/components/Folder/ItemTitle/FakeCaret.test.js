@@ -29,13 +29,13 @@ describe("FakeCaret", () => {
     const item = {
         id: 42,
         parent_id: 66,
-        type: "wiki"
+        type: "wiki",
     };
     const component_options = {
         localVue,
         propsData: {
-            item
-        }
+            item,
+        },
     };
 
     it(`Given item has no siblings,
@@ -44,12 +44,12 @@ describe("FakeCaret", () => {
         const store = new Vuex.Store({
             state: {
                 current_folder: { id: 66 },
-                folder_content: [item]
-            }
+                folder_content: [item],
+            },
         });
         const wrapper = shallowMount(FakeCaret, { store, ...component_options });
 
-        expect(wrapper.contains(".fa-fw")).toBeFalsy();
+        expect(wrapper.find(".fa-fw").exists()).toBeFalsy();
     });
 
     it(`Given item has only documents as siblings,
@@ -63,13 +63,13 @@ describe("FakeCaret", () => {
                     { id: 44, parent_id: 66, type: "link" },
                     { id: 45, parent_id: 66, type: "wiki" },
                     { id: 46, parent_id: 66, type: "empty" },
-                    item
-                ]
-            }
+                    item,
+                ],
+            },
         });
         const wrapper = shallowMount(FakeCaret, { store, ...component_options });
 
-        expect(wrapper.contains(".fa-fw")).toBeFalsy();
+        expect(wrapper.find(".fa-fw").exists()).toBeFalsy();
     });
 
     it(`Given item has at least one folder as sibling,
@@ -83,13 +83,13 @@ describe("FakeCaret", () => {
                     { id: 44, parent_id: 66, type: "link" },
                     { id: 45, parent_id: 66, type: "folder" },
                     { id: 46, parent_id: 66, type: "empty" },
-                    item
-                ]
-            }
+                    item,
+                ],
+            },
         });
         const wrapper = shallowMount(FakeCaret, { store, ...component_options });
 
-        expect(wrapper.contains(".fa-fw")).toBeTruthy();
+        expect(wrapper.find(".fa-fw").exists()).toBeTruthy();
     });
 
     it(`Given item has no siblings,
@@ -104,13 +104,13 @@ describe("FakeCaret", () => {
                     { id: 44, parent_id: 111, type: "link" },
                     { id: 66, parent_id: 111, type: "folder" },
                     { id: 46, parent_id: 111, type: "empty" },
-                    item
-                ]
-            }
+                    item,
+                ],
+            },
         });
         const wrapper = shallowMount(FakeCaret, { store, ...component_options });
 
-        expect(wrapper.contains(".fa-fw")).toBeTruthy();
+        expect(wrapper.find(".fa-fw").exists()).toBeTruthy();
     });
 
     it(`Given item has only documents as siblings,
@@ -125,13 +125,13 @@ describe("FakeCaret", () => {
                     { id: 44, parent_id: 66, type: "link" },
                     { id: 66, parent_id: 111, type: "folder" },
                     { id: 46, parent_id: 66, type: "empty" },
-                    item
-                ]
-            }
+                    item,
+                ],
+            },
         });
         const wrapper = shallowMount(FakeCaret, { store, ...component_options });
 
-        expect(wrapper.contains(".fa-fw")).toBeTruthy();
+        expect(wrapper.find(".fa-fw").exists()).toBeTruthy();
     });
 
     it(`Given item has at least one folder as siblings,
@@ -146,12 +146,12 @@ describe("FakeCaret", () => {
                     { id: 44, parent_id: 66, type: "link" },
                     { id: 66, parent_id: 111, type: "folder" },
                     { id: 46, parent_id: 66, type: "folder" },
-                    item
-                ]
-            }
+                    item,
+                ],
+            },
         });
         const wrapper = shallowMount(FakeCaret, { store, ...component_options });
 
-        expect(wrapper.contains(".fa-fw")).toBeTruthy();
+        expect(wrapper.find(".fa-fw").exists()).toBeTruthy();
     });
 });

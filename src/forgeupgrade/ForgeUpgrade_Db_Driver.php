@@ -27,12 +27,16 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract
     protected $user;
     protected $password;
 
+    private $enable_ssl = false;
+    private $ssl_ca_file;
+    private $ssl_verify_cert = false;
+
     protected $platform_name = "tuleap";
     protected $env_variable_name = "TULEAP_LOCAL_INC";
 
     protected function initOptions()
     {
-        if (!$this->dsn) {
+        if (! $this->dsn) {
             $localInc = $this->getLocalInc();
             if (is_file($localInc)) {
                 include $localInc;
@@ -44,17 +48,26 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract
                 if (strpos($sys_dbhost, ':') !== false) {
                     list($host, $details) = explode(':', $sys_dbhost);
                     if (is_numeric($details)) {
-                        $port = ';port='.$details;
+                        $port = ';port=' . $details;
                     } else {
-                        $socket = ';unix_socket='.$socket;
+                        $socket = ';unix_socket=' . $socket;
                     }
                 } else {
                     $host   = $sys_dbhost;
                 }
 
-                $this->dsn      = 'mysql:host='.$host.$socket.$port.';dbname='.$sys_dbname;
+                $this->dsn      = 'mysql:host=' . $host . $socket . $port . ';dbname=' . $sys_dbname;
                 $this->user     = $sys_dbuser;
                 $this->password = $sys_dbpasswd;
+                if (isset($sys_enablessl) && $sys_enablessl == '1') {
+                    $this->enable_ssl = true;
+                }
+                if (isset($sys_db_ssl_ca) && is_file($sys_db_ssl_ca)) {
+                    $this->ssl_ca_file = $sys_db_ssl_ca;
+                }
+                if (isset($sys_db_ssl_verify_cert) && $sys_db_ssl_verify_cert == '1') {
+                    $this->ssl_verify_cert = true;
+                }
             } else {
                 throw new Exception($this->getErrorLocalIncMessage());
             }
@@ -63,12 +76,12 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract
 
     private function getLocalInc()
     {
-        return getenv($this->env_variable_name) ? getenv($this->env_variable_name) : '/etc/'.$this->platform_name.'/conf/local.inc';
+        return getenv($this->env_variable_name) ? getenv($this->env_variable_name) : '/etc/' . $this->platform_name . '/conf/local.inc';
     }
 
     private function getErrorLocalIncMessage()
     {
-        return 'Unable to find a valid local.inc for '.$this->platform_name.', please check '.$this->env_variable_name.' environment variable';
+        return 'Unable to find a valid local.inc for ' . $this->platform_name . ', please check ' . $this->env_variable_name . ' environment variable';
     }
 
     /**
@@ -80,17 +93,29 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract
      */
     public function getPdo()
     {
-        if (!$this->pdo) {
+        if (! $this->pdo) {
             $this->initOptions();
             $this->pdo = new PDO(
                 $this->dsn,
                 $this->user,
                 $this->password,
-                array(PDO::MYSQL_ATTR_INIT_COMMAND =>  "SET NAMES 'UTF8'")
+                $this->getPDOOptions(),
             );
             //$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return $this->pdo;
+    }
+
+    private function getPDOOptions()
+    {
+        $options = [
+            PDO::MYSQL_ATTR_INIT_COMMAND =>  "SET NAMES 'UTF8'",
+        ];
+        if ($this->enable_ssl) {
+            $options[PDO::MYSQL_ATTR_SSL_CA] = $this->ssl_ca_file;
+            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = $this->ssl_verify_cert;
+        }
+        return $options;
     }
 
     /**
@@ -109,7 +134,7 @@ class ForgeUpgrade_Db_Driver extends ForgeUpgrade_Db_Driver_Abstract
         $logger->setPassword($this->password);
         $logger->setDSN($this->dsn);
         $logger->setTable('forge_upgrade_log');
-        $logger->setInsertSql('INSERT INTO forge_upgrade_log (id, bucket_id, timestamp, logger, level, message, thread, file, line) VALUES (NULL,'.$bucket->getId().',?,?,?,?,?,?,?)');
+        $logger->setInsertSql('INSERT INTO forge_upgrade_log (id, bucket_id, timestamp, logger, level, message, thread, file, line) VALUES (NULL,' . $bucket->getId() . ',?,?,?,?,?,?,?)');
         $logger->setInsertPattern('%d,%c,%p,%m,%t,%F,%L');
         $logger->activateOptions();
 

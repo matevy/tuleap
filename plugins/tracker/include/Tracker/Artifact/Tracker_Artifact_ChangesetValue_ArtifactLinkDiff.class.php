@@ -72,8 +72,8 @@ class Tracker_Artifact_ChangesetValue_ArtifactLinkDiff
                 $this->removed->add($previous[$key]);
             }
 
-            $this->added_by_nature   = array();
-            $this->updated_by_nature = array();
+            $this->added_by_nature   = [];
+            $this->updated_by_nature = [];
             foreach ($next as $key => $artifactlinkinfo) {
                 if (! isset($previous[$key])) {
                     $this->fillAddedByNature($artifactlinkinfo, $nature_factory, $formatter);
@@ -136,7 +136,7 @@ class Tracker_Artifact_ChangesetValue_ArtifactLinkDiff
             return;
         }
 
-        $key = $previous_nature->shortname .'-'. $next_nature->shortname;
+        $key = $previous_nature->shortname . '-' . $next_nature->shortname;
         if (! isset($this->updated_by_nature[$key])) {
             $this->updated_by_nature[$key] = new UpdatedNatureLinkCollection(
                 $previous_nature,
@@ -162,10 +162,10 @@ class Tracker_Artifact_ChangesetValue_ArtifactLinkDiff
         }
 
         if (empty($this->next)) {
-            return ' '.dgettext('tuleap-tracker', 'cleared');
+            return ' ' . dgettext('tuleap-tracker', 'cleared');
         }
 
-        $formatted_messages = array();
+        $formatted_messages = [];
         $formatted_messages[] = $this->removed->fetchFormatted($user, $format, $ignore_perms);
         foreach ($this->added_by_nature as $collection) {
             $formatted_messages[] = $collection->fetchFormatted($user, $format, $ignore_perms);
@@ -184,7 +184,7 @@ class Tracker_Artifact_ChangesetValue_ArtifactLinkDiff
         }
 
         if ($format === 'html') {
-            return '<ul><li>'. implode('</li><li>', $formatted_messages) .'</li></ul>';
+            return '<ul><li>' . implode('</li><li>', $formatted_messages) . '</li></ul>';
         } else {
             $separator = "\n    * ";
             return $separator . implode($separator, $formatted_messages) . "\n";

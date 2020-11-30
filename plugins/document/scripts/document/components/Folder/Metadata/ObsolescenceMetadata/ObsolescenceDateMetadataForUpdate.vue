@@ -19,11 +19,13 @@
   -->
 
 <template>
-    <div class="tlp-form-element document-obsolescence-date-section" v-if="is_obsolescence_date_metadata_used" data-test="obsolescence-date-metadata">
-        <label class="tlp-label"
-               for="document-obsolescence-date-update"
-        >
-            <translate> Obsolescence date</translate>
+    <div
+        class="tlp-form-element document-obsolescence-date-section"
+        v-if="is_obsolescence_date_metadata_used"
+        data-test="obsolescence-date-metadata"
+    >
+        <label class="tlp-label" for="document-obsolescence-date-update">
+            <translate>Obsolescence date</translate>
             <i class="fa fa-asterisk"></i>
         </label>
         <div class="tlp-form-element document-obsolescence-date-metadata-select">
@@ -43,7 +45,7 @@
                 <option name="today" value="today" v-translate>Obsolete today</option>
             </select>
             <div class="tlp-form-element-prepend">
-                <span class="tlp-prepend"><i class="fa fa-calendar"></i></span>
+                <span class="tlp-prepend"><i class="fas fa-calendar-alt"></i></span>
                 <date-flat-picker
                     v-bind:id="'document-obsolescence-date-update'"
                     v-bind:required="true"
@@ -52,7 +54,11 @@
                 />
             </div>
         </div>
-        <p class="tlp-text-danger" v-if="error_message.length > 0" data-test="obsolescence-date-error-message">
+        <p
+            class="tlp-text-danger"
+            v-if="error_message.length > 0"
+            data-test="obsolescence-date-error-message"
+        >
             {{ error_message }}
         </p>
     </div>
@@ -67,14 +73,14 @@ export default {
     name: "ObsolescenceDateMetadataForUpdate",
     components: { DateFlatPicker },
     props: {
-        value: String
+        value: String,
     },
     data() {
         return {
             date_value: this.value,
             selected_value: "",
             error_message: "",
-            uses_helper_validity: false
+            uses_helper_validity: false,
         };
     },
     computed: {
@@ -91,7 +97,7 @@ export default {
                 this.$emit("input", value);
 
                 this.uses_helper_validity = false;
-            }
+            },
         },
         selected_date_value: {
             get() {
@@ -99,8 +105,8 @@ export default {
             },
             set(value) {
                 this.selected_value = value;
-            }
-        }
+            },
+        },
     },
     mounted() {
         if (this.value !== "") {
@@ -117,7 +123,7 @@ export default {
 
             this.selected_value = event.target.value;
             this.obsolescence_date = input_date_value;
-        }
-    }
+        },
+    },
 };
 </script>

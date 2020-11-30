@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,10 +21,14 @@ namespace Tuleap\AgileDashboard\REST\v1\Kanban;
 
 use Luracast\Restler\RestException;
 
+/**
+ * @psalm-immutable
+ */
 class KanbanAddRepresentation
 {
     /**
-     * @var {@type array}
+     * @var array {@type int}
+     * @psalm-var int[]
      */
     public $ids;
 

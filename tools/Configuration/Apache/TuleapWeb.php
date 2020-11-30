@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,7 @@
 
 namespace Tuleap\Configuration\Apache;
 
-use Tuleap\Configuration\Logger\LoggerInterface;
+use Psr\Log\LoggerInterface;
 use Tuleap\Configuration\Logger\Wrapper;
 
 class TuleapWeb
@@ -53,17 +53,17 @@ class TuleapWeb
 
     private function updateHttpdConf()
     {
-        $httpd_conf = file_get_contents($this->httpd_conf_path.'/conf/httpd.conf');
+        $httpd_conf = file_get_contents($this->httpd_conf_path . '/conf/httpd.conf');
 
         $conf = preg_replace(
-            array(
+            [
                 '/^Include conf\/ssl\.conf$/m',
                 '/^Listen .*$/m',
-            ),
-            array(
+            ],
+            [
                 '#Include conf/ssl.conf',
                 'Listen 127.0.0.1:8080',
-            ),
+            ],
             $httpd_conf
         );
 
@@ -71,13 +71,13 @@ class TuleapWeb
 
         if ($httpd_conf !== $conf) {
             $this->logger->info("Make apache listen on localhost 8080");
-            file_put_contents($this->httpd_conf_path.'/conf/httpd.conf', $conf);
+            file_put_contents($this->httpd_conf_path . '/conf/httpd.conf', $conf);
         }
     }
 
     private function disableSSLvhost()
     {
-        $vhost_file = $this->httpd_conf_path.'/conf.d/tuleap-vhost.conf';
+        $vhost_file = $this->httpd_conf_path . '/conf.d/tuleap-vhost.conf';
         if (is_file($vhost_file)) {
             $new_content = '';
             $in_ssl_vhost = false;
@@ -116,14 +116,14 @@ class TuleapWeb
     private function turnHttpVhostOn8080($content)
     {
         return preg_replace(
-            array(
+            [
                 '/^NameVirtualHost .*:80$/m',
                 '/^<VirtualHost .*:80>/m',
-            ),
-            array(
+            ],
+            [
                 'NameVirtualHost 127.0.0.1:8080',
                 '<VirtualHost 127.0.0.1:8080>',
-            ),
+            ],
             $content
         );
     }

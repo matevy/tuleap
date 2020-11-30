@@ -19,7 +19,7 @@
  */
 
 
-class GenericUserFactory
+class GenericUserFactory // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     public const CONFIG_KEY_SUFFIX = 'sys_generic_user_suffix';
 
@@ -75,12 +75,9 @@ class GenericUserFactory
     }
 
     /**
-     *
      * @param int $group_id
-     * @param string $password
-     * @return GenericUser
      */
-    public function create($group_id, $password)
+    public function create($group_id, \Tuleap\Cryptography\ConcealedString $password): GenericUser
     {
         $generic_user = $this->generateGenericUser($group_id, new PFUser());
         $generic_user->setPassword($password);
@@ -91,7 +88,7 @@ class GenericUserFactory
         return $generic_user;
     }
 
-    /**-
+    /**
      * @param int $group_id
      * @return GenericUser
      */

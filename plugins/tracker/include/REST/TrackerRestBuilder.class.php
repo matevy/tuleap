@@ -18,16 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\REST\CompleteTrackerRepresentation;
 use Tuleap\Tracker\REST\FormElementRepresentationsBuilder;
-use Tuleap\Tracker\REST\PermissionsExporter;
 use Tuleap\Tracker\REST\StructureElementRepresentation;
 use Tuleap\Tracker\REST\Tracker\PermissionsRepresentationBuilder;
 use Tuleap\Tracker\REST\WorkflowRepresentation;
-use Tuleap\Tracker\REST\WorkflowTransitionRepresentation;
-use Tuleap\Tracker\REST\WorkflowRulesRepresentation;
 use Tuleap\Tracker\REST\WorkflowRuleDateRepresentation;
 use Tuleap\Tracker\REST\WorkflowRuleListRepresentation;
+use Tuleap\Tracker\REST\WorkflowRulesRepresentation;
+use Tuleap\Tracker\REST\WorkflowTransitionRepresentation;
 
 class Tracker_REST_TrackerRestBuilder
 {
@@ -53,7 +53,7 @@ class Tracker_REST_TrackerRestBuilder
         $this->permissions_representation_builder   = $permissions_representation_builder;
     }
 
-    public function getTrackerRepresentationInTrackerContext(PFUser $user, Tracker $tracker) : CompleteTrackerRepresentation
+    public function getTrackerRepresentationInTrackerContext(PFUser $user, Tracker $tracker): CompleteTrackerRepresentation
     {
         return $this->buildTrackerRepresentation(
             $user,
@@ -65,7 +65,7 @@ class Tracker_REST_TrackerRestBuilder
         );
     }
 
-    public function getTrackerRepresentationInArtifactContext(PFUser $user, Tracker_Artifact $artifact) : CompleteTrackerRepresentation
+    public function getTrackerRepresentationInArtifactContext(PFUser $user, Artifact $artifact): CompleteTrackerRepresentation
     {
         $tracker = $artifact->getTracker();
 
@@ -82,8 +82,7 @@ class Tracker_REST_TrackerRestBuilder
     private function buildTrackerRepresentation(PFUser $user, Tracker $tracker, array $rest_fields): CompleteTrackerRepresentation
     {
         $semantic_manager = $this->getSemanticManager($tracker);
-        $tracker_representation = new CompleteTrackerRepresentation();
-        $tracker_representation->build(
+        return CompleteTrackerRepresentation::build(
             $tracker,
             $rest_fields,
             $this->getStructureRepresentation($tracker),
@@ -91,8 +90,6 @@ class Tracker_REST_TrackerRestBuilder
             $this->getWorkflowRepresentation($tracker->getWorkflow(), $user, $tracker->getGroupId()),
             $this->permissions_representation_builder->getPermissionsRepresentation($tracker, $user)
         );
-
-        return $tracker_representation;
     }
 
     /**
@@ -101,7 +98,6 @@ class Tracker_REST_TrackerRestBuilder
      * requires a tracker as a parameter (I cannot pass it as constructor argument
      * because the tracker is an argument of the method, not the class).
      *
-     * @param Tracker $tracker
      * @return Tracker_SemanticManager
      */
     protected function getSemanticManager(Tracker $tracker)
@@ -111,7 +107,7 @@ class Tracker_REST_TrackerRestBuilder
 
     private function getStructureRepresentation(Tracker $tracker)
     {
-        $structure_element_representations = array();
+        $structure_element_representations = [];
         $form_elements                     = $this->formelement_factory->getUsedFormElementForTracker($tracker);
 
         if ($form_elements) {
@@ -127,7 +123,6 @@ class Tracker_REST_TrackerRestBuilder
     }
 
     /**
-     * @param PFUser $user
      * @return Tuleap\Tracker\REST\WorkflowRepresentation | null
      */
     private function getWorkflowRepresentation(Workflow $workflow, PFUser $user, $project_id)
@@ -136,7 +131,7 @@ class Tracker_REST_TrackerRestBuilder
             return;
         }
 
-        $transitions = array();
+        $transitions = [];
         foreach ($workflow->getTransitions() as $transition) {
             $condition_permission = new Workflow_Transition_Condition_Permissions($transition);
 
@@ -145,14 +140,11 @@ class Tracker_REST_TrackerRestBuilder
             }
         }
 
-        $workflow_representation = new WorkflowRepresentation();
-        $workflow_representation->build(
+        return new WorkflowRepresentation(
             $workflow,
             $this->getWorkflowRulesRepresentation($workflow),
             $transitions
         );
-
-        return $workflow_representation;
     }
 
     /**
@@ -161,20 +153,17 @@ class Tracker_REST_TrackerRestBuilder
      */
     public function getWorkflowRulesRepresentation(Workflow $workflow)
     {
-        $workflow_representation = new WorkflowRulesRepresentation();
-        $workflow_representation->build(
+        return new WorkflowRulesRepresentation(
             $this->getListOfWorkflowRuleDateRepresentation($workflow),
             $this->getListOfWorkflowRuleListRepresentation($workflow)
         );
-
-        return $workflow_representation;
     }
 
     /** @return Tuleap\Tracker\REST\WorkflowRuleListRepresentation[] */
     private function getListOfWorkflowRuleDateRepresentation(Workflow $workflow)
     {
         $rules_manager = $workflow->getGlobalRulesManager();
-        $dates = array();
+        $dates = [];
         foreach ($workflow->getGlobalRulesManager()->getAllDateRulesByTrackerId($workflow->getTrackerId()) as $rule) {
             $rule_date_representation = new WorkflowRuleDateRepresentation();
             $rule_date_representation->build(
@@ -191,7 +180,7 @@ class Tracker_REST_TrackerRestBuilder
     /** @return Tuleap\Tracker\REST\WorkflowRuleListRepresentation[] */
     private function getListOfWorkflowRuleListRepresentation(Workflow $workflow)
     {
-        $lists = array();
+        $lists = [];
         foreach ($workflow->getGlobalRulesManager()->getAllListRulesByTrackerWithOrder($workflow->getTrackerId()) as $rule) {
             $rule_list_representation = new WorkflowRuleListRepresentation();
             $rule_list_representation->build(
@@ -208,7 +197,6 @@ class Tracker_REST_TrackerRestBuilder
 
     /**
      *
-     * @param Transition $transition
      *
      * @return Tuleap\Tracker\REST\WorkflowTransitionRepresentation
      */

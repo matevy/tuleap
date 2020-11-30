@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) Jtekt, Jason Team, 2012. All rights reserved
- * Copyright (c) Enalean, 2015-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,11 +19,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 
 class Tracker_FormElement_Field_Checkbox extends Tracker_FormElement_Field_MultiSelectbox
 {
 
-    protected function fetchFieldContainerStart($id, $name)
+    protected function fetchFieldContainerStart(string $id, string $name, string $data_target_fields_ids): string
     {
         return '';
     }
@@ -37,9 +38,9 @@ class Tracker_FormElement_Field_Checkbox extends Tracker_FormElement_Field_Multi
         $html    = '';
         $checked = $is_selected ? 'checked="checked"' : '';
 
-        $html .= '<label class="checkbox" for="cb_'. $id .'" ><input type="hidden" '.$name.' value="0"  />';
-        $html .= '<input type="checkbox" '. $name .' value="'. $id .'" id=cb_'. $id .' '. $checked .' valign="middle" />';
-        $html .= $this->getBind()->formatChangesetValueWithoutLink($value) .'</label>';
+        $html .= '<label class="checkbox" for="cb_' . $id . '" ><input type="hidden" ' . $name . ' value="0"  />';
+        $html .= '<input type="checkbox" ' . $name . ' value="' . $id . '" id=cb_' . $id . ' ' . $checked . ' valign="middle" />';
+        $html .= $this->getBind()->formatChangesetValueWithoutLink($value) . '</label>';
 
         return $html;
     }
@@ -52,7 +53,7 @@ class Tracker_FormElement_Field_Checkbox extends Tracker_FormElement_Field_Multi
     /**
      * @see Tracker_FormElement_Field::hasChanges()
      */
-    public function hasChanges(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $previous_changesetvalue, $new_value)
+    public function hasChanges(Artifact $artifact, Tracker_Artifact_ChangesetValue $previous_changesetvalue, $new_value)
     {
         return parent::hasChanges($artifact, $previous_changesetvalue, $this->filterZeroWhenArray($new_value));
     }
@@ -67,33 +68,21 @@ class Tracker_FormElement_Field_Checkbox extends Tracker_FormElement_Field_Multi
         return is_array($values) ? array_filter($values) : $values;
     }
 
-    /**
-     * @return the label of the field (mainly used in admin part)
-     */
     public static function getFactoryLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'checkbox');
+        return dgettext('tuleap-tracker', 'Checkbox');
     }
 
-    /**
-     * @return the description of the field (mainly used in admin part)
-     */
     public static function getFactoryDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'checkbox_desc');
+        return dgettext('tuleap-tracker', 'Checkbox');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconUseIt()
     {
         return $GLOBALS['HTML']->getImagePath('ic/ui-check-box.png');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconCreate()
     {
         return $GLOBALS['HTML']->getImagePath('ic/ui-check--plus.png');
@@ -107,7 +96,7 @@ class Tracker_FormElement_Field_Checkbox extends Tracker_FormElement_Field_Multi
      */
     public function changeType($type)
     {
-        if (in_array($type, array('sb', 'msb', 'rb'))) {
+        if (in_array($type, ['sb', 'msb', 'rb'])) {
             // We should remove the entry in msb table
             // However we keep it for the case where admin changes its mind.
             return true;

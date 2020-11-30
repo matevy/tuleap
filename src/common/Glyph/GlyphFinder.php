@@ -20,6 +20,7 @@
 
 namespace Tuleap\Glyph;
 
+use ForgeConfig;
 use Tuleap\URI\URIModifier;
 
 class GlyphFinder
@@ -40,7 +41,7 @@ class GlyphFinder
      */
     public function get($name)
     {
-        static $symbol_cache = array();
+        static $symbol_cache = [];
 
         if (isset($symbol_cache[$name])) {
             return $symbol_cache[$name];
@@ -70,7 +71,14 @@ class GlyphFinder
     private function getCoreGlyph($name)
     {
         $core_glyphs_location = new GlyphLocation(__DIR__ . '/../../glyphs');
-        return $this->readGlyph($core_glyphs_location, $name);
+        $glyph = $this->readGlyph($core_glyphs_location, $name);
+
+        if (! $glyph) {
+            $custom_glyphs_location = new GlyphLocation(ForgeConfig::get('sys_data_dir') . '/images/');
+            $glyph = $this->readGlyph($custom_glyphs_location, $name);
+        }
+
+        return $glyph;
     }
 
     /**

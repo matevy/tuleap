@@ -24,17 +24,25 @@ $datetime_msg = 'yyyy-mm-dd hh:mm:ss';
 
 require_once __DIR__ . '/../../include/utils.php';
 
+/**
+ * This function does not do any sort of HTML escaping but is never expected to be used
+ * in a context where the content type is something else than text/csv. To avoid
+ * false-positives it is considered HTML is escaped.
+ *
+ * @psalm-taint-escape html
+ */
 function tocsv($string, $csv_separator)
 {
-
     // Escape the double quote character by doubling it
     $string = str_replace('"', '""', $string);
 
     //Surround with double quotes if there is a comma;
     // a space or the user separator in the string
-    if (strpos($string, ' ') !== false || strpos($string, ',') !== false || strpos($string, $csv_separator) !== false ||
+    if (
+        strpos($string, ' ') !== false || strpos($string, ',') !== false || strpos($string, $csv_separator) !== false ||
         strpos($string, '"') !== false || strpos($string, "\n") !== false || strpos($string, "\t") !== false ||
-        strpos($string, "\r") !== false || strpos($string, "\0") !== false || strpos($string, "\x0B") !== false) {
+        strpos($string, "\r") !== false || strpos($string, "\0") !== false || strpos($string, "\x0B") !== false
+    ) {
         return "\"$string\"";
     } else {
         return $string;
@@ -54,9 +62,6 @@ function get_csv_separator()
     }
     $separator = '';
     switch ($u_separator) {
-        case 'comma':
-            $separator = ",";
-            break;
         case 'semicolon':
             $separator = ";";
             break;
@@ -64,7 +69,7 @@ function get_csv_separator()
             $separator = "\t";
             break;
         default:
-            $separator = PFUser::DEFAULT_CSV_SEPARATOR;
+            $separator = ',';
             break;
     }
     return $separator;
@@ -98,20 +103,20 @@ function display_exported_fields($col_list, $lbl_list, $dsc_list, $sample_val, $
 {
     global $Language;
 
-    $title_arr=array();
-    $title_arr[]=$Language->getText('project_export_utils', 'label');
-    $title_arr[]=$Language->getText('project_export_utils', 'sample_val');
-    $title_arr[]=$Language->getText('project_admin_editugroup', 'desc');
+    $title_arr = [];
+    $title_arr[] = $Language->getText('project_export_utils', 'label');
+    $title_arr[] = $Language->getText('project_export_utils', 'sample_val');
+    $title_arr[] = $Language->getText('project_admin_editugroup', 'desc');
 
     $purifier = Codendi_HTMLPurifier::instance();
 
     echo html_build_list_table_top($title_arr);
     $cnt = 0;
     foreach ($col_list as $col) {
-        $star = (($mand_list && isset($mand_list[$col]) && $mand_list[$col]) ? ' <span class="highlight"><big>*</big></b></span>':'');
-        echo '<tr class="'.util_get_alt_row_color($cnt++).'">'.
-        '<td><b>'.$lbl_list[$col].'</b>'.$star.
-        '</td><td>'.nl2br($purifier->purify($sample_val[$col])).'</td><td>'.$purifier->purify($dsc_list[$col]).'</td></tr>';
+        $star = (($mand_list && isset($mand_list[$col]) && $mand_list[$col]) ? ' <span class="highlight"><big>*</big></b></span>' : '');
+        echo '<tr class="' . util_get_alt_row_color($cnt++) . '">' .
+        '<td><b>' . $lbl_list[$col] . '</b>' . $star .
+        '</td><td>' . nl2br($purifier->purify($sample_val[$col])) . '</td><td>' . $purifier->purify($dsc_list[$col]) . '</td></tr>';
     }
 
     echo '</table>';
@@ -119,20 +124,19 @@ function display_exported_fields($col_list, $lbl_list, $dsc_list, $sample_val, $
 
 function pick_a_record_at_random($result, $numrows, $col_list)
 {
-
     /* return a record from a result set at random using the column
          list passed as an argument */
 
-    $record = array();
+    $record = [];
 
     // If there is an item  available pick one at random
     // and display Sample values.
     if ($result && $numrows > 0) {
-        $pickone = ($numrows <= 1 ? 0:rand(0, $numrows-1));
+        $pickone = ($numrows <= 1 ? 0 : random_int(0, $numrows - 1));
     }
 
     // Build the array with the record picked at random
-    $record = array();
+    $record = [];
     foreach ($col_list as $col) {
         $record[$col] = db_result($result, $pickone, $col);
     }
@@ -158,7 +162,6 @@ function prepare_textarea($textarea)
  */
 function prepare_artifact_record($at, $fields, $group_artifact_id, &$record, $export)
 {
-
     global $datetime_fmt,$sys_lf,$Language;
     /* $record:
        Input: a row from the artifact table (passed by reference.
@@ -168,7 +171,7 @@ function prepare_artifact_record($at, $fields, $group_artifact_id, &$record, $ex
     $line = '';
     foreach ($fields as $field) {
         if ($field->isSelectBox() || $field->isMultiSelectBox()) {
-            $values = array();
+            $values = [];
             if ($field->isStandardField()) {
                 $values[] = $record[$field->getName()];
             } else {
@@ -200,27 +203,27 @@ function prepare_artifact_record($at, $fields, $group_artifact_id, &$record, $ex
     }
 
     // Follow ups
-    $ah=new ArtifactHtml($at, $record['artifact_id']);
+    $ah = new ArtifactHtml($at, $record['artifact_id']);
     $sys_lf_sav = $sys_lf;
     $sys_lf = "\n";
     $record['follow_ups'] = $ah->showFollowUpComments($at->Group->getID(), true, Artifact::OUTPUT_EXPORT);
     $sys_lf = $sys_lf_sav;
 
     // Dependencies
-    $result=$ah->getDependencies();
-    $rows=db_numrows($result);
+    $result = $ah->getDependencies();
+    $rows = db_numrows($result);
     $dependent = '';
-    for ($i=0; $i < $rows; $i++) {
+    for ($i = 0; $i < $rows; $i++) {
         $dependent_on_artifact_id = db_result($result, $i, 'is_dependent_on_artifact_id');
-        $dependent .= $dependent_on_artifact_id.",";
+        $dependent .= $dependent_on_artifact_id . ",";
     }
-    $record['is_dependent_on'] = (($dependent !== '')?substr($dependent, 0, strlen($dependent)-1):$Language->getText('global', 'none'));
+    $record['is_dependent_on'] = (($dependent !== '') ? substr($dependent, 0, strlen($dependent) - 1) : $Language->getText('global', 'none'));
 
     //CC
     $cc_list = $ah->getCCList();
     $rows = db_numrows($cc_list);
-    $cc = array();
-    for ($i=0; $i < $rows; $i++) {
+    $cc = [];
+    for ($i = 0; $i < $rows; $i++) {
         $cc_email = db_result($cc_list, $i, 'email');
         $cc[] = $cc_email;
     }
@@ -229,7 +232,6 @@ function prepare_artifact_record($at, $fields, $group_artifact_id, &$record, $ex
 
 function prepare_artifact_history_record($at, $art_field_fact, &$record)
 {
-
     global $datetime_fmt;
 
   /*
@@ -263,7 +265,7 @@ function prepare_artifact_history_record($at, $art_field_fact, &$record)
             $record['type'] = join(",", $label_values);
         }
     } else {
-        $record['type']='';
+        $record['type'] = '';
     }
 }
 
@@ -280,7 +282,7 @@ function prepare_historic_value(&$record, $field, $group_artifact_id, $name)
         // later in the process
             $record[$name] = '0';
         } else {
-            $record[$name] = format_date($GLOBALS['datetime_fmt'], $record[$name]);
+            $record[$name] = format_date(ForgeConfig::get('datetime_fmt'), $record[$name]);
         }
     } elseif ($field->isFloat()) {
         $record[$name] = number_format($record[$name], 2);
@@ -288,29 +290,6 @@ function prepare_historic_value(&$record, $field, $group_artifact_id, $name)
       // all text fields converted from HTML to ASCII
         $record[$name] = prepare_textarea($record[$name]);
     }
-}
-
-function project_export_makesalt($type = CRYPT_SALT_LENGTH)
-{
-    switch ($type) {
-        case 12:
-            $saltlen=8;
-            $saltprefix='$1$';
-            $saltsuffix='$';
-            break;
-        case 2:
-        default:
-           // by default, fall back on Standard DES (should work everywhere)
-            $saltlen=2;
-            $saltprefix='';
-            $saltsuffix='';
-            break;
-    }
-    $salt='';
-    while (strlen($salt)<$saltlen) {
-        $salt.= chr(rand(64, 126));
-    }
-    return $saltprefix.$salt.$saltsuffix;
 }
 
     /**
@@ -323,7 +302,6 @@ function project_export_makesalt($type = CRYPT_SALT_LENGTH)
 
 function prepare_access_logs_record($group_id, &$record)
 {
-
     if (isset($record['time'])) {
         $time = $record['time'];
         $record['time'] = format_date('Y-m-d', $time);
@@ -332,13 +310,13 @@ function prepare_access_logs_record($group_id, &$record)
     $um = UserManager::instance();
     $user = $um->getUserByUserName($record['user_name']);
     if ($user) {
-        $record['user'] = $user->getRealName()."(".$user->getName().")";
+        $record['user'] = $user->getRealName() . "(" . $user->getName() . ")";
     } else {
         $record['user'] = 'N/A';
     }
     //for cvs & svn access logs
     if (isset($record['day'])) {
         $day = $record['day'];
-        $record['day'] = substr($day, 0, 4)."-".substr($day, 4, 2)."-".substr($day, 6, 2);
+        $record['day'] = substr($day, 0, 4) . "-" . substr($day, 4, 2) . "-" . substr($day, 6, 2);
     }
 }

@@ -72,16 +72,12 @@ class GitRepositoryHeaderDisplayer
         $this->displayForBurningParrot($request, $current_user, $repository);
     }
 
-    private function includeAssetsForBurningParrot(HTTPRequest $request, BaseLayout $layout) : void
+    private function includeAssetsForBurningParrot(HTTPRequest $request, BaseLayout $layout): void
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../../../src/www/assets/git/themes',
-            '/assets/git/themes'
-        );
-        if (in_array($request->get('a'), ['blob', 'blame'], true)) {
-            $layout->addCssAsset(new CssAssetWithoutVariantDeclinaisons($include_assets, 'syntax-highlight'));
+        if (! $request->exist('a') || in_array($request->get('a'), ['blob', 'blame', 'tree'], true)) {
+            $layout->addCssAsset(new CssAssetWithoutVariantDeclinaisons($this->include_assets, 'syntax-highlight'));
         }
-        $layout->addCssAsset(new CssAsset($include_assets, 'bp-style'));
+        $layout->addCssAsset(new CssAsset($this->include_assets, 'bp-style'));
         $layout->includeFooterJavascriptFile($this->include_assets->getFileURL('repository.js'));
 
         $external_assets = new CollectAssets();

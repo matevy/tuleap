@@ -22,7 +22,6 @@ use Tuleap\Color\AllowedColorsCollection;
 use Tuleap\Label\CanProjectUseLabels;
 use Tuleap\Label\CollectionOfLabelableDao;
 use Tuleap\Color\ColorPresenterFactory;
-use Tuleap\Layout\IncludeAssets;
 use Tuleap\Project\Label\AddController;
 use Tuleap\Project\Label\DeleteController;
 use Tuleap\Project\Label\EditController;
@@ -36,7 +35,7 @@ require_once __DIR__ . '/../../include/pre.php';
 $event_manager = EventManager::instance();
 $request       = HTTPRequest::instance();
 $project       = $request->getProject();
-session_require(array('group' => $project->getID(), 'admin_flags' => 'A'));
+session_require(['group' => $project->getID(), 'admin_flags' => 'A']);
 
 $event = new CanProjectUseLabels($project);
 $event_manager->processEvent($event);
@@ -48,7 +47,6 @@ if (! $event->areLabelsUsable()) {
 $url_builder   = new LabelsManagementURLBuilder();
 $dao           = new LabelDao();
 $history_dao   = new ProjectHistoryDao();
-$assets        = new IncludeAssets(ForgeConfig::get('codendi_dir').'/src/www/assets', '/assets');
 $colors        = new AllowedColorsCollection();
 $color_factory = new ColorPresenterFactory($colors);
 
@@ -56,7 +54,7 @@ $labelable_daos = new CollectionOfLabelableDao();
 $event_manager->processEvent($labelable_daos);
 
 $router = new LabelsManagementRouter(
-    new IndexController($url_builder, $dao, $labelable_daos, $assets, $color_factory),
+    new IndexController($url_builder, $dao, $labelable_daos, $color_factory),
     new DeleteController($url_builder, $dao, $history_dao, $labelable_daos, $event_manager),
     new EditController($url_builder, $dao, $history_dao, $labelable_daos, $colors, $event_manager),
     new AddController($url_builder, $dao, $history_dao, $colors)

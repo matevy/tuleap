@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,19 +46,19 @@ class Tracker_FormElement_View_Admin
     public function fetchTypeNotModifiable()
     {
         $html = '';
-        $html .= '<p><label for="formElement_type">'. $GLOBALS['Language']->getText('plugin_tracker_include_type', 'type') .': </label>';
-        $html .= '<img width="16" height="16" alt="" src="'. $this->formElement->getFactoryIconUseIt() .'" style="vertical-align:middle"/> '. $this->formElement->getFactoryLabel();
+        $html .= '<p><label for="formElement_type">' . dgettext('tuleap-tracker', 'Type') . ': </label>';
+        $html .= '<img width="16" height="16" alt="" src="' . $this->formElement->getFactoryIconUseIt() . '" style="vertical-align:middle"/> ' . $this->formElement->getFactoryLabel();
         $html .= '</p>';
-        $html .= '<p>'.$this->formElement->getFactoryDescription().'</p>';
+        $html .= '<p>' . $this->formElement->getFactoryDescription() . '</p>';
         return $html;
     }
 
     public function fetchTypeForUpdate()
     {
         $html = '';
-        $html .= '<p><label for="formElement_type">'. $GLOBALS['Language']->getText('plugin_tracker_include_type', 'type') .': </label>';
-        $html .= '<img width="16" height="16" alt="" src="'. $this->formElement->getFactoryIconUseIt() .'" style="vertical-align:middle"/> '. $this->formElement->getFactoryLabel();
-        $html .= '<p>'.$this->formElement->getFactoryDescription().'</p>';
+        $html .= '<p><label for="formElement_type">' . dgettext('tuleap-tracker', 'Type') . ': </label>';
+        $html .= '<img width="16" height="16" alt="" src="' . $this->formElement->getFactoryIconUseIt() . '" style="vertical-align:middle"/> ' . $this->formElement->getFactoryLabel();
+        $html .= '<p>' . $this->formElement->getFactoryDescription() . '</p>';
         $html .= '</p>';
         return $html;
     }
@@ -68,7 +68,7 @@ class Tracker_FormElement_View_Admin
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
         $html .= '<p>';
-        $html .= '<label for="formElement_name">' . $GLOBALS['Language']->getText('plugin_tracker_include_type', 'name') . ': </label>';
+        $html .= '<label for="formElement_name">' . dgettext('tuleap-tracker', 'Name') . ': </label>';
         $html .= '<input type="text" id="formElement_name" name="formElement_data[name]" value="' . $hp->purify($this->formElement->getName(), CODENDI_PURIFIER_CONVERT_HTML) . '" />';
         $html .= '</p>';
         return $html;
@@ -84,8 +84,8 @@ class Tracker_FormElement_View_Admin
         $purifier = Codendi_HTMLPurifier::instance();
         $html     = '';
         $html    .= '<p>';
-        $html    .= '<label for="formElement_label">'.$GLOBALS['Language']->getText('plugin_tracker_include_report', 'field_label').': <font color="red">*</font></label> ';
-        $html    .= '<input type="text" name="formElement_data[label]" id="formElement_label" value="'. $purifier->purify($this->formElement->getLabel()) .'" size="40" />';
+        $html    .= '<label for="formElement_label">' . dgettext('tuleap-tracker', 'Label') . ': <font color="red">*</font></label> ';
+        $html    .= '<input type="text" name="formElement_data[label]" id="formElement_label" value="' . $purifier->purify($this->formElement->getLabel()) . '" size="40" />';
         $html    .= '<input type="hidden" name="formElement_data[use_it]" value="1" />';
         $html    .= '</p>';
         $html    .= $this->fetchCustomHelp();
@@ -103,8 +103,8 @@ class Tracker_FormElement_View_Admin
         $html = '';
         $html .= '<p>';
 
-        $html .= '<label for="formElement_description">'.$GLOBALS['Language']->getText('plugin_tracker_include_type', 'fieldset_desc').':</label>';
-        $html .= '<textarea name="formElement_data[description]" id="formElement_description" cols="40">'.  $hp->purify($this->formElement->description, CODENDI_PURIFIER_CONVERT_HTML)  .'</textarea>';
+        $html .= '<label for="formElement_description">' . dgettext('tuleap-tracker', 'Description') . ':</label>';
+        $html .= '<textarea name="formElement_data[description]" id="formElement_description" cols="40">' .  $hp->purify($this->formElement->description, CODENDI_PURIFIER_CONVERT_HTML)  . '</textarea>';
 
         $html .= '</p>';
         return $html;
@@ -115,7 +115,7 @@ class Tracker_FormElement_View_Admin
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
         $html .= '<p>';
-        $html .= '<label>'.$GLOBALS['Language']->getText('plugin_tracker_include_type', 'name') . '</label>';
+        $html .= '<label>' . dgettext('tuleap-tracker', 'Name') . '</label>';
         $html .= $hp->purify($this->formElement->getName(), CODENDI_PURIFIER_CONVERT_HTML);
         $html .= '</p>';
         return $html;
@@ -131,7 +131,7 @@ class Tracker_FormElement_View_Admin
         $purifier = Codendi_HTMLPurifier::instance();
         $html     = '';
         $html    .= '<p>';
-        $html    .= '<label>'.$GLOBALS['Language']->getText('plugin_tracker_include_report', 'field_label').'</label>';
+        $html    .= '<label>' . dgettext('tuleap-tracker', 'Label') . '</label>';
         $html    .= $purifier->purify($this->formElement->getLabel());
         $html    .= '<input type="hidden" name="formElement_data[use_it]" value="1" />';
         $html    .= '</p>';
@@ -149,7 +149,7 @@ class Tracker_FormElement_View_Admin
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
         $html .= '<p>';
-        $html .= '<label>'.$GLOBALS['Language']->getText('plugin_tracker_include_type', 'fieldset_desc').'</label>';
+        $html .= '<label>' . dgettext('tuleap-tracker', 'Description') . '</label>';
         $html .= $hp->purify($this->formElement->description, CODENDI_PURIFIER_CONVERT_HTML);
         $html .= '</p>';
         return $html;
@@ -160,15 +160,24 @@ class Tracker_FormElement_View_Admin
         return '';
     }
 
-    public function fetchCustomHelpForShared()
+    public function fetchCustomHelpForShared(): string
     {
+        $hp = Codendi_HTMLPurifier::instance();
         $originalTrackerName = $this->formElement->getOriginalTracker()->getName();
         $originalProjectName = $this->formElement->getOriginalProject()->getPublicName();
         $originalEditUrl     = $this->formElement->getOriginalField()->getAdminEditUrl();
 
         $html = '';
         $html .= '<span class="tracker-admin-form-element-help">';
-        $html .= $GLOBALS['Language']->getText('plugin_tracker_include_type', 'field_copied_from', array($originalTrackerName, $originalProjectName, $originalEditUrl));
+        $html .= sprintf(
+            dgettext(
+                'tuleap-tracker',
+                'This field is shared from tracker <a href="%s">%s</a> from project %s'
+            ),
+            $originalEditUrl,
+            $originalTrackerName,
+            $hp->purify($originalProjectName)
+        );
         $html .= '</span>';
         return $html;
     }
@@ -177,8 +186,8 @@ class Tracker_FormElement_View_Admin
     {
         $html = '';
         $html .= '<p>';
-        $html .= '<label for="formElement_rank">'.$GLOBALS['Language']->getText('plugin_tracker_include_type', 'rank_screen').': <font color="red">*</font></label>';
-        $items = array();
+        $html .= '<label for="formElement_rank">' . dgettext('tuleap-tracker', 'Rank') . ': <font color="red">*</font></label>';
+        $items = [];
         foreach ($this->allUsedElements as $field) {
             $items[] = $field->getRankSelectboxDefinition();
         }
@@ -186,10 +195,10 @@ class Tracker_FormElement_View_Admin
             $this->formElement->id,
             $this->formElement->rank,
             $items,
-            array(
+            [
                 'id'   => 'formElement_rank',
                 'name' => 'formElement_data[rank]'
-            )
+            ]
         );
         $html .= '</p>';
         return $html;
@@ -235,48 +244,48 @@ class Tracker_FormElement_View_Admin
         $html     = '';
         switch ($property['type']) {
             case 'string':
-                $html .= '<label for="formElement_properties_'. $purifier->purify($key) .'">'. $purifier->purify($this->formElement->getPropertyLabel($key)) .'</label> ';
-                $html .= '<input type="text" 
-                             size="'. $purifier->purify($property['size']) .'"
-                             name="formElement_data[specific_properties]['. $purifier->purify($key) .']"
-                             id="formElement_properties_'. $purifier->purify($key) .'"
-                             value="'. $purifier->purify($property['value']) .'" />';
+                $html .= '<label for="formElement_properties_' . $purifier->purify($key) . '">' . $purifier->purify($this->formElement->getPropertyLabel($key)) . '</label> ';
+                $html .= '<input type="text"
+                             size="' . $purifier->purify($property['size']) . '"
+                             name="formElement_data[specific_properties][' . $purifier->purify($key) . ']"
+                             id="formElement_properties_' . $purifier->purify($key) . '"
+                             value="' . $purifier->purify($property['value']) . '" />';
                 break;
             case 'date':
-                $html .= '<label for="formElement_properties_'. $purifier->purify($key) .'">'. $purifier->purify($this->formElement->getPropertyLabel($key)) .'</label> ';
+                $html .= '<label for="formElement_properties_' . $purifier->purify($key) . '">' . $purifier->purify($this->formElement->getPropertyLabel($key)) . '</label> ';
                 $value = $purifier->purify($property['value'] ? $this->formElement->formatDate($property['value']) : '');
-                $html .= $GLOBALS['HTML']->getDatePicker("formElement_properties_".$key, "formElement_data[specific_properties][$key]", $value);
+                $html .= $GLOBALS['HTML']->getDatePicker("formElement_properties_" . $key, "formElement_data[specific_properties][$key]", $value);
                 break;
             case 'text':
-                $html .= '<label for="formElement_properties_'. $purifier->purify($key) .'">'. $purifier->purify($this->formElement->getPropertyLabel($key)) .'</label> ';
+                $html .= '<label for="formElement_properties_' . $purifier->purify($key) . '">' . $purifier->purify($this->formElement->getPropertyLabel($key)) . '</label> ';
                 $html .= '<textarea
                            cols="50" rows="10"
-                           name="formElement_data[specific_properties]['. $purifier->purify($key) .']"
-                           id="formElement_properties_'. $key .'">' .
+                           name="formElement_data[specific_properties][' . $purifier->purify($key) . ']"
+                           id="formElement_properties_' . $key . '">' .
                            $purifier->purify($property['value']) . '</textarea>';
                 break;
             case 'rich_text':
-                $html .= '<label for="formElement_properties_'. $purifier->purify($key) .'">'. $purifier->purify($this->formElement->getPropertyLabel($key)) .'</label> ';
+                $html .= '<label for="formElement_properties_' . $purifier->purify($key) . '">' . $purifier->purify($this->formElement->getPropertyLabel($key)) . '</label> ';
                 $html .= '<textarea
                            class="tracker-field-richtext"
-                           cols="50" rows="10"  
-                           name="formElement_data[specific_properties]['. $purifier->purify($key) .']"
-                           id="formElement_properties_'. $purifier->purify($key) .'">' .
+                           cols="50" rows="10"
+                           name="formElement_data[specific_properties][' . $purifier->purify($key) . ']"
+                           id="formElement_properties_' . $purifier->purify($key) . '">' .
                            $purifier->purify($property['value'], CODENDI_PURIFIER_FULL) . '</textarea>';
                 break;
             case 'radio':
-                $html .= '<label for="formElement_properties_'. $purifier->purify($key) .'">'. $purifier->purify($this->formElement->getPropertyLabel($key)) .'</label> ';
+                $html .= '<label for="formElement_properties_' . $purifier->purify($key) . '">' . $purifier->purify($this->formElement->getPropertyLabel($key)) . '</label> ';
                 foreach ($property['choices'] as $key_choice => $choice) {
                     $checked = '';
                     if ($this->formElement->getProperty($key) == $choice['radio_value']) {
                         $checked = 'checked="checked"';
                     }
                     $html .= '<div class="form-inline"><input type="radio"
-                                 name="formElement_data[specific_properties]['. $purifier->purify($key) .']"
-                                 value="'. $purifier->purify($choice['radio_value']) .'"
-                                 id="formElement_properties_'. $purifier->purify($key_choice) .'"
-                                 '. $checked .' />';
-                    $html .= '&nbsp;'.$this->fetchAdminSpecificProperty($key_choice, $choice);
+                                 name="formElement_data[specific_properties][' . $purifier->purify($key) . ']"
+                                 value="' . $purifier->purify($choice['radio_value']) . '"
+                                 id="formElement_properties_' . $purifier->purify($key_choice) . '"
+                                 ' . $checked . ' />';
+                    $html .= '&nbsp;' . $this->fetchAdminSpecificProperty($key_choice, $choice);
                     $html .= '</div>';
                 }
                 break;
@@ -284,17 +293,17 @@ class Tracker_FormElement_View_Admin
                 $checked = $property['value'] ? 'checked="checked"' : '';
                 $html .= '<label class="checkbox">
                         <input  type="hidden"
-                                name="formElement_data[specific_properties]['. $purifier->purify($key) .']"
+                                name="formElement_data[specific_properties][' . $purifier->purify($key) . ']"
                                 value="0"/>
                         <input  type="checkbox"
-                                name="formElement_data[specific_properties]['. $purifier->purify($key) .']"
-                                id="formElement_properties_'.$purifier->purify($key).'" '. $checked .'
+                                name="formElement_data[specific_properties][' . $purifier->purify($key) . ']"
+                                id="formElement_properties_' . $purifier->purify($key) . '" ' . $checked . '
                                 value="1"/>
-                        '.$purifier->purify($this->formElement->getPropertyLabel($key)).'
+                        ' . $purifier->purify($this->formElement->getPropertyLabel($key)) . '
                     </label>';
                 break;
             case 'label':
-                $html .= '<label for="formElement_properties_'. $purifier->purify($key) .'">'. $purifier->purify($this->formElement->getPropertyLabel($key)) .'</label> ';
+                $html .= '<label for="formElement_properties_' . $purifier->purify($key) . '">' . $purifier->purify($this->formElement->getPropertyLabel($key)) . '</label> ';
                 break;
             default:
                 //Unknown type. raise exception?
@@ -328,7 +337,7 @@ class Tracker_FormElement_View_Admin
     {
         $html  = '';
         $html .= '<p>';
-        $html .= '<input type="submit" name="'. $name .'" value="'. $GLOBALS['Language']->getText('global', 'btn_submit') .'" />';
+        $html .= '<input type="submit" name="' . $name . '" value="' . $GLOBALS['Language']->getText('global', 'btn_submit') . '" />';
         $html .= '</p>';
         return $html;
     }
@@ -346,27 +355,28 @@ class Tracker_FormElement_View_Admin
         }
         $html = '';
         $html .= '<p>';
-        $html .= '<a href="'. ByFieldController::getUrl($tracker).'?selected_id='.$this->formElement->id.'">';
-        $html .= $GLOBALS['HTML']->getImage('ic/lock-small.png', array(
+        $html .= '<a href="' . ByFieldController::getUrl($tracker) . '?selected_id=' . $this->formElement->id . '">';
+        $html .= $GLOBALS['HTML']->getImage('ic/lock-small.png', [
             'style' => 'vertical-align:middle;',
-        ));
+        ]);
         $html .= ' ';
-        $html .= $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'edit_permissions') .'</a>';
+        $html .= dgettext('tuleap-tracker', 'Edit permissions of this field') . '</a>';
         $html .= '</p>';
         return $html;
     }
 
     public function fetchSharedUsage()
     {
+        $hp = Codendi_HTMLPurifier::instance();
         $html = '';
         $fields = $this->formElement->getSharedTargets();
         if ($fields) {
-            $trackers = array();
+            $trackers = [];
             foreach ($fields as $field) {
                 $t = $field->getTracker();
-                $trackers[$t->getId()] = '<a href="'. TRACKER_BASE_URL.'/?tracker='. $t->getId() .'&func=admin-formElements">'. $t->getName() .' ('. $t->getProject()->getPublicName() .')</a>';
+                $trackers[$t->getId()] = '<a href="' . TRACKER_BASE_URL . '/?tracker=' . $t->getId() . '&func=admin-formElements">' . $t->getName() . ' (' . $hp->purify($t->getProject()->getPublicName()) . ')</a>';
             }
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_include_type', 'field_copied_to');
+            $html .= dgettext('tuleap-tracker', 'This field is used by the following trackers:');
             $html .= '<ul><li>';
             $html .= implode('</li><li>', $trackers);
             $html .= '</li></ul>';

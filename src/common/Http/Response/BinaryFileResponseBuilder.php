@@ -22,12 +22,14 @@ declare(strict_types=1);
 
 namespace Tuleap\Http\Response;
 
-use function is_resource;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 use RuntimeException;
+use Tuleap\Http\Response\Stream\CallbackNoBufferStream;
+use function is_resource;
 
 final class BinaryFileResponseBuilder
 {
@@ -46,7 +48,7 @@ final class BinaryFileResponseBuilder
         $this->stream_factory   = $stream_factory;
     }
 
-    public function fromFilePath(ServerRequestInterface $request, string $file_path, string $name = '', string $content_type = 'application/octet-stream') : ResponseInterface
+    public function fromFilePath(ServerRequestInterface $request, string $file_path, string $name = '', string $content_type = 'application/octet-stream'): ResponseInterface
     {
         $file_resource = @fopen($file_path, 'rb');
         if (! is_resource($file_resource)) {
@@ -56,34 +58,51 @@ final class BinaryFileResponseBuilder
         if ($file_name === '') {
             $file_name = basename($file_path);
         }
-        return $this->build($request, $file_resource, $file_name, $content_type, filesize($file_path));
+        return $this->build($request, $this->stream_factory->createStreamFromResource($file_resource), $file_name, $content_type);
     }
 
-    private function build(ServerRequestInterface $request, $resource, string $name, string $content_type, int $length) : ResponseInterface
+    /**
+     * @psalm-param callable():void $callback
+     */
+    public function fromCallback(ServerRequestInterface $request, callable $callback, string $name, string $content_type): ResponseInterface
+    {
+        return $this->build($request, new CallbackNoBufferStream($callback), $name, $content_type);
+    }
+
+    private function build(ServerRequestInterface $request, StreamInterface $stream, string $name, string $content_type): ResponseInterface
     {
         $response = $this->response_factory->createResponse()
-            ->withHeader('Content-Length', (string) $length)
             ->withHeader('Content-Type', $content_type)
-            ->withHeader('Content-Disposition', 'attachment; filename="'. $this->getNameForContentDispositionHeader($name) .'"')
+            ->withHeader('Content-Disposition', 'attachment; filename="' . $this->getNameForContentDispositionHeader($name) . '"')
             ->withHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; form-action 'none';")
             ->withHeader('X-DNS-Prefetch-Control', 'off')
-            ->withBody($this->stream_factory->createStreamFromResource($resource));
+            ->withHeader('Cache-Control', 'private')
+            ->withHeader('Pragma', 'no-cache')
+            ->withBody($stream);
+
+        $length = $stream->getSize();
+        if ($length !== null) {
+            $response = $response->withHeader('Content-Length', (string) $length);
+        }
 
         return $this->handleRange($request, $response);
     }
 
-    private function getNameForContentDispositionHeader(string $name) : string
+    private function getNameForContentDispositionHeader(string $name): string
     {
         return str_replace('"', '\\"', $this->removeNonPrintableASCIIChars($name));
     }
 
-    private function removeNonPrintableASCIIChars(string $str) : string
+    private function removeNonPrintableASCIIChars(string $str): string
     {
         return preg_replace('/[^(\x20-\x7F)]*/', '', $str);
     }
 
-    private function handleRange(ServerRequestInterface $request, ResponseInterface $response) : ResponseInterface
+    private function handleRange(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
+        if (! $response->hasHeader('Content-Length')) {
+            return $response;
+        }
         $response = $response->withHeader('Accept-Ranges', 'bytes');
 
         $range_header = $request->getHeaderLine('Range');

@@ -18,18 +18,28 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\Changeset\Validation\ChangesetValidationContext;
+use Tuleap\Tracker\FormElement\ArtifactLinkValidator;
+
 /**
  * I validate fields
  */
-abstract class Tracker_Artifact_Changeset_FieldsValidator //phpcs:ignore
+abstract class Tracker_Artifact_Changeset_FieldsValidator // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 {
     /** @var Tracker_FormElementFactory */
     protected $formelement_factory;
+    /**
+     * @var ArtifactLinkValidator
+     */
+    private $artifact_link_validator;
 
     public function __construct(
-        Tracker_FormElementFactory $formelement_factory
+        Tracker_FormElementFactory $formelement_factory,
+        ArtifactLinkValidator $artifact_link_validator
     ) {
-        $this->formelement_factory = $formelement_factory;
+        $this->formelement_factory     = $formelement_factory;
+        $this->artifact_link_validator = $artifact_link_validator;
     }
 
     /**
@@ -40,14 +50,25 @@ abstract class Tracker_Artifact_Changeset_FieldsValidator //phpcs:ignore
      *
      * @return bool true if all fields are valid, false otherwise. This function update $field_data (set values to null if not valid)
      */
-    public function validate(Tracker_Artifact $artifact, \PFUser $user, $fields_data)
-    {
+    public function validate(
+        Artifact $artifact,
+        \PFUser $user,
+        $fields_data,
+        ChangesetValidationContext $changeset_validation_context
+    ): bool {
         $is_valid    = true;
         $used_fields = $this->formelement_factory->getUsedFields($artifact->getTracker());
         foreach ($used_fields as $field) {
-            $submitted_value = $this->getSubmittedValue($field, $fields_data);
-            if ($this->canValidateField($artifact, $field)) {
-                $is_valid = $this->validateField($artifact, $field, $user, $submitted_value) && $is_valid;
+            if ($this->canValidateField($artifact, $field, $user)) {
+                $submitted_value = $this->getSubmittedValue($field, $fields_data);
+                $is_one_field_valid = $this->validateOneField(
+                    $artifact,
+                    $user,
+                    $field,
+                    $submitted_value,
+                    $changeset_validation_context
+                );
+                $is_valid           = $is_valid && $is_one_field_valid;
             }
         }
 
@@ -55,18 +76,41 @@ abstract class Tracker_Artifact_Changeset_FieldsValidator //phpcs:ignore
     }
 
     /**
-     * @return bool
+     * @param mixed $submitted_value
      */
+    private function validateOneField(
+        Artifact $artifact,
+        PFUser $user,
+        Tracker_FormElement_Field $field,
+        $submitted_value,
+        ChangesetValidationContext $changeset_validation_context
+    ): bool {
+        if ($field instanceof \Tracker_FormElement_Field_ArtifactLink) {
+            $is_field_generally_valid = $this->validateField($artifact, $field, $user, $submitted_value);
+            if (! $is_field_generally_valid) {
+                return false;
+            }
+            return $this->artifact_link_validator->isValid(
+                $submitted_value,
+                $artifact,
+                $field,
+                $changeset_validation_context->getArtifactLinkContext()
+            );
+        }
+        return $this->validateField($artifact, $field, $user, $submitted_value);
+    }
+
     abstract protected function canValidateField(
-        Tracker_Artifact $artifact,
-        Tracker_FormElement_Field $field
-    );
+        Artifact $artifact,
+        Tracker_FormElement_Field $field,
+        PFUser $user
+    ): bool;
 
     /**
      * @return bool
      */
     abstract protected function validateField(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_FormElement_Field $field,
         \PFUser $user,
         $submitted_value

@@ -19,7 +19,7 @@
 
 import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import DisplayEmbeddedContent from "./DisplayEmbeddedContent.vue";
 
 describe("DisplayEmbeddedContent", () => {
@@ -34,56 +34,56 @@ describe("DisplayEmbeddedContent", () => {
             return shallowMount(DisplayEmbeddedContent, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
 
-    it(`It renders an embedded document in narrow view`, () => {
+    it(`renders an embedded document in narrow view`, () => {
         store.state.is_embedded_in_large_view = false;
         store.state.currently_previewed_item = {
             id: 42,
             title: "My embedded content",
             embedded_file_properties: {
-                content: "My content"
-            }
+                content: "My content",
+            },
         };
         const wrapper = factory({
-            isInLargeView: false
+            isInLargeView: false,
         });
 
-        const element = wrapper.find("[data-test=display-embedded-content]");
+        const element = wrapper.get("[data-test=display-embedded-content]");
         expect(element.classes()).toEqual(["tlp-pane", "embedded-document", "narrow"]);
     });
 
-    it(`It renders an embedded document in large view`, () => {
+    it(`renders an embedded document in large view`, () => {
         store.state.is_embedded_in_large_view = true;
         store.state.currently_previewed_item = {
             id: 42,
             title: "My embedded content",
             embedded_file_properties: {
-                content: "My content"
-            }
+                content: "My content",
+            },
         };
         const wrapper = factory({
-            isInLargeView: true
+            isInLargeView: true,
         });
 
-        const element = wrapper.find("[data-test=display-embedded-content]");
+        const element = wrapper.get("[data-test=display-embedded-content]");
         expect(element.classes()).toEqual(["tlp-pane", "embedded-document"]);
     });
 
-    it(`It does not throw error if embedded_file_properties key is missing`, () => {
+    it(`does not throw error if embedded_file_properties key is missing`, () => {
         store.state.is_embedded_in_large_view = true;
         store.state.currently_previewed_item = {
             id: 42,
-            title: "My embedded content"
+            title: "My embedded content",
         };
         const wrapper = factory({
-            isInLargeView: true
+            isInLargeView: true,
         });
 
-        const element = wrapper.find("[data-test=display-embedded-content]");
+        const element = wrapper.get("[data-test=display-embedded-content]");
         expect(element.classes()).toEqual(["tlp-pane", "embedded-document"]);
     });
 });

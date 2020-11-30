@@ -30,6 +30,7 @@ use Rest_Exception_InvalidTokenException;
 use Tuleap\Authentication\SplitToken\SplitTokenException;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\User\AccessKey\AccessKeyException;
+use Tuleap\User\OAuth2\OAuth2Exception;
 use User_StatusInvalidException;
 
 final class RESTCurrentUserMiddleware implements MiddlewareInterface
@@ -49,12 +50,12 @@ final class RESTCurrentUserMiddleware implements MiddlewareInterface
         $this->basic_rest_authentication = $basic_rest_authentication;
     }
 
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler) : ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $this->basic_rest_authentication->__isAllowed();
         try {
-            $current_user = $this->rest_user_manager->getCurrentUser();
-        } catch (AccessKeyException | SplitTokenException | Rest_Exception_InvalidTokenException | User_StatusInvalidException $exception) {
+            $current_user = $this->rest_user_manager->getCurrentUser(null);
+        } catch (AccessKeyException | SplitTokenException | Rest_Exception_InvalidTokenException | User_StatusInvalidException | OAuth2Exception $exception) {
             throw new ForbiddenException($exception->getMessage());
         }
 

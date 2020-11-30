@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,10 +21,11 @@
 namespace Tuleap\Tracker\FormElement;
 
 use Feedback;
-use Tracker_Artifact;
 use Tracker_FormElement_Field_ArtifactLink;
 use Tuleap\Tracker\Admin\ArtifactLinksUsageDao;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenterFactory;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\Validation\ArtifactLinkValidationContext;
 
 class ArtifactLinkValidator
 {
@@ -51,9 +52,16 @@ class ArtifactLinkValidator
         $this->dao                      = $dao;
     }
 
-    public function isValid($value, \Tracker_Artifact $artifact, Tracker_FormElement_Field_ArtifactLink $field)
-    {
-        if ($this->isDataSent($value) === false) {
+    /**
+     * @param array|null $value
+     */
+    public function isValid(
+        $value,
+        \Tuleap\Tracker\Artifact\Artifact $artifact,
+        Tracker_FormElement_Field_ArtifactLink $field,
+        ArtifactLinkValidationContext $context
+    ): bool {
+        if ($value === null || $this->isDataSent($value) === false) {
             return true;
         }
 
@@ -88,7 +96,7 @@ class ArtifactLinkValidator
             }
         }
 
-        if ($this->areTypesValid($artifact, $value) === false) {
+        if ($this->areTypesValid($artifact, $value, $field, $context) === false) {
             $is_valid = false;
         }
 
@@ -106,7 +114,6 @@ class ArtifactLinkValidator
     }
 
     /**
-     * @param Tracker_FormElement_Field_ArtifactLink $field
      * @param $artifact_id
      *
      * @return bool
@@ -117,11 +124,7 @@ class ArtifactLinkValidator
         if ($artifact_id === "") {
             $GLOBALS['Response']->addFeedback(
                 'error',
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker_common_artifact',
-                    'error_artifactlink_value',
-                    array($field->getLabel(), $artifact_id)
-                )
+                sprintf(dgettext('tuleap-tracker', '%1$s: %2$s is not an artifact id.'), $field->getLabel(), $artifact_id)
             );
 
             return false;
@@ -131,10 +134,9 @@ class ArtifactLinkValidator
     }
 
     /**
-     * @param Tracker_FormElement_Field_ArtifactLink $field
      * @param $artifact_id
      *
-     * @return \Tracker_Artifact|null
+     * @return \Tuleap\Tracker\Artifact\Artifact|null
      */
     private function getArtifact(Tracker_FormElement_Field_ArtifactLink $field, $artifact_id)
     {
@@ -142,11 +144,7 @@ class ArtifactLinkValidator
         if ($artifact === null) {
             $GLOBALS['Response']->addFeedback(
                 'error',
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker_common_artifact',
-                    'error_artifactlink_value',
-                    array($field->getLabel(), $artifact_id)
-                )
+                sprintf(dgettext('tuleap-tracker', '%1$s: %2$s is not an artifact id.'), $field->getLabel(), $artifact_id)
             );
 
             return null;
@@ -156,25 +154,19 @@ class ArtifactLinkValidator
     }
 
     /**
-     * @param Tracker_Artifact $artifact
-     * @param Tracker_FormElement_Field_ArtifactLink $field
      * @param $artifact_id
      *
      * @return bool
      */
     private function isTrackerDeleted(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_FormElement_Field_ArtifactLink $field,
         $artifact_id
     ) {
         if ($artifact->getTracker()->isDeleted()) {
             $GLOBALS['Response']->addFeedback(
                 'error',
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker_common_artifact',
-                    'error_artifactlink_value_not_exist',
-                    array($field->getLabel(), $artifact_id)
-                )
+                sprintf(dgettext('tuleap-tracker', '%1$s : artifact #%2$s does not exist.'), $field->getLabel(), $artifact_id)
             );
 
             return true;
@@ -186,7 +178,7 @@ class ArtifactLinkValidator
     /**
      * @return bool
      */
-    private function isProjectActive(Tracker_Artifact $artifact)
+    private function isProjectActive(Artifact $artifact)
     {
         if (! $artifact->getTracker()->getProject()->isActive()) {
             $GLOBALS['Response']->addFeedback(
@@ -204,50 +196,109 @@ class ArtifactLinkValidator
     }
 
     /**
-     * @param Tracker_Artifact $artifact
      * @param array $value
-     *
-     * @return bool
      */
-    private function areTypesValid(Tracker_Artifact $artifact, array $value)
-    {
-        if ($artifact->getTracker()->isProjectAllowedToUseNature() === true && isset($value['natures'])) {
-            foreach ($value['natures'] as $artifact_id => $nature_shortname) {
-                $nature = $this->nature_presenter_factory->getFromShortname($nature_shortname);
-                if (! $nature) {
-                    $GLOBALS['Response']->addFeedback(
-                        Feedback::ERROR,
-                        $GLOBALS['Language']->getText(
-                            'plugin_tracker_common_artifact',
-                            'error_artifactlink_nature_missing',
-                            array($artifact->getId())
-                        )
-                    );
+    private function areTypesValid(
+        Artifact $artifact,
+        array $value,
+        Tracker_FormElement_Field_ArtifactLink $field,
+        ArtifactLinkValidationContext $context
+    ): bool {
+        if ($artifact->getTracker()->isProjectAllowedToUseNature() === false || ! isset($value['natures'])) {
+            return true;
+        }
 
-                    return false;
-                }
+        $project                   = $artifact->getTracker()->getProject();
+        $editable_link_types       = $this->getEditableLinkShortnames($project);
+        $used_types_by_artifact_id = $this->getUsedTypeShortnameByArtifactID($artifact, $field);
 
-                if ($this->dao->isTypeDisabledInProject(
-                    $artifact->getTracker()->getProject()->getID(),
-                    $nature_shortname
-                )) {
-                    $GLOBALS['Response']->addFeedback(
-                        Feedback::ERROR,
-                        sprintf(
-                            dgettext(
-                                'tuleap-tracker',
-                                'The artifact link type "%s" is disabled and cannot be used to link artifact #%s'
-                            ),
-                            $nature_shortname,
-                            $artifact_id
-                        )
-                    );
+        foreach ($value['natures'] as $artifact_id => $nature_shortname) {
+            $nature = $this->nature_presenter_factory->getFromShortname($nature_shortname);
+            if (! $nature) {
+                $GLOBALS['Response']->addFeedback(
+                    Feedback::ERROR,
+                    sprintf(dgettext('tuleap-tracker', 'Type is missing for artifact #%1$s.'), $artifact->getId())
+                );
 
-                    return false;
-                }
+                return false;
+            }
+
+            if ($this->dao->isTypeDisabledInProject($artifact->getTracker()->getProject()->getID(), $nature_shortname)) {
+                $GLOBALS['Response']->addFeedback(
+                    Feedback::ERROR,
+                    sprintf(
+                        dgettext(
+                            'tuleap-tracker',
+                            'The artifact link type "%s" is disabled and cannot be used to link artifact #%s'
+                        ),
+                        $nature_shortname,
+                        $artifact_id
+                    )
+                );
+
+                return false;
+            }
+
+            $is_an_editable_link_type      = $nature_shortname === '' || isset($editable_link_types[$nature_shortname]);
+            $is_an_unchanged_existing_link = isset($used_types_by_artifact_id[(int) $artifact_id]) && $used_types_by_artifact_id[(int) $artifact_id] === $nature_shortname;
+            if (! $context->isSystemAction() && ! $is_an_editable_link_type && ! $is_an_unchanged_existing_link) {
+                $GLOBALS['Response']->addFeedback(
+                    Feedback::ERROR,
+                    sprintf(
+                        dgettext(
+                            'tuleap-tracker',
+                            'The artifact link type "%s" cannot be used to link artifact #%s manually'
+                        ),
+                        $nature_shortname,
+                        $artifact_id
+                    )
+                );
+
+                return false;
             }
         }
 
         return true;
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private function getEditableLinkShortnames(\Project $project): array
+    {
+        $editable_link_types = $this->nature_presenter_factory->getAllTypesEditableInProject($project);
+
+        $editable_link_types_shortnames = [];
+
+        foreach ($editable_link_types as $editable_link_type) {
+            $editable_link_types_shortnames[$editable_link_type->shortname] = true;
+        }
+
+        return $editable_link_types_shortnames;
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    private function getUsedTypeShortnameByArtifactID(Artifact $artifact, Tracker_FormElement_Field_ArtifactLink $field): array
+    {
+        $changeset = $artifact->getLastChangesetWithFieldValue($field);
+        if ($changeset === null) {
+            return [];
+        }
+        $changeset_value = $changeset->getValue($field);
+        if ($changeset_value === null) {
+            return [];
+        }
+
+        $all_art_links = $changeset_value->getValue();
+
+        $used_types_by_artifact_id = [];
+
+        foreach ($all_art_links as $artifact_id => $art_link_info) {
+            $used_types_by_artifact_id[(int) $artifact_id] = $art_link_info->getNature();
+        }
+
+        return $used_types_by_artifact_id;
     }
 }

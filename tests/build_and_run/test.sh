@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Note: images are pulled each and every time to ensure we are running the last version of the image.
+#       This is required because we don't version the images
+
 set -ex
 
 if [ -z "$OS" ]; then
@@ -15,14 +18,16 @@ function cleanup {
 }
 trap cleanup EXIT
 
+docker pull $DOCKER_REGISTRY/enalean/tuleap-buildrpms:"$OS"-without-srpms
 docker run -i --name "$UNIQUE_NAME-rpm-builder" -v "$WORKSPACE/sources":/tuleap:ro $DOCKER_REGISTRY/enalean/tuleap-buildrpms:"$OS"-without-srpms
 
-
 if [ "$OS" == "centos7" ]; then
+    docker pull $DOCKER_REGISTRY/enalean/tuleap-installrpms:ci-centos7
     docker run -t --name "$UNIQUE_NAME-rpm-installer" --volumes-from "$UNIQUE_NAME-rpm-builder" -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
         --mount type=tmpfs,destination=/run $DOCKER_REGISTRY/enalean/tuleap-installrpms:ci-centos7
 else
-    docker run -i --name "$UNIQUE_NAME-rpm-installer" --volumes-from "$UNIQUE_NAME-rpm-builder" $DOCKER_REGISTRY/enalean/tuleap-installrpms:ci-centos6
+    docker pull $DOCKER_REGISTRY/enalean/tuleap-installrpms:ci-centos6
+    docker run -i --name "$UNIQUE_NAME-rpm-installer" -e DB=mysql57 --volumes-from "$UNIQUE_NAME-rpm-builder" $DOCKER_REGISTRY/enalean/tuleap-installrpms:ci-centos6
 fi
 
 mkdir -p "$WORKSPACE/results/build-and-run-$OS"
@@ -31,4 +36,4 @@ docker cp "$UNIQUE_NAME-rpm-installer":/var/log/nginx "$WORKSPACE/results/build-
 docker cp "$UNIQUE_NAME-rpm-installer":/var/opt/remi/php73/log/php-fpm "$WORKSPACE/results/build-and-run-$OS/fpm"
 docker cp "$UNIQUE_NAME-rpm-installer":/var/log/tuleap "$WORKSPACE/results/build-and-run-$OS/tuleap"
 
-grep "Tuleap $(cat "$WORKSPACE"/sources/VERSION)" "$WORKSPACE/results/build-and-run-$OS/index.html"
+grep "Dev Build $(cat "$WORKSPACE"/sources/VERSION)" "$WORKSPACE/results/build-and-run-$OS/index.html"

@@ -22,13 +22,10 @@ declare(strict_types=1);
 
 namespace Tuleap\SVN\AccessControl;
 
-use BackendSVN;
-use Project;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Tuleap\SVN\Repository\Repository;
 use Tuleap\SVN\Repository\RepositoryManager;
 
 class SVNRefreshAllAccessFilesCommand extends Command
@@ -43,10 +40,6 @@ class SVNRefreshAllAccessFilesCommand extends Command
      * @var AccessFileHistoryFactory
      */
     private $access_file_history_factory;
-    /**
-     * @var \SVN_AccessFile_Writer
-     */
-    private $access_file_writer;
     /**
      * @var AccessFileHistoryCreator
      */

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  *  This file is a part of Tuleap.
  *
@@ -25,10 +25,13 @@ use Tuleap\FRS\UploadedLink;
 use Tuleap\REST\JsonCast;
 use Tuleap\User\REST\UserRepresentation;
 
+/**
+ * @psalm-immutable
+ */
 class UploadedLinkRepresentation
 {
     /**
-     * @var $id {@type int}
+     * @var int $id {@type int}
      */
     public $id;
 
@@ -38,29 +41,28 @@ class UploadedLinkRepresentation
     public $owner;
 
     /**
-     * @var $link {@type string}
+     * @var string $link {@type string}
      */
     public $link;
 
     /**
-     * @var $link {@type string}
+     * @var string $link {@type string}
      */
     public $name;
 
     /**
-     * @param $release_time {@type string}
+     * @var string $release_time {@type string}
      */
     public $release_time;
 
-    public function build(UploadedLink $link)
+    public function __construct(UploadedLink $link)
     {
         $this->id             = JsonCast::toInt($link->getId());
         $this->link           = $link->getLink();
         $this->name           = $link->getName();
         $this->release_time   = JsonCast::toDate($link->getReleaseTime());
 
-        $owner_representation = new UserRepresentation();
-        $owner_representation->build($link->getOwner());
+        $owner_representation = UserRepresentation::build($link->getOwner());
         $this->owner = $owner_representation;
     }
 }

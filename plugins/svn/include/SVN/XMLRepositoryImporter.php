@@ -20,11 +20,9 @@
 
 namespace Tuleap\SVN;
 
-use Backend;
 use Event;
 use EventManager;
-use ForgeConfig;
-use Logger;
+use Psr\Log\LoggerInterface;
 use Project;
 use SimpleXMLElement;
 use SVN_AccessFile_Writer;
@@ -37,6 +35,7 @@ use Tuleap\SVN\Migration\RepositoryCopier;
 use Tuleap\SVN\Notifications\NotificationsEmailsBuilder;
 use Tuleap\SVN\Repository\Exception\CannotCreateRepositoryException;
 use Tuleap\SVN\Repository\Exception\RepositoryNameIsInvalidException;
+use Tuleap\SVN\Repository\SvnRepository;
 use Tuleap\SVN\Repository\Repository;
 use Tuleap\SVN\Repository\RepositoryCreator;
 use Tuleap\SVN\Repository\RepositoryManager;
@@ -50,7 +49,7 @@ class XMLRepositoryImporter
      */
     private $backend_svn;
     /**
-     * @var \Backend
+     * @var \BackendSystem
      */
     private $backend_system;
 
@@ -63,7 +62,7 @@ class XMLRepositoryImporter
     /** @var string */
     private $access_file_contents;
 
-    /** @var array(array(path => (string), emails => (string)), ...) */
+    /** @var array array(array(path => (string), emails => (string)), ...) */
     private $subscriptions;
 
     /** @var SimpleXMLElement */
@@ -102,8 +101,8 @@ class XMLRepositoryImporter
         SimpleXMLElement $xml_repo,
         $extraction_path,
         RepositoryCreator $repository_creator,
-        Backend $backend_svn,
-        Backend $backend_system,
+        \BackendSVN $backend_svn,
+        \BackendSystem $backend_system,
         AccessFileHistoryCreator $access_file_history_creator,
         RepositoryManager $repository_manager,
         \UserManager $user_manager,
@@ -112,20 +111,20 @@ class XMLRepositoryImporter
         XMLUserChecker $xml_user_checker
     ) {
         $attrs      = $xml_repo->attributes();
-        $this->name = $attrs['name'];
+        $this->name = (string) $attrs['name'];
         if (isset($attrs['dump-file'])) {
             $this->dump_file_path = $extraction_path . '/' . $attrs['dump-file'];
         }
 
-        $this->access_file_contents = (string)$xml_repo->{"access-file"};
+        $this->access_file_contents = (string) $xml_repo->{"access-file"};
 
-        $this->subscriptions = array();
+        $this->subscriptions = [];
         foreach ($xml_repo->notification as $notif) {
             $a                     = $notif->attributes();
-            $this->subscriptions[] = array(
+            $this->subscriptions[] = [
                 'path' => $a['path'],
                 'emails' => $a['emails']
-            );
+            ];
         }
 
         $this->references                   = $xml_repo->references;
@@ -142,18 +141,18 @@ class XMLRepositoryImporter
 
     public function import(
         ImportConfig $configuration,
-        Logger $logger,
+        LoggerInterface $logger,
         Project $project,
         AccessFileHistoryCreator $accessfile_history_creator,
         MailNotificationManager $mail_notification_manager,
         RuleName $rule_name,
         \PFUser $committer
     ) {
-        if (!$rule_name->isValid($this->name)) {
+        if (! $rule_name->isValid($this->name)) {
             throw new XMLImporterException("Repository name '{$this->name}' is invalid: " . $rule_name->getErrorMessage());
         }
 
-        $repo = new Repository("", $this->name, '', '', $project);
+        $repo = SvnRepository::buildToBeCreatedRepository($this->name, $project);
 
         try {
             $copy_from_core = false;
@@ -168,7 +167,7 @@ class XMLRepositoryImporter
             throw new XMLImporterException($e->getMessage());
         }
 
-        if (!$sysevent) {
+        if (! $sysevent) {
             throw new XMLImporterException("Could not create system event");
         }
 
@@ -191,19 +190,19 @@ class XMLRepositoryImporter
 
         $logger->info("[svn] Importing SVN repository {$this->name}");
 
-        if (!empty($this->dump_file_path)) {
+        if (! empty($this->dump_file_path)) {
             $this->importCommits($logger, $repo);
         }
 
-        if (!empty($this->access_file_contents)) {
+        if (! empty($this->access_file_contents)) {
             $this->importAccessFile($logger, $repo, $accessfile_history_creator);
         }
 
-        if (!empty($this->subscriptions)) {
+        if (! empty($this->subscriptions)) {
             $this->importSubscriptions($logger, $repo, $mail_notification_manager);
         }
 
-        if (!empty($this->references)) {
+        if (! empty($this->references)) {
             $this->importReferences($configuration, $logger, $repo);
         }
 
@@ -212,7 +211,7 @@ class XMLRepositoryImporter
         }
     }
 
-    private function importCommits(Logger $logger, Repository $repo)
+    private function importCommits(LoggerInterface $logger, Repository $repo)
     {
         $rootpath_arg = escapeshellarg($repo->getSystemPath());
         $dumpfile_arg = escapeshellarg($this->dump_file_path);
@@ -239,7 +238,7 @@ class XMLRepositoryImporter
     }
 
     private function importAccessFile(
-        Logger $logger,
+        LoggerInterface $logger,
         Repository $repo,
         AccessFileHistoryCreator $accessfile_history_creator
     ) {
@@ -261,7 +260,7 @@ class XMLRepositoryImporter
     }
 
     private function importSubscriptions(
-        Logger $logger,
+        LoggerInterface $logger,
         Repository $repo,
         MailNotificationManager $mail_notification_manager
     ) {
@@ -272,27 +271,27 @@ class XMLRepositoryImporter
                 $repo,
                 $subscription['path'],
                 $this->notifications_emails_builder->transformNotificationEmailsStringAsArray($subscription['emails']),
-                array(),
-                array()
+                [],
+                []
             );
             $mail_notification_manager->create($notif);
         }
     }
 
-    private function importReferences(ImportConfig $configuration, Logger $logger, Repository $repo)
+    private function importReferences(ImportConfig $configuration, LoggerInterface $logger, Repository $repo)
     {
         EventManager::instance()->processEvent(
             Event::IMPORT_COMPAT_REF_XML,
-            array(
+            [
                 'logger' => $logger,
-                'created_refs' => array(
+                'created_refs' => [
                     'repository' => $repo,
-                ),
+                ],
                 'service_name' => self::SERVICE_NAME,
                 'xml_content' => $this->references,
                 'project' => $repo->getProject(),
                 'configuration' => $configuration,
-            )
+            ]
         );
     }
 

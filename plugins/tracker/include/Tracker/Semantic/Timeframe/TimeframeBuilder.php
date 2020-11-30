@@ -26,43 +26,35 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\Semantic\Timeframe;
 
-use Logger;
 use PFUser;
+use Psr\Log\LoggerInterface;
 use TimePeriodWithoutWeekEnd;
-use Tracker_Artifact;
 use Tracker_Artifact_ChangesetValue_Date;
 use Tracker_Artifact_ChangesetValue_Numeric;
 use Tracker_FormElement_Chart_Field_Exception;
 use Tracker_FormElement_Field_Date;
-use Tracker_FormElementFactory;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class TimeframeBuilder
 {
-    /**
-     * @var Tracker_FormElementFactory
-     */
-    private $formelement_factory;
-
     /**
      * @var SemanticTimeframeBuilder
      */
     private $semantic_timeframe_builder;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
     public function __construct(
-        Tracker_FormElementFactory $formelement_factory,
         SemanticTimeframeBuilder $semantic_timeframe_builder,
-        Logger $logger
+        LoggerInterface $logger
     ) {
-        $this->formelement_factory        = $formelement_factory;
         $this->semantic_timeframe_builder = $semantic_timeframe_builder;
         $this->logger                     = $logger;
     }
 
-    public function buildTimePeriodWithoutWeekendForArtifact(Tracker_Artifact $artifact, PFUser $user) : TimePeriodWithoutWeekEnd
+    public function buildTimePeriodWithoutWeekendForArtifact(Artifact $artifact, PFUser $user): TimePeriodWithoutWeekEnd
     {
         $semantic_timeframe = $this->semantic_timeframe_builder->getSemantic($artifact->getTracker());
 
@@ -90,7 +82,7 @@ class TimeframeBuilder
         return TimePeriodWithoutWeekEnd::buildFromDuration($start_date, $duration);
     }
 
-    public function buildTimePeriodWithoutWeekendForArtifactForREST(Tracker_Artifact $artifact, PFUser $user) : TimePeriodWithoutWeekEnd
+    public function buildTimePeriodWithoutWeekendForArtifactForREST(Artifact $artifact, PFUser $user): TimePeriodWithoutWeekEnd
     {
         $semantic_timeframe = $this->semantic_timeframe_builder->getSemantic($artifact->getTracker());
 
@@ -121,7 +113,7 @@ class TimeframeBuilder
     /**
      * @throws Tracker_FormElement_Chart_Field_Exception
      */
-    public function buildTimePeriodWithoutWeekendForArtifactChartRendering(Tracker_Artifact $artifact, PFUser $user) : TimePeriodWithoutWeekEnd
+    public function buildTimePeriodWithoutWeekendForArtifactChartRendering(Artifact $artifact, PFUser $user): TimePeriodWithoutWeekEnd
     {
         $semantic_timeframe = $this->semantic_timeframe_builder->getSemantic($artifact->getTracker());
 
@@ -200,7 +192,7 @@ class TimeframeBuilder
      * @throws TimeframeFieldNotFoundException
      * @throws TimeframeFieldNoValueException
      */
-    private function getTimestamp(PFUser $user, Tracker_Artifact $artifact, SemanticTimeframe $semantic_timeframe) : int
+    private function getTimestamp(PFUser $user, Artifact $artifact, SemanticTimeframe $semantic_timeframe): int
     {
         $field = $semantic_timeframe->getStartDateField();
         if ($field === null || ! $field->userCanRead($user)) {
@@ -223,7 +215,7 @@ class TimeframeBuilder
      * @throws TimeframeFieldNotFoundException
      * @throws TimeframeFieldNoValueException
      */
-    private function getDurationFieldValue(PFUser $user, Tracker_Artifact $milestone_artifact, SemanticTimeframe $semantic_timeframe)
+    private function getDurationFieldValue(PFUser $user, Artifact $milestone_artifact, SemanticTimeframe $semantic_timeframe)
     {
         $field = $semantic_timeframe->getDurationField();
 
@@ -245,7 +237,7 @@ class TimeframeBuilder
      * @throws TimeframeFieldNotFoundException
      * @throws TimeframeFieldNoValueException
      */
-    private function getEndDateFieldValue(PFUser $user, Tracker_Artifact $milestone_artifact, SemanticTimeframe $semantic_timeframe): int
+    private function getEndDateFieldValue(PFUser $user, Artifact $milestone_artifact, SemanticTimeframe $semantic_timeframe): int
     {
         $field = $semantic_timeframe->getEndDateField();
 
@@ -260,6 +252,6 @@ class TimeframeBuilder
 
         assert($last_changeset_value instanceof Tracker_Artifact_ChangesetValue_Date);
 
-        return  (int) $last_changeset_value->getTimestamp();
+        return (int) $last_changeset_value->getTimestamp();
     }
 }

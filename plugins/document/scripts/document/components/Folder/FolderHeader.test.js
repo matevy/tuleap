@@ -22,7 +22,7 @@ import { shallowMount } from "@vue/test-utils";
 import localVue from "../../helpers/local-vue.js";
 
 import FolderHeader from "./FolderHeader.vue";
-import { createStoreMock } from "../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import { TYPE_EMPTY } from "../../constants.js";
 
 describe("FolderHeader", () => {
@@ -31,36 +31,40 @@ describe("FolderHeader", () => {
     beforeEach(() => {
         const general_store = {
             state: {
-                is_loading_ascendant_hierarchy: false
+                is_loading_ascendant_hierarchy: false,
             },
             getters: {
                 current_folder_title: "My folder title",
-                is_folder_empty: true
-            }
+                is_folder_empty: true,
+            },
         };
 
         store = createStoreMock(general_store);
 
-        const dynamic_import_stubs = {
-            permissionsUpdateModal: "<div></div>",
-            confirmDeletionModal: "<div></div>"
-        };
+        const dynamic_import_stubs = [
+            "confirm-deletion-modal",
+            "permissions-update-modal",
+            "create-new-item-version-modal",
+            "download-folder-size-threshold-exceeded-modal",
+            "download-folder-size-warning-modal",
+            "file-changelog-modal",
+        ];
 
         factory = (props = {}) => {
             return shallowMount(FolderHeader, {
                 localVue,
                 mocks: { $store: store },
                 propsData: { ...props },
-                stubs: dynamic_import_stubs
+                stubs: dynamic_import_stubs,
             });
         };
     });
-    describe("Component rendering - ", () => {
+    describe("Component rendering -", () => {
         it(`Does not display title information when folder is loading_ascendent_hierarchy`, () => {
             store.state.is_loading_ascendant_hierarchy = true;
 
             const wrapper = factory();
-            expect(wrapper.find("[data-test=document-folder-header-title]").classes()).toContain(
+            expect(wrapper.get("[data-test=document-folder-header-title]").classes()).toContain(
                 "document-folder-title-loading"
             );
         });
@@ -69,17 +73,19 @@ describe("FolderHeader", () => {
             store.state.is_loading_ascendant_hierarchy = false;
 
             const wrapper = factory();
-            expect(wrapper.find("[data-test=document-folder-header-title]").classes()).toEqual([]);
+            expect(wrapper.get("[data-test=document-folder-header-title]").classes()).toEqual([]);
         });
     });
-    describe("Search box - ", () => {
+    describe("Search box -", () => {
         it(`Does not display search box, when current folder has no content`, () => {
             store.state.is_loading_ascendant_hierarchy = false;
             store.state.current_folder = { id: 20 };
             store.getters.is_folder_empty = true;
 
             const wrapper = factory();
-            expect(wrapper.contains("[data-test=document-folder-harder-search-box")).toBeFalsy();
+            expect(
+                wrapper.find("[data-test=document-folder-harder-search-box]").exists()
+            ).toBeFalsy();
         });
         it(`Display search box, when folder has content`, () => {
             store.state.is_loading_ascendant_hierarchy = false;
@@ -87,64 +93,117 @@ describe("FolderHeader", () => {
             store.getters.is_folder_empty = false;
 
             const wrapper = factory();
-            expect(wrapper.contains("[data-test=document-folder-harder-search-box")).toBeTruthy();
+            expect(
+                wrapper.find("[data-test=document-folder-harder-search-box]").exists()
+            ).toBeTruthy();
         });
     });
 
-    describe("Modal loading - ", () => {
-        it(`Load new item version modal`, () => {
+    describe("Modal loading -", () => {
+        it(`Loads new item version modal`, async () => {
             store.state.is_loading_ascendant_hierarchy = false;
             store.state.current_folder = { id: 20 };
 
             const wrapper = factory();
+            expect(wrapper.find("[data-test=document-new-version-modal]").exists()).toBe(false);
+
             const event = { detail: { current_item: { type: TYPE_EMPTY } } };
             wrapper.vm.showCreateNewItemVersionModal(event);
-
-            expect(wrapper.contains("[data-test=document-new-version-modal]")).toBeTruthy();
-            expect(wrapper.contains("[data-test=document-update-metadata-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-delete-item-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-permissions-item-modal]")).toBeFalsy();
+            await wrapper.vm.$nextTick();
+            await wrapper.vm.shown_new_version_modal();
+            expect(wrapper.find("[data-test=document-new-version-modal]").exists()).toBe(true);
         });
-        it(`Load delete modal`, () => {
+
+        it(`Loads delete modal`, async () => {
             store.state.is_loading_ascendant_hierarchy = false;
             store.state.current_folder = { id: 20 };
 
             const wrapper = factory();
+            expect(wrapper.find("[data-test=document-delete-item-modal]").exists()).toBe(false);
+
             const event = { detail: { current_item: { type: TYPE_EMPTY } } };
             wrapper.vm.showDeleteItemModal(event);
-
-            expect(wrapper.contains("[data-test=document-new-version-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-update-metadata-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-delete-item-modal]")).toBeTruthy();
-            expect(wrapper.contains("[data-test=document-permissions-item-modal]")).toBeFalsy();
+            await wrapper.vm.$nextTick();
+            expect(wrapper.find("[data-test=document-delete-item-modal]").exists()).toBe(true);
         });
 
-        it(`Load update metadata modal`, () => {
+        it(`Loads update metadata modal`, async () => {
             store.state.is_loading_ascendant_hierarchy = false;
             store.state.current_folder = { id: 20 };
 
             const wrapper = factory();
+            expect(wrapper.find("[data-test=document-update-metadata-modal]").exists()).toBe(false);
+
             const event = { detail: { current_item: { type: TYPE_EMPTY } } };
             wrapper.vm.showUpdateItemMetadataModal(event);
-
-            expect(wrapper.contains("[data-test=document-new-version-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-update-metadata-modal]")).toBeTruthy();
-            expect(wrapper.contains("[data-test=document-delete-item-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-permissions-item-modal]")).toBeFalsy();
+            await wrapper.vm.$nextTick();
+            await wrapper.vm.shown_update_metadata_modal();
+            expect(wrapper.find("[data-test=document-update-metadata-modal]").exists()).toBe(true);
         });
 
-        it(`Load permission modal`, () => {
+        it(`Loads permission modal`, async () => {
             store.state.is_loading_ascendant_hierarchy = false;
             store.state.current_folder = { id: 20 };
 
             const wrapper = factory();
+            expect(wrapper.find("[data-test=document-permissions-item-modal]").exists()).toBe(
+                false
+            );
             const event = { detail: { current_item: { type: TYPE_EMPTY } } };
             wrapper.vm.showUpdateItemPermissionsModal(event);
+            await wrapper.vm.$nextTick();
+            expect(wrapper.find("[data-test=document-permissions-item-modal]").exists()).toBe(true);
+        });
 
-            expect(wrapper.contains("[data-test=document-new-version-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-update-metadata-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-delete-item-modal]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-permissions-item-modal]")).toBeTruthy();
+        it("Loads the folder size threshold exceeded error modal", async () => {
+            store.state.is_loading_ascendant_hierarchy = false;
+            store.state.current_folder = { id: 20 };
+
+            const wrapper = factory();
+            expect(
+                wrapper.find("[data-test=document-folder-size-threshold-exceeded]").exists()
+            ).toBe(false);
+
+            const event = { detail: { current_folder_size: 100000 } };
+            wrapper.vm.showMaxArchiveSizeThresholdExceededErrorModal(event);
+            await wrapper.vm.$nextTick();
+            expect(
+                wrapper.find("[data-test=document-folder-size-threshold-exceeded]").exists()
+            ).toBe(true);
+        });
+
+        it("Loads the folder size warning modal", async () => {
+            store.state.is_loading_ascendant_hierarchy = false;
+            store.state.current_folder = { id: 20 };
+
+            const wrapper = factory();
+            expect(wrapper.find("[data-test=document-folder-size-warning-modal]").exists()).toBe(
+                false
+            );
+
+            const event = {
+                detail: { current_folder_size: 100000, folder_href: "/download/folder/here" },
+            };
+            wrapper.vm.showArchiveSizeWarningModal(event);
+            await wrapper.vm.$nextTick();
+            expect(wrapper.find("[data-test=document-folder-size-warning-modal]").exists()).toBe(
+                true
+            );
+        });
+
+        it("loads the file changelog modal", async () => {
+            store.state.is_loading_ascendant_hierarchy = false;
+            store.state.current_folder = { id: 20 };
+
+            const wrapper = factory();
+            expect(wrapper.find("[data-test=file-changelog-modal]").exists()).toBe(false);
+
+            const event = {
+                detail: { updated_file: { id: 12 }, dropped_file: new Blob() },
+            };
+            wrapper.vm.showChangelogModal(event);
+            await wrapper.vm.$nextTick();
+            expect(wrapper.find("[data-test=file-changelog-modal]").exists()).toBe(true);
         });
     });
 });

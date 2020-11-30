@@ -24,7 +24,7 @@ use Luracast\Restler\RestException;
 use PFUser;
 use Tracker_Artifact_PriorityManager;
 use Tracker_ArtifactFactory;
-use Tuleap\Tracker\REST\v1\ArtifactLinkUpdater;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\ArtifactLinkUpdater;
 
 class ResourcesPatcher
 {
@@ -72,7 +72,7 @@ class ResourcesPatcher
 
     public function removeArtifactFromSource(PFUser $user, array $add)
     {
-        $to_add = array();
+        $to_add = [];
         foreach ($add as $move) {
             $added_id = $move->id;
             $to_add[] = $added_id;
@@ -82,8 +82,8 @@ class ResourcesPatcher
                 $this->artifactlink_updater->updateArtifactLinks(
                     $user,
                     $from_artifact,
-                    array(),
-                    array($added_id),
+                    [],
+                    [$added_id],
                     \Tracker_FormElement_Field_ArtifactLink::NO_NATURE
                 );
             }

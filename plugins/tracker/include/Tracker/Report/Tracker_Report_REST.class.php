@@ -34,15 +34,15 @@ class Tracker_Report_REST extends Tracker_Report
      */
     private $formelement_factory;
 
-    private $allowed_operators = array(
+    private $allowed_operators = [
         self::DEFAULT_OPERATOR,
         self::OPERATOR_EQUALS,
         self::OPERATOR_BETWEEN,
         self::OPERATOR_GREATER_THAN,
         self::OPERATOR_LESS_THAN,
-    );
+    ];
 
-    protected $rest_criteria = array();
+    protected $rest_criteria = [];
 
     public function __construct(
         PFUser $current_user,
@@ -73,7 +73,7 @@ class Tracker_Report_REST extends Tracker_Report
         $this->permissions_manager = $permissions_manager;
         $this->dao                 = $dao;
         $this->formelement_factory = $formelement_factory;
-        $this->criteria            = array();
+        $this->criteria            = [];
     }
 
     /**
@@ -120,19 +120,19 @@ class Tracker_Report_REST extends Tracker_Report
     private function harmoniseCriteria(&$criteria)
     {
         if (! is_array($criteria)) {
-            $criteria = array();
+            $criteria = [];
         }
 
         foreach ($criteria as $field => $criterion) {
             if ($this->isCriterionBasic($criterion)) {
-                $criterion = $criteria[$field] = array(
+                $criterion = $criteria[$field] = [
                     self::OPERATOR_PROPERTY_NAME => self::DEFAULT_OPERATOR,
                     self::VALUE_PROPERTY_NAME    => $criterion
-                );
+                ];
             }
 
             if (! is_array($criterion)) {
-                throw new Tracker_Report_InvalidRESTCriterionException('Criterion for field '. $field . ' is malformed');
+                throw new Tracker_Report_InvalidRESTCriterionException('Criterion for field ' . $field . ' is malformed');
             }
 
             $this->checkCriterionProperties($criterion, $field);
@@ -161,10 +161,10 @@ class Tracker_Report_REST extends Tracker_Report
     private function checkCriterionProperties($criterion, $field)
     {
         if (! isset($criterion[self::OPERATOR_PROPERTY_NAME]) || ! isset($criterion[self::VALUE_PROPERTY_NAME])) {
-            throw new Tracker_Report_InvalidRESTCriterionException('Criterion for field '. $field . ' is malformed');
+            throw new Tracker_Report_InvalidRESTCriterionException('Criterion for field ' . $field . ' is malformed');
         }
         if (! in_array($criterion[self::OPERATOR_PROPERTY_NAME], $this->allowed_operators)) {
-            throw new Tracker_Report_InvalidRESTCriterionException('Invalid operator for field '. $field);
+            throw new Tracker_Report_InvalidRESTCriterionException('Invalid operator for field ' . $field);
         }
     }
 

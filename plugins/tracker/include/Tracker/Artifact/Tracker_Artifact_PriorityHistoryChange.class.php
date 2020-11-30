@@ -16,6 +16,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_Item
 {
 
@@ -32,17 +34,17 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
     private $id;
 
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $moved_artifact;
 
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $artifact_higher;
 
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $artifact_lower;
 
@@ -75,9 +77,9 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
     public function __construct(
         Tracker_ArtifactFactory $tracker_artifact_factory,
         $id,
-        Tracker_Artifact $moved_artifact,
-        Tracker_Artifact $artifact_higher,
-        Tracker_Artifact $artifact_lower,
+        Artifact $moved_artifact,
+        Artifact $artifact_higher,
+        Artifact $artifact_lower,
         $context,
         Project $project,
         $has_been_raised,
@@ -164,7 +166,7 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
         return $this->prioritized_by->fetchHtmlAvatar();
     }
 
-    public function fetchFollowUp($diff_to_previous)
+    public function fetchFollowUp($diff_to_previous, PFUser $current_user)
     {
         $html  = '';
         $html .= $this->getAvatar();
@@ -172,11 +174,11 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
         $html .= '<div class="tracker_artifact_followup_header">';
         $html .= $this->getPermalink();
         $html .= $this->getUserLink();
-        $html .= $this->getTimeAgo();
+        $html .= $this->getTimeAgo($current_user);
         $html .= '</div>';
 
         $html .= '<div class="tracker_artifact_followup_content">';
-        $html .= $this->getFollowupContent($diff_to_previous);
+        $html .= $this->getFollowupContent($diff_to_previous, $current_user);
         $html .= '</div>';
 
         $html .= '<div style="clear:both;"></div>';
@@ -184,9 +186,9 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
         return $html;
     }
 
-    public function getFollowupContent($diff_to_previous)
+    public function getFollowupContent(string $diff_to_previous, \PFUser $current_user): string
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'priority_change_intro') .
+        return dgettext('tuleap-tracker', 'The priority has been') .
             ' ' . $this->getRankProgression() .
             $this->getContextRepresentation() .
             ' ' . $this->getRelativeArtifactRepresentation();
@@ -197,9 +199,9 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
         $html = '<span class="rank-progression">';
 
         if ($this->hasBeenRaised()) {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'priority_change_raised') . ' &#8599;';
+            $html .= dgettext('tuleap-tracker', 'raised') . ' &#8599;';
         } else {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'priority_change_decreased') . ' &#8600;';
+            $html .= dgettext('tuleap-tracker', 'decreased') . ' &#8600;';
         }
 
         $html .= '</span>';
@@ -212,10 +214,10 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
             $html = '';
 
         if (! is_null($this->context) && $this->context !== self::NO_CONTEXT) {
-            $html .= ' ' . $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'priority_change_in') . ' ';
+            $html .= ' ' . dgettext('tuleap-tracker', 'in') . ' ';
 
             if ($this->context === '0') {
-                $html .= $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'priority_change_backlog');
+                $html .= dgettext('tuleap-tracker', 'the project\'s backlog');
             } else {
                 $artifact = $this->tracker_artifact_factory->getArtifactById($this->context);
                 if ($artifact) {
@@ -232,10 +234,10 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
     private function getRelativeArtifactRepresentation()
     {
         if ($this->moved_artifact == $this->artifact_higher) {
-            return $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'priority_change_before_than') . ' ' . $this->artifact_lower->fetchColoredXRef();
+            return dgettext('tuleap-tracker', 'and it\'s now placed before') . ' ' . $this->artifact_lower->fetchColoredXRef();
         }
 
-        return $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'priority_change_after_than') . ' ' . $this->artifact_higher->fetchColoredXRef();
+        return dgettext('tuleap-tracker', 'and it\'s now placed after') . ' ' . $this->artifact_higher->fetchColoredXRef();
     }
 
     /**
@@ -247,8 +249,7 @@ class Tracker_Artifact_PriorityHistoryChange extends Tracker_Artifact_Followup_I
         $format = 'html',
         $user = null,
         $ignore_perms = false,
-        $for_mail = false,
-        $for_modal = false
+        $for_mail = false
     ) {
         return '';
     }

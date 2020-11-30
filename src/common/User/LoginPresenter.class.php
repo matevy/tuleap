@@ -30,6 +30,11 @@ class User_LoginPresenter
      * @var CSRFSynchronizerToken
      */
     private $csrf_token;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
+    public $prompt_parameter;
 
     public function __construct(
         $return_to,
@@ -37,6 +42,7 @@ class User_LoginPresenter
         $form_loginname,
         $additional_connectors,
         CSRFSynchronizerToken $csrf_token,
+        string $prompt_parameter,
         $display_new_account_button = true,
         $allow_password_recovery = true
     ) {
@@ -47,11 +53,12 @@ class User_LoginPresenter
         $this->allow_password_recovery    = $allow_password_recovery;
         $this->additional_connectors      = $additional_connectors;
         $this->csrf_token                 = $csrf_token;
+        $this->prompt_parameter           = $prompt_parameter;
     }
 
     public function getTemplateDir()
     {
-        return ForgeConfig::get('codendi_dir') .'/src/templates/user';
+        return ForgeConfig::get('codendi_dir') . '/src/templates/user';
     }
 
     public function getTemplate()
@@ -106,17 +113,17 @@ class User_LoginPresenter
 
     public function help_subject()
     {
-        return $GLOBALS['Language']->getText('account_login', 'help_subject', array(ForgeConfig::get('sys_name')));
+        return $GLOBALS['Language']->getText('account_login', 'help_subject', [ForgeConfig::get('sys_name')]);
     }
 
     public function account_login_page_title()
     {
-        return $GLOBALS['Language']->getText('account_login', 'page_title', array(ForgeConfig::get('sys_name')));
+        return $GLOBALS['Language']->getOverridableText('account_login', 'page_title', [ForgeConfig::get('sys_name')]);
     }
 
     public function account_login_name()
     {
-        return $GLOBALS['Language']->getText('account_login', 'name');
+        return $GLOBALS['Language']->getOverridableText('account_login', 'name');
     }
 
     public function account_login_password()
@@ -136,7 +143,7 @@ class User_LoginPresenter
 
     public function account_login_login_with_tuleap()
     {
-        return $GLOBALS['Language']->getText('account_login', 'login_with_tuleap', array(ForgeConfig::get('sys_name')));
+        return $GLOBALS['Language']->getText('account_login', 'login_with_tuleap', [ForgeConfig::get('sys_name')]);
     }
 
     public function getReturnTo()

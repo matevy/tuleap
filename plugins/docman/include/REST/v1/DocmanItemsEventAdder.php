@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1;
 
@@ -40,13 +40,12 @@ class DocmanItemsEventAdder
         $this->event_manager = $event_manager;
     }
 
-    public function addNotificationEvents(Project $project) : void
+    public function addNotificationEvents(Project $project): void
     {
         $feedback                         = new NullResponseFeedbackWrapper();
         $notifications_builders           = new NotificationBuilders(
             $feedback,
-            $project,
-            '/plugins/docman/?group_id=' . urlencode((string) $project->getID())
+            $project
         );
         $notification_manager             = $notifications_builders->buildNotificationManager();
         $notification_manager_add         = $notifications_builders->buildNotificationManagerAdd();
@@ -66,7 +65,7 @@ class DocmanItemsEventAdder
         $adder->addNotificationManagement();
     }
 
-    public function addLogEvents() : void
+    public function addLogEvents(): void
     {
         $logger = new Docman_Log();
         $adder  = new LogEventAdder($this->event_manager, $logger);

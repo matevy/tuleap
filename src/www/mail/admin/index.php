@@ -24,9 +24,9 @@ if ($group_id && user_ismember($group_id, 'A')) {
          */
 
         if ($request->existAndNonEmpty('add_list')) {
-            $list_password = substr(md5($GLOBALS['session_hash'] . time() . rand(0, 40000)), 0, 16);
+            $list_password = sodium_bin2base64(random_bytes(12), SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
             $list_name = $request->getValidated('list_name', 'string', '');
-            if (!$list_name || strlen($list_name) < ForgeConfig::get('sys_lists_name_min_length')) {
+            if (! $list_name || strlen($list_name) < ForgeConfig::get('sys_lists_name_min_length')) {
                 exit_error($Language->getText('global', 'error'), $Language->getText('mail_admin_index', 'provide_correct_list_name'));
             }
             if (! preg_match('/(^([a-zA-Z\_0-9\.-]*))$/', $list_name)) {
@@ -65,7 +65,7 @@ if ($group_id && user_ismember($group_id, 'A')) {
                     $result = db_query($sql);
                     $group_list_id = db_insertid($result);
 
-                    if (!$result) {
+                    if (! $result) {
                         $feedback .= ' ' . $Language->getText('mail_admin_index', 'add_list_err') . ' ';
                         echo db_error();
                     } else {
@@ -73,7 +73,7 @@ if ($group_id && user_ismember($group_id, 'A')) {
                     }
 
                     // Raise an event
-                    EventManager::instance()->processEvent('mail_list_create', array('group_list_id' => $group_list_id,));
+                    EventManager::instance()->processEvent('mail_list_create', ['group_list_id' => $group_list_id,]);
 
                     // get email addr
                     $res_email = db_query("SELECT email FROM user WHERE user_id='" . $db_escaped_user_id . "'");
@@ -83,12 +83,12 @@ if ($group_id && user_ismember($group_id, 'A')) {
                     $row_email = db_fetch_array($res_email);
 
                     // mail password to admin
-                    $message = $Language->getText('mail_admin_index', 'list_create_explain', array($GLOBALS['sys_name'], $new_list_name . '@' . $sys_lists_domain, $list_server . "/mailman/listinfo/$new_list_name", $list_server . "/mailman/admin/$new_list_name", $list_password));
+                    $message = $Language->getText('mail_admin_index', 'list_create_explain', [ForgeConfig::get('sys_name'), $new_list_name . '@' . $sys_lists_domain, $list_server . "/mailman/listinfo/$new_list_name", $list_server . "/mailman/admin/$new_list_name", $list_password]);
 
-                    $hdrs = "From: " . $GLOBALS['sys_email_admin'] . $GLOBALS['sys_lf'];
-                    $hdrs .='Content-type: text/plain; charset=utf-8' . $GLOBALS['sys_lf'];
+                    $hdrs = "From: " . ForgeConfig::get('sys_email_admin') . ForgeConfig::get('sys_lf');
+                    $hdrs .= 'Content-type: text/plain; charset=utf-8' . ForgeConfig::get('sys_lf');
 
-                    mail($row_email['email'], $GLOBALS['sys_name'] . " " . $Language->getText('mail_admin_index', 'new_mail_list'), $message, $hdrs);
+                    mail($row_email['email'], ForgeConfig::get('sys_name') . " " . $Language->getText('mail_admin_index', 'new_mail_list'), $message, $hdrs);
 
                     $feedback .= " " . $Language->getText('mail_admin_index', 'mail_sent_to', $row_email['email']) . " ";
                 }
@@ -106,13 +106,13 @@ if ($group_id && user_ismember($group_id, 'A')) {
                     "description='" . db_es(htmlspecialchars($description)) . "' " .
                     "WHERE group_list_id='" . db_ei($group_list_id) . "' AND group_id='" . db_ei($group_id) . "'";
             $result = db_query($sql);
-            if (!$result || db_affected_rows($result) < 1) {
+            if (! $result || db_affected_rows($result) < 1) {
                 $feedback .= ' ' . $Language->getText('mail_admin_index', 'upate_status_err') . ' ';
                 echo db_error();
             } else {
                 if ($is_public == 9) {
                     // List deleted: raise event
-                    EventManager::instance()->processEvent('mail_list_delete', array('group_list_id' => $group_list_id,));
+                    EventManager::instance()->processEvent('mail_list_delete', ['group_list_id' => $group_list_id,]);
                 }
                 $feedback .= ' ' . $Language->getText('mail_admin_index', 'status_update_success') . ' ';
             }
@@ -123,8 +123,7 @@ if ($group_id && user_ismember($group_id, 'A')) {
         /*
           Show the form for adding mailing list
          */
-        mail_header_admin(array('title' => $Language->getText('mail_admin_index', 'add_a_mail_list'),
-            'help' => 'communication.html#creation'));
+        mail_header(['title' => $Language->getText('mail_admin_index', 'add_a_mail_list')]);
 
         echo '
             <H3>' . $Language->getText('mail_admin_index', 'add_a_mail_list') . '</H3>';
@@ -158,13 +157,12 @@ if ($group_id && user_ismember($group_id, 'A')) {
             <INPUT TYPE="SUBMIT" NAME="SUBMIT" VALUE="' . $Language->getText('mail_admin_index', 'add_this_list') . '">
             </FORM>';
 
-        mail_footer(array());
+        mail_footer([]);
     } elseif ($request->existAndNonEmpty('change_status')) {
         /*
           Change a forum to public/private
          */
-        mail_header_admin(array('title' => $Language->getText('mail_admin_index', 'update_mail_list'),
-            'help' => 'communication.html#creation'));
+        mail_header(['title' => $Language->getText('mail_admin_index', 'update_mail_list')]);
 
         $sql = "SELECT list_name,group_list_id,is_public,description " .
                 "FROM mail_group_list " .
@@ -172,7 +170,7 @@ if ($group_id && user_ismember($group_id, 'A')) {
         $result = db_query($sql);
         $rows = db_numrows($result);
 
-        if (!$result || $rows < 1) {
+        if (! $result || $rows < 1) {
             echo '
                 <H2>' . $Language->getText('mail_admin_index', 'no_list_found') . '</H2>
                 <P>
@@ -182,9 +180,9 @@ if ($group_id && user_ismember($group_id, 'A')) {
             echo '
             <H2>' . $Language->getText('mail_admin_index', 'update_mail_list') . '</H2>
             <P>
-            ' . $Language->getText('mail_admin_index', 'admin_lists_here', $GLOBALS['sys_name']) . '<P>';
+            ' . $Language->getText('mail_admin_index', 'admin_lists_here', ForgeConfig::get('sys_name') . '<P>');
 
-            $title_arr = array();
+            $title_arr = [];
             $title_arr[] = $Language->getText('mail_admin_index', 'list');
             $title_arr[] = $Language->getText('global', 'status');
             $title_arr[] = $Language->getText('mail_admin_index', 'update');
@@ -222,14 +220,13 @@ if ($group_id && user_ismember($group_id, 'A')) {
             echo '</TABLE>';
         }
 
-        mail_footer(array());
+        mail_footer([]);
     } else {
         /*
           Show main page for choosing
           either moderotor or delete
          */
-        mail_header_admin(array('title' => $Language->getText('mail_admin_index', 'mail_list_admin'),
-            'help' => 'communication.html#mailing-lists'));
+        mail_header(['title' => $Language->getText('mail_admin_index', 'mail_list_admin')]);
 
         echo '
             <H2>' . $Language->getText('mail_admin_index', 'mail_list_admin') . '</H2>
@@ -238,13 +235,13 @@ if ($group_id && user_ismember($group_id, 'A')) {
                                                       <p>' . $Language->getText('mail_admin_index', 'create_new_mail_lists') . '
             <h3><A HREF="?group_id=' . $group_id . '&change_status=1">' . $Language->getText('mail_admin_index', 'admin_update_lists') . '</A></h3>
                                                       <p>' . $Language->getText('mail_admin_index', 'manage_mail');
-        mail_footer(array());
+        mail_footer([]);
     }
 } else {
     /*
       Not logged in or insufficient privileges
      */
-    if (!$group_id) {
+    if (! $group_id) {
         exit_no_group();
     } else {
         exit_permission_denied();

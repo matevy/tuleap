@@ -43,17 +43,17 @@ rcs_id('$Id: RedirectTo.php,v 1.13 2004/02/17 12:11:36 rurban Exp $');
  */
 class WikiPlugin_RedirectTo extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("RedirectTo");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Redirects to another url or page.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -62,15 +62,15 @@ class WikiPlugin_RedirectTo extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array( 'href' => '',
+        return [ 'href' => '',
                       // 'type' => 'Temp' // or 'Permanent' // so far ignored
                       'page' => false,
-                      );
+                      ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = ($this->getArgs($argstr, $request));
 
@@ -95,7 +95,7 @@ class WikiPlugin_RedirectTo extends WikiPlugin
         } elseif ($page) {
             $url = WikiURL(
                 $page,
-                array('redirectfrom' => $request->getArg('pagename')),
+                ['redirectfrom' => $request->getArg('pagename')],
                 'abs_path'
             );
         } else {
@@ -127,7 +127,7 @@ class WikiPlugin_RedirectTo extends WikiPlugin
 
         return $request->redirect($url);
     }
-};
+}
 
 // $Log: RedirectTo.php,v $
 // Revision 1.13  2004/02/17 12:11:36  rurban

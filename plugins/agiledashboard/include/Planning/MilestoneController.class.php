@@ -19,9 +19,6 @@
  */
 
 use Tuleap\AgileDashboard\BaseController;
-use Tuleap\AgileDashboard\BreadCrumbDropdown\AgileDashboardCrumbBuilder;
-use Tuleap\AgileDashboard\BreadCrumbDropdown\MilestoneCrumbBuilder;
-use Tuleap\AgileDashboard\BreadCrumbDropdown\VirtualTopMilestoneCrumbBuilder;
 use Tuleap\AgileDashboard\Milestone\AllBreadCrumbsForMilestoneBuilder;
 use Tuleap\AgileDashboard\Milestone\Pane\Details\DetailsPaneInfo;
 use Tuleap\AgileDashboard\Milestone\Pane\PanePresenterData;
@@ -100,7 +97,7 @@ class Planning_MilestoneController extends BaseController
 
     private function getActivePaneIdentifier()
     {
-        return $this->pane_factory->getActivePane($this->milestone)->getIdentifier();
+        return $this->pane_factory->getActivePane($this->milestone, $this->request->getCurrentUser())->getIdentifier();
     }
 
     public function getHeaderOptions()
@@ -108,11 +105,20 @@ class Planning_MilestoneController extends BaseController
         $this->generateBareMilestone();
         $pane_info_identifier = new AgileDashboard_PaneInfoIdentifier();
 
-        return array(
-            Layout::INCLUDE_FAT_COMBINED => ! $pane_info_identifier->isPaneAPlanningV2(
-                $this->getActivePaneIdentifier()
-            )
+        $is_pane_a_planning_v2 = $pane_info_identifier->isPaneAPlanningV2(
+            $this->getActivePaneIdentifier()
         );
+
+        $header_options = [
+            Layout::INCLUDE_FAT_COMBINED => ! $is_pane_a_planning_v2,
+            'body_class'                 => ['agiledashboard-body']
+        ];
+
+        if ($is_pane_a_planning_v2) {
+            $header_options['body_class'][] = 'has-sidebar-with-pinned-header';
+        }
+
+        return $header_options;
     }
 
     private function getMilestonePresenter(PanePresenterData $presenter_data)
@@ -142,15 +148,15 @@ class Planning_MilestoneController extends BaseController
         $extractor          = new AgileDashboard_PaneRedirectionExtractor();
 
         if (! ($this->inconsistentArtifactsIdsAreValid($artifact_ids) && $milestone->solveInconsistencies($this->getCurrentUser(), $artifact_ids))) {
-            $this->addFeedback(Feedback::ERROR, $GLOBALS['Language']->getText('plugin_agiledashboard', 'error_on_inconsistencies_solving'));
+            $this->addFeedback(Feedback::ERROR, dgettext('tuleap-agiledashboard', 'An error occurred while trying to solve inconsistencies.'));
         }
 
-        $this->addFeedback(Feedback::INFO, $GLOBALS['Language']->getText('plugin_agiledashboard', 'successful_inconsistencies_solving'));
+        $this->addFeedback(Feedback::INFO, dgettext('tuleap-agiledashboard', 'Inconsistencies successfully solved!'));
 
         if (! $request_has_redirect = $extractor->getRedirectToParameters($this->request, $this->project)) {
-            $this->redirect(array(
+            $this->redirect([
                 'group_id' => $this->project->getGroupId()
-            ));
+            ]);
         }
 
         $this->redirect($extractor->getRedirectToParameters($this->request, $this->project));
@@ -181,13 +187,13 @@ class Planning_MilestoneController extends BaseController
     }
 
     /**
-     * @param PanePresenterData $presenter_data
      * @return string
      */
     private function getTemplateName(PanePresenterData $presenter_data)
     {
         $current_pane_identifier = $presenter_data->getActivePane()->getIdentifier();
-        if ($current_pane_identifier === DetailsPaneInfo::IDENTIFIER ||
+        if (
+            $current_pane_identifier === DetailsPaneInfo::IDENTIFIER ||
             $current_pane_identifier === PlanningV2PaneInfo::IDENTIFIER
         ) {
             return 'show';

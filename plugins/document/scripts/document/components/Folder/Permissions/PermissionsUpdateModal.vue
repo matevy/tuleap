@@ -18,22 +18,27 @@
   -
   -->
 <template>
-    <form class="tlp-modal"
-          role="dialog"
-          aria-labelledby="document-update-permissions-modal"
-          enctype="multipart/form-data"
-          v-on:submit.prevent="updatePermissions"
+    <form
+        class="tlp-modal"
+        role="dialog"
+        aria-labelledby="document-update-permissions-modal"
+        enctype="multipart/form-data"
+        v-on:submit.prevent="updatePermissions"
     >
-        <modal-header v-bind:modal-title="modal_title"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-header-class="'fa-pencil'"
+        <modal-header
+            v-bind:modal-title="modal_title"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-header-class="'fa-pencil'"
         />
-        <modal-feedback/>
+        <modal-feedback />
         <div class="tlp-modal-body document-item-modal-body">
             <div v-if="project_ugroups === null" class="document-permissions-modal-loading-state">
                 <i class="fa fa-spin fa-circle-o-notch"></i>
             </div>
-            <div v-else-if="item.permissions_for_groups" class="document-permissions-update-container">
+            <div
+                v-else-if="item.permissions_for_groups"
+                class="document-permissions-update-container"
+            >
                 <permissions-for-groups-selector
                     v-bind:project_ugroups="project_ugroups"
                     v-model="updated_permissions"
@@ -44,16 +49,17 @@
                 />
             </div>
         </div>
-        <modal-footer v-bind:is-loading="! can_be_submitted"
-                      v-bind:submit-button-label="submit_button_label"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-submit-button-class="'fa-pencil'"
+        <modal-footer
+            v-bind:is-loading="!can_be_submitted"
+            v-bind:submit-button-label="submit_button_label"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-submit-button-class="'fa-pencil'"
         />
     </form>
 </template>
 <script>
 import { mapState } from "vuex";
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 import { sprintf } from "sprintf-js";
 import ModalHeader from "../ModalCommon/ModalHeader.vue";
 import ModalFeedback from "../ModalCommon/ModalFeedback.vue";
@@ -70,10 +76,10 @@ export default {
         ModalFeedback,
         ModalFooter,
         PermissionsForGroupsSelector,
-        PermissionsUpdateFolderSubItems
+        PermissionsUpdateFolderSubItems,
     },
     props: {
-        item: Object
+        item: Object,
     },
     data: () => {
         return {
@@ -84,8 +90,8 @@ export default {
                 apply_permissions_on_children: false,
                 can_read: [],
                 can_write: [],
-                can_manage: []
-            }
+                can_manage: [],
+            },
         };
     },
     computed: {
@@ -99,12 +105,12 @@ export default {
         },
         can_be_submitted() {
             return this.project_ugroups !== null && this.is_submitting_new_permissions === false;
-        }
+        },
     },
     watch: {
-        item: function() {
+        item: function () {
             this.setPermissionsToUpdateFromItem();
-        }
+        },
     },
     beforeMount() {
         this.setPermissionsToUpdateFromItem();
@@ -113,6 +119,7 @@ export default {
         this.modal = createModal(this.$el);
         EventBus.$on("show-update-permissions-modal", this.show);
         this.modal.addEventListener("tlp-modal-hidden", this.reset);
+        this.show();
     },
     beforeDestroy() {
         EventBus.$off("show-update-permissions-modal", this.show);
@@ -127,7 +134,7 @@ export default {
                 apply_permissions_on_children: false,
                 can_read: JSON.parse(JSON.stringify(this.item.permissions_for_groups.can_read)),
                 can_write: JSON.parse(JSON.stringify(this.item.permissions_for_groups.can_write)),
-                can_manage: JSON.parse(JSON.stringify(this.item.permissions_for_groups.can_manage))
+                can_manage: JSON.parse(JSON.stringify(this.item.permissions_for_groups.can_manage)),
             };
         },
         async show() {
@@ -151,7 +158,7 @@ export default {
             if (this.has_modal_error === false) {
                 this.modal.hide();
             }
-        }
-    }
+        },
+    },
 };
 </script>

@@ -51,7 +51,7 @@ class HudsonBuild
         $parsed_url = parse_url($hudson_build_url);
 
         if (! $parsed_url || ! array_key_exists('scheme', $parsed_url)) {
-            throw new HudsonJobURLMalformedException($GLOBALS['Language']->getText('plugin_hudson', 'wrong_job_url', array($hudson_build_url)));
+            throw new HudsonJobURLMalformedException(sprintf(dgettext('tuleap-hudson', 'Wrong Job URL: %1$s'), $hudson_build_url));
         }
 
         $this->hudson_build_url = $hudson_build_url . "/api/xml";
@@ -67,62 +67,62 @@ class HudsonBuild
             $this->request_factory->createRequest('GET', $hudson_build_url)
         );
         if ($response->getStatusCode() !== 200) {
-            throw new HudsonJobURLFileNotFoundException($GLOBALS['Language']->getText('plugin_hudson', 'job_url_file_not_found', array($hudson_build_url)));
+            throw new HudsonJobURLFileNotFoundException(sprintf(dgettext('tuleap-hudson', 'File not found at URL: %1$s'), $hudson_build_url));
         }
 
         $xmlobj = simplexml_load_string($response->getBody()->getContents());
         if ($xmlobj !== false) {
             return $xmlobj;
         }
-        throw new HudsonJobURLFileException($GLOBALS['Language']->getText('plugin_hudson', 'job_url_file_error', array($hudson_build_url)));
+        throw new HudsonJobURLFileException(sprintf(dgettext('tuleap-hudson', 'Unable to read file at URL: %1$s'), $hudson_build_url));
     }
 
-    function getDom()
+    public function getDom()
     {
         return $this->dom_build;
     }
 
-    function getBuildStyle()
+    public function getBuildStyle()
     {
         return $this->dom_build->getName();
     }
 
-    function isBuilding()
+    public function isBuilding()
     {
         return ($this->dom_build->building == "true");
     }
 
-    function getUrl()
+    public function getUrl()
     {
         return (string) $this->dom_build->url;
     }
 
-    function getResult()
+    public function getResult()
     {
         return (string) $this->dom_build->result;
     }
 
-    function getNumber()
+    public function getNumber()
     {
         return (int) $this->dom_build->number;
     }
 
-    function getDuration()
+    public function getDuration()
     {
         return (int) $this->dom_build->duration;
     }
 
-    function getTimestamp()
+    public function getTimestamp()
     {
         return (int) $this->dom_build->timestamp;
     }
 
-    function getBuildTime()
+    public function getBuildTime()
     {
         return format_date($GLOBALS['Language']->getText('system', 'datefmt'), substr($this->getTimestamp(), 0, -3));
     }
 
-    function getStatusIcon()
+    public function getStatusIcon()
     {
         $color = 'red';
         if ($this->getResult() == 'SUCCESS') {
@@ -130,6 +130,6 @@ class HudsonBuild
         } elseif ($this->getResult() == 'UNSTABLE') {
             $color = 'yellow';
         }
-        return hudsonPlugin::ICONS_PATH .'status_'. $color .'.png';
+        return hudsonPlugin::ICONS_PATH . 'status_' . $color . '.png';
     }
 }

@@ -39,16 +39,13 @@ class DashboardWidgetRetriever
      */
     public function getAllWidgets($dashboard_id, $dashboard_type)
     {
-        $widgets_by_line = array();
+        $widgets_by_line = [];
 
         foreach ($this->dao->searchAllLinesByDashboardIdOrderedByRank($dashboard_id, $dashboard_type) as $line) {
             $widget_line = new DashboardWidgetLine(
                 $line['id'],
-                $line['dashboard_id'],
-                $line['dashboard_type'],
                 $line['layout'],
-                $line['rank'],
-                array()
+                []
             );
             $widgets_by_line[] = $widget_line;
             $this->addColumnWidgetsByLine($widget_line);
@@ -77,14 +74,13 @@ class DashboardWidgetRetriever
      */
     public function getColumnsByLineById($line_id)
     {
-        $columns = array();
+        $columns = [];
 
         foreach ($this->dao->searchAllColumnsByLineIdOrderedByRank($line_id) as $column) {
             $columns[] = new DashboardWidgetColumn(
                 $column['id'],
                 $column['line_id'],
-                $column['rank'],
-                array()
+                []
             );
         }
 
@@ -108,26 +104,19 @@ class DashboardWidgetRetriever
         return null;
     }
 
-    /**
-     * @param DashboardWidgetLine $widget_line
-     */
     private function addColumnWidgetsByLine(DashboardWidgetLine $widget_line)
     {
         foreach ($this->dao->searchAllColumnsByLineIdOrderedByRank($widget_line->getId()) as $column) {
             $widget_column = new DashboardWidgetColumn(
                 $column['id'],
                 $column['line_id'],
-                $column['rank'],
-                array()
+                []
             );
             $widget_line->addWidgetColumn($widget_column);
             $this->addWidgetsByColumn($widget_column);
         }
     }
 
-    /**
-     * @param DashboardWidgetColumn $widget_column
-     */
     private function addWidgetsByColumn(DashboardWidgetColumn $widget_column)
     {
         foreach ($this->dao->searchAllWidgetByColumnId($widget_column->getId()) as $row) {

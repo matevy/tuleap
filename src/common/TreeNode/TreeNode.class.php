@@ -36,22 +36,22 @@ class TreeNode /*implements Visitable*/
     /**
      * @type mixed
      */
-    var $data;
+    public $data;
 
     /**
      * @var mixed
      */
-    var $object;
+    public $object;
 
     /**
      * @type array
      */
-    var $children;
+    public $children;
 
     /**
      * @type TreeNode Reference
      */
-    var $parentNode;
+    public $parentNode;
 
     private $id;
 
@@ -59,14 +59,14 @@ class TreeNode /*implements Visitable*/
     /**
      * Constructor
      */
-    function __construct($data = null, $id = null)
+    public function __construct($data = null, $id = null)
     {
-        $this->id = ($id === null) ? uniqid() : $id;
+        $this->id = ($id === null) ? bin2hex(random_bytes(7)) : $id;
         /*if(func_num_args() !== 0) {
             trigger_error(get_class($this).'::TreeNode => Do not accept arguments', E_USER_ERROR);
         }*/
         $this->data       = $data;
-        $this->children   = array();
+        $this->children   = [];
         $this->parentNode = null;
     }
 
@@ -85,7 +85,7 @@ class TreeNode /*implements Visitable*/
      *
      * @param mixed $d Any kind of data stored in a Node
      */
-    function setData($d)
+    public function setData($d)
     {
         $this->data = $d;
     }
@@ -96,7 +96,7 @@ class TreeNode /*implements Visitable*/
      *
      * @return mixed (reference)
      */
-    function &getData()
+    public function &getData()
     {
         return $this->data;
     }
@@ -108,12 +108,12 @@ class TreeNode /*implements Visitable*/
      * @access private
      * @return mixed (reference)
      */
-    function _setParentNode(&$node)
+    public function _setParentNode(&$node)
     {
         if (is_object($node) && is_a($node, 'TreeNode')) {
             $this->parentNode =& $node;
         } else {
-            trigger_error(static::class.'::setParentNode => require: TreeNode given: "'.  get_class($node).'"', E_USER_ERROR);
+            trigger_error(static::class . '::setParentNode => require: TreeNode given: "' .  get_class($node) . '"', E_USER_ERROR);
         }
     }
 
@@ -123,7 +123,7 @@ class TreeNode /*implements Visitable*/
      *
      * @return mixed (reference)
      */
-    function &getParentNode()
+    public function &getParentNode()
     {
         return $this->parentNode;
     }
@@ -134,16 +134,16 @@ class TreeNode /*implements Visitable*/
      *
      * @param TreeNode &$c A TreeNode (reference call)
      */
-    function addChild($c)
+    public function addChild($c)
     {
         if (is_object($c) && is_a($c, 'TreeNode')) {
             if ($this->children === null) {
-                $this->children = array();
+                $this->children = [];
             }
             $c->_setParentNode($this);
             $this->children[] = $c;
         } else {
-            trigger_error(static::class.'::addChild => require: TreeNode given: "'.get_class($c).'"', E_USER_ERROR);
+            trigger_error(static::class . '::addChild => require: TreeNode given: "' . get_class($c) . '"', E_USER_ERROR);
         }
     }
 
@@ -152,7 +152,7 @@ class TreeNode /*implements Visitable*/
      *
      * @return TreeNode
      */
-    function addChildren()
+    public function addChildren()
     {
         $child_list = func_get_args();
         foreach ($child_list as $child) {
@@ -166,16 +166,16 @@ class TreeNode /*implements Visitable*/
      *
      * @param int $key Id of child to remove.
      */
-    function removeChild($key, $object = null)
+    public function removeChild($key, $object = null)
     {
-        if (!$key && $object && is_array($this->children)) {
+        if (! $key && $object && is_array($this->children)) {
             $key = array_search($object, $this->children);
         }
         if (isset($key) && is_int($key) && is_array($this->children) && array_key_exists($key, $this->children)) {
             unset($this->children[$key]);
             $this->children = array_values($this->children);
         } else {
-            trigger_error(static::class.'::removeChild => require: "int" given: "'.gettype($key).'"', E_USER_ERROR);
+            trigger_error(static::class . '::removeChild => require: "int" given: "' . gettype($key) . '"', E_USER_ERROR);
         }
     }
 
@@ -186,12 +186,12 @@ class TreeNode /*implements Visitable*/
      * @param int $key Id of child to return
      * @return TreeNode reference.
      */
-    function &getChild($key)
+    public function &getChild($key)
     {
         if (isset($key) && is_int($key) && is_array($this->children) && array_key_exists($key, $this->children)) {
             return $this->children[$key];
         } else {
-            trigger_error(static::class.'::getChild => require: "int" given: "'.gettype($key).'"', E_USER_ERROR);
+            trigger_error(static::class . '::getChild => require: "int" given: "' . gettype($key) . '"', E_USER_ERROR);
         }
     }
 
@@ -201,7 +201,7 @@ class TreeNode /*implements Visitable*/
      *
      * @return array of TreeNode
      */
-    function &getChildren()
+    public function &getChildren()
     {
         return $this->children;
     }
@@ -212,7 +212,7 @@ class TreeNode /*implements Visitable*/
      *
      * @param $children array of TreeNode
      */
-    function setChildren($children)
+    public function setChildren($children)
     {
         if (is_array($this->children)) {
             $this->clearChildren();
@@ -220,7 +220,7 @@ class TreeNode /*implements Visitable*/
                 $this->addChild($child);
             }
         } else {
-            trigger_error(static::class.'::setChildren => require: "array" given: "'.gettype($children).'"', E_USER_ERROR);
+            trigger_error(static::class . '::setChildren => require: "array" given: "' . gettype($children) . '"', E_USER_ERROR);
         }
     }
 
@@ -229,7 +229,7 @@ class TreeNode /*implements Visitable*/
      */
     public function clearChildren()
     {
-        $this->children = array();
+        $this->children = [];
     }
 
     /**
@@ -237,7 +237,7 @@ class TreeNode /*implements Visitable*/
      *
      * @return bool .
      */
-    function hasChildren()
+    public function hasChildren()
     {
         return (count($this->children) > 0);
     }
@@ -255,7 +255,7 @@ class TreeNode /*implements Visitable*/
      */
     public function addSingularChild(TreeNode $child)
     {
-        if (!$this->hasChild($child)) {
+        if (! $this->hasChild($child)) {
             $this->addChild($child);
         }
     }
@@ -263,9 +263,8 @@ class TreeNode /*implements Visitable*/
     /**
      * Visitor entry.
      *
-     * @param Visitor
      */
-    function accept(&$visitor, $params = null)
+    public function accept(&$visitor, $params = null)
     {
         return $visitor->visit($this, $params);
     }
@@ -274,9 +273,9 @@ class TreeNode /*implements Visitable*/
     {
         $children_as_string = '';
         foreach ($this->getChildren() as $child) {
-            $children_as_string .= $child->__toString() .",\n";
+            $children_as_string .= $child->__toString() . ",\n";
         }
-        return 'TreeNode #'. $this->id ." {\n $children_as_string }\n";
+        return 'TreeNode #' . $this->id . " {\n $children_as_string }\n";
     }
 
     /**
@@ -284,7 +283,7 @@ class TreeNode /*implements Visitable*/
      */
     public function flattenChildren()
     {
-        $flatten_children = array();
+        $flatten_children = [];
 
         foreach ($this->getChildren() as $child) {
             $flatten_children = array_merge($flatten_children, $child->flatten());
@@ -298,7 +297,7 @@ class TreeNode /*implements Visitable*/
      */
     public function flatten()
     {
-        return array_merge(array($this), $this->flattenChildren());
+        return array_merge([$this], $this->flattenChildren());
     }
 
     public function getObject()

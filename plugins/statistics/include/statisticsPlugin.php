@@ -22,7 +22,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\Admin\SiteAdministrationAddOption;
+use Tuleap\Admin\SiteAdministrationPluginOption;
 use Tuleap\BurningParrotCompatiblePageEvent;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\Collector as CVSCollector;
+use Tuleap\Layout\IncludeAssets;
 use Tuleap\Project\Admin\Navigation\NavigationDropdownItemPresenter;
 use Tuleap\Project\Admin\Navigation\NavigationPresenter;
 use Tuleap\Project\Admin\Navigation\NavigationPresenterBuilder;
@@ -32,16 +36,16 @@ use Tuleap\Project\Quota\ProjectQuotaInformation;
 use Tuleap\Project\Quota\ProjectQuotaRequester;
 use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
 use Tuleap\SOAP\SOAPRequestValidatorImplementation;
-use Tuleap\SVN\DiskUsage\Collector as SVNCollector;
-use Tuleap\SVN\DiskUsage\Retriever as SVNRetriever;
-use Tuleap\CVS\DiskUsage\Retriever as CVSRetriever;
-use Tuleap\CVS\DiskUsage\Collector as CVSCollector;
-use Tuleap\CVS\DiskUsage\FullHistoryDao;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\FullHistoryDao;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\Retriever as CVSRetriever;
+use Tuleap\Statistics\DiskUsage\Subversion\Collector as SVNCollector;
+use Tuleap\Statistics\DiskUsage\Subversion\Retriever as SVNRetriever;
 use Tuleap\SystemEvent\RootDailyStartEvent;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once 'constants.php';
 
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 class StatisticsPlugin extends Plugin
 {
 
@@ -49,7 +53,7 @@ class StatisticsPlugin extends Plugin
     {
         parent::__construct($id);
         $this->addHook('cssfile', 'cssFile', false);
-        $this->addHook('site_admin_option_hook', 'site_admin_option_hook', false);
+        $this->addHook(SiteAdministrationAddOption::NAME);
         $this->addHook(RootDailyStartEvent::NAME);
         $this->addHook(\Tuleap\Widget\Event\GetWidget::NAME);
         $this->addHook(\Tuleap\Widget\Event\GetProjectWidgetList::NAME);
@@ -74,22 +78,22 @@ class StatisticsPlugin extends Plugin
 
         $this->addHook(ProjectQuotaRequester::NAME);
 
-        bindTextDomain('tuleap-statistics', STATISTICS_BASE_DIR . '/../site-content');
+        bindTextDomain('tuleap-statistics', __DIR__ . '/../site-content');
     }
 
     /** @see Event::GET_SYSTEM_EVENT_CLASS */
-    public function get_system_event_class($params)
+    public function get_system_event_class($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         switch ($params['type']) {
             case SystemEvent_STATISTICS_DAILY::NAME:
                 $queue = new SystemEventQueueStatistics();
                 $params['class'] = 'SystemEvent_STATISTICS_DAILY';
-                $params['dependencies'] = array(
+                $params['dependencies'] = [
                     $queue->getLogger(),
                     $this->getConfigurationManager(),
                     $this->getDiskUsagePurger($queue->getLogger()),
                     $this->getDiskUsageManager()
-                );
+                ];
                 break;
             default:
                 break;
@@ -97,13 +101,13 @@ class StatisticsPlugin extends Plugin
     }
 
     /** @see Event::SYSTEM_EVENT_GET_CUSTOM_QUEUES */
-    public function system_event_get_custom_queues(array $params)
+    public function system_event_get_custom_queues(array $params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['queues'][SystemEventQueueStatistics::NAME] = new SystemEventQueueStatistics();
     }
 
     /** @see Event::SYSTEM_EVENT_GET_TYPES_FOR_CUSTOM_QUEUE */
-    public function system_event_get_types_for_custom_queue($params)
+    public function system_event_get_types_for_custom_queue($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($params['queue'] === SystemEventQueueStatistics::NAME) {
             $params['types'][] = SystemEvent_STATISTICS_DAILY::NAME;
@@ -111,7 +115,7 @@ class StatisticsPlugin extends Plugin
     }
 
     /** @see Event::AFTER_MASSMAIL_TO_PROJECT_ADMINS */
-    public function after_massmail_to_project_admins($params)
+    public function after_massmail_to_project_admins($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $request = HTTPRequest::instance();
         if ($request->get('project_over_quota')) {
@@ -119,26 +123,26 @@ class StatisticsPlugin extends Plugin
         }
     }
 
-    function getPluginInfo()
+    public function getPluginInfo()
     {
-        if (!$this->pluginInfo instanceof StatisticsPluginInfo) {
+        if (! $this->pluginInfo instanceof StatisticsPluginInfo) {
             include_once('StatisticsPluginInfo.class.php');
             $this->pluginInfo = new StatisticsPluginInfo($this);
         }
         return $this->pluginInfo;
     }
 
-    function site_admin_option_hook($params)
+    public function siteAdministrationAddOption(SiteAdministrationAddOption $site_administration_add_option): void
     {
-        $params['plugins'][] = array(
-            'label' => 'Statistics',
-            'href'  => $this->getPluginPath() . '/'
+        $site_administration_add_option->addPluginOption(
+            SiteAdministrationPluginOption::build('Statistics', $this->getPluginPath() . '/')
         );
     }
 
     public function burningParrotCompatiblePage(BurningParrotCompatiblePageEvent $event)
     {
-        if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0
+        if (
+            strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0
             && ! strpos($_SERVER['REQUEST_URI'], 'project_stat.php')
         ) {
             $event->setIsInBurningParrotCompatiblePage();
@@ -152,7 +156,7 @@ class StatisticsPlugin extends Plugin
         );
     }
 
-    private function getDiskUsagePurger(Logger $logger)
+    private function getDiskUsagePurger(\Psr\Log\LoggerInterface $logger)
     {
         return new Statistics_DiskUsagePurger(
             new Statistics_DiskUsageDao(),
@@ -175,9 +179,9 @@ class StatisticsPlugin extends Plugin
         $presenter->addDropdownItem(
             NavigationPresenterBuilder::DATA_ENTRY_SHORTNAME,
             new NavigationDropdownItemPresenter(
-                $GLOBALS['Language']->getText('plugin_statistics_admin_page', 'show_statistics'),
+                dgettext('tuleap-statistics', 'Disk usage'),
                 $this->getPluginPath() . '/project_stat.php?' . http_build_query(
-                    array('group_id' => $presenter->getProjectId())
+                    ['group_id' => $presenter->getProjectId()]
                 )
             )
         );
@@ -190,40 +194,39 @@ class StatisticsPlugin extends Plugin
      *
      * @return void
      */
-    function usergroup_data($params)
+    public function usergroup_data($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $user_url_params = array(
+        $user_url_params = [
             'menu' => 'one_user_details',
-            'user' => $params['user']->getRealName().' ('.$params['user']->getUserName() .')'
-        );
+            'user' => $params['user']->getRealName() . ' (' . $params['user']->getUserName() . ')'
+        ];
 
-        $params['links'][] = array(
-            'href'  => $this->getPluginPath() . '/disk_usage.php?'.http_build_query($user_url_params),
-            'label' => $GLOBALS['Language']->getText('plugin_statistics_admin_page', 'show_statistics')
-        );
+        $params['links'][] = [
+            'href'  => $this->getPluginPath() . '/disk_usage.php?' . http_build_query($user_url_params),
+            'label' => dgettext('tuleap-statistics', 'Disk usage')
+        ];
     }
 
     /** @see ProjectDetailsPresenter::GET_MORE_INFO_LINKS */
-    function get_more_info_links($params)
+    public function get_more_info_links($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if (! UserManager::instance()->getCurrentUser()->isSuperUser()) {
             return;
         }
 
-        $project_url_params = array(
+        $project_url_params = [
             'menu'           => 'services',
-            'project_filter' => $params['project']->getUnconvertedPublicName().' ('.$params['project']->getUnixName() .')'
-        );
-        $params['links'][] = array(
-            'href'  => $this->getPluginPath().'/disk_usage.php?'.http_build_query($project_url_params),
-            'label' => $GLOBALS['Language']->getText('plugin_statistics_admin_page', 'show_statistics')
-        );
+            'project_filter' => $params['project']->getPublicName() . ' (' . $params['project']->getUnixName() . ')'
+        ];
+        $params['links'][] = [
+            'href'  => $this->getPluginPath() . '/disk_usage.php?' . http_build_query($project_url_params),
+            'label' => dgettext('tuleap-statistics', 'Disk usage')
+        ];
     }
 
     /**
      * Instanciate the widget
      *
-     * @param \Tuleap\Widget\Event\GetWidget $get_wiget_event
      *
      * @return void
      */
@@ -242,16 +245,17 @@ class StatisticsPlugin extends Plugin
 
     public function uninstall()
     {
-        $this->removeOrphanWidgets(array('plugin_statistics_projectstatistics'));
+        $this->removeOrphanWidgets(['plugin_statistics_projectstatistics']);
     }
 
-    function cssFile($params)
+    public function cssFile($params)
     {
         // This stops styles inadvertently clashing with the main site.
-        if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0 ||
+        if (
+            strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0 ||
             strpos($_SERVER['REQUEST_URI'], '/widgets/') === 0
         ) {
-            echo '<link rel="stylesheet" type="text/css" href="'.$this->getThemePath().'/css/style.css" />'."\n";
+            echo '<link rel="stylesheet" type="text/css" href="' . $this->getAssets()->getFileURL('style-fp.css') . '" />' . "\n";
         }
     }
 
@@ -259,7 +263,7 @@ class StatisticsPlugin extends Plugin
     {
         $uri           = $this->getSoapUri();
         $service_class = 'Statistics_SOAPServer';
-        require_once $service_class .'.class.php';
+        require_once $service_class . '.class.php';
 
         if ($request->exist('wsdl')) {
             $this->dumpWSDL($uri, $service_class);
@@ -291,7 +295,7 @@ class StatisticsPlugin extends Plugin
         $disk_usage_manager     = $this->getDiskUsageManager();
         $project_quota_manager  = new ProjectQuotaManager();
 
-        $server = new TuleapSOAPServer($uri.'/?wsdl', array('cache_wsdl' => WSDL_CACHE_NONE));
+        $server = new TuleapSOAPServer($uri . '/?wsdl', ['cache_wsdl' => WSDL_CACHE_NONE]);
         $server->setClass($service_class, $soap_request_validator, $disk_usage_manager, $project_quota_manager);
         $xml_security = new XML_Security();
         $xml_security->enableExternalLoadOfEntities();
@@ -322,30 +326,30 @@ class StatisticsPlugin extends Plugin
 
     private function getSoapUri()
     {
-        return HTTPRequest::instance()->getServerUrl().'/plugins/statistics/soap';
+        return HTTPRequest::instance()->getServerUrl() . '/plugins/statistics/soap';
     }
 
     public function renderWSDL()
     {
         $uri = $this->getSoapUri();
         $wsdl_renderer = new SOAP_WSDLRenderer();
-        $wsdl_renderer->render($uri .'/?wsdl');
+        $wsdl_renderer->render($uri . '/?wsdl');
     }
 
-    public function wsdl_doc2soap_types($params)
+    public function wsdl_doc2soap_types($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $params['doc2soap_types'] = array_merge($params['doc2soap_types'], array(
+        $params['doc2soap_types'] = array_merge($params['doc2soap_types'], [
             'arrayofstatistics' => 'tns:ArrayOfStatistics',
-        ));
+        ]);
     }
 
-    public function aggregate_statistics($params)
+    public function aggregate_statistics($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $statistics_aggregator = new StatisticsAggregatorDao();
         $statistics_aggregator->addStatistic($params['project_id'], $params['statistic_name']);
     }
 
-    public function get_statistics_aggregation($params)
+    public function get_statistics_aggregation($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $statistics_aggregator = new StatisticsAggregatorDao();
         $params['result'] = $statistics_aggregator->getStatistics(
@@ -355,18 +359,20 @@ class StatisticsPlugin extends Plugin
         );
     }
 
-    public function burning_parrot_get_stylesheets(array $params)
+    public function burning_parrot_get_stylesheets(array $params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0) {
-            $variant = $params['variant'];
-            $params['stylesheets'][] = $this->getThemePath() .'/css/style-'. $variant->getName() .'.css';
+            $variant    = $params['variant'];
+            $params['stylesheets'][] = $this->getAssets()->getFileURL('style-bp-' . $variant->getName() . '.css');
         }
     }
 
-    public function burning_parrot_get_javascript_files(array $params)
+    public function burning_parrot_get_javascript_files(array $params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0) {
-            $params['javascript_files'][] = $this->getPluginPath() . '/js/admin.js';
+            $ckeditor_assets = new IncludeAssets(__DIR__ . '/../../../src/www/assets/core', '/assets/core');
+            $params['javascript_files'][] = $ckeditor_assets->getFileURL('ckeditor.js');
+            $params['javascript_files'][] = $this->getAssets()->getFileURL('admin.js');
         }
     }
 
@@ -378,10 +384,17 @@ class StatisticsPlugin extends Plugin
 
         $project_quota_requester->setProjectQuotaInformation(
             new ProjectQuotaInformation(
-                $project,
                 $project_quota_manager->getProjectAuthorizedQuota($project->getID()),
                 $disk_usage_manager->returnTotalProjectSize($project->getID())
             )
+        );
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/statistics',
+            '/assets/statistics'
         );
     }
 }

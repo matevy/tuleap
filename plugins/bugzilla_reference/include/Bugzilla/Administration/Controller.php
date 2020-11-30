@@ -85,7 +85,7 @@ class Controller
 
     private function getPresenters(array $references)
     {
-        $presenters = array();
+        $presenters = [];
 
         foreach ($references as $reference) {
             $presenters[] = new ReferencePresenter(
@@ -103,9 +103,6 @@ class Controller
         return $presenters;
     }
 
-    /**
-     * @param \Codendi_Request $request
-     */
     public function addReference(\Codendi_Request $request)
     {
         $this->csrf_token->check();

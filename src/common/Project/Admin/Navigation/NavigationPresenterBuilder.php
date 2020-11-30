@@ -30,6 +30,7 @@ use Tuleap\Project\Service\IndexController;
 class NavigationPresenterBuilder
 {
     public const DATA_ENTRY_SHORTNAME = 'data';
+    public const OTHERS_ENTRY_SHORTNAME = 'others';
 
     /**
      * @var NavigationPresenter
@@ -65,7 +66,7 @@ class NavigationPresenterBuilder
             $entries = $this->buildEntriesForCastratedAdmin($project, $current_pane_shortname);
         }
 
-        $this->presenter = new NavigationPresenter($entries, $project, $current_pane_shortname);
+        $this->presenter = new NavigationPresenter($entries, $project);
 
         if ($user->isAdmin($project_id)) {
             $this->addTrackerImportEntry($project);
@@ -89,17 +90,16 @@ class NavigationPresenterBuilder
             new NavigationDropdownItemPresenter(
                 _('Trackers v3 import'),
                 '/tracker/import_admin.php?' . http_build_query(
-                    array(
+                    [
                         'group_id' => $project->getID(),
                         'mode' => 'admin'
-                    )
+                    ]
                 )
             )
         );
     }
 
     /**
-     * @param Project $project
      * @param $current_pane_shortname
      * @param $project_id
      * @return array
@@ -108,20 +108,14 @@ class NavigationPresenterBuilder
     {
         $project_id = $project->getID();
 
-        $entries = array();
+        $entries = [];
 
-        $entries['details'] = new NavigationItemPresenter(
-            _('Details'),
-            '/project/admin/editgroupinfo.php?' . http_build_query(array('group_id' => $project_id)),
-            'details',
-            $current_pane_shortname
-        );
 
         $entries['members'] = $this->getMembersItemPresenter($project_id, $current_pane_shortname);
 
         $entries['groups'] = new NavigationItemPresenter(
             _('Groups'),
-            '/project/admin/ugroup.php?' . http_build_query(array('group_id' => $project_id)),
+            '/project/admin/ugroup.php?' . http_build_query(['group_id' => $project_id]),
             'groups',
             $current_pane_shortname
         );
@@ -131,56 +125,74 @@ class NavigationPresenterBuilder
             $current_pane_shortname
         );
 
-        $entries['services']                 = new NavigationItemPresenter(
-            _('Services'),
-            IndexController::getUrl($project),
-            'services',
+        $entries['details'] = new NavigationItemPresenter(
+            _('Details'),
+            '/project/admin/editgroupinfo.php?' . http_build_query(['group_id' => $project_id]),
+            'details',
             $current_pane_shortname
         );
-        if ($this->canLabelsBeUsedByProject($project)) {
-            $entries['labels'] = new NavigationItemPresenter(
-                _('Labels'),
-                '/project/admin/labels.php?' . http_build_query(array('group_id' => $project_id)),
-                'labels',
-                $current_pane_shortname
-            );
-        }
-        $entries['references']               = new NavigationItemPresenter(
-            _('References'),
-            '/project/admin/reference.php?' . http_build_query(array('group_id' => $project_id)),
-            'references',
-            $current_pane_shortname
-        );
-        $entries['categories']               = new NavigationItemPresenter(
-            _('Categories'),
-            '/project/'. (int) $project_id .'/admin/categories',
-            'categories',
-            $current_pane_shortname
-        );
+
         $entries[self::DATA_ENTRY_SHORTNAME] = new NavigationDropdownPresenter(
             _('Data'),
             self::DATA_ENTRY_SHORTNAME,
             $current_pane_shortname,
-            array(
+            [
                 new NavigationDropdownItemPresenter(
                     _('Project Data Export'),
-                    '/project/export/index.php?' . http_build_query(array('group_id' => $project_id))
+                    '/project/export/index.php?' . http_build_query(['group_id' => $project_id])
                 ),
                 new NavigationDropdownItemPresenter(
                     _('Project History'),
-                    '/project/admin/history.php?' . http_build_query(array('group_id' => $project_id))
+                    '/project/admin/history.php?' . http_build_query(['group_id' => $project_id]),
+                    'project-history'
                 ),
                 new NavigationDropdownItemPresenter(
                     _('Access Logs'),
-                    '/project/stats/source_code_access.php?' . http_build_query(array('group_id' => $project_id))
+                    '/project/stats/source_code_access.php?' . http_build_query(['group_id' => $project_id])
                 )
-            )
+            ]
         );
-        $entries['banner'] = new NavigationItemPresenter(
-            _('Banner'),
-            '/project/' . urlencode((string) $project_id) . '/admin/banner',
-            'banner',
-            $current_pane_shortname
+
+        $other_items = [
+            new NavigationDropdownItemPresenter(
+                _('Services'),
+                IndexController::getUrl($project),
+                'services'
+            ),
+            new NavigationDropdownItemPresenter(
+                _('References'),
+                '/project/admin/reference.php?' . http_build_query(['group_id' => $project_id]),
+                'references'
+            ),
+            new NavigationDropdownItemPresenter(
+                _('Categories'),
+                '/project/' . (int) $project_id . '/admin/categories',
+                'categories'
+            ),
+            new NavigationDropdownItemPresenter(
+                _('Banner'),
+                '/project/' . urlencode((string) $project_id) . '/admin/banner',
+                'banner'
+            ),
+            new NavigationDropdownItemPresenter(
+                _('Background'),
+                '/project/' . urlencode((string) $project_id) . '/admin/background',
+                'background'
+            ),
+        ];
+        if ($this->canLabelsBeUsedByProject($project)) {
+            $other_items[] = new NavigationDropdownItemPresenter(
+                _('Labels'),
+                '/project/admin/labels.php?' . http_build_query(['group_id' => $project_id]),
+                'labels'
+            );
+        }
+
+        $entries[self::OTHERS_ENTRY_SHORTNAME] = new NavigationDropdownPresenter(
+            "",
+            self::OTHERS_ENTRY_SHORTNAME,
+            $current_pane_shortname,
+            $other_items
         );
 
         return $entries;
@@ -188,9 +200,9 @@ class NavigationPresenterBuilder
 
     private function buildEntriesForCastratedAdmin(Project $project, $current_pane_shortname)
     {
-        return array(
+        return [
             'members' => $this->getMembersItemPresenter($project->getID(), $current_pane_shortname)
-        );
+        ];
     }
 
     /**
@@ -202,7 +214,7 @@ class NavigationPresenterBuilder
     {
         return new NavigationItemPresenter(
             _('Members'),
-            '/project/'.urlencode((string) $project_id).'/admin/members',
+            '/project/' . urlencode((string) $project_id) . '/admin/members',
             'members',
             $current_pane_shortname
         );

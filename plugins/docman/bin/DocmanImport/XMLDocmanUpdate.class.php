@@ -25,7 +25,7 @@ require_once 'Trees.class.php';
 class XMLDocmanUpdate extends XMLDocmanImport
 {
 
-    private $remoteItems = array();
+    private $remoteItems = [];
     private $continue = false;
 
     public function updatePath($xmlDoc, $parentId, $path)
@@ -51,6 +51,7 @@ class XMLDocmanUpdate extends XMLDocmanImport
             $remoteTree = $this->getTitleTreeFromIdTree($idtree);
         } catch (SoapFault $e) {
             $this->printSoapResponseAndThrow($e);
+            return;
         }
 
         // Merge the trees, and tag the nodes
@@ -58,14 +59,14 @@ class XMLDocmanUpdate extends XMLDocmanImport
 
         $tagCounts = $this->tagCount($mergedTree);
 
-        if (!$this->continue) {
-            $this->logger->info($tagCounts['IN_BOTH']." item(s) will be updated");
+        if (! $this->continue) {
+            $this->logger->info($tagCounts['IN_BOTH'] . " item(s) will be updated");
         }
-        $this->logger->info($tagCounts['IN_SECOND']." item(s) will be created");
-        if (!$this->continue) {
-            $this->logger->info($tagCounts['IN_FIRST']." item(s) will be removed");
+        $this->logger->info($tagCounts['IN_SECOND'] . " item(s) will be created");
+        if (! $this->continue) {
+            $this->logger->info($tagCounts['IN_FIRST'] . " item(s) will be removed");
         }
-        if (!$this->continue) {
+        if (! $this->continue) {
             echo "Are you sure you want to update the document tree? (y/n) [n] ";
         } else {
             echo "Are you sure you want to continue the upload? (y/n) [n] ";
@@ -84,8 +85,8 @@ class XMLDocmanUpdate extends XMLDocmanImport
         if (isset($this->reorder) && ($this->reorder == true)) {
             uksort($array, 'strnatcasecmp');
 
-            $docArray = array();
-            $folderArray = array();
+            $docArray = [];
+            $folderArray = [];
 
             foreach ($array as $k => $v) {
                 if ($v['xmlElement']['type'] == 'folder') {
@@ -112,7 +113,7 @@ class XMLDocmanUpdate extends XMLDocmanImport
      */
     private function tagCount($tree)
     {
-        $counts = array('IN_BOTH' => 0, 'IN_FIRST' => 0, 'IN_SECOND' => 0);
+        $counts = ['IN_BOTH' => 0, 'IN_FIRST' => 0, 'IN_SECOND' => 0];
         if (isset($tree['tag']) && isset($counts[$tree['tag']])) {
             $counts[$tree['tag']]++;
         }
@@ -158,7 +159,7 @@ class XMLDocmanUpdate extends XMLDocmanImport
                     // In both => update or re-create item
                     $node = $tree['xmlElement'];
 
-                    if (!$this->continue) {
+                    if (! $this->continue) {
                         if ($node['type'] == 'file' || $node['type'] == 'embeddedfile') {
                             if ($this->checkVersionChecksums($itemId, $node)) {
                                 $this->updateItem($itemId, $node);
@@ -187,8 +188,7 @@ class XMLDocmanUpdate extends XMLDocmanImport
      */
     private function buildDistantTreeFromSoapArray()
     {
-
-        $listOfNodes = array();
+        $listOfNodes = [];
         foreach ($this->remoteItems as $id => $itemInfo) {
             $listOfNodes[$itemInfo->parent_id][] = $id;
         }
@@ -254,7 +254,7 @@ class XMLDocmanUpdate extends XMLDocmanImport
 
         foreach ($itemElement->xpath('item') as $childItem) {
             $children = $this->getTreeFromItemElement_rec($childItem);
-            $childTitle = (string)$childItem->properties->title;
+            $childTitle = (string) $childItem->properties->title;
             if (isset($tree['children'][$childTitle])) {
                 $title = $itemElement->properties->title;
                 $msg = "Several items have the title '$childTitle' in the folder '$title' (in the archive). In order to make use of the update function, please assure that all the items have distinct names in each folder.";
@@ -271,8 +271,8 @@ class XMLDocmanUpdate extends XMLDocmanImport
      */
     private function getTreeFromItemElement($itemElement)
     {
-        $title = (string)$itemElement->properties->title;
-        return array($title => $this->getTreeFromItemElement_rec($itemElement));
+        $title = (string) $itemElement->properties->title;
+        return [$title => $this->getTreeFromItemElement_rec($itemElement)];
     }
 
     /**
@@ -300,11 +300,11 @@ class XMLDocmanUpdate extends XMLDocmanImport
      */
     private function getAllVersionsMD5sum($node)
     {
-        $md5sums = array();
+        $md5sums = [];
 
         foreach ($node->xpath('versions/version') as $version) {
-            $file = (string)$version->content;
-            $fullPath = $this->dataBaseDir.'/'.$file;
+            $file = (string) $version->content;
+            $fullPath = $this->dataBaseDir . '/' . $file;
             $md5sums[] = md5_file($fullPath);
         }
 
@@ -314,7 +314,7 @@ class XMLDocmanUpdate extends XMLDocmanImport
     /**
      * Compares the version checksums in order to decide what to do.
      * For each version of the item, the checksum of the local file and the remote file are compared
-     * @return true  if we just have to send the new versions to the server
+     * @return bool true  if we just have to send the new versions to the server
      *         false if some versions have been created server-side (so we will need to delete and recreate the whole item)
      */
     private function checkVersionChecksums($itemId, $node)
@@ -334,6 +334,10 @@ class XMLDocmanUpdate extends XMLDocmanImport
             }
         } while ($retry);
 
+        if (! isset($remoteMd5sums)) {
+            return false;
+        }
+
         if (count($localMd5sums) >= count($remoteMd5sums)) {
             $commonVersionCount = count($remoteMd5sums);
             for ($i = 0; $i < $commonVersionCount; $i++) {
@@ -352,7 +356,6 @@ class XMLDocmanUpdate extends XMLDocmanImport
      */
     private function updateItem($itemId, $node)
     {
-
         $itemInfo = $this->getItemInformation($node);
 
         switch ($node['type']) {
@@ -378,8 +381,8 @@ class XMLDocmanUpdate extends XMLDocmanImport
                             $date
                         ) = $this->getVersionInformation($version);
 
-                        $fileName = (string)$version->filename;
-                        $fileType = (string)$version->filetype;
+                        $fileName = (string) $version->filename;
+                        $fileType = (string) $version->filetype;
 
                         $this->createFileVersion($itemId, $label, $changelog, $file, $fileName, $fileType, $author, $date);
                     }

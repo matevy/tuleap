@@ -19,7 +19,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\Artifact\Changeset\ChangesetFromXmlDao;
+use Tuleap\Tracker\Artifact\Changeset\ChangesetFromXmlDisplayer;
 use Tuleap\Tracker\Artifact\Changeset\PostCreation\ActionsRunner;
+use Tuleap\Tracker\REST\ChangesetRepresentation;
 
 require_once __DIR__ . '/../../../../../src/www/include/utils.php';
 
@@ -44,11 +48,11 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
     /**
      * Constructor
      *
-     * @param int              $id           The changeset Id
-     * @param Tracker_Artifact $artifact     The artifact
-     * @param int              $submitted_by The id of the owner of this changeset
-     * @param int              $submitted_on The timestamp
-     * @param string           $email        The email of the submitter if anonymous mode
+     * @param int      $id           The changeset Id
+     * @param Artifact $artifact     The artifact
+     * @param int      $submitted_by The id of the owner of this changeset
+     * @param int      $submitted_on The timestamp
+     * @param string   $email        The email of the submitter if anonymous mode
      */
     public function __construct($id, $artifact, $submitted_by, $submitted_on, $email)
     {
@@ -144,7 +148,7 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
 
     public function forceFetchAllValues()
     {
-        $this->values = array();
+        $this->values = [];
         $factory = $this->getFormElementFactory();
         foreach ($this->getValueDao()->searchById($this->id) as $row) {
             if ($field = $factory->getFieldById($row['field_id'])) {
@@ -206,13 +210,13 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
         return $this->submitted_on;
     }
 
-    public function getFollowupContent($diff_to_previous)
+    public function getFollowupContent(string $diff_to_previous, \PFUser $current_user): string
     {
         $html = '';
 
         //The comment
         if ($comment = $this->getComment()) {
-            $follow_up = $comment->fetchFollowUp();
+            $follow_up = $comment->fetchFollowUp($current_user);
             $html .= '<div class="tracker_artifact_followup_comment">';
             $html .= $follow_up;
             $html .= '</div>';
@@ -237,7 +241,7 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
      *
      * @return string html
      */
-    public function fetchFollowUp($diff_to_previous)
+    public function fetchFollowUp($diff_to_previous, PFUser $current_user)
     {
         $html = '';
 
@@ -246,13 +250,14 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
         $html .= '<div class="tracker_artifact_followup_header">';
         $html .= $this->getPermalink();
         $html .= $this->fetchChangesetActionButtons();
+        $html .= $this->fetchImportedFromXmlData();
         $html .= $this->getUserLink();
-        $html .= $this->getTimeAgo();
+        $html .= $this->getTimeAgo($current_user);
         $html .= '</div>';
 
         // The content
         $html .= '<div class="tracker_artifact_followup_content">';
-        $html .= $this->getFollowupContent($diff_to_previous);
+        $html .= $this->getFollowupContent($diff_to_previous, $current_user);
         $html .= '</div>';
 
         $html .= '<div style="clear:both;"></div>';
@@ -284,7 +289,7 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
 
         $html  = '';
         $html .= '<a href="#" class="tracker_artifact_followup_comment_controls_edit">';
-        $html .= '<button class="btn btn-mini"><i class="fa fa-pencil-square-o"></i> ' . $GLOBALS['Language']->getText('plugin_tracker_fieldeditor', 'edit') . '</button>';
+        $html .= '<button class="btn btn-mini"><i class="far fa-edit"></i> ' . dgettext('tuleap-tracker', 'Edit') . '</button>';
         $html .= '</a>';
 
         return $html;
@@ -302,11 +307,11 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
             return '';
         }
 
-        $raw_email_button_title = $GLOBALS['Language']->getText('plugin_tracker', 'raw_email_button_title');
+        $raw_email_button_title = dgettext('tuleap-tracker', 'Display original email');
         $raw_mail               = Codendi_HTMLPurifier::instance()->purify($raw_mail);
 
-        $html = '<button type="button" class="btn btn-mini tracker_artifact_followup_comment_controls_raw_email" data-raw-email="'. $raw_mail .'">
-                      <i class="fa fa-envelope"></i> '. $raw_email_button_title .'
+        $html = '<button type="button" class="btn btn-mini tracker_artifact_followup_comment_controls_raw_email" data-raw-email="' . $raw_mail . '">
+                      <i class="fa fa-envelope"></i> ' . $raw_email_button_title . '
                  </button>';
 
         return $html;
@@ -316,13 +321,13 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
     {
         return $GLOBALS['HTML']->getImage(
             'ic/comment.png',
-            array(
+            [
                 'border' => 0,
                 'alt'   => 'permalink',
                 'class' => 'tracker_artifact_followup_permalink',
                 'style' => 'vertical-align:middle',
-                'title' => 'Link to this followup - #'. (int) $this->id
-            )
+                'title' => 'Link to this followup - #' . (int) $this->id
+            ]
         );
     }
 
@@ -372,14 +377,6 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
     public function getAvatarUrl()
     {
         return $this->getSubmitter()->getAvatarUrl();
-    }
-
-    /**
-     * @return string html
-     */
-    public function getDateSubmittedOn()
-    {
-        return DateHelper::timeAgoInWords($this->submitted_on, false, true);
     }
 
     /**
@@ -444,7 +441,7 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
      */
     protected function userCanDelete(?PFUser $user = null)
     {
-        if (!$user) {
+        if (! $user) {
             $user = $this->getUserManager()->getCurrentUser();
         }
         // Only tracker admin can edit a comment
@@ -460,11 +457,11 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
      */
     public function userCanEdit(?PFUser $user = null)
     {
-        if (!$user) {
+        if (! $user) {
             $user = $this->getUserManager()->getCurrentUser();
         }
         // Only tracker admin and original submitter (minus anonymous) can edit a comment
-        return $this->artifact->getTracker()->userIsAdmin($user) || ((int)$this->submitted_by && $user->getId() == $this->submitted_by);
+        return $this->artifact->getTracker()->userIsAdmin($user) || ((int) $this->submitted_by && $user->getId() == $this->submitted_by);
     }
 
     /**
@@ -502,16 +499,16 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
                 $reference_manager->extractCrossRef(
                     $body,
                     $this->artifact->getId(),
-                    Tracker_Artifact::REFERENCE_NATURE,
+                    Artifact::REFERENCE_NATURE,
                     $this->artifact->getTracker()->getGroupID(),
                     $user->getId(),
                     $this->artifact->getTracker()->getItemName()
                 );
 
-                $params = array('group_id'     => $this->getArtifact()->getTracker()->getGroupId(),
+                $params = ['group_id'     => $this->getArtifact()->getTracker()->getGroupId(),
                                 'artifact'     => $this->getArtifact(),
                                 'changeset_id' => $this->getId(),
-                                'text'         => $body);
+                                'text'         => $body];
 
                 EventManager::instance()->processEvent('tracker_followup_event_update', $params);
 
@@ -634,16 +631,6 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
     }
 
     /**
-     * Return modal format diff between this changeset and previous one (HTML code)
-     *
-     * @return string The field difference between the previous changeset. or false if no changes
-     */
-    public function modalDiffToPrevious($format = 'html', $user = null, $ignore_perms = false)
-    {
-        return $this->diffToPrevious($format, $user, $ignore_perms, false, true);
-    }
-
-    /**
      * Return diff between this followup and previous one (HTML code)
      *
      * @return string html
@@ -652,8 +639,7 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
         $format = 'html',
         $user = null,
         $ignore_perms = false,
-        $for_mail = false,
-        $for_modal = false
+        $for_mail = false
     ) {
         $result             = '';
         $factory            = $this->getFormElementFactory();
@@ -694,8 +680,6 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
                     $format,
                     $user
                 );
-            } elseif ($for_modal) {
-                $diff = $current_changeset_value->modalDiff($previous_changeset_value, $format, $user);
             } else {
                 $diff = $current_changeset_value->diff($previous_changeset_value, $format, $user);
             }
@@ -766,12 +750,12 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
         switch ($format) {
             case 'html':
                 $result .= '<li>';
-                $result .= '<span class="tracker_artifact_followup_changes_field"><b>'. Codendi_HTMLPurifier::instance()->purify($field->getLabel()) .'</b></span> ';
-                $result .= '<span class="tracker_artifact_followup_changes_changes">'. $diff .'</span>';
+                $result .= '<span class="tracker_artifact_followup_changes_field"><b>' . Codendi_HTMLPurifier::instance()->purify($field->getLabel()) . '</b></span> ';
+                $result .= '<span class="tracker_artifact_followup_changes_changes">' . $diff . '</span>';
                 $result .= '</li>';
                 break;
             default://text
-                $result .= ' * '.$field->getLabel().' : '.PHP_EOL;
+                $result .= ' * ' . $field->getLabel() . ' : ' . PHP_EOL;
                 $result .= $diff . PHP_EOL;
                 break;
         }
@@ -801,7 +785,7 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
     /**
      * Return the Tracker_Artifact of this changeset
      *
-     * @return Tracker_Artifact The artifact of this changeset
+     * @return Artifact The artifact of this changeset
      */
     public function getArtifact()
     {
@@ -812,6 +796,8 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
      * Returns the Id of this changeset
      *
      * @return int The Id of this changeset
+     *
+     * @psalm-mutation-free
      */
     public function getId()
     {
@@ -827,19 +813,19 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
         if ($fields == self::FIELDS_COMMENTS && $comment->hasEmptyBody()) {
             return null;
         }
-        $classname_with_namespace = 'Tuleap\Tracker\REST\ChangesetRepresentation';
-        $changeset_representation = new $classname_with_namespace;
+
+        $changeset_representation = new ChangesetRepresentation();
         $changeset_representation->build(
             $this,
             $comment,
-            $fields  == self::FIELDS_COMMENTS  ? array() : $this->getRESTFieldValues($user)
+            $fields  == self::FIELDS_COMMENTS  ? [] : $this->getRESTFieldValues($user)
         );
         return $changeset_representation;
     }
 
     private function getRESTFieldValues(PFUser $user)
     {
-        $values = array();
+        $values = [];
         $factory = $this->getFormElementFactory();
 
         foreach ($factory->getUsedFieldsForREST($this->getTracker()) as $field) {
@@ -877,7 +863,7 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
 
     private function getFullRESTFieldValuesWithoutPermissions(PFUser $user)
     {
-        $values = array();
+        $values = [];
         $factory = $this->getFormElementFactory();
 
         foreach ($factory->getUsedFieldsForREST($this->getTracker()) as $field) {
@@ -894,7 +880,7 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
      */
     public function getUri()
     {
-        return  TRACKER_BASE_URL.'/?aid='.$this->getArtifact()->getId().'#followup_'.$this->getId();
+        return TRACKER_BASE_URL . '/?aid=' . $this->getArtifact()->getId() . '#followup_' . $this->getId();
     }
 
     /**
@@ -909,5 +895,17 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
         }
 
         return $this->id === $artifact_last_changeset->getId();
+    }
+
+    private function fetchImportedFromXmlData(): string
+    {
+        $renderer  = TemplateRendererFactory::build()->getRenderer(__DIR__ . "/../../../templates/artifact");
+        $displayer = new ChangesetFromXmlDisplayer(
+            new ChangesetFromXmlDao(),
+            UserManager::instance(),
+            $renderer
+        );
+
+        return $displayer->display((int) $this->getId());
     }
 }

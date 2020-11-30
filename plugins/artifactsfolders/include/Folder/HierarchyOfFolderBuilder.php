@@ -20,9 +20,8 @@
 
 namespace Tuleap\ArtifactsFolders\Folder;
 
-use PFUser;
-use Tracker_Artifact;
 use Tracker_ArtifactFactory;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever;
 
 class HierarchyOfFolderBuilder
@@ -52,9 +51,9 @@ class HierarchyOfFolderBuilder
         $this->artifact_factory = $artifact_factory;
     }
 
-    public function getHierarchyOfFolderForArtifact(Tracker_Artifact $artifact)
+    public function getHierarchyOfFolderForArtifact(Artifact $artifact)
     {
-        $hierarchy = array();
+        $hierarchy = [];
         $row = $this->folder_dao->searchFoldersTheArtifactBelongsTo($artifact->getId())->getRow();
         if ($row) {
             $folder    = $this->artifact_factory->getInstanceFromRow($row);
@@ -64,9 +63,9 @@ class HierarchyOfFolderBuilder
         return $hierarchy;
     }
 
-    public function getHierarchyOfFolder(Tracker_Artifact $folder)
+    public function getHierarchyOfFolder(Artifact $folder)
     {
-        $hierarchy = array();
+        $hierarchy = [];
         foreach ($this->retriever->getParentsHierarchy($folder)->getArtifacts() as $ancestors) {
             $parent_folder = $this->getFirstParentThatIsAFolder($ancestors);
             if (! $parent_folder) {
@@ -81,10 +80,9 @@ class HierarchyOfFolderBuilder
     }
 
     /**
-     * @param Tracker_Artifact $artifact
-     * @return null|Tracker_Artifact
+     * @return null|Artifact
      */
-    public function getDirectFolderForArtifact(Tracker_Artifact $artifact)
+    public function getDirectFolderForArtifact(Artifact $artifact)
     {
         $row = $this->folder_dao->searchFoldersTheArtifactBelongsTo($artifact->getId())->getRow();
         if ($row) {
@@ -97,8 +95,8 @@ class HierarchyOfFolderBuilder
     private function getFirstParentThatIsAFolder($ancestors)
     {
         $parent_folder = null;
-        /** @var Tracker_Artifact $parent */
         foreach ($ancestors as $parent) {
+            \assert($parent instanceof Artifact);
             if ($this->folder_dao->isTrackerConfiguredToContainFolders($parent->getTrackerId())) {
                 $parent_folder = $parent;
             }

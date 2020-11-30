@@ -43,7 +43,7 @@ EOT;
 
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
-            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding column backlog_title or plan_title to plugin_agiledashboard_planning: '.implode(', ', $this->db->dbh->errorInfo()));
+            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('An error occured while adding column backlog_title or plan_title to plugin_agiledashboard_planning: ' . implode(', ', $this->db->dbh->errorInfo()));
         }
 
         $sql = "UPDATE plugin_agiledashboard_planning SET backlog_title = 'Release Backlog', plan_title = 'Sprint Plan'";
@@ -52,10 +52,10 @@ EOT;
 
     public function postUp()
     {
-        if (!$this->db->columnNameExists('plugin_agiledashboard_planning', 'backlog_title')) {
+        if (! $this->db->columnNameExists('plugin_agiledashboard_planning', 'backlog_title')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('An error occured while adding column backlog_title to plugin_agiledashboard_planning');
         }
-        if (!$this->db->columnNameExists('plugin_agiledashboard_planning', 'plan_title')) {
+        if (! $this->db->columnNameExists('plugin_agiledashboard_planning', 'plan_title')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotCompleteException('An error occured while adding column plan_title to plugin_agiledashboard_planning');
         }
     }

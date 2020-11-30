@@ -17,6 +17,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_DateReminder
 {
 
@@ -92,9 +94,8 @@ class Tracker_DateReminder
     /**
      * Get tracker id of the reminder
      *
-     * @return int
      */
-    public function getTrackerId()
+    public function getTrackerId(): int
     {
         return $this->trackerId;
     }
@@ -116,7 +117,7 @@ class Tracker_DateReminder
      */
     public function getField()
     {
-        if (!$this->field) {
+        if (! $this->field) {
             $this->field = Tracker_FormElementFactory::instance()->getUsedFormElementById($this->getFieldId());
         }
         return $this->field;
@@ -125,7 +126,7 @@ class Tracker_DateReminder
     /**
      * Return the tracker of this reminder
      *
-     * @return Tracker
+     * @return Tracker|null
      */
     public function getTracker()
     {
@@ -240,20 +241,20 @@ class Tracker_DateReminder
     /**
      * Retrieve the recipient list for all ugroup_id and tracker roles
      *
-     * @param Tracker_Artifact $artifact  Artifact
+     * @param Artifact $artifact Artifact
      *
      * @return Array
      */
-    public function getRecipients(Tracker_Artifact $artifact)
+    public function getRecipients(Artifact $artifact)
     {
-        $recipients    = array();
+        $recipients    = [];
         $ugroups       = $this->getUgroups(true);
         $roles         = $this->getRoles();
-        if (!empty($ugroups)) {
+        if (! empty($ugroups)) {
             $recipients = array_merge($recipients, $this->getRecipientsFromUgroups());
         }
 
-        if (!empty($roles)) {
+        if (! empty($roles)) {
             $recipients = array_merge($recipients, $this->getRecipientsFromRoles($artifact));
         }
 
@@ -267,12 +268,16 @@ class Tracker_DateReminder
      */
     private function getRecipientsFromUgroups()
     {
-        $recipients = array();
+        $recipients = [];
         $uGroupManager = new UGroupManager();
         $ugroups       = $this->getUgroups(true);
         foreach ($ugroups as $ugroupId) {
             if ($ugroupId < 100) {
-                $members = $uGroupManager->getDynamicUGroupsMembers($ugroupId, $this->getTracker()->getGroupId());
+                $tracker = $this->getTracker();
+                if ($tracker === null) {
+                    throw new RuntimeException('Tracker does not exist');
+                }
+                $members = $uGroupManager->getDynamicUGroupsMembers($ugroupId, $tracker->getGroupId());
             } else {
                 $uGroup  = $uGroupManager->getById($ugroupId);
                 $members = $uGroup->getMembers();
@@ -287,13 +292,13 @@ class Tracker_DateReminder
     /**
      * Retrieve the recipient list for Tracker Roles
      *
-     * @param Tracker_Artifact $artifact  Artifact
+     * @param Artifact $artifact Artifact
      *
      * @return Array
      */
-    private function getRecipientsFromRoles(Tracker_Artifact $artifact)
+    private function getRecipientsFromRoles(Artifact $artifact)
     {
-        $recipients = array();
+        $recipients = [];
         $roles      = $this->getRoles();
         foreach ($roles as $userRole) {
             $recipients = array_merge($recipients, $userRole->getRecipientsFromArtifact($artifact));
@@ -341,9 +346,9 @@ class Tracker_DateReminder
         $ugroupsLabel   = '';
         $ugroupManager  = $this->getUGroupManager();
         $ugroups        = explode(',', $this->ugroups);
-        if (!empty($ugroups)) {
+        if (! empty($ugroups)) {
             foreach ($ugroups as $ugroup) {
-                $ugroupsLabel  .= ' "'.util_translate_name_ugroup($ugroupManager->getById($ugroup)->getName()).' "';
+                $ugroupsLabel  .= ' "' . \Tuleap\User\UserGroup\NameTranslator::getUserGroupDisplayKey((string) $ugroupManager->getById($ugroup)->getName()) . ' "';
             }
         }
         return $ugroupsLabel;
@@ -359,7 +364,7 @@ class Tracker_DateReminder
         $rolesLabel   = '';
         $roles        = $this->getRoles();
         foreach ($roles as $role) {
-            $rolesLabel  .= ' "'.$role->getLabel().' "';
+            $rolesLabel  .= ' "' . $role->getLabel() . ' "';
         }
         return $rolesLabel;
     }
@@ -367,11 +372,11 @@ class Tracker_DateReminder
     /**
      * Retreive The date Field value
      *
-     * @param Tracker_Artifact $artifact The artifact
+     * @param Artifact $artifact The artifact
      *
-     * @return date
+     * @return string|false
      */
-    public function getFieldValue(Tracker_Artifact $artifact)
+    public function getFieldValue(Artifact $artifact)
     {
         $field = $this->getField();
         return $field->getLastValue($artifact);

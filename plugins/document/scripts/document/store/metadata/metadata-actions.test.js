@@ -17,7 +17,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { mockFetchError } from "../../../../../../src/www/themes/common/tlp/mocks/tlp-fetch-mock-helper.js";
+import { mockFetchError } from "../../../../../../src/themes/tlp/mocks/tlp-fetch-mock-helper.js";
 import { loadProjectMetadata } from "./metadata-actions.js";
 import * as rest_querier from "../../api/rest-querier.js";
 import * as handle_errors from "../actions-helpers/handle-errors.js";
@@ -27,24 +27,24 @@ describe("Metadata actions", () => {
 
     beforeEach(() => {
         context = {
-            commit: jest.fn()
+            commit: jest.fn(),
         };
 
         global_context = {
             state: {
-                project_id: 102
-            }
+                project_id: 102,
+            },
         };
         getProjectMetadata = jest.spyOn(rest_querier, "getProjectMetadata");
         handleErrors = jest.spyOn(handle_errors, "handleErrors").mockReturnValue(Promise.resolve());
     });
 
-    it(`It load project metadata definition`, async () => {
+    it(`load project metadata definition`, async () => {
         const metadata = [
             {
                 short_name: "text",
-                type: "text"
-            }
+                type: "text",
+            },
         ];
 
         getProjectMetadata.mockReturnValue(metadata);
@@ -59,9 +59,9 @@ describe("Metadata actions", () => {
             status: 400,
             error_json: {
                 error: {
-                    message: "Something bad happens"
-                }
-            }
+                    message: "Something bad happens",
+                },
+            },
         });
 
         await loadProjectMetadata(context, [{ state: { project_id: 102 } }]);

@@ -28,7 +28,6 @@ use HTTPRequest;
 use TemplateRendererFactory;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\OpenIDConnectClient\Login\ConnectorPresenterBuilder;
-use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\DispatchableWithRequestNoAuthz;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
@@ -49,8 +48,6 @@ class LoginController implements DispatchableWithRequestNoAuthz
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @return void
      * @throws ForbiddenException
@@ -61,16 +58,16 @@ class LoginController implements DispatchableWithRequestNoAuthz
         $return_to = $request->get('return_to');
         $presenter = $this->connector_presenter_builder->getLoginSpecificPageConnectorPresenter($return_to);
 
-        $layout->header(array(
+        $layout->header([
             'title' => $GLOBALS['Language']->getText(
                 'account_login',
                 'page_title',
-                array(ForgeConfig::get('sys_name'))
+                [ForgeConfig::get('sys_name')]
             ),
-            'body_class' => array('login-page')
-        ));
+            'body_class' => ['login-page']
+        ]);
         $renderer = TemplateRendererFactory::build()->getRenderer(OPENIDCONNECTCLIENT_TEMPLATE_DIR);
         $renderer->renderToPage('login-page', $presenter);
-        $layout->footer(array('without_content' => true));
+        $layout->footer(['without_content' => true]);
     }
 }

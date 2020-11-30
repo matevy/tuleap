@@ -18,14 +18,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
 
 class Tracker_Action_UpdateArtifact
 {
 
-    /** @var Tracker_Artifact */
+    /** @var Artifact */
     private $artifact;
 
     /** @var Tracker_FormElementFactory */
@@ -45,7 +46,7 @@ class Tracker_Action_UpdateArtifact
     private $hidden_fieldsets_detector;
 
     public function __construct(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_FormElementFactory $form_element_factory,
         EventManager $event_manager,
         NatureIsChildLinkRetriever $artifact_retriever,
@@ -77,7 +78,7 @@ class Tracker_Action_UpdateArtifact
             $this->artifact->createNewChangeset($fields_data, $request->get('artifact_followup_comment'), $current_user, true, $comment_format);
 
             $art_link = $this->artifact->fetchDirectLinkToArtifact();
-            $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_index', 'update_success', array($art_link)), CODENDI_PURIFIER_LIGHT);
+            $GLOBALS['Response']->addFeedback('info', sprintf(dgettext('tuleap-tracker', 'Successfully Updated (%1$s)'), $art_link), CODENDI_PURIFIER_LIGHT);
 
             $redirect = $this->getRedirectUrlAfterArtifactUpdate($request);
             $this->artifact->summonArtifactRedirectors($request, $redirect);
@@ -85,7 +86,7 @@ class Tracker_Action_UpdateArtifact
             if ($request->isAjax()) {
                 $this->sendAjaxCardsUpdateInfo($current_user, $this->artifact, $this->form_element_factory);
             } elseif ($request->existAndNonEmpty('from_overlay')) {
-                echo '<script>window.parent.tuleap.cardwall.cardsEditInPlace.validateEdition('.$this->artifact->getId().')</script>';
+                echo '<script>window.parent.tuleap.cardwall.cardsEditInPlace.validateEdition(' . $this->artifact->getId() . ')</script>';
                 return;
             } else {
                 $GLOBALS['Response']->redirect($redirect->toUrl());
@@ -98,7 +99,6 @@ class Tracker_Action_UpdateArtifact
                 $render = new Tracker_Artifact_ReadOnlyRenderer(
                     $this->event_manager,
                     $this->artifact,
-                    $this->form_element_factory,
                     $layout,
                     $this->artifact_retriever,
                     $this->visit_recorder,
@@ -114,7 +114,6 @@ class Tracker_Action_UpdateArtifact
                 $render = new Tracker_Artifact_ReadOnlyRenderer(
                     $this->event_manager,
                     $this->artifact,
-                    $this->form_element_factory,
                     $layout,
                     $this->artifact_retriever,
                     $this->visit_recorder,
@@ -135,14 +134,14 @@ class Tracker_Action_UpdateArtifact
         $redirect->base_url         = TRACKER_BASE_URL;
         $redirect->query_parameters = $this->calculateRedirectParams($stay, $from_aid);
         if ($stay) {
-            $redirect->mode = Tracker_Artifact_Redirect::STATE_STAY_OR_CONTINUE;
+            $redirect->mode = Tracker_Artifact_Redirect::STATE_STAY;
         }
         return $redirect;
     }
 
     private function calculateRedirectParams($stay, $from_aid)
     {
-        $redirect_params = array();
+        $redirect_params = [];
         if ($stay) {
             $redirect_params['aid']       = $this->artifact->getId();
             $redirect_params['from_aid']  = $from_aid;
@@ -166,9 +165,9 @@ class Tracker_Action_UpdateArtifact
     }
 
 
-    private function getCardUpdateInfo(Tracker_Artifact $artifact, PFUser $current_user)
+    private function getCardUpdateInfo(Artifact $artifact, PFUser $current_user)
     {
-        $card_info               = array();
+        $card_info               = [];
         $tracker_id              = $artifact->getTracker()->getId();
         $remaining_effort_field  = $this->form_element_factory->getComputableFieldByNameForUser(
             $tracker_id,
@@ -179,22 +178,23 @@ class Tracker_Action_UpdateArtifact
             $remaining_effort = $remaining_effort_field->fetchCardValue($artifact);
             $remaining_effort = $this->addAutocomputeLabelIfFieldIsAutcocomputed($artifact, $remaining_effort_field, $remaining_effort);
 
-            $card_info[$artifact->getId()] = array(
+            $card_info[$artifact->getId()] = [
                 Tracker::REMAINING_EFFORT_FIELD_NAME => $remaining_effort
-            );
+            ];
         }
         return $card_info;
     }
 
     private function addAutocomputeLabelIfFieldIsAutcocomputed(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_FormElement_Field $remaining_effort_field,
         $remaining_effort
     ) {
-        if ($artifact->getTracker()->hasFormElementWithNameAndType($remaining_effort_field->getName(), array('computed'))
+        if (
+            $artifact->getTracker()->hasFormElementWithNameAndType($remaining_effort_field->getName(), ['computed'])
             && $remaining_effort_field->isArtifactValueAutocomputed($artifact)
         ) {
-            $remaining_effort .= " (" . $GLOBALS['Language']->getText('plugin_tracker', 'autocomputed_field') . ")";
+            $remaining_effort .= " (" . dgettext('tuleap-tracker', 'autocomputed') . ")";
         }
 
         return $remaining_effort;

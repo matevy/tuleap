@@ -27,7 +27,7 @@ class Docman_ItemDao extends DataAccessObject
     /**
      * Return the timestamp of the current day at 00:00
      */
-    private static function getObsoleteToday() : int
+    private static function getObsoleteToday(): int
     {
         $today = getdate();
         return mktime(0, 0, 1, $today['mon'], $today['mday'], $today['year']);
@@ -37,20 +37,20 @@ class Docman_ItemDao extends DataAccessObject
      * Return the SQL statement that exclude the items that are obsolete as of today.
      * static
      */
-    private static function getExcludeObsoleteItemsStmt(string $table) : string
+    private static function getExcludeObsoleteItemsStmt(string $table): string
     {
         $sql = '';
-        $sql .= '('.$table.'.obsolescence_date = 0 OR ';
-        $sql .= ' '.$table.'.obsolescence_date > '.self::getObsoleteToday().')';
+        $sql .= '(' . $table . '.obsolescence_date = 0 OR ';
+        $sql .= ' ' . $table . '.obsolescence_date > ' . self::getObsoleteToday() . ')';
         return $sql;
     }
 
     /**
      * Return the SQL statement that exclude the items that are deleted.
      */
-    private static function getExcludeDeletedItemsStmt(string $table) : string
+    private static function getExcludeDeletedItemsStmt(string $table): string
     {
-        return $table.'.delete_date IS NULL';
+        return $table . '.delete_date IS NULL';
     }
 
     /**
@@ -58,7 +58,7 @@ class Docman_ItemDao extends DataAccessObject
      */
     public static function getCommonExcludeStmt($table)
     {
-        return self::getExcludeDeletedItemsStmt($table).' AND '.
+        return self::getExcludeDeletedItemsStmt($table) . ' AND ' .
             self::getExcludeObsoleteItemsStmt($table);
     }
 
@@ -67,13 +67,13 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return DataAccessResult
      */
-    function searchById($id, $params = array())
+    public function searchById($id, $params = [])
     {
         $_id = (int) $id;
-        return $this->_searchWithCurrentVersion(' i.item_id = '.$_id, '', '', array(), $params);
+        return $this->_searchWithCurrentVersion(' i.item_id = ' . $_id, '', '', [], $params);
     }
 
-    function searchByIdList($idList)
+    public function searchByIdList($idList)
     {
         if (is_array($idList) && count($idList) > 0) {
             $sql_where = sprintf(' i.item_id IN (%s)', implode(', ', $idList));
@@ -88,18 +88,18 @@ class Docman_ItemDao extends DataAccessObject
      * @param $groupId  The group id on which the search applies
      * @param $parentId The parent folder where to search.
      */
-    function searchByTitle($title, $groupId = null, $parentId = null)
+    public function searchByTitle($title, $groupId = null, $parentId = null)
     {
         if (is_array($title)) {
-            $where = ' i.title IN ("'.implode('", "', array_map('db_es', $title)).'")';
+            $where = ' i.title IN ("' . implode('", "', array_map('db_es', $title)) . '")';
         } else {
-            $where = ' i.title = '.$this->da->quoteSmart($title);
+            $where = ' i.title = ' . $this->da->quoteSmart($title);
         }
         if ($groupId !== null) {
-            $where .= ' AND i.group_id = '.$this->da->escapeInt($groupId);
+            $where .= ' AND i.group_id = ' . $this->da->escapeInt($groupId);
         }
         if ($parentId !== null) {
-            $where .= ' AND i.parent_id = '.$this->da->escapeInt($parentId);
+            $where .= ' AND i.parent_id = ' . $this->da->escapeInt($parentId);
         }
 
         $order = ' ORDER BY version_date DESC';
@@ -139,18 +139,18 @@ class Docman_ItemDao extends DataAccessObject
         return $this->retrieveCount($sql) > 0;
     }
 
-    function searchObsoleteByGroupId($groupId)
+    public function searchObsoleteByGroupId($groupId)
     {
         $sql = '';
         $sql .= $this->_getItemSearchSelectStmt();
         $sql .= $this->_getItemSearchFromStmt();
         $sql .= sprintf(
-            ' WHERE i.group_id = %d'.
-                        ' AND (obsolescence_date > 0'.
-                        '  AND obsolescence_date < %d)'.
+            ' WHERE i.group_id = %d' .
+                        ' AND (obsolescence_date > 0' .
+                        '  AND obsolescence_date < %d)' .
                         ' ORDER BY obsolescence_date DESC',
-            $groupId,
-            $this->getObsoleteToday()
+            $this->da->escapeInt($groupId),
+            $this->da->escapeInt($this->getObsoleteToday())
         );
         return $this->retrieve($sql);
     }
@@ -164,16 +164,16 @@ class Docman_ItemDao extends DataAccessObject
         $limit    = $this->da->escapeInt($limit);
         $offset   = $this->da->escapeInt($offset);
 
-        $params = array(
+        $params = [
             'limit'           => $limit,
             'offset'          => $offset,
             'ignore_deleted'  => true,
             'ignore_obselete' => true
-        );
+        ];
 
         $where = " i.group_id = $groupId AND i.delete_date IS NULL";
 
-        return $this->_searchWithCurrentVersion($where, '', '', array(), $params);
+        return $this->_searchWithCurrentVersion($where, '', '', [], $params);
     }
 
     /**
@@ -181,17 +181,17 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return DataAccessResult
      */
-    function searchByGroupId($id, &$report, $params)
+    public function searchByGroupId($id, &$report, $params)
     {
         // Where clause
         // Select on group_id
         $_id = (int) $id;
-        $sql_where = ' i.group_id = '.$_id;
+        $sql_where = ' i.group_id = ' . $_id;
 
         // Order clause
         $sql_order = '';
 
-        $fromStmts = array();
+        $fromStmts = [];
 
         // Report
         if ($report !== null) {
@@ -209,7 +209,7 @@ class Docman_ItemDao extends DataAccessObject
                     // Handle 'where' clause
                     $where = $sqlFilter->getWhere();
                     if ($where != '') {
-                        $sql_where .= ' AND '.$where;
+                        $sql_where .= ' AND ' . $where;
                     }
                 }
 
@@ -239,7 +239,7 @@ class Docman_ItemDao extends DataAccessObject
 
         // Prepare 'order' clause if any
         if ($sql_order != '') {
-            $sql_order = ' ORDER BY '.$sql_order;
+            $sql_order = ' ORDER BY ' . $sql_order;
         }
 
         $from = array_unique($fromStmts);
@@ -247,9 +247,9 @@ class Docman_ItemDao extends DataAccessObject
         return $this->_searchWithCurrentVersion($sql_where, '', $sql_order, $from, $params);
     }
 
-    function _getItemSearchSelectStmt()
+    public function _getItemSearchSelectStmt()
     {
-        $sql = 'SELECT i.*, '.implode(', ', array(
+        $sql = 'SELECT i.*, ' . implode(', ', [
                 'v.id as version_id',
                 'v.number as version_number',
                 'v.user_id as version_user_id',
@@ -267,7 +267,7 @@ class Docman_ItemDao extends DataAccessObject
                 'lv.changelog as link_version_changelog',
                 'lv.date      as link_version_date',
                 'lv.link_url  as link_version_link_url',
-            )).
+            ]) .
             ', 1 as folder_nb_of_children ';
         return $sql;
     }
@@ -277,18 +277,18 @@ class Docman_ItemDao extends DataAccessObject
      * each item because there is a 'v2.id IS NULL' in the WHERE part of the
      * query.
      */
-    function _getItemSearchFromStmt()
+    public function _getItemSearchFromStmt()
     {
-        $sql = 'FROM plugin_docman_item AS i'.
+        $sql = 'FROM plugin_docman_item AS i' .
 
-            ' LEFT JOIN plugin_docman_version AS v'.
-            '  ON (i.item_id = v.item_id)'.
-            ' LEFT JOIN plugin_docman_version AS v2'.
-            '  ON (v2.item_id = v.item_id AND v.number < v2.number) '.
+            ' LEFT JOIN plugin_docman_version AS v' .
+            '  ON (i.item_id = v.item_id)' .
+            ' LEFT JOIN plugin_docman_version AS v2' .
+            '  ON (v2.item_id = v.item_id AND v.number < v2.number) ' .
 
-            ' LEFT JOIN plugin_docman_link_version AS lv'.
-            '  ON (i.item_id = lv.item_id)'.
-            ' LEFT JOIN plugin_docman_link_version AS lv2'.
+            ' LEFT JOIN plugin_docman_link_version AS lv' .
+            '  ON (i.item_id = lv.item_id)' .
+            ' LEFT JOIN plugin_docman_link_version AS lv2' .
             '  ON (lv2.item_id = lv.item_id AND lv.number < lv2.number) ';
         return $sql;
     }
@@ -297,21 +297,21 @@ class Docman_ItemDao extends DataAccessObject
      * $params['ignore_deleted'] boolean By default the query *exclude* deleted items.
      * $params['ignore_obsolete'] boolean By default the query *include* obsolete items.
      */
-    function _searchWithCurrentVersion($where, $group = '', $order = '', $from = array(), $params = array())
+    public function _searchWithCurrentVersion($where, $group = '', $order = '', $from = [], $params = [])
     {
         $sql = '';
         $sql .= $this->_getItemSearchSelectStmt();
         $sql .= $this->_getItemSearchFromStmt();
-        $sql .= (count($from) > 0 ? ' LEFT JOIN '.implode(' LEFT JOIN ', $from) : '')
-            .' WHERE 1 AND ';
-        if (!isset($params['ignore_deleted']) || !$params['ignore_deleted']) {
-            $sql .= ' '.$this->getExcludeDeletedItemsStmt('i').' AND ';
+        $sql .= (count($from) > 0 ? ' LEFT JOIN ' . implode(' LEFT JOIN ', $from) : '')
+            . ' WHERE 1 AND ';
+        if (! isset($params['ignore_deleted']) || ! $params['ignore_deleted']) {
+            $sql .= ' ' . $this->getExcludeDeletedItemsStmt('i') . ' AND ';
         }
         if (isset($params['ignore_obsolete']) && $params['ignore_obsolete'] == true) {
-            $sql .= $this->getExcludeObsoleteItemsStmt('i').' AND ';
+            $sql .= $this->getExcludeObsoleteItemsStmt('i') . ' AND ';
         }
         if (isset($params['ignore_folders']) && $params['ignore_folders'] == true) {
-            $sql .= ' i.item_type <> '.PLUGIN_DOCMAN_ITEM_TYPE_FOLDER.' AND ';
+            $sql .= ' i.item_type <> ' . PLUGIN_DOCMAN_ITEM_TYPE_FOLDER . ' AND ';
         }
         // Related to the 2 LEFT JOIN on docman_version in _getItemSearchFromStmt()
         $sql .= ' v2.id IS NULL AND lv2.id IS NULL AND ';
@@ -320,7 +320,7 @@ class Docman_ItemDao extends DataAccessObject
         if (isset($params['offset']) && isset($params['limit'])) {
             $search_limit = $this->da->escapeInt($params['limit']);
             $offset       = $this->da->escapeInt($params['offset']);
-            $limit        = " LIMIT ". $offset .", " . $search_limit;
+            $limit        = " LIMIT " . $offset . ", " . $search_limit;
         }
 
         $sql .= $where . $group . $order . $limit;
@@ -341,9 +341,9 @@ class Docman_ItemDao extends DataAccessObject
      * @param $ignoreObsolete Ignore obsolete items if true.
      * @return array An array of 'WHERE' statements.
      */
-    function _getCommonItemFilters($table = 'i', $ignoreDeleted = true, $ignoreObsolete = true)
+    public function _getCommonItemFilters($table = 'i', $ignoreDeleted = true, $ignoreObsolete = true)
     {
-        $filters = array();
+        $filters = [];
         if ($ignoreDeleted) {
             $filters['del'] = $this->getExcludeDeletedItemsStmt($table);
         }
@@ -360,11 +360,11 @@ class Docman_ItemDao extends DataAccessObject
      * @param $stmtArray Array of statements.
      * @return string
      */
-    function _stmtArrayToString($op, $stmtArray)
+    public function _stmtArrayToString($op, $stmtArray)
     {
         $str = '';
         if (count($stmtArray) > 0) {
-            $str = ' '.$op.' '.implode(' '.$op.' ', $stmtArray);
+            $str = ' ' . $op . ' ' . implode(' ' . $op . ' ', $stmtArray);
         }
         return $str;
     }
@@ -375,23 +375,23 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return DataAccessResult
      */
-    function searchExpandedUserPrefs($group_id, $user_id)
+    public function searchExpandedUserPrefs($group_id, $user_id)
     {
-        $pref_base = PLUGIN_DOCMAN_EXPAND_FOLDER_PREF.'_'.((int)$group_id);
+        $pref_base = PLUGIN_DOCMAN_EXPAND_FOLDER_PREF . '_' . ((int) $group_id);
 
         $sql = sprintf(
             'SELECT preference_name, preference_value'
-                       .' FROM user_preferences'
-                       .' WHERE user_id=%d'
-                       .' AND preference_name LIKE "%s"',
+                       . ' FROM user_preferences'
+                       . ' WHERE user_id=%d'
+                       . ' AND preference_name LIKE "%s"',
             $user_id,
-            $pref_base.'_%'
+            $pref_base . '_%'
         );
 
         return $this->retrieve($sql);
     }
 
-    function createFromRow($row)
+    public function createFromRow(array $row)
     {
         if (isset($row['create_date']) && $row['create_date'] != '') {
             $updateParent = false;
@@ -400,7 +400,7 @@ class Docman_ItemDao extends DataAccessObject
             $row['create_date'] = time();
         }
 
-        if (!isset($row['update_date']) || $row['update_date'] == '') {
+        if (! isset($row['update_date']) || $row['update_date'] == '') {
             $row['update_date'] = time();
         }
 
@@ -412,12 +412,12 @@ class Docman_ItemDao extends DataAccessObject
             $row['item_id'] = $item_id;
         }
 
-        $arg    = array();
-        $values = array();
-        $cols   = array('item_id', 'parent_id', 'group_id', 'title', 'description', 'create_date', 'update_date', 'user_id', 'status', 'obsolescence_date', 'rank', 'item_type', 'link_url', 'wiki_page', 'file_is_embedded');
+        $arg    = [];
+        $values = [];
+        $cols   = ['item_id', 'parent_id', 'group_id', 'title', 'description', 'create_date', 'update_date', 'user_id', 'status', 'obsolescence_date', 'rank', 'item_type', 'link_url', 'wiki_page', 'file_is_embedded'];
         foreach ($row as $key => $value) {
             if (in_array($key, $cols)) {
-                $arg[]    = $key;
+                $arg[]    = $this->da->quoteSmartSchema($key);
                 $values[] = $this->da->quoteSmart($value);
             }
         }
@@ -425,8 +425,8 @@ class Docman_ItemDao extends DataAccessObject
             return false;
         }
         $sql = 'INSERT INTO plugin_docman_item '
-            .'('.implode(', ', $arg).')'
-            .' VALUES ('.implode(', ', $values).')';
+            . '(' . implode(', ', $arg) . ')'
+            . ' VALUES (' . implode(', ', $values) . ')';
 
         $inserted = $this->update($sql);
         if (! $inserted) {
@@ -443,7 +443,7 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return true if there is no error
      */
-    function updateById(
+    public function updateById(
         $item_id,
         $parent_id = null,
         $group_id = null,
@@ -458,60 +458,59 @@ class Docman_ItemDao extends DataAccessObject
         $wiki_page = null,
         $file_is_embedded = null
     ) {
-
-        $argArray = array();
+        $argArray = [];
 
         if ($parent_id !== null) {
-            $argArray[] = 'parent_id='.((int) $parent_id);
+            $argArray[] = 'parent_id=' . ((int) $parent_id);
         }
 
         if ($group_id !== null) {
-            $argArray[] = 'group_id='.((int) $group_id);
+            $argArray[] = 'group_id=' . ((int) $group_id);
         }
 
         if ($title !== null) {
-            $argArray[] = 'title='.$this->da->quoteSmart($title);
+            $argArray[] = 'title=' . $this->da->quoteSmart($title);
         }
 
         if ($description !== null) {
-            $argArray[] = 'description='.$this->da->quoteSmart($description);
+            $argArray[] = 'description=' . $this->da->quoteSmart($description);
         }
 
         if ($create_date !== null) {
-            $argArray[] = 'create_date='.((int) $create_date);
+            $argArray[] = 'create_date=' . ((int) $create_date);
         }
 
         if ($update_date !== null) {
-            $argArray[] = 'update_date='.((int) $update_date);
+            $argArray[] = 'update_date=' . ((int) $update_date);
         }
 
         if ($user_id !== null) {
-            $argArray[] = 'user_id='.((int) $user_id);
+            $argArray[] = 'user_id=' . ((int) $user_id);
         }
 
         if ($rank !== null) {
-            $argArray[] = 'rank='.((int) $rank);
+            $argArray[] = 'rank=' . ((int) $rank);
         }
 
         if ($item_type !== null) {
-            $argArray[] = 'item_type='.((int) $item_type);
+            $argArray[] = 'item_type=' . ((int) $item_type);
         }
 
         if ($link_url !== null) {
-            $argArray[] = 'link_url='.$this->da->quoteSmart($link_url);
+            $argArray[] = 'link_url=' . $this->da->quoteSmart($link_url);
         }
 
         if ($wiki_page !== null) {
-            $argArray[] = 'wiki_page='.$this->da->quoteSmart($wiki_page);
+            $argArray[] = 'wiki_page=' . $this->da->quoteSmart($wiki_page);
         }
 
         if ($file_is_embedded !== null) {
-            $argArray[] = 'file_is_embedded='.((int) $file_is_embedded);
+            $argArray[] = 'file_is_embedded=' . ((int) $file_is_embedded);
         }
 
         $sql = 'UPDATE plugin_docman_item'
-            .' SET '.implode(', ', $argArray)
-            .' WHERE item_id='.((int) $item_id);
+            . ' SET ' . implode(', ', $argArray)
+            . ' WHERE item_id=' . ((int) $item_id);
 
         $inserted = $this->update($sql);
         if ($inserted) {
@@ -520,7 +519,7 @@ class Docman_ItemDao extends DataAccessObject
         return $inserted;
     }
 
-    function updateFromRow($row)
+    public function updateFromRow(array $row)
     {
         $updated = false;
         $id = false;
@@ -538,18 +537,18 @@ class Docman_ItemDao extends DataAccessObject
         }
 
         if ($id) {
-            $set_array = array();
+            $set_array = [];
             foreach ($row as $key => $value) {
                 if ($key !== 'id') {
-                    $set_array[] = $key .' = '. $this->da->quoteSmart($value);
+                    $set_array[] = $this->da->quoteSmartSchema($key) . ' = ' . $this->da->quoteSmart($value);
                 }
             }
             if (empty($set_array)) {
                 return true;
             }
             $sql = 'UPDATE plugin_docman_item'
-                .' SET '.implode(' , ', $set_array)
-                .' WHERE item_id='. $this->da->quoteSmart($id);
+                . ' SET ' . implode(' , ', $set_array)
+                . ' WHERE item_id=' . $this->da->quoteSmart($id);
             $updated = $this->update($sql);
             if ($updated && $updateParent) {
                 $this->_updateUpdateDateOfParent($this->da->quoteSmart($id));
@@ -558,25 +557,25 @@ class Docman_ItemDao extends DataAccessObject
         return $updated;
     }
 
-    function _updateUpdateDateOfParent($item_id_quoted)
+    public function _updateUpdateDateOfParent($item_id_quoted)
     {
-        $sql = 'SELECT parent_id, update_date FROM plugin_docman_item WHERE item_id = '. $item_id_quoted;
+        $sql = 'SELECT parent_id, update_date FROM plugin_docman_item WHERE item_id = ' . $item_id_quoted;
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError() && $dar->valid()) {
+        if ($dar && ! $dar->isError() && $dar->valid()) {
             $item = $dar->current();
-            $sql = 'UPDATE plugin_docman_item SET update_date = '. $item['update_date'] .' WHERE item_id = '. $item['parent_id'];
+            $sql = 'UPDATE plugin_docman_item SET update_date = ' . $item['update_date'] . ' WHERE item_id = ' . $item['parent_id'];
             $this->update($sql);
         }
     }
 
-    function massUpdate($srcItemId, $mdLabel, $itemIdArray)
+    public function massUpdate($srcItemId, $mdLabel, $itemIdArray)
     {
         $sql = sprintf(
-            'UPDATE plugin_docman_item item_src,  plugin_docman_item item_dst'.
-                       ' SET item_dst.'.$mdLabel.' = item_src.'.$mdLabel.
-                       ' WHERE item_src.item_id = %d'.
+            'UPDATE plugin_docman_item item_src,  plugin_docman_item item_dst' .
+                       ' SET item_dst.' . $mdLabel . ' = item_src.' . $mdLabel .
+                       ' WHERE item_src.item_id = %d' .
                        '  AND item_dst.item_id IN (%s)',
-            $srcItemId,
+            $this->da->escapeInt($srcItemId),
             implode(',', $itemIdArray)
         );
         return $this->update($sql);
@@ -589,7 +588,7 @@ class Docman_ItemDao extends DataAccessObject
      * @param $item_id int
      * @return true if there is no error
      */
-    function delete($item_id)
+    public function delete($item_id)
     {
         $sql = sprintf(
             "DELETE FROM plugin_docman_item WHERE item_id=%d",
@@ -609,17 +608,17 @@ class Docman_ItemDao extends DataAccessObject
      * otherwise, if more than one child exists is the only useful info (this
      * is why there is a LIMIT 2).
      */
-    function hasRootOnlyOneChild($groupId)
+    public function hasRootOnlyOneChild($groupId)
     {
         $cFilters = $this->_stmtArrayToString('AND', $this->_getCommonItemFilters());
         $sql = sprintf(
-            'SELECT i.item_id'.
-                       ' FROM plugin_docman_item i'.
-                       ' JOIN plugin_docman_item r'.
-                       '  ON (i.parent_id = r.item_id)'.
-                       ' WHERE r.parent_id = 0'.
-                       ' AND r.group_id = %d'.
-                       $cFilters.
+            'SELECT i.item_id' .
+                       ' FROM plugin_docman_item i' .
+                       ' JOIN plugin_docman_item r' .
+                       '  ON (i.parent_id = r.item_id)' .
+                       ' WHERE r.parent_id = 0' .
+                       ' AND r.group_id = %d' .
+                       $cFilters .
                        ' LIMIT 2',
             $groupId
         );
@@ -635,7 +634,7 @@ class Docman_ItemDao extends DataAccessObject
      * special move (that require $item_id param) change ranking of the item
      * to move up or down.
      */
-    function _changeSiblingRanking($parentId, $ordering, $item_id = false)
+    public function _changeSiblingRanking($parentId, $ordering, $item_id = false)
     {
         $rank = 0;
         switch ($ordering) {
@@ -643,8 +642,8 @@ class Docman_ItemDao extends DataAccessObject
             case 'end':
                 $_select = $ordering == 'end' ? 'MAX(rank)+1' : 'MIN(rank)-1';
                 $sql = sprintf(
-                    'SELECT %s AS rank'.
-                               ' FROM plugin_docman_item'.
+                    'SELECT %s AS rank' .
+                               ' FROM plugin_docman_item' .
                                ' WHERE parent_id = %d',
                     $_select,
                     $parentId
@@ -666,12 +665,12 @@ class Docman_ItemDao extends DataAccessObject
                         $order = 'DESC';
                     }
                     $sql = sprintf(
-                        'SELECT i1.item_id as item_id, i1.rank as rank'.
-                                   ' FROM plugin_docman_item i1'.
-                                   '  INNER JOIN plugin_docman_item i2 USING(parent_id)'.
-                                   ' WHERE i2.item_id = %d'.
-                                   '  AND i1.rank %s i2.rank'.
-                                   ' ORDER BY i1.rank %s'.
+                        'SELECT i1.item_id as item_id, i1.rank as rank' .
+                                   ' FROM plugin_docman_item i1' .
+                                   '  INNER JOIN plugin_docman_item i2 USING(parent_id)' .
+                                   ' WHERE i2.item_id = %d' .
+                                   '  AND i1.rank %s i2.rank' .
+                                   ' ORDER BY i1.rank %s' .
                                    ' LIMIT 1',
                         $item_id,
                         $op,
@@ -682,9 +681,9 @@ class Docman_ItemDao extends DataAccessObject
                         $row = $dar->current();
 
                         $sql = sprintf(
-                            'UPDATE plugin_docman_item i1, plugin_docman_item i2'.
-                                       ' SET i1.rank = i2.rank, i2.rank = %d'.
-                                       ' WHERE i1.item_id = %d '.
+                            'UPDATE plugin_docman_item i1, plugin_docman_item i2' .
+                                       ' SET i1.rank = i2.rank, i2.rank = %d' .
+                                       ' WHERE i1.item_id = %d ' .
                                        '  AND i2.item_id = %d',
                             $row['rank'],
                             $row['item_id'],
@@ -698,11 +697,11 @@ class Docman_ItemDao extends DataAccessObject
                 }
                 break;
             default:
-                $rank = $ordering?$ordering:0;
+                $rank = $ordering ? $ordering : 0;
                 $sql = sprintf(
-                    'UPDATE plugin_docman_item'.
-                               ' SET rank = rank + 1 '.
-                               ' WHERE  parent_id = %d '.
+                    'UPDATE plugin_docman_item' .
+                               ' SET rank = rank + 1 ' .
+                               ' WHERE  parent_id = %d ' .
                                '  AND rank >= %d',
                     $parentId,
                     $rank
@@ -714,7 +713,7 @@ class Docman_ItemDao extends DataAccessObject
         return $rank;
     }
 
-    function setNewParent($item_id, $new_parent_id, $ordering)
+    public function setNewParent($item_id, $new_parent_id, $ordering)
     {
         $can_update = true;
 
@@ -725,7 +724,7 @@ class Docman_ItemDao extends DataAccessObject
         $res = false;
         if ($can_update) {
             $sql = sprintf(
-                'UPDATE plugin_docman_item SET parent_id = %s, rank = %s '.
+                'UPDATE plugin_docman_item SET parent_id = %s, rank = %s ' .
                 ' WHERE  item_id = %s ',
                 $this->da->quoteSmart($new_parent_id),
                 $this->da->quoteSmart($rank),
@@ -736,10 +735,10 @@ class Docman_ItemDao extends DataAccessObject
         return $res;
     }
 
-    function searchByParentsId($parents)
+    public function searchByParentsId($parents)
     {
         $sql = sprintf(
-            'SELECT * FROM plugin_docman_item WHERE parent_id IN (%s) AND delete_date IS NULL AND (obsolescence_date = 0 OR obsolescence_date > '.$this->getObsoleteToday().') ORDER BY rank',
+            'SELECT * FROM plugin_docman_item WHERE parent_id IN (%s) AND delete_date IS NULL AND (obsolescence_date = 0 OR obsolescence_date > ' . $this->getObsoleteToday() . ') ORDER BY rank',
             implode(', ', $parents)
         );
         return $this->retrieve($sql);
@@ -763,7 +762,7 @@ class Docman_ItemDao extends DataAccessObject
     public function searchRootIdForGroupId($group_id)
     {
         $sql = sprintf(
-            'SELECT item_id FROM plugin_docman_item WHERE parent_id = 0 '.
+            'SELECT item_id FROM plugin_docman_item WHERE parent_id = 0 ' .
             ' AND group_id = %s ',
             $this->da->quoteSmart($group_id)
         );
@@ -792,15 +791,15 @@ class Docman_ItemDao extends DataAccessObject
      * @param array $parentIds List of parent ids
      * @return DataAccessResult
      */
-    function searchSubFolders($parentIds = array())
+    public function searchSubFolders($parentIds = [])
     {
         if (is_array($parentIds) && count($parentIds) > 0) {
             $sql = sprintf(
                 'SELECT *'
-                           .' FROM plugin_docman_item'
-                           .' WHERE delete_date IS NULL'
-                           .' AND parent_id IN (%s)'
-                           .' AND item_type = %d',
+                           . ' FROM plugin_docman_item'
+                           . ' WHERE delete_date IS NULL'
+                           . ' AND parent_id IN (%s)'
+                           . ' AND item_type = %d',
                 implode(',', $parentIds),
                 PLUGIN_DOCMAN_ITEM_TYPE_FOLDER
             );
@@ -817,10 +816,10 @@ class Docman_ItemDao extends DataAccessObject
      * @param array $params
      * @return DataAccessResult
      */
-    function searchChildren($parentIds, $params)
+    public function searchChildren($parentIds, $params)
     {
-        $where = " i.parent_id in (".implode(',', $parentIds).")";
-        return $this->_searchWithCurrentVersion($where, '', '', array(), $params);
+        $where = " i.parent_id in (" . implode(',', $parentIds) . ")";
+        return $this->_searchWithCurrentVersion($where, '', '', [], $params);
     }
 
     /*
@@ -829,15 +828,15 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @note: Cross-Project query.
      */
-    function searchObsoleteAcrossProjects($tsStart, $tsEnd)
+    public function searchObsoleteAcrossProjects($tsStart, $tsEnd)
     {
         $sql = sprintf(
-            'SELECT i.*'.
-                       ' FROM plugin_docman_item i, groups g'.
-                       ' WHERE delete_date IS NULL'.
-                       ' AND (i.obsolescence_date >= %d'.
-                       '   AND i.obsolescence_date <= %d)'.
-                       ' AND g.group_id = i.group_id'.
+            'SELECT i.*' .
+                       ' FROM plugin_docman_item i, groups g' .
+                       ' WHERE delete_date IS NULL' .
+                       ' AND (i.obsolescence_date >= %d' .
+                       '   AND i.obsolescence_date <= %d)' .
+                       ' AND g.group_id = i.group_id' .
                        ' AND g.status = "A"',
             $tsStart,
             $tsEnd
@@ -853,22 +852,22 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return bool .
      */
-    function isWikiPageReferenced($wikipage, $group_id)
+    public function isWikiPageReferenced($wikipage, $group_id)
     {
         $obsoleteToday = $this->getObsoleteToday();
         $sql = sprintf(
-            'SELECT item_id'.
-            ' FROM plugin_docman_item'.
-            ' WHERE wiki_page = \'%s\''.
-            ' AND group_id = %d'.
-            ' AND delete_date IS NULL'.
+            'SELECT item_id' .
+            ' FROM plugin_docman_item' .
+            ' WHERE wiki_page = \'%s\'' .
+            ' AND group_id = %d' .
+            ' AND delete_date IS NULL' .
             ' AND (obsolescence_date > %d OR obsolescence_date=0)',
             db_es($wikipage),
             db_ei($group_id),
             $obsoleteToday
         );
         $res = $this->retrieve($sql);
-        if ($res && !$res->isError() && $res->rowCount() >= 1) {
+        if ($res && ! $res->isError() && $res->rowCount() >= 1) {
             return true;
         } else {
             return false;
@@ -883,20 +882,20 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return array $ids ids of docman items that reference the wiki page.
      */
-    function getItemIdByWikiPageAndGroupId($wikipage, $group_id)
+    public function getItemIdByWikiPageAndGroupId($wikipage, $group_id)
     {
-        $ids = array();
+        $ids = [];
         $sql = sprintf(
-            'SELECT item_id'.
-            ' FROM plugin_docman_item i'.
-            ' WHERE i.wiki_page = \'%s\''.
-            ' AND i.group_id = %d'.
-            ' AND '. Docman_ItemDao::getCommonExcludeStmt('i'),
+            'SELECT item_id' .
+            ' FROM plugin_docman_item i' .
+            ' WHERE i.wiki_page = \'%s\'' .
+            ' AND i.group_id = %d' .
+            ' AND ' . Docman_ItemDao::getCommonExcludeStmt('i'),
             db_es($wikipage),
             db_ei($group_id)
         );
         $res = $this->retrieve($sql);
-        if ($res && !$res->isError()) {
+        if ($res && ! $res->isError()) {
             if ($res->rowCount() > 1) {
                 $res->rewind();
                 while ($res->valid()) {
@@ -921,15 +920,15 @@ class Docman_ItemDao extends DataAccessObject
     /**
     * This removes all users copy preferences set on item identified by $item_id. This is done once the corresponding item is deleted
     *
-    * @param int $itemid identifer of docman item that has been marked as deleted.
+    * @param int $item_id identifer of docman item that has been marked as deleted.
     *@return void
     *
     */
-    function deleteCopyPreferenceForAllUsers($item_id)
+    public function deleteCopyPreferenceForAllUsers($item_id)
     {
         $sql = sprintf(
-            'DELETE FROM user_preferences'.
-            ' WHERE preference_name=\'%s_item_copy\''.
+            'DELETE FROM user_preferences' .
+            ' WHERE preference_name=\'%s_item_copy\'' .
             ' AND preference_value=%d',
             PLUGIN_DOCMAN_PREF,
             $this->da->quoteSmart($item_id)
@@ -940,15 +939,15 @@ class Docman_ItemDao extends DataAccessObject
     /**
     * This removes all users cut preferences set on item identified by $item_id. This is done once the corresponding item is deleted
     *
-    * @param int $itemid identifer of docman item that has been marked as deleted.
+    * @param int $item_id identifer of docman item that has been marked as deleted.
     *@return void
     *
     */
-    function deleteCutPreferenceForAllUsers($item_id)
+    public function deleteCutPreferenceForAllUsers($item_id)
     {
         $sql = sprintf(
-            'DELETE FROM user_preferences'.
-            ' WHERE preference_name=\'%s_item_cut\''.
+            'DELETE FROM user_preferences' .
+            ' WHERE preference_name=\'%s_item_cut\'' .
             ' AND preference_value=%d',
             PLUGIN_DOCMAN_PREF,
             $this->da->quoteSmart($item_id)
@@ -963,18 +962,18 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return bool
      */
-    function storeDeletedItem($itemId)
+    public function storeDeletedItem($itemId)
     {
-        $sql = 'INSERT INTO plugin_docman_item_deleted (item_id, parent_id, group_id, title, '.
-                        ' description, create_date, update_date, delete_date, '.
-                        ' user_id, status, obsolescence_date, rank, item_type, link_url, '.
-                        ' wiki_page, file_is_embedded) '.
-                        ' SELECT item_id, parent_id, group_id, title, '.
-                        ' description, create_date, update_date, delete_date, '.
-                        ' user_id, status, obsolescence_date, rank, item_type, link_url,'.
-                        ' wiki_page, file_is_embedded '.
-                        ' FROM plugin_docman_item '.
-                        ' WHERE item_id='.$this->da->quoteSmart($itemId);
+        $sql = 'INSERT INTO plugin_docman_item_deleted (item_id, parent_id, group_id, title, ' .
+                        ' description, create_date, update_date, delete_date, ' .
+                        ' user_id, status, obsolescence_date, rank, item_type, link_url, ' .
+                        ' wiki_page, file_is_embedded) ' .
+                        ' SELECT item_id, parent_id, group_id, title, ' .
+                        ' description, create_date, update_date, delete_date, ' .
+                        ' user_id, status, obsolescence_date, rank, item_type, link_url,' .
+                        ' wiki_page, file_is_embedded ' .
+                        ' FROM plugin_docman_item ' .
+                        ' WHERE item_id=' . $this->da->quoteSmart($itemId);
 
         return $this->update($sql);
     }
@@ -987,23 +986,23 @@ class Docman_ItemDao extends DataAccessObject
      * @param int $limit
      * @return Array
      */
-    function listPendingItems($groupId, $offset, $limit)
+    public function listPendingItems($groupId, $offset, $limit)
     {
-        $sql=' SELECT SQL_CALC_FOUND_ROWS D.item_id as id, '.
-                      ' D.item_type, '.
-                      ' D.title as title , I.title as location , '.
-                      ' D.user_id as user, D.delete_date  as date'.
-             ' FROM plugin_docman_item_deleted as D, plugin_docman_item as I'.
-             ' WHERE  D.group_id='.db_ei($groupId).
-             '        AND D.delete_date <= '.$this->da->escapeInt($_SERVER['REQUEST_TIME']).
-             '        AND D.parent_id = I.item_id '.
-             '        AND D.purge_date IS NULL '.
-             ' ORDER BY D.delete_date DESC '.
-             ' LIMIT '.$this->da->escapeInt($offset).', '.$this->da->escapeInt($limit);
+        $sql = ' SELECT SQL_CALC_FOUND_ROWS D.item_id as id, ' .
+                      ' D.item_type, ' .
+                      ' D.title as title , I.title as location , ' .
+                      ' D.user_id as user, D.delete_date  as date' .
+             ' FROM plugin_docman_item_deleted as D, plugin_docman_item as I' .
+             ' WHERE  D.group_id=' . db_ei($groupId) .
+             '        AND D.delete_date <= ' . $this->da->escapeInt($_SERVER['REQUEST_TIME']) .
+             '        AND D.parent_id = I.item_id ' .
+             '        AND D.purge_date IS NULL ' .
+             ' ORDER BY D.delete_date DESC ' .
+             ' LIMIT ' . $this->da->escapeInt($offset) . ', ' . $this->da->escapeInt($limit);
 
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError() && $dar->rowCount() >0) {
-                        $pendings = array();
+        if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
+                        $pendings = [];
             foreach ($dar as $row) {
                 $pendings[] = $row;
             }
@@ -1014,9 +1013,9 @@ class Docman_ItemDao extends DataAccessObject
                 return [];
             }
             $row = $resNumrows->getRow();
-            return array('items' => $pendings, 'nbItems' => $row['nb']);
+            return ['items' => $pendings, 'nbItems' => $row['nb']];
         }
-        return array();
+        return [];
     }
 
     /**
@@ -1026,14 +1025,14 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return DataAccessResult|false
      */
-    function listItemsToPurge($time)
+    public function listItemsToPurge($time)
     {
-        $sql = 'SELECT item_id, parent_id, group_id, title, '.
-               ' description, create_date, update_date, delete_date, '.
-               ' user_id, status, obsolescence_date, rank, item_type, link_url, '.
-               ' wiki_page, file_is_embedded '.
-               ' FROM plugin_docman_item_deleted '.
-               ' WHERE delete_date < '.$this->da->escapeInt($time).
+        $sql = 'SELECT item_id, parent_id, group_id, title, ' .
+               ' description, create_date, update_date, delete_date, ' .
+               ' user_id, status, obsolescence_date, rank, item_type, link_url, ' .
+               ' wiki_page, file_is_embedded ' .
+               ' FROM plugin_docman_item_deleted ' .
+               ' WHERE delete_date < ' . $this->da->escapeInt($time) .
                ' AND purge_date IS NULL ';
         return $this->retrieve($sql);
     }
@@ -1046,11 +1045,11 @@ class Docman_ItemDao extends DataAccessObject
      *
      * @return bool
      */
-    function setPurgeDate($itemId, $time)
+    public function setPurgeDate($itemId, $time)
     {
-        $sql = 'UPDATE plugin_docman_item_deleted'.
-               ' SET purge_date = '.$this->da->escapeInt($time).
-               ' WHERE item_id = '.$this->da->escapeInt($itemId);
+        $sql = 'UPDATE plugin_docman_item_deleted' .
+               ' SET purge_date = ' . $this->da->escapeInt($time) .
+               ' WHERE item_id = ' . $this->da->escapeInt($itemId);
         return $this->update($sql);
     }
 
@@ -1063,12 +1062,12 @@ class Docman_ItemDao extends DataAccessObject
      */
     public function restore($itemId)
     {
-        $sql = 'UPDATE plugin_docman_item'.
-               ' SET delete_date = NULL'.
-               ' WHERE item_id = '.$this->da->escapeInt($itemId);
+        $sql = 'UPDATE plugin_docman_item' .
+               ' SET delete_date = NULL' .
+               ' WHERE item_id = ' . $this->da->escapeInt($itemId);
         if ($this->update($sql)) {
-            $sql = 'DELETE FROM plugin_docman_item_deleted'.
-                   ' WHERE item_id = '.$this->da->escapeInt($itemId);
+            $sql = 'DELETE FROM plugin_docman_item_deleted' .
+                   ' WHERE item_id = ' . $this->da->escapeInt($itemId);
             return $this->update($sql);
         }
         return true;
@@ -1082,17 +1081,17 @@ class Docman_ItemDao extends DataAccessObject
 
         $res = $this->retrieveFirstRow($sql);
 
-        return (!$res)? 0 : (int)$res['nb'];
+        return (! $res) ? 0 : (int) $res['nb'];
     }
     public function countDocumentAfter(int $timestamp): int
     {
         $sql = 'SELECT count(*) as nb
                 FROM plugin_docman_item
                 WHERE item_type != ' . $this->da->escapeInt(PLUGIN_DOCMAN_ITEM_TYPE_FOLDER) . '
-                AND create_date > '.$this->da->escapeInt($timestamp);
+                AND create_date > ' . $this->da->escapeInt($timestamp);
 
         $res = $this->retrieveFirstRow($sql);
 
-        return (!$res)? 0 : (int)$res['nb'];
+        return (! $res) ? 0 : (int) $res['nb'];
     }
 }

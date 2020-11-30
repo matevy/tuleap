@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2016 - 2018. All rights reserved.
+ * Copyright Enalean (c) 2016 - Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -108,10 +108,10 @@ class PostCommit
 
         $this->extractReference($repository, $commit_info_enhanced, $committer, $new_revision);
 
-        $params = array(
+        $params = [
             'repository' => $repository,
             'commit_info' => $commit_info_enhanced
-        );
+        ];
 
         $this->event_manager->processEvent(self::PROCESS_POST_COMMIT, $params);
     }
@@ -201,7 +201,7 @@ class PostCommit
         if ($commit_info->hasChangedFiles()) {
             $body .= "\n\nSource code changes: \n";
             foreach ($commit_info->getAllFiles() as $file) {
-                $body .= $repository->getSvnDomain() . "/plugins/svn/index.php/" . trim($file) . "?roottype=svn&root=" . $repository->getFullName() . "&r1=$old_revision&r2=$new_revision\n";
+                $body .= $repository->getSvnDomain() . '/plugins/svn/' . trim($file) . "?roottype=svn&root=" . $repository->getFullName() . "&r1=$old_revision&r2=$new_revision\n";
             }
         }
 
@@ -242,7 +242,7 @@ class PostCommit
 
     private function getNotifiedMails(Repository $repository)
     {
-        $notified_mails = array();
+        $notified_mails = [];
 
         $commit_info = $this->commit_info_enhancer->getCommitInfo();
         foreach ($commit_info->getChangedDirectories() as $path) {

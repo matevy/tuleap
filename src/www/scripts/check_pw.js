@@ -18,7 +18,7 @@
  */
 
 /* global jQuery:readonly */
-(function($) {
+(function ($) {
     let currentRequest = null;
 
     function checkPassword() {
@@ -26,8 +26,8 @@
             currentRequest.abort();
         }
         currentRequest = $.post("/include/check_pw.php", {
-            form_pw: $(this).val()
-        }).done(function(data) {
+            form_pw: $(this).val(),
+        }).done(function (data) {
             if (toggleErrorMessages(data)) {
                 setRobustnessToBad();
             } else {
@@ -39,21 +39,27 @@
 
     function toggleErrorMessages(data) {
         var has_errors = false;
-        window.password_validators.forEach(function(key) {
-            $(".password_validator_msg_" + key + " > i").each(function() {
+        window.password_validators.forEach(function (key) {
+            $(".password_validator_msg_" + key).each(function () {
                 if (data.indexOf(key) >= 0) {
                     has_errors = true;
+                    $(this).addClass("tlp-text-danger").removeClass("tlp-text-success");
+
                     $(this)
+                        .find("> i")
                         .addClass("fa-times")
-                        .addClass("password_strategy_bad")
+                        .addClass("password-strategy-bad")
                         .removeClass("fa-check")
-                        .removeClass("password_strategy_good");
+                        .removeClass("password-strategy-good");
                 } else {
+                    $(this).addClass("tlp-text-success").removeClass("tlp-text-danger");
+
                     $(this)
+                        .find("> i")
                         .addClass("fa-check")
-                        .addClass("password_strategy_good")
+                        .addClass("password-strategy-good")
                         .removeClass("fa-times")
-                        .removeClass("password_strategy_bad");
+                        .removeClass("password-strategy-bad");
                 }
             });
         });
@@ -62,15 +68,21 @@
     }
 
     function setRobustnessToGood() {
-        $(".robustness .password_strategy_bad").hide();
-        $(".robustness .password_strategy_good").show();
-        $(".robustness .password_validators_loading").hide();
+        $(".robustness").removeClass("bad");
+        $(".robustness").addClass("good");
+
+        $(".robustness > .password-strategy-bad").hide();
+        $(".robustness > .password-strategy-good").show();
+        $(".robustness .fa-circle-o-notch").removeClass("fa-circle-o-notch fa-spin");
     }
 
     function setRobustnessToBad() {
-        $(".robustness .password_strategy_bad").show();
-        $(".robustness .password_strategy_good").hide();
-        $(".robustness .password_validators_loading").hide();
+        $(".robustness").removeClass("good");
+        $(".robustness").addClass("bad");
+
+        $(".robustness > .password-strategy-bad").show();
+        $(".robustness > .password-strategy-good").hide();
+        $(".robustness .fa-circle-o-notch").removeClass("fa-circle-o-notch fa-spin");
     }
 
     /**
@@ -80,25 +92,32 @@
      */
     function debounce(func, wait) {
         let timeout;
-        return function() {
+        return function () {
             const context = this,
                 args = arguments;
             clearTimeout(timeout);
-            timeout = setTimeout(function() {
+            timeout = setTimeout(function () {
                 timeout = null;
                 func.apply(context, args);
             }, wait);
         };
     }
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         setRobustnessToBad();
 
         const debouncedCheckPassword = debounce(checkPassword, 300);
 
         $("#form_pw").on("paste keyup", debouncedCheckPassword);
-        $("#form_pw").on("paste keyup", function() {
-            $(".robustness .password_validators_loading").show();
+        $("#form_pw").on("paste keyup", function () {
+            $(".robustness .fa-times, .robustness .fa-check")
+                .removeClass("fa-times fa-check")
+                .addClass("fa-circle-o-notch fa-spin");
+        });
+        $("#form_pw").on("focus", function () {
+            $(".account-security-password-robustness").removeClass(
+                "account-security-password-robustness-hidden"
+            );
         });
     });
 })(jQuery);

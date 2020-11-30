@@ -19,45 +19,45 @@
 
 import { shallowMount } from "@vue/test-utils";
 import OpenClosedSwitcher from "./OpenClosedSwitcher.vue";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import { createTaskboardLocalVue } from "../../../helpers/local-vue-for-test";
 
 describe("OpenClosedSwitcher", () => {
-    it("It toggles the right button when closed items should be displayed", async () => {
+    it("toggles the right button when closed items should be displayed", async () => {
         const wrapper = shallowMount(OpenClosedSwitcher, {
             localVue: await createTaskboardLocalVue(),
             mocks: {
                 $store: createStoreMock({
                     state: {
-                        are_closed_items_displayed: true
-                    }
-                })
-            }
+                        are_closed_items_displayed: true,
+                    },
+                }),
+            },
         });
 
-        const radio_show: HTMLInputElement = wrapper.find("#button-bar-show-closed")
+        const radio_show: HTMLInputElement = wrapper.get("#button-bar-show-closed")
             .element as HTMLInputElement;
-        const radio_hide: HTMLInputElement = wrapper.find("#button-bar-hide-closed")
+        const radio_hide: HTMLInputElement = wrapper.get("#button-bar-hide-closed")
             .element as HTMLInputElement;
         expect(radio_show.checked).toBe(true);
         expect(radio_hide.checked).toBe(false);
     });
 
-    it("It toggles the right button when closed items should not be displayed", async () => {
+    it("toggles the right button when closed items should not be displayed", async () => {
         const wrapper = shallowMount(OpenClosedSwitcher, {
             localVue: await createTaskboardLocalVue(),
             mocks: {
                 $store: createStoreMock({
                     state: {
-                        are_closed_items_displayed: false
-                    }
-                })
-            }
+                        are_closed_items_displayed: false,
+                    },
+                }),
+            },
         });
 
-        const radio_show: HTMLInputElement = wrapper.find("#button-bar-show-closed")
+        const radio_show: HTMLInputElement = wrapper.get("#button-bar-show-closed")
             .element as HTMLInputElement;
-        const radio_hide: HTMLInputElement = wrapper.find("#button-bar-hide-closed")
+        const radio_hide: HTMLInputElement = wrapper.get("#button-bar-hide-closed")
             .element as HTMLInputElement;
         expect(radio_show.checked).toBe(false);
         expect(radio_hide.checked).toBe(true);
@@ -69,12 +69,12 @@ describe("OpenClosedSwitcher", () => {
             mocks: {
                 $store: createStoreMock({
                     state: {
-                        are_closed_items_displayed: false
-                    }
-                })
-            }
+                        are_closed_items_displayed: false,
+                    },
+                }),
+            },
         });
-        wrapper.find("#button-bar-show-closed").setChecked();
+        wrapper.get("#button-bar-show-closed").setChecked();
         expect(wrapper.vm.$store.dispatch).toHaveBeenCalledWith(
             "displayClosedItems",
             expect.anything()
@@ -87,12 +87,14 @@ describe("OpenClosedSwitcher", () => {
             mocks: {
                 $store: createStoreMock({
                     state: {
-                        are_closed_items_displayed: false
-                    }
-                })
-            }
+                        are_closed_items_displayed: false,
+                    },
+                }),
+            },
         });
-        wrapper.find("#button-bar-hide-closed").setChecked();
+        const hide_button = wrapper.get("#button-bar-hide-closed");
+        hide_button.setChecked();
+        hide_button.trigger("change");
         expect(wrapper.vm.$store.dispatch).toHaveBeenCalledWith(
             "hideClosedItems",
             expect.anything()

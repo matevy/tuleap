@@ -23,6 +23,9 @@ namespace Tuleap\FRS\REST\v1;
 use FRSPackage;
 use Tuleap\REST\JsonCast;
 
+/**
+ * @psalm-immutable
+ */
 class PackageMinimalRepresentation
 {
     public const ROUTE = 'frs_packages';
@@ -42,10 +45,10 @@ class PackageMinimalRepresentation
      */
     public $label;
 
-    public function build(FRSPackage $package)
+    public function __construct(FRSPackage $package)
     {
         $this->id    = JsonCast::toInt($package->getPackageID());
-        $this->uri   = self::ROUTE ."/". urlencode($this->id);
+        $this->uri   = self::ROUTE . "/" . urlencode($this->id);
         $this->label = $package->getName();
     }
 }

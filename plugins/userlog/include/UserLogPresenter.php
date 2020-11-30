@@ -65,11 +65,11 @@ class UserLogPresenter
         $this->label_referrer        = $GLOBALS['Language']->getText('plugin_userlog', 'label_referrer');
         $this->export_csv            = $GLOBALS['Language']->getText('plugin_userlog', 'export_csv');
 
-        $this->export_url = USERLOG_BASE_URL.'/?'.http_build_query(
-            array(
+        $this->export_url = USERLOG_BASE_URL . '/?' . http_build_query(
+            [
                 'action' => 'export',
                 'day'    => $selected_day,
-            )
+            ]
         );
 
         $nb_displayed     = $offset + $limit > $nb_logs ? $nb_logs - $offset : $limit;
@@ -79,7 +79,7 @@ class UserLogPresenter
             $nb_displayed,
             $nb_logs,
             '/plugins/userlog/',
-            array('day' => $selected_day)
+            ['day' => $selected_day]
         );
     }
 }

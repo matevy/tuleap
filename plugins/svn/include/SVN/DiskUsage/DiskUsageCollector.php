@@ -27,7 +27,7 @@ use SvnPlugin;
 class DiskUsageCollector
 {
     /**
-     * @var Retriever
+     * @var DiskUsageRetriever
      */
     private $retriever;
     /**
@@ -41,7 +41,7 @@ class DiskUsageCollector
         $this->dao       = $dao;
     }
 
-    public function collectDiskUsageForProject(Project $project, \DateTimeImmutable $collect_date)
+    public function collectDiskUsageForProject(Project $project, \DateTimeImmutable $collect_date): void
     {
         $svn_disk_size = $this->retriever->getDiskUsageForProject($project);
         $this->dao->addGroup(
@@ -50,5 +50,13 @@ class DiskUsageCollector
             $svn_disk_size,
             $collect_date->getTimestamp()
         );
+        $this->resetSubversionCoreStatisticsWhenPluginManageCoreRepository($project, $collect_date);
+    }
+
+    private function resetSubversionCoreStatisticsWhenPluginManageCoreRepository(Project $project, \DateTimeImmutable $collect_date): void
+    {
+        if ($this->retriever->hasCoreStatistics($project)) {
+            $this->dao->updateGroup($project, $collect_date, \Statistics_DiskUsageManager::SVN, '0');
+        }
     }
 }

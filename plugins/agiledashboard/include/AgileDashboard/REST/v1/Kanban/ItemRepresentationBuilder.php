@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,9 +24,9 @@ use AgileDashboard_KanbanItemManager;
 use Cardwall_Semantic_CardFields;
 use EventManager;
 use PFUser;
-use Tracker_Artifact;
 use Tuleap\AgileDashboard\Kanban\ColumnIdentifier;
 use Tuleap\Cardwall\BackgroundColor\BackgroundColorBuilder;
+use Tuleap\Tracker\Artifact\Artifact;
 use UserManager;
 
 class ItemRepresentationBuilder
@@ -59,10 +59,9 @@ class ItemRepresentationBuilder
     }
 
     /**
-     * @param Tracker_Artifact $artifact
      * @return KanbanItemRepresentation
      */
-    public function buildItemRepresentation(Tracker_Artifact $artifact)
+    public function buildItemRepresentation(Artifact $artifact)
     {
         $item_in_backlog = $this->kanban_item_manager->isKanbanItemInBacklog($artifact);
         $in_column       = ($item_in_backlog) ? ColumnIdentifier::BACKLOG_COLUMN : null;
@@ -86,11 +85,9 @@ class ItemRepresentationBuilder
     }
 
     /**
-     * @param ColumnIdentifier $column_identifier
-     * @param Tracker_Artifact $artifact
      * @return KanbanItemRepresentation
      */
-    public function buildItemRepresentationInColumn(ColumnIdentifier $column_identifier, Tracker_Artifact $artifact)
+    public function buildItemRepresentationInColumn(ColumnIdentifier $column_identifier, Artifact $artifact)
     {
         $time_info = $column_identifier->isBacklog() ? [] : $this->time_info_factory->getTimeInfo($artifact);
 
@@ -98,12 +95,10 @@ class ItemRepresentationBuilder
     }
 
     /**
-     * @param ColumnIdentifier $column_identifier
-     * @param Tracker_Artifact $artifact
      * @param $time_info
      * @return KanbanItemRepresentation
      */
-    private function buildItem(ColumnIdentifier $column_identifier, Tracker_Artifact $artifact, array $time_info)
+    private function buildItem(ColumnIdentifier $column_identifier, Artifact $artifact, array $time_info)
     {
         $current_user         = $this->user_manager->getCurrentUser();
         $card_fields_semantic = $this->getCardFieldsSemantic($artifact);
@@ -114,26 +109,21 @@ class ItemRepresentationBuilder
             $current_user
         );
 
-        $item_representation = new KanbanItemRepresentation();
-        $item_representation->build(
+        return KanbanItemRepresentation::build(
             $artifact,
             $time_info,
             $column_identifier->getColumnId(),
             $card_fields,
             $background_color
         );
-        return $item_representation;
     }
 
     /**
-     * @param Cardwall_Semantic_CardFields $card_fields_semantic
-     * @param Tracker_Artifact $artifact
-     * @param PFUser $current_user
      * @return array
      */
     private function getCardFields(
         Cardwall_Semantic_CardFields $card_fields_semantic,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $current_user
     ) {
         $card_fields = [];
@@ -152,19 +142,18 @@ class ItemRepresentationBuilder
     }
 
     /**
-     * @param Tracker_Artifact $artifact
      * @return Cardwall_Semantic_CardFields|null
      */
-    private function getCardFieldsSemantic(Tracker_Artifact $artifact)
+    private function getCardFieldsSemantic(Artifact $artifact)
     {
         $card_fields_semantic = null;
 
         $this->event_manager->processEvent(
             AGILEDASHBOARD_EVENT_GET_CARD_FIELDS,
-            array(
+            [
                 'tracker'              => $artifact->getTracker(),
                 'card_fields_semantic' => &$card_fields_semantic
-            )
+            ]
         );
 
         return $card_fields_semantic;

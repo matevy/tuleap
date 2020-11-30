@@ -20,10 +20,17 @@
 
 <template>
     <div class="taskboard-head">
-        <div class="taskboard-header taskboard-cell-swimlane-header" v-bind:class="fullscreen_class"></div>
+        <div
+            class="taskboard-header taskboard-cell-swimlane-header"
+            v-bind:class="taskboard_cell_swimlane_header_classes"
+        ></div>
         <template v-for="column of columns">
-            <collapsed-header-cell v-bind:key="column.id" v-if="column.is_collapsed" v-bind:column="column"/>
-            <expanded-header-cell v-bind:key="column.id" v-else v-bind:column="column"/>
+            <collapsed-header-cell
+                v-bind:key="column.id"
+                v-if="column.is_collapsed"
+                v-bind:column="column"
+            />
+            <expanded-header-cell v-bind:key="column.id" v-else v-bind:column="column" />
         </template>
     </div>
 </template>
@@ -37,16 +44,16 @@ import ExpandedHeaderCell from "./Expanded/ExpandedHeaderCell.vue";
 import CollapsedHeaderCell from "./Collapsed/CollapsedHeaderCell.vue";
 
 const column = namespace("column");
-const fullscreen = namespace("fullscreen");
+const swimlane = namespace("swimlane");
 
 @Component({
-    components: { CollapsedHeaderCell, ExpandedHeaderCell }
+    components: { CollapsedHeaderCell, ExpandedHeaderCell },
 })
 export default class TaskBoardHeader extends Vue {
     @column.State
     readonly columns!: Array<ColumnDefinition>;
 
-    @fullscreen.Getter
-    readonly fullscreen_class!: string;
+    @swimlane.Getter
+    readonly taskboard_cell_swimlane_header_classes!: string[];
 }
 </script>

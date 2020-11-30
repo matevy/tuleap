@@ -30,7 +30,7 @@ class HTTPRequest extends Codendi_Request
     /**
      * @var array
      */
-    private $trusted_proxied = array();
+    private $trusted_proxied = [];
 
     /**
      * Constructor
@@ -69,29 +69,9 @@ class HTTPRequest extends Codendi_Request
         }
     }
 
-    public function getBrowser()
-    {
-        if ($this->hasUserAgent() && $this->isBrowserInternetExplorerBefore11()) {
-            return new BrowserIEDeprecated($this->getCurrentUser());
-        }
-
-        return new Browser();
-    }
-
-    private function isBrowserInternetExplorerBefore11()
-    {
-        // MSIE string has been removed in IE11
-        // see https://msdn.microsoft.com/en-us/library/bg182625(v=vs.85).aspx
-        return strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE') !== false;
-    }
-
-    private function hasUserAgent()
-    {
-        return isset($_SERVER['HTTP_USER_AGENT']);
-    }
-
     /**
      * Hold an instance of the class
+     * @var self|null
      */
     protected static $_instance;
 
@@ -102,9 +82,9 @@ class HTTPRequest extends Codendi_Request
      */
     public static function instance()
     {
-        if (!isset(self::$_instance)) {
+        if (! isset(self::$_instance)) {
             $c = self::class;
-            self::$_instance = new $c;
+            self::$_instance = new $c();
         }
         return self::$_instance;
     }
@@ -128,7 +108,6 @@ class HTTPRequest extends Codendi_Request
     public function validFile(&$validator)
     {
         if (is_a($validator, 'Valid_File')) {
-            $this->_validated_input[$validator->getKey()] = true;
             return $validator->validate($_FILES, $validator->getKey());
         } else {
             return false;
@@ -143,7 +122,7 @@ class HTTPRequest extends Codendi_Request
      * @param string $variable Name of the parameter to get.
      * @param array $array Name of the parameter to get.
      */
-    function _get($variable, $array)
+    public function _get($variable, $array)
     {
         if ($this->_exist($variable, $array)) {
             return $array[$variable];
@@ -261,11 +240,11 @@ class HTTPRequest extends Codendi_Request
     public function getServerUrl()
     {
         if ($this->reverseProxyForwardsOriginalProtocol()) {
-            return $this->getScheme().$_SERVER[self::HEADER_HOST];
+            return $this->getScheme() . $_SERVER[self::HEADER_HOST];
         } elseif ($this->isSecure() && ForgeConfig::get('sys_https_host')) {
-            return $this->getScheme().ForgeConfig::get('sys_https_host');
+            return $this->getScheme() . ForgeConfig::get('sys_https_host');
         } else {
-            return $this->getScheme().ForgeConfig::get('sys_default_domain');
+            return $this->getScheme() . ForgeConfig::get('sys_default_domain');
         }
     }
 

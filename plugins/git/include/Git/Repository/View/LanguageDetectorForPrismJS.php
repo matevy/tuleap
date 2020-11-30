@@ -25,23 +25,30 @@ namespace Tuleap\Git\Repository\View;
 class LanguageDetectorForPrismJS
 {
     private const FILENAMES = [
-        'CMakeLists.txt' => 'cmake'
+        'CMakeLists.txt'  => 'cmake',
+        'Dockerfile'      => 'dockerfile',
+        '.eslintignore'   => 'ignore',
+        '.prettierignore' => 'ignore',
     ];
 
     private const EXTENSIONS = [
-        'js'       => 'javascript',
-        'py'       => 'python',
-        'rb'       => 'ruby',
-        'ps1'      => 'powershell',
-        'psm1'     => 'powershell',
-        'sh'       => 'bash',
-        'bat'      => 'batch',
-        'h'        => 'c',
-        'tex'      => 'latex',
-        'vue'      => 'markup',
-        'mkd'      => 'markdown',
-        'yml'      => 'yaml',
-        'cmake.in' => 'cmake'
+        'js'             => 'javascript',
+        'py'             => 'python',
+        'rb'             => 'ruby',
+        'ps1'            => 'powershell',
+        'psm1'           => 'powershell',
+        'sh'             => 'bash',
+        'bat'            => 'batch',
+        'h'              => 'c',
+        'tex'            => 'latex',
+        'vue'            => 'markup',
+        'mkd'            => 'markdown',
+        'yml'            => 'yaml',
+        'cmake.in'       => 'cmake',
+        'tf'             => 'hcl',
+        'tfvars'         => 'hcl',
+        'tfstate'        => 'json',
+        'tfstate.backup' => 'json',
     ];
 
     public function getLanguage(string $filename): string

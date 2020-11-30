@@ -23,6 +23,7 @@ use Symfony\Component\Lock\Store\SemaphoreStore;
 use Tuleap\CLI\Application;
 use Tuleap\CLI\CLICommandsCollector;
 use Tuleap\CLI\Command\ConfigGetCommand;
+use Tuleap\CLI\Command\ConfigListCommand;
 use Tuleap\CLI\Command\ConfigSetCommand;
 use Tuleap\CLI\Command\DailyJobCommand;
 use Tuleap\CLI\Command\ImportProjectXMLCommand;
@@ -38,13 +39,14 @@ use Tuleap\CLI\DelayExecution\ExecutionDelayedLauncher;
 use Tuleap\CLI\DelayExecution\ExecutionDelayerRandomizedSleep;
 use Tuleap\DB\DBFactory;
 use Tuleap\FRS\CorrectFrsRepositoryPermissionsCommand;
-use Tuleap\Mail\AutomaticMailsLogger;
-use Tuleap\Mail\AutomaticMailsSender;
+use Tuleap\Language\LocaleSwitcher;
+use Tuleap\User\Profile\ForceRegenerationDefaultAvatarCommand;
+use Tuleap\User\UserSuspensionManager;
 use Tuleap\Password\PasswordSanityChecker;
 use Tuleap\Queue\TaskWorker\TaskWorkerProcessCommand;
 use Tuleap\User\AccessKey\AccessKeyDAO;
 use Tuleap\User\AccessKey\AccessKeyRevoker;
-use Tuleap\User\IdleUsersDao;
+use Tuleap\Dao\UserSuspensionDao;
 use TuleapCfg\Command\ProcessFactory;
 
 (static function () {
@@ -75,6 +77,12 @@ $user_manager          = UserManager::instance();
 $CLI_command_collector = new CLICommandsCollector();
 
 $CLI_command_collector->addCommand(
+    ConfigListCommand::NAME,
+    static function () use ($event_manager): ConfigListCommand {
+        return new ConfigListCommand($event_manager);
+    }
+);
+$CLI_command_collector->addCommand(
     ConfigGetCommand::NAME,
     static function (): ConfigGetCommand {
         return new ConfigGetCommand();
@@ -82,10 +90,12 @@ $CLI_command_collector->addCommand(
 );
 $CLI_command_collector->addCommand(
     ConfigSetCommand::NAME,
-    static function () use ($event_manager) : ConfigSetCommand {
+    static function () use ($event_manager): ConfigSetCommand {
         return new ConfigSetCommand(
-            new ConfigDao(),
-            $event_manager
+            new \Tuleap\Config\ConfigSet(
+                $event_manager,
+                new ConfigDao()
+            )
         );
     }
 );
@@ -100,13 +110,13 @@ $CLI_command_collector->addCommand(
 );
 $CLI_command_collector->addCommand(
     ImportProjectXMLCommand::NAME,
-    static function () : ImportProjectXMLCommand {
+    static function (): ImportProjectXMLCommand {
         return new ImportProjectXMLCommand();
     }
 );
 $CLI_command_collector->addCommand(
     ProcessSystemEventsCommand::NAME,
-    static function () use ($backend_logger, $event_manager) : ProcessSystemEventsCommand {
+    static function () use ($backend_logger, $event_manager): ProcessSystemEventsCommand {
         $store   = new SemaphoreStore();
         $factory = new LockFactory($store);
 
@@ -119,7 +129,7 @@ $CLI_command_collector->addCommand(
 );
 $CLI_command_collector->addCommand(
     QueueSystemCheckCommand::NAME,
-    static function () use ($event_manager) : QueueSystemCheckCommand {
+    static function () use ($event_manager): QueueSystemCheckCommand {
         return new QueueSystemCheckCommand(
             $event_manager,
             DBFactory::getMainTuleapDBConnection(),
@@ -134,7 +144,7 @@ $CLI_command_collector->addCommand(
 
 $CLI_command_collector->addCommand(
     LaunchEveryMinuteJobCommand::NAME,
-    static function () use ($event_manager, $backend_logger) : LaunchEveryMinuteJobCommand {
+    static function () use ($event_manager, $backend_logger): LaunchEveryMinuteJobCommand {
         return new LaunchEveryMinuteJobCommand(
             $event_manager,
             $backend_logger,
@@ -145,24 +155,23 @@ $CLI_command_collector->addCommand(
 
 $CLI_command_collector->addCommand(
     WorkerSVNRootUpdateCommand::NAME,
-    static function () : WorkerSVNRootUpdateCommand {
+    static function (): WorkerSVNRootUpdateCommand {
         return new WorkerSVNRootUpdateCommand();
     }
 );
 
 $CLI_command_collector->addCommand(
     \Tuleap\CLI\Command\RedisWaiterCommand::NAME,
-    static function () : \Tuleap\CLI\Command\RedisWaiterCommand {
+    static function (): \Tuleap\CLI\Command\RedisWaiterCommand {
         return new \Tuleap\CLI\Command\RedisWaiterCommand();
     }
 );
 
 $CLI_command_collector->addCommand(
     DailyJobCommand::NAME,
-    static function () use ($event_manager, $user_manager) : DailyJobCommand {
+    static function () use ($event_manager, $user_manager): DailyJobCommand {
         return new DailyJobCommand(
             $event_manager,
-            $user_manager,
             new AccessKeyRevoker(
                 new AccessKeyDAO()
             ),
@@ -172,15 +181,15 @@ $CLI_command_collector->addCommand(
                     new ExecutionDelayerRandomizedSleep(1799)
                 )
             ),
-            new AutomaticMailsSender(
+            new UserSuspensionManager(
                 new MailPresenterFactory(),
-                TemplateRendererFactory::build()->getRenderer(__DIR__ .'/../templates/mail/'),
-                'mail-suspension-alert',
-                new Codendi_Mail,
-                new IdleUsersDao(),
+                TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../templates/mail/'),
+                new Codendi_Mail(),
+                new UserSuspensionDao(),
                 $user_manager,
                 new BaseLanguageFactory(),
-                new AutomaticMailsLogger()
+                BackendLogger::getDefaultLogger('usersuspension_syslog'),
+                new LocaleSwitcher()
             )
         );
     }
@@ -188,11 +197,11 @@ $CLI_command_collector->addCommand(
 
 $CLI_command_collector->addCommand(
     TaskWorkerProcessCommand::NAME,
-    static function () use ($event_manager) : TaskWorkerProcessCommand {
+    static function () use ($event_manager): TaskWorkerProcessCommand {
         return new TaskWorkerProcessCommand(
             $event_manager,
             new TruncateLevelLogger(
-                new BackendLogger(Tuleap\Queue\Worker::DEFAULT_LOG_FILE_PATH),
+                BackendLogger::getDefaultLogger(basename(Tuleap\Queue\Worker::DEFAULT_LOG_FILE_PATH)),
                 ForgeConfig::get('sys_logger_level')
             )
         );
@@ -201,7 +210,7 @@ $CLI_command_collector->addCommand(
 
 $CLI_command_collector->addCommand(
     WorkerSupervisorCommand::NAME,
-    static function () : WorkerSupervisorCommand {
+    static function (): WorkerSupervisorCommand {
         return new WorkerSupervisorCommand(
             new ProcessFactory(),
             new LockFactory(new SemaphoreStore()),
@@ -211,7 +220,7 @@ $CLI_command_collector->addCommand(
 
 $CLI_command_collector->addCommand(
     WorkerSystemCtlCommand::NAME,
-    static function () : WorkerSystemCtlCommand {
+    static function (): WorkerSystemCtlCommand {
         return new WorkerSystemCtlCommand(
             new ProcessFactory(),
         );
@@ -222,8 +231,18 @@ $CLI_command_collector->addCommand(
     CorrectFrsRepositoryPermissionsCommand::NAME,
     function (): CorrectFrsRepositoryPermissionsCommand {
         return new CorrectFrsRepositoryPermissionsCommand(
-            new DirectoryIterator('/var/lib/tuleap/ftp/tuleap/'),
+            new DirectoryIterator(ForgeConfig::get('ftp_frs_dir_prefix')),
             ProjectManager::instance()
+        );
+    }
+);
+
+$CLI_command_collector->addCommand(
+    ForceRegenerationDefaultAvatarCommand::NAME,
+    static function (): ForceRegenerationDefaultAvatarCommand {
+        return new ForceRegenerationDefaultAvatarCommand(
+            UserManager::instance(),
+            new UserDao()
         );
     }
 );

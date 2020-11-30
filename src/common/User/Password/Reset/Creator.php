@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -28,7 +28,7 @@ use Tuleap\Authentication\SplitToken\SplitTokenVerificationStringHasher;
 class Creator
 {
     /**
-     * @var DataAccessObject
+     * @var LostPasswordDAO
      */
     private $dao;
     /**
@@ -37,18 +37,14 @@ class Creator
     private $hasher;
 
     public function __construct(
-        DataAccessObject $dao,
+        LostPasswordDAO $dao,
         SplitTokenVerificationStringHasher $hasher
     ) {
         $this->dao    = $dao;
         $this->hasher = $hasher;
     }
 
-    /**
-     * @return SplitToken
-     * @throws \Tuleap\User\Password\Reset\TokenNotCreatedException
-     */
-    public function create(PFUser $user)
+    public function create(PFUser $user): ?SplitToken
     {
         $verification_string = SplitTokenVerificationString::generateNewSplitTokenVerificationString();
         $current_date        = new \DateTime();
@@ -59,8 +55,8 @@ class Creator
             $current_date->getTimestamp()
         );
 
-        if ($token_id === false) {
-            throw new TokenNotCreatedException();
+        if ($token_id === null) {
+            return null;
         }
 
         return new SplitToken($token_id, $verification_string);

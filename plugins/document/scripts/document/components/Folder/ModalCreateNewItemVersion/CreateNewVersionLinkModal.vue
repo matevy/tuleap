@@ -18,37 +18,45 @@
   -->
 
 <template>
-    <form class="tlp-modal"
-          role="dialog"
-          v-bind:aria-labelled-by="aria_labelled_by"
-          v-on:submit="createNewLinkVersion"
-          data-test="document-new-item-version-modal"
+    <form
+        class="tlp-modal"
+        role="dialog"
+        v-bind:aria-labelled-by="aria_labelled_by"
+        v-on:submit="createNewLinkVersion"
+        data-test="document-new-item-version-modal"
     >
-        <modal-header v-bind:modal-title="modal_title"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-header-class="'fa-plus'"
+        <modal-header
+            v-bind:modal-title="modal_title"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-header-class="'fa-plus'"
         />
-        <modal-feedback/>
+        <modal-feedback />
         <div class="tlp-modal-body">
-            <item-update-properties v-bind:version="version" v-bind:item="item" v-on:approvalTableActionChange="setApprovalUpdateAction">
+            <item-update-properties
+                v-bind:version="version"
+                v-bind:item="item"
+                v-on:approval-table-action-change="setApprovalUpdateAction"
+            >
                 <link-properties
                     v-if="link_model"
                     v-model="link_model"
                     v-bind:item="item"
-                    key="link-props"/>
+                    key="link-props"
+                />
             </item-update-properties>
         </div>
-        <modal-footer v-bind:is-loading="is_loading"
-                      v-bind:submit-button-label="submit_button_label"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-submit-button-class="'fa-plus'"
+        <modal-footer
+            v-bind:is-loading="is_loading"
+            v-bind:submit-button-label="submit_button_label"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-submit-button-class="'fa-plus'"
         />
     </form>
 </template>
 
 <script>
 import { mapState } from "vuex";
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 import { sprintf } from "sprintf-js";
 import ModalHeader from "../ModalCommon/ModalHeader.vue";
 import ModalFeedback from "../ModalCommon/ModalFeedback.vue";
@@ -63,10 +71,10 @@ export default {
         ItemUpdateProperties,
         ModalFeedback,
         ModalHeader,
-        ModalFooter
+        ModalFooter,
     },
     props: {
-        item: Object
+        item: Object,
     },
     data() {
         return {
@@ -74,7 +82,7 @@ export default {
             version: {},
             is_loading: false,
             is_displayed: false,
-            modal: null
+            modal: null,
         };
     },
     computed: {
@@ -87,7 +95,7 @@ export default {
         },
         aria_labelled_by() {
             return "document-new-item-version-modal";
-        }
+        },
     },
     mounted() {
         this.modal = createModal(this.$el);
@@ -106,7 +114,7 @@ export default {
             this.version = {
                 title: "",
                 changelog: "",
-                is_file_locked: this.item.lock_info !== null
+                is_file_locked: this.item.lock_info !== null,
             };
 
             this.link_model = this.item.link_properties;
@@ -131,7 +139,7 @@ export default {
                 this.version.title,
                 this.version.changelog,
                 this.version.is_file_locked,
-                this.approval_table_action
+                this.approval_table_action,
             ]);
 
             this.is_loading = false;
@@ -140,7 +148,7 @@ export default {
                 this.link_model = null;
                 this.modal.hide();
             }
-        }
-    }
+        },
+    },
 };
 </script>

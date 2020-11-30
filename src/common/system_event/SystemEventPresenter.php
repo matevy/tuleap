@@ -26,16 +26,15 @@ use Codendi_HTMLPurifier;
 class SystemEventPresenter
 {
     private static $NULL_DATE = '0000-00-00 00:00:00';
-    private static $NULL_TIME = '00:00:00';
 
-    private static $BADGES_PER_STATUS = array(
+    private static $BADGES_PER_STATUS = [
         SystemEvent::STATUS_RUNNING => 'info',
         SystemEvent::STATUS_DONE    => 'success',
         SystemEvent::STATUS_WARNING => 'warning',
         SystemEvent::STATUS_ERROR   => 'danger',
         SystemEvent::STATUS_NONE    => 'secondary',
         SystemEvent::STATUS_NEW     => 'secondary'
-    );
+    ];
 
     public $id;
     public $full_type;
@@ -70,9 +69,16 @@ class SystemEventPresenter
         $this->owner     = $sysevent->getOwner();
         $this->log       = $sysevent->getLog() ? $sysevent->getLog() : '';
 
-        $this->priority = $GLOBALS['Language']->getText('admin_system_events', 'priority_' . $sysevent->getPriority());
-        $this->is_high  = (int)$sysevent->getPriority() === SystemEvent::PRIORITY_HIGH;
-        $this->is_low   = (int)$sysevent->getPriority() === SystemEvent::PRIORITY_LOW;
+        if ($sysevent->getPriority() === SystemEvent::PRIORITY_HIGH) {
+            $this->priority = $GLOBALS['Language']->getText('admin_system_events', 'priority_1');
+        } elseif ($sysevent->getPriority() === SystemEvent::PRIORITY_MEDIUM) {
+            $this->priority = $GLOBALS['Language']->getText('admin_system_events', 'priority_2');
+        } else {
+            $this->priority = $GLOBALS['Language']->getText('admin_system_events', 'priority_3');
+        }
+
+        $this->is_high  = (int) $sysevent->getPriority() === SystemEvent::PRIORITY_HIGH;
+        $this->is_low   = (int) $sysevent->getPriority() === SystemEvent::PRIORITY_LOW;
 
         $this->is_started = $sysevent->getProcessDate() !== self::$NULL_DATE;
         $this->is_ended   = $sysevent->getEndDate() !== self::$NULL_DATE;

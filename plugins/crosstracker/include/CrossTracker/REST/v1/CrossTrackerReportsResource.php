@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -57,7 +57,8 @@ use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\NotEqualComp
 use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\NotInComparisonFromWhereBuilder;
 use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\Semantic\AssignedTo;
 use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\Semantic\Description;
-use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\Semantic\Status;
+use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\Semantic\Status\EqualComparisonFromWhereBuilder as StatusEqualComparisonFromWhereBuilder;
+use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\Semantic\Status\NotEqualComparisonFromWhereBuilder as StatusNotEqualComparisonFromWhereBuilder;
 use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\Semantic\Title;
 use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\SearchableVisitor;
 use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilderVisitor;
@@ -204,7 +205,7 @@ class CrossTrackerReportsResource extends AuthenticatedResource
             new EqualComparisonFromWhereBuilder(
                 new Title\EqualComparisonFromWhereBuilder(),
                 new Description\EqualComparisonFromWhereBuilder(),
-                new Status\EqualComparisonFromWhereBuilder(),
+                new StatusEqualComparisonFromWhereBuilder(),
                 new Date\EqualComparisonFromWhereBuilder(
                     $date_value_extractor,
                     $date_time_value_rounder,
@@ -233,7 +234,7 @@ class CrossTrackerReportsResource extends AuthenticatedResource
             new NotEqualComparisonFromWhereBuilder(
                 new Title\NotEqualComparisonFromWhereBuilder(),
                 new Description\NotEqualComparisonFromWhereBuilder(),
-                new Status\NotEqualComparisonFromWhereBuilder(),
+                new StatusNotEqualComparisonFromWhereBuilder(),
                 new Date\NotEqualComparisonFromWhereBuilder(
                     $date_value_extractor,
                     $date_time_value_rounder,
@@ -431,11 +432,9 @@ class CrossTrackerReportsResource extends AuthenticatedResource
      * @param int    $limit Number of elements displayed per page {@from path}{@min 1}{@max 50}
      * @param int    $offset Position of the first element to display {@from path}{@min 0}
      *
-     * @return CrossTrackerArtifactReportRepresentation[]
-     *
      * @throws RestException 404
      */
-    public function getIdContent($id, $query, $limit = self::MAX_LIMIT, $offset = 0)
+    public function getIdContent($id, $query, $limit = self::MAX_LIMIT, $offset = 0): array
     {
         $this->checkAccess();
         Header::allowOptionsGet();
@@ -460,35 +459,35 @@ class CrossTrackerReportsResource extends AuthenticatedResource
             );
             $representations = $this->representation_factory->buildRepresentationsForReport($artifacts, $current_user);
         } catch (CrossTrackerReportNotFoundException $exception) {
-            throw new RestException(404, null, array('i18n_error_message' => "Report not found"));
+            throw new RestException(404, null, ['i18n_error_message' => "Report not found"]);
         } catch (TrackerNotFoundException $exception) {
-            throw new RestException(400, null, array('i18n_error_message' => $exception->getMessage()));
+            throw new RestException(400, null, ['i18n_error_message' => $exception->getMessage()]);
         } catch (TrackerDuplicateException $exception) {
-            throw new RestException(400, null, array('i18n_error_message' => $exception->getMessage()));
+            throw new RestException(400, null, ['i18n_error_message' => $exception->getMessage()]);
         } catch (SyntaxError $exception) {
             throw new RestException(
                 400,
                 null,
-                array('i18n_error_message' => dgettext("tuleap-crosstracker", "Error while parsing the query"))
+                ['i18n_error_message' => dgettext("tuleap-crosstracker", "Error while parsing the query")]
             );
         } catch (LimitSizeIsExceededException $exception) {
             throw new RestException(
                 400,
                 null,
-                array('i18n_error_message' => dgettext(
+                ['i18n_error_message' => dgettext(
                     "tuleap-tracker",
                     "The query is considered too complex to be executed by the server. Please simplify it (e.g remove comparisons) to continue."
-                ))
+                )]
             );
         } catch (SearchablesDoNotExistException $exception) {
-            throw new RestException(400, null, array('i18n_error_message' => $exception->getMessage()));
+            throw new RestException(400, null, ['i18n_error_message' => $exception->getMessage()]);
         } catch (SearchablesAreInvalidException $exception) {
-            throw new RestException(400, null, array('i18n_error_message' => $exception->getMessage()));
+            throw new RestException(400, null, ['i18n_error_message' => $exception->getMessage()]);
         }
 
         $this->sendPaginationHeaders($limit, $offset, $representations->getTotalSize());
 
-        return array("artifacts" => $representations->getArtifacts());
+        return ["artifacts" => $representations->getArtifacts()];
     }
 
     /**
@@ -546,7 +545,6 @@ class CrossTrackerReportsResource extends AuthenticatedResource
     /**
      * @param Tracker[] $trackers
      * @param $expert_query
-     * @param PFUser $user
      * @throws RestException
      */
     private function checkQueryIsValid(array $trackers, $expert_query, PFUser $user)
@@ -585,10 +583,7 @@ class CrossTrackerReportsResource extends AuthenticatedResource
      */
     private function getReportRepresentation($report)
     {
-        $representation = new CrossTrackerReportRepresentation();
-        $representation->build($report);
-
-        return $representation;
+        return CrossTrackerReportRepresentation::fromReport($report);
     }
 
     private function sendPaginationHeaders($limit, $offset, $size)
@@ -598,7 +593,6 @@ class CrossTrackerReportsResource extends AuthenticatedResource
 
     /**
      * @param                    $query
-     * @param CrossTrackerReport $report
      *
      * @throws RestException 400
      *
@@ -635,8 +629,6 @@ class CrossTrackerReportsResource extends AuthenticatedResource
     }
 
     /**
-     * @param PFUser             $user
-     * @param CrossTrackerReport $report
      *
      * @throws RestException 403
      */
@@ -655,7 +647,7 @@ class CrossTrackerReportsResource extends AuthenticatedResource
         try {
             $this->cross_tracker_permission_gate->check($user, $report);
         } catch (CrossTrackerUnauthorizedException $ex) {
-            throw new RestException(403, null, array('i18n_error_message' => $ex->getMessage()));
+            throw new RestException(403, null, ['i18n_error_message' => $ex->getMessage()]);
         }
     }
 

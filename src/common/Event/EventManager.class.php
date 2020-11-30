@@ -20,9 +20,7 @@
  */
 
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Psr\EventDispatcher\ListenerProviderInterface;
 use Psr\EventDispatcher\StoppableEventInterface;
-use Tuleap\Event\EventManagerCannotDispatchException;
 
 class EventManager implements EventDispatcherInterface // phpcs:ignore
 {
@@ -43,7 +41,6 @@ class EventManager implements EventDispatcherInterface // phpcs:ignore
 
     /**
      * Set current instance of singleton.  DO NOT USE IT IN PRODUCTION CODE!
-     * @param EventManager $instance
      */
     public static function setInstance(EventManager $instance)
     {
@@ -74,11 +71,11 @@ class EventManager implements EventDispatcherInterface // phpcs:ignore
 
     public function addListener($event, $listener, $callback, $recallEvent)
     {
-        $this->listeners[$event][] = array(
+        $this->listeners[$event][] = [
             'listener'    => $listener,
             'callback'    => $callback,
             'recallEvent' => $recallEvent
-        );
+        ];
     }
 
     /**
@@ -95,7 +92,7 @@ class EventManager implements EventDispatcherInterface // phpcs:ignore
      * @param Tuleap\Event\Dispatchable|string $event
      * @param array $params
      */
-    public function processEvent($event, $params = array())
+    public function processEvent($event, $params = [])
     {
         if (is_object($event)) {
             $this->dispatch($event);

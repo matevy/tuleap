@@ -20,7 +20,10 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import createPersistedState from "vuex-persistedstate";
-import createMutationsSharer from "vuex-shared-mutations";
+import createMutationsSharer, {
+    BroadcastChannelStrategy,
+    LocalStorageStratery as LocalStorageStrategy,
+} from "vuex-shared-mutations";
 import { expiringLocalStorage } from "./store-persistence/storage.js";
 import * as mutations from "./mutations.js";
 import * as getters from "./getters.js";
@@ -41,19 +44,34 @@ export function createStore(user_id, project_id) {
         modules: {
             error,
             clipboard,
-            metadata
+            metadata,
         },
         plugins: [
             createPersistedState({
                 key: `document_clipboard_${user_id}_${project_id}`,
                 storage: expiringLocalStorage(900),
-                paths: ["clipboard"]
+                paths: ["clipboard"],
             }),
             createMutationsSharer({
-                predicate: mutation => {
+                predicate: (mutation) => {
                     return mutation.type.startsWith("clipboard/");
-                }
-            })
-        ]
+                },
+                strategy: (() => {
+                    const SHARED_MUTATIONS_KEY = `document_clipboard_shared_mutations_${user_id}_${project_id}`;
+
+                    if (BroadcastChannelStrategy.available()) {
+                        return new BroadcastChannelStrategy({ key: SHARED_MUTATIONS_KEY });
+                    }
+
+                    if (LocalStorageStrategy.available()) {
+                        return new LocalStorageStrategy({ key: SHARED_MUTATIONS_KEY });
+                    }
+
+                    throw new Error(
+                        "No strategies available to share mutations, unsupported browser?"
+                    );
+                })(),
+            }),
+        ],
     });
 }

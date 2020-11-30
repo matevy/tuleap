@@ -17,9 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\DB\DBConfig;
 use Tuleap\SvnCore\Cache\Parameters;
-
-require_once 'SVN_Apache.class.php';
 
 class SVN_Apache_ModPerl extends SVN_Apache
 {
@@ -28,34 +27,30 @@ class SVN_Apache_ModPerl extends SVN_Apache
      */
     private $cache_parameters;
 
-    public function __construct(Parameters $cache_parameters, array $project)
+    public function __construct(Parameters $cache_parameters)
     {
-        parent::__construct($project);
         $this->cache_parameters = $cache_parameters;
     }
 
-    public function getHeaders()
+    public function getHeaders(): string
     {
-        $ret = 'PerlLoadModule Apache::Tuleap'.PHP_EOL;
-        return $ret;
+        return 'PerlLoadModule Apache::Tuleap' . PHP_EOL;
     }
 
-    protected function getProjectAuthentication($row)
+    protected function getProjectAuthentication(Project $project): string
     {
-        $tuleap_dsn          = $this->escapeStringForApacheConf(
-            'DBI:mysql:' . ForgeConfig::get('sys_dbname') . ':' . ForgeConfig::get('sys_dbhost')
-        );
+        $tuleap_dsn          = $this->escapeStringForApacheConf($this->getDBIConnect());
         $maximum_credentials = $this->escapeStringForApacheConf($this->cache_parameters->getMaximumCredentials());
         $lifetime            = $this->escapeStringForApacheConf($this->cache_parameters->getLifetime());
 
         $conf  = '';
-        $conf .= $this->getCommonAuthentication($row['group_name']);
+        $conf .= $this->getCommonAuthentication($project);
         $conf .= "    PerlAccessHandler Apache::Authn::Tuleap::access_handler\n";
         $conf .= "    PerlAuthenHandler Apache::Authn::Tuleap::authen_handler\n";
         $conf .= '    TuleapDSN "' . $tuleap_dsn . '"' . "\n";
         $conf .= '    TuleapDbUser "' . $this->escapeStringForApacheConf(ForgeConfig::get('sys_dbauth_user')) . '"' . "\n";
         $conf .= '    TuleapDbPass "' . $this->escapeStringForApacheConf(ForgeConfig::get('sys_dbauth_passwd')) . '"' . "\n";
-        $conf .= '    TuleapGroupId "' . $this->escapeStringForApacheConf($row['group_id']) . '"' . "\n";
+        $conf .= '    TuleapGroupId "' . $this->escapeStringForApacheConf((string) $project->getID()) . '"' . "\n";
         $conf .= '    TuleapCacheCredsMax ' . $maximum_credentials . "\n";
         $conf .= '    TuleapCacheLifetime ' . $lifetime . "\n";
 
@@ -64,18 +59,37 @@ class SVN_Apache_ModPerl extends SVN_Apache
         return $conf;
     }
 
-    private function addRedisBlock()
+    private function addRedisBlock(): string
     {
-        $conf = '';
         $redis_server = trim(ForgeConfig::get('redis_server'));
-        if ($redis_server) {
-            $redis_server .= ':'.trim(ForgeConfig::get('redis_port'));
-            $conf .= '    TuleapRedisServer "' . $this->escapeStringForApacheConf($redis_server) . '"' . "\n";
+        if (! $redis_server || strpos($redis_server, 'tls://') === 0) {
+            return '';
         }
+        $redis_server .= ':' . trim(ForgeConfig::get('redis_port'));
+        $conf = '    TuleapRedisServer "' . $this->escapeStringForApacheConf($redis_server) . '"' . "\n";
         $redis_password = trim(ForgeConfig::get('redis_password'));
         if ($redis_password) {
             $conf .= '    TuleapRedisPassword "' . $this->escapeStringForApacheConf($redis_password) . '"' . "\n";
         }
         return $conf;
+    }
+
+    private function getDBIConnect(): string
+    {
+        $connect = sprintf('DBI:mysql:%s:%s', ForgeConfig::get(DBConfig::CONF_DBNAME), ForgeConfig::get(DBConfig::CONF_HOST));
+        if (! DBConfig::isUsingDefaultPort()) {
+            $connect = sprintf('%s;port=%s', $connect, ForgeConfig::get(DBConfig::CONF_PORT));
+        }
+        if (DBConfig::isSSLEnabled()) {
+            // RHEL/CENTOS7 version of perl cannot verify SSL Cert issuer. Moreover perl package is affected by [1] and there
+            // are no evidences that this corresponding fix was backported.
+            // [1] https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-10789
+            $connect = sprintf(
+                '%s;mysql_ssl=1;mysql_ssl_ca_file=%s;mysql_ssl_verify_server_cert=0',
+                $connect,
+                DBConfig::getSSLCACertFile(),
+            );
+        }
+        return $connect;
     }
 }

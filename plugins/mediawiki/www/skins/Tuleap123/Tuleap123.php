@@ -10,13 +10,11 @@
  * @ingroup Skins
  */
 
-use Tuleap\BurningParrotCompatiblePageDetector;
 use Tuleap\Mediawiki\ForgeUserGroupPermission\MediawikiAdminAllProjects;
-use Tuleap\Request\CurrentPage;
 
-require_once MEDIAWIKI_BASE_DIR.'/MediawikiManager.class.php';
+require_once MEDIAWIKI_BASE_DIR . '/MediawikiManager.class.php';
 
-if (!defined('MEDIAWIKI')) {
+if (! defined('MEDIAWIKI')) {
     die(-1);
 }
 
@@ -36,12 +34,14 @@ class SkinTuleap123 extends SkinTemplate
     public $template = 'Tuleap123Template';
     public $useHeadElement = true;
 
-    function setupTemplate($classname, $repository = false, $cache_dir = false)
+    public function setupTemplate($classname, $repository = false, $cache_dir = false)
     {
             $tc = new $classname();
-            $tc->params = array();
-        if (($tc->project = $project =
-                group_get_object_by_name($GLOBALS['fusionforgeproject']))) {
+            $tc->params = [];
+        if (
+            ($tc->project = $project =
+                group_get_object_by_name($GLOBALS['fusionforgeproject']))
+        ) {
                 $tc->params['group'] = $GLOBALS['group_id'] =
                     $project->getID();
                 $tc->params['toptab'] = 'plugin_mediawiki';
@@ -56,7 +56,7 @@ class SkinTuleap123 extends SkinTemplate
     /**
      * @param $out OutputPage
      */
-    function setupSkinUserCss(OutputPage $out)
+    public function setupSkinUserCss(OutputPage $out)
     {
             /* add Tuleap styles */
         foreach ($GLOBALS['HTML']->getAllStyleSheets() as $sheet) {
@@ -65,7 +65,7 @@ class SkinTuleap123 extends SkinTemplate
 
             parent::setupSkinUserCss($out);
 
-            $out->addModuleStyles(array( 'mediawiki.skinning.interface', 'skins.monobook.styles' ));
+            $out->addModuleStyles(['mediawiki.skinning.interface', 'skins.monobook.styles']);
 
             // TODO: Migrate all of these
             $out->addStyle('Tuleap123/main.css', 'screen');
@@ -74,7 +74,7 @@ class SkinTuleap123 extends SkinTemplate
             $out->addStyle('Tuleap123/IE70Fixes.css', 'screen', 'IE 7');
     }
 
-    function addToBodyAttributes($out, &$bodyAttrs)
+    public function addToBodyAttributes($out, &$bodyAttrs)
     {
         parent::addToBodyAttributes($out, $bodyAttrs);
         $current_user  = UserManager::instance()->getCurrentUser();
@@ -121,24 +121,24 @@ class Tuleap123Template extends BaseTemplate
         if ($this->isCompatibilityViewEnabled()) {
             $this->addForgeBackLinksToSidebar();
         } else {
+            $breadcrumb_builder = new \Tuleap\Mediawiki\MediawikiBreadcrumbBuilder(
+                new User_ForgeUserGroupPermissionsManager(
+                    new User_ForgeUserGroupPermissionsDao(),
+                ),
+            );
+            $breadcrumbs = $breadcrumb_builder->getBreadcrumbs(
+                $GLOBALS['group'],
+                UserManager::instance()->getCurrentUser(),
+            );
+            $GLOBALS['HTML']->addBreadcrumbs($breadcrumbs);
             $GLOBALS['HTML']->header($this->params);
-            if ($this->IsUserAdmin()) {
-                echo '<ul class="nav nav-pills toolbar">
-                            <li>
-                                <a href="/plugins/mediawiki/forge_admin.php?group_id='.$GLOBALS['group']->getId().'"
-                                    data-test="mediawiki-administration-link">'.
-                                $GLOBALS['Language']->getText('global', 'Administration').'
-                                </a>
-                            </li>
-                        </ul>';
-            }
         }
 
             echo "<div id=\"ff-mw-wrapper\"><div style=\"font-size:x-small;\">\n";
             echo "<!-- FUSIONFORGE BodyHeader END -->\n";
 
         ?><div id="globalWrapper">
-<div id="column-content"><div id="content" class="mw-body-primary" role="main">
+<div id="column-content"><div data-test="mediawiki-content" id="content" class="mw-body-primary" role="main">
     <a id="top"></a>
         <?php if ($this->data['sitenotice']) {
             ?><div id="siteNotice"><?php $this->html('sitenotice') ?></div><?php
@@ -187,9 +187,9 @@ class Tuleap123Template extends BaseTemplate
         <?php $class_no_logo = (! $this->data['logopath']) ? 'no-logo' : ''; ?>
     <div class="portlet <?php echo $class_no_logo; ?>" id="p-logo" role="banner">
         <?php
-        echo Html::element('a', array(
+        echo Html::element('a', [
         'href' => $this->data['nav_urls']['mainpage']['href'],
-        'style' => "background-image: url({$this->data['logopath']});" )
+        'style' => "background-image: url({$this->data['logopath']});" ]
         + Linker::tooltipAndAccesskeyAttribs('p-logo')); ?>
 
     </div>
@@ -236,11 +236,13 @@ class Tuleap123Template extends BaseTemplate
         <?php
         $this->printTrail();
                 echo "</div></div>\n";
-                $GLOBALS['HTML']->footer($this->params);
+        if (! $this->isCompatibilityViewEnabled()) {
+            $GLOBALS['HTML']->footer($this->params);
+        }
         echo Html::closeElement('body');
         echo Html::closeElement('html');
         wfRestoreWarnings();
-    } // end of execute() method
+    }
 
     private function IsUserAdmin()
     {
@@ -281,27 +283,27 @@ class Tuleap123Template extends BaseTemplate
     private function addForgeBackLinksToSidebar()
     {
         $forge_name    = forge_get_config('sys_fullname');
-        $added_toolbox = array();
+        $added_toolbox = [];
 
         if ($this->isUserAnonymous()) {
             $event_manager   = EventManager::instance();
             $url_redirect    = new URLRedirect($event_manager);
-            $added_toolbox[] = array(
+            $added_toolbox[] = [
                 'text' => $GLOBALS['Language']->getText('include_menu', 'login'),
                 'href' => $url_redirect->buildReturnToLogin($_SERVER)
-            );
+            ];
         }
 
-        $added_toolbox[] = array(
-           'text' => $GLOBALS['Language']->getText('plugin_mediawiki', 'back_to_forge', array($forge_name)),
-           'href' => '/projects/'.$GLOBALS['group']->getUnixName()
-        );
+        $added_toolbox[] = [
+           'text' => sprintf(dgettext('tuleap-mediawiki', 'Go back to %1$s'), $forge_name),
+           'href' => '/projects/' . $GLOBALS['group']->getUnixName()
+        ];
 
         if ($this->IsUserAdmin()) {
-            $added_toolbox []= array(
+            $added_toolbox[] = [
                 'text' => $GLOBALS['Language']->getText('global', 'Administration'),
-                'href' => '/plugins/mediawiki/forge_admin.php?group_id='.$GLOBALS['group']->getId()
-            );
+                'href' => '/plugins/mediawiki/forge_admin.php?group_id=' . $GLOBALS['group']->getId()
+            ];
         }
 
         $this->data['sidebar'][$forge_name] = $added_toolbox;
@@ -309,13 +311,13 @@ class Tuleap123Template extends BaseTemplate
 
     protected function renderPortals($sidebar)
     {
-        if (!isset($sidebar['SEARCH'])) {
+        if (! isset($sidebar['SEARCH'])) {
             $sidebar['SEARCH'] = true;
         }
-        if (!isset($sidebar['TOOLBOX'])) {
+        if (! isset($sidebar['TOOLBOX'])) {
             $sidebar['TOOLBOX'] = true;
         }
-        if (!isset($sidebar['LANGUAGES'])) {
+        if (! isset($sidebar['LANGUAGES'])) {
             $sidebar['LANGUAGES'] = true;
         }
 
@@ -342,7 +344,7 @@ class Tuleap123Template extends BaseTemplate
                echo '</div>';
     }
 
-    function searchBox()
+    public function searchBox()
     {
         global $wgUseTwoButtonsSearchForm;
         ?>
@@ -351,12 +353,12 @@ class Tuleap123Template extends BaseTemplate
         <div id="searchBody" class="pBody">
             <form action="<?php $this->text('wgScript') ?>" id="searchform">
                 <input type='hidden' name="title" value="<?php $this->text('searchtitle') ?>"/>
-        <?php echo $this->makeSearchInput(array( "id" => "searchInput" )); ?>
+        <?php echo $this->makeSearchInput(["id" => "searchInput"]); ?>
 
-        <?php echo $this->makeSearchButton("go", array( "id" => "searchGoButton", "class" => "searchButton" ));
+        <?php echo $this->makeSearchButton("go", ["id" => "searchGoButton", "class" => "searchButton"]);
         if ($wgUseTwoButtonsSearchForm) {
             ?>&#160;
-            <?php echo $this->makeSearchButton("fulltext", array( "id" => "mw-searchButton", "class" => "searchButton" ));
+            <?php echo $this->makeSearchButton("fulltext", ["id" => "mw-searchButton", "class" => "searchButton"]);
         } else { ?>
                 <div><a href="<?php $this->text('searchaction') ?>" rel="search"><?php $this->msg('powersearch-legend') ?></a></div><?php
         } ?>
@@ -371,7 +373,7 @@ class Tuleap123Template extends BaseTemplate
      * Prints the cactions bar.
      * Shared between MonoBook and Modern
      */
-    function cactions()
+    public function cactions()
     {
         ?>
     <div id="p-cactions" class="portlet" role="navigation">
@@ -389,7 +391,7 @@ class Tuleap123Template extends BaseTemplate
     </div>
         <?php
     }
-    function toolbox()
+    public function toolbox()
     {
         ?>
     <div class="portlet" id="p-tb" role="navigation">
@@ -402,8 +404,8 @@ class Tuleap123Template extends BaseTemplate
 
             <?php
         }
-        wfRunHooks('MonoBookTemplateToolboxEnd', array( &$this ));
-        wfRunHooks('SkinTemplateToolboxEnd', array( &$this, true ));
+        wfRunHooks('MonoBookTemplateToolboxEnd', [&$this]);
+        wfRunHooks('SkinTemplateToolboxEnd', [&$this, true]);
         ?>
             </ul>
         <?php	    $this->renderAfterPortlet('tb'); ?>
@@ -412,7 +414,7 @@ class Tuleap123Template extends BaseTemplate
         <?php
     }
 
-    function languageBox()
+    public function languageBox()
     {
         if ($this->data['language_urls'] !== false) {
             ?>
@@ -436,9 +438,9 @@ class Tuleap123Template extends BaseTemplate
      * @param $bar string
      * @param $cont array|string
      */
-    function customBox($bar, $cont)
+    public function customBox($bar, $cont)
     {
-        $portletAttribs = array( 'class' => 'generated-sidebar portlet', 'id' => Sanitizer::escapeId("p-$bar"), 'role' => 'navigation' );
+        $portletAttribs = ['class' => 'generated-sidebar portlet', 'id' => Sanitizer::escapeId("p-$bar"), 'role' => 'navigation'];
         $tooltip = Linker::titleAttrib("p-$bar");
         if ($tooltip !== false) {
             $portletAttribs['title'] = $tooltip;
@@ -467,4 +469,4 @@ class Tuleap123Template extends BaseTemplate
     </div>
         <?php
     }
-} // end of class
+}

@@ -33,7 +33,7 @@ class Tracker_RuleDao extends DataAccessObject
     * Gets all tables of the db
     * @return DataAccessResult
     */
-    function searchAll()
+    public function searchAll()
     {
         $sql = "SELECT *
                 FROM tracker_rule JOIN tracker_rule_list
@@ -45,7 +45,7 @@ class Tracker_RuleDao extends DataAccessObject
     * Searches Tracker_Rule by TrackerId
     * @return DataAccessResult
     */
-    function searchByTrackerId($tracker_id)
+    public function searchByTrackerId($tracker_id)
     {
         $sql = sprintf(
             "SELECT id, source_field_id, source_value_id, target_field_id, rule_type, target_value_id
@@ -61,9 +61,8 @@ class Tracker_RuleDao extends DataAccessObject
     * create a row in the table tracker_rule and in tracker_rule_list
     * @return true or id(auto_increment) if there is no error
     */
-    function create($tracker_id, $source_field_id, $source_value_id, $target_field_id, $rule_type, $target_value_id)
+    public function create($tracker_id, $source_field_id, $source_value_id, $target_field_id, $rule_type, $target_value_id)
     {
-
         $sql_insert_rule = sprintf(
             "INSERT INTO tracker_rule (tracker_id, rule_type)
                             VALUES (%s, %s)",
@@ -89,7 +88,7 @@ class Tracker_RuleDao extends DataAccessObject
     * Searches Tracker_Rule by tracker_id
     * @return DataAccessResult
     */
-    function searchByTrackerIdWithOrder($tracker_id)
+    public function searchByTrackerIdWithOrder($tracker_id)
     {
        //$sql = sprintf("SELECT ar.id, ar.source_field_id, ar.source_value_id, ar.target_field_id, ar.rule_type, ar.target_value_id ".
        //               " FROM tracker_rule AS ar ".
@@ -103,17 +102,17 @@ class Tracker_RuleDao extends DataAccessObject
        //               " ORDER BY afu1.place, afu2.place, afvls.order_id, afvlt.order_id, ar.id",
        //        $this->da->quoteSmart($tracker_id));
                $sql = sprintf(
-                   "SELECT id, source_field_id, source_value_id, target_field_id, rule_type, target_value_id ".
+                   "SELECT id, source_field_id, source_value_id, target_field_id, rule_type, target_value_id " .
                               "FROM tracker_rule JOIN tracker_rule_list
                                ON (tracker_rule.id = tracker_rule_list.tracker_rule_id)" .
-                              " WHERE tracker_id = %s ".
+                              " WHERE tracker_id = %s " .
                               " ORDER BY id",
                    $this->da->quoteSmart($tracker_id)
                );
         return $this->retrieve($sql);
     }
 
-    function deleteById($id)
+    public function deleteById($id)
     {
         $sql_delete_list = sprintf(
             "DELETE FROM tracker_rule_list WHERE tracker_rule_id = %s",
@@ -128,7 +127,7 @@ class Tracker_RuleDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function deleteRulesBySourceTarget($tracker_id, $field_source_id, $field_target_id)
+    public function deleteRulesBySourceTarget($tracker_id, $field_source_id, $field_target_id)
     {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $field_source_id = $this->da->escapeInt($field_source_id);
@@ -156,7 +155,7 @@ class Tracker_RuleDao extends DataAccessObject
         $this->commit();
     }
 
-    function searchBySourceTarget($tracker_id, $field_source_id, $field_target_id)
+    public function searchBySourceTarget($tracker_id, $field_source_id, $field_target_id)
     {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $field_source_id = $this->da->escapeInt($field_source_id);
@@ -170,7 +169,7 @@ class Tracker_RuleDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function searchInvolvedFieldsByTrackerId($tracker_id)
+    public function searchInvolvedFieldsByTrackerId($tracker_id)
     {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT DISTINCT tracker_rule_list.source_field_id, tracker_rule_list.target_field_id

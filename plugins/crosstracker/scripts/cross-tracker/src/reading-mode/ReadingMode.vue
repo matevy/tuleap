@@ -19,30 +19,35 @@
 
 <template>
     <div class="cross-tracker-reading-mode">
-        <div class="reading-mode-report"
-             v-bind:class="{'disabled': ! is_user_admin}"
-             v-on:click="switchToWritingMode"
+        <div
+            class="reading-mode-report"
+            v-bind:class="{ disabled: !is_user_admin }"
+            v-on:click="switchToWritingMode"
+            data-test="cross-tracker-reading-mode"
         >
             <tracker-list-reading-mode
                 v-bind:reading-cross-tracker-report="readingCrossTrackerReport"
             />
-            <div class="reading-mode-query"
-                 v-if="is_expert_query_not_empty"
-            >{{ readingCrossTrackerReport.expert_query }}</div>
+            <div class="reading-mode-query" v-if="is_expert_query_not_empty">
+                {{ readingCrossTrackerReport.expert_query }}
+            </div>
         </div>
-        <div class="reading-mode-actions"
-             v-if="! is_report_saved"
-        >
-            <button class="tlp-button-primary tlp-button-outline reading-mode-actions-cancel"
-                    v-on:click="cancelReport()"
-                    v-translate
-            >Cancel</button>
-            <button class="tlp-button-primary"
-                    v-on:click="saveReport()"
-                    v-bind:class="{'disabled': is_save_disabled}"
+        <div class="reading-mode-actions" v-if="!is_report_saved">
+            <button
+                class="tlp-button-primary tlp-button-outline reading-mode-actions-cancel"
+                v-on:click="cancelReport()"
+                v-translate
             >
-                <i v-if="! is_loading" class="tlp-button-icon fa fa-save"></i>
-                <i v-if="is_loading" class="tlp-button-icon fa fa-circle-o-notch fa-spin"></i>
+                Cancel
+            </button>
+            <button
+                class="tlp-button-primary"
+                v-on:click="saveReport()"
+                v-bind:class="{ disabled: is_save_disabled }"
+                data-test="cross-tracker-save-report"
+            >
+                <i v-if="!is_loading" class="tlp-button-icon fa fa-save"></i>
+                <i v-if="is_loading" class="tlp-button-icon fas fa-circle-notch fa-spin"></i>
                 <translate>Save report</translate>
             </button>
         </div>
@@ -57,11 +62,11 @@ export default {
     components: { TrackerListReadingMode },
     props: {
         backendCrossTrackerReport: Object,
-        readingCrossTrackerReport: Object
+        readingCrossTrackerReport: Object,
     },
     data() {
         return {
-            is_loading: false
+            is_loading: false,
         };
     },
     computed: {
@@ -71,7 +76,7 @@ export default {
         },
         is_save_disabled() {
             return this.is_loading || this.$store.getters.has_error_message;
-        }
+        },
     },
     methods: {
         switchToWritingMode() {
@@ -79,7 +84,7 @@ export default {
                 return;
             }
 
-            this.$emit("switchToWritingMode");
+            this.$emit("switch-to-writing-mode");
         },
 
         async saveReport() {
@@ -114,7 +119,7 @@ export default {
         cancelReport() {
             this.readingCrossTrackerReport.duplicateFromReport(this.backendCrossTrackerReport);
             this.$store.commit("discardUnsavedReport");
-        }
-    }
+        },
+    },
 };
 </script>

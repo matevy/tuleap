@@ -18,29 +18,17 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integer implements Tracker_FormElement_Field_ReadOnly
 {
 
+    /**
+     * @psalm-mutation-free
+     */
     public function getLabel($report = null)
     {
         return $this->label;
-    }
-
-    private function getRenderedAdditionalInformationsForLabel($additional_informations)
-    {
-        $html = $this->getTemplateRenderer()->renderToString(
-            'additional_column_title',
-            array(
-                'additional_title' => $additional_informations
-            )
-        );
-
-        return $html;
-    }
-
-    private function getTemplateRenderer()
-    {
-        return TemplateRendererFactory::build()->getRenderer(TRACKER_TEMPLATE_DIR.'/report');
     }
 
     public function getCriteriaFrom($criteria)
@@ -56,11 +44,14 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
         return '';
     }
 
+    /**
+     * @param null|Tracker_Report|int $report
+     */
     public function fetchChangesetValue($artifact_id, $changeset_id, $value, $report = null, $from_aid = null)
     {
         $value = $this->getArtifactRank($artifact_id);
 
-        if (! $report) {
+        if (! $report instanceof Tracker_Report) {
             return $value;
         }
 
@@ -69,7 +60,7 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
             return $augmented_value;
         }
 
-        return '<span class="non-displayable" title="' . $GLOBALS['Language']->getText('plugin_tracker_report', 'non_displayable_tooltip') . '">' . $GLOBALS['Language']->getText('plugin_tracker_report', 'non_displayable') . '</span>';
+        return '<span class="non-displayable" title="' . dgettext('tuleap-tracker', 'The rank of an artifact only exists in the context of a milestone. You must filter by milestone to view artifact ranks.') . '">' . dgettext('tuleap-tracker', 'N/A') . '</span>';
     }
 
     public function fetchCSVChangesetValue($artifact_id, $changeset_id, $value, $report)
@@ -79,7 +70,7 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
             return $augmented_value;
         }
 
-        return $GLOBALS['Language']->getText('plugin_tracker_report', 'non_displayable');
+        return dgettext('tuleap-tracker', 'N/A');
     }
 
     private function getAugmentedFieldValue($artifact_id, Tracker_Report $report)
@@ -88,12 +79,12 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
 
         EventManager::instance()->processEvent(
             TRACKER_EVENT_FIELD_AUGMENT_DATA_FOR_REPORT,
-            array(
+            [
                 'additional_criteria' => $report->getAdditionalCriteria(),
                 'result'              => &$result,
                 'artifact_id'         => $artifact_id,
                 'field'               => $this
-            )
+            ]
         );
 
         return $result;
@@ -124,20 +115,20 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
      */
     public function getAggregateFunctions()
     {
-        return array();
+        return [];
     }
 
     /**
      * Fetch the html code to display the field value in artifact
      *
-     * @param Tracker_Artifact                $artifact         The artifact
+     * @param Artifact                        $artifact         The artifact
      * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
      * @param array                           $submitted_values The value already submitted by the user
      *
      * @return string
      */
     protected function fetchArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -147,12 +138,12 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
     /**
      * Fetch the html code to display the field value in artifact in read only mode
      *
-     * @param Tracker_Artifact                $artifact The artifact
+     * @param Artifact                        $artifact The artifact
      * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
      *
      * @return string
      */
-    public function fetchArtifactValueReadOnly(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    public function fetchArtifactValueReadOnly(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         return '<span>' . $this->getArtifactRank($artifact->getID()) . '</span>';
     }
@@ -164,16 +155,13 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
 
     /**
      * Fetch artifact value for email
-     * @param Tracker_Artifact $artifact
-     * @param PFUser $user
      * @param bool $ignore_perms
-     * @param Tracker_Artifact_ChangesetValue $value
      * @param string $format
      *
      * @return string
      */
     public function fetchMailArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         $ignore_perms,
         ?Tracker_Artifact_ChangesetValue $value = null,
@@ -192,7 +180,7 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
     }
 
     public function fetchArtifactValueWithEditionFormIfEditable(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -208,33 +196,21 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
         return '<span>314116</span>';
     }
 
-    /**
-     * @return the label of the field (mainly used in admin part)
-     */
     public static function getFactoryLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'priority_label');
+        return dgettext('tuleap-tracker', 'Rank');
     }
 
-    /**
-     * @return the description of the field (mainly used in admin part)
-     */
     public static function getFactoryDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'priority_description');
+        return dgettext('tuleap-tracker', 'Rank');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconUseIt()
     {
         return $GLOBALS['HTML']->getImagePath('ic/priority.png');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconCreate()
     {
         return $GLOBALS['HTML']->getImagePath('ic/priority.png');
@@ -243,11 +219,10 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
     /**
      * Fetch the html code to display the field value in tooltip
      *
-     * @param Tracker_Artifact $artifact
      * @param Tracker_Artifact_ChangesetValue $value The changeset value of this field
      * @return string The html code to display the field value in tooltip
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    protected function fetchTooltipValue(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         return $this->getArtifactRank($artifact->getID());
     }
@@ -255,12 +230,12 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
     /**
      * Validate a value
      *
-     * @param Tracker_Artifact $artifact The artifact
-     * @param mixed            $value    data coming from the request.
+     * @param Artifact $artifact The artifact
+     * @param mixed    $value    data coming from the request.
      *
      * @return bool true if the value is considered ok
      */
-    protected function validate(Tracker_Artifact $artifact, $value)
+    protected function validate(Artifact $artifact, $value)
     {
         return true;
     }
@@ -293,8 +268,6 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
     /**
      * Return REST value of the priority
      *
-     * @param PFUser $user
-     * @param Tracker_Artifact_Changeset $changeset
      *
      * @return mixed | null if no values
      */
@@ -310,7 +283,7 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
             $this->getId(),
             Tracker_FormElementFactory::instance()->getType($this),
             $this->getLabel(),
-            (int)$this->getArtifactRank($changeset->getArtifact()->getID())
+            (int) $this->getArtifactRank($changeset->getArtifact()->getID())
         );
         return $artifact_field_value_full_representation;
     }
@@ -328,23 +301,24 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
     /**
      * Validate a field
      *
-     * @param Tracker_Artifact                $artifact             The artifact to check
+     * @param Artifact                        $artifact             The artifact to check
      * @param mixed                           $submitted_value      The submitted value
      * @param Tracker_Artifact_ChangesetValue $last_changeset_value The last changeset value of the field (give null if no old value)
      *
      * @return bool true on success or false on failure
      */
     public function validateFieldWithPermissionsAndRequiredStatus(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         $submitted_value,
+        PFUser $user,
         ?Tracker_Artifact_ChangesetValue $last_changeset_value = null,
-        $is_submission = null
-    ) {
+        ?bool $is_submission = null
+    ): bool {
         $is_valid = true;
 
-        if ($submitted_value !== null && ! $this->userCanUpdate()) {
+        if ($submitted_value !== null && ! $this->userCanUpdate($user)) {
             $is_valid = true;
-            $GLOBALS['Response']->addFeedback('warning', $GLOBALS['Language']->getText('plugin_tracker_admin_import', 'field_not_taken_account', array($this->getName())));
+            $GLOBALS['Response']->addFeedback('warning', sprintf(dgettext('tuleap-tracker', 'The field "%1$s" will not be taken into account.'), $this->getName()));
         }
 
         return $is_valid;
@@ -353,11 +327,10 @@ class Tracker_FormElement_Field_Priority extends Tracker_FormElement_Field_Integ
     /**
      * Fetch the html code to display the field value in card
      *
-     * @param Tracker_Artifact $artifact
      *
      * @return string
      */
-    public function fetchCardValue(Tracker_Artifact $artifact, ?Tracker_CardDisplayPreferences $display_preferences = null)
+    public function fetchCardValue(Artifact $artifact, ?Tracker_CardDisplayPreferences $display_preferences = null)
     {
         //return $this->fetchTooltipValue($artifact, $artifact->getLastChangeset()->getValue($this));
 

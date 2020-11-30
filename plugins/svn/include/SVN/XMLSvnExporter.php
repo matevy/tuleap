@@ -20,7 +20,7 @@
 
 namespace Tuleap\SVN;
 
-use Logger;
+use Psr\Log\LoggerInterface;
 use Project;
 use SimpleXMLElement;
 use Tuleap\Project\XML\Export\ArchiveInterface;
@@ -58,7 +58,7 @@ class XMLSvnExporter
     private $mail_notification_manager;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
     /**
@@ -72,7 +72,7 @@ class XMLSvnExporter
         SvnAdmin $svn_admin,
         XML_SimpleXMLCDATAFactory $cdata_section_factory,
         MailNotificationManager $mail_notification_manager,
-        Logger $logger,
+        LoggerInterface $logger,
         AccessFileReader $access_file_reader
     ) {
         $this->repository_manager        = $repository_manager;
@@ -93,7 +93,7 @@ class XMLSvnExporter
             $this->logger->info('dumping ' . $repository->getName());
             $node_repository = $this->dumpRepository($root_node, $repository, $temporary_dump_path_on_filesystem);
 
-            $export_dump_file_name = $repository->getName().".svn";
+            $export_dump_file_name = $repository->getName() . ".svn";
             if ($archive->isADirectory() === true) {
                 $archive->addEmptyDir('svn');
             }

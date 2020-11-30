@@ -23,9 +23,9 @@ namespace Tuleap\Tracker\Artifact\Changeset\PostCreation;
 use ConfigNotificationAssignedTo;
 use ForgeConfig;
 use HTTPRequest;
+use Psr\Log\LoggerInterface;
 use Tracker_Artifact_Changeset;
 use Tracker_Artifact_MailGateway_RecipientFactory;
-use Tuleap\Mail\MailLogger;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfig;
 use Tuleap\Tracker\Notifications\ConfigNotificationEmailCustomSender;
 use Tuleap\Tracker\Notifications\ConfigNotificationEmailCustomSenderFormatter;
@@ -41,7 +41,7 @@ final class EmailNotificationTask implements PostCreationTask
     ];
 
     /**
-     * @var \Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
     /**
@@ -74,7 +74,7 @@ final class EmailNotificationTask implements PostCreationTask
     private $recipient_factory;
 
     public function __construct(
-        MailLogger $logger,
+        LoggerInterface $logger,
         UserHelper $user_helper,
         RecipientsManager $recipients_manager,
         Tracker_Artifact_MailGateway_RecipientFactory $recipient_factory,
@@ -106,10 +106,10 @@ final class EmailNotificationTask implements PostCreationTask
 
         // 1. Get the recipients list
         $recipients = $this->recipients_manager->getRecipients($changeset, $is_update);
-        $this->logger->debug('Recipients '.implode(', ', array_keys($recipients)));
+        $this->logger->debug('Recipients ' . implode(', ', array_keys($recipients)));
 
         // 2. Compute the body of the message + headers
-        $messages = array();
+        $messages = [];
 
         if ($this->mail_gateway_config->isTokenBasedEmailgatewayEnabled() || $this->isNotificationAssignedToEnabled($tracker)) {
             $messages = $this->buildAMessagePerRecipient($changeset, $recipients, $is_update);
@@ -119,7 +119,7 @@ final class EmailNotificationTask implements PostCreationTask
 
         // 3. Send the notification
         foreach ($messages as $message) {
-            $this->logger->debug('Notify '.implode(', ', $message['recipients']));
+            $this->logger->debug('Notify ' . implode(', ', $message['recipients']));
             $this->mail_sender->send(
                 $changeset,
                 $message['recipients'],
@@ -144,29 +144,29 @@ final class EmailNotificationTask implements PostCreationTask
 
     public function buildAMessagePerRecipient(Tracker_Artifact_Changeset $changeset, array $recipients, $is_update)
     {
-        $messages       = array();
+        $messages       = [];
         $anonymous_mail = 0;
 
         foreach ($recipients as $recipient => $check_perms) {
             $user = $this->recipients_manager->getUserFromRecipientName($recipient);
 
             if (! $user->isAnonymous()) {
-                $headers    = array_filter(array($this->getCustomReplyToHeader($changeset->getArtifact())));
+                $headers    = array_filter([$this->getCustomReplyToHeader($changeset->getArtifact())]);
                 $message_id = $this->getMessageId($user, $changeset);
 
                 $messages[$message_id]               = $this->getMessageContent($changeset, $user, $is_update, $check_perms);
-                $messages[$message_id]['from']       = $this->getSenderName($changeset) . '<' .$changeset->getArtifact()->getTokenBasedEmailAddress() . '>';
+                $messages[$message_id]['from']       = $this->getSenderName($changeset) . '<' . $changeset->getArtifact()->getTokenBasedEmailAddress() . '>';
                 $messages[$message_id]['message-id'] = $message_id;
                 $messages[$message_id]['headers']    = $headers;
-                $messages[$message_id]['recipients'] = array($user->getEmail());
+                $messages[$message_id]['recipients'] = [$user->getEmail()];
             } else {
-                $headers = array($this->getAnonymousHeaders());
+                $headers = [$this->getAnonymousHeaders()];
 
                 $messages[$anonymous_mail]               = $this->getMessageContent($changeset, $user, $is_update, $check_perms);
                 $messages[$anonymous_mail]['from']       = $this->getEmailSenderAddress($changeset);
                 $messages[$anonymous_mail]['message-id'] = null;
                 $messages[$anonymous_mail]['headers']    = $headers;
-                $messages[$anonymous_mail]['recipients'] = array($user->getEmail());
+                $messages[$anonymous_mail]['recipients'] = [$user->getEmail()];
 
                 $anonymous_mail += 1;
             }
@@ -177,15 +177,15 @@ final class EmailNotificationTask implements PostCreationTask
 
     public function buildOneMessageForMultipleRecipients(Tracker_Artifact_Changeset $changeset, array $recipients, $is_update)
     {
-        $messages = array();
+        $messages = [];
         foreach ($recipients as $recipient => $check_perms) {
             $user = $this->recipients_manager->getUserFromRecipientName($recipient);
 
             if ($user) {
-                $ignore_perms    = !$check_perms;
+                $ignore_perms    = ! $check_perms;
                 $recipient_mail  = $user->getEmail();
                 $message_content = $this->getMessageContent($changeset, $user, $is_update, $check_perms);
-                $headers         = array_filter(array($this->getCustomReplyToHeader($changeset->getArtifact())));
+                $headers         = array_filter([$this->getCustomReplyToHeader($changeset->getArtifact())]);
                 $hash            = md5($message_content['htmlBody'] . $message_content['txtBody'] . serialize($message_content['subject']));
 
                 if (isset($messages[$hash])) {
@@ -195,7 +195,7 @@ final class EmailNotificationTask implements PostCreationTask
 
                     $messages[$hash]['message-id'] = null;
                     $messages[$hash]['headers']    = $headers;
-                    $messages[$hash]['recipients'] = array($recipient_mail);
+                    $messages[$hash]['recipients'] = [$recipient_mail];
                 }
 
                 $messages[$hash]['from'] = $this->getEmailSenderAddress($changeset);
@@ -244,7 +244,7 @@ final class EmailNotificationTask implements PostCreationTask
         if (! $email_domain) {
             $email_domain = ForgeConfig::get('sys_default_domain');
         }
-        return self::DEFAULT_MAIL_SENDER.'@'.$email_domain;
+        return self::DEFAULT_MAIL_SENDER . '@' . $email_domain;
     }
 
     /**
@@ -257,7 +257,6 @@ final class EmailNotificationTask implements PostCreationTask
 
     /**
      * Looks for the custom sender setting and formats the name accordingly
-     * @param \Tracker_Artifact_Changeset $changeset
      * @return string containing the formatted name if setting enabled
      * */
     private function getSenderName(Tracker_Artifact_Changeset $changeset)
@@ -278,12 +277,11 @@ final class EmailNotificationTask implements PostCreationTask
 
     /**
      * Get the appropriate fields for putting into the email sender field
-     * @param \Tracker_Artifact_Changeset $changeset
      * @return array of kv pairs with the applicable fields
      * */
     private function getAppropriateSenderFields(Tracker_Artifact_Changeset $changeset)
     {
-        $fields = array();
+        $fields = [];
         $user_row = $changeset->getSubmitter()->toRow();
         $user_fields = self::DEFAULT_SENDER_EXPOSED_FIELDS;
         foreach ($user_fields as $exposed_field => $internal_field) {
@@ -298,26 +296,26 @@ final class EmailNotificationTask implements PostCreationTask
         return $recipient->getEmail();
     }
 
-    private function getCustomReplyToHeader(\Tracker_Artifact $artifact)
+    private function getCustomReplyToHeader(\Tuleap\Tracker\Artifact\Artifact $artifact)
     {
         $artifactbymail = new \Tracker_ArtifactByEmailStatus($this->mail_gateway_config);
 
         if ($this->mail_gateway_config->isTokenBasedEmailgatewayEnabled()) {
-            return array(
+            return [
                 "name" => "Reply-to",
                 "value" => $artifact->getTokenBasedEmailAddress()
-            );
+            ];
         } elseif ($artifactbymail->canUpdateArtifactInInsecureMode($artifact->getTracker())) {
-            return array(
+            return [
                 "name" => "Reply-to",
                 "value" => $artifact->getInsecureEmailAddress()
-            );
+            ];
         }
     }
 
     private function getMessageContent(Tracker_Artifact_Changeset $changeset, \PFUser $user, $is_update, $check_perms)
     {
-        $ignore_perms = !$check_perms;
+        $ignore_perms = ! $check_perms;
 
         $lang        = $user->getLanguage();
 
@@ -334,7 +332,7 @@ final class EmailNotificationTask implements PostCreationTask
         $txtBody .= $this->getTextAssignedToFilter($changeset->getArtifact(), $user);
         $subject  = $this->getSubject($changeset->getArtifact(), $user, $ignore_perms);
 
-        $message = array();
+        $message = [];
 
         $message['htmlBody'] = $htmlBody;
         $message['txtBody']  = $txtBody;
@@ -347,7 +345,7 @@ final class EmailNotificationTask implements PostCreationTask
      * Get the text body for notification
      *
      * @param bool $is_update It is an update, not a new artifact
-     * @param String  $recipient    The recipient who will receive the notification
+     * @param \PFUser  $recipient_user    The recipient who will receive the notification
      * @param \BaseLanguage $language The language of the message
      * @param bool $ignore_perms indicates if permissions have to be ignored
      *
@@ -358,25 +356,25 @@ final class EmailNotificationTask implements PostCreationTask
         $format = 'text';
         $art    = $changeset->getArtifact();
 
-        $output = '+============== '.'['.$art->getTracker()->getItemName() .' #'. $art->getId().'] '.$art->fetchMailTitle($recipient_user, $format, $ignore_perms).' ==============+';
+        $output = '+============== ' . '[' . $art->getTracker()->getItemName() . ' #' . $art->getId() . '] ' . $art->fetchMailTitle($recipient_user, $format, $ignore_perms) . ' ==============+';
         $output .= PHP_EOL;
         $output .= PHP_EOL;
         $proto   = ForgeConfig::get('sys_https_host') ? 'https' : 'http';
-        $output .= ' <'. $proto .'://'. ForgeConfig::get('sys_default_domain') .TRACKER_BASE_URL.'/?aid='. $art->getId() .'>';
+        $output .= ' <' . $proto . '://' . ForgeConfig::get('sys_default_domain') . TRACKER_BASE_URL . '/?aid=' . $art->getId() . '>';
         $output .= PHP_EOL;
-        $output .= $language->getText('plugin_tracker_include_artifact', 'last_edited');
-        $output .= ' '. $this->user_helper->getDisplayNameFromUserId($changeset->getSubmittedBy());
-        $output .= ' on '.\DateHelper::formatForLanguage($language, $changeset->getSubmittedOn());
+        $output .= dgettext('tuleap-tracker', 'last edited by:');
+        $output .= ' ' . $this->user_helper->getDisplayNameFromUserId($changeset->getSubmittedBy());
+        $output .= ' on ' . \DateHelper::formatForLanguage($language, $changeset->getSubmittedOn());
         if ($comment = $changeset->getComment()) {
             $output .= PHP_EOL;
             $output .= $comment->fetchMailFollowUp($format);
         }
         $output .= PHP_EOL;
-        $output .= ' -------------- ' . $language->getText('plugin_tracker_artifact_changeset', 'header_changeset') . ' ---------------- ' ;
+        $output .= ' -------------- ' . dgettext('tuleap-tracker', 'CHANGESET') . ' ---------------- ';
         $output .= PHP_EOL;
         $output .= $changeset->diffToPrevious($format, $recipient_user, $ignore_perms);
         $output .= PHP_EOL;
-        $output .= ' -------------- ' . $language->getText('plugin_tracker_artifact_changeset', 'header_artifact') . ' ---------------- ';
+        $output .= ' -------------- ' . dgettext('tuleap-tracker', 'ARTIFACT') . ' ---------------- ';
         $output .= PHP_EOL;
         $output .= $art->fetchMail($recipient_user, $format, $ignore_perms);
         $output .= PHP_EOL;
@@ -387,7 +385,7 @@ final class EmailNotificationTask implements PostCreationTask
      * Get the html body for notification
      *
      * @param bool $is_update It is an update, not a new artifact
-     * @param String  $recipient    The recipient who will receive the notification
+     * @param \PFUser $recipient_user    The recipient who will receive the notification
      * @param \BaseLanguage $language The language of the message
      * @param bool $ignore_perms ???
      *
@@ -409,7 +407,7 @@ final class EmailNotificationTask implements PostCreationTask
             '<table style="width:100%">
             <tr>
                 <td align="left" colspan="2">
-                    <h1>'.$hp->purify($art->fetchMailTitle($recipient_user, $format, $ignore_perms)).'
+                    <h1>' . $hp->purify($art->fetchMailTitle($recipient_user, $format, $ignore_perms)) . '
                     </h1>
                 </td>
             </tr>';
@@ -418,7 +416,7 @@ final class EmailNotificationTask implements PostCreationTask
             $output .=
                 '<tr>
                     <td colspan="2" align="left">
-                        <h2>'.$language->getText('plugin_tracker_artifact_changeset', 'header_html_changeset').'
+                        <h2>' . dgettext('tuleap-tracker', 'Latest modifications') . '
                         </h2>
                     </td>
                 </tr>';
@@ -429,7 +427,7 @@ final class EmailNotificationTask implements PostCreationTask
             // Last changes
             if ($changes) {
                 //TODO check that the following is PHP compliant (what if I made a changes without a comment? -- comment is null)
-                if (!empty($comment->body)) {
+                if (! empty($comment->body)) {
                     $output .= '
                         <tr>
                             <td colspan="2">
@@ -441,20 +439,20 @@ final class EmailNotificationTask implements PostCreationTask
                     '<tr>
                         <td> </td>
                         <td align="left">
-                            <ul>'.
-                    $changes.'
+                            <ul>' .
+                    $changes . '
                             </ul>
                         </td>
                     </tr>';
             }
 
-            $artifact_link = HTTPRequest::instance()->getServerUrl() .'/plugins/tracker/?aid='.(int)$art->getId();
+            $artifact_link = HTTPRequest::instance()->getServerUrl() . '/plugins/tracker/?aid=' . (int) $art->getId();
 
             $output .=
                 '<tr>
                     <td> </td>
-                    <td align="right">'.
-                $this->fetchHtmlAnswerButton($artifact_link).
+                    <td align="right">' .
+                $this->fetchHtmlAnswerButton($artifact_link) .
                 '</span>
                     </td>
                 </tr>';
@@ -475,7 +473,7 @@ final class EmailNotificationTask implements PostCreationTask
     private function fetchHtmlAnswerButton($artifact_link)
     {
         return '<span class="cta">
-            <a href="'. $artifact_link .'" target="_blank" rel="noreferrer">' .
+            <a href="' . $artifact_link . '" target="_blank" rel="noreferrer">' .
             $GLOBALS['Language']->getText('tracker_include_artifact', 'mail_answer_now') .
             '</a>
         </span>';
@@ -484,7 +482,7 @@ final class EmailNotificationTask implements PostCreationTask
     /**
      * @return string
      */
-    private function getTextAssignedToFilter(\Tracker_Artifact $artifact, \PFUser $recipient)
+    private function getTextAssignedToFilter(\Tuleap\Tracker\Artifact\Artifact $artifact, \PFUser $recipient)
     {
         $filter = '';
 
@@ -504,7 +502,7 @@ final class EmailNotificationTask implements PostCreationTask
     /**
      * @return string
      */
-    private function getHTMLAssignedToFilter(\Tracker_Artifact $artifact, \PFUser $recipient)
+    private function getHTMLAssignedToFilter(\Tuleap\Tracker\Artifact\Artifact $artifact, \PFUser $recipient)
     {
         $filter = '';
 
@@ -525,9 +523,9 @@ final class EmailNotificationTask implements PostCreationTask
      *
      * @return string
      */
-    private function getSubject(\Tracker_Artifact $artifact, \PFUser $recipient, $ignore_perms = false)
+    private function getSubject(\Tuleap\Tracker\Artifact\Artifact $artifact, \PFUser $recipient, $ignore_perms = false)
     {
-        $subject  = '['. $artifact->getTracker()->getItemName() .' #'. $artifact->getId() .'] ';
+        $subject  = '[' . $artifact->getTracker()->getItemName() . ' #' . $artifact->getId() . '] ';
         $subject .= $this->getSubjectAssignedTo($artifact, $recipient);
         $subject .= $artifact->fetchMailTitle($recipient, 'text', $ignore_perms);
         return $subject;
@@ -536,13 +534,13 @@ final class EmailNotificationTask implements PostCreationTask
     /**
      * @return string
      */
-    private function getSubjectAssignedTo(\Tracker_Artifact $artifact, \PFUser $recipient)
+    private function getSubjectAssignedTo(\Tuleap\Tracker\Artifact\Artifact $artifact, \PFUser $recipient)
     {
         if ($this->isNotificationAssignedToEnabled($artifact->getTracker())) {
             $assigned_to_users = $artifact->getAssignedTo($recipient);
             foreach ($assigned_to_users as $assigned_to_user) {
                 if ((int) $assigned_to_user->getId() === (int) $recipient->getId()) {
-                    return '[' . $recipient->getLanguage()->getText('plugin_tracker_include_type', 'assigned_to_me') . '] ';
+                    return '[' . dgettext('tuleap-tracker', 'Assigned to me') . '] ';
                 }
             }
         }

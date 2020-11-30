@@ -24,7 +24,6 @@ class DashboardWidgetColumn
 {
     private $id;
     private $line_id;
-    private $rank;
 
     /**
      * @var DashboardWidget[]
@@ -34,18 +33,13 @@ class DashboardWidgetColumn
     public function __construct(
         $id,
         $line_id,
-        $rank,
         array $widgets
     ) {
         $this->id      = $id;
         $this->line_id = $line_id;
-        $this->rank    = $rank;
         $this->widgets = $widgets;
     }
 
-    /**
-     * @param DashboardWidget $widget
-     */
     public function addWidget(DashboardWidget $widget)
     {
         $this->widgets[] = $widget;

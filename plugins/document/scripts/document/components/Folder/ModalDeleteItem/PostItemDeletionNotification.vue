@@ -18,11 +18,12 @@
   -->
 
 <template>
-    <div class="document-notification tlp-alert-success"
-         v-bind:class="{
-             'document-notification-fadeout': is_fadeout
-         }"
-         v-if="is_displayed"
+    <div
+        class="document-notification tlp-alert-success"
+        v-bind:class="{
+            'document-notification-fadeout': is_fadeout,
+        }"
+        v-if="is_displayed"
     >
         <translate>The item has been deleted successfully.</translate>
     </div>
@@ -37,18 +38,18 @@ export default {
             is_displayed: false,
             is_fadeout: false,
             fadeout_timeout_id: null,
-            hidden_timeout_id: null
+            hidden_timeout_id: null,
         };
     },
     computed: {
-        ...mapState(["show_post_deletion_notification"])
+        ...mapState(["show_post_deletion_notification"]),
     },
     watch: {
-        show_post_deletion_notification: function(value) {
+        show_post_deletion_notification: function (value) {
             if (value) {
                 this.show();
             }
-        }
+        },
     },
     methods: {
         show() {
@@ -66,7 +67,7 @@ export default {
                 this.is_displayed = false;
                 this.$store.commit("hidePostDeletionNotification");
             }, 3000);
-        }
-    }
+        },
+    },
 };
 </script>

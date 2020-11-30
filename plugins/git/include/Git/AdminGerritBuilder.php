@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -37,7 +37,7 @@ class AdminGerritBuilder
 
     public function buildFromRequest(array $request)
     {
-        $gerrit_server                         = array();
+        $gerrit_server                         = [];
         $gerrit_server['host']                 = $request['host'];
         $gerrit_server['ssh_port']             = $request['ssh_port'];
         $gerrit_server['http_port']            = $request['http_port'];
@@ -47,7 +47,6 @@ class AdminGerritBuilder
         $gerrit_server['use_ssl']              = isset($request['use_ssl']) ? $request['use_ssl'] : false;
         $gerrit_server['http_password']        = $request['http_password'];
         $gerrit_server['replication_password'] = $request['replication_password'];
-        $gerrit_server['auth_type']            = $request['auth_type'];
         $gerrit_server['gerrit_version']       = Git_RemoteServer_GerritServer::GERRIT_VERSION_2_8_PLUS;
 
         return $gerrit_server;
@@ -69,7 +68,7 @@ class AdminGerritBuilder
             );
             return '';
         }
-        $validated_key = $this->ssh_key_validator->validateAllKeys(array($ssh_key));
+        $validated_key = $this->ssh_key_validator->validateAllKeys([$ssh_key]);
 
         if (empty($validated_key)) {
             return '';

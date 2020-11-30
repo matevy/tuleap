@@ -45,12 +45,12 @@ class XML_ParseException extends Exception
 
     public function getSourceXMLForError(XML_ParseError $error)
     {
-        return $this->indented_xml[$error->getLine()-1];
+        return $this->indented_xml[$error->getLine() - 1];
     }
 
     public function getIndentedXml()
     {
-        $output = array();
+        $output = [];
         $line_no = 1;
         foreach ($this->indented_xml as $line) {
             $output[] = $line_no . ': ' . $line;

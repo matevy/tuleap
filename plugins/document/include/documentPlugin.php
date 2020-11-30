@@ -18,17 +18,33 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
+use Tuleap\Docman\DocmanSettingsSiteAdmin\DocmanSettingsTabsPresenterCollection;
 use Tuleap\Docman\ExternalLinks\DocmanLinkProvider;
 use Tuleap\Docman\ExternalLinks\ExternalLinkRedirector;
 use Tuleap\Docman\ExternalLinks\ExternalLinksManager;
 use Tuleap\Docman\ExternalLinks\Link;
+use Tuleap\Document\Config\Admin\FilesDownloadLimitsAdminController;
+use Tuleap\Document\Config\Admin\FilesDownloadLimitsAdminSaveController;
+use Tuleap\Document\Config\Admin\HistoryEnforcementAdminController;
+use Tuleap\Document\Config\Admin\HistoryEnforcementAdminSaveController;
+use Tuleap\Document\Config\FileDownloadLimitsBuilder;
+use Tuleap\Document\Config\HistoryEnforcementSettingsBuilder;
 use Tuleap\Document\DocumentUsageRetriever;
+use Tuleap\Document\DownloadFolderAsZip\DocumentFolderZipStreamer;
+use Tuleap\Document\DownloadFolderAsZip\ZipStreamerLoggingHelper;
+use Tuleap\Document\DownloadFolderAsZip\ZipStreamMailNotificationSender;
 use Tuleap\Document\LinkProvider\DocumentLinkProvider;
 use Tuleap\Document\PermissionDeniedDocumentMailSender;
 use Tuleap\Document\Tree\DocumentTreeController;
 use Tuleap\Document\Tree\DocumentTreeProjectExtractor;
 use Tuleap\Error\PlaceHolderBuilder;
+use Tuleap\Http\HTTPFactoryBuilder;
+use Tuleap\Http\Response\BinaryFileResponseBuilder;
+use Tuleap\Http\Server\ServiceInstrumentationMiddleware;
 use Tuleap\Layout\ServiceUrlCollector;
+use Tuleap\Project\Flags\ProjectFlagsBuilder;
+use Tuleap\Project\Flags\ProjectFlagsDao;
 use Tuleap\Request\CollectRoutesEvent;
 
 require_once __DIR__ . '/../../docman/include/docmanPlugin.php';
@@ -46,7 +62,7 @@ class documentPlugin extends Plugin // phpcs:ignore
         parent::__construct($id);
         $this->setScope(self::SCOPE_PROJECT);
 
-        bindtextdomain('tuleap-document', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-document', __DIR__ . '/../site-content');
     }
 
     public function getHooksAndCallbacks()
@@ -56,6 +72,7 @@ class documentPlugin extends Plugin // phpcs:ignore
         $this->addHook(ExternalLinkRedirector::NAME);
         $this->addHook(ServiceUrlCollector::NAME);
         $this->addHook(DocmanLinkProvider::NAME);
+        $this->addHook(DocmanSettingsTabsPresenterCollection::NAME);
 
         return parent::getHooksAndCallbacks();
     }
@@ -72,9 +89,9 @@ class documentPlugin extends Plugin // phpcs:ignore
         return $this->pluginInfo;
     }
 
-    public function getOldPluginInfo() : DocmanPluginInfo
+    public function getOldPluginInfo(): DocmanPluginInfo
     {
-        if (!$this->old_docman_plugin_info) {
+        if (! $this->old_docman_plugin_info) {
             $this->old_docman_plugin_info = new DocmanPluginInfo($this->getDocmanPlugin());
         }
         return $this->old_docman_plugin_info;
@@ -85,10 +102,36 @@ class documentPlugin extends Plugin // phpcs:ignore
         return ['docman'];
     }
 
-
     public function routeGet(): DocumentTreeController
     {
-        return new DocumentTreeController($this->getProjectExtractor(), $this->getOldPluginInfo());
+        return new DocumentTreeController(
+            $this->getProjectExtractor(),
+            $this->getOldPluginInfo(),
+            new FileDownloadLimitsBuilder(),
+            new HistoryEnforcementSettingsBuilder(),
+            new ProjectFlagsBuilder(new ProjectFlagsDao()),
+        );
+    }
+
+    public function routeDownloadFolderAsZip(): DocumentFolderZipStreamer
+    {
+        return new DocumentFolderZipStreamer(
+            new BinaryFileResponseBuilder(
+                HTTPFactoryBuilder::responseFactory(),
+                HTTPFactoryBuilder::streamFactory()
+            ),
+            $this->getProjectExtractor(),
+            UserManager::instance(),
+            new ZipStreamerLoggingHelper(),
+            new ZipStreamMailNotificationSender(),
+            new \Tuleap\Document\DownloadFolderAsZip\FolderSizeIsAllowedChecker(
+                new \Tuleap\Docman\REST\v1\Folders\ComputeFolderSizeVisitor(),
+            ),
+            new \Tuleap\Document\Config\FileDownloadLimitsBuilder(),
+            new SapiEmitter(),
+            new \Tuleap\Http\Server\SessionWriteCloseMiddleware(),
+            new ServiceInstrumentationMiddleware('document')
+        );
     }
 
     public function routeSendRequestMail(): PermissionDeniedDocumentMailSender
@@ -99,15 +142,46 @@ class documentPlugin extends Plugin // phpcs:ignore
         );
     }
 
-    public function collectRoutesEvent(CollectRoutesEvent $event)
+    public function collectRoutesEvent(CollectRoutesEvent $event): void
     {
         $event->getRouteCollector()->addGroup('/plugins/document', function (FastRoute\RouteCollector $r) {
             $r->post(
                 '/PermissionDeniedRequestMessage/{project_id:\d+}',
                 $this->getRouteHandler('routeSendRequestMail')
             );
+            $r->get(
+                '/{project_name:[A-z0-9-]+}/folders/{folder_id:\d+}/download-folder-as-zip',
+                $this->getRouteHandler('routeDownloadFolderAsZip')
+            );
             $r->get('/{project_name:[A-z0-9-]+}/[{vue-routing:.*}]', $this->getRouteHandler('routeGet'));
         });
+
+        $event->getRouteCollector()->addGroup(\DocmanPlugin::ADMIN_BASE_URL, function (FastRoute\RouteCollector $r) {
+            $r->get('/files-download-limits', $this->getRouteHandler('routeGetDocumentSettings'));
+            $r->post('/files-download-limits', $this->getRouteHandler('routePostDocumentSettings'));
+            $r->get('/history-enforcement', $this->getRouteHandler('routeGetHistoryEnforcementSettings'));
+            $r->post('/history-enforcement', $this->getRouteHandler('routePostHistoryEnforcementSettings'));
+        });
+    }
+
+    public function routeGetDocumentSettings(): FilesDownloadLimitsAdminController
+    {
+        return FilesDownloadLimitsAdminController::buildSelf();
+    }
+
+    public function routePostDocumentSettings(): FilesDownloadLimitsAdminSaveController
+    {
+        return FilesDownloadLimitsAdminSaveController::buildSelf();
+    }
+
+    public function routeGetHistoryEnforcementSettings(): HistoryEnforcementAdminController
+    {
+        return HistoryEnforcementAdminController::buildSelf();
+    }
+
+    public function routePostHistoryEnforcementSettings(): HistoryEnforcementAdminSaveController
+    {
+        return HistoryEnforcementAdminSaveController::buildSelf();
     }
 
     public function externalLinksManager(ExternalLinksManager $collector)
@@ -133,7 +207,7 @@ class documentPlugin extends Plugin // phpcs:ignore
         );
     }
 
-    public function getProjectExtractor() : DocumentTreeProjectExtractor
+    public function getProjectExtractor(): DocumentTreeProjectExtractor
     {
         return new DocumentTreeProjectExtractor(ProjectManager::instance());
     }
@@ -176,9 +250,17 @@ class documentPlugin extends Plugin // phpcs:ignore
     public function docmanLinkProvider(DocmanLinkProvider $link_provider)
     {
         $project = $link_provider->getProject();
-        $retriever = new DocumentUsageRetriever();
-        if ($retriever->canProjectUseNewUI($project)) {
-            $link_provider->replaceProvider(new DocumentLinkProvider(HTTPRequest::instance()->getServerUrl(), $project));
-        }
+        $link_provider->replaceProvider(new DocumentLinkProvider(HTTPRequest::instance()->getServerUrl(), $project));
+    }
+
+    public function docmanSettingsTabsPresenterCollection(DocmanSettingsTabsPresenterCollection $collection): void
+    {
+        $collection->add(
+            new \Tuleap\Document\Config\Admin\FileDownloadTabPresenter()
+        );
+
+        $collection->add(
+            new \Tuleap\Document\Config\Admin\HistoryEnforcementTabPresenter()
+        );
     }
 }

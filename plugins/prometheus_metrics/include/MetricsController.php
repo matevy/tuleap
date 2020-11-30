@@ -22,9 +22,11 @@ declare(strict_types=1);
 
 namespace Tuleap\PrometheusMetrics;
 
+use Enalean\Prometheus\Renderer\IncoherentMetricLabelNamesAndValues;
+use Enalean\Prometheus\Renderer\RenderTextFormat;
+use Enalean\Prometheus\Storage\FlushableStorage;
 use EventManager;
 use ForgeConfig;
-use Prometheus\RenderTextFormat;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -32,12 +34,13 @@ use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Redis;
 use Tuleap\Admin\Homepage\NbUsersByStatusBuilder;
+use Tuleap\BuildVersion\VersionPresenter;
 use Tuleap\Http\HttpClientFactory;
 use Tuleap\Http\HTTPFactoryBuilder;
 use Tuleap\Instrument\Prometheus\Prometheus;
 use Tuleap\Request\DispatchablePSR15Compatible;
 use Tuleap\Request\DispatchableWithRequestNoAuthz;
-use Zend\HttpHandlerRunner\Emitter\EmitterInterface;
+use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 
 final class MetricsController extends DispatchablePSR15Compatible implements DispatchableWithRequestNoAuthz
 {
@@ -62,9 +65,17 @@ final class MetricsController extends DispatchablePSR15Compatible implements Dis
      */
     private $event_manager;
     /**
+     * @var VersionPresenter
+     */
+    private $version_presenter;
+    /**
      * @var Redis|null
      */
     private $redis;
+    /**
+     * @var FlushableStorage
+     */
+    private $flushable_storage;
 
     public function __construct(
         ResponseFactoryInterface $response_factory,
@@ -73,22 +84,26 @@ final class MetricsController extends DispatchablePSR15Compatible implements Dis
         MetricsCollectorDao $dao,
         NbUsersByStatusBuilder $nb_user_builder,
         EventManager $event_manager,
+        VersionPresenter $version_presenter,
         ?Redis $redis,
+        FlushableStorage $flushable_storage,
         MiddlewareInterface ...$middleware_stack
     ) {
         parent::__construct($emitter, ...$middleware_stack);
-        $this->response_factory = $response_factory;
-        $this->stream_factory   = $stream_factory;
-        $this->dao              = $dao;
-        $this->nb_user_builder  = $nb_user_builder;
-        $this->event_manager    = $event_manager;
-        $this->redis            = $redis;
+        $this->response_factory  = $response_factory;
+        $this->stream_factory    = $stream_factory;
+        $this->dao               = $dao;
+        $this->nb_user_builder   = $nb_user_builder;
+        $this->event_manager     = $event_manager;
+        $this->version_presenter = $version_presenter;
+        $this->redis             = $redis;
+        $this->flushable_storage = $flushable_storage;
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         return $this->response_factory->createResponse()
-            ->withHeader('Content-Type', RenderTextFormat::MIME_TYPE)
+            ->withHeader('Content-Type', (new RenderTextFormat())->getMimeType())
             ->withBody(
                 $this->stream_factory->createStream(
                     $this->getTuleapMetrics() .
@@ -98,22 +113,39 @@ final class MetricsController extends DispatchablePSR15Compatible implements Dis
             );
     }
 
-    private function getTuleapMetrics() : string
+    private function getTuleapMetrics(): string
     {
-        return Prometheus::instance()->renderText();
+        $instance = Prometheus::instance();
+
+        try {
+            return $instance->renderText();
+        } catch (IncoherentMetricLabelNamesAndValues | \TypeError $error) {
+            // Try to cleanup the persistent datastore, the inconsistency might comes
+            // from an upgrade of the Prometheus library or a change in the structure
+            // of one of the metrics
+            $this->flushable_storage->flush();
+            return $instance->renderText();
+        }
     }
 
-    private function getTuleapComputedMetrics() : string
+    private function getTuleapComputedMetrics(): string
     {
         $prometheus = Prometheus::getInMemory();
-        $collector  = new MetricsCollector($prometheus, $this->dao, $this->nb_user_builder, $this->event_manager, $this->redis);
+        $collector  = new MetricsCollector(
+            $prometheus,
+            $this->dao,
+            $this->nb_user_builder,
+            $this->event_manager,
+            $this->version_presenter,
+            $this->redis
+        );
 
         $collector->collect();
 
         return $prometheus->renderText();
     }
 
-    private function getNodeExporterMetrics() : string
+    private function getNodeExporterMetrics(): string
     {
         try {
             $node_exporter_url = ForgeConfig::get(Prometheus::CONFIG_PROMETHEUS_NODE_EXPORTER, '');

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -29,13 +29,7 @@ class Response
      *
      * @var Feedback
      */
-    var $_feedback;
-
-    /**
-     *
-     * @var Tour[]
-     */
-    var $tours = array();
+    public $_feedback;
 
     /**
     * Constructor
@@ -56,25 +50,12 @@ class Response
                 $dao->delete($session_id);
             }
         }
-        if (!$this->_feedback) {
+        if (! $this->_feedback) {
             $this->clearFeedback();
         }
     }
 
-    function addTour(Tuleap_Tour $tour)
-    {
-        $this->tours[] = $tour;
-    }
-
-    /**
-     * @return Tuleap_Tour[]
-     */
-    function getTours()
-    {
-        return $this->tours;
-    }
-
-    function addFeedback($level, $message, $purify = CODENDI_PURIFIER_CONVERT_HTML)
+    public function addFeedback($level, $message, $purify = CODENDI_PURIFIER_CONVERT_HTML)
     {
         $this->_feedback->log($level, $message, $purify);
     }
@@ -82,7 +63,7 @@ class Response
     /**
      * Only adds to the feedback if the messge doesn't already exist.
      */
-    function addUniqueFeedback($level, $message, $purify = CODENDI_PURIFIER_CONVERT_HTML)
+    public function addUniqueFeedback($level, $message, $purify = CODENDI_PURIFIER_CONVERT_HTML)
     {
         if (! strstr($this->getRawFeedback(), $message)) {
             $this->_feedback->log($level, $message, $purify);
@@ -93,16 +74,16 @@ class Response
     {
         $this->_feedback->display();
     }
-    function feedbackHasWarningsOrErrors()
+    public function feedbackHasWarningsOrErrors()
     {
         return $this->_feedback->hasWarningsOrErrors();
     }
-    function feedbackHasErrors()
+    public function feedbackHasErrors()
     {
         return $this->_feedback->hasErrors();
     }
 
-    function getRawFeedback()
+    public function getRawFeedback()
     {
         return $this->_feedback->fetchAsPlainText();
     }
@@ -117,7 +98,7 @@ class Response
     /**
      * @return array of error messages
      */
-    function getFeedbackErrors()
+    public function getFeedbackErrors()
     {
         return $this->_feedback->fetchErrors();
     }
@@ -137,7 +118,7 @@ class Response
         return new FeedbackDao();
     }
 
-    function _serializeFeedback()
+    public function _serializeFeedback()
     {
         $dao        = $this->getFeedbackDao();
         $session_id = UserManager::instance()->getCurrentUser()->getSessionId();
@@ -146,8 +127,7 @@ class Response
 
     public function sendStatusCode($code)
     {
-        header("HTTP/1.0 $code");
-        echo $this->getRawFeedback();
+        \http_response_code($code);
     }
 
     public function setContentType($content_type)
@@ -165,7 +145,7 @@ class Response
     {
         header('Content-Description: File Transfer');
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Content-Disposition: attachment; filename="'.$output_filename.'"');
+        header('Content-Disposition: attachment; filename="' . $output_filename . '"');
         header('Content-Type: application/xml');
 
         echo $xml;

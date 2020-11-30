@@ -36,13 +36,11 @@ class BurnupFieldRetriever
     }
 
     /**
-     * @param \Tracker_Artifact $artifact
-     * @param PFUser $user
      * @return Burnup|null
      */
-    public function getField(\Tracker_Artifact $artifact, PFUser $user)
+    public function getField(\Tuleap\Tracker\Artifact\Artifact $artifact, PFUser $user)
     {
-        $burnup_fields = $this->factory->getUsedFormElementsByType($artifact->getTracker(), array(Burnup::TYPE));
+        $burnup_fields = $this->factory->getUsedFormElementsByType($artifact->getTracker(), [Burnup::TYPE]);
 
         if (count($burnup_fields) > 0 && $burnup_fields[0]->userCanRead($user)) {
             return $burnup_fields[0];

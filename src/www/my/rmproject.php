@@ -32,6 +32,7 @@ if (user_isloggedin()) {
         $group_id = $request->get('group_id');
     } else {
         exit_no_group();
+        exit();
     }
 
     $user_remover = new \Tuleap\Project\UserRemover(
@@ -48,13 +49,13 @@ if (user_isloggedin()) {
 
     /********* mail the changes so the admins know what happened *********/
     $res_admin = db_query("SELECT user.user_id AS user_id, user.email AS email, user.user_name AS user_name FROM user,user_group
-		WHERE user_group.user_id=user.user_id AND user_group.group_id=".db_ei($group_id)." AND
+		WHERE user_group.user_id=user.user_id AND user_group.group_id=" . db_ei($group_id) . " AND
 		user_group.admin_flags = 'A'
 		UNION
 		SELECT user.user_id AS user_id, user.email AS email, user.user_name AS user_name
 		FROM user
 		    INNER JOIN ugroup_user ON (user.user_id = ugroup_user.user_id)
-		    INNER JOIN ugroup ON (ugroup_user.ugroup_id = ugroup.ugroup_id AND ugroup.group_id = ".db_ei($group_id).")
+		    INNER JOIN ugroup ON (ugroup_user.ugroup_id = ugroup.ugroup_id AND ugroup.group_id = " . db_ei($group_id) . ")
 		    INNER JOIN project_membership_delegation AS delegation ON (ugroup_user.ugroup_id = delegation.ugroup_id)
     ");
     $to = '';
@@ -64,17 +65,17 @@ if (user_isloggedin()) {
     if (strlen($to) > 0) {
         $to = substr($to, 0, -1);
 
-        $project=new Project($group_id);
+        $project = new Project($group_id);
         $project_name = $project->getPublicName();
 
-        list($host,$port) = explode(':', $GLOBALS['sys_default_domain']);
-        $link_members = HTTPRequest::instance()->getServerUrl()."/project/memberlist.php?group_id=$group_id";
-        $subject = $Language->getText('bookmark_rmproject', 'mail_subject', array($GLOBALS['sys_name'],user_getname($user_id),$project_name));
-        $body = stripcslashes($Language->getText('bookmark_rmproject', 'mail_body', array($project_name, user_getname($user_id),$link_members)));
+        list($host,$port) = explode(':', ForgeConfig::get('sys_default_domain'));
+        $link_members = HTTPRequest::instance()->getServerUrl() . "/project/memberlist.php?group_id=$group_id";
+        $subject = $Language->getText('bookmark_rmproject', 'mail_subject', [ForgeConfig::get('sys_name'), user_getname($user_id), $project_name]);
+        $body = stripcslashes($Language->getText('bookmark_rmproject', 'mail_body', [$project_name, user_getname($user_id), $link_members]));
         $mail = new Codendi_Mail();
         $mail->setTo($to);
         $mail->setSubject($subject);
-        $mail->setFrom($GLOBALS['sys_noreply']);
+        $mail->setFrom(ForgeConfig::get('sys_noreply'));
         $mail->setBodyText($body);
         $mail->send();
     }

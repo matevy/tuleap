@@ -25,8 +25,6 @@ namespace Tuleap\Tracker\Workflow\PostAction\Update\Internal;
 use LogicException;
 use Tracker;
 use Tracker_FormElementFactory;
-use Tracker_RuleFactory;
-use Tuleap\Tracker\Workflow\PostAction\Update\FrozenFieldsValue;
 use Tuleap\Tracker\Workflow\PostAction\Update\HiddenFieldsetsValue;
 
 class HiddenFieldsetsValueValidator
@@ -63,7 +61,7 @@ class HiddenFieldsetsValueValidator
     /**
      * @throws InvalidPostActionException
      */
-    private function validateSelectedFieldset(Tracker $tracker, HiddenFieldsetsValue $hidden_fieldsets_value) : void
+    private function validateSelectedFieldset(Tracker $tracker, HiddenFieldsetsValue $hidden_fieldsets_value): void
     {
         $used_fieldset_ids = $this->extractUsedFieldsetIds($tracker);
         $workflow          = $tracker->getWorkflow();
@@ -77,12 +75,12 @@ class HiddenFieldsetsValueValidator
         }
     }
 
-    private function extractUsedFieldsetIds(Tracker $tracker) : array
+    private function extractUsedFieldsetIds(Tracker $tracker): array
     {
         $used_fieldsets    = $this->form_element_factory->getUsedFieldsets($tracker);
         $used_fieldset_ids = [];
-        /** @var \Tracker_FormElement_Container_Fieldset $used_fieldset */
         foreach ($used_fieldsets as $used_fieldset) {
+            \assert($used_fieldset instanceof \Tracker_FormElement_Container_Fieldset);
             $used_fieldset_ids[] = (int) $used_fieldset->getID();
         }
 

@@ -30,17 +30,17 @@ require_once('lib/PageList.php');
  */
 class WikiPlugin_AllPages extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("AllPages");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("List all pages in this wiki.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -49,17 +49,17 @@ class WikiPlugin_AllPages extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array(
+            [
                    'noheader'      => false,
                    'include_empty' => false,
                    //'pages'         => false, // DONT, this would be ListPages then.
                    'info'          => '',
                    'debug'         => false
-            )
+            ]
         );
     }
 
@@ -69,17 +69,17 @@ class WikiPlugin_AllPages extends WikiPlugin
     // sortby: [+|-] pagename|mtime|hits
 
     // 2004-07-08 22:05:35 rurban: turned off &$request to prevent from strange bug below
-    function run($dbi, $argstr, $request, $basepage)
+    public function run($dbi, $argstr, $request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         $pages = false;
         // Todo: extend given _GET args
         if ($args['debug']) {
-            $timer = new DebugTimer;
+            $timer = new DebugTimer();
         }
         $caption = _("All pages in this wiki (%d total):");
 
-        if (!empty($args['owner'])) {
+        if (! empty($args['owner'])) {
             $pages = PageList::allPagesByOwner(
                 $args['owner'],
                 $args['include_empty'],
@@ -98,7 +98,7 @@ class WikiPlugin_AllPages extends WikiPlugin
                     count($pages)
                 );
             }
-        } elseif (!empty($args['author'])) {
+        } elseif (! empty($args['author'])) {
             $pages = PageList::allPagesByAuthor(
                 $args['author'],
                 $args['include_empty'],
@@ -117,7 +117,7 @@ class WikiPlugin_AllPages extends WikiPlugin
                     count($pages)
                 );
             }
-        } elseif (!empty($args['creator'])) {
+        } elseif (! empty($args['creator'])) {
             $pages = PageList::allPagesByCreator(
                 $args['creator'],
                 $args['include_empty'],
@@ -145,11 +145,11 @@ class WikiPlugin_AllPages extends WikiPlugin
                 $args['count'] = $request->getArg('count');
             }
         }
-        if (empty($args['count']) and !empty($pages)) {
+        if (empty($args['count']) and ! empty($pages)) {
             $args['count'] = count($pages);
         }
         $pagelist = new PageList($args['info'], $args['exclude'], $args);
-        if (!$args['noheader']) {
+        if (! $args['noheader']) {
             $pagelist->setCaption($caption);
         }
 
@@ -177,12 +177,12 @@ class WikiPlugin_AllPages extends WikiPlugin
         }
     }
 
-    function getmicrotime()
+    public function getmicrotime()
     {
         list($usec, $sec) = explode(" ", microtime());
-        return (float)$usec + (float)$sec;
+        return (float) $usec + (float) $sec;
     }
-};
+}
 
 // $Log: AllPages.php,v $
 // Revision 1.36  2005/01/28 12:08:42  rurban

@@ -26,12 +26,12 @@ require_once('lib/PageList.php');
 
 class WikiPlugin_LikePages extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("LikePages");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return sprintf(
             _("List page names which share an initial or final title word with '%s'."),
@@ -39,7 +39,7 @@ class WikiPlugin_LikePages extends WikiPlugin
         );
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -48,22 +48,22 @@ class WikiPlugin_LikePages extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array('page'     => '[pagename]',
+            ['page'     => '[pagename]',
                    'prefix'   => false,
                    'suffix'   => false,
                    'noheader' => false,
-            )
+            ]
         );
     }
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor
     // exclude arg allows multiple pagenames exclude=HomePage,RecentChanges
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         extract($args);
@@ -93,12 +93,12 @@ class WikiPlugin_LikePages extends WikiPlugin
         }
 
         // Search for pages containing either the suffix or the prefix.
-        $search = $match = array();
-        if (!empty($prefix)) {
+        $search = $match = [];
+        if (! empty($prefix)) {
             $search[] = $this->_quote($prefix);
             $match[]  = '^' . preg_quote($prefix, '/');
         }
-        if (!empty($suffix)) {
+        if (! empty($suffix)) {
             $search[] = $this->_quote($suffix);
             $match[]  = preg_quote($suffix, '/') . '$';
         }
@@ -106,19 +106,19 @@ class WikiPlugin_LikePages extends WikiPlugin
         if ($search) {
             $query = new TextSearchQuery(join(' OR ', $search));
         } else {
-            $query = new NullTextSearchQuery; // matches nothing
+            $query = new NullTextSearchQuery(); // matches nothing
         }
 
         $match_re = '/' . join('|', $match) . '/';
 
         $pagelist = new PageList($info, $exclude, $args);
-        if (!$noheader) {
+        if (! $noheader) {
             $pagelist->setCaption($descrip);
         }
         $pages = $dbi->titleSearch($query);
         while ($page = $pages->next()) {
             $name = $page->getName();
-            if (!preg_match($match_re, $name)) {
+            if (! preg_match($match_re, $name)) {
                 continue;
             }
             $pagelist->addPage($page);
@@ -127,11 +127,11 @@ class WikiPlugin_LikePages extends WikiPlugin
         return $pagelist;
     }
 
-    function _quote($str)
+    public function _quote($str)
     {
         return "'" . str_replace("'", "''", $str) . "'";
     }
-};
+}
 
 // $Log: LikePages.php,v $
 // Revision 1.22  2004/11/23 15:17:19  rurban

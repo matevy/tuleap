@@ -25,7 +25,6 @@ use Tuleap\OpenIDConnectClient\Authentication\Token\TokenRequestCreator;
 use Tuleap\OpenIDConnectClient\Authentication\Token\TokenRequestSender;
 use Tuleap\OpenIDConnectClient\Authentication\UserInfo\UserInfoRequestCreator;
 use Tuleap\OpenIDConnectClient\Authentication\UserInfo\UserInfoRequestSender;
-use ForgeConfig;
 use Tuleap\OpenIDConnectClient\Provider\ProviderManager;
 
 class Flow
@@ -82,7 +81,7 @@ class Flow
      * @throws \Http\Client\Exception
      * @throws \Tuleap\OpenIDConnectClient\Provider\ProviderNotFoundException
      */
-    public function process(\HTTPRequest $request) : FlowResponse
+    public function process(\HTTPRequest $request): FlowResponse
     {
         $authorization_response = AuthorizationResponse::buildFromHTTPRequest($request);
         $signed_state           = $authorization_response->getState();
@@ -92,10 +91,11 @@ class Flow
         $token_request  = $this->token_request_creator->createTokenRequest(
             $provider,
             $authorization_response,
-            $provider->getRedirectUri()
+            $provider->getRedirectUri(),
+            $state->getPKCECodeVerifier()
         );
         $token_response = $this->token_request_sender->sendTokenRequest($token_request);
-        $id_token       = $this->id_token_verifier->validate(
+        $id_token_sub   = $this->id_token_verifier->validate(
             $provider,
             $state->getNonce(),
             $token_response->getIDToken()
@@ -106,6 +106,6 @@ class Flow
 
         $this->state_manager->clearState();
 
-        return new FlowResponse($provider, $state->getReturnTo(), $id_token['sub'], $user_info_response->getClaims());
+        return new FlowResponse($provider, $state->getReturnTo(), $id_token_sub, $user_info_response->getClaims());
     }
 }

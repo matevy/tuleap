@@ -20,11 +20,12 @@
 <template>
     <div class="tlp-form-element">
         <label class="tlp-label" v-bind:for="selector_id">{{ label }}</label>
-        <select v-bind:id="selector_id"
-                class="tlp-select"
-                multiple
-                v-model="selected_ugroup_ids"
-                v-on:change="updateSelectedUGroups"
+        <select
+            v-bind:id="selector_id"
+            class="tlp-select"
+            multiple
+            v-model="selected_ugroup_ids"
+            v-on:change="updateSelectedUGroups"
         >
             <option
                 v-for="ugroup in project_ugroups"
@@ -38,47 +39,50 @@
 </template>
 <script>
 function getSelectedUGroupsIDs(selected_ugroups) {
-    return selected_ugroups.map(ugroup => ugroup.id);
+    return selected_ugroups.map((ugroup) => ugroup.id);
 }
 
 export default {
     name: "PermissionsSelector",
     model: {
-        prop: "selected_ugroups"
+        prop: "selected_ugroups",
     },
     props: {
         label: {
             type: String,
-            required: true
+            required: true,
         },
         project_ugroups: {
             type: Array,
-            required: true
+            required: true,
         },
         selected_ugroups: {
             type: Array,
-            required: true
-        }
+            required: true,
+        },
     },
     data() {
         return {
-            selected_ugroup_ids: getSelectedUGroupsIDs(this.selected_ugroups)
+            selected_ugroup_ids: getSelectedUGroupsIDs(this.selected_ugroups),
         };
     },
     computed: {
         selector_id() {
             return "document-permission-" + this.label;
-        }
+        },
     },
     watch: {
-        selected_ugroups: function(value) {
+        selected_ugroups: function (value) {
             this.selected_ugroup_ids = getSelectedUGroupsIDs(value);
-        }
+        },
     },
     methods: {
         updateSelectedUGroups() {
-            this.$emit("input", this.selected_ugroup_ids.map(ugroup_id => ({ id: ugroup_id })));
-        }
-    }
+            this.$emit(
+                "input",
+                this.selected_ugroup_ids.map((ugroup_id) => ({ id: ugroup_id }))
+            );
+        },
+    },
 };
 </script>

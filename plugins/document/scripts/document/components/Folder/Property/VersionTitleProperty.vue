@@ -19,11 +19,7 @@
 
 <template>
     <div class="tlp-form-element docman-item-version-title-update">
-        <label
-            class="tlp-label"
-            for="document-update-version-title"
-            v-translate
-        >
+        <label class="tlp-label" for="document-update-version-title" v-translate>
             Version name
         </label>
         <input
@@ -35,21 +31,21 @@
             v-bind:value="value"
             v-on:input="$emit('input', $event.target.value)"
             ref="input"
-        >
+        />
     </div>
 </template>
 <script>
 export default {
     props: {
-        value: String
+        value: String,
     },
     computed: {
         placeholder() {
             return this.$gettext("My new version name");
-        }
+        },
     },
     mounted() {
         this.$refs.input.focus();
-    }
+    },
 };
 </script>

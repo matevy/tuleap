@@ -18,28 +18,51 @@
  */
 
 $button-size: 40px;
+$button-with-label-height: 32px;
+$button-margin: $tlp-small-spacing;
 
 .taskboard-add-card-form {
-    min-height: $button-size;
+    display: none;
+    justify-content: center;
 
-    &:first-child > .taskboard-card-label-editor {
-        margin: 0;
+    &:first-child > {
+        .taskboard-add-in-place-button {
+            margin: 0;
+        }
     }
 }
 
-.taskboard-add-in-place-button {
-    position: absolute;
-    z-index: 10;
-    bottom: $tlp-half-spacing;
-    left: 50%;
-    width: $button-size;
-    height: $button-size;
-    transform: translateX(-50%);
-    transition: opacity ease-in-out 100ms;
-    border-radius: 50%;
-    opacity: 0;
+.taskboard-cell-with-add-form {
+    padding: $tlp-small-spacing $tlp-small-spacing ($button-size + 2 * $button-margin + $tlp-small-spacing);
+
+    &:hover {
+        padding: $tlp-small-spacing;
+
+        > .taskboard-add-card-form {
+            display: flex;
+        }
+    }
 }
 
-.taskboard-cell:hover > .taskboard-add-card-form > .taskboard-add-in-place-button {
-    opacity: 1;
+.taskboard-add-card-form-editor-container {
+    width: 100%;
+}
+
+.taskboard-cell-solo-card + .taskboard-add-card-form > .taskboard-add-card-form-editor-container {
+    margin: $tlp-small-spacing 0 0;
+}
+
+.taskboard-drop-not-accepted > .taskboard-add-card-form {
+    display: none;
+}
+
+.taskboard-add-in-place-button {
+    margin: ($button-size - $button-with-label-height + $tlp-small-spacing) 0 $tlp-small-spacing;
+
+    &:not(.taskboard-add-in-place-button-with-label) {
+        width: $button-size;
+        margin: $tlp-small-spacing 0;
+        padding: 0;
+        border-radius: 50%;
+    }
 }

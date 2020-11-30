@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -30,15 +30,18 @@ interface LegacyDataAccessInterface
      * @param $sql string the database query to run
      * @deprecated
      * @return object MySQLDataAccessResultInterface
+     *
+     * @psalm-taint-sink sql $sql
+     * @psalm-taint-sink sql $params
      */
-    public function query($sql, $params = array());
+    public function query($sql, $params = []);
 
     /**
      * Return ID generated from the previous INSERT operation.
      *
      * @deprecated
      *
-     * @return int, or 0 if the previous query does not generate an AUTO_INCREMENT value, or FALSE if no MySQL connection was established
+     * @return false|int or 0 if the previous query does not generate an AUTO_INCREMENT value, or FALSE if no MySQL connection was established
      */
     public function lastInsertId();
 
@@ -71,7 +74,7 @@ interface LegacyDataAccessInterface
      *
      * @return string
      */
-    public function quoteSmart($value, $params = array());
+    public function quoteSmart($value, $params = []);
 
     /**
      * Quote schema name to make safe
@@ -81,14 +84,14 @@ interface LegacyDataAccessInterface
      *
      * @return string
      */
-    public function quoteSmartSchema($value, $params = array());
+    public function quoteSmartSchema($value, $params = []);
 
     /**
      * Safe implode function to use with SQL queries
      * @deprecated
      * @static
      */
-    public function quoteSmartImplode($glue, $pieces, $params = array());
+    public function quoteSmartImplode($glue, $pieces, $params = []);
 
     /**
      * cast to int

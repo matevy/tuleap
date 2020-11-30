@@ -1,9 +1,0 @@
-{
-  "label": "Modals",
-  "shortcode": "tlp-modal",
-  "children": [
-    "structure",
-    "usage",
-    "types"
-  ]
-}

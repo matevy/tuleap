@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,18 +19,19 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\Request;
 
 use Throwable;
 
-class ForbiddenException extends \Exception
+final class ForbiddenException extends \Exception
 {
-
-    public function __construct($message = null, $code = 0, ?Throwable $previous = null)
+    public function __construct(?string $message = null, ?Throwable $previous = null)
     {
         if ($message === null) {
             $message = _('You are not allowed to access this resource');
         }
-        parent::__construct($message, $code, $previous);
+        parent::__construct($message, 403, $previous);
     }
 }

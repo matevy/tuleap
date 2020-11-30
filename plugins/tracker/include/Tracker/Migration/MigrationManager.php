@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2014 - 2019. All rights reserved.
+ * Copyright Enalean (c) 2014 - present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -23,23 +23,21 @@
  */
 
 use Tracker\Artifact\XMLArtifactSourcePlatformExtractor;
-use Tuleap\DB\DBFactory;
-use Tuleap\DB\DBTransactionExecutorWithConnection;
+use Tuleap\Project\XML\Import\ExternalFieldsExtractor;
+use Tuleap\Tracker\Artifact\Changeset\ArtifactChangesetSaver;
 use Tuleap\Tracker\Artifact\Changeset\FieldsToBeSavedInSpecificOrderRetriever;
+use Tuleap\Tracker\Artifact\Creation\TrackerArtifactCreator;
 use Tuleap\Tracker\Artifact\ExistingArtifactSourceIdFromTrackerExtractor;
+use Tuleap\Tracker\Creation\TrackerCreationDataChecker;
 use Tuleap\Tracker\DAO\TrackerArtifactSourceIdDao;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SourceOfAssociationCollectionBuilder;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SourceOfAssociationDetector;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SubmittedValueConvertor;
-use Tuleap\Tracker\Artifact\RecentlyVisited\RecentlyVisitedDao;
-use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\TrackerIsInvalidException;
 
-class Tracker_Migration_MigrationManager
+class Tracker_Migration_MigrationManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 {
-
-    public const INDENT_XSL_RESOURCE = '/xml/indent.xsl';
-
     public const LOG_FILE = 'tv3_tv5_migration_syslog';
 
     /** @var  Tracker_SystemEventManager */
@@ -60,14 +58,25 @@ class Tracker_Migration_MigrationManager
     /** @var  Tracker_ArtifactFactory */
     private $artifact_factory;
 
-    /** @var Logger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
     /** @var Tracker_Migration_MailLogger */
     private $mail_logger;
+    /**
+     * @var TrackerCreationDataChecker
+     */
+    private $creation_data_checker;
 
-    public function __construct(Tracker_SystemEventManager $system_event_manager, TrackerFactory $tracker_factory, Tracker_ArtifactFactory $artifact_factory, Tracker_FormElementFactory $form_element_factory, UserManager $user_manager, ProjectManager $project_manager)
-    {
+    public function __construct(
+        Tracker_SystemEventManager $system_event_manager,
+        TrackerFactory $tracker_factory,
+        Tracker_ArtifactFactory $artifact_factory,
+        Tracker_FormElementFactory $form_element_factory,
+        UserManager $user_manager,
+        ProjectManager $project_manager,
+        TrackerCreationDataChecker $creation_data_checker
+    ) {
         $this->system_event_manager = $system_event_manager;
         $this->tracker_factory      = $tracker_factory;
         $this->user_manager         = $user_manager;
@@ -77,18 +86,18 @@ class Tracker_Migration_MigrationManager
 
         // Log everything in Backend
         // Only Warn and errors by email
-        $backend_logger    = new BackendLogger($this->getLogFilePath());
-        $this->mail_logger = new Tracker_Migration_MailLogger($backend_logger);
+        $backend_logger    = BackendLogger::getDefaultLogger(self::LOG_FILE);
+        $this->mail_logger = new Tracker_Migration_MailLogger();
         $this->logger      = new Tracker_Migration_MigrationLogger(
             $backend_logger,
             $this->mail_logger
         );
+        $this->creation_data_checker = $creation_data_checker;
     }
 
     /**
      * Launch the migration of a TV3 to a TV5
      *
-     * @param Project $project
      * @param $tracker_id
      * @param $name
      * @param $description
@@ -98,7 +107,9 @@ class Tracker_Migration_MigrationManager
      */
     public function askForMigration(Project $project, $tracker_id, $name, $description, $short_name)
     {
-        if (! $this->tracker_factory->validMandatoryInfoOnCreate($name, $description, $short_name, $project->getGroupId())) {
+        try {
+            $this->creation_data_checker->checkAtProjectCreation((int) $project->getID(), $name, $short_name);
+        } catch (TrackerIsInvalidException $exception) {
             return false;
         }
 
@@ -108,15 +119,19 @@ class Tracker_Migration_MigrationManager
 
     public function migrate($username, $project_id, $tv3_id, $tracker_name, $tracker_description, $tracker_short_name)
     {
-        $this->logger->info('-- Beginning of migration of tracker v3 '.$tv3_id.' to '.$tracker_name.' --');
+        $this->logger->info('-- Beginning of migration of tracker v3 ' . $tv3_id . ' to ' . $tracker_name . ' --');
 
         $user         = $this->user_manager->getUserByUserName($username);
+        if (! $user) {
+            $this->logger->warning('Can not find the user for TV3 migration!!!');
+            $this->logger->warning('Skipping;');
+        }
         $tracker_id   = $this->createTrackerStructure($user, $project_id, $tv3_id, $tracker_name, $tracker_description, $tracker_short_name);
         $xml_path     = $this->exportTV3Data($tv3_id);
-        $this->importArtifactsData($username, $tracker_id, $xml_path);
+        $this->importArtifactsData($username, $tracker_id, $xml_path, $user);
         unlink($xml_path);
 
-        $this->logger->info('-- End of migration of tracker v3 '.$tv3_id.' to '.$tracker_name.' --');
+        $this->logger->info('-- End of migration of tracker v3 ' . $tv3_id . ' to ' . $tracker_name . ' --');
         $this->mail_logger->sendMail($user, $this->project_manager->getProject($project_id), $tv3_id, $tracker_name);
     }
 
@@ -130,12 +145,7 @@ class Tracker_Migration_MigrationManager
         return $this->system_event_manager->isThereAMigrationQueuedForProject($project);
     }
 
-    private function getLogFilePath()
-    {
-        return ForgeConfig::get('codendi_log').'/'.self::LOG_FILE;
-    }
-
-    private function importArtifactsData($username, $tracker_id, $xml_file_path)
+    private function importArtifactsData($username, $tracker_id, $xml_file_path, PFUser $user): void
     {
         $this->logger->info('--> Import into TV5 ');
         $this->user_manager->forceLogin($username);
@@ -144,14 +154,23 @@ class Tracker_Migration_MigrationManager
         if ($tracker) {
             $xml_import = $this->getXMLImporter();
 
-            $xml_import->importFromFile($tracker, $xml_file_path, ForgeConfig::get('sys_data_dir') . DIRECTORY_SEPARATOR . 'trackerv3');
+            $xml_import->importFromFile($tracker, $xml_file_path, $user);
         }
-        $this->logger->info('<-- TV5 imported '.PHP_EOL);
+        $this->logger->info('<-- TV5 imported ' . PHP_EOL);
     }
 
-    private function getXMLImporter()
+    private function getXMLImporter(): Tracker_Artifact_XMLImport
     {
-        $fields_validator       = new Tracker_Artifact_Changeset_AtGivenDateFieldsValidator($this->form_element_factory);
+        $artifact_link_usage_dao = new \Tuleap\Tracker\Admin\ArtifactLinksUsageDao();
+        $artifact_link_validator = new \Tuleap\Tracker\FormElement\ArtifactLinkValidator(
+            $this->artifact_factory,
+            new \Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenterFactory(
+                new NatureDao(),
+                $artifact_link_usage_dao
+            ),
+            $artifact_link_usage_dao
+        );
+        $fields_validator       = new Tracker_Artifact_Changeset_AtGivenDateFieldsValidator($this->form_element_factory, $artifact_link_validator);
         $changeset_dao          = new Tracker_Artifact_ChangesetDao();
         $artifact_source_id_dao = new TrackerArtifactSourceIdDao();
 
@@ -168,15 +187,14 @@ class Tracker_Migration_MigrationManager
             new NatureDao(),
             new XMLArtifactSourcePlatformExtractor(new Valid_HTTPURI(), $this->logger),
             new ExistingArtifactSourceIdFromTrackerExtractor($artifact_source_id_dao),
-            $artifact_source_id_dao
+            $artifact_source_id_dao,
+            new ExternalFieldsExtractor(EventManager::instance())
         );
     }
 
     private function getArtifactCreator(Tracker_Artifact_Changeset_AtGivenDateFieldsValidator $fields_validator, Tracker_Artifact_ChangesetDao $changeset_dao)
     {
-        return new Tracker_ArtifactCreator(
-            $this->artifact_factory,
-            $fields_validator,
+        return TrackerArtifactCreator::build(
             new Tracker_Artifact_Changeset_InitialChangesetAtGivenDateCreator(
                 $fields_validator,
                 new FieldsToBeSavedInSpecificOrderRetriever($this->form_element_factory),
@@ -184,11 +202,11 @@ class Tracker_Migration_MigrationManager
                 $this->artifact_factory,
                 EventManager::instance(),
                 new Tracker_Artifact_Changeset_ChangesetDataInitializator($this->form_element_factory),
-                $this->logger
+                $this->logger,
+                ArtifactChangesetSaver::build()
             ),
-            new VisitRecorder(new RecentlyVisitedDao()),
-            $this->logger,
-            new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
+            $fields_validator,
+            $this->logger
         );
     }
 
@@ -215,15 +233,15 @@ class Tracker_Migration_MigrationManager
             ),
             new Tracker_Artifact_Changeset_ChangesetDataInitializator($this->form_element_factory),
             new \Tuleap\DB\DBTransactionExecutorWithConnection(\Tuleap\DB\DBFactory::getMainTuleapDBConnection()),
+            ArtifactChangesetSaver::build()
         );
     }
 
     private function exportTV3Data($tv3_id)
     {
         $this->logger->info('--> Export TV3 data ');
-        $xml_path    = $this->generateTemporaryPath();
-        $indent_xsl_path = $this->getIndentXSLResourcePath();
-        $xml             = new DOMDocument("1.0", "UTF8");
+        $xml_path = $this->generateTemporaryPath();
+        $xml      = new DOMDocument("1.0", "UTF8");
 
         $dao                 = new ArtifactXMLExporterDao();
         $node_helper         = new ArtifactXMLNodeHelper($xml);
@@ -231,29 +249,21 @@ class Tracker_Migration_MigrationManager
 
         $exporter = new ArtifactXMLExporter($dao, $attachment_exporter, $node_helper, $this->logger);
         $exporter->exportTrackerData($tv3_id);
-        $this->logger->info('<-- TV3 data exported '.PHP_EOL);
+        $this->logger->info('<-- TV3 data exported ' . PHP_EOL);
 
-        $xml_security = new XML_Security();
-        $xml_security->enableExternalLoadOfEntities();
         $xsl = new DOMDocument();
-        $xsl->load($indent_xsl_path);
+        $xsl->load(__DIR__ . '/../../../../../src/utils/xml/indent.xsl');
 
         $proc = new XSLTProcessor();
         $proc->importStyleSheet($xsl);
 
         $xml_string = $proc->transformToXML($xml);
-        $xml_security->disableExternalLoadOfEntities();
 
         if (file_put_contents($xml_path, $xml_string) !== strlen($xml_string)) {
-            throw new Exception('Something went wrong when writing tv3 xml in '.$xml_path);
+            throw new Exception('Something went wrong when writing tv3 xml in ' . $xml_path);
         }
 
         return $xml_path;
-    }
-
-    private function getIndentXSLResourcePath()
-    {
-        return ForgeConfig::get('codendi_utils_prefix') . self::INDENT_XSL_RESOURCE;
     }
 
     private function generateTemporaryPath()
@@ -274,7 +284,7 @@ class Tracker_Migration_MigrationManager
         if (! $new_tracker) {
             throw new Tracker_Exception_Migration_StructureCreationException($tracker_name, $tv3_id);
         }
-        $this->logger->info('<-- Structure migrated '.PHP_EOL);
+        $this->logger->info('<-- Structure migrated ' . PHP_EOL);
 
         return $new_tracker->getId();
     }

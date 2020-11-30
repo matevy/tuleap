@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Tuleap\CLI\Command;
 
-use Logger;
+use Psr\Log\LoggerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -40,23 +40,23 @@ final class LaunchEveryMinuteJobCommand extends Command
      */
     private $event_dispatcher;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
-    public function __construct(EventDispatcherInterface $event_dispatcher, Logger $logger, DBConnection $db_connection)
+    public function __construct(EventDispatcherInterface $event_dispatcher, LoggerInterface $logger, DBConnection $db_connection)
     {
         parent::__construct(self::NAME);
         $this->event_dispatcher = $event_dispatcher;
         $this->logger           = $logger;
     }
 
-    protected function configure() : void
+    protected function configure(): void
     {
         $this->setDescription('Trigger an event that is supposed to be launched every minute by Cron or SystemD timers');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output) : int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->event_dispatcher->dispatch(new EventCronJobEveryMinute($this->logger));
         return 0;

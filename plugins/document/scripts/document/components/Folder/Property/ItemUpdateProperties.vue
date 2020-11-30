@@ -18,35 +18,57 @@
   -
   -->
 
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
     <div class="docman-item-update-property">
         <div class="docman-item-title-update-property">
-            <version-title-property v-model="version.title"/>
-            <lock-property v-model="version.is_file_locked" v-bind:item="item"/>
+            <version-title-property
+                v-model="version.title"
+                data-test="update-property-version-title"
+            />
+            <lock-property
+                v-if="!isOpenAfterDnd"
+                v-model="version.is_file_locked"
+                v-bind:item="item"
+                data-test="update-property-lock-version"
+            />
         </div>
-        <changelog-property v-model="version.changelog"/>
+        <changelog-property v-model="version.changelog" data-test="update-property-changelog" />
         <slot></slot>
-        <approval-update-properties v-if="item.has_approval_table" v-on:approvalTableActionChange="emitApprovalUpdateAction" data-test="update-approval-properties"/>
+        <approval-update-properties
+            v-if="item.has_approval_table && !isOpenAfterDnd"
+            v-on:approval-table-action-change="emitApprovalUpdateAction"
+            data-test="update-approval-properties"
+        />
     </div>
 </template>
 
+<!-- eslint-disable vue/no-mutating-props -->
 <script>
 import VersionTitleProperty from "./VersionTitleProperty.vue";
 import ChangelogProperty from "./ChangelogProperty.vue";
 import LockProperty from "./LockProperty.vue";
 import ApprovalUpdateProperties from "./ApprovalUpdateProperties.vue";
+import { mapState } from "vuex";
 
 export default {
     name: "ItemUpdateProperties",
     components: { LockProperty, ChangelogProperty, VersionTitleProperty, ApprovalUpdateProperties },
     props: {
         version: Object,
-        item: Object
+        item: Object,
+        isOpenAfterDnd: {
+            type: Boolean,
+            default: false,
+        },
+    },
+    computed: {
+        ...mapState(["is_changelog_proposed_after_dnd"]),
     },
     methods: {
         emitApprovalUpdateAction(action) {
-            this.$emit("approvalTableActionChange", action);
-        }
-    }
+            this.$emit("approval-table-action-change", action);
+        },
+    },
 };
 </script>

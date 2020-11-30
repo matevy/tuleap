@@ -22,7 +22,6 @@ namespace Tuleap\ReferenceAliasGit;
 
 use GitRepositoryFactory;
 use ReferenceInstance;
-use ProjectManager;
 
 class ReferencesBuilder
 {
@@ -37,18 +36,11 @@ class ReferencesBuilder
      */
     private $dao;
 
-    /**
-     * @var ProjectManager
-     */
-    private $project_manager;
-
     public function __construct(
         Dao $dao,
-        ProjectManager $project_manager,
         GitRepositoryFactory $repository_factory
     ) {
         $this->dao                = $dao;
-        $this->project_manager    = $project_manager;
         $this->repository_factory = $repository_factory;
     }
 
@@ -59,7 +51,7 @@ class ReferencesBuilder
      */
     public function getReference($keyword, $value)
     {
-        return $this->findReference($keyword, $keyword.$value);
+        return $this->findReference($keyword, $keyword . $value);
     }
 
     /**
@@ -69,19 +61,19 @@ class ReferencesBuilder
      */
     public function getExtraReferenceSpecs()
     {
-        return array(
-            array(
-                'cb'     => array($this, 'referenceFromMatch'),
+        return [
+            [
+                'cb'     => [$this, 'referenceFromMatch'],
                 'regexp' => '/
                     (?<![_a-zA-Z0-9])  # ensure the pattern is not following digits or letters
                     (?P<ref>
-                        (?P<key>'. ReferencesImporter::XREF_CMMT .')
+                        (?P<key>' . ReferencesImporter::XREF_CMMT . ')
                         (?P<val>[0-9]+)
                     )
                     (?![_A-Za-z0-9])   # ensure the pattern is not folloed by digits or letters
                 /x'
-            )
-        );
+            ]
+        ];
     }
 
     /**

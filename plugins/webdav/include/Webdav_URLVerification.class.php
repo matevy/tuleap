@@ -42,7 +42,7 @@ class Webdav_URLVerification extends URLVerification
      *
      * @return String
      */
-    function getWebDAVHost()
+    public function getWebDAVHost()
     {
         return $this->webdavHost;
     }
@@ -67,10 +67,11 @@ class Webdav_URLVerification extends URLVerification
      */
     public function assertValidUrl($server, HTTPRequest $request, ?Project $project = null)
     {
-        if (strcmp($server['HTTP_HOST'], $this->getWebDAVHost()) == 0
-            && strcmp($this->getWebDAVHost(), $GLOBALS['sys_default_domain']) != 0
+        if (
+            strcmp($server['HTTP_HOST'], $this->getWebDAVHost()) == 0
+            && strcmp($this->getWebDAVHost(), ForgeConfig::get('sys_default_domain')) != 0
             && strcmp($this->getWebDAVHost(), ForgeConfig::get('sys_https_host')) != 0
-            ) {
+        ) {
             if (! $request->isSecure() && ForgeConfig::get('sys_https_host')) {
                 $this->forbiddenError();
             }
@@ -84,7 +85,7 @@ class Webdav_URLVerification extends URLVerification
      *
      * @return void
      */
-    function forbiddenError()
+    public function forbiddenError()
     {
         header('HTTP/1.1 403 Forbidden: HTTPS required instead of HTTP');
         exit;

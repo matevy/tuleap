@@ -1,0 +1,225 @@
+/**
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+@import 'fonts';
+
+$tlp-h1-color: $tlp-theme-sidebar-background-color;
+
+body {
+    color: $tlp-typo-default-text-color;
+    font-family: $tlp-font-family;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 0 0 $tlp-medium-spacing;
+    text-rendering: optimizelegibility;
+
+    small {
+        margin: 0 0 0 5px;
+        color: $tlp-ui-dimmed;
+    }
+}
+
+h1 {
+    margin: 0 0 $tlp-title-spacing;
+    color: $tlp-h1-color;
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 40px;
+
+    small {
+        font-size: 24px;
+    }
+}
+
+h2 {
+    color: $tlp-theme-color;
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 36px;
+
+    small {
+        font-size: 20px;
+    }
+}
+
+h3 {
+    color: $tlp-ui-dimmed;
+    font-size: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+
+    small {
+        font-size: 14px;
+        text-transform: none;
+    }
+}
+
+h4 {
+    font-size: 20px;
+    font-weight: 600;
+
+    small {
+        font-size: 13px;
+    }
+}
+
+h5 {
+    font-size: 18px;
+    font-weight: 600;
+
+    small {
+        font-size: 13px;
+    }
+}
+
+h6 {
+    font-size: 17px;
+    font-weight: 600;
+
+    small {
+        font-size: 13px;
+    }
+}
+
+hr {
+    border: 0;
+    border-top: 2px solid $tlp-ui-border-normal;
+}
+
+p {
+    margin: 0 0 $tlp-medium-spacing;
+    line-height: $tlp-paragraph-line-height;
+
+    &:last-child,
+    &[class^='text-'] {
+        margin: 0;
+    }
+}
+
+ul,
+ol {
+    margin: 0 0 $tlp-medium-spacing;
+    padding: 0 0 0 1.5 * $tlp-medium-spacing;
+    line-height: $tlp-paragraph-line-height;
+
+    &:last-child {
+        margin: 0;
+    }
+}
+
+a {
+    color: $tlp-theme-color;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+        text-decoration: underline;
+    }
+}
+
+strong {
+    font-weight: 700;
+}
+
+em {
+    font-style: italic;
+}
+
+sub {
+    font-size: smaller;
+    vertical-align: sub;
+}
+
+sup {
+    font-size: smaller;
+    vertical-align: super;
+}
+
+blockquote {
+    margin: 0 0 $tlp-medium-spacing;
+    padding: 0 0 0 $tlp-medium-spacing / 2;
+    border-left: 5px solid #d7d7d7;
+    line-height: $tlp-paragraph-line-height;
+}
+
+.tlp-text-muted {
+    color: $tlp-ui-dimmed;
+}
+
+.tlp-text-info {
+    color: $tlp-ui-info;
+}
+
+.tlp-text-success {
+    color: $tlp-ui-success;
+}
+
+.tlp-text-warning {
+    color: $tlp-ui-warning;
+}
+
+.tlp-text-danger {
+    color: $tlp-ui-danger;
+}
+
+%tlp-code {
+    background: transparentize($tlp-theme-color, .95);
+    color: $tlp-theme-color;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+    font-size: .875rem;
+    font-weight: 400;
+    line-height: 1.375rem;
+}
+
+kbd {
+    display: inline-block;
+    padding: 2px $tlp-small-spacing;
+    border-radius: 4px;
+    background: $tlp-theme-sidebar-background-color;
+    color: $tlp-ui-white;
+    font-family: -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue',sans-serif;
+    font-size: .875rem;
+    line-height: 1.25rem;
+    vertical-align: 1px;
+}
+
+code {
+    @extend %tlp-code;
+
+    padding: 3px;
+    border-radius: 4px;
+}
+
+pre {
+    @extend %tlp-code;
+
+    padding: 5px 3px 5px $tlp-medium-spacing / 2;
+    border-left: 5px solid transparentize($tlp-theme-color, .5);
+
+    code {
+        padding: 0;
+        background: none;
+    }
+}

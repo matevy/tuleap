@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,22 +21,28 @@
 
 class LDAP_LoginPresenter extends User_LoginPresenter
 {
-    public function __construct(User_LoginPresenter $login_presenter)
+    /**
+     * @var string
+     */
+    private $ldap_server_common_name;
+
+    public function __construct(User_LoginPresenter $login_presenter, string $ldap_server_common_name)
     {
         parent::__construct(
             $login_presenter->getReturnTo(),
             $login_presenter->getPv(),
             $login_presenter->getFormLoginName(),
-            '',
+            $login_presenter->additional_connectors(),
             $login_presenter->getCSRFToken(),
+            $login_presenter->prompt_parameter,
             $login_presenter->getDisplayNewAccountButton(),
             false
         );
+        $this->ldap_server_common_name = $ldap_server_common_name;
     }
 
     public function account_login_login_with_tuleap()
     {
-        $ldap_name = $GLOBALS['Language']->getText('plugin_ldap', 'people_ldap');
-        return $GLOBALS['Language']->getText('account_login', 'page_title', array($ldap_name));
+        return $GLOBALS['Language']->getOverridableText('account_login', 'page_title', [$this->ldap_server_common_name]);
     }
 }

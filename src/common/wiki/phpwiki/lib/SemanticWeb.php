@@ -112,22 +112,22 @@
 include_once('lib/RssWriter.php');
 class RdfWriter extends RssWriter // in fact it should be rewritten to be other way round.
 {
-    function __construct()
+    public function __construct()
     {
         $this->XmlElement(
             'rdf:RDF',
-            array('xmlns' => "http://purl.org/rss/1.0/",
-            'xmlns:rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
+            ['xmlns' => "http://purl.org/rss/1.0/",
+            'xmlns:rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#']
         );
 
-        $this->_modules = array(
+        $this->_modules = [
             //Standards
         'content'    => "http://purl.org/rss/1.0/modules/content/",
         'dc'    => "http://purl.org/dc/elements/1.1/",
-        );
+        ];
 
-        $this->_uris_seen = array();
-        $this->_items = array();
+        $this->_uris_seen = [];
+        $this->_items = [];
     }
 }
 
@@ -141,7 +141,7 @@ class RdfWriter extends RssWriter // in fact it should be rewritten to be other 
 */
 class OwlWriter extends RdfWriter
 {
-};
+}
 
 /**
  * ModelWriter - Export a KB as set of wiki pages.
@@ -153,7 +153,7 @@ class OwlWriter extends RdfWriter
 */
 class ModelWriter extends OwlWriter
 {
-};
+}
 
 
 /**
@@ -163,40 +163,36 @@ class ModelWriter extends OwlWriter
  */
 class ReasonerBackend
 {
-    function __construct()
+    public function __construct()
     {
-        ;
     }
     /**
      * transform to reasoner syntax
      */
-    function transformTo()
+    public function transformTo()
     {
-        ;
     }
     /**
      * transform from reasoner syntax
      */
-    function transformFrom()
+    public function transformFrom()
     {
-        ;
     }
     /**
      * call the reasoner
      */
-    function invoke()
+    public function invoke()
     {
-        ;
     }
-};
+}
 
 class ReasonerBackend_LISA extends ReasonerBackend
 {
-};
+}
 
 class ReasonerBackend_KM extends ReasonerBackend
 {
-};
+}
 
 
 // (c-file-style: "gnu")

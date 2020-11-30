@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\Workflow\PostAction\FrozenFields;
 
-use Codendi_Request;
 use SimpleXMLElement;
 use Tracker_FormElement_Field;
 use Transition_PostAction;
@@ -67,30 +66,11 @@ class FrozenFields extends Transition_PostAction
         return '';
     }
 
-    /** @return string html */
-    public function fetch()
-    {
-        // Not implemented. We do not support the legacy UI for this new post action
-        return '';
-    }
-
     /** @return bool */
     public function isDefined()
     {
         // Since we do not support the legacy UI, it is always well defined
         return true;
-    }
-
-    /**
-     * Update/Delete action
-     *
-     * @param Codendi_Request $request The request
-     *
-     * @return void
-     */
-    public function process(Codendi_Request $request)
-    {
-        // Not implemented. We do not support the legacy UI for this new post action
     }
 
     /**
@@ -103,7 +83,7 @@ class FrozenFields extends Transition_PostAction
      */
     public function exportToXml(SimpleXMLElement $root, $xmlMapping)
     {
-        if (count($this->getFieldIds()) >0) {
+        if (count($this->getFieldIds()) > 0) {
             $child = $root->addChild(self::XML_TAG_NAME);
             foreach ($this->getFieldIds() as $field_id) {
                 $field_id = array_search($field_id, $xmlMapping);
@@ -117,7 +97,6 @@ class FrozenFields extends Transition_PostAction
     /**
      * Get the value of bypass_permissions
      *
-     * @param Tracker_FormElement_Field $field
      *
      * @return bool
      */

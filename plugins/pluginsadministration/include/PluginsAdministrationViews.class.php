@@ -28,6 +28,7 @@ use Tuleap\PluginsAdministration\AvailablePluginsPresenter;
 use Tuleap\PluginsAdministration\PluginDisablerVerifier;
 use Tuleap\PluginsAdministration\PluginPropertiesPresenter;
 
+// phpcs:ignore SlevomatCodingStandard.Classes.UnusedPrivateElements.UnusedMethod
 class PluginsAdministrationViews extends Views
 {
 
@@ -37,22 +38,16 @@ class PluginsAdministrationViews extends Views
     /** @var PluginDependencySolver */
     private $dependency_solver;
 
-    /** @var TemplateRendererFactory */
-    private $renderer;
-
     /**
      * @var PluginDisablerVerifier
      */
     private $plugin_disabler_verifier;
 
-    function __construct(&$controler, $view = null)
+    public function __construct(&$controler, $view = null)
     {
         $this->View($controler, $view);
         $this->plugin_manager           = PluginManager::instance();
         $this->dependency_solver        = new PluginDependencySolver($this->plugin_manager);
-        $this->renderer                 = TemplateRendererFactory::build()->getRenderer(
-            PLUGINSADMINISTRATION_TEMPLATE_DIR
-        );
         $plugin_administration          = $this->plugin_manager->getPluginByName('pluginsadministration');
         $this->plugin_disabler_verifier = new PluginDisablerVerifier(
             $plugin_administration,
@@ -63,12 +58,12 @@ class PluginsAdministrationViews extends Views
     public function header()
     {
         $title = dgettext('tuleap-pluginsadministration', 'Plugins');
-        $GLOBALS['HTML']->header(array('title'=>$title, 'selected_top_tab' => 'admin', 'main_classes' => array('tlp-framed')));
+        $GLOBALS['HTML']->header(['title' => $title, 'main_classes' => ['tlp-framed']]);
     }
 
-    function footer()
+    public function footer()
     {
-        $GLOBALS['HTML']->footer(array());
+        $GLOBALS['HTML']->footer([]);
     }
 
     public function display($view = '')
@@ -144,7 +139,7 @@ class PluginsAdministrationViews extends Views
     }
 
     // {{{ Views
-    function browse()
+    public function browse()
     {
         $output = '';
         $output .= $this->getInstalledPluginsPresenter();
@@ -175,7 +170,7 @@ class PluginsAdministrationViews extends Views
         $dependencies           = implode(', ', $plugin->getDependencies());
         $are_there_dependencies = ! empty($dependencies);
 
-        $properties = array();
+        $properties = [];
         if (ForgeConfig::get('sys_plugins_editable_configuration')) {
             $descs = $plugin_info->getPropertyDescriptors();
             $keys  = $descs->getKeys();
@@ -185,11 +180,11 @@ class PluginsAdministrationViews extends Views
                 $desc      = $descs->get($key);
                 $prop_name = $desc->getName();
 
-                $properties[] = array(
+                $properties[] = [
                     'name' => $prop_name,
                     'is_bool' => is_bool($desc->getValue()),
                     'value' => $desc->getValue()
-                );
+                ];
 
                 $iter->next();
             }
@@ -199,17 +194,10 @@ class PluginsAdministrationViews extends Views
         $additional_options           = $plugin->getAdministrationOptions();
         $are_there_additional_options = ! empty($additional_options);
 
-        $enable_switch = $this->getFlag(
-            $plugin->getId(),
-            $this->plugin_manager->isPluginAvailable($plugin),
-            (strcasecmp(get_class($plugin), 'PluginsAdministrationPlugin') === 0),
-            'properties'
-        );
-        $is_there_enable_switch = ! empty($enable_switch);
+        $is_enabled             = (bool) $this->plugin_manager->isPluginAvailable($plugin);
+        $is_there_enable_switch = (strcasecmp(get_class($plugin), 'PluginsAdministrationPlugin') !== 0);
 
-        $csrf_token = new CSRFSynchronizerToken(
-            '/plugins/pluginsadministration/?view=properties&plugin_id=' . urlencode($plugin->getId())
-        );
+        $csrf_token = new CSRFSynchronizerToken('/plugins/pluginsadministration/');
 
         return new PluginPropertiesPresenter(
             $plugin->getId(),
@@ -218,7 +206,7 @@ class PluginsAdministrationViews extends Views
             $descriptor->getDescription(),
             $plugin->getScope(),
             $is_there_enable_switch,
-            $enable_switch,
+            $this->getEnableUrl((int) $plugin->getId(), $is_enabled, 'properties'),
             $are_there_dependencies,
             $dependencies,
             $is_there_readme,
@@ -227,8 +215,23 @@ class PluginsAdministrationViews extends Views
             $properties,
             $are_there_additional_options,
             $additional_options,
-            $csrf_token
+            $csrf_token,
+            $is_enabled
         );
+    }
+
+    private function getEnableUrl(int $id, bool $is_enabled, string $view): string
+    {
+        $action = $is_enabled ? 'unavailable' : 'available';
+
+        return '?' .
+            http_build_query(
+                [
+                    'action'    => $action,
+                    'plugin_id' => $id,
+                    'view'      => $view
+                ]
+            );
     }
 
     private function getPluginResourceRestrictorPresenter(
@@ -249,26 +252,18 @@ class PluginsAdministrationViews extends Views
         );
     }
 
-    var $_plugins;
+    public $_plugins;
 
-    function _emphasis($name, $enable)
+    public function _searchPlugins()
     {
-        if (!$enable) {
-            $name = '<span class="pluginsadministration_unavailable">'.$name.'</span>';
-        }
-        return $name;
-    }
-
-    function _searchPlugins()
-    {
-        if (!$this->_plugins) {
-            $this->_plugins    = array();
+        if (! $this->_plugins) {
+            $this->_plugins    = [];
 
             $plugin_manager               = $this->plugin_manager;
             try {
                 $forgeUpgradeConfig = new ForgeUpgradeConfig(new System_Command());
                 $forgeUpgradeConfig->loadDefaults();
-                $noFUConfig = array();
+                $noFUConfig = [];
             } catch (Exception $e) {
                 $GLOBALS['Response']->addFeedback('warning', $e->getMessage());
             }
@@ -285,26 +280,26 @@ class PluginsAdministrationViews extends Views
                 $dont_touch    = ! $this->plugin_disabler_verifier->canPluginBeDisabled($plugin);
                 $dont_restrict = $plugin->getScope() !== Plugin::SCOPE_PROJECT;
 
-                $this->_plugins[] = array(
-                    'plugin_id'     => $plugin->getId(),
+                $this->_plugins[] = [
+                    'id'            => $plugin->getId(),
                     'name'          => $name,
                     'description'   => $descriptor->getDescription(),
                     'version'       => $descriptor->getVersion(),
                     'available'     => $available,
                     'scope'         => $plugin->getScope(),
                     'dont_touch'    => $dont_touch,
-                    'dont_restrict' => $dont_restrict);
+                    'dont_restrict' => $dont_restrict];
 
-                if (isset($noFUConfig, $forgeUpgradeConfig) && !$forgeUpgradeConfig->existsInPath($plugin->getFilesystemPath())) {
-                    $noFUConfig[] = array('name' => $name, 'plugin' => $plugin);
+                if (isset($noFUConfig, $forgeUpgradeConfig) && ! $forgeUpgradeConfig->existsInPath($plugin->getFilesystemPath())) {
+                    $noFUConfig[] = ['name' => $name, 'plugin' => $plugin];
                 }
             }
 
             // ForgeUpgrade configuration warning
-            if (isset($noFUConfig) && count($noFUConfig) && isset($GLOBALS['forgeupgrade_file'])) {
-                $txt = 'Some plugins are not referenced in ForgeUpgrade configuration, please add the following in <code>'.$GLOBALS['forgeupgrade_file'].'.</code><br/>';
+            if (isset($noFUConfig) && count($noFUConfig) && ForgeConfig::exists('forgeupgrade_file')) {
+                $txt = 'Some plugins are not referenced in ForgeUpgrade configuration, please add the following in <code>' . ForgeConfig::get('forgeupgrade_file') . '.</code><br/>';
                 foreach ($noFUConfig as $plugInfo) {
-                    $txt .= '<code>path[]="'.$plugInfo['plugin']->getFilesystemPath().'"</code><br/>';
+                    $txt .= '<code>path[]="' . $plugInfo['plugin']->getFilesystemPath() . '"</code><br/>';
                 }
                 $GLOBALS['Response']->addFeedback('warning', $txt, CODENDI_PURIFIER_DISABLED);
             }
@@ -320,33 +315,30 @@ class PluginsAdministrationViews extends Views
             }
         );
 
-        $i       = 0;
-        $plugins = array();
+        $plugins = [];
         foreach ($this->_plugins as $plugin) {
             $is_there_unmet_dependencies = false;
             $unmet_dependencies          = $this->dependency_solver->getInstalledDependencies(
-                $this->plugin_manager->getPluginById($plugin['plugin_id'])
+                $this->plugin_manager->getPluginById($plugin['id'])
             );
 
             if ($unmet_dependencies) {
                 $is_there_unmet_dependencies = true;
             }
-            $plugins[] = array(
-                'available'                   => $plugin['available']? '': 'pluginsadministration_unavailable',
+            $plugins[] = [
+                'id'                          => $plugin['id'],
                 'name'                        => $plugin['name'],
                 'version'                     => $plugin['version'],
                 'description'                 => $plugin['description'],
-                'flags'                       => $this->getFlag($plugin['plugin_id'], $plugin['available'], $plugin['dont_touch'], 'installed'),
+                'enable_url'                  => $this->getEnableUrl($plugin['id'], $plugin['available'], 'installed'),
                 'scope'                       => $this->getScopeLabel((int) $plugin['scope']),
-                'plugin_id'                   => $plugin['plugin_id'],
                 'dont_touch'                  => $plugin['dont_touch'],
                 'dont_restrict'               => $plugin['dont_restrict'],
                 'is_there_unmet_dependencies' => $is_there_unmet_dependencies,
                 'unmet_dependencies'          => $unmet_dependencies,
-                'csrf_token'                  => new CSRFSynchronizerToken('/plugins/pluginsadministration/')
-            );
-
-            $i++;
+                'csrf_token'                  => new CSRFSynchronizerToken('/plugins/pluginsadministration/'),
+                'is_enabled'                  => $plugin['available']
+            ];
         }
 
         return new PluginsAdministration_Presenter_InstalledPluginsPresenter($plugins);
@@ -358,39 +350,7 @@ class PluginsAdministrationViews extends Views
             return dgettext('tuleap-pluginsadministration', 'Projects');
         }
 
-        if ($scope === Plugin::SCOPE_USER) {
-            return dgettext('tuleap-pluginsadministration', 'Users');
-        }
-
         return dgettext('tuleap-pluginsadministration', 'System');
-    }
-
-    private function getFlag($plugin_id, $is_active, $dont_touch, $view)
-    {
-        $output  = '';
-        $checked = '';
-        $title   = dgettext('tuleap-pluginsadministration', 'Do not avail this plugin');
-        $action  = 'available';
-
-        if ($is_active) {
-            $checked = 'checked';
-            $title   = dgettext('tuleap-pluginsadministration', 'Avail this plugin');
-            $action  = 'unavailable';
-        }
-
-        if (! $dont_touch) {
-            $csrf_token = new CSRFSynchronizerToken('/plugins/pluginsadministration/');
-            $output = '
-            <form id="plugin-switch-form-'.$plugin_id.'" action="?action='. $action .'&plugin_id='. $plugin_id .'&view='.$view.'" method="POST">
-                ' . $csrf_token->fetchHTMLInput() . '
-                <div class="tlp-switch tlp-table-cell-actions-button">
-                    <input type="checkbox" data-form-id="plugin-switch-form-'.$plugin_id.'" id="plugin-switch-toggler-'.$plugin_id.'" class="tlp-switch-checkbox" '.$checked.'>
-                    <label for="plugin-switch-toggler-'.$plugin_id.'" class="tlp-switch-button">'.$title.'</label>
-                </div>
-            </form>';
-        }
-
-        return $output;
     }
 
     private function getAvailablePluginsPresenter()

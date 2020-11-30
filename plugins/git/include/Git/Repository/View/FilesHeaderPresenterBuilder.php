@@ -56,8 +56,6 @@ class FilesHeaderPresenterBuilder
     }
 
     /**
-     * @param HTTPRequest   $request
-     * @param GitRepository $repository
      *
      * @return FilesHeaderPresenter
      */
@@ -111,14 +109,11 @@ class FilesHeaderPresenterBuilder
     }
 
     /**
-     * @param HTTPRequest $request
-     * @param Commit      $commit
      *
      * @return array [string, bool]
      */
     private function getHeadNameForCurrentCommit(HTTPRequest $request, Commit $commit)
     {
-        /** @var Ref[] $refs */
         if (empty($commit->GetHeads()) && empty($commit->GetTags())) {
             return [$commit->GetHash(), false];
         }
@@ -153,7 +148,6 @@ class FilesHeaderPresenterBuilder
     }
 
     /**
-     * @param Commit $commit
      *
      * @return array
      */
@@ -163,7 +157,6 @@ class FilesHeaderPresenterBuilder
     }
 
     /**
-     * @param Commit $commit
      *
      * @return array
      */
@@ -173,8 +166,6 @@ class FilesHeaderPresenterBuilder
     }
 
     /**
-     * @param HTTPRequest $request
-     * @param Commit      $commit
      *
      * @return array|null
      */
@@ -194,7 +185,6 @@ class FilesHeaderPresenterBuilder
     }
 
     /**
-     * @param HTTPRequest $request
      * @return array
      */
     private function getURLParameters(HTTPRequest $request)

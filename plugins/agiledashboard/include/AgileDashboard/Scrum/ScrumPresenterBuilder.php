@@ -19,7 +19,7 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\AgileDashboard\Scrum;
 
@@ -27,13 +27,16 @@ use AdminScrumPresenter;
 use AgileDashboard_ConfigurationManager;
 use EventManager;
 use PFUser;
+use Planning;
 use Planning_PlanningAdminPresenter;
 use Planning_PlanningOutOfHierarchyAdminPresenter;
 use PlanningFactory;
 use Project;
 use Tuleap\AgileDashboard\Event\GetAdditionalScrumAdminPaneContent;
+use Tuleap\AgileDashboard\Event\GetAdditionalScrumAdminSection;
 use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
+use Tuleap\AgileDashboard\Workflow\AddToTopBacklogPostActionDao;
 
 class ScrumPresenterBuilder
 {
@@ -58,43 +61,50 @@ class ScrumPresenterBuilder
      */
     private $explicit_backlog_dao;
 
+    /**
+     * @var AddToTopBacklogPostActionDao
+     */
+    private $add_to_top_backlog_post_action_dao;
+
     public function __construct(
         AgileDashboard_ConfigurationManager $config_manager,
         ScrumForMonoMilestoneChecker $scrum_mono_milestone_checker,
         EventManager $event_manager,
         PlanningFactory $planning_factory,
-        ExplicitBacklogDao $explicit_backlog_dao
+        ExplicitBacklogDao $explicit_backlog_dao,
+        AddToTopBacklogPostActionDao $add_to_top_backlog_post_action_dao
     ) {
-        $this->config_manager               = $config_manager;
-        $this->scrum_mono_milestone_checker = $scrum_mono_milestone_checker;
-        $this->event_manager                = $event_manager;
-        $this->planning_factory             = $planning_factory;
-        $this->explicit_backlog_dao         = $explicit_backlog_dao;
+        $this->config_manager                     = $config_manager;
+        $this->scrum_mono_milestone_checker       = $scrum_mono_milestone_checker;
+        $this->event_manager                      = $event_manager;
+        $this->planning_factory                   = $planning_factory;
+        $this->explicit_backlog_dao               = $explicit_backlog_dao;
+        $this->add_to_top_backlog_post_action_dao = $add_to_top_backlog_post_action_dao;
     }
 
-    public function getAdminScrumPresenter(PFUser $user, Project $project)
+    public function getAdminScrumPresenter(PFUser $user, Project $project, GetAdditionalScrumAdminSection $additional_scrum_sections)
     {
         $group_id                    = (int) $project->getID();
         $can_create_planning         = true;
-        $tracker_uri                 = '';
         $root_planning_name          = '';
         $potential_planning_trackers = [];
-        $root_planning               = $this->planning_factory->getRootPlanning($user, $group_id);
+        $root_planning               = $this->planning_factory->getRootPlanning($user, $group_id) ?: null;
         $scrum_activated             = $this->config_manager->scrumIsActivatedForProject($group_id);
 
         if ($root_planning) {
             $can_create_planning = count($this->planning_factory->getAvailablePlanningTrackers($user, $group_id)) > 0;
 
-            $tracker_uri                 = $root_planning->getPlanningTracker()->getUri();
             $root_planning_name          = $root_planning->getName();
             $potential_planning_trackers = $this->planning_factory->getPotentialPlanningTrackers($user, $group_id);
         }
 
+        $has_workflow_action_add_to_top_backlog_defined = $this->add_to_top_backlog_post_action_dao
+            ->isAtLeastOnePostActionDefinedInProject($group_id);
+
         return new AdminScrumPresenter(
-            $this->getPlanningAdminPresenterList($user, $project, $root_planning_name),
+            $this->getPlanningAdminPresenterList($user, $project, $root_planning),
             $group_id,
             $can_create_planning,
-            $tracker_uri,
             $root_planning_name,
             $potential_planning_trackers,
             $scrum_activated,
@@ -105,7 +115,8 @@ class ScrumPresenterBuilder
             $this->doesConfigurationAllowsPlanningCreation($user, $group_id, $can_create_planning),
             $this->getAdditionalContent(),
             $this->doesProjectUseExplicitBacklog($project),
-            (bool) $user->useLabFeatures()
+            $has_workflow_action_add_to_top_backlog_defined,
+            $additional_scrum_sections->getAdditionalSectionsControllers()
         );
     }
 
@@ -140,7 +151,7 @@ class ScrumPresenterBuilder
     /**
      * @return Planning_PlanningOutOfHierarchyAdminPresenter[] | Planning_PlanningAdminPresenter[]
      */
-    private function getPlanningAdminPresenterList(PFUser $user, Project $project, string $root_planning_name): array
+    private function getPlanningAdminPresenterList(PFUser $user, Project $project, ?Planning $root_planning): array
     {
         $plannings                 = [];
         $planning_out_of_hierarchy = [];
@@ -150,19 +161,24 @@ class ScrumPresenterBuilder
         }
 
         $use_explicit_backlog = $this->doesProjectUseExplicitBacklog($project);
-        $root_planning        = $this->planning_factory->getRootPlanning($user, $project_id);
 
         foreach ($this->planning_factory->getPlannings($user, $project_id) as $planning) {
             $is_planning_removal_dangerous = $root_planning && $use_explicit_backlog && $planning->getId() === $root_planning->getId();
 
             if (isset($planning_out_of_hierarchy[$planning->getId()])) {
                 $plannings[] = new Planning_PlanningOutOfHierarchyAdminPresenter(
+                    $this->event_manager,
                     $planning,
-                    $root_planning_name,
+                    $root_planning,
                     $is_planning_removal_dangerous
                 );
             } else {
-                $plannings[] = new Planning_PlanningAdminPresenter($planning, $is_planning_removal_dangerous);
+                $plannings[] = new Planning_PlanningAdminPresenter(
+                    $this->event_manager,
+                    $planning,
+                    $root_planning,
+                    $is_planning_removal_dangerous
+                );
             }
         }
 

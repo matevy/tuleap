@@ -41,13 +41,15 @@ CREATE TABLE IF NOT EXISTS plugin_openidconnectclient_provider_generic (
     provider_id INT(11) UNSIGNED NOT NULL PRIMARY KEY,
     authorization_endpoint TEXT NOT NULL,
     token_endpoint TEXT NOT NULL,
+    jwks_endpoint TEXT NOT NULL,
     user_info_endpoint TEXT NOT NULL
 );
 
 
 CREATE TABLE IF NOT EXISTS plugin_openidconnectclient_provider_azure_ad (
     provider_id INT(11) UNSIGNED NOT NULL PRIMARY KEY,
-    tenant_id TEXT NOT NULL
+    tenant_id TEXT NOT NULL,
+    acceptable_tenant_auth_identifier VARCHAR(32) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS plugin_openidconnectclient_unlinked_account (
@@ -60,8 +62,9 @@ CREATE TABLE IF NOT EXISTS plugin_openidconnectclient_unlinked_account (
 INSERT INTO plugin_openidconnectclient_provider(name, client_id, client_secret, icon, color)
 VALUES ('Google', '', '', '', '');
 
-INSERT INTO plugin_openidconnectclient_provider_generic(provider_id, authorization_endpoint, token_endpoint, user_info_endpoint)
+INSERT INTO plugin_openidconnectclient_provider_generic(provider_id, authorization_endpoint, token_endpoint, jwks_endpoint, user_info_endpoint)
 VALUES ((SELECT LAST_INSERT_ID() FROM plugin_openidconnectclient_provider),
         'https://accounts.google.com/o/oauth2/v2/auth',
         'https://oauth2.googleapis.com/token',
+        'https://www.googleapis.com/oauth2/v3/certs',
         'https://www.googleapis.com/oauth2/v3/userinfo');

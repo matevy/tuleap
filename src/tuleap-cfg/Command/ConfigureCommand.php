@@ -43,7 +43,7 @@ class ConfigureCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('configure')
@@ -51,9 +51,9 @@ class ConfigureCommand extends Command
             ->addArgument('module', InputArgument::REQUIRED, 'Which module do you want to configure: only apache at the moment');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (! file_exists($this->base_directory.'/etc/httpd/conf/httpd.conf') && ! file_exists($this->base_directory . '/etc/httpd/conf.d/ssl.conf')) {
+        if (! file_exists($this->base_directory . '/etc/httpd/conf/httpd.conf') && ! file_exists($this->base_directory . '/etc/httpd/conf.d/ssl.conf')) {
             $output->writeln('Nothing to do for Apache');
             return 0;
         }

@@ -1,25 +1,23 @@
 <?php
 /**
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * CodeX is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * CodeX is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-
-require_once('include/DataAccessObject.class.php');
 
 class CrossReferenceDao extends DataAccessObject
 {
@@ -66,37 +64,36 @@ class CrossReferenceDao extends DataAccessObject
 
     public function createDbCrossRef($cross_ref)
     {
-
-        $sql="INSERT INTO {$this->table_name}
+        $sql = "INSERT INTO {$this->table_name}
               (created_at,user_id,source_type,source_keyword,source_id,
                source_gid,target_type,target_keyword, target_id,target_gid)
-              VALUES ( ".
-                (time()) .",".
-                $this->da->quoteSmart((int) $cross_ref->userId) .", ".
-                $this->da->quoteSmart((string) $cross_ref->insertSourceType) .", ".
-                $this->da->quoteSmart((string) $cross_ref->sourceKey) ." ,".
-                $this->da->quoteSmart((string) $cross_ref->refSourceId) ." ,".
-                $this->da->quoteSmart((int) $cross_ref->refSourceGid) .", ".
-                $this->da->quoteSmart((string) $cross_ref->insertTargetType) .", ".
-                $this->da->quoteSmart((string) $cross_ref->targetKey) ." ,".
-                $this->da->quoteSmart((string) $cross_ref->refTargetId) .", ".
-                $this->da->quoteSmart((int) $cross_ref->refTargetGid) .")";
+              VALUES ( " .
+                (time()) . "," .
+                $this->da->quoteSmart((int) $cross_ref->userId) . ", " .
+                $this->da->quoteSmart((string) $cross_ref->insertSourceType) . ", " .
+                $this->da->quoteSmart((string) $cross_ref->sourceKey) . " ," .
+                $this->da->quoteSmart((string) $cross_ref->refSourceId) . " ," .
+                $this->da->quoteSmart((int) $cross_ref->refSourceGid) . ", " .
+                $this->da->quoteSmart((string) $cross_ref->insertTargetType) . ", " .
+                $this->da->quoteSmart((string) $cross_ref->targetKey) . " ," .
+                $this->da->quoteSmart((string) $cross_ref->refTargetId) . ", " .
+                $this->da->quoteSmart((int) $cross_ref->refTargetGid) . ")";
 
         $res = $this->da->query($sql);
-        return (bool) ($res && !$res->isError());
+        return (bool) ($res && ! $res->isError());
     }
 
     public function existInDb($cross_ref)
     {
-        $sql= "SELECT * from {$this->table_name} WHERE ".
-              "source_id='". db_es($cross_ref->refSourceId)."' AND " .
-              "target_id='". db_es($cross_ref->refTargetId)."' AND ".
-              "source_gid='". db_ei($cross_ref->refSourceGid)."' AND ".
-              "target_gid='". db_ei($cross_ref->refTargetGid)."' AND ".
-              "source_type='". db_es($cross_ref->insertSourceType) ."' AND ".
-              "target_type='". db_es($cross_ref->insertTargetType) ."'";
+        $sql = "SELECT * from {$this->table_name} WHERE " .
+              "source_id='" . db_es($cross_ref->refSourceId) . "' AND " .
+              "target_id='" . db_es($cross_ref->refTargetId) . "' AND " .
+              "source_gid='" . db_ei($cross_ref->refSourceGid) . "' AND " .
+              "target_gid='" . db_ei($cross_ref->refTargetGid) . "' AND " .
+              "source_type='" . db_es($cross_ref->insertSourceType) . "' AND " .
+              "target_type='" . db_es($cross_ref->insertTargetType) . "'";
         $res = $this->da->query($sql);
-        return (bool) ($res && !$res->isError() && $res->rowCount() >= 1);
+        return (bool) ($res && ! $res->isError() && $res->rowCount() >= 1);
     }
 
     public function fullReferenceExistInDb($cross_ref)
@@ -190,5 +187,18 @@ class CrossReferenceDao extends DataAccessObject
         $res = $this->da->query($sql);
 
         return (bool) $res;
+    }
+
+    /**
+     * @return array|false
+     */
+    public function getReferenceByKeyword(string $keyword)
+    {
+        $keyword = $this->da->quoteSmart($keyword);
+        $sql     = "SELECT *
+            FROM $this->table_name
+            WHERE source_keyword = $keyword";
+
+        return $this->retrieveFirstRow($sql);
     }
 }

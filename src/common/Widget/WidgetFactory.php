@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -11,16 +11,15 @@
  *
  * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Tuleap. If not, see <http://www.gnu.org/licenses/
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace Tuleap\Widget;
 
-use EventManager;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use TemplateRendererFactory;
 use Tuleap\Dashboard\Project\ProjectDashboardController;
@@ -33,7 +32,6 @@ use User_ForgeUserGroupPermission_ProjectApproval;
 use User_ForgeUserGroupPermissionsManager;
 use UserManager;
 use Widget;
-use Widget_Contacts;
 use Widget_MyAdmin;
 use Widget_MyArtifacts;
 use Widget_MyBookmarks;
@@ -41,14 +39,12 @@ use Widget_MyImageViewer;
 use Widget_MyLatestSvnCommits;
 use Widget_MyMonitoredForums;
 use Widget_MyMonitoredFp;
-use Widget_MyProjects;
 use Widget_MyRss;
 use Widget_MySystemEvent;
 use Widget_ProjectDescription;
 use Widget_ProjectImageViewer;
 use Widget_ProjectLatestCvsCommits;
 use Widget_ProjectLatestFileReleases;
-use Widget_ProjectLatestNews;
 use Widget_ProjectLatestSvnCommits;
 use Widget_ProjectPublicAreas;
 use Widget_ProjectRss;
@@ -92,7 +88,7 @@ class WidgetFactory
 
         switch ($widget_name) {
             case 'myprojects':
-                $widget = new Widget_MyProjects();
+                $widget = new MyProjects();
                 break;
             case 'mybookmarks':
                 $widget = new Widget_MyBookmarks();
@@ -169,7 +165,7 @@ class WidgetFactory
                 $widget = new Widget_ProjectImageViewer();
                 break;
             case 'projectcontacts':
-                $widget = new Widget_Contacts();
+                $widget = new ProjectContacts();
                 break;
             case Note\ProjectNote::NAME:
                 $widget = new Note\ProjectNote(
@@ -196,7 +192,7 @@ class WidgetFactory
      * @param string $dashboard_type
      * @return Widget[]
      */
-    public function getWidgetsForOwnerType($dashboard_type)
+    public function getWidgetsForOwnerType($dashboard_type): array
     {
         if ($dashboard_type === UserDashboardController::DASHBOARD_TYPE) {
             $event = new GetUserWidgetList();
@@ -205,7 +201,14 @@ class WidgetFactory
         }
 
         $this->event_manager->dispatch($event);
-        return $event->getWidgets();
+        $widget_names = $event->getWidgets();
+
+        $widgets = [];
+        foreach ($widget_names as $widget_name) {
+            $widgets[] = $this->getInstanceByWidgetName($widget_name);
+        }
+
+        return array_filter($widgets);
     }
 
     /**

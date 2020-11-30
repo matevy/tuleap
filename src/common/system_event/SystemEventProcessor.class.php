@@ -42,7 +42,7 @@ abstract class SystemEventProcessor implements IRunInAMutex
     protected $dao;
 
     /**
-     * @var Logger
+     * @var \Psr\Log\LoggerInterface
      */
     protected $logger;
 
@@ -50,7 +50,7 @@ abstract class SystemEventProcessor implements IRunInAMutex
         SystemEventProcess $process,
         SystemEventManager $system_event_manager,
         SystemEventDao $dao,
-        Logger $logger
+        \Psr\Log\LoggerInterface $logger
     ) {
         $this->process              = $process;
         $this->system_event_manager = $system_event_manager;
@@ -69,7 +69,7 @@ abstract class SystemEventProcessor implements IRunInAMutex
         try {
             $this->postEventsActions($executed_events_ids, $queue);
         } catch (Exception $exception) {
-            $this->logger->error("[SystemEventProcessor] An error happened during execution of post actions: ".$exception->getMessage());
+            $this->logger->error("[SystemEventProcessor] An error happened during execution of post actions: " . $exception->getMessage());
         }
     }
 
@@ -77,11 +77,11 @@ abstract class SystemEventProcessor implements IRunInAMutex
     {
         $types = $this->system_event_manager->getTypesForQueue($queue);
         if (! $types) {
-            return array();
+            return [];
         }
 
-        $executed_events_ids = array();
-        while (($dar=$this->dao->checkOutNextEvent($owner, $types)) != null) {
+        $executed_events_ids = [];
+        while (($dar = $this->dao->checkOutNextEvent($owner, $types)) != null) {
             $sysevent = $this->getSystemEventFromDar($dar);
             if ($sysevent) {
                 $this->executeSystemEvent($sysevent);
@@ -102,7 +102,7 @@ abstract class SystemEventProcessor implements IRunInAMutex
 
     private function executeSystemEvent(SystemEvent $sysevent)
     {
-        $this->logger->info("Processing event #".$sysevent->getId()." ".$sysevent->getType()."(".$sysevent->getParameters().")");
+        $this->logger->info("Processing event #" . $sysevent->getId() . " " . $sysevent->getType() . "(" . $sysevent->getParameters() . ")");
         try {
             SystemEventInstrumentation::increment(SystemEvent::STATUS_RUNNING);
             $sysevent->process();
@@ -113,7 +113,7 @@ abstract class SystemEventProcessor implements IRunInAMutex
         $this->dao->close($sysevent);
         SystemEventInstrumentation::durationHistogram($this->dao->getElapsedTime($sysevent));
         $sysevent->notify();
-        $this->logger->info("Processing event #".$sysevent->getId().": done.");
+        $this->logger->info("Processing event #" . $sysevent->getId() . ": done.");
     }
 
     abstract protected function getOwner();

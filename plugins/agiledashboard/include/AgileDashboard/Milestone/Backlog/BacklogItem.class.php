@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2013 - 2018. All rights reserved.
+ * Copyright Enalean (c) 2013-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -22,6 +22,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class AgileDashboard_Milestone_Backlog_BacklogItem implements AgileDashboard_Milestone_Backlog_IBacklogItem
 {
     /** @var Int */
@@ -35,9 +37,6 @@ class AgileDashboard_Milestone_Backlog_BacklogItem implements AgileDashboard_Mil
 
     /** @var String */
     private $short_type;
-
-    /** @var String */
-    private $url;
 
     /** @var Int */
     private $initial_effort;
@@ -56,24 +55,23 @@ class AgileDashboard_Milestone_Backlog_BacklogItem implements AgileDashboard_Mil
     /** @var String */
     private $color;
 
-    /** @var Tracker_Artifact */
+    /** @var Artifact */
     private $artifact;
 
-    /** @var Tracker_Artifact */
+    /** @var Artifact */
     private $parent;
 
     /** @var bool */
     private $has_children = null;
     /**
-     * @var
+     * @var bool
      */
     private $is_inconsistent;
 
-    public function __construct(Tracker_Artifact $artifact, $is_inconsistent)
+    public function __construct(Artifact $artifact, bool $is_inconsistent)
     {
         $this->id              = $artifact->getId();
-        $this->title           = $artifact->getTitle();
-        $this->url             = $artifact->getUri();
+        $this->title           = $artifact->getTitle() ?? '';
         $this->artifact        = $artifact;
         $this->color           = $this->artifact->getTracker()->getColor()->getName();
         $this->type            = $this->artifact->getTracker()->getName();
@@ -81,13 +79,13 @@ class AgileDashboard_Milestone_Backlog_BacklogItem implements AgileDashboard_Mil
         $this->is_inconsistent = $is_inconsistent;
     }
 
-    public function setParent(Tracker_Artifact $parent)
+    public function setParent(Artifact $parent)
     {
         $this->parent = $parent;
     }
 
     /**
-     * @return Tracker_Artifact
+     * @return Artifact
      */
     public function getParent()
     {
@@ -115,7 +113,7 @@ class AgileDashboard_Milestone_Backlog_BacklogItem implements AgileDashboard_Mil
         return $this->id;
     }
 
-    public function title()
+    public function title(): string
     {
         return $this->title;
     }
@@ -125,7 +123,7 @@ class AgileDashboard_Milestone_Backlog_BacklogItem implements AgileDashboard_Mil
         return $this->type;
     }
 
-    public function short_type()
+    public function getShortType(): string
     {
         return $this->short_type;
     }
@@ -147,7 +145,7 @@ class AgileDashboard_Milestone_Backlog_BacklogItem implements AgileDashboard_Mil
         return $this->status;
     }
 
-    public function color()
+    public function color(): string
     {
         return $this->color;
     }
@@ -165,7 +163,7 @@ class AgileDashboard_Milestone_Backlog_BacklogItem implements AgileDashboard_Mil
         return $this->has_children;
     }
     /**
-     * @return Tracker_Artifact
+     * @return Artifact
      */
     public function getArtifact()
     {

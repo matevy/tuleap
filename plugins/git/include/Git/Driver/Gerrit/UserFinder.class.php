@@ -25,16 +25,12 @@
 class Git_Driver_Gerrit_UserFinder
 {
 
-    /** @var UGroupManager */
-    private $ugroup_manager;
-
     /** @var PermissionsManager */
     private $permissions_manager;
 
-    public function __construct(PermissionsManager $permissions_manager, UGroupManager $ugroup_manager)
+    public function __construct(PermissionsManager $permissions_manager)
     {
         $this->permissions_manager = $permissions_manager;
-        $this->ugroup_manager      = $ugroup_manager;
     }
 
 
@@ -45,13 +41,16 @@ class Git_Driver_Gerrit_UserFinder
             return false;
         }
         foreach ($this->permissions_manager->getAuthorizedUgroups($repository->getId(), $permission_type) as $row) {
-            if ($row['ugroup_id'] == ProjectUGroup::REGISTERED ||
+            if (
+                $row['ugroup_id'] == ProjectUGroup::REGISTERED ||
                 $row['ugroup_id'] == ProjectUGroup::ANONYMOUS ||
                 $row['ugroup_id'] == ProjectUGroup::AUTHENTICATED
             ) {
                 return true;
             }
         }
+
+        return false;
     }
 
     /**
@@ -65,11 +64,11 @@ class Git_Driver_Gerrit_UserFinder
     public function getUgroups($repository_id, $permission_type)
     {
         if ($permission_type == Git::SPECIAL_PERM_ADMIN) {
-            return array(ProjectUGroup::PROJECT_ADMIN);
+            return [ProjectUGroup::PROJECT_ADMIN];
         }
 
         $ugroup_ids = $this->permissions_manager->getAuthorizedUgroups($repository_id, $permission_type, false);
-        $result = array();
+        $result = [];
         foreach ($ugroup_ids as $row) {
             $result[] = $row['ugroup_id'];
         }

@@ -33,7 +33,7 @@ describe("ApprovalTableBadge", () => {
             return shallowMount(ApprovalTableBadge, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -44,14 +44,14 @@ describe("ApprovalTableBadge", () => {
         const item = {
             id: 42,
             title: "my unlocked document",
-            type: TYPE_EMBEDDED
+            type: TYPE_EMBEDDED,
         };
 
         const wrapper = approval_badge_factory({
-            item
+            item,
         });
 
-        expect(wrapper.contains(".document-approval-badge")).toBeFalsy();
+        expect(wrapper.find(".document-approval-badge").exists()).toBeFalsy();
     });
 
     it(`Given document has no approval status
@@ -62,15 +62,15 @@ describe("ApprovalTableBadge", () => {
             title: "my locked document",
             type: TYPE_EMBEDDED,
             approval_table: {
-                approval_state: "Approved"
-            }
+                approval_state: "Approved",
+            },
         };
 
         const wrapper = approval_badge_factory({
-            item
+            item,
         });
 
-        expect(wrapper.contains(".document-approval-badge")).toBeTruthy();
+        expect(wrapper.find(".document-approval-badge").exists()).toBeTruthy();
         expect(wrapper.vm.approval_data.icon_badge).toBe("fa-tlp-gavel-approved");
         expect(wrapper.vm.approval_data.badge_label).toBe("Approved");
         expect(wrapper.vm.approval_data.badge_class).toBe("tlp-badge-success ");

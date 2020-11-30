@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_Artifact_XMLImport_XMLImportFieldStrategyOpenList implements Tracker_Artifact_XMLImport_XMLImportFieldStrategy
 {
 
@@ -43,20 +45,16 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyOpenList implements Track
     /**
      * Extract Field data from XML input
      *
-     * @param Tracker_FormElement_Field $field
-     * @param SimpleXMLElement $field_change
      *
-     * @param PFUser $submitted_by
-     * @param Tracker_Artifact $artifact
      * @return mixed
      */
     public function getFieldData(
         Tracker_FormElement_Field $field,
         SimpleXMLElement $field_change,
         PFUser $submitted_by,
-        Tracker_Artifact $artifact
+        Artifact $artifact
     ) {
-        $values = array();
+        $values = [];
         $bind   = (string) $field_change['bind'];
 
         foreach ($field_change->value as $value) {
@@ -83,7 +81,7 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyOpenList implements Track
                 return '';
             }
 
-            return Tracker_FormElement_Field_OpenList::BIND_PREFIX.$user->getId();
+            return Tracker_FormElement_Field_OpenList::BIND_PREFIX . $user->getId();
         }
 
         return $field->getFieldData((string) $value);

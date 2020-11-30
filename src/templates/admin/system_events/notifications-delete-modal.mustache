@@ -10,9 +10,9 @@
     {{/ csrf }}
     <div class="tlp-modal-header">
         <h1 class="tlp-modal-title" id="delete-notification-modal-label-{{ id }}">
-            <i class="fa fa-trash-o tlp-modal-title-icon"></i> {{ delete_notif_label }}
+            <i class="far fa-trash-alt tlp-modal-title-icon"></i> {{ delete_notif_label }}
         </h1>
-        <div class="tlp-modal-close" data-dismiss="modal" aria-label="Close">×</div>
+        <div class="tlp-modal-close" tabindex="0" role="button" data-dismiss="modal" aria-label="Close">×</div>
     </div>
     <div class="tlp-modal-body">
         <p>{{ delete_confirm }}</p>
@@ -22,7 +22,7 @@
             {{ cancel }}
         </button>
         <button type="submit" class="tlp-button-danger tlp-modal-action" name="delete" value="{{ id }}">
-            <i class="fa fa-trash-o tlp-button-icon"></i> {{ delete_notif_label }}
+            <i class="far fa-trash-alt tlp-button-icon"></i> {{ delete_notif_label }}
         </button>
     </div>
 </form>

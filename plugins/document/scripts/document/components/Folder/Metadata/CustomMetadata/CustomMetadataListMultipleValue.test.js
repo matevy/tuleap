@@ -20,7 +20,7 @@
 
 import localVue from "../../../../helpers/local-vue.js";
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import CustomMetadataListMultipleValue from "./CustomMetadataListMultipleValue.vue";
 import EventBus from "../../../../helpers/event-bus.js";
 
@@ -33,7 +33,7 @@ describe("CustomMetadataListMultipleValue", () => {
             return shallowMount(CustomMetadataListMultipleValue, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -47,14 +47,14 @@ describe("CustomMetadataListMultipleValue", () => {
                     allowed_list_values: [
                         { id: 100, value: "None" },
                         { id: 101, value: "abcde" },
-                        { id: 102, value: "fghij" }
-                    ]
+                        { id: 102, value: "fghij" },
+                    ],
                 },
                 {
                     short_name: "an other list",
-                    allowed_list_values: [{ id: 100, value: "None" }]
-                }
-            ]
+                    allowed_list_values: [{ id: 100, value: "None" }],
+                },
+            ],
         };
 
         const currentlyUpdatedItemMetadata = {
@@ -63,25 +63,25 @@ describe("CustomMetadataListMultipleValue", () => {
             list_value: [101],
             is_required: false,
             type: "list",
-            is_multiple_value_allowed: true
+            is_multiple_value_allowed: true,
         };
         const wrapper = factory({ currentlyUpdatedItemMetadata });
 
         await wrapper.vm.$nextTick().then(() => {});
 
         const all_options = wrapper
-            .find("[data-test=document-custom-list-multiple-select]")
+            .get("[data-test=document-custom-list-multiple-select]")
             .findAll("option");
 
         expect(all_options.length).toBe(3);
         expect(
-            wrapper.contains("[data-test=document-custom-list-multiple-value-100]")
+            wrapper.find("[data-test=document-custom-list-multiple-value-100]").exists()
         ).toBeTruthy();
         expect(
-            wrapper.contains("[data-test=document-custom-list-multiple-value-101]")
+            wrapper.find("[data-test=document-custom-list-multiple-value-101]").exists()
         ).toBeTruthy();
         expect(
-            wrapper.contains("[data-test=document-custom-list-multiple-value-102]")
+            wrapper.find("[data-test=document-custom-list-multiple-value-102]").exists()
         ).toBeTruthy();
     });
     it(`Given a list metadata is required
@@ -90,9 +90,9 @@ describe("CustomMetadataListMultipleValue", () => {
             project_metadata_list: [
                 {
                     short_name: "list",
-                    allowed_list_values: [{ id: 101, value: "abcde" }]
-                }
-            ]
+                    allowed_list_values: [{ id: 101, value: "abcde" }],
+                },
+            ],
         };
 
         const currentlyUpdatedItemMetadata = {
@@ -101,13 +101,17 @@ describe("CustomMetadataListMultipleValue", () => {
             list_value: [101],
             is_required: true,
             type: "list",
-            is_multiple_value_allowed: true
+            is_multiple_value_allowed: true,
         };
 
         const wrapper = factory({ currentlyUpdatedItemMetadata });
-        expect(wrapper.contains("[data-test=document-custom-list-multiple-select]")).toBeTruthy();
+        expect(
+            wrapper.find("[data-test=document-custom-list-multiple-select]").exists()
+        ).toBeTruthy();
 
-        expect(wrapper.contains("[data-test=document-custom-metadata-is-required]")).toBeTruthy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-is-required]").exists()
+        ).toBeTruthy();
     });
 
     it(`Given a list metadata is updated
@@ -119,10 +123,10 @@ describe("CustomMetadataListMultipleValue", () => {
                     allowed_list_values: [
                         { id: 100, value: "None" },
                         { id: 101, value: "abcde" },
-                        { id: 102, value: "fghij" }
-                    ]
-                }
-            ]
+                        { id: 102, value: "fghij" },
+                    ],
+                },
+            ],
         };
         const currentlyUpdatedItemMetadata = {
             short_name: "list",
@@ -130,7 +134,7 @@ describe("CustomMetadataListMultipleValue", () => {
             list_value: [101],
             is_required: true,
             type: "list",
-            is_multiple_value_allowed: true
+            is_multiple_value_allowed: true,
         };
 
         const wrapper = factory({ currentlyUpdatedItemMetadata });
@@ -142,7 +146,7 @@ describe("CustomMetadataListMultipleValue", () => {
         );
     });
 
-    it(`It DOES NOT renders the component when there is only one value allowed for the list`, () => {
+    it(`DOES NOT renders the component when there is only one value allowed for the list`, () => {
         store.state.metadata = {
             project_metadata_list: [
                 {
@@ -150,10 +154,10 @@ describe("CustomMetadataListMultipleValue", () => {
                     allowed_list_values: [
                         { id: 100, value: "None" },
                         { id: 101, value: "abcde" },
-                        { id: 102, value: "fghij" }
-                    ]
-                }
-            ]
+                        { id: 102, value: "fghij" },
+                    ],
+                },
+            ],
         };
 
         const currentlyUpdatedItemMetadata = {
@@ -162,15 +166,17 @@ describe("CustomMetadataListMultipleValue", () => {
             value: 101,
             is_required: true,
             type: "list",
-            is_multiple_value_allowed: false
+            is_multiple_value_allowed: false,
         };
 
         const wrapper = factory({ currentlyUpdatedItemMetadata });
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-multiple]")).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-multiple]").exists()
+        ).toBeFalsy();
         expect(wrapper.vm.$data.project_metadata_list_possible_values).toEqual([]);
     });
 
-    it(`It does not render the component when type does not match`, () => {
+    it(`does not render the component when type does not match`, () => {
         store.state.metadata = {
             project_metadata_list: [
                 {
@@ -178,10 +184,10 @@ describe("CustomMetadataListMultipleValue", () => {
                     allowed_list_values: [
                         { id: 100, value: "None" },
                         { id: 101, value: "abcde" },
-                        { id: 102, value: "fghij" }
-                    ]
-                }
-            ]
+                        { id: 102, value: "fghij" },
+                    ],
+                },
+            ],
         };
 
         const currentlyUpdatedItemMetadata = {
@@ -190,14 +196,16 @@ describe("CustomMetadataListMultipleValue", () => {
             value: 101,
             is_required: true,
             type: "text",
-            is_multiple_value_allowed: true
+            is_multiple_value_allowed: true,
         };
 
         const wrapper = factory({ currentlyUpdatedItemMetadata });
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-multiple]")).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-multiple]").exists()
+        ).toBeFalsy();
     });
 
-    it(`It throws an event when list value is changed`, () => {
+    it(`throws an event when list value is changed`, () => {
         store.state.metadata = {
             project_metadata_list: [
                 {
@@ -205,10 +213,10 @@ describe("CustomMetadataListMultipleValue", () => {
                     allowed_list_values: [
                         { id: 100, value: "None" },
                         { id: 101, value: "abcde" },
-                        { id: 102, value: "fghij" }
-                    ]
-                }
-            ]
+                        { id: 102, value: "fghij" },
+                    ],
+                },
+            ],
         };
         const currentlyUpdatedItemMetadata = {
             short_name: "list",
@@ -216,7 +224,7 @@ describe("CustomMetadataListMultipleValue", () => {
             list_value: [101],
             is_required: true,
             type: "list",
-            is_multiple_value_allowed: true
+            is_multiple_value_allowed: true,
         };
 
         const event_bus_emit = jest.spyOn(EventBus, "$emit");
@@ -228,8 +236,8 @@ describe("CustomMetadataListMultipleValue", () => {
         expect(event_bus_emit).toHaveBeenCalledWith("update-multiple-metadata-list-value", {
             detail: {
                 value: wrapper.vm.multiple_list_values,
-                id: "list"
-            }
+                id: "list",
+            },
         });
     });
 });

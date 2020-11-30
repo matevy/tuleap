@@ -26,18 +26,18 @@ $request = HTTPRequest::instance();
 // Valid group id
 $vGroupId = new Valid_GroupId();
 $vGroupId->required();
-if (!$request->valid($vGroupId)) {
+if (! $request->valid($vGroupId)) {
     exit_error($Language->getText('project_admin_index', 'invalid_p'), $Language->getText('project_admin_index', 'p_not_found'));
 }
 $group_id = $request->get('group_id');
 
 
-session_require(array('group'=>$group_id, 'admin_flags'=>'A'));
+session_require(['group' => $group_id, 'admin_flags' => 'A']);
 
 //  get the Project
 $pm    = ProjectManager::instance();
 $project = $pm->getProject($group_id);
-if (!$project || !is_object($project) || $project->isError()) {
+if (! $project || ! is_object($project) || $project->isError()) {
     exit_no_group();
 }
 
@@ -46,7 +46,7 @@ if ($project->getStatus() != 'A') {
     $request->checkUserIsSuperUser();
 }
 
-$vFunc = new Valid_WhiteList('func', array('member_req_notif_group', 'member_req_notif_message'));
+$vFunc = new Valid_WhiteList('func', ['member_req_notif_group', 'member_req_notif_message']);
 $vFunc->required();
 if ($request->isPost() && $request->valid($vFunc)) {
     /*
@@ -64,13 +64,13 @@ if ($request->isPost() && $request->valid($vFunc)) {
                 $validUgroups = $result['ugroups'];
                 if (empty($validUgroups)) {
                     // If no valid ugroups the default one is project admins ugroup
-                    $validUgroups = array($GLOBALS['UGROUP_PROJECT_ADMIN']);
+                    $validUgroups = [$GLOBALS['UGROUP_PROJECT_ADMIN']];
                     $GLOBALS['Response']->addFeedback('error', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_all_invalid'));
                 } else {
                     // If some selected ugroups are not valid display them to the user.
                     $diff = array_diff($ugroups, $validUgroups);
-                    if (!empty($diff)) {
-                        $deletedUgroups = array();
+                    if (! empty($diff)) {
+                        $deletedUgroups = [];
                         foreach ($diff as $ugroupId) {
                             $deletedUgroups[] = ugroup_get_name_from_id($ugroupId);
                         }
@@ -85,26 +85,26 @@ if ($request->isPost() && $request->valid($vFunc)) {
                 //to retreive the old marked ugroups
                 $darUgroups = $pm->getMembershipRequestNotificationUGroup($group_id);
                 if ($pm->setMembershipRequestNotificationUGroup($group_id, $validUgroups)) {
-                    $oldUgroups = array();
-                    if ($darUgroups && !$darUgroups->isError() && $darUgroups->rowCount() > 0) {
+                    $oldUgroups = [];
+                    if ($darUgroups && ! $darUgroups->isError() && $darUgroups->rowCount() > 0) {
                         foreach ($darUgroups as $row) {
                             $oldUgroups[] = ugroup_get_name_from_id($row['ugroup_id']);
                         }
                     } else {
-                        $oldUgroups = array(ugroup_get_name_from_id($GLOBALS['UGROUP_PROJECT_ADMIN']));
+                        $oldUgroups = [ugroup_get_name_from_id($GLOBALS['UGROUP_PROJECT_ADMIN'])];
                     }
                     foreach ($validUgroups as $ugroupId) {
                         $ugroupName   = ugroup_get_name_from_id($ugroupId);
-                        $newUgroups   = array($ugroupName);
-                        $addedUgroups = array();
+                        $newUgroups   = [$ugroupName];
+                        $addedUgroups = [];
                         if ($ugroupId == $GLOBALS['UGROUP_PROJECT_ADMIN']) {
-                            $addedUgroups[] = util_translate_name_ugroup('project_admin');
+                            $addedUgroups[] = \Tuleap\User\UserGroup\NameTranslator::getUserGroupDisplayKey((string) 'project_admin');
                         } else {
                             $addedUgroups[] = $ugroupName;
                         }
                     }
                     //update group history
-                    (new ProjectHistoryDao())->groupAddHistory('membership_request_updated', implode(',', $oldUgroups).' :: '.implode(',', $newUgroups), $group_id);
+                    (new ProjectHistoryDao())->groupAddHistory('membership_request_updated', implode(',', $oldUgroups) . ' :: ' . implode(',', $newUgroups), $group_id);
                     $GLOBALS['Response']->addFeedback('info', $Language->getText('project_admin_index', 'member_request_delegation_ugroups_msg', implode(', ', $addedUgroups)));
                 }
             } else {
@@ -119,13 +119,13 @@ if ($request->isPost() && $request->valid($vFunc)) {
             $vMessage->required();
             $message = trim($request->get('text'));
             $dar = $pm->getMessageToRequesterForAccessProject($group_id);
-            if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+            if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
                 $row = $dar->current();
-                if (!strcmp($row['msg_to_requester'], $message)) {
+                if (! strcmp($row['msg_to_requester'], $message)) {
                     $updatedMessage = false;
                 }
             }
-            if ($request->valid($vMessage) & !empty($message) & $updatedMessage) {
+            if ($request->valid($vMessage) & ! empty($message) & $updatedMessage) {
                 if ($pm->setMessageToRequesterForAccessProject($group_id, $message)) {
                     $GLOBALS['Response']->addFeedback('info', $Language->getText('project_admin_index', 'member_request_delegation_msg_info'));
                 }
@@ -141,28 +141,28 @@ if ($request->isPost() && $request->valid($vFunc)) {
 */
 
 project_admin_header(
-    array(
-        'title'=>$Language->getText('project_admin_ugroup', 'permission_request'),
-        'group'=>$group_id
-    ),
+    [
+        'title' => $Language->getText('project_admin_ugroup', 'permission_request'),
+        'group' => $group_id
+    ],
     \Tuleap\Project\Admin\Navigation\NavigationPermissionsDropdownPresenterBuilder::PERMISSIONS_ENTRY_SHORTNAME
 );
 
 echo '
-<h2>'.$Language->getText('project_admin_index', 'member_request_delegation_title').'</h2>';
+<h2>' . $Language->getText('project_admin_index', 'member_request_delegation_title') . '</h2>';
 
 echo '<table>';
 echo '<tr><td colspan="2"><p>';
-if (!$project->isPublic()) {
-    echo $Language->getText('project_admin_index', 'member_request_delegation_desc_private_group');
+if (! $project->isPublic()) {
+    echo $Language->getOverridableText('project_admin_index', 'member_request_delegation_desc_private_group');
 } else {
-    echo $Language->getText('project_admin_index', 'member_request_delegation_desc_restricted_user');
+    echo $Language->getOverridableText('project_admin_index', 'member_request_delegation_desc_restricted_user');
 }
 echo '</p>';
-$notices = array();
+$notices = [];
 EventManager::instance()->processEvent(
     'permission_request_information',
-    array('group_id' => $group_id, 'notices' => &$notices)
+    ['group_id' => $group_id, 'notices' => &$notices]
 );
 if ($notices) {
     echo '<div class="alert alert-info">';
@@ -170,34 +170,37 @@ if ($notices) {
     echo '</div>';
 }
 
-echo '<p>'. $Language->getText('project_admin_index', 'member_request_delegation_desc_selected_group');
+echo '<p>' . $Language->getText('project_admin_index', 'member_request_delegation_desc_selected_group');
 echo '</p></td></tr>';
 
 //Retrieve the saved ugroups for notification from DB
 $dar = $pm->getMembershipRequestNotificationUGroup($group_id);
-if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
-    $selectedUgroup = array();
+if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
+    $selectedUgroup = [];
     foreach ($dar as $row) {
         $selectedUgroup[] = $row['ugroup_id'];
     }
 } else {
-        $selectedUgroup = array($GLOBALS['UGROUP_PROJECT_ADMIN']);
+        $selectedUgroup = [$GLOBALS['UGROUP_PROJECT_ADMIN']];
 }
 
 
-$ugroupList = array(array('value' => $GLOBALS['UGROUP_PROJECT_ADMIN'], 'text' => util_translate_name_ugroup('project_admin')));
+$ugroupList = [['value' => $GLOBALS['UGROUP_PROJECT_ADMIN'], 'text' => \Tuleap\User\UserGroup\NameTranslator::getUserGroupDisplayKey((string) 'project_admin')]];
 /** @psalm-suppress DeprecatedFunction */
 $res = ugroup_db_get_existing_ugroups($group_id);
 while ($row = db_fetch_array($res)) {
-    $ugroupList[] = array('value' => $row['ugroup_id'], 'text' => $row['name']);
+    $ugroupList[] = ['value' => $row['ugroup_id'], 'text' => $row['name']];
 }
+
+$purifier = Codendi_HTMLPurifier::instance();
+
 echo '<tr><td colspan="2">';
 echo '<form method="post" action="permission_request.php">';
 echo '<input type="hidden" name="func" value="member_req_notif_group" />';
-echo '<input type="hidden" name="group_id" value="'. $group_id .'">';
+echo '<input type="hidden" name="group_id" value="' . $purifier->purify($group_id) . '">';
 echo html_build_multiple_select_box_from_array($ugroupList, "ugroups[]", $selectedUgroup, 8, false, '', false, '', false, '', false);
 echo '<br />';
-echo '<input type="submit" name="submit" value="'.$Language->getText('global', 'btn_update').'" />';
+echo '<input type="submit" name="submit" value="' . $Language->getText('global', 'btn_update') . '" />';
 echo '</form>';
 echo '</td></tr>';
 
@@ -207,22 +210,21 @@ echo '</p></td></tr>';
 
 $message = $GLOBALS['Language']->getText('project_admin_index', 'member_request_delegation_msg_to_requester');
 $dar = $pm->getMessageToRequesterForAccessProject($group_id);
-if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
     $row = $dar->current();
     if ($row['msg_to_requester'] != "member_request_delegation_msg_to_requester") {
         $message = $row['msg_to_requester'];
     }
 }
-$purifier = Codendi_HTMLPurifier::instance();
 echo '<tr><td colspan="2">';
 echo '<form method="post" action="permission_request.php">
           <textarea wrap="virtual" rows="5" cols="70" name="text">' . $purifier->purify($message) . '</textarea>
           <input type="hidden" name="func" value="member_req_notif_message">
-          <input type="hidden" name="group_id" value="' .$group_id. '">
-          <br><input name="submit" type="submit" value="'.$GLOBALS['Language']->getText('global', 'btn_update').'"/></br>
+          <input type="hidden" name="group_id" value="' . $purifier->purify($group_id) . '">
+          <br><input name="submit" type="submit" value="' . $GLOBALS['Language']->getText('global', 'btn_update') . '"/></br>
      </form>';
 
 echo '</td></tr>';
 echo '</table>';
 
-project_admin_footer(array());
+project_admin_footer([]);

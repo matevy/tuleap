@@ -22,8 +22,6 @@ declare(strict_types=1);
 
 namespace Tuleap\Taskboard\Tracker;
 
-use Tracker_FormElement_Field_Selectbox;
-
 class AddInPlaceRetriever
 {
     /**
@@ -36,15 +34,10 @@ class AddInPlaceRetriever
         $this->form_element_factory = $form_element_factory;
     }
 
-    /**
-     * @psalm-param array<int, Tracker_FormElement_Field_Selectbox> $mapped_fields_by_tracker_id
-     *
-     * @param Tracker_FormElement_Field_Selectbox[] $mapped_fields_by_tracker_id
-     */
     public function retrieveAddInPlace(
         TaskboardTracker $taskboard_tracker,
         \PFUser $user,
-        array $mapped_fields_by_tracker_id
+        MappedFieldsCollection $mapped_fields_collection
     ): ?AddInPlace {
         $tracker        = $taskboard_tracker->getTracker();
         $child_trackers = $tracker->getChildren();
@@ -54,10 +47,10 @@ class AddInPlaceRetriever
         }
 
         $child_tracker = $child_trackers[0];
-        if (empty($mapped_fields_by_tracker_id[$child_tracker->getId()])) {
+        if (! $mapped_fields_collection->hasKey($child_tracker)) {
             return null;
         }
-        $mapped_field = $mapped_fields_by_tracker_id[$child_tracker->getId()];
+        $mapped_field = $mapped_fields_collection->get($child_tracker);
         if (! $mapped_field->userCanSubmit($user)) {
             return null;
         }
@@ -91,8 +84,8 @@ class AddInPlaceRetriever
         $mapped_field_id = $mapped_field->getId();
         $tracker_fields  = $this->form_element_factory->getUsedFields($tracker);
 
-        /** @var \Tracker_FormElement_Field $field */
         foreach ($tracker_fields as $field) {
+            \assert($field instanceof \Tracker_FormElement_Field);
             if ($field->getId() === $title_field_id) {
                 continue;
             }

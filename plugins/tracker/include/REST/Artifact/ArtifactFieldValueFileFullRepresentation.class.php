@@ -22,7 +22,7 @@ namespace Tuleap\Tracker\REST\Artifact;
 
 use Tuleap\REST\JsonCast;
 
-class ArtifactFieldValueFileFullRepresentation
+class ArtifactFieldValueFileFullRepresentation extends ArtifactFieldValueRepresentationData
 {
     /**
      * @var int ID of the field
@@ -42,7 +42,7 @@ class ArtifactFieldValueFileFullRepresentation
     /**
      * @var Tuleap\Tracker\REST\Artifact\FileInfoRepresentation[]
      */
-    public $file_descriptions = array();
+    public $file_descriptions = [];
 
     public function build($id, $type, $label, array $values)
     {

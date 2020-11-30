@@ -20,17 +20,15 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_MetadataFactory.class.php');
-
 class Docman_MetadataComparator
 {
-    var $docmanIcons;
-    var $srcGo;
-    var $dstGo;
+    public $docmanIcons;
+    public $srcGo;
+    public $dstGo;
 
-    function __construct($srcGroupId, $dstGroupId, $themePath)
+    public function __construct($srcGroupId, $dstGroupId, $themePath)
     {
-        $this->docmanIcons = new Docman_Icons($themePath.'/images/ic/');
+        $this->docmanIcons = new Docman_Icons($themePath . '/images/ic/');
         $pm = ProjectManager::instance();
         $this->srcGo = $pm->getProject($srcGroupId);
         $this->dstGo = $pm->getProject($dstGroupId);
@@ -40,9 +38,9 @@ class Docman_MetadataComparator
      * For a five object iterator, return an array of object indexed by
      * $func applied on object.
      */
-    function getArrayFromIterator($iter, $func)
+    public function getArrayFromIterator($iter, $func)
     {
-        $a = array();
+        $a = [];
         while ($iter->valid()) {
             $e = $iter->current();
             $a[$e->$func()] = $e;
@@ -51,29 +49,38 @@ class Docman_MetadataComparator
         return $a;
     }
 
-    function checkMdDifferences($srcMd, $dstMd, $loveMap)
+    public function checkMdDifferences($srcMd, $dstMd, $loveMap)
     {
-        $diffArray = array();
-        if (!$dstMd->sameDescription($srcMd)) {
-            $diffArray[] = $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_desc');
+        $diffArray = [];
+        if (! $dstMd->sameDescription($srcMd)) {
+            $diffArray[] = dgettext('tuleap-docman', 'Description: <strong><em>new text</em></strong>');
         }
-        if (!$dstMd->sameIsEmptyAllowed($srcMd)) {
-            $diffArray[] = $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_allowempty', array($GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_'.$srcMd->getIsEmptyAllowed())));
+        if (! $dstMd->sameIsEmptyAllowed($srcMd)) {
+            $diffArray[] = sprintf(dgettext('tuleap-docman', 'Allow empty value: <strong>%1$s</strong>'), $this->getEnabledDisabledText($srcMd->getIsEmptyAllowed()));
         }
-        if (!$dstMd->sameIsMultipleValuesAllowed($srcMd)) {
-            $diffArray[] = $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_allowmultiplevalue', array($GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_'.$srcMd->getIsMultipleValuesAllowed())));
+        if (! $dstMd->sameIsMultipleValuesAllowed($srcMd)) {
+            $diffArray[] = sprintf(dgettext('tuleap-docman', 'Allow multiple selection: <strong>%1$s</strong>'), $this->getEnabledDisabledText($srcMd->getIsMultipleValuesAllowed()));
         }
-        if (!$dstMd->sameUseIt($srcMd)) {
-            $diffArray[] = $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_useit', array($GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_param_'.$srcMd->getUseIt())));
+        if (! $dstMd->sameUseIt($srcMd)) {
+            $diffArray[] = sprintf(dgettext('tuleap-docman', 'Usage: <strong>%1$s</strong>'), $this->getEnabledDisabledText($srcMd->getUseIt()));
         }
         return $diffArray;
+    }
+
+    private function getEnabledDisabledText(bool $is_enabled): string
+    {
+        if ($is_enabled) {
+            return dgettext('tuleap-docman', 'Enabled');
+        }
+
+        return dgettext('tuleap-docman', 'Disabled');
     }
 
     /**
      *
      * Same algo used in Docman_View_ItemDetailsSectionPaste::_checkLoveToImport
      */
-    function getLoveCompareTable($srcMd, $dstMd, $mdMap, &$sthToImport)
+    public function getLoveCompareTable($srcMd, $dstMd, $mdMap, &$sthToImport)
     {
         $html = '';
 
@@ -94,7 +101,7 @@ class Docman_MetadataComparator
         $purifier = Codendi_HTMLPurifier::instance();
 
         // Keep a trace of matching love
-        $matchingLove = array();
+        $matchingLove = [];
         while ($srcLoveIter->valid()) {
             $srcLove = $srcLoveIter->current();
             $rowStyle = 'missing';
@@ -113,25 +120,25 @@ class Docman_MetadataComparator
 
             // Name
             $html .= "<td style=\"padding-left: 2em;\"></td>\n";
-            $html .= "<td>".Docman_MetadataHtmlList::_getElementName($srcLove)."</td>\n";
+            $html .= "<td>" . Docman_MetadataHtmlList::_getElementName($srcLove) . "</td>\n";
 
             // Presence in source project
-            $html .= '<td align="center"><img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" /></td>';
+            $html .= '<td align="center"><img src="' . $this->docmanIcons->getThemeIcon('tick.png') . '" /></td>';
 
             // Presence in destination project
             $html .= "<td align=\"center\">";
             switch ($rowStyle) {
                 case 'equals':
-                    $html .= '<img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" />';
+                    $html .= '<img src="' . $this->docmanIcons->getThemeIcon('tick.png') . '" />';
                     break;
             }
             $html .= "</td>\n";
 
             // Differences
-            $html .= "<td class=\"docman_md_".$rowStyle."\">";
+            $html .= "<td class=\"docman_md_" . $rowStyle . "\">";
             switch ($rowStyle) {
                 case 'missing':
-                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_status_'.$rowStyle);
+                    $html .= dgettext('tuleap-docman', 'Doesn\'t exist');
             }
             $html .= "</td>\n";
 
@@ -139,7 +146,7 @@ class Docman_MetadataComparator
             $html .= "<td>";
             switch ($rowStyle) {
                 case 'missing':
-                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_import_love', array($purifier->purify($srcLove->getName())));
+                    $html .= sprintf(dgettext('tuleap-docman', 'Will create value <strong>%1$s</strong>'), $purifier->purify($srcLove->getName()));
             }
             $html .= "</td\n>";
 
@@ -151,15 +158,15 @@ class Docman_MetadataComparator
         // Append to the table the list of values elements in the dst project
         // that where not present in the src project.
         foreach ($dstLoveArray as $love) {
-            if (!isset($matchingLove[$love->getId()])) {
+            if (! isset($matchingLove[$love->getId()])) {
                 $html .= "<tr>\n";
                 // Name
                 $html .= "<td>&nbsp;</td>\n";
-                $html .= "<td>".$purifier->purify($love->getName())."</td>\n";
+                $html .= "<td>" . $purifier->purify($love->getName()) . "</td>\n";
                 // Presence in source project
                 $html .= "<td></td>\n";
                 // Presence in destination project
-                $html .= '<td align="center"><img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" /></td>';
+                $html .= '<td align="center"><img src="' . $this->docmanIcons->getThemeIcon('tick.png') . '" /></td>';
                 // Differences
                 $html .= "<td></td>\n";
                 // Action
@@ -171,8 +178,9 @@ class Docman_MetadataComparator
         return $html;
     }
 
-    function getMetadataCompareTable(&$sthToImport)
+    public function getMetadataCompareTable(&$sthToImport)
     {
+        $purifier = Codendi_HTMLPurifier::instance();
         $html = '';
 
         // True if there is sth to import in dst project.
@@ -188,26 +196,26 @@ class Docman_MetadataComparator
         $dstMdArray = $this->getArrayFromIterator($dstMdIter, 'getLabel');
 
         // Get mapping between the 2 definitions
-        $mdMap = array();
+        $mdMap = [];
         $srcMdFactory->getMetadataMapping($this->dstGo->getGroupId(), $mdMap);
 
-        $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_desc', array($this->dstGo->getPublicName(), $this->srcGo->getPublicName()));
+        $html .= sprintf(dgettext('tuleap-docman', '<p>The table below highlight the differences between %1$s and %2$s properties.</p><p>If there are differences, you can click on "Import" button at the bottom of the page. The properties of %1$s will be modified match what is defined in %2$s.</p><p><strong>Note:</strong> this operation delete neither properties nor values in %1$s and %2$s won\'t be modified.</p>'), $purifier->purify($this->dstGo->getPublicName()), $purifier->purify($this->srcGo->getPublicName()));
 
         // Table
         $html .= "<table border=\"1\">\n";
 
         $html .= "<tr>\n";
-        $html .= "<th colspan=\"2\">".$GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_prop')."</th>\n";
-        $html .= "<th>".$this->srcGo->getPublicName()."</th>\n";
-        $html .= "<th>".$this->dstGo->getPublicName()."</th>\n";
-        $html .= "<th>".$GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_diff', array($this->dstGo->getPublicName(), $this->srcGo->getPublicName()))."</th>\n";
-        $html .= "<th>".$GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_action', array($this->dstGo->getPublicName()))."</th>\n";
+        $html .= "<th colspan=\"2\">" . dgettext('tuleap-docman', 'Property') . "</th>\n";
+        $html .= "<th>" . $purifier->purify($this->srcGo->getPublicName()) . "</th>\n";
+        $html .= "<th>" . $purifier->purify($this->dstGo->getPublicName()) . "</th>\n";
+        $html .= "<th>" . sprintf(dgettext('tuleap-docman', 'Differences<br />in %1$s vs. %2$s'), $purifier->purify($this->dstGo->getPublicName()), $purifier->purify($this->srcGo->getPublicName())) . "</th>\n";
+        $html .= "<th>" . sprintf(dgettext('tuleap-docman', 'Import actions<br />in %1$s'), $purifier->purify($this->dstGo->getPublicName())) . "</th>\n";
         $html .= "</tr>\n";
 
         $purifier = Codendi_HTMLPurifier::instance();
 
         // Keep a trace of metadata that matched in the dst metadata list.
-        $matchingMd = array();
+        $matchingMd = [];
         $srcMdIter->rewind();
         while ($srcMdIter->valid()) {
             $srcMd = $srcMdIter->current();
@@ -260,7 +268,7 @@ class Docman_MetadataComparator
 
             // Presence in source project
             $html .= "<td align=\"center\">";
-            $html .= '<img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" />';
+            $html .= '<img src="' . $this->docmanIcons->getThemeIcon('tick.png') . '" />';
             $html .= "</td>";
 
             // Presence in destination project
@@ -268,18 +276,22 @@ class Docman_MetadataComparator
             switch ($dstMdStatus) {
                 case 'equals':
                 case 'equivalent':
-                    $html .= '<img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" />';
+                    $html .= '<img src="' . $this->docmanIcons->getThemeIcon('tick.png') . '" />';
                     break;
             }
             $html .= "</td>";
 
             // Differences
-            $html .= "<td class=\"docman_md_".$dstMdStatus."\">";
+            $html .= "<td class=\"docman_md_" . $dstMdStatus . "\">";
             switch ($dstMdStatus) {
                 case 'equivalent':
+                    $html .= dgettext('tuleap-docman', 'Settings differ');
+                    break;
                 case 'missing':
+                    $html .= dgettext('tuleap-docman', 'Doesn\'t exist');
+                    break;
                 case 'conflict':
-                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_status_'.$dstMdStatus);
+                    $html .= dgettext('tuleap-docman', 'Name conflict');
                     break;
             }
             $html .= "</td>";
@@ -299,13 +311,13 @@ class Docman_MetadataComparator
                     }
                     $diffStr .= '</ul>';
 
-                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_update_md', array($purified_property_name, $this->dstGo->getPublicName(), $diffStr));
+                    $html .= sprintf(dgettext('tuleap-docman', 'Will override <strong>%1$s</strong> settings in %2$s: %3$s'), $purified_property_name, $purifier->purify($this->dstGo->getPublicName()), $diffStr);
                     break;
                 case 'missing':
-                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_import_md', array($purified_property_name));
+                    $html .= sprintf(dgettext('tuleap-docman', 'Will create property <strong>%1$s</strong> with the same settings and values'), $purified_property_name);
                     break;
                 case 'conflict':
-                    $html .= $GLOBALS['Language']->getText('plugin_docman', 'admin_md_import_tbl_act_conflict');
+                    $html .= dgettext('tuleap-docman', 'A property with the same name but a different type exists in destination project. Will be skiped.');
                     break;
             }
             $html .= "</td>";
@@ -326,7 +338,7 @@ class Docman_MetadataComparator
         // Append to the table the metadata in the dst project that where not
         // present in the src project.
         foreach ($dstMdArray as $md) {
-            if (!isset($matchingMd[$md->getLabel()])) {
+            if (! isset($matchingMd[$md->getLabel()])) {
                 $html .= "<tr>\n";
 
                 // Name
@@ -340,7 +352,7 @@ class Docman_MetadataComparator
 
                 // Presence in destination project
                 $html .= "<td align=\"center\">";
-                $html .= '<img src="'.$this->docmanIcons->getThemeIcon('tick.png').'" />';
+                $html .= '<img src="' . $this->docmanIcons->getThemeIcon('tick.png') . '" />';
                 $html .= "</td>";
 
                 // Differences

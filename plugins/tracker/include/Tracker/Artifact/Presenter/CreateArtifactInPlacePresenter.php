@@ -17,13 +17,16 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
+
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_Artifact_Presenter_CreateArtifactInPlacePresenter
 {
 
     /** @var Tracker */
     private $tracker;
 
-    /** @var Tracker_Artifact | null */
+    /** @var Artifact | null */
     private $artifact_to_link;
 
     /** @var Tracker_FormElement[] */
@@ -51,11 +54,7 @@ class Tracker_Artifact_Presenter_CreateArtifactInPlacePresenter
             return null;
         }
 
-        return $GLOBALS['Language']->getText(
-            'plugin_tracker_modal_artifact',
-            'artifact_to_link_title',
-            array($this->artifact_to_link->getTitle())
-        );
+        return sprintf(dgettext('tuleap-tracker', 'The artifact will be linked to %1$s'), (string) $this->artifact_to_link->getTitle());
     }
 
     public function has_linked_artifact()
@@ -74,11 +73,11 @@ class Tracker_Artifact_Presenter_CreateArtifactInPlacePresenter
 
     public function submit()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_modal_artifact', 'submit');
+        return dgettext('tuleap-tracker', 'Submit');
     }
 
     public function cancel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_modal_artifact', 'cancel');
+        return dgettext('tuleap-tracker', 'Cancel');
     }
 }

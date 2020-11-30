@@ -30,10 +30,11 @@ require_once('data-access/GraphOnTrackersV5_ChartFactory.class.php');
 *
 * Tracker Chart
 */
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 abstract class GraphOnTrackersV5_Widget_Chart extends Widget
 {
-    var $chart_title;
-    var $chart_id;
+    public $chart_title;
+    public $chart_id;
 
     public function __construct($id, $owner_id, $owner_type)
     {
@@ -41,7 +42,7 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget
         $this->setOwner($owner_id, $owner_type);
     }
 
-    function getTitle()
+    public function getTitle()
     {
         return $this->chart_title ?: 'Tracker Chart';
     }
@@ -79,25 +80,25 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget
 
         return '
             <div class="tlp-form-element">
-                <label class="tlp-label" for="title-'. $purifier->purify($widget_id) .'">
-                    '. $purifier->purify(_('Title')) .'
+                <label class="tlp-label" for="title-' . $purifier->purify($widget_id) . '">
+                    ' . $purifier->purify(_('Title')) . '
                 </label>
                 <input type="text"
                        class="tlp-input"
-                       id="title-'. $purifier->purify($widget_id) .'"
+                       id="title-' . $purifier->purify($widget_id) . '"
                        name="chart[title]"
-                       value="'. $purifier->purify($this->getTitle()) .'">
+                       value="' . $purifier->purify($this->getTitle()) . '">
             </div>
             <div class="tlp-form-element">
-                <label class="tlp-label" for="chart-id-'. $purifier->purify($widget_id) .'">
+                <label class="tlp-label" for="chart-id-' . $purifier->purify($widget_id) . '">
                     Chart Id <i class="fa fa-asterisk"></i>
                 </label>
                 <input type="number"
                        size="5"
                        class="tlp-input"
-                       id="chart-id-'. $purifier->purify($widget_id) .'"
+                       id="chart-id-' . $purifier->purify($widget_id) . '"
                        name="chart[chart_id]"
-                       value="'. $purifier->purify($this->chart_id) .'"
+                       value="' . $purifier->purify($this->chart_id) . '"
                        required
                        placeholder="123">
             </div>
@@ -110,12 +111,12 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget
 
         return '
             <div class="tlp-form-element">
-                <label class="tlp-label" for="widget-chart-title">'. $purifier->purify(_('Title')) .'</label>
+                <label class="tlp-label" for="widget-chart-title">' . $purifier->purify(_('Title')) . '</label>
                 <input type="text"
                        class="tlp-input"
                        id="widget-chart-title"
                        name="chart[title]"
-                       value="'. $purifier->purify($this->getTitle()) .'">
+                       value="' . $purifier->purify($this->getTitle()) . '">
             </div>
             <div class="tlp-form-element">
                 <label class="tlp-label" for="widget-chart-id">
@@ -139,16 +140,16 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget
         $owner_id,
         $owner_type
     ) {
-        $sql = "INSERT INTO plugin_graphontrackersv5_widget_chart (owner_id, owner_type, title, chart_id) 
-        SELECT  ". $owner_id .", '". $owner_type ."', title, chart_id
+        $sql = "INSERT INTO plugin_graphontrackersv5_widget_chart (owner_id, owner_type, title, chart_id)
+        SELECT  " . $owner_id . ", '" . $owner_type . "', title, chart_id
         FROM plugin_graphontrackersv5_widget_chart
-        WHERE owner_id = ". $this->owner_id ." AND owner_type = '". $this->owner_type ."' ";
+        WHERE owner_id = " . $this->owner_id . " AND owner_type = '" . $this->owner_type . "' ";
         $res = db_query($sql);
         return db_insertid($res);
     }
-    function loadContent($id)
+    public function loadContent($id)
     {
-        $sql = "SELECT * FROM plugin_graphontrackersv5_widget_chart WHERE owner_id = ". $this->owner_id ." AND owner_type = '". $this->owner_type ."' AND id = ". $id;
+        $sql = "SELECT * FROM plugin_graphontrackersv5_widget_chart WHERE owner_id = " . $this->owner_id . " AND owner_type = '" . $this->owner_type . "' AND id = " . $id;
         $res = db_query($sql);
         if ($res && db_numrows($res)) {
             $data = db_fetch_array($res);
@@ -157,7 +158,7 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget
             $this->content_id = $id;
         }
     }
-    function create(Codendi_Request $request)
+    public function create(Codendi_Request $request)
     {
         $content_id = false;
         $vId = new Valid_UInt('chart_id');
@@ -165,13 +166,13 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget
         $vId->required();
         if ($request->validInArray('chart', $vId)) {
             $chart = $request->get('chart');
-            $sql = 'INSERT INTO plugin_graphontrackersv5_widget_chart (owner_id, owner_type, title, chart_id) VALUES ('. $this->owner_id .", '". $this->owner_type ."', '". db_escape_string($chart['title']) ."', ". db_escape_int($chart['chart_id']) .")";
+            $sql = 'INSERT INTO plugin_graphontrackersv5_widget_chart (owner_id, owner_type, title, chart_id) VALUES (' . $this->owner_id . ", '" . $this->owner_type . "', '" . db_escape_string($chart['title']) . "', " . db_escape_int($chart['chart_id']) . ")";
             $res = db_query($sql);
             $content_id = db_insertid($res);
         }
         return $content_id;
     }
-    function updatePreferences(Codendi_Request $request)
+    public function updatePreferences(Codendi_Request $request)
     {
         $done = false;
         $vContentId = new Valid_UInt('content_id');
@@ -179,58 +180,58 @@ abstract class GraphOnTrackersV5_Widget_Chart extends Widget
         if (($chart = $request->get('chart')) && $request->valid($vContentId)) {
             $vId = new Valid_UInt('chart_id');
             if ($request->validInArray('chart', $vId)) {
-                $id = " chart_id   = ". db_escape_int($chart['chart_id']) ." ";
+                $id = " chart_id   = " . db_escape_int($chart['chart_id']) . " ";
             } else {
                 $id = '';
             }
 
             $vTitle = new Valid_String('title');
             if ($request->validInArray('chart', $vTitle)) {
-                $title = " title = '". db_escape_string($chart['title']) ."' ";
+                $title = " title = '" . db_escape_string($chart['title']) . "' ";
             } else {
                 $title = '';
             }
 
             if ($id || $title) {
-                $sql = "UPDATE plugin_graphontrackersv5_widget_chart SET ". $title .", ". $id ." WHERE owner_id = ". $this->owner_id ." AND owner_type = '". $this->owner_type ."' AND id = ". (int)$request->get('content_id');
+                $sql = "UPDATE plugin_graphontrackersv5_widget_chart SET " . $title . ", " . $id . " WHERE owner_id = " . $this->owner_id . " AND owner_type = '" . $this->owner_type . "' AND id = " . (int) $request->get('content_id');
                 $res = db_query($sql);
                 $done = true;
             }
         }
         return $done;
     }
-    function destroy($id)
+    public function destroy($id)
     {
-        $sql = 'DELETE FROM plugin_graphontrackersv5_widget_chart WHERE id = '. $id .' AND owner_id = '. $this->owner_id ." AND owner_type = '". $this->owner_type ."'";
+        $sql = 'DELETE FROM plugin_graphontrackersv5_widget_chart WHERE id = ' . $id . ' AND owner_id = ' . $this->owner_id . " AND owner_type = '" . $this->owner_type . "'";
         db_query($sql);
     }
-    function isUnique()
+    public function isUnique()
     {
         return false;
     }
 
-    function getCategory()
+    public function getCategory()
     {
         return dgettext('tuleap-tracker', 'Trackers');
     }
 
-    public function getJavascriptDependencies()
+    public function getJavascriptDependencies(): array
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/graphontrackersv5/scripts',
-            '/assets/graphontrackersv5/scripts'
-        );
         return [
-            ['file' => $include_assets->getFileURL('graphontrackersv5.js')]
+            ['file' => $this->getAssets()->getFileURL('graphontrackersv5.js')]
         ];
     }
 
-    public function getStylesheetDependencies()
+    public function getStylesheetDependencies(): CssAssetCollection
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/graphontrackersv5/themes',
-            '/assets/graphontrackersv5/themes'
+        return new CssAssetCollection([new CssAssetWithoutVariantDeclinaisons($this->getAssets(), 'style')]);
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/graphontrackersv5',
+            '/assets/graphontrackersv5'
         );
-        return new CssAssetCollection([new CssAssetWithoutVariantDeclinaisons($include_assets, 'style')]);
     }
 }

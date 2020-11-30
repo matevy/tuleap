@@ -1,22 +1,22 @@
-<div class="tlp-framed">
-    <h1 class="agiledashboard-administration-title">{{ config_title }}</h1>
+<h1 class="agiledashboard-administration-title">{{# dgettext }} tuleap-agiledashboard | Agile Dashboard administration {{/ dgettext }}</h1>
+
+<div class="main-project-tabs">
+    <nav class="tlp-tabs">
+        <a class="tlp-tab tlp-tab-active"
+           href="?group_id={{ group_id }}&action=admin&pane=scrum">{{# dgettext }} tuleap-agiledashboard | Scrum {{/ dgettext }}
+        </a>
+        <a class="tlp-tab"
+           href="?group_id={{ group_id }}&action=admin&pane=kanban" data-test="admin-kanban-pane">{{# dgettext }} tuleap-agiledashboard | Kanban {{/ dgettext }}
+        </a>
+        {{# can_burnup_be_configured }}
+            <a class="tlp-tab"
+               href="?group_id={{ group_id }}&action=admin&pane=charts">{{# dgettext }} tuleap-agiledashboard | Charts {{/ dgettext }}
+            </a>
+        {{/ can_burnup_be_configured }}
+    </nav>
 </div>
 
-<nav class="tlp-tabs">
-    <a class="tlp-tab tlp-tab-active"
-        href="?group_id={{ group_id }}&action=admin&pane=scrum">{{# dgettext }} tuleap-agiledashboard | Scrum {{/ dgettext }}
-    </a>
-    <a class="tlp-tab"
-        href="?group_id={{ group_id }}&action=admin&pane=kanban">{{# dgettext }} tuleap-agiledashboard | Kanban {{/ dgettext }}
-    </a>
-    {{# can_burnup_be_configured }}
-        <a class="tlp-tab"
-            href="?group_id={{ group_id }}&action=admin&pane=charts">{{# dgettext }} tuleap-agiledashboard | Charts {{/ dgettext }}
-        </a>
-    {{/ can_burnup_be_configured }}
-</nav>
-
-<div class="agiledashboard-administration-scrum tlp-framed-horizontally">
+<div class="agiledashboard-administration-scrum tlp-framed">
     <div class="agiledashboard-administration-scrum-main">
         <form action="?group_id={{ group_id }}&action=updateConfiguration" method="POST">
             <input type="hidden" name="activate-scrum" value="0">
@@ -38,7 +38,7 @@
                                     value="1"
                                     {{# scrum_activated }} checked {{/ scrum_activated }}
                                 >
-                                <label for="activate-scrum" class="tlp-switch-button" aria-hidden></label>
+                                <label for="activate-scrum" class="tlp-switch-button" aria-hidden="true"></label>
                             </div>
                             {{^ scrum_activated }}
                                 {{^ has_plannings }}
@@ -60,10 +60,10 @@
                                         value="1"
                                         {{# use_mono_milestone }} checked {{/ use_mono_milestone }}
                                     >
-                                    <label for="activate-scrum-v2" class="tlp-switch-button" aria-hidden></label>
+                                    <label for="activate-scrum-v2" class="tlp-switch-button" aria-hidden="true"></label>
                                 </div>
                                 <p class="tlp-text-warning">
-                                    <i class="fa fa-warning"></i> {{ warning_feature_under_construction }}
+                                    <i class="fas fa-exclamation-triangle"></i> {{ warning_feature_under_construction }}
                                 </p>
                             </div>
                         {{/ can_scrum_mono_milestone_be_enabled }}
@@ -84,35 +84,55 @@
                             </p>
                         </div>
 
-                        {{# must_display_explicit_top_backlog_switch }}
-                            <input type="hidden" name="use-explicit-top-backlog" value="0">
-                            <div class="tlp-form-element">
-                                <label class="tlp-label" for="use-explicit-top-backlog">
-                                    <i class="fa fa-flask"></i> {{# dgettext }}tuleap-agiledashboard | Explicit top backlog{{/ dgettext }}
-                                </label>
-                                <div class="tlp-switch">
-                                    <input type="checkbox"
-                                           id="use-explicit-top-backlog"
-                                           class="tlp-switch-checkbox"
-                                           name="use-explicit-top-backlog"
-                                           value="1"
-                                        {{# explicit_top_backlog_enabled }} checked disabled {{/ explicit_top_backlog_enabled }}
-                                    >
-                                    <label for="use-explicit-top-backlog" class="tlp-switch-button" aria-hidden></label>
-                                </div>
-                                <p class="tlp-text-warning">
-                                    <i class="fa fa-warning"></i> {{# dgettext }}tuleap-agiledashboard | This is an experimental feature. It's explained <a href="https://tuleap.net/plugins/tracker/?aid=13997">here</a>. Once activated, you will start with an empty top backlog.{{/ dgettext }}
-                                </p>
+                        {{# additional_scrum_sections_controllers }}
+                            {{{ content }}}
+                        {{/ additional_scrum_sections_controllers }}
+
+                        <input type="hidden" name="use-explicit-top-backlog" value="0">
+                        <div class="tlp-form-element">
+                            <label class="tlp-label" for="use-explicit-top-backlog">
+                                {{# dgettext }}tuleap-agiledashboard | Explicit top backlog{{/ dgettext }}
+                            </label>
+                            <div class="tlp-switch">
+                                <input type="checkbox"
+                                       id="use-explicit-top-backlog"
+                                       class="tlp-switch-checkbox"
+                                       name="use-explicit-top-backlog"
+                                       value="1"
+                                    {{# explicit_top_backlog_enabled }} checked {{/ explicit_top_backlog_enabled }}
+                                >
+                                <label for="use-explicit-top-backlog" class="tlp-switch-button" aria-hidden="true"></label>
                             </div>
-                        {{/ must_display_explicit_top_backlog_switch }}
+                            <p class="tlp-text-info">
+                                <i class="fa fa-info-circle"></i>
+                                {{# dgettext }}tuleap-agiledashboard | Explicit backlog allows to select, item per item, what goes in Scrum top backlog.{{/ dgettext }}
+                                    <a href="/doc/en/user-guide/agile-dashboard.html?#explicit-backlog">
+                                        {{# dgettext }}tuleap-agiledashboard | See documentation for more details. {{/ dgettext }}
+                                    </a>
+                            </p>
+                        </div>
 
                     </section>
 
                     <section class="tlp-pane-section tlp-pane-section-submit">
                         {{{ token }}}
-                        <button type="submit" class="tlp-button-primary" id="ad-service-submit">
+                        <button type="submit"
+                                class="tlp-button-primary submit-without-modal"
+                                id="ad-service-submit"
+                        >
                             <i class="fa fa-save tlp-button-icon"></i> {{# dgettext }}tuleap-agiledashboard | Save{{/ dgettext }}
                         </button>
+
+                        <button type="button"
+                                class="tlp-button-primary scrum-administration-submit-hidden"
+                                id="scrum-configuration-edit-options-button"
+                                data-target-modal-id="scrum-explicit-backlog-switch-usage-modal"
+                                data-explicit-backlog-value="{{ explicit_top_backlog_enabled }}"
+                        >
+                            <i class="fa fa-save tlp-button-icon"></i> {{# dgettext }}tuleap-agiledashboard | Save{{/ dgettext }}
+                        </button>
+
+                        {{> admin-scrum/switch-explicit-backlog-usage-modal }}
                     </section>
                 </div>
             </section>
@@ -121,7 +141,7 @@
         <section class="tlp-pane">
             <div class="tlp-pane-container">
                 <div class="tlp-pane-header">
-                    <h1 class="tlp-pane-title"><i class="fa fa-sign-in"></i> {{ planning_section }}</h1>
+                    <h1 class="tlp-pane-title"><i class="fas fa-sign-in-alt"></i> {{ planning_section }}</h1>
                 </div>
                 <section class="tlp-pane-section">
                     <div class="tlp-table-actions">
@@ -183,13 +203,13 @@
                                         <td>
                                             {{# extra_message }}
                                                 <span class="tlp-tooltip tlp-tooltip-right" data-tlp-tooltip="{{ extra_message }}">
-                                                    <i class="fa fa-warning agiledashboard-administration-scrum-planning-warning"></i>
+                                                    <i class="fas fa-exclamation-triangle agiledashboard-administration-scrum-planning-warning"></i>
                                                 </span>
                                             {{/ extra_message }}
                                         </td>
                                         <td class="tlp-table-cell-actions">
                                             <a href="{{ edit_url }}" class="tlp-table-cell-actions-button tlp-button-small tlp-button-primary tlp-button-outline">
-                                                <i class="fa fa-pencil tlp-button-icon"></i> {{ edit_action_label }}
+                                                <i class="fas fa-pencil-alt tlp-button-icon"></i> {{ edit_action_label }}
                                             </a>
                                             {{> admin-scrum/admin-planning-deletion }}
                                         </td>
@@ -209,7 +229,7 @@
             <div class="tlp-pane-container">
                 <div class="tlp-pane-header">
                     <h1 class="tlp-pane-title">
-                        <i class="fa fa-exchange tlp-pane-title-icon"></i> {{ import_export_section }}
+                        <i class="fas fa-exchange-alt tlp-pane-title-icon"></i> {{ import_export_section }}
                     </h1>
                 </div>
                 <section class="tlp-pane-section">

@@ -33,13 +33,14 @@ use Tuleap\Project\Admin\PermissionsPerGroup\PanesPermissionPerGroupBuilder;
 use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupBuilder;
 use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupPresenter;
 use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupUGroupFormatter;
+use Tuleap\Project\UGroupLiteralizer;
 
 require_once __DIR__ . '/../../include/pre.php';
 
 $request  = HTTPRequest::instance();
 $group_id = $request->getValidated('group_id', 'GroupId', 0);
 
-session_require(array('group' => $group_id, 'admin_flags' => 'A'));
+session_require(['group' => $group_id, 'admin_flags' => 'A']);
 
 $project_manager = ProjectManager::instance();
 $project         = $project_manager->getProject($group_id);
@@ -99,4 +100,4 @@ TemplateRendererFactory::build()
     ->getRenderer($templates_dir)
     ->renderToPage('permission-per-group', $presenter);
 
-project_admin_footer(array());
+project_admin_footer([]);

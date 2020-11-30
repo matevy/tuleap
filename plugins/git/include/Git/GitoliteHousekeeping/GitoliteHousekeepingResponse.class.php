@@ -28,10 +28,10 @@ class Git_GitoliteHousekeeping_GitoliteHousekeepingResponse
 
     public const LOG_PREFIX = '[GITOLITE_HOUSEKEEPING] ';
 
-    /** @var Logger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
-    public function __construct(Logger $logger)
+    public function __construct(\Psr\Log\LoggerInterface $logger)
     {
         $this->logger = $logger;
     }
@@ -50,13 +50,13 @@ class Git_GitoliteHousekeeping_GitoliteHousekeepingResponse
 
     public function error($msg)
     {
-        $this->logger->error(self::LOG_PREFIX. $msg);
-        echo self::ANSI_RED .'[ERROR] '. self::ANSI_NOCOLOR . $msg . PHP_EOL;
+        $this->logger->error(self::LOG_PREFIX . $msg);
+        echo self::ANSI_RED . '[ERROR] ' . self::ANSI_NOCOLOR . $msg . PHP_EOL;
     }
 
     public function info($msg)
     {
-        $this->logger->info(self::LOG_PREFIX. $msg);
-        echo self::ANSI_GREEN .'[INFO] '. self::ANSI_NOCOLOR . $msg . PHP_EOL;
+        $this->logger->info(self::LOG_PREFIX . $msg);
+        echo self::ANSI_GREEN . '[INFO] ' . self::ANSI_NOCOLOR . $msg . PHP_EOL;
     }
 }

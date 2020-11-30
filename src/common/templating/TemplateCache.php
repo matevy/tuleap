@@ -20,19 +20,17 @@
 
 namespace Tuleap\Templating;
 
-class TemplateCache
+class TemplateCache implements TemplateCacheInterface
 {
     public const CACHE_FOLDER_NAME = 'template_engine';
 
-    /**
-     * @return string|null
-     */
-    public function getPath()
+
+    public function getPath(): ?string
     {
         return \ForgeConfig::get('codendi_cache_dir') . DIRECTORY_SEPARATOR . self::CACHE_FOLDER_NAME;
     }
 
-    public function invalidate()
+    public function invalidate(): void
     {
         $path = $this->getPath();
         if ($path === null) {

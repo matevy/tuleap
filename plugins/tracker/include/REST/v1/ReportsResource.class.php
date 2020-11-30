@@ -20,23 +20,23 @@
 
 namespace Tuleap\Tracker\REST\v1;
 
-use Tracker_Artifact;
-use Tuleap\REST\ProjectAuthorization;
-use Tuleap\REST\AuthenticatedResource;
-use Tuleap\REST\Exceptions\LimitOutOfBoundsException;
 use Luracast\Restler\RestException;
+use PFUser;
+use Tracker_ArtifactFactory;
+use Tracker_FormElementFactory;
+use Tracker_ReportFactory;
+use Tracker_URLVerification;
+use Tuleap\REST\AuthenticatedResource;
+use Tuleap\REST\Header;
+use Tuleap\REST\ProjectAuthorization;
 use Tuleap\REST\ProjectStatusVerificator;
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
+use Tuleap\Tracker\REST\Artifact\ArtifactRepresentation;
 use Tuleap\Tracker\REST\Artifact\ArtifactRepresentationBuilder;
 use Tuleap\Tracker\REST\MinimalTrackerRepresentation;
 use Tuleap\Tracker\REST\ReportRepresentation;
-use Tracker_ReportFactory;
-use Tracker_ArtifactFactory;
-use Tracker_FormElementFactory;
 use UserManager;
-use PFUser;
-use Tuleap\REST\Header;
-use Tracker_URLVerification;
-use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
 
 /**
  * Wrapper for Tracker Report related REST methods
@@ -85,10 +85,11 @@ class ReportsResource extends AuthenticatedResource
      *
      * @url GET {id}
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id Id of the report
      *
-     * @return Tuleap\Tracker\REST\ReportRepresentation
+     * @return ReportRepresentation
      * @throws RestException 403
      * @throws RestException 404
      */
@@ -103,8 +104,7 @@ class ReportsResource extends AuthenticatedResource
             $report->getTracker()->getProject()
         );
 
-        $rest_report = new ReportRepresentation();
-        $rest_report->build($report);
+        $rest_report = new ReportRepresentation($report);
 
         Header::allowOptionsGet();
 
@@ -143,10 +143,11 @@ class ReportsResource extends AuthenticatedResource
      *
      * @url GET {id}/artifacts
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id Id of the report
      * @param string $values Which fields to include in the response. Default is no field values {@from path}{@choice ,all}
-     * @param int $limit Number of elements displayed per page {@from path}{@min 1}
+     * @param int $limit Number of elements displayed per page {@from path}{@min 1} {@max 50}
      * @param int $offset Position of the first element to display {@from path}{@min 0}
      *
      * @return array {@type Tuleap\Tracker\REST\Artifact\ArtifactRepresentation}
@@ -160,7 +161,6 @@ class ReportsResource extends AuthenticatedResource
         $offset = self::DEFAULT_OFFSET
     ) {
         $this->checkAccess();
-        $this->checkLimitValue($limit);
 
         $user   = UserManager::instance()->getCurrentUser();
         $report = $this->getReportById($user, $id);
@@ -189,13 +189,13 @@ class ReportsResource extends AuthenticatedResource
     }
 
     /**
-     * @return Tuleap\Tracker\REST\Artifact\ArtifactRepresentation[]
+     * @return ArtifactRepresentation[]
      */
     private function getListOfArtifactRepresentation(PFUser $user, $artifacts, $with_all_field_values)
     {
         $builder = $this->builder;
 
-        $build_artifact_representation = function (?Tracker_Artifact $artifact) use (
+        $build_artifact_representation = function (?Artifact $artifact) use (
             $builder,
             $user,
             $with_all_field_values
@@ -205,8 +205,7 @@ class ReportsResource extends AuthenticatedResource
             }
 
             if ($with_all_field_values) {
-                $tracker_representation = new MinimalTrackerRepresentation();
-                $tracker_representation->build($artifact->getTracker());
+                $tracker_representation = MinimalTrackerRepresentation::build($artifact->getTracker());
 
                 return $builder->getArtifactRepresentationWithFieldValues($user, $artifact, $tracker_representation);
             } else {
@@ -219,7 +218,7 @@ class ReportsResource extends AuthenticatedResource
         return array_values(array_filter($list_of_artifact_representation));
     }
 
-    /** @return Tracker_Report */
+    /** @return \Tracker_Report */
     private function getReportById(\PFUser $user, $id)
     {
         $store_in_session = false;
@@ -241,12 +240,5 @@ class ReportsResource extends AuthenticatedResource
         ProjectAuthorization::userCanAccessProject($user, $tracker->getProject(), new Tracker_URLVerification());
 
         return $report;
-    }
-
-    private function checkLimitValue($limit)
-    {
-        if ($limit > self::MAX_LIMIT) {
-            throw new LimitOutOfBoundsException(self::MAX_LIMIT);
-        }
     }
 }

@@ -56,11 +56,9 @@ abstract class ComparisonChecker implements ValueWrapperVisitor
         $this->list_value_validator = $list_value_validator;
     }
 
-    abstract public function getOperator() : string;
+    abstract public function getOperator(): string;
 
     /**
-     * @param Metadata $metadata
-     * @param Comparison $comparison
      * @throws InvalidQueryException
      */
     public function checkComparisonIsValid(Metadata $metadata, Comparison $comparison)

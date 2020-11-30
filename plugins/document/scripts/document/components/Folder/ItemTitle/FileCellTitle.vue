@@ -21,10 +21,10 @@
 
 <template>
     <div>
-        <fake-caret v-bind:item="item"/>
+        <fake-caret v-bind:item="item" />
         <i class="fa fa-fw document-folder-content-icon" v-bind:class="icon_class"></i>
         <a v-bind:href="file_url" class="document-folder-subitem-link">
-            {{ title }}
+            {{ item.title }}
         </a>
         <span class="tlp-badge-warning document-badge-corrupted" v-translate v-if="is_corrupted">
             Corrupted
@@ -36,13 +36,12 @@
 import { iconForMimeType } from "../../../helpers/icon-for-mime-type.js";
 import { ICON_EMPTY } from "../../../constants.js";
 import FakeCaret from "./FakeCaret.vue";
-import { getTitleWithElipsisIfNeeded } from "../../../helpers/cell-title-formatter.js";
 
 export default {
     name: "FileCellTitle",
     components: { FakeCaret },
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
         icon_class() {
@@ -52,9 +51,6 @@ export default {
 
             return iconForMimeType(this.item.file_properties.file_type);
         },
-        title() {
-            return getTitleWithElipsisIfNeeded(this.item);
-        },
         file_url() {
             if (!this.item.file_properties) {
                 return;
@@ -63,7 +59,7 @@ export default {
         },
         is_corrupted() {
             return !this.item.file_properties;
-        }
-    }
+        },
+    },
 };
 </script>

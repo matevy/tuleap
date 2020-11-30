@@ -19,6 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\SVN\GetAllRepositories;
+use Tuleap\SVN\SvnCoreUsage;
 use Tuleap\Svn\SVNRepositoryCreationException;
 use Tuleap\Svn\SVNRepositoryLayoutInitializationException;
 use Tuleap\SvnCore\Cache\ParameterDao;
@@ -34,6 +36,10 @@ class BackendSVN extends Backend
 {
 
     protected $SVNApacheConfNeedUpdate;
+    /**
+     * @var SvnCoreUsage
+     */
+    private $svn_core_usage;
 
     /**
      * For mocking (unit tests)
@@ -69,7 +75,7 @@ class BackendSVN extends Backend
      *
      * @return ServiceDao
      */
-    function _getServiceDao()
+    public function _getServiceDao()
     {
         return new ServiceDao(CodendiDataAccess::instance());
     }
@@ -102,7 +108,7 @@ class BackendSVN extends Backend
      */
     public function createProjectSVN($group_id)
     {
-        $project=$this->getProjectManager()->getProject($group_id);
+        $project = $this->getProjectManager()->getProject($group_id);
         if ($this->createRepository($group_id, $project->getSVNRootPath())) {
             if ($this->updateHooksForProjectRepository($project)) {
                 if ($this->createSVNAccessFile($group_id, $project->getSVNRootPath())) {
@@ -145,26 +151,28 @@ class BackendSVN extends Backend
             $exception = $layout_initialization_exception;
         }
 
-        $params = array(
+        $params = [
             'project_id' => $project_id
-        );
+        ];
 
         EventManager::instance()->processEvent(
             Event::SVN_REPOSITORY_CREATED,
             $params
         );
 
-        $project=$this->getProjectManager()->getProject($project_id);
+        $project = $this->getProjectManager()->getProject($project_id);
 
-        if (! $this->updateHooks(
-            $project,
-            $svn_dir,
-            true,
-            $hook_commit_path,
-            'svn_post_commit.php',
-            ForgeConfig::get('tuleap_dir').'/src/utils/php-launcher.sh',
-            'svn_pre_commit.php'
-        )) {
+        if (
+            ! $this->updateHooks(
+                $project,
+                $svn_dir,
+                true,
+                $hook_commit_path,
+                'svn_post_commit.php',
+                ForgeConfig::get('tuleap_dir') . '/src/utils/php-launcher.sh',
+                'svn_pre_commit.php'
+            )
+        ) {
             throw new SVNRepositoryCreationException(_('Could not update hooks of the SVN repository'));
         }
 
@@ -181,21 +189,21 @@ class BackendSVN extends Backend
 
     private function createRepository($group_id, $system_path)
     {
-        $project=$this->getProjectManager()->getProject($group_id);
-        if (!$project) {
+        $project = $this->getProjectManager()->getProject($group_id);
+        if (! $project) {
             return false;
         }
 
-        if (!is_dir($system_path)) {
+        if (! is_dir($system_path)) {
             // Let's create a SVN repository for this group
-            if (!mkdir($system_path, 0775, true)) {
+            if (! mkdir($system_path, 0775, true)) {
                 $this->log("Can't create project SVN dir: $system_path", Backend::LOG_ERROR);
                 return false;
             }
-            system($GLOBALS['svnadmin_cmd']." create ".escapeshellarg($system_path)." --fs-type fsfs");
+            system(ForgeConfig::get('svnadmin_cmd') . " create " . escapeshellarg($system_path) . " --fs-type fsfs");
 
             $this->setUserAndGroup($project, $system_path);
-            system("chmod g+rw ".escapeshellarg($system_path));
+            system("chmod g+rw " . escapeshellarg($system_path));
         }
 
         return true;
@@ -203,7 +211,7 @@ class BackendSVN extends Backend
 
     private function createSVNAccessFile($group_id, $system_path)
     {
-        if (!$this->updateSVNAccess($group_id, $system_path)) {
+        if (! $this->updateSVNAccess($group_id, $system_path)) {
             $this->log("Can't update SVN access file", Backend::LOG_ERROR);
             return false;
         }
@@ -218,10 +226,9 @@ class BackendSVN extends Backend
 
      /**
      * Check if repository of given project exists
-     * @param Project
-     * @return true is repository already exists, false otherwise
+     * @return bool true is repository already exists, false otherwise
      */
-    function repositoryExists(Project $project)
+    public function repositoryExists(Project $project)
     {
         return is_dir($project->getSVNRootPath());
     }
@@ -235,7 +242,7 @@ class BackendSVN extends Backend
             return;
         }
 
-        $filtered_layout = array();
+        $filtered_layout = [];
         foreach ($initial_layout as $requested_path) {
             $path_to_create = URIModifier::removeDotSegments(
                 URIModifier::removeEmptySegments($system_path . DIRECTORY_SEPARATOR . $requested_path)
@@ -270,12 +277,12 @@ class BackendSVN extends Backend
     private function getUsernameUsableInSVN($project_id, PFUser $user)
     {
         $intro_information = false;
-        EventManager::instance()->processEvent(Event::SVN_INTRO, array(
+        EventManager::instance()->processEvent(Event::SVN_INTRO, [
             'svn_intro_in_plugin' => false,
             'svn_intro_info'      => &$intro_information,
             'group_id'            => $project_id,
             'user_id'             => $user->getId()
-        ));
+        ]);
         $user_name = $user->getUserName();
         if ($intro_information !== false) {
             $user_name = $intro_information->getLogin();
@@ -294,10 +301,10 @@ class BackendSVN extends Backend
      */
     public function updateHooks(Project $project, $system_path, $can_change_svn_log, $hook_commit_path, $post_commit_file, $post_commit_launcher, $pre_commit_file)
     {
-        $unix_group_name=$project->getUnixNameMixedCase(); // May contain upper-case letters
+        $unix_group_name = $project->getUnixNameMixedCase(); // May contain upper-case letters
         if ($project->isSVNTracked()) {
             $filename = "$system_path/hooks/post-commit";
-            $update_hook=false;
+            $update_hook = false;
             if (! is_file($filename)) {
                 // File header
                 $fp = fopen($filename, 'w');
@@ -312,18 +319,18 @@ class BackendSVN extends Backend
                 fwrite($fp, "#   [1] REPOS-PATH   (the path to this repository)\n");
                 fwrite($fp, "#   [2] REV          (the number of the revision just committed)\n\n");
                 fclose($fp);
-                $update_hook=true;
+                $update_hook = true;
             } else {
-                $file_array=file($filename);
-                if (!in_array($this->block_marker_start, $file_array)) {
-                    $update_hook=true;
+                $file_array = file($filename);
+                if (! in_array($this->block_marker_start, $file_array)) {
+                    $update_hook = true;
                 }
             }
             if ($update_hook) {
-                $command  ='REPOS="$1"'."\n";
-                $command .='REV="$2"'."\n";
+                $command  = 'REPOS="$1"' . "\n";
+                $command .= 'REV="$2"' . "\n";
 
-                $command .= $post_commit_launcher.' ' . $hook_commit_path .'/'.$post_commit_file.' "$REPOS" "$REV" >/dev/null';
+                $command .= $post_commit_launcher . ' ' . $hook_commit_path . '/' . $post_commit_file . ' "$REPOS" "$REV" >/dev/null';
 
                 $this->addBlock($filename, $command);
                 $this->chown($filename, $this->getHTTPUser());
@@ -333,9 +340,9 @@ class BackendSVN extends Backend
         } else {
             // Make sure that the Codendi blocks are removed
             $filename = "$system_path/hooks/post-commit";
-            $update_hook=false;
+            $update_hook = false;
             if (is_file($filename)) {
-                $file_array=file($filename);
+                $file_array = file($filename);
                 if (in_array($this->block_marker_start, $file_array)) {
                     $this->removeBlock($filename);
                 }
@@ -359,17 +366,17 @@ class BackendSVN extends Backend
             fwrite($fp, "#\n");
             fwrite($fp, "#   [1] REPOS-PATH   (the path to this repository)\n");
             fwrite($fp, "#   [2] TXN-NAME     (the name of the txn about to be committed)\n");
-            $update_hook=true;
+            $update_hook = true;
         } else {
-            $file_array=file($filename);
-            if (!in_array($this->block_marker_start, $file_array)) {
-                $update_hook=true;
+            $file_array = file($filename);
+            if (! in_array($this->block_marker_start, $file_array)) {
+                $update_hook = true;
             }
         }
         if ($update_hook) {
-            $command  = 'REPOS="$1"'."\n";
-            $command .= 'TXN="$2"'."\n";
-            $command .= $GLOBALS['codendi_dir'].'/src/utils/php-launcher.sh '.$hook_commit_path.'/'.$pre_commit_file.' "$REPOS" "$TXN" || exit 1';
+            $command  = 'REPOS="$1"' . "\n";
+            $command .= 'TXN="$2"' . "\n";
+            $command .= ForgeConfig::get('codendi_dir') . '/src/utils/php-launcher.sh ' . $hook_commit_path . '/' . $pre_commit_file . ' "$REPOS" "$TXN" || exit 1';
             $this->addBlock($filename, $command);
             $this->chown($filename, $this->getHTTPUser());
             $this->chgrp($filename, $this->getSvnFilesUnixGroupName($project));
@@ -441,7 +448,7 @@ class BackendSVN extends Backend
 
     private function getSvnAccessFile($system_path)
     {
-        return $system_path."/.SVNAccessFile";
+        return $system_path . "/.SVNAccessFile";
     }
 
     private function getDefaultBlocEnd()
@@ -467,7 +474,7 @@ class BackendSVN extends Backend
                     $contents .= $line;
                 }
                 if (strcmp($line, $this->getDefaultBlocEnd()) == 0) {
-                    $configlines=1;
+                    $configlines = 1;
                 }
             }
         }
@@ -501,20 +508,20 @@ class BackendSVN extends Backend
 
     private function updateSVNAccessFile($system_path, $custom_perms, Project $project)
     {
-        if (!$project) {
+        if (! $project) {
             return false;
         }
 
         if (! is_dir($system_path)) {
-            $this->log("Can't update SVN Access file: project SVN repo is missing: ".$system_path, Backend::LOG_ERROR);
+            $this->log("Can't update SVN Access file: project SVN repo is missing: " . $system_path, Backend::LOG_ERROR);
             return false;
         }
 
         $unix_group_name = $project->getUnixNameMixedCase();
 
         $svnaccess_file     = $this->getSvnAccessFile($system_path);
-        $svnaccess_file_old = $this->getSvnAccessFile($system_path).".old";
-        $svnaccess_file_new = $this->getSvnAccessFile($system_path).".new";
+        $svnaccess_file_old = $this->getSvnAccessFile($system_path) . ".old";
+        $svnaccess_file_new = $this->getSvnAccessFile($system_path) . ".new";
 
 
         // Retrieve custom permissions, if any
@@ -551,18 +558,18 @@ class BackendSVN extends Backend
     public function checkSVNAccessPresence($group_id)
     {
         $project = $this->getProjectManager()->getProject($group_id);
-        if (!$project) {
+        if (! $project) {
             return false;
         }
 
         if (! $this->repositoryExists($project)) {
-            $this->log("Can't update SVN Access file: project SVN repo is missing: ".$project->getSVNRootPath(), Backend::LOG_ERROR);
+            $this->log("Can't update SVN Access file: project SVN repo is missing: " . $project->getSVNRootPath(), Backend::LOG_ERROR);
             return false;
         }
 
-        $svnaccess_file = $project->getSVNRootPath()."/.SVNAccessFile";
+        $svnaccess_file = $project->getSVNRootPath() . "/.SVNAccessFile";
 
-        if (!is_file($svnaccess_file)) {
+        if (! is_file($svnaccess_file)) {
             return $this->updateSVNAccess($group_id, $project->getSVNRootPath());
         }
         return true;
@@ -574,7 +581,7 @@ class BackendSVN extends Backend
      * @param Project $project
      * @return String
      */
-    function getSVNAccessGroups($project)
+    public function getSVNAccessGroups($project)
     {
         $conf = "[groups]\n";
         $conf .= $this->getSVNAccessProjectMembers($project);
@@ -592,28 +599,27 @@ class BackendSVN extends Backend
      *
      * @return String
      */
-    function getSVNAccessProjectMembers($project)
+    public function getSVNAccessProjectMembers($project)
     {
         $list  = "";
         $first = true;
         foreach ($project->getMembersUserNames($this->getProjectManager()) as $member) {
-            if (!$first) {
+            if (! $first) {
                 $list .= ', ';
             }
             $first = false;
             $list .= strtolower($member['user_name']);
         }
-        return "members = ".$list."\n";
+        return "members = " . $list . "\n";
     }
 
     /**
      * SVNAccessFile ugroups definitions
      *
-     * @param Project $project
      *
      * @return String
      */
-    function getSVNAccessUserGroupMembers(Project $project)
+    public function getSVNAccessUserGroupMembers(Project $project)
     {
         $conf       = "";
         $ugroup_dao = $this->getUGroupDao();
@@ -622,7 +628,7 @@ class BackendSVN extends Backend
         foreach ($dar as $row) {
             $ugroup          = $this->getUGroupFromRow($row);
             $ugroup_members  = $ugroup->getMembers();
-            $valid_members   = array();
+            $valid_members   = [];
             foreach ($ugroup_members as $ugroup_member) {
                 try {
                     $this->getProjectAccessChecker()->checkUserCanAccessProject($ugroup_member, $project);
@@ -634,7 +640,7 @@ class BackendSVN extends Backend
             // User names must be in lowercase
             if ($ugroup->getName() && count($valid_members) > 0) {
                 $members_list = strtolower(implode(", ", $valid_members));
-                $conf .= $ugroup->getName()." = ".$members_list."\n";
+                $conf .= $ugroup->getName() . " = " . $members_list . "\n";
             }
         }
         $conf .= "\n";
@@ -657,10 +663,10 @@ class BackendSVN extends Backend
      *
      * @return String
      */
-    function getSVNAccessRootPathDef($project)
+    public function getSVNAccessRootPathDef($project)
     {
         $conf = "[/]\n";
-        if (!$project->isPublic() || $project->isSVNPrivate()) {
+        if (! $project->isPublic() || $project->isSVNPrivate()) {
             $conf .= "* = \n";
         } else {
             $conf .= "* = r\n";
@@ -736,8 +742,8 @@ class BackendSVN extends Backend
     public function generateSVNApacheConf()
     {
         $svn_root_file = ForgeConfig::get('svn_root_file');
-        $svn_root_file_old = $svn_root_file.".old";
-        $svn_root_file_new = $svn_root_file.".new";
+        $svn_root_file_old = $svn_root_file . ".old";
+        $svn_root_file_new = $svn_root_file . ".new";
         try {
             $conf = $this->getApacheConf();
         } catch (Exception $ex) {
@@ -761,12 +767,18 @@ class BackendSVN extends Backend
     /**
      * public for testing purpose
      */
-    public function getApacheConf()
+    public function getApacheConf(): string
     {
-        $list_repositories = $this->getSvnDao()->searchSvnRepositories();
+        $get_all_repositories = EventManager::instance()->dispatch(
+            new GetAllRepositories(
+                $this->getSvnDao(),
+                ProjectManager::instance()
+            )
+        );
+        assert($get_all_repositories instanceof GetAllRepositories);
         $factory           = $this->getSVNApacheAuthFactory();
 
-        $conf = new SVN_Apache_SvnrootConf($factory, $list_repositories);
+        $conf = new SVN_Apache_SvnrootConf($factory, $get_all_repositories->getRepositories());
 
         return $conf->getFullConf();
     }
@@ -788,14 +800,14 @@ class BackendSVN extends Backend
      */
     public function archiveProjectSVN($group_id)
     {
-        $project=$this->getProjectManager()->getProject($group_id);
-        if (!$project) {
+        $project = $this->getProjectManager()->getProject($group_id);
+        if (! $project) {
             return false;
         }
         $mydir      = $project->getSVNRootPath();
         $repopath   = dirname($mydir);
         $reponame   = basename($mydir);
-        $backupfile = ForgeConfig::get('sys_project_backup_path')."/$reponame-svn.tgz";
+        $backupfile = ForgeConfig::get('sys_project_backup_path') . "/$reponame-svn.tgz";
 
         if (is_dir($mydir)) {
             system("cd $repopath; tar cfz $backupfile $reponame");
@@ -832,7 +844,7 @@ class BackendSVN extends Backend
     public function checkSVNMode(Project $project)
     {
         $svnroot = $project->getSVNRootPath();
-        $is_private = !$project->isPublic() || $project->isSVNPrivate();
+        $is_private = ! $project->isPublic() || $project->isSVNPrivate();
         if ($is_private) {
             $perms = fileperms($svnroot);
             // 'others' should have no right on the repository
@@ -842,14 +854,16 @@ class BackendSVN extends Backend
             }
         }
         // Sometimes, there might be a bad ownership on file (e.g. chmod failed, maintenance done as root...)
-        $files_to_check=array('db/current', 'hooks/pre-commit', 'hooks/post-commit', 'db/rep-cache.db');
+        $files_to_check = ['db/current', 'hooks/pre-commit', 'hooks/post-commit', 'db/rep-cache.db'];
         $need_owner_update = false;
         foreach ($files_to_check as $file) {
             // Get file stat
             if (file_exists("$svnroot/$file")) {
                 $stat = stat("$svnroot/$file");
-                if (($stat['uid'] != $this->getHTTPUserUID())
-                     || ($stat['gid'] != $this->getSvnFilesUnixGroupId($project)) ) {
+                if (
+                    ($stat['uid'] != $this->getHTTPUserUID())
+                     || ($stat['gid'] != $this->getSvnFilesUnixGroupId($project))
+                ) {
                     $need_owner_update = true;
                 }
             }
@@ -866,7 +880,7 @@ class BackendSVN extends Backend
     public function setUserAndGroup(Project $project, $svnroot)
     {
         $group = $this->getSvnFilesUnixGroupName($project);
-        $no_filter_file_extension = array();
+        $no_filter_file_extension = [];
         $this->recurseChownChgrp($svnroot, $this->getHTTPUser(), $group, $no_filter_file_extension);
         $this->chown($svnroot, $this->getHTTPUser());
         $this->chgrp($svnroot, $group);
@@ -890,31 +904,30 @@ class BackendSVN extends Backend
      *
      * @param String $name
      *
-     * @return false if repository or file  or link already exists, true otherwise
+     * @return bool false if repository or file  or link already exists, true otherwise
      */
-    function isNameAvailable($name)
+    public function isNameAvailable($name)
     {
-        $path = $GLOBALS['svn_prefix']."/".$name;
-        return (!$this->fileExists($path));
+        $path = ForgeConfig::get('svn_prefix') . "/" . $name;
+        return (! $this->fileExists($path));
     }
 
     /**
      * Rename svn repository (following project unix_name change)
      *
-     * @param Project $project
      * @param String  $newName
      *
      * @return bool
      */
     public function renameSVNRepository(Project $project, $newName)
     {
-        return rename($project->getSVNRootPath(), $GLOBALS['svn_prefix'].'/'.$newName);
+        return rename($project->getSVNRootPath(), ForgeConfig::get('svn_prefix') . '/' . $newName);
     }
 
     private function enableCommitMessageUpdate($project_svnroot, $hooks_path)
     {
-        $hook_names = array('pre-revprop-change', 'post-revprop-change');
-        $hook_error = array();
+        $hook_names = ['pre-revprop-change', 'post-revprop-change'];
+        $hook_error = [];
 
         foreach ($hook_names as $hook_name) {
             if (! $this->enableHook($project_svnroot, $hook_name, "$hooks_path/$hook_name.php")) {
@@ -931,7 +944,7 @@ class BackendSVN extends Backend
     private function buildExceptionMessage(array $hook_error)
     {
         if (count($hook_error) > 1) {
-            $exception_message = 'Files '. implode(', ', $hook_error) .' already exist';
+            $exception_message = 'Files ' . implode(', ', $hook_error) . ' already exist';
         } else {
              $exception_message = 'File ' . implode($hook_error) . ' already exists';
         }
@@ -978,7 +991,7 @@ class BackendSVN extends Backend
 
     private function getHookPath($project_svnroot, $hook_name)
     {
-        return $project_svnroot.'/hooks/'.$hook_name;
+        return $project_svnroot . '/hooks/' . $hook_name;
     }
 
     /**
@@ -993,5 +1006,41 @@ class BackendSVN extends Backend
     public function exportSVNAccessFileDefaultBloc(Project $project): string
     {
         return $this->getDefaultBlockStart() . $this->getDefaultBlock($project) . $this->getDefaultBlocEnd();
+    }
+
+    public function systemCheck(Project $project): void
+    {
+        if ($project->usesSVN() && $this->getSvnCoreUsage()->isManagedByCore($project)) {
+            if (! $this->repositoryExists($project)) {
+                if (! $this->createProjectSVN($project->getId())) {
+                    throw new RuntimeException('Could not create/initialize project SVN repository');
+                }
+                $this->updateSVNAccess($project->getId(), $project->getSVNRootPath());
+                $this->setSVNPrivacy($project, ! $project->isPublic() || $project->isSVNPrivate());
+                $this->setSVNApacheConfNeedUpdate();
+            } else {
+                $this->checkSVNAccessPresence($project->getId());
+            }
+
+            $this->updateHooksForProjectRepository($project);
+
+            // Check ownership/mode/access rights
+            $this->checkSVNMode($project);
+        }
+
+        // If no codendi_svnroot.conf file, force recreate.
+        if (! is_file(ForgeConfig::get('svn_root_file'))) {
+            $this->setSVNApacheConfNeedUpdate();
+        }
+    }
+
+    private function getSvnCoreUsage(): SvnCoreUsage
+    {
+        if (! $this->svn_core_usage) {
+            $svn_core_usage = EventManager::instance()->dispatch(new SvnCoreUsage());
+            assert($svn_core_usage instanceof SvnCoreUsage);
+            $this->svn_core_usage = $svn_core_usage;
+        }
+        return $this->svn_core_usage;
     }
 }

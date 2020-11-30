@@ -29,7 +29,7 @@ class MinimalHudsonJobFactory // @codingStandardsIgnoreLine
 {
     public const API_XML = '/api/xml';
 
-    private $jobs = array();
+    private $jobs = [];
 
     /**
      * Returns all HudsonJobs for one owner
@@ -54,7 +54,7 @@ class MinimalHudsonJobFactory // @codingStandardsIgnoreLine
     private function getJobsByGroup($group_id)
     {
         $dar = $this->getDao()->searchByGroupID($group_id);
-        $jobs = array();
+        $jobs = [];
         foreach ($dar as $row) {
             try {
                 $jobs[$row['job_id']] = $this->getMinimalHudsonJob($row['job_url'], $row['name']);
@@ -72,7 +72,7 @@ class MinimalHudsonJobFactory // @codingStandardsIgnoreLine
     private function getJobsByUser($user_id)
     {
         $dar = $this->getDao()->searchByUserID($user_id);
-        $jobs = array();
+        $jobs = [];
         foreach ($dar as $row) {
             try {
                 $jobs[$row['job_id']] = $this->getMinimalHudsonJob($row['job_url'], $row['name']);
@@ -106,13 +106,13 @@ class MinimalHudsonJobFactory // @codingStandardsIgnoreLine
         $parsed_url = parse_url($url);
 
         if (! $parsed_url || ! array_key_exists('scheme', $parsed_url)) {
-            throw new HudsonJobURLMalformedException($GLOBALS['Language']->getText('plugin_hudson', 'wrong_job_url', [$url]));
+            throw new HudsonJobURLMalformedException(sprintf(dgettext('tuleap-hudson', 'Wrong Job URL: %1$s'), $url));
         }
 
-        $matches = array();
+        $matches = [];
         if (preg_match(Jenkins_Client::BUILD_WITH_PARAMETERS_REGEXP, $url, $matches)) {
              return $matches['job_url'] . self::API_XML;
         }
-        return  $url . self::API_XML;
+        return $url . self::API_XML;
     }
 }

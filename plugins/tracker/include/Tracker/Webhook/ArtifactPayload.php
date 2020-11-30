@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,6 @@
 
 namespace Tuleap\Tracker\Webhook;
 
-use Tracker_Artifact;
 use Tracker_Artifact_Changeset;
 use Tuleap\User\REST\MinimalUserRepresentation;
 use Tuleap\Webhook\Payload;
@@ -55,8 +54,7 @@ class ArtifactPayload implements Payload
             $previous_changeset_content = $previous_changeset->getFullRESTValue($user);
         }
 
-        $user_representation = new MinimalUserRepresentation();
-        $user_representation->build($user);
+        $user_representation = MinimalUserRepresentation::build($user);
 
         return [
             'action'   => $previous_changeset === null ? 'create' : 'update',

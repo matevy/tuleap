@@ -26,91 +26,91 @@ use Tuleap\chart\GanttVerticalLine;
 class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
 {
 
-    var $title;
-    var $description;
-    var $scale;
-    var $start;
-    var $due;
-    var $finish;
-    var $progress;
-    var $right;
-    var $asOfDate;
-    var $hint;
-    var $links;
-    var $summary;
-    var $jp_graph_path;
-    var $summary_label;
+    public $title;
+    public $description;
+    public $scale;
+    public $start;
+    public $due;
+    public $finish;
+    public $progress;
+    public $right;
+    public $asOfDate;
+    public $hint;
+    public $links;
+    public $summary;
+    public $jp_graph_path;
+    public $summary_label;
 
-    function setTitle($title)
+    public function setTitle($title)
     {
         $this->title = $title;
     }
 
-    function setDescription($description)
+    public function setDescription($description)
     {
         $this->description = $description;
     }
 
-    function setScale($scale)
+    public function setScale($scale)
     {
         $this->scale = $scale;
     }
 
-    function setStart($start)
+    public function setStart($start)
     {
         $this->start = $start;
     }
 
-    function setDue($due)
+    public function setDue($due)
     {
         $this->due = $due;
     }
 
-    function setFinish($finish)
+    public function setFinish($finish)
     {
         $this->finish = $finish;
     }
 
-    function setProgress($progress)
+    public function setProgress($progress)
     {
         $this->progress = $progress;
     }
 
 
-    function setRight($right)
+    public function setRight($right)
     {
         $this->right = $right;
     }
 
 
-    function setAsOfDate($asOfDate)
+    public function setAsOfDate($asOfDate)
     {
         $this->asOfDate = $asOfDate;
     }
 
-    function setHint($hint)
+    public function setHint($hint)
     {
         $this->hint = $hint;
     }
 
-    function setSummary($summary)
+    public function setSummary($summary)
     {
         $this->summary = $summary;
     }
 
 
-    function setLinks($links)
+    public function setLinks($links)
     {
         $this->links = $links;
     }
 
-    function setData($data)
+    public function setData($data)
     {
         $this->data = $data;
     }
 
 
-    function formatScale()
+    public function formatScale()
     {
         switch ($this->scale) {
             case 'day':
@@ -129,7 +129,7 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
         }
     }
 
-    function getScaleDim()
+    public function getScaleDim()
     {
         $scale_dim = null;
         switch ($this->scale) {
@@ -154,7 +154,7 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
     /**
     * Builds gantt graph
     */
-    function buildGraph()
+    public function buildGraph()
     {
         $this->graph = new Chart_Gantt($this->width, $this->height, "auto");
 
@@ -169,7 +169,7 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
         //Try to fix issue with 'cut' right infos
         //TODO : more elegant way...
         $margin_right = 20;
-        if (isset($this->data[0]['right']) && $this->data[0]['right'] !='' && $this->asOfDate == '') {
+        if (isset($this->data[0]['right']) && $this->data[0]['right'] != '' && $this->asOfDate == '') {
             $margin_right = 100;
         }
         $this->graph->SetMargin(20, $margin_right, $this->graph->getTopMargin(), 30);
@@ -178,7 +178,7 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
         if ($this->asOfDate == 0) {
             $dateRep  = date("Y-m-d", $_SERVER['REQUEST_TIME']);
             $dateDisp = date("m-d-Y", $_SERVER['REQUEST_TIME']);
-            $vline = new GanttVerticalLine($dateRep, "Today:".$dateDisp, $this->graph->getTodayLineColor(), 1, 'solid');
+            $vline = new GanttVerticalLine($dateRep, "Today:" . $dateDisp, $this->graph->getTodayLineColor(), 1, 'solid');
         } else {
             $dateRep  = $this->asOfDate;
             $dateDisp = date("m-d-Y", strtotime($this->asOfDate));
@@ -194,108 +194,90 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
         $scale_dim = $this->getScaleDim();
 
         //add info to gantt graph
-        $this->graph->scale->actinfo->SetColTitles(array("Id", $this->summary_label));
+        $this->graph->scale->actinfo->SetColTitles(["Id", $this->summary_label]);
 
         $format = "Y-m-d";
         $today  = strtotime('now');
-        $one_day = 24*3600;
-        for ($i=0; $i<count($this->data); $i++) {
+        $one_day = 24 * 3600;
+        for ($i = 0; $i < count($this->data); $i++) {
             $s = $this->data[$i]['start'];
             $d = $this->data[$i]['due'];
             $f = $this->data[$i]['finish'];
 
             //Milestone
-            if (($s == 0 && $d == 0 && $f != 0)
+            if (
+                ($s == 0 && $d == 0 && $f != 0)
                 || ($s == 0 && $d != 0 && $f == 0)
                 || ($s == 0 && $d != 0 && $f == $d)
-                ) {
-                $this->addMilestone($i, $this->data[$i], array('date' => max($this->data[$i]['due'], $this->data[$i]['finish'])));
-            }
-            //Late milestone
-            elseif ($s == 0 && $d != 0 && $f != 0 && $d < $f) {
-                $this->addLateBar($i, $this->data[$i], false, array(
+            ) {
+                $this->addMilestone($i, $this->data[$i], ['date' => max($this->data[$i]['due'], $this->data[$i]['finish'])]);
+            } elseif ($s == 0 && $d != 0 && $f != 0 && $d < $f) { //Late milestone
+                $this->addLateBar($i, $this->data[$i], false, [
                     'start'   => 'due',
                     'end'     => 'finish',
                     'label'   => "",
                     'caption' => "",
                     'height'  => 0.2
-                ));
-                $this->addMilestone($i, $this->data[$i], array('date' => 'finish'));
-            }
-            //Early milestone
-            elseif ($s == 0 && $d != 0 && $f != 0 && $f < $d) {
-                $this->addBar($i, $this->data[$i], false, array(
+                ]);
+                $this->addMilestone($i, $this->data[$i], ['date' => 'finish']);
+            } elseif ($s == 0 && $d != 0 && $f != 0 && $f < $d) { //Early milestone
+                $this->addBar($i, $this->data[$i], false, [
                     'start'   => 'finish',
                     'end'     => 'due',
                     'label'   => "",
                     'caption' => "",
                     'height'  => 0.2
-                ));
-                $this->addMilestone($i, $this->data[$i], array('date' => 'finish'));
-            }
-            //Bar, start to finish
-            elseif ($s != 0 && $d == 0 && $s <= $f) {
-                $this->addBar($i, $this->data[$i], true, array(
+                ]);
+                $this->addMilestone($i, $this->data[$i], ['date' => 'finish']);
+            } elseif ($s != 0 && $d == 0 && $s <= $f) { //Bar, start to finish
+                $this->addBar($i, $this->data[$i], true, [
                     'start'   => 'start',
                     'end'     => 'finish'
-                ));
-            }
-            //Bar, start to due
-            elseif ($s != 0 && $d != 0 && $s <= $d && ($f == 0 || $d == $f)) {
-                $this->addBar($i, $this->data[$i], true, array(
+                ]);
+            } elseif ($s != 0 && $d != 0 && $s <= $d && ($f == 0 || $d == $f)) { //Bar, start to due
+                $this->addBar($i, $this->data[$i], true, [
                     'start'   => 'start',
                     'end'     => 'due'
-                ));
-            }
-            //Late bar, start to due to finish
-            elseif ($s != 0 && $d != 0 && $f != 0 && $s <= $d && $d < $f) {
-                $this->addBar($i, $this->data[$i], true, array(
+                ]);
+            } elseif ($s != 0 && $d != 0 && $f != 0 && $s <= $d && $d < $f) { //Late bar, start to due to finish
+                $this->addBar($i, $this->data[$i], true, [
                     'start' => 'start',
                     'end' => 'due',
-                    'caption' => ""));
-                $bar = $this->addLateBar($i, $this->data[$i], false, array(
+                    'caption' => ""]);
+                $bar = $this->addLateBar($i, $this->data[$i], false, [
                     'start' => date($format, ( strtotime($this->data[$i]['due']) + $one_day)),
                     'end' => 'finish',
-                    'label' => ""));
-            }
-            //Late bar, due to start
-            elseif ($s != 0 && $d != 0 && $d < $s && ($f == 0 || $s == $f)) {
-                $bar = $this->addLateBar($i, $this->data[$i], true, array(
+                    'label' => ""]);
+            } elseif ($s != 0 && $d != 0 && $d < $s && ($f == 0 || $s == $f)) { //Late bar, due to start
+                $bar = $this->addLateBar($i, $this->data[$i], true, [
                     'start' => 'due',
-                    'end' => 'start'));
-            }
-            //Late bar, due to finish
-            elseif ($s != 0 && $d != 0 && $f != 0 && $d < $s && $s < $f) {
-                $bar = $this->addLateBar($i, $this->data[$i], true, array(
+                    'end' => 'start']);
+            } elseif ($s != 0 && $d != 0 && $f != 0 && $d < $s && $s < $f) { //Late bar, due to finish
+                $bar = $this->addLateBar($i, $this->data[$i], true, [
                     'start' => 'due',
-                    'end' => 'finish'));
-            }
-            //Early bar
-            elseif ($s != 0 && $d != 0 && $f != 0 && $s <= $f && $f < $d) {
-                $this->addBar($i, $this->data[$i], true, array(
+                    'end' => 'finish']);
+            } elseif ($s != 0 && $d != 0 && $f != 0 && $s <= $f && $f < $d) { //Early bar
+                $this->addBar($i, $this->data[$i], true, [
                     'start' => 'start',
                     'end' => 'finish',
-                    'caption' => ""));
-                $this->addBar($i, $this->data[$i], false, array(
+                    'caption' => ""]);
+                $this->addBar($i, $this->data[$i], false, [
                     'start' => date($format, ( strtotime($this->data[$i]['finish']) + $one_day)),
                     'end' => 'due',
                     'label' => "",
-                    'height' => 0.2));
-            }
-            //Error
-            else {
+                    'height' => 0.2]);
+            } else { //Error
                 $this->addErrorBar($i, $this->data[$i]);
             }
         }
     }
 
-    protected function addBar($pos, $data, $progress, $params = array())
+    protected function addBar($pos, $data, $progress, $params = [])
     {
-
         $format = "Y-m-d";
         //start date
         if (isset($params['start'])) {
-            if (in_array($params['start'], array('start', 'due', 'finish'))) {
+            if (in_array($params['start'], ['start', 'due', 'finish'])) {
                 $aStart = $data[$params['start']];
             } else {
                 $aStart = $params['start'];
@@ -306,7 +288,7 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
 
         //end date
         if (isset($params['end'])) {
-            if (in_array($params['end'], array('start', 'due', 'finish'))) {
+            if (in_array($params['end'], ['start', 'due', 'finish'])) {
                 $aEnd = $data[$params['end']];
             } else {
                 $aEnd = $params['end'];
@@ -314,7 +296,7 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
         } else {
             $aEnd = $data['finish'];
         }
-        $aLabel        = isset($params['label']) ? $params['label'] : array($data['id'], html_entity_decode($data['summary']));
+        $aLabel        = isset($params['label']) ? $params['label'] : [$data['id'], html_entity_decode($data['summary'])];
         $aCaption      = isset($params['caption']) ? $params['caption'] : $data['right'];
         $aHeightFactor = isset($params['height']) ? $params['height'] : 0.6; //default jpgraph value
 
@@ -327,12 +309,12 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
         return $bar;
     }
 
-    protected function addMilestone($pos, $data, $params = array())
+    protected function addMilestone($pos, $data, $params = [])
     {
         $format = "Y-m-d";
-        $aLabel   = isset($params['label']) ? $params['label'] : array($data['id'], html_entity_decode($data['summary']));
+        $aLabel   = isset($params['label']) ? $params['label'] : [$data['id'], html_entity_decode($data['summary'])];
         if (isset($params['date'])) {
-            if (in_array($params['date'], array('start', 'due', 'finish'))) {
+            if (in_array($params['date'], ['start', 'due', 'finish'])) {
                 $aDate = $data[$params['date']];
             } else {
                 $aDate = $params['date'];
@@ -355,36 +337,36 @@ class GraphOnTrackersV5_Engine_Gantt extends GraphOnTrackersV5_Engine
 
         $debut = null;
         $fin   = null;
-        foreach (array('start', 'due', 'finish') as $date) {
+        foreach (['start', 'due', 'finish'] as $date) {
             if ($data[$date]) {
-                if (!$debut) {
+                if (! $debut) {
                     $debut = $data[$date];
                 } else {
                     $debut = min($debut, $data[$date]);
                 }
             }
-            if (!$fin) {
+            if (! $fin) {
                 $fin = $data[$date];
             } else {
                 $fin = max($fin, $data[$date]);
             }
         }
-        if (!$debut) {
+        if (! $debut) {
             $debut = date($format, strtotime('now'));
         }
-        if (!$fin) {
+        if (! $fin) {
             $fin = $debut;
         }
 
-        $bar = $this->addBar($pos, $data, false, array('start' => $debut, 'end' => $fin, 'height' => 0.2));
-        $bar->SetColor($this->graph->getErrorBarColor().":0.7");
+        $bar = $this->addBar($pos, $data, false, ['start' => $debut, 'end' => $fin, 'height' => 0.2]);
+        $bar->SetColor($this->graph->getErrorBarColor() . ":0.7");
         $bar->SetPattern(GANTT_RDIAG, "black", 96);
     }
 
-    protected function addLateBar($pos, $data, $progress, $params = array())
+    protected function addLateBar($pos, $data, $progress, $params = [])
     {
         $bar = $this->addBar($pos, $data, $progress, $params);
-        $bar->SetColor($this->graph->getLateBarColor().":0.7");
+        $bar->SetColor($this->graph->getLateBarColor() . ":0.7");
         $bar->SetPattern(GANTT_SOLID, $this->graph->getLateBarColor());
     }
 }

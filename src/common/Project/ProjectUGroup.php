@@ -62,7 +62,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         self::AUTHENTICATED,
     ];
 
-    public static $legacy_ugroups = array(
+    public static $legacy_ugroups = [
         self::FILE_MANAGER_ADMIN,
         self::DOCUMENT_ADMIN,
         self::DOCUMENT_TECH,
@@ -72,9 +72,9 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         self::NEWS_ADMIN,
         self::NEWS_WRITER,
         self::SVN_ADMIN,
-    );
+    ];
 
-    public static $normalized_names = array(
+    public const NORMALIZED_NAMES = [
         self::NONE               => 'nobody',
         self::ANONYMOUS          => 'all_users',
         self::REGISTERED         => 'registered_users',
@@ -90,7 +90,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         self::NEWS_ADMIN         => 'news_admins',
         self::NEWS_WRITER        => 'news_editors',
         self::SVN_ADMIN          => 'svn_admins',
-    );
+    ];
 
     protected $id    = 0;
     protected $group_id     = 0;
@@ -114,10 +114,6 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      * @var UGroupUserDao
      */
     private $ugroup_user_dao;
-    /**
-     * @var UserGroupDao
-     */
-    private $user_group_dao;
 
     /**
      * Constructor of the class
@@ -143,7 +139,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      */
     protected function getUGroupDao()
     {
-        if (!$this->ugroup_dao) {
+        if (! $this->ugroup_dao) {
             $this->ugroup_dao = new UGroupDao();
         }
         return $this->ugroup_dao;
@@ -156,7 +152,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      */
     protected function getUGroupUserDao()
     {
-        if (!$this->ugroup_user_dao) {
+        if (! $this->ugroup_user_dao) {
             $this->ugroup_user_dao = new UGroupUserDao();
         }
         return $this->ugroup_user_dao;
@@ -181,6 +177,8 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      * Get the ugroup name
      *
      * @return string
+     *
+     * @psalm-mutation-free
      */
     public function getName()
     {
@@ -197,11 +195,13 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      * or the name of static user groups
      *
      * @return string
+     *
+     * @psalm-mutation-free
      */
     public function getNormalizedName()
     {
         if ($this->is_dynamic) {
-            return self::$normalized_names[$this->id];
+            return self::NORMALIZED_NAMES[$this->id];
         }
         return $this->name;
     }
@@ -211,6 +211,8 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      * Get the ugroup id
      *
      * @return int
+     *
+     * @psalm-mutation-free
      */
     public function getId()
     {
@@ -224,7 +226,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
 
     public function getProject()
     {
-        if (!$this->project) {
+        if (! $this->project) {
             $this->project = ProjectManager::instance()->getProject($this->group_id);
         }
         return $this->project;
@@ -240,7 +242,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      */
     public function getTranslatedDescription()
     {
-        return util_translate_desc_ugroup($this->getDescription());
+        return \Tuleap\User\UserGroup\DescriptionTranslator::getUserGroupDisplayDescription((string) $this->getDescription());
     }
 
     /**
@@ -280,7 +282,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      */
     public function getMembersUserName()
     {
-        $names = array();
+        $names = [];
         foreach ($this->getMembers() as $member) {
             $names[] = $member->getUserName();
         }
@@ -313,7 +315,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
     {
         if ($this->is_dynamic) {
             $dar = $this->getUGroupUserDao()->searchUserByDynamicUGroupIdIncludingSuspendedAndDeleted($this->id, $group_id);
-            return $dar->instanciateWith(array($this, 'newUserFromIncompleteRow'));
+            return $dar->instanciateWith([$this, 'newUserFromIncompleteRow']);
         }
         $dar   = $this->getUGroupUserDao()->searchUserByStaticUGroupIdIncludingSuspendedAndDeleted($this->id);
         $users = [];
@@ -348,7 +350,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         $dar = $this->getUGroupUserDao()->searchUsersByDynamicUGroupIdPaginated($this->id, $group_id, $limit, $offset);
 
         if (! $dar) {
-            return array();
+            return [];
         }
 
         $users = [];
@@ -457,10 +459,10 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      */
     private function assertProjectUGroupAndUserValidity($user)
     {
-        if (!$this->group_id) {
+        if (! $this->group_id) {
             throw new Exception('Invalid group_id');
         }
-        if (!$this->id) {
+        if (! $this->id) {
             throw new UGroup_Invalid_Exception();
         }
         if ($user->isAnonymous()) {
@@ -483,7 +485,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         );
     }
 
-    private function getProjectMemberAdder() : ProjectMemberAdder
+    private function getProjectMemberAdder(): ProjectMemberAdder
     {
         return ProjectMemberAdderWithoutStatusCheckAndNotifications::build();
     }
@@ -492,7 +494,6 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
      * Remove given user from user group
      * This method can remove from any group, either dynamic or static.
      *
-     * @param PFUser $user
      *
      * @throws UGroup_Invalid_Exception
      *
@@ -527,7 +528,7 @@ class ProjectUGroup implements User_UGroup // phpcs:ignore PSR1.Classes.ClassDec
         ugroup_remove_user_from_ugroup($group_id, $ugroup_id, $user_id);
     }
 
-    protected function removeUserFromDynamicGroup(PFUser $user) : void
+    protected function removeUserFromDynamicGroup(PFUser $user): void
     {
         $project = $this->getProject();
         if ($project === null) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2018. All rights reserved
+ * Copyright (c) Enalean, 2017-Present. All rights reserved
  * Copyright (c) STMicroelectronics, 2008. All Rights Reserved.
  *
  * Originally written by Manuel Vacelet, 2008
@@ -28,7 +28,7 @@
 class Docman_Folder extends Docman_Item
 {
 
-    function __construct($data = null)
+    public function __construct($data = null)
     {
         parent::__construct($data);
         $this->_resetItems();
@@ -36,42 +36,48 @@ class Docman_Folder extends Docman_Item
 
     public function getType()
     {
-        return $GLOBALS['Language']->getText('plugin_docman', 'doc_type_folder');
+        return dgettext('tuleap-docman', 'Folder');
     }
 
-    function toRow()
+    public function toRow()
     {
         $row = parent::toRow();
         $row['item_type'] = PLUGIN_DOCMAN_ITEM_TYPE_FOLDER;
         return $row;
     }
 
-    function isRoot()
+    public function isRoot()
     {
         return $this->parent_id == 0;
     }
 
-    var $_items;
-    function addItem(&$item)
+    public $_items;
+    public function addItem(&$item)
     {
         $this->_items->add($item, -($item->getRank()));
     }
-    function &getAllItems()
+    public function &getAllItems()
     {
         return $this->_items;
     }
-    function removeAllItems()
+    public function removeAllItems()
     {
         $this->_resetItems();
     }
-    function _resetItems()
+    public function _resetItems()
     {
         if (isset($this->_items)) {
             unset($this->_items);
         }
         $this->_items = new PrioritizedList();
     }
-    public function accept($visitor, $params = array())
+
+    public function setItems(PrioritizedList $items): void
+    {
+        $this->_items = $items;
+    }
+
+    public function accept($visitor, $params = [])
     {
         return $visitor->visitFolder($this, $params);
     }

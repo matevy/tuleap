@@ -20,7 +20,6 @@
  */
 
 use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueFullRepresentation;
-use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueOpenListRepresentation;
 use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation;
 use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentationData;
 
@@ -50,6 +49,11 @@ abstract class Tracker_Artifact_ChangesetValue
      */
     protected $has_changed;
 
+    /**
+     * @param int $id
+     * @param Tracker_FormElement_Field $field
+     * @param bool $has_changed
+     */
     public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed)
     {
         $this->id          = $id;
@@ -119,34 +123,18 @@ abstract class Tracker_Artifact_ChangesetValue
     }
 
     /**
-     * Returns a modal format diff between current changeset value and changeset value in param
-     *
-     * @param Tracker_Artifact_ChangesetValue $changeset_value The changeset value to compare to this changeset value
-     * @param string                          $format          The format of the diff (html, text, ...)
-     * @param PFUser                          $user            The user or null
-     *
-     * @return string|false The difference between another $changeset_value, false if no differences
-     */
-    public function modalDiff($changeset_value, $format = 'html', ?PFUser $user = null)
-    {
-        return $this->diff($changeset_value, $format, $user);
-    }
-
-    /**
      * Return the REST value of this changeset value
      *
-     * @param PFUser $user
      *
-     * @return ArtifactFieldValueRepresentationData
+     * @return ArtifactFieldValueRepresentationData|null
      */
     abstract public function getRESTValue(PFUser $user);
 
     /**
      * Return the full REST value of this changeset value
      *
-     * @param PFUser $user
      *
-     * @return ArtifactFieldValueRepresentationData
+     * @return ArtifactFieldValueRepresentationData|null
      */
     abstract public function getFullRESTValue(PFUser $user);
 

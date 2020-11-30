@@ -70,7 +70,8 @@ import {
     putWikiMetadata,
     putWikiPermissions,
     removeUserPreferenceForEmbeddedDisplay,
-    setNarrowModeForEmbeddedDisplay
+    setNarrowModeForEmbeddedDisplay,
+    getItemWithSize,
 } from "../api/rest-querier.js";
 
 import {
@@ -79,14 +80,14 @@ import {
     handleErrorsForDeletionModal,
     handleErrorsForDocument,
     handleErrorsForLock,
-    handleErrorsForModal
+    handleErrorsForModal,
 } from "./actions-helpers/handle-errors.js";
 import { loadFolderContent } from "./actions-helpers/load-folder-content.js";
 import { loadAscendantHierarchy } from "./actions-helpers/load-ascendant-hierarchy.js";
 import {
     uploadFile,
     uploadVersion,
-    uploadVersionFromEmpty
+    uploadVersionFromEmpty,
 } from "./actions-helpers/upload-file.js";
 import { flagItemAsCreated } from "./actions-helpers/flag-item-as-created.js";
 import { adjustItemToContentAfterItemCreationInAFolder } from "./actions-helpers/adjust-item-to-content-after-item-creation-in-folder.js";
@@ -98,14 +99,14 @@ import {
     TYPE_FOLDER,
     TYPE_LINK,
     TYPE_WIKI,
-    USER_CANNOT_PROPAGATE_DELETION_TO_WIKI_SERVICE
+    USER_CANNOT_PROPAGATE_DELETION_TO_WIKI_SERVICE,
 } from "../constants.js";
 import { addNewFolder } from "../api/rest-querier";
 import { getCustomMetadata } from "../helpers/metadata-helpers/custom-metadata-helper.js";
 import { formatCustomMetadataForFolderUpdate } from "../helpers/metadata-helpers/data-transformatter-helper.js";
 import { getProjectUserGroupsWithoutServiceSpecialUGroups } from "../helpers/permissions/ugroups.js";
 
-export const loadRootFolder = async context => {
+export const loadRootFolder = async (context) => {
     try {
         context.commit("beginLoading");
         const service = await getDocumentManagerServiceInformation(context.state.project_id);
@@ -237,7 +238,7 @@ export const loadFolder = (context, folder_id) => {
 
     function getCurrentFolder() {
         const index_of_folder_in_hierarchy = context.state.current_folder_ascendant_hierarchy.findIndex(
-            item => item.id === folder_id
+            (item) => item.id === folder_id
         );
         const is_folder_found_in_hierarchy = index_of_folder_in_hierarchy !== -1;
         const current_folder = is_folder_found_in_hierarchy
@@ -246,7 +247,7 @@ export const loadFolder = (context, folder_id) => {
 
         return {
             is_folder_found_in_hierarchy,
-            current_folder
+            current_folder,
         };
     }
 
@@ -276,7 +277,7 @@ export const loadFolder = (context, folder_id) => {
 
     function getLoadingCurrentFolderPromise(current_folder) {
         if (shouldWeRemotelyLoadTheFolder(current_folder, folder_id)) {
-            return getItem(folder_id).then(folder => {
+            return getItem(folder_id).then((folder) => {
                 context.commit("setCurrentFolder", folder);
 
                 return folder;
@@ -293,13 +294,7 @@ export const loadFolder = (context, folder_id) => {
 
 export async function createNewFileVersion(context, [item, dropped_file]) {
     try {
-        await uploadNewVersion(context, [
-            item,
-            dropped_file,
-            item.title,
-            "",
-            item.lock_info !== null
-        ]);
+        await uploadNewVersion(context, [item, dropped_file, item.title, "", false]);
         Vue.set(item, "updated", true);
     } catch (exception) {
         context.commit("toggleCollapsedFolderHasUploadingContent", [parent, false]);
@@ -319,7 +314,7 @@ export const createNewFileVersionFromModal = async (
             version_title,
             changelog,
             is_file_locked,
-            approval_table_action
+            approval_table_action,
         ]);
         Vue.set(item, "updated", true);
     } catch (exception) {
@@ -412,11 +407,10 @@ async function uploadNewVersion(
         return;
     }
 
-    const updated_item = context.state.folder_content.find(({ id }) => id === item.id);
-    context.commit("addFileInUploadsList", updated_item);
-    Vue.set(updated_item, "progress", null);
-    Vue.set(updated_item, "upload_error", null);
-    Vue.set(updated_item, "is_uploading_new_version", true);
+    context.commit("addFileInUploadsList", item);
+    Vue.set(item, "progress", null);
+    Vue.set(item, "upload_error", null);
+    Vue.set(item, "is_uploading_new_version", true);
 
     uploadVersionAndAssignUploader(item, context, uploaded_file, new_version);
 }
@@ -482,11 +476,11 @@ async function createNewFile(
             description: description,
             file_properties: {
                 file_name: dropped_file.name,
-                file_size: dropped_file.size
+                file_size: dropped_file.size,
             },
             status: status,
             obsolescence_date: obsolescence_date,
-            metadata: metadata
+            metadata: metadata,
         },
         parent.id
     );
@@ -508,7 +502,7 @@ async function createNewFile(
         is_uploading: true,
         progress: 0,
         uploader: null,
-        upload_error: null
+        upload_error: null,
     };
 
     fake_item.uploader = uploadFile(context, dropped_file, fake_item, new_file, parent);
@@ -523,7 +517,7 @@ async function createNewFile(
     }
     context.commit("toggleCollapsedFolderHasUploadingContent", [
         parent,
-        display_progress_bar_on_folder
+        display_progress_bar_on_folder,
     ]);
 }
 
@@ -567,10 +561,10 @@ export const cancelVersionUpload = async (context, item) => {
 export const cancelFolderUpload = (context, folder) => {
     try {
         const children = context.state.files_uploads_list.filter(
-            item => item.parent_id === folder.id
+            (item) => item.parent_id === folder.id
         );
 
-        children.forEach(child => {
+        children.forEach((child) => {
             if (child.is_uploading_new_version) {
                 cancelVersionUpload(context, child);
             } else {
@@ -584,15 +578,15 @@ export const cancelFolderUpload = (context, folder) => {
     }
 };
 
-export const cancelAllFileUploads = context => {
+export const cancelAllFileUploads = (context) => {
     return Promise.all(
         context.state.folder_content
-            .filter(item => item.is_uploading)
-            .map(item => cancelFileUpload(context, item))
+            .filter((item) => item.is_uploading)
+            .map((item) => cancelFileUpload(context, item))
     );
 };
 
-export const setUserPreferenciesForUI = async context => {
+export const setUserPreferenciesForUI = async (context) => {
     try {
         return await addUserLegacyUIPreferency(context.state.user_id, context.state.project_id);
     } catch (exception) {
@@ -623,13 +617,6 @@ export const deleteItem = async (context, [item, additional_options]) => {
                 break;
         }
 
-        if (
-            context.state.currently_previewed_item &&
-            item.id === context.state.currently_previewed_item.id
-        ) {
-            context.commit("updateCurrentlyPreviewedItem", null);
-        }
-
         context.commit("clipboard/emptyClipboardAfterItemDeletion", item);
         context.commit("removeItemFromFolderContent", item);
         context.commit("showPostDeletionNotification");
@@ -645,8 +632,8 @@ export const getWikisReferencingSameWikiPage = async (context, item) => {
         );
 
         return await Promise.all(
-            wiki_page_referencers.map(item =>
-                getParents(item.item_id).then(parents => buildItemPath(item, parents))
+            wiki_page_referencers.map((item) =>
+                getParents(item.item_id).then((parents) => buildItemPath(item, parents))
             )
         );
     } catch (exception) {
@@ -820,7 +807,7 @@ export const updateMetadata = async (context, [item, item_to_update, current_fol
                     item_to_update.owner.id,
                     {
                         value: item_to_update.status.value,
-                        recursion: item_to_update.status.recursion
+                        recursion: item_to_update.status.recursion,
                     },
                     obsolescence_date,
                     custom_metadata
@@ -893,7 +880,7 @@ export const updatePermissions = async (context, [item, updated_permissions]) =>
     }
 };
 
-export const loadProjectUserGroupsIfNeeded = async context => {
+export const loadProjectUserGroupsIfNeeded = async (context) => {
     if (context.state.project_ugroups !== null) {
         return;
     }
@@ -907,11 +894,8 @@ export const loadProjectUserGroupsIfNeeded = async context => {
 
 export const toggleQuickLook = async (context, item_id) => {
     try {
-        let item = context.state.folder_content.find(({ id }) => id === item_id);
-        if (!item) {
-            context.commit("beginLoadingCurrentlyPreviewedItem");
-            item = await getItem(item_id);
-        }
+        context.commit("beginLoadingCurrentlyPreviewedItem");
+        const item = await getItem(item_id);
 
         context.commit("updateCurrentlyPreviewedItem", item);
         context.commit("toggleQuickLook", true);
@@ -922,7 +906,7 @@ export const toggleQuickLook = async (context, item_id) => {
     }
 };
 
-export const removeQuickLook = context => {
+export const removeQuickLook = (context) => {
     context.commit("updateCurrentlyPreviewedItem", null);
     context.commit("toggleQuickLook", false);
 };
@@ -942,7 +926,7 @@ export const createNewVersionFromEmpty = async (context, [selected_type, item, i
             case TYPE_FILE:
                 await uploadNewFileVersionFromEmptyDocument(context, [
                     item,
-                    item_to_update.file_properties.file
+                    item_to_update.file_properties.file,
                 ]);
                 break;
             default:
@@ -956,5 +940,16 @@ export const createNewVersionFromEmpty = async (context, [selected_type, item, i
         context.commit("updateCurrentItemForQuickLokDisplay", updated_item);
     } catch (exception) {
         await handleErrorsForModal(context, exception);
+    }
+};
+
+export const getFolderProperties = async (context, [folder_item]) => {
+    try {
+        const { folder_properties } = await getItemWithSize(folder_item.id);
+
+        return folder_properties;
+    } catch (exception) {
+        await context.dispatch("error/handleGlobalModalError", exception);
+        return null;
     }
 };

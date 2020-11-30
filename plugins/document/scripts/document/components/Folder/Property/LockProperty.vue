@@ -19,16 +19,19 @@
 
 <template>
     <div class="tlp-form-element docman-item-lock-update">
-        <label class="tlp-label" for="docman-version-update-lock" data-test="lock-property-label">{{lock_label}}</label>
+        <label class="tlp-label" for="docman-version-update-lock" data-test="lock-property-label">
+            {{ lock_label }}
+        </label>
         <div class="tlp-switch">
-            <input type="checkbox"
-                   id="docman-version-update-lock"
-                   class="tlp-switch-checkbox"
-                   name="is_file_locked"
-                   data-test="lock-property-input-switch"
-                   v-on:input="$emit('input', $event.target.checked)"
-                   v-bind:checked="is_checked"
-            >
+            <input
+                type="checkbox"
+                id="docman-version-update-lock"
+                class="tlp-switch-checkbox"
+                name="is_file_locked"
+                data-test="lock-property-input-switch"
+                v-on:input="$emit('input', $event.target.checked)"
+                v-bind:checked="is_checked"
+            />
             <label for="docman-version-update-lock" class="tlp-switch-button" aria-hidden></label>
         </div>
     </div>
@@ -38,7 +41,7 @@
 export default {
     name: "LockProperty",
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
         is_checked() {
@@ -48,7 +51,7 @@ export default {
             return this.is_checked
                 ? this.$gettext("Keep lock?")
                 : this.$gettext("Lock new version");
-        }
-    }
+        },
+    },
 };
 </script>

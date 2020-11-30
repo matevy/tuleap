@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Test\rest\Docman;
 
@@ -26,7 +26,6 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 
 use REST_TestDataBuilder;
 use Tuleap\Docman\Test\rest\DocmanDataBuilder;
-use Tuleap\Docman\Test\rest\Helper\DocmanDataBuildCommon;
 use Tuleap\Docman\Test\rest\Helper\DocmanTestExecutionHelper;
 
 final class DocmanEmbeddedTest extends DocmanTestExecutionHelper
@@ -170,7 +169,7 @@ final class DocmanEmbeddedTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testUpdatePermissionsEmbeddedDocument(int $root_id) : void
+    public function testUpdatePermissionsEmbeddedDocument(int $root_id): void
     {
         $embedded_doc_id = $this->createEmbeddedFileAndReturnItsId(
             $root_id,
@@ -345,7 +344,7 @@ final class DocmanEmbeddedTest extends DocmanTestExecutionHelper
         );
 
         $document = $response->json();
-        $this->assertEquals($document['lock_info'] ["locked_by"]["username"], DocmanDataBuilder::ADMIN_USER_NAME);
+        $this->assertEquals($document['lock_info']["locked_by"]["username"], DocmanDataBuilder::ADMIN_USER_NAME);
     }
 
     /**
@@ -743,7 +742,7 @@ final class DocmanEmbeddedTest extends DocmanTestExecutionHelper
             REST_TestDataBuilder::ADMIN_USER_NAME
         );
 
-        $this->assertEquals(array('OPTIONS', 'PUT'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(['OPTIONS', 'PUT'], $response->getHeader('Allow')->normalize()->toArray());
         $this->assertEquals($response->getStatusCode(), 200);
     }
 

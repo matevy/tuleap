@@ -19,10 +19,7 @@
 
 <template>
     <div class="tlp-form-element" v-if="is_displayed">
-        <label
-            class="tlp-label"
-            for="document-new-file-upload"
-        >
+        <label class="tlp-label" for="document-new-file-upload">
             <translate>File</translate>
             <i class="fa fa-asterisk"></i>
         </label>
@@ -34,7 +31,7 @@
                 required
                 v-on:change="onFileChange"
                 ref="input"
-            >
+            />
             <p class="tlp-text-danger" v-if="error_message.length > 0">
                 {{ error_message }}
             </p>
@@ -42,6 +39,7 @@
     </div>
 </template>
 
+<!-- eslint-disable vue/no-mutating-props -->
 <script>
 import { TYPE_FILE } from "../../../constants.js";
 import { mapState } from "vuex";
@@ -52,18 +50,18 @@ export default {
     name: "FileProperties",
     props: {
         value: Object,
-        item: Object
+        item: Object,
     },
     data() {
         return {
-            error_message: ""
+            error_message: "",
         };
     },
     computed: {
         ...mapState(["max_size_upload"]),
         is_displayed() {
             return this.item.type === TYPE_FILE;
-        }
+        },
     },
     methods: {
         onFileChange(e) {
@@ -88,7 +86,7 @@ export default {
             this.$refs.input.setCustomValidity(this.error_message);
 
             this.$emit("input", { file });
-        }
-    }
+        },
+    },
 };
 </script>

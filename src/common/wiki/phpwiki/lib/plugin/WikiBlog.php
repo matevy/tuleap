@@ -71,17 +71,17 @@ require_once('lib/TextSearchQuery.php');
 
 class WikiPlugin_WikiBlog extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("WikiBlog");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return sprintf(_("Show and add blogs for %s"), '[pagename]');
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -111,16 +111,16 @@ class WikiPlugin_WikiBlog extends WikiPlugin
     // - captions for 'show' and 'add' sections
 
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('pagename'   => '[pagename]',
+        return ['pagename'   => '[pagename]',
                      'order'      => 'normal',
                      'mode'       => 'show,add',
                      'noheader'   => false
-                    );
+                    ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         // allow empty pagenames for ADMIN_USER style blogs: "Blog/day"
@@ -131,7 +131,7 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         $blog = $request->getArg("blog");
         $request->setArg('blog', false);
 
-        if ($request->isPost() and !empty($blog['addblog'])) {
+        if ($request->isPost() and ! empty($blog['addblog'])) {
             $this->add($request, $blog); // noreturn
         }
 
@@ -139,7 +139,7 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         // for new comments
         $html = HTML();
         foreach (explode(',', $args['mode']) as $show) {
-            if (!empty($seen[$show])) {
+            if (! empty($seen[$show])) {
                 continue;
             }
             $seen[$show] = 1;
@@ -158,7 +158,7 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         return $html;
     }
 
-    function add(&$request, $blog, $type = 'wikiblog')
+    public function add(&$request, $blog, $type = 'wikiblog')
     {
         $parent = $blog['pagename'];
         if (empty($parent)) {
@@ -186,21 +186,21 @@ class WikiPlugin_WikiBlog extends WikiPlugin
          *    updates are atomic with the version creation.
          */
 
-        $blog_meta = array('ctime'      => $now,
+        $blog_meta = ['ctime'      => $now,
                            'creator'    => $user->getId(),
                            'creator_id' => $user->getAuthenticatedId(),
-                           );
+                           ];
 
         // Version meta-data
         $summary = trim($blog['summary']);
-        $version_meta = array('author'    => $blog_meta['creator'],
+        $version_meta = ['author'    => $blog_meta['creator'],
                               'author_id' => $blog_meta['creator_id'],
                               'markup'    => 2.0,   // assume new markup
                               'summary'   => $summary ? $summary : _("New comment."),
                               'mtime'     => $now,
                               'pagetype'  => $type,
                               $type       => $blog_meta,
-                              );
+                              ];
         if ($type == 'comment') {
             unset($version_meta['summary']);
         }
@@ -209,7 +209,7 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         $body = trim($blog['body']);
 
         $saved = false;
-        while (!$saved) {
+        while (! $saved) {
             // Generate the page name.  For now, we use the format:
             //   Rootname/Blog/2003-01-11/14:03:02+00:00
             // This gives us natural chronological order when sorted
@@ -227,23 +227,23 @@ class WikiPlugin_WikiBlog extends WikiPlugin
             // Check intermediate pages. If not existing they should RedirectTo the parent page.
             // Maybe add the BlogArchives plugin instead for the new interim subpage.
             $redirected = $prefix . $pagename;
-            if (!$dbi->isWikiPage($redirected)) {
+            if (! $dbi->isWikiPage($redirected)) {
                 require_once('lib/loadsave.php');
-                $pageinfo = array('pagename' => $redirected,
-                                  'content'  => '<?plugin RedirectTo page='.$parent.' ?>',
-                                  'pagedata' => array(),
-                                  'versiondata' => array('author' => $blog_meta['creator']),
-                                  );
+                $pageinfo = ['pagename' => $redirected,
+                                  'content'  => '<?plugin RedirectTo page=' . $parent . ' ?>',
+                                  'pagedata' => [],
+                                  'versiondata' => ['author' => $blog_meta['creator']],
+                                  ];
                 SavePage($request, $pageinfo, '', '');
             }
             $redirected = $prefix . $pagename . SUBPAGE_SEPARATOR . preg_replace("/T.*/", "", "$time");
-            if (!$dbi->isWikiPage($redirected)) {
+            if (! $dbi->isWikiPage($redirected)) {
                 require_once('lib/loadsave.php');
-                $pageinfo = array('pagename' => $redirected,
-                                  'content'  => '<?plugin RedirectTo page='.$parent.' ?>',
-                                  'pagedata' => array(),
-                                  'versiondata' => array('author' => $blog_meta['creator']),
-                                  );
+                $pageinfo = ['pagename' => $redirected,
+                                  'content'  => '<?plugin RedirectTo page=' . $parent . ' ?>',
+                                  'pagedata' => [],
+                                  'versiondata' => ['author' => $blog_meta['creator']],
+                                  ];
                 SavePage($request, $pageinfo, '', '');
             }
 
@@ -281,7 +281,7 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         // Any way to jump back to preview mode???
     }
 
-    function showAll(&$request, $args, $type = "wikiblog")
+    public function showAll(&$request, $args, $type = "wikiblog")
     {
         // FIXME: currently blogSearch uses WikiDB->titleSearch to
         // get results, so results are in alphabetical order.
@@ -295,21 +295,21 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         $html = HTML();
         if ($blogs) {
             // First reorder
-            usort($blogs, array("WikiPlugin_WikiBlog",
-                                "cmp"));
+            usort($blogs, ["WikiPlugin_WikiBlog",
+                                "cmp"]);
             if ($args['order'] == 'reverse') {
                 $blogs = array_reverse($blogs);
             }
 
             $name = $this->_blogPrefix($type);
-            if (!$args['noheader']) {
+            if (! $args['noheader']) {
                 $html->pushContent(HTML::h4(
-                    array('class' => "$type-heading"),
+                    ['class' => "$type-heading"],
                     fmt("%s on %s:", $name, WikiLink($parent))
                 ));
             }
             foreach ($blogs as $rev) {
-                if (!$rev->get($type)) {
+                if (! $rev->get($type)) {
                     // Ack! this is an old-style blog with data ctime in page meta-data.
                     $content = $this->_transformOldFormatBlog($rev, $type);
                 } else {
@@ -322,7 +322,7 @@ class WikiPlugin_WikiBlog extends WikiPlugin
     }
 
     // all Blogs/Forum/Comment entries are subpages under this pagename, to find them faster.
-    function _blogPrefix($type = 'wikiblog')
+    public function _blogPrefix($type = 'wikiblog')
     {
         if ($type == 'wikiblog') {
             $name = "Blog";
@@ -334,11 +334,11 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         return $name;
     }
 
-    function _transformOldFormatBlog($rev, $type = 'wikiblog')
+    public function _transformOldFormatBlog($rev, $type = 'wikiblog')
     {
         $page = $rev->getPage();
-        $metadata = array();
-        foreach (array('ctime', 'creator', 'creator_id') as $key) {
+        $metadata = [];
+        foreach (['ctime', 'creator', 'creator_id'] as $key) {
             $metadata[$key] = $page->get($key);
         }
         if (empty($metadata) and $type != 'wikiblog') {
@@ -349,14 +349,14 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         return new TransformedText($page, $rev->getPackedContent(), $meta, $type);
     }
 
-    function findBlogs(&$dbi, $parent, $type = 'wikiblog')
+    public function findBlogs(&$dbi, $parent, $type = 'wikiblog')
     {
         $prefix = (empty($parent) ? "" :  $parent . SUBPAGE_SEPARATOR) . $this->_blogPrefix($type);
-        $pages = $dbi->titleSearch(new TextSearchQuery("^".$prefix, true, 'posix'));
+        $pages = $dbi->titleSearch(new TextSearchQuery("^" . $prefix, true, 'posix'));
 
-        $blogs = array();
+        $blogs = [];
         while ($page = $pages->next()) {
-            if (!string_starts_with($page->getName(), $prefix)) {
+            if (! string_starts_with($page->getName(), $prefix)) {
                 continue;
             }
             $current = $page->getCurrentRevision();
@@ -367,7 +367,7 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         return $blogs;
     }
 
-    function cmp($a, $b)
+    public function cmp($a, $b)
     {
         return(strcmp(
             $a->get('mtime'),
@@ -375,45 +375,45 @@ class WikiPlugin_WikiBlog extends WikiPlugin
         ));
     }
 
-    function showForm(&$request, $args, $template = 'blogform')
+    public function showForm(&$request, $args, $template = 'blogform')
     {
         // Show blog-entry form.
         return new Template(
             $template,
             $request,
-            array('PAGENAME' => $args['pagename'])
+            ['PAGENAME' => $args['pagename']]
         );
     }
 
     // "2004-12" => "December 2004"
-    function _monthTitle($month)
+    public function _monthTitle($month)
     {
         //list($year,$mon) = explode("-",$month);
-        return strftime("%B %Y", strtotime($month."-01"));
+        return strftime("%B %Y", strtotime($month . "-01"));
     }
 
     // "User/Blog/2004-12-13/12:28:50+01:00" => array('month' => "2004-12", ...)
-    function _blog($rev_or_page)
+    public function _blog($rev_or_page)
     {
         $pagename = $rev_or_page->getName();
         if (preg_match("/^(.*Blog)\/(\d\d\d\d-\d\d)-(\d\d)\/(.*)/", $pagename, $m)) {
             list(,$prefix,$month,$day,$time) = $m;
         }
-        return array('pagename' => $pagename,
+        return ['pagename' => $pagename,
                      // page (list pages per month) or revision (list months)?
                      //'title' => isa($rev_or_page,'WikiDB_PageRevision') ? $rev_or_page->get('summary') : '',
                      //'monthtitle' => $this->_monthTitle($month),
                      'month'   => $month,
                      'day'     => $day,
                      'time'    => $time,
-                     'prefix'  => $prefix);
+                     'prefix'  => $prefix];
     }
 
-    function _nonDefaultArgs($args)
+    public function _nonDefaultArgs($args)
     {
         return array_diff_assoc($args, $this->getDefaultArguments());
     }
-};
+}
 
 // $Log: WikiBlog.php,v $
 // Revision 1.23  2005/10/29 09:06:37  rurban

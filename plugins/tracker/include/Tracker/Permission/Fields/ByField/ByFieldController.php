@@ -23,20 +23,12 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\Permission\Fields\ByField;
 
-use Codendi_HTMLPurifier;
 use HTTPRequest;
 use Tracker_FormElementFactory;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
-use Tuleap\Tracker\Permission\Fields\ByGroup\ByGroupFieldsPermissions;
-use Tuleap\Tracker\Permission\Fields\ByGroup\ByGroupOneFieldPresenter;
-use Tuleap\Tracker\Permission\Fields\ByGroup\ByGroupOneFieldWithUGroupListPresenter;
-use Tuleap\Tracker\Permission\Fields\ByGroup\ByGroupPresenter;
-use Tuleap\Tracker\Permission\Fields\ByGroup\ByGroupUGroupListPresenter;
-use Tuleap\Tracker\Permission\Fields\PermissionsOnFieldsUpdateController;
-use Tuleap\Tracker\Permission\Fields\ByGroup\ByGroupController;
 
 class ByFieldController implements DispatchableWithRequest
 {
@@ -60,8 +52,6 @@ class ByFieldController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @return void
      * @throws ForbiddenException
@@ -97,7 +87,7 @@ class ByFieldController implements DispatchableWithRequest
 
         $tracker_manager = new \TrackerManager();
 
-        $title = $GLOBALS['Language']->getText('plugin_tracker_include_type', 'manage_fields_tracker_permissions');
+        $title = dgettext('tuleap-tracker', 'Manage Fields Permissions');
 
         $tracker->displayAdminPermsHeader($tracker_manager, $title);
 
@@ -115,7 +105,7 @@ class ByFieldController implements DispatchableWithRequest
     }
 
 
-    private function getUGroupPermissionsPerField(\Tracker $tracker, int $selected_id) : ByFieldGroupPermissions
+    private function getUGroupPermissionsPerField(\Tracker $tracker, int $selected_id): ByFieldGroupPermissions
     {
         $ugroups_permissions = plugin_tracker_permission_get_field_tracker_ugroups_permissions(
             $tracker->getGroupId(),
@@ -147,7 +137,7 @@ class ByFieldController implements DispatchableWithRequest
         return $ugroups_for_selected_field;
     }
 
-    private function getFieldsPermissionForGroupWithFirstMatchingGroup(array $ugroups_permissions, int $selected_id) : ByFieldGroupPermissions
+    private function getFieldsPermissionForGroupWithFirstMatchingGroup(array $ugroups_permissions, int $selected_id): ByFieldGroupPermissions
     {
         foreach ($ugroups_permissions as $field_id => $value_field) {
             $field_id = (int) $field_id;
@@ -163,8 +153,8 @@ class ByFieldController implements DispatchableWithRequest
         return count($ugroup_list) === 0;
     }
 
-    public static function getUrl(\Tracker $tracker) : string
+    public static function getUrl(\Tracker $tracker): string
     {
-        return TRACKER_BASE_URL.self::URL.'/'.$tracker->getId();
+        return TRACKER_BASE_URL . self::URL . '/' . $tracker->getId();
     }
 }

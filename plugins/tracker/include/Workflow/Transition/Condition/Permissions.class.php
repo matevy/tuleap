@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,12 +18,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Workflow\Transition\Condition\Visitor;
 
 // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class Workflow_Transition_Condition_Permissions extends Workflow_Transition_Condition
 {
-
     /** @var string */
     public $identifier = 'perms';
 
@@ -33,30 +33,12 @@ class Workflow_Transition_Condition_Permissions extends Workflow_Transition_Cond
     private $permission_manager;
 
     /** @var array */
-    private $authorized_ugroups_keyname = array();
+    private $authorized_ugroups_keyname = [];
 
     public function __construct(Transition $transition)
     {
         parent::__construct($transition);
         $this->permission_manager = PermissionsManager::instance();
-    }
-
-    /**
-     * @see Workflow_Transition_Condition::fetch()
-     */
-    public function fetch()
-    {
-        $html  = '';
-        $html .= $GLOBALS['Language']->getText('workflow_admin', 'label_define_transition_permissions');
-        $html .= '<br />';
-        $html .= '<p>';
-        $html .= plugin_tracker_permission_fetch_selection_field(
-            self::PERMISSION_TRANSITION,
-            $this->transition->getId(),
-            $this->transition->getGroupId()
-        );
-        $html .= '</p>';
-        return $html;
     }
 
     /**
@@ -100,7 +82,7 @@ class Workflow_Transition_Condition_Permissions extends Workflow_Transition_Cond
     private function addPermissions($ugroups)
     {
         foreach ($ugroups as $ugroup) {
-            if (! $this->permission_manager->addPermission(self::PERMISSION_TRANSITION, (int)$this->transition->getId(), $ugroup)) {
+            if (! $this->permission_manager->addPermission(self::PERMISSION_TRANSITION, (int) $this->transition->getId(), $ugroup)) {
                 return false;
             }
         }
@@ -117,14 +99,12 @@ class Workflow_Transition_Condition_Permissions extends Workflow_Transition_Cond
         }
     }
 
-    public function validate($fields_data, Tracker_Artifact $artifact, $comment_body)
+    public function validate($fields_data, Artifact $artifact, string $comment_body, PFUser $current_user): bool
     {
-        $current_user = UserManager::instance()->getCurrentUser();
-
         if (! $this->isUserAllowedToSeeTransition($current_user, $artifact->getTracker())) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
-                $GLOBALS['Language']->getText('plugin_tracker_artifact', 'transition_permissions_not_valid')
+                dgettext('tuleap-tracker', 'Transition permissions are not respected')
             );
             return false;
         }
@@ -134,7 +114,7 @@ class Workflow_Transition_Condition_Permissions extends Workflow_Transition_Cond
 
     public function isUserAllowedToSeeTransition(PFUser $user, Tracker $tracker)
     {
-        if ($tracker->userIsAdmin($user)) {
+        if (($user instanceof Tracker_Workflow_WorkflowUser) || ($tracker->userIsAdmin($user))) {
             return true;
         }
 

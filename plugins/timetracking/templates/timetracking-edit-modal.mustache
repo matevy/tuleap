@@ -25,12 +25,13 @@
                 <span class="tuleap_field_date">
                     <input name="timetracking-edit-time-date"
                            id="timetracking-edit-time-date"
+                           data-test="timetracking-edit-row-date"
                            data-format="yyyy-MM-dd"
                            type="text"
                            value="{{ day }}">
                     </input>
                     <span class="add-on add-on-calendar">
-                        <i class="fa fa-calendar" data-time-icon="fa-clock-o" data-date-icon="fa-calendar"></i>
+                        <i class="fas fa-calendar-alt" data-time-icon="fa-clock" data-date-icon="fa-calendar-alt"></i>
                     </span>
                 </span>
             </div>
@@ -38,6 +39,7 @@
             <label>{{# dgettext }} tuleap-timetracking | Time {{/ dgettext }}</label>
             <input type="text"
                    name="timetracking-edit-time-time"
+                   data-test="timetracking-edit-row-time"
                    placeholder="00:00"
                    pattern="{{ pattern }}"
                    required
@@ -50,6 +52,7 @@
             <input type="submit"
                    class="btn btn-primary"
                    name="timetracking-edit-time"
+                   data-test="timetracking-edit-time"
                    value="{{# dgettext }} tuleap-timetracking | Edit time {{/ dgettext }}"
             >
         </div>

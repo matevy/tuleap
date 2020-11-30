@@ -25,8 +25,8 @@
 class HTML_Table
 {
     private $id            = '';
-    private $titles        = array();
-    private $table_classes = array();
+    private $titles        = [];
+    private $table_classes = [];
     private $body          = '';
 
     public function __construct()
@@ -65,23 +65,23 @@ class HTML_Table
 
     public function render()
     {
-        return '<table'.$this->getTableAttributes().'>
-                 '.$this->renderHead().'
-                 '.$this->renderBody().'
+        return '<table' . $this->getTableAttributes() . '>
+                 ' . $this->renderHead() . '
+                 ' . $this->renderBody() . '
                 </table>';
     }
 
     private function getTableAttributes()
     {
-        $attributes = array();
+        $attributes = [];
         if (count($this->table_classes)) {
-            $attributes[] = 'class="'.implode(' ', $this->table_classes).'"';
+            $attributes[] = 'class="' . implode(' ', $this->table_classes) . '"';
         }
         if ($this->id) {
-            $attributes[] = 'id="'.$this->id.'"';
+            $attributes[] = 'id="' . $this->id . '"';
         }
         if (count($attributes)) {
-            return ' '.implode(' ', $attributes);
+            return ' ' . implode(' ', $attributes);
         }
         return '';
     }
@@ -91,7 +91,7 @@ class HTML_Table
         if (count($this->titles)) {
             return '  <thead>
                         <tr>
-                          <th>'.implode('</th><th>', $this->titles).'</th>
+                          <th>' . implode('</th><th>', $this->titles) . '</th>
                         </tr>
                       </thead>';
         }
@@ -101,7 +101,7 @@ class HTML_Table
     private function renderBody()
     {
         if ($this->body) {
-            return '<tbody>'.$this->body.'</tbody>';
+            return '<tbody>' . $this->body . '</tbody>';
         }
         return;
     }

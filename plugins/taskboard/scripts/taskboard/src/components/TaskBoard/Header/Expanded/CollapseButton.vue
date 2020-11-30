@@ -19,15 +19,14 @@
   -->
 
 <template>
-    <span class="taskboard-header-collapse-column"
-          v-bind:title="title"
-    >
-        <i class="fa fa-minus-square"
-           role="button"
-           tabindex="0"
-           v-bind:aria-label="title"
-           v-on:click="collapseColumn(column)"
-           data-test="button"
+    <span class="taskboard-header-collapse-column" v-bind:title="title">
+        <i
+            class="fa fa-minus-square"
+            role="button"
+            tabindex="0"
+            v-bind:aria-label="title"
+            v-on:click="collapseColumn(column)"
+            data-test="button"
         ></i>
     </span>
 </template>
@@ -50,7 +49,7 @@ export default class CollapseButton extends Vue {
 
     get title(): string {
         return this.$gettextInterpolate(this.$gettext('Collapse "%{ label }" column'), {
-            label: this.column.label
+            label: this.column.label,
         });
     }
 }

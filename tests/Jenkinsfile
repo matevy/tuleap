@@ -21,7 +21,7 @@ pipeline {
                 }
                 script {
                     actions = load 'sources/tests/actions.groovy'
-                    actions.prepareSources('nexus.enalean.com_readonly')
+                    actions.prepareSources('nexus.enalean.com_readonly', 'github-token-composer')
                 }
             }
         }
@@ -42,19 +42,10 @@ pipeline {
         stage('Tests') {
             failFast false
             parallel {
-                stage('UT SimpleTest PHP 7.3') {
-                    steps { script { actions.runSimpleTestTests('73') } }
-                    post { always { junit 'results/ut-simpletest/php-73/results.xml' } }
-                }
                 stage('UT PHPUnit') {
                     stages {
                         stage('UT PHPUnit PHP 7.3') {
                             steps { script { actions.runPHPUnitTests('73') } }
-                            post {
-                                always {
-                                    step([$class: 'CloverPublisher', cloverReportDir: 'results/ut-phpunit/php-73/coverage/', cloverReportFileName: 'clover.xml'])
-                                }
-                            }
                         }
                     }
                     post { always { junit 'results/ut-phpunit/*/phpunit_tests_results.xml' } }
@@ -62,23 +53,20 @@ pipeline {
                 stage ('Jest') {
                     agent {
                         docker {
-                            image 'node:12.6-alpine'
+                            image 'node:14.5-alpine'
                             reuseNode true
                             args '--network none'
                         }
                     }
                     steps { script { actions.runJestTests('Tuleap', '.') } }
                     post {
-                        always {
-                            junit 'results/jest/test-*-results.xml'
-                            step([$class: 'CloverPublisher', cloverReportDir: 'results/jest/coverage/', cloverReportFileName: 'clover.xml'])
-                        }
+                        always { junit 'results/jest/test-*-results.xml' }
                     }
                 }
                 stage('REST') {
                     stages {
-                        stage('REST CentOS 6 PHP 7.3 MySQL 5.7') {
-                            steps { script { actions.runRESTTests('c6-php73-mysql57') } }
+                        stage('REST PHP 7.3 MySQL 5.7') {
+                            steps { script { actions.runRESTTests('mysql57', '73') } }
                         }
                     }
                     post { always { junit 'results/api-rest/*/rest_tests.xml' } }
@@ -86,33 +74,39 @@ pipeline {
                 stage('DB Integration') {
                     stages {
                         stage('DB CentOS 6 PHP 7.3 MySQL 5.7') {
-                            steps { script { actions.runDBTests('c6-php73-mysql57') } }
+                            steps { script { actions.runDBTests('mysql57', '73') } }
                         }
                     }
                     post { always { junit 'results/db/*/db_tests.xml' } }
                 }
                 stage('SOAP') {
                     stages {
-                        stage('SOAP PHP 7.3') { steps { script { actions.runSOAPTests('php-73', '5') } } }
+                        stage('SOAP PHP 7.3') { steps { script { actions.runSOAPTests('mysql57', '73') } } }
                     }
-                    post { always { junit "results/api-soap/*/soap_tests.xml" } }
+                    post { always { junit "results/soap/*/soap_tests.xml" } }
                 }
                 stage('Build and run CentOS 6') { steps { script { actions.runBuildAndRun('centos6') } } }
                 stage('Build and run CentOS 7') { steps { script { actions.runBuildAndRun('centos7') } } }
-                stage('Code conformity') {
+                stage('Translations') {
                     stages {
-                        stage('Check translation files') {
+                        stage('Check .po files') {
                             steps { script {
                                 actions.runFilesStatusChangesDetection('.', 'translation files', '"*.po\$"')
                             } }
                         }
-                        stage('Javascript coding standards') {
-                            steps { script { actions.runJavascriptCodingStandards() } }
+                        stage('Check .tab files') {
+                            steps { script {
+                                sh 'sources/src/utils/analyse_language_files.pl sources/'
+                            } }
                         }
+                    }
+                }
+                stage('Code conformity') {
+                    stages {
                         stage('ESLint static analysis') {
                             agent {
                                 docker {
-                                    image 'node:12.6-alpine'
+                                    image 'node:14.5-alpine'
                                     reuseNode true
                                     args '--network none'
                                 }
@@ -128,7 +122,7 @@ pipeline {
                             steps {
                                 script {
                                     def filesToAnalyze = '.'
-                                    if (env.BRANCH_NAME != 'master') {
+                                    if (env.GIT_BRANCH != 'origin/master') {
                                         def helpers = load 'sources/tests/helpers.groovy'
                                         filesToAnalyze = helpers.getModifiedFilesSinceFirstParentOfCurrentCommit('sources/')
                                     }
@@ -141,18 +135,20 @@ pipeline {
                             }
                         }
                         stage('Psalm static analysis') {
-                            when { not { branch 'master' } }
                             agent {
-                                dockerfile {
-                                    dir 'sources/tests/psalm/'
+                                docker {
+                                    image 'enalean/tuleap-test-phpunit:c7-php73'
                                     reuseNode true
                                     args '--network none'
                                 }
                             }
                             steps {
                                 script {
-                                    def helpers = load 'sources/tests/helpers.groovy'
-                                    def filesToAnalyze = helpers.getModifiedFilesSinceFirstParentOfCurrentCommit('sources/')
+                                    def filesToAnalyze = '.'
+                                    if (env.GIT_BRANCH != 'origin/master') {
+                                        def helpers = load 'sources/tests/helpers.groovy'
+                                        filesToAnalyze = helpers.getModifiedFilesSinceFirstParentOfCurrentCommit('sources/')
+                                    }
                                     actions.runPsalm('tests/psalm/psalm.xml', filesToAnalyze)
                                 }
                             }
@@ -161,6 +157,27 @@ pipeline {
                                     recordIssues enabledForFailure: true, minimumSeverity: 'NORMAL', tools: [checkStyle(id: 'checkstyle_psalm', pattern: 'results/psalm/checkstyle.xml')]
                                 }
                             }
+                        }
+                        stage('Architecture') {
+                            agent {
+                                docker {
+                                    image 'enalean/tuleap-test-phpunit:c7-php73'
+                                    reuseNode true
+                                    args '--network none'
+                                }
+                            }
+                            steps { script { actions.runDeptrac('tests/deptrac/core_on_plugins.yml', 'core_on_plugins') } }
+                            post { failure { junit 'results/deptrac/*.xml' } }
+                        }
+                        stage('SCSS coding standards') {
+                            agent {
+                                docker {
+                                    image 'node:14.5-alpine'
+                                    reuseNode true
+                                    args '--network none'
+                                }
+                            }
+                            steps { script { actions.runStylelint() } }
                         }
                     }
                 }

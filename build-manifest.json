@@ -1,56 +1,57 @@
 {
     "name": "core",
-    "themes": {
-        "common": {
-            "files": [
-                "src/www/themes/common/css/print.scss",
-                "src/www/themes/common/css/style.scss"
-            ],
-            "target_dir": "src/www/themes/common/css"
-        }
-    },
-    "components": [
-        "src/www/themes/common/tlp/",
-        "src/www/themes/FlamingParrot/",
-        "src/www/scripts/",
-        "src/www/themes/BurningParrot/",
-        "src/www/themes/BurningParrot/css/project-registration/",
-        "src/www/themes/BurningParrot/css/dashboards/"
-    ],
     "gettext-js": {
         "chart-builders": {
-            "src": "src/www/scripts/charts-builders",
-            "po": "src/www/scripts/charts-builders/po"
+            "src": "src/scripts/charts-builders",
+            "po": "src/scripts/charts-builders/po"
+        },
+        "burning-parrot": {
+            "src": "src/scripts/BurningParrot/src",
+            "po": "src/scripts/BurningParrot/po"
         },
         "project-admin": {
-            "src": "src/www/scripts/project/admin",
-            "po": "src/www/scripts/project/po"
+            "src": "src/scripts/project/admin/src",
+            "po": "src/scripts/project/admin/po"
         },
         "rich-text-editor": {
-            "src": "src/www/scripts/tuleap/ckeditor",
-            "po": "src/www/scripts/tuleap/ckeditor/po"
+            "src": "src/scripts/tuleap/ckeditor",
+            "po": "src/scripts/tuleap/ckeditor/po"
+        }
+    },
+    "gettext-ts": {
+        "list-picker": {
+            "src": "src/scripts/list-picker",
+            "po": "src/scripts/list-picker/po"
         }
     },
     "gettext-vue": {
         "permissions-per-group-frs": {
-            "src": "src/www/scripts/frs/permissions-per-group",
-            "po": "src/www/scripts/frs/permissions-per-group/po"
+            "src": "src/scripts/frs/permissions-per-group",
+            "po": "src/scripts/frs/permissions-per-group/po"
         },
         "permissions-per-group-news": {
-            "src": "src/www/scripts/news/permissions-per-group",
-            "po": "src/www/scripts/news/permissions-per-group/po"
+            "src": "src/scripts/news/permissions-per-group",
+            "po": "src/scripts/news/permissions-per-group/po"
         },
         "project-admin-services": {
-            "src": "src/www/scripts/project/admin/services/src",
-            "po": "src/www/scripts/project/admin/services/po"
+            "src": "src/scripts/project/admin/services/src",
+            "po": "src/scripts/project/admin/services/po"
         },
         "project-admin-banner": {
-            "src": "src/www/scripts/project/admin/banner/src",
-            "po": "src/www/scripts/project/admin/banner/po"
+            "src": "src/scripts/project/admin/banner/src",
+            "po": "src/scripts/project/admin/banner/po"
         },
         "project-registration": {
-            "src": "src/www/scripts/project/registration/src",
-            "po": "src/www/scripts/project/registration/po"
+            "src": "src/scripts/project/registration/src",
+            "po": "src/scripts/project/registration/po"
+        },
+        "switch-to": {
+            "src": "src/scripts/switch-to/src",
+            "po": "src/scripts/switch-to/po"
+        },
+        "platform-banner-admin": {
+            "src": "src/scripts/platform/banner/admin/src",
+            "po": "src/scripts/platform/banner/admin/po"
         }
     }
 }

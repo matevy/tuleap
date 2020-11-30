@@ -26,7 +26,11 @@ use Tuleap\Cryptography\ConcealedString;
 
 class RedisInitializer
 {
-    public const CONNECT_TIMEOUT = 0.1;
+    /**
+     * Connection timeout is raised to 200ms as we now (11.14) support TLS connection to redis
+     * and TLS handshake overhead + bumpy network can make things slower.
+     */
+    public const CONNECT_TIMEOUT = 0.2;
 
     /**
      * @var string
@@ -52,7 +56,7 @@ class RedisInitializer
      * @throws RedisConnectionException
      * @throws \RedisException
      */
-    public function init(\Redis $client) : void
+    public function init(\Redis $client): void
     {
         if ($this->host === '') {
             throw new RedisConnectionException('No Redis server has been setup');
@@ -70,11 +74,16 @@ class RedisInitializer
             throw new RedisConnectionException("Redis connection failed ($error_message)");
         }
 
-        $trimmed_password = trim($this->password->getString());
-        if ($trimmed_password !== '' && ! $client->auth($trimmed_password)) {
+        $raw_password     = $this->password->getString();
+        $trimmed_password = trim($raw_password);
+        \sodium_memzero($raw_password);
+        $is_authentication_successful = $trimmed_password !== '' && ! $client->auth($trimmed_password);
+        if ($is_authentication_successful) {
             $error_message = trim(preg_replace('/^ERR/', '', $client->getLastError() ?? ''));
             $error_message = str_replace($trimmed_password, '*********pwd*********', $error_message);
+            \sodium_memzero($trimmed_password);
             throw new RedisConnectionException("Redis authentication failed ($error_message)");
         }
+        \sodium_memzero($trimmed_password);
     }
 }

@@ -18,21 +18,25 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenterFactory;
+
 /**
  * I validate fields for initial changeset
  */
-class Tracker_Artifact_Changeset_InitialChangesetFieldsValidator extends Tracker_Artifact_Changeset_FieldsValidator //phpcs:ignore
+class Tracker_Artifact_Changeset_InitialChangesetFieldsValidator extends Tracker_Artifact_Changeset_FieldsValidator // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 {
     protected function canValidateField(
-        Tracker_Artifact $artifact,
-        Tracker_FormElement_Field $field
-    ) {
+        Artifact $artifact,
+        Tracker_FormElement_Field $field,
+        PFUser $user
+    ): bool {
         //we do not validate if the field is required and we can't submit the field
-        return !($field->isRequired() && !$field->userCanSubmit());
+        return ! ($field->isRequired() && ! $field->userCanSubmit($user));
     }
 
     protected function validateField(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_FormElement_Field $field,
         \PFUser $user,
         $submitted_value
@@ -43,8 +47,27 @@ class Tracker_Artifact_Changeset_InitialChangesetFieldsValidator extends Tracker
         return $field->validateFieldWithPermissionsAndRequiredStatus(
             $artifact,
             $submitted_value,
+            $user,
             $last_changeset_value,
             $is_submission
         );
+    }
+
+    public static function build(): self
+    {
+        $form_element_factory    = \Tracker_FormElementFactory::instance();
+        $artifact_factory        = Tracker_ArtifactFactory::instance();
+
+        $artifact_link_usage_dao = new \Tuleap\Tracker\Admin\ArtifactLinksUsageDao();
+        $artifact_link_validator = new \Tuleap\Tracker\FormElement\ArtifactLinkValidator(
+            $artifact_factory,
+            new NaturePresenterFactory(
+                new \Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao(),
+                $artifact_link_usage_dao
+            ),
+            $artifact_link_usage_dao
+        );
+
+        return new self($form_element_factory, $artifact_link_validator);
     }
 }

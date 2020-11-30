@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,6 +18,8 @@
  * along with Tuleap; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+use Tuleap\Cryptography\ConcealedString;
 
 class SVN_TokenHandler
 {
@@ -42,10 +44,22 @@ class SVN_TokenHandler
         $this->password_handler        = $password_handler;
     }
 
-    public function getSVNTokensForUser(PFUser $user)
+    public static function build(): self
+    {
+        return new self(
+            new SVN_TokenDao(),
+            new RandomNumberGenerator(),
+            PasswordHandlerFactory::getPasswordHandler()
+        );
+    }
+
+    /**
+     * @return SVN_Token[]
+     */
+    public function getSVNTokensForUser(PFUser $user): array
     {
         $rows       = $this->token_dao->getSVNTokensForUser($user->getId());
-        $svn_tokens = array();
+        $svn_tokens = [];
 
         foreach ($rows as $row) {
             $svn_tokens[] = $this->instantiateFromRow($user, $row);
@@ -54,7 +68,7 @@ class SVN_TokenHandler
         return $svn_tokens;
     }
 
-    public function generateSVNTokenForUser(PFUser $user, $comment)
+    public function generateSVNTokenForUser(PFUser $user, $comment): ?ConcealedString
     {
         $token          = $this->generateRandomToken();
         $token_computed = $this->password_handler->computeUnixPassword($token);
@@ -62,7 +76,7 @@ class SVN_TokenHandler
         if ($this->token_dao->generateSVNTokenForUser($user->getId(), $token_computed, $comment)) {
             return $token;
         } else {
-            return false;
+            return null;
         }
     }
 
@@ -71,9 +85,9 @@ class SVN_TokenHandler
         return $this->token_dao->deleteSVNTokensForUser($user->getId(), $svn_token_ids);
     }
 
-    private function generateRandomToken()
+    private function generateRandomToken(): ConcealedString
     {
-        return $this->random_number_generator->getNumber();
+        return new ConcealedString($this->random_number_generator->getNumber());
     }
 
     private function instantiateFromRow(PFUser $user, $svn_token_data)

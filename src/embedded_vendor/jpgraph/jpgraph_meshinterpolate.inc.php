@@ -26,7 +26,7 @@ function doMeshInterpolate(&$aData, $aFactor)
  */
 class MeshInterpolate
 {
-    private $data = array();
+    private $data = [];
 
    /**
     * Calculate the mid points of the given rectangle which has its top left
@@ -37,13 +37,13 @@ class MeshInterpolate
     * @param $col Top left corner of square to work with
     * $param $aFactor In how many subsquare should we split this square. A value of 1 indicates that no action
     */
-    function IntSquare($aRow, $aCol, $aFactor)
+    public function IntSquare($aRow, $aCol, $aFactor)
     {
         if ($aFactor <= 1) {
             return;
         }
 
-        $step = pow(2, $aFactor-1);
+        $step = pow(2, $aFactor - 1);
 
         $v0 = $this->data[$aRow][$aCol];
         $v1 = $this->data[$aRow][$aCol + $step];
@@ -56,10 +56,10 @@ class MeshInterpolate
         $this->data[$aRow + $step / 2][$aCol + $step] = ( $v1 + $v3 ) / 2;
         $this->data[$aRow + $step / 2][$aCol + $step / 2] = ( $v0 + $v1 + $v2 + $v3 ) / 4;
 
-        $this->IntSquare($aRow, $aCol, $aFactor-1);
-        $this->IntSquare($aRow, $aCol + $step / 2, $aFactor-1);
-        $this->IntSquare($aRow + $step / 2, $aCol, $aFactor-1);
-        $this->IntSquare($aRow + $step / 2, $aCol + $step / 2, $aFactor-1);
+        $this->IntSquare($aRow, $aCol, $aFactor - 1);
+        $this->IntSquare($aRow, $aCol + $step / 2, $aFactor - 1);
+        $this->IntSquare($aRow + $step / 2, $aCol, $aFactor - 1);
+        $this->IntSquare($aRow + $step / 2, $aCol + $step / 2, $aFactor - 1);
     }
 
     /**
@@ -73,15 +73,15 @@ class MeshInterpolate
      * @param  $aInNbr Interpolation factor
      * @return the interpolated matrice
      */
-    function Linear(&$aData, $aIntFactor)
+    public function Linear(&$aData, $aIntFactor)
     {
-        $step = pow(2, $aIntFactor-1);
+        $step = pow(2, $aIntFactor - 1);
 
         $orig_cols = count($aData[0]);
         $orig_rows = count($aData);
         // Number of new columns/rows
         // N = (a-1) * 2^(f-1) + 1
-        $p = pow(2, $aIntFactor-1);
+        $p = pow(2, $aIntFactor - 1);
         $new_cols = $p * ( $orig_cols - 1 ) + 1;
         $new_rows = $p * ( $orig_rows - 1 ) + 1;
 
@@ -89,7 +89,7 @@ class MeshInterpolate
         // Initialize the new matrix with the values that we know
         for ($i = 0; $i < $new_rows; $i++) {
             for ($j = 0; $j < $new_cols; $j++) {
-                $v = 0 ;
+                $v = 0;
                 if (( $i % $step == 0 ) && ( $j % $step == 0 )) {
                     $v = $aData[$i / $step][$j / $step];
                 }
@@ -97,8 +97,8 @@ class MeshInterpolate
             }
         }
 
-        for ($i = 0; $i < $new_rows-1; $i += $step) {
-            for ($j = 0; $j < $new_cols-1; $j += $step) {
+        for ($i = 0; $i < $new_rows - 1; $i += $step) {
+            for ($j = 0; $j < $new_cols - 1; $j += $step) {
                 $this->IntSquare($i, $j, $aIntFactor);
             }
         }

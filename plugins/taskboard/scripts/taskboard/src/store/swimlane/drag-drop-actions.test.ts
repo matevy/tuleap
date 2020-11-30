@@ -20,9 +20,13 @@ import { ActionContext } from "vuex";
 import * as actions from "./drag-drop-actions";
 import * as item_finder from "../../helpers/html-to-item";
 import * as card_positioner from "../../helpers/cards-reordering";
-import { HandleDropPayload, SwimlaneState } from "./type";
+import { HandleDropPayload, MoveCardsPayload, ReorderCardsPayload, SwimlaneState } from "./type";
 import { RootState } from "../type";
-import { Card, ColumnDefinition, Swimlane, Direction } from "../../type";
+import { Card, ColumnDefinition, Swimlane, Direction, CardPosition } from "../../type";
+import * as tlp from "tlp";
+import { mockFetchSuccess } from "../../../../../../../src/themes/tlp/mocks/tlp-fetch-mock-helper";
+
+jest.mock("tlp");
 
 function createElement(): HTMLElement {
     const local_document = document.implementation.createHTMLDocument();
@@ -44,13 +48,13 @@ describe(`drag-drop-actions`, () => {
         context = ({
             commit: jest.fn(),
             getters: {
-                cards_in_cell: jest.fn()
+                cards_in_cell: jest.fn(),
             },
             rootGetters: {
-                column_and_swimlane_of_cell: jest.fn()
+                column_and_swimlane_of_cell: jest.fn(),
             },
             dispatch: jest.fn(),
-            rootState: {} as RootState
+            rootState: {} as RootState,
         } as unknown) as ActionContext<SwimlaneState, RootState>;
     });
 
@@ -136,7 +140,7 @@ describe(`drag-drop-actions`, () => {
             const position = {
                 ids: [667],
                 direction: Direction.AFTER,
-                compared_to: 778
+                compared_to: 778,
             };
             jest.spyOn(card_positioner, "getCardPosition").mockReturnValue(position);
 
@@ -146,7 +150,7 @@ describe(`drag-drop-actions`, () => {
             expect(context.dispatch).toHaveBeenCalledWith("reorderCardsInCell", {
                 swimlane,
                 column,
-                position
+                position,
             });
             expect(context.commit).toHaveBeenCalledWith("unsetDropZoneRejectingDrop");
         });
@@ -167,7 +171,7 @@ describe(`drag-drop-actions`, () => {
             const position = {
                 ids: [667],
                 direction: Direction.BEFORE,
-                compared_to: 778
+                compared_to: 778,
             };
             jest.spyOn(card_positioner, "getCardPosition").mockReturnValue(position);
 
@@ -177,7 +181,7 @@ describe(`drag-drop-actions`, () => {
             expect(context.dispatch).toHaveBeenCalledWith("reorderCardsInCell", {
                 swimlane,
                 column,
-                position
+                position,
             });
             expect(context.commit).toHaveBeenCalledWith("unsetDropZoneRejectingDrop");
         });
@@ -208,7 +212,7 @@ describe(`drag-drop-actions`, () => {
             expect(context.dispatch).toHaveBeenCalledWith("moveCardToCell", {
                 card,
                 swimlane,
-                column
+                column,
             });
             expect(context.commit).toHaveBeenCalledWith("unsetDropZoneRejectingDrop");
         });
@@ -233,7 +237,7 @@ describe(`drag-drop-actions`, () => {
             const position = {
                 ids: [667],
                 direction: Direction.BEFORE,
-                compared_to: 778
+                compared_to: 778,
             };
 
             jest.spyOn(card_positioner, "getCardPosition");
@@ -246,7 +250,7 @@ describe(`drag-drop-actions`, () => {
                 card,
                 swimlane,
                 column,
-                position
+                position,
             });
             expect(context.commit).toHaveBeenCalledWith("unsetDropZoneRejectingDrop");
         });
@@ -275,16 +279,14 @@ describe(`drag-drop-actions`, () => {
             expect(context.dispatch).toHaveBeenCalledWith("moveCardToCell", {
                 card,
                 swimlane,
-                column
+                column,
             });
             expect(context.commit).toHaveBeenCalledWith("unsetDropZoneRejectingDrop");
         });
 
-        it(`
-            Given a solo card
+        it(`Given a solo card
             When it has been dragged over some different containers and dropped in the source one
-            Then it should not try to reorder the cards
-        `, async () => {
+            Then it should not try to reorder the cards`, async () => {
             const column = { id: 31, label: "Todo" } as ColumnDefinition;
             const card = { id: 667, label: "Do the stuff", has_children: false } as Card;
             const swimlane = { card } as Swimlane;
@@ -309,11 +311,9 @@ describe(`drag-drop-actions`, () => {
             expect(context.dispatch).not.toHaveBeenCalledWith();
         });
 
-        it(`
-            Given a child card alone in a cell
+        it(`Given a child card alone in a cell
             When it has been dragged over some different containers and dropped in the source one
-            Then it should not try to reorder the cards
-        `, async () => {
+            Then it should not try to reorder the cards`, async () => {
             const column = { id: 31, label: "Todo" } as ColumnDefinition;
             const swimlane = { card: { id: 666, has_children: true } } as Swimlane;
             const card = { id: 667, label: "Do the stuff", has_children: false } as Card;
@@ -336,6 +336,204 @@ describe(`drag-drop-actions`, () => {
 
             expect(card_positioner.getCardPosition).not.toHaveBeenCalled();
             expect(context.dispatch).not.toHaveBeenCalledWith();
+        });
+    });
+
+    describe("reorderCardsInCell", () => {
+        const card_to_move = { id: 102, tracker_id: 7, mapped_list_value: { id: 49 } } as Card;
+        const swimlane: Swimlane = {
+            card: { id: 86 },
+            children_cards: [
+                { id: 100, tracker_id: 7, mapped_list_value: { id: 49 } } as Card,
+                card_to_move,
+            ],
+        } as Swimlane;
+
+        const column: ColumnDefinition = {
+            id: 42,
+        } as ColumnDefinition;
+
+        const position: CardPosition = {
+            ids: [card_to_move.id],
+            direction: Direction.BEFORE,
+            compared_to: 100,
+        };
+
+        const payload = {
+            swimlane,
+            column,
+            position,
+        } as ReorderCardsPayload;
+
+        it("The new position of the card is stored and the cards are reordered", async () => {
+            const tlpPatchMock = jest.spyOn(tlp, "patch");
+            mockFetchSuccess(tlpPatchMock, {});
+            await actions.reorderCardsInCell(context, payload);
+
+            expect(tlpPatchMock).toHaveBeenCalledWith(`/api/v1/taskboard_cells/86/column/42`, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    order: {
+                        ids: [102],
+                        direction: "before",
+                        compared_to: 100,
+                    },
+                }),
+            });
+
+            expect(context.commit).toHaveBeenCalledWith("changeCardPosition", payload);
+        });
+
+        it("A modal opens on error", async () => {
+            const error = new Error();
+
+            const tlpPatchMock = jest.spyOn(tlp, "patch");
+            tlpPatchMock.mockRejectedValue(error);
+
+            await actions.reorderCardsInCell(context, payload);
+
+            expect(context.dispatch).toHaveBeenCalledWith("error/handleModalError", error, {
+                root: true,
+            });
+        });
+    });
+
+    describe("moveCardToCell", () => {
+        let column: ColumnDefinition;
+
+        beforeEach(() => {
+            column = { id: 42 } as ColumnDefinition;
+        });
+
+        it(`when a child card was moved,
+            it will PATCH the new cell,
+            move the card to its new column
+            and refresh the card and its parent`, async () => {
+            const card_to_move = {
+                id: 102,
+                tracker_id: 7,
+                mapped_list_value: { id: 49 },
+                has_children: true,
+            } as Card;
+            const swimlane = {
+                card: { id: 86 },
+                children_cards: [
+                    { id: 100, tracker_id: 7, mapped_list_value: { id: 49 } } as Card,
+                    card_to_move,
+                ],
+            } as Swimlane;
+            const payload: MoveCardsPayload = { swimlane, column, card: card_to_move };
+
+            const tlpPatchMock = jest.spyOn(tlp, "patch");
+            mockFetchSuccess(tlpPatchMock, {});
+
+            await actions.moveCardToCell(context, payload);
+
+            expect(tlpPatchMock).toHaveBeenCalledWith(`/api/v1/taskboard_cells/86/column/42`, {
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ add: card_to_move.id }),
+            });
+
+            expect(context.dispatch).toHaveBeenCalledWith("refreshCardAndParent", {
+                swimlane,
+                card: card_to_move,
+            });
+            expect(context.commit).toHaveBeenCalledWith("moveCardToColumn", payload);
+        });
+
+        it(`when a solo card was moved,
+            it will PATCH the new cell,
+            move the card to its new column
+            and refresh the card`, async () => {
+            const card_to_move = {
+                id: 102,
+                tracker_id: 7,
+                mapped_list_value: { id: 49 },
+                has_children: false,
+            } as Card;
+            const swimlane: Swimlane = {
+                card: card_to_move,
+                children_cards: [],
+                is_loading_children_cards: false,
+            };
+            const payload: MoveCardsPayload = { swimlane, column, card: card_to_move };
+
+            const tlpPatchMock = jest.spyOn(tlp, "patch");
+            mockFetchSuccess(tlpPatchMock, {});
+
+            await actions.moveCardToCell(context, payload);
+
+            expect(tlpPatchMock).toHaveBeenCalledWith("/api/v1/taskboard_cells/86/column/42", {
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ add: card_to_move.id }),
+            });
+
+            expect(context.dispatch).toHaveBeenCalledWith("refreshCardAndParent", {
+                swimlane,
+                card: card_to_move,
+            });
+            expect(context.commit).toHaveBeenCalledWith("moveCardToColumn", payload);
+        });
+
+        it("When the payload has a position, it will add it to the REST payload", async () => {
+            const card_to_move = {
+                id: 102,
+                tracker_id: 7,
+                mapped_list_value: { id: 49 },
+                has_children: true,
+            } as Card;
+            const swimlane = { card: { id: 86 }, children_cards: [card_to_move] } as Swimlane;
+            const position: CardPosition = {
+                ids: [card_to_move.id],
+                direction: Direction.BEFORE,
+                compared_to: 100,
+            };
+            const payload: MoveCardsPayload = { swimlane, column, card: card_to_move, position };
+
+            const tlpPatchMock = jest.spyOn(tlp, "patch");
+            mockFetchSuccess(tlpPatchMock, {});
+
+            await actions.moveCardToCell(context, payload);
+
+            expect(tlpPatchMock).toHaveBeenCalledWith(`/api/v1/taskboard_cells/86/column/42`, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    add: card_to_move.id,
+                    order: {
+                        ids: [102],
+                        direction: "before",
+                        compared_to: 100,
+                    },
+                }),
+            });
+
+            expect(context.commit).toHaveBeenCalledWith("moveCardToColumn", payload);
+        });
+
+        it("A modal opens on error", async () => {
+            const card_to_move = {
+                id: 102,
+                tracker_id: 7,
+                mapped_list_value: { id: 49 },
+                has_children: true,
+            } as Card;
+            const swimlane = { card: { id: 86 }, children_cards: [card_to_move] } as Swimlane;
+            const payload: MoveCardsPayload = { swimlane, column, card: card_to_move };
+
+            const error = new Error();
+
+            const tlpPatchMock = jest.spyOn(tlp, "patch");
+            tlpPatchMock.mockRejectedValue(error);
+
+            await actions.moveCardToCell(context, payload);
+
+            expect(context.dispatch).toHaveBeenCalledWith("error/handleModalError", error, {
+                root: true,
+            });
         });
     });
 });

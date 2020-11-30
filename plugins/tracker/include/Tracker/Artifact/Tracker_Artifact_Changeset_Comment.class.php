@@ -19,6 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Markdown\CommonMarkInterpreter;
+
 class Tracker_Artifact_Changeset_Comment
 {
 
@@ -32,13 +34,15 @@ class Tracker_Artifact_Changeset_Comment
      */
     public const HTML_COMMENT = 'html';
 
+    public const MARKDOWN_COMMENT = 'markdown';
+
     /**
     * @const Changeset available comment formats
     */
-    private static $available_comment_formats = array(
+    private static $available_comment_formats = [
         self::TEXT_COMMENT,
         self::HTML_COMMENT,
-    );
+    ];
 
     public $id;
     /**
@@ -57,18 +61,18 @@ class Tracker_Artifact_Changeset_Comment
     /**
      * @var array of purifier levels to be used when the comment is displayed in text/plain context
      */
-    public static $PURIFIER_LEVEL_IN_TEXT = array(
-        'html' => CODENDI_PURIFIER_STRIP_HTML,
-        'text' => CODENDI_PURIFIER_DISABLED,
-    );
+    public static $PURIFIER_LEVEL_IN_TEXT = [
+        self::HTML_COMMENT => CODENDI_PURIFIER_STRIP_HTML,
+        self::TEXT_COMMENT => CODENDI_PURIFIER_DISABLED,
+    ];
 
     /**
      * @var array of purifier levels to be used when the comment is displayed in text/html context
      */
-    public static $PURIFIER_LEVEL_IN_HTML = array(
-        'html' => CODENDI_PURIFIER_FULL,
-        'text' => CODENDI_PURIFIER_BASIC,
-    );
+    public static $PURIFIER_LEVEL_IN_HTML = [
+        self::HTML_COMMENT => CODENDI_PURIFIER_FULL,
+        self::TEXT_COMMENT => CODENDI_PURIFIER_BASIC,
+    ];
 
     /**
      * Constructor
@@ -114,12 +118,9 @@ class Tracker_Artifact_Changeset_Comment
         return $this->purifyBody($level);
     }
 
-    /**
-     * @return string the cleaned body to be included in a text/html context
-     */
-    public function getPurifiedBodyForHTML()
+    public function getPurifiedBodyForHTML(): string
     {
-        if ($this->bodyFormat === 'html') {
+        if ($this->bodyFormat === self::HTML_COMMENT) {
             return $this->purifyHTMLBody();
         }
 
@@ -127,22 +128,20 @@ class Tracker_Artifact_Changeset_Comment
         return $this->purifyBody($level);
     }
 
-    private function purifyBody($level)
+    private function purifyBody($level): string
     {
-        $hp = Codendi_HTMLPurifier::instance();
-        return $hp->purify(
+        return $this->getPurifier()->purify(
             $this->body,
             $level,
             $this->changeset->getArtifact()->getTracker()->getGroupId()
         );
     }
 
-    private function purifyHTMLBody()
+    private function purifyHTMLBody(): string
     {
-        $hp = Codendi_HTMLPurifier::instance();
-        return $hp->purifyHTMLWithReferences(
+        return $this->getPurifier()->purifyHTMLWithReferences(
             $this->body,
-            $this->changeset->artifact->getTracker()->group_id
+            $this->changeset->artifact->getTracker()->getGroupId()
         );
     }
 
@@ -151,7 +150,7 @@ class Tracker_Artifact_Changeset_Comment
      *
      * @return string the HTML code of this comment
      */
-    public function fetchFollowUp()
+    public function fetchFollowUp(PFUser $current_user)
     {
         if ($this->hasEmptyBody()) {
             return null;
@@ -160,20 +159,28 @@ class Tracker_Artifact_Changeset_Comment
         $uh   = UserHelper::instance();
         $html = '<div class="tracker_artifact_followup_comment_edited_by">';
         if ($this->parent_id) {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'last_edited');
-            $html .= ' '. $uh->getLinkOnUserFromUserId($this->submitted_by) .' ';
-            $html .= DateHelper::timeAgoInWords($this->submitted_on, false, true);
+            $html .= dgettext('tuleap-tracker', 'last edited by:');
+            $html .= ' ' . $uh->getLinkOnUserFromUserId($this->submitted_by) . ' ';
+            $html .= DateHelper::relativeDateInlineContext($this->submitted_on, $current_user);
         }
         $html .= '</div>';
 
-        if (!empty($this->body)) {
-            $html .= '<input type="hidden"
-                id="tracker_artifact_followup_comment_body_format_'.$this->changeset->getId().'"
-                name="tracker_artifact_followup_comment_body_format_'.$this->changeset->getId().'"
-                value="'.$this->bodyFormat.'" />';
-            $html .= '<div class="tracker_artifact_followup_comment_body">';
-            if ($this->parent_id && !trim($this->body)) {
-                $html .= '<em>'. $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'comment_cleared') .'</em>';
+        if (! empty($this->body)) {
+            // consider markdown format to be similar to text one for now
+            $considered_body_format = $this->bodyFormat;
+            if ($considered_body_format === self::MARKDOWN_COMMENT) {
+                $considered_body_format = self::TEXT_COMMENT;
+            }
+            $html        .= '<input type="hidden"
+                id="tracker_artifact_followup_comment_body_format_' . $this->changeset->getId() . '"
+                name="tracker_artifact_followup_comment_body_format_' . $this->changeset->getId() . '"
+                value="' . $considered_body_format . '" />';
+            $html        .= '<div class="tracker_artifact_followup_comment_body">';
+            if ($this->parent_id && ! trim($this->body)) {
+                $html .= '<em>' . dgettext('tuleap-tracker', 'Comment has been cleared') . '</em>';
+            } elseif ($this->bodyFormat === self::MARKDOWN_COMMENT) {
+                $content_interpretor = CommonMarkInterpreter::build(Codendi_HTMLPurifier::instance());
+                $html .= $content_interpretor->getInterpretedContent($this->body);
             } else {
                 $html .= $this->getPurifiedBodyForHTML();
             }
@@ -198,25 +205,28 @@ class Tracker_Artifact_Changeset_Comment
      * @param String  $format Format of the output
      * @return string the HTML code of this comment
      */
-    public function fetchMailFollowUp($format = 'html')
+    public function fetchMailFollowUp($format = self::HTML_COMMENT)
     {
-        if ($format != 'html') {
+        if ($format !== self::HTML_COMMENT) {
             if ($this->hasEmptyBody()) {
                 return '';
             }
 
             $body = $this->getPurifiedBodyForText();
-            return PHP_EOL.PHP_EOL.$body.PHP_EOL.PHP_EOL;
+            return PHP_EOL . PHP_EOL . $body . PHP_EOL . PHP_EOL;
         }
 
-        $user     = UserManager::instance()->getUserById($this->submitted_by);
+        $user     = $this->getCurrentUser();
+        if ($user === null) {
+            return '';
+        }
         $avatar   = $user->fetchHtmlAvatar();
-        $timezone = ($user->getId() != 0) ? ' ('.$user->getTimezone().')' : '';
+        $timezone = ($user->getId() != 0) ? ' (' . $user->getTimezone() . ')' : '';
 
         $html =
             '<tr valign="top">
-                <td align="left">'.
-                    $avatar.'
+                <td align="left">' .
+                    $avatar . '
                 </td>
                 <td align="left" valign="top">
                     <div style="
@@ -234,20 +244,20 @@ class Tracker_Artifact_Changeset_Comment
                         <table style="width:100%; background-color:#F6F6F6;">
                             <tr>
                                 <td>
-                                    <span> '.
-                                        $this->fetchFormattedMailUserInfo($user).'
+                                    <span> ' .
+                                        $this->fetchFormattedMailUserInfo($user) . '
                                     </span>
                                 </td>
                                 <td align="right" valign="top">
-                                    <div style="text-align:right;font-size:0.95em;color:#666;">'.
-                                        format_date($GLOBALS['Language']->getText('system', 'datefmt'), $this->submitted_on).
-                                        $timezone.'
+                                    <div style="text-align:right;font-size:0.95em;color:#666;">' .
+                                        format_date($GLOBALS['Language']->getText('system', 'datefmt'), $this->submitted_on) .
+                                        $timezone . '
                                     </div>
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="2" >'.
-                                    $this->fetchFormattedMailComment() . ' ' .'
+                                <td colspan="2" >' .
+                                    $this->fetchFormattedMailComment() . ' ' . '
                                 </td>
                             </tr>
                         </table>
@@ -275,20 +285,22 @@ class Tracker_Artifact_Changeset_Comment
         return $comment_format;
     }
 
-    private function fetchFormattedMailComment()
+    private function fetchFormattedMailComment(): string
     {
         $formatted_comment = '';
-        if (!empty($this->body)) {
-            if ($this->parent_id && !trim($this->body)) {
+        $comment = '';
+        if (! empty($this->body)) {
+            if ($this->parent_id && ! trim($this->body)) {
                 $comment =
-                '<em>'.
-                    $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'comment_cleared') .'
-                </em>';
+                '<em>' . dgettext('tuleap-tracker', "Comment has been cleared") . '</em>';
             } else {
-                $comment = $this->getPurifiedBodyForHTML();
+                if ($this->parent_id) {
+                    $comment .= "<em>" . dgettext('tuleap-tracker', "Updated comment:") . "</em><br><br>";
+                }
+                $comment .= $this->getPurifiedBodyForHTML();
             }
 
-            $formatted_comment = '<div style="margin: 1em 0; padding: 0.5em 1em;">'. $comment .'</div>';
+            $formatted_comment = '<div style="margin: 1em 0; padding: 0.5em 1em;">' . $comment . '</div>';
         }
 
         return $formatted_comment;
@@ -298,10 +310,10 @@ class Tracker_Artifact_Changeset_Comment
     {
         $hp = Codendi_HTMLPurifier::instance();
 
-        if ($user && !$user->isAnonymous()) {
+        if ($user && ! $user->isAnonymous()) {
             $user_info =
-                '<a href="mailto:'.$hp->purify($user->getEmail()).'">'.
-                    $hp->purify($user->getRealName()).' ('.$hp->purify($user->getUserName()) .')
+                '<a href="mailto:' . $hp->purify($user->getEmail()) . '">' .
+                    $hp->purify($user->getRealName()) . ' (' . $hp->purify($user->getUserName()) . ')
                 </a>';
         } else {
             $user = UserManager::instance()->getUserAnonymous();
@@ -328,10 +340,14 @@ class Tracker_Artifact_Changeset_Comment
 
         $user_xml_exporter->exportUserByUserId($this->submitted_by, $comment_node, 'submitted_by');
 
-        $submitted_on_node = $comment_node->addChild('submitted_on', date('c', $this->submitted_on));
-        $submitted_on_node->addAttribute('format', 'ISO8601');
-
         $cdata_factory   = new XML_SimpleXMLCDATAFactory();
+        $cdata_factory->insertWithAttributes(
+            $comment_node,
+            'submitted_on',
+            date('c', $this->submitted_on),
+            ['format' => 'ISO8601']
+        );
+
         $comment_escaped = $this->getCommentBodyWithEscapedCrossReferences();
         $cdata_factory->insert($comment_node, 'body', $comment_escaped);
 
@@ -342,7 +358,7 @@ class Tracker_Artifact_Changeset_Comment
     {
         $reference_manager = new ReferenceManager();
         $pattern           = $reference_manager->_getExpForRef();
-        $matches           = array();
+        $matches           = [];
         $escaped_body      = $this->body;
 
         if (preg_match_all($pattern, $this->body, $matches)) {
@@ -353,5 +369,21 @@ class Tracker_Artifact_Changeset_Comment
         }
 
         return $escaped_body;
+    }
+
+    /**
+     * Protected for testing purpose
+     */
+    protected function getCurrentUser(): ?PFUser
+    {
+        return UserManager::instance()->getUserById($this->submitted_by);
+    }
+
+    /**
+     * Protected for testing purpose
+     */
+    protected function getPurifier(): Codendi_HTMLPurifier
+    {
+        return Codendi_HTMLPurifier::instance();
     }
 }

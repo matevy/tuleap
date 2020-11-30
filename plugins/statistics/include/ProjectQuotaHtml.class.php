@@ -1,7 +1,7 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2015 – Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics 2012. All rights reserved
- * Copyright (c) Enalean, 2015 – 2017. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,17 +20,15 @@
  */
 
 use Tuleap\Admin\AdminPageRenderer;
+use Tuleap\InstanceBaseURLBuilder;
 use Tuleap\Statistics\AdminHeaderPresenter;
 use Tuleap\Statistics\ProjectsOverQuotaPresenter;
-
-require_once('ProjectQuotaManager.class.php');
 
 /**
  * Management of custom quota by project
  */
 class ProjectQuotaHtml
 {
-
     /**
      * ProjectManager instance
      */
@@ -43,19 +41,24 @@ class ProjectQuotaHtml
 
     /** @var UserManager */
     private $user_manager;
-
     /**
-     * Constructor of the class
-     *
-     * @return Void
+     * @var InstanceBaseURLBuilder
      */
-    public function __construct()
+    private $instance_url_builder;
+    /**
+     * @var Codendi_HTMLPurifier
+     */
+    private $html_purifier;
+
+    public function __construct(InstanceBaseURLBuilder $instance_url_builder, Codendi_HTMLPurifier $html_purifier)
     {
-        $this->dao                 = new Statistics_ProjectQuotaDao();
-        $this->projectManager      = ProjectManager::instance();
-        $this->projectQuotaManager = new ProjectQuotaManager();
-        $this->csrf                = new CSRFSynchronizerToken('project_quota.php');
-        $this->user_manager        = UserManager::instance();
+        $this->dao                  = new Statistics_ProjectQuotaDao();
+        $this->projectManager       = ProjectManager::instance();
+        $this->projectQuotaManager  = new ProjectQuotaManager();
+        $this->csrf                 = new CSRFSynchronizerToken('project_quota.php');
+        $this->user_manager         = UserManager::instance();
+        $this->instance_url_builder = $instance_url_builder;
+        $this->html_purifier        = $html_purifier;
     }
 
     /**
@@ -84,7 +87,7 @@ class ProjectQuotaHtml
      *
      * @param HTTPRequest $request HTTP request
      *
-     * @return String
+     * @return string|null
      */
     private function validateProjectFilter(HTTPRequest $request)
     {
@@ -107,7 +110,7 @@ class ProjectQuotaHtml
     {
         $validSort = new Valid_String('sort');
         $sortBy    = null;
-        $validRequest = array();
+        $validRequest = [];
         if ($request->valid($validSort)) {
             $sortBy  = $request->get('sort');
             $validRequest['sort'] = $sortBy;
@@ -126,32 +129,28 @@ class ProjectQuotaHtml
 
     public function getListOfProjectQuotaPresenters(HTTPRequest $request)
     {
-        $quotas       = array();
+        $quotas       = [];
         $count        = 25;
         $offset       = $this->validateOffset($request);
         $filter       = $this->validateProjectFilter($request);
         $orderParams  = $this->validateOrderByFilter($request);
         $sortBy       = $orderParams['sort'];
         $orderBy      = $orderParams['order'];
-        $list         = $this->getListOfProjectsIds($filter);
+        $list         = $this->getListOfProjectsIds($filter ?? '');
         $purifier     = Codendi_HTMLPurifier::instance();
 
         $customQuotas = $this->dao->getAllCustomQuota($list, $offset, $count, $sortBy, $orderBy);
         $total_size   = $this->dao->foundRows();
         foreach ($customQuotas as $row) {
             $project      = $this->projectManager->getProject($row[Statistics_ProjectQuotaDao::GROUP_ID]);
-            $project_name = (empty($project)) ? '' : $project->getUnconvertedPublicName();
+            $project_name = (empty($project)) ? '' : $project->getPublicName();
             $user         = $this->user_manager->getUserById($row[Statistics_ProjectQuotaDao::REQUESTER_ID]);
 
-            $quotas[] = array(
+            $quotas[] = [
                 'project_id'              => $row[Statistics_ProjectQuotaDao::GROUP_ID],
                 'project_name'            => $project_name,
                 'user_name'               => UserHelper::instance()->getDisplayNameFromUser($user),
-                'quota'                   => $GLOBALS['Language']->getText(
-                    'plugin_statistics',
-                    'quota_size',
-                    $row[Statistics_ProjectQuotaDao::REQUEST_SIZE]
-                ),
+                'quota'                   => sprintf(dgettext('tuleap-statistics', '%1$s GB'), $row[Statistics_ProjectQuotaDao::REQUEST_SIZE]),
                 'motivation'              => $row[Statistics_ProjectQuotaDao::EXCEPTION_MOTIVATION],
                 'purified_motivation'     => $purifier->purify(
                     $row[Statistics_ProjectQuotaDao::EXCEPTION_MOTIVATION],
@@ -162,10 +161,10 @@ class ProjectQuotaHtml
                     $row[Statistics_ProjectQuotaDao::REQUEST_DATE]
                 ),
                 'purified_delete_confirm' => $purifier->purify(
-                    $GLOBALS['Language']->getText('plugin_statistics', 'delete_confirm', $project_name),
+                    sprintf(dgettext('tuleap-statistics', 'Wow, wait a minute. You are about to delete the quota for <b>%1$s</b> project. Please confirm your action.'), $project_name),
                     CODENDI_PURIFIER_LIGHT
                 )
-            );
+            ];
         }
 
         $pagination = new \Tuleap\Layout\PaginationPresenter(
@@ -174,13 +173,13 @@ class ProjectQuotaHtml
             count($quotas),
             $total_size,
             '/plugins/statistics/project_quota.php',
-            array()
+            []
         );
 
-        return array(
+        return [
             'pagination' => $pagination,
             'quotas'     => $quotas
-        );
+        ];
     }
 
     /**
@@ -192,7 +191,7 @@ class ProjectQuotaHtml
      */
     private function getListOfProjectsIds($filter)
     {
-        $list = array();
+        $list = [];
         if (! $filter) {
             return $list;
         }
@@ -219,7 +218,7 @@ class ProjectQuotaHtml
      */
     public function handleRequest(HTTPRequest $request)
     {
-        $validAction = new Valid_WhiteList('action', array('add', 'delete'));
+        $validAction = new Valid_WhiteList('action', ['add', 'delete']);
         if ($request->valid($validAction)) {
             $action = $request->get('action');
             switch ($action) {
@@ -268,7 +267,7 @@ class ProjectQuotaHtml
                     break;
             }
         } else {
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_statistics', 'invalid_action'));
+            $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-statistics', 'Invalid Action'));
         }
     }
 
@@ -284,7 +283,7 @@ class ProjectQuotaHtml
             $exceeding_projects = $this->enhanceWithModalValues($exceeding_projects);
         }
 
-        $title     = $GLOBALS['Language']->getText('plugin_statistics', 'projects_over_quota_title');
+        $title     = dgettext('tuleap-statistics', 'Projects exceeding their disk quota');
         $presenter = new ProjectsOverQuotaPresenter($this->getHeaderPresenter($title), $exceeding_projects);
         $renderer  = new AdminPageRenderer();
         $renderer->renderANoFramedPresenter($title, STATISTICS_TEMPLATE_DIR, 'projects-over-quota', $presenter);
@@ -301,25 +300,14 @@ class ProjectQuotaHtml
         );
     }
 
-    /**
-     * @return array
-     */
-    private function enhanceWithModalValues(array $exceeding_projects)
+    private function enhanceWithModalValues(array $exceeding_projects): array
     {
         $new_values['csrf_token']  = new CSRFSynchronizerToken('');
-        $enhanced_projects         = array();
+        $enhanced_projects         = [];
 
         foreach ($exceeding_projects as $project) {
-            $new_values['subject_content'] = $GLOBALS['Language']->getText(
-                'plugin_statistics',
-                'disk_quota_warning_subject',
-                array($project['project_name'])
-            );
-            $new_values['body_content']    = $GLOBALS['Language']->getText(
-                'plugin_statistics',
-                'disk_quota_warning_body',
-                array($project['project_name'], $project['current_disk_space'])
-            );
+            $new_values['subject_content'] = sprintf(dgettext('tuleap-statistics', '[Disk quota] [Warning] Project %1$s is exceeding allowed disk quota'), $project['project_name']);
+            $new_values['body_content']    = sprintf(dgettext('tuleap-statistics', 'Dear project administrator,<br><br>The size of the project <a href="%1$s">%2$s</a> is: "%3$s".<br>We advise you to delete unneeded data in order to decrease the project size growth. <br>(please note that deleting items from a subversion repository has no effect on the disk size, on the contrary, it may increase your server repository size).<br>We advise you to avoid storing binaries into your Subversion repository.<br>For Documents, you can remove oldest versions in order to decrease the project\'s size.<br><br>--<br>Please note that without any actions from you, for the safety of the entire platform, your project may be suspended until we find a solution.'), $this->html_purifier->purify($this->instance_url_builder->build() . '/projects/' . urlencode($project['project_unix_name'])), $this->html_purifier->purify($project['project_name']), $this->html_purifier->purify($project['current_disk_space']));
 
             $enhanced_projects[] = array_merge($project, $new_values);
         }

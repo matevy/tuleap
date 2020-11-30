@@ -21,7 +21,10 @@
     <div class="empty-page">
         <div class="empty-page-illustration">
             <svg xmlns="http://www.w3.org/2000/svg" width="364" height="150" fill="none">
-                <use href="../../images/illustrations.svg#board-without-any-columns-for-admin" class="tlp-illustration"/>
+                <use
+                    href="../../images/illustrations.svg#board-without-any-columns-for-admin"
+                    class="tlp-illustration"
+                />
             </svg>
         </div>
         <div class="empty-page-text-with-small-text">
@@ -31,7 +34,7 @@
             </div>
         </div>
         <a class="tlp-button-primary tlp-button-large" v-bind:href="admin_url">
-            <i class="fa fa-long-arrow-right tlp-button-icon"></i>
+            <i class="fas fa-long-arrow-alt-right tlp-button-icon"></i>
             <translate>Define columns</translate>
         </a>
     </div>

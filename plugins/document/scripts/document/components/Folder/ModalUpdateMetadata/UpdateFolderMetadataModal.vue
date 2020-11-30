@@ -19,28 +19,36 @@
   -->
 
 <template>
-    <form class="tlp-modal" role="dialog" v-bind:aria-labelled-by="aria_labelled_by" v-on:submit="updateMetadata">
-        <modal-header v-bind:modal-title="modal_title"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-header-class="'fa-pencil'"
+    <form
+        class="tlp-modal"
+        role="dialog"
+        v-bind:aria-labelled-by="aria_labelled_by"
+        v-on:submit="updateMetadata"
+    >
+        <modal-header
+            v-bind:modal-title="modal_title"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-header-class="'fa-pencil'"
         />
-        <modal-feedback/>
+        <modal-feedback />
         <div class="tlp-modal-body document-item-modal-body">
-            <folder-global-metadata-for-update v-bind:currently-updated-item="item_to_update"
-                                               v-bind:parent="current_folder"
-                                               v-bind:item-metadata="formatted_item_metadata"
+            <folder-global-metadata-for-update
+                v-bind:currently-updated-item="item_to_update"
+                v-bind:parent="current_folder"
+                v-bind:item-metadata="formatted_item_metadata"
             />
         </div>
-        <modal-footer v-bind:is-loading="is_loading"
-                      v-bind:submit-button-label="submit_button_label"
-                      v-bind:aria-labelled-by="aria_labelled_by"
-                      v-bind:icon-submit-button-class="'fa-pencil'"
+        <modal-footer
+            v-bind:is-loading="is_loading"
+            v-bind:submit-button-label="submit_button_label"
+            v-bind:aria-labelled-by="aria_labelled_by"
+            v-bind:icon-submit-button-class="'fa-pencil'"
         />
     </form>
 </template>
 
 <script>
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 import { mapState } from "vuex";
 import { sprintf } from "sprintf-js";
 import ModalHeader from "../ModalCommon/ModalHeader.vue";
@@ -49,7 +57,7 @@ import ModalFooter from "../ModalCommon/ModalFooter.vue";
 import FolderGlobalMetadataForUpdate from "../Metadata/FolderMetadata/FolderGlobalMetadataForUpdate.vue";
 import {
     transformCustomMetadataForItemUpdate,
-    transformFolderMetadataForRecursionAtUpdate
+    transformFolderMetadataForRecursionAtUpdate,
 } from "../../../helpers/metadata-helpers/data-transformatter-helper.js";
 import EventBus from "../../../helpers/event-bus.js";
 import { getCustomMetadata } from "../../../helpers/metadata-helpers/custom-metadata-helper.js";
@@ -60,10 +68,10 @@ export default {
         FolderGlobalMetadataForUpdate,
         ModalFeedback,
         ModalHeader,
-        ModalFooter
+        ModalFooter,
     },
     props: {
-        item: Object
+        item: Object,
     },
     data() {
         return {
@@ -72,7 +80,7 @@ export default {
             modal: null,
             recursion_option: "none",
             metadata_list_to_update: [],
-            formatted_item_metadata: []
+            formatted_item_metadata: [],
         };
     },
     computed: {
@@ -86,7 +94,7 @@ export default {
         },
         aria_labelled_by() {
             return "document-update-folder-metadata-modal";
-        }
+        },
     },
     beforeMount() {
         this.item_to_update = transformFolderMetadataForRecursionAtUpdate(this.item);
@@ -124,7 +132,7 @@ export default {
                 this.item_to_update,
                 this.current_folder,
                 this.metadata_list_to_update,
-                this.recursion_option
+                this.recursion_option,
             ]);
             this.is_loading = false;
             if (this.has_modal_error === false) {
@@ -142,10 +150,10 @@ export default {
                 return;
             }
             const item_metadata = this.formatted_item_metadata.find(
-                metadata => metadata.short_name === event.detail.id
+                (metadata) => metadata.short_name === event.detail.id
             );
             item_metadata.list_value = event.detail.value;
-        }
-    }
+        },
+    },
 };
 </script>

@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 /**
  * Release     ->   Epic
  * `- Sprint   ->   `- Story
@@ -28,35 +30,34 @@
  */
 class Planning_ArtifactParentsSelector_NearestMilestoneWithBacklogTrackerCommand extends Planning_ArtifactParentsSelector_Command
 {
-
     /**
      * @see Planning_ArtifactParentsSelector_Command
      *
      * @return array of Tracker_Artifact
      */
-    public function getPossibleParents(Tracker $parent_tracker, Tracker_Artifact $source_artifact, PFUser $user)
+    public function getPossibleParents(Tracker $parent_tracker, Artifact $source_artifact, PFUser $user)
     {
         $milestone = $this->findNearestMilestoneWithBacklogTracker($parent_tracker, $source_artifact, $user);
         if ($milestone) {
-            $linked_artifacts = array();
+            $linked_artifacts = [];
             foreach ($milestone->getPlannedArtifacts($user)->getChildren() as $child) {
                 $linked_artifacts[] = $child->getObject();
             }
-            array_walk($linked_artifacts, array($this, 'keepOnlyArtifactsBelongingToParentTracker'), $parent_tracker);
+            array_walk($linked_artifacts, [$this, 'keepOnlyArtifactsBelongingToParentTracker'], $parent_tracker);
             return array_values(array_filter($linked_artifacts));
         }
     }
 
-    private function findNearestMilestoneWithBacklogTracker(Tracker $expected_backlog_tracker, Tracker_Artifact $source_artifact, PFUser $user)
+    private function findNearestMilestoneWithBacklogTracker(Tracker $expected_backlog_tracker, Artifact $source_artifact, PFUser $user)
     {
         $planning = $this->planning_factory->getPlanningByPlanningTracker($source_artifact->getTracker());
-        if ($planning && in_array($expected_backlog_tracker, $planning->getBacklogTrackers())) {
+        if ($planning && in_array($expected_backlog_tracker->getId(), $planning->getBacklogTrackersIds())) {
             return $this->milestone_factory->getMilestoneFromArtifactWithPlannedArtifacts($source_artifact, $user);
-        } else {
-            $parent = $source_artifact->getParent($user);
-            if ($parent) {
-                return $this->findNearestMilestoneWithBacklogTracker($expected_backlog_tracker, $parent, $user);
-            }
+        }
+
+        $parent = $source_artifact->getParent($user);
+        if ($parent) {
+            return $this->findNearestMilestoneWithBacklogTracker($expected_backlog_tracker, $parent, $user);
         }
     }
 }

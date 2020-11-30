@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,7 +23,10 @@ namespace Tuleap\Queue;
 
 interface PersistentQueue
 {
-    public function pushSinglePersistentMessage($topic, $content);
+    public function pushSinglePersistentMessage(string $topic, $content): void;
 
-    public function listen($queue_id, $topic, $callback);
+    /**
+     * @psalm-param callable(string): void $callback
+     */
+    public function listen($queue_id, $topic, callable $callback);
 }

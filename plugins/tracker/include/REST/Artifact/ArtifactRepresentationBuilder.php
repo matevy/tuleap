@@ -22,13 +22,13 @@ namespace Tuleap\Tracker\REST\Artifact;
 
 use Closure;
 use PFUser;
-use Tracker_Artifact;
 use Tracker_Artifact_Changeset;
 use Tracker_Artifact_PaginatedArtifacts;
 use Tracker_ArtifactFactory;
 use Tracker_FormElement_Field;
 use Tracker_FormElement_Field_Alphanum;
 use Tracker_FormElementFactory;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenter;
 use Tuleap\Tracker\REST\ChangesetRepresentationCollection;
@@ -63,94 +63,70 @@ class ArtifactRepresentationBuilder
     /**
      * Return an artifact snapshot representation
      *
-     * @param PFUser $user
-     * @param Tracker_Artifact $artifact
-     * @param TrackerRepresentation $tracker_representation
      * @return ArtifactRepresentation
      */
-    public function getArtifactRepresentationWithFieldValues(PFUser $user, Tracker_Artifact $artifact, TrackerRepresentation $tracker_representation)
+    public function getArtifactRepresentationWithFieldValues(PFUser $user, Artifact $artifact, TrackerRepresentation $tracker_representation)
     {
-        $artifact_representation = new ArtifactRepresentation();
-        $artifact_representation->build(
+        return ArtifactRepresentation::build(
             $user,
             $artifact,
             $this->getFieldsValues($user, $artifact),
             null,
             $tracker_representation
         );
-
-        return $artifact_representation;
     }
 
     /**
      * Return an artifact snapshot representation
      *
-     * @param PFUser $user
-     * @param Tracker_Artifact $artifact
-     * @param TrackerRepresentation $tracker_representation
      * @return ArtifactRepresentation
      */
-    public function getArtifactRepresentationWithFieldValuesByFieldValues(PFUser $user, Tracker_Artifact $artifact, TrackerRepresentation $tracker_representation)
+    public function getArtifactRepresentationWithFieldValuesByFieldValues(PFUser $user, Artifact $artifact, TrackerRepresentation $tracker_representation)
     {
-        $artifact_representation = new ArtifactRepresentation();
-        $artifact_representation->build(
+        return ArtifactRepresentation::build(
             $user,
             $artifact,
             null,
             $this->getFieldValuesIndexedByName($user, $artifact),
             $tracker_representation
         );
-
-        return $artifact_representation;
     }
 
     /**
      * Return an artifact snapshot representation
      *
-     * @param PFUser $user
-     * @param Tracker_Artifact $artifact
-     * @param TrackerRepresentation $tracker_representation
      * @return ArtifactRepresentation
      */
-    public function getArtifactRepresentationWithFieldValuesInBothFormat(PFUser $user, Tracker_Artifact $artifact, TrackerRepresentation $tracker_representation)
+    public function getArtifactRepresentationWithFieldValuesInBothFormat(PFUser $user, Artifact $artifact, TrackerRepresentation $tracker_representation)
     {
-        $artifact_representation = new ArtifactRepresentation();
-        $artifact_representation->build(
+        return ArtifactRepresentation::build(
             $user,
             $artifact,
             $this->getFieldsValues($user, $artifact),
             $this->getFieldValuesIndexedByName($user, $artifact),
             $tracker_representation
         );
-
-        return $artifact_representation;
     }
 
     /**
      * Return an artifact snapshot representation
      *
-     * @param PFUser           $user
-     * @param Tracker_Artifact $artifact
      * @return ArtifactRepresentation
      */
-    public function getArtifactRepresentation(PFUser $user, Tracker_Artifact $artifact)
+    public function getArtifactRepresentation(PFUser $user, Artifact $artifact)
     {
-        $tracker_representation  = new MinimalTrackerRepresentation();
-        $tracker_representation->build($artifact->getTracker());
+        $tracker_representation  = MinimalTrackerRepresentation::build($artifact->getTracker());
 
-        $artifact_representation = new ArtifactRepresentation();
-        $artifact_representation->build(
+        return ArtifactRepresentation::build(
             $user,
             $artifact,
             null,
             null,
             $tracker_representation
         );
-
-        return $artifact_representation;
     }
 
-    private function getFieldsValues(PFUser $user, Tracker_Artifact $artifact)
+    private function getFieldsValues(PFUser $user, Artifact $artifact)
     {
         $changeset = $artifact->getLastChangeset();
         return $this->mapAndFilter(
@@ -159,7 +135,7 @@ class ArtifactRepresentationBuilder
         );
     }
 
-    private function getFieldValuesIndexedByName(PFUser $user, Tracker_Artifact $artifact)
+    private function getFieldValuesIndexedByName(PFUser $user, Artifact $artifact)
     {
         $changeset = $artifact->getLastChangeset();
         $values    = [];
@@ -180,7 +156,6 @@ class ArtifactRepresentationBuilder
      * empty results and normalize the array
      *
      * @param array   $collection
-     * @param Closure $function
      * @return array
      */
     private function mapAndFilter(array $collection, Closure $function)
@@ -219,8 +194,6 @@ class ArtifactRepresentationBuilder
     /**
      * Returns REST representation of artifact history
      *
-     * @param PFUser           $user
-     * @param Tracker_Artifact $artifact
      * @param string           $fields
      * @param int              $offset
      * @param int              $limit
@@ -229,7 +202,7 @@ class ArtifactRepresentationBuilder
      */
     public function getArtifactChangesetsRepresentation(
         PFUser $user,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         $fields,
         $offset,
         $limit,
@@ -256,7 +229,7 @@ class ArtifactRepresentationBuilder
 
     public function getArtifactRepresentationCollection(
         PFUser $user,
-        Tracker_Artifact $artifact_id,
+        Artifact $artifact_id,
         $nature,
         $direction,
         $offset,

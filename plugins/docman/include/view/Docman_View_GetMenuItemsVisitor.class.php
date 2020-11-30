@@ -25,18 +25,18 @@ use Tuleap\Docman\Upload\Version\VersionOngoingUploadRetriever;
 
 class Docman_View_GetMenuItemsVisitor implements ItemVisitor
 {
-    var $actions;
+    public $actions;
     private $user;
 
-    function __construct(&$user, $groupId)
+    public function __construct(&$user, $groupId)
     {
         $this->dPm = Docman_PermissionsManager::instance($groupId);
         $this->user = $user;
         $this->if = Docman_ItemFactory::instance($groupId);
-        $this->actions = array();
+        $this->actions = [];
     }
 
-    function visitItem(Docman_Item $item, $params = array())
+    public function visitItem(Docman_Item $item, $params = [])
     {
         if ($this->dPm->userCanManage($this->user, $item->getId())) {
             $this->actions['canPermissions'] = true;
@@ -60,7 +60,7 @@ class Docman_View_GetMenuItemsVisitor implements ItemVisitor
             $this->actions['canMove'] = true;
             $this->actions['canCut'] = true;
         }
-        if (!$this->if->isRoot($item) && $this->dPm->userCanDelete($this->user, $item)) {
+        if (! $this->if->isRoot($item) && $this->dPm->userCanDelete($this->user, $item)) {
             $this->actions['canDelete'] = true;
         }
 
@@ -83,7 +83,7 @@ class Docman_View_GetMenuItemsVisitor implements ItemVisitor
         return $this->actions;
     }
 
-    function visitFolder(Docman_Folder $item, $params = array())
+    public function visitFolder(Docman_Folder $item, $params = [])
     {
         if ($this->dPm->userCanWrite($this->user, $item->getId())) {
             $this->actions['canNewDocument'] = true;
@@ -92,8 +92,10 @@ class Docman_View_GetMenuItemsVisitor implements ItemVisitor
             $itemFactory = Docman_ItemFactory::instance($item->getGroupId());
             $parents = $itemFactory->getParents($item->getId());
             $this->actions['parents'] = $parents;
-            if ($this->if->getCopyPreference($this->user) !== false ||
-               $pasteItemId !== false && $pasteItemId != $item->getId() && !(isset($parents[$pasteItemId]) && $parents[$pasteItemId])) {
+            if (
+                $this->if->getCopyPreference($this->user) !== false ||
+                $pasteItemId !== false && $pasteItemId != $item->getId() && ! (isset($parents[$pasteItemId]) && $parents[$pasteItemId])
+            ) {
                 $this->actions['canPaste'] = true;
             }
         }
@@ -105,12 +107,12 @@ class Docman_View_GetMenuItemsVisitor implements ItemVisitor
         return $this->actions;
     }
 
-    function visitDocument($item, $params = array())
+    public function visitDocument($item, $params = [])
     {
         return $this->visitItem($item, $params);
     }
 
-    function visitWiki(Docman_Wiki $item, $params = array())
+    public function visitWiki(Docman_Wiki $item, $params = [])
     {
         if ($this->dPm->userCanWrite($this->user, $item->getId())) {
             $this->actions['canUpdate'] = true;
@@ -118,7 +120,7 @@ class Docman_View_GetMenuItemsVisitor implements ItemVisitor
         return $this->visitDocument($item, $params);
     }
 
-    function visitLink(Docman_Link $item, $params = array())
+    public function visitLink(Docman_Link $item, $params = [])
     {
         if ($this->dPm->userCanWrite($this->user, $item->getId())) {
             $this->actions['canNewVersion'] = true;
@@ -127,7 +129,7 @@ class Docman_View_GetMenuItemsVisitor implements ItemVisitor
         return $this->visitDocument($item, $params);
     }
 
-    function visitFile(Docman_File $item, $params = array())
+    public function visitFile(Docman_File $item, $params = [])
     {
         if ($this->dPm->userCanWrite($this->user, $item->getId())) {
             $this->actions['canNewVersion'] = true;
@@ -140,12 +142,12 @@ class Docman_View_GetMenuItemsVisitor implements ItemVisitor
         return $this->visitDocument($item, $params);
     }
 
-    function visitEmbeddedFile(Docman_EmbeddedFile $item, $params = array())
+    public function visitEmbeddedFile(Docman_EmbeddedFile $item, $params = [])
     {
         return $this->visitFile($item, $params);
     }
 
-    function visitEmpty(Docman_Empty $item, $params = array())
+    public function visitEmpty(Docman_Empty $item, $params = [])
     {
         if ($this->dPm->userCanWrite($this->user, $item->getId())) {
             $this->actions['canUpdate'] = true;

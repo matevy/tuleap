@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Test\rest\Helper;
 
@@ -36,9 +36,9 @@ class DocmanTestExecutionHelper extends DocmanBase
     {
         $search = urlencode(
             json_encode(
-                array(
+                [
                     'username' => DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME
-                )
+                ]
             )
         );
         $response = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_1_NAME, $this->client->get("users?query=$search&limit=10"));

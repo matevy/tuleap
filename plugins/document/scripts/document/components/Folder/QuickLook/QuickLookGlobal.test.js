@@ -19,7 +19,7 @@
 
 import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import { TYPE_EMPTY } from "../../../constants.js";
 import QuickLookGlobal from "./QuickLookGlobal.vue";
 
@@ -27,7 +27,7 @@ describe("QuickLookGlobal", () => {
     it(`Displays the description of the item observed in the QuickLook`, () => {
         const state = {};
         const store_options = {
-            state
+            state,
         };
         const store = createStoreMock(store_options);
 
@@ -37,17 +37,17 @@ describe("QuickLookGlobal", () => {
             type: TYPE_EMPTY,
             description: "description with ref #1",
             post_processed_description:
-                'description with <a href="https://example.com/goto">ref #1</a>'
+                'description with <a href="https://example.com/goto">ref #1</a>',
         };
 
         store.state.currently_previewed_item = item;
 
         const wrapper = shallowMount(QuickLookGlobal, {
             localVue,
-            mocks: { $store: store }
+            mocks: { $store: store },
         });
 
-        const displayed_description = wrapper.find("[id=item-description]");
+        const displayed_description = wrapper.get("[id=item-description]");
 
         expect(displayed_description.text()).toEqual(item.description);
         expect(displayed_description.html()).toContain(item.post_processed_description);

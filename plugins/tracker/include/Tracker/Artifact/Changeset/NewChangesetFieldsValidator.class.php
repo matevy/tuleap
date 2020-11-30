@@ -18,35 +18,39 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\FormElement\ArtifactLinkValidator;
 use Tuleap\Tracker\Workflow\WorkflowUpdateChecker;
 
 /**
  * I validate fields for new changeset (update of artifact)
  */
-class Tracker_Artifact_Changeset_NewChangesetFieldsValidator extends Tracker_Artifact_Changeset_FieldsValidator //phpcs:ignore
+class Tracker_Artifact_Changeset_NewChangesetFieldsValidator extends Tracker_Artifact_Changeset_FieldsValidator // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 {
     private $workflow_update_checker;
 
     public function __construct(
         Tracker_FormElementFactory $form_element_factory,
+        ArtifactLinkValidator $artifact_link_validator,
         WorkflowUpdateChecker $workflow_update_checker
     ) {
-        parent::__construct($form_element_factory);
+        parent::__construct($form_element_factory, $artifact_link_validator);
         $this->workflow_update_checker = $workflow_update_checker;
     }
 
     protected function canValidateField(
-        Tracker_Artifact $artifact,
-        Tracker_FormElement_Field $field
-    ) {
+        Artifact $artifact,
+        Tracker_FormElement_Field $field,
+        PFUser $user
+    ): bool {
         $last_changeset = $artifact->getLastChangeset();
 
         //we do not validate if we are in submission mode, the field is required and we can't submit the field
-        return !(!$last_changeset && $field->isRequired() && !$field->userCanSubmit());
+        return ! (! $last_changeset && $field->isRequired() && ! $field->userCanSubmit($user));
     }
 
     protected function validateField(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_FormElement_Field $field,
         \PFUser $user,
         $submitted_value
@@ -54,25 +58,25 @@ class Tracker_Artifact_Changeset_NewChangesetFieldsValidator extends Tracker_Art
         $is_submission        = false;
         $last_changeset_value = $this->getLastChangesetValue($artifact, $field);
 
-        return
-            $this->workflow_update_checker->canFieldBeUpdated(
-                $artifact,
-                $field,
-                $last_changeset_value,
-                $submitted_value,
-                $is_submission,
-                $user
-            )
+        return $this->workflow_update_checker->canFieldBeUpdated(
+            $artifact,
+            $field,
+            $last_changeset_value,
+            $submitted_value,
+            $is_submission,
+            $user
+        )
             && $field->validateFieldWithPermissionsAndRequiredStatus(
                 $artifact,
                 $submitted_value,
+                $user,
                 $last_changeset_value,
                 $is_submission
             );
     }
 
     private function getLastChangesetValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_FormElement_Field $field
     ) {
         $last_changeset = $artifact->getLastChangeset();

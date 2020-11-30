@@ -22,11 +22,14 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\Artifact\Renderer\ListPickerIncluder;
+
 class Tracker_Artifact_SubmitOverlayRenderer extends Tracker_Artifact_SubmitAbstractRenderer
 {
 
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $source_artifact;
 
@@ -40,7 +43,7 @@ class Tracker_Artifact_SubmitOverlayRenderer extends Tracker_Artifact_SubmitAbst
      */
     private $current_user;
 
-    public function __construct(Tracker $tracker, Tracker_Artifact $source_artifact, EventManager $event_manager, Tracker_IFetchTrackerSwitcher $tracker_switcher)
+    public function __construct(Tracker $tracker, Artifact $source_artifact, EventManager $event_manager, Tracker_IFetchTrackerSwitcher $tracker_switcher)
     {
         parent::__construct($tracker, $event_manager);
         $this->source_artifact  = $source_artifact;
@@ -65,6 +68,7 @@ class Tracker_Artifact_SubmitOverlayRenderer extends Tracker_Artifact_SubmitAbst
     {
         $GLOBALS['HTML']->overlay_header();
         $this->displayTrackerSwitcher($this->current_user);
+        ListPickerIncluder::includeListPickerAssets();
         echo $this->fetchSubmitInstructions();
     }
 
@@ -75,14 +79,7 @@ class Tracker_Artifact_SubmitOverlayRenderer extends Tracker_Artifact_SubmitAbst
             $project = $this->source_artifact->getTracker()->getProject();
             $GLOBALS['Response']->addFeedback(
                 'warning',
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker',
-                    'linked_to',
-                    array(
-                        $this->source_artifact->fetchDirectLinkToArtifact(),
-                        $this->tracker_switcher->fetchTrackerSwitcher($current_user, ' ', $project, $this->tracker),
-                    )
-                ),
+                sprintf(dgettext('tuleap-tracker', 'This artifact (of %2$s) will be linked to %1$s'), $this->source_artifact->fetchDirectLinkToArtifact(), $this->tracker_switcher->fetchTrackerSwitcher($current_user, ' ', $project, $this->tracker)),
                 CODENDI_PURIFIER_DISABLED
             );
         } else {
@@ -95,14 +92,14 @@ class Tracker_Artifact_SubmitOverlayRenderer extends Tracker_Artifact_SubmitAbst
     {
         $html = '';
 
-        $html .= '<input type="hidden" name="link-artifact-id" value="'. $this->source_artifact->getId() .'" />';
+        $html .= '<input type="hidden" name="link-artifact-id" value="' . $this->source_artifact->getId() . '" />';
         if ($request->get('immediate')) {
             $html .= '<input type="hidden" name="immediate" value="1" />';
         }
 
         $html .= $this->fetchFormElements($request, $current_user);
 
-        $html .= '<input class="btn btn-primary" type="submit" id="tracker_artifact_submit" value="'. $GLOBALS['Language']->getText('global', 'btn_submit') .'" />';
+        $html .= '<input class="btn btn-primary" type="submit" id="tracker_artifact_submit" value="' . $GLOBALS['Language']->getText('global', 'btn_submit') . '" />';
 
         return $html;
     }

@@ -12,7 +12,7 @@ class Template
     /**
      * name optionally of form "theme/template" to include parent templates in children
      */
-    function __construct($name, $request, $args = false)
+    public function __construct($name, $request, $args = false)
     {
         global $WikiTheme;
 
@@ -27,7 +27,7 @@ class Template
         }
         $this->_name = $name;
         $file = $WikiTheme->findTemplate($name);
-        if (!$file) {
+        if (! $file) {
             trigger_error("no template for $name found.", E_USER_WARNING);
             return;
         }
@@ -36,7 +36,7 @@ class Template
             $WikiTheme->_theme = $oldtheme;
         }
         $fp = fopen($file, "rb");
-        if (!$fp) {
+        if (! $fp) {
             trigger_error("$file not found", E_USER_WARNING);
             return;
         }
@@ -47,13 +47,13 @@ class Template
         if (is_array($args)) {
             $this->_locals = $args;
         } elseif ($args) {
-            $this->_locals = array('CONTENT' => $args);
+            $this->_locals = ['CONTENT' => $args];
         } else {
-            $this->_locals = array();
+            $this->_locals = [];
         }
     }
 
-    function _munge_input($template)
+    public function _munge_input($template)
     {
         // Convert < ?plugin expr ? > to < ?php $this->_printPluginPI("expr"); ? >
         $template = preg_replace_callback(
@@ -71,19 +71,19 @@ class Template
         return preg_replace('/<\?=(.*?)\?>/s', '<?php $this->_print(\1);?>', $template);
     }
 
-    function _printPlugin($pi)
+    public function _printPlugin($pi)
     {
         include_once("lib/WikiPlugin.php");
         static $loader;
 
         if (empty($loader)) {
-            $loader = new WikiPluginLoader;
+            $loader = new WikiPluginLoader();
         }
 
         $this->_print($loader->expandPI($pi, $this->_request, $this, $this->_basepage));
     }
 
-    function _print($val)
+    public function _print($val)
     {
         if (isa($val, 'Template')) {
             $this->_expandSubtemplate($val);
@@ -92,7 +92,7 @@ class Template
         }
     }
 
-    function _expandSubtemplate(&$template)
+    public function _expandSubtemplate(&$template)
     {
         // FIXME: big hack!
         //if (!$template->_request)
@@ -118,25 +118,25 @@ class Template
      *
      * @param $replacement string Replacement HTML text.
      */
-    function replace($varname, $value)
+    public function replace($varname, $value)
     {
         $this->_locals[$varname] = $value;
     }
 
 
-    function printExpansion($defaults = false)
+    public function printExpansion($defaults = false)
     {
-        if (!is_array($defaults)) { // HTML object or template object
-            $defaults = array('CONTENT' => $defaults);
+        if (! is_array($defaults)) { // HTML object or template object
+            $defaults = ['CONTENT' => $defaults];
         }
         $this->_vars = array_merge($defaults, $this->_locals);
         extract($this->_vars);
 
         global $request;
-        if (!isset($user)) {
+        if (! isset($user)) {
             $user = $request->getUser();
         }
-        if (!isset($page)) {
+        if (! isset($page)) {
             $page = $request->getPage();
         }
 
@@ -156,7 +156,7 @@ class Template
     // Find a way to do template expansion less memory intensive and faster.
     // 1.3.4 needed no memory at all for dumphtml, now it needs +15MB.
     // Smarty? As before?
-    function getExpansion($defaults = false)
+    public function getExpansion($defaults = false)
     {
         ob_start();
         $this->printExpansion($defaults);
@@ -165,19 +165,19 @@ class Template
         return $xml;
     }
 
-    function printXML()
+    public function printXML()
     {
         $this->printExpansion();
     }
 
-    function asXML()
+    public function asXML()
     {
         return $this->getExpansion();
     }
 
 
     // Debugging:
-    function _dump_template()
+    public function _dump_template()
     {
         $lines = explode("\n", $this->_munge_input($this->_tmpl));
         $pre = HTML::pre();
@@ -188,7 +188,7 @@ class Template
         $pre->printXML();
     }
 
-    function _errorHandler($error)
+    public function _errorHandler($error)
     {
         //if (!preg_match('/: eval\(\)\'d code$/', $error->errfile))
     //    return false;
@@ -200,18 +200,17 @@ class Template
             if (preg_match('/Undefined variable:\s*[_A-Z]+\s*$/', $error->errstr)) {
                 return true;
             }
-        }
-        // ignore recursively nested htmldump loop: browse -> body -> htmldump -> browse -> body ...
-        // FIXME for other possible loops also
-        elseif (strstr($error->errfile, "In template 'htmldump'")) {
-            ; //return $error;
+        } elseif (strstr($error->errfile, "In template 'htmldump'")) {
+            // ignore recursively nested htmldump loop: browse -> body -> htmldump -> browse -> body ...
+            // FIXME for other possible loops also
+//return $error;
         } elseif (strstr($error->errfile, "In template '")) { // merge
             $error->errfile = preg_replace("/'(\w+)'\)$/", "'\\1' < '$this->_name')", $error->errfile);
         } else {
             $error->errfile .= " (In template '$this->_name')";
         }
 
-        if (!empty($this->_tmpl)) {
+        if (! empty($this->_tmpl)) {
             $lines = explode("\n", $this->_tmpl);
             if (isset($lines[$error->errline - 1])) {
                 $error->errstr .= ":\n\t" . $lines[$error->errline - 1];
@@ -219,7 +218,7 @@ class Template
         }
         return $error;
     }
-};
+}
 
 /**
  * Get a templates
@@ -238,7 +237,7 @@ function Template($name, $args = false)
 function alreadyTemplateProcessed($name)
 {
     global $request;
-    return !empty($request->_TemplatesProcessed[$name]) ? true : false;
+    return ! empty($request->_TemplatesProcessed[$name]) ? true : false;
 }
 /**
  * Make and expand the top-level template.
@@ -255,15 +254,15 @@ function GeneratePage($content, $title, $page_revision = false, $args = false)
 {
     global $request;
 
-    if (!is_array($args)) {
-        $args = array();
+    if (! is_array($args)) {
+        $args = [];
     }
 
     $args['CONTENT'] = $content;
     $args['TITLE'] = $title;
     $args['revision'] = $page_revision;
 
-    if (!isset($args['HEADER'])) {
+    if (! isset($args['HEADER'])) {
         $args['HEADER'] = $title;
     }
 
@@ -278,8 +277,8 @@ function GeneratePageasXML($content, $title, $page_revision = false, $args = fal
 {
     global $request;
 
-    if (!is_array($args)) {
-        $args = array();
+    if (! is_array($args)) {
+        $args = [];
     }
 
     $content->_basepage = $title;
@@ -287,7 +286,7 @@ function GeneratePageasXML($content, $title, $page_revision = false, $args = fal
     $args['TITLE'] = SplitPagename($title);
     $args['revision'] = $page_revision;
 
-    if (!isset($args['HEADER'])) {
+    if (! isset($args['HEADER'])) {
         $args['HEADER'] = SplitPagename($title);
     }
 

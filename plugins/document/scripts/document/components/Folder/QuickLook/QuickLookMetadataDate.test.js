@@ -22,7 +22,7 @@ import { shallowMount } from "@vue/test-utils";
 import QuickLookMetadataDate from "./QuickLookMetadataDate.vue";
 
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 
 import * as date_formatter from "../../../helpers/date-formatter.js";
 
@@ -40,7 +40,10 @@ describe("QuickLookMetadataDate", () => {
             return shallowMount(QuickLookMetadataDate, {
                 localVue,
                 propsData: { metadata: props },
-                mocks: { $store: store }
+                mocks: { $store: store },
+                stubs: {
+                    "tlp-relative-date": true,
+                },
             });
         };
     });
@@ -53,21 +56,16 @@ describe("QuickLookMetadataDate", () => {
             type: "date",
             list_value: null,
             value: "2019-07-02",
-            post_processed_value: "2019-07-02"
+            post_processed_value: "2019-07-02",
         };
         store.state.date_time_format = "d/m/Y H:i";
 
         const wrapper = metadata_factory(metadata_date);
-        expect(wrapper.contains("[data-test=metadata-date-formatted-display]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=metadata-date-today]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-permanent]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-empty]")).toBeFalsy();
-
-        expect(
-            wrapper
-                .find("[data-test=metadata-date-formatted-display]")
-                .element.getAttribute("data-tlp-tooltip")
-        ).toContain("02/07/2019 00:00");
+        expect(wrapper.find("[data-test=metadata-date-formatted-display]").exists()).toBeTruthy();
+        expect(wrapper.find("[data-test=metadata-date-today]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-permanent]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-empty]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-formatted-display]").exists()).toBeTruthy();
     });
     it(`Given a date without value
         Then it displays it as empty`, () => {
@@ -77,16 +75,16 @@ describe("QuickLookMetadataDate", () => {
             type: "date",
             list_value: null,
             value: null,
-            post_processed_value: null
+            post_processed_value: null,
         };
 
         store.state.date_time_format = "d/m/Y H:i";
 
         const wrapper = metadata_factory(metadata_date);
-        expect(wrapper.contains("[data-test=metadata-date-formatted-display]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-today]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-permanent]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-empty]")).toBeTruthy();
+        expect(wrapper.find("[data-test=metadata-date-formatted-display]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-today]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-permanent]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-empty]").exists()).toBeTruthy();
     });
     it(`Given an obsolescence date
         Then it displays the formatted date like a regular date type metadata`, () => {
@@ -97,16 +95,16 @@ describe("QuickLookMetadataDate", () => {
             type: "date",
             list_value: null,
             value: "2019-07-02",
-            post_processed_value: "2019-07-02"
+            post_processed_value: "2019-07-02",
         };
         store.state.date_time_format = "d/m/Y H:i";
 
         const wrapper = metadata_factory(metadata_date);
 
-        expect(wrapper.contains("[data-test=metadata-date-formatted-display]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=metadata-date-today]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-permanent]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-empty]")).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-formatted-display]").exists()).toBeTruthy();
+        expect(wrapper.find("[data-test=metadata-date-today]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-permanent]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-empty]").exists()).toBeFalsy();
     });
     it(`Given an obsolescence date without value
         Then it displays it as permanent`, () => {
@@ -117,17 +115,17 @@ describe("QuickLookMetadataDate", () => {
             type: "date",
             list_value: null,
             value: null,
-            post_processed_value: null
+            post_processed_value: null,
         };
 
         store.state.date_time_format = "d/m/Y H:i";
 
         const wrapper = metadata_factory(metadata_date);
 
-        expect(wrapper.contains("[data-test=metadata-date-formatted-display]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-today]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-permanent]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=metadata-date-empty]")).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-formatted-display]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-today]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-permanent]").exists()).toBeTruthy();
+        expect(wrapper.find("[data-test=metadata-date-empty]").exists()).toBeFalsy();
     });
     it(`Given an obsolescence date set as today
         Then it displays it as today`, () => {
@@ -138,7 +136,7 @@ describe("QuickLookMetadataDate", () => {
             type: "date",
             list_value: null,
             value: "2019-07-02",
-            post_processed_value: "2019-07-02"
+            post_processed_value: "2019-07-02",
         };
 
         store.state.date_time_format = "d/m/Y H:i";
@@ -147,9 +145,9 @@ describe("QuickLookMetadataDate", () => {
 
         const wrapper = metadata_factory(metadata_date);
 
-        expect(wrapper.contains("[data-test=metadata-date-formatted-display]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-today]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=metadata-date-permanent]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=metadata-date-empty]")).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-formatted-display]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-today]").exists()).toBeTruthy();
+        expect(wrapper.find("[data-test=metadata-date-permanent]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=metadata-date-empty]").exists()).toBeFalsy();
     });
 });

@@ -24,6 +24,7 @@ namespace Tuleap\DB;
 
 use ParagonIE\EasyDB\EasyDB;
 use ParagonIE\EasyDB\Factory;
+use PDO;
 
 class DBCreator
 {
@@ -37,17 +38,23 @@ class DBCreator
         $this->database_name = $database_name;
     }
 
-    public function createDB() : EasyDB
+    public function createDB(): EasyDB
     {
         return Factory::fromArray([
-            $this->getDSN(),
+            DBConfig::getPDODSN($this->database_name),
             \ForgeConfig::get('sys_dbuser'),
-            \ForgeConfig::get('sys_dbpasswd')
+            \ForgeConfig::get('sys_dbpasswd'),
+            $this->getOptions(),
         ]);
     }
 
-    private function getDSN() : string
+    private function getOptions(): array
     {
-        return 'mysql:host=' . \ForgeConfig::get('sys_dbhost') . ';dbname=' . $this->database_name;
+        $options = [];
+        if (DBConfig::isSSLEnabled()) {
+            $options[PDO::MYSQL_ATTR_SSL_CA] = DBConfig::getSSLCACertFile();
+            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = DBConfig::isSSLVerifyCert();
+        }
+        return $options;
     }
 }

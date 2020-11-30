@@ -42,7 +42,7 @@ class b201209121717_turn_tables_innodb extends ForgeUpgrade_Bucket
             }
         }
 
-        $tables = array(
+        $tables = [
             'tracker_workflow ',
             'tracker_workflow_transition ',
             'tracker_workflow_transition_postactions_field_date ',
@@ -92,7 +92,7 @@ class b201209121717_turn_tables_innodb extends ForgeUpgrade_Bucket
             'tracker_report_criteria_openlist_value',
             'tracker_report_criteria_permissionsonartifact_value',
             'tracker_field_list_bind_decorator',
-            'tracker_artifact',
+            'Tuleap\Artifact\Artifact',
             'tracker_tooltip',
             'tracker_global_notification',
             'tracker_watcher',
@@ -109,9 +109,9 @@ class b201209121717_turn_tables_innodb extends ForgeUpgrade_Bucket
             'tracker_perm ',
             'tracker_rule',
             'tracker_hierarchy ',
-            'tracker_reminder');
+            'tracker_reminder'];
         foreach ($tables as $table) {
-            if (!$this->isTableInnoDB($table)) {
+            if (! $this->isTableInnoDB($table)) {
                 $this->log->info("Convert $table");
                 $sql = "ALTER TABLE $table ENGINE = InnoDB";
                 $result = $this->db->dbh->exec($sql);
@@ -133,7 +133,7 @@ class b201209121717_turn_tables_innodb extends ForgeUpgrade_Bucket
 
     private function indexNameExists($tableName, $index)
     {
-        $sql = 'SHOW INDEX FROM '.$tableName.' WHERE Key_name LIKE '.$this->db->dbh->quote($index);
+        $sql = 'SHOW INDEX FROM ' . $tableName . ' WHERE Key_name LIKE ' . $this->db->dbh->quote($index);
         $res = $this->db->dbh->query($sql);
         if ($res && $res->fetch() !== false) {
             return true;

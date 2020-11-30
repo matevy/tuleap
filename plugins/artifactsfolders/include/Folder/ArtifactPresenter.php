@@ -22,7 +22,7 @@ namespace Tuleap\ArtifactsFolders\Folder;
 
 use DateTime;
 use PFUser;
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 use UserHelper;
 
 class ArtifactPresenter
@@ -37,7 +37,7 @@ class ArtifactPresenter
     public $assignees;
     public $folder_hierarchy;
 
-    public function build(PFUser $current_user, Tracker_Artifact $artifact, array $folder_hierarchy)
+    public function build(PFUser $current_user, Artifact $artifact, array $folder_hierarchy)
     {
         $this->id               = $artifact->getId();
         $this->html_url         = $artifact->getUri();
@@ -55,7 +55,7 @@ class ArtifactPresenter
         $date                     = new DateTime('@' . $artifact->getLastUpdateDate());
         $this->last_modified_date = $date->format($GLOBALS['Language']->getText('system', 'datefmt'));
 
-        $this->assignees = array();
+        $this->assignees = [];
         foreach ($artifact->getAssignedTo($current_user) as $assignee) {
             $this->assignees[] = $this->getUserPresenter($assignee);
         }
@@ -68,16 +68,16 @@ class ArtifactPresenter
     private function getFolderHierarchyPresenter(array $folder_hierarchy)
     {
         return array_map(
-            function (Tracker_Artifact $folder) {
+            function (Artifact $folder) {
                 $title = $folder->getTitle();
                 if (! $title) {
                     $title = $folder->getXRef();
                 }
 
-                return array(
+                return [
                     'url'   => $folder->getUri(),
                     'title' => $title
-                );
+                ];
             },
             $folder_hierarchy
         );
@@ -87,10 +87,10 @@ class ArtifactPresenter
     {
         $user_helper = UserHelper::instance();
 
-        return array(
+        return [
             'url'          => $user_helper->getUserUrl($user),
             'display_name' => $this->getDisplayName($user)
-        );
+        ];
     }
 
     private function getDisplayName(PFUser $user)
@@ -102,7 +102,7 @@ class ArtifactPresenter
         return UserHelper::instance()->getDisplayNameFromUser($user);
     }
 
-    private function getTitle(Tracker_Artifact $artifact)
+    private function getTitle(Artifact $artifact)
     {
         $title = $artifact->getTitle();
 

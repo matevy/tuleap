@@ -37,10 +37,17 @@ class ProfileController implements DispatchableWithRequest, DispatchableWithBurn
      * @var ProfilePresenterBuilder
      */
     private $presenter_builder;
+    /**
+     * @var ProfileAsJSONForTooltipController
+     */
+    private $json_controller;
 
-    public function __construct(ProfilePresenterBuilder $presenter_builder)
-    {
+    public function __construct(
+        ProfilePresenterBuilder $presenter_builder,
+        ProfileAsJSONForTooltipController $json_controller
+    ) {
         $this->presenter_builder = $presenter_builder;
+        $this->json_controller   = $json_controller;
     }
 
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
@@ -51,13 +58,25 @@ class ProfileController implements DispatchableWithRequest, DispatchableWithBurn
         }
 
         $current_user = $request->getCurrentUser();
+
+        if ($request->get('as-json-for-tooltip')) {
+            $this->json_controller->process($current_user, $user);
+
+            return;
+        }
+
         if ($current_user->isAnonymous()) {
             $layout->redirect('/account/login.php');
 
             return;
         }
 
-        $layout->header(['title' => UserHelper::instance()->getDisplayNameFromUser($user)]);
+        $layout->header(
+            [
+                'title' => UserHelper::instance()->getDisplayNameFromUser($user),
+                'body_class' => ['body-user-profile'],
+            ],
+        );
         $this->renderToPage($user, $current_user);
         $layout->footer([]);
     }

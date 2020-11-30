@@ -41,17 +41,17 @@ rcs_id('$Id: EditMetaData.php,v 1.11 2004/06/01 16:48:11 rurban Exp $');
  */
 class WikiPlugin_EditMetaData extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("EditMetaData");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return sprintf(_("Edit metadata for %s"), '[pagename]');
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -65,23 +65,23 @@ class WikiPlugin_EditMetaData extends WikiPlugin
     //  page - page whose metadata is editted
 
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('page'       => '[pagename]'
-                    );
+        return ['page'       => '[pagename]'
+                    ];
     }
 
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $this->_args = $this->getArgs($argstr, $request);
         extract($this->_args);
-        if (!$page) {
+        if (! $page) {
             return '';
         }
 
-        $hidden_pagemeta = array ('_cached_html');
-        $readonly_pagemeta = array ('hits');
+        $hidden_pagemeta =  ['_cached_html'];
+        $readonly_pagemeta =  ['hits'];
         $dbi = $request->getDbh();
         $p = $dbi->getPage($page);
         $pagemeta = $p->getMetaData();
@@ -91,7 +91,7 @@ class WikiPlugin_EditMetaData extends WikiPlugin
         if ($request->isPost() and $request->_user->isAdmin() and $request->getArg('metaedit')) {
             $metafield = trim($request->getArg('metafield'));
             $metavalue = trim($request->getArg('metavalue'));
-            if (!in_array($metafield, $readonly_pagemeta)) {
+            if (! in_array($metafield, $readonly_pagemeta)) {
                 if (preg_match('/^(.*?)\[(.*?)\]$/', $metafield, $matches)) {
                     list(,$array_field, $array_key) = $matches;
                     $array_value = $pagemeta[$array_field];
@@ -104,7 +104,7 @@ class WikiPlugin_EditMetaData extends WikiPlugin
             $dbi->touch();
             $url = $request->getURLtoSelf(
                 false,
-                array('metaedit','metafield','metavalue')
+                ['metaedit', 'metafield', 'metavalue']
             );
             $request->redirect($url);
             // The rest of the output will not be seen due to the
@@ -141,10 +141,9 @@ class WikiPlugin_EditMetaData extends WikiPlugin
                 }
                 $dl->pushContent($dl1);
             } elseif (in_array($key, $hidden_pagemeta)) {
-                ;
             } elseif (in_array($key, $readonly_pagemeta)) {
                 $dl->pushContent(HTML::dt(
-                    array('style' => 'background: #dddddd'),
+                    ['style' => 'background: #dddddd'],
                     "$key => $val\n"
                 ));
             } else {
@@ -157,13 +156,13 @@ class WikiPlugin_EditMetaData extends WikiPlugin
             $action = $request->getPostURL();
             $hiddenfield = HiddenInputs($request->getArgs());
             $instructions = _("Add or change a page-level metadata 'key=>value' pair. Note that you can remove a key by leaving the value-box empty.");
-            $keyfield = HTML::input(array('name' => 'metafield'), '');
-            $valfield = HTML::input(array('name' => 'metavalue'), '');
+            $keyfield = HTML::input(['name' => 'metafield'], '');
+            $valfield = HTML::input(['name' => 'metavalue'], '');
             $button = Button('submit:metaedit', _("Submit"), false);
             $form = HTML::form(
-                array('action' => $action,
+                ['action' => $action,
                                      'method' => 'post',
-                                     'accept-charset' => $GLOBALS['charset']),
+                                     'accept-charset' => $GLOBALS['charset']],
                 $hiddenfield,
                 $instructions,
                 HTML::br(),
@@ -180,7 +179,7 @@ class WikiPlugin_EditMetaData extends WikiPlugin
         }
         return $html;
     }
-};
+}
 
 // $Log: EditMetaData.php,v $
 // Revision 1.11  2004/06/01 16:48:11  rurban

@@ -47,7 +47,7 @@ class Git_Gitolite_SSHKeyMassDumper implements MassDumper
 
     private function dumpAllKeys()
     {
-        $dumped_users = array();
+        $dumped_users = [];
         foreach ($this->user_manager->getUsersWithSshKey() as $user) {
             $dumped_users[$user->getUserName()] = true;
             $this->dumper->dumpSSHKeysWithoutCommit($user);
@@ -57,11 +57,11 @@ class Git_Gitolite_SSHKeyMassDumper implements MassDumper
 
     private function purgeNotDumpedUsers(array $dumped_users)
     {
-        foreach (glob($this->dumper->getKeyDirPath().'/*.pub') as $file) {
+        foreach (glob($this->dumper->getKeyDirPath() . '/*.pub') as $file) {
             $file_name = basename($file);
-            if (!$this->isReservedName($file_name)) {
+            if (! $this->isReservedName($file_name)) {
                 $user_name = substr($file_name, 0, strpos($file_name, '@'));
-                if (!isset($dumped_users[$user_name])) {
+                if (! isset($dumped_users[$user_name])) {
                     $this->dumper->getGitExec()->rm($file);
                 }
             }
@@ -83,6 +83,6 @@ class Git_Gitolite_SSHKeyMassDumper implements MassDumper
 
     private function isGerritKey($file_name)
     {
-        return strpos($file_name, Rule_UserName::RESERVED_PREFIX.Git_RemoteServer_Gerrit_ReplicationSSHKey::KEYNAME_PREFIX) === 0;
+        return strpos($file_name, Rule_UserName::RESERVED_PREFIX . Git_RemoteServer_Gerrit_ReplicationSSHKey::KEYNAME_PREFIX) === 0;
     }
 }

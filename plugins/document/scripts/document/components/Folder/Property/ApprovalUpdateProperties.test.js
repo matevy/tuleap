@@ -26,7 +26,7 @@ describe("ApprovalUpdateProperties", () => {
     beforeEach(() => {
         approval_update_factory = () => {
             return shallowMount(ApprovalUpdateProperties, {
-                localVue
+                localVue,
             });
         };
     });
@@ -35,35 +35,35 @@ describe("ApprovalUpdateProperties", () => {
         Then it raise the 'action' event with the value 'copy'`, () => {
         const wrapper = approval_update_factory();
 
-        const radio_input = wrapper.find(
+        const radio_input = wrapper.get(
             'input[id="document-new-file-upload-approval-table-action-copy"]'
         );
         radio_input.setChecked();
 
-        expect(wrapper.emitted().approvalTableActionChange[0]).toEqual(["copy"]);
+        expect(wrapper.emitted()["approval-table-action-change"][0]).toEqual(["copy"]);
     });
     it(`Given the reset action of an approval table
         When the user updating an item
         Then it raise the 'action' event with the value 'reset'`, () => {
         const wrapper = approval_update_factory();
 
-        const radio_input = wrapper.find(
+        const radio_input = wrapper.get(
             'input[id="document-new-file-upload-approval-table-action-reset"]'
         );
         radio_input.setChecked();
 
-        expect(wrapper.emitted().approvalTableActionChange[0]).toEqual(["reset"]);
+        expect(wrapper.emitted()["approval-table-action-change"][0]).toEqual(["reset"]);
     });
     it(`Given the empty action of an approval table
         When the user updating an item
         Then it raise the 'action' event with the value 'empty'`, () => {
         const wrapper = approval_update_factory();
 
-        const radio_input = wrapper.find(
+        const radio_input = wrapper.get(
             'input[id="document-new-file-upload-approval-table-action-empty"]'
         );
         radio_input.setChecked();
 
-        expect(wrapper.emitted().approvalTableActionChange[0]).toEqual(["empty"]);
+        expect(wrapper.emitted()["approval-table-action-change"][0]).toEqual(["empty"]);
     });
 });

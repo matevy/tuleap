@@ -39,13 +39,13 @@ class Tracker_Migration_V3
     public function createTV5FromTV3(Project $project, $name, $description, $itemname, ArtifactType $tv3)
     {
         $dao = new Tracker_Migration_V3_Dao();
-        $logger = new BackendLogger(ForgeConfig::get('codendi_log').'/'.Tracker_Migration_MigrationManager::LOG_FILE);
+        $logger = BackendLogger::getDefaultLogger(Tracker_Migration_MigrationManager::LOG_FILE);
 
-        $log_prefix = '['.uniqid().']';
-        $logger->info("$log_prefix Start migration of tracker v3: ".$tv3->getID());
+        $log_prefix = '[' . bin2hex(random_bytes(7)) . ']';
+        $logger->info("$log_prefix Start migration of tracker v3: " . $tv3->getID());
         // 010 & 020
         if ($id = $dao->create($project->getId(), $name, $description, $itemname, $tv3->getID())) {
-            $logger->info("$log_prefix Tracker v5: ".$id);
+            $logger->info("$log_prefix Tracker v5: " . $id);
 
             $logger->info("$log_prefix 030 Fieldset");
             $fieldset_dao = new Tracker_Migration_V3_FieldsetsDao();
@@ -118,7 +118,11 @@ class Tracker_Migration_V3
             $reminder_dao->create($tv3->getID(), $id);
 
             $logger->info("$log_prefix Complete");
-            return $this->tracker_factory->getTrackerById($id);
+            $tracker = $this->tracker_factory->getTrackerById($id);
+            if ($tracker === null) {
+                throw new RuntimeException('Tracker does not exist');
+            }
+            return $tracker;
         }
     }
 }

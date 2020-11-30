@@ -21,30 +21,30 @@
 
 class Docman_Path
 {
-    var $path;
-    function __construct()
+    public $path;
+    public function __construct()
     {
-        $this->path = array();
+        $this->path = [];
     }
-    function get(&$item)
+    public function get(&$item)
     {
-        if (!isset($this->path[$item->getId()])) {
+        if (! isset($this->path[$item->getId()])) {
             $this->path[$item->getId()] = '';
             if ($item->getParentId()) {
                 $if = $this->_getItemFactory();
-                $parent = $if->getItemFromDb($item->getParentId(), array('ignore_deleted' => true));
+                $parent = $if->getItemFromDb($item->getParentId(), ['ignore_deleted' => true]);
                 if ($parent) {
-                    $this->path[$item->getId()] = $this->get($parent) .'/';
+                    $this->path[$item->getId()] = $this->get($parent) . '/';
                 }
             }
             $this->path[$item->getId()] .= $item->getTitle();
         }
         return $this->path[$item->getId()];
     }
-    var $item_factory;
+    public $item_factory;
     private function _getItemFactory()
     {
-        if (!$this->item_factory) {
+        if (! $this->item_factory) {
             $this->item_factory = new Docman_ItemFactory();
         }
         return $this->item_factory;

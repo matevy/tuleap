@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2015-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -45,13 +45,13 @@ class TuleapRegisterMail
     public function getMail($login, $confirm_hash, $base_url, $from, $to, $presenter_role)
     {
         if ($presenter_role === "user") {
-            $subject = $GLOBALS['Language']->getText('include_proj_email', 'account_register', $GLOBALS['sys_name']);
+            $subject = $GLOBALS['Language']->getText('include_proj_email', 'account_register', ForgeConfig::get('sys_name'));
             include($GLOBALS['Language']->getContent('include/new_user_email'));
         } elseif ($presenter_role === "admin") {
-            $subject = $GLOBALS['Language']->getText('account_register', 'welcome_email_title', $GLOBALS['sys_name']);
+            $subject = $GLOBALS['Language']->getText('account_register', 'welcome_email_title', ForgeConfig::get('sys_name'));
             include($GLOBALS['Language']->getContent('account/new_account_email'));
         } elseif ($presenter_role === "admin-notification") {
-            $redirect_url = $base_url ."/admin/approve_pending_users.php?page=pending";
+            $redirect_url = $base_url . "/admin/approve_pending_users.php?page=pending";
             $subject = $GLOBALS['Language']->getText('account_register', 'mail_approval_subject', $login);
             $message = $this->createNotificationMessageText($login, $redirect_url);
         } else {
@@ -131,25 +131,25 @@ class TuleapRegisterMail
     private function createNotificationMessageText($login, $redirect_url)
     {
         $message = $GLOBALS['Language']->getText('account_register', 'mail_approval_title') . "\n\n"
-           . $GLOBALS['Language']->getText('account_register', 'mail_approval_section_one', array($GLOBALS['sys_name'])) . " "
-           . $login . $GLOBALS['Language']->getText('account_register', 'mail_approval_section_after_login', array($GLOBALS['sys_name'])). "\n\n"
+           . $GLOBALS['Language']->getText('account_register', 'mail_approval_section_one', [ForgeConfig::get('sys_name')]) . " "
+           . $login . $GLOBALS['Language']->getText('account_register', 'mail_approval_section_after_login', [ForgeConfig::get('sys_name')]) . "\n\n"
            . $GLOBALS['Language']->getText('account_register', 'mail_approval_section_two') . "\n\n"
-           . "<". $redirect_url. ">\n\n"
+           . "<" . $redirect_url . ">\n\n"
            . $GLOBALS['Language']->getText('account_register', 'mail_thanks') . "\n\n"
-           . $GLOBALS['Language']->getText('account_register', 'mail_signature', array($GLOBALS['sys_name'])) . "\n\n";
+           . $GLOBALS['Language']->getText('account_register', 'mail_signature', [ForgeConfig::get('sys_name')]) . "\n\n";
 
         return $message;
     }
 
-    private function addLogoInAttachment(Codendi_Mail $mail)
+    private function addLogoInAttachment(Codendi_Mail $mail): string
     {
         $logo_retriever = new LogoRetriever();
         $cid_logo       = '';
-        $path_logo      = $logo_retriever->getPath();
+        $path_logo      = $logo_retriever->getLegacyPath();
         if ($path_logo) {
             $id_attachment  = 'logo';
             $mail->addInlineAttachment(file_get_contents($path_logo), $logo_retriever->getMimetype(), $id_attachment);
-            $cid_logo = 'cid:'.$id_attachment;
+            $cid_logo = 'cid:' . $id_attachment;
         }
 
         return $cid_logo;

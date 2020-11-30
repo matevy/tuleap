@@ -1,0 +1,38 @@
+/* stylelint-disable selector-class-pattern */
+.feedback_error,
+.feedback_warning,
+.feedback_info,
+.feedback_debug {
+    margin: 10px 0;
+    padding: 20px;
+    border-left: 5px solid transparent;
+    border-radius: 3px;
+    list-style: none;
+
+    h4 {
+        margin: 0 0 20px;
+    }
+}
+
+.feedback_error {
+    border-left-color: $ui-color-danger;
+    background: desaturate(lighten(mix($white, $ui-color-danger, 25%), 23%), 15%);
+    color: darken($ui-color-danger, 15%);
+}
+
+.feedback_warning {
+    border-left-color: $ui-color-warning;
+    background: desaturate(lighten(mix($white, $ui-color-warning, 20%), 23%), 15%);
+    color: saturate(darken($ui-color-warning, 30%), 10%);
+}
+
+.feedback_info {
+    border-left-color: $ui-color-info;
+    background: desaturate(lighten(mix($white, $ui-color-info, 25%), 23%), 15%);
+    color: darken($ui-color-info, 30%);
+}
+
+.feedback_debug {
+    display: none;
+}
+/* stylelint-enable */

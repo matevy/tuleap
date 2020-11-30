@@ -19,22 +19,26 @@
 
 import { shallowMount } from "@vue/test-utils";
 import localVue from "../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import DocumentBreadcrumb from "./DocumentBreadcrumb.vue";
 
 describe("DocumentBreadcrumb", () => {
     let store_options, state, component_options, store;
     beforeEach(() => {
-        state = {};
+        state = {
+            privacy: {
+                are_restricted_users_allowed: false,
+            },
+        };
         store_options = {
-            state
+            state,
         };
         store = createStoreMock(store_options);
 
         component_options = {
             localVue,
             propsData: {},
-            mocks: { $store: store }
+            mocks: { $store: store },
         };
     });
     it(`Given user is docman administrator
@@ -44,7 +48,7 @@ describe("DocumentBreadcrumb", () => {
         store.state.current_folder_ascendant_hierarchy = [];
 
         const wrapper = shallowMount(DocumentBreadcrumb, component_options);
-        expect(wrapper.contains("[data-test=breadcrumb-administrator-link]")).toBeTruthy();
+        expect(wrapper.find("[data-test=breadcrumb-administrator-link]").exists()).toBeTruthy();
     });
 
     it(`Given user is regular user
@@ -54,7 +58,7 @@ describe("DocumentBreadcrumb", () => {
         store.state.current_folder_ascendant_hierarchy = [];
 
         const wrapper = shallowMount(DocumentBreadcrumb, component_options);
-        expect(wrapper.contains("[data-test=breadcrumb-administrator-link]")).toBeFalsy();
+        expect(wrapper.find("[data-test=breadcrumb-administrator-link]").exists()).toBeFalsy();
     });
 
     it(`Given ascendant hierarchy has more than 5 ascendants
@@ -69,12 +73,12 @@ describe("DocumentBreadcrumb", () => {
             { id: 4, title: "My fourth folder" },
             { id: 5, title: "My fifth folder" },
             { id: 6, title: "My sixth folder" },
-            { id: 7, title: "My seventh folder" }
+            { id: 7, title: "My seventh folder" },
         ];
 
         const wrapper = shallowMount(DocumentBreadcrumb, component_options);
 
-        expect(wrapper.contains("[data-test=breadcrumb-ellipsis]")).toBeTruthy();
+        expect(wrapper.find("[data-test=breadcrumb-ellipsis]").exists()).toBeTruthy();
     });
 
     it(`Given ascendant hierarchy has more than 5 ascendants and given we're still loading the ascendent hierarchy
@@ -89,13 +93,13 @@ describe("DocumentBreadcrumb", () => {
             { id: 4, title: "My fourth folder" },
             { id: 5, title: "My fifth folder" },
             { id: 6, title: "My sixth folder" },
-            { id: 7, title: "My seventh folder" }
+            { id: 7, title: "My seventh folder" },
         ];
 
         const wrapper = shallowMount(DocumentBreadcrumb, component_options);
 
-        expect(wrapper.contains("[data-test=breadcrumb-ellipsis]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-breadcrumb-skeleton]")).toBeTruthy();
+        expect(wrapper.find("[data-test=breadcrumb-ellipsis]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=document-breadcrumb-skeleton]").exists()).toBeTruthy();
     });
 
     it(`Given a list of folders which are in different hierarchy level
@@ -108,7 +112,7 @@ describe("DocumentBreadcrumb", () => {
             { id: 2, title: "My second folder", parent_id: 0 },
             { id: 3, title: "My third folder", parent_id: 1 },
             { id: 4, title: "My fourth folder", parent_id: 2 },
-            { id: 5, title: "My fifth folder", parent_id: 2 }
+            { id: 5, title: "My fifth folder", parent_id: 2 },
         ];
 
         const wrapper = shallowMount(DocumentBreadcrumb, component_options);
@@ -129,12 +133,12 @@ describe("DocumentBreadcrumb", () => {
             { id: 2, title: "My second folder", parent_id: 0 },
             { id: 3, title: "My third folder", parent_id: 1 },
             { id: 4, title: "My fourth folder", parent_id: 2 },
-            { id: 5, title: "My fifth folder", parent_id: 2 }
+            { id: 5, title: "My fifth folder", parent_id: 2 },
         ];
 
         const wrapper = shallowMount(DocumentBreadcrumb, component_options);
 
-        expect(wrapper.contains("[data-test=breadcrumb-current-document]")).toBeFalsy();
+        expect(wrapper.find("[data-test=breadcrumb-current-document]").exists()).toBeFalsy();
     });
 
     it(`Given a list of folders and the current document which is displayed
@@ -144,7 +148,7 @@ describe("DocumentBreadcrumb", () => {
         store.state.currently_previewed_item = {
             id: 6,
             title: "My embedded content",
-            parent_id: 0
+            parent_id: 0,
         };
         store.state.is_user_administrator = false;
         store.state.is_loading_ascendant_hierarchy = false;
@@ -153,11 +157,11 @@ describe("DocumentBreadcrumb", () => {
             { id: 2, title: "My second folder", parent_id: 0 },
             { id: 3, title: "My third folder", parent_id: 1 },
             { id: 4, title: "My fourth folder", parent_id: 2 },
-            { id: 5, title: "My fifth folder", parent_id: 2 }
+            { id: 5, title: "My fifth folder", parent_id: 2 },
         ];
 
         const wrapper = shallowMount(DocumentBreadcrumb, component_options);
 
-        expect(wrapper.contains("[data-test=breadcrumb-current-document]")).toBeTruthy();
+        expect(wrapper.find("[data-test=breadcrumb-current-document]").exists()).toBeTruthy();
     });
 });

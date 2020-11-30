@@ -19,13 +19,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Layout\CssAssetCollection;
 use Tuleap\Layout\CssAssetWithoutVariantDeclinaisons;
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Tracker\Report\WidgetAdditionalButtonPresenter;
 
 require_once('data-access/GraphOnTrackersV5_ChartFactory.class.php');
-require_once(TRACKER_BASE_DIR .'/Tracker/Report/Tracker_Report_Renderer.class.php');
+require_once(TRACKER_BASE_DIR . '/Tracker/Report/Tracker_Report_Renderer.class.php');
 
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
 {
 
@@ -88,31 +90,31 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
     {
         $html = '';
         $this->initiateSession();
-        $readonly = !$report_can_be_modified || $user->isAnonymous();
+        $readonly = ! $report_can_be_modified || $user->isAnonymous();
 
-        if (!$readonly && $this->chart_to_edit) {
-            $html .= '<script type="text/javascript" src="/plugins/graphontrackersv5/dependencies.js"></script>';
+        if (! $readonly && $this->chart_to_edit) {
+            $html .= $this->getAssets()->getHTMLSnippet('dependencies.js');
 
-            $url = '?'. http_build_query(array(
+            $url = '?' . http_build_query([
                                                'report'   => $this->report->id,
-                                               'renderer' => $this->id));
-            $html .= '<p><a href="'. $url .'">&laquo; '. $GLOBALS['Language']->getText('plugin_graphontrackersv5_include_report', 'return_renderer') .'</a></p>';
-            $html .= '<form action="'. $url .'" name="edit_chart_form" method="post">';
+                                               'renderer' => $this->id]);
+            $html .= '<p><a href="' . $url . '">&laquo; ' . dgettext('tuleap-graphontrackersv5', 'Go back to charts') . '</a></p>';
+            $html .= '<form action="' . $url . '" name="edit_chart_form" method="post">';
             $html .= '<input type="hidden" name="func" VALUE="renderer" />';
-            $html .= '<input type="hidden" name="renderer_plugin_graphontrackersv5[edit_chart]" VALUE="'. $this->chart_to_edit->getId() .'" />';
+            $html .= '<input type="hidden" name="renderer_plugin_graphontrackersv5[edit_chart]" VALUE="' . $this->chart_to_edit->getId() . '" />';
             $html .= '<table>';
             $html .= '<thead>
                         <tr class="boxtable">
-                            <th class="boxtitle">'.$GLOBALS['Language']->getText('plugin_graphontrackersv5_boxtable', 'chart_properties').'</th>
-                            <th class="boxtitle">'.$GLOBALS['Language']->getText('plugin_graphontrackersv5_boxtable', 'preview').'</th>
+                            <th class="boxtitle">' . dgettext('tuleap-graphontrackersv5', 'Chart Properties') . '</th>
+                            <th class="boxtitle">' . dgettext('tuleap-graphontrackersv5', 'Preview') . '</th>
                         </tr>
                       </thead>';
             $html .= '<tbody><tr valign="top"><td>';
             //{{{ Chart Properties
             foreach ($this->chart_to_edit->getProperties() as $prop) {
-                $html .= '<p>'. $prop->render() ."</p>\n";
+                $html .= '<p>' . $prop->render() . "</p>\n";
             }
-            $html .= '<p style="text-align:center;"><input type="submit" name="renderer_plugin_graphontrackersv5[update_chart]" value="'. $GLOBALS['Language']->getText('global', 'btn_submit') .'" /></p>';
+            $html .= '<p style="text-align:center;"><input type="submit" name="renderer_plugin_graphontrackersv5[update_chart]" value="' . $GLOBALS['Language']->getText('global', 'btn_submit') . '" /></p>';
             //}}}
             $html .= '</td><td style="text-align:center">';
             //{{{ Chart Preview
@@ -149,24 +151,24 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
     {
         $html = '';
 
-        if (!$readonly) {
+        if (! $readonly) {
             $html .= '<div id="tracker_report_renderer_view_controls">';
             $html .= '<div class="btn-group">';
             $html .= '<a href="#" class="btn btn-mini dropdown-toggle" data-toggle="dropdown">';
             $html .= '<i class="fa fa-plus"></i> ';
-            $html .= $GLOBALS['Language']->getText('plugin_graphontrackersv5_include_report', 'add_chart');
+            $html .= dgettext('tuleap-graphontrackersv5', 'Add a Chart');
             $html .= ' <span class="caret"></span>';
             $html .= '</a>';
             $html .= '<ul class="dropdown-menu pull-right"> ';
-            $url = '?'. http_build_query(array(
+            $url = '?' . http_build_query([
                                                'report'   => $this->report->id,
                                                'renderer' => $this->id,
                                                'func'     => 'renderer',
-                                              ));
-            $url_add = $url .'&amp;renderer_plugin_graphontrackersv5[add_chart]=';
+                                              ]);
+            $url_add = $url . '&amp;renderer_plugin_graphontrackersv5[add_chart]=';
             foreach ($this->getChartFactory()->getChartFactories() as $factory) {
                 $html .= '<li>';
-                $html .= '<a href="'. $url_add . $factory['chart_type'] .'">';
+                $html .= '<a href="' . $url_add . $factory['chart_type'] . '">';
                 $html .= $factory['title'];
                 $html .= '</a>';
                 $html .= '</li>';
@@ -176,7 +178,7 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
             $html .= '</div>';
             $html .= '<form action="" method="POST">
                 <input type="hidden" name="func" VALUE="renderer" />
-                <input type="hidden" name="renderer" VALUE="'. $this->id .'" />';
+                <input type="hidden" name="renderer" VALUE="' . $this->id . '" />';
         }
 
         $html .= '<div class="tracker_report_renderer_graphontrackers_charts">';
@@ -189,8 +191,8 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
 
         $html .= '</div>';
 
-        if (!$readonly) {
-            $html .='</form>';
+        if (! $readonly) {
+            $html .= '</form>';
         }
 
         return $html;
@@ -214,26 +216,26 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
 
     private function getTemplateRenderer()
     {
-        return TemplateRendererFactory::build()->getRenderer(TRACKER_TEMPLATE_DIR.'/report');
+        return TemplateRendererFactory::build()->getRenderer(TRACKER_TEMPLATE_DIR . '/report');
     }
 
     /**
      * Process the request
      * @param Request $request
      */
-    public function processRequest(TrackerManager $tracker_manager, $request, $current_user)
+    public function processRequest(TrackerManager $tracker_manager, $request, PFUser $current_user)
     {
         $renderer_parameters = $request->get('renderer_plugin_graphontrackersv5');
         if ($renderer_parameters && is_array($renderer_parameters)) {
             if (isset($renderer_parameters['add_chart'])) {
                 $this->chart_to_edit = $this->getChartFactory()
                                             ->createChart($this, $renderer_parameters['add_chart']);
-                $GLOBALS['Response']->redirect(TRACKER_BASE_URL.'/?'. http_build_query(array(
+                $GLOBALS['Response']->redirect(TRACKER_BASE_URL . '/?' . http_build_query([
                     'report' => $this->report->id,
                     'renderer' => $this->id,
                     'func' => 'renderer',
                     'renderer_plugin_graphontrackersv5[edit_chart]' => $this->chart_to_edit->id,
-                )));
+                ]));
             }
 
             if (isset($renderer_parameters['edit_chart']) && ! $current_user->isAnonymous()) {
@@ -248,7 +250,7 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
                             $this->chart_to_edit,
                             $chart_data['rank']
                         );
-                        $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_graphontrackersv5_include_report', 'updated_report'));
+                        $GLOBALS['Response']->addFeedback('info', dgettext('tuleap-graphontrackersv5', 'Graphic Report updated successfully'));
                     }
                 }
                 $this->report->display($tracker_manager, $request, $current_user);
@@ -265,10 +267,12 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
             if (isset($renderer_parameters['stroke'])) {
                 $store_in_session = true;
                 if ($request->exist('store_in_session')) {
-                    $store_in_session = (bool)$request->get('store_in_session');
+                    $store_in_session = (bool) $request->get('store_in_session');
                 }
-                if ($chart = $this->getChartFactory()
-                                  ->getChart($this, $renderer_parameters['stroke'], $store_in_session)) {
+                if (
+                    $chart = $this->getChartFactory()
+                                  ->getChart($this, $renderer_parameters['stroke'], $store_in_session)
+                ) {
                     $chart->stroke();
                     exit;
                 }
@@ -285,7 +289,7 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
 
     public function afterProcessRequest($engine, $request, $current_user)
     {
-        if (!$this->chart_to_edit) {
+        if (! $this->chart_to_edit) {
             parent::afterProcessRequest($engine, $request, $current_user);
         }
     }
@@ -312,7 +316,7 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
         $child = $root->addChild('charts');
         foreach ($this->getChartFactory()->getCharts($this) as $chart) {
             if ($chart instanceof GraphOnTrackersV5_Chart_CumulativeFlow) {
-                if (!$this->form_element_factory->getUsedFormElementById($chart->getFieldId())) {
+                if (! $this->form_element_factory->getUsedFormElementById($chart->getFieldId())) {
                     return;
                 }
                 $grandchild = $child->addChild('chart');
@@ -343,7 +347,7 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
     */
     public function setSession($renderer_id = null)
     {
-        if (!$renderer_id) {
+        if (! $renderer_id) {
             $renderer_id = $this->id;
         }
         $this->report_session->set("{$this->id}.name", $this->name);
@@ -414,27 +418,26 @@ class GraphOnTrackersV5_Renderer extends Tracker_Report_Renderer
 
     public function getIcon()
     {
-        return 'fa fa-bar-chart-o';
+        return 'far fa-chart-bar';
     }
 
-    public function getJavascriptDependencies()
+    public function getJavascriptDependencies(): array
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/graphontrackersv5/scripts',
-            '/assets/graphontrackersv5/scripts'
-        );
         return [
-            ['file' => $include_assets->getFileURL('graphontrackersv5.js')]
+            ['file' => $this->getAssets()->getFileURL('graphontrackersv5.js')]
         ];
     }
 
-    /** @return \Tuleap\Layout\CssAssetCollection */
-    public function getStylesheetDependencies()
+    public function getStylesheetDependencies(): CssAssetCollection
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/graphontrackersv5/themes',
-            '/assets/graphontrackersv5/themes'
+        return new CssAssetCollection([new CssAssetWithoutVariantDeclinaisons($this->getAssets(), 'style')]);
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/graphontrackersv5',
+            '/assets/graphontrackersv5'
         );
-        return new \Tuleap\Layout\CssAssetCollection([new CssAssetWithoutVariantDeclinaisons($include_assets, 'style')]);
     }
 }

@@ -29,8 +29,8 @@ describe("LockProperty", () => {
             return shallowMount(LockProperty, {
                 localVue,
                 propsData: {
-                    item: { ...item }
-                }
+                    item: { ...item },
+                },
             });
         };
     });
@@ -39,9 +39,9 @@ describe("LockProperty", () => {
             const item = { id: 1, title: "Item", lock_info: null };
             const wrapper = lock_property(item);
 
-            const label_element = wrapper.find("[data-test='lock-property-label']");
+            const label_element = wrapper.get("[data-test='lock-property-label']");
 
-            expect(label_element.element.textContent).toEqual("Lock new version");
+            expect(label_element.element.textContent).toMatch("Lock new version");
         });
 
         it("displays the 'Keep lock?' label on update if the document does have a lock", () => {
@@ -50,14 +50,14 @@ describe("LockProperty", () => {
                 title: "Item",
                 lock_info: {
                     locked_date: "2019-04-25T16:32:59+02:00",
-                    lock_by: "peraltaj"
-                }
+                    lock_by: "peraltaj",
+                },
             };
             const wrapper = lock_property(item);
 
-            const label_element = wrapper.find("[data-test='lock-property-label']");
+            const label_element = wrapper.get("[data-test='lock-property-label']");
 
-            expect(label_element.element.textContent).toEqual("Keep lock?");
+            expect(label_element.element.textContent).toMatch("Keep lock?");
         });
     });
 });

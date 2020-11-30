@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Upload\Version;
 
@@ -63,8 +63,8 @@ class VersionBeingUploadedInformationProvider implements TusFileInformationProvi
         }
 
         $version_id = (int) $version_id;
-        /** @var PFUser $current_user */
         $current_user = $request->getAttribute(RESTCurrentUserMiddleware::class);
+        \assert($current_user instanceof PFUser);
 
         $document_row = $this->dao->searchDocumentVersionOngoingUploadByVersionIDUserIDAndExpirationDate(
             $version_id,

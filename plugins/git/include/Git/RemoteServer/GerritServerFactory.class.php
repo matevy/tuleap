@@ -33,13 +33,6 @@ class Git_RemoteServer_GerritServerFactory
     /** @var ProjectManager */
     private $project_manager;
 
-    /**
-     *
-     * @param Git_RemoteServer_Dao $dao
-     * @param GitDao $git_dao
-     * @param Git_SystemEventManager $system_event_manager
-     * @param ProjectManager $project_manager
-     */
     public function __construct(Git_RemoteServer_Dao $dao, GitDao $git_dao, Git_SystemEventManager $system_event_manager, ProjectManager $project_manager)
     {
         $this->dao     = $dao;
@@ -50,7 +43,6 @@ class Git_RemoteServer_GerritServerFactory
 
     /**
      *
-     * @param GitRepository $repository
      * @return Git_RemoteServer_GerritServer
      */
     public function getServer(GitRepository $repository)
@@ -79,7 +71,7 @@ class Git_RemoteServer_GerritServerFactory
      */
     public function getServers()
     {
-        $servers = array();
+        $servers = [];
         foreach ($this->dao->searchAll() as $row) {
             $servers[$row['id']] = $this->instantiateFromRow($row);
         }
@@ -99,7 +91,7 @@ class Git_RemoteServer_GerritServerFactory
      */
     public function getUnrestrictedServers()
     {
-        $servers = array();
+        $servers = [];
         foreach ($this->dao->searchAllUnrestricted() as $row) {
             $servers[$row['id']] = $this->instantiateFromRow($row);
         }
@@ -112,7 +104,7 @@ class Git_RemoteServer_GerritServerFactory
      */
     public function getAvailableServersForProject(Project $project)
     {
-        $servers = array();
+        $servers = [];
         foreach ($this->dao->searchAvailableServersForProject($project->getID()) as $row) {
             $servers[$row['id']] = $this->instantiateFromRow($row);
         }
@@ -131,7 +123,7 @@ class Git_RemoteServer_GerritServerFactory
      */
     public function getServersForProject(Project $project)
     {
-        $servers = array();
+        $servers = [];
         foreach ($this->dao->searchAllByProjectId($project->getID()) as $row) {
             $servers[$row['id']] = $this->instantiateFromRow($row);
         }
@@ -144,17 +136,13 @@ class Git_RemoteServer_GerritServerFactory
 
     public function getServersForUGroup(ProjectUGroup $ugroup)
     {
-        $servers = array();
+        $servers = [];
         foreach ($this->dao->searchAllByUGroupId($ugroup->getProjectId(), $ugroup->getId()) as $row) {
             $servers[$row['id']] = $this->instantiateFromRow($row);
         }
         return $servers;
     }
 
-    /**
-     *
-     * @param Git_RemoteServer_GerritServer $server
-     */
     public function save(Git_RemoteServer_GerritServer $server)
     {
         $id = $this->dao->save(
@@ -167,8 +155,7 @@ class Git_RemoteServer_GerritServerFactory
             $server->getReplicationKey(),
             $server->usesSSL(),
             $server->getGerritVersion(),
-            $server->getHTTPPassword(),
-            $server->getAuthType()
+            $server->getHTTPPassword()
         );
         if ($server->getId() == 0) {
             $server->setId($id);
@@ -176,19 +163,11 @@ class Git_RemoteServer_GerritServerFactory
         $this->system_event_manager->queueGerritReplicationKeyUpdate($server);
     }
 
-    /**
-     *
-     * @param Git_RemoteServer_GerritServer $server
-     */
     public function updateReplicationPassword(Git_RemoteServer_GerritServer $server)
     {
         $this->dao->updateReplicationPassword($server->getId(), $server->getReplicationPassword());
     }
 
-    /**
-     *
-     * @param Git_RemoteServer_GerritServer $server
-     */
     public function delete(Git_RemoteServer_GerritServer $server)
     {
         if (! $this->isServerUsed($server)) {
@@ -199,7 +178,6 @@ class Git_RemoteServer_GerritServerFactory
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $server
      * @return bool
      */
     public function isServerUsed(Git_RemoteServer_GerritServer $server)
@@ -217,7 +195,6 @@ class Git_RemoteServer_GerritServerFactory
 
     /**
      *
-     * @param PFUser $user
      * @return Git_RemoteServer_GerritServer[]
      */
     public function getRemoteServersForUser(PFUser $user)
@@ -249,8 +226,7 @@ class Git_RemoteServer_GerritServerFactory
             $row['use_ssl'],
             $row['gerrit_version'],
             $row['http_password'],
-            $row['replication_password'],
-            $row['auth_type']
+            $row['replication_password']
         );
     }
 

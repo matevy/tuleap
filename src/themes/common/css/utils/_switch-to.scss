@@ -1,0 +1,362 @@
+/**
+ * Copyright (c) Enalean, 2020-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+$projects-container-width: 400px;
+
+#switch-to-modal {
+    width: 75vw;
+    min-width: 700px;
+    max-width: 1200px;
+    overflow: hidden;
+    border-radius: 6px;
+}
+
+.switch-to-modal-header {
+    padding: ($tlp-medium-spacing + 1px) $tlp-medium-spacing ($tlp-medium-spacing + 1px) $tlp-large-spacing;
+    border-bottom: 1px solid rgba(104, 122, 124, .2);
+    background-blend-mode: overlay;
+}
+
+.switch-to-modal-header-filter-container {
+    display: flex;
+    flex: 1 0 auto;
+    align-items: center;
+}
+
+.switch-to-modal-header-icon {
+    margin: 0 6px 0 0;
+    opacity: .7;
+    color: $tlp-ui-dimmed;
+    font-size: .875rem;
+    line-height: 1rem;
+}
+
+#switch-to-filter {
+    width: 100%;
+    padding: 0 $tlp-small-spacing;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-family: $switch-to-font-family;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.1875rem;
+
+    &::placeholder {
+        color: $tlp-ui-dimmed;
+    }
+
+    &::-ms-clear,
+    &::-ms-reveal {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
+    &::-webkit-search-decoration,
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-results-button,
+    &::-webkit-search-results-decoration { display: none; }
+}
+
+.switch-to-modal-header-legacy-search-button {
+    margin: -2px 0;
+    padding: $white-space-above-and-after-a-project-link $tlp-small-spacing;
+    transition: opacity 100ms ease-in-out, background 100ms ease-in-out;
+    border: 0;
+    border-radius: 4px;
+    opacity: .75;
+    background: none;
+    color: $dark-modal-dimmed-text-color;
+    font-family: $switch-to-font-family;
+    font-size: .8125rem;
+    font-weight: 500;
+    line-height: 1rem;
+    cursor: pointer;
+
+    &:focus,
+    &:hover {
+        opacity: 1;
+        background: rgba(0, 0, 0, .2);
+    }
+
+    > .fa-long-arrow-right {
+        margin: 0 0 0 $tlp-small-spacing;
+    }
+}
+
+.switch-to-modal-body {
+    display: flex;
+    padding: $tlp-large-spacing $tlp-large-spacing $tlp-large-spacing ($tlp-large-spacing - $tlp-small-spacing);
+    background: $dark-modal-background;
+    color: $dark-modal-default-text-color;
+}
+
+.switch-to-modal-body-title {
+    font-size: .8125rem;
+    font-weight: 600;
+    line-height: 1rem;
+    text-transform: uppercase;
+}
+
+.switch-to-projects {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 0 0 ($tlp-large-spacing - $white-space-above-and-after-a-project-link);
+}
+
+.switch-to-projects-project {
+    display: flex;
+    align-items: baseline;
+    color: $dark-modal-default-text-color;
+
+    &:hover,
+    &:focus-within {
+        > .switch-to-projects-project-admin-icon {
+            opacity: 1;
+        }
+    }
+}
+
+.switch-to-projects-project-link {
+    padding: $white-space-above-and-after-a-project-link $tlp-small-spacing;
+    border-radius: 4px;
+    color: $dark-modal-default-text-color;
+
+    &:hover,
+    &:focus {
+        background: rgba(0, 0, 0, .2);
+        text-decoration: none;
+    }
+}
+
+.switch-to-projects-project-icon {
+    margin: 0 $tlp-small-spacing 0 0;
+    font-size: .8rem;
+}
+
+.switch-to-projects-project-admin-icon {
+    position: relative;
+    top: -1px;
+    margin: 0 0 0 4px;
+    padding: $white-space-above-and-after-a-project-link $tlp-small-spacing;
+    transition: opacity 100ms ease-in-out;
+    border-radius: 4px;
+    opacity: 0;
+    color: $dark-modal-dimmed-text-color;
+    font-size: .8125rem;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+        background: rgba(0, 0, 0, .2);
+        text-decoration: none;
+    }
+}
+
+.switch-to-projects-softwaremap {
+    padding: 6px 8px ($tlp-large-spacing + 6px) 36px;
+    opacity: .75;
+    color: $dark-modal-dimmed-text-color;
+    font-size: .8125rem;
+    font-weight: 500;
+    line-height: 1rem;
+
+    &:focus {
+        text-decoration: underline;
+    }
+}
+
+.switch-to-projects-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 $tlp-jumbo-spacing;
+}
+
+
+.switch-to-modal-body-global-loading {
+    display: flex;
+    width: 100%;
+
+    > p {
+        flex: 1 1 auto;
+
+        > .tlp-skeleton-text {
+            display: block;
+            margin: 0 auto;
+        }
+    }
+}
+
+.switch-to-modal-body-global-empty {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    align-items: center;
+    min-height: 200px;
+    padding: 0 0 $tlp-jumbo-spacing;
+}
+
+.switch-to-projects-container {
+    flex: 0 0 auto;
+    width: $projects-container-width;
+
+    > .switch-to-modal-body-title {
+        margin: 0 0 $tlp-medium-spacing 36px;
+    }
+}
+
+.switch-to-modal-body-global-empty-text,
+.switch-to-recent-items-empty-text,
+.switch-to-projects-empty-text {
+    margin: $tlp-medium-spacing 0 $tlp-large-spacing;
+    opacity: .75;
+    color: $dark-modal-dimmed-text-color;
+    font-size: .8125rem;
+    font-weight: 500;
+    line-height: 1rem;
+}
+
+.switch-to-empty-illustration {
+    opacity: .5;
+
+    .stroked {
+        stroke: $dark-modal-dimmed-text-color;
+    }
+
+    .filled {
+        fill: $dark-modal-dimmed-text-color;
+    }
+}
+
+.switch-to-modal-no-matching-projects {
+    margin: $tlp-large-spacing 0 $tlp-large-spacing 36px;
+}
+
+.switch-to-modal-no-matching-history,
+.switch-to-modal-no-matching-history:last-child {
+    margin: $tlp-large-spacing 0 $tlp-large-spacing $tlp-small-spacing;
+}
+
+.switch-to-modal-no-matching-history,
+.switch-to-modal-no-matching-projects {
+    opacity: .75;
+    color: $dark-modal-dimmed-text-color;
+    font-size: .875rem;
+}
+
+.switch-to-recent-items {
+    flex: 1 1 auto;
+    width: calc(100% - #{$projects-container-width});
+
+    .switch-to-modal-body-title {
+        margin: 0 0 $tlp-medium-spacing $tlp-small-spacing;
+    }
+}
+
+.switch-to-recent-items-error {
+    opacity: .75;
+    font-size: .8125rem;
+    font-weight: 600;
+    line-height: 1rem;
+}
+
+.switch-to-recent-items-error-icon {
+    margin: 0 4px 0 0;
+}
+
+.switch-to-recent-items-loading > p > .tlp-skeleton-text {
+    margin: 0 0 0 8px;
+}
+
+.switch-to-recent-items-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 0 $tlp-jumbo-spacing;
+}
+
+.switch-to-recent-items-entry {
+    display: flex;
+    align-items: center;
+
+    &:last-child {
+        margin: 0 0 $tlp-large-spacing;
+    }
+}
+
+.switch-to-recent-items-entry-link {
+    min-width: 0;
+    padding: $white-space-above-and-after-a-project-link $tlp-small-spacing;
+    overflow: hidden;
+    border-radius: 4px;
+    color: $dark-modal-default-text-color;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:focus,
+    &:hover {
+        background: rgba(0, 0, 0, .2);
+        text-decoration: none;
+    }
+}
+
+.switch-to-recent-items-entry-icon,
+.switch-to-recent-items-entry-badge {
+    margin: 0 4px 0 0;
+}
+
+.switch-to-recent-items-entry-badge {
+    font-weight: 400;
+}
+
+.switch-to-recent-items-entry-quick-links {
+    display: flex;
+    padding: 0 0 0 $tlp-small-spacing;
+    transition: opacity 100ms ease-in-out;
+    opacity: 0;
+}
+
+.switch-to-recent-items-entry:focus-within,
+.switch-to-recent-items-entry:hover {
+    > .switch-to-recent-items-entry-quick-links {
+        opacity: 1;
+    }
+}
+
+.switch-to-recent-items-entry-quick-links-link {
+    padding: $white-space-above-and-after-a-project-link $tlp-small-spacing;
+    border-radius: 4px;
+    color: $dark-modal-default-text-color;
+    font-size: .8125rem;
+
+    &:focus,
+    &:hover {
+        background: rgba(0, 0, 0, .2);
+        text-decoration: none;
+    }
+}
+
+@each $color-name, $colors in $tlp-swatch-color-map {
+    .switch-to-recent-items-entry-link.#{$color-name} > .switch-to-recent-items-entry-icon {
+        color: map-get($colors, 'primary');
+    }
+}

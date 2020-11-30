@@ -82,12 +82,6 @@ class Project_OneStepCreation_OneStepCreationRequest
 
     /**
      *
-     * @var bool
-     */
-    private $is_valid = true;
-
-    /**
-     *
      * @var string
      */
     private $form_submission_path;
@@ -95,7 +89,7 @@ class Project_OneStepCreation_OneStepCreationRequest
     /**
      * @var array
      */
-    private $custom_descriptions = array();
+    private $custom_descriptions = [];
 
     /** @var Codendi_Request */
     private $request;
@@ -114,7 +108,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         $this->request                         = $request;
         $this->is_public                       = $default_project_visibility === Project::ACCESS_PUBLIC ||
             $default_project_visibility === Project::ACCESS_PUBLIC_UNRESTRICTED;
-        $this->user_can_choose_project_privacy = ForgeConfig::get('sys_user_can_choose_project_privacy');
+        $this->user_can_choose_project_privacy = ForgeConfig::get(ProjectManager::SYS_USER_CAN_CHOOSE_PROJECT_PRIVACY);
         $request_data                          = $request->params;
         $this->setFullName($request_data)
             ->setUnixName($request_data)
@@ -133,9 +127,9 @@ class Project_OneStepCreation_OneStepCreationRequest
      */
     public function getProjectValues()
     {
-        return array(
+        return [
             'project' => array_merge(
-                array(
+                [
                     Project_OneStepCreation_OneStepCreationPresenter::FULL_NAME                       => $this->getFullName(),
                     Project_OneStepCreation_OneStepCreationPresenter::IS_PUBLIC                       => $this->isPublic(),
                     'allow_restricted'                                                                => $this->allow_restricted,
@@ -145,22 +139,22 @@ class Project_OneStepCreation_OneStepCreationRequest
                     Project_OneStepCreation_OneStepCreationPresenter::SHORT_DESCRIPTION               => $this->getShortDescription(),
                     'is_test'                                                                         => false,
                     'services'                                                                        => $this->getServices(),
-                ),
+                ],
                 $this->custom_descriptions,
                 $this->getTroveCatDataForProjectRequest()
             )
-        );
+        ];
     }
 
     private function getTroveCatDataForProjectRequest()
     {
-        $trove_data = array();
+        $trove_data = [];
 
         if (count($this->trove_cats) > 0) {
-            $troves = array();
+            $troves = [];
 
             foreach ($this->trove_cats as $trove_id => $selected_child_trove_id) {
-                $troves[$trove_id] = array($selected_child_trove_id);
+                $troves[$trove_id] = [$selected_child_trove_id];
             }
 
             $trove_data['trove'] = $troves;
@@ -283,7 +277,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         }
     }
 
-    private function setUnixName(array $data) : self
+    private function setUnixName(array $data): self
     {
         if (isset($data[Project_OneStepCreation_OneStepCreationPresenter::UNIX_NAME])) {
             $this->unix_name = $data[Project_OneStepCreation_OneStepCreationPresenter::UNIX_NAME];
@@ -292,7 +286,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         return $this;
     }
 
-    private function setFullName(array $data) : self
+    private function setFullName(array $data): self
     {
         if (isset($data[Project_OneStepCreation_OneStepCreationPresenter::FULL_NAME])) {
             $this->full_name = $data[Project_OneStepCreation_OneStepCreationPresenter::FULL_NAME];
@@ -301,7 +295,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         return $this;
     }
 
-    private function setShortDescription(array $data) : self
+    private function setShortDescription(array $data): self
     {
         if (isset($data[Project_OneStepCreation_OneStepCreationPresenter::SHORT_DESCRIPTION])) {
             $this->short_description = trim($data[Project_OneStepCreation_OneStepCreationPresenter::SHORT_DESCRIPTION]);
@@ -310,7 +304,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         return $this;
     }
 
-    private function setTemplateId(array $data) : self
+    private function setTemplateId(array $data): self
     {
         if (isset($data[Project_OneStepCreation_OneStepCreationPresenter::TEMPLATE_ID])) {
             $this->templateId = $data[Project_OneStepCreation_OneStepCreationPresenter::TEMPLATE_ID];
@@ -321,7 +315,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         return $this;
     }
 
-    private function setIsPublic(array $data) : self
+    private function setIsPublic(array $data): self
     {
         if (isset($data[Project_OneStepCreation_OneStepCreationPresenter::IS_PUBLIC])) {
             $this->is_public = $data[Project_OneStepCreation_OneStepCreationPresenter::IS_PUBLIC];
@@ -330,7 +324,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         return $this;
     }
 
-    private function setProjectAllowRestricted(array $data) : self
+    private function setProjectAllowRestricted(array $data): self
     {
         $this->allow_restricted = true;
 
@@ -343,7 +337,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         return $this;
     }
 
-    private function setTosApproval($data) : self
+    private function setTosApproval($data): self
     {
         $this->term_of_service_approval = false;
 
@@ -354,10 +348,10 @@ class Project_OneStepCreation_OneStepCreationRequest
         return $this;
     }
 
-    private function setCustomDescriptions($data) : self
+    private function setCustomDescriptions($data): self
     {
         foreach ($data as $key => $value) {
-            if (preg_match('/^'. preg_quote(Project_OneStepCreation_OneStepCreationPresenter::PROJECT_DESCRIPTION_PREFIX) .'(\d+)$/', $key, $matches)) {
+            if (preg_match('/^' . preg_quote(Project_OneStepCreation_OneStepCreationPresenter::PROJECT_DESCRIPTION_PREFIX) . '(\d+)$/', $key, $matches)) {
                 $this->custom_descriptions[$key] = $value;
             }
         }
@@ -365,7 +359,7 @@ class Project_OneStepCreation_OneStepCreationRequest
         return $this;
     }
 
-    private function setTroveCats($data) : self
+    private function setTroveCats($data): self
     {
         foreach ($data as $key => $trove_value) {
             if ($key === Project_OneStepCreation_OneStepCreationPresenter::TROVE_CAT_PREFIX) {

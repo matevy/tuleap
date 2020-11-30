@@ -17,7 +17,11 @@ services:
 
   test-cypress:
     build:
-      context: ./tests/e2e/DockerImage
+      context: ./tests/e2e/docker
+      dockerfile: run-tests.dockerfile
+      args:
+        DOCKER_REGISTRY: ${DOCKER_REGISTRY:-docker.io}
+        CYPRESS_VERSION: $CYPRESS_VERSION
     command: /tuleap/tests/e2e/distlp/cypress/run.sh
     volumes:
       - .:/tuleap
@@ -29,7 +33,7 @@ services:
       - external-connectivity
 
   reverse-proxy:
-    image: enalean/tuleap-reverseproxy:distlp-1.4
+    image: ${DOCKER_REGISTRY:-docker.io}/enalean/tuleap-reverseproxy:distlp-1.4
     command: /tuleap/tools/distlp/reverse-proxy/run.sh
     volumes:
       - .:/tuleap
@@ -41,7 +45,7 @@ services:
       - tuleap
 
   backend-web:
-    image: enalean/tuleap-aio-dev:c6-php73-nginx
+    image: ${DOCKER_REGISTRY:-docker.io}/enalean/tuleap-aio-dev:c6-php73-nginx
     environment:
       RUN_COMMAND: "/opt/remi/php73/root/usr/bin/php /usr/share/tuleap/tools/distlp/backend-web/run.php test"
       MYSQL_ROOT_PASSWORD: DumpPass4Tests
@@ -58,7 +62,7 @@ services:
       - tuleap
 
   backend-svn:
-    image: enalean/tuleap-dev:1.11
+    image: ${DOCKER_REGISTRY:-docker.io}/enalean/tuleap-dev:1.13
     command: /usr/share/tuleap/tools/distlp/backend-svn/backend-svn.sh
     volumes:
       - .:/usr/share/tuleap
@@ -73,7 +77,7 @@ services:
       - tuleap
 
   ldap:
-    image: enalean/ldap
+    image: ${DOCKER_REGISTRY:-docker.io}/enalean/ldap
     environment:
       LDAP_ROOT_PASSWORD: DumpPass4Tests
       LDAP_MANAGER_PASSWORD: DumpPass4Tests
@@ -83,16 +87,17 @@ services:
       - tuleap
 
   db:
-    image: mysql:5.5
+    image: ${DOCKER_REGISTRY:-docker.io}/mysql:5.7
     environment:
       MYSQL_ROOT_PASSWORD: DumpPass4Tests
     volumes:
       - tests-db-data:/var/lib/mysql
+      - ./src/etc/tuleap-mysql57-dev.cnf:/etc/mysql/mysql.conf.d/tuleap.cnf:ro,cached
     networks:
       - tuleap
 
   redis:
-    image: redis:3.2
+    image: ${DOCKER_REGISTRY:-docker.io}/redis:3.2
     networks:
      - tuleap
 

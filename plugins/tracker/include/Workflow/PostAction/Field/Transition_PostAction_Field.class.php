@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,6 +21,8 @@
 /**
  * Base class for field post actions.
  */
+
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 abstract class Transition_PostAction_Field extends Transition_PostAction
 {
 
@@ -30,24 +32,14 @@ abstract class Transition_PostAction_Field extends Transition_PostAction
     protected $field;
 
     /**
-     * Constructor
-     *
      * @param Transition                   $transition The transition the post action belongs to
      * @param int $id Id of the post action
-     * @param Tracker_FormElement_Field    $field      The field the post action should modify
+     * @param Tracker_FormElement_Field    $field      The field or field_id the post action should modify
      */
     public function __construct(Transition $transition, $id, $field)
     {
         parent::__construct($transition, $id);
         $this->field = $field;
-    }
-
-    /**
-     * @see Transition_PostAction
-     */
-    public function getCssClasses()
-    {
-        return 'workflow_action_field '.parent::getCssClasses();
     }
 
     /**
@@ -77,7 +69,6 @@ abstract class Transition_PostAction_Field extends Transition_PostAction
     /**
      * Get the value of bypass_permissions
      *
-     * @param Tracker_FormElement_Field $field
      *
      * @return bool
      */
@@ -89,9 +80,9 @@ abstract class Transition_PostAction_Field extends Transition_PostAction
     /**
      * Check if a post action on field_id already exists
      *
-     * @param $request_field_id the field_id from the request
+     * @param mixed $request_field_id the field_id from the request
      *
-     * @return int, a field id
+     * @return int a field id
      */
     public function getFieldIdOfPostActionToUpdate($request_field_id)
     {
@@ -104,7 +95,10 @@ abstract class Transition_PostAction_Field extends Transition_PostAction
                 $already_used = $this->getDao()->searchByTransitionIdAndFieldId($this->transition->getId(), $new_field->getId());
 
                 if (count($already_used)) {
-                    $this->addFeedback('error', 'workflow_admin', 'postaction_on_field_already_exist', array($new_field->getLabel()));
+                    $this->addFeedback(
+                        'error',
+                        sprintf(dgettext('tuleap-tracker', 'An action on the field \'%1$s\' already exists.'), $new_field->getLabel())
+                    );
                 } else {
                     $field_id = $new_field->getId();
                     return $field_id;

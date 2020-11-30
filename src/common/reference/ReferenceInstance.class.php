@@ -27,16 +27,16 @@
 class ReferenceInstance
 {
 
-    var $match;
-    var $gotoLink;
-    var $reference;
-    var $value;
+    public $match;
+    public $gotoLink;
+    public $reference;
+    public $value;
 
     /**
      * Constructor
      * Note that we need a valid reference parameter
      */
-    function __construct($match, $ref, $value)
+    public function __construct($match, $ref, $value)
     {
         $this->reference = $ref;
         $this->match = $match;
@@ -44,7 +44,7 @@ class ReferenceInstance
     }
 
     /** Accessors */
-    function getMatch()
+    public function getMatch()
     {
         return $this->match;
     }
@@ -52,15 +52,15 @@ class ReferenceInstance
     /**
      * @return Reference
      */
-    function getReference()
+    public function getReference()
     {
         return $this->reference;
     }
-    function getGotoLink()
+    public function getGotoLink()
     {
         return $this->gotoLink;
     }
-    function getValue()
+    public function getValue()
     {
         return $this->value;
     }
@@ -68,23 +68,23 @@ class ReferenceInstance
     /**
      @return string full link (with http://servername...) if needed.
     */
-    function getFullGotoLink()
+    public function getFullGotoLink()
     {
-        return HTTPRequest::instance()->getServerUrl().$this->gotoLink;
+        return HTTPRequest::instance()->getServerUrl() . $this->gotoLink;
     }
 
     /**
      * Compute GotoLink according to the extracted match.
      */
-    function computeGotoLink($keyword, $value, $group_id)
+    public function computeGotoLink($keyword, $value, $group_id)
     {
         // If no group_id from context, the default is "100".
         // Don't use it in the link...
         $group_param = '';
-        if ($group_id!=100) {
-            $group_param="&group_id=$group_id";
+        if ($group_id != 100) {
+            $group_param = "&group_id=$group_id";
         }
 
-        $this->gotoLink="/goto?key=".urlencode($keyword)."&val=".urlencode($value).$group_param;
+        $this->gotoLink = "/goto?key=" . urlencode($keyword) . "&val=" . urlencode($value) . $group_param;
     }
 }

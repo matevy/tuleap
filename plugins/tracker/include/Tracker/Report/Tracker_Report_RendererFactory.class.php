@@ -44,6 +44,7 @@ class Tracker_Report_RendererFactory
 
     /**
      * Hold an instance of the class
+     * @var self|null
      */
     protected static $_instance;
 
@@ -52,7 +53,7 @@ class Tracker_Report_RendererFactory
      */
     public static function instance()
     {
-        if (!isset(self::$_instance)) {
+        if (! isset(self::$_instance)) {
             self::$_instance = new self();
         }
         return self::$_instance;
@@ -72,7 +73,7 @@ class Tracker_Report_RendererFactory
                     ->searchById($id)
                     ->getRow();
         if ($row) {
-            if (!$report) {
+            if (! $report) {
                 //try to dynamically load it
                 $arf = Tracker_ReportFactory::instance();
                 $report = $arf->getReportById($row['report_id'], UserManager::instance()->getCurrentUser()->getId());
@@ -93,7 +94,7 @@ class Tracker_Report_RendererFactory
      */
     public function getReportRenderersByReport($report)
     {
-        $renderers = array();
+        $renderers = [];
         //Check that renderers are already in the session
         $renderers_data = $report->report_session->get('renderers');
         if (! $renderers_data) {
@@ -119,7 +120,7 @@ class Tracker_Report_RendererFactory
      */
     public function getReportRenderersByReportFromDb($report)
     {
-        $renderers = array();
+        $renderers = [];
         foreach ($this->getDao()->searchByReportId($report->id) as $row) {
             if ($r = $this->getInstanceFromRow($row, $report)) {
                 $renderers[$row['id']] = $r;
@@ -129,8 +130,7 @@ class Tracker_Report_RendererFactory
     }
 
     /**
-     * @param Report $report the id of the report
-     * @param array
+     * @param Tracker_Report $report the id of the report
      */
     public function getReportRendererByReportAndId($report, $renderer_id, $store_in_session = true)
     {
@@ -141,7 +141,7 @@ class Tracker_Report_RendererFactory
             $session->changeSessionNamespace('renderers');
             $row = $session->get($renderer_id);
         }
-        if (!$row) {
+        if (! $row) {
             $row = $this->getDao()->searchByIdAndReportId($renderer_id, $report->id)->getRow();
         }
         if ($row) {
@@ -209,9 +209,9 @@ class Tracker_Report_RendererFactory
                         $this->getEventManager()
                                     ->processEvent(
                                         'tracker_report_create_renderer',
-                                        array('renderer_id' => $renderer_id,
+                                        ['renderer_id' => $renderer_id,
                                                          'type'        => $type,
-                                                         'report'      => $report)
+                                                         'report'      => $report]
                                     );
                         break;
                 }
@@ -261,16 +261,16 @@ class Tracker_Report_RendererFactory
             $session = new Tracker_Report_Session($report->id);
             $session->changeSessionNamespace('renderers');
             $nb_renderers = count($report->getRenderers());
-            $renderer_id = -$nb_renderers-1;
+            $renderer_id = -$nb_renderers - 1;
             $session->set(
                 $renderer_id,
-                array(
+                [
                     'id'            => $renderer_id,
                     'name'          => $name,
                     'description'   => $description,
                     'rank'          => $nb_renderers,
                     'renderer_type' => $type,
-                )
+                ]
             );
             if ($this->report_session) {
                 $this->report_session->setHasChanged();
@@ -287,9 +287,9 @@ class Tracker_Report_RendererFactory
                     $this->getEventManager()
                                 ->processEvent(
                                     'tracker_report_create_renderer_in_session',
-                                    array('renderer_id' => $renderer_id,
+                                    ['renderer_id' => $renderer_id,
                                                      'type'        => $type,
-                                                     'report'      => $report)
+                                                     'report'      => $report]
                                 );
                     break;
             }
@@ -328,11 +328,11 @@ class Tracker_Report_RendererFactory
 
     public function getTypes()
     {
-        $types = array(Tracker_Report_Renderer::TABLE => $GLOBALS['Language']->getText('plugin_tracker_report', 'table'));
+        $types = [Tracker_Report_Renderer::TABLE => dgettext('tuleap-tracker', 'Table')];
         $this->getEventManager()
                     ->processEvent(
                         'tracker_report_renderer_types',
-                        array('types' => &$types)
+                        ['types' => &$types]
                     );
         return $types;
     }
@@ -340,7 +340,7 @@ class Tracker_Report_RendererFactory
      * Force the order of renderers for a report
      *
      * @param Tracker_Report $report          The report
-     * @param array          $renderers_order The ids of renderers in specified order
+     * @param array          $report_renderers The ids of renderers in specified order
      *
      * @return bool true on success false on failure
      */
@@ -356,7 +356,7 @@ class Tracker_Report_RendererFactory
      */
     protected function getDao()
     {
-        if (!$this->dao) {
+        if (! $this->dao) {
             $this->dao = new Tracker_Report_RendererDao();
         }
         return $this->dao;
@@ -368,7 +368,7 @@ class Tracker_Report_RendererFactory
      */
     protected function getTableDao()
     {
-        if (!$this->table_dao) {
+        if (! $this->table_dao) {
             $this->table_dao = new Tracker_Report_Renderer_TableDao();
         }
         return $this->table_dao;
@@ -393,12 +393,12 @@ class Tracker_Report_RendererFactory
             $this->report_session->changeSessionNamespace('renderers');
         }
 
-        if (!isset($this->renderers[$row['id']]) || $row['id']== 0) {
+        if (! isset($this->renderers[$row['id']]) || $row['id'] == 0) {
             $instance = null;
             switch ($row['renderer_type']) {
                 case Tracker_Report_Renderer::TABLE:
                     //First retrieve specific properties of the renderer that are not saved in the generic table
-                    if (!isset($row['chunksz']) || !isset($row['multisort'])) {
+                    if (! isset($row['chunksz']) || ! isset($row['multisort'])) {
                         $row['chunksz']   = 15;
                         $row['multisort'] = 0;
                         $table_row = $this->getTableDao()
@@ -417,7 +417,7 @@ class Tracker_Report_RendererFactory
                         $row['description'],
                         $row['rank'],
                         $row['chunksz'],
-                        $row['multisort']
+                        (bool) $row['multisort']
                     );
 
                     if ($store_in_session) {
@@ -450,20 +450,20 @@ class Tracker_Report_RendererFactory
                 default:
                     $this->getEventManager()->processEvent(
                         'tracker_report_renderer_instance',
-                        array(
+                        [
                             'instance'         => &$instance,
                             'type'             => $row['renderer_type'],
                             'row'              => $row,
                             'report'           => $report,
                             'store_in_session' => $store_in_session,
-                        )
+                        ]
                     );
                     break;
             }
             $this->renderers[$row['id']] = $instance;
 
             if ($instance) {
-                if ($store_in_session) {
+                if ($store_in_session && isset($this->report_session)) {
                     //override the row in the current session
                     //do not traverse the row with a foreach since some info should not be put in the session
                     // (like SimpleXMLElement during an xml import)
@@ -492,36 +492,36 @@ class Tracker_Report_RendererFactory
     {
         $att = $xml->attributes();
         assert($att !== null);
-        $row = array(
+        $row = [
             'id'            => 0,
-            'name'          => (string)$xml->name,
-            'description'   => (string)$xml->description,
-            'rank'          => (int)$att['type'],
-            'renderer_type' => (string)$att['type'],
-        );
+            'name'          => (string) $xml->name,
+            'description'   => (string) $xml->description,
+            'rank'          => (int) $att['type'],
+            'renderer_type' => (string) $att['type'],
+        ];
 
         switch ($row['renderer_type']) {
             case Tracker_Report_Renderer::TABLE:
                 // specific TABLE attributes
-                $row['chunksz']   = (int)$att['chunksz'];
-                $row['multisort'] = (int)$att['multisort'];
+                $row['chunksz']   = (int) $att['chunksz'];
+                $row['multisort'] = (int) $att['multisort'];
 
                 //columns
-                $cols = array();
+                $cols = [];
                 foreach ($xml->columns->field as $f) {
                     $att    = $f->attributes();
-                    $column = array();
+                    $column = [];
 
-                    if (! isset($xmlMapping[(string)$att['REF']])) {
+                    if (! isset($xmlMapping[(string) $att['REF']])) {
                         continue;
                     }
 
-                    $column['field'] = $xmlMapping[(string)$att['REF']];
+                    $column['field'] = $xmlMapping[(string) $att['REF']];
                     if (isset($att['artlink-nature'])) {
                         $column['artlink_nature'] = $att['artlink-nature'];
                     }
                     if (isset($att['artlink-nature-format'])) {
-                        $column['artlink_nature_format'] = (string)$att['artlink-nature-format'];
+                        $column['artlink_nature_format'] = (string) $att['artlink-nature-format'];
                     }
                     $cols[] = $column;
                 }
@@ -529,16 +529,16 @@ class Tracker_Report_RendererFactory
                 $row['columns'] = $cols;
 
                 //sort
-                $sort = array();
+                $sort = [];
                 if ($xml->sort) {
                     foreach ($xml->sort->field as $f) {
                         $att = $f->attributes();
-                        $column = array();
-                        if (! isset($xmlMapping[(string)$att['REF']])) {
+                        $column = [];
+                        if (! isset($xmlMapping[(string) $att['REF']])) {
                             continue;
                         }
 
-                        $column['field'] = $xmlMapping[(string)$att['REF']];
+                        $column['field'] = $xmlMapping[(string) $att['REF']];
                         $sort[] = $column;
                     }
                     $row['sort'] = $sort;

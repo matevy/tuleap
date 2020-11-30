@@ -29,7 +29,7 @@ class Tracker_SharedFormElementFactory
      */
     private $boundValuesFactory;
 
-    function __construct(Tracker_FormElementFactory $factory, Tracker_FormElement_Field_List_BindFactory $boundValuesFactory)
+    public function __construct(Tracker_FormElementFactory $factory, Tracker_FormElement_Field_List_BindFactory $boundValuesFactory)
     {
         $this->boundValuesFactory = $boundValuesFactory;
         $this->factory = $factory;
@@ -39,8 +39,8 @@ class Tracker_SharedFormElementFactory
     public function createFormElement(Tracker $tracker, array $formElement_data, PFUser $user, $tracker_is_empty, $force_absolute_ranking)
     {
         $formElement = $this->factory->getFormElementById($formElement_data['field_id']);
-        if (!$formElement) {
-            $exception_message = $GLOBALS['Language']->getText('plugin_tracker_formelement_exception', 'wrong_field_id', $formElement_data['field_id']);
+        if (! $formElement) {
+            $exception_message = sprintf(dgettext('tuleap-tracker', 'There is no field with ID:%1$s'), $formElement_data['field_id']);
             throw new Exception($exception_message);
         }
         $field = $this->getRootOriginalField($formElement);
@@ -63,8 +63,6 @@ class Tracker_SharedFormElementFactory
     }
 
     /**
-     * @param Tracker_FormElement $field
-     * @param PFUser              $user
      *
      * @throws Exception
      */
@@ -77,25 +75,29 @@ class Tracker_SharedFormElementFactory
 
     private function assertFieldIsReadable(Tracker_FormElement $field, PFUser $user)
     {
-        if (! ($field->userCanRead($user)
-              && $field->getTracker()->userCanView($user))) {
-            $exception_message = $GLOBALS['Language']->getText('plugin_tracker_formelement_exception', 'permission_denied');
+        if (
+            ! ($field->userCanRead($user)
+              && $field->getTracker()->userCanView($user))
+        ) {
+            $exception_message = dgettext('tuleap-tracker', 'Permission Denied');
             throw new Exception($exception_message);
         }
     }
 
     private function assertFieldIsStaticSelectbox(Tracker_FormElement $field)
     {
-        if (! ($field instanceof Tracker_FormElement_Field_Selectbox
-                && $field->getBind() instanceof Tracker_FormElement_Field_List_Bind_Static)) {
-            $exception_message = $GLOBALS['Language']->getText('plugin_tracker_formelement_exception', 'field_must_be_static');
+        if (
+            ! ($field instanceof Tracker_FormElement_Field_Selectbox
+                && $field->getBind() instanceof Tracker_FormElement_Field_List_Bind_Static)
+        ) {
+            $exception_message = dgettext('tuleap-tracker', 'Can only share static selectbox fields');
             throw new Exception($exception_message);
         }
     }
 
     private function populateFormElementDataForASharedField($originField)
     {
-        return array(
+        return [
             'type'              => $this->factory->getType($originField),
             'label'             => $originField->getLabel(),
             'description'       => $originField->getDescription(),
@@ -105,11 +107,10 @@ class Tracker_SharedFormElementFactory
             'required'          => $originField->isRequired(),
             'notifications'     => $originField->hasNotifications(),
             'original_field_id' => $originField->getId(),
-        );
+        ];
     }
 
     /**
-     * @param Project $project
      *
      * @throws Exception
      */

@@ -21,13 +21,11 @@
 namespace Tuleap\Tracker\Artifact\ArtifactsDeletion;
 
 use EventManager;
-use ForgeConfig;
-use Logger;
 use PFUser;
-use Tracker_Artifact;
+use Psr\Log\LoggerInterface;
 use Tuleap\DB\DBConnection;
 use Tuleap\Event\Events\ArchiveDeletedItemEvent;
-use Tuleap\Project\XML\Export\ZipArchive;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\ArtifactWithTrackerStructureExporter;
 
 class ArchiveAndDeleteArtifactTask
@@ -49,7 +47,7 @@ class ArchiveAndDeleteArtifactTask
      */
     private $db_connection;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -58,7 +56,7 @@ class ArchiveAndDeleteArtifactTask
         ArtifactDependenciesDeletor $dependencies_deletor,
         EventManager $event_manager,
         DBConnection $db_connection,
-        Logger $logger
+        LoggerInterface $logger
     ) {
         $this->artifact_with_tracker_structure_exporter = $artifact_with_tracker_structure_exporter;
         $this->dependencies_deletor                     = $dependencies_deletor;
@@ -67,13 +65,13 @@ class ArchiveAndDeleteArtifactTask
         $this->logger                                   = $logger;
     }
 
-    public function archive(\Tracker_Artifact $artifact, \PFUser $user) : void
+    public function archive(\Tuleap\Tracker\Artifact\Artifact $artifact, \PFUser $user): void
     {
         $this->tryToArchiveArtifact($artifact, $user);
         $this->dependencies_deletor->cleanDependencies($artifact);
     }
 
-    private function tryToArchiveArtifact(Tracker_Artifact $artifact, PFUser $user) : void
+    private function tryToArchiveArtifact(Artifact $artifact, PFUser $user): void
     {
         $archive_file_provider = new ArchiveDeletedArtifactProvider(
             $this->artifact_with_tracker_structure_exporter,
@@ -83,8 +81,9 @@ class ArchiveAndDeleteArtifactTask
         try {
             $this->event_manager->processEvent(new ArchiveDeletedItemEvent($archive_file_provider));
         } catch (\Exception $exception) {
-            $this->logger->debug(
-                "Unable to archive the artifact " . $artifact->getId() . ":" . $exception->getMessage()
+            $this->logger->error(
+                "Unable to archive the artifact " . $artifact->getId() . ":" . $exception->getMessage(),
+                ['exception' => $exception]
             );
         } finally {
             $archive_file_provider->purge();

@@ -60,8 +60,6 @@ class PermissionPerTypeExtractor
     }
 
     /**
-     * @param Project $project
-     * @param PermissionPerGroupCollection $permissions
      * @param                              $type
      *
      * @return array
@@ -78,11 +76,11 @@ class PermissionPerTypeExtractor
 
         if (count($formatted_permissions->getPermissions()) > 0) {
             $permissions->addPermissions(
-                array(
+                [
                     'name'   => $permission_title,
                     'groups' => $formatted_permissions->getPermissions(),
                     'url'    => $this->url_builder->getGlobalAdminLink($project)
-                )
+                ]
             );
         }
     }
@@ -116,7 +114,6 @@ class PermissionPerTypeExtractor
     }
 
     /**
-     * @param Project $project
      * @param         $type
      * @param         $selected_ugroup
      *
@@ -126,7 +123,8 @@ class PermissionPerTypeExtractor
     {
         $all_ugroups = $this->frs_permission_factory->getFrsUGroupsByPermission($project, $type);
 
-        if (isset($all_ugroups[$selected_ugroup]) ||
+        if (
+            isset($all_ugroups[$selected_ugroup]) ||
             ((int) $selected_ugroup === ProjectUGroup::PROJECT_ADMIN && $type === FRSPermission::FRS_ADMIN)
         ) {
             return $all_ugroups;

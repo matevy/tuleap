@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,6 +22,8 @@ namespace Tuleap\OpenIDConnectClient\Authentication\Token;
 
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Tuleap\Cryptography\ConcealedString;
+use Tuleap\Http\Client\Authentication\BasicAuth;
 use Tuleap\OpenIDConnectClient\Authentication\Authorization\AuthorizationResponse;
 use Tuleap\OpenIDConnectClient\Provider\Provider;
 
@@ -35,17 +37,22 @@ class TokenRequestCreator
      * @var StreamFactoryInterface
      */
     private $stream_factory;
+    /**
+     * @var BasicAuth
+     */
+    private $basic_auth;
 
-    public function __construct(RequestFactoryInterface $http_request_factory, StreamFactoryInterface $stream_factory)
-    {
+    public function __construct(
+        RequestFactoryInterface $http_request_factory,
+        StreamFactoryInterface $stream_factory,
+        BasicAuth $basic_auth
+    ) {
         $this->http_request_factory = $http_request_factory;
         $this->stream_factory       = $stream_factory;
+        $this->basic_auth           = $basic_auth;
     }
 
-    /**
-     * @return TokenRequest
-     */
-    public function createTokenRequest(Provider $provider, AuthorizationResponse $authorization_response, $redirect_uri)
+    public function createTokenRequest(Provider $provider, AuthorizationResponse $authorization_response, string $redirect_uri, ConcealedString $pkce_code_verifier): TokenRequest
     {
         $http_request = $this->http_request_factory->createRequest(
             'POST',
@@ -61,12 +68,16 @@ class TokenRequestCreator
                             'grant_type'    => 'authorization_code',
                             'code'          => $authorization_response->getCode(),
                             'redirect_uri'  => $redirect_uri,
-                            'client_id'     => $provider->getClientId(),
-                            'client_secret' => $provider->getClientSecret(),
+                            'code_verifier' => $pkce_code_verifier->getString(),
                         ]
                     )
                 )
             );
+        $http_request = $this->basic_auth->authenticate(
+            $http_request,
+            $provider->getClientId(),
+            new ConcealedString($provider->getClientSecret())
+        );
 
         return new TokenRequest($http_request);
     }

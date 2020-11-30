@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,62 +18,26 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Workflow\Transition\Condition\Visitor;
 
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 class Workflow_Transition_Condition_FieldNotEmpty extends Workflow_Transition_Condition
-{ //phpcs:ignore
-
+{
     /** @var string */
     public $identifier = 'notempty';
 
-    /** @var Tracker_FormElement_Field */
-    private $fields = array();
+    /** @var Tracker_FormElement_Field[] */
+    private $fields = [];
 
     /** @var Workflow_Transition_Condition_FieldNotEmpty_Dao */
     private $dao;
 
-    public function __construct(Transition $transition, Workflow_Transition_Condition_FieldNotEmpty_Dao $dao, ?Tracker_Artifact $artifact = null)
+    public function __construct(Transition $transition, Workflow_Transition_Condition_FieldNotEmpty_Dao $dao, ?Artifact $artifact = null)
     {
         parent::__construct($transition);
         $this->dao                = $dao;
         $this->formElementFactory = Tracker_FormElementFactory::instance();
-    }
-
-    /**
-     * @see Workflow_Transition_Condition::fetch()
-     * @return string The field wrapped in Html
-     */
-    public function fetch()
-    {
-        $purifier = Codendi_HTMLPurifier::instance();
-        $html     = '';
-        $html    .= $GLOBALS['Language']->getText('workflow_admin', 'label_define_transition_required_field');
-        $html    .= '<br />';
-        $html    .= $GLOBALS['Language']->getText('workflow_admin', 'the_field') . ' ';
-        $html    .= '<select multiple name="add_notempty_condition[]">';
-
-        $selected = '';
-        if (empty($this->fields)) {
-            $selected = 'selected="selected"';
-        }
-        $html .= '<option value="0" '. $selected .'>';
-        $html .= $GLOBALS['Language']->getText('global', 'please_choose_dashed');
-        $html .= '</option>';
-
-        foreach ($this->getSelectableFields() as $field) {
-            $selected = '';
-            if (in_array($field, $this->fields)) {
-                $selected .= 'selected="selected"';
-            }
-
-            $html .= '<option value="' . $purifier->purify($field->getId()) . '" '. $selected .'>';
-            $html .= $purifier->purify($field->getLabel());
-            $html .= '</option>';
-        }
-        $html .= '</select>';
-        $html .= ' ' . $GLOBALS['Language']->getText('workflow_admin', 'field_not_empty');
-
-        return $html;
     }
 
     /**
@@ -82,7 +46,7 @@ class Workflow_Transition_Condition_FieldNotEmpty extends Workflow_Transition_Co
     public function exportToXml(SimpleXMLElement $root, $xmlMapping)
     {
         if (! $this->fields) {
-            return null;
+            return;
         }
 
         $child = $root->addChild('condition');
@@ -108,7 +72,7 @@ class Workflow_Transition_Condition_FieldNotEmpty extends Workflow_Transition_Co
 
     public function getFieldIds()
     {
-        $ids = array();
+        $ids = [];
         foreach ($this->fields as $field) {
             $ids[] = $field->getId();
         }
@@ -116,22 +80,7 @@ class Workflow_Transition_Condition_FieldNotEmpty extends Workflow_Transition_Co
         return $ids;
     }
 
-    /**
-     * Get all non dynamic fields where the condition may occur
-     *
-     * @return array Array of Tracker_FormElement_Field
-     */
-    private function getSelectableFields()
-    {
-        $tracker = $this->transition->getWorkflow()->getTracker();
-        return $this->formElementFactory->getUsedNonDynamicFields($tracker);
-    }
-
-    /**
-     *
-     * @return bool
-     */
-    public function validate($fields_data, Tracker_Artifact $artifact, $comment_body)
+    public function validate($fields_data, Artifact $artifact, string $comment_body, PFUser $current_user): bool
     {
         if (empty($this->fields)) {
             return true;
@@ -142,7 +91,7 @@ class Workflow_Transition_Condition_FieldNotEmpty extends Workflow_Transition_Co
             $value = $this->getFieldValue($fields_data, $artifact, $field);
 
             if ($field->isEmpty($value, $artifact)) {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('workflow_condition', 'invalid_condition', $field->getLabel(). ' ('. $field->getName() .')'));
+                $GLOBALS['Response']->addFeedback('error', sprintf(dgettext('tuleap-tracker', 'Invalid condition: the field \'%1$s\'must not be empty'), $field->getLabel() . ' (' . $field->getName() . ')'));
                 $field->setHasErrors(true);
                 $is_valid = false;
             }
@@ -151,7 +100,7 @@ class Workflow_Transition_Condition_FieldNotEmpty extends Workflow_Transition_Co
         return $is_valid;
     }
 
-    private function getFieldValue($fields_data, Tracker_Artifact $artifact, Tracker_FormElement_Field $field)
+    private function getFieldValue($fields_data, Artifact $artifact, Tracker_FormElement_Field $field)
     {
         $field_id = $field->getId();
         if (isset($fields_data[$field_id])) {
@@ -160,7 +109,7 @@ class Workflow_Transition_Condition_FieldNotEmpty extends Workflow_Transition_Co
         return $this->getFieldValueFromLastChangeset($artifact, $field);
     }
 
-    private function getFieldValueFromLastChangeset(Tracker_Artifact $artifact, Tracker_FormElement_Field $field)
+    private function getFieldValueFromLastChangeset(Artifact $artifact, Tracker_FormElement_Field $field)
     {
         $value = null;
         $last_changeset = $artifact->getLastChangeset();

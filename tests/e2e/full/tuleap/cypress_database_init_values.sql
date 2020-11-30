@@ -1,1 +1,4 @@
-insert into service (service_id, group_id, label, description, short_name, link, is_active, is_used, scope, rank) VALUES (19, 100, 'wiki', 'wiki', 'wiki', '/wiki/?group_id=$group_id', 1, 1, 'system', 30);
+UPDATE service SET is_active=true WHERE short_name='wiki';
+
+# Add nature for frs plugin tests
+INSERT INTO plugin_tracker_artifactlink_natures (shortname, forward_label, reverse_label) VALUES ('fixed_in', 'Fixed in', 'Fixed by');

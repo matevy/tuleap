@@ -49,15 +49,16 @@
 
 .taskboard-cell {
     flex: 1;
-    min-width: 200px;
-    padding: $tlp-half-spacing;
+    min-width: 250px;
+    min-height: 40px;
+    padding: $tlp-small-spacing;
     border-right: 1px solid $tlp-ui-border-normal;
     border-bottom: 3px solid $tlp-ui-border-normal;
     vertical-align: top;
 
     &.taskboard-drop-not-accepted {
         > .taskboard-drop-not-accepted-overlay {
-            display: flex;
+            display: block;
         }
 
         >.taskboard-draggable-item {
@@ -84,7 +85,6 @@
     width: 50px;
     min-width: unset;
     min-height: 100px;
-    overflow: hidden;
     background: $tlp-ui-white;
     cursor: pointer;
 
@@ -93,17 +93,19 @@
         background: darken($tlp-ui-white, 2%);
     }
 
-    > .gu-transit,
-    > .gu-mirror,
+    &.taskboard-cell-collapsed-hover[data-drek-over] {
+        background: mix($tlp-theme-color, $tlp-ui-white, 7%);
+    }
+
+    // This includes drek-ghost
     > .taskboard-draggable-item {
-        opacity: 0;
-        white-space: nowrap;
+        display: none;
     }
 }
 
 .taskboard-swimlane-toggle {
     position: absolute;
-    z-index: 2;
+    z-index: 10;
     top: 5px;
     left: 6px;
     transition: opacity ease-in-out 100ms;
@@ -118,8 +120,8 @@
 
 .taskboard-no-mapping:last-child,
 .taskboard-no-mapping {
-    margin: $tlp-half-spacing 0 0;
-    padding: 0 $tlp-half-spacing 0 ($tlp-half-spacing + 3px);
+    margin: $tlp-small-spacing 0 0;
+    padding: 0 $tlp-small-spacing 0 ($tlp-small-spacing + 3px);
     font-size: 14px;
     line-height: 20px;
 }

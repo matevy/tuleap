@@ -103,13 +103,8 @@ class ProjectEditController
         $project_type = $request->getValidated('group_type', 'string', $project->getType());
 
         if ($this->hasStatusChanged($project, $form_status) || $this->hasTypeChanged($project, $project_type)) {
-            if ($this->hasStatusChanged($project, $form_status) && $form_status === Project::STATUS_PENDING) {
-                $GLOBALS['Response']->addFeedback(
-                    Feedback::ERROR,
-                    _('Switching the project status back to "pending" is not possible.')
-                );
-
-                $GLOBALS['Response']->redirect('/admin/groupedit.php?group_id='. urlencode($project_id));
+            if (! $this->checkIfStatusCanBeChanged($project, $form_status)) {
+                return;
             }
 
             $this->dao->updateProjectStatusAndType($form_status, $project_type, $project_id);
@@ -125,7 +120,7 @@ class ProjectEditController
             $this->project_manager->removeProjectFromCache($project);
         }
 
-        $GLOBALS['Response']->redirect('/admin/groupedit.php?group_id='. urlencode($project_id));
+        $GLOBALS['Response']->redirect('/admin/groupedit.php?group_id=' . urlencode($project_id));
     }
 
     private function propagateStatusChange(Project $project, $form_status)
@@ -135,7 +130,9 @@ class ProjectEditController
         }
 
         if ($this->hasStatusChanged($project, $form_status) && $project->getGroupId() !== Project::ADMIN_PROJECT_ID) {
-            $this->project_history_dao->groupAddHistory('status', $GLOBALS['Language']->getText('admin_groupedit', 'status_' . $project->getStatus()) . " :: " . $GLOBALS['Language']->getText('admin_groupedit', 'status_' . $form_status), $project->group_id);
+            $old_status_label = $this->getStatusLabel($project->getStatus());
+            $new_status_label = $this->getStatusLabel($form_status);
+            $this->project_history_dao->groupAddHistory('status', $old_status_label . " :: " . $new_status_label, $project->group_id);
 
             $event_params = [
                 'group_id' => $project->group_id
@@ -158,6 +155,24 @@ class ProjectEditController
                 );
             }
         }
+    }
+
+    private function getStatusLabel($status_code)
+    {
+        switch ($status_code) {
+            case Project::STATUS_ACTIVE:
+                return $GLOBALS['Language']->getText('admin_groupedit', 'status_A');
+            case Project::STATUS_PENDING:
+                return $GLOBALS['Language']->getText('admin_groupedit', 'status_P');
+            case Project::STATUS_SUSPENDED:
+                return $GLOBALS['Language']->getText('admin_groupedit', 'status_H');
+            case Project::STATUS_DELETED:
+                return $GLOBALS['Language']->getText('admin_groupedit', 'status_D');
+            case Project::STATUS_SYSTEM:
+                return $GLOBALS['Language']->getText('admin_groupedit', 'status_s');
+        }
+
+        throw new \RuntimeException("Unknown status $status_code");
     }
 
     private function renameProject(Project $project, $new_name)
@@ -223,5 +238,32 @@ class ProjectEditController
         }
 
         return $project->getStatus();
+    }
+
+    private function checkIfStatusCanBeChanged(Project $project, string $form_status): bool
+    {
+        if ($this->hasStatusChanged($project, $form_status)) {
+            if ($form_status === Project::STATUS_PENDING) {
+                $feedback_message = _('Switching the project status back to "pending" is not possible.');
+                $this->sendErrorFeedbackAndRedirect($project->getID(), $feedback_message);
+                return false;
+            }
+            if ($project->getStatus() === Project::STATUS_DELETED) {
+                $feedback_message = _('A deleted project can not be restored.');
+                $this->sendErrorFeedbackAndRedirect($project->getID(), $feedback_message);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function sendErrorFeedbackAndRedirect(int $project_id, string $message): void
+    {
+        $GLOBALS['Response']->addFeedback(
+            Feedback::ERROR,
+            $message
+        );
+
+        $GLOBALS['Response']->redirect('/admin/groupedit.php?group_id=' . urlencode((string) $project_id));
     }
 }

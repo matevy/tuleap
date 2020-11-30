@@ -18,6 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\MailGateway\IncomingMail;
 
 class Tracker_Artifact_IncomingMessageInsecureBuilder
@@ -114,7 +115,7 @@ class Tracker_Artifact_IncomingMessageInsecureBuilder
     }
 
     /**
-     * @return Tracker_Artifact
+     * @return Artifact
      */
     private function getArtifactFromMailHeader($mail_receiver)
     {
@@ -124,7 +125,7 @@ class Tracker_Artifact_IncomingMessageInsecureBuilder
             throw new Tracker_Artifact_MailGateway_ArtifactIdMissingException();
         }
 
-        $artifact_id = (int)$mail_userpart[1];
+        $artifact_id = (int) $mail_userpart[1];
         $artifact = $this->artifact_factory->getArtifactById($artifact_id);
 
         if ($artifact === null) {
@@ -160,15 +161,16 @@ class Tracker_Artifact_IncomingMessageInsecureBuilder
     {
         $mail_address = '';
         foreach ($address_array as $id => $value) {
-            if ((strpos(
-                $value,
-                trackerPlugin::EMAILGATEWAY_INSECURE_ARTIFACT_UPDATE
-            ) === 0) ||
+            if (
+                (strpos(
+                    $value,
+                    trackerPlugin::EMAILGATEWAY_INSECURE_ARTIFACT_UPDATE
+                ) === 0) ||
                 (strpos(
                     $value,
                     trackerPlugin::EMAILGATEWAY_INSECURE_ARTIFACT_CREATION
                 ) === 0)
-                ) {
+            ) {
                 $mail_address = $value;
                 break;
             }

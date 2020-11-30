@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1;
 
@@ -87,7 +87,7 @@ class DocmanItemUpdator
     ): void {
         if ($should_lock_item) {
             $this->lock_factory->lock($item, $user);
-        } elseif (!$should_lock_item && $this->lock_factory->itemIsLocked($item)) {
+        } elseif (! $should_lock_item && $this->lock_factory->itemIsLocked($item)) {
             $this->lock_factory->unlock($item, $user);
         }
         $this->post_update_event_adder->triggerPostUpdateEvents($item, $user, $version);

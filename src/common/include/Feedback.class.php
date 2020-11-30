@@ -37,24 +37,24 @@ class Feedback
     public const ERROR = 'error';
     public const DEBUG = 'debug';
 
-    function __construct()
+    public function __construct()
     {
-        $this->logs = array();
+        $this->logs = [];
         $this->setFormatter(new FeedbackFormatter());
     }
 
-    function setFormatter(FeedbackFormatter $formatter)
+    public function setFormatter(FeedbackFormatter $formatter)
     {
         $this->formatter = $formatter;
     }
 
-    function log($level, $msg, $purify = CODENDI_PURIFIER_CONVERT_HTML)
+    public function log($level, $msg, $purify = CODENDI_PURIFIER_CONVERT_HTML)
     {
-        if (!is_array($msg)) {
-            $msg = array($msg);
+        if (! is_array($msg)) {
+            $msg = [$msg];
         }
         foreach ($msg as $m) {
-            $this->logs[] = array('level' => $level, 'msg' => $m, 'purify' => $purify);
+            $this->logs[] = ['level' => $level, 'msg' => $m, 'purify' => $purify];
         }
     }
 
@@ -66,16 +66,16 @@ class Feedback
         return $this->logs;
     }
 
-    function fetch()
+    public function fetch()
     {
         return $this->formatter->format($this->logs);
     }
 
-    function fetchAsPlainText()
+    public function fetchAsPlainText()
     {
            $txt = '';
         foreach ($this->logs as $log) {
-            $txt .= $log['level'] .': '. $log['msg'] ."\n";
+            $txt .= $log['level'] . ': ' . $log['msg'] . "\n";
         }
         return $txt;
     }
@@ -83,9 +83,9 @@ class Feedback
     /**
      * @return array of error messages
      */
-    function fetchErrors()
+    public function fetchErrors()
     {
-        $errors = array();
+        $errors = [];
         foreach ($this->logs as $log) {
             if ($log['level'] == self::ERROR) {
                 $errors[] = $log['msg'];
@@ -95,14 +95,14 @@ class Feedback
         return $errors;
     }
 
-    function display()
+    public function display()
     {
         echo $this->htmlContent();
     }
 
     public function htmlContent()
     {
-        return '<div id="feedback" data-test="feedback">'.$this->fetch().'</div>';
+        return '<div id="feedback" data-test="feedback">' . $this->fetch() . '</div>';
     }
 
     public function hasWarningsOrErrors()

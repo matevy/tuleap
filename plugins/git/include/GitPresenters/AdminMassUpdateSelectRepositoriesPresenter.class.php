@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2015. All rights reserved
+ * Copyright (c) Enalean, 2014 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -31,15 +31,17 @@ class GitPresenters_AdminMassUpdateSelectRepositoriesPresenter extends GitPresen
      */
     public $repositories;
 
-
-    public function __construct(CSRFSynchronizerToken $csrf, $project_id, array $repositories)
-    {
+    public function __construct(
+        CSRFSynchronizerToken $csrf,
+        $project_id,
+        array $external_pane_presenters,
+        array $repositories
+    ) {
         $are_mirrors_defined = true;
-        parent::__construct($project_id, $are_mirrors_defined);
+        parent::__construct($project_id, $are_mirrors_defined, $external_pane_presenters);
 
-        $this->csrf_token                             = $csrf;
-        $this->manage_mass_update_select_repositories = true;
-        $this->repositories                           = $repositories;
+        $this->csrf_token   = $csrf;
+        $this->repositories = $repositories;
     }
 
     public function title()
@@ -64,6 +66,6 @@ class GitPresenters_AdminMassUpdateSelectRepositoriesPresenter extends GitPresen
 
     public function form_action()
     {
-        return '/plugins/git/?group_id='. $this->project_id .'&action=admin-mass-update';
+        return '/plugins/git/?group_id=' . $this->project_id . '&action=admin-mass-update';
     }
 }

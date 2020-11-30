@@ -51,7 +51,7 @@ class TrackerReportConfigController
 
     public function display(CSRFSynchronizerToken $csrf_token)
     {
-        $title = $GLOBALS['Language']->getText('plugin_tracker_config', 'title');
+        $title = dgettext('tuleap-tracker', 'Trackers');
 
         $this->admin_page_rendered->renderANoFramedPresenter(
             $title,
@@ -71,16 +71,17 @@ class TrackerReportConfigController
         $valid_query_limit = new Valid_UInt('query_limit');
         if ($request->valid($valid_query_limit)) {
             $query_limit = $request->get('query_limit');
-            if ($query_limit
+            if (
+                $query_limit
                 && $query_limit <= self::EXPERT_QUERY_LIMIT_MAX
                 && $this->config->setExpertQueryLimit($query_limit)
             ) {
-                $response->addFeedback(Feedback::INFO, $GLOBALS['Language']->getText('plugin_tracker_report_config', 'successfully_updated'));
+                $response->addFeedback(Feedback::INFO, dgettext('tuleap-tracker', 'Successfully updated.'));
             } else {
-                $response->addFeedback(Feedback::ERROR, $GLOBALS['Language']->getText('plugin_tracker_report_config', 'add_error'));
+                $response->addFeedback(Feedback::ERROR, dgettext('tuleap-tracker', 'The limit value is incorrect.'));
             }
         } else {
-            $response->addFeedback(Feedback::ERROR, $GLOBALS['Language']->getText('plugin_tracker_report_config', 'add_error'));
+            $response->addFeedback(Feedback::ERROR, dgettext('tuleap-tracker', 'The limit value is incorrect.'));
         }
 
         $response->redirect($_SERVER['REQUEST_URI']);

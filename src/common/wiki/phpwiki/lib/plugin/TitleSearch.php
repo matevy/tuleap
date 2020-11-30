@@ -39,17 +39,17 @@ require_once('lib/PageList.php');
  */
 class WikiPlugin_TitleSearch extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("TitleSearch");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Search the titles of all pages in this wiki.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -58,11 +58,11 @@ class WikiPlugin_TitleSearch extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(), // paging and more.
-            array('s'             => false,
+            ['s'             => false,
                    'auto_redirect' => false,
                    'noheader'      => false,
                    'exclude'       => false,
@@ -70,14 +70,14 @@ class WikiPlugin_TitleSearch extends WikiPlugin
                    'case_exact'    => false,
                    'regex'            => 'auto',
                    'format'           => false,
-            )
+            ]
         );
     }
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor
     // exclude arg allows multiple pagenames exclude=Php*,RecentChanges
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         if (empty($args['s'])) {
@@ -105,9 +105,9 @@ class WikiPlugin_TitleSearch extends WikiPlugin
         }
         // Provide an unknown WikiWord link to allow for page creation
         // when a search returns no results
-        if (!$args['noheader']) {
+        if (! $args['noheader']) {
             $s = $args['s'];
-            if (!$pagelist->getTotal() and !$query->_regex) {
+            if (! $pagelist->getTotal() and ! $query->_regex) {
                 $s = WikiLink($args['s'], 'auto');
             }
             $pagelist->setCaption(fmt("Title search results for '%s'", $s));
@@ -122,7 +122,7 @@ class WikiPlugin_TitleSearch extends WikiPlugin
 
         return $pagelist;
     }
-};
+}
 
 // $Log: TitleSearch.php,v $
 // Revision 1.28  2005/09/10 21:33:08  rurban

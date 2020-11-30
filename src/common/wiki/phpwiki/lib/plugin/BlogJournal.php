@@ -18,17 +18,17 @@ require_once('lib/plugin/WikiBlog.php');
  */
 class WikiPlugin_BlogJournal extends WikiPlugin_WikiBlog
 {
-    function getName()
+    public function getName()
     {
         return _("BlogJournal");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Include latest blog entries for the current or ADMIN user");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -37,21 +37,21 @@ class WikiPlugin_BlogJournal extends WikiPlugin_WikiBlog
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('count'    => 7,
+        return ['count'    => 7,
                      'user'     => '',
                      'order'    => 'reverse',        // latest first
                      'month'    => false,
                      'noheader' => 0
-                     );
+                     ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         if (is_array($argstr)) { // can do with array also.
             $args = $argstr;
-            if (!isset($args['order'])) {
+            if (! isset($args['order'])) {
                 $args['order'] = 'reverse';
             }
         } else {
@@ -65,7 +65,7 @@ class WikiPlugin_BlogJournal extends WikiPlugin_WikiBlog
                 $args['user'] = '';
             }
         }
-        if (!$args['user'] or $args['user'] == ADMIN_USER) {
+        if (! $args['user'] or $args['user'] == ADMIN_USER) {
             if (BLOG_EMPTY_DEFAULT_PREFIX) {
                 $args['user'] = '';         // "Blogs/day" pages
             } else {
@@ -79,7 +79,7 @@ class WikiPlugin_BlogJournal extends WikiPlugin_WikiBlog
         if ($args['month']) {
             $prefix .= (SUBPAGE_SEPARATOR . $args['month']);
         }
-        $pages = $dbi->titleSearch(new TextSearchQuery("^".$prefix, true, 'posix'));
+        $pages = $dbi->titleSearch(new TextSearchQuery("^" . $prefix, true, 'posix'));
         $html = HTML();
         $i = 0;
         while (($page = $pages->next()) and $i < $args['count']) {
@@ -95,10 +95,10 @@ class WikiPlugin_BlogJournal extends WikiPlugin_WikiBlog
         if ($args['user'] == $user->UserName()) {
             $html->pushContent(WikiLink(_("WikiBlog"), 'known', "New entry"));
         }
-        if (!$i) {
+        if (! $i) {
             return HTML(HTML::h3(_("No Blog Entries")), $html);
         }
-        if (!$args['noheader']) {
+        if (! $args['noheader']) {
             return HTML(
                 HTML::h3(sprintf(_("Blog Entries for %s:"), $this->_monthTitle($args['month']))),
                 $html
@@ -107,7 +107,7 @@ class WikiPlugin_BlogJournal extends WikiPlugin_WikiBlog
             return $html;
         }
     }
-};
+}
 
 // $Log: BlogJournal.php,v $
 // Revision 1.4  2005/11/21 20:56:23  rurban

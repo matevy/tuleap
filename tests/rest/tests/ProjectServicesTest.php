@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace Tuleap\REST;
 
-use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Message\Response;
 use REST_TestDataBuilder;
 
@@ -59,6 +58,7 @@ class ProjectServicesTest extends ProjectBase
         $services = $response->json();
 
         $expected = [
+            'admin' => ['is_enabled' => true],
             'summary' => ['is_enabled' => true],
             'plugin_tracker' => ['is_enabled' => true],
             'file' => ['is_enabled' => false],

@@ -201,7 +201,7 @@ class SampleGraph
 
         //advanced search display per day
         if ($this->advsrch == 3) {
-            $datagraph = array();
+            $datagraph = [];
 
             // init array of graph values
             for ($y = $this->minyear; $y <= $this->maxyear; $y++) {
@@ -240,10 +240,10 @@ class SampleGraph
 
             $this->graphValues = $datagraph;
 
-            $nbmonth = ceil(count($this->graphValues)/30);
+            $nbmonth = ceil(count($this->graphValues) / 30);
 
             //create the graph
-            $this->graph = new Graph($nbmonth*500, 450);
+            $this->graph = new Graph($nbmonth * 500, 450);
             $this->graph->img->SetMargin(60, 120, 20, 90);
             $gbparray = new BarPlot($this->graphValues);
         } else { // create the graph
@@ -263,7 +263,7 @@ class SampleGraph
 
         // create the bar plots in the advanced search display per month case
         if ($this->advsrch == 2) {
-            $datagraph = array();
+            $datagraph = [];
 
             for ($y = $this->minyear; $y <= $this->maxyear; $y++) {
                 $minm = 1;
@@ -303,13 +303,13 @@ class SampleGraph
         $this->graph->legend->Pos(.02, .05, "right", "top");
 
         if ($this->advsrch == 3) { //the position of the legend depend on the number of month display
-            $this->graph->legend->Pos(.075/$nbmonth, .05, "right", "top");
+            $this->graph->legend->Pos(.075 / $nbmonth, .05, "right", "top");
         }
 
         $this->graph->Add($gbparray);
 
-        $color1 = array(195, 225, 255);
-        $color2 = array(225,240,255);
+        $color1 = [195, 225, 255];
+        $color2 = [225, 240, 255];
         $this->graph->setBackgroundGradient($color1, $color2, GRAD_HOR, BGRAD_MARGIN);
 
         //manage the Weekend display in the Simple search
@@ -348,20 +348,20 @@ class SampleGraph
                 }
             }
 
-            for ($i=0; $i < count($ubandarray); $i++) {
+            for ($i = 0; $i < count($ubandarray); $i++) {
                 $this->graph->AddBand($ubandarray[$i]);
             }
 
-            for ($i=0; $i < count($abandarray); $i++) {
+            for ($i = 0; $i < count($abandarray); $i++) {
                 $this->graph->AddBand($abandarray[$i]);
             }
         }
 
         //manage the title of the graph
         if ($this->advsrch != 0) {
-            $this->graph->title->Set('New '.$this->selectedData.' by '.$this->filter.' between '.$this->titlePeriod);
+            $this->graph->title->Set('New ' . $this->selectedData . ' by ' . $this->filter . ' between ' . $this->titlePeriod);
         } else {
-            $this->graph->title->Set('New '.$this->selectedData.' during '.$this->titlePeriod);
+            $this->graph->title->Set('New ' . $this->selectedData . ' during ' . $this->titlePeriod);
         }
         $this->graph->title->setFont(FF_FONT1, FS_BOLD);
     }
@@ -378,8 +378,8 @@ class SampleGraph
         //init x axis for advanced search display per month
         if ($this->filter == 'month') {
             if ($this->advsrch == 2) {
-                $this->minmonth = $this->minmonth-1;
-                $this->maxmonth = $this->maxmonth-1;
+                $this->minmonth = $this->minmonth - 1;
+                $this->maxmonth = $this->maxmonth - 1;
 
                 $dateLocale = new DateLocale();
                 $months     = $dateLocale->GetShortMonth();
@@ -395,7 +395,7 @@ class SampleGraph
                     }
 
                     for ($m = $minm; $m <= $maxm; $m++) {
-                        $databarx[] = $months[$m%12];
+                        $databarx[] = $months[$m % 12];
                     }
                 }
                 $this->graph->xaxis->SetTickLabels($databarx);
@@ -429,10 +429,11 @@ class SampleGraph
                         $maxd = $this->maxday;
                     }
 
+                    $databarx = [];
                     for ($d = $mind; $d <= $maxd; $d++) {
                         if ($d == 1) {
-                            $databarx[] = $d.'/'.date('F', mktime(0, 0, 0, $m, $d, $y));
-                        } elseif ($d%5 == 0) {
+                            $databarx[] = $d . '/' . date('F', mktime(0, 0, 0, $m, $d, $y));
+                        } elseif ($d % 5 == 0) {
                             $databarx[] = $d;
                         } else {
                             $databarx[] = '';

@@ -24,6 +24,9 @@ namespace Tuleap\Docman\REST\v1\Service;
 
 use Tuleap\Docman\REST\v1\ItemRepresentation;
 
+/**
+ * @psalm-immutable
+ */
 final class DocmanServiceRepresentation
 {
     /**
@@ -45,12 +48,12 @@ final class DocmanServiceRepresentation
         $this->root_item              = $root_item;
     }
 
-    public static function buildWithNoInformation() : self
+    public static function buildWithNoInformation(): self
     {
         return new self(null, null);
     }
 
-    public static function buildWithRootItem(ItemRepresentation $root_item) : self
+    public static function buildWithRootItem(ItemRepresentation $root_item): self
     {
         return new self(null, $root_item);
     }
@@ -58,7 +61,7 @@ final class DocmanServiceRepresentation
     public static function buildWithRootItemAndPermissions(
         DocmanServicePermissionsForGroupsRepresentation $permissions_for_groups,
         ItemRepresentation $root_item
-    ) : self {
+    ): self {
         return new self($permissions_for_groups, $root_item);
     }
 }

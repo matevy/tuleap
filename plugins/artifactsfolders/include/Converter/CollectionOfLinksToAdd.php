@@ -20,22 +20,22 @@
 
 namespace Tuleap\ArtifactsFolders\Converter;
 
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class CollectionOfLinksToAdd
 {
     /**
      * @var array
      */
-    private $links = array();
+    private $links = [];
 
-    public function addALink(Tracker_Artifact $folder, Tracker_Artifact $item)
+    public function addALink(Artifact $folder, Artifact $item)
     {
         $folder_id = $folder->getId();
         $item_id   = $item->getId();
 
         if (! array_key_exists($folder_id, $this->links)) {
-            $this->links[$folder_id] = array("folder" => $folder, "links" => array());
+            $this->links[$folder_id] = ["folder" => $folder, "links" => []];
         }
 
         $this->links[$folder_id]["links"][$item_id] = $item;

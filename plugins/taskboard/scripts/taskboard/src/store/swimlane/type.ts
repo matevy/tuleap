@@ -18,12 +18,14 @@
  */
 
 import { Card, CardPosition, ColumnDefinition, Swimlane } from "../../type";
+import { UserForPeoplePicker } from "./card/type";
 
 export interface SwimlaneState {
     swimlanes: Array<Swimlane>;
     is_loading_swimlanes: boolean;
     dropzone_rejecting_drop?: HTMLElement;
     is_card_creation_blocked_due_to_ongoing_creation: boolean;
+    possible_assignees: Map<number, UserForPeoplePicker[]>;
 }
 
 export interface AddChildrenToSwimlanePayload {
@@ -52,9 +54,9 @@ export interface HandleDropPayload {
 }
 
 export interface HandleDragPayload {
-    readonly dropped_card?: Element;
-    readonly target_cell?: Element;
-    readonly source_cell?: Element;
+    readonly dropped_card: HTMLElement;
+    readonly target_cell: HTMLElement;
+    readonly source_cell: HTMLElement;
 }
 
 export interface RefreshCardActionPayload {
@@ -63,6 +65,5 @@ export interface RefreshCardActionPayload {
 }
 
 export interface RefreshCardMutationPayload {
-    readonly swimlane: Swimlane;
     readonly refreshed_card: Card;
 }

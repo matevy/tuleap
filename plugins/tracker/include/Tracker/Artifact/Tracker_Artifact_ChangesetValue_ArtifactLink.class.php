@@ -109,13 +109,12 @@ class Tracker_Artifact_ChangesetValue_ArtifactLink extends Tracker_Artifact_Chan
     /**
      * Return diff between 2 changeset values
      *
-     * @param Tracker_Artifact_ChangesetValue_ArtifactLink $old_changeset_value
      *
      * @return Tracker_Artifact_ChangesetValue_ArtifactLinkDiff
      */
     public function getArtifactLinkInfoDiff(Tracker $tracker, ?Tracker_Artifact_ChangesetValue_ArtifactLink $old_changeset_value = null)
     {
-        $previous = array();
+        $previous = [];
         if ($old_changeset_value !== null) {
             $previous = $old_changeset_value->getValue();
         }
@@ -147,14 +146,14 @@ class Tracker_Artifact_ChangesetValue_ArtifactLink extends Tracker_Artifact_Chan
     public function nodiff($format = 'html')
     {
         $next = $this->getValue();
-        if (!empty($next)) {
+        if (! empty($next)) {
             $result = '';
-            $added_arr = array();
+            $added_arr = [];
             foreach ($next as $art_id => $added_element) {
                 $added_arr[] = $added_element->getLink();
             }
             $added   = implode(', ', $added_arr);
-            $result = ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'set_to').' '.$added;
+            $result = ' ' . dgettext('tuleap-tracker', 'set to') . ' ' . $added;
             return $result;
         }
     }
@@ -183,7 +182,7 @@ class Tracker_Artifact_ChangesetValue_ArtifactLink extends Tracker_Artifact_Chan
 
     private function getAllOutgoingArtifactIdsUserCanSee(PFUser $user)
     {
-        $values = array();
+        $values = [];
 
         foreach ($this->getArtifactIdsUserCanSee($user) as $id) {
             $values[] = $this->buildArtifactReference($id);
@@ -194,7 +193,7 @@ class Tracker_Artifact_ChangesetValue_ArtifactLink extends Tracker_Artifact_Chan
 
     private function getAllIncomingArtifactIdsUserCanSee(PFUser $user)
     {
-        $values = array();
+        $values = [];
 
         foreach ($this->getIncomingArtifactIdsUserCanSee($user) as $id) {
             $values[] = $this->buildArtifactReference($id);
@@ -206,8 +205,7 @@ class Tracker_Artifact_ChangesetValue_ArtifactLink extends Tracker_Artifact_Chan
     private function buildArtifactReference($artifact_id)
     {
         $tracker_artifact_factory = Tracker_ArtifactFactory::instance();
-        $artifact_reference       = new ArtifactReference();
-        $artifact_reference->build($tracker_artifact_factory->getArtifactById($artifact_id));
+        $artifact_reference       = ArtifactReference::build($tracker_artifact_factory->getArtifactById($artifact_id));
 
         return $artifact_reference;
     }
@@ -230,12 +228,11 @@ class Tracker_Artifact_ChangesetValue_ArtifactLink extends Tracker_Artifact_Chan
     /**
      * Returns the list of artifact id in all artifact links user can see
      *
-     * @param PFUser $user
      * @return type
      */
     public function getArtifactIdsUserCanSee(PFUser $user)
     {
-        $artifact_links_user_can_see = array();
+        $artifact_links_user_can_see = [];
 
         foreach ($this->artifact_links as $artifact_id => $link) {
             if ($link->userCanView($user)) {
@@ -248,7 +245,7 @@ class Tracker_Artifact_ChangesetValue_ArtifactLink extends Tracker_Artifact_Chan
 
     private function getIncomingArtifactIdsUserCanSee(PFUser $user)
     {
-        $reverse_artifact_links_user_can_see = array();
+        $reverse_artifact_links_user_can_see = [];
 
         foreach ($this->reverse_artifact_links as $artifact_id => $link) {
             if ($link->userCanView($user)) {

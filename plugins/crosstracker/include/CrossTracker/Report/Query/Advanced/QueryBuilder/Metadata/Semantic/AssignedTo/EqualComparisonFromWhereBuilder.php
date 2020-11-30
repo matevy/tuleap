@@ -20,7 +20,6 @@
 
 namespace Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\Semantic\AssignedTo;
 
-use ParagonIE\EasyDB\EasyStatement;
 use Tracker;
 use Tuleap\CrossTracker\Report\Query\Advanced\QueryBuilder\Metadata\ListValueExtractor;
 use Tuleap\CrossTracker\Report\Query\IProvideParametrizedFromAndWhereSQLFragments;
@@ -43,8 +42,6 @@ class EqualComparisonFromWhereBuilder implements FromWhereBuilder
     }
 
     /**
-     * @param Metadata $metadata
-     * @param Comparison $comparison
      * @param Tracker[] $trackers
      * @return IProvideParametrizedFromAndWhereSQLFragments
      */

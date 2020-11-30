@@ -31,20 +31,36 @@ class ForgeConfig
 
     /**
      * Hold the configuration variables
+     * @var array
      */
-    protected static $conf_stack = array(0 => array());
+    protected static $conf_stack = [0 => []];
 
     /**
      * Load the configuration variables into the current stack
      *
      * @access protected for testing purpose
      *
-     * @param ConfigValueProvider $value_provider
      */
     protected static function load(ConfigValueProvider $value_provider)
     {
         // Store in the stack the local scope...
         self::$conf_stack[0] = array_merge(self::$conf_stack[0], $value_provider->getVariables());
+    }
+
+    public static function loadLocalInc(): void
+    {
+        self::loadFromFile(__DIR__ . '/../../etc/local.inc.dist');
+        $local_inc_file_path = (new Config_LocalIncFinder())->getLocalIncPath();
+        self::loadFromFile($local_inc_file_path);
+    }
+
+    public static function loadDatabaseInc(): void
+    {
+        $database_config_file = self::get('db_config_file');
+        if (! is_file($database_config_file)) {
+            throw new RuntimeException('Database configuration file cannot be read, did you loadLocalInc first ?');
+        }
+        self::loadFromFile($database_config_file);
     }
 
     public static function loadFromFile($file)
@@ -61,7 +77,7 @@ class ForgeConfig
      * Get the $name configuration variable
      *
      * @param $name    string the variable name
-     * @param $default mixed  the value to return if the variable is not set in the configuration. TODO: read in the local.inc.dist
+     * @param $default mixed  the value to return if the variable is not set in the configuration
      *
      * @return mixed
      */
@@ -69,6 +85,14 @@ class ForgeConfig
     {
         if (self::exists($name)) {
             return self::$conf_stack[0][$name];
+        }
+        return $default;
+    }
+
+    public static function getInt(string $name, int $default = 0): int
+    {
+        if (self::exists($name)) {
+            return (int) self::$conf_stack[0][$name];
         }
         return $default;
     }
@@ -82,10 +106,10 @@ class ForgeConfig
     {
         $filename = $GLOBALS['Language']->getContent('include/restricted_user_permissions', 'en_US');
         if (! $filename) {
-            return array();
+            return [];
         }
 
-        $public_projects = array();
+        $public_projects = [];
         include($filename);
 
         return $public_projects;
@@ -109,8 +133,8 @@ class ForgeConfig
      */
     public static function store()
     {
-        array_unshift(self::$conf_stack, array());
-        if (!count(self::$conf_stack)) {
+        array_unshift(self::$conf_stack, []);
+        if (! count(self::$conf_stack)) {
             trigger_error('Config registry lost');
         }
     }

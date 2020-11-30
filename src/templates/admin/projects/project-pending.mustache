@@ -50,9 +50,9 @@
                                 </label>
                                 <p>
                                     <i
-                                       class="fa pending-project-access-icon
+                                       class="fas pending-project-access-icon
                                            {{# is_wide_open }}fa-tlp-unlock-plus-r{{/ is_wide_open }}
-                                           {{# is_open }}fa-unlock{{/ is_open }}
+                                           {{# is_open }}fa-lock-open{{/ is_open }}
                                            {{# is_closed }}fa-lock{{/ is_closed }}
                                            {{# is_closed_incl_restricted }}fa-tlp-lock-plus-r{{/ is_closed_incl_restricted }}
                                     "></i> {{ access }}
@@ -91,16 +91,21 @@
                         <div>
                             <div class="tlp-property">
                                 <label class="tlp-label">{{ submitted_by_label }}</label>
-                                <div class="pending-project-name-and-avatar">
-                                    <a href="/admin/usergroup.php?user_id={{ user_id }}">
-                                    <div class="tlp-avatar pending-project-avatar">
-                                        {{# user_has_avatar }}
-                                            <img src="{{ user_avatar }}">
-                                        {{/ user_has_avatar }}
+                                {{# admin_is_anonymous }}
+                                    <div class="tlp-alert-warning">{{# gettext }}User cannot be found{{/ gettext }}</div>
+                                {{/ admin_is_anonymous }}
+                                {{^ admin_is_anonymous }}
+                                    <div class="pending-project-name-and-avatar">
+                                        <a href="/admin/usergroup.php?user_id={{ user_id }}">
+                                        <div class="tlp-avatar pending-project-avatar">
+                                            {{# user_has_avatar }}
+                                                <img src="{{ user_avatar }}">
+                                            {{/ user_has_avatar }}
+                                        </div>
+                                        {{ user_name }}
+                                        </a>
                                     </div>
-                                    {{ user_name }}
-                                    </a>
-                                </div>
+                                {{/ admin_is_anonymous }}
                             </div>
                             <div class="tlp-property">
                                 <label class="tlp-label">{{ creation_date_label }}</label>
@@ -128,7 +133,7 @@
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="group_id" value="{{ project_id }}">
                                 <button type="submit" class="tlp-button-danger tlp-button-primary">
-                                    <i class="fa fa-trash tlp-button-icon"></i> {{ delete_label }}
+                                    <i class="fas fa-trash-alt tlp-button-icon"></i> {{ delete_label }}
                                 </button>
                             </form>
                         </div>

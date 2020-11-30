@@ -23,28 +23,49 @@ declare(strict_types=1);
 
 namespace Tuleap\Project\Registration\Template;
 
+use ProjectManager;
 use Tuleap\Glyph\GlyphFinder;
 use Tuleap\Project\XML\ConsistencyChecker;
+use Tuleap\Project\XML\ServiceEnableForXmlImportRetriever;
 use Tuleap\Project\XML\XMLFileContentRetriever;
 use Tuleap\XML\ProjectXMLMerger;
 
 class TemplateFactory
 {
     /**
-     * @var ProjectTemplate[]
+     * @var array<string,TuleapTemplate>
      */
     private $templates;
     /**
      * @var TemplateDao
      */
     private $template_dao;
+    /**
+     * @var \ProjectManager
+     */
+    private $project_manager;
+    /**
+     * @var GlyphFinder
+     */
+    private $glyph_finder;
 
-    public function __construct(GlyphFinder $glyph_finder, ProjectXMLMerger $project_xml_merger, ConsistencyChecker $consistency_checker, TemplateDao $template_dao)
-    {
-        $this->template_dao = $template_dao;
-        $this->templates = [
+    public function __construct(
+        GlyphFinder $glyph_finder,
+        ProjectXMLMerger $project_xml_merger,
+        ConsistencyChecker $consistency_checker,
+        TemplateDao $template_dao,
+        ProjectManager $project_manager
+    ) {
+        $this->template_dao    = $template_dao;
+        $this->templates       = [
+            AgileALMTemplate::NAME => new AgileALMTemplate($glyph_finder, $project_xml_merger, $consistency_checker),
             ScrumTemplate::NAME => new ScrumTemplate($glyph_finder, $project_xml_merger, $consistency_checker),
+            KanbanTemplate::NAME => new KanbanTemplate($glyph_finder, $project_xml_merger, $consistency_checker),
+            IssuesTemplate::NAME => new IssuesTemplate($glyph_finder, $project_xml_merger, $consistency_checker),
+            EmptyTemplate::NAME => new EmptyTemplate($glyph_finder),
         ];
+        $this->project_manager = $project_manager;
+        $this->glyph_finder    = $glyph_finder;
     }
 
     public static function build(): self
@@ -55,10 +76,12 @@ class TemplateFactory
             ),
             new ProjectXMLMerger(),
             new ConsistencyChecker(
-                \ServiceManager::instance(),
-                new XMLFileContentRetriever()
+                new XMLFileContentRetriever(),
+                \EventManager::instance(),
+                new ServiceEnableForXmlImportRetriever(\PluginFactory::instance())
             ),
-            new TemplateDao()
+            new TemplateDao(),
+            \ProjectManager::instance()
         );
     }
 
@@ -73,14 +96,22 @@ class TemplateFactory
                 $templates[] = $template;
             }
         }
+
+        if (count($templates) === 0) {
+            $templates[] = new EmptyTemplate($this->glyph_finder);
+        }
+
         return $templates;
     }
 
     /**
      * @throws InvalidTemplateException
      */
-    public function getTemplate(string $name): ProjectTemplate
+    public function getTemplate(string $name): TuleapTemplate
     {
+        if ($name === EmptyTemplate::NAME && isset($this->templates[$name])) {
+            return $this->templates[EmptyTemplate::NAME];
+        }
         if (! isset($this->templates[$name]) || ! $this->templates[$name]->isAvailable()) {
             throw new InvalidXMLTemplateNameException();
         }
@@ -89,7 +120,7 @@ class TemplateFactory
 
     public function recordUsedTemplate(\Project $project, ProjectTemplate $template): \Project
     {
-        $this->template_dao->saveTemplate($project, $template->getName());
+        $this->template_dao->saveTemplate($project, $template->getId());
         return $project;
     }
 
@@ -104,5 +135,22 @@ class TemplateFactory
         } catch (InvalidTemplateException $exception) {
         }
         return null;
+    }
+
+    /**
+     * @return CompanyTemplate[]
+     */
+    public function getCompanyTemplateList(): array
+    {
+        $company_templates = [];
+        $project_templates = $this->project_manager->getSiteTemplates();
+
+        foreach ($project_templates as $project_template) {
+            if ((int) $project_template->getGroupId() === \Project::ADMIN_PROJECT_ID) {
+                continue;
+            }
+            $company_templates[] = new CompanyTemplate($project_template, $this->glyph_finder);
+        }
+        return $company_templates;
     }
 }

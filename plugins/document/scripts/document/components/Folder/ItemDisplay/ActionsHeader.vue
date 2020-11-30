@@ -21,19 +21,21 @@
     <div class="document-header-actions">
         <div class="tlp-dropdown document-dropdown-menu-button">
             <div class="tlp-dropdown-split-button">
-                <create-new-item-version-button class="tlp-button-primary tlp-dropdown-split-button-main"
-                                                v-bind:item="item"
-                                                v-bind:icon-classes="'fa fa-mail-forward tlp-button-icon'"
-                                                data-test="item-action-create-new-version-button"
-                                                v-if="item.user_can_write"
+                <create-new-item-version-button
+                    class="tlp-button-primary tlp-dropdown-split-button-main"
+                    v-bind:item="item"
+                    v-bind:icon-classes="'fas fa-share tlp-button-icon'"
+                    data-test="item-action-create-new-version-button"
+                    v-if="item.user_can_write"
                 />
-                <details-item-button v-bind:item="item"
-                                     v-bind:button-class="'tlp-dropdown-split-button-main'"
-                                     v-else
-                                     data-test="item-action-details-button"
+                <details-item-button
+                    v-bind:item="item"
+                    v-bind:button-class="'tlp-dropdown-split-button-main'"
+                    v-else
+                    data-test="item-action-details-button"
                 />
                 <drop-down-button v-bind:is-in-large-mode="false">
-                    <drop-down-displayed-embedded/>
+                    <drop-down-displayed-embedded />
                 </drop-down-button>
             </div>
         </div>
@@ -51,10 +53,10 @@ export default {
         DropDownDisplayedEmbedded,
         DropDownButton,
         DetailsItemButton,
-        CreateNewItemVersionButton
+        CreateNewItemVersionButton,
     },
     props: {
-        item: Object
-    }
+        item: Object,
+    },
 };
 </script>

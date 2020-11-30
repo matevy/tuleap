@@ -34,8 +34,6 @@ interface Git_Driver_Gerrit
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param GitRepository $repository
      * @param String $parent_project_name
      * @return String Gerrit project name
      */
@@ -47,8 +45,6 @@ interface Git_Driver_Gerrit
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param Project $project
      * @param String $admin_group_name
      * @return String Gerrit project name
      */
@@ -60,23 +56,20 @@ interface Git_Driver_Gerrit
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $server
      * @param string $project_name
-     * @return true if the gerrit project exists, else return false
+     * @return bool true if the gerrit project exists, else return false
      */
-    public function doesTheParentProjectExist(Git_RemoteServer_GerritServer $server, $project_name);
+    public function doesTheParentProjectExist(Git_RemoteServer_GerritServer $server, $project_name): bool;
 
     /**
-     * @param Git_RemoteServer_GerritServer $server
      * @param string $project_name
-     * @return true if the gerrit project exists, else return false
+     * @return bool true if the gerrit project exists, else return false
      *
      * @throws Git_Driver_Gerrit_Exception
      */
-    public function doesTheProjectExist(Git_RemoteServer_GerritServer $server, $project_name);
+    public function doesTheProjectExist(Git_RemoteServer_GerritServer $server, $project_name): bool;
 
     /**
-     * @param Git_RemoteServer_GerritServer $server
      *
      * @throws Git_Driver_Gerrit_Exception
      */
@@ -84,14 +77,12 @@ interface Git_Driver_Gerrit
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $server
-     * @return array : the list of the parent project created in the gerrit server
+     * @return array the list of the parent project created in the gerrit server
      */
     public function listParentProjects(Git_RemoteServer_GerritServer $server);
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $server
      * @param String $group_name
      * @param String $owner
      */
@@ -104,7 +95,6 @@ interface Git_Driver_Gerrit
      *
      * Can throw Git_Driver_Gerrit_RemoteSSHCommandFailure exception
      *
-     * @param Git_RemoteServer_GerritServer $server
      * @param type $group_full_name
      *
      * @return type
@@ -116,7 +106,6 @@ interface Git_Driver_Gerrit
     public function listGroups(Git_RemoteServer_GerritServer $server);
 
     /**
-     * @param Git_RemoteServer_GerritServer $server
      *
      * @return array of (groupname => uuid)
      */
@@ -147,7 +136,6 @@ interface Git_Driver_Gerrit
      *
      * Can throw Git_Driver_Gerrit_RemoteSSHCommandFailure exception
      *
-     * @param Git_RemoteServer_GerritServer $server
      * @param String $group_name
      */
     public function removeAllGroupMembers(Git_RemoteServer_GerritServer $server, $group_name);
@@ -157,7 +145,6 @@ interface Git_Driver_Gerrit
      *
      * Can throw Git_Driver_Gerrit_RemoteSSHCommandFailure exception
      *
-     * @param Git_RemoteServer_GerritServer $server
      * @param String $group_name
      * @param String $included_group_name
      */
@@ -168,7 +155,6 @@ interface Git_Driver_Gerrit
      *
      * Can throw Git_Driver_Gerrit_RemoteSSHCommandFailure exception
      *
-     * @param Git_RemoteServer_GerritServer $server
      * @param String $group_name
      */
     public function removeAllIncludedGroups(Git_RemoteServer_GerritServer $server, $group_name);
@@ -177,18 +163,13 @@ interface Git_Driver_Gerrit
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param Git_Driver_Gerrit_User $user
-     * @param string $ssh_key
      * @throws Git_Driver_Gerrit_Exception
      *
      */
-    public function addSSHKeyToAccount(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $user, $ssh_key);
+    public function addSSHKeyToAccount(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $user, string $ssh_key): void;
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param Git_Driver_Gerrit_User $user
      * @param string $ssh_key
      * @throws Git_Driver_Gerrit_Exception
      */
@@ -200,7 +181,6 @@ interface Git_Driver_Gerrit
 
     /**
      * Set the parent of a project
-     * @param Git_RemoteServer_GerritServer $server
      * @param string $project_name
      * @param string $parent_project_name
      */
@@ -208,19 +188,16 @@ interface Git_Driver_Gerrit
 
     /**
      * Reset the parent of a project
-     * @param Git_RemoteServer_GerritServer $server
      * @param string $project_name
      */
     public function resetProjectInheritance(Git_RemoteServer_GerritServer $server, $project_name);
 
     /**
-     * @param Git_RemoteServer_GerritServer $server
      * @return bool
      */
     public function isDeletePluginEnabled(Git_RemoteServer_GerritServer $server);
 
     /**
-     * @param Git_RemoteServer_GerritServer $server
      * @param string $gerrit_project_full_name E.g. bugs or bugs/repository1
      *
      * @throws Git_Driver_Gerrit_Exception
@@ -228,7 +205,6 @@ interface Git_Driver_Gerrit
     public function deleteProject(Git_RemoteServer_GerritServer $server, $gerrit_project_full_name);
 
     /**
-     * @param Git_RemoteServer_GerritServer $server
      * @param string $gerrit_project_full_name
      *
      * @throws Git_Driver_Gerrit_Exception

@@ -7,12 +7,15 @@
 set -ex
 
 MAX_TEST_EXECUTION_TIME='30m'
+TIMEOUT="$(command -v gtimeout || echo timeout)"
 DOCKERCOMPOSE="docker-compose -f docker-compose-distlp-tests.yml -p distlp-tests-${BUILD_TAG:-dev}"
 
 test_results_folder='./test_results_distlp'
 if [ -n "$1" ]; then
     test_results_folder="$1"
 fi
+
+cypress_version="$(python3 -c 'import json,sys;print(json.load(sys.stdin)["dependencies"]["cypress"]["version"], end="")' < ./package-lock.json)"
 
 clean_env() {
     $DOCKERCOMPOSE down --remove-orphans --volumes || true
@@ -22,7 +25,7 @@ wait_until_tests_are_executed() {
     local test_cli_container_id="$($DOCKERCOMPOSE ps -q test-cli)"
     local test_cypress_container_id="$($DOCKERCOMPOSE ps -q test-cypress)"
 
-    timeout "$MAX_TEST_EXECUTION_TIME" docker wait "$test_cli_container_id" "$test_cypress_container_id" || \
+    $TIMEOUT "$MAX_TEST_EXECUTION_TIME" docker wait "$test_cli_container_id" "$test_cypress_container_id" || \
         echo 'Tests take to much time to execute. End of execution will not be waited for!'
 }
 
@@ -30,7 +33,7 @@ mkdir -p "$test_results_folder" || true
 rm -rf "$test_results_folder/*" || true
 clean_env
 
-TEST_RESULT_OUTPUT="$test_results_folder" $DOCKERCOMPOSE up -d --build
+TEST_RESULT_OUTPUT="$test_results_folder" CYPRESS_VERSION="$cypress_version" $DOCKERCOMPOSE up -d --build
 
 wait_until_tests_are_executed
 

@@ -18,15 +18,24 @@
   -->
 
 <template>
-    <div class="document-upload-to-current-folder" v-bind:class="classes" data-test="document-current-folder-dropzone">
-        <div v-if="user_can_dragndrop_in_current_folder"
-             class="document-upload-to-current-folder-message"
-             data-test="document-current-folder-success-dropzone"
+    <div
+        class="document-upload-to-current-folder"
+        v-bind:class="classes"
+        data-test="document-current-folder-dropzone"
+    >
+        <div
+            v-if="user_can_dragndrop_in_current_folder"
+            class="document-upload-to-current-folder-message"
+            data-test="document-current-folder-success-dropzone"
         >
             <i class="fa fa-rotate-90 fa-mail-forward document-upload-to-current-folder-icon"></i>
             <p>{{ message_success }}</p>
         </div>
-        <div v-else class="document-upload-to-current-folder-message" data-test="document-current-folder-error-dropzone">
+        <div
+            v-else
+            class="document-upload-to-current-folder-message"
+            data-test="document-current-folder-error-dropzone"
+        >
             <i class="fa fa-ban document-upload-to-current-folder-icon"></i>
             <p>{{ message_error }}</p>
         </div>
@@ -41,7 +50,7 @@ import { sprintf } from "sprintf-js";
 export default {
     props: {
         user_can_dragndrop_in_current_folder: Boolean,
-        is_dropzone_highlighted: Boolean
+        is_dropzone_highlighted: Boolean,
     },
     computed: {
         ...mapGetters(["current_folder_title"]),
@@ -56,7 +65,7 @@ export default {
                 {
                     nb_files: this.max_files_dragndrop,
                     folder: this.current_folder_title,
-                    size: prettyKibibytes(this.max_size_upload)
+                    size: prettyKibibytes(this.max_size_upload),
                 }
             );
         },
@@ -71,7 +80,7 @@ export default {
         },
         classes() {
             return this.is_dropzone_highlighted ? this.upload_current_folder_class : "";
-        }
-    }
+        },
+    },
 };
 </script>

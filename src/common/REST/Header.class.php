@@ -84,97 +84,97 @@ class Header
 
     public static function allowOptions()
     {
-        self::sendAllowHeaders(array(self::OPTIONS));
+        self::sendAllowHeaders([self::OPTIONS]);
     }
 
     public static function allowOptionsGet()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET));
+        self::sendAllowHeaders([self::OPTIONS, self::GET]);
     }
 
     public static function allowOptionsPostDelete()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::POST, self::DELETE));
+        self::sendAllowHeaders([self::OPTIONS, self::POST, self::DELETE]);
     }
 
     public static function allowOptionsDelete()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::DELETE));
+        self::sendAllowHeaders([self::OPTIONS, self::DELETE]);
     }
 
     public static function allowOptionsGetPut()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PUT));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PUT]);
     }
 
     public static function allowOptionsGetPutPost()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PUT, self::POST));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PUT, self::POST]);
     }
 
     public static function allowOptionsGetPutPostDelete()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PUT, self::POST, self::DELETE));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PUT, self::POST, self::DELETE]);
     }
 
     public static function allowOptionsGetPutPostPatch()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PUT, self::POST, self::PATCH));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PUT, self::POST, self::PATCH]);
     }
 
     public static function allowOptionsGetPutPatch()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PUT, self::PATCH));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PUT, self::PATCH]);
     }
 
     public static function allowOptionsGetPutDelete()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PUT, self::DELETE));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PUT, self::DELETE]);
     }
 
     public static function allowOptionsGetPutDeletePatch()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PUT, self::DELETE, self::PATCH));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PUT, self::DELETE, self::PATCH]);
     }
 
     public static function allowOptionsPut()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::PUT));
+        self::sendAllowHeaders([self::OPTIONS, self::PUT]);
     }
 
     public static function allowOptionsPost()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::POST));
+        self::sendAllowHeaders([self::OPTIONS, self::POST]);
     }
 
     public static function allowOptionsPostPut()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::POST, self::PUT));
+        self::sendAllowHeaders([self::OPTIONS, self::POST, self::PUT]);
     }
 
     public static function allowOptionsGetPost()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::POST));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::POST]);
     }
 
     public static function allowOptionsGetPatch()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PATCH));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PATCH]);
     }
 
     public static function allowOptionsGetPatchDelete()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::PATCH, self::DELETE));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::PATCH, self::DELETE]);
     }
 
     public static function allowOptionsPatchDelete()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::PATCH, self::DELETE));
+        self::sendAllowHeaders([self::OPTIONS, self::PATCH, self::DELETE]);
     }
 
     public static function allowOptionsGetDelete()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::DELETE));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::DELETE]);
     }
 
     public static function allowOptionsGetPostDelete()
@@ -184,22 +184,22 @@ class Header
 
     public static function allowOptionsPatch()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::PATCH));
+        self::sendAllowHeaders([self::OPTIONS, self::PATCH]);
     }
 
     public static function allowOptionsPostPatch()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::POST, self::PATCH));
+        self::sendAllowHeaders([self::OPTIONS, self::POST, self::PATCH]);
     }
 
     public static function allowOptionsGetPostPatch()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::POST, self::PATCH));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::POST, self::PATCH]);
     }
 
     public static function allowOptionsGetPostPatchDelete()
     {
-        self::sendAllowHeaders(array(self::OPTIONS, self::GET, self::POST, self::PATCH, self::DELETE));
+        self::sendAllowHeaders([self::OPTIONS, self::GET, self::POST, self::PATCH, self::DELETE]);
     }
 
     private static function sendAllowHeaders($methods)
@@ -209,12 +209,25 @@ class Header
         self::sendHeader(self::CORS_ALLOW_METHODS, $methods);
     }
 
-    public static function sendPaginationHeaders($limit, $offset, $size, $max_limit)
+    public static function sendPaginationHeaders(int $limit, int $offset, int $size, int $max_limit): void
     {
-        self::sendHeader(self::X_PAGINATION_LIMIT, $limit);
-        self::sendHeader(self::X_PAGINATION_OFFSET, $offset);
-        self::sendHeader(self::X_PAGINATION_SIZE, $size);
-        self::sendHeader(self::X_PAGINATION_LIMIT_MAX, $max_limit);
+        self::sendHeader(self::X_PAGINATION_LIMIT, self::getValidValueForPaginationHeader($limit));
+        self::sendHeader(self::X_PAGINATION_OFFSET, self::getValidValueForPaginationHeader($offset));
+        self::sendHeader(self::X_PAGINATION_SIZE, self::getValidValueForPaginationHeader($size));
+        self::sendHeader(self::X_PAGINATION_LIMIT_MAX, self::getValidValueForPaginationHeader($max_limit));
+    }
+
+    /**
+     * @psalm-pure
+     *
+     * @psalm-taint-escape text
+     */
+    private static function getValidValueForPaginationHeader(int $value): int
+    {
+        if ($value < 0) {
+            return 0;
+        }
+        return $value;
     }
 
     public static function sendOptionsPaginationHeaders($limit, $offset, $max_limit)
@@ -247,6 +260,6 @@ class Header
 
     private static function sendHeader($name, $value)
     {
-        header($name .': '. $value);
+        header($name . ': ' . $value);
     }
 }

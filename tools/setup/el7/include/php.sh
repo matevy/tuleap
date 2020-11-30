@@ -1,9 +1,3 @@
-_phpPasswordHasher() {
-    # ${1}: password
-
-    "${php}" "${tools_dir}/utils/password_hasher.php" -p "${1}"
-}
-
 _phpActivePlugin() {
     # ${1}: plugin name
     # ${2}: user name
@@ -18,14 +12,6 @@ _phpForgeupgrade() {
     _infoMessage "Register buckets in forgeupgrade"
     "${php}" "${forgeupgrade_dir}/forgeupgrade.php" \
         --config="${forgeupgrade_conf}" "${1}" 2> >(_logCatcher)
-}
-
-_phpImportTrackerTemplate() {
-    for template in ${install_dir}/plugins/tracker/www/resources/templates/Tracker_*.xml; do
-        "${php_launcher}" ${install_dir}/plugins/tracker/bin/import_tracker_xml_template.php ${template} \
-            2> >(_logCatcher)
-        echo "${install_dir}/plugins/tracker/bin/import_tracker_xml_template.php ${template}"
-    done
 }
 
 _phpConfigureModule() {

@@ -18,16 +18,16 @@
   -->
 
 <template>
-    <a v-if="item.can_user_manage"
-       v-on:click.prevent="showUpdateModal"
-       class="tlp-dropdown-menu-item"
-       role="menuitem"
+    <button
+        v-if="item.can_user_manage"
+        v-on:click.prevent="showUpdateModal"
+        class="tlp-dropdown-menu-item"
+        type="button"
+        role="menuitem"
     >
         <i class="fa fa-fw fa-lock tlp-dropdown-menu-item-icon"></i>
-        <translate>
-            Permissions
-        </translate>
-    </a>
+        <translate>Permissions</translate>
+    </button>
 </template>
 
 <script>
@@ -35,14 +35,14 @@ import EventBus from "../../../helpers/event-bus.js";
 export default {
     name: "UpdatePermissions",
     props: {
-        item: Object
+        item: Object,
     },
     methods: {
         showUpdateModal() {
             EventBus.$emit("show-update-permissions-modal", {
-                detail: { current_item: this.item }
+                detail: { current_item: this.item },
             });
-        }
-    }
+        },
+    },
 };
 </script>

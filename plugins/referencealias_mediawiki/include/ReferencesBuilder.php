@@ -52,7 +52,7 @@ class ReferencesBuilder
      */
     public function getReference(Project $project, $keyword, $value)
     {
-        return $this->findReference($project, $keyword, $keyword.$value);
+        return $this->findReference($project, $keyword, $keyword . $value);
     }
 
     /**
@@ -62,9 +62,9 @@ class ReferencesBuilder
      */
     public function getExtraReferenceSpecs()
     {
-        return array(
-            array(
-                'cb'     => array($this, 'referenceFromMatch'),
+        return [
+            [
+                'cb'     => [$this, 'referenceFromMatch'],
                 'regexp' => '/
                     (?<![_a-zA-Z0-9])  # ensure the pattern is not following digits or letters
                     (?P<ref>
@@ -73,8 +73,8 @@ class ReferencesBuilder
                     )
                     (?![_A-Za-z0-9])   # ensure the pattern is not followed by digits or letters
                 /x'
-            )
-        );
+            ]
+        ];
     }
 
     /**
@@ -121,7 +121,7 @@ class ReferencesBuilder
             case 'wiki':
                 $base_id     = 0;
                 $description = '';
-                $url         = "plugins/mediawiki/wiki/".urlencode($project->getUnixNameLowerCase())."/index.php/".urlencode($target);
+                $url         = "plugins/mediawiki/wiki/" . urlencode($project->getUnixNameLowerCase()) . "/index.php/" . urlencode($target);
                 $visibility  = 'P';
                 $service     = 'mediawiki';
                 $nature      = 'mediawiki';

@@ -18,16 +18,19 @@
   -->
 
 <template>
-    <div class="tlp-modal"
-         role="dialog"
-         aria-labelledby="document-uploads-files-modal-title"
-    >
+    <div class="tlp-modal" role="dialog" aria-labelledby="document-uploads-files-modal-title">
         <div class="tlp-modal-header">
             <h1 class="tlp-modal-title" id="document-uploads-files-modal-title">
                 <i class="fa fa-upload tlp-modal-title-icon"></i>
                 <translate>Uploading documents</translate>
             </h1>
-            <div class="tlp-modal-close" data-dismiss="modal" v-bind:aria-label="close">
+            <div
+                class="tlp-modal-close"
+                tabindex="0"
+                role="button"
+                data-dismiss="modal"
+                v-bind:aria-label="close"
+            >
                 &times;
             </div>
         </div>
@@ -36,7 +39,9 @@
                 class="tlp-pane-section document-dragndrop-file-upload"
                 v-for="file in files_uploads_list"
                 v-bind:key="file.id"
-                v-bind:class="{ 'document-dragndrop-file-upload-error': file.upload_error !== null }"
+                v-bind:class="{
+                    'document-dragndrop-file-upload-error': file.upload_error !== null,
+                }"
             >
                 <div class="document-uploads-file">
                     <span class="document-uploads-file-title">{{ file.title }}</span>
@@ -44,22 +49,24 @@
                         {{ getUploadErrorMessage(file) }}
                     </span>
                 </div>
-                <upload-progress-bar v-if="file.is_uploading || file.is_uploading_new_version" v-bind:item="file"/>
+                <upload-progress-bar
+                    v-if="file.is_uploading || file.is_uploading_new_version"
+                    v-bind:item="file"
+                />
                 <span v-else-if="file.upload_error !== null" class="tlp-badge-danger" v-translate>
                     Upload error
                 </span>
             </div>
             <div class="document-uploads-modal-empty-state" v-if="files_uploads_list.length === 0">
-                <p class="empty-page-text" v-translate>
-                    There is no upload in progress
-                </p>
+                <p class="empty-page-text" v-translate>There is no upload in progress</p>
             </div>
         </div>
         <div class="tlp-modal-footer">
-            <button type="submit"
-                    class="tlp-button-primary tlp-modal-action"
-                    data-dismiss="modal"
-                    v-translate
+            <button
+                type="submit"
+                class="tlp-button-primary tlp-modal-action"
+                data-dismiss="modal"
+                v-translate
             >
                 Close
             </button>
@@ -74,20 +81,20 @@ import { FILE_UPLOAD_UNKNOWN_ERROR } from "../../../constants.js";
 
 export default {
     components: {
-        UploadProgressBar
+        UploadProgressBar,
     },
     computed: {
         ...mapState(["files_uploads_list"]),
         close() {
             return this.$gettext("Close");
-        }
+        },
     },
     methods: {
         getUploadErrorMessage(file) {
             return file.upload_error === FILE_UPLOAD_UNKNOWN_ERROR
                 ? this.$gettext("An error has occurred, please contact your administrator")
                 : file.upload_error;
-        }
-    }
+        },
+    },
 };
 </script>

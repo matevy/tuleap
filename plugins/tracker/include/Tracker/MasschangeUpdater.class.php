@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\Tracker\Masschange\TrackerMasschangeProcessExternalActionsEvent;
+
 class Tracker_MasschangeUpdater
 {
 
@@ -48,6 +50,11 @@ class Tracker_MasschangeUpdater
      */
     private $artifact_dao;
 
+    /**
+     * @var EventManager
+     */
+    private $event_manager;
+
     public function __construct(
         Tracker $tracker,
         Tracker_Report $tracker_report,
@@ -55,7 +62,8 @@ class Tracker_MasschangeUpdater
         Tracker_RuleFactory $rule_factory,
         Tracker_FormElementFactory $form_element_factory,
         Tracker_ArtifactFactory $artifact_factory,
-        Tracker_ArtifactDao $artifact_dao
+        Tracker_ArtifactDao $artifact_dao,
+        EventManager $event_manager
     ) {
         $this->tracker                     = $tracker;
         $this->tracker_report              = $tracker_report;
@@ -64,6 +72,7 @@ class Tracker_MasschangeUpdater
         $this->form_element_factory        = $form_element_factory;
         $this->artifact_factory            = $artifact_factory;
         $this->artifact_dao                = $artifact_dao;
+        $this->event_manager               = $event_manager;
     }
 
     public function updateArtifacts(PFUser $user, Codendi_Request $request)
@@ -71,8 +80,8 @@ class Tracker_MasschangeUpdater
         if ($this->tracker->userIsAdmin($user)) {
             $masschange_aids = $request->get('masschange_aids');
             if (empty($masschange_aids)) {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_masschange_detail', 'no_items_selected'));
-                $GLOBALS['Response']->redirect(TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId());
+                $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker', 'No artifacts have been selected'));
+                $GLOBALS['Response']->redirect(TRACKER_BASE_URL . '/?tracker=' . $this->tracker->getId());
             }
 
             $unsubscribe = $request->get('masschange-unsubscribe-option');
@@ -84,8 +93,8 @@ class Tracker_MasschangeUpdater
             $masschange_data    = $request->get('artifact');
 
             if (! $unsubscribe && empty($masschange_data)) {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_masschange_detail', 'no_items_selected'));
-                $GLOBALS['Response']->redirect(TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId());
+                $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker', 'No artifacts have been selected'));
+                $GLOBALS['Response']->redirect(TRACKER_BASE_URL . '/?tracker=' . $this->tracker->getId());
             }
 
             $comment = $request->get('artifact_masschange_followup_comment');
@@ -104,10 +113,18 @@ class Tracker_MasschangeUpdater
                 );
             }
 
-            $GLOBALS['Response']->redirect(TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId());
+            $event = new TrackerMasschangeProcessExternalActionsEvent(
+                $user,
+                $this->tracker,
+                $request,
+                $masschange_aids
+            );
+            $this->event_manager->processEvent($event);
+
+            $GLOBALS['Response']->redirect(TRACKER_BASE_URL . '/?tracker=' . $this->tracker->getId());
         } else {
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin', 'access_denied'));
-            $GLOBALS['Response']->redirect(TRACKER_BASE_URL.'/?tracker='. $this->tracker_report->getId());
+            $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker', 'Access denied. You don\'t have permissions to perform this action.'));
+            $GLOBALS['Response']->redirect(TRACKER_BASE_URL . '/?tracker=' . $this->tracker_report->getId());
         }
     }
 
@@ -118,7 +135,7 @@ class Tracker_MasschangeUpdater
         string $comment,
         bool $send_notifications,
         string $comment_format
-    ) : void {
+    ): void {
         $fields_data = $this->consolidateFieldsData($fields_data);
 
         $list_fields_used_in_tracker_rules = $this->getFieldListUsedInTrackerRules();
@@ -150,22 +167,22 @@ class Tracker_MasschangeUpdater
                 $not_updated_aids[] = $aid;
                 continue;
             } catch (Tracker_Exception $e) {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin_import', 'unable_to_update_artifact', array($aid)));
+                $GLOBALS['Response']->addFeedback('error', sprintf(dgettext('tuleap-tracker', 'Unable to update artifact %1$s'), $aid));
                 $GLOBALS['Response']->addFeedback('error', $e->getMessage());
                 $not_updated_aids[] = $aid;
                 continue;
             }
         }
         if (! empty($not_updated_aids)) {
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_index', 'mass_update_failed', implode(', ', $not_updated_aids)));
+            $GLOBALS['Response']->addFeedback('error', sprintf(dgettext('tuleap-tracker', 'The following artifacts were not updated (%1$s)'), implode(', ', $not_updated_aids)));
             return;
         }
 
-        $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_index', 'mass_update_success'));
-        $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_index', 'updated_aid', implode(', ', $masschange_aids)));
+        $GLOBALS['Response']->addFeedback('info', dgettext('tuleap-tracker', 'Successfully Updated'));
+        $GLOBALS['Response']->addFeedback('info', sprintf(dgettext('tuleap-tracker', 'Updated %1$s'), implode(', ', $masschange_aids)));
     }
 
-    private function consolidateFieldsData(array $fields_data) : array
+    private function consolidateFieldsData(array $fields_data): array
     {
         $fields_data['request_method_called'] = 'artifact-masschange';
         $this->tracker->augmentDataFromRequest($fields_data);
@@ -177,7 +194,7 @@ class Tracker_MasschangeUpdater
     /**
      * @return Tracker_FormElement_Field_List[]
      */
-    private function getFieldListUsedInTrackerRules() : array
+    private function getFieldListUsedInTrackerRules(): array
     {
         $list_fields_used_in_tracker_rules = [];
         $tracker_rules_for_list_field      = $this->rule_factory->getAllListRulesByTrackerWithOrder($this->tracker->getId());
@@ -206,12 +223,12 @@ class Tracker_MasschangeUpdater
         Tracker_Artifact_Changeset $changeset,
         array $list_fields,
         array $fields_data
-    ) : array {
+    ): array {
         foreach ($list_fields as $list_field) {
             $changeset_value = $changeset->getValue($list_field);
             if ($changeset_value !== null) {
                 $value = $changeset_value->getValue();
-                if ($list_field->isNone($value) && !(isset($fields_data[$list_field->getId()]))) {
+                if ($list_field->isNone($value) && ! (isset($fields_data[$list_field->getId()]))) {
                     $field_value = [Tracker_FormElement_Field_List::NONE_VALUE];
                     if (count($field_value) === 1) {
                         $fields_data[$list_field->getId()] = current($field_value);
@@ -234,15 +251,11 @@ class Tracker_MasschangeUpdater
 
         $GLOBALS['Response']->addFeedback(
             'info',
-            $GLOBALS['Language']->getText(
-                'plugin_tracker_masschange_detail',
-                'unsubscribe_aids',
-                implode(', ', $masschange_aids)
-            )
+            sprintf(dgettext('tuleap-tracker', 'You are unsubscribed from notifications of artifacts %1$s'), implode(', ', $masschange_aids))
         );
     }
 
-    private function getArtifactNotificationSubscriber($artifact_id) : Tracker_ArtifactNotificationSubscriber
+    private function getArtifactNotificationSubscriber($artifact_id): Tracker_ArtifactNotificationSubscriber
     {
         $artifact = $this->artifact_factory->getArtifactById($artifact_id);
         if ($artifact === null) {

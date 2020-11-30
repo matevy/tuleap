@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011. All Rights Reserved.
+ * Copyright (c) Enalean, 2011-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -44,7 +44,7 @@ class BaseLanguageFactory
      */
     public function __construct()
     {
-        $this->languages           = array();
+        $this->languages           = [];
         $this->supported_languages = ForgeConfig::get('sys_supported_languages');
         $this->default_language    = ForgeConfig::get('sys_lang');
     }
@@ -73,9 +73,10 @@ class BaseLanguageFactory
         if (strpos($this->supported_languages, $locale) === false) {
             $locale = $this->default_language;
         }
-        if (!isset($this->languages[$locale])) {
+        if (! isset($this->languages[$locale])) {
             $this->cacheBaseLanguage($this->createBaseLanguage($locale));
         }
+        assert(isset($this->languages[$locale]));
         return $this->languages[$locale];
     }
 
@@ -98,7 +99,7 @@ class BaseLanguageFactory
 
     public function getAvailableLanguages()
     {
-        $languages = array();
+        $languages = [];
         foreach ($this->getSupportedLanguages() as $lang) {
             $languages[$lang] = $this->getBaseLanguage($lang)->getText('system', 'locale_label');
         }

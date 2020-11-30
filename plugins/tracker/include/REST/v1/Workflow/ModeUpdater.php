@@ -22,18 +22,12 @@
 namespace Tuleap\Tracker\REST\v1\Workflow;
 
 use Tracker;
-use Transition;
-use TransitionFactory;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
 use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
 use Tuleap\Tracker\Workflow\SimpleMode\State\State;
 use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
 use Tuleap\Tracker\Workflow\SimpleMode\TransitionReplicator;
-use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
-use Tuleap\Tracker\Workflow\Transition\NoSiblingTransitionException;
-use Tuleap\Tracker\Workflow\Transition\NoTransitionForStateException;
-use Workflow;
 use Workflow_Dao;
 
 class ModeUpdater
@@ -47,10 +41,6 @@ class ModeUpdater
      * @var TransitionReplicator
      */
     private $transition_replicator;
-    /**
-     * @var TransitionFactory
-     */
-    private $transition_factory;
 
     /**
      * @var FrozenFieldsDao
@@ -88,7 +78,7 @@ class ModeUpdater
         $this->hidden_fieldsets_dao  = $hidden_fieldsets_dao;
     }
 
-    public function switchWorkflowToAdvancedMode(Tracker $tracker) : void
+    public function switchWorkflowToAdvancedMode(Tracker $tracker): void
     {
         $workflow    = $tracker->getWorkflow();
         $workflow_id = (int) $workflow->getId();
@@ -108,7 +98,7 @@ class ModeUpdater
      * @throws \Tuleap\Tracker\Workflow\PostAction\Update\Internal\UnknownPostActionIdsException
      * @throws \Tuleap\Tracker\Workflow\Transition\Condition\ConditionsUpdateException
      */
-    public function switchWorkflowToSimpleMode(Tracker $tracker) : void
+    public function switchWorkflowToSimpleMode(Tracker $tracker): void
     {
         $workflow    = $tracker->getWorkflow();
         $workflow_id = $workflow->getId();
@@ -121,7 +111,7 @@ class ModeUpdater
             $this->replicatePerState($state);
         }
 
-        $this->workflow_dao->switchWorkflowToSimpleMode($workflow_id);
+        $this->workflow_dao->switchWorkflowToSimpleMode((int) $workflow_id);
     }
 
     /**

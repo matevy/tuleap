@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,7 +22,7 @@ namespace Tuleap\Git\GitViews\RepoManagement\Pane;
 
 use Tuleap\Git\Webhook\WebhookSettingsPresenter;
 use Tuleap\Git\Webhook\CreateWebhookButtonPresenter;
-use Tuleap\Git\Webhook\WebhookPresenter;
+use Tuleap\Git\Webhook\GenericWebhookPresenter;
 use Tuleap\Git\Webhook\SectionOfWebhooksPresenter;
 use Tuleap\Git\Webhook\CreateWebhookModalPresenter;
 use Tuleap\Git\Webhook\EditWebhookModalPresenter;
@@ -33,7 +33,6 @@ use Tuleap\Git\Webhook\Webhook;
 use GitRepository;
 use Codendi_Request;
 use CSRFSynchronizerToken;
-use Codendi_HTMLPurifier;
 use EventManager;
 use TemplateRendererFactory;
 
@@ -96,28 +95,30 @@ class Hooks extends Pane
      */
     public function getContent()
     {
-        $description    = dgettext('tuleap-git', 'You can define several generic webhooks.');
+        $description            = dgettext('tuleap-git', 'You can define several generic webhooks.');
+        $additional_description = '';
 
-        $create_buttons       = array();
-        $sections             = array();
-        $additional_html_bits = array();
+        $create_buttons       = [];
+        $sections             = [];
+        $additional_html_bits = [];
 
         EventManager::instance()->processEvent(
             self::ADDITIONAL_WEBHOOKS,
-            array(
-                'request'              => $this->request,
-                'repository'           => $this->repository,
-                'description'          => &$description,
-                'create_buttons'       => &$create_buttons,
-                'sections'             => &$sections,
-                'additional_html_bits' => &$additional_html_bits
-            )
+            [
+                'request'                => $this->request,
+                'repository'             => $this->repository,
+                'description'            => &$description,
+                'create_buttons'         => &$create_buttons,
+                'sections'               => &$sections,
+                'additional_html_bits'   => &$additional_html_bits,
+                'additional_description' => &$additional_description,
+            ]
         );
 
         $csrf = new CSRFSynchronizerToken(self::CSRF_TOKEN_ID);
         $this->addCustomWebhooks($sections, $create_buttons, $csrf);
 
-        $renderer = TemplateRendererFactory::build()->getRenderer(dirname(GIT_BASE_DIR).'/templates/settings');
+        $renderer = TemplateRendererFactory::build()->getRenderer(dirname(GIT_BASE_DIR) . '/templates/settings');
 
         return $renderer->renderToString(
             'hooks',
@@ -125,6 +126,7 @@ class Hooks extends Pane
                 $csrf,
                 $this->getTitle(),
                 $description,
+                $additional_description,
                 $create_buttons,
                 $sections,
                 new CreateWebhookModalPresenter($this->repository),
@@ -138,7 +140,7 @@ class Hooks extends Pane
         $create_buttons[] = new CreateWebhookButtonPresenter();
 
         $label               = dgettext('tuleap-git', 'Generic webhooks');
-        $webhooks_presenters = array();
+        $webhooks_presenters = [];
 
         $webhooks = $this->webhook_factory->getWebhooksForRepository($this->repository);
         if (count($webhooks) === 0) {
@@ -148,7 +150,7 @@ class Hooks extends Pane
         foreach ($webhooks as $webhook) {
             $webhook_logs = $this->getLogsForWebhook($webhook);
 
-            $webhooks_presenters[] = new WebhookPresenter(
+            $webhooks_presenters[] = new GenericWebhookPresenter(
                 $this->repository,
                 $webhook->getId(),
                 $webhook->getUrl(),
@@ -162,7 +164,7 @@ class Hooks extends Pane
 
     private function getLogsForWebhook(Webhook $webhook)
     {
-        $logs = array();
+        $logs = [];
         foreach ($this->webhook_dao->getLogs($webhook->getId()) as $row) {
             $logs[] = new WebhookLogPresenter(
                 format_date($GLOBALS['Language']->getText('system', 'datefmt'), $row['created_on']),
@@ -182,8 +184,8 @@ class Hooks extends Pane
             $icon      = 'fa fa-exclamation-triangle';
         }
 
-        return '<span class="'. $classname .'" title="'. $this->hp->purify($status) .'">
-            <i class="'. $icon .'"></i> '. $this->hp->purify($status) .'
+        return '<span class="' . $classname . '" title="' . $this->hp->purify($status) . '">
+            <i class="' . $icon . '"></i> ' . $this->hp->purify($status) . '
             </span>';
     }
 }

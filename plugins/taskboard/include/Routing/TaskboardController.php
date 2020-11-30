@@ -23,9 +23,10 @@ declare(strict_types=1);
 namespace Tuleap\Taskboard\Routing;
 
 use HTTPRequest;
-use Planning_MilestonePaneFactory;
 use TemplateRenderer;
 use Tuleap\AgileDashboard\Milestone\AllBreadCrumbsForMilestoneBuilder;
+use Tuleap\BrowserDetection\DetectedBrowser;
+use Tuleap\Cardwall\Agiledashboard\CardwallPaneInfo;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\CssAsset;
 use Tuleap\Layout\IncludeAssets;
@@ -50,21 +51,13 @@ class TaskboardController implements DispatchableWithRequestNoAuthz, Dispatchabl
      */
     private $bread_crumbs_builder;
     /**
-     * @var Planning_MilestonePaneFactory
-     */
-    private $pane_factory;
-    /**
      * @var IncludeAssets
      */
     private $agiledashboard_assets;
     /**
      * @var IncludeAssets
      */
-    private $taskboard_theme_assets;
-    /**
-     * @var IncludeAssets
-     */
-    private $taskboard_js_assets;
+    private $taskboard_assets;
     /**
      * @var BoardPresenterBuilder
      */
@@ -80,18 +73,16 @@ class TaskboardController implements DispatchableWithRequestNoAuthz, Dispatchabl
         AllBreadCrumbsForMilestoneBuilder $bread_crumbs_builder,
         BoardPresenterBuilder $presenter_builder,
         IncludeAssets $agiledashboard_assets,
-        IncludeAssets $taskboard_theme_assets,
-        IncludeAssets $taskboard_js_assets,
+        IncludeAssets $taskboard_assets,
         VisitRecorder $visit_recorder
     ) {
-        $this->milestone_extractor    = $milestone_extractor;
-        $this->renderer               = $renderer;
-        $this->bread_crumbs_builder   = $bread_crumbs_builder;
-        $this->presenter_builder      = $presenter_builder;
-        $this->agiledashboard_assets  = $agiledashboard_assets;
-        $this->taskboard_theme_assets = $taskboard_theme_assets;
-        $this->taskboard_js_assets    = $taskboard_js_assets;
-        $this->visit_recorder         = $visit_recorder;
+        $this->milestone_extractor   = $milestone_extractor;
+        $this->renderer              = $renderer;
+        $this->bread_crumbs_builder  = $bread_crumbs_builder;
+        $this->presenter_builder     = $presenter_builder;
+        $this->agiledashboard_assets = $agiledashboard_assets;
+        $this->taskboard_assets      = $taskboard_assets;
+        $this->visit_recorder        = $visit_recorder;
     }
 
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables): void
@@ -108,19 +99,31 @@ class TaskboardController implements DispatchableWithRequestNoAuthz, Dispatchabl
                 $GLOBALS['Language']->getText(
                     'project_service',
                     'service_not_used',
-                    $GLOBALS['Language']->getText('plugin_agiledashboard', 'service_lbl_key')
+                    dgettext('tuleap-agiledashboard', 'Agile Dashboard')
                 )
             );
+        }
+        if (DetectedBrowser::detectFromTuleapHTTPRequest($request)->isIE11()) {
+            $layout->redirect(
+                '/plugins/agiledashboard/?' . http_build_query(
+                    [
+                        'group_id'    => $project->getID(),
+                        'planning_id' => $milestone->getPlanningId(),
+                        'action'      => 'show',
+                        'aid'         => $milestone->getArtifactId(),
+                        'pane'        => CardwallPaneInfo::IDENTIFIER
+                    ]
+                )
+            );
+            return;
         }
 
         $this->visit_recorder->record($user, $milestone->getArtifact());
 
         $layout->includeFooterJavascriptFile($this->agiledashboard_assets->getFileURL('scrum-header.js'));
-        $is_ie_11 = $this->isIE11();
-        if (! $is_ie_11) {
-            $layout->includeFooterJavascriptFile($this->taskboard_js_assets->getFileURL('taskboard.js'));
-        }
-        $layout->addCssAsset(new CssAsset($this->taskboard_theme_assets, 'taskboard'));
+        $layout->includeFooterJavascriptFile($this->taskboard_assets->getFileURL('taskboard.js'));
+
+        $layout->addCssAsset(new CssAsset($this->taskboard_assets, 'taskboard'));
 
         $service->displayHeader(
             $milestone->getArtifactTitle() . ' - ' . dgettext('tuleap-taskboard', "Taskboard"),
@@ -128,14 +131,7 @@ class TaskboardController implements DispatchableWithRequestNoAuthz, Dispatchabl
             [],
             ['main_classes' => ['fluid-main']]
         );
-        $this->renderer->renderToPage('taskboard', $this->presenter_builder->getPresenter($milestone, $user, $is_ie_11));
+        $this->renderer->renderToPage('taskboard', $this->presenter_builder->getPresenter($milestone, $user));
         $service->displayFooter();
-    }
-
-    private function isIE11(): bool
-    {
-        return preg_match('~MSIE|Internet Explorer~i', $_SERVER['HTTP_USER_AGENT'])
-            || (strpos($_SERVER['HTTP_USER_AGENT'], 'Trident/7.0;') !== false
-                && strpos($_SERVER['HTTP_USER_AGENT'], 'rv:11.0') !== false);
     }
 }

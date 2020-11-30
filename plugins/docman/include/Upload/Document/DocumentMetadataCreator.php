@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Upload\Document;
 
@@ -62,7 +62,7 @@ class DocumentMetadataCreator
 
     private function initMetadataFromRow(array $metadata_row): Docman_Metadata
     {
-        if ((int)$metadata_row['data_type'] === PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
+        if ((int) $metadata_row['data_type'] === PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
             $metadata = new Docman_ListMetadata();
         } else {
             $metadata = new Docman_Metadata();

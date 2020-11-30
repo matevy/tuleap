@@ -27,31 +27,33 @@ use Tuleap\PullRequest\Reviewer\Change\ReviewerChange;
 use Tuleap\REST\JsonCast;
 use Tuleap\User\REST\MinimalUserRepresentation;
 
-/**
- * @psalm-immutable
- */
 final class ReviewerChangeTimelineEventRepresentation
 {
     /**
      * @var MinimalUserRepresentation
+     * @psalm-readonly
      */
     public $user;
     /**
      * @var string {@type date}
+     * @psalm-readonly
      */
     public $post_date;
     /**
      * @var string
+     * @psalm-readonly
      */
     public $type = 'reviewer-change';
     /**
      * @var MinimalUserRepresentation[]
      * @psalm-var list<MinimalUserRepresentation>
+     * @psalm-readonly
      */
     public $added_reviewers;
     /**
      * @var MinimalUserRepresentation[]
      * @psalm-var list<MinimalUserRepresentation>
+     * @psalm-readonly
      */
     public $removed_reviewers;
 
@@ -69,10 +71,7 @@ final class ReviewerChangeTimelineEventRepresentation
 
     private static function buildMinimalUserRepresentation(PFUser $user): MinimalUserRepresentation
     {
-        $minimal_user_representation = new MinimalUserRepresentation();
-        $minimal_user_representation->build($user);
-
-        return $minimal_user_representation;
+        return MinimalUserRepresentation::build($user);
     }
 
     /**

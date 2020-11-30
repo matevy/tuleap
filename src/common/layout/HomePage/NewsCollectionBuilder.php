@@ -26,7 +26,13 @@ use Tuleap\News\NewsDao;
 
 class NewsCollectionBuilder
 {
+    /**
+     * Toggle display of news on the site home page
+     *
+     * @tlp-config-key
+     */
     public const CONFIG_DISPLAY_NEWS = 'display_homepage_news';
+
     /**
      * @var NewsDao
      */
@@ -57,11 +63,11 @@ class NewsCollectionBuilder
         $all_news = [];
         if (ForgeConfig::get(self::CONFIG_DISPLAY_NEWS)) {
             foreach ($this->dao->getNewsForSiteHomePage() as $news) {
-                $all_news []= new HomePageNews(
+                $all_news[] = new HomePageNews(
                     $this->purifier,
                     $this->project_manager->getProject($news['group_id']),
                     $this->user_manager->getUserById($news['submitted_by']),
-                    new \DateTimeImmutable('@'.$news['date']),
+                    new \DateTimeImmutable('@' . $news['date']),
                     $news['summary'],
                     $news['details']
                 );

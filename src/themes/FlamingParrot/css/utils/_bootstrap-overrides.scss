@@ -1,0 +1,704 @@
+/**
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+h2 {
+    font-size: 2em;
+}
+
+h3 {
+    font-size: 1.3em;
+}
+
+hr {
+    margin: $tlp-medium-spacing 0;
+}
+
+blockquote p {
+    font-size: 1em;
+}
+
+input,
+button,
+select,
+textarea {
+    font-family: $base-font;
+}
+
+input[type='file'] {
+    margin-top: -13px;
+}
+
+.tooltip.in {
+    opacity: 1;
+}
+
+.tooltip.right .tooltip-arrow {
+    border-right-color: $dark-grey;
+}
+
+.tooltip-inner {
+    background-color: $dark-grey;
+}
+
+kbd {
+    display: inline-block;
+    padding: 2px $tlp-small-spacing;
+    border-radius: 4px;
+    background: $sidebar-background;
+    color: $white;
+    font-family: -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue',sans-serif;
+    font-size: .875rem;
+    line-height: 1.25rem;
+    vertical-align: 1px;
+}
+
+.alert {
+    margin: 10px 0;
+    padding: 20px;
+    border: 0;
+    border-left: 5px solid $ui-color-warning;
+    border-radius: 3px;
+    background: transparentize($ui-color-warning, .9);
+    color: darken($ui-color-warning, 10%);
+    list-style: none;
+    text-shadow: none;
+
+    h4 {
+        margin: 0 0 20px;
+        color: inherit;
+    }
+
+    &.alert-absolute {
+        background: $ui-color-warning-light;
+    }
+}
+
+.alert-success {
+    border-left-color: $ui-color-success;
+    background: transparentize($ui-color-success, .9);
+    color: $ui-color-success;
+
+    &.alert-absolute {
+        background: $ui-color-success-light;
+    }
+}
+
+.alert-info {
+    border-left-color: $ui-color-info;
+    background: transparentize($ui-color-info, .9);
+    color: darken($ui-color-info, 30%);
+
+    &.alert-absolute {
+        background: $ui-color-info-light;
+    }
+}
+
+.alert-error {
+    border-left-color: $ui-color-danger;
+    background: transparentize($ui-color-danger, .9);
+    color: $ui-color-danger;
+
+    &.alert-absolute {
+        background: $ui-color-danger-light;
+    }
+}
+
+@each $color-name, $colors in $swatch-color-map {
+    .badge.tlp-badge-#{$color-name},
+    .badge.#{$color-name} {
+        padding: 5px 8px;
+        border: 1px solid map-get($colors, 'primary');
+        border-radius: 15px;
+        background: map-get($colors, 'primary');
+        color: #ffffff;
+        font-size: .75rem;
+        line-height: 1;
+        text-shadow: none;
+
+        &.tlp-badge-outline {
+            border: 1px solid transparentize(map-get($colors, 'primary'), .4);
+            background: transparentize(map-get($colors, 'primary'), .9);
+            color: map-get($colors, 'text');
+
+            &.tlp-badge-on-dark-background {
+                border: 1px solid mix(map-get($colors, 'primary'), $white, 85%);
+                background: transparentize(map-get($colors, 'primary'), .85);
+                color: mix(map-get($colors, 'border'), $white, 90%);
+
+                @if $color-name == 'teddy-brown'
+                    or $color-name == 'plum-crazy'
+                    or $color-name == 'red-wine'
+                    or $color-name == 'army-green' {
+                    color: mix(map-get($colors, 'border'), $white, 70%);
+                }
+            }
+        }
+    }
+}
+
+legend {
+    box-sizing: border-box;
+}
+
+.dropdown-menu {
+    z-index: 3000;
+}
+
+.popover {
+    z-index: 4000;
+
+    .project-privacy {
+        font-size: .9em;
+    }
+}
+
+.dropdown-submenu.pull-left.glued > .dropdown-menu {
+    left: 0;
+    margin: 0;
+    transform: translateX(-100%);
+}
+
+.nav-tabs {
+    min-height: 44px;
+    margin: $tlp-large-spacing 0 $tlp-medium-spacing;
+    padding: 0 $tlp-medium-spacing;
+    border-bottom: 0;
+    background-color: $white;
+    box-shadow: inset 0 1px 0 #e3e5ed, inset 0 -1px 0 #e3e5ed;
+    font-size: .75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+
+    label {
+        letter-spacing: normal;
+        text-transform: none;
+    }
+
+    > li {
+        border-top: 1px solid transparent;
+        border-right: 0;
+        border-bottom: 1px solid transparent;
+        border-left: 0;
+    }
+
+    > li:hover,
+    li:focus {
+        border-top: 1px solid transparent;
+        border-right: 0;
+        border-left: 0;
+        box-shadow: inset 0 -2px 0 $navbar-color;
+    }
+
+    > li > a {
+        margin-right: 0;
+        padding: $tlp-medium-spacing $tlp-large-spacing ($tlp-medium-spacing - 2);
+        border-top: 1px;
+        border-right: 0;
+        border-bottom: 2px solid transparent;
+        border-left: 0;
+        border-radius: 0;
+        background-color: transparent;
+        color: #747474;
+        line-height: .75rem;
+    }
+
+    > li > a:hover,
+    a:focus {
+        padding: $tlp-medium-spacing $tlp-large-spacing ($tlp-medium-spacing - 2);
+        border-top: 1px;
+        border-right: 0;
+        border-left: 0;
+        background-color: transparent;
+        color: $navbar-color;
+
+        > .caret {
+            border-top-color: $navbar-color;
+            border-bottom-color: $navbar-color;
+        }
+    }
+
+    /* stylelint-disable selector-no-qualifying-type */
+    li.active {
+        > a {
+            border-bottom: 2px solid $navbar-color;
+            color: $navbar-color;
+
+            > .caret {
+                border-top-color: $navbar-color;
+                border-bottom-color: $navbar-color;
+            }
+        }
+    }
+    /* stylelint-enable */
+
+    a.active { /* stylelint-disable-line selector-no-qualifying-type */
+        border-bottom-color: $navbar-color;
+    }
+
+    .dropdown-toggle {
+        border-color: transparent;
+        background-color: transparent;
+        color: #747474;
+    }
+
+    .dropdown-menu {
+        border: 0;
+        border-radius: 0;
+    }
+
+    > li > .dropdown-toggle > .caret {
+        margin-top: 5px;
+        border-top-color: #747474;
+        border-bottom-color: #747474;
+    }
+
+}
+
+.tabs-left > .nav-tabs .active > a,
+.tabs-left > .nav-tabs .active > a:hover,
+.tabs-left > .nav-tabs .active > a:focus {
+    border-color: transparent;
+}
+
+/* stylelint-disable selector-no-qualifying-type */
+.nav li.dropdown.open .caret,
+.nav li.dropdown.open.active .caret,
+.nav li.dropdown.open a:hover .caret {
+    border-top-color: $navbar-color;
+    border-bottom-color: $navbar-color;
+}
+
+.nav > li.dropdown.open {
+    &.active {
+        a:hover,
+        a:focus {
+            border-color: transparent;
+            background-color: transparent;
+            color: $navbar-color;
+        }
+    }
+
+    > .dropdown-menu {
+        font-size: 14px;
+        font-weight: normal;
+        letter-spacing: normal;
+        text-transform: none;
+
+        a {
+            padding: 10px 20px;
+            color: $navbar-color;
+            line-height: 14px;
+
+            &:hover,
+            &:focus {
+                border-color: transparent;
+                background: #f3f3f3;
+                color: $navbar-color;
+            }
+
+            &.text-error {
+                color: #b94a48;
+
+                &:hover,
+                &:focus {
+                    color: #953b39;
+                }
+            }
+        }
+    }
+}
+/* stylelint-enable */
+
+.tabs-left > .nav-tabs {
+    box-shadow: none;
+}
+
+/************
+ * BUTTONS
+ ************/
+
+@mixin btn($background-color, $color) {
+    padding: 9px $tlp-medium-spacing; // match TLP buttons
+    border-color: $background-color;
+    outline: none;
+    background: $background-color;
+    color: $color;
+    font-weight: 500;
+    text-shadow: none;
+
+    &:not(.btn-link) {
+        box-shadow: 0 1px 1px rgba(0, 0, 0, .12);
+    }
+
+    &.btn-large {
+        padding: 11px $tlp-large-spacing; // match TLP buttons
+        font-size: 1.25rem;
+        line-height: 1.5rem;
+
+        .caret {
+            margin-top: 8px;
+        }
+    }
+
+
+    &.btn-small {
+        padding: 3px $tlp-medium-spacing; // match TLP buttons
+        font-size: .75rem;
+        line-height: 1.5rem;
+
+        > .caret:not(:only-child) {
+            margin-top: 10px;
+        }
+    }
+
+    &.btn-mini {
+        padding: 2px $tlp-small-spacing; // match TLP buttons
+        font-size: .75rem;
+        line-height: 1.15rem;
+    }
+
+    &:disabled,
+    &.disabled {
+        border-color: transparent;
+        background: transparentize($background-color, .4);
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+
+    &.active:not(.disabled):not(:disabled) {
+        border-color: darken($background-color, 10%);
+        background: darken($background-color, 10%);
+    }
+
+    > i {
+        margin-right: 2px;
+    }
+}
+
+@mixin btn-hover($color) {
+    transition: box-shadow 75ms ease-in-out,background 75ms ease-in-out,border-color 75ms ease-in-out;
+    border-color: darken($color, 5%);
+    background: darken($color, 5%);
+    box-shadow: none;
+}
+
+@mixin dropdown-menu($color) {
+    &:not(.disabled) > a,
+    > input {
+        color: $color;
+
+        &:hover,
+        &:focus {
+            background: #f3f3f3;
+        }
+
+        &:focus {
+            outline: none;
+        }
+    }
+}
+
+.btn-group {
+    .btn-primary + .dropdown-menu > li {
+        @include dropdown-menu($main);
+    }
+
+    /* stylelint-disable selector-no-qualifying-type */
+    > .dropdown-menu > li {
+        @include dropdown-menu($main);
+
+        &.dropdown-submenu {
+            > .dropdown-menu > li {
+                @include dropdown-menu($main);
+            }
+
+            &:hover > a,
+            &:hover > input {
+                background: none;
+            }
+        }
+    }
+    /* stylelint-enable */
+
+    > .btn.dropdown-toggle {
+        padding-right: 12px !important;
+        padding-left: 12px !important;
+    }
+}
+
+.btn:not(.btn-link) {
+    @include btn($ui-border-light, $sidebar-background);
+
+    &.btn-primary {
+        @include btn($main, $white);
+    }
+
+    &.btn-danger {
+        @include btn($ui-color-danger, $white);
+    }
+
+    &.btn-success {
+        @include btn($ui-color-success, $white);
+    }
+
+    &.btn-warning {
+        @include btn($ui-color-warning, $white);
+    }
+
+    &.btn-info {
+        @include btn($ui-color-info, $white);
+    }
+
+    &:hover:not(:disabled):not(.disabled):not(.active) {
+        @include btn-hover($ui-border-light);
+
+        &.btn-primary {
+            @include btn-hover($main);
+        }
+
+        &.btn-danger {
+            @include btn-hover($ui-color-danger);
+        }
+
+        &.btn-success {
+            @include btn-hover($ui-color-success);
+        }
+
+        &.btn-warning {
+            @include btn-hover($ui-color-warning);
+        }
+
+        &.btn-info {
+            @include btn-hover($ui-color-info);
+        }
+    }
+}
+
+.input-prepend,
+.input-append {
+    display: inline-flex;
+    border-radius: 3px;
+
+    .btn {
+        // @bdauton approved this crappy thing
+        box-shadow: none !important;
+    }
+
+    > input,
+    > select {
+        height: auto;
+    }
+}
+
+/************
+ * MODALS
+ ************/
+
+.modal {
+    z-index: 2006;
+    overflow: hidden;
+    border: 1px solid transparent;
+    box-shadow: 0 10px 36px rgba(0, 0, 0, .2);
+    font-size: 14px;
+
+    form {
+        margin: 0;
+    }
+}
+
+.modal-header {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    height: 1px; // Fix IE11 sorcery
+    min-height: 64px;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    background: $main;
+    color: $white;
+
+    &.modal-header-error {
+        background: $ui-color-danger;
+    }
+
+    i {
+        padding: 0 5px;
+    }
+
+    h2,
+    h3 {
+        flex: 1;
+        order: 1;
+        border: 0;
+        font-size: 24px;
+        font-weight: 400;
+    }
+
+    p {
+        order: 2;
+        color: $white;
+    }
+
+    > .close {
+        position: relative;
+        top: 0;
+        order: 3;
+        margin-top: 0;
+        opacity: 1;
+        color: $white;
+        font-family: inherit;
+        font-size: 24px;
+        font-style: normal;
+        font-weight: 600;
+        text-shadow: none;
+    }
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #f3f3f3;
+    border-radius: 0 0 3px 3px;
+    background-color: $white;
+    text-align: right;
+}
+
+.modal-backdrop,
+.modal-backdrop.fade.in {
+    z-index: 2005;
+    opacity: .5;
+}
+
+.tuleap-artifact-modal .modal-header .title {
+    font-size: 24px;
+}
+
+.tuleap-artifact-modal .column {
+    background-color: transparent;
+
+    h4 {
+        color: $white;
+    }
+}
+
+.tuleap-artifact-modal .modal-body .column {
+    padding: 15px;
+}
+
+.tuleap-artifact-modal .modal-body fieldset {
+    margin: 0 0 20px;
+}
+
+/**
+ * Table
+ */
+%tlp-table-th {
+    padding: 10px;
+    color: $main;
+    font-weight: 600;
+
+    > a {
+        color: $main;
+        text-decoration: none;
+    }
+}
+
+.table {
+    > thead > tr > th {
+        @extend %tlp-table-th;
+
+        border-bottom: 2px solid $main;
+    }
+
+    > .table-sticky-header > tr > th {
+        position: sticky;
+        top: $navbar-height;
+        border-bottom: 0;
+        background: $white;
+        background-clip: padding-box;
+        box-shadow: inset 0 -2px 0 0 $main;
+    }
+
+    > tfoot > tr > th {
+        @extend %tlp-table-th;
+
+        border-top: 2px solid $main;
+    }
+
+    > tbody {
+        + tbody {
+            border-top: 0;
+        }
+
+        > tr:nth-child(even) > td {
+            background: #fcfcfc;
+        }
+
+        > tr:nth-child(odd) > td {
+            background: #ffffff;
+        }
+
+        > tr:hover > td {
+            background: transparentize($main, .93);
+        }
+
+        /* stylelint-disable selector-no-qualifying-type */
+        > tr > td {
+            padding: 10px;
+            border-bottom: 1px solid #e3e5ed;
+            line-height: normal;
+            vertical-align: middle;
+
+            &.table-cell-section {
+                padding: 5px 10px;
+                background: $main-background;
+                color: $main;
+                font-size: 11px;
+                font-weight: 600;
+                letter-spacing: .3px;
+                text-transform: uppercase;
+            }
+
+            &.table-cell-empty {
+                height: 100px;
+                background: #fcfcfc;
+                color: transparentize($main, .7);
+                font-style: italic;
+                text-align: center;
+                vertical-align: middle;
+            }
+        }
+        /* stylelint-enable */
+
+        > tr:first-child > td {
+            border-top: 0;
+        }
+
+        > tr:last-child > td {
+            border: 0;
+        }
+    }
+
+    > thead > tr > th a,
+    > tbody > tr > td a {
+        text-decoration: none;
+    }
+}

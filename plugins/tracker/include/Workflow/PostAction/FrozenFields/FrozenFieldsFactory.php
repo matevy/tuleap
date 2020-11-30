@@ -26,75 +26,40 @@ use SimpleXMLElement;
 use Tracker_FormElement_Field;
 use Transition;
 use Transition_PostAction;
+use Workflow;
 
 class FrozenFieldsFactory implements \Transition_PostActionSubFactory
 {
     /** @var FrozenFieldsDao */
     private $frozen_dao;
-
     /**
-     * @var \Tracker_FormElementFactory
+     * @var FrozenFieldsRetriever
      */
-    private $form_element_factory;
+    private $frozen_fields_retriever;
 
-    public function __construct(FrozenFieldsDao $frozen_dao, \Tracker_FormElementFactory $form_element_factory)
-    {
+    public function __construct(
+        FrozenFieldsDao $frozen_dao,
+        FrozenFieldsRetriever $frozen_fields_retriever
+    ) {
         $this->frozen_dao           = $frozen_dao;
-        $this->form_element_factory = $form_element_factory;
+        $this->frozen_fields_retriever = $frozen_fields_retriever;
     }
 
-    /**
-     * Get html code to let someone choose a post action for a transition
-     *
-     * @return string html
-     */
-    public function fetchPostActions()
+    public function warmUpCacheForWorkflow(Workflow $workflow): void
     {
-        // Not implemented. We do not support the legacy UI for this post action
-        return '';
+        $this->frozen_fields_retriever->warmUpCacheForWorkflow($workflow);
     }
 
     /**
-     * @param Transition $transition
-     * @param string     $requested_postaction
-     */
-    public function addPostAction(Transition $transition, $requested_postaction)
-    {
-        // Not implemented. We do not support the legacy UI for this post action
-    }
-
-    /**
-     * Instanciate the post actions of a given transition
-     *
-     * @param Transition $transition The transition
-     *
      * @return FrozenFields[]
      */
-    public function loadPostActions(Transition $transition) : array
+    public function loadPostActions(Transition $transition): array
     {
-        $rows = $this->frozen_dao->searchByTransitionId((int) $transition->getId());
-
-        $field_ids = [];
-        $post_action_id = null;
-        foreach ($rows as $row) {
-            $field_ids[] = $row['field_id'];
-            // There is only one FrozenFields post-action per transition, so we just choose the last row's id
-            $post_action_id = $row['postaction_id'];
+        try {
+            return [$this->frozen_fields_retriever->getFrozenFields($transition)];
+        } catch (NoFrozenFieldsPostActionException $exception) {
         }
-        if ($post_action_id === null) {
-            return [];
-        }
-
-        $fields = [];
-        foreach ($field_ids as $field_id) {
-            $field = $this->form_element_factory->getFieldById($field_id);
-            if ($field) {
-                $fields[] = $field;
-            }
-        }
-
-        $post_action = new FrozenFields($transition, $post_action_id, $fields);
-        return [$post_action];
+        return [];
     }
 
     /**
@@ -124,17 +89,6 @@ class FrozenFieldsFactory implements \Transition_PostActionSubFactory
     public function isFieldUsedInPostActions(Tracker_FormElement_Field $field)
     {
         return $this->frozen_dao->isFieldUsedInPostAction($field->getId());
-    }
-
-    /**
-     * Delete a workflow
-     *
-     * @param int $workflow_id the id of the workflow
-     *
-     */
-    public function deleteWorkflow($workflow_id)
-    {
-        // This is dead code and should be removed.
     }
 
     /**
@@ -177,8 +131,8 @@ class FrozenFieldsFactory implements \Transition_PostActionSubFactory
     {
         $fields = [];
         foreach ($xml->field_id as $xml_field_id) {
-            if (isset($xmlMapping[(string)$xml_field_id['REF']])) {
-                $fields[] = $xmlMapping[(string)$xml_field_id['REF']];
+            if (isset($xmlMapping[(string) $xml_field_id['REF']])) {
+                $fields[] = $xmlMapping[(string) $xml_field_id['REF']];
             }
         }
 

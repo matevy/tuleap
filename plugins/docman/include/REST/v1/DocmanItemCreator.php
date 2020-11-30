@@ -165,7 +165,6 @@ class DocmanItemCreator
         $link_url,
         $content
     ) {
-
         $status_id = $this->status_mapper->getItemStatusWithParentInheritance($parent_item, $status);
 
         if ($item_type_id !== PLUGIN_DOCMAN_ITEM_TYPE_FOLDER) {
@@ -174,8 +173,10 @@ class DocmanItemCreator
                 $current_time
             );
         } else {
-            $obsolescence_date_time_stamp = (int)ItemRepresentation::OBSOLESCENCE_DATE_NONE;
+            $obsolescence_date_time_stamp = (int) ItemRepresentation::OBSOLESCENCE_DATE_NONE;
         }
+
+        $current_date = new \DateTimeImmutable();
         $item = $this->item_factory->createWithoutOrdering(
             $title,
             $description,
@@ -184,6 +185,8 @@ class DocmanItemCreator
             $obsolescence_date_time_stamp,
             $user->getId(),
             $item_type_id,
+            $current_date,
+            $current_date,
             $wiki_page,
             $link_url
         );
@@ -199,7 +202,7 @@ class DocmanItemCreator
         ];
 
         if ($metadata_to_create->isInheritedFromParent()) {
-            $this->metadata_value_dao->inheritMetadataFromParent((int)$item->getId(), (int) $parent_item->getId());
+            $this->metadata_value_dao->inheritMetadataFromParent((int) $item->getId(), (int) $parent_item->getId());
         }
 
         if ($item_type_id === PLUGIN_DOCMAN_ITEM_TYPE_EMBEDDEDFILE) {
@@ -207,10 +210,7 @@ class DocmanItemCreator
         }
 
         $item->accept($this->creator_visitor, $params);
-        $representation = new CreatedItemRepresentation();
-        $representation->build($item->getId());
-
-        return $representation;
+        return CreatedItemRepresentation::build($item->getId());
     }
 
     /**
@@ -228,7 +228,7 @@ class DocmanItemCreator
         FilePropertiesPOSTPATCHRepresentation $file_properties,
         MetadataToCreate $metadata_to_create,
         ?DocmanItemPermissionsForGroupsSetRepresentation $permissions_for_groups_representation
-    ) : CreatedItemRepresentation {
+    ): CreatedItemRepresentation {
         if ($this->item_factory->doesTitleCorrespondToExistingDocument($title, $parent_item->getId())) {
             throw new RestException(400, "A file with same title already exists in the given folder.");
         }
@@ -256,16 +256,13 @@ class DocmanItemCreator
             );
 
             if ($metadata_to_create->isInheritedFromParent()) {
-                $this->metadata_value_dao->inheritMetadataFromParent((int)$document_to_upload->getItemId(), (int) $parent_item->getId());
+                $this->metadata_value_dao->inheritMetadataFromParent((int) $document_to_upload->getItemId(), (int) $parent_item->getId());
             }
 
             if ($file_properties->file_size === 0) {
                 $this->empty_file_to_upload_finisher->createEmptyFile($document_to_upload, $file_properties->file_name);
 
-                $representation = new CreatedItemRepresentation();
-                $representation->build($document_to_upload->getItemId());
-
-                return $representation;
+                return CreatedItemRepresentation::build($document_to_upload->getItemId());
             }
         } catch (UploadCreationConflictException $exception) {
             throw new RestException(409, $exception->getMessage());
@@ -275,12 +272,8 @@ class DocmanItemCreator
             throw new RestException(400, $exception->getMessage());
         }
 
-        $file_properties_representation = new CreatedItemFilePropertiesRepresentation();
-        $file_properties_representation->build($document_to_upload->getUploadHref());
-        $representation = new CreatedItemRepresentation();
-        $representation->build($document_to_upload->getItemId(), $file_properties_representation);
-
-        return $representation;
+        $file_properties_representation = CreatedItemFilePropertiesRepresentation::build($document_to_upload->getUploadHref());
+        return CreatedItemRepresentation::build($document_to_upload->getItemId(), $file_properties_representation);
     }
 
     /**
@@ -296,7 +289,6 @@ class DocmanItemCreator
         \DateTimeImmutable $current_time,
         Project $project
     ): CreatedItemRepresentation {
-
         if ($this->item_factory->doesTitleCorrespondToExistingFolder($representation->title, $parent_item->getId())) {
             throw new RestException(400, "A folder with same title already exists in the given folder.");
         }
@@ -426,7 +418,6 @@ class DocmanItemCreator
     }
 
     /**
-     * @return CreatedItemRepresentation
      * @throws Metadata\HardCodedMetadataException
      * @throws RestException
      * @throws \Tuleap\Docman\CannotInstantiateItemWeHaveJustCreatedInDBException
@@ -474,7 +465,6 @@ class DocmanItemCreator
     }
 
     /**
-     * @return CreatedItemRepresentation
      * @throws Metadata\HardCodedMetadataException
      * @throws RestException
      * @throws \Tuleap\Docman\CannotInstantiateItemWeHaveJustCreatedInDBException
@@ -530,7 +520,7 @@ class DocmanItemCreator
     private function getPermissionsForGroupsSet(
         Docman_Item $parent_item,
         ?DocmanItemPermissionsForGroupsSetRepresentation $representation
-    ) : ?DocmanItemPermissionsForGroupsSet {
+    ): ?DocmanItemPermissionsForGroupsSet {
         if ($representation === null) {
             return null;
         }

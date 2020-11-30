@@ -23,7 +23,6 @@ namespace Tuleap\TuleapSynchro\Endpoint;
 
 use CSRFSynchronizerToken;
 use HTTPRequest;
-use Tuleap\Admin\AdminPageRenderer;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithBurningParrot;
 use Tuleap\Request\DispatchableWithRequest;
@@ -36,22 +35,14 @@ class EndpointDeleteController implements DispatchableWithRequest, DispatchableW
      */
     private $endpoint_updater;
 
-    /**
-     * @var AdminPageRenderer
-     */
-    private $admin_page_renderer;
-
-    public function __construct(EndpointUpdater $endpoint_updater, AdminPageRenderer $admin_page_renderer)
+    public function __construct(EndpointUpdater $endpoint_updater)
     {
         $this->endpoint_updater    = $endpoint_updater;
-        $this->admin_page_renderer = $admin_page_renderer;
     }
 
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
      * @param array $variables
      * @return void
      * @throws ForbiddenException

@@ -24,10 +24,10 @@
 use Tuleap\GraphOnTrackersV5\Chart\Visitor;
 
 require_once('GraphOnTrackersV5_Chart.class.php');
-require_once(dirname(__FILE__).'/../data-transformation/GraphOnTrackersV5_Burndown_DataBuilder.class.php');
-require_once(dirname(__FILE__).'/../graphic-library/GraphOnTrackersV5_Engine_Burndown.class.php');
+require_once(dirname(__FILE__) . '/../data-transformation/GraphOnTrackersV5_Burndown_DataBuilder.class.php');
+require_once(dirname(__FILE__) . '/../graphic-library/GraphOnTrackersV5_Engine_Burndown.class.php');
 require_once('GraphOnTrackersV5_Chart_BurndownDao.class.php');
-require_once(dirname(__FILE__).'/../common/HTML_Element_Selectbox_TrackerFields_NumericFieldsV5.class.php');
+require_once(dirname(__FILE__) . '/../common/HTML_Element_Selectbox_TrackerFields_NumericFieldsV5.class.php');
 
 /**
  * Base class to provide a Scrum Burndown Chart
@@ -138,11 +138,11 @@ class GraphOnTrackersV5_Chart_Burndown extends GraphOnTrackersV5_Chart
      */
     public function getSpecificRow()
     {
-        return array(
+        return [
             'field_id'   => $this->getFieldId(),
             'start_date' => $this->getStartDate(),
             'duration'   => $this->getDuration(),
-        );
+        ];
     }
 
     /**
@@ -210,32 +210,32 @@ class GraphOnTrackersV5_Chart_Burndown extends GraphOnTrackersV5_Chart
     {
         return array_merge(
             parent::getProperties(),
-            array(
+            [
                 'field_id'   => new HTML_Element_Selectbox_TrackerFields_NumericFieldsV5(
                     $this->getTracker(),
-                    $GLOBALS['Language']->getText('plugin_graphontrackersv5_scrum', 'burndown_property_effort'),
+                    dgettext('tuleap-graphontrackersv5', 'Effort field'),
                     'chart[field_id]',
                     $this->getFieldId()
                 ),
                 'start_date' => new HTML_Element_Input_Date(
-                    $GLOBALS['Language']->getText('plugin_graphontrackersv5_scrum', 'burndown_property_start_date'),
+                    dgettext('tuleap-graphontrackersv5', 'Start of the sprint'),
                     'chart[start_date]',
                     $this->getStartDate()
                 ),
                 'duration'   => new HTML_Element_Input_Text(
-                    $GLOBALS['Language']->getText('plugin_graphontrackersv5_scrum', 'burndown_property_duration'),
+                    dgettext('tuleap-graphontrackersv5', 'Duration (in days)'),
                     'chart[duration]',
                     $this->getDuration(),
                     4
                 )
-            )
+            ]
         );
     }
 
     public function createDb($id)
     {
         $field_id   = $this->getFieldId();
-        if (!is_int($field_id) && !is_string($field_id) && $field_id) {
+        if (! is_int($field_id) && ! is_string($field_id) && $field_id) {
             $field_id = $field_id->getid();
         }
         $start_date = $this->getStartDate();
@@ -260,13 +260,13 @@ class GraphOnTrackersV5_Chart_Burndown extends GraphOnTrackersV5_Chart
     public function setSpecificPropertiesFromXML($xml, $formsMapping)
     {
         if ($xml['start_date']) {
-            $this->setStartDate((int)$xml['start_date']);
+            $this->setStartDate((int) $xml['start_date']);
         }
         if ($xml['duration']) {
-            $this->setDuration((int)$xml['duration']);
+            $this->setDuration((int) $xml['duration']);
         }
-        if (isset($formsMapping[(int)$xml['field_id']])) {
-            $this->setFieldId($formsMapping[(int)$xml['field_id']]);
+        if (isset($formsMapping[(int) $xml['field_id']])) {
+            $this->setFieldId($formsMapping[(int) $xml['field_id']]);
         }
     }
 
@@ -277,9 +277,9 @@ class GraphOnTrackersV5_Chart_Burndown extends GraphOnTrackersV5_Chart
      */
     public function arrayOfSpecificProperties()
     {
-        return array('start_date' => $this->getStartDate(),
+        return ['start_date' => $this->getStartDate(),
                      'field_id' => $this->getFieldId(),
-                     'duration' => $this->getDuration());
+                     'duration' => $this->getDuration()];
     }
 
     public function exportToXml(SimpleXMLElement $root, $formsMapping)

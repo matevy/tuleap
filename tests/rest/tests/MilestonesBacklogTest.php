@@ -28,14 +28,14 @@ class MilestonesBacklogTest extends MilestoneBase //phpcs:ignore PSR1.Classes.Cl
 {
     public function testOPTIONSBacklog(): void
     {
-        $response = $this->getResponse($this->client->options('milestones/'.$this->release_artifact_ids[1].'/backlog'));
-        $this->assertEquals(array('OPTIONS', 'GET', 'PUT', 'POST', 'PATCH'), $response->getHeader('Allow')->normalize()->toArray());
+        $response = $this->getResponse($this->client->options('milestones/' . $this->release_artifact_ids[1] . '/backlog'));
+        $this->assertEquals(['OPTIONS', 'GET', 'PUT', 'POST', 'PATCH'], $response->getHeader('Allow')->normalize()->toArray());
     }
 
     public function testOPTIONSBacklogWithRESTReadOnlyUser(): void
     {
         $response = $this->getResponse(
-            $this->client->options('milestones/'.$this->release_artifact_ids[1].'/backlog'),
+            $this->client->options('milestones/' . $this->release_artifact_ids[1] . '/backlog'),
             REST_TestDataBuilder::TEST_BOT_USER_NAME
         );
 
@@ -45,8 +45,8 @@ class MilestonesBacklogTest extends MilestoneBase //phpcs:ignore PSR1.Classes.Cl
     public function testGETBacklog(): void
     {
         $response = $this->getResponse($this->client->get('milestones/' . $this->release_artifact_ids[1] . '/backlog'));
-
-        $this->assertBacklog($response);
+        $this->assertCount(3, $response->json());
+        $this->assertFirstThreeElementsOfBacklog($response);
     }
 
     public function testGETBacklogWithRESTReadOnlyUser(): void
@@ -55,15 +55,37 @@ class MilestonesBacklogTest extends MilestoneBase //phpcs:ignore PSR1.Classes.Cl
             $this->client->get('milestones/' . $this->release_artifact_ids[1] . '/backlog'),
             REST_TestDataBuilder::TEST_BOT_USER_NAME
         );
-
-        $this->assertBacklog($response);
+        $this->assertCount(3, $response->json());
+        $this->assertFirstThreeElementsOfBacklog($response);
     }
 
-    private function assertBacklog(Response $response): void
+    public function testGETBacklogWithAllItems(): void
+    {
+        $query = json_encode(['status' => 'all']);
+        $response = $this->getResponse(
+            $this->client->get('milestones/' . $this->release_artifact_ids[1] . '/backlog?query=' . urlencode($query))
+        );
+
+        $backlog_items = $response->json();
+        $this->assertCount(4, $backlog_items);
+        $this->assertFirstThreeElementsOfBacklog($response);
+
+        $fourth_backlog_item = $backlog_items[3];
+        $this->assertArrayHasKey('id', $fourth_backlog_item);
+        $this->assertArrayHasKey('accept', $fourth_backlog_item);
+        $this->assertArrayHasKey('trackers', $fourth_backlog_item['accept']);
+        $this->assertEquals($fourth_backlog_item['accept']['trackers'][0]['id'], $this->tasks_tracker_id);
+        $this->assertEquals($fourth_backlog_item['accept']['trackers'][0]['uri'], 'trackers/' . $this->tasks_tracker_id);
+        $this->assertEquals($fourth_backlog_item['label'], "Closed Story");
+        $this->assertEquals($fourth_backlog_item['status'], "Closed");
+        $this->assertEquals($fourth_backlog_item['artifact']['id'], $this->story_artifact_ids[12]);
+        $this->assertEquals($fourth_backlog_item['artifact']['uri'], 'artifacts/' . $this->story_artifact_ids[12]);
+        $this->assertEquals($fourth_backlog_item['artifact']['tracker']['id'], $this->user_stories_tracker_id);
+    }
+
+    private function assertFirstThreeElementsOfBacklog(Response $response): void
     {
         $backlog_items = $response->json();
-
-        $this->assertCount(3, $backlog_items);
 
         $first_backlog_item = $backlog_items[0];
         $this->assertArrayHasKey('id', $first_backlog_item);
@@ -153,10 +175,10 @@ class MilestonesBacklogTest extends MilestoneBase //phpcs:ignore PSR1.Classes.Cl
 
     public function testPUTBacklogWithoutPermission(): void
     {
-        $response_put = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_2_NAME, $this->client->put('milestones/'.$this->release_artifact_ids[1].'/backlog', null, '['.$this->story_artifact_ids[4].','.$this->story_artifact_ids[5].','.$this->story_artifact_ids[3].']'));
+        $response_put = $this->getResponseByName(REST_TestDataBuilder::TEST_USER_2_NAME, $this->client->put('milestones/' . $this->release_artifact_ids[1] . '/backlog', null, '[' . $this->story_artifact_ids[4] . ',' . $this->story_artifact_ids[5] . ',' . $this->story_artifact_ids[3] . ']'));
         $this->assertEquals($response_put->getStatusCode(), 403);
 
-        $response_get = $this->getResponse($this->client->get('milestones/'.$this->release_artifact_ids[1].'/backlog'));
+        $response_get = $this->getResponse($this->client->get('milestones/' . $this->release_artifact_ids[1] . '/backlog'));
         $backlog_items = $response_get->json();
         $this->assertCount(3, $backlog_items);
 
@@ -205,7 +227,7 @@ class MilestonesBacklogTest extends MilestoneBase //phpcs:ignore PSR1.Classes.Cl
     public function testPOSTBacklogForbiddenForRESTReadOnlyUserNotInvolvedInProject(): void
     {
         $post = [
-            'artifact' => array('id' => $this->story_artifact_ids[6])
+            'artifact' => ['id' => $this->story_artifact_ids[6]]
         ];
 
         $response_post = $this->getResponse(
@@ -222,9 +244,9 @@ class MilestonesBacklogTest extends MilestoneBase //phpcs:ignore PSR1.Classes.Cl
 
     public function testPOSTBacklogAppendsId(): void
     {
-        $post          = array(
-            'artifact' => array('id' => $this->story_artifact_ids[6])
-        );
+        $post          = [
+            'artifact' => ['id' => $this->story_artifact_ids[6]]
+        ];
         $response_post = $this->getResponse(
             $this->client->post(
                 'milestones/' . $this->release_artifact_ids[1] . '/backlog',
@@ -234,7 +256,7 @@ class MilestonesBacklogTest extends MilestoneBase //phpcs:ignore PSR1.Classes.Cl
         );
         $this->assertEquals($response_post->getStatusCode(), 201);
 
-        $response_get = $this->getResponse($this->client->get('milestones/'.$this->release_artifact_ids[1].'/backlog'));
+        $response_get = $this->getResponse($this->client->get('milestones/' . $this->release_artifact_ids[1] . '/backlog'));
         $backlog_items = $response_get->json();
         $last_item     = count($backlog_items) - 1;
 
@@ -245,13 +267,13 @@ class MilestonesBacklogTest extends MilestoneBase //phpcs:ignore PSR1.Classes.Cl
 
     public function testPOSTBacklogWithoutPermissions(): void
     {
-        $post = array(
-            'artifact' => array('id' => $this->story_artifact_ids[6])
-        );
+        $post = [
+            'artifact' => ['id' => $this->story_artifact_ids[6]]
+        ];
         $response_post = $this->getResponseByName(
             REST_TestDataBuilder::TEST_USER_2_NAME,
             $this->client->post(
-                'milestones/'.$this->release_artifact_ids[1].'/backlog',
+                'milestones/' . $this->release_artifact_ids[1] . '/backlog',
                 null,
                 json_encode($post)
             )

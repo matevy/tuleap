@@ -1,5 +1,6 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics 2012. All rights reserved
  *
  * Tuleap is free software; you can redistribute it and/or modify
@@ -17,11 +18,12 @@
  */
 
 use Tuleap\Admin\AdminPageRenderer;
+use Tuleap\InstanceBaseURLBuilder;
 use Tuleap\Statistics\AdminHeaderPresenter;
 use Tuleap\Statistics\ProjectQuotaPresenter;
 
 require_once __DIR__ . '/../../../src/www/include/pre.php';
-require_once __DIR__ .'/../include/ProjectQuotaHtml.class.php';
+require_once __DIR__ . '/../include/ProjectQuotaHtml.class.php';
 
 
 $pluginManager = PluginManager::instance();
@@ -38,14 +40,14 @@ if (! UserManager::instance()->getCurrentUser()->isSuperUser()) {
 $csrf = new CSRFSynchronizerToken('project_quota.php');
 
 $request = HTTPRequest::instance();
-$pqHtml  = new ProjectQuotaHtml();
+$pqHtml  = new ProjectQuotaHtml(new InstanceBaseURLBuilder(), Codendi_HTMLPurifier::instance());
 $pqHtml->HandleRequest($request);
 
 $project_quota_manager = new ProjectQuotaManager();
 
 $collection = $pqHtml->getListOfProjectQuotaPresenters($request);
 
-$title = $GLOBALS['Language']->getText('plugin_statistics', 'quota_title');
+$title = dgettext('tuleap-statistics', 'Project quota');
 
 $admin_page_renderer = new AdminPageRenderer();
 $admin_page_renderer->renderANoFramedPresenter(

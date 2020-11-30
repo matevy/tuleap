@@ -25,8 +25,8 @@ use Tuleap\Hudson\HudsonJobBuilder;
 class hudson_Widget_ProjectJobsOverview extends HudsonOverviewWidget
 {
 
-    var $plugin;
-    var $group_id;
+    public $plugin;
+    public $group_id;
     /**
      * @var HudsonJobBuilder
      */
@@ -52,12 +52,12 @@ class hudson_Widget_ProjectJobsOverview extends HudsonOverviewWidget
 
     public function getTitle()
     {
-        return $GLOBALS['Language']->getText('plugin_hudson', 'project_jobs');
+        return dgettext('tuleap-hudson', 'Jenkins Jobs');
     }
 
     public function getDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_hudson', 'widget_description_jobsoverview');
+        return dgettext('tuleap-hudson', 'Shows an overview of all the jobs associated with this project. You can always choose the ones you want to display in the widget (preferences link).');
     }
 
     public function hasPreferences($widget_id)
@@ -81,12 +81,12 @@ class hudson_Widget_ProjectJobsOverview extends HudsonOverviewWidget
                 try {
                     $job = $job_with_exception->getHudsonJob();
 
-                    $html .= '<tr class="'. util_get_alt_row_color($cpt) .'">';
+                    $html .= '<tr class="' . util_get_alt_row_color($cpt) . '">';
                     $html .= ' <td>';
-                    $html .= ' <img class="widget-jenkins-job-icon" src="'.$purifier->purify($job->getStatusIcon()).'" title="'.$purifier->purify($job->getStatus()).'" >';
+                    $html .= ' <img class="widget-jenkins-job-icon" src="' . $purifier->purify($job->getStatusIcon()) . '" title="' . $purifier->purify($job->getStatus()) . '" >';
                     $html .= ' </td>';
                     $html .= ' <td style="width:99%">';
-                    $html .= '  <a class="widget-jenkins-job" href="/plugins/hudson/?action=view_job&group_id='.urlencode($this->group_id).'&job_id='.urlencode($job_id).'">'.$purifier->purify($job->getName()).'</a><br />';
+                    $html .= '  <a class="widget-jenkins-job" href="/plugins/hudson/?action=view_job&group_id=' . urlencode($this->group_id) . '&job_id=' . urlencode($job_id) . '">' . $purifier->purify($job->getName()) . '</a><br />';
                     $html .= ' </td>';
                     $html .= '</tr>';
 
@@ -97,7 +97,7 @@ class hudson_Widget_ProjectJobsOverview extends HudsonOverviewWidget
             }
             $html .= '</table>';
         } else {
-            $html .= $GLOBALS['Language']->getText('plugin_hudson', 'widget_no_job_project', $purifier->purify($this->group_id));
+            $html .= sprintf(dgettext('tuleap-hudson', 'No job found. Please <a href="/plugins/hudson/?group_id=%1$s">add a job</a> before adding any Jenkins widget.'), $purifier->purify($this->group_id));
         }
         if ($nb_jobs_in_error > 0) {
             $html_error_string  = '<div class="tlp-alert-warning">';

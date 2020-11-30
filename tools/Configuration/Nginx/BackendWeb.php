@@ -20,7 +20,7 @@
 
 namespace Tuleap\Configuration\Nginx;
 
-use Tuleap\Configuration\Logger\LoggerInterface;
+use Psr\Log\LoggerInterface;
 
 class BackendWeb
 {
@@ -47,14 +47,14 @@ class BackendWeb
         $this->common->deployConfigurationChunks();
         $this->common->deployMainNginxConf();
         $this->common->replacePlaceHolderInto(
-            $this->tuleap_base_dir.'/tools/distlp/backend-web/nginx/tuleap.conf',
-            $this->nginx_base_dir.'/conf.d/tuleap.conf',
-            array(
+            $this->tuleap_base_dir . '/tools/distlp/backend-web/nginx/tuleap.conf',
+            $this->nginx_base_dir . '/conf.d/tuleap.conf',
+            [
                 '%sys_default_domain%'
-            ),
-            array(
+            ],
+            [
                 $this->server_name
-            )
+            ]
         );
     }
 }

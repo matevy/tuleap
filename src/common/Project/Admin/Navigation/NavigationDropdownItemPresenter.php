@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,17 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\Project\Admin\Navigation;
 
 class NavigationDropdownItemPresenter implements NavigationDropdownItemInterface
 {
     public $label;
     public $html_url;
+    public $identifier;
 
-    public function __construct($label, $html_url)
+    public function __construct($label, $html_url, $identifier = null)
     {
-        $this->label     = $label;
-        $this->html_url  = $html_url;
+        $this->label      = $label;
+        $this->html_url   = $html_url;
+        $this->identifier = ($identifier) ?: 'dropdown-default-identifier';
     }
 
     public function isMenuTitle()

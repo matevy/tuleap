@@ -21,19 +21,13 @@
     <section class="tlp-pane-section document-quick-look-properties">
         <div class="document-quick-look-properties-column">
             <div class="tlp-property">
-                <label for="document-id" class="tlp-label" v-translate>
-                    Id
-                </label>
-                <p id="document-id">
-                    #{{ item.id }}
-                </p>
+                <label for="document-id" class="tlp-label" v-translate>Id</label>
+                <p id="document-id">#{{ item.id }}</p>
             </div>
             <div class="tlp-property">
-                <label for="document-owner" class="tlp-label" v-translate>
-                    Owner
-                </label>
+                <label for="document-owner" class="tlp-label" v-translate>Owner</label>
                 <p id="document-owner">
-                    <user-badge v-bind:user="item.owner"/>
+                    <user-badge v-bind:user="item.owner" />
                 </p>
             </div>
             <template v-if="is_document">
@@ -47,31 +41,41 @@
         </div>
         <div class="document-quick-look-properties-column">
             <div class="tlp-property">
-                <label for="document-creation-date" class="tlp-label" v-translate>
-                    Creation
-                </label>
-                <p id="document-creation-date" class="tlp-tooltip tlp-tooltip-left" v-bind:data-tlp-tooltip="getFormattedDate(item.creation_date)">
-                    {{ getFormattedDateForDisplay(item.creation_date) }}
-                </p>
+                <label class="tlp-label" v-translate>Creation</label>
+                <tlp-relative-date
+                    v-bind:date="item.creation_date"
+                    v-bind:absolute-date="getFormattedDate(item.creation_date)"
+                    v-bind:placement="relative_date_placement"
+                    v-bind:preference="relative_date_preference"
+                    v-bind:locale="user_locale"
+                />
             </div>
             <div class="tlp-property">
-                <label for="document-last-update-date" class="tlp-label" v-translate>
-                    Last update date
-                </label>
-                <p id="document-last-update-date" class="tlp-tooltip tlp-tooltip-left" v-bind:data-tlp-tooltip="getFormattedDate(item.last_update_date)">
-                    {{ getFormattedDateForDisplay(item.last_update_date) }}
-                </p>
+                <label class="tlp-label" v-translate>Last update date</label>
+                <tlp-relative-date
+                    v-bind:date="item.last_update_date"
+                    v-bind:absolute-date="getFormattedDate(item.last_update_date)"
+                    v-bind:placement="relative_date_placement"
+                    v-bind:preference="relative_date_preference"
+                    v-bind:locale="user_locale"
+                />
             </div>
-            <div class="tlp-property" v-if="has_an_approval_table" data-test="docman-item-approval-table-status-badge">
+            <div
+                class="tlp-property"
+                v-if="has_an_approval_table"
+                data-test="docman-item-approval-table-status-badge"
+            >
                 <label for="document-approval-table-status" class="tlp-label" v-translate>
                     Approval table status
                 </label>
-                <approval-table-badge id="document-approval-table-status" v-bind:item="item" v-bind:is-in-folder-content-row="false"/>
+                <approval-table-badge
+                    id="document-approval-table-status"
+                    v-bind:item="item"
+                    v-bind:is-in-folder-content-row="false"
+                />
             </div>
             <div v-if="is_file" class="tlp-property">
-                <label for="document-file-size" class="tlp-label" v-translate>
-                    File size
-                </label>
+                <label for="document-file-size" class="tlp-label" v-translate>File size</label>
                 <p id="document-file-size" data-test="docman-file-size">
                     {{ file_size_in_mega_bytes }}
                 </p>
@@ -90,22 +94,23 @@
 <script>
 import prettyBytes from "pretty-bytes-es5";
 import { mapState } from "vuex";
-import {
-    formatDateUsingPreferredUserFormat,
-    getElapsedTimeFromNow
-} from "../../../helpers/date-formatter.js";
+import { formatDateUsingPreferredUserFormat } from "../../../helpers/date-formatter.js";
 import UserBadge from "../../User/UserBadge.vue";
 import { TYPE_FILE, TYPE_FOLDER } from "../../../constants.js";
 import QuickLookDocumentAdditionalMetadataList from "./QuickLookDocumentAdditionalMetadataList.vue";
 import ApprovalTableBadge from "../ApprovalTables/ApprovalTableBadge.vue";
+import {
+    relativeDatePlacement,
+    relativeDatePreference,
+} from "../../../../../../../src/themes/tlp/src/js/custom-elements/relative-date/relative-date-helper";
 
 export default {
     components: { ApprovalTableBadge, QuickLookDocumentAdditionalMetadataList, UserBadge },
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
-        ...mapState(["date_time_format"]),
+        ...mapState(["date_time_format", "relative_dates_display", "user_locale"]),
         metadata_right_column() {
             const metadata_length = this.get_custom_metadata.length;
 
@@ -137,21 +142,24 @@ export default {
                 "description",
                 "owner",
                 "create_date",
-                "update_date"
+                "update_date",
             ];
 
             return this.item.metadata.filter(
                 ({ short_name }) => !hardcoded_metadata.includes(short_name)
             );
-        }
+        },
+        relative_date_preference() {
+            return relativeDatePreference(this.relative_dates_display);
+        },
+        relative_date_placement() {
+            return relativeDatePlacement(this.relative_dates_display, "right");
+        },
     },
     methods: {
         getFormattedDate(date) {
             return formatDateUsingPreferredUserFormat(date, this.date_time_format);
         },
-        getFormattedDateForDisplay(date) {
-            return getElapsedTimeFromNow(date);
-        }
-    }
+    },
 };
 </script>

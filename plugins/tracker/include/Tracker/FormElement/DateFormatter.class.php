@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_FormElement_DateFormatter
 {
     public const DATE_FORMAT           = "Y-m-d";
@@ -59,7 +61,7 @@ class Tracker_FormElement_DateFormatter
     }
 
     public function fetchArtifactValueReadOnly(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value = null
     ) {
         if (empty($value) || ! $value->getTimestamp()) {
@@ -88,11 +90,7 @@ class Tracker_FormElement_DateFormatter
             if (! $is_valid) {
                 $GLOBALS['Response']->addFeedback(
                     'error',
-                    $GLOBALS['Language']->getText(
-                        'plugin_tracker_common_artifact',
-                        'error_date_value',
-                        array($this->field->getLabel())
-                    )
+                    sprintf(dgettext('tuleap-tracker', '%1$s is not a date.'), $this->field->getLabel())
                 );
             }
         }
@@ -104,7 +102,7 @@ class Tracker_FormElement_DateFormatter
     {
         return $this->getDatePicker(
             $GLOBALS['Language']->getText('global', 'unchanged'),
-            array()
+            []
         );
     }
 
@@ -118,7 +116,7 @@ class Tracker_FormElement_DateFormatter
      */
     public function formatDate($timestamp)
     {
-        return format_date(self::DATE_FORMAT, (float)$timestamp, '');
+        return format_date(self::DATE_FORMAT, (float) $timestamp, '');
     }
 
     public function formatDateForDisplay($timestamp)
@@ -129,10 +127,10 @@ class Tracker_FormElement_DateFormatter
     protected function getDatePicker($value, array $errors)
     {
         return $GLOBALS['HTML']->getBootstrapDatePicker(
-            "tracker_admin_field_". $this->field->getId(),
-            'artifact['. $this->field->getId() .']',
+            "tracker_admin_field_" . $this->field->getId(),
+            'artifact[' . $this->field->getId() . ']',
             $value,
-            array(),
+            [],
             $errors,
             false
         );

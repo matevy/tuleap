@@ -44,9 +44,9 @@ class GitLog
      *
      * @return Void
      */
-    function logsDaily($params)
+    public function logsDaily($params)
     {
-        $params['logs'][] = array(
+        $params['logs'][] = [
             'sql'   => $this->getSqlStatementForLogsDaily(
                 $params['group_id'],
                 $params['logs_cond'],
@@ -54,7 +54,7 @@ class GitLog
             ),
             'field' => dgettext('tuleap-git', 'Repository'),
             'title' => dgettext('tuleap-git', 'Git access')
-        );
+        ];
     }
 
     /**
@@ -100,7 +100,7 @@ class GitLog
      */
     private function getGitReadLogFilter($group_id, $who, $span)
     {
-        $filters = array($this->getWhoFilter($group_id, $who), $this->getDateFilter($span));
+        $filters = [$this->getWhoFilter($group_id, $who), $this->getDateFilter($span)];
         return implode(' AND ', array_filter($filters));
     }
 
@@ -127,8 +127,8 @@ class GitLog
     private function getDateFilter($span)
     {
         $start_date = new DateTime();
-        $start_date->sub(new DateInterval('P'.$span.'D'));
+        $start_date->sub(new DateInterval('P' . $span . 'D'));
 
-        return 'log.day >= '.$this->data_access->quoteSmart($start_date->format('Ymd'));
+        return 'log.day >= ' . $this->data_access->quoteSmart($start_date->format('Ymd'));
     }
 }

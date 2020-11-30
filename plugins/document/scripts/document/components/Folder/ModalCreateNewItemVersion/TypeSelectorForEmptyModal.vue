@@ -20,17 +20,19 @@
 
 <template>
     <div class="document-new-item-type-selector">
-        <div class="document-new-item-type"
-             v-for="type of supported_types"
-             v-bind:key="type.identifier"
-             v-bind:class="{'document-new-item-type-checked': type.is_checked}"
-             v-on:click="$emit('input', type.identifier)"
-             v-bind:data-test="`document-type-selector-${type.identifier}`"
+        <div
+            class="document-new-item-type"
+            v-for="type of supported_types"
+            v-bind:key="type.identifier"
+            v-bind:class="{ 'document-new-item-type-checked': type.is_checked }"
+            v-on:click="$emit('input', type.identifier)"
+            v-bind:data-test="`document-type-selector-${type.identifier}`"
         >
-            <i class="document-new-item-type-icon fa"
-               v-for="icon of type.icons"
-               v-bind:key="icon"
-               v-bind:class="icon"
+            <i
+                class="document-new-item-type-icon fa"
+                v-for="icon of type.icons"
+                v-bind:key="icon"
+                v-bind:class="icon"
             ></i>
             <span class="document-new-item-type-label">{{ type.label }}</span>
         </div>
@@ -42,14 +44,14 @@ import {
     ICON_LINK,
     TYPE_EMBEDDED,
     TYPE_LINK,
-    TYPE_FILE
+    TYPE_FILE,
 } from "../../../constants.js";
 import { mapState } from "vuex";
 
 export default {
     name: "TypeSelectorForEmptyModal",
     props: {
-        value: String
+        value: String,
     },
     computed: {
         ...mapState(["embedded_are_allowed"]),
@@ -59,25 +61,30 @@ export default {
                     identifier: TYPE_FILE,
                     is_checked: this.value === TYPE_FILE,
                     label: this.$gettext("File"),
-                    icons: ["fa-file-excel-o", "fa-file-word-o", "fa-file-pdf-o", "fa-file-image-o"]
+                    icons: [
+                        "fa-file-excel-o",
+                        "fa-file-word-o",
+                        "fa-file-pdf-o",
+                        "fa-file-image-o",
+                    ],
                 },
                 {
                     identifier: TYPE_LINK,
                     is_checked: this.value === TYPE_LINK,
                     label: this.$gettext("Link"),
-                    icons: [ICON_LINK]
-                }
+                    icons: [ICON_LINK],
+                },
             ];
             if (this.embedded_are_allowed) {
                 types.push({
                     identifier: TYPE_EMBEDDED,
                     is_checked: this.value === TYPE_EMBEDDED,
                     label: this.$gettext("Embedded"),
-                    icons: [ICON_EMBEDDED]
+                    icons: [ICON_EMBEDDED],
                 });
             }
             return types;
-        }
-    }
+        },
+    },
 };
 </script>

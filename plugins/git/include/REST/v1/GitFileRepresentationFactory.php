@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,7 +24,6 @@ namespace Tuleap\Git\REST\v1;
 use Tuleap\Git\Exceptions\GitRepoRefNotFoundException;
 use Tuleap\Git\GitPHP\Pack;
 use Tuleap\Git\GitPHP\Project;
-use Tuleap\Git\GitPHP\ProjectProvider;
 
 class GitFileRepresentationFactory
 {
@@ -51,8 +50,6 @@ class GitFileRepresentationFactory
         $file = $git_repository->GetBlob($hash);
         $size = $file->GetSize();
 
-        $git_file = new GitFileContentRepresentation();
-        $git_file->build($name, $path_to_file, $encoded_content, $size);
-        return $git_file;
+        return new GitFileContentRepresentation($name, $path_to_file, $encoded_content, $size);
     }
 }

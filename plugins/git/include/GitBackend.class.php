@@ -1,6 +1,6 @@
 <?php
 /**
-  * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+  * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
   * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
   *
   * This file is a part of Tuleap.
@@ -25,8 +25,6 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
 {
 
     private $driver;
-    private $packagesFile;
-    private $configFile;
     //path MUST end with a '/'
     private $gitRootPath;
 
@@ -39,11 +37,9 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
     {
         $this->gitRootPath  = '';
         $this->driver       = new GitDriver();
-        $this->packagesFile = 'etc/packages.ini';
-        $this->configFile   = 'etc/config.ini';
         $this->dao          = new GitDao();
         //WARN : this is much safer to set it to an absolute path
-        $this->gitRootPath  = Git_Backend_Interface::GIT_ROOT_PATH ;
+        $this->gitRootPath  = Git_Backend_Interface::GIT_ROOT_PATH;
         $this->gitBackupDir = PluginManager::instance()->getPluginByName('git')->getPluginInfo()->getPropVal('git_backup_dir');
     }
 
@@ -88,14 +84,14 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
 
     public function delete(GitRepository $repository)
     {
-        $path = $this->getGitRootPath().DIRECTORY_SEPARATOR.$repository->getPath();
+        $path = $this->getGitRootPath() . DIRECTORY_SEPARATOR . $repository->getPath();
         $this->archive($repository);
         $this->getDriver()->delete($path);
     }
 
     public function save($repository)
     {
-        $path          = Git_Backend_Interface::GIT_ROOT_PATH .'/'.$repository->getPath();
+        $path          = Git_Backend_Interface::GIT_ROOT_PATH . '/' . $repository->getPath();
         $fsDescription = $this->getDriver()->getDescription($path);
         $description   = $repository->getDescription();
         if ($description != $fsDescription) {
@@ -106,15 +102,15 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
 
     public function renameProject(Project $project, $newName)
     {
-        if (is_dir(Git_Backend_Interface::GIT_ROOT_PATH .'/'.$project->getUnixName())) {
-            return rename(Git_Backend_Interface::GIT_ROOT_PATH .'/'.$project->getUnixName(), Git_Backend_Interface::GIT_ROOT_PATH .'/'.$newName);
+        if (is_dir(Git_Backend_Interface::GIT_ROOT_PATH . '/' . $project->getUnixName())) {
+            return rename(Git_Backend_Interface::GIT_ROOT_PATH . '/' . $project->getUnixName(), Git_Backend_Interface::GIT_ROOT_PATH . '/' . $newName);
         }
         return true;
     }
 
     public function isInitialized(GitRepository $repository)
     {
-        $masterExists = $this->getDriver()->masterExists($this->getGitRootPath().'/'.$repository->getPath());
+        $masterExists = $this->getDriver()->masterExists($this->getGitRootPath() . '/' . $repository->getPath());
         if ($masterExists) {
             $this->getDao()->initialize($repository->getId());
             return true;
@@ -130,14 +126,14 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
      */
     public function isCreated(GitRepository $repository)
     {
-        return $this->getDriver()->isRepositoryCreated($this->getGitRootPath().'/'.$repository->getPath());
+        return $this->getDriver()->isRepositoryCreated($this->getGitRootPath() . '/' . $repository->getPath());
     }
 
     public function changeRepositoryAccess($repository)
     {
         $access   = $repository->getAccess();
         $repoPath = $repository->getPath();
-        $path     = Git_Backend_Interface::GIT_ROOT_PATH .'/'.$repoPath;
+        $path     = Git_Backend_Interface::GIT_ROOT_PATH . '/' . $repoPath;
         $this->getDriver()->setRepositoryAccess($path, $access);
         $this->getDao()->save($repository);
         return true;
@@ -151,7 +147,7 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
     public function changeRepositoryMailPrefix($repository)
     {
         if ($this->getDao()->save($repository)) {
-            $path = $this->getGitRootPath().$repository->getPath();
+            $path = $this->getGitRootPath() . $repository->getPath();
             $this->getDriver()->setConfig($path, 'hooks.emailprefix', $repository->getMailPrefix());
             $this->setUpMailingHook($repository);
             return true;
@@ -166,7 +162,7 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
      */
     public function changeRepositoryMailingList($repository)
     {
-        $path = $this->getGitRootPath().$repository->getPath();
+        $path = $this->getGitRootPath() . $repository->getPath();
         $this->getDriver()->setConfig($path, 'hooks.mailinglist', implode(',', $repository->getNotifiedMails()));
         $this->setUpMailingHook($repository);
         return true;
@@ -182,8 +178,8 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
     public function deployPostReceive($path)
     {
         $this->getDriver()->activateHook('post-receive', $path);
-        $hook = '. '.$GLOBALS['sys_pluginsroot'].'git/hooks/post-receive 2>/dev/null';
-        $this->addBlock($path.'/hooks/post-receive', $hook);
+        $hook = '. ' . ForgeConfig::get('sys_pluginsroot') . 'git/hooks/post-receive 2>/dev/null';
+        $this->addBlock($path . '/hooks/post-receive', $hook);
     }
 
     /**
@@ -193,7 +189,7 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
      */
     public function setUpMailingHook($repository)
     {
-        $path     = $this->getGitRootPath().$repository->getPath();
+        $path     = $this->getGitRootPath() . $repository->getPath();
         $show_rev = $repository->getPostReceiveShowRev($this->url_manager);
         $this->getDriver()->setConfig($path, 'hooks.showrev', $show_rev);
     }
@@ -205,8 +201,8 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
 
     protected function setRepositoryPermissions($repository)
     {
-        $path = $this->getGitRootPath().DIRECTORY_SEPARATOR.$repository->getPath();
-        $no_filter_file_extension = array();
+        $path = $this->getGitRootPath() . DIRECTORY_SEPARATOR . $repository->getPath();
+        $no_filter_file_extension = [];
         $this->recurseChownChgrp(
             $path,
             'codendiadm',
@@ -220,9 +216,9 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
     {
         $gitRootPath    = $this->getGitRootPath();
         //create the gitroot directory
-        if (!is_dir($gitRootPath)) {
-            if (!mkdir($gitRootPath, 0755)) {
-                throw new GitBackendException(dgettext('tuleap-git', 'Error while creating root for Git repositories (Contact the site admin)').' -> '.$gitRootPath);
+        if (! is_dir($gitRootPath)) {
+            if (! mkdir($gitRootPath, 0755)) {
+                throw new GitBackendException(dgettext('tuleap-git', 'Error while creating root for Git repositories (Contact the site admin)') . ' -> ' . $gitRootPath);
             }
         }
         return true;
@@ -231,15 +227,15 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
     //TODO : public project
     protected function createProjectRoot($repository)
     {
-        $gitProjectPath = $this->getGitRootPath().DIRECTORY_SEPARATOR.$repository->getRootPath();
+        $gitProjectPath = $this->getGitRootPath() . DIRECTORY_SEPARATOR . $repository->getRootPath();
         $groupName      = $repository->getProject()->getUnixName();
-        if (!is_dir($gitProjectPath)) {
-            if (!mkdir($gitProjectPath, 0775, true)) {
-                throw new GitBackendException(dgettext('tuleap-git', 'Error while creating project root for Git repository (Contact the site admin)').' -> '.$gitProjectPath);
+        if (! is_dir($gitProjectPath)) {
+            if (! mkdir($gitProjectPath, 0775, true)) {
+                throw new GitBackendException(dgettext('tuleap-git', 'Error while creating project root for Git repository (Contact the site admin)') . ' -> ' . $gitProjectPath);
             }
 
-            if (!$this->chgrp($gitProjectPath, $groupName)) {
-                throw new GitBackendException(dgettext('tuleap-git', 'Error while setting project root permissions (Contact the site admin)').$gitProjectPath.' group='.$groupName);
+            if (! $this->chgrp($gitProjectPath, $groupName)) {
+                throw new GitBackendException(dgettext('tuleap-git', 'Error while setting project root permissions (Contact the site admin)') . $gitProjectPath . ' group=' . $groupName);
             }
         }
         return true;
@@ -247,22 +243,21 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
 
     /**
      *@todo move the archive to another directory
-     * @param <type> $repository
-     * @return <type>
+     * @return true
      */
     public function archive(GitRepository $repository)
     {
         chdir($this->getGitRootPath());
         $path = $repository->getPath();
-        $archiveName = $repository->getBackupPath().'.tar.bz2';
-        $cmd    = ' tar cjf '.$archiveName.' '.$path.' 2>&1';
-        $rcode  = 0 ;
+        $archiveName = $repository->getBackupPath() . '.tar.gz';
+        $cmd    = ' tar czf ' . escapeshellarg($archiveName) . ' ' . escapeshellarg($path) . ' 2>&1';
+        $rcode  = 0;
         $output = $this->system($cmd, $rcode);
         if ($rcode != 0) {
-            throw new GitBackendException($cmd.' -> '.$output);
+            throw new GitBackendException($cmd . ' -> ' . $output);
         }
-        if (!empty($this->gitBackupDir) && is_dir($this->gitBackupDir)) {
-            $this->system('mv '.$this->getGitRootPath().'/'.$archiveName.' '.$this->gitBackupDir.'/'.$archiveName);
+        if (! empty($this->gitBackupDir) && is_dir($this->gitBackupDir)) {
+            $this->system('mv ' . escapeshellarg($this->getGitRootPath() . '/' . $archiveName) . ' ' . escapeshellarg($this->gitBackupDir . '/' . $archiveName));
         }
         return true;
     }
@@ -272,20 +267,19 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
      */
     public function isNameAvailable($newName)
     {
-        return ! $this->fileExists(Git_Backend_Interface::GIT_ROOT_PATH .'/'.$newName);
+        return ! $this->fileExists(Git_Backend_Interface::GIT_ROOT_PATH . '/' . $newName);
     }
 
     /**
      * Return URL to access the respository for remote git commands
      *
-     * @param  GitRepository $repository
      * @return array
      */
     public function getAccessURL(GitRepository $repository)
     {
         $serverName  = $_SERVER['SERVER_NAME'];
         $user = UserManager::instance()->getCurrentUser();
-        return array('ssh' => $user->getUserName() .'@'. $serverName .':/gitroot/'. $repository->getProject()->getUnixName().'/'.$repository->getName().'.git');
+        return ['ssh' => $user->getUserName() . '@' . $serverName . ':/gitroot/' . $repository->getProject()->getUnixName() . '/' . $repository->getName() . '.git'];
     }
 
     /**
@@ -305,7 +299,7 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
             if ($user->isRestricted() && $user->isMember($repository->getProjectId())) {
                 return true;
             }
-            if (!$user->isAnonymous()) {
+            if (! $user->isAnonymous()) {
                 return true;
             }
         }
@@ -324,13 +318,13 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
         $formatter->clearContent();
         $formatter->addEmptyLine();
         $formatter->addHeader('Git');
-        $gitShellIndex[]       = $GLOBALS['Language']->getText('plugin_statistics', 'scm_month');
+        $gitShellIndex[]       = dgettext('tuleap-git', 'Month');
         $gitShell[]            = "Git shell created repositories";
-        $gitShellActiveIndex[] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_month');
+        $gitShellActiveIndex[] = dgettext('tuleap-git', 'Month');
         $gitShellActive[]      = "Git shell created repositories (still active)";
-        $gitoliteIndex[]       = $GLOBALS['Language']->getText('plugin_statistics', 'scm_month');
+        $gitoliteIndex[]       = dgettext('tuleap-git', 'Month');
         $gitolite[]            = "Gitolite created repositories";
-        $gitoliteActiveIndex[] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_month');
+        $gitoliteActiveIndex[] = dgettext('tuleap-git', 'Month');
         $gitoliteActive[]      = "Gitolite created repositories (still active)";
         $this->fillBackendStatisticsByType($formatter, 'gitshell', $gitShellIndex, $gitShell, false);
         $this->fillBackendStatisticsByType($formatter, 'gitshell', $gitShellActiveIndex, $gitShellActive, true);
@@ -360,7 +354,7 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
         $rows = $dao->getBackendStatistics($type, $formatter->startDate, $formatter->endDate, $formatter->groupId, $keepedAlive);
         if (count($rows) > 0) {
             foreach ($rows as $row) {
-                $typeIndex[] = $row['month']." ".$row['year'];
+                $typeIndex[] = $row['month'] . " " . $row['year'];
                 $typeArray[]      = intval($row['count']);
             }
             $formatter->addLine($typeIndex);
@@ -378,16 +372,16 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
      */
     private function retrieveLoggedPushesStatistics(Statistics_Formatter $formatter)
     {
-        $gitIndex[]   = $GLOBALS['Language']->getText('plugin_statistics', 'scm_month');
-        $gitPushes[]  = $GLOBALS['Language']->getText('plugin_statistics', 'scm_git_total_pushes');
-        $gitCommits[] = $GLOBALS['Language']->getText('plugin_statistics', 'scm_git_total_commits');
-        $gitUsers[]   = $GLOBALS['Language']->getText('plugin_statistics', 'scm_git_users');
-        $gitRepo[]    = $GLOBALS['Language']->getText('plugin_statistics', 'scm_git_repositories');
+        $gitIndex[]   = dgettext('tuleap-git', 'Month');
+        $gitPushes[]  = dgettext('tuleap-git', 'Total number of git pushes');
+        $gitCommits[] = dgettext('tuleap-git', 'Total number of git commits');
+        $gitUsers[]   = dgettext('tuleap-git', 'Total number of users');
+        $gitRepo[]    = dgettext('tuleap-git', 'Total number of repositories');
 
         $gitLogDao = new Git_LogDao();
         $rows      = $gitLogDao->totalPushes($formatter->startDate, $formatter->endDate, $formatter->groupId);
         foreach ($rows as $row) {
-            $gitIndex[]   = $row['month']." ".$row['year'];
+            $gitIndex[]   = $row['month'] . " " . $row['year'];
             $gitPushes[]  = intval($row['pushes_count']);
             $gitCommits[] = intval($row['commits_count']);
             $gitUsers[]   = intval($row['users']);
@@ -409,10 +403,10 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
             return;
         }
 
-        $header = array($GLOBALS['Language']->getText('plugin_statistics', 'scm_month'));
-        $line   = array(dgettext('tuleap-git', 'Total number of git read access'));
+        $header = [dgettext('tuleap-git', 'Month')];
+        $line   = [dgettext('tuleap-git', 'Total number of git read access')];
         foreach ($stats as $row) {
-            $header[] = $row['month']." ".$row['year'];
+            $header[] = $row['month'] . " " . $row['year'];
             $line[]   = intval($row['nb']);
         }
 
@@ -438,7 +432,6 @@ class GitBackend extends Backend implements Git_Backend_Interface, GitRepository
     /**
      * Move the archived gitolite repositories to the archiving area before purge
      *
-     * @param GitRepository $repository
      */
     public function archiveBeforePurge(GitRepository $repository)
     {

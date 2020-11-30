@@ -30,11 +30,6 @@ class Cardwall_RawBoardBuilder
     /**
      * Build a Cardwall_Board taking account of Mapped Fieds
      *
-     * @param PFUser $user
-     * @param Tracker_ArtifactFactory $artifact_factory
-     * @param Planning_Milestone $milestone
-     * @param Cardwall_OnTop_Config $config
-     * @param Cardwall_OnTop_Config_ColumnCollection $columns
      *
      * @return Cardwall_Board
      */
@@ -64,7 +59,7 @@ class Cardwall_RawBoardBuilder
         );
         $presenter_builder        = new Cardwall_CardInCellPresenterBuilder(
             new Cardwall_CardInCellPresenterFactory($field_provider, $mapping_collection),
-            new Cardwall_CardFields(UserManager::instance(), $form_element_factory),
+            new Cardwall_CardFields($form_element_factory),
             $this->getDisplayPreferences($milestone, $user),
             $user,
             $background_color_builder,
@@ -86,8 +81,6 @@ class Cardwall_RawBoardBuilder
     /**
      * Get the display preferences of a user for a given milestone
      *
-     * @param Planning_Milestone $milestone
-     * @param PFUser $user
      *
      * @return Cardwall_UserPreferences_UserPreferencesDisplayUser
      */
@@ -101,7 +94,7 @@ class Cardwall_RawBoardBuilder
 
     private function getMappingCollection(Planning $planning, Cardwall_OnTop_Config_ColumnCollection $columns, Cardwall_FieldProviders_IProvideFieldGivenAnArtifact $field_provider, Cardwall_OnTop_Config $config)
     {
-        $trackers_used_on_cardwall = array();
+        $trackers_used_on_cardwall = [];
 
         foreach ($planning->getBacklogTrackers() as $backlog_tracker) {
             $trackers_used_on_cardwall[] = $backlog_tracker->getChildren();
@@ -115,10 +108,10 @@ class Cardwall_RawBoardBuilder
 
     private function getIndexedStatusFieldsOf(array $trackers, $field_provider)
     {
-        $status_fields = array();
+        $status_fields = [];
 
         foreach ($trackers as $tracker) {
-            $status_fields = array_merge($status_fields, array_filter(array_map(array($field_provider, 'getField'), $tracker)));
+            $status_fields = array_merge($status_fields, array_filter(array_map([$field_provider, 'getField'], $tracker)));
         }
         $indexed_status_fields  = $this->indexById($status_fields);
         return $indexed_status_fields;
@@ -126,7 +119,7 @@ class Cardwall_RawBoardBuilder
 
     private function indexById(array $fields)
     {
-        $indexed_array = array();
+        $indexed_array = [];
         foreach ($fields as $field) {
             $indexed_array[$field->getId()] = $field;
         }

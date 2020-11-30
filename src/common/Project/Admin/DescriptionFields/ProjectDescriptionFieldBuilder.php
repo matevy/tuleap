@@ -46,31 +46,19 @@ class ProjectDescriptionFieldBuilder
     {
         $project_custom_fields = $project->getProjectsDescFieldsValue();
 
-        $presenters = array();
+        $presenters = [];
         foreach ($all_custom_fields as $custom_field) {
             $field_value = $this->getFieldValue($project_custom_fields, $custom_field);
 
-            $presenters[] = array(
-                'label'       => $this->getFieldName($custom_field),
+            $presenters[] = [
+                'label'       => DescriptionFieldLabelBuilder::getFieldTranslatedName($custom_field['desc_name']),
                 'is_empty'    => $field_value == '',
                 'value'       => $field_value ? $field_value : $GLOBALS['Language']->getText('global', 'none'),
                 'is_required' => $custom_field['desc_required']
-            );
+            ];
         }
 
         return $presenters;
-    }
-
-    private function getFieldName(array $custom_field)
-    {
-        $field_name = $custom_field['desc_name'];
-        if (preg_match('/(.*):(.*)/', $field_name, $matches)) {
-            if ($GLOBALS['Language']->hasText($matches[1], $matches[2])) {
-                $field_name = $GLOBALS['Language']->getText($matches[1], $matches[2]);
-            }
-        }
-
-        return $field_name;
     }
 
     private function getFieldValue(array $project_custom_fields, array $custom_field)

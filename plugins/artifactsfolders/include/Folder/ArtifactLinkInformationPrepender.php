@@ -22,7 +22,7 @@ namespace Tuleap\ArtifactsFolders\Folder;
 
 use Codendi_HTMLPurifier;
 use PFUser;
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class ArtifactLinkInformationPrepender
 {
@@ -44,7 +44,7 @@ class ArtifactLinkInformationPrepender
     }
 
     public function prependArtifactLinkInformation(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $current_user,
         $reverse_artifact_links,
         $read_only,
@@ -77,10 +77,10 @@ class ArtifactLinkInformationPrepender
     private function fetchLinkToFolder(array $folder_hierarchy)
     {
         $purifier = Codendi_HTMLPurifier::instance();
-        $folders = array();
-        /** @var Tracker_Artifact $folder */
+        $folders = [];
         foreach ($folder_hierarchy as $folder) {
-            $uri = $folder->getUri().'&view=artifactsfolders';
+            \assert($folder instanceof Artifact);
+            $uri = $folder->getUri() . '&view=artifactsfolders';
 
             $link = '<a href="' . $purifier->purify($uri) . '" class="direct-link-to-artifact">';
             $link .= $purifier->purify($folder->getTitle());
@@ -93,10 +93,10 @@ class ArtifactLinkInformationPrepender
     }
 
     private function fetchSelectBox(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $current_user,
         array $additional_classes,
-        ?Tracker_Artifact $current_folder = null
+        ?Artifact $current_folder = null
     ) {
         $class = "";
         if (count($additional_classes) === 0) {
@@ -105,7 +105,7 @@ class ArtifactLinkInformationPrepender
 
         $project = $artifact->getTracker()->getProject();
 
-        $options    = array();
+        $options    = [];
         $collection = $this->builder->buildFolderHierarchicalRepresentationCollection(
             $artifact,
             $project,
@@ -120,7 +120,7 @@ class ArtifactLinkInformationPrepender
         $purifier = Codendi_HTMLPurifier::instance();
         return '<select name="new-artifact-folder" ' . $purifier->purify($class) . '>
             <option value="" class="not-anymore-in-folder">'
-            . $GLOBALS['Language']->getText('plugin_folders', 'no_folder') . '</option>'
+            . dgettext('tuleap-artifactsfolders', 'Not in a folder') . '</option>'
             . implode('', $options) . '</select>';
     }
 
@@ -133,7 +133,7 @@ class ArtifactLinkInformationPrepender
 
         $purifier = Codendi_HTMLPurifier::instance();
         return '<span ' . $purifier->purify($class) . '>' .
-            $GLOBALS['Language']->getText('plugin_folders', 'current_folder') .
+            dgettext('tuleap-artifactsfolders', 'Currently in folder:') .
             '</span>';
     }
 }

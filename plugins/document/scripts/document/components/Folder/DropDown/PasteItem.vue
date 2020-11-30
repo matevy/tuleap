@@ -18,8 +18,9 @@
   -->
 
 <template>
-    <a
+    <button
         class="tlp-dropdown-menu-item document-clipboard-menu-item-paste"
+        type="button"
         role="menuitem"
         v-if="can_item_be_pasted"
         v-on:click="pasteItem"
@@ -28,15 +29,16 @@
     >
         <i
             class="fa tlp-dropdown-menu-item-icon document-clipboard-paste-icon-status"
-            v-bind:class="[ pasting_in_progress ? ' fa-spin fa-circle-o-notch' : 'fa-fw fa-paste' ]"
+            v-bind:class="[pasting_in_progress ? ' fa-spin fa-circle-o-notch' : 'fa-fw fa-paste']"
         ></i>
         <div class="document-clipboard-item-to-paste-container">
             <translate>Paste</translate>
             <span class="document-clipboard-item-to-paste">
-                <i class="fa fa-file-o"></i> {{ item_title }}
+                <i class="far fa-file"></i>
+                {{ item_title }}
             </span>
         </div>
-    </a>
+    </button>
 </template>
 <script>
 import { mapState, mapGetters } from "vuex";
@@ -44,14 +46,14 @@ import EventBus from "../../../helpers/event-bus.js";
 import { TYPE_FOLDER, CLIPBOARD_OPERATION_COPY } from "../../../constants.js";
 import {
     doesFolderNameAlreadyExist,
-    doesDocumentNameAlreadyExist
+    doesDocumentNameAlreadyExist,
 } from "../../../helpers/metadata-helpers/check-item-title.js";
 import { isItemDestinationIntoItself } from "../../../helpers/clipboard/clipboard-helpers.js";
 
 export default {
     name: "PasteItem",
     props: {
-        destination: Object
+        destination: Object,
     },
     computed: {
         ...mapState(["folder_content"]),
@@ -60,7 +62,7 @@ export default {
             "pasting_in_progress",
             "operation_type",
             "item_type",
-            "item_id"
+            "item_id",
         ]),
         ...mapGetters(["is_item_a_folder"]),
         can_item_be_pasted() {
@@ -93,7 +95,7 @@ export default {
                 ) &&
                 !isItemDestinationIntoItself(this.folder_content, this.item_id, this.destination.id)
             );
-        }
+        },
     },
     methods: {
         async pasteItem() {
@@ -103,9 +105,9 @@ export default {
             await this.$store.dispatch("clipboard/pasteItem", [
                 this.destination,
                 this.$store.state.current_folder,
-                this.$store
+                this.$store,
             ]);
-        }
-    }
+        },
+    },
 };
 </script>

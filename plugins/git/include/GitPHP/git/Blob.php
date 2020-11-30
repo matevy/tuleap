@@ -63,7 +63,7 @@ class Blob extends FilesystemObject
      *
      * @access protected
      */
-    protected $history = array();
+    protected $history = [];
 
     /**
      * blame
@@ -72,7 +72,7 @@ class Blob extends FilesystemObject
      *
      * @access protected
      */
-    protected $blame = array();
+    protected $blame = [];
 
     /**
      * blameRead
@@ -110,7 +110,7 @@ class Blob extends FilesystemObject
      */
     public function GetData($explode = false) // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -195,7 +195,7 @@ class Blob extends FilesystemObject
             return $this->size;
         }
 
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -232,7 +232,7 @@ class Blob extends FilesystemObject
             $mime = $this->FileMime_Extension();
         }
 
-        if ((!empty($mime)) && $short) {
+        if ((! empty($mime)) && $short) {
             $mime = strtok($mime, '/');
         }
 
@@ -249,15 +249,15 @@ class Blob extends FilesystemObject
      */
     private function FileMime_Fileinfo() // @codingStandardsIgnoreLine
     {
-        if (!function_exists('finfo_buffer')) {
+        if (! function_exists('finfo_buffer')) {
             return '';
         }
 
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
-        if (!$this->data) {
+        if (! $this->data) {
             return '';
         }
 
@@ -295,7 +295,7 @@ class Blob extends FilesystemObject
 
         $dotpos = strrpos($file, '.');
         if ($dotpos !== false) {
-            $file = substr($file, $dotpos+1);
+            $file = substr($file, $dotpos + 1);
         }
         switch ($file) {
             case 'jpg':
@@ -391,7 +391,7 @@ class Blob extends FilesystemObject
      */
     public function GetBlame() // @codingStandardsIgnoreLine
     {
-        if (!$this->blameRead) {
+        if (! $this->blameRead) {
             $this->ReadBlame();
         }
 
@@ -411,7 +411,7 @@ class Blob extends FilesystemObject
 
         $exe = new GitExe($this->GetProject());
 
-        $args = array();
+        $args = [];
         $args[] = '-s';
         $args[] = '-l';
         $args[] = '--root';
@@ -429,7 +429,7 @@ class Blob extends FilesystemObject
         foreach ($blamelines as $line) {
             if (preg_match('/^([0-9a-fA-F]{40})(\s+.+)?\s+([0-9]+)\)/', $line, $regs)) {
                 if ($regs[1] != $lastcommit) {
-                    $this->blame[(int)($regs[3])] = $this->GetProject()->GetCommit($regs[1]);
+                    $this->blame[(int) ($regs[3])] = $this->GetProject()->GetCommit($regs[1]);
                     $lastcommit = $regs[1];
                 }
             }
@@ -446,7 +446,7 @@ class Blob extends FilesystemObject
      */
     public function isBlob()
     {
-        return  true;
+        return true;
     }
 
     public function isSubmodule()

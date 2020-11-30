@@ -30,17 +30,17 @@ require_once('lib/PageList.php');
 
 class WikiPlugin_OrphanedPages extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("OrphanedPages");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("List pages which are not linked to by any other page.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -49,22 +49,22 @@ class WikiPlugin_OrphanedPages extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('noheader'      => false,
+        return ['noheader'      => false,
                      'include_empty' => false,
                      'exclude'       => '',
                      'info'          => '',
                      'sortby'        => false,
                      'limit'         => 0,
                      'paging'        => 'auto',
-                     );
+                     ];
     }
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor,markup or all
     // exclude arg allows multiple pagenames exclude=HomePage,RecentChanges
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         extract($args);
@@ -73,21 +73,23 @@ class WikiPlugin_OrphanedPages extends WikiPlugin
         // tailored SQL query via the backend, but this does the job
 
         $allpages_iter = $dbi->getAllPages($include_empty);
-        $pages = array();
+        $pages = [];
         while ($page = $allpages_iter->next()) {
             $links_iter = $page->getBackLinks();
             // Test for absence of backlinks. If a page is linked to
             // only by itself, it is still an orphan
             $parent = $links_iter->next();
-            if (!$parent               // page has no parents
+            if (
+                ! $parent               // page has no parents
                 or (($parent->getName() == $page->getName())
-                    and !$links_iter->next())) { // or page has only itself as a parent
+                    and ! $links_iter->next())
+            ) { // or page has only itself as a parent
                 $pages[] = $page;
             }
         }
         $args['count'] = count($pages);
         $pagelist = new PageList($info, $exclude, $args);
-        if (!$noheader) {
+        if (! $noheader) {
             $pagelist->setCaption(_("Orphaned Pages in this wiki (%d total):"));
         }
         // deleted pages show up as version 0.
@@ -95,10 +97,10 @@ class WikiPlugin_OrphanedPages extends WikiPlugin
             $pagelist->_addColumn('version');
         }
         list($offset,$pagesize) = $pagelist->limit($args['limit']);
-        if (!$pagesize) {
+        if (! $pagesize) {
             $pagelist->addPageList($pages);
         } else {
-            for ($i=$offset; $i < $offset + $pagesize - 1; $i++) {
+            for ($i = $offset; $i < $offset + $pagesize - 1; $i++) {
                 if ($i >= $args['count']) {
                     break;
                 }
@@ -107,7 +109,7 @@ class WikiPlugin_OrphanedPages extends WikiPlugin
         }
         return $pagelist;
     }
-};
+}
 
 // $Log: OrphanedPages.php,v $
 // Revision 1.10  2004/07/09 13:05:34  rurban

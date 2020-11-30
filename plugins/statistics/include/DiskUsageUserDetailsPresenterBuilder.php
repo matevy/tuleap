@@ -34,7 +34,7 @@ class DiskUsageUserDetailsPresenterBuilder
      */
     private $disk_usage_manager;
     /**
-     * @var DiskUsageOutput
+     * @var Statistics_DiskUsageOutput
      */
     private $disk_usage_output;
     /**
@@ -86,15 +86,15 @@ class DiskUsageUserDetailsPresenterBuilder
         $user              = $this->user_manager->findUser($user_value);
         $error_message     = false;
         $user_id           = false;
-        $data_user_details = array();
+        $data_user_details = [];
 
         if (! $user) {
-            $error_message = $GLOBALS['Language']->getText('plugin_statistics_admin_page', 'no_user_selected');
+            $error_message = dgettext('tuleap-statistics', 'No user selected');
         } else {
             $user_id           = $user->getId();
             $data_user_details = $this->buildUserDetails($user, $start_date_value, $end_date_value);
             if (empty($data_user_details)) {
-                $error_message = $GLOBALS['Language']->getText('plugin_statistics_admin_page', 'no_user_details_data');
+                $error_message = dgettext('tuleap-statistics', 'No matching data for this user');
             }
         }
 
@@ -131,13 +131,13 @@ class DiskUsageUserDetailsPresenterBuilder
         $start_date,
         $end_date
     ) {
-        $graph_query = http_build_query(array(
+        $graph_query = http_build_query([
             'user_id'    => $user_id,
             'start_date' => $start_date,
             'end_date'   => $end_date,
             'group_by'   => $group_by,
             'graph_type' => 'graph_user'
-        ));
+        ]);
 
         return 'disk_usage_graph.php?' . $graph_query;
     }
@@ -154,20 +154,20 @@ class DiskUsageUserDetailsPresenterBuilder
         );
 
         if (! $row) {
-            return array();
+            return [];
         }
 
-        $user_details_query = http_build_query(array(
+        $user_details_query = http_build_query([
             'user_id' => $user->getId()
-        ));
+        ]);
 
-        return array(
+        return [
             'user_name'        => $user->getUserName(),
             'user_details_url' => '/admin/usergroup.php?' . $user_details_query,
             'start_size'       => $this->disk_usage_output->sizeReadable($row['start_size']),
             'end_size'         => $this->disk_usage_output->sizeReadable($row['end_size']),
             'evolution'        => $this->disk_usage_output->sizeReadable($row['evolution']),
             'evolution_rate'   => ($row['evolution'] == 0) ? '-' : sprintf('%01.2f %%', ($row['evolution_rate'] * 100))
-        );
+        ];
     }
 }

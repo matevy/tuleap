@@ -24,18 +24,18 @@ class Tracker_Artifact_View_Copy extends Tracker_Artifact_View_Edit
     /** @see Tracker_Artifact_View_Edit::getURL() */
     public function getURL()
     {
-        return TRACKER_BASE_URL .'/?'. http_build_query(
-            array(
+        return TRACKER_BASE_URL . '/?' . http_build_query(
+            [
                 'aid' => $this->artifact->getId(),
                 'func' => 'copy-artifact'
-            )
+            ]
         );
     }
 
     /** @see Tracker_Artifact_View_Edit::getTitle() */
     public function getTitle()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_artifact', 'edit_title');
+        return dgettext('tuleap-tracker', 'Artifact');
     }
 
     /** @see Tracker_Artifact_View_Edit::fetch() */

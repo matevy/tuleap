@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace TuleapCodingStandard\Sniffs\Commenting;
 
-use PHP_CodeSniffer\Files\File;
 use SlevomatCodingStandard\Sniffs\TestCase;
 
 final class FileCopyrightSniffTest extends TestCase
@@ -30,14 +29,14 @@ final class FileCopyrightSniffTest extends TestCase
     /**
      * @dataProvider providerValidFiles
      */
-    public function testNoErrorWhenCopyrightBlockIsPresent(string $path) : void
+    public function testNoErrorWhenCopyrightBlockIsPresent(string $path): void
     {
         $report = self::checkFile($path);
 
         self::assertNoSniffErrorInFile($report);
     }
 
-    public function providerValidFiles() : array
+    public function providerValidFiles(): array
     {
         return [
             [__DIR__ . '/_fixtures/FileCopyright/Valid/OpenTagAndCopyrightDocCommentAtTheBeginning.php'],
@@ -48,7 +47,7 @@ final class FileCopyrightSniffTest extends TestCase
         ];
     }
 
-    public function testCodeBeforeCopyright() : void
+    public function testCodeBeforeCopyright(): void
     {
         $report = self::checkFile(__DIR__ . '/_fixtures/FileCopyright/Invalid/CodeBeforeCopyright.php');
 
@@ -56,7 +55,7 @@ final class FileCopyrightSniffTest extends TestCase
         self::assertSniffError($report, 3, 'MissingCopyright');
     }
 
-    public function testOnlyOpenTag() : void
+    public function testOnlyOpenTag(): void
     {
         $report = self::checkFile(__DIR__ . '/_fixtures/FileCopyright/Invalid/OnlyPHPOpenTag.php');
 
@@ -64,7 +63,7 @@ final class FileCopyrightSniffTest extends TestCase
         self::assertSniffError($report, 1, 'MissingCopyright');
     }
 
-    public function testEmptyLinesBeforeCopyright() : void
+    public function testEmptyLinesBeforeCopyright(): void
     {
         $report = self::checkFile(__DIR__ . '/_fixtures/FileCopyright/Invalid/EmptyLinesBeforeCopyRight.php');
 
@@ -73,7 +72,7 @@ final class FileCopyrightSniffTest extends TestCase
         self::assertAllFixedInFile($report);
     }
 
-    public function testEmptyLinesBeforeCopyrightAndMultipleOpenTags() : void
+    public function testEmptyLinesBeforeCopyrightAndMultipleOpenTags(): void
     {
         $report = self::checkFile(__DIR__ . '/_fixtures/FileCopyright/Invalid/EmptyLinesBeforeCopyRightAndMultipleOpenTags.php');
 
@@ -82,7 +81,7 @@ final class FileCopyrightSniffTest extends TestCase
         self::assertAllFixedInFile($report);
     }
 
-    public function testSpacesAfterCopyright() : void
+    public function testSpacesAfterCopyright(): void
     {
         $report = self::checkFile(__DIR__ . '/_fixtures/FileCopyright/Invalid/SpacesAfterOpenTag.php');
 
@@ -91,7 +90,7 @@ final class FileCopyrightSniffTest extends TestCase
         self::assertAllFixedInFile($report);
     }
 
-    public function testCopyrightOnTheSameLineThanOpenTag() : void
+    public function testCopyrightOnTheSameLineThanOpenTag(): void
     {
         $report = self::checkFile(__DIR__ . '/_fixtures/FileCopyright/Invalid/CopyrightOnTheSameLineThanOpenTag.php');
 

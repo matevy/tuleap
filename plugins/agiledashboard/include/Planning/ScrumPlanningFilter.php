@@ -20,7 +20,6 @@
 
 namespace Tuleap\AgileDashboard\Planning;
 
-use AgileDashboard_HierarchyChecker;
 use PFUser;
 use Planning;
 use Planning_TrackerPresenter;
@@ -49,14 +48,14 @@ class ScrumPlanningFilter
 
     public function getBacklogTrackersFiltered(array $trackers, Planning $planning)
     {
-        $trackers_filtered = array();
+        $trackers_filtered = [];
 
         foreach ($this->getPlanningTrackerPresenters($trackers, $planning) as $tracker_presenter) {
-            $trackers_filtered[] = array(
+            $trackers_filtered[] = [
                 'name'     => $tracker_presenter->getName(),
                 'id'       => $tracker_presenter->getId(),
                 'selected' => $tracker_presenter->selectedIfBacklogTracker()
-            );
+            ];
         }
 
         return $trackers_filtered;
@@ -64,7 +63,7 @@ class ScrumPlanningFilter
 
     private function getPlanningTrackerPresenters(array $trackers, Planning $planning)
     {
-        $tracker_presenters = array();
+        $tracker_presenters = [];
 
         foreach ($trackers as $tracker) {
             if ($tracker !== null) {
@@ -101,7 +100,6 @@ class ScrumPlanningFilter
     }
 
     /**
-     * @param PFUser $user
      *
      * @return array
      */
@@ -114,24 +112,23 @@ class ScrumPlanningFilter
     }
 
     /**
-     * @param PFUser $user
      * @param $project_id
      *
      * @return array
      */
     private function getTrackersNotInHierachy(PFUser $user, $project_id)
     {
-        $trackers_filtered  = array();
+        $trackers_filtered  = [];
         $available_trackers = $this->planning_factory->getAvailableBacklogTrackers($user, $project_id);
 
         foreach ($available_trackers as $tracker) {
-            if (count($tracker->getChildren()) === 0 && count($tracker->getParent()) === 0) {
-                $trackers_filtered[] = array(
+            if (count($tracker->getChildren()) === 0 && $tracker->getParent() === null) {
+                $trackers_filtered[] = [
                     'name'     => $tracker->getName(),
                     'id'       => $tracker->getId(),
                     'selected' => false,
                     'disabled' => false
-                );
+                ];
             }
         }
 
@@ -139,23 +136,22 @@ class ScrumPlanningFilter
     }
 
     /**
-     * @param PFUser $user
      * @param $project_id
      *
      * @return array
      */
     private function getPlanningTrackerForMonoMilestone(PFUser $user, $project_id)
     {
-        $trackers_filtered  = array();
+        $trackers_filtered  = [];
         $available_trackers = $this->planning_factory->getPotentialPlanningTrackers($user, $project_id);
 
         foreach ($available_trackers as $tracker) {
-            $trackers_filtered[] = array(
+            $trackers_filtered[] = [
                 'name'     => $tracker->getName(),
                 'id'       => $tracker->getId(),
                 'selected' => true,
                 'disabled' => false
-            );
+            ];
         }
 
         return $trackers_filtered;
@@ -164,7 +160,6 @@ class ScrumPlanningFilter
     /**
      * @param array $trackers
      * @param array $kanban_tracker_ids
-     * @param Planning $planning
      *
      * @return array
      */
@@ -172,14 +167,14 @@ class ScrumPlanningFilter
         array $trackers,
         Planning $planning
     ) {
-        $trackers_filtered = array();
+        $trackers_filtered = [];
 
         foreach ($this->getPlanningTrackerPresenters($trackers, $planning) as $tracker_presenter) {
-            $trackers_filtered[] = array(
+            $trackers_filtered[] = [
                 'name'     => $tracker_presenter->getName(),
                 'id'       => $tracker_presenter->getId(),
                 'selected' => $tracker_presenter->selectedIfPlanningTracker()
-            );
+            ];
         }
 
         return $trackers_filtered;

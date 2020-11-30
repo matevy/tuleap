@@ -27,6 +27,7 @@
  * diff -u -I "[ ]*<date>.*</date>" -I "[ ]*<create_date>.*</create_date>" -I "[ ]*<update_date>.*</update_date>" -I "[ ]*<owner>.*</owner>" -I "[ ]*<author>.*</author>" file1.xml file2.xml
  */
 require_once __DIR__ . '/../../../../src/www/include/pre.php';
+require __DIR__ . '/../../include/docmanPlugin.php';
 require __DIR__ . '/XMLExport.class.php';
 require __DIR__ . '/Docman_ExportException.class.php';
 
@@ -36,7 +37,7 @@ $consoleLogger = new Log_ConsoleLogger();
 $posix_user = posix_getpwuid(posix_geteuid());
 $sys_user   = $posix_user['name'];
 if ($sys_user !== 'root' && $sys_user !== ForgeConfig::get('sys_http_user')) {
-    $consoleLogger->error('Unsufficient privileges for user '.$sys_user);
+    $consoleLogger->error('Unsufficient privileges for user ' . $sys_user);
     return false;
 }
 
@@ -46,7 +47,7 @@ function usage()
     $consoleLogger->error("Usage: export.php groupId targetname");
 }
 
-if (!isset($argv[2])) {
+if (! isset($argv[2])) {
     $consoleLogger->error("No target directory specified");
     usage();
     return false;
@@ -60,16 +61,16 @@ if (is_file($argv[2])) {
 $start = microtime(true);
 
 try {
-    $logger    = new BackendLogger(ForgeConfig::get('codendi_log') . '/DocmanExport.log');
+    $logger    = BackendLogger::getDefaultLogger('DocmanExport.log');
     $XMLExport = new XMLExport($logger);
     $XMLExport->setGroupId($argv[1]);
     $XMLExport->setPackagePath($argv[2]);
     $XMLExport->setArchiveName(basename($argv[2]));
     $XMLExport->dumpPackage();
 } catch (Exception $exception) {
-    $consoleLogger->error("Export failed : ".$exception->getMessage());
+    $consoleLogger->error("Export failed : " . $exception->getMessage());
     return false;
 }
 
 $end = microtime(true);
-$consoleLogger->info("Elapsed time: ".($end-$start));
+$consoleLogger->info("Elapsed time: " . ($end - $start));

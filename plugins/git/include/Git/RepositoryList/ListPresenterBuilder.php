@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -24,8 +24,12 @@ use GitDao;
 use GitPermissionsManager;
 use PFUser;
 use Project;
+use Tuleap\Git\Events\GetExternalGitHomepagePluginsEvent;
+use Tuleap\Project\Flags\ProjectFlagsBuilder;
 use Tuleap\User\REST\MinimalUserRepresentation;
 use UserManager;
+use Tuleap\Git\Events\GetExternalUsedServiceEvent;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 class ListPresenterBuilder
 {
@@ -41,26 +45,49 @@ class ListPresenterBuilder
      * @var UserManager
      */
     private $user_manager;
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $event_manager;
+    /**
+     * @var ProjectFlagsBuilder
+     */
+    private $project_flags_builder;
 
-    public function __construct(GitPermissionsManager $git_permissions_manager, GitDao $dao, UserManager $user_manager)
-    {
+    public function __construct(
+        GitPermissionsManager $git_permissions_manager,
+        GitDao $dao,
+        UserManager $user_manager,
+        EventDispatcherInterface $event_manager,
+        ProjectFlagsBuilder $project_flags_builder
+    ) {
         $this->git_permissions_manager = $git_permissions_manager;
         $this->dao                     = $dao;
         $this->user_manager            = $user_manager;
+        $this->event_manager           = $event_manager;
+        $this->project_flags_builder   = $project_flags_builder;
     }
 
     public function build(Project $project, PFUser $current_user)
     {
+        $external_git_homapage_plugin_event = new GetExternalGitHomepagePluginsEvent($project);
+        $this->event_manager->dispatch($external_git_homapage_plugin_event);
+
+        $external_git_actions_event = new GetExternalUsedServiceEvent($project, $current_user);
+        $this->event_manager->dispatch($external_git_actions_event);
+
         return new GitRepositoryListPresenter(
             $current_user,
             $project,
             $this->git_permissions_manager->userIsGitAdmin($current_user, $project),
-            $this->getRepositoriesOwnersRepresentations($project)
+            $this->getRepositoriesOwnersRepresentations($project),
+            $external_git_homapage_plugin_event->getExternalPluginsInfos(),
+            $this->project_flags_builder->buildProjectFlags($project),
+            $external_git_actions_event->getExternalsUsedServices()
         );
     }
 
     /**
-     * @param Project $project
      *
      * @return array
      */
@@ -74,10 +101,7 @@ class ListPresenterBuilder
                         return;
                     }
 
-                    $representation = new MinimalUserRepresentation();
-                    $representation->build($user);
-
-                    return $representation;
+                    return MinimalUserRepresentation::build($user);
                 },
                 $this->dao->getProjectRepositoriesOwners(
                     $project->getID()

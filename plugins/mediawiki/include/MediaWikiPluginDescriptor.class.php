@@ -24,9 +24,8 @@
 class MediaWikiPluginDescriptor extends PluginDescriptor
 {
 
-    function __construct()
+    public function __construct()
     {
-        parent::__construct($GLOBALS['Language']->getText('plugin_mediawiki', 'descriptor_name'), false, $GLOBALS['Language']->getText('plugin_mediawiki', 'descriptor_description'));
-        $this->setVersionFromFile(dirname(__FILE__).'/../VERSION');
+        parent::__construct(dgettext('tuleap-mediawiki', 'Plugin Mediawiki'), false, dgettext('tuleap-mediawiki', 'Mediawiki integration in the forge'));
     }
 }

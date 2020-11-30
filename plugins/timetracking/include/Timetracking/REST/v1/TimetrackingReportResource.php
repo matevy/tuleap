@@ -100,8 +100,6 @@ class TimetrackingReportResource extends AuthenticatedResource
         $this->tracker_representation_factory = new TrackerRepresentationFactory(
             new TimeDao(),
             new PermissionsRetriever(new TimetrackingUgroupRetriever(new TimetrackingUgroupDao())),
-            \TrackerFactory::instance(),
-            \Tracker_ArtifactFactory::instance(),
             UserHelper::instance()
         );
     }
@@ -176,8 +174,6 @@ class TimetrackingReportResource extends AuthenticatedResource
      *
      * @param int $id Id of the report
      * @param string $query With a property "trackers_id","start_date" and "end_date" to search trackers' times. {@from path} {@required false}
-     * @param int $limit
-     * @param int $offset
      *
      * @return TimetrackingTrackerReportRepresentation[]
      *
@@ -200,7 +196,7 @@ class TimetrackingReportResource extends AuthenticatedResource
             $trackers     = [];
 
             foreach ($this->getTrackersFromRoute($query, $report) as $tracker) {
-                $trackers[ $tracker->getId() ] = $tracker;
+                $trackers[$tracker->getId()] = $tracker;
             }
 
             $dates = $this->date_extractor->getDatesFromRoute($query);
@@ -280,27 +276,23 @@ class TimetrackingReportResource extends AuthenticatedResource
      */
     private function getReportRepresentation(TimetrackingReport $report)
     {
-        $representation = new TimetrackingReportRepresentation();
-        $representation->build($report);
-
-        return $representation;
+        return TimetrackingReportRepresentation::fromReport($report);
     }
 
     /**
      * @param                    $query
-     * @param TimetrackingReport $report
      *
      * @throws RestException 400
      *
      * @return array
      */
-    private function getTrackersFromRoute($query, TimetrackingReport $report) : array
+    private function getTrackersFromRoute($query, TimetrackingReport $report): array
     {
         $query_parser = new QueryParameterParser($this->json_decoder);
         $json_query   = $this->json_decoder->decodeAsAnArray('query', $query);
 
         $query = trim($query);
-        if (! isset($json_query[ "trackers_id" ])) {
+        if (! isset($json_query["trackers_id"])) {
             return $report->getTrackers();
         }
 
@@ -317,8 +309,6 @@ class TimetrackingReportResource extends AuthenticatedResource
     }
 
     /**
-     * @param PFUser             $user
-     * @param TimetrackingReport $report
      *
      * @throws RestException 403
      **/

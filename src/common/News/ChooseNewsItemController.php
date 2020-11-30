@@ -85,7 +85,7 @@ class ChooseNewsItemController
         }
 
         // admin pages can be reached by news admin (N2) or project admin (A)
-        if (! user_ismember($project->getID(), 'A') &&  ! user_ismember($project->getID(), 'N2')) {
+        if (! user_ismember($project->getID(), 'A') && ! user_ismember($project->getID(), 'N2')) {
             exit_error($GLOBALS['Language']->getText('news_admin_index', 'permission_denied'), $GLOBALS['Language']->getText('news_admin_index', 'need_to_be_admin'));
         }
     }
@@ -95,7 +95,7 @@ class ChooseNewsItemController
         $items     = $this->data_mapper->fetchAll($this->getProjectFromRequest());
         $presenter = new ChooseNewsPresenter($items, $this->request->get('project_id'));
         $renderer  = TemplateRendererFactory::build()->getRenderer(
-            ForgeConfig::get('codendi_dir') .'/src/templates/news/'
+            ForgeConfig::get('codendi_dir') . '/src/templates/news/'
         );
 
         $renderer->renderToPage('choose_news', $presenter);
@@ -104,17 +104,17 @@ class ChooseNewsItemController
     private function displayHeader()
     {
         news_header(
-            array(
+            [
                 'title'      => $GLOBALS['Language']->getText('news_admin_index', 'title'),
-                'help'       => 'communication.html#news-service',
+                'help'       => 'collaboration.html#news-service',
                 'project_id' => $this->request->get('project_id')
-            )
+            ]
         );
     }
 
     private function displayFooter()
     {
-        news_footer(array());
+        news_footer([]);
     }
 
     private function getProjectFromRequest()

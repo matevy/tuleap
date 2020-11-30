@@ -36,7 +36,6 @@ class SOAP_RequestLimitator
 
     private $currentTime;
     private $nbCallToMethod;
-    private $firstCallToMethod;
 
     /**
      * Constructor
@@ -51,8 +50,7 @@ class SOAP_RequestLimitator
         $this->timeframe = $timeframe;
         $this->dao       = $dao;
 
-        $this->nbCallToMethod    = array();
-        $this->firstCallToMethod = array();
+        $this->nbCallToMethod    = [];
     }
 
     /**

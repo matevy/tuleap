@@ -1,5 +1,6 @@
 <?php
 /**
+ * Copyright (c) Enalean 2020-present. All rights reserved
  * Copyright (c) STMicroelectronics 2016. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -18,6 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 use Tuleap\Tracker\FormElement\TrackerFormElementExternalField;
 use Tuleap\TrackerEncryption\ChangesetValue;
@@ -46,8 +48,8 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
      */
     private function fetchButton()
     {
-        $html = '<button class="btn" type="button" id="show_password_'. $this->id .'">
-                     <span id="show_password_icon_'. $this->id .'" class="fa fa-eye-slash"></span>
+        $html = '<button class="btn" type="button" id="show_password_' . $this->id . '">
+                     <span id="show_password_icon_' . $this->id . '" class="fa fa-eye-slash"></span>
                  </button>';
 
         return $html;
@@ -58,45 +60,35 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
      */
     protected function fetchAdminFormElement()
     {
-        return $this->fetchSubmitValue(array());
+        return $this->fetchSubmitValue([]);
     }
 
-    /**
-     * @return the label of the field (mainly used in admin part)
-     */
     public static function getFactoryLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_encryption', 'field_label');
+        return dgettext('tuleap-tracker_encryption', 'Encrypted field');
     }
 
-    /**
-     * @return the description of the field (mainly used in admin part)
-     */
     public static function getFactoryDescription()
     {
-          return $GLOBALS['Language']->getText('plugin_tracker_encryption', 'field_label');
+          return dgettext('tuleap-tracker_encryption', 'Encrypted field');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconUseIt()
     {
         return $GLOBALS['HTML']->getImagePath('ic/lock.png');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconCreate()
     {
         return $GLOBALS['HTML']->getImagePath('ic/lock.png');
     }
 
-    protected function validate(Tracker_Artifact $artifact, $value)
+    protected function validate(Artifact $artifact, $value)
     {
-        if ($this->getLastChangesetValue($artifact) !== null
-            && $this->getLastChangesetValue($artifact)->getValue() === $value
+        $last_changeset_value = $this->getLastChangesetValue($artifact);
+        if (
+            $last_changeset_value !== null
+            && $last_changeset_value->getValue() === $value
         ) {
             return true;
         }
@@ -105,11 +97,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
         if ($maximum_characters_allowed !== 0 && mb_strlen($value) > $maximum_characters_allowed) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker_common_artifact',
-                    'error_string_max_characters',
-                    array($this->getLabel(), $maximum_characters_allowed)
-                )
+                sprintf(dgettext('tuleap-tracker', '%1$s can not contain more than %2$s characters.'), $this->getLabel(), $maximum_characters_allowed)
             );
             return false;
         }
@@ -131,7 +119,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
         $changeset_value_id,
         $value,
         ?Tracker_Artifact_ChangesetValue $previous_changesetvalue,
-        CreatedFileURLMapping $id_mapping
+        CreatedFileURLMapping $url_mapping
     ) {
         if ($value != "") {
             $dao_pub_key        = new TrackerPublicKeyDao();
@@ -141,7 +129,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
                 $encryption_manager = new Encryption_Manager($tracker_key);
                 return $this->getValueDao()->create($changeset_value_id, $encryption_manager->encrypt($value));
             } catch (Tracker_EncryptionException $exception) {
-                return $exception->getMessage();
+                return false;
             }
         } else {
             return $this->getValueDao()->create($changeset_value_id, $value);
@@ -158,7 +146,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     }
 
     /**
-     * @param Tracker_ReportCriteria $criteria
+     * @param Tracker_Report_Criteria $criteria
      *
      * @return string
      * @see fetchCriteria
@@ -179,7 +167,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     }
 
     /**
-     * @param Tracker_ReportCriteria $criteria
+     * @param Tracker_Report_Criteria $criteria
      *
      * @return string
      */
@@ -206,7 +194,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     }
 
     /**
-     * @param Tracker_ReportCriteria $criteria
+     * @param Tracker_Report_Criteria $criteria
      *
      * @return string
      * @see getCriteriaFrom
@@ -224,12 +212,13 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
      * @return string
      */
     protected function fetchArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value = null,
-        $submitted_values = array()
+        $submitted_values = []
     ) {
         $html = '';
-        if (is_array($submitted_values)
+        if (
+            is_array($submitted_values)
             && isset($submitted_values[$this->getId()])
             && $submitted_values[$this->getId()] !== false
         ) {
@@ -248,7 +237,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
      * @return string
      */
     public function fetchArtifactValueReadOnly(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value = null
     ) {
         if (isset($value) === false || $value->getValue() === '') {
@@ -261,7 +250,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     }
 
     protected function getHiddenArtifactValueForEdition(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -289,9 +278,9 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     }
 
     protected function fetchArtifactValueWithEditionFormIfEditable(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value = null,
-        $submitted_values = array()
+        $submitted_values = []
     ) {
         return "<div class='tracker-form-element-encrypted'>" . $this->fetchArtifactValueReadOnly($artifact, $value) . "</div>" .
             $this->getHiddenArtifactValueForEdition($artifact, $value, $submitted_values);
@@ -308,7 +297,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     /**
      * @return string
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    protected function fetchTooltipValue(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         return '';
     }
@@ -316,18 +305,6 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
     protected function getValueDao()
     {
         return new ValueDao();
-    }
-
-    /**
-     * @param Tracker_Artifact $artifact
-     * @param array $from
-     * @param array $to
-     *
-     * @return string
-     */
-    public function fetchFollowUp($artifact, $from, $to)
-    {
-        return '';
     }
 
     /**
@@ -370,7 +347,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
         return $value;
     }
 
-    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactForOverlay(Artifact $artifact, array $submitted_values)
     {
     }
 
@@ -379,7 +356,7 @@ class Tracker_FormElement_Field_Encrypted extends Tracker_FormElement_Field impl
         return false;
     }
 
-    public function hasChanges(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $old_value, $new_value)
+    public function hasChanges(Artifact $artifact, Tracker_Artifact_ChangesetValue $old_value, $new_value)
     {
         return $old_value->getValue() !== $new_value;
     }

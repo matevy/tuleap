@@ -24,20 +24,18 @@
  */
 namespace Tuleap\AgileDashboard\REST\v1;
 
-use PlanningFactory;
-use Tracker_ArtifactFactory;
-use Tracker_Artifact;
-use Tracker;
-use Tracker_FormElementFactory;
-use AgileDashboard_Milestone_Backlog_BacklogItemCollectionFactory;
-use AgileDashboard_Milestone_Backlog_BacklogFactory;
 use AgileDashboard_Milestone_Backlog_Backlog;
+use AgileDashboard_Milestone_Backlog_BacklogFactory;
+use AgileDashboard_Milestone_Backlog_BacklogItemCollectionFactory;
 use AgileDashboard_Milestone_Backlog_IBacklogItemCollection;
-use Planning_MilestoneFactory;
-use Planning_Milestone;
 use PFUser;
+use Planning_Milestone;
+use Planning_MilestoneFactory;
+use PlanningFactory;
 use Project;
+use Tracker_ArtifactFactory;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class MilestoneResourceValidator
 {
@@ -57,9 +55,6 @@ class MilestoneResourceValidator
     /** @var Tracker_ArtifactFactory */
     private $tracker_artifact_factory;
 
-    /** @var Tracker_FormElementFactory */
-    private $tracker_form_element_factory;
-
     /**
      * @var ScrumForMonoMilestoneChecker
      */
@@ -68,7 +63,6 @@ class MilestoneResourceValidator
     public function __construct(
         PlanningFactory $planning_factory,
         Tracker_ArtifactFactory $tracker_artifact_factory,
-        Tracker_FormElementFactory $tracker_form_element_factory,
         AgileDashboard_Milestone_Backlog_BacklogFactory $backlog_factory,
         Planning_MilestoneFactory $milestone_factory,
         AgileDashboard_Milestone_Backlog_BacklogItemCollectionFactory $backlog_row_collection_factory,
@@ -76,7 +70,6 @@ class MilestoneResourceValidator
     ) {
         $this->planning_factory                = $planning_factory;
         $this->tracker_artifact_factory        = $tracker_artifact_factory;
-        $this->tracker_form_element_factory    = $tracker_form_element_factory;
         $this->backlog_factory                 = $backlog_factory;
         $this->milestone_factory               = $milestone_factory;
         $this->backlog_item_collection_factory = $backlog_row_collection_factory;
@@ -163,7 +156,7 @@ class MilestoneResourceValidator
         ?AgileDashboard_Milestone_Backlog_IBacklogItemCollection $done = null,
         ?AgileDashboard_Milestone_Backlog_IBacklogItemCollection $open_unplanned = null
     ) {
-        $artifacts = array();
+        $artifacts = [];
 
         foreach ($ids as $potential_backlog_item_id) {
             $artifact = $this->tracker_artifact_factory->getArtifactById($potential_backlog_item_id);
@@ -175,7 +168,8 @@ class MilestoneResourceValidator
                 throw new ArtifactIsNotInBacklogTrackerException($potential_backlog_item_id);
             }
 
-            if ($todo !== null
+            if (
+                $todo !== null
                 && ! $this->isArtifactInUnplannedParentMilestoneBacklogItems($artifact, $open_unplanned)
                 && ! $this->isArtifactInPlannedMilestoneBacklogItems($artifact, $done, $todo)
             ) {
@@ -198,12 +192,12 @@ class MilestoneResourceValidator
         return $this->backlog_item_collection_factory->getTodoCollection($user, $milestone, $backlog, false);
     }
 
-    private function isArtifactInUnplannedParentMilestoneBacklogItems(Tracker_Artifact $artifact, AgileDashboard_Milestone_Backlog_IBacklogItemCollection $unplanned_backlog_items)
+    private function isArtifactInUnplannedParentMilestoneBacklogItems(Artifact $artifact, AgileDashboard_Milestone_Backlog_IBacklogItemCollection $unplanned_backlog_items)
     {
         return $unplanned_backlog_items->containsId($artifact->getId());
     }
 
-    private function isArtifactInPlannedMilestoneBacklogItems(Tracker_Artifact $artifact, AgileDashboard_Milestone_Backlog_IBacklogItemCollection $done, AgileDashboard_Milestone_Backlog_IBacklogItemCollection $todo)
+    private function isArtifactInPlannedMilestoneBacklogItems(Artifact $artifact, AgileDashboard_Milestone_Backlog_IBacklogItemCollection $done, AgileDashboard_Milestone_Backlog_IBacklogItemCollection $todo)
     {
         return ($done->containsId($artifact->getId()) || $todo->containsId($artifact->getId()));
     }
@@ -273,7 +267,7 @@ class MilestoneResourceValidator
     private function filterArtifactIdsAlreadyInBacklog(array $ids, Planning_Milestone $milestone, PFUser $user)
     {
         $indexed_backlog_items = $this->getIndexedBacklogItems($user, $milestone);
-        $to_add = array();
+        $to_add = [];
         foreach ($ids as $id) {
             if (! isset($indexed_backlog_items[$id])) {
                 $to_add[] = $id;
@@ -284,7 +278,7 @@ class MilestoneResourceValidator
 
     private function getIndexedChildrenBacklogTrackers(Planning_Milestone $milestone)
     {
-        $children_backlog_trackers = array();
+        $children_backlog_trackers = [];
         $children_planning = $this->planning_factory->getChildrenPlanning($milestone->getPlanning());
         if ($children_planning) {
             foreach ($children_planning->getBacklogTrackersIds() as $id) {
@@ -296,7 +290,7 @@ class MilestoneResourceValidator
 
     private function getIndexedBacklogItems(PFUser $user, Planning_Milestone $milestone)
     {
-        $index = array();
+        $index = [];
         $backlog_items = $this->getMilestoneBacklogItems($user, $milestone);
         foreach ($backlog_items as $item) {
             $index[$item->id()] = true;
@@ -356,7 +350,7 @@ class MilestoneResourceValidator
         }
     }
 
-    public function canBacklogItemBeAddedToMilestone(Tracker_Artifact $artifact, array $allowed_trackers)
+    public function canBacklogItemBeAddedToMilestone(Artifact $artifact, array $allowed_trackers)
     {
         $artifact_tracker_id = $artifact->getTrackerId();
 
@@ -381,7 +375,7 @@ class MilestoneResourceValidator
 
     private function getIndexedLinkedArtifactIds(PFUser $user, Planning_Milestone $milestone)
     {
-        $linked_artifacts_index = array();
+        $linked_artifacts_index = [];
         foreach ($milestone->getArtifact()->getLinkedArtifacts($user) as $artifact) {
             $linked_artifacts_index[$artifact->getId()] = true;
         }

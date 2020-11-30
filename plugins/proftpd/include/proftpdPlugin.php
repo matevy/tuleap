@@ -18,6 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Layout\IncludeAssets;
 use Tuleap\ProFTPd\Admin\PermissionsManager as ProftpdPermissionsManager;
 use Tuleap\ProFTPd\PermissionsPerGroup\ProftpdPermissionsPerGroupPresenterBuilder;
 use Tuleap\ProFTPd\Plugin\ProftpdPluginInfo;
@@ -27,16 +28,16 @@ use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupPaneCollector;
 use Tuleap\Project\Admin\PermissionsPerGroup\PermissionPerGroupUGroupFormatter;
 
 require_once 'constants.php';
-require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-class proftpdPlugin extends Plugin
+class proftpdPlugin extends Plugin // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 {
     public const SERVICE_SHORTNAME = 'plugin_proftpd';
 
     public function __construct($id)
     {
         parent::__construct($id);
-        bindtextdomain('tuleap-proftpd', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-proftpd', __DIR__ . '/../site-content');
 
         $this->addHook('cssfile');
         $this->addHook(Event::SERVICE_CLASSNAMES);
@@ -68,10 +69,10 @@ class proftpdPlugin extends Plugin
     private function getRouter()
     {
         return new Tuleap\ProFTPd\ProftpdRouter(
-            array(
+            [
                 $this->getExplorerController(),
                 $this->getAdminController(),
-            )
+            ]
         );
     }
 
@@ -105,7 +106,7 @@ class proftpdPlugin extends Plugin
         return self::SERVICE_SHORTNAME;
     }
 
-    public function register_project_creation($params)
+    public function register_project_creation($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project_template = ProjectManager::instance()->getProject($params['template_id']);
         $project          = ProjectManager::instance()->getProject($params['group_id']);
@@ -117,17 +118,22 @@ class proftpdPlugin extends Plugin
         );
     }
 
-    public function service_classnames(array &$params)
+    public function service_classnames(array &$params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['classnames'][$this->getServiceShortname()] = \Tuleap\ProFTPd\ServiceProFTPd::class;
     }
 
     public function cssfile($params)
     {
-        if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0 ||
+        if (
+            strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0 ||
             strpos($_SERVER['REQUEST_URI'], '/widgets/') === 0
         ) {
-            echo '<link rel="stylesheet" type="text/css" href="'.$this->getThemePath().'/css/style.css" />'."\n";
+            $assets = new IncludeAssets(
+                __DIR__ . '/../../../src/www/assets/proftpd/',
+                '/assets/proftpd/'
+            );
+            echo '<link rel="stylesheet" type="text/css" href="' . $assets->getFileURL('style.css') . '" />' . "\n";
         }
     }
 
@@ -137,21 +143,21 @@ class proftpdPlugin extends Plugin
         return parent::getHooksAndCallbacks();
     }
 
-    public function logs_daily($params)
+    public function logs_daily($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $dao = new Tuleap\ProFTPd\Xferlog\Dao();
 
         $project = $this->getProject($params['group_id']);
         if ($project->usesService($this->getServiceShortname())) {
-            $params['logs'][] = array(
+            $params['logs'][] = [
                 'sql'   => $dao->getLogQuery($params['group_id'], $params['logs_cond']),
                 'field' => dgettext('tuleap-proftpd', 'Filepath'),
                 'title' => dgettext('tuleap-proftpd', 'FTP access')
-            );
+            ];
         }
     }
 
-    public function service_is_used($params)
+    public function service_is_used($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if ($params['shortname'] == self::SERVICE_SHORTNAME && $params['is_used']) {
             $project = $this->getProject($params['group_id']);
@@ -159,7 +165,7 @@ class proftpdPlugin extends Plugin
         }
     }
 
-    public function approve_pending_project($params)
+    public function approve_pending_project($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project = $this->getProject($params['group_id']);
         if ($project->usesService($this->getServiceShortname())) {
@@ -180,12 +186,12 @@ class proftpdPlugin extends Plugin
         $this->getProftpdSystemEventManager()->queueACLUpdate($project->getUnixName());
     }
 
-    public function system_event_get_types_for_default_queue($params)
+    public function system_event_get_types_for_default_queue($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['types'] = array_merge($params['types'], $this->getProftpdSystemEventManager()->getTypes());
     }
 
-    public function rename_project($params)
+    public function rename_project($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project             = $params['project'];
         $base_sftp_dir       = $this->getPluginInfo()->getPropVal('proftpd_base_directory');
@@ -200,7 +206,7 @@ class proftpdPlugin extends Plugin
     /**
      * This callback make SystemEvent manager knows about proftpd plugin System Events
      */
-    public function get_system_event_class($params)
+    public function get_system_event_class($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $this->getProftpdSystemEventManager()->instanciateEvents(
             $params['type'],
@@ -222,7 +228,7 @@ class proftpdPlugin extends Plugin
     /**
      * @see Event::GET_FTP_INCOMING_DIR
      */
-    public function get_ftp_incoming_dir($params)
+    public function get_ftp_incoming_dir($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $project = $params['project'];
 
@@ -244,19 +250,16 @@ class proftpdPlugin extends Plugin
             new NavigationDropdownItemPresenter(
                 dgettext('tuleap-proftpd', 'Proftpd'),
                 $this->getPluginPath() . '/?' . http_build_query(
-                    array(
+                    [
                         'group_id'   => $project->getID(),
                         'controller' => "admin",
                         'action'     => 'index'
-                    )
+                    ]
                 )
             )
         );
     }
 
-    /**
-     * @param PermissionPerGroupPaneCollector $event
-     */
     public function permissionPerGroupPaneCollector(PermissionPerGroupPaneCollector $event)
     {
         $project = $event->getProject();

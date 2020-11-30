@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,11 +22,11 @@ namespace Tuleap\Tracker\Artifact\ArtifactsDeletion;
 
 use CrossReferenceManager;
 use PermissionsManager;
-use Tracker_Artifact;
 use Tracker_Artifact_PriorityManager;
 use Tracker_ArtifactDao;
-use Tracker_FormElement_Field_ComputedDaoCache;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\RecentlyVisited\RecentlyVisitedDao;
+use Tuleap\Tracker\FormElement\Field\Computed\ComputedFieldDaoCache;
 
 class ArtifactDependenciesDeletor
 {
@@ -47,7 +47,7 @@ class ArtifactDependenciesDeletor
      */
     private $dao;
     /**
-     * @var Tracker_FormElement_Field_ComputedDaoCache
+     * @var ComputedFieldDaoCache
      */
     private $computed_dao_cache;
     /**
@@ -64,7 +64,7 @@ class ArtifactDependenciesDeletor
         CrossReferenceManager $cross_reference_manager,
         Tracker_Artifact_PriorityManager $tracker_artifact_priority_manager,
         Tracker_ArtifactDao $dao,
-        Tracker_FormElement_Field_ComputedDaoCache $computed_dao_cache,
+        ComputedFieldDaoCache $computed_dao_cache,
         RecentlyVisitedDao $recently_visited_dao,
         PendingArtifactRemovalDao $artifact_removal
     ) {
@@ -77,14 +77,21 @@ class ArtifactDependenciesDeletor
         $this->artifact_removal                  = $artifact_removal;
     }
 
-    public function cleanDependencies(Tracker_Artifact $artifact)
+    public function cleanDependencies(Artifact $artifact)
     {
-        $this->permissions_manager->clearPermission(Tracker_Artifact::PERMISSION_ACCESS, $artifact->getId());
+        $artifact_deletor_visitor = new ArtifactFilesDeletorVisitor($artifact);
+        $this->permissions_manager->clearPermission(Artifact::PERMISSION_ACCESS, $artifact->getId());
+        $tracker = $artifact->getTracker();
         $this->cross_reference_manager->deleteEntity(
             $artifact->getId(),
-            Tracker_Artifact::REFERENCE_NATURE,
-            $artifact->getTracker()->getGroupId()
+            Artifact::REFERENCE_NATURE,
+            $tracker->getGroupId()
         );
+
+        foreach ($tracker->getFormElementFields() as $form_element) {
+            $form_element->accept($artifact_deletor_visitor);
+        }
+
         $this->dao->deleteArtifactLinkReference($artifact->getId());
         $this->dao->deleteUnsubscribeNotificationForArtifact($artifact->getId());
         // We do not keep trace of the history change here because it doesn't have any sense

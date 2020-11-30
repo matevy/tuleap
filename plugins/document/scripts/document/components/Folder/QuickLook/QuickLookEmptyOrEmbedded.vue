@@ -30,7 +30,7 @@
             v-bind:is-details-button-shown="!item.user_can_write"
         />
         <div class="document-header-spacer"></div>
-        <quick-look-delete-button v-bind:item="item"/>
+        <quick-look-delete-button v-bind:item="item" />
     </div>
 </template>
 
@@ -43,15 +43,15 @@ export default {
     components: {
         DetailsItemButton,
         DropDownQuickLook,
-        QuickLookDeleteButton
+        QuickLookDeleteButton,
     },
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
         is_details_button_shown() {
             return !this.item.user_can_write;
-        }
-    }
+        },
+    },
 };
 </script>

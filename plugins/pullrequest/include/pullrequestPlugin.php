@@ -28,6 +28,7 @@ use Tuleap\Git\Events\AfterRepositoryForked;
 use Tuleap\Git\GitAdditionalActionEvent;
 use Tuleap\Git\GitRepositoryDeletionEvent;
 use Tuleap\Git\GitViews\RepoManagement\Pane\PanesCollection;
+use Tuleap\Git\Hook\PostReceiveExecuteEvent;
 use Tuleap\Git\MarkTechnicalReference;
 use Tuleap\Git\Permissions\AccessControlVerifier;
 use Tuleap\Git\Permissions\FineGrainedDao;
@@ -50,7 +51,7 @@ use Tuleap\Label\CollectionOfLabelableDao;
 use Tuleap\Label\LabeledItemCollection;
 use Tuleap\Layout\CssAsset;
 use Tuleap\Layout\IncludeAssets;
-use Tuleap\layout\ScriptAsset;
+use Tuleap\Layout\JavascriptAsset;
 use Tuleap\Project\Admin\GetProjectHistoryEntryValue;
 use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
 use Tuleap\PullRequest\Authorization\PullRequestPermissionChecker;
@@ -71,7 +72,6 @@ use Tuleap\PullRequest\InlineComment\Dao as InlineCommentDao;
 use Tuleap\PullRequest\InlineComment\InlineCommentUpdater;
 use Tuleap\PullRequest\Label\LabeledItemCollector;
 use Tuleap\PullRequest\Label\PullRequestLabelDao;
-use Tuleap\PullRequest\Logger;
 use Tuleap\PullRequest\MergeSetting\MergeSettingDAO;
 use Tuleap\PullRequest\MergeSetting\MergeSettingRetriever;
 use Tuleap\PullRequest\NavigationTab\NavigationTabPresenterBuilder;
@@ -95,7 +95,7 @@ use Tuleap\PullRequest\Timeline\TimelineEventCreator;
 use Tuleap\PullRequest\Tooltip\Presenter;
 use Tuleap\Queue\WorkerEvent;
 use Tuleap\Request\CollectRoutesEvent;
-use Zend\HttpHandlerRunner\Emitter\SapiEmitter;
+use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
 
 class pullrequestPlugin extends Plugin // phpcs:ignore
 {
@@ -135,7 +135,7 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
             $this->addHook(REST_GIT_PULL_REQUEST_GET_FOR_REPOSITORY);
             $this->addHook(GIT_ADDITIONAL_BODY_CLASSES);
             $this->addHook(GIT_ADDITIONAL_PERMITTED_ACTIONS);
-            $this->addHook(GIT_HOOK_POSTRECEIVE_REF_UPDATE, 'gitHookPostReceive');
+            $this->addHook(PostReceiveExecuteEvent::NAME);
             $this->addHook(GitRepositoryDeletionEvent::NAME);
             $this->addHook(GitAdditionalActionEvent::NAME);
             $this->addHook(AdditionalInformationRepresentationRetriever::NAME);
@@ -159,7 +159,7 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
      */
     public function getDependencies()
     {
-        return array('git');
+        return ['git'];
     }
 
     public function service_classnames($params) // phpcs:ignore
@@ -169,21 +169,20 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
 
     public function collectAssets(CollectAssets $retriever)
     {
+        $assets = new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/pullrequest',
+            '/assets/pullrequest'
+        );
+
         $css_assets = new CssAsset(
-            new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/pullrequest/BurningParrot',
-                '/assets/pullrequest/BurningParrot'
-            ),
+            $assets,
             'repository'
         );
         $retriever->addStylesheet($css_assets);
 
-        $scripts_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/pullrequest/scripts',
-            '/assets/pullrequest/scripts'
-        );
 
-        $create_pullrequest = new ScriptAsset($scripts_assets, 'create-pullrequest-button.js');
+
+        $create_pullrequest = new JavascriptAsset($assets, 'create-pullrequest-button.js');
         $retriever->addScript($create_pullrequest);
     }
 
@@ -192,7 +191,7 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
      */
     public function getPluginInfo()
     {
-        if (!$this->pluginInfo) {
+        if (! $this->pluginInfo) {
             $this->pluginInfo = new PluginInfo($this);
         }
         return $this->pluginInfo;
@@ -222,7 +221,11 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
     {
         $version = $params['version'];
         $class   = "\\Tuleap\\PullRequest\\REST\\$version\\RepositoryResource";
-        $repository_resource = new $class;
+        if (! class_exists($class)) {
+            throw new LogicException("$class does not exist");
+        }
+
+        $repository_resource = new $class();
 
         $params['result'] = $repository_resource->getPaginatedPullRequests(
             $params['repository'],
@@ -259,23 +262,30 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
     {
         if ($event->getRequest()->get('action') === 'pull-requests') {
             $layout          = $this->getThemeManager()->getBurningParrot($event->getRequest()->getCurrentUser());
+            if ($layout === null) {
+                throw new \Exception("Could not load BurningParrot theme");
+            }
             $this->getPullRequestDisplayer()->display($event->getRequest(), $layout);
         }
     }
 
-    public function gitHookPostReceive($params)
+    public function postReceiveExecuteEvent(PostReceiveExecuteEvent $event)
     {
-        $refname     = $params['refname'];
+        $refname     = $event->getRefname();
         $branch_name = $this->getBranchNameFromRef($refname);
 
         if ($branch_name != null) {
-            $new_rev    = $params['newrev'];
-            $repository = $params['repository'];
-            $user       = $params['user'];
+            $new_rev    = $event->getNewrev();
+            $repository = $event->getRepository();
+            $user       = $event->getUser();
 
             if ($new_rev == '0000000000000000000000000000000000000000') {
                 $this->abandonFromSourceBranch($user, $repository, $branch_name);
             } else {
+                if (! $user->isAnonymous()) {
+                    $this->markManuallyMerged($user, $repository, $branch_name, $new_rev);
+                }
+
                 $pull_request_updater = new PullRequestUpdater(
                     $this->getPullRequestFactory(),
                     new PullRequestMerger(
@@ -291,13 +301,9 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
                         new GitPullRequestReferenceDAO(),
                         new GitPullRequestReferenceNamespaceAvailabilityChecker()
                     ),
-                    PullRequestNotificationSupport::buildDispatcher(new Logger())
+                    PullRequestNotificationSupport::buildDispatcher(self::getLogger())
                 );
                 $pull_request_updater->updatePullRequests($user, $repository, $branch_name, $new_rev);
-            }
-
-            if (! $user->isAnonymous()) {
-                $this->markManuallyMerged($user, $repository, $branch_name, $new_rev);
             }
         }
     }
@@ -342,7 +348,7 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
                 new MergeSettingRetriever(new MergeSettingDAO())
             ),
             $this->getTimelineEventCreator(),
-            PullRequestNotificationSupport::buildDispatcher(new Logger())
+            PullRequestNotificationSupport::buildDispatcher(self::getLogger())
         );
     }
 
@@ -429,16 +435,16 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
     {
         $params['keywords'] = array_merge(
             $params['keywords'],
-            array(self::PR_REFERENCE_KEYWORD, self::PULLREQUEST_REFERENCE_KEYWORD)
+            [self::PR_REFERENCE_KEYWORD, self::PULLREQUEST_REFERENCE_KEYWORD]
         );
     }
 
     public function get_available_reference_natures($params) // phpcs:ignore
     {
-        $nature = array(self::REFERENCE_NATURE => array(
+        $nature = [self::REFERENCE_NATURE => [
             'keyword' => 'pullrequest',
             'label'   => 'Git Pull Request'
-        ));
+        ]];
 
         $params['natures'] = array_merge($params['natures'], $nature);
     }
@@ -528,7 +534,12 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
 
     public function postInitGitRepositoryWithDataEvent(PostInitGitRepositoryWithDataEvent $event)
     {
-        (new GitPullRequestReferenceRemover)->removeAll(GitExec::buildFromRepository($event->getRepository()));
+        (new GitPullRequestReferenceRemover())->removeAll(GitExec::buildFromRepository($event->getRepository()));
+    }
+
+    public static function getLogger()
+    {
+        return BackendLogger::getDefaultLogger('pullrequest_syslog');
     }
 
     public function dailyExecution()
@@ -542,7 +553,7 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
             ),
             $this->getPullRequestFactory(),
             $this->getRepositoryFactory(),
-            new Logger()
+            self::getLogger(),
         );
         $pull_request_git_reference_bulk_converter->convertAllPullRequestsWithoutAGitReference();
     }
@@ -727,7 +738,6 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
     {
         $header_builder = new GitRepositoryHeaderDisplayerBuilder();
         return new PullrequestDisplayer(
-            $this->getThemeManager(),
             $this->getPullRequestFactory(),
             $this->getTemplateRenderer(),
             new MergeSettingRetriever(new MergeSettingDAO()),
@@ -736,9 +746,6 @@ class pullrequestPlugin extends Plugin // phpcs:ignore
         );
     }
 
-    /**
-     * @return HTMLURLBuilder
-     */
     private function getHTMLBuilder(): HTMLURLBuilder
     {
         return new HTMLURLBuilder(

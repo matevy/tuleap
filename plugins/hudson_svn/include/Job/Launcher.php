@@ -25,7 +25,7 @@ use Tuleap\SVN\Repository\Repository;
 use Tuleap\SVN\Commit\CommitInfo;
 use Jenkins_Client;
 use Jenkins_ClientUnableToLaunchBuildException;
-use Logger;
+use Psr\Log\LoggerInterface;
 
 class Launcher
 {
@@ -33,7 +33,7 @@ class Launcher
     public const ROOT_DIRECTORY = '/';
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -48,9 +48,9 @@ class Launcher
     /** @var BuildParams  */
     private $build_params;
 
-    private $launched_jobs = array();
+    private $launched_jobs = [];
 
-    public function __construct(Factory $factory, Logger $logger, Jenkins_Client $ci_client, BuildParams $build_params)
+    public function __construct(Factory $factory, LoggerInterface $logger, Jenkins_Client $ci_client, BuildParams $build_params)
     {
         $this->factory      = $factory;
         $this->logger       = $logger;
@@ -78,7 +78,7 @@ class Launcher
                     continue;
                 }
 
-                $this->logger->info("Launching job #$job_id triggered by repository ".$repository->getFullName()." with the url " .$job->getUrl());
+                $this->logger->info("Launching job #$job_id triggered by repository " . $repository->getFullName() . " with the url " . $job->getUrl());
                 try {
                     $this->ci_client->setToken($job->getToken());
                     $this->ci_client->launchJobBuild(
@@ -88,7 +88,7 @@ class Launcher
 
                     $this->launched_jobs[] = $job->getUrl();
                 } catch (Jenkins_ClientUnableToLaunchBuildException $exception) {
-                    $this->logger->error("Launching job #$job_id triggered by repository ".$repository->getFullName()." with the url " .$job->getUrl()." returns an error " .$exception->getMessage());
+                    $this->logger->error("Launching job #$job_id triggered by repository " . $repository->getFullName() . " with the url " . $job->getUrl() . " returns an error " . $exception->getMessage());
                 }
 
                 continue;
@@ -133,7 +133,7 @@ class Launcher
      */
     private function getWellFormedChangedDirectories(CommitInfo $commit_info)
     {
-        $well_formed_directories = array();
+        $well_formed_directories = [];
         foreach ($commit_info->getChangedDirectories() as $changed_directory) {
             if ($changed_directory !== self::ROOT_DIRECTORY) {
                 $changed_directory = self::ROOT_DIRECTORY . $changed_directory;

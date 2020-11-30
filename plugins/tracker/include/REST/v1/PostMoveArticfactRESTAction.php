@@ -23,7 +23,7 @@ namespace Tuleap\Tracker\REST\v1;
 use Feedback;
 use FeedbackDao;
 use Tracker;
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class PostMoveArticfactRESTAction
 {
@@ -40,7 +40,7 @@ class PostMoveArticfactRESTAction
     public function addFeedback(
         Tracker $source_tracker,
         Tracker $target_tracker,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         \PFUser $user
     ) {
         $tracker_source_name      = $source_tracker->getItemName();
@@ -57,7 +57,7 @@ class PostMoveArticfactRESTAction
                 dgettext('tuleap-tracker', "%s has been successfully moved to %s in %s"),
                 $tracker_source_name . " #" . $artifact->getId(),
                 $tracker_destination_name . " #" . $artifact->getId(),
-                $target_tracker->getProject()->getUnconvertedPublicName()
+                $target_tracker->getProject()->getPublicName()
             );
         }
 

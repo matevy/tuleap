@@ -23,7 +23,6 @@ namespace Tuleap\Statistics;
 use Feedback;
 use ForgeConfig;
 use HTTPRequest;
-use Statistics_DiskUsageManager;
 use Tuleap\Admin\AdminPageRenderer;
 
 class DiskUsageRouter
@@ -32,10 +31,6 @@ class DiskUsageRouter
      * @var DiskUsageGlobalPresenterBuilder
      */
     public $global_builder;
-    /**
-     * @var Statistics_DiskUsageManager
-     */
-    private $usage_manager;
     /**
      * @var DiskUsageServicesPresenterBuilder
      */
@@ -56,14 +51,12 @@ class DiskUsageRouter
     private $user_details_builder;
 
     public function __construct(
-        Statistics_DiskUsageManager $usage_manager,
         DiskUsageServicesPresenterBuilder $services_builder,
         DiskUsageProjectsPresenterBuilder $projects_builder,
         DiskUsageTopUsersPresenterBuilder $top_users_builder,
         DiskUsageGlobalPresenterBuilder $global_builder,
         DiskUsageUserDetailsPresenterBuilder $user_details_builder
     ) {
-        $this->usage_manager        = $usage_manager;
         $this->services_builder     = $services_builder;
         $this->projects_builder     = $projects_builder;
         $this->top_users_builder    = $top_users_builder;
@@ -97,9 +90,9 @@ class DiskUsageRouter
             } catch (StartDateGreaterThanEndDateException $exception) {
                 $GLOBALS['Response']->addFeedback(
                     Feedback::ERROR,
-                    $GLOBALS['Language']->getText('plugin_statistics', 'period_error')
+                    dgettext('tuleap-statistics', 'You made a mistake in selecting period. Please try again!')
                 );
-                $GLOBALS['Response']->redirect('/plugins/statistics/disk_usage.php?menu='.$menu);
+                $GLOBALS['Response']->redirect('/plugins/statistics/disk_usage.php?menu=' . $menu);
             }
         }
     }
@@ -114,7 +107,7 @@ class DiskUsageRouter
         $end_date               = $request->get('end_date');
         $relative_y_axis        = $request->get('relative_y_axis');
 
-        $title = $GLOBALS['Language']->getText('plugin_statistics', 'index_page_title');
+        $title = dgettext('tuleap-statistics', 'Statistics');
 
         $disk_usage_services_presenter = $this->services_builder->buildServices(
             $project_id,
@@ -146,7 +139,7 @@ class DiskUsageRouter
         $order             = $request->get('order');
         $offset            = $request->get('offset');
 
-        $title = $GLOBALS['Language']->getText('plugin_statistics', 'index_page_title');
+        $title = dgettext('tuleap-statistics', 'Statistics');
 
         $disk_usage_projects_presenter = $this->projects_builder->buildProjects(
             $title,
@@ -171,7 +164,7 @@ class DiskUsageRouter
     {
         $end_date = $request->get('end_date');
 
-        $title = $GLOBALS['Language']->getText('plugin_statistics', 'index_page_title');
+        $title = dgettext('tuleap-statistics', 'Statistics');
 
         $top_users_presenter = $this->top_users_builder->build(
             $title,
@@ -189,7 +182,7 @@ class DiskUsageRouter
 
     private function displayGlobalData()
     {
-        $title = $GLOBALS['Language']->getText('plugin_statistics', 'index_page_title');
+        $title = dgettext('tuleap-statistics', 'Statistics');
 
         $disk_usage_global_presenter = $this->global_builder->build($title);
 
@@ -209,7 +202,7 @@ class DiskUsageRouter
         $start_date        = $request->get('start_date');
         $end_date          = $request->get('end_date');
 
-        $title = $GLOBALS['Language']->getText('plugin_statistics', 'index_page_title');
+        $title = dgettext('tuleap-statistics', 'Statistics');
 
         $user_details_presenter = $this->user_details_builder->build(
             $title,

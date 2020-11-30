@@ -46,6 +46,9 @@ class Admin_UserListExporter
      * @param String $current_sort_header
      * @param String $sort_order
      * @param array  $status_values
+     *
+     * @psalm-param "user_name"|"realname"|"status" $current_sort_header
+     * @psalm-param "ASC"|"DESC" $sort_order
      */
     public function exportUserList($group_id, $user_name_search, $current_sort_header, $sort_order, $status_values)
     {
@@ -55,7 +58,7 @@ class Admin_UserListExporter
         $eol = "\n";
         $documents_title = [
             'user_id'          => $Language->getText('admin_userlist', 'id_user'),
-            'login_name'       => $Language->getText('include_user_home', 'login_name'),
+            'login_name'       => $Language->getOverridableText('include_user_home', 'login_name'),
             'real_name'        => $Language->getText('include_user_home', 'real_name'),
             'email'            => $Language->getText('admin_userlist', 'email'),
             'member_of'        => $Language->getText('admin_userlist', 'member_of'),
@@ -63,7 +66,7 @@ class Admin_UserListExporter
             'status'           => $Language->getText('admin_userlist', 'status'),
             'last_access_date' => $Language->getText('admin_userlist', 'last_access_date'),
         ];
-        echo build_csv_header($this->col_list, $documents_title).$eol;
+        echo build_csv_header($this->col_list, $documents_title) . $eol;
         $dao = new UserDao(CodendiDataAccess::instance());
         $result = $dao->listAllUsers($group_id, $user_name_search, 0, 0, $current_sort_header, $sort_order, $status_values);
         $users  = $result['users'];
@@ -91,7 +94,7 @@ class Admin_UserListExporter
                 'status'           => $this->getUserStatus($user['status']),
                 'last_access_date' => $this->getLastAccessDate($user['last_access_date']),
             ];
-            $csv_body .= build_csv_record($this->col_list, $documents_body)."\n";
+            $csv_body .= build_csv_record($this->col_list, $documents_body) . "\n";
         }
 
         return $csv_body;

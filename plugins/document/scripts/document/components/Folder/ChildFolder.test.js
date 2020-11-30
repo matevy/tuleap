@@ -21,7 +21,7 @@ import { shallowMount } from "@vue/test-utils";
 import VueRouter from "vue-router";
 import localVue from "../../helpers/local-vue.js";
 
-import { createStoreMock } from "../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import ChildFolder from "./ChildFolder.vue";
 
 describe("ChildFolder", () => {
@@ -33,13 +33,13 @@ describe("ChildFolder", () => {
             routes: [
                 {
                     path: "/folder/10",
-                    name: "folder"
+                    name: "folder",
                 },
                 {
                     path: "/preview/20",
-                    name: "preview"
-                }
-            ]
+                    name: "preview",
+                },
+            ],
         });
 
         factory = (props = {}) => {
@@ -47,7 +47,7 @@ describe("ChildFolder", () => {
                 localVue,
                 propsData: { ...props },
                 mocks: { $store: store },
-                router
+                router,
             });
         };
     });
@@ -59,8 +59,8 @@ describe("ChildFolder", () => {
         router.push({
             name: "folder",
             params: {
-                item_id: 10
-            }
+                item_id: 10,
+            },
         });
 
         factory();
@@ -73,14 +73,14 @@ describe("ChildFolder", () => {
         router.push({
             name: "preview",
             params: {
-                preview_item_id: 20
-            }
+                preview_item_id: 20,
+            },
         });
         const wrapper = factory();
 
         store.state.currently_previewed_item = {
             id: 20,
-            parent_id: 10
+            parent_id: 10,
         };
 
         expect(store.dispatch).toHaveBeenCalledWith("toggleQuickLook", 20);
@@ -96,8 +96,8 @@ describe("ChildFolder", () => {
         router.push({
             name: "preview",
             params: {
-                preview_item_id: 20
-            }
+                preview_item_id: 20,
+            },
         });
         factory();
 
@@ -106,46 +106,48 @@ describe("ChildFolder", () => {
     });
 
     it(`Given route is updated to "folder" and given folder has changed (=> redirection into a folder)
-        Then the folder is loaded`, () => {
+        Then the folder is loaded`, async () => {
         store.state.current_folder = { id: 10, title: "current folder" };
 
         router.push({
             name: "preview",
             params: {
-                preview_item_id: 10
-            }
+                preview_item_id: 10,
+            },
         });
-        factory();
+        const wrapper = factory();
 
         router.push({
             name: "folder",
             params: {
-                item_id: 20
-            }
+                item_id: 20,
+            },
         });
+        await wrapper.vm.$nextTick();
 
         expect(store.dispatch).toHaveBeenCalledWith("removeQuickLook");
         expect(store.dispatch).toHaveBeenCalledWith("loadFolder", 20);
     });
 
     it(`Given route is updated to "folder" and given folder is the same (=> close preview)
-        Then we only close quick look`, () => {
+        Then we only close quick look`, async () => {
         store.state.current_folder = { id: 10, title: "current folder" };
 
         router.push({
             name: "preview",
             params: {
-                preview_item_id: 20
-            }
+                preview_item_id: 20,
+            },
         });
-        factory();
+        const wrapper = factory();
 
         router.push({
             name: "folder",
             params: {
-                preview_item_id: 20
-            }
+                preview_item_id: 20,
+            },
         });
+        await wrapper.vm.$nextTick();
 
         expect(store.dispatch).toHaveBeenCalledWith("removeQuickLook");
         expect(store.dispatch).not.toHaveBeenCalledWith("loadFolder");

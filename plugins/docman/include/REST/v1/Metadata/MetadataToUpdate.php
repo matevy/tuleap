@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
@@ -49,9 +49,6 @@ class MetadataToUpdate
         return new self($metadata, $value, $recursion);
     }
 
-    /**
-     * @return \Docman_Metadata
-     */
     public function getMetadata(): \Docman_Metadata
     {
         return $this->metadata;
@@ -65,9 +62,6 @@ class MetadataToUpdate
         return $this->value;
     }
 
-    /**
-     * @return string
-     */
     public function getRecursion(): string
     {
         return $this->recursion;

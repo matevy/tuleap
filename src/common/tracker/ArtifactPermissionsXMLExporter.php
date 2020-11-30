@@ -64,10 +64,10 @@ class ArtifactPermissionsXMLExporter
     private function getFilteredUgroupIds($artifact_id)
     {
         $permissions         = $this->dao->searchPermsForArtifact($artifact_id);
-        $filtered_ugroup_ids = array();
+        $filtered_ugroup_ids = [];
 
         foreach ($permissions as $row) {
-            $ugroup_id = (int)$row['ugroup_id'];
+            $ugroup_id = (int) $row['ugroup_id'];
 
             if ($ugroup_id === ProjectUGroup::NONE) {
                 $ugroup_id = ProjectUGroup::PROJECT_ADMIN;

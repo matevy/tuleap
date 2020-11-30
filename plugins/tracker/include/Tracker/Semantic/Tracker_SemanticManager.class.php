@@ -47,22 +47,22 @@ class Tracker_SemanticManager
 
     public function displayAdminSemantic(TrackerManager $tracker_manager, $request, $current_user)
     {
-        $title = $GLOBALS['Language']->getText('plugin_tracker_admin', 'manage_semantic');
+        $title = dgettext('tuleap-tracker', 'Manage Semantic');
         $this->tracker->displayWarningArtifactByEmailSemantic();
         $this->tracker->displayAdminItemHeader($tracker_manager, 'editsemantic', $title);
 
         echo '<h2 class="almost-tlp-title">' . $title . '</h2>';
         echo '<p>';
-        echo $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'semantic_intro');
+        echo dgettext('tuleap-tracker', 'As trackers can be fully customized, you may want to define what is the title of your artifacts, or when you consider an artifact to be open or close. This information is used in the application to display artifact summary, and tooltip for instance.');
         echo '</p>';
 
         foreach ($this->getSemantics() as $semantic) {
-            echo '<h3>'. $semantic->getLabel() .' <a href="'.TRACKER_BASE_URL.'/?'. http_build_query(array(
+            echo '<h3>' . $semantic->getLabel() . ' <a href="' . TRACKER_BASE_URL . '/?' . http_build_query([
                 'tracker'  => $this->tracker->getId(),
                 'func'     => 'admin-semantic',
                 'semantic' => $semantic->getShortName(),
-            )) .'">';
-            echo $GLOBALS['HTML']->getImage('ic/edit.png', array('alt' => 'edit'));
+            ]) . '">';
+            echo $GLOBALS['HTML']->getImage('ic/edit.png', ['alt' => 'edit']);
             echo '</a></h3>';
             $semantic->display();
         }
@@ -79,7 +79,7 @@ class Tracker_SemanticManager
             $title
         );
 
-        echo '<h2 class="almost-tlp-title">'. $title .'</h2>';
+        echo '<h2 class="almost-tlp-title">' . $title . '</h2>';
     }
 
     public function displaySemanticFooter(Tracker_Semantic $semantic, TrackerManager $tracker_manager)
@@ -136,16 +136,15 @@ class Tracker_SemanticManager
     /**
      * Use an event to get semantics from other plugins.
      *
-     * @param Tracker_SemanticCollection $semantics
      */
     private function addOtherSemantics(Tracker_SemanticCollection $semantics)
     {
          EventManager::instance()->processEvent(
              TRACKER_EVENT_MANAGE_SEMANTICS,
-             array(
+             [
                 'semantics'   => $semantics,
                 'tracker'     => $this->tracker,
-             )
+             ]
          );
     }
 
@@ -182,12 +181,12 @@ class Tracker_SemanticManager
 
     protected function getSemanticOrder()
     {
-        $order = array('title', 'description', 'status', 'contributor', SemanticTimeframe::NAME);
+        $order = ['title', 'description', 'status', 'contributor', SemanticTimeframe::NAME];
         EventManager::instance()->processEvent(
             TRACKER_EVENT_GET_SEMANTICS_NAMES,
-            array(
+            [
                 'semantics' => &$order
-            )
+            ]
         );
 
         return $order;

@@ -43,11 +43,10 @@ class WebDAVAuthentication
      *
      * @return PFUser
      */
-    function authenticate()
+    public function authenticate()
     {
-
         // test if username field is empty
-        if (!$this->issetUsername()) {
+        if (! $this->issetUsername()) {
             $this->setHeader();
         } else {
             $username = $this->getUsername();
@@ -68,16 +67,14 @@ class WebDAVAuthentication
      *
      * @return bool
      */
-    function issetUsername()
+    public function issetUsername()
     {
-
         return isset($_SERVER['PHP_AUTH_USER']);
     }
 
     /**
      * Sets the authentication header
      *
-     * @return void
      */
     public function setHeader(): void
     {
@@ -89,9 +86,8 @@ class WebDAVAuthentication
      *
      * @return String
      */
-    function getUsername()
+    public function getUsername()
     {
-
         return $_SERVER['PHP_AUTH_USER'];
     }
 
@@ -100,9 +96,8 @@ class WebDAVAuthentication
      *
      * @return String
      */
-    function getPassword()
+    public function getPassword()
     {
-
         return $_SERVER['PHP_AUTH_PW'];
     }
 
@@ -115,9 +110,8 @@ class WebDAVAuthentication
      *
      * @return PFUser
      */
-    function getUser($username, $password)
+    public function getUser($username, $password)
     {
-
-        return UserManager::instance()->login($username, $password);
+        return UserManager::instance()->login($username, new \Tuleap\Cryptography\ConcealedString($password));
     }
 }

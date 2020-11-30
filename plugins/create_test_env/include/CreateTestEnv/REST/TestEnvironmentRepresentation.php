@@ -49,8 +49,8 @@ class TestEnvironmentRepresentation
     {
         $this->id                = JsonCast::toInt($project->getID());
         $this->project_shortname = $project->getUnixNameMixedCase();
-        $this->project_realname  = $project->getUnconvertedPublicName();
-        $this->project_url       = $base_url.'/projects/'.$project->getUnixNameLowerCase();
+        $this->project_realname  = $project->getPublicName();
+        $this->project_url       = $base_url . '/projects/' . $project->getUnixNameLowerCase();
         return $this;
     }
 }

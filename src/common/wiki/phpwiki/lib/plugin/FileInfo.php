@@ -35,17 +35,17 @@ rcs_id('$Id: FileInfo.php,v 1.4 2005/10/29 14:18:47 rurban Exp $');
 
 class WikiPlugin_FileInfo extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("FileInfo");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Display file information like version,size,date,... of uploaded files.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -54,39 +54,39 @@ class WikiPlugin_FileInfo extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array(
+        return [
                      'file'      => false, // relative path from PHPWIKI_DIR. (required)
                      'display'   => false, // version,size,date,mtime,owner,name,path,dirname,link.  (required)
                      'format'    => false, // printf format string with %s only, all display modes
                             // from above vars return strings (optional)
-                    );
+                    ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
-        if (!$file) {
+        if (! $file) {
             return $this->error(sprintf(_("A required argument '%s' is missing."), 'file'));
         }
-        if (!$display) {
+        if (! $display) {
             return $this->error(sprintf(_("A required argument '%s' is missing."), 'display'));
         }
 
         $dir = getcwd();
         chdir(PHPWIKI_DIR);
     // sanify $file name
-        if (!file_exists($file)) {
+        if (! file_exists($file)) {
             trigger_error("file \"$file\" not found", E_USER_WARNING);
         }
         $realfile = realpath($file);
-        if (!string_starts_with($realfile, realpath(getUploadDataPath()))) {
+        if (! string_starts_with($realfile, realpath(getUploadDataPath()))) {
             return $this->error("invalid path \"$file\"");
         } else {
             $isuploaded = 1;
         }
-        $s = array();
+        $s = [];
         $modes = explode(",", $display);
         foreach ($modes as $mode) {
             switch ($mode) {
@@ -122,9 +122,9 @@ class WikiPlugin_FileInfo extends WikiPlugin
                     break;
                 case 'link':
                     if ($isuploaded) {
-                              $s[] = "[Upload:".basename($file)."]";
+                              $s[] = "[Upload:" . basename($file) . "]";
                     } else {
-                                $s[] = "[".basename($file)."]";
+                                $s[] = "[" . basename($file) . "]";
                     }
                     break;
                 default:
@@ -133,7 +133,7 @@ class WikiPlugin_FileInfo extends WikiPlugin
             }
         }
         chdir($dir);
-        if (!$format) {
+        if (! $format) {
             $format = '';
             foreach ($s as $x) {
                 $format .= " %s";
@@ -150,7 +150,7 @@ class WikiPlugin_FileInfo extends WikiPlugin
         }
     }
 
-    function magic($file)
+    public function magic($file)
     {
         if (function_exists('finfo_file') or loadPhpExtension('fileinfo')) {
             // Valid finfo_open (i.e. libmagic) options:
@@ -164,20 +164,20 @@ class WikiPlugin_FileInfo extends WikiPlugin
         return '';
     }
 
-    function mime_type($file)
+    public function mime_type($file)
     {
         return '';
     }
 
-    function _formatsize($n, $factor, $suffix = '')
+    public function _formatsize($n, $factor, $suffix = '')
     {
         if ($n > $factor) {
             $b = $n / $factor;
             $n -= floor($factor * $b);
-            return number_format($b, $n ? 3 : 0). $suffix;
+            return number_format($b, $n ? 3 : 0) . $suffix;
         }
     }
-    function phonysize($a)
+    public function phonysize($a)
     {
         $factor = 1024 * 1024 * 1000;
         if ($a > $factor) {
@@ -198,13 +198,10 @@ class WikiPlugin_FileInfo extends WikiPlugin
         }
     }
 
-    function exeversion($file)
+    public function exeversion($file)
     {
-        if (!isWindows()) {
+        if (! isWindows()) {
             return "?";
-        }
-        if (class_exists('ffi') or loadPhpExtension('ffi')) {
-            return $this->exeversion_ffi($file);
         }
         if (function_exists('res_list_type') or loadPhpExtension('win32std')) {
             return $this->exeversion_resopen($file);
@@ -214,77 +211,20 @@ class WikiPlugin_FileInfo extends WikiPlugin
     }
 
     // http://www.codeproject.com/dll/showver.asp
-    function exeversion_showver($file)
+    public function exeversion_showver($file)
     {
         $path = realpath($file);
         $result = `showver $path`;
         return "?";
     }
 
-    function exeversion_ffi($file)
-    {
-        if (!DEBUG) {
-            return "?"; // not yet stable
-        }
-
-        if (function_exists('ffi') or loadPhpExtension('ffi')) {
-            $win32_idl = "
-struct VS_FIXEDFILEINFO {
-        DWORD dwSignature;
-        DWORD dwStrucVersion;
-        DWORD dwFileVersionMS;
-        DWORD dwFileVersionLS;
-        DWORD dwProductVersionMS;
-        DWORD dwProductVersionLS;
-        DWORD dwFileFlagsMask;
-        DWORD dwFileFlags;
-        DWORD dwFileOS;
-        DWORD dwFileType;
-        DWORD dwFileSubtype;
-        DWORD dwFileDateMS;
-        DWORD dwFileDateLS;
-};
-struct VS_VERSIONINFO { struct VS_VERSIONINFO
-  WORD  wLength; 
-  WORD  wValueLength; 
-  WORD  wType; 
-  WCHAR szKey[1]; 
-  WORD  Padding1[1]; 
-  VS_FIXEDFILEINFO Value; 
-  WORD  Padding2[1]; 
-  WORD  Children[1]; 
-};
-[lib='kernel32.dll'] DWORD GetFileVersionInfoSizeA(char *szFileName, DWORD *dwVerHnd);
-[lib='kernel32.dll'] int GetFileVersionInfoA(char *sfnFile, DWORD dummy, DWORD size, struct VS_VERSIONINFO *pVer);
-";
-            $ffi = new ffi($win32_idl);
-            $dummy = 0; // &DWORD
-             $size = $ffi->GetFileVersionInfoSizeA($file, $dummy);
-            //$pVer = str_repeat($size+1);
-            $pVer = new ffi_struct($ffi, "VS_VERSIONINFO");
-            if ($ffi->GetFileVersionInfoA($file, 0, $size, $pVer)
-                and $pVer->wValueLength) {
-         // analyze the VS_FIXEDFILEINFO(Value);
-         // $pValue = new ffi_struct($ffi, "VS_FIXEDFILEINFO");
-                $pValue = $pVer->Value;
-                return sprintf(
-                    "%d.%d.%d.%d",
-                    $pValue->dwFileVersionMS >> 16,
-                    $pValue->dwFileVersionMS & 0xFFFF,
-                    $pValue->dwFileVersionLS >> 16,
-                    $pValue->dwFileVersionLS & 0xFFFF
-                );
-            }
-        }
-    }
-
     // Read "RT_VERSION/VERSIONINFO" exe/dll resource info for MSWin32 binaries
     // The "win32std" extension is not ready yet to pass back a VERSIONINFO struct
-    function exeversion_resopen($file)
+    public function exeversion_resopen($file)
     {
         if (function_exists('res_list_type') or loadPhpExtension('win32std')) {
             // See http://msdn.microsoft.com/workshop/networking/predefined/res.asp
-            $v = file_get_contents('res://'.realpath($file).urlencode('/RT_VERSION/#1'));
+            $v = file_get_contents('res://' . realpath($file) . urlencode('/RT_VERSION/#1'));
             if ($v) {
              // This is really a binary VERSIONINFO block, with lots of
              // nul bytes (widechar) which cannot be transported as string.
@@ -334,7 +274,7 @@ struct VS_VERSIONINFO { struct VS_VERSIONINFO
             return "";
         }
     }
-};
+}
 
 /*
  $Log: FileInfo.php,v $

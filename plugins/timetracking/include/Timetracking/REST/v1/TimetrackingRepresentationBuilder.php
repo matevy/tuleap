@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2018. All rights reserved.
+ * Copyright Enalean (c) 2018-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -24,23 +24,20 @@
 
 namespace Tuleap\Timetracking\REST\v1;
 
-use Tuleap\Timetracking\Time\Time;
-
 class TimetrackingRepresentationBuilder
 {
     /**
-     * @param Time[]
-     * @return TimetrackingRepresentation[]
+     * @param \Tuleap\Timetracking\Time\Time[] $times
+     * @return TimetrackingRepresentation[][]
      */
     public function buildPaginatedTimes(array $times)
     {
         $representations = [];
 
         foreach ($times as $time) {
-            $representation = new TimetrackingRepresentation();
-            $representation->build($time);
+            $representation = TimetrackingRepresentation::fromTime($time);
 
-            $representations[ $time->getArtifactId() ][] = $representation;
+            $representations[$time->getArtifactId()][] = $representation;
         }
 
         return $representations;

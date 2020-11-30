@@ -50,7 +50,6 @@ use Tuleap\SVN\Hooks\PostCommit;
 use Tuleap\SVN\Commit\CommitInfo;
 use Tuleap\SVN\Commit\CommitInfoEnhancer;
 use Tuleap\SVN\SvnAdmin;
-use Tuleap\SVN\SvnLogger;
 
 try {
     $repository   = $argv[1];
@@ -62,12 +61,12 @@ try {
         new RepositoryManager(
             new Dao(),
             ProjectManager::instance(),
-            new SvnAdmin(new System_Command(), new SvnLogger(), Backend::instance(Backend::SVN)),
-            new SvnLogger(),
+            new SvnAdmin(new System_Command(), SvnPlugin::getLogger(), Backend::instance(Backend::SVN)),
+            SvnPlugin::getLogger(),
             new System_Command(),
             new Destructor(
                 new Dao(),
-                new SvnLogger()
+                SvnPlugin::getLogger()
             ),
             EventManager::instance(),
             Backend::instance(Backend::SVN),
@@ -82,11 +81,7 @@ try {
                 new ProjectHistoryDao(),
                 new NotificationsEmailsBuilder(),
                 new UGroupManager()
-            ),
-            new UsersToNotifyDao(),
-            new UgroupsToNotifyDao(),
-            new UGroupManager(),
-            UserManager::instance()
+            )
         ),
         new MailBuilder(
             TemplateRendererFactory::build(),
@@ -100,7 +95,7 @@ try {
                 new MailLogger()
             )
         ),
-        new CommitInfoEnhancer(new SVNLook(new System_Command()), new CommitInfo()),
+        new CommitInfoEnhancer(new Svnlook(new System_Command()), new CommitInfo()),
         new LastAccessUpdater(new LastAccessDao()),
         UserManager::instance(),
         EventManager::instance()

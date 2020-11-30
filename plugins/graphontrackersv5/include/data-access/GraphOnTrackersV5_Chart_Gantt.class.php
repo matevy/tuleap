@@ -193,60 +193,59 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
 
     public function getProperties()
     {
-        $parent_properties=parent::getProperties();
+        $parent_properties = parent::getProperties();
         unset($parent_properties['dimensions']);
         return array_merge(
             $parent_properties,
-            array(
+            [
                 new HTML_Element_Columns(
-                    new HTML_Element_Selectbox_TrackerFields_DatesV5($this->getTracker(), $GLOBALS['Language']->getText('plugin_graphontrackersv5_gantt_property', 'gantt_field_start'), 'chart[field_start]', $this->getField_start()),
-                    new HTML_Element_Selectbox_TrackerFields_DatesV5($this->getTracker(), $GLOBALS['Language']->getText('plugin_graphontrackersv5_gantt_property', 'gantt_field_due'), 'chart[field_due]', $this->getField_due(), true),
-                    new HTML_Element_Selectbox_TrackerFields_DatesV5($this->getTracker(), $GLOBALS['Language']->getText('plugin_graphontrackersv5_gantt_property', 'gantt_field_finish'), 'chart[field_finish]', $this->getField_finish())
+                    new HTML_Element_Selectbox_TrackerFields_DatesV5($this->getTracker(), dgettext('tuleap-graphontrackersv5', 'Start Date'), 'chart[field_start]', $this->getField_start()),
+                    new HTML_Element_Selectbox_TrackerFields_DatesV5($this->getTracker(), dgettext('tuleap-graphontrackersv5', 'Due Date'), 'chart[field_due]', $this->getField_due(), true),
+                    new HTML_Element_Selectbox_TrackerFields_DatesV5($this->getTracker(), dgettext('tuleap-graphontrackersv5', 'Finish Date'), 'chart[field_finish]', $this->getField_finish())
                 ),
                 new HTML_Element_Columns(
-                    new HTML_Element_Selectbox_TrackerFields_SelectboxesAndTextsV5($this->getTracker(), $GLOBALS['Language']->getText('plugin_graphontrackersv5_gantt_property', 'gantt_summary'), 'chart[summary]', $this->getSummary()),
-                    new HTML_Element_Selectbox_TrackerFields_Int_TextFieldsV5($this->getTracker(), $GLOBALS['Language']->getText('plugin_graphontrackersv5_gantt_property', 'gantt_field_percentage'), 'chart[field_percentage]', $this->getField_percentage(), true),
-                    new HTML_Element_Selectbox_Scale($GLOBALS['Language']->getText('plugin_graphontrackersv5_gantt_property', 'gantt_scale'), 'chart[scale]', $this->getScale())
+                    new HTML_Element_Selectbox_TrackerFields_SelectboxesAndTextsV5($this->getTracker(), dgettext('tuleap-graphontrackersv5', 'Summary'), 'chart[summary]', $this->getSummary()),
+                    new HTML_Element_Selectbox_TrackerFields_Int_TextFieldsV5($this->getTracker(), dgettext('tuleap-graphontrackersv5', 'Progress'), 'chart[field_percentage]', $this->getField_percentage(), true),
+                    new HTML_Element_Selectbox_Scale(dgettext('tuleap-graphontrackersv5', 'Time Scale'), 'chart[scale]', $this->getScale())
                 ),
 
                 new HTML_Element_Columns(
-                    new HTML_Element_Input_Date($GLOBALS['Language']->getText('plugin_graphontrackersv5_gantt_property', 'gantt_as_of_date'), 'chart[as_of_date]', strtotime($this->getAs_of_date())),
-                    new HTML_Element_Selectbox_TrackerFields_SelectboxesAndTextsV5($this->getTracker(), $GLOBALS['Language']->getText('plugin_graphontrackersv5_gantt_property', 'gantt_field_righttext'), 'chart[field_righttext]', $this->getField_righttext(), true)
+                    new HTML_Element_Input_Date(dgettext('tuleap-graphontrackersv5', 'As of date'), 'chart[as_of_date]', strtotime($this->getAs_of_date())),
+                    new HTML_Element_Selectbox_TrackerFields_SelectboxesAndTextsV5($this->getTracker(), dgettext('tuleap-graphontrackersv5', 'Informations at the right of the bars'), 'chart[field_righttext]', $this->getField_righttext(), true)
                 ),
-            )
+            ]
         );
     }
 
     public function createDb($id)
     {
-
         $field_start = $this->getField_start();
-        if (!is_string($field_start) && !is_int($field_start) && $field_start) {
+        if (! is_string($field_start) && ! is_int($field_start) && $field_start) {
             $field_start = $field_start->getid();
         }
 
         $field_due = $this->getField_due();
-        if (!is_string($field_due) && !is_int($field_due) && $field_due) {
+        if (! is_string($field_due) && ! is_int($field_due) && $field_due) {
             $field_due = $field_due->getid();
         }
 
         $field_finish = $this->getField_finish();
-        if (!is_string($field_finish) && !is_int($field_finish) && $field_finish) {
+        if (! is_string($field_finish) && ! is_int($field_finish) && $field_finish) {
             $field_finish = $field_finish->getid();
         }
 
         $field_percentage = $this->getField_percentage();
-        if (!is_string($field_percentage) && !is_int($field_percentage) && $field_percentage) {
+        if (! is_string($field_percentage) && ! is_int($field_percentage) && $field_percentage) {
                 $field_percentage = $field_percentage->getid();
         }
 
         $field_righttext = $this->getField_righttext();
-        if (!is_string($field_righttext) && !is_int($field_righttext) && $field_righttext) {
+        if (! is_string($field_righttext) && ! is_int($field_righttext) && $field_righttext) {
                 $field_righttext = $field_righttext->getid();
         }
 
         $field_summary = $this->getSummary();
-        if (!is_string($field_summary) && !is_int($field_summary) && $field_summary) {
+        if (! is_string($field_summary) && ! is_int($field_summary) && $field_summary) {
             $field_summary = $field_summary->getid();
         }
 
@@ -282,7 +281,6 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
 
     protected function updateSpecificProperties($row)
     {
-
         $session = self::getSession($this->renderer->report->id, $this->renderer->id);
 
         $session->set("$this->id.field_start", $row['field_start']);
@@ -307,7 +305,7 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
         return true;
     }
 
-    function userCanVisualize()
+    public function userCanVisualize()
     {
         $ff = Tracker_FormElementFactory::instance();
         $artifact_field_start = $ff->getFormElementById($this->field_start);
@@ -315,10 +313,12 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
         $artifact_summary = $ff->getFormElementById($this->summary);
         $artifact_scale = $ff->getFormElementById($this->scale);
 
-        if (($artifact_field_start && $artifact_field_start->userCanRead()) ||
+        if (
+            ($artifact_field_start && $artifact_field_start->userCanRead()) ||
             ($artifact_field_finish && $artifact_field_finish->userCanRead()) ||
             ($artifact_summary && $artifact_summary->userCanRead()) ||
-            ($artifact_scale && $artifact_scale->userCanRead())) {
+            ($artifact_scale && $artifact_scale->userCanRead())
+        ) {
             return true;
         } else {
             return false;
@@ -332,7 +332,7 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
 
     public function getSpecificRow()
     {
-        return array(
+        return [
             'field_start'      => $this->getField_start(),
             'field_due'        => $this->getField_due(),
             'field_finish'     => $this->getField_finish(),
@@ -341,7 +341,7 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
             'scale'            => $this->getScale(),
             'as_of_date'       => $this->getAs_of_date(),
             'summary'          => $this->getSummary(),
-        );
+        ];
     }
 
     /**
@@ -352,29 +352,29 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
      */
     public function setSpecificPropertiesFromXML($xml, $formsMapping)
     {
-        if (isset($formsMapping[(string)$xml['start']])) {
-            $this->setField_start($formsMapping[(string)$xml['start']]);
+        if (isset($formsMapping[(string) $xml['start']])) {
+            $this->setField_start($formsMapping[(string) $xml['start']]);
         }
-        if (isset($formsMapping[(string)$xml['due']])) {
-            $this->setField_due($formsMapping[(string)$xml['due']]);
+        if (isset($formsMapping[(string) $xml['due']])) {
+            $this->setField_due($formsMapping[(string) $xml['due']]);
         }
-        if (isset($formsMapping[(string)$xml['finish']])) {
-            $this->setField_finish($formsMapping[(string)$xml['finish']]);
+        if (isset($formsMapping[(string) $xml['finish']])) {
+            $this->setField_finish($formsMapping[(string) $xml['finish']]);
         }
-        if (isset($formsMapping[(string)$xml['righttext']])) {
-            $this->setField_righttext($formsMapping[(string)$xml['righttext']]);
+        if (isset($formsMapping[(string) $xml['righttext']])) {
+            $this->setField_righttext($formsMapping[(string) $xml['righttext']]);
         }
-        if (isset($formsMapping[(string)$xml['summary']])) {
-            $this->setSummary($formsMapping[(string)$xml['summary']]);
+        if (isset($formsMapping[(string) $xml['summary']])) {
+            $this->setSummary($formsMapping[(string) $xml['summary']]);
         }
-        if ((string)$xml['scale']) {
-            $this->setScale((string)$xml['scale']);
+        if ((string) $xml['scale']) {
+            $this->setScale((string) $xml['scale']);
         }
-        if ((string)$xml['as_of_date']) {
-            $this->setAs_of_date((string)$xml['as_of_date']);
+        if ((string) $xml['as_of_date']) {
+            $this->setAs_of_date((string) $xml['as_of_date']);
         }
-        if (isset($formsMapping[(string)$xml['percentage']])) {
-            $this->setField_percentage($formsMapping[(string)$xml['percentage']]);
+        if (isset($formsMapping[(string) $xml['percentage']])) {
+            $this->setField_percentage($formsMapping[(string) $xml['percentage']]);
         }
     }
 
@@ -385,7 +385,7 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
      */
     public function arrayOfSpecificProperties()
     {
-        return array(
+        return [
             'field_start'      => $this->getField_start(),
             'field_due'        => $this->getField_due(),
             'field_finish'     => $this->getField_finish(),
@@ -394,7 +394,7 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
             'scale'            => $this->getScale(),
             'as_of_date'       => $this->getAs_of_date(),
             'summary'          => $this->getSummary(),
-        );
+        ];
     }
 
     public function exportToXml(SimpleXMLElement $root, $formsMapping)
@@ -406,19 +406,19 @@ class GraphOnTrackersV5_Chart_Gantt extends GraphOnTrackersV5_Chart
         if ($this->as_of_date) {
             $root->addAttribute('as_of_date', $this->as_of_date);
         }
-        if ($this->field_start && ($start = (string)array_search($this->field_start, $formsMapping))) {
+        if ($this->field_start && ($start = (string) array_search($this->field_start, $formsMapping))) {
             $root->addAttribute('start', $start);
         }
-        if ($this->field_due && ($due = (string)array_search($this->field_due, $formsMapping))) {
+        if ($this->field_due && ($due = (string) array_search($this->field_due, $formsMapping))) {
             $root->addAttribute('due', $due);
         }
-        if ($this->field_finish && ($finish = (string)array_search($this->field_finish, $formsMapping))) {
+        if ($this->field_finish && ($finish = (string) array_search($this->field_finish, $formsMapping))) {
             $root->addAttribute('finish', $finish);
         }
-        if ($this->field_percentage && ($percentage = (string)array_search($this->field_percentage, $formsMapping))) {
+        if ($this->field_percentage && ($percentage = (string) array_search($this->field_percentage, $formsMapping))) {
             $root->addAttribute('percentage', $percentage);
         }
-        if ($this->field_righttext && ($righttext = (string)array_search($this->field_righttext, $formsMapping))) {
+        if ($this->field_righttext && ($righttext = (string) array_search($this->field_righttext, $formsMapping))) {
             $root->addAttribute('righttext', $righttext);
         }
         if ($this->summary) {

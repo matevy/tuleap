@@ -22,8 +22,8 @@
             </div>
             {{# is_there_enable_switch }}
             <div class="tlp-property">
-                <label class="tlp-label">{{ properties_pane_enabled }}</label>
-                {{{ enable_switch }}}
+                <label class="tlp-label" for="plugin-switch-toggler-{{ id }}">{{ properties_pane_enabled }}</label>
+                {{> enable-disable-plugin-switch }}
             </div>
             {{/ is_there_enable_switch }}
         </section>
@@ -95,7 +95,7 @@
         <div class="tlp-pane-container plugin-properties-readme-container">
             <div class="tlp-pane-header">
                 <h1 class="tlp-pane-title">
-                    <i class="fa fa-file-text-o tlp-pane-title-icon"></i> {{ properties_pane_readme_title }}
+                    <i class="far fa-file-alt tlp-pane-title-icon"></i> {{ properties_pane_readme_title }}
                 </h1>
             </div>
             <section class="tlp-pane-section">

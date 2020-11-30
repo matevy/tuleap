@@ -22,13 +22,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_Artifact_ReadOnlyRenderer extends Tracker_Artifact_EditRenderer
 {
 
     /**
      * @return string The HTML code for artifact fields
      */
-    public function fetchFields(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchFields(Artifact $artifact, array $submitted_values)
     {
         $submitted_artifact = '';
 
@@ -36,6 +38,6 @@ class Tracker_Artifact_ReadOnlyRenderer extends Tracker_Artifact_EditRenderer
             $submitted_artifact = "submitted_artifact";
         }
 
-        return "<div class='".$submitted_artifact."'>".$artifact->getTracker()->fetchFormElementsReadOnly($artifact, $submitted_values)."</div>";
+        return "<div class='" . $submitted_artifact . "'>" . $artifact->getTracker()->fetchFormElementsReadOnly($artifact, $submitted_values) . "</div>";
     }
 }

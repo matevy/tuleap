@@ -21,6 +21,7 @@
 namespace Tuleap\AgileDashboard;
 
 use AdminKanbanPresenter;
+use AgileDashboard_BacklogItemDao;
 use AgileDashboard_ConfigurationManager;
 use AgileDashboard_FirstKanbanCreator;
 use AgileDashboard_FirstScrumCreator;
@@ -33,16 +34,23 @@ use Codendi_Request;
 use CSRFSynchronizerToken;
 use EventManager;
 use Feedback;
+use MilestoneReportCriterionDao;
 use PFUser;
+use Planning_MilestoneFactory;
 use PlanningFactory;
 use Project;
 use ProjectXMLImporter;
 use Tracker_ReportFactory;
 use TrackerFactory;
 use TrackerXmlImport;
+use Tuleap\AgileDashboard\Artifact\PlannedArtifactDao;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AdministrationCrumbBuilder;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AgileDashboardCrumbBuilder;
+use Tuleap\AgileDashboard\Event\GetAdditionalScrumAdminSection;
+use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
+use Tuleap\AgileDashboard\ExplicitBacklog\ConfigurationUpdater;
 use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
+use Tuleap\AgileDashboard\ExplicitBacklog\UnplannedArtifactsAdder;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsModeChecker;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsModeUpdater;
 use Tuleap\AgileDashboard\FormElement\Burnup\ProjectsCountModeDao;
@@ -53,6 +61,9 @@ use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneDao;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneDisabler;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneEnabler;
 use Tuleap\AgileDashboard\Scrum\ScrumPresenterBuilder;
+use Tuleap\AgileDashboard\Workflow\AddToTopBacklogPostActionDao;
+use Tuleap\DB\DBFactory;
+use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbCollection;
 use Tuleap\Layout\IncludeAssets;
 use UserManager;
@@ -97,6 +108,11 @@ class AdminController extends BaseController
      */
     private $scrum_presenter_builder;
 
+    /**
+     * @var GetAdditionalScrumAdminSection
+     */
+    private $additional_scrum_sections;
+
     public function __construct(
         Codendi_Request $request,
         PlanningFactory $planning_factory,
@@ -124,6 +140,9 @@ class AdminController extends BaseController
         $this->admin_crumb_builder         = $admin_crumb_builder;
         $this->count_elements_mode_checker = $count_elements_mode_checker;
         $this->scrum_presenter_builder     = $scrum_presenter_builder;
+
+        $this->additional_scrum_sections = new GetAdditionalScrumAdminSection($this->project);
+        $this->event_manager->dispatch($this->additional_scrum_sections);
     }
 
     /**
@@ -148,16 +167,18 @@ class AdminController extends BaseController
     public function adminScrum(): string
     {
         $include_assets = new IncludeAssets(
-            AGILEDASHBOARD_BASE_DIR . '/../www/assets',
-            AGILEDASHBOARD_BASE_URL . '/assets'
+            __DIR__ . '/../../../../src/www/assets/agiledashboard',
+            '/assets/agiledashboard'
         );
+
         $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL('administration.js'));
 
         return $this->renderToString(
             'admin-scrum',
             $this->scrum_presenter_builder->getAdminScrumPresenter(
                 $this->getCurrentUser(),
-                $this->project
+                $this->project,
+                $this->additional_scrum_sections
             )
         );
     }
@@ -196,11 +217,8 @@ class AdminController extends BaseController
         );
     }
 
-    public function updateConfiguration()
+    public function updateConfiguration(): void
     {
-        $token = new CSRFSynchronizerToken('/plugins/agiledashboard/?action=admin');
-        $token->check();
-
         if (! $this->request->getCurrentUser()->isAdmin($this->group_id)) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
@@ -209,6 +227,9 @@ class AdminController extends BaseController
 
             return;
         }
+
+        $token = new CSRFSynchronizerToken('/plugins/agiledashboard/?action=admin');
+        $token->check();
 
         $response = new AgileDashboardConfigurationResponse(
             $this->request->getProject(),
@@ -255,11 +276,25 @@ class AdminController extends BaseController
                 new ScrumForMonoMilestoneEnabler($scrum_mono_milestone_dao),
                 new ScrumForMonoMilestoneDisabler($scrum_mono_milestone_dao),
                 new ScrumForMonoMilestoneChecker($scrum_mono_milestone_dao, $this->planning_factory),
-                new ExplicitBacklogDao()
+                new ConfigurationUpdater(
+                    new ExplicitBacklogDao(),
+                    new MilestoneReportCriterionDao(),
+                    new AgileDashboard_BacklogItemDao(),
+                    Planning_MilestoneFactory::build(),
+                    new ArtifactsInExplicitBacklogDao(),
+                    new UnplannedArtifactsAdder(
+                        new ExplicitBacklogDao(),
+                        new ArtifactsInExplicitBacklogDao(),
+                        new PlannedArtifactDao()
+                    ),
+                    new AddToTopBacklogPostActionDao(),
+                    new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection())
+                )
             );
         }
 
-        return $updater->updateConfiguration();
+        $this->additional_scrum_sections->notifyAdditionalSectionsControllers(\HTTPRequest::instance());
+        $updater->updateConfiguration();
     }
 
     public function createKanban()
@@ -278,10 +313,10 @@ class AdminController extends BaseController
             return;
         }
 
-        if (! $tracker_id) {
+        if (! $tracker_id || $tracker === null) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
-                $GLOBALS['Language']->getText('plugin_agiledashboard', 'no_tracker_selected')
+                dgettext('tuleap-agiledashboard', 'No tracker has been selected.')
             );
 
             $this->redirectToHome();
@@ -292,7 +327,7 @@ class AdminController extends BaseController
         if ($this->kanban_manager->doesKanbanExistForTracker($tracker)) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
-                $GLOBALS['Language']->getText('plugin_agiledashboard', 'kanban_tracker_used')
+                dgettext('tuleap-agiledashboard', 'Tracker already used by another Kanban.')
             );
 
             $this->redirectToHome();
@@ -303,12 +338,12 @@ class AdminController extends BaseController
         if ($this->kanban_manager->createKanban($kanban_name, $tracker_id)) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::INFO,
-                $GLOBALS['Language']->getText('plugin_agiledashboard', 'kanban_created', [$kanban_name])
+                sprintf(dgettext('tuleap-agiledashboard', 'Kanban %1$s successfully created.'), $kanban_name)
             );
         } else {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
-                $GLOBALS['Language']->getText('plugin_agiledashboard', 'kanban_creation_error', [$kanban_name])
+                sprintf(dgettext('tuleap-agiledashboard', 'Error while creating Kanban %1$s.'), $kanban_name)
             );
         }
 
@@ -324,7 +359,7 @@ class AdminController extends BaseController
         );
     }
 
-    private function getAdminChartsPresenter(Project $project) : AdminChartsPresenter
+    private function getAdminChartsPresenter(Project $project): AdminChartsPresenter
     {
         $token = new CSRFSynchronizerToken('/plugins/agiledashboard/?action=admin');
 

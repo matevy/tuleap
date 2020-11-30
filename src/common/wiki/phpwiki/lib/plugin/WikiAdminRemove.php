@@ -36,17 +36,17 @@ require_once('lib/plugin/WikiAdminSelect.php');
 
 class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
 {
-    function getName()
+    public function getName()
     {
         return _("WikiAdminRemove");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Permanently remove all selected pages.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -55,11 +55,11 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array(
+            [
                    's'     => false,
                      /*
                       * Show only pages which have been 'deleted' this
@@ -79,11 +79,11 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
                      'max_age' => 31,
                      /* Columns to include in listing */
                      'info'     => 'most',
-            )
+            ]
         );
     }
 
-    function collectPages(&$list, &$dbi, $sortby, $limit = 0)
+    public function collectPages(&$list, &$dbi, $sortby, $limit = 0)
     {
         extract($this->_args);
 
@@ -115,13 +115,13 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
         return $list;
     }
 
-    function removePages(&$request, $pages)
+    public function removePages(&$request, $pages)
     {
         $ul = HTML::ul();
         $dbi = $request->getDbh();
         $count = 0;
         foreach ($pages as $name) {
-            $name = str_replace(array('%5B','%5D'), array('[',']'), $name);
+            $name = str_replace(['%5B', '%5D'], ['[', ']'], $name);
             if (mayAccessPage('remove', $name)) {
                 $dbi->deletePage($name);
                 $ul->pushContent(HTML::li(fmt("Removed page '%s' successfully.", $name)));
@@ -139,7 +139,7 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
         );
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         if ($request->getArg('action') != 'browse') {
             if ($request->getArg('action') != _("PhpWikiAdministration/Remove")) {
@@ -148,7 +148,7 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
         }
 
         $args = $this->getArgs($argstr, $request);
-        if (!is_numeric($args['min_age'])) {
+        if (! is_numeric($args['min_age'])) {
             $args['min_age'] = -1;
         }
         $this->_args = $args;
@@ -159,17 +159,19 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
         $this->preSelectS($args, $request);
 
         $p = $request->getArg('p');
-        if (!$p) {
+        if (! $p) {
             $p = $this->_list;
         }
         $post_args = $request->getArg('admin_remove');
 
         $next_action = 'select';
-        $pages = array();
-        if ($p && $request->isPost() &&
-            !empty($post_args['remove']) && empty($post_args['cancel'])) {
+        $pages = [];
+        if (
+            $p && $request->isPost() &&
+            ! empty($post_args['remove']) && empty($post_args['cancel'])
+        ) {
             // check individual PagePermissions
-            if (!ENABLE_PAGEPERM and !$request->_user->isAdmin()) {
+            if (! ENABLE_PAGEPERM and ! $request->_user->isAdmin()) {
                 $request->_notAuthorized(WIKIAUTH_ADMIN);
                 $this->disabled("! user->isAdmin");
             }
@@ -181,14 +183,14 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
             if ($post_args['action'] == 'select') {
                 $next_action = 'verify';
                 foreach ($p as $name => $c) {
-                    $name = str_replace(array('%5B','%5D'), array('[',']'), $name);
+                    $name = str_replace(['%5B', '%5D'], ['[', ']'], $name);
                     $pages[$name] = $c;
                 }
             }
-        } elseif ($p && is_array($p) && !$request->isPost()) { // from WikiAdminSelect
+        } elseif ($p && is_array($p) && ! $request->isPost()) { // from WikiAdminSelect
             $next_action = 'verify';
             foreach ($p as $name => $c) {
-                $name = str_replace(array('%5B','%5D'), array('[',']'), $name);
+                $name = str_replace(['%5B', '%5D'], ['[', ']'], $name);
                 $pages[$name] = $c;
             }
             $request->setArg('p', false);
@@ -200,9 +202,9 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
         $pagelist = new PageList_Selectable(
             $args['info'],
             $args['exclude'],
-            array('types' =>
-                                                  array('remove'
-            => new _PageList_Column_remove('remove', _("Remove"))))
+            ['types' =>
+                                                  ['remove'
+            => new _PageList_Column_remove('remove', _("Remove"))]]
         );
         $pagelist->addPageList($pages);
 
@@ -244,17 +246,17 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
 
         // TODO: quick select by regex javascript?
         return HTML::form(
-            array('action' => $request->getPostURL(),
-                                'method' => 'post'),
+            ['action' => $request->getPostURL(),
+                                'method' => 'post'],
             $header,
             $pagelist->getContent(),
             HiddenInputs(
                 $request->getArgs(),
                 false,
-                array('admin_remove')
+                ['admin_remove']
             ),
-            HiddenInputs(array('admin_remove[action]' => $next_action,
-                                             'require_authority_for_post' => WIKIAUTH_ADMIN)),
+            HiddenInputs(['admin_remove[action]' => $next_action,
+                                             'require_authority_for_post' => WIKIAUTH_ADMIN]),
             $buttons
         );
     }
@@ -262,15 +264,15 @@ class WikiPlugin_WikiAdminRemove extends WikiPlugin_WikiAdminSelect
 
 class _PageList_Column_remove extends _PageList_Column
 {
-    function _getValue($page_handle, &$revision_handle)
+    public function _getValue($page_handle, &$revision_handle)
     {
         return Button(
-            array('action' => 'remove'),
+            ['action' => 'remove'],
             _("Remove"),
             $page_handle->getName()
         );
     }
-};
+}
 
 
 // $Log: WikiAdminRemove.php,v $

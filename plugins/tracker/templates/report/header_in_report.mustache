@@ -8,10 +8,6 @@
     </div>
 {{/ has_warnings }}
 
-{{# has_browse_instructions }}
-    <div class="browse_instructions">{{{ browse_instructions }}}</div>
-{{/ has_browse_instructions }}
-
 <div id="tracker_report_config_options" class="row-fluid">
     <div id="tracker_report_selection" class="pull-left">
         <h2>
@@ -24,6 +20,13 @@
                     {{> button_dropdowns }}
                 {{/ options_dropdown }}
             {{/ can_save }}
+
+            {{^ is_user_anonymous }}
+                <a class="btn btn-primary" data-test="new-artifact" href="{{ artifact_creation_url }}">
+                    <i class="fa fa-plus" ></i>
+                    {{# dgettext }} tuleap-tracker |New %s | {{ item_name }} {{/ dgettext }}
+                </a>
+            {{/ is_user_anonymous }}
         </h2>
     </div>
 
@@ -67,3 +70,7 @@
         </div>
     {{/ can_save }}
 </div>
+
+{{# has_browse_instructions }}
+    <div class="browse_instructions">{{{ browse_instructions }}}</div>
+{{/ has_browse_instructions }}

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,29 +18,27 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\User\Account\RegistrationGuardEvent;
+
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class User_LoginPresenterBuilder
 {
 
     /** @return User_LoginPresenter */
-    public function build($return_to, $printer_version, $form_loginname, $is_secure, CSRFSynchronizerToken $login_csrf)
+    public function build($return_to, $printer_version, $form_loginname, $is_secure, CSRFSynchronizerToken $login_csrf, string $prompt_param)
     {
         $additional_connectors = '';
         EventManager::instance()->processEvent(
             Event::LOGIN_ADDITIONAL_CONNECTOR,
-            array(
+            [
                 'return_to'            => $return_to,
                 'is_secure'            => $is_secure,
                 'additional_connector' => &$additional_connectors
-            )
+            ]
         );
 
-        $display_new_account_button = true;
-        EventManager::instance()->processEvent(
-            'display_newaccount',
-            array(
-                'allow' => &$display_new_account_button
-            )
-        );
+        $registration_guard = EventManager::instance()->dispatch(new RegistrationGuardEvent());
+        assert($registration_guard instanceof RegistrationGuardEvent);
 
         $presenter = new User_LoginPresenter(
             $return_to,
@@ -48,17 +46,18 @@ class User_LoginPresenterBuilder
             $form_loginname,
             $additional_connectors,
             $login_csrf,
-            $display_new_account_button
+            $prompt_param,
+            $registration_guard->isRegistrationPossible(),
         );
 
         $authoritative = false;
 
         EventManager::instance()->processEvent(
             'login_presenter',
-            array(
+            [
                 'presenter'     => &$presenter,
                 'authoritative' => &$authoritative,
-            )
+            ]
         );
 
         return $presenter;
@@ -71,6 +70,6 @@ class User_LoginPresenterBuilder
         $printer_version = 0;
         $form_loginname  = '';
 
-        return $this->build($return_to, $printer_version, $form_loginname, $is_secure, $login_csrf);
+        return $this->build($return_to, $printer_version, $form_loginname, $is_secure, $login_csrf, '');
     }
 }

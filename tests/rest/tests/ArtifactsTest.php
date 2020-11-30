@@ -55,7 +55,7 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
 
         $response = $this->getResponse($this->client->post('artifacts', null, $post_body));
         $this->assertEquals(201, $response->getStatusCode());
-        $this->assertRegExp('/.+ GMT$/', $response->getHeader('Last-Modified')->normalize()->__toString(), 'Last-Modified must be RFC1123 complient');
+        $this->assertMatchesRegularExpression('/.+ GMT$/', $response->getHeader('Last-Modified')->normalize()->__toString(), 'Last-Modified must be RFC1123 complient');
         $this->assertNotNull($response->getHeader('Etag'));
         $this->assertNotNull($response->getHeader('Location'));
 
@@ -150,8 +150,8 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
                 $value = null;
                 if (isset($field['manual_value'])) {
                     $value = $field['manual_value'];
-                } elseif (isset($field[$field['type'].'_value'])) {
-                    $value = $field[$field['type'].'_value'];
+                } elseif (isset($field[$field['type'] . '_value'])) {
+                    $value = $field[$field['type'] . '_value'];
                 } elseif (isset($field['value'])) {
                     $value = $field['value'];
                 }
@@ -245,32 +245,32 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
         $start_date->setDate(2016, 11, 17);
         $start_date->setTime(23, 59, 59);
 
-        $expected_burndown_chart = array(
-            array(
+        $expected_burndown_chart = [
+            [
                 "date"             => $start_date->format(DATE_ATOM),
                 "remaining_effort" => 32
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+1 day')->format(DATE_ATOM),
                 "remaining_effort" => 20
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+3 day')->format(DATE_ATOM),
                 "remaining_effort" => 25
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+1 day')->format(DATE_ATOM),
                 "remaining_effort" => 20
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+1 day')->format(DATE_ATOM),
                 "remaining_effort" => 20
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+1 day')->format(DATE_ATOM),
                 "remaining_effort" => 20
-            )
-        );
+            ]
+        ];
 
         $this->assertEquals($burndown['values'][6]['value']['points_with_date'], $expected_burndown_chart);
     }
@@ -293,32 +293,32 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
         $start_date->setDate(2016, 11, 17);
         $start_date->setTime(23, 59, 59);
 
-        $expected_burndown_chart = array(
-            array(
+        $expected_burndown_chart = [
+            [
                 "date"             => $start_date->format(DATE_ATOM),
                 "remaining_effort" => 25
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+1 day')->format(DATE_ATOM),
                 "remaining_effort" => 20
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+3 day')->format(DATE_ATOM),
                 "remaining_effort" => 40
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+1 day')->format(DATE_ATOM),
                 "remaining_effort" => 20
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+1 day')->format(DATE_ATOM),
                 "remaining_effort" => 20
-            ),
-            array(
+            ],
+            [
                 "date"             => $start_date->modify('+1 day')->format(DATE_ATOM),
                 "remaining_effort" => 20
-            )
-        );
+            ]
+        ];
 
         $this->assertEquals($burndown['values'][6]['value']['points_with_date'], $expected_burndown_chart);
     }
@@ -336,14 +336,14 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
     /**
      * @depends testPostArtifact
      */
-    public function testGetArtifacts()
+    public function testGetArtifacts(): void
     {
         $do_not_exist_artifact_id = 999999999999999999;
         $existing_artifact_ids    = array_merge($this->level_one_artifact_ids, $this->level_two_artifact_ids);
         $wanted_artifacts_ids     = $existing_artifact_ids;
         $wanted_artifacts_ids[]   = $do_not_exist_artifact_id;
 
-        $query = json_encode(array('id' => $wanted_artifacts_ids));
+        $query = json_encode(['id' => $wanted_artifacts_ids]);
 
         $response  = $this->getResponse($this->client->get('artifacts?query=' . urlencode($query)));
         $artifacts = $response->json();
@@ -357,12 +357,20 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
         $artifacts = $response_with_read_only_user->json();
 
         $this->assertCount(count($existing_artifact_ids), $artifacts['collection']);
+        $tracker_ids = [];
+        foreach ($artifacts['collection'] as $artifact) {
+            $artifact_tracker_id = $artifact['tracker']['id'];
+            if (! in_array($artifact_tracker_id, $tracker_ids, true)) {
+                $tracker_ids[] = $artifact_tracker_id;
+            }
+        }
+        $this->assertCount(2, $tracker_ids);
     }
 
     public function testGetTooManyArtifacts()
     {
         $too_many_artifacts_id = array_keys(array_fill(0, 200, 1));
-        $query                 = json_encode(array('id' => $too_many_artifacts_id));
+        $query                 = json_encode(['id' => $too_many_artifacts_id]);
 
         $response = $this->getResponse($this->client->get('artifacts?query=' . urlencode($query)));
         $this->assertEquals(403, $response->getStatusCode());
@@ -390,7 +398,7 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
     {
         $field_label =  'Summary';
         $put_body    = $this->buildPUTBodyContent($artifact_id, $field_label);
-        $response    = $this->getResponse($this->client->put('artifacts/'.$artifact_id, null, $put_body));
+        $response    = $this->getResponse($this->client->put('artifacts/' . $artifact_id, null, $put_body));
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertNotNull($response->getHeader('Last-Modified'));
@@ -404,14 +412,14 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
     {
         $field_id = $this->getFieldIdForFieldLabel($artifact_id, $field_label);
 
-        return json_encode(array(
-            'values' => array(
-                array(
+        return json_encode([
+            'values' => [
+                [
                     'field_id' => $field_id,
                     'value'    => "wunderbar",
-                ),
-            ),
-        ));
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -419,22 +427,22 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
      */
     public function testPutIsIdempotent($artifact_id)
     {
-        $artifact      = $this->getResponse($this->client->get('artifacts/'.$artifact_id));
+        $artifact      = $this->getResponse($this->client->get('artifacts/' . $artifact_id));
         $last_modified = $artifact->getHeader('Last-Modified')->normalize()->__toString();
         $etag          = $artifact->getHeader('Etag')->normalize()->__toString();
 
         $field_label =  'Summary';
         $field_id = $this->getFieldIdForFieldLabel($artifact_id, $field_label);
-        $put_resource = json_encode(array(
-            'values' => array(
-                array(
+        $put_resource = json_encode([
+            'values' => [
+                [
                     'field_id' => $field_id,
                     'value'    => "wunderbar",
-                ),
-            ),
-        ));
+                ],
+            ],
+        ]);
 
-        $response    = $this->getResponse($this->client->put('artifacts/'.$artifact_id, null, $put_resource));
+        $response    = $this->getResponse($this->client->put('artifacts/' . $artifact_id, null, $put_resource));
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertNotNull($response->getHeader('Last-Modified'));
         $this->assertNotNull($response->getHeader('Etag'));
@@ -452,18 +460,18 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
     {
         $field_label =  'Summary';
         $field_id = $this->getFieldIdForFieldLabel($artifact_id, $field_label);
-        $put_resource = json_encode(array(
-            'values' => array(
-                array(
+        $put_resource = json_encode([
+            'values' => [
+                [
                     'field_id' => $field_id,
                     'value'    => "This should return 200",
-                ),
-            ),
-        ));
+                ],
+            ],
+        ]);
 
-        $request = $this->client->put('artifacts/'.$artifact_id, null, $put_resource);
+        $request = $this->client->put('artifacts/' . $artifact_id, null, $put_resource);
 
-        $artifact      = $this->getResponse($this->client->get('artifacts/'.$artifact_id));
+        $artifact      = $this->getResponse($this->client->get('artifacts/' . $artifact_id));
         $last_modified = $artifact->getHeader('Last-Modified')->normalize()->__toString();
         $request->setHeader('If-Unmodified-Since', $last_modified);
 
@@ -483,18 +491,18 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
     {
         $field_label =  'Summary';
         $field_id = $this->getFieldIdForFieldLabel($artifact_id, $field_label);
-        $put_resource = json_encode(array(
-            'values' => array(
-                array(
+        $put_resource = json_encode([
+            'values' => [
+                [
                     'field_id' => $field_id,
                     'value'    => "varm choklade",
-                ),
-            ),
-        ));
+                ],
+            ],
+        ]);
 
-        $request = $this->client->put('artifacts/'.$artifact_id, null, $put_resource);
+        $request = $this->client->put('artifacts/' . $artifact_id, null, $put_resource);
 
-        $artifact      = $this->getResponse($this->client->get('artifacts/'.$artifact_id));
+        $artifact      = $this->getResponse($this->client->get('artifacts/' . $artifact_id));
         $Etag = $artifact->getHeader('Etag')->normalize()->__toString();
         $request->setHeader('If-Match', $Etag);
 
@@ -514,17 +522,17 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
     {
         $field_label =  'Summary';
         $field_id = $this->getFieldIdForFieldLabel($artifact_id, $field_label);
-        $put_resource = json_encode(array(
-            'values' => array(
-                array(
+        $put_resource = json_encode([
+            'values' => [
+                [
                     'field_id' => $field_id,
                     'value'    => "This should return 412",
-                ),
-            ),
-        ));
+                ],
+            ],
+        ]);
 
         $last_modified = "2001-03-05T15:14:55+01:00";
-        $request       = $this->client->put('artifacts/'.$artifact_id, null, $put_resource);
+        $request       = $this->client->put('artifacts/' . $artifact_id, null, $put_resource);
         $request->setHeader('If-Unmodified-Since', $last_modified);
 
         try {
@@ -541,17 +549,17 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
     {
         $field_label =  'Summary';
         $field_id = $this->getFieldIdForFieldLabel($artifact_id, $field_label);
-        $put_resource = json_encode(array(
-            'values' => array(
-                array(
+        $put_resource = json_encode([
+            'values' => [
+                [
                     'field_id' => $field_id,
                     'value'    => "This should return 4122415",
-                ),
-            ),
-        ));
+                ],
+            ],
+        ]);
 
         $Etag    = "one empty bottle";
-        $request = $this->client->put('artifacts/'.$artifact_id, null, $put_resource);
+        $request = $this->client->put('artifacts/' . $artifact_id, null, $put_resource);
         $request->setHeader('If-Match', $Etag);
 
         try {
@@ -566,15 +574,15 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
      */
     public function testPutArtifactComment($artifact_id)
     {
-        $put_resource = json_encode(array(
-            'values' => array(),
-            'comment' => array(
+        $put_resource = json_encode([
+            'values' => [],
+            'comment' => [
                 'format' => 'text',
                 'body'   => 'Please see my comment',
-            ),
-        ));
+            ],
+        ]);
 
-        $response    = $this->getResponse($this->client->put('artifacts/'.$artifact_id, null, $put_resource));
+        $response    = $this->getResponse($this->client->put('artifacts/' . $artifact_id, null, $put_resource));
         $this->assertEquals($response->getStatusCode(), 200);
         $this->assertNotNull($response->getHeader('Last-Modified'));
         $this->assertNotNull($response->getHeader('Etag'));
@@ -595,17 +603,17 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
         $field_label     = 'artlink';
         $field_id        = $this->getFieldIdForFieldLabel($artifact_id, $field_label);
         $put_resource    = json_encode(
-            array(
-                'values' => array(
-                    array(
+            [
+                'values' => [
+                    [
                         'field_id' => $field_id,
-                        "links"    => array(
-                            array("id" => $this->level_three_artifact_ids[1], "type" => $nature_is_child),
-                            array("id" => $this->level_three_artifact_ids[3], "type" => $nature_empty),
-                        )
-                    ),
-                ),
-            )
+                        "links"    => [
+                            ["id" => $this->level_three_artifact_ids[1], "type" => $nature_is_child],
+                            ["id" => $this->level_three_artifact_ids[3], "type" => $nature_empty],
+                        ]
+                    ],
+                ],
+            ]
         );
 
         $response = $this->getResponse($this->client->put('artifacts/' . $artifact_id, null, $put_resource));
@@ -621,7 +629,7 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
 
     public function testAnonymousGETArtifact()
     {
-        $response = $this->client->get('artifacts/'.$this->story_artifact_ids[1])->send();
+        $response = $this->client->get('artifacts/' . $this->story_artifact_ids[1])->send();
         $this->assertEquals(403, $response->getStatusCode());
     }
 
@@ -699,10 +707,6 @@ class ArtifactsTest extends ArtifactsTestExecutionHelper  // @codingStandardsIgn
             )
         );
         $this->assertEquals(400, $response->getStatusCode());
-    }
-    private function getTracker($tracker_id)
-    {
-        return $this->tracker_representations[$tracker_id];
     }
     /**
      * @param $response

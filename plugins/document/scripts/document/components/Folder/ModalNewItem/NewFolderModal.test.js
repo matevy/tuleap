@@ -22,7 +22,7 @@ import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue.js";
 
 import NewFolderModal from "./NewFolderModal.vue";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 
 import EventBus from "../../../helpers/event-bus.js";
 import * as tlp from "tlp";
@@ -45,7 +45,7 @@ describe("NewFolderModal", () => {
                             list_value: "My current folder",
                             is_multiple_value_allowed: false,
                             type: "text",
-                            is_required: false
+                            is_required: false,
                         },
                         {
                             short_name: "custom metadata",
@@ -53,20 +53,20 @@ describe("NewFolderModal", () => {
                             value: "value",
                             is_multiple_value_allowed: false,
                             type: "text",
-                            is_required: false
-                        }
+                            is_required: false,
+                        },
                     ],
                     permissions_for_groups: {
                         can_read: [],
                         can_write: [],
-                        can_manage: []
-                    }
+                        can_manage: [],
+                    },
                 },
                 is_obsolescence_date_metadata_used: true,
                 is_item_status_metadata_used: true,
                 project_id: 102,
-                project_ugroups: null
-            }
+                project_ugroups: null,
+            },
         };
 
         store = createStoreMock(general_store, { metadata: {} });
@@ -74,33 +74,33 @@ describe("NewFolderModal", () => {
         factory = () => {
             return shallowMount(NewFolderModal, {
                 localVue,
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
 
-        jest.spyOn(tlp, "modal").mockReturnValue({
+        jest.spyOn(tlp, "createModal").mockReturnValue({
             addEventListener: () => {},
             show: () => {},
-            hide: () => {}
+            hide: () => {},
         });
     });
 
     it("Does not load project metadata, when they have already been loaded", async () => {
         store.state.metadata = {
-            has_loaded_metadata: true
+            has_loaded_metadata: true,
         };
 
         const wrapper = factory();
 
         EventBus.$emit("show-new-document-modal", {
-            detail: { parent: store.state.current_folder }
+            detail: { parent: store.state.current_folder },
         });
         await wrapper.vm.$nextTick().then(() => {});
 
         expect(store.dispatch).not.toHaveBeenCalledWith("metadata/loadProjectMetadata");
     });
 
-    it("It inherit default values from parent metadata", () => {
+    it("inherit default values from parent metadata", () => {
         const folder_to_create = {
             metadata: [
                 {
@@ -109,15 +109,15 @@ describe("NewFolderModal", () => {
                     value: "value",
                     is_multiple_value_allowed: false,
                     type: "text",
-                    is_required: false
-                }
-            ]
+                    is_required: false,
+                },
+            ],
         };
 
         const wrapper = factory();
 
         EventBus.$emit("show-new-folder-modal", {
-            detail: { parent: store.state.current_folder }
+            detail: { parent: store.state.current_folder },
         });
         expect(wrapper.vm.item.metadata).toEqual(folder_to_create.metadata);
     });

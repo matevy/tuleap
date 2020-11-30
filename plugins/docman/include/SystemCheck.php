@@ -35,7 +35,7 @@ class Docman_SystemCheck
     /** @var Backend */
     private $backend;
 
-    /** @var Logger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
     /**
@@ -48,7 +48,7 @@ class Docman_SystemCheck
         Docman_SystemCheckProjectRetriever $retriever,
         Backend $backend,
         PluginConfigChecker $config_checker,
-        Logger $logger
+        \Psr\Log\LoggerInterface $logger
     ) {
         $this->retriever      = $retriever;
         $this->docman_plugin  = $docman_plugin;
@@ -103,6 +103,6 @@ class Docman_SystemCheck
 
     private function getDocmanRootPath()
     {
-        return $this->docman_plugin->getPluginInfo()->getPropertyValueForName('docman_root').'/';
+        return $this->docman_plugin->getPluginInfo()->getPropertyValueForName('docman_root') . '/';
     }
 }

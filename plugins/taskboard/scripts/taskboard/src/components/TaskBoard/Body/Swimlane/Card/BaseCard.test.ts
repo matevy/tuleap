@@ -19,11 +19,12 @@
 
 import { shallowMount, Slots, Wrapper } from "@vue/test-utils";
 import BaseCard from "./BaseCard.vue";
-import { createStoreMock } from "../../../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import { Card, TaskboardEvent, Tracker, User } from "../../../../../type";
 import EventBus from "../../../../../helpers/event-bus";
 import LabelEditor from "./Editor/Label/LabelEditor.vue";
 import { UpdateCardPayload } from "../../../../../store/swimlane/card/type";
+import * as scroll_helper from "../../../../../helpers/scroll-to-item";
 
 function getWrapper(
     card: Card,
@@ -36,29 +37,30 @@ function getWrapper(
             $store: createStoreMock({
                 state: {
                     user: { user_has_accessibility_mode },
-                    swimlane: {}
+                    swimlane: {},
+                    fullscreen: {},
                 },
                 getters: {
-                    tracker_of_card: (): Tracker => tracker_of_card
-                }
-            })
+                    tracker_of_card: (): Tracker => tracker_of_card,
+                },
+            }),
         },
         propsData: { card },
-        slots
+        slots,
     });
 }
 
 function getCard(
     definition: Card = {
         background_color: "",
-        is_in_edit_mode: false
+        is_in_edit_mode: false,
     } as Card
 ): Card {
     return {
+        ...definition,
         id: 43,
         color: "lake-placid-blue",
         assignees: [] as User[],
-        ...definition
     } as Card;
 }
 
@@ -72,33 +74,23 @@ describe("BaseCard", () => {
     it("adds accessibility class if user needs it and card has a background color", () => {
         const wrapper = getWrapper(getCard({ background_color: "fiesta-red" } as Card), {}, true);
 
-        expect(wrapper.contains(".taskboard-card-accessibility")).toBe(true);
+        expect(wrapper.find(".taskboard-card-accessibility").exists()).toBe(true);
         expect(wrapper.classes()).toContain("taskboard-card-with-accessibility");
     });
 
     it("does not add accessibility class if user needs it but card has no background color", () => {
         const wrapper = getWrapper(getCard(), {}, true);
 
-        expect(wrapper.contains(".taskboard-card-accessibility")).toBe(false);
+        expect(wrapper.find(".taskboard-card-accessibility").exists()).toBe(false);
         expect(wrapper.classes()).not.toContain("taskboard-card-with-accessibility");
     });
 
     it("includes the remaining effort slot", () => {
         const wrapper = getWrapper(getCard(), {
-            remaining_effort: '<div class="my-remaining-effort"></div>'
+            remaining_effort: '<div class="my-remaining-effort"></div>',
         });
 
-        expect(wrapper.contains(".taskboard-card > .my-remaining-effort")).toBe(true);
-    });
-
-    it("includes the initial effort slot", () => {
-        const wrapper = getWrapper(getCard(), {
-            initial_effort: '<div class="my-initial-effort"></div>'
-        });
-
-        expect(
-            wrapper.contains(".taskboard-card-content > .taskboard-card-info > .my-initial-effort")
-        ).toBe(true);
+        expect(wrapper.find(".taskboard-card > .my-remaining-effort").exists()).toBe(true);
     });
 
     describe("edit mode", () => {
@@ -122,7 +114,7 @@ describe("BaseCard", () => {
             const card = getCard({ is_in_edit_mode: false } as Card);
             const wrapper = getWrapper(card);
 
-            wrapper.find(".taskboard-card-edit-trigger").trigger("click");
+            wrapper.get("[data-test=card-edit-button]").trigger("click");
 
             expect(wrapper.vm.$store.commit).toHaveBeenCalledWith(
                 "swimlane/addCardToEditMode",
@@ -134,7 +126,7 @@ describe("BaseCard", () => {
             const card = getCard({ is_in_edit_mode: true } as Card);
             const wrapper = getWrapper(card);
 
-            wrapper.find(".taskboard-card-edit-trigger").trigger("click");
+            wrapper.get("[data-test=card-edit-button]").trigger("click");
             expect(wrapper.vm.$store.commit).not.toHaveBeenCalledWith(
                 "swimlane/addCardToEditMode",
                 expect.any(Object)
@@ -147,7 +139,7 @@ describe("BaseCard", () => {
             const card = getCard();
             const wrapper = getWrapper(card, {}, false, { title_field: null } as Tracker);
 
-            expect(wrapper.contains(".taskboard-card-edit-trigger")).toBe(false);
+            expect(wrapper.find(".taskboard-card-edit-trigger").exists()).toBe(false);
             expect(wrapper.classes("taskboard-card-editable")).toBe(false);
         });
 
@@ -155,7 +147,7 @@ describe("BaseCard", () => {
             Then it will display the card as editable`, () => {
             const wrapper = getWrapper(getCard());
 
-            expect(wrapper.contains(".taskboard-card-edit-trigger")).toBe(true);
+            expect(wrapper.find(".taskboard-card-edit-trigger").exists()).toBe(true);
             expect(wrapper.classes("taskboard-card-editable")).toBe(true);
         });
 
@@ -164,7 +156,7 @@ describe("BaseCard", () => {
             Then it won't display the card as editable`, () => {
             const wrapper = getWrapper(getCard({ is_being_saved: true } as Card));
 
-            expect(wrapper.contains(".taskboard-card-edit-trigger")).toBe(false);
+            expect(wrapper.find(".taskboard-card-edit-trigger").exists()).toBe(false);
             expect(wrapper.classes("taskboard-card-editable")).toBe(false);
         });
 
@@ -195,7 +187,7 @@ describe("BaseCard", () => {
 
             const label = "Lorem ipsum";
             wrapper.setData({ label });
-            const edit_label = wrapper.find(LabelEditor);
+            const edit_label = wrapper.findComponent(LabelEditor);
             edit_label.vm.$emit("save");
 
             expect(wrapper.vm.$store.commit).not.toHaveBeenCalledWith(
@@ -205,7 +197,8 @@ describe("BaseCard", () => {
             expect(wrapper.vm.$store.dispatch).toHaveBeenCalledWith("swimlane/saveCard", {
                 card,
                 label,
-                tracker: { title_field: { id: 1212 } } as Tracker
+                tracker: { title_field: { id: 1212 } } as Tracker,
+                assignees: [],
             } as UpdateCardPayload);
         });
 
@@ -225,16 +218,17 @@ describe("BaseCard", () => {
             expect(wrapper.vm.$store.dispatch).toHaveBeenCalledWith("swimlane/saveCard", {
                 card,
                 label,
-                tracker: { title_field: { id: 1212 } } as Tracker
+                tracker: { title_field: { id: 1212 } } as Tracker,
+                assignees: [],
             } as UpdateCardPayload);
         });
 
-        it(`Does not save the new label if it is identical to the former one`, () => {
+        it(`Does not save the card if new label and assignees are identical to the former ones`, () => {
             const card = getCard({ label: "toto", is_in_edit_mode: true } as Card);
             const wrapper = getWrapper(card);
 
             wrapper.setData({ label: "toto" });
-            const edit_label = wrapper.find(LabelEditor);
+            const edit_label = wrapper.findComponent(LabelEditor);
             edit_label.vm.$emit("save");
 
             expect(wrapper.vm.$store.commit).toHaveBeenCalledWith(
@@ -244,11 +238,28 @@ describe("BaseCard", () => {
             expect(wrapper.vm.$store.dispatch).not.toHaveBeenCalled();
         });
 
+        it(`Save the card if label is identical to the former one but assignees are not`, () => {
+            const card = getCard({ label: "toto", is_in_edit_mode: true } as Card);
+            const wrapper = getWrapper(card);
+
+            wrapper.setData({ label: "toto" });
+            wrapper.setData({ assignees: [{ id: 123 }, { id: 234 }] });
+            const edit_label = wrapper.findComponent(LabelEditor);
+            edit_label.vm.$emit("save");
+
+            expect(wrapper.vm.$store.dispatch).toHaveBeenCalledWith("swimlane/saveCard", {
+                card,
+                label: "toto",
+                tracker: { title_field: { id: 1212 } } as Tracker,
+                assignees: [{ id: 123 }, { id: 234 }],
+            } as UpdateCardPayload);
+        });
+
         it("displays a card in edit mode", () => {
             const card = getCard({
                 is_in_edit_mode: true,
                 is_being_saved: true,
-                is_just_saved: true
+                is_just_saved: true,
             } as Card);
             const wrapper = getWrapper(card);
 
@@ -261,7 +272,7 @@ describe("BaseCard", () => {
             const card = getCard({
                 is_in_edit_mode: false,
                 is_being_saved: true,
-                is_just_saved: true
+                is_just_saved: true,
             } as Card);
             const wrapper = getWrapper(card);
 
@@ -274,13 +285,32 @@ describe("BaseCard", () => {
             const card = getCard({
                 is_in_edit_mode: false,
                 is_being_saved: false,
-                is_just_saved: true
+                is_just_saved: true,
             } as Card);
             const wrapper = getWrapper(card);
 
             expect(wrapper.classes()).not.toContain("taskboard-card-edit-mode");
             expect(wrapper.classes()).not.toContain("taskboard-card-is-being-saved");
             expect(wrapper.classes()).toContain("taskboard-card-is-just-saved");
+        });
+
+        it("scrolls to the card when it is ouside the viewport in edit mode", () => {
+            const card = getCard({
+                is_in_edit_mode: false,
+                is_being_saved: false,
+                is_just_saved: true,
+            } as Card);
+
+            jest.useFakeTimers();
+
+            const wrapper = getWrapper(card);
+
+            jest.spyOn(scroll_helper, "scrollToItemIfNeeded").mockImplementation();
+
+            wrapper.get("[data-test=card-edit-button]").trigger("click");
+
+            jest.runAllTimers();
+            expect(scroll_helper.scrollToItemIfNeeded).toHaveBeenCalled();
         });
     });
 });

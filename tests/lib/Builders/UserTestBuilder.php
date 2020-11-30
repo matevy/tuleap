@@ -25,33 +25,110 @@ namespace Tuleap\Test\Builders;
 
 class UserTestBuilder
 {
-    private $params = array('language_id' => 'en_US');
+    private $params = ['language_id' => 'en_US'];
+    /**
+     * @var \BaseLanguage
+     */
+    private $language;
+    /**
+     * @var string
+     */
+    private $avatar_url = '';
 
-    public static function aUser() : self
+    public static function aUser(): self
     {
         return new self();
     }
 
-    public function withUserName(string $name)
+    public static function anAnonymousUser(): self
+    {
+        return (new self())->withId(0);
+    }
+
+    public function withUserName(string $name): self
     {
         $this->params['user_name'] = $name;
         return $this;
     }
 
-    public function withId(int $id)
+    public function withRealName(string $string): self
+    {
+        $this->params['realname'] = $string;
+        return $this;
+    }
+
+    public function withId(int $id): self
     {
         $this->params['user_id'] = $id;
         return $this;
     }
 
-    public function withLdapId(string $id)
+    public function withLdapId(string $id): self
     {
         $this->params['ldap_id'] = $id;
         return $this;
     }
 
-    public function build()
+    public function withLastPwdUpdate(string $timestamp): self
     {
-        return new \PFUser($this->params);
+        $this->params['last_pwd_update'] = $timestamp;
+        return $this;
+    }
+
+    public function withLanguage(\BaseLanguage $language): self
+    {
+        $this->language = $language;
+        return $this;
+    }
+
+    public function withAvatarUrl(string $avatar_url): self
+    {
+        $this->avatar_url = $avatar_url;
+        return $this;
+    }
+
+    public function withAddDate(int $timestamp): self
+    {
+        $this->params['add_date'] = (string) $timestamp;
+        return $this;
+    }
+
+    public function withEmail(string $email): self
+    {
+        $this->params['email'] = (string) $email;
+        return $this;
+    }
+
+    public function withTimezone(string $timezone): self
+    {
+        $this->params['timezone'] = $timezone;
+        return $this;
+    }
+
+    /**
+     * @psalm-param \PFUser::STATUS_*
+     */
+    public function withStatus(string $status): self
+    {
+        $this->params['status'] = $status;
+        return $this;
+    }
+
+    public function withLocale(string $language_tag): self
+    {
+        $this->params['language_id'] = $language_tag;
+        return $this;
+    }
+
+    public function build(): \PFUser
+    {
+        $user = new \PFUser($this->params);
+        if ($this->language) {
+            $user->setLanguage($this->language);
+        }
+        if ($this->avatar_url) {
+            $user->setAvatarUrl($this->avatar_url);
+        }
+        return $user;
     }
 }

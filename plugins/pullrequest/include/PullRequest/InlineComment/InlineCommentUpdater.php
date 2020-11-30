@@ -21,7 +21,6 @@
 namespace Tuleap\PullRequest\InlineComment;
 
 use Tuleap\PullRequest\FileUniDiff;
-use Tuleap\PullRequest\FileUniDiffBuilder;
 use Tuleap\PullRequest\UniDiffLine;
 
 class InlineCommentUpdater
@@ -39,13 +38,13 @@ class InlineCommentUpdater
      */
     public function updateWhenSourceChanges(array $comments, FileUniDiff $original_diff, FileUniDiff $changes_diff, FileUniDiff $dest_changes_diff, FileUniDiff $target_diff)
     {
-        $comments_to_update = array();
+        $comments_to_update = [];
 
         foreach ($comments as $comment) {
             $original_line = $original_diff->getLine($comment->getUniDiffOffset());
             if ($original_line->getType() == UniDiffLine::ADDED || $original_line->getType() == UniDiffLine::KEPT) {
                 $this->updateCommentOnAddedOrKeptLine($comment, $changes_diff, $target_diff, $original_line);
-            } elseif ($original_line->getType() == UnidiffLine::REMOVED) {
+            } elseif ($original_line->getType() == UniDiffLine::REMOVED) {
                 $this->updateCommentOnDeletedLine($comment, $dest_changes_diff, $target_diff, $original_line);
             }
             $comments_to_update[] = $comment;
@@ -72,7 +71,7 @@ class InlineCommentUpdater
             $comment->markAsOutdated();
         } else {
             $target_line = $target_diff->getLineFromOldOffset($dest_changes_line->getNewOffset());
-            if ($target_line->getType() == UnidiffLine::REMOVED) {
+            if ($target_line->getType() == UniDiffLine::REMOVED) {
                 $new_unidiff_offset = $target_line->getUnidiffOffset();
                 $comment->setUnidiffOffset($new_unidiff_offset);
             } else {

@@ -19,10 +19,11 @@
   -->
 
 <template>
-    <button type="button"
-            class="tlp-button-primary tlp-button-outline tlp-button-small tlp-dropdown-split-button-main"
-            data-test="document-quick-look-button"
-            v-on:click="toggleQuickLook()"
+    <button
+        type="button"
+        class="tlp-button-primary tlp-button-outline tlp-button-small tlp-dropdown-split-button-main"
+        data-test="document-quick-look-button"
+        v-on:click="toggleQuickLook()"
     >
         <i class="fa fa-eye tlp-button-icon"></i>
         <translate>Quick look</translate>
@@ -34,12 +35,12 @@ import EventBus from "../../../helpers/event-bus.js";
 export default {
     name: "QuickLookButton",
     props: {
-        item: Object
+        item: Object,
     },
     methods: {
         toggleQuickLook() {
             EventBus.$emit("toggle-quick-look", { details: { item: this.item } });
-        }
-    }
+        },
+    },
 };
 </script>

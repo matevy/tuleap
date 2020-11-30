@@ -71,15 +71,15 @@ class Cardwall_OnTop_Config_Command_UpdateMappingFields extends Cardwall_OnTop_C
      */
     public function execute(Codendi_Request $request)
     {
-        if (!is_array($request->get('mapping_field'))) {
+        if (! is_array($request->get('mapping_field'))) {
             return;
         }
         $mapping_fields = $this->getMappingFields();
         foreach ($request->get('mapping_field') as $mapping_tracker_id => $mapping_tracker_info) {
-            if (!isset($mapping_tracker_info['field'])) {
+            if (! isset($mapping_tracker_info['field'])) {
                 continue;
             }
-            $field_id = (int)$mapping_tracker_info['field'];
+            $field_id = (int) $mapping_tracker_info['field'];
             $mapping_tracker = $this->tracker_factory->getTrackerById($mapping_tracker_id);
             $field           = $this->form_element_factory->getFieldById($field_id);
             $this->save($mapping_tracker_info, $mapping_fields, $mapping_tracker, $field);
@@ -91,7 +91,7 @@ class Cardwall_OnTop_Config_Command_UpdateMappingFields extends Cardwall_OnTop_C
      */
     private function getMappingFields()
     {
-        $mapping_fields = array();
+        $mapping_fields = [];
         $mapping_fields_rows = $this->dao->searchMappingFields($this->tracker->getId());
         foreach ($mapping_fields_rows as $row) {
             $mapping_fields[$row['tracker_id']] = $row['field_id'];
@@ -117,13 +117,13 @@ class Cardwall_OnTop_Config_Command_UpdateMappingFields extends Cardwall_OnTop_C
     {
         if ($this->dao->save($this->tracker->getId(), $mapping_tracker->getId(), $field->getId())) {
             $this->value_dao->delete($this->tracker->getId(), $mapping_tracker->getId());
-            $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_cardwall', 'on_top_mapping_changed', array($mapping_tracker->getName(), $field->getLabel())));
+            $GLOBALS['Response']->addFeedback('info', sprintf(dgettext('tuleap-cardwall', 'Mapping on %1$s changed to %2$s'), $mapping_tracker->getName(), $field->getLabel()));
         }
     }
 
     private function saveValuesMapping(array $mapping_tracker_info, Tracker $mapping_tracker, Tracker_FormElement $field)
     {
-        if (empty($mapping_tracker_info['values']) || !is_array($mapping_tracker_info['values'])) {
+        if (empty($mapping_tracker_info['values']) || ! is_array($mapping_tracker_info['values'])) {
             return;
         }
         $nb_changes      = 0;
@@ -133,12 +133,12 @@ class Cardwall_OnTop_Config_Command_UpdateMappingFields extends Cardwall_OnTop_C
                 $mapping_changed = true;
                 $this->value_dao->deleteAllFieldValues($this->tracker->getId(), $mapping_tracker->getId(), $field->getId(), $column_id);
                 foreach ($values as $value_id) {
-                    $nb_changes += $this->value_dao->save($this->tracker->getId(), $mapping_tracker->getId(), $field->getId(), (int)$value_id, $column_id);
+                    $nb_changes += $this->value_dao->save($this->tracker->getId(), $mapping_tracker->getId(), $field->getId(), (int) $value_id, $column_id);
                 }
             }
         }
         if ($mapping_changed && $nb_changes > 0) {
-            $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_cardwall', 'on_top_mapping_values_changed', array($field->getLabel())));
+            $GLOBALS['Response']->addFeedback('info', sprintf(dgettext('tuleap-cardwall', 'Values mapping changed for "%1$s" field'), $field->getLabel()));
         }
     }
 
@@ -154,7 +154,7 @@ class Cardwall_OnTop_Config_Command_UpdateMappingFields extends Cardwall_OnTop_C
 
     private function mappingValuesAddedOrRemoved($column_id, array $value_mappings, array $values)
     {
-        $already_processed = array();
+        $already_processed = [];
         if ($this->areMappingValuesRemoved($column_id, $value_mappings, $values, $already_processed)) {
             return true;
         } else {
@@ -167,7 +167,7 @@ class Cardwall_OnTop_Config_Command_UpdateMappingFields extends Cardwall_OnTop_C
         $no_update_needed = true;
         foreach ($value_mappings as $value_id => $value_mapping) {
             if ($value_mapping->getColumnId() == $column_id) {
-                $already_processed[]= $value_id;
+                $already_processed[] = $value_id;
                 if (in_array($value_id, $values)) {
                     $no_update_needed = $no_update_needed & true;
                 } else {
@@ -175,7 +175,7 @@ class Cardwall_OnTop_Config_Command_UpdateMappingFields extends Cardwall_OnTop_C
                 }
             }
         }
-        return !$no_update_needed;
+        return ! $no_update_needed;
     }
 
     private function areMappingValuesAdded(array $values, array $already_processed)
@@ -196,6 +196,6 @@ class Cardwall_OnTop_Config_Command_UpdateMappingFields extends Cardwall_OnTop_C
      */
     private function fieldHasChanged(array $mapping_fields, ?Tracker $mapping_tracker = null, ?Tracker_FormElement $field = null)
     {
-        return !isset($mapping_fields[$mapping_tracker->getId()]) || $mapping_fields[$mapping_tracker->getId()] != $field->getId();
+        return ! isset($mapping_fields[$mapping_tracker->getId()]) || ($field !== null && $mapping_fields[$mapping_tracker->getId()] != $field->getId());
     }
 }

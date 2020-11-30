@@ -47,12 +47,12 @@ final class GerritUnsupportedVersionDriver implements Git_Driver_Gerrit
         throw new UnsupportedGerritVersionException();
     }
 
-    public function doesTheParentProjectExist(Git_RemoteServer_GerritServer $server, $project_name)
+    public function doesTheParentProjectExist(Git_RemoteServer_GerritServer $server, $project_name): bool
     {
         throw new UnsupportedGerritVersionException();
     }
 
-    public function doesTheProjectExist(Git_RemoteServer_GerritServer $server, $project_name)
+    public function doesTheProjectExist(Git_RemoteServer_GerritServer $server, $project_name): bool
     {
         throw new UnsupportedGerritVersionException();
     }
@@ -137,7 +137,7 @@ final class GerritUnsupportedVersionDriver implements Git_Driver_Gerrit
         throw new UnsupportedGerritVersionException();
     }
 
-    public function addSSHKeyToAccount(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $user, $ssh_key)
+    public function addSSHKeyToAccount(Git_RemoteServer_GerritServer $server, Git_Driver_Gerrit_User $user, string $ssh_key): void
     {
         throw new UnsupportedGerritVersionException();
     }

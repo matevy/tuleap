@@ -20,13 +20,13 @@
 
 use Tuleap\AgileDashboard\Kanban\TrackerReport\TrackerReportBuilder;
 use Tuleap\AgileDashboard\Kanban\TrackerReport\TrackerReportDao;
-use Tuleap\AgileDashboard\Widget\WidgetAddToDashboardDropdownBuilder;
 use Tuleap\AgileDashboard\Widget\WidgetAddToDashboardDropdownRepresentationBuilder;
 use Tuleap\Dashboard\Project\ProjectDashboardDao;
 use Tuleap\Dashboard\Project\ProjectDashboardRetriever;
 use Tuleap\Dashboard\User\UserDashboardDao;
 use Tuleap\Dashboard\User\UserDashboardRetriever;
 use Tuleap\Dashboard\Widget\DashboardWidgetDao;
+use Tuleap\Tracker\Artifact\Renderer\ListPickerIncluder;
 use Tuleap\Widget\WidgetFactory;
 
 class KanbanPresenter
@@ -65,6 +65,9 @@ class KanbanPresenter
 
     /** @var string */
     public $user_accessibility_mode;
+
+    /** @var string */
+    public $is_list_picker_enabled;
 
     public function __construct(
         AgileDashboard_Kanban $kanban,
@@ -113,19 +116,22 @@ class KanbanPresenter
         $this->kanban_representation             = json_encode($kanban_representation_builder->build($kanban, $user));
         $this->dashboard_dropdown_representation = json_encode($widget_dropdown_builder->build($kanban, $user, $project_manager->getProject($project_id)));
         $this->tracker_reports                   = json_encode($tracker_report_builder->build($selected_tracker_report_id));
-        $this->user_is_kanban_admin              = (int)$user_is_kanban_admin;
+        $this->user_is_kanban_admin              = (int) $user_is_kanban_admin;
         $this->language                          = $language;
         $this->project_id                        = $project_id;
         $this->user_id                           = $user->getId();
-        $this->view_mode                         = $user->getPreference('agiledashboard_kanban_item_view_mode_' . $kanban->getId());
+        $this->view_mode                         = (string) $user->getPreference(
+            'agiledashboard_kanban_item_view_mode_' . $kanban->getId()
+        );
         $this->nodejs_server                     = ForgeConfig::get('nodejs_server');
         $this->kanban_url                        = AGILEDASHBOARD_BASE_URL . '/?' . http_build_query(
-            array(
-                'group_id' => $this->project_id,
-                'action'   => 'showKanban',
-                'id'       => $kanban->getId()
-            )
+            [
+                    'group_id' => $this->project_id,
+                    'action'   => 'showKanban',
+                    'id'       => $kanban->getId()
+                ]
         );
-        $this->user_accessibility_mode = json_encode((bool) $user->getPreference(PFUser::ACCESSIBILITY_MODE));
+        $this->user_accessibility_mode           = json_encode((bool) $user->getPreference(PFUser::ACCESSIBILITY_MODE));
+        $this->is_list_picker_enabled            = json_encode((bool) ListPickerIncluder::isListPickerEnabledAndBrowserNotIE11());
     }
 }

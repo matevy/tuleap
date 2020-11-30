@@ -23,6 +23,7 @@ use Tuleap\FRS\FRSPermissionCreator;
 use Tuleap\FRS\FRSPermissionDao;
 use Tuleap\Http\HttpClientFactory;
 use Tuleap\Http\HTTPFactoryBuilder;
+use Tuleap\Project\DeletedProjectStatusChangeException;
 use Tuleap\Project\ProjectAccessChecker;
 use Tuleap\Project\RestrictedUserCanAccessProjectVerifier;
 use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
@@ -36,11 +37,42 @@ use Tuleap\Webhook\Emitter;
 
 class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
+    /**
+     * Is project creation allowed to regular users (1) or not (0)
+     *
+     * @tlp-config-key
+     */
     public const CONFIG_PROJECTS_CAN_BE_CREATED                     = 'sys_use_project_registration';
+    /**
+     * Should project be approved by site admin (1) or auto approved (0)
+     *
+     * @tlp-config-key
+     */
     public const CONFIG_PROJECT_APPROVAL                            = 'sys_project_approval';
+    /**
+     * Max number of projects in the site administration validation queue
+     *
+     * @tlp-config-key
+     */
     public const CONFIG_NB_PROJECTS_WAITING_FOR_VALIDATION          = 'nb_projects_waiting_for_validation';
+    /**
+     * Max number of projects a user can submit in validation queue
+     *
+     * @tlp-config-key
+     */
     public const CONFIG_NB_PROJECTS_WAITING_FOR_VALIDATION_PER_USER = 'nb_projects_waiting_for_validation_per_user';
+    /**
+     * Are restricted users allowed to create projects (1) or not (0)
+     *
+     * @tlp-config-key
+     */
     public const CONFIG_RESTRICTED_USERS_CAN_CREATE_PROJECTS        = 'restricted_users_can_create_projects';
+    /**
+     * Are project admin allowed to choose project's visibility (1) or not (0)
+     *
+     * @tlp-config-key
+     */
+    public const SYS_USER_CAN_CHOOSE_PROJECT_PRIVACY                = 'sys_user_can_choose_project_privacy';
 
     /**
      * The Projects dao used to fetch data
@@ -79,7 +111,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
         ?ProjectDao $dao = null
     ) {
         $this->_dao                   = $dao;
-        $this->_cached_projects       = array();
+        $this->_cached_projects       = [];
         $this->project_history_dao    = $project_history_dao;
         $this->project_access_checker = $project_access_checker;
     }
@@ -90,7 +122,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public static function instance()
     {
-        if (!isset(self::$_instance)) {
+        if (! isset(self::$_instance)) {
             $project_access_checker = new ProjectAccessChecker(
                 PermissionsOverrider_PermissionsOverriderManager::instance(),
                 new RestrictedUserCanAccessProjectVerifier(),
@@ -130,7 +162,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public function _getDao() // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
     {
-        if (!isset($this->_dao)) {
+        if (! isset($this->_dao)) {
             $this->_dao = new ProjectDao(CodendiDataAccess::instance());
         }
         return $this->_dao;
@@ -142,7 +174,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public function getProject($group_id)
     {
-        if (!isset($this->_cached_projects[$group_id])) {
+        if (! isset($this->_cached_projects[$group_id])) {
             $p = $this->createProjectInstance($group_id);
             $this->_cached_projects[$group_id] = $p;
         }
@@ -193,18 +225,16 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      *
      * @param array $row
      *
-     * @return Project
      */
-    public function getProjectFromDbRow(array $row)
+    public function getProjectFromDbRow(array $row): Project
     {
         return $this->getAndCacheProject($row);
     }
 
     /**
      * @param $group_id int The id of the project to look for
-     * @return Project
      */
-    protected function createProjectInstance($group_id_or_row)
+    protected function createProjectInstance($group_id_or_row): Project
     {
         if (is_array($group_id_or_row)) {
             return new Project($group_id_or_row);
@@ -224,7 +254,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
 
     public function getProjectsByStatus($status)
     {
-        $projects = array();
+        $projects = [];
         $dao = new ProjectDao(CodendiDataAccess::instance());
         foreach ($dao->searchByStatus($status) as $row) {
             $projects[$row['group_id']] = $this->getAndCacheProject($row);
@@ -246,7 +276,6 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public function getAllProjectsButDeleted()
     {
-
         $projects_active     = $this->getProjectsByStatus(Project::STATUS_ACTIVE);
         $projects_pending    = $this->getProjectsByStatus(Project::STATUS_PENDING);
         $projects_holding    = $this->getProjectsByStatus(Project::STATUS_SUSPENDED);
@@ -259,7 +288,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public function getAllPrivateProjects()
     {
-        $private_projects = array();
+        $private_projects = [];
         foreach ($this->_getDao()->searchByPublicStatus(false) as $row) {
             $private_projects[] = $this->getAndCacheProject($row);
         }
@@ -271,7 +300,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public function getAllPendingProjects()
     {
-        $pending_projects = array();
+        $pending_projects = [];
         foreach ($this->_getDao()->searchByStatus(Project::STATUS_PENDING) as $row) {
             $pending_projects[] = $this->createProjectInstance($row);
         }
@@ -297,7 +326,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
         if ($user === null) {
             return [];
         }
-        $projects = array();
+        $projects = [];
         $dao = new ProjectDao(CodendiDataAccess::instance());
         $dar = $dao->searchProjectsNameLike($name, $limit, $user->getId(), $isMember, $isAdmin, $isPrivate, $offset);
         $nbFound = $dao->foundRows();
@@ -319,7 +348,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public function getProjectFromAutocompleter($name)
     {
-        $matches = array();
+        $matches = [];
         $dao = new ProjectDao(CodendiDataAccess::instance());
         if (preg_match('/^(.*) \((.*)\)$/', $name, $matches)) {
             // Autocompleter "normal" form: Public Name (unix_name); {
@@ -332,7 +361,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
             $dar = $dao->searchByCaseInsensitiveUnixGroupName($name);
         }
 
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             return $this->getAndCacheProject($dar->getRow());
         }
         return false;
@@ -342,12 +371,10 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      * Create new Project object from row or get it from cache if already built
      *
      * @param Array $row
-     *
-     * @return Project
      */
-    protected function getAndCacheProject($row)
+    protected function getAndCacheProject($row): Project
     {
-        if (!isset($this->_cached_projects[$row['group_id']])) {
+        if (! isset($this->_cached_projects[$row['group_id']])) {
             $p = $this->createProjectInstance($row);
             $this->_cached_projects[$row['group_id']] = $p;
         }
@@ -365,7 +392,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
     {
         $p = null;
         $dar = $this->_getDao()->searchByUnixGroupName($name);
-        if ($dar && !$dar->isError() && $dar->rowCount() === 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() === 1) {
             $p = $this->createProjectInstance($dar->getRow());
         }
         return $p;
@@ -374,7 +401,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
     public function getProjectByCaseInsensitiveUnixName($name)
     {
         $dar = $this->_getDao()->searchByCaseInsensitiveUnixGroupName($name);
-        if ($dar && !$dar->isError() && $dar->rowCount() === 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() === 1) {
             return $this->createProjectInstance($dar->getRow());
         }
         return null;
@@ -383,7 +410,6 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
     /**
      * Make project available
      *
-     * @param Project $project
      *
      * @return bool
      */
@@ -391,7 +417,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
     {
         if ($this->activateWithoutNotifications($project)) {
             if (! send_new_project_email($project)) {
-                $GLOBALS['Response']->addFeedback('warning', $project->getPublicName()." - ".$GLOBALS['Language']->getText('global', 'mail_failed', array($GLOBALS['sys_email_admin'])));
+                $GLOBALS['Response']->addFeedback('warning', $project->getPublicName() . " - " . $GLOBALS['Language']->getText('global', 'mail_failed', [ForgeConfig::get('sys_email_admin')]));
             }
             return true;
         }
@@ -408,7 +434,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
             $this->project_history_dao->groupAddHistory('approved', 'x', $project->getId());
 
             $em = $this->getEventManager();
-            $em->processEvent('approve_pending_project', array('group_id' => $project->getId()));
+            $em->processEvent('approve_pending_project', ['group_id' => $project->getId()]);
 
             $this->launchWebhooksProjectCreated($project);
 
@@ -434,6 +460,10 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
 
     public function updateStatus(Project $project, $status)
     {
+        if ($project->getStatus() === Project::STATUS_DELETED) {
+            throw new DeletedProjectStatusChangeException();
+        }
+
         if (! $this->_getDao()->updateStatus($project->getId(), $status)) {
             $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('admin_approve_pending', 'error_update'));
         }
@@ -471,11 +501,11 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
             $event_manager = EventManager::instance();
             $event_manager->processEvent(
                 Event::RENAME_PROJECT,
-                array(
+                [
                     'project'     => $project,
                     'success'     => &$success,
                     'new_name'    => $new_name,
-                )
+                ]
             );
 
             return $success;
@@ -535,20 +565,20 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
                 $is_private = true;
                 break;
             default:
-                $GLOBALS['Response']->addFeedback('error', 'bad value '.$access_level);
+                $GLOBALS['Response']->addFeedback('error', 'bad value ' . $access_level);
                 return;
         }
 
         $this->project_history_dao->groupAddHistory('access', $access_level, $project_id);
-        $this->getEventManager()->processEvent('project_is_private', array(
+        $this->getEventManager()->processEvent('project_is_private', [
             'group_id'           => $project_id,
             'project_is_private' => $is_private,
-        ));
-        $this->getEventManager()->processEvent(Event::PROJECT_ACCESS_CHANGE, array(
+        ]);
+        $this->getEventManager()->processEvent(Event::PROJECT_ACCESS_CHANGE, [
             'project_id'         => $project_id,
             'access'             => $access_level,
             'old_access'         => $old_access,
-        ));
+        ]);
 
         $this->getFrsPermissionsCreator()->updateProjectAccess($project, $old_access, $access_level);
         if ($is_private) {
@@ -680,7 +710,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public function removeProjectMembers($project)
     {
-        if (!$project || !is_object($project) || $project->isError()) {
+        if (! $project || ! is_object($project) || $project->isError()) {
             exit_no_group();
         }
         $dao = new UserGroupDao(CodendiDataAccess::instance());
@@ -703,14 +733,29 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
         } else {
             $group = $this->getProject($groupId);
         }
-        if (!$group || !is_object($group)) {
-            throw new SoapFault('GET_GROUP_FAULT', $groupId.' : '.$GLOBALS['Language']->getText('include_group', 'g_not_found'), $method);
+        if (! $group || ! is_object($group)) {
+            throw new SoapFault('GET_GROUP_FAULT', $groupId . ' : ' . $GLOBALS['Language']->getText('include_group', 'g_not_found'), $method);
         } elseif ($group->isError()) {
             throw new SoapFault('GET_GROUP_FAULT', $group->getErrorMessage(), $method);
-        } elseif (!$group->isActive()) {
-            throw new SoapFault('GET_GROUP_FAULT', $group->getUnixName().' : '.$GLOBALS['Language']->getText('include_exit', 'project_status_'.$group->getStatus()), $method);
+        } elseif (! $group->isActive()) {
+            $status = '';
+            switch ($group->getStatus()) {
+                case Project::STATUS_DELETED:
+                    $status = $GLOBALS['Language']->getText('include_exit', 'project_status_D');
+                    break;
+                case Project::STATUS_PENDING:
+                    $status = $GLOBALS['Language']->getText('include_exit', 'project_status_P');
+                    break;
+                case Project::STATUS_SUSPENDED:
+                    $status = $GLOBALS['Language']->getText('include_exit', 'project_status_H');
+                    break;
+                case Project::STATUS_SYSTEM:
+                    $status = $GLOBALS['Language']->getText('include_exit', 'project_status_s');
+                    break;
+            }
+            throw new SoapFault('GET_GROUP_FAULT', $group->getUnixName() . ' : ' . $status, $method);
         }
-        if (!$this->checkRestrictedAccess($group, $this->_getUserManager()->getCurrentUser())) {
+        if (! $this->checkRestrictedAccess($group, $this->_getUserManager()->getCurrentUser())) {
             throw new SoapFault('GET_GROUP_FAULT', 'Restricted user: permission denied.', $method);
         }
         return $group;
@@ -854,14 +899,15 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
     {
         return $this->_getDao()
             ->searchAllActiveProjectsForUser($user->getId())
-            ->instanciateWith(array($this, 'getProjectFromDbRow'));
+            ->instanciateWith([$this, 'getProjectFromDbRow']);
     }
 
     private function instantiateProjectsForUser(LegacyDataAccessResultInterface $projects_results, PFUser $user)
     {
         $projects = [];
         foreach ($projects_results as $row) {
-            if ($row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED &&
+            if (
+                $row['access'] === Project::ACCESS_PRIVATE_WO_RESTRICTED &&
                 ForgeConfig::areRestrictedUsersAllowed() &&
                 $user->isRestricted()
             ) {
@@ -895,6 +941,17 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
         return $this->getPaginatedProjects($matching_projects, $user, $total_size);
     }
 
+    /**
+     * @return Tuleap\Project\PaginatedProjects
+     */
+    public function getProjectICanAdminForREST(PFUser $user, $offset, $limit)
+    {
+        $matching_projects = $this->_getDao()->getProjectICanAdminForREST($user, $offset, $limit);
+        $total_size        = $this->_getDao()->foundRows();
+
+        return $this->getPaginatedProjects($matching_projects, $user, $total_size);
+    }
+
     public function getMyAndPublicProjectsForRESTByShortname($shortname, PFUser $user, $offset, $limit)
     {
         $dao = $this->_getDao();
@@ -920,7 +977,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
 
     private function getPaginatedProjects(LegacyDataAccessResultInterface $result, PFUser $user, $total_size)
     {
-        $projects = array();
+        $projects = [];
         foreach ($result as $row) {
             $project = $this->getProjectFromDbRow($row);
             try {
@@ -948,10 +1005,10 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
         $result        = $this->getHierarchyManager()->setParentProject($group_id, $parent_group_id);
 
         if ($result) {
-            $event_manager->processEvent(Event::PROJECT_SET_PARENT_PROJECT, array(
+            $event_manager->processEvent(Event::PROJECT_SET_PARENT_PROJECT, [
                 'group_id'  => $group_id,
                 'parent_id' => $parent_group_id
-            ));
+            ]);
         }
 
         return $result;
@@ -967,9 +1024,9 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
         $result        = $this->getHierarchyManager()->removeParentProject($group_id);
 
         if ($result) {
-            $event_manager->processEvent(Event::PROJECT_UNSET_PARENT_PROJECT, array(
+            $event_manager->processEvent(Event::PROJECT_UNSET_PARENT_PROJECT, [
                 'group_id'  => $group_id
-            ));
+            ]);
         }
 
         return $result;
@@ -990,7 +1047,7 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
      */
     public function getAllParentsProjects($group_id)
     {
-        $projects   = array();
+        $projects   = [];
         $parent_ids = $this->getHierarchyManager()->getAllParents($group_id);
 
         foreach ($parent_ids as $parent_id) {
@@ -1045,11 +1102,11 @@ class ProjectManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamesp
     public function getProjectMembers($project_id)
     {
         $dar = $this->_getDao()->getProjectMembers($project_id);
-        if (!$dar) {
-            return array();
+        if (! $dar) {
+            return [];
         }
 
-        $result = array();
+        $result = [];
         while ($row = $dar->getRow()) {
             $result[$row['user_id']] = $row;
         }

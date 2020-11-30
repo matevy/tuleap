@@ -43,11 +43,7 @@ declare -r password_file="/root/.tuleap_passwd"
 declare -r rh_release="/etc/redhat-release"
 declare -r script_name="$(${basename} ${0})"
 declare -r sefile="/etc/selinux/config"
-declare -r src_db_forgeupgrade="/usr/share/forgeupgrade"
 declare -r src_db_mysql="${install_dir}/src/db/mysql"
-declare -r sql_forgeupgrade="${src_db_forgeupgrade}/db/install-mysql.sql"
-declare -r sql_structure="${src_db_mysql}/database_structure.sql"
-declare -r sql_init="${src_db_mysql}/database_initvalues.sql"
 declare -r tuleap_lib_bin="/usr/lib/tuleap/bin"
 declare -r tuleap_src_plugins="/usr/share/tuleap/plugins"
 declare -r tuleap_data="/var/lib/tuleap"
@@ -70,13 +66,14 @@ declare -r httpd_conf_ssl="/etc/httpd/conf.d/ssl.conf"
 
 # declare options
 declare -r sys_db_name="tuleap"
-declare -r sys_db_user="tuleap"
 declare -r my_opt="--batch --skip-column-names"
 declare -r project_admin="admin"
 declare -r tuleap_unix_user="codendiadm"
 declare -i mysql_port=3306
 
 declare -a timers=("tuleap-process-system-events-default.timer"
+                   "tuleap-process-system-events-statistics.timer"
+                   "tuleap-process-system-events-tv3-tv5-migration.timer"
                    "tuleap-launch-system-check.timer"
                    "tuleap-launch-daily-event.timer"
                    "tuleap-launch-plugin-job.timer")

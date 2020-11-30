@@ -40,7 +40,7 @@ class AddedLinkByNatureCollection implements ICollectChangeOfLinksBetweenTwoChan
     /**
      * @var Tracker_ArtifactLinkInfo[]
      */
-    private $added = array();
+    private $added = [];
 
     public function __construct(NaturePresenter $nature, CollectionOfLinksFormatter $formatter)
     {
@@ -53,10 +53,7 @@ class AddedLinkByNatureCollection implements ICollectChangeOfLinksBetweenTwoChan
         $this->added[] = $artifactlinkinfo;
     }
 
-    /**
-     * @return string
-     */
-    public function fetchFormatted(PFUser $user, $format, $ignore_perms) : string
+    public function fetchFormatted(PFUser $user, $format, $ignore_perms): string
     {
         if ($this->nature->shortname) {
             return sprintf(dgettext('tuleap-tracker', 'Added %s: %s'), $this->nature->forward_label, $this->formatter->format($this->added, $user, $format, $ignore_perms));

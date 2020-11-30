@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\AgileDashboard\Event\IScrumAdminSectionControllers;
+
 class AdminScrumPresenter
 {
 
@@ -25,7 +27,7 @@ class AdminScrumPresenter
     public $group_id;
 
     /** @var array */
-    public $plannings = array();
+    public $plannings = [];
 
     /** @var bool */
     public $scrum_activated;
@@ -51,9 +53,8 @@ class AdminScrumPresenter
      */
     public $does_configuration_allows_planning_creation;
 
-    private $root_planning_tracker_url;
     private $root_planning_name;
-    private $planning_hierarchy = array();
+    private $planning_hierarchy = [];
     private $can_create_planning;
     private $additional_content;
 
@@ -65,13 +66,17 @@ class AdminScrumPresenter
     /**
      * @var bool
      */
-    public $must_display_explicit_top_backlog_switch;
+    public $has_workflow_action_add_to_top_backlog_defined;
+
+    /**
+     * @var IScrumAdminSectionControllers[]
+     */
+    public $additional_scrum_sections_controllers;
 
     public function __construct(
         array $plannings,
         $group_id,
         $can_create_planning,
-        $root_planning_tracker_url,
         $root_planning_name,
         array $hierarchy,
         $scrum_activated,
@@ -82,12 +87,12 @@ class AdminScrumPresenter
         $does_configuration_allows_planning_creation,
         $additional_content,
         bool $explicit_top_backlog_enabled,
-        bool $user_lab_feature
+        bool $has_workflow_action_add_to_top_backlog_defined,
+        array $additional_scrum_sections_controllers
     ) {
         $this->plannings                                   = $plannings;
         $this->group_id                                    = $group_id;
         $this->can_create_planning                         = $can_create_planning;
-        $this->root_planning_tracker_url                   = $root_planning_tracker_url;
         $this->root_planning_name                          = $root_planning_name;
         $this->scrum_activated                             = $scrum_activated;
         $this->scrum_title                                 = $scrum_title;
@@ -97,17 +102,15 @@ class AdminScrumPresenter
         $this->does_configuration_allows_planning_creation = $does_configuration_allows_planning_creation;
         $this->additional_content                          = $additional_content;
 
-        $this->cannot_create_planning_in_scrum_v2          = $GLOBALS['Language']->getText(
-            'plugin_agiledashboard',
-            'cannot_create_planning_in_scrum_v2'
-        );
+        $this->cannot_create_planning_in_scrum_v2          = dgettext('tuleap-agiledashboard', 'You cannot create more than one planning in scrum V2.');
 
         foreach ($hierarchy as $tracker) {
             $this->planning_hierarchy[] = $tracker->getName();
         }
 
-        $this->explicit_top_backlog_enabled              = $explicit_top_backlog_enabled;
-        $this->must_display_explicit_top_backlog_switch  = (bool) $explicit_top_backlog_enabled || $user_lab_feature;
+        $this->explicit_top_backlog_enabled                   = $explicit_top_backlog_enabled;
+        $this->has_workflow_action_add_to_top_backlog_defined = $has_workflow_action_add_to_top_backlog_defined;
+        $this->additional_scrum_sections_controllers          = $additional_scrum_sections_controllers;
     }
 
     public function has_plannings()
@@ -117,32 +120,32 @@ class AdminScrumPresenter
 
     public function create_planning()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_create');
+        return dgettext('tuleap-agiledashboard', 'Create a new planning');
     }
 
     public function import_template()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'import_template');
+        return dgettext('tuleap-agiledashboard', 'Import a configuration from a template file');
     }
 
     public function export_template()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'export_template');
+        return dgettext('tuleap-agiledashboard', 'Export the configuration');
     }
 
     public function import_export_section()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'import_export_section');
+        return dgettext('tuleap-agiledashboard', 'Import/Export');
     }
 
     public function planning_section()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_section');
+        return dgettext('tuleap-agiledashboard', 'Planning management');
     }
 
     public function general_settings_section()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'general_settings_section');
+        return dgettext('tuleap-agiledashboard', 'General settings');
     }
 
     public function can_create_planning()
@@ -152,19 +155,17 @@ class AdminScrumPresenter
 
     public function cannot_create_planning()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'cannot_create_planning');
+        return dgettext('tuleap-agiledashboard', 'You cannot create new planning because either:');
     }
 
     public function cannot_create_planning_no_trackers()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'cannot_create_planning_no_trackers');
+        return dgettext('tuleap-agiledashboard', 'there is no trackers in tracker service');
     }
 
     public function cannot_create_planning_hierarchy()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'cannot_create_planning_hierarchy', array(
-            $this->getPlanningNamesHierarchy()
-        ));
+        return sprintf(dgettext('tuleap-agiledashboard', 'all potential planning trackers (%1$s) are already used by a planning configuration (see below).'), $this->getPlanningNamesHierarchy());
     }
 
     private function getPlanningNamesHierarchy()
@@ -178,44 +179,37 @@ class AdminScrumPresenter
 
     public function cannot_create_planning_config()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'cannot_create_planning_config', array(
-            $this->root_planning_name
-        ));
+        return sprintf(dgettext('tuleap-agiledashboard', 'The potential planning trackers are computed out of %1$s configuration and its hierarchy.'), $this->root_planning_name);
     }
 
     public function cannot_create_planning_popover_title()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'cannot_create_planning_popover_title');
+        return dgettext('tuleap-agiledashboard', 'Can\'t create new planning');
     }
 
     public function edit_action_label()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'edit_action_label');
-    }
-
-    public function config_title()
-    {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'config_title');
+        return dgettext('tuleap-agiledashboard', 'Edit');
     }
 
     public function activate_scrum_label()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'activate_scrum_label');
+        return dgettext('tuleap-agiledashboard', 'Activate Scrum');
     }
 
     public function title_label()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'title');
+        return dgettext('tuleap-agiledashboard', 'Title');
     }
 
     public function title_label_help()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'title_scrum_help');
+        return dgettext('tuleap-agiledashboard', 'This will be used to identify the Scrum section from the Agile Dashboard homepage.');
     }
 
     public function first_scrum_will_be_created()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'first_scrum_will_be_created');
+        return dgettext('tuleap-agiledashboard', 'A first scrum configuration will be used during the activation. This operation can take a few seconds.');
     }
 
     public function token()
@@ -226,17 +220,17 @@ class AdminScrumPresenter
 
     public function activate_scrum_mono_milestone_label()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'activate_scrum_mono_milestone_label');
+        return dgettext('tuleap-agiledashboard', 'Enable Scrum V2');
     }
 
     public function warning_feature_under_construction()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'warning_feature_under_construction');
+        return dgettext('tuleap-agiledashboard', 'This feature is under development. Once checked it wont be possible to start scrum with default template.');
     }
 
     public function scrum_monomilestone_title()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'scrum_monomilestone_title');
+        return dgettext('tuleap-agiledashboard', 'Scrum mono milestone');
     }
 
     public function additional_content()

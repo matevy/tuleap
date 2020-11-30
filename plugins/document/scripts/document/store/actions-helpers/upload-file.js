@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,7 @@
 import { Upload } from "tus-js-client";
 import { getItem } from "../../api/rest-querier.js";
 import { flagItemAsCreated } from "./flag-item-as-created.js";
-import { FILE_UPLOAD_UNKNOWN_ERROR, RETRY_DELAYS } from "../../constants.js";
+import { FILE_UPLOAD_UNKNOWN_ERROR } from "../../constants.js";
 
 function updateParentProgress(bytes_total, fake_item, bytes_uploaded, context, parent) {
     if (bytes_total === 0) {
@@ -34,10 +34,9 @@ function updateParentProgress(bytes_total, fake_item, bytes_uploaded, context, p
 export function uploadFile(context, dropped_file, fake_item, docman_item, parent) {
     const uploader = new Upload(dropped_file, {
         uploadUrl: docman_item.file_properties.upload_href,
-        retryDelays: RETRY_DELAYS,
         metadata: {
             filename: dropped_file.name,
-            filetype: dropped_file.type
+            filetype: dropped_file.type,
         },
         onProgress: (bytes_uploaded, bytes_total) => {
             updateParentProgress(bytes_total, fake_item, bytes_uploaded, context, parent);
@@ -62,7 +61,7 @@ export function uploadFile(context, dropped_file, fake_item, docman_item, parent
             fake_item.upload_error = originalRequest.statusText;
 
             context.commit("removeItemFromFolderContent", fake_item);
-        }
+        },
     });
 
     uploader.start();
@@ -72,7 +71,7 @@ export function uploadFile(context, dropped_file, fake_item, docman_item, parent
 
 export function uploadVersion(context, dropped_file, updated_file, new_version) {
     let parent_folder = context.state.folder_content.find(
-        item => item.id === updated_file.parent_id
+        (item) => item.id === updated_file.parent_id
     );
 
     if (!parent_folder) {
@@ -81,10 +80,9 @@ export function uploadVersion(context, dropped_file, updated_file, new_version) 
 
     const uploader = new Upload(dropped_file, {
         uploadUrl: new_version.upload_href,
-        retryDelays: RETRY_DELAYS,
         metadata: {
             filename: dropped_file.name,
-            filetype: dropped_file.type
+            filetype: dropped_file.type,
         },
         onProgress: (bytes_uploaded, bytes_total) => {
             updateParentProgress(bytes_total, updated_file, bytes_uploaded, context, parent_folder);
@@ -100,24 +98,23 @@ export function uploadVersion(context, dropped_file, updated_file, new_version) 
         },
         onError: ({ originalRequest }) => {
             updated_file.upload_error = originalRequest.statusText;
-        }
+        },
     });
     uploader.start();
     return uploader;
 }
 export function uploadVersionFromEmpty(context, dropped_file, updated_empty, new_version) {
     let parent_folder = context.state.folder_content.find(
-        item => item.id === updated_empty.parent_id
+        (item) => item.id === updated_empty.parent_id
     );
     if (!parent_folder) {
         parent_folder = context.state.current_folder;
     }
     const uploader = new Upload(dropped_file, {
         uploadUrl: new_version.upload_href,
-        retryDelays: RETRY_DELAYS,
         metadata: {
             filename: dropped_file.name,
-            filetype: dropped_file.type
+            filetype: dropped_file.type,
         },
         onProgress: (bytes_uploaded, bytes_total) => {
             updateParentProgress(
@@ -140,7 +137,7 @@ export function uploadVersionFromEmpty(context, dropped_file, updated_empty, new
         },
         onError: ({ originalRequest }) => {
             updated_empty.upload_error = originalRequest.statusText;
-        }
+        },
     });
 
     uploader.start();

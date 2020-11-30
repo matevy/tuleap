@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\Artifact\RecentlyVisited;
 
-use Tracker_Artifact;
 use Tuleap\Event\Dispatchable;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\User\History\HistoryQuickLink;
 
 class HistoryQuickLinkCollection implements Dispatchable
@@ -34,13 +34,18 @@ class HistoryQuickLinkCollection implements Dispatchable
      */
     private $links = [];
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $artifact;
+    /**
+     * @var \PFUser
+     */
+    private $current_user;
 
-    public function __construct(Tracker_Artifact $artifact)
+    public function __construct(Artifact $artifact, \PFUser $current_user)
     {
-        $this->artifact = $artifact;
+        $this->artifact     = $artifact;
+        $this->current_user = $current_user;
     }
 
     public function getLinks(): array
@@ -53,8 +58,13 @@ class HistoryQuickLinkCollection implements Dispatchable
         $this->links[] = $link;
     }
 
-    public function getArtifact(): Tracker_Artifact
+    public function getArtifact(): Artifact
     {
         return $this->artifact;
+    }
+
+    public function getCurrentUser(): \PFUser
+    {
+        return $this->current_user;
     }
 }

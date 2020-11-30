@@ -26,21 +26,26 @@ namespace Tuleap\Project\Admin\ProjectUGroup;
 use CSRFSynchronizerToken;
 use Feedback;
 use HTTPRequest;
-use ProjectManager;
 use Tuleap\Layout\BaseLayout;
+use Tuleap\Project\Admin\Routing\ProjectAdministratorChecker;
+use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithStatusCheckAndNotifications;
 use Tuleap\Project\UGroups\Membership\MemberAdder;
 use Tuleap\Request\DispatchableWithRequest;
-use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
+use Tuleap\Request\ProjectRetriever;
 use UGroupManager;
 use UserManager;
 
 class MemberAdditionController implements DispatchableWithRequest
 {
     /**
-     * @var ProjectManager
+     * @var ProjectRetriever
      */
-    private $project_manager;
+    private $project_retriever;
+    /**
+     * @var ProjectAdministratorChecker
+     */
+    private $administrator_checker;
     /**
      * @var UGroupManager
      */
@@ -58,26 +63,48 @@ class MemberAdditionController implements DispatchableWithRequest
      */
     private $member_adder;
 
-    public function __construct(ProjectManager $project_manager, UGroupManager $ugroup_manager, UserManager $user_manager, MemberAdder $member_adder, CSRFSynchronizerToken $csrf_synchronizer)
-    {
-        $this->project_manager = $project_manager;
-        $this->ugroup_manager = $ugroup_manager;
-        $this->user_manager = $user_manager;
-        $this->csrf_synchronizer = $csrf_synchronizer;
-        $this->member_adder = $member_adder;
+    public function __construct(
+        ProjectRetriever $project_retriever,
+        ProjectAdministratorChecker $administrator_checker,
+        UGroupManager $ugroup_manager,
+        UserManager $user_manager,
+        MemberAdder $member_adder,
+        CSRFSynchronizerToken $csrf_synchronizer
+    ) {
+        $this->project_retriever     = $project_retriever;
+        $this->administrator_checker = $administrator_checker;
+        $this->ugroup_manager        = $ugroup_manager;
+        $this->user_manager          = $user_manager;
+        $this->csrf_synchronizer     = $csrf_synchronizer;
+        $this->member_adder          = $member_adder;
     }
 
+    public static function buildSelf(): self
+    {
+        $ugroup_manager = new UGroupManager();
+        return new self(
+            ProjectRetriever::buildSelf(),
+            new ProjectAdministratorChecker(),
+            $ugroup_manager,
+            \UserManager::instance(),
+            MemberAdder::build(
+                ProjectMemberAdderWithStatusCheckAndNotifications::build()
+            ),
+            UGroupRouter::getCSRFTokenSynchronizer()
+        );
+    }
+
+    /**
+     * @throws NotFoundException
+     * @throws \Tuleap\Project\UGroups\Membership\InvalidProjectException
+     * @throws \Tuleap\Project\UGroups\Membership\UserIsAnonymousException
+     * @throws \Tuleap\Request\ForbiddenException
+     * @throws \UGroup_Invalid_Exception
+     */
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
-        $project_id = $variables['id'];
-        $project = $this->project_manager->getProject($project_id);
-        if (! $project || $project->isError()) {
-            throw new NotFoundException();
-        }
-
-        if (! $request->getCurrentUser()->isAdmin($project->getID())) {
-            throw new ForbiddenException();
-        }
+        $project = $this->project_retriever->getProjectFromId($variables['id']);
+        $this->administrator_checker->checkUserIsProjectAdministrator($request->getCurrentUser(), $project);
 
         $ugroup = $this->ugroup_manager->getUGroup($project, $variables['user-group-id']);
         if (! $ugroup) {

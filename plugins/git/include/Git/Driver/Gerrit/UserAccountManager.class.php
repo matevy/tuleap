@@ -44,14 +44,13 @@ class Git_Driver_Gerrit_UserAccountManager
 
     /**
      *
-     * @param PFUser $user
      *
      * @return Git_Driver_Gerrit_User|null
      */
     public function getGerritUser(PFUser $user)
     {
         $ldap_user = null;
-        $params    = array('ldap_user' => &$ldap_user, 'user' => $user);
+        $params    = ['ldap_user' => &$ldap_user, 'user' => $user];
         EventManager::instance()->processEvent(Event::GET_LDAP_LOGIN_NAME_FOR_USER, $params);
         if ($ldap_user) {
             return new Git_Driver_Gerrit_User($ldap_user);
@@ -62,7 +61,6 @@ class Git_Driver_Gerrit_UserAccountManager
 
     /**
      *
-     * @param PFUser $user
      * @return bool
      */
     private function isGerrit(PFUser $user)
@@ -93,7 +91,7 @@ class Git_Driver_Gerrit_UserAccountManager
             return;
         }
 
-        $errors = array();
+        $errors = [];
         $remote_servers = $this->remote_gerrit_factory->getRemoteServersForUser($user);
 
         foreach ($remote_servers as $remote_server) {
@@ -131,7 +129,7 @@ class Git_Driver_Gerrit_UserAccountManager
             return;
         }
 
-        $errors = array();
+        $errors = [];
         $remote_servers = $this->remote_gerrit_factory->getRemoteServersForUser($user);
 
         foreach ($remote_servers as $remote_server) {
@@ -147,15 +145,13 @@ class Git_Driver_Gerrit_UserAccountManager
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $remote_server
      * @param array $keys
-     * @param Git_Driver_Gerrit_User $gerrit_user
      *
      * @return string[] List of errors
      */
-    private function addKeys(Git_RemoteServer_GerritServer $remote_server, Array $keys, Git_Driver_Gerrit_User $gerrit_user)
+    private function addKeys(Git_RemoteServer_GerritServer $remote_server, array $keys, Git_Driver_Gerrit_User $gerrit_user)
     {
-        $errors = array();
+        $errors = [];
         foreach ($keys as $key) {
             try {
                 $this->gerrit_driver_factory->getDriver($remote_server)->addSSHKeyToAccount($remote_server, $gerrit_user, $key);
@@ -168,15 +164,13 @@ class Git_Driver_Gerrit_UserAccountManager
 
     /**
      *
-     * @param Git_RemoteServer_GerritServer $remote_server
      * @param array $keys
-     * @param Git_Driver_Gerrit_User $gerrit_user
      *
      * @return string[] List of errors
      */
-    private function removeKeys(Git_RemoteServer_GerritServer $remote_server, Array $keys, Git_Driver_Gerrit_User $gerrit_user)
+    private function removeKeys(Git_RemoteServer_GerritServer $remote_server, array $keys, Git_Driver_Gerrit_User $gerrit_user)
     {
-        $errors = array();
+        $errors = [];
         foreach ($keys as $key) {
             try {
                 $this->gerrit_driver_factory->getDriver($remote_server)->removeSSHKeyFromAccount($remote_server, $gerrit_user, $key);
@@ -193,7 +187,7 @@ class Git_Driver_Gerrit_UserAccountManager
      * @param array $new_keys
      * @return array
      */
-    private function getKeysToAdd(Array $original_keys, Array $new_keys)
+    private function getKeysToAdd(array $original_keys, array $new_keys)
     {
         return array_unique(array_diff($new_keys, $original_keys));
     }
@@ -204,7 +198,7 @@ class Git_Driver_Gerrit_UserAccountManager
      * @param array $new_keys
      * @return array
      */
-    private function getKeysToRemove(Array $original_keys, Array $new_keys)
+    private function getKeysToRemove(array $original_keys, array $new_keys)
     {
         return array_unique(array_diff($original_keys, $new_keys));
     }
@@ -215,7 +209,7 @@ class Git_Driver_Gerrit_UserAccountManager
      * @param array $keys_to_remove
      * @return array
      */
-    private function areThereKeysToUpdate(Array $keys_to_add, Array $keys_to_remove)
+    private function areThereKeysToUpdate(array $keys_to_add, array $keys_to_remove)
     {
         return $keys_to_add || $keys_to_remove;
     }

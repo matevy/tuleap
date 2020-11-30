@@ -63,15 +63,13 @@ class PlanningResource extends AuthenticatedResource
             $planning_factory,
             $artifact_factory,
             \Tracker_FormElementFactory::instance(),
-            \TrackerFactory::instance(),
             $status_counter,
             new PlanningPermissionsManager(),
             new AgileDashboard_Milestone_MilestoneDao(),
             new ScrumForMonoMilestoneChecker(new ScrumForMonoMilestoneDao(), $planning_factory),
             new TimeframeBuilder(
-                $form_element_factory,
                 new SemanticTimeframeBuilder(new SemanticTimeframeDao(), $form_element_factory),
-                new \BackendLogger()
+                \BackendLogger::getDefaultLogger()
             ),
             new MilestoneBurndownFieldChecker($form_element_factory)
         );
@@ -86,8 +84,8 @@ class PlanningResource extends AuthenticatedResource
      * @access hybrid
      *
      * @param int $id Id of the planning
-     * @param int $limit Number of elements displayed per page
-     * @param int $offset Position of the first element to display
+     * @param int $limit Number of elements displayed per page {@min 0} {@max 100}
+     * @param int $offset Position of the first element to display {@min 0}
      *
      * @return array {@type Tuleap\AgileDashboard\REST\v1\MilestoneRepresentation}
      *
@@ -97,9 +95,6 @@ class PlanningResource extends AuthenticatedResource
     public function getMilestones($id, $limit = 10, $offset = 0)
     {
         $this->checkAccess();
-        if (! $this->limitValueIsAcceptable($limit)) {
-             throw new RestException(406, 'Maximum value for limit exceeded');
-        }
 
         return $this->getMilestonesByPlanning($this->getPlanning($id), $limit, $offset);
     }
@@ -152,11 +147,6 @@ class PlanningResource extends AuthenticatedResource
         return $planning;
     }
 
-    private function limitValueIsAcceptable($limit)
-    {
-        return $limit <= self::MAX_LIMIT;
-    }
-
     private function getCurrentUser()
     {
         return UserManager::instance()->getCurrentUser();
@@ -164,7 +154,7 @@ class PlanningResource extends AuthenticatedResource
 
     private function getMilestonesByPlanning(Planning $planning, $limit, $offset)
     {
-        $all_milestones = array();
+        $all_milestones = [];
         $milestones = $this->milestone_factory->getAllBareMilestones($this->getCurrentUser(), $planning);
         foreach ($milestones as $milestone) {
             $all_milestones[] = new MilestoneInfoRepresentation($milestone);

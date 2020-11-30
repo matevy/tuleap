@@ -42,11 +42,11 @@ $limit     = 15;
 $page      = 1;
 
 if ($request->get('page')) {
-    $page = (int)$request->get('page');
+    $page = (int) $request->get('page');
 }
 
 $offset    = ($page - 1) * $limit;
-$list      = array();
+$list      = [];
 $isMember  = false;
 $isAdmin   = false;
 $isPrivate = false;
@@ -56,7 +56,7 @@ if ($user->isRestricted()) {
     $isMember = true;
 }
 
-$vPrivate = new Valid_WhiteList('private', array('1'));
+$vPrivate = new Valid_WhiteList('private', ['1']);
 $vPrivate->required();
 // Allow the autocomplete to include private projects only to super user
 if ($request->valid($vPrivate) && $user->isSuperUser()) {
@@ -67,33 +67,33 @@ $prjManager     = ProjectManager::instance();
 $nbProjectFound = 0;
 $projects       = $prjManager->searchProjectsNameLike($name, $limit, $nbProjectFound, $user, $isMember, $isAdmin, $isPrivate, $offset);
 foreach ($projects as $project) {
-    $list[] = $project->getUnconvertedPublicName(). " (".$project->getUnixName().")";
+    $list[] = $project->getPublicName() . " (" . $project->getUnixName() . ")";
 }
 
 $nbLeft = $nbProjectFound - $limit;
 if ($nbLeft > 0 && ! $json_format) {
-    $list[] = '<strong>'.$nbLeft.' left ...</strong>';
+    $list[] = '<strong>' . $nbLeft . ' left ...</strong>';
 }
 
 
 $purifier = Codendi_HTMLPurifier::instance();
 
 if ($json_format) {
-    $json_entries = array();
+    $json_entries = [];
     foreach ($list as $entry) {
-        $json_entries[] = array(
+        $json_entries[] = [
             'id'   => $entry,
             'text' => $entry
-        );
+        ];
     }
 
     $more_results = ($offset + $limit) < $nbProjectFound;
-    $output       = array(
+    $output       = [
         'results' => $json_entries,
-        'pagination' => array(
+        'pagination' => [
             'more' => $more_results
-        )
-    );
+        ]
+    ];
 
     $GLOBALS['Response']->sendJSON($output);
 } else {

@@ -47,18 +47,12 @@ final class ProjectImportCleanupUserCreatorFromAdministrators implements Dispatc
         $this->ugroup_administrator = $ugroup_administrator;
     }
 
-    /**
-     * @return PFUser
-     */
-    public function getCreator() : PFUser
+    public function getCreator(): PFUser
     {
         return $this->creator;
     }
 
-    /**
-     * @return ProjectUGroup
-     */
-    public function getUGroupAdministrator() : ProjectUGroup
+    public function getUGroupAdministrator(): ProjectUGroup
     {
         return $this->ugroup_administrator;
     }

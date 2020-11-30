@@ -26,7 +26,6 @@ use PermissionsManager;
 use Git;
 use Tuleap\User\UserGroup\NameTranslator;
 use UGroupManager;
-use User_ForgeUGroup;
 use ProjectUGroup;
 use Project;
 
@@ -59,8 +58,8 @@ class HistoryValueFormatter
     private $permissions_manager;
 
     public function __construct(
-        PermissionsManager   $permissions_manager,
-        UGroupManager        $ugroup_manager,
+        PermissionsManager $permissions_manager,
+        UGroupManager $ugroup_manager,
         FineGrainedRetriever $fine_grained_retriever,
         DefaultFineGrainedPermissionFactory $default_fine_grained_factory,
         FineGrainedPermissionFactory $fine_grained_factory
@@ -90,7 +89,8 @@ class HistoryValueFormatter
     {
         $value = $this->getReadersForRepository($repository);
 
-        if (! $repository->isMigratedToGerrit() &&
+        if (
+            ! $repository->isMigratedToGerrit() &&
             ! $this->fine_grained_retriever->doesRepositoryUseFineGrainedPermissions($repository)
         ) {
             $value .= $this->getWritersForRepository($repository);
@@ -157,15 +157,18 @@ class HistoryValueFormatter
     private function formatUgroups(array $ugroups, $key)
     {
         $value = "$key: ";
-        $value .= implode(', ', array_map(array($this, 'extractUgroupName'), $ugroups));
+        $value .= implode(
+            ', ',
+            array_map(
+                static function (ProjectUGroup $ugroup) {
+                    return NameTranslator::getUserGroupDisplayName($ugroup->getName());
+                },
+                $ugroups
+            )
+        );
         $value .= PHP_EOL;
 
         return $value;
-    }
-
-    private function extractUgroupName(ProjectUGroup $ugroup)
-    {
-        return NameTranslator::getUserGroupDisplayName($ugroup->getName());
     }
 
     /**
@@ -186,7 +189,7 @@ class HistoryValueFormatter
     {
         $project_ugroups = $this->ugroup_manager->getUgroupsById($project);
 
-        $ugroups = array();
+        $ugroups = [];
         foreach ($ugroup_ids as $ugroup_id) {
             $ugroups[] = $project_ugroups[$ugroup_id];
         }

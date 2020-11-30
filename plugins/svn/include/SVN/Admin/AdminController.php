@@ -23,7 +23,7 @@ namespace Tuleap\SVN\Admin;
 use CSRFSynchronizerToken;
 use Feedback;
 use HTTPRequest;
-use Logger;
+use Psr\Log\LoggerInterface;
 use Project;
 use Rule_Email;
 use Tuleap\SVN\Notifications\CannotAddUgroupsNotificationException;
@@ -83,7 +83,7 @@ class AdminController
         MailHeaderManager $mail_header_manager,
         RepositoryManager $repository_manager,
         MailNotificationManager $mail_notification_manager,
-        Logger $logger,
+        LoggerInterface $logger,
         NotificationListBuilder $notification_list_builder,
         NotificationsEmailsBuilder $emails_builder,
         UserManager $user_manager,
@@ -121,7 +121,7 @@ class AdminController
 
         $title = $GLOBALS['Language']->getText('global', 'Administration');
 
-        $service->renderInPage(
+        $service->renderInPageRepositoryAdministration(
             $request,
             $repository->getName() . ' – ' . $title,
             'admin/mail_notification',
@@ -132,7 +132,9 @@ class AdminController
                 $title,
                 $mail_header,
                 $this->notification_list_builder->getNotificationsPresenter($notifications_details, $this->emails_builder)
-            )
+            ),
+            '',
+            $repository,
         );
     }
 
@@ -158,11 +160,11 @@ class AdminController
         }
 
         $GLOBALS['Response']->redirect(SVN_BASE_URL . '/?' . http_build_query(
-            array(
+            [
                 'group_id' => $request->getProject()->getid(),
                 'repo_id' => $request->get('repo_id'),
                 'action' => 'display-mail-notification'
-            )
+            ]
         ));
     }
 
@@ -176,8 +178,10 @@ class AdminController
         $notification_to_add    = $request->get('notification_add');
         $notification_to_update = $request->get('notification_update');
 
-        if ($notification_to_update
-            && !empty($notification_to_update)) {
+        if (
+            $notification_to_update
+            && ! empty($notification_to_update)
+        ) {
             $this->updateMailingList($request, $repository, $notification_to_update);
         } else {
             $this->createMailingList($request, $repository, $notification_to_add);
@@ -194,7 +198,7 @@ class AdminController
         $is_path_valid = $request->valid($valid_path) && $form_path !== '';
         $invalid_entries->generateWarningMessageForInvalidEntries();
 
-        if (!$is_path_valid) {
+        if (! $is_path_valid) {
             $this->addFeedbackPathError();
             $this->redirectOnDisplayNotification($request);
             return;
@@ -215,7 +219,7 @@ class AdminController
             return;
         }
 
-        if (!$autocompleter->isNotificationEmpty()) {
+        if (! $autocompleter->isNotificationEmpty()) {
             $mail_notification = new MailNotification(
                 0,
                 $repository,
@@ -264,7 +268,7 @@ class AdminController
         $is_path_valid = $request->valid($valid_path) && $new_path !== '';
         $invalid_entries->generateWarningMessageForInvalidEntries();
 
-        if (!$is_path_valid) {
+        if (! $is_path_valid) {
             $this->addFeedbackPathError($request);
             $this->redirectOnDisplayNotification($request);
             return;
@@ -272,7 +276,7 @@ class AdminController
 
         $notification = $this->mail_notification_manager->getByIdAndRepository($repository, $notification_id);
 
-        if (!$notification) {
+        if (! $notification) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
                 sprintf(
@@ -287,8 +291,10 @@ class AdminController
             return;
         }
 
-        if ($notification->getPath() !== $new_path
-            && $this->mail_notification_manager->isAnExistingPath($repository, $notification_id, $new_path)) {
+        if (
+            $notification->getPath() !== $new_path
+            && $this->mail_notification_manager->isAnExistingPath($repository, $notification_id, $new_path)
+        ) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
                 sprintf(
@@ -312,7 +318,7 @@ class AdminController
             $autocompleter->getUgroups()
         );
         try {
-            if (!$autocompleter->isNotificationEmpty()) {
+            if (! $autocompleter->isNotificationEmpty()) {
                 $this->mail_notification_manager->update($email_notification);
             } else {
                 $this->mail_notification_manager->removeByNotificationId($notification_id);
@@ -370,10 +376,10 @@ class AdminController
     public function updateHooksConfig(ServiceSvn $service, HTTPRequest $request)
     {
         $repository  = $this->repository_manager->getByIdAndProject($request->get('repo_id'), $request->getProject());
-        $hook_config = array(
-            HookConfig::MANDATORY_REFERENCE => (bool)$request->get("pre_commit_must_contain_reference"),
-            HookConfig::COMMIT_MESSAGE_CAN_CHANGE => (bool)$request->get("allow_commit_message_changes")
-        );
+        $hook_config = [
+            HookConfig::MANDATORY_REFERENCE => (bool) $request->get("pre_commit_must_contain_reference"),
+            HookConfig::COMMIT_MESSAGE_CAN_CHANGE => (bool) $request->get("allow_commit_message_changes")
+        ];
         $this->hook_config_updator->updateHookConfig($repository, $hook_config);
 
         $this->displayHooksConfig($service, $request);
@@ -387,7 +393,7 @@ class AdminController
         $token = $this->generateToken($request->getProject(), $repository);
         $title = $GLOBALS['Language']->getText('global', 'Administration');
 
-        $service->renderInPage(
+        $service->renderInPageRepositoryAdministration(
             $request,
             $repository->getName() . ' – ' . $title,
             'admin/hooks_config',
@@ -398,18 +404,23 @@ class AdminController
                 $title,
                 $hook_config->getHookConfig(HookConfig::MANDATORY_REFERENCE),
                 $hook_config->getHookConfig(HookConfig::COMMIT_MESSAGE_CAN_CHANGE)
-            )
+            ),
+            '',
+            $repository,
         );
     }
 
     public function displayRepositoryDelete(ServiceSvn $service, HTTPRequest $request)
     {
         $repository = $this->repository_manager->getByIdAndProject($request->get('repo_id'), $request->getProject());
-        $title      = $GLOBALS['Language']->getText('global', 'Administration');
+        if (! $repository->canBeDeleted()) {
+            $this->redirect($request->getProject()->getID());
+        }
+        $title = $GLOBALS['Language']->getText('global', 'Administration');
 
         $token = $this->generateTokenDeletion($request->getProject(), $repository);
 
-        $service->renderInPage(
+        $service->renderInPageRepositoryAdministration(
             $request,
             $repository->getName() . ' – ' . $title,
             'admin/repository_delete',
@@ -418,7 +429,9 @@ class AdminController
                 $request->getProject(),
                 $title,
                 $token
-            )
+            ),
+            '',
+            $repository,
         );
     }
 
@@ -471,32 +484,29 @@ class AdminController
     private function generateTokenDeletion(Project $project, Repository $repository)
     {
         return new CSRFSynchronizerToken(SVN_BASE_URL . '/?' . http_build_query(
-            array(
+            [
                 'group_id' => $project->getID(),
                 'repo_id' => $repository->getId(),
                 'action' => 'delete-repository'
-            )
+            ]
         ));
     }
 
     private function redirect($project_id)
     {
         $GLOBALS['Response']->redirect(SVN_BASE_URL . '/?' . http_build_query(
-            array('group_id' => $project_id)
+            ['group_id' => $project_id]
         ));
     }
 
-    /**
-     * @param HTTPRequest $request
-     */
     private function redirectOnDisplayNotification(HTTPRequest $request)
     {
         $GLOBALS['Response']->redirect(SVN_BASE_URL . '/?' . http_build_query(
-            array(
+            [
                 'group_id' => $request->getProject()->getid(),
                 'repo_id' => $request->get('repo_id'),
                 'action' => 'display-mail-notification'
-            )
+            ]
         ));
     }
 

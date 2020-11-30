@@ -32,11 +32,11 @@ function exit_wiki_empty()
     $go = $pm->getProject($group_id);
     $uname = $go->getUnixName();
 
-    $HTML->header(array('title'=>$GLOBALS['Language']->getText('wiki_views_wikiviews', 'title_error')));
+    $HTML->header(['title' => $GLOBALS['Language']->getText('wiki_views_wikiviews', 'title_error')]);
 
-    print $GLOBALS['Language']->getText('wiki_views_wikiviews', 'not_activate', array($uname));
+    print $GLOBALS['Language']->getText('wiki_views_wikiviews', 'not_activate', [$uname]);
 
-    $HTML->footer(array());
+    $HTML->footer([]);
     exit;
 }
 
@@ -46,10 +46,10 @@ function exit_wiki_empty()
  */
 function hide_url($svc, $db_item_id, $defaultHide = false, $hide = null)
 {
-    $pref_name = 'hide_'.$svc.$db_item_id;
+    $pref_name = 'hide_' . $svc . $db_item_id;
 
     if (empty($hide)) {
-        $hide=$_REQUEST['hide_'.$svc];
+        $hide = $_REQUEST['hide_' . $svc];
     }
 
     $noPref = false;
@@ -62,7 +62,7 @@ function hide_url($svc, $db_item_id, $defaultHide = false, $hide = null)
     }
 
   // If no given value for hide, keep the old one
-    if (!isset($hide)) {
+    if (! isset($hide)) {
         $hide = $old_hide;
     }
 
@@ -72,16 +72,16 @@ function hide_url($svc, $db_item_id, $defaultHide = false, $hide = null)
     }
 
     if ($hide == 2 || ($noPref && $defaultHide)) {
-        $hide_url = 'hide_'.$svc.'=1&hide_item_id='.$db_item_id;
-        $hide_img = '<img src="'.util_get_image_theme("pointer_right.png").'" align="middle" border="0" alt="Expand">';
+        $hide_url = 'hide_' . $svc . '=1&hide_item_id=' . $db_item_id;
+        $hide_img = '<img src="' . util_get_image_theme("pointer_right.png") . '" align="middle" border="0" alt="Expand">';
         $hide_now = true;
     } else {
-        $hide_url = 'hide_'.$svc.'=2&hide_item_id='.$db_item_id;
-        $hide_img = '<img src="'.util_get_image_theme("pointer_down.png").'" align="middle" border="0" alt="Collapse">';
+        $hide_url = 'hide_' . $svc . '=2&hide_item_id=' . $db_item_id;
+        $hide_img = '<img src="' . util_get_image_theme("pointer_down.png") . '" align="middle" border="0" alt="Collapse">';
         $hide_now = false;
     }
 
-    return array($hide_now, $hide_url, $hide_img);
+    return [$hide_now, $hide_url, $hide_img];
 }
 
 function wiki_display_header()
@@ -100,15 +100,15 @@ function wiki_display_footer()
  */
 class WikiViews extends Views
 {
-  /* protected int    */ var $gid;
-  /* protected string */ var $wikiname;
-  /* protected string */ var $wikiLink;
-  /* protected string */ var $wikiAdminLink;
+  /* protected int    */ public $gid;
+  /* protected string */ public $wikiname;
+  /* protected string */ public $wikiLink;
+  /* protected string */ public $wikiAdminLink;
 
   /**
    * WikiView - Constructor
    */
-    function WikiView(&$controler, $id = 0, $view = null)
+    public function WikiView(&$controler, $id = 0, $view = null)
     {
         parent::view($controler, $view);
 
@@ -121,17 +121,17 @@ class WikiViews extends Views
       // Wikize project name
         $pm = ProjectManager::instance();
         $go = $pm->getProject($this->gid);
-        $this->wikiname = ucfirst($go->getUnixName()).'Wiki';
+        $this->wikiname = ucfirst($go->getUnixName()) . 'Wiki';
 
       // Build convenients URL
-        $this->wikiLink      = '/wiki/index.php?group_id='.$this->gid;
-        $this->wikiAdminLink = '/wiki/admin/index.php?group_id='.$this->gid;
+        $this->wikiLink      = '/wiki/index.php?group_id=' . $this->gid;
+        $this->wikiAdminLink = '/wiki/admin/index.php?group_id=' . $this->gid;
     }
 
   /**
    * displayMenu - Public pure virtual
    */
-    function displayMenu()
+    public function displayMenu()
     {
     }
 
@@ -140,11 +140,19 @@ class WikiViews extends Views
    *
    * Display Wiki Service header
    */
-    function header()
+    public function header()
     {
         $this->html_params['stylesheet'][] = '/wiki/themes/Codendi/phpwiki-codendi.css';
         $this->html_params['service_name'] = 'wiki';
         $this->html_params['project_id']   = $this->gid;
+
+        $GLOBALS['HTML']->addBreadcrumbs([
+            [
+                'title' => _('Wiki'),
+                'url' => '/wiki/?group_id=' . (int) $this->gid,
+            ],
+        ]);
+
         parent::header();
         $this->displayMenu();
     }
@@ -152,31 +160,31 @@ class WikiViews extends Views
     /**
     * pagePerms - public View
     */
-    function _pagePerms($postUrl = '')
+    public function _pagePerms($postUrl = '')
     {
         $wp = new WikiPage($_REQUEST['id']);
         $pagename = $wp->getPagename();
 
         $eM = EventManager::instance();
         $referenced = false;
-        $eM->processEvent('isWikiPageReferenced', array(
+        $eM->processEvent('isWikiPageReferenced', [
                           'referenced' => &$referenced,
                           'wiki_page'  => $pagename,
                           'group_id' => $this->gid
-                        ));
+                        ]);
         if ($referenced) {
             $label = '';
-            $eM->processEvent('getPermsLabelForWiki', array(
+            $eM->processEvent('getPermsLabelForWiki', [
                               'label'  => &$label
-                            ));
-            print '<p align="center"><br><b>'.$label.'</b></p>';
+                            ]);
+            print '<p align="center"><br><b>' . $label . '</b></p>';
         } else {
             print $GLOBALS['Language']->getText('wiki_views_wikiviews', 'set_perm_title');
             if (empty($pagename)) {
                 print $GLOBALS['Language']->getText('wiki_views_wikiviews', 'empty_page');
             } else {
                 $purifier = Codendi_HTMLPurifier::instance();
-                print $GLOBALS['Language']->getText('wiki_views_wikiviews', 'not_empty_page', array($purifier->purify($pagename)));
+                print $GLOBALS['Language']->getText('wiki_views_wikiviews', 'not_empty_page', [$purifier->purify($pagename)]);
                 permission_display_selection_form("WIKIPAGE_READ", $wp->getId(), $this->gid, $postUrl);
             }
         }

@@ -1,21 +1,22 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
 
@@ -25,13 +26,13 @@
 class TemplateSingleton
 {
   // simply containing the
-    var $data_array = array();
+    public $data_array = [];
 
     public const PROJECT      = 1;
     public const TEMPLATE     = 2;
     public const TEST_PROJECT = 3;
 
-    function __construct()
+    public function __construct()
     {
         $this->update();
     }
@@ -39,45 +40,56 @@ class TemplateSingleton
     public static function instance()
     {
         static $template_instance;
-        if (!$template_instance) {
+        if (! $template_instance) {
             $template_instance = new TemplateSingleton();
         }
         return $template_instance;
     }
 
-    function getLabel($proj_type)
+    public function getLabel($proj_type)
     {
-        return $GLOBALS['Language']->getText('include_common_template', $this->data_array[$proj_type]);
+        switch ($proj_type) {
+            case self::TEST_PROJECT:
+                return $GLOBALS['Language']->getText('include_common_template', 'test_project');
+            case self::TEMPLATE:
+                return $GLOBALS['Language']->getText('include_common_template', 'template');
+            case self::PROJECT:
+            default:
+                return $GLOBALS['Language']->getText('include_common_template', 'project');
+        }
     }
 
-    function update()
+    public function update()
     {
-        $db_res=db_query("SELECT * FROM group_type");
-        $this->data_array=array();
-        $rows=db_numrows($db_res);
-        for ($i=0; $i<$rows; $i++) {
+        $db_res = db_query("SELECT * FROM group_type");
+        $this->data_array = [];
+        $rows = db_numrows($db_res);
+        for ($i = 0; $i < $rows; $i++) {
             $this->data_array[db_result($db_res, $i, 'type_id')] = db_result($db_res, $i, 'name');
         }
     }
 
-    function isTemplate($id)
+    /**
+     * @psalm-pure
+     */
+    public static function isTemplate($id): bool
     {
         return ($id == self::TEMPLATE);
     }
 
-    function isProject($id)
+    public function isProject($id)
     {
         return ($id == self::PROJECT);
     }
 
-    function isTestProject($id)
+    public function isTestProject($id)
     {
         return ($id == self::TEST_PROJECT);
     }
 
-    function showTypeBox($name = 'group_type', $checked_val = 'xzxz')
+    public function showTypeBox($name = 'group_type', $checked_val = 'xzxz')
     {
-        $localizedTypes = array();
+        $localizedTypes = [];
         foreach (array_keys($this->data_array) as $type_id) {
             $localizedTypes[] = $this->getLabel($type_id);
         }
@@ -86,7 +98,7 @@ class TemplateSingleton
 
     public function getLocalizedTypes()
     {
-        $localized = array();
+        $localized = [];
         foreach (array_keys($this->data_array) as $type_id) {
             $localized[$type_id] = $this->getLabel($type_id);
         }
@@ -94,7 +106,7 @@ class TemplateSingleton
         return $localized;
     }
 
-    function getTemplates()
+    public function getTemplates()
     {
         $db_templates = db_query("SELECT group_id,group_name,unix_group_name,short_description,register_time FROM groups WHERE type='2' and status IN ('A','s')");
         return $db_templates;

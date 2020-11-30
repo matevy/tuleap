@@ -21,9 +21,8 @@
 namespace Tuleap\Tracker\REST;
 
 use Tracker_FormElement_Field_List_Value;
-use Tuleap\Project\REST\UserGroupRepresentation;
+use Tuleap\Project\REST\MinimalUserGroupRepresentation;
 use Tuleap\REST\JsonCast;
-use Project;
 
 class FieldListBindUGroupValueRepresentation
 {
@@ -38,11 +37,11 @@ class FieldListBindUGroupValueRepresentation
     public $label;
 
     /**
-     * @var UserGroupRepresentation
+     * @var MinimalUserGroupRepresentation
      */
     public $ugroup_reference;
 
-    public function build(Tracker_FormElement_Field_List_Value $value, UserGroupRepresentation $ugroup_representation)
+    public function build(Tracker_FormElement_Field_List_Value $value, MinimalUserGroupRepresentation $ugroup_representation)
     {
         $this->id               = JsonCast::toInt($value->getId());
         $this->label            = $value->getAPIValue();

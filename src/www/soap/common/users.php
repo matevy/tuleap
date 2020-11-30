@@ -24,12 +24,12 @@ require_once __DIR__ . '/../../include/utils_soap.php';
 if (defined('NUSOAP')) {
     $server->register(
         'checkUsersExistence',
-        array('sessionKey'=>'xsd:string',
-        'users'=>'tns:ArrayOfstring'
-        ),
-        array('return'=>'tns:ArrayOfUserInfo'),
+        ['sessionKey' => 'xsd:string',
+        'users' => 'tns:ArrayOfstring'
+        ],
+        ['return' => 'tns:ArrayOfUserInfo'],
         $uri,
-        $uri.'#checkUsersExistence',
+        $uri . '#checkUsersExistence',
         'rpc',
         'encoded',
         'Returns the users that exist with their user name'
@@ -37,12 +37,12 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'getUserInfo',
-        array('sessionKey' =>'xsd:string',
-          'user_id'    =>'xsd:int'
-        ),
-        array('return' => 'tns:UserInfo'),
+        ['sessionKey' => 'xsd:string',
+          'user_id'    => 'xsd:int'
+        ],
+        ['return' => 'tns:UserInfo'],
         $uri,
-        $uri.'#getUserInfo',
+        $uri . '#getUserInfo',
         'rpc',
         'encoded',
         'Returns the user info matching the given id'
@@ -76,7 +76,7 @@ if (defined('NUSOAP')) {
     {
         if (session_continue($sessionKey)) {
             try {
-                $existingUsers         = array();
+                $existingUsers         = [];
                 $user_manager          = UserManager::instance();
                 $currentUser           = $user_manager->getCurrentUser();
                 $email_identifier_type = 'email:';
@@ -86,7 +86,7 @@ if (defined('NUSOAP')) {
                         $user_email = substr($userIdentifier, strlen($email_identifier_type));
                         $users      = $user_manager->getAllUsersByEmail($user_email);
                     } else {
-                        $users = array($user_manager->getUserByIdentifier($userIdentifier));
+                        $users = [$user_manager->getUserByIdentifier($userIdentifier)];
                     }
 
                     foreach ($users as $user) {
@@ -108,9 +108,9 @@ if (defined('NUSOAP')) {
 
 
     $server->addFunction(
-        array(
+        [
             'getUserInfo',
             'checkUsersExistence',
-        )
+        ]
     );
 }

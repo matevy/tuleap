@@ -20,13 +20,7 @@
 
 <template>
     <div class="tlp-form-element">
-        <label
-            class="tlp-label"
-            for="document-new-item-description"
-            v-translate
-        >
-            Description
-        </label>
+        <label class="tlp-label" for="document-new-item-description" v-translate>Description</label>
         <textarea
             class="tlp-textarea"
             id="document-new-item-description"
@@ -41,12 +35,12 @@
 <script>
 export default {
     props: {
-        value: String
+        value: String,
     },
     computed: {
         placeholder() {
             return this.$gettext("My useful document description");
-        }
-    }
+        },
+    },
 };
 </script>

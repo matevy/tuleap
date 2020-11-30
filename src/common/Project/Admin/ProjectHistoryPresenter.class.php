@@ -98,8 +98,8 @@ class ProjectHistoryPresenter
             'history-search-start',
             'start',
             $this->start_date,
-            array(),
-            array(),
+            [],
+            [],
             false
         );
     }
@@ -110,8 +110,8 @@ class ProjectHistoryPresenter
             'history-search-end',
             'end',
             $this->end_date,
-            array(),
-            array(),
+            [],
+            [],
             false
         );
     }
@@ -218,7 +218,7 @@ class ProjectHistoryPresenter
 
     public function current_on_total()
     {
-        return ($this->offset + $this->index-3) . '/' . $this->history_rows['numrows'];
+        return ($this->offset + $this->index - 3) . '/' . $this->history_rows['numrows'];
     }
 
     public function export_history()

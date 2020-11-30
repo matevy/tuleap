@@ -24,7 +24,6 @@ namespace Tuleap\Tracker\Workflow\PostAction\Update\Internal;
 use DataAccessQueryException;
 use Transition;
 use Transition_PostAction_Field_IntDao;
-use Tuleap\DB\DataAccessObject;
 use Tuleap\DB\DBTransactionExecutor;
 use Tuleap\Tracker\Workflow\PostAction\Update\SetIntValue;
 
@@ -64,7 +63,7 @@ class SetIntValueRepository
                         $transition->getId()
                     )
                 );
-            };
+            }
             $success = $this->set_int_value_dao->updatePostAction(
                 $id_or_failure,
                 $set_int_value->getFieldId(),

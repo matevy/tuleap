@@ -21,12 +21,12 @@
 class Encoding_SupportedXmlCharEncoding
 {
 
-    private static $php_supported_encoding_types = array(
+    private static $php_supported_encoding_types = [
         'UTF-8',
         'ISO-8859-1',
         'ISO-8859-5',
         'ISO-8859-15',
-    );
+    ];
 
    /**
     * @see http://www.w3.org/TR/REC-xml/#charsets
@@ -53,9 +53,10 @@ class Encoding_SupportedXmlCharEncoding
         }
 
         $length = strlen($string);
-        for ($i=0; $i < $length; $i++) {
+        for ($i = 0; $i < $length; $i++) {
             $current = ord($string[$i]);
-            if ((($current >= 0x20) && ($current <= 0xD7FF)) ||
+            if (
+                (($current >= 0x20) && ($current <= 0xD7FF)) ||
                 (($current >= 0xE000) && ($current <= 0xFFFD)) ||
                 (($current >= 0x10000) && ($current <= 0x10FFFF)) ||
                 $current == 0x9 ||
@@ -72,7 +73,7 @@ class Encoding_SupportedXmlCharEncoding
     }
 
    /**
-    * @return UTF-8 string. All unrecognized characters are stripped-out
+    * @return string UTF-8 string. All unrecognized characters are stripped-out
     */
     private static function convertToUTF8($string)
     {

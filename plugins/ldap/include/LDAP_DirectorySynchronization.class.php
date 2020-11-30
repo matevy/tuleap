@@ -40,10 +40,10 @@ class LDAP_DirectorySynchronization
     protected $lum;
     protected $um;
 
-    /** @var Logger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
-    public function __construct(LDAP $ldap, Logger $logger)
+    public function __construct(LDAP $ldap, \Psr\Log\LoggerInterface $logger)
     {
         $this->ldapTime = 0;
         $this->ldap     = $ldap;
@@ -61,7 +61,7 @@ class LDAP_DirectorySynchronization
         AND ldap_id <> ""';
 
         $res = db_query($sql);
-        if ($res && !db_error()) {
+        if ($res && ! db_error()) {
             $nbr_all_users         = db_numrows($res);
             $users_are_suspendable = $this->getLdapUserManager()->areUsersSupendable($nbr_all_users);
             while ($row = db_fetch_array($res)) {
@@ -70,13 +70,13 @@ class LDAP_DirectorySynchronization
             $this->getLdapUserManager()->triggerRenameOfUsers();
             $this->remindAdminsBeforeCleanUp();
         } else {
-            echo "DB error: ".db_error().PHP_EOL;
+            echo "DB error: " . db_error() . PHP_EOL;
         }
     }
 
     public function ldapSync($row, $users_are_suspendable = true)
     {
-        $ldap_query = $this->ldap->getLDAPParam('eduid').'='.$row['ldap_id'];
+        $ldap_query = $this->ldap->getLDAPParam('eduid') . '=' . $row['ldap_id'];
         $userSync = $this->getLdapUserSync();
         $attributes = $userSync->getSyncAttributes($this->ldap);
 
@@ -88,14 +88,14 @@ class LDAP_DirectorySynchronization
             $search_depth = LDAP::SCOPE_ONELEVEL;
         }
 
-        foreach (explode(';', $this->ldap->getLDAPParam('people_dn')) as $PeopleDn) {
+        foreach (explode(';', $this->ldap->getLDAPParam('people_dn') ?? '') as $PeopleDn) {
             $lri = $this->ldap->search($PeopleDn, $ldap_query, $search_depth, $attributes);
-            if ($lri === false ||count($lri) === 1) {
+            if ($lri === false || count($lri) === 1) {
                 break;
             }
         }
         $time_end   = microtime(true);
-        $this->ldapTime += ($time_end-$time_start);
+        $this->ldapTime += ($time_end - $time_start);
 
         if ($this->ldap->getErrno() === LDAP::ERR_SUCCESS && $lri) {
             $user     = new PFUser($row);
@@ -109,12 +109,12 @@ class LDAP_DirectorySynchronization
                     $this->getLdapUserManager()->updateLdapUid($user, $lr->getLogin());
                 }
             } elseif (count($lri) == 0 && $users_are_suspendable) {
-                $this->logger->warn('LDAP user to be suspended: '.$user->getId().' '. $user->getUserName());
+                $this->logger->warning('LDAP user to be suspended: ' . $user->getId() . ' ' . $user->getUserName());
 
                 $this->logger->debug(
-                    ' *** PEOPLEDN: '.$PeopleDn.
-                    ' *** LDAP QUERY: '. $ldap_query.
-                    ' *** ATTRIBUTES: '. print_r($attributes, true)
+                    ' *** PEOPLEDN: ' . $PeopleDn .
+                    ' *** LDAP QUERY: ' . $ldap_query .
+                    ' *** ATTRIBUTES: ' . print_r($attributes, true)
                 );
 
                 // User not found in LDAP directory
@@ -176,7 +176,7 @@ class LDAP_DirectorySynchronization
 
     public function getLdapUserManager()
     {
-        if (!isset($this->lum)) {
+        if (! isset($this->lum)) {
             $this->lum = new LDAP_UserManager($this->ldap, LDAP_UserSync::instance());
         }
         return $this->lum;

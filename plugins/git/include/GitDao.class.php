@@ -64,7 +64,7 @@ class GitDao extends \Tuleap\DB\DataAccessObject
                 WHERE repository_id = ? AND repository_deletion_date = "0000-00-00 00:00:00"';
         $result = $this->getDB()->run($sql, $id);
 
-        return !empty($result) && count($result) === 1;
+        return ! empty($result) && count($result) === 1;
     }
 
     public function initialize($repositoryId)
@@ -80,7 +80,7 @@ class GitDao extends \Tuleap\DB\DataAccessObject
 
     public function save(GitRepository $repository)
     {
-        $id          = (int)$repository->getId();
+        $id          = (int) $repository->getId();
 
         $name        = $repository->getName();
         $mailPrefix  = $repository->getMailPrefix();
@@ -90,7 +90,7 @@ class GitDao extends \Tuleap\DB\DataAccessObject
 
         try {
             $parent   = $repository->getParent();
-            if (!empty($parent)) {
+            if (! empty($parent)) {
                 $parentId = $parent->getId();
             }
         } catch (GitDaoException $e) {
@@ -163,8 +163,8 @@ class GitDao extends \Tuleap\DB\DataAccessObject
         $deletionDate = $repository->getDeletionDate();
         $projectName  = $repository->getProject()->getUnixName();
         $backup_path  = str_replace('/', '_', $repository->getFullName());
-        $backup_path  .= '_'.strtotime($deletionDate);
-        $backup_path  = $projectName.'_'.$backup_path;
+        $backup_path  .= '_' . strtotime($deletionDate);
+        $backup_path  = $projectName . '_' . $backup_path;
 
         try {
             $affected_rows = $this->getDB()->update(
@@ -187,8 +187,8 @@ class GitDao extends \Tuleap\DB\DataAccessObject
 
     public function renameProject(Project $project, $newName)
     {
-        $oldPath = $project->getUnixName().'/';
-        $newPath = $newName.'/';
+        $oldPath = $project->getUnixName() . '/';
+        $newPath = $newName . '/';
 
         try {
             $this->getDB()->run(
@@ -209,7 +209,7 @@ class GitDao extends \Tuleap\DB\DataAccessObject
     /**
      * Obtain project's list of git repositories. May be filtered out by user to get only her own repositories
      *
-     * @param Integre $projectId    Project id
+     * @param int $projectId    Project id
      * @param bool $onlyGitShell If true list will contain only git repositories no gitolite
      * @param bool $scope Allows to get all projects ignoring if the scope is project or personal
      * @param int $userId User id
@@ -228,7 +228,7 @@ class GitDao extends \Tuleap\DB\DataAccessObject
         }
 
         if (empty($projectId)) {
-            return array();
+            return [];
         }
 
         if ($scope) {
@@ -247,6 +247,7 @@ class GitDao extends \Tuleap\DB\DataAccessObject
             $sql,
             $condition->values()
         );
+        assert(is_array($results));
 
         $list = [];
         foreach ($results as $row) {
@@ -307,7 +308,7 @@ class GitDao extends \Tuleap\DB\DataAccessObject
     /**
      * This function initialize a GitRepository object with its database value
      * @param GitRepository $repository
-     * @return <type>
+     * @return true
      */
     public function getProjectRepository($repository)
     {
@@ -327,10 +328,10 @@ class GitDao extends \Tuleap\DB\DataAccessObject
 
     public function searchProjectRepositoryByPath($projectId, $repositoryPath)
     {
-        //COLLATE utf8_bin used in query in order to create a case sensitive match
+        // BINARY ? used in query in order to create a case sensitive match
         return $this->getDB()->row(
             'SELECT * FROM plugin_git
-                       WHERE repository_path COLLATE utf8_bin = ? AND project_id = ?
+                       WHERE repository_path = BINARY ? AND project_id = ?
                             AND repository_deletion_date = "0000-00-00 00:00:00"',
             $repositoryPath,
             $projectId
@@ -343,8 +344,8 @@ class GitDao extends \Tuleap\DB\DataAccessObject
         if (empty($repoId)) {
             throw new GitDaoException(dgettext('tuleap-git', 'Repository child search failed : missing repository id'));
         }
-        $query = 'SELECT repository_id'.
-                 ' FROM plugin_git'.
+        $query = 'SELECT repository_id' .
+                 ' FROM plugin_git' .
                  ' WHERE repository_parent_id=? AND repository_deletion_date="0000-00-00 00:00:00"';
 
         try {
@@ -352,14 +353,14 @@ class GitDao extends \Tuleap\DB\DataAccessObject
         } catch (PDOException $ex) {
             return false;
         }
-        return !empty($result);
+        return ! empty($result);
     }
 
     /**
      * This function log a Git Push in the database
      *
      * @param int $repoId Id of the git repository
-     * @param int $UserId Id of the user that performed the push
+     * @param int $userId Id of the user that performed the push
      * @param int $pushTimestamp Date of the push
      * @param int $commitsNumber Number of commits
      *
@@ -388,7 +389,7 @@ class GitDao extends \Tuleap\DB\DataAccessObject
 
     public function getProjectRepositoryById($repository)
     {
-        $id = (int)$repository->getId();
+        $id = (int) $repository->getId();
         if (empty($id)) {
             return false;
         }
@@ -439,7 +440,6 @@ class GitDao extends \Tuleap\DB\DataAccessObject
 
     /**
      * @deprecated Should use GitRepository::getInstanceFrom row instead.
-     * @param GitRepository $repository
      * @param type $result
      */
     public function hydrateRepositoryObject(GitRepository $repository, $result)
@@ -661,10 +661,10 @@ class GitDao extends \Tuleap\DB\DataAccessObject
      */
     public function getDeletedRepositoriesToPurge($retention_period)
     {
-        $query = 'SELECT * '.
+        $query = 'SELECT * ' .
                  ' FROM plugin_git' .
                  ' WHERE repository_deletion_date != "0000-00-00 00:00:00"' .
-                 ' AND repository_backend_type = ?'.
+                 ' AND repository_backend_type = ?' .
                  ' AND TO_DAYS(NOW()) - TO_DAYS(repository_deletion_date) = ?';
 
         return $this->getDB()->run($query, self::BACKEND_GITOLITE, $retention_period);
@@ -678,15 +678,15 @@ class GitDao extends \Tuleap\DB\DataAccessObject
      */
     public function getDeletedRepositoriesByProjectId($project_id, $retention_period)
     {
-        $query = 'SELECT * '.
-                 ' FROM plugin_git'.
-                 ' WHERE repository_deletion_date != "0000-00-00 00:00:00"'.
-                 ' AND repository_backend_type = ?'.
+        $query = 'SELECT * ' .
+                 ' FROM plugin_git' .
+                 ' WHERE repository_deletion_date != "0000-00-00 00:00:00"' .
+                 ' AND repository_backend_type = ?' .
                  ' AND project_id = ?' .
-                 ' AND TO_DAYS(NOW()) - TO_DAYS(repository_deletion_date) < ?'.
-                 ' AND repository_id NOT IN ('.
-                 '     SELECT parameters FROM system_event'.
-                 '     WHERE type=? '.
+                 ' AND TO_DAYS(NOW()) - TO_DAYS(repository_deletion_date) < ?' .
+                 ' AND repository_id NOT IN (' .
+                 '     SELECT parameters FROM system_event' .
+                 '     WHERE type=? ' .
                  '     AND status IN (?, ?))';
 
         return $this->getDB()->run(

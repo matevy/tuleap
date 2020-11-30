@@ -30,7 +30,7 @@ require_once('lib/Template.php');
 // We might use a HTML PageType, which is contra wiki, but some people might prefer HTML markup.
 // TODO: Change from constant to user preference variable (checkbox setting),
 //       when HtmlParser is finished.
-if (!defined('USE_HTMLAREA')) {
+if (! defined('USE_HTMLAREA')) {
     define('USE_HTMLAREA', false);
 }
 if (USE_HTMLAREA) {
@@ -39,7 +39,7 @@ if (USE_HTMLAREA) {
 
 class PageEditor
 {
-    function __construct(&$request)
+    public function __construct(&$request)
     {
         $this->request = &$request;
 
@@ -55,11 +55,11 @@ class PageEditor
             }
         }
 
-        $this->meta = array('author' => $this->user->getId(),
+        $this->meta = ['author' => $this->user->getId(),
                             'author_id' => $this->user->getAuthenticatedId(),
-                            'mtime' => time());
+                            'mtime' => time()];
 
-        $this->tokens = array();
+        $this->tokens = [];
 
         $version = $request->getArg('version');
         if ($version !== false) {
@@ -77,8 +77,10 @@ class PageEditor
             $this->_initialEdit = true;
 
             // The edit request has specified some initial content from a template
-            if (($template = $request->getArg('template'))
-                   and $request->_dbi->isWikiPage($template)) {
+            if (
+                ($template = $request->getArg('template'))
+                   and $request->_dbi->isWikiPage($template)
+            ) {
                 $page = $request->_dbi->getPage($template);
                 $current = $page->getCurrentRevision();
                 $this->_content = $current->getPackedContent();
@@ -87,14 +89,13 @@ class PageEditor
                 $this->_redirect_to = $request->getArg('save_and_redirect_to');
             }
         }
-        if (!headers_sent()) {
+        if (! headers_sent()) {
             header("Content-Type: text/html; charset=" . $GLOBALS['charset']);
         }
     }
 
-    function editPage()
+    public function editPage()
     {
-
         global $WikiTheme;
         $saveFailed = false;
         $tokens = &$this->tokens;
@@ -102,12 +103,16 @@ class PageEditor
         $tokens['CONCURRENT_UPDATE_MESSAGE'] = '';
         $r = $this->request;
 
-        if (isset($r->args['pref']['editWidth'])
-            and ($r->getPref('editWidth') != $r->args['pref']['editWidth'])) {
+        if (
+            isset($r->args['pref']['editWidth'])
+            and ($r->getPref('editWidth') != $r->args['pref']['editWidth'])
+        ) {
             $r->_prefs->set('editWidth', $r->args['pref']['editWidth']);
         }
-        if (isset($r->args['pref']['editHeight'])
-            and ($r->getPref('editHeight') != $r->args['pref']['editHeight'])) {
+        if (
+            isset($r->args['pref']['editHeight'])
+            and ($r->getPref('editHeight') != $r->args['pref']['editHeight'])
+        ) {
             $r->_prefs->set('editHeight', $r->args['pref']['editHeight']);
         }
 
@@ -179,7 +184,7 @@ class PageEditor
         return $this->output('editpage', _("Edit: %s"));
     }
 
-    function output($template, $title_fs)
+    public function output($template, $title_fs)
     {
         global $WikiTheme;
         $selected = &$this->selected;
@@ -204,7 +209,7 @@ class PageEditor
     }
 
 
-    function viewSource()
+    public function viewSource()
     {
         assert($this->isInitialEdit());
         assert($this->selected);
@@ -214,25 +219,25 @@ class PageEditor
         return $this->output('viewsource', _("View Source: %s"));
     }
 
-    function updateLock()
+    public function updateLock()
     {
-        if ((bool)$this->page->get('locked') == (bool)$this->locked) {
+        if ((bool) $this->page->get('locked') == (bool) $this->locked) {
             return false;       // Not changed.
         }
 
-        if (!$this->user->isAdmin()) {
+        if (! $this->user->isAdmin()) {
             // FIXME: some sort of message
             return false;         // not allowed.
         }
 
-        $this->page->set('locked', (bool)$this->locked);
+        $this->page->set('locked', (bool) $this->locked);
         $this->tokens['LOCK_CHANGED_MSG']
             = $this->locked ? _("Page now locked.") : _("Page now unlocked.");
 
         return true;            // lock changed.
     }
 
-    function savePage()
+    public function savePage()
     {
         $request = &$this->request;
 
@@ -273,7 +278,7 @@ class PageEditor
             // force new?
             $meta
         );
-        if (!isa($newrevision, 'WikiDB_PageRevision')) {
+        if (! isa($newrevision, 'WikiDB_PageRevision')) {
             // Save failed.  (Concurrent updates).
             return false;
         } else {
@@ -283,7 +288,7 @@ class PageEditor
 
             // Save succeded. We raise an event.
             $new = $this->version + 1;
-            $difflink = WikiURL($page->getName(), array('action'=>'diff'), true);
+            $difflink = WikiURL($page->getName(), ['action' => 'diff'], true);
             $difflink .= "&versions%5b%5d=" . $this->version . "&versions%5b%5d=" . $new;
             $eM = EventManager::instance();
             $uM = UserManager::instance();
@@ -291,14 +296,14 @@ class PageEditor
             $wiki_page = new WikiPage(GROUP_ID, $page->getName());
             $eM->processEvent(
                 "wiki_page_updated",
-                array(
+                [
                     'group_id'         => GROUP_ID,
                     'wiki_page'        => $page->getName(),
                     'referenced'       => $wiki_page->isReferenced(),
                     'diff_link'        => $difflink,
                     'user'             => $user,
                     'version'          => $this->version
-                )
+                ]
             );
         }
 
@@ -341,23 +346,23 @@ class PageEditor
         return true;
     }
 
-    function isConcurrentUpdate()
+    public function isConcurrentUpdate()
     {
         assert($this->current->getVersion() >= $this->_currentVersion);
         return $this->current->getVersion() != $this->_currentVersion;
     }
 
-    function canEdit()
+    public function canEdit()
     {
-        return !$this->page->get('locked') || $this->user->isAdmin();
+        return ! $this->page->get('locked') || $this->user->isAdmin();
     }
 
-    function isInitialEdit()
+    public function isInitialEdit()
     {
         return $this->_initialEdit;
     }
 
-    function isUnchanged()
+    public function isUnchanged()
     {
         $current = &$this->current;
 
@@ -368,14 +373,14 @@ class PageEditor
         return $this->_content == $current->getPackedContent();
     }
 
-    function getPreview()
+    public function getPreview()
     {
         include_once('lib/PageType.php');
         $this->_content = $this->getContent();
         return new TransformedText($this->page, $this->_content, $this->meta);
     }
 
-    function getConvertedPreview()
+    public function getConvertedPreview()
     {
         include_once('lib/PageType.php');
         $this->_content = $this->getContent();
@@ -385,7 +390,7 @@ class PageEditor
     }
 
     // possibly convert HTMLAREA content back to Wiki markup
-    function getContent()
+    public function getContent()
     {
         if (USE_HTMLAREA) {
             $xml_output = Edit_HtmlArea_ConvertAfter($this->_content);
@@ -396,18 +401,17 @@ class PageEditor
         }
     }
 
-    function getLockedMessage()
+    public function getLockedMessage()
     {
-        return
-            HTML(
-                HTML::h2(_("Page Locked")),
-                HTML::p(_("This page has been locked by the administrator so your changes can not be saved.")),
-                HTML::p(_("(Copy your changes to the clipboard. You can try editing a different page or save your text in a text editor.)")),
-                HTML::p(_("Sorry for the inconvenience."))
-            );
+        return HTML(
+            HTML::h2(_("Page Locked")),
+            HTML::p(_("This page has been locked by the administrator so your changes can not be saved.")),
+            HTML::p(_("(Copy your changes to the clipboard. You can try editing a different page or save your text in a text editor.)")),
+            HTML::p(_("Sorry for the inconvenience."))
+        );
     }
 
-    function getConflictMessage($unresolved = false)
+    public function getConflictMessage($unresolved = false)
     {
         /*
          xgettext only knows about c/c++ line-continuation strings
@@ -420,8 +424,8 @@ class PageEditor
         if ($unresolved) {
             $message =  HTML::p(fmt(
                 "Some of the changes could not automatically be combined.  Please look for sections beginning with '%s', and ending with '%s'.  You will need to edit those sections by hand before you click Save.",
-                "<<<<<<< ". _("Your version"),
-                ">>>>>>> ". _("Other version")
+                "<<<<<<< " . _("Your version"),
+                ">>>>>>> " . _("Other version")
             ));
         } else {
             $message = HTML::p(_("Please check it through before saving."));
@@ -433,17 +437,16 @@ class PageEditor
           HTML::li(_("Make changes to the file again. Paste your additions from the clipboard (or text editor).")),
           HTML::li(_("Save your updated changes.")));
         */
-        return
-            HTML(
-                HTML::h2(_("Conflicting Edits!")),
-                HTML::p(_("In the time since you started editing this page, another user has saved a new version of it.")),
-                HTML::p(_("Your changes can not be saved as they are, since doing so would overwrite the other author's changes. So, your changes and those of the other author have been combined. The result is shown below.")),
-                $message
-            );
+        return HTML(
+            HTML::h2(_("Conflicting Edits!")),
+            HTML::p(_("In the time since you started editing this page, another user has saved a new version of it.")),
+            HTML::p(_("Your changes can not be saved as they are, since doing so would overwrite the other author's changes. So, your changes and those of the other author have been combined. The result is shown below.")),
+            $message
+        );
     }
 
 
-    function getTextArea()
+    public function getTextArea()
     {
         $request = &$this->request;
 
@@ -455,12 +458,12 @@ class PageEditor
         }
 
         $textarea = HTML::textarea(
-            array('class'=> 'wikiedit',
+            ['class' => 'wikiedit',
                                          'name' => 'edit[content]',
                                          'id'   => 'edit[content]',
                                          'rows' => $request->getPref('editHeight'),
                                          'cols' => $request->getPref('editWidth'),
-                                         'readonly' => (bool) $readonly),
+                                         'readonly' => (bool) $readonly],
             $this->_content
         );
         if (USE_HTMLAREA) {
@@ -470,48 +473,48 @@ class PageEditor
         }
     }
 
-    function getFormElements()
+    public function getFormElements()
     {
         global $WikiTheme;
         $request = &$this->request;
         $page = &$this->page;
 
-        $h = array('action'   => 'edit',
+        $h = ['action'   => 'edit',
                    'pagename' => $page->getName(),
                    'version'  => $this->version,
                    'edit[pagetype]' => $this->meta['pagetype'],
-                   'edit[current_version]' => $this->_currentVersion);
+                   'edit[current_version]' => $this->_currentVersion];
 
         $el['HIDDEN_INPUTS'] = HiddenInputs($h);
         $el['EDIT_TEXTAREA'] = $this->getTextArea();
         $el['SUMMARY_INPUT']
-            = HTML::input(array('type'  => 'text',
+            = HTML::input(['type'  => 'text',
                                 'class' => 'wikitext',
                                 'id' => 'edit[summary]',
                                 'name'  => 'edit[summary]',
                                 'size'  => 50,
                                 'maxlength' => 256,
-                                'value' => $this->meta['summary']));
+                                'value' => $this->meta['summary']]);
         $el['MINOR_EDIT_CB']
-            = HTML::input(array('type' => 'checkbox',
+            = HTML::input(['type' => 'checkbox',
                                 'name'  => 'edit[minor_edit]',
                                 'id' => 'edit[minor_edit]',
-                                'checked' => (bool) $this->meta['is_minor_edit']));
+                                'checked' => (bool) $this->meta['is_minor_edit']]);
         $el['OLD_MARKUP_CB']
-            = HTML::input(array('type' => 'checkbox',
+            = HTML::input(['type' => 'checkbox',
                                 'name' => 'edit[markup]',
                                 'value' => 'old',
                                 'checked' => $this->meta['markup'] < 2.0,
                                 'id' => 'useOldMarkup',
-                                'onclick' => 'showOldMarkupRules(this.checked)'));
+                                'onclick' => 'showOldMarkupRules(this.checked)']);
         $el['OLD_MARKUP_CONVERT'] = ($this->meta['markup'] < 2.0)
             ? Button('submit:edit[edit_convert]', _("Convert"), 'wikiaction') : '';
         $el['LOCKED_CB']
-            = HTML::input(array('type' => 'checkbox',
+            = HTML::input(['type' => 'checkbox',
                                 'name' => 'edit[locked]',
                                 'id'   => 'edit[locked]',
-                                'disabled' => (bool) !$this->user->isadmin(),
-                                'checked'  => (bool) $this->locked));
+                                'disabled' => (bool) ! $this->user->isadmin(),
+                                'checked'  => (bool) $this->locked]);
 
         $el['PREVIEW_B'] = Button(
             'submit:edit[preview]',
@@ -524,56 +527,58 @@ class PageEditor
 
         $el['IS_CURRENT'] = $this->version == $this->current->getVersion();
 
-        $el['WIDTH_PREF'] = HTML::input(array('type' => 'text',
+        $el['WIDTH_PREF'] = HTML::input(['type' => 'text',
                                     'size' => 3,
                                     'maxlength' => 4,
                                     'class' => "numeric",
                                     'name' => 'pref[editWidth]',
                                     'id'   => 'pref[editWidth]',
                                     'value' => $request->getPref('editWidth'),
-                                    'onchange' => 'this.form.submit();'));
-        $el['HEIGHT_PREF'] = HTML::input(array('type' => 'text',
+                                    'onchange' => 'this.form.submit();']);
+        $el['HEIGHT_PREF'] = HTML::input(['type' => 'text',
                                      'size' => 3,
                                      'maxlength' => 4,
                                      'class' => "numeric",
                                      'name' => 'pref[editHeight]',
                                      'id'   => 'pref[editHeight]',
                                      'value' => $request->getPref('editHeight'),
-                                     'onchange' => 'this.form.submit();'));
+                                     'onchange' => 'this.form.submit();']);
         $el['SEP'] = $WikiTheme->getButtonSeparator();
         $el['AUTHOR_MESSAGE'] = fmt("Author will be logged as %s.", HTML::em($this->user->getId()));
 
         return $el;
     }
 
-    function _redirectToBrowsePage()
+    public function _redirectToBrowsePage()
     {
         $this->request->redirect(WikiURL($this->page, false, 'absolute_url'));
     }
 
-    function redirectAfterSavingPage($pagename)
+    public function redirectAfterSavingPage($pagename)
     {
         $url     = WikiURL($this->page, false, 'absolute_url');
-        $link    = '<a href="' . $url . '">'.$pagename.'</a>';
+        $link    = '<a href="' . $url . '">' . $pagename . '</a>';
         $message = fmt("Saved: %s", $link)->asString();
 
         $GLOBALS['Response']->addFeedback('info', $message, CODENDI_PURIFIER_LIGHT);
         $GLOBALS['Response']->redirect($url);
     }
 
-    function _restoreState()
+    public function _restoreState()
     {
         $request = &$this->request;
 
         $posted = $request->getArg('edit');
         $request->setArg('edit', false);
 
-        if (!$posted || !$request->isPost()
-            || $request->getArg('action') != 'edit') {
+        if (
+            ! $posted || ! $request->isPost()
+            || $request->getArg('action') != 'edit'
+        ) {
             return false;
         }
 
-        if (!isset($posted['content']) || !is_string($posted['content'])) {
+        if (! isset($posted['content']) || ! is_string($posted['content'])) {
             return false;
         }
         $this->_content = preg_replace(
@@ -592,20 +597,20 @@ class PageEditor
             return false;       // FIXME: some kind of warning?
         }
 
-        $is_old_markup = !empty($posted['markup']) && $posted['markup'] == 'old';
+        $is_old_markup = ! empty($posted['markup']) && $posted['markup'] == 'old';
         $meta['markup'] = $is_old_markup ? false : 2.0;
         $meta['summary'] = trim(substr($posted['summary'], 0, 256));
-        $meta['is_minor_edit'] = !empty($posted['minor_edit']);
-        $meta['pagetype'] = !empty($posted['pagetype']) ? $posted['pagetype'] : false;
+        $meta['is_minor_edit'] = ! empty($posted['minor_edit']);
+        $meta['pagetype'] = ! empty($posted['pagetype']) ? $posted['pagetype'] : false;
 
         $this->meta = array_merge($this->meta, $meta);
-        $this->locked = !empty($posted['locked']);
+        $this->locked = ! empty($posted['locked']);
 
-        if (!empty($posted['preview'])) {
+        if (! empty($posted['preview'])) {
             $this->editaction = 'preview';
-        } elseif (!empty($posted['save'])) {
+        } elseif (! empty($posted['save'])) {
             $this->editaction = 'save';
-        } elseif (!empty($posted['edit_convert'])) {
+        } elseif (! empty($posted['edit_convert'])) {
             $this->editaction = 'edit_convert';
         } else {
             $this->editaction = 'edit';
@@ -614,14 +619,14 @@ class PageEditor
         return true;
     }
 
-    function _initializeState()
+    public function _initializeState()
     {
         $request = &$this->request;
         $current = &$this->current;
         $selected = &$this->selected;
         $user = &$this->user;
 
-        if (!$selected) {
+        if (! $selected) {
             NoSuchRevision($request, $this->page, $this->version); // noreturn
         }
 
@@ -643,7 +648,7 @@ class PageEditor
             $is_new_markup = $selected->get('markup') >= 2.0;
         }
 
-        $this->meta['markup'] = $is_new_markup ? 2.0: false;
+        $this->meta['markup'] = $is_new_markup ? 2.0 : false;
         $this->meta['pagetype'] = $selected->get('pagetype');
         if ($this->meta['pagetype'] == 'wikiblog') {
             $this->meta['summary'] = $selected->get('summary'); // keep blog title
@@ -656,11 +661,11 @@ class PageEditor
 
 class LoadFileConflictPageEditor extends PageEditor
 {
-    function editPage($saveFailed = true)
+    public function editPage($saveFailed = true)
     {
         $tokens = &$this->tokens;
 
-        if (!$this->canEdit()) {
+        if (! $this->canEdit()) {
             if ($this->isInitialEdit()) {
                 return $this->viewSource();
             }
@@ -720,7 +725,7 @@ class LoadFileConflictPageEditor extends PageEditor
         // FIXME: this doesn't display
     }
 
-    function output($template, $title_fs)
+    public function output($template, $title_fs)
     {
         $selected = &$this->selected;
         $current = &$this->current;
@@ -741,7 +746,7 @@ class LoadFileConflictPageEditor extends PageEditor
         return true;
     }
 
-    function getConflictMessage($unresolved = false)
+    public function getConflictMessage($unresolved = false)
     {
         $message = HTML(HTML::p(
             fmt(

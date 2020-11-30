@@ -107,7 +107,7 @@ class MetadataUpdator
     }
 
     /**
-     * @throws I18nRestException
+     * @throws I18NRestException
      * @throws RestException
      * @throws MetadataDoesNotExistException
      */
@@ -116,8 +116,10 @@ class MetadataUpdator
         \Docman_Item $item,
         PFUser $current_user
     ): void {
-        if ($representation->title !== $item->getTitle() &&
-            $this->item_factory->doesTitleCorrespondToExistingDocument($representation->title, (int)$item->getParentId())) {
+        if (
+            $representation->title !== $item->getTitle() &&
+            $this->item_factory->doesTitleCorrespondToExistingDocument($representation->title, (int) $item->getParentId())
+        ) {
             throw new RestException(400, "A file with same title already exists in the given folder.");
         }
 
@@ -133,7 +135,7 @@ class MetadataUpdator
         $new_owner_id = $representation->owner_id;
         $new_owner    = $this->owner_retriever->getUserFromRepresentationId($new_owner_id);
         if ($new_owner === null) {
-            throw new I18nRestException(
+            throw new I18NRestException(
                 400,
                 sprintf(
                     dgettext('tuleap-docman', 'The specified owner ID #%d does not match a valid user.'),
@@ -147,7 +149,7 @@ class MetadataUpdator
                 $representation->metadata
             );
         } catch (CustomMetadataException $e) {
-            throw new I18nRestException(
+            throw new I18NRestException(
                 400,
                 $e->getI18NExceptionMessage()
             );
@@ -156,7 +158,7 @@ class MetadataUpdator
         foreach ($metadata_to_update_collection as $metadata_to_update) {
                 $this->metadata_value_updator->updateMetadata(
                     $metadata_to_update->getMetadata(),
-                    (int)$item->getId(),
+                    (int) $item->getId(),
                     $metadata_to_update->getValue()
                 );
         }
@@ -210,8 +212,10 @@ class MetadataUpdator
         Project $project,
         PFUser $user
     ): void {
-        if ($representation->title !== $item->getTitle() &&
-            $this->item_factory->doesTitleCorrespondToExistingFolder($representation->title, (int)$item->getParentId())) {
+        if (
+            $representation->title !== $item->getTitle() &&
+            $this->item_factory->doesTitleCorrespondToExistingFolder($representation->title, (int) $item->getParentId())
+        ) {
             throw new RestException(400, "A file with same title already exists in the given folder.");
         }
 
@@ -239,7 +243,7 @@ class MetadataUpdator
                 $representation->metadata
             );
         } catch (CustomMetadataException $e) {
-            throw new I18nRestException(
+            throw new I18NRestException(
                 400,
                 $e->getI18NExceptionMessage()
             );
@@ -248,7 +252,7 @@ class MetadataUpdator
         foreach ($metadata_to_update_collection as $metadata_to_update) {
             $this->metadata_value_updator->updateMetadata(
                 $metadata_to_update->getMetadata(),
-                (int)$item->getId(),
+                (int) $item->getId(),
                 $metadata_to_update->getValue()
             );
         }
@@ -268,8 +272,8 @@ class MetadataUpdator
             if ($all_item_collection->getTotalElements() > 0) {
                 $this->recursive_updator->updateRecursiveMetadataOnFolderAndItems(
                     $all_item_collection,
-                    (int)$item->getId(),
-                    (int)$project->getID()
+                    (int) $item->getId(),
+                    (int) $project->getID()
                 );
             }
 
@@ -290,8 +294,8 @@ class MetadataUpdator
             $this->event_processor->raiseUpdateEvent(
                 $item,
                 $current_user,
-                (string)$item->getStatus(),
-                (string)$status,
+                (string) $item->getStatus(),
+                (string) $status,
                 'status'
             );
         }

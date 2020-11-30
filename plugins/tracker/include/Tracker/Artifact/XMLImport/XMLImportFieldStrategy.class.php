@@ -18,23 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 interface Tracker_Artifact_XMLImport_XMLImportFieldStrategy
 {
 
     /**
      * Extract Field data from XML input
      *
-     * @param Tracker_FormElement_Field $field
-     * @param SimpleXMLElement $field_change
      *
-     * @param PFUser $submitted_by
-     * @param Tracker_Artifact $artifact
      * @return mixed
      */
     public function getFieldData(
         Tracker_FormElement_Field $field,
         SimpleXMLElement $field_change,
         PFUser $submitted_by,
-        Tracker_Artifact $artifact
+        Artifact $artifact
     );
 }

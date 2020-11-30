@@ -29,17 +29,17 @@ require_once('lib/PageList.php');
  */
 class WikiPlugin_RandomPage extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("RandomPage");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Displays a list of randomly chosen pages or redirects to a random page.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -48,20 +48,20 @@ class WikiPlugin_RandomPage extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array('numpages'     => 20,     // was pages
+            ['numpages'     => 20,     // was pages
                    'pages'        => false, // deprecated
                    'redirect'     => false,
                    'hidename'     => false, // only for numpages=1
                    'exclude'      => $this->default_exclude(),
-            'info'         => '')
+            'info'         => '']
         );
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         extract($args);
@@ -72,8 +72,8 @@ class WikiPlugin_RandomPage extends WikiPlugin
             $pages = false;
         // fix new pages handling in arg preprozessor.
         } elseif (is_array($pages)) {
-            $numpages = (int)$pages[0];
-            if ($numpages > 0 and !$dbi->isWikiPage($numpages)) {
+            $numpages = (int) $pages[0];
+            if ($numpages > 0 and ! $dbi->isWikiPage($numpages)) {
                 $pages = false;
             } else {
                 $numpages = 1;
@@ -82,7 +82,6 @@ class WikiPlugin_RandomPage extends WikiPlugin
 
         $allpages = $dbi->getAllPages(false, $sortby, $limit, $exclude);
         $pagearray = $allpages->asArray();
-        better_srand(); // Start with a good seed.
 
         if (($numpages == 1) && $pagearray) {
             $page = $pagearray[array_rand($pagearray)];
@@ -114,7 +113,7 @@ class WikiPlugin_RandomPage extends WikiPlugin
         return $pagelist;
     }
 
-    function default_exclude()
+    public function default_exclude()
     {
         // Some useful default pages to exclude.
         $default_exclude = 'RandomPage,HomePage,AllPages,RecentChanges,RecentEdits,FullRecentChanges';
@@ -123,7 +122,7 @@ class WikiPlugin_RandomPage extends WikiPlugin
         }
         return implode(",", $exclude);
     }
-};
+}
 
 
 // $Log: RandomPage.php,v $

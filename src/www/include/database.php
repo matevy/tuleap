@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright 1999-2000 (c) The SourceForge Crew
  *
  * This file is a part of Tuleap.
@@ -18,27 +18,28 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
-if (!defined('CODENDI_DB_NULL')) {
+if (! defined('CODENDI_DB_NULL')) {
     define('CODENDI_DB_NULL', 0);
 }
-if (!defined('CODENDI_DB_NOT_NULL')) {
+if (! defined('CODENDI_DB_NOT_NULL')) {
     define('CODENDI_DB_NOT_NULL', 1);
 }
 
 /**
  * @deprecated
+ * @psalm-taint-sink sql $sql
  */
-function db_query($sql, $print = 0)
+function db_query($sql)
 {
-    if ($print) {
-        print "<br>Query is: $sql<br>";
-    }
     /** @psalm-suppress DeprecatedFunction */
-    return db_query_params($sql, array());
+    return db_query_params($sql, []);
 }
 
 /**
  * @deprecated
+ *
+ * @psalm-taint-sink sql $sql
+ * @psalm-taint-sink sql $params
  */
 function db_query_params($sql, $params)
 {
@@ -115,7 +116,7 @@ function db_fetch_array($qhandle = 0)
         if ($GLOBALS['db_qhandle']) {
             return CodendiDataAccess::instance()->fetchArray($GLOBALS['db_qhandle']);
         } else {
-            return (array());
+            return ([]);
         }
     }
 }
@@ -191,7 +192,7 @@ function db_es($string, $qhandle = false)
  */
 function db_escape_int($val, $null = CODENDI_DB_NOT_NULL)
 {
-    $match = array();
+    $match = [];
     if ($null === CODENDI_DB_NULL && $val === '') {
         return 'NULL';
     }

@@ -19,22 +19,31 @@
  */
 
 use Tuleap\AgileDashboard\AdminController;
+use Tuleap\AgileDashboard\Artifact\PlannedArtifactDao;
 use Tuleap\AgileDashboard\BaseController;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AdministrationCrumbBuilder;
 use Tuleap\AgileDashboard\BreadCrumbDropdown\AgileDashboardCrumbBuilder;
 use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
+use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
+use Tuleap\AgileDashboard\ExplicitBacklog\UnplannedArtifactsAdder;
+use Tuleap\AgileDashboard\ExplicitBacklog\XMLImporter;
 use Tuleap\AgileDashboard\FormElement\Burnup\CountElementsModeChecker;
 use Tuleap\AgileDashboard\FormElement\BurnupCacheGenerator;
 use Tuleap\AgileDashboard\FormElement\FormElementController;
 use Tuleap\AgileDashboard\Kanban\BreadCrumbBuilder;
 use Tuleap\AgileDashboard\Kanban\RecentlyVisited\RecentlyVisitedKanbanDao;
 use Tuleap\AgileDashboard\Kanban\ShowKanbanController;
+use Tuleap\AgileDashboard\Milestone\Backlog\TopBacklogElementsToAddChecker;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
 use Tuleap\AgileDashboard\PermissionsPerGroup\AgileDashboardJSONPermissionsRetriever;
+use Tuleap\AgileDashboard\Planning\Admin\PlanningEditionPresenterBuilder;
+use Tuleap\AgileDashboard\Planning\Admin\UpdateRequestValidator;
 use Tuleap\AgileDashboard\Planning\PlanningUpdater;
+use Tuleap\AgileDashboard\Planning\RootPlanning\UpdateIsAllowedChecker;
 use Tuleap\AgileDashboard\Planning\ScrumPlanningFilter;
 use Tuleap\AgileDashboard\Scrum\ScrumPresenterBuilder;
 use Tuleap\DB\DBTransactionExecutor;
+use Tuleap\Project\XML\Import\ExternalFieldsExtractor;
 use Tuleap\Tracker\Semantic\Timeframe\TimeframeChecker;
 
 /**
@@ -60,7 +69,7 @@ class AgileDashboardRouter
     private $plugin;
 
     /**
-     * @param Service
+     * @var Service|null
      */
     private $service;
 
@@ -100,9 +109,6 @@ class AgileDashboardRouter
 
     /** @var PlanningPermissionsManager */
     private $planning_permissions_manager;
-
-    /** @var AgileDashboard_HierarchyChecker */
-    private $hierarchy_checker;
 
     /**
      * @var ScrumForMonoMilestoneChecker
@@ -155,6 +161,22 @@ class AgileDashboardRouter
      * @var PlanningUpdater
      */
     private $planning_updater;
+    /**
+     * @var AgileDashboard_XMLExporter
+     */
+    private $agile_dashboard_exporter;
+    /**
+     * @var UpdateIsAllowedChecker
+     */
+    private $root_planning_update_checker;
+    /**
+     * @var PlanningEditionPresenterBuilder
+     */
+    private $planning_edition_presenter_builder;
+    /**
+     * @var UpdateRequestValidator
+     */
+    private $update_request_validator;
 
     public function __construct(
         Plugin $plugin,
@@ -179,31 +201,39 @@ class AgileDashboardRouter
         ScrumPresenterBuilder $scrum_presenter_builder,
         EventManager $event_manager,
         PlanningUpdater $planning_updater,
-        Planning_RequestValidator $planning_request_validator
+        Planning_RequestValidator $planning_request_validator,
+        AgileDashboard_XMLExporter $agile_dashboard_exporter,
+        UpdateIsAllowedChecker $root_planning_update_checker,
+        PlanningEditionPresenterBuilder $planning_edition_presenter_builder,
+        UpdateRequestValidator $update_request_validator
     ) {
-        $this->plugin                       = $plugin;
-        $this->milestone_factory            = $milestone_factory;
-        $this->planning_factory             = $planning_factory;
-        $this->milestone_controller_factory = $milestone_controller_factory;
-        $this->project_manager              = $project_manager;
-        $this->xml_exporter                 = $xml_exporter;
-        $this->kanban_manager               = $kanban_manager;
-        $this->config_manager               = $config_manager;
-        $this->kanban_factory               = $kanban_factory;
-        $this->planning_permissions_manager = $planning_permissions_manager;
-        $this->scrum_mono_milestone_checker = $scrum_mono_milestone_checker;
-        $this->planning_filter              = $planning_filter;
-        $this->permissions_retriever        = $permissions_retriever;
-        $this->service_crumb_builder        = $service_crumb_builder;
-        $this->admin_crumb_builder          = $admin_crumb_builder;
-        $this->timeframe_checker            = $timeframe_checker;
-        $this->count_elements_mode_checker  = $count_elements_mode_checker;
-        $this->transaction_executor         = $transaction_executor;
-        $this->explicit_backlog_dao         = $explicit_backlog_dao;
-        $this->scrum_presenter_builder      = $scrum_presenter_builder;
-        $this->event_manager                = $event_manager;
-        $this->planning_updater             = $planning_updater;
-        $this->planning_request_validator   = $planning_request_validator;
+        $this->plugin                             = $plugin;
+        $this->milestone_factory                  = $milestone_factory;
+        $this->planning_factory                   = $planning_factory;
+        $this->milestone_controller_factory       = $milestone_controller_factory;
+        $this->project_manager                    = $project_manager;
+        $this->xml_exporter                       = $xml_exporter;
+        $this->kanban_manager                     = $kanban_manager;
+        $this->config_manager                     = $config_manager;
+        $this->kanban_factory                     = $kanban_factory;
+        $this->planning_permissions_manager       = $planning_permissions_manager;
+        $this->scrum_mono_milestone_checker       = $scrum_mono_milestone_checker;
+        $this->planning_filter                    = $planning_filter;
+        $this->permissions_retriever              = $permissions_retriever;
+        $this->service_crumb_builder              = $service_crumb_builder;
+        $this->admin_crumb_builder                = $admin_crumb_builder;
+        $this->timeframe_checker                  = $timeframe_checker;
+        $this->count_elements_mode_checker        = $count_elements_mode_checker;
+        $this->transaction_executor               = $transaction_executor;
+        $this->explicit_backlog_dao               = $explicit_backlog_dao;
+        $this->scrum_presenter_builder            = $scrum_presenter_builder;
+        $this->event_manager                      = $event_manager;
+        $this->planning_updater                   = $planning_updater;
+        $this->planning_request_validator         = $planning_request_validator;
+        $this->agile_dashboard_exporter           = $agile_dashboard_exporter;
+        $this->root_planning_update_checker       = $root_planning_update_checker;
+        $this->planning_edition_presenter_builder = $planning_edition_presenter_builder;
+        $this->update_request_validator           = $update_request_validator;
     }
 
     /**
@@ -213,16 +243,32 @@ class AgileDashboardRouter
      *   - Use a 'resource' parameter to deduce the controller (e.g. someurl/?resource=planning&id=2 )
      *   - Pass $request to action methods
      *
-     * @param Codendi_Request $request
      */
     public function route(Codendi_Request $request)
     {
         $planning_controller            = $this->buildPlanningController($request);
+        $xml_rng_validator              = new XML_RNGValidator();
+        $external_field_extractor       = new ExternalFieldsExtractor($this->event_manager);
         $agile_dashboard_xml_controller = new AgileDashboard_XMLController(
             $request,
             $this->planning_factory,
-            $this->milestone_factory,
-            $this->plugin->getThemePath()
+            $xml_rng_validator,
+            $this->agile_dashboard_exporter,
+            new AgileDashboard_XMLImporter(),
+            $this->planning_request_validator,
+            new XMLImporter(
+                new ExplicitBacklogDao(),
+                new TopBacklogElementsToAddChecker(
+                    PlanningFactory::build(),
+                    Tracker_ArtifactFactory::instance()
+                ),
+                new UnplannedArtifactsAdder(
+                    new ExplicitBacklogDao(),
+                    new ArtifactsInExplicitBacklogDao(),
+                    new PlannedArtifactDao()
+                )
+            ),
+            $external_field_extractor
         );
 
         switch ($request->get('action')) {
@@ -245,7 +291,7 @@ class AgileDashboardRouter
                 $this->executeAction($planning_controller, 'create');
                 break;
             case 'edit':
-                $this->renderAction($planning_controller, 'edit', $request);
+                $this->renderAction($planning_controller, 'edit', $request, [], ['body_class' => ['agiledashboard-body']]);
                 break;
             case 'update':
                 $this->executeAction($planning_controller, 'update');
@@ -257,14 +303,14 @@ class AgileDashboardRouter
                 if ($this->userIsAdmin($request)) {
                     $pane = $request->get('pane');
                     if ($pane === self::PANE_KANBAN) {
-                        $this->renderAction($this->buildController($request), 'adminKanban', $request);
+                        $this->renderAction($this->buildController($request), 'adminKanban', $request, [], ['body_class' => ['agiledashboard-body']]);
                     } elseif (\ForgeConfig::get('use_burnup_count_elements') && $pane === self::PANE_CHARTS) {
-                        $this->renderAction($this->buildController($request), 'adminCharts', $request);
+                        $this->renderAction($this->buildController($request), 'adminCharts', $request, [], ['body_class' => ['agiledashboard-body']]);
                     } else {
                         $this->renderAction($this->buildController($request), 'adminScrum', $request);
                     }
                 } else {
-                    $GLOBALS['Response']->redirect(AGILEDASHBOARD_BASE_URL .'/?group_id='. urlencode($request->get('group_id')));
+                    $GLOBALS['Response']->redirect(AGILEDASHBOARD_BASE_URL . '/?group_id=' . urlencode($request->get('group_id')));
                 }
                 break;
             case 'export':
@@ -274,7 +320,14 @@ class AgileDashboardRouter
                 if (! IS_SCRIPT) {
                     $this->executeAction($agile_dashboard_xml_controller, 'importOnlyAgileDashboard');
                 } else {
-                    $this->executeAction($agile_dashboard_xml_controller, 'importProject');
+                    $this->executeAction(
+                        $agile_dashboard_xml_controller,
+                        'importProject',
+                        [
+                            $request->get('artifact_id_mapping'),
+                            $request->get('logger')
+                        ]
+                    );
                 }
                 break;
             case 'solve-inconsistencies':
@@ -288,10 +341,10 @@ class AgileDashboardRouter
                 $this->executeAction($this->buildController($request), 'createKanban');
                 break;
             case 'showKanban':
-                $header_options = array(
-                    'body_class'                 => array('agiledashboard_kanban'),
+                $header_options = [
+                    'body_class'                 => ['agiledashboard_kanban', 'agiledashboard-body'],
                     Layout::INCLUDE_FAT_COMBINED => false,
-                );
+                ];
 
                 $tracker_factory = TrackerFactory::instance();
                 $controller = new ShowKanbanController(
@@ -303,7 +356,7 @@ class AgileDashboardRouter
                     new BreadCrumbBuilder($tracker_factory, $this->kanban_factory),
                     new RecentlyVisitedKanbanDao()
                 );
-                $this->renderAction($controller, 'showKanban', $request, array(), $header_options);
+                $this->renderAction($controller, 'showKanban', $request, [], $header_options);
                 break;
             case 'burnup-cache-generate':
                 $this->buildFormElementController()->forceBurnupCacheGeneration($request);
@@ -311,12 +364,12 @@ class AgileDashboardRouter
             case 'permission-per-group':
                 if (! $request->getCurrentUser()->isAdmin($request->getProject()->getID())) {
                     $GLOBALS['Response']->send400JSONErrors(
-                        array(
+                        [
                             'error' => dgettext(
                                 'tuleap-agiledashboard',
                                 "You don't have permissions to see user groups."
                             )
-                        )
+                        ]
                     );
                 }
 
@@ -324,10 +377,10 @@ class AgileDashboardRouter
                 break;
             case 'index':
             default:
-                $header_options = array(
-                    'body_class' => array('agiledashboard_homepage')
-                );
-                $this->renderAction($planning_controller, 'index', $request, array(), $header_options);
+                $header_options = [
+                    'body_class' => ['agiledashboard_homepage']
+                ];
+                $this->renderAction($planning_controller, 'index', $request, [], $header_options);
         }
     }
 
@@ -343,19 +396,19 @@ class AgileDashboardRouter
      */
     private function getHeaderTitle(Codendi_Request $request, $action_name)
     {
-        $header_title = array(
-            'index'               => $GLOBALS['Language']->getText('plugin_agiledashboard', 'service_lbl_key'),
-            'exportToFile'        => $GLOBALS['Language']->getText('plugin_agiledashboard', 'service_lbl_key'),
-            'adminScrum'          => $GLOBALS['Language']->getText('plugin_agiledashboard', 'AdminScrum'),
-            'adminKanban'         => $GLOBALS['Language']->getText('plugin_agiledashboard', 'AdminKanban'),
+        $header_title = [
+            'index'               => dgettext('tuleap-agiledashboard', 'Agile Dashboard'),
+            'exportToFile'        => dgettext('tuleap-agiledashboard', 'Agile Dashboard'),
+            'adminScrum'          => dgettext('tuleap-agiledashboard', 'Scrum Administration of Agile Dashboard'),
+            'adminKanban'         => dgettext('tuleap-agiledashboard', 'Kanban Administration of Agile Dashboard'),
             'adminCharts'         => dgettext("tuleap-agiledashboard", "Charts configuration"),
-            'new_'                => $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_new'),
-            'importForm'          => $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_new'),
-            'edit'                => $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_edit'),
-            'show'                => $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_show'),
-            'showTop'             => $GLOBALS['Language']->getText('plugin_agiledashboard', 'planning_show'),
-            'showKanban'          => $GLOBALS['Language']->getText('plugin_agiledashboard', 'kanban_show')
-        );
+            'new_'                => dgettext('tuleap-agiledashboard', 'New Planning'),
+            'importForm'          => dgettext('tuleap-agiledashboard', 'New Planning'),
+            'edit'                => dgettext('tuleap-agiledashboard', 'Edit'),
+            'show'                => dgettext('tuleap-agiledashboard', 'View Planning'),
+            'showTop'             => dgettext('tuleap-agiledashboard', 'View Planning'),
+            'showKanban'          => dgettext('tuleap-agiledashboard', 'Kanban')
+        ];
 
         $title = $header_title[$action_name];
 
@@ -369,7 +422,6 @@ class AgileDashboardRouter
     /**
      * Retrieves the Agile Dashboard Service instance matching the request group id.
      *
-     * @param Codendi_Request $request
      *
      * @return Service
      */
@@ -378,6 +430,7 @@ class AgileDashboardRouter
         if ($this->service == null) {
             $project = $request->getProject();
             $this->service = $project->getService('plugin_agiledashboard');
+            assert($this->service instanceof Service);
         }
         return $this->service;
     }
@@ -403,7 +456,7 @@ class AgileDashboardRouter
                 $GLOBALS['Language']->getText(
                     'project_service',
                     'service_not_used',
-                    $GLOBALS['Language']->getText('plugin_agiledashboard', 'service_lbl_key')
+                    dgettext('tuleap-agiledashboard', 'Agile Dashboard')
                 )
             );
         }
@@ -419,7 +472,6 @@ class AgileDashboardRouter
     /**
      * Renders the bottom footer for all Agile Dashboard pages.
      *
-     * @param Codendi_Request $request
      */
     private function displayFooter(Codendi_Request $request)
     {
@@ -449,7 +501,10 @@ class AgileDashboardRouter
             $this->explicit_backlog_dao,
             $this->planning_updater,
             $this->event_manager,
-            $this->planning_request_validator
+            $this->planning_request_validator,
+            $this->root_planning_update_checker,
+            $this->planning_edition_presenter_builder,
+            $this->update_request_validator
         );
     }
 
@@ -493,11 +548,11 @@ class AgileDashboardRouter
         MVC2_Controller $controller,
         $action_name,
         Codendi_Request $request,
-        array           $args = array(),
-        array           $header_options = array()
+        array $args = [],
+        array $header_options = []
     ) {
         $content = $this->executeAction($controller, $action_name, $args);
-        $header_options = array_merge($header_options, $controller->getHeaderOptions());
+        $header_options = array_merge_recursive($header_options, $controller->getHeaderOptions());
 
         $this->displayHeader($controller, $request, $this->getHeaderTitle($request, $action_name), $header_options);
         echo $content;
@@ -515,10 +570,9 @@ class AgileDashboardRouter
     protected function executeAction(
         MVC2_Controller $controller,
         $action_name,
-        array           $args = array()
+        array $args = []
     ) {
-
-        return call_user_func_array(array($controller, $action_name), $args);
+        return call_user_func_array([$controller, $action_name], $args);
     }
 
     /**
@@ -527,7 +581,6 @@ class AgileDashboardRouter
      * TODO:
      *   - merge into AgileDashboardRouter::route()
      *
-     * @param Codendi_Request $request
      */
     public function routeShowPlanning(Codendi_Request $request)
     {
@@ -543,8 +596,8 @@ class AgileDashboardRouter
                 /* no break */
             default:
                 $controller = $this->milestone_controller_factory->getMilestoneController($request);
-                $action_arguments = array();
-                $this->renderAction($controller, 'show', $request, $action_arguments, array('body_class' => array('agiledashboard_planning')));
+                $action_arguments = [];
+                $this->renderAction($controller, 'show', $request, $action_arguments, ['body_class' => ['agiledashboard_planning']]);
         }
     }
 
@@ -562,23 +615,23 @@ class AgileDashboardRouter
                 $GLOBALS['Language']->getText(
                     'project_service',
                     'service_not_used',
-                    $GLOBALS['Language']->getText('plugin_agiledashboard', 'service_lbl_key')
+                    dgettext('tuleap-agiledashboard', 'Agile Dashboard')
                 )
             );
         }
 
         $controller     = $this->milestone_controller_factory->getVirtualTopMilestoneController($request);
         $header_options = array_merge(
-            array('body_class' => array('agiledashboard_planning')),
+            ['body_class' => ['agiledashboard_planning']],
             $controller->getHeaderOptions()
         );
         $breadcrumbs = $controller->getBreadcrumbs();
 
-        $top_planning_rendered = $this->executeAction($controller, 'showTop', array());
+        $top_planning_rendered = $this->executeAction($controller, 'showTop', []);
         $service->displayHeader(
             sprintf(
                 dgettext('tuleap-agiledashboard', '%s top backlog'),
-                $service->getProject()->getUnconvertedPublicName()
+                $service->getProject()->getPublicName()
             ),
             $breadcrumbs,
             [],

@@ -84,10 +84,10 @@ class MediawikiManager
     private function getDefaultReadAccessControl(Project $project)
     {
         if ($project->isPublic()) {
-            return array(ProjectUGroup::REGISTERED);
+            return [ProjectUGroup::REGISTERED];
         }
 
-        return array(ProjectUGroup::PROJECT_MEMBERS);
+        return [ProjectUGroup::PROJECT_MEMBERS];
     }
 
     /**
@@ -117,7 +117,7 @@ class MediawikiManager
      */
     private function getDefaultWriteAccessControl()
     {
-        return array(ProjectUGroup::PROJECT_MEMBERS);
+        return [ProjectUGroup::PROJECT_MEMBERS];
     }
 
     /**
@@ -126,7 +126,7 @@ class MediawikiManager
     private function getAccessControl(Project $project, $access)
     {
         $result     = $this->dao->getAccessControl($project->getID(), $access);
-        $ugroup_ids = array();
+        $ugroup_ids = [];
 
         foreach ($result as $row) {
             $ugroup_ids[] = $row['ugroup_id'];
@@ -138,7 +138,7 @@ class MediawikiManager
     private function getAccessControlForProjectContainingUGroup(Project $project, $access, ProjectUGroup $ugroup)
     {
         $result     = $this->dao->getAccessControlForProjectContainingUGroup($project->getID(), $access, $ugroup->getId());
-        $ugroup_ids = array();
+        $ugroup_ids = [];
 
         foreach ($result as $row) {
             $ugroup_ids[] = $row['ugroup_id'];
@@ -199,7 +199,7 @@ class MediawikiManager
 
     public function instanceUsesProjectID(Project $project)
     {
-        return is_dir(forge_get_config('projects_path', 'mediawiki') . "/". $project->getID());
+        return is_dir(forge_get_config('projects_path', 'mediawiki') . "/" . $project->getID());
     }
 
     private function restrictedUserCanRead(PFUser $user, Project $project)
@@ -227,8 +227,6 @@ class MediawikiManager
         );
     }
     /**
-     * @param PFUser $user
-     * @param Project $project
      * @return bool true if user can read
      */
     public function userCanRead(PFUser $user, Project $project)
@@ -243,15 +241,13 @@ class MediawikiManager
 
         $common_ugroups_ids = array_intersect(
             $this->getReadAccessControl($project),
-            $user->getUgroups($project->getID(), array())
+            $user->getUgroups($project->getID(), [])
         );
 
-        return !empty($common_ugroups_ids);
+        return ! empty($common_ugroups_ids);
     }
 
     /**
-     * @param PFUser $user
-     * @param Project $project
      * @return bool true if user can write
      */
     public function userCanWrite(PFUser $user, Project $project)
@@ -266,10 +262,10 @@ class MediawikiManager
 
         $common_ugroups_ids = array_intersect(
             $this->getWriteAccessControl($project),
-            $user->getUgroups($project->getID(), array())
+            $user->getUgroups($project->getID(), [])
         );
 
-        return !empty($common_ugroups_ids);
+        return ! empty($common_ugroups_ids);
     }
 
     private function userIsRestrictedAndNotProjectMember(PFUser $user, Project $project)

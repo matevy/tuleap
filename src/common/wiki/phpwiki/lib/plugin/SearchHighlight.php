@@ -33,17 +33,17 @@ require_once("lib/PageList.php");
  */
 class WikiPlugin_SearchHighlight extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("SearchHighlight");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Hilight referred search terms.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -52,15 +52,15 @@ class WikiPlugin_SearchHighlight extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('s'        => false,
+        return ['s'        => false,
                      'case_exact' => false,  //not yet supported
                      'regex'    => false,    //not yet supported
-                     );
+                     ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         if (empty($args['s'])) {
@@ -71,38 +71,38 @@ class WikiPlugin_SearchHighlight extends WikiPlugin
 
         $query = new TextSearchQuery($s, $case_exact, $regex);
         //$pages = $dbi->fullSearch($query);
-        $lines = array();
+        $lines = [];
         $hilight_re = $query->getHighlightRegexp();
         $page = $request->getPage();
         return $this->showhits($page, $hilight_re);
     }
 
-    function showhits($page, $hilight_re)
+    public function showhits($page, $hilight_re)
     {
         $current = $page->getCurrentRevision();
         $matches = preg_grep("/$hilight_re/i", $current->getContent());
-        $html = array();
+        $html = [];
         foreach ($matches as $line) {
             $line = $this->highlight_line($line, $hilight_re);
             $html[] = HTML::dd(HTML::small(
-                array('class' => 'search-context'),
+                ['class' => 'search-context'],
                 $line
             ));
         }
         return $html;
     }
 
-    function highlight_line($line, $hilight_re)
+    public function highlight_line($line, $hilight_re)
     {
         while (preg_match("/^(.*?)($hilight_re)/i", $line, $m)) {
             $line = substr($line, strlen($m[0]));
             $html[] = $m[1];    // prematch
-            $html[] = HTML::strong(array('class' => 'search-term'), $m[2]); // match
+            $html[] = HTML::strong(['class' => 'search-term'], $m[2]); // match
         }
         $html[] = $line;        // postmatch
         return $html;
     }
-};
+}
 
 // $Log: SearchHighlight.php,v $
 // Revision 1.1  2004/09/26 14:58:36  rurban

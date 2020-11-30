@@ -19,19 +19,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_NotificationsManager.class.php');
-require_once('Docman_Path.class.php');
-
 class Docman_NotificationsManager_Add extends Docman_NotificationsManager
 {
 
     public const MESSAGE_ADDED = 'added'; // X has been added
 
-    function _getListeningUsersItemId($params)
+    public function _getListeningUsersItemId($params)
     {
         return $params['parent']->getId();
     }
-    function _buildMessage($event, $params, $user)
+    public function _buildMessage($event, $params, $user)
     {
         switch ($event) {
             case 'plugin_docman_event_add':
@@ -51,7 +48,7 @@ class Docman_NotificationsManager_Add extends Docman_NotificationsManager
                 break;
         }
     }
-    function _getMessageForUser($user, $message_type, $params)
+    public function _getMessageForUser($user, $message_type, $params)
     {
         $msg = '';
         switch ($message_type) {
@@ -62,9 +59,9 @@ class Docman_NotificationsManager_Add extends Docman_NotificationsManager
                     dgettext('tuleap-docman', "%s has been modified by %s."),
                     $params['path']->get($params['parent']),
                     $user->getRealName()
-                ) ."\n";
+                ) . "\n";
 
-                $msg .=$this->getMessageLink($message_type, $params) . "\n\n";
+                $msg .= $this->getMessageLink($message_type, $params) . "\n\n";
                 $msg .= dgettext('tuleap-docman', "Added:");
                 $msg .= "\n" . $params['item']->getTitle();
 

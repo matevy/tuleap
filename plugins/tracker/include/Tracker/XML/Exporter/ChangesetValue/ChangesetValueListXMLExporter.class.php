@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,17 +18,19 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\XML\Exporter\FieldChange\FieldChangeListBuilder;
+
 class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter extends Tracker_XML_Exporter_ChangesetValue_ChangesetValueXMLExporter
 {
-
     /**
-     * @var UserXMLExporter
+     * @var FieldChangeListBuilder
      */
-    private $user_xml_exporter;
+    private $field_change_list_builder;
 
-    public function __construct(UserXMLExporter $user_xml_exporter)
+    public function __construct(FieldChangeListBuilder $field_change_list_builder)
     {
-        $this->user_xml_exporter = $user_xml_exporter;
+        $this->field_change_list_builder = $field_change_list_builder;
     }
 
     protected function getFieldChangeType()
@@ -39,40 +41,17 @@ class Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter extends 
     public function export(
         SimpleXMLElement $artifact_xml,
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_Artifact_ChangesetValue $changeset_value
     ) {
-        $field_change = $this->createFieldChangeNodeInChangesetNode(
-            $changeset_value,
-            $changeset_xml
-        );
-
         $bind_type = $changeset_value->getField()->getBind()->getType();
-        $field_change->addAttribute('bind', $bind_type);
+        $values    = $changeset_value->getValue();
 
-        $values = $changeset_value->getValue();
-
-        if (empty($values)) {
-            $field_change->addChild('value');
-        } elseif ($bind_type === Tracker_FormElement_Field_List_Bind_Users::TYPE) {
-            foreach ($values as $value) {
-                $this->user_xml_exporter->exportUserByUserId($value, $field_change, 'value');
-            }
-        } else {
-            array_walk(
-                $values,
-                array($this, 'appendValueToFieldChangeNode'),
-                $field_change
-            );
-        }
-    }
-
-    private function appendValueToFieldChangeNode(
-        $value,
-        $index,
-        SimpleXMLElement $field_xml
-    ) {
-        $value_xml = $field_xml->addChild('value', $value);
-        $value_xml->addAttribute('format', 'id');
+        $this->field_change_list_builder->build(
+            $changeset_xml,
+            $changeset_value->getField()->getName(),
+            $bind_type,
+            $values
+        );
     }
 }

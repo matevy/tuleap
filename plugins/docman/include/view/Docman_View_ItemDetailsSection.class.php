@@ -24,16 +24,16 @@
 /* abstract */class Docman_View_ItemDetailsSection
 {
 
-    var $id;
-    var $title;
-    var $item;
+    public $id;
+    public $title;
+    public $item;
     /**
      * @var string
      */
     protected $url;
-    var $hp;
+    public $hp;
 
-    function __construct($item, string $url, $id, $title)
+    public function __construct($item, string $url, $id, $title)
     {
         $this->id     = $id;
         $this->title  = $title;
@@ -42,15 +42,15 @@
         $this->hp     = Codendi_HTMLPurifier::instance();
     }
 
-    function getId()
+    public function getId()
     {
         return $this->id;
     }
-    function getTitle()
+    public function getTitle()
     {
         return $this->title;
     }
-    function getContent($params = [])
+    public function getContent($params = [])
     {
         return '';
     }

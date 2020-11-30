@@ -55,8 +55,6 @@ class TroveCatListController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
      * @param array $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -127,10 +125,10 @@ class TroveCatListController implements DispatchableWithRequest
     {
         $current_trove_category = $this->formatTroveCategoriesFromRequest($request);
 
-        $last_parent             = array();
-        $already_seen            = array();
-        $trove_category_children = array();
-        $last_parent_ids         = array();
+        $last_parent             = [];
+        $already_seen            = [];
+        $trove_category_children = [];
+        $last_parent_ids         = [];
         $this->trove_cat_retriever->retrieveChildren(
             $current_trove_category['trove_cat_id'],
             $last_parent,
@@ -221,10 +219,10 @@ class TroveCatListController implements DispatchableWithRequest
             $request->get('display-at-project-creation')
         );
 
-        $trove_cat_list  = array();
-        $already_seen    = array();
-        $last_parent     = array();
-        $last_parent_ids = array();
+        $trove_cat_list  = [];
+        $already_seen    = [];
+        $last_parent     = [];
+        $last_parent_ids = [];
         $this->trove_cat_retriever->retrieveFathers(
             $request->get('parent'),
             $last_parent,
@@ -233,12 +231,12 @@ class TroveCatListController implements DispatchableWithRequest
             $last_parent_ids
         );
 
-        $ids = array(0);
+        $ids = [0];
         if (isset($trove_cat_list['hierarchy_id'])) {
             $ids = explode(' :: ', $trove_cat_list['hierarchy_id']);
         }
 
-        $trove_categories = array(
+        $trove_categories = [
             'shortname'    => $request->get('shortname'),
             'fullname'     => $request->get('fullname'),
             'description'  => $request->get('description'),
@@ -246,12 +244,12 @@ class TroveCatListController implements DispatchableWithRequest
             'display'      => $display,
             'mandatory'    => $this->isMandatory($display, $request->get('is-mandatory')),
             'trove_cat_id' => $request->get('id'),
-            'fullpath'     => (isset($trove_cat_list['hierarchy'])) ? $trove_cat_list['hierarchy'] .  " :: " .$request->get('fullname') : $request->get('fullname'),
+            'fullpath'     => (isset($trove_cat_list['hierarchy'])) ? $trove_cat_list['hierarchy'] .  " :: " . $request->get('fullname') : $request->get('fullname'),
             'fullpath_ids' => (isset($trove_cat_list['hierarchy_id'])) ? $trove_cat_list['hierarchy_id'] . " :: "  . $trove_cat_id : $trove_cat_id,
             'root_parent'  => (int) $ids[0],
             'nb_max_values' => $nb_max_values,
             'is_project_flag' => $is_project_flag
-        );
+        ];
 
         return $trove_categories;
     }
@@ -259,10 +257,10 @@ class TroveCatListController implements DispatchableWithRequest
     private function delete(HTTPRequest $request)
     {
         $trove_cat_id            = $request->get('trove_cat_id');
-        $last_parent             = array();
-        $already_seen            = array();
-        $trove_category_children = array();
-        $hierarchy_ids           = array();
+        $last_parent             = [];
+        $already_seen            = [];
+        $trove_category_children = [];
+        $hierarchy_ids           = [];
 
         $this->trove_cat_retriever->retrieveChildren(
             $trove_cat_id,
@@ -284,7 +282,6 @@ class TroveCatListController implements DispatchableWithRequest
     }
 
     /**
-     * @param HTTPRequest $request
      *
      * @return bool
      * @throws \Exception

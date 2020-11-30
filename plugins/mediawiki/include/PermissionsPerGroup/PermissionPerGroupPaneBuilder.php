@@ -153,14 +153,11 @@ class PermissionPerGroupPaneBuilder
         $formatted_group = $this->formatter->getFormattedUGroups($project, $permissions);
 
         $collection->addPermissions(
-            array('name' => $group_name, 'groups' => $formatted_group, 'url' => $this->getGlobalAdminLink($project))
+            ['name' => $group_name, 'groups' => $formatted_group, 'url' => $this->getGlobalAdminLink($project)]
         );
     }
 
     /**
-     * @param Project                      $project
-     * @param PermissionPerGroupCollection $collection
-     * @param ProjectUGroup                $selected_ugroup
      * @param                              $current_mapping
      * @param                              $mw_group_name
      */
@@ -179,16 +176,30 @@ class PermissionPerGroupPaneBuilder
             $this->formatUGroupPermissions(
                 $project,
                 $current_mapping[$mw_group_name],
-                $GLOBALS['Language']->getText('plugin_mediawiki', 'group_name_'.$mw_group_name),
+                $this->getGroupName($mw_group_name),
                 $collection
             );
         }
     }
 
+    private function getGroupName($mw_group_name): string
+    {
+        switch ($mw_group_name) {
+            case 'user':
+                return dgettext('tuleap-mediawiki', 'User');
+            case 'bot':
+                return dgettext('tuleap-mediawiki', 'Bot');
+            case 'sysop':
+                return dgettext('tuleap-mediawiki', 'Administrator / sysop');
+            case 'bureaucrat':
+                return dgettext('tuleap-mediawiki', 'Bureaucrat');
+            case 'anonymous':
+            default:
+                return dgettext('tuleap-mediawiki', 'Anonymous');
+        }
+    }
+
     /**
-     * @param Project                      $project
-     * @param PermissionPerGroupCollection $collection
-     * @param ProjectUGroup                $selected_ugroup
      * @param                              $current_mapping
      * @param                              $mw_group_name
      */
@@ -206,7 +217,7 @@ class PermissionPerGroupPaneBuilder
         $this->formatUGroupPermissions(
             $project,
             $current_mapping[$mw_group_name],
-            $GLOBALS['Language']->getText('plugin_mediawiki', 'group_name_'.$mw_group_name),
+            $this->getGroupName($mw_group_name),
             $collection
         );
     }

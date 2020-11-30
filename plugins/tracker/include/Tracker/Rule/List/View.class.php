@@ -28,7 +28,7 @@ class Tracker_Rule_List_View
      *
      * @var Tracker_Rule_List
      */
-    var $rule;
+    public $rule;
 
     /**
      *  Tracker_Rule_List_View() - constructor
@@ -40,7 +40,7 @@ class Tracker_Rule_List_View
             $this->rule = $rule;
     }
 
-    function display()
+    public function display()
     {
         echo $this->fetch();
     }
@@ -49,25 +49,25 @@ class Tracker_Rule_List_View
      * @return a representation of an artifact rule
      * #id@tracker_id source_field(source_value) => target_field(target_value_1, target_value_2)
      */
-    function fetch()
+    public function fetch()
     {
-        $output  = '#'. $this->rule->id;
-        $output .= '@'. $this->rule->tracker_id;
-        $output .= ' '. $this->rule->source_field;
-        $output .= '('. $this->rule->source_value .') =>';
-        $output .= ' '. $this->rule->target_field;
-        $output .= '('. $this->rule->target_value .')';
+        $output  = '#' . $this->rule->id;
+        $output .= '@' . $this->rule->tracker_id;
+        $output .= ' ' . $this->rule->source_field;
+        $output .= '(' . $this->rule->source_value . ') =>';
+        $output .= ' ' . $this->rule->target_field;
+        $output .= '(' . $this->rule->target_value . ')';
         return $output;
     }
 
-    function fetchJavascript()
+    public function fetchJavascript()
     {
-        $output  = '{id:'. (int)$this->rule->id .', ';
-        $output .= 'tracker_id:'. (int)$this->rule->tracker_id .', ';
-        $output .= 'source_field:'. (int)$this->rule->source_field .', ';
-        $output .= 'source_value:'. (int)$this->rule->source_value .', ';
-        $output .= 'target_field:'. (int)$this->rule->target_field .', ';
-        $output .= 'target_value:'. (int)$this->rule->target_value .'';
+        $output  = '{id:' . (int) $this->rule->id . ', ';
+        $output .= 'tracker_id:' . (int) $this->rule->tracker_id . ', ';
+        $output .= 'source_field:' . (int) $this->rule->source_field . ', ';
+        $output .= 'source_value:' . (int) $this->rule->source_value . ', ';
+        $output .= 'target_field:' . (int) $this->rule->target_field . ', ';
+        $output .= 'target_value:' . (int) $this->rule->target_value . '';
         $output .= '}';
         return $output;
     }

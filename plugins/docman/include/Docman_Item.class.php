@@ -49,10 +49,10 @@ class Docman_Item
     public $obsolescenceDate = null;
     public $isObsolete       = null;
 
-    protected $_actions      = array();
-    protected $_metadata     = array();
-    public $pathId           = array();
-    public $pathTitle        = array();
+    protected $_actions      = [];
+    protected $_metadata     = [];
+    public $pathId           = [];
+    public $pathTitle        = [];
 
 
 
@@ -75,8 +75,8 @@ class Docman_Item
 
     public function setTitle($title)
     {
-        if (strpos($title, '_lbl_key') !== false) {
-            $this->title = $GLOBALS['Language']->getText('plugin_docman', $title);
+        if ('roottitle_lbl_key' === $title) {
+            $this->title = dgettext('tuleap-docman', 'Project Documentation');
             $this->titlekey = $title;
         } else {
             $this->title = $title;
@@ -211,7 +211,7 @@ class Docman_Item
 
     public function getType()
     {
-        return $GLOBALS['Language']->getText('plugin_docman', 'doc_type_item');
+        return dgettext('tuleap-docman', 'Docman item');
     }
 
     public function initFromRow($row)
@@ -256,7 +256,7 @@ class Docman_Item
 
     public function toRow()
     {
-        $row = array();
+        $row = [];
         $row['item_id']     = $this->getId();
         $row['title']       = $this->getTitle(true);
         $row['description'] = $this->getDescription();
@@ -276,8 +276,10 @@ class Docman_Item
      * @template ItemVisitorReturnType
      * @psalm-param ItemVisitor<ItemVisitorReturnType> $visitor
      * @psalm-return ItemVisitorReturnType
+     *
+     * @psalm-taint-specialize
      */
-    public function accept(ItemVisitor $visitor, array $params = array())
+    public function accept(ItemVisitor $visitor, array $params = [])
     {
         return $visitor->visitItem($this, $params);
     }
@@ -332,7 +334,7 @@ class Docman_Item
 
             case 'status':
                 $status      = $this->getStatus();
-                $status_list = array();
+                $status_list = [];
                 if ($status !== null) {
                     $status_list[] = Docman_MetadataListOfValuesElementFactory::getStatusList($status);
                 }
@@ -420,10 +422,10 @@ class Docman_Item
 
     public function fireEvent($event, $user, $parent = null)
     {
-        $params = array('group_id' => $this->getGroupId(),
+        $params = ['group_id' => $this->getGroupId(),
                         'parent'   => $parent,
                         'item'     => $this,
-                        'user'     => $user);
+                        'user'     => $user];
         $this->getEventManager()->processEvent($event, $params);
     }
 

@@ -18,11 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Document\Tree;
 
 use CSRFSynchronizerToken;
+use DocmanPlugin;
+use Tuleap\date\DefaultRelativeDatesDisplayPreferenceRetriever;
+use Tuleap\Document\Config\FileDownloadLimits;
+use Tuleap\Document\Config\HistoryEnforcementSettings;
+use Tuleap\Project\ProjectPrivacyPresenter;
 
 class DocumentTreePresenter
 {
@@ -74,6 +79,43 @@ class DocumentTreePresenter
      * @var string
      */
     public $csrf_token;
+    /**
+     * @var int
+     */
+    public $max_archive_size;
+    /**
+     * @var int
+     */
+    public $warning_threshold;
+
+    /**
+     * @var bool
+     */
+    public $is_changelog_proposed_after_dnd;
+    /**
+     * @var string
+     */
+    public $relative_dates_display;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
+    public $project_url;
+    /**
+     * @var mixed
+     * @psalm-readonly
+     */
+    public $project_public_name;
+    /**
+     * @var false|string
+     * @psalm-readonly
+     */
+    public $privacy;
+    /**
+     * @var false|string
+     * @psalm-readonly
+     */
+    public $project_flags;
 
     public function __construct(
         \Project $project,
@@ -82,19 +124,33 @@ class DocumentTreePresenter
         bool $is_item_status_metadata_used,
         bool $is_obsolescence_date_metadata_used,
         bool $only_siteadmin_can_delete_option,
-        CSRFSynchronizerToken $csrf
+        CSRFSynchronizerToken $csrf,
+        FileDownloadLimits $file_download_limits,
+        HistoryEnforcementSettings $history_settings,
+        array $project_flags
     ) {
         $this->project_id                         = $project->getID();
         $this->project_name                       = $project->getUnixNameLowerCase();
+        $this->project_public_name                = $project->getPublicName();
+        $this->project_url                        = $project->getUrl();
         $this->user_is_admin                      = $user->isAdmin($project->getID());
         $this->user_can_create_wiki               = $project->usesWiki();
         $this->user_can_delete_item               = ! $only_siteadmin_can_delete_option || $user->isSuperUser();
-        $this->max_size_upload                    = \ForgeConfig::get(PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING);
-        $this->max_files_dragndrop                = \ForgeConfig::get(PLUGIN_DOCMAN_MAX_NB_FILE_UPLOADS_SETTING);
+        $this->max_size_upload                    = \ForgeConfig::get(DocmanPlugin::PLUGIN_DOCMAN_MAX_FILE_SIZE_SETTING);
+        $this->max_files_dragndrop                = \ForgeConfig::get(
+            DocmanPlugin::PLUGIN_DOCMAN_MAX_NB_FILE_UPLOADS_SETTING
+        );
         $this->embedded_are_allowed               = $embedded_are_allowed;
         $this->is_item_status_metadata_used       = $is_item_status_metadata_used;
         $this->is_obsolescence_date_metadata_used = $is_obsolescence_date_metadata_used;
         $this->csrf_token_name                    = $csrf->getTokenName();
         $this->csrf_token                         = $csrf->getToken();
+        $this->max_archive_size                   = $file_download_limits->getMaxArchiveSize();
+        $this->warning_threshold                  = $file_download_limits->getWarningThreshold();
+        $this->is_changelog_proposed_after_dnd    = $history_settings->isChangelogProposedAfterDragAndDrop();
+        $this->relative_dates_display             = $user->getPreference(\DateHelper::PREFERENCE_NAME) ?: DefaultRelativeDatesDisplayPreferenceRetriever::retrieveDefaultValue();
+
+        $this->privacy       = json_encode(ProjectPrivacyPresenter::fromProject($project), JSON_THROW_ON_ERROR);
+        $this->project_flags = json_encode($project_flags, JSON_THROW_ON_ERROR);
     }
 }

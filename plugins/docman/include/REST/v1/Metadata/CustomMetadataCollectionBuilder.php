@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
@@ -48,16 +48,14 @@ class CustomMetadataCollectionBuilder
         $metadata_representations = [];
 
         $metadata_list = $this->metadata_factory->getRealMetadataList();
-        /**
-         * @var Docman_Metadata $metadata
-         */
         foreach ($metadata_list as $metadata) {
+            \assert($metadata instanceof Docman_Metadata);
             $representation = new ProjectConfiguredMetadataRepresentation();
             $representation->build(
                 $metadata->getLabel(),
                 $metadata->getName(),
                 $metadata->getDescription(),
-                (int)$metadata->getType(),
+                (int) $metadata->getType(),
                 $metadata->isEmptyAllowed(),
                 $metadata->isMultipleValuesAllowed(),
                 $metadata->isUsed(),
@@ -71,19 +69,17 @@ class CustomMetadataCollectionBuilder
 
     private function getListOfPossibleValues(Docman_Metadata $metadata): ?array
     {
-        if ((int)$metadata->getType() !== PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
+        if ((int) $metadata->getType() !== PLUGIN_DOCMAN_METADATA_TYPE_LIST) {
             return null;
         }
 
-        $list_of_values = $this->list_of_value_builder->build((int)$metadata->getId(), false);
+        $list_of_values = $this->list_of_value_builder->build((int) $metadata->getId(), false);
 
         $possible_values_representation = [];
-        /**
-         * @var Docman_MetadataListOfValuesElement $value
-         */
         foreach ($list_of_values as $value) {
+            \assert($value instanceof Docman_MetadataListOfValuesElement);
             $representation = new DocmanMetadataListValueRepresentation();
-            $representation->build((int)$value->getId(), $value->getMetadataValue());
+            $representation->build((int) $value->getId(), $value->getMetadataValue());
 
             $possible_values_representation[] = $representation;
         }

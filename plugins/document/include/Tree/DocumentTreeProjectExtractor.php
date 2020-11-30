@@ -40,7 +40,7 @@ class DocumentTreeProjectExtractor
      *
      * @throws NotFoundException
      */
-    public function getProject(array $variables) : Project
+    public function getProject(array $variables): Project
     {
         $project = $this->project_manager->getProjectByUnixName($variables['project_name']);
         if (! $project) {
@@ -51,7 +51,7 @@ class DocumentTreeProjectExtractor
             throw new NotFoundException(
                 sprintf(
                     dgettext("tuleap-document", "Documents service is not activated in project %s"),
-                    $project->getUnconvertedPublicName()
+                    $project->getPublicName()
                 )
             );
         }

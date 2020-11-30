@@ -34,42 +34,41 @@
 class WikiPlugin_HtmlConverter extends WikiPlugin
 {
 
-    function getName()
+    public function getName()
     {
         return "HtmlConverter";
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Convert HTML markup into wiki markup. (Version 0.5)");
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array();
+        return [];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
-
         /* plugin not yet has arguments - save for later (copied from UpLoad)
         $args = $this->getArgs($argstr, $request);
         extract($args);
         */
 
-        $form = HTML::form(array('action' => $request->getPostURL(),
+        $form = HTML::form(['action' => $request->getPostURL(),
                                  'enctype' => 'multipart/form-data',
-                                 'method' => 'post'));
-        $contents = HTML::div(array('class' => 'wikiaction'));
-        $contents->pushContent(HTML::input(array('type' => 'hidden',
+                                 'method' => 'post']);
+        $contents = HTML::div(['class' => 'wikiaction']);
+        $contents->pushContent(HTML::input(['type' => 'hidden',
                                                  'name' => 'MAX_FILE_SIZE',
-                                                 'value' => MAX_UPLOAD_SIZE)));
-        $contents->pushContent(HTML::input(array('name' => 'userfile',
+                                                 'value' => MAX_UPLOAD_SIZE]));
+        $contents->pushContent(HTML::input(['name' => 'userfile',
                                                  'type' => 'file',
-                                                 'size' => '50')));
+                                                 'size' => '50']));
         $contents->pushContent(HTML::raw(" "));
-        $contents->pushContent(HTML::input(array('value' => _("Upload"),
-                                                 'type' => 'submit')));
+        $contents->pushContent(HTML::input(['value' => _("Upload"),
+                                                 'type' => 'submit']));
         $form->pushContent($contents);
 
         $message = HTML();
@@ -79,7 +78,7 @@ class WikiPlugin_HtmlConverter extends WikiPlugin
             $userfile_name = basename($userfile_name);
             $userfile_tmpname = $userfile->getTmpName();
 
-            if (!preg_match("/(\.html|\.htm)$/i", $userfile_name)) {
+            if (! preg_match("/(\.html|\.htm)$/i", $userfile_name)) {
                 $message->pushContent(_("Only files with extension HTML are allowed"), HTML::br(), HTML::br());
             } else {
                 $message->pushContent(_("Processed $userfile_name"), HTML::br(), HTML::br());
@@ -96,9 +95,8 @@ class WikiPlugin_HtmlConverter extends WikiPlugin
         return $result;
     }
 
-    function _processA(&$file)
+    public function _processA(&$file)
     {
-
         $file = preg_replace(
             "!<a([[:space:]]+)href([[:space:]]*)=([[:space:]]*)\"([-/.a-zA-Z0-9_~#@%$?&=:\200-\377\(\)[:space:]]+)\"([^>]*)>!Di",
             "{{\\4}}",
@@ -108,27 +106,25 @@ class WikiPlugin_HtmlConverter extends WikiPlugin
         $file = preg_replace("!{{([-/a-zA-Z0-9._~#@%$?&=:\200-\377\(\)[:space:]]+)}}([^<]+)</a>!Di", "[ \\2 | \\1 ]", $file);
     }
 
-    function _processIMG(&$file)
+    public function _processIMG(&$file)
     {
-
         $img_regexp = "_<img\s+src\s*=\s*\"([-/.a-zA-Z0-9\_~#@%$?&=:\200-\377\(\)\s]+)\"[^>]*>_";
 
         $file = preg_replace($img_regexp, "\n\n[Upload:\\1]", $file);
     }
 
-    function _processUL(&$file)
+    public function _processUL(&$file)
     {
-
      // put any <li>-Tag in a new line to indent correctly and strip trailing white space (including new-lines)
         $file = str_replace("<li", "\n<li", $file);
         $file = preg_replace("/<li>\s*/", "<li>", $file);
 
         $enclosing_regexp = "_(.*)<ul\s?[^>]*>((?U).*)</ul>(.*)_is";
         $indent_tag = "<li";
-        $embedded_fragment_array = array();
+        $embedded_fragment_array = [];
         $found = preg_match($enclosing_regexp, $file, $embedded_fragment_array);
         while ($found) {
-            $indented = str_replace($indent_tag, "\t".$indent_tag, $embedded_fragment_array[2]);
+            $indented = str_replace($indent_tag, "\t" . $indent_tag, $embedded_fragment_array[2]);
          // string the file together again with the indented part in the middle.
          // a <p> is inserted instead of the erased <ul> tags to have a paragraph generated at the end of the script
             $file = $embedded_fragment_array[1] . "<p>" . $indented . $embedded_fragment_array[3];
@@ -136,7 +132,7 @@ class WikiPlugin_HtmlConverter extends WikiPlugin
         }
     }
 
-    function _process($file_name)
+    public function _process($file_name)
     {
         $result = HTML();
         $file = file_get_contents($file_name);
@@ -194,10 +190,10 @@ class WikiPlugin_HtmlConverter extends WikiPlugin
      // strip attributes from <pre>-Tags and add a new-line before
         $file = preg_replace("_<pre(\s[^>]*|)>_iU", "\n<pre>", $file);
 
-        $outputArea = HTML::textarea(array(
+        $outputArea = HTML::textarea([
             'rows' => '30',
         'cols' => '80',
-        'wrap' => 'virtual'));
+        'wrap' => 'virtual']);
 
         $outputArea->pushContent(_($file));
         $result->pushContent($outputArea);

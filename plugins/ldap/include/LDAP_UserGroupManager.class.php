@@ -32,12 +32,7 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
     private $project_manager;
 
     /**
-     * @var LDAP
-     */
-    private $ldap;
-
-    /**
-     * @var Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
@@ -51,7 +46,7 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
         LDAP_UserManager $ldap_user_manager,
         LDAP_UserGroupDao $dao,
         ProjectManager $project_manager,
-        Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         \Tuleap\LDAP\GroupSyncNotificationsManager $notifications_manager
     ) {
         parent::__construct($ldap, $ldap_user_manager, $project_manager, $notifications_manager);
@@ -85,27 +80,27 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
     /**
      * Add user to a user group
      *
-     * @param int $ugroupId Codendi Group ID
+     * @param int $id Codendi Group ID
      * @param int $userId User ID
      *
      * @return bool
      */
-    protected function addUserToGroup($ugroupId, $userId)
+    protected function addUserToGroup($id, $userId)
     {
-        return $this->getDao()->addUserToGroup($ugroupId, $userId);
+        return $this->getDao()->addUserToGroup($id, $userId);
     }
 
     /**
      * Remove user from a user group
      *
-     * @param int $ugroupId Codendi Group ID
+     * @param int $id Codendi Group ID
      * @param int $userId User ID
      *
      * @return bool
      */
-    protected function removeUserFromGroup($ugroupId, $userId)
+    protected function removeUserFromGroup($id, $userId)
     {
-        return $this->getDao()->removeUserFromGroup($ugroupId, $userId);
+        return $this->getDao()->removeUserFromGroup($id, $userId);
     }
 
     /**
@@ -184,7 +179,7 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
     public function synchronizeUgroups()
     {
         $dar = $this->getSynchronizedUgroups();
-        if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
             foreach ($dar as $row) {
                 $this->setId($row['ugroup_id']);
                 $this->setGroupDn($row['ldap_group_dn']);
@@ -202,7 +197,7 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
 
         $project = $this->project_manager->getProject($this->project_id);
         if (! $project->isPublic()) {
-            $this->logger->warn("The synchronisation for ugroup #$this->id is done in a private projects.\n" .
+            $this->logger->warning("The synchronisation for ugroup #$this->id is done in a private projects.\n" .
                 'Non project members will not be added or will be removed of this ugroup.');
 
             $project_member_ids = $project->getMembersId();
@@ -216,7 +211,7 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
     {
         foreach ($this->usersToAdd as $key => $user_id) {
             if (! in_array($user_id, $project_member_ids)) {
-                $this->logger->warn("The user #$user_id will not be added to this ugroup because he/she is not project member.");
+                $this->logger->warning("The user #$user_id will not be added to this ugroup because he/she is not project member.");
 
                 unset($this->usersToAdd[$key]);
             }
@@ -228,7 +223,7 @@ class LDAP_UserGroupManager extends LDAP_GroupManager
         $ugroup_members = $this->getDbGroupMembersIds($this->id);
         foreach ($ugroup_members as $user_id) {
             if (! in_array($user_id, $project_member_ids)) {
-                $this->logger->warn("The user #$user_id will be removed of this ugroup because he/she is not project member.");
+                $this->logger->warning("The user #$user_id will be removed of this ugroup because he/she is not project member.");
                 $this->usersToRemove[$user_id] = $user_id;
                 $this->removeUserFromNotImpactedAsItWillBeDeleted($user_id);
             }

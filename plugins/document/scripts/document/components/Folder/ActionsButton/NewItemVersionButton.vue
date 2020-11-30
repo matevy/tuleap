@@ -18,17 +18,23 @@
   -->
 
 <template>
-    <a
+    <button
         v-if="item.user_can_write"
         v-bind:class="button_classes"
+        type="button"
+        role="menuitem"
         v-bind:data-tlp-tooltip="cannot_create_new_wiki_version_because_approval_table"
         v-on:click="goToUpdate"
         data-test="document-new-item-version-button"
     >
-        <i v-if="is_loading_item" v-bind:class="iconClasses" class="fa fa-spin fa-circle-o-notch"></i>
+        <i
+            v-if="is_loading_item"
+            v-bind:class="iconClasses"
+            class="fa fa-spin fa-circle-o-notch"
+        ></i>
         <i v-else v-bind:class="iconClasses"></i>
         <translate>Create new version</translate>
-    </a>
+    </button>
 </template>
 <script>
 import { TYPE_LINK, TYPE_WIKI } from "../../../constants.js";
@@ -39,11 +45,11 @@ export default {
     props: {
         item: Object,
         buttonClasses: String,
-        iconClasses: String
+        iconClasses: String,
     },
     data() {
         return {
-            is_loading_item: false
+            is_loading_item: false,
         };
     },
     computed: {
@@ -62,7 +68,7 @@ export default {
             }
 
             return classes;
-        }
+        },
     },
     methods: {
         async goToUpdate() {
@@ -79,7 +85,7 @@ export default {
                 );
 
                 EventBus.$emit("show-create-new-item-version-modal", {
-                    detail: { current_item: link_with_all_properties }
+                    detail: { current_item: link_with_all_properties },
                 });
 
                 this.is_loading_item = false;
@@ -87,9 +93,9 @@ export default {
             }
 
             EventBus.$emit("show-create-new-item-version-modal", {
-                detail: { current_item: this.item }
+                detail: { current_item: this.item },
             });
-        }
-    }
+        },
+    },
 };
 </script>

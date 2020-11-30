@@ -23,9 +23,7 @@
         <p v-translate>
             You can't upload a new version of this file until the approval table is closed.
         </p>
-        <p v-translate="{ table_state }">
-            Current approval table state: %{ table_state }.
-        </p>
+        <p v-translate="{ table_state }">Current approval table state: %{ table_state }.</p>
     </error-modal>
 </template>
 
@@ -35,7 +33,7 @@ import { mapState } from "vuex";
 export default {
     components: { ErrorModal },
     props: {
-        reasons: Array
+        reasons: Array,
     },
     computed: {
         ...mapState(["project_id"]),
@@ -62,14 +60,14 @@ export default {
                 table_owner_url: this.table_owner.user_url,
                 table_owner_name: this.table_owner.display_name,
                 approval_table_url: this.approval_table_url,
-                filename: this.reasons[0].filename
+                filename: this.reasons[0].filename,
             });
-        }
+        },
     },
     methods: {
         bubbleErrorModalHidden() {
             this.$emit("error-modal-hidden");
-        }
-    }
+        },
+    },
 };
 </script>

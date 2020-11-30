@@ -50,7 +50,7 @@ final class SystemEventUserActiveStatusChange extends SystemEvent
         UserManager $user_manager,
         UserGroupDao $user_group_dao,
         UserRemover $user_remover
-    ) : void {
+    ): void {
         $this->user_manager   = $user_manager;
         $this->user_group_dao = $user_group_dao;
         $this->user_remover   = $user_remover;
@@ -63,12 +63,11 @@ final class SystemEventUserActiveStatusChange extends SystemEvent
      * @param bool $with_link true if you want links to entities. The returned
      * string will be html instead of plain/text
      *
-     * @return string
      */
-    public function verbalizeParameters($with_link) : string
+    public function verbalizeParameters($with_link): string
     {
         $txt = '';
-        $txt .= 'user: '. $this->verbalizeUserId($this->getIdFromParam(), $with_link);
+        $txt .= 'user: ' . $this->verbalizeUserId($this->getIdFromParam(), $with_link);
         return $txt;
     }
 
@@ -80,7 +79,7 @@ final class SystemEventUserActiveStatusChange extends SystemEvent
         // Check parameters
         $user_id = $this->getIdFromParam();
         $user    = $this->user_manager->getUserById($user_id);
-        if ($user && !$user->isAnonymous()) {
+        if ($user && ! $user->isAnonymous()) {
             $this->cleanRestrictedUserFromProjectMembershipIfNecessary($user);
             if ($this->createUser($user)) {
                 $this->done();
@@ -97,15 +96,15 @@ final class SystemEventUserActiveStatusChange extends SystemEvent
     /**
      * Perform user creation on system
      */
-    private function createUser(PFUser $user) : bool
+    private function createUser(PFUser $user): bool
     {
-        /** @var \BackendSystem $system_backend */
         $system_backend = Backend::instance('System');
+        \assert($system_backend instanceof \BackendSystem);
         $system_backend->flushNscdAndFsCache();
         return $system_backend->createUserHome($user);
     }
 
-    private function cleanRestrictedUserFromProjectMembershipIfNecessary(PFUser $user) : void
+    private function cleanRestrictedUserFromProjectMembershipIfNecessary(PFUser $user): void
     {
         if (! ForgeConfig::areRestrictedUsersAllowed()) {
             return;

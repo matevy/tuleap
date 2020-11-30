@@ -56,13 +56,6 @@ class SystemEvent_SVN_DELETE_REPOSITORY extends SystemEvent //phpcs:ignore
      */
     private $generator;
 
-    /**
-     * @param RepositoryManager   $repository_manager
-     * @param ProjectManager      $project_manager
-     * @param ApacheConfGenerator $generator
-     * @param RepositoryDeleter   $repository_deleter
-     * @param SvnAdmin            $svn_admin
-     */
     public function injectDependencies(
         RepositoryManager $repository_manager,
         ProjectManager $project_manager,
@@ -93,13 +86,12 @@ class SystemEvent_SVN_DELETE_REPOSITORY extends SystemEvent //phpcs:ignore
             return false;
         }
 
-        $project    = $this->getProject($project_id);
-        $repository = $this->getRepository($project, $repository_id);
-
-        if ((int)$repository->getProject()->getID() !== (int)$project_id) {
-            $this->error('Bad project id');
+        $project = $this->getProject($project_id);
+        if (! $project || $project->isError() || $project->getID() === null) {
+            $this->error('Invalid project');
             return false;
         }
+        $repository = $this->getRepository($project, $repository_id);
 
         $this->repository_deleter->markAsDeleted($repository);
         $this->svn_admin->dumpRepository($repository, $repository->getSystemBackupPath());
@@ -116,8 +108,8 @@ class SystemEvent_SVN_DELETE_REPOSITORY extends SystemEvent //phpcs:ignore
         $project_id    = $this->getRequiredParameter(0);
         $repository_id = $this->getRequiredParameter(1);
 
-        return 'project: '. $this->verbalizeProjectId($project_id, $with_link) .
-            ', repository: '. $repository_id;
+        return 'project: ' . $this->verbalizeProjectId($project_id, $with_link) .
+            ', repository: ' . $repository_id;
     }
 
     protected function getRepository(Project $project, $repository_id)

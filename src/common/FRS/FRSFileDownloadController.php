@@ -29,14 +29,13 @@ use Project_AccessException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use RuntimeException;
 use Tuleap\Http\Response\BinaryFileResponseBuilder;
 use Tuleap\Request\DispatchablePSR15Compatible;
 use Tuleap\Request\DispatchableWithRequestNoAuthz;
 use Tuleap\Request\NotFoundException;
 use Tuleap\REST\RESTCurrentUserMiddleware;
 use URLVerification;
-use Zend\HttpHandlerRunner\Emitter\EmitterInterface;
+use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 
 final class FRSFileDownloadController extends DispatchablePSR15Compatible implements DispatchableWithRequestNoAuthz
 {
@@ -70,7 +69,7 @@ final class FRSFileDownloadController extends DispatchablePSR15Compatible implem
      * @throws NotFoundException
      * @throws FRSFileNotPresentInStorage
      */
-    public function handle(ServerRequestInterface $request) : ResponseInterface
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $file_id = (int) $request->getAttribute('file_id');
 
@@ -80,8 +79,8 @@ final class FRSFileDownloadController extends DispatchablePSR15Compatible implem
             throw new NotFoundException(_('The file cannot be found'));
         }
 
-        /** @var PFUser $current_user */
         $current_user = $request->getAttribute(RESTCurrentUserMiddleware::class);
+        \assert($current_user instanceof PFUser);
 
         try {
             $this->url_verification->userCanAccessProject($current_user, $file->getGroup());

@@ -18,14 +18,26 @@
   -->
 
 <template>
-    <div class="tlp-modal tlp-modal-danger" role="dialog" aria-labelledby="document-confirm-deletion-modal-title">
+    <div
+        class="tlp-modal tlp-modal-danger"
+        role="dialog"
+        aria-labelledby="document-confirm-deletion-modal-title"
+    >
         <div class="tlp-modal-header">
-            <h1 class="tlp-modal-title" id="document-confirm-deletion-modal-title" v-translate>Hold on a second!</h1>
-            <div class="tlp-modal-close" data-dismiss="modal" v-bind:aria-label="close">
+            <h1 class="tlp-modal-title" id="document-confirm-deletion-modal-title" v-translate>
+                Hold on a second!
+            </h1>
+            <div
+                class="tlp-modal-close"
+                tabindex="0"
+                role="button"
+                data-dismiss="modal"
+                v-bind:aria-label="close"
+            >
                 ×
             </div>
         </div>
-        <modal-feedback/>
+        <modal-feedback />
         <div class="tlp-modal-body">
             <p>{{ modal_description }}</p>
             <div
@@ -41,26 +53,36 @@
                 v-model="additional_options"
                 v-bind:item="item"
                 v-bind:wiki-page-referencers="wiki_page_referencers"
+                data-test="delete-wiki-checkbox"
             />
             <span class="document-confirm-deletion-modal-wiki-page-referencers-loading">
-                <i class="fa fa-spin fa-circle-o-notch" v-if="is_item_a_wiki(item) && wiki_page_referencers_loading"></i>
+                <i
+                    class="fa fa-spin fa-circle-o-notch"
+                    v-if="is_item_a_wiki(item) && wiki_page_referencers_loading"
+                ></i>
             </span>
         </div>
         <div class="tlp-modal-footer">
-            <button type="button" class="tlp-button-danger tlp-button-outline tlp-modal-action" data-dismiss="modal">Cancel</button>
+            <button
+                type="button"
+                class="tlp-button-danger tlp-button-outline tlp-modal-action"
+                data-dismiss="modal"
+            >
+                Cancel
+            </button>
             <button
                 type="button"
                 class="tlp-button-danger tlp-modal-action"
                 data-test="document-confirm-deletion-button"
                 v-on:click="deleteItem()"
-                v-bind:class="{'disabled': is_confirm_button_disabled}"
+                v-bind:class="{ disabled: is_confirm_button_disabled }"
                 v-bind:disabled="is_confirm_button_disabled"
             >
                 <i
                     class="fa tlp-button-icon"
                     v-bind:class="{
                         'fa-spin fa-circle-o-notch': is_an_action_on_going,
-                        'fa-trash-o': ! is_an_action_on_going
+                        'fa-trash-o': !is_an_action_on_going,
                     }"
                 ></i>
                 <span v-translate>Delete</span>
@@ -72,21 +94,21 @@
 <script>
 import { sprintf } from "sprintf-js";
 import { mapState, mapGetters } from "vuex";
-import { modal } from "tlp";
+import { createModal } from "tlp";
 import ModalFeedback from "../ModalCommon/ModalFeedback.vue";
 
 export default {
     components: {
         ModalFeedback,
         "delete-associated-wiki-page-checkbox": () =>
-            import("./AdditionalCheckboxes/DeleteAssociatedWikiPageCheckbox.vue")
+            import("./AdditionalCheckboxes/DeleteAssociatedWikiPageCheckbox.vue"),
     },
     props: {
         item: Object,
         shouldRedirectToParentAfterDeletion: {
             type: Boolean,
-            default: false
-        }
+            default: false,
+        },
     },
     data() {
         return {
@@ -94,12 +116,12 @@ export default {
             is_item_being_deleted: false,
             wiki_page_referencers_loading: false,
             additional_options: {},
-            wiki_page_referencers: null
+            wiki_page_referencers: null,
         };
     },
     computed: {
         ...mapState("error", ["has_modal_error"]),
-        ...mapState(["current_folder"]),
+        ...mapState(["current_folder", "currently_previewed_item"]),
         ...mapGetters(["is_item_a_wiki", "is_item_a_folder"]),
         close() {
             return this.$gettext("Close");
@@ -124,10 +146,10 @@ export default {
                 !this.wiki_page_referencers_loading &&
                 this.wiki_page_referencers !== null
             );
-        }
+        },
     },
     mounted() {
-        this.modal = modal(this.$el);
+        this.modal = createModal(this.$el);
         this.modal.addEventListener("tlp-modal-hidden", this.resetModal);
 
         this.modal.show();
@@ -144,10 +166,7 @@ export default {
             await this.$store.dispatch("deleteItem", [this.item, this.additional_options]);
 
             if (!this.has_modal_error) {
-                await this.$router.replace({
-                    name: "folder",
-                    params: { item_id: deleted_item.parent_id }
-                });
+                await this.redirectToParentFolderIfNeeded(deleted_item);
                 this.$store.commit("showPostDeletionNotification");
 
                 this.modal.hide();
@@ -169,7 +188,23 @@ export default {
         resetModal() {
             this.$store.commit("error/resetModalError");
             this.$emit("delete-modal-closed");
-        }
-    }
+        },
+        async redirectToParentFolderIfNeeded(deleted_item) {
+            const is_item_the_current_folder = this.item.id === this.current_folder.id;
+            const is_item_being_previewed =
+                this.currently_previewed_item !== null &&
+                this.currently_previewed_item.id === this.item.id;
+
+            if (!is_item_the_current_folder && !is_item_being_previewed) {
+                return;
+            }
+
+            this.$store.commit("updateCurrentlyPreviewedItem", null);
+            await this.$router.replace({
+                name: "folder",
+                params: { item_id: deleted_item.parent_id },
+            });
+        },
+    },
 };
 </script>

@@ -21,14 +21,20 @@
 
 use Tuleap\Admin\Homepage\NbUsersByStatusBuilder;
 use Tuleap\Admin\Homepage\UserCounterDao;
+use Tuleap\BuildVersion\FlavorFinderFromFilePresence;
+use Tuleap\BuildVersion\VersionPresenter;
 use Tuleap\Http\HTTPFactoryBuilder;
+use Tuleap\Http\Server\Authentication\BasicAuthLoginExtractor;
 use Tuleap\PrometheusMetrics\MetricsAuthentication;
 use Tuleap\PrometheusMetrics\MetricsCollectorDao;
 use Tuleap\PrometheusMetrics\MetricsController;
 use Tuleap\Redis\ClientFactory;
 use Tuleap\Redis\RedisConnectionException;
+use Tuleap\CLI\CLICommandsCollector;
+use Tuleap\PrometheusMetrics\ClearPrometheusMetricsCommand;
+use Tuleap\PrometheusMetrics\PrometheusFlushableStorageProvider;
 use Tuleap\Request\CollectRoutesEvent;
-use Zend\HttpHandlerRunner\Emitter\SapiEmitter;
+use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -41,7 +47,7 @@ class prometheus_metricsPlugin extends Plugin  // @codingStandardsIgnoreLine
         parent::__construct($id);
         $this->setScope(self::SCOPE_SYSTEM);
 
-        bindtextdomain('tuleap-prometheus_metrics', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-prometheus_metrics', __DIR__ . '/../site-content');
     }
 
     public function getPluginInfo()
@@ -56,6 +62,7 @@ class prometheus_metricsPlugin extends Plugin  // @codingStandardsIgnoreLine
     public function getHooksAndCallbacks()
     {
         $this->addHook(CollectRoutesEvent::NAME);
+        $this->addHook(CLICommandsCollector::NAME);
 
         return parent::getHooksAndCallbacks();
     }
@@ -76,9 +83,12 @@ class prometheus_metricsPlugin extends Plugin  // @codingStandardsIgnoreLine
             new MetricsCollectorDao(),
             new NbUsersByStatusBuilder(new UserCounterDao()),
             EventManager::instance(),
+            VersionPresenter::fromFlavorFinder(new FlavorFinderFromFilePresence()),
             $redis_client,
+            (new PrometheusFlushableStorageProvider())->getFlushableStorage(),
             new MetricsAuthentication(
                 $response_factory,
+                new BasicAuthLoginExtractor(),
                 $this->getPluginEtcRoot()
             )
         );
@@ -87,5 +97,17 @@ class prometheus_metricsPlugin extends Plugin  // @codingStandardsIgnoreLine
     public function collectRoutesEvent(CollectRoutesEvent $event)
     {
         $event->getRouteCollector()->get('/metrics', $this->getRouteHandler('routeGetMetrics'));
+    }
+
+    public function collectCLICommands(CLICommandsCollector $commands_collector): void
+    {
+        $commands_collector->addCommand(
+            ClearPrometheusMetricsCommand::NAME,
+            static function (): ClearPrometheusMetricsCommand {
+                return new ClearPrometheusMetricsCommand(
+                    (new PrometheusFlushableStorageProvider())->getFlushableStorage()
+                );
+            }
+        );
     }
 }

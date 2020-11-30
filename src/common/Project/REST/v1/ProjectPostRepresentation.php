@@ -19,10 +19,13 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Project\REST\v1;
 
+/**
+ * @psalm-immutable
+ */
 class ProjectPostRepresentation
 {
     /**
@@ -56,7 +59,7 @@ class ProjectPostRepresentation
     public $template_id;
 
     /**
-     * @var string Template name provided by the platform {@from body} {@required false} {@choice scrum}
+     * @var string Template name provided by the platform {@from body} {@required false} {@choice agile_alm,scrum,kanban,issues,empty}
      */
     public $xml_template_name;
 

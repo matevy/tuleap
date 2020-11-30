@@ -25,7 +25,7 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
 /* abstract */ class Docman_View_Display extends Docman_View_Docman
 {
 
-    function _title($params)
+    public function _title($params)
     {
         // No title in printer version
         if (isset($params['pv']) && $params['pv'] > 0) {
@@ -35,11 +35,11 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
         $renderer  = TemplateRendererFactory::build()->getRenderer(__DIR__ . "/../../templates");
         $renderer->renderToPage(
             'docman-title',
-            [ "title" => $this->getUnconvertedTitle($params)]
+            ["title" => $this->getUnconvertedTitle($params)]
         );
     }
 
-    /* protected */ function _footer($params)
+    /* protected */ public function _footer($params)
     {
         $builder   = new DocumentFooterPresenterBuilder(ProjectManager::instance(), EventManager::instance());
         $presenter = $builder->build($params, $params['group_id'], $params['item']->toRow(), $params['user']);
@@ -51,22 +51,22 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
         parent::_footer($params);
     }
 
-    function _breadCrumbs($params)
+    public function _breadCrumbs($params)
     {
         $hp                 = Codendi_HTMLPurifier::instance();
         $item               = $params['item'];
         $current_item       = $item;
         $current_item_title = $item->getTitle();
         $id                 = $item->getId();
-        $parents            = array();
+        $parents            = [];
         $item_factory       = $this->_getItemFactory($params);
         while ($item->getParentId() != 0) {
             $item = $item_factory->getItemFromDb($item->getParentId());
-            $parents[] = array(
+            $parents[] = [
                 'item'  => $item,
                 'id'    => $item->getId(),
                 'title' => $item->getTitle()
-            );
+            ];
         }
         $urlAction = 'show';
         if (isset($params['action'])) {
@@ -84,16 +84,16 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
         $html .= '<table border="0" width="100%">';
         $html .= '<tr>';
         $html .= '<td align="left">';
-        $html .= '<div id="docman_item_title_link_'. $id .'">'. $GLOBALS['Language']->getText('plugin_docman', 'breadcrumbs_location') .' ';
+        $html .= '<div id="docman_item_title_link_' . $id . '">' . dgettext('tuleap-docman', 'Location:') . ' ';
         $parents = array_reverse($parents);
         foreach ($parents as $parent) {
             $urlParams['id'] = $parent['id'];
             $url             = DocmanViewURLBuilder::buildActionUrl($parent['item'], $params, $urlParams);
-            $html           .= '&nbsp;<a href="'.$url.'">'.  $hp->purify($parent['title'], CODENDI_PURIFIER_CONVERT_HTML)  .'</a>&nbsp;/';
+            $html           .= '&nbsp;<a href="' . $url . '">' .  $hp->purify($parent['title'], CODENDI_PURIFIER_CONVERT_HTML)  . '</a>&nbsp;/';
         }
         $urlParams['id'] = $id;
         $url = DocmanViewURLBuilder::buildActionUrl($params['item'], $params, $urlParams);
-        $html .= '&nbsp;<a href="'.$url.'"><b>'.  $hp->purify($current_item_title, CODENDI_PURIFIER_CONVERT_HTML)  .'</b></a>';
+        $html .= '&nbsp;<a href="' . $url . '"><b>' .  $hp->purify($current_item_title, CODENDI_PURIFIER_CONVERT_HTML)  . '</b></a>';
         $html .= $this->getItemMenu($current_item, $params, $bc = true);
         $this->javascript .= $this->getActionForItem($current_item);
         $html .= '</div>';
@@ -102,14 +102,14 @@ use Tuleap\Docman\view\DocumentFooterPresenterBuilder;
         echo $html;
     }
 
-    function _javascript($params)
+    public function _javascript($params)
     {
         // force docman object to watch click on pen icon
         $this->javascript .= "docman.initShowOptions();\n";
         parent::_javascript($params);
     }
 
-    function _mode($params)
+    public function _mode($params)
     {
         $html = '';
          // Close table opened in method 'breadCrumbs'.

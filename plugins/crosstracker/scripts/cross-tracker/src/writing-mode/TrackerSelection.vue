@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018. All Rights Reserved.
+  - Copyright (c) Enalean, 2018 - present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -19,25 +19,35 @@
 
 <template>
     <div class="cross-tracker-selector">
-        <div class="tlp-form-element" v-bind:class="{ 'tlp-form-element-disabled': is_project_select_disabled }">
-            <label class="tlp-label" for="project"><translate>Project</translate> <i class="fa fa-asterisk"></i></label>
+        <div
+            class="tlp-form-element"
+            v-bind:class="{ 'tlp-form-element-disabled': is_project_select_disabled }"
+        >
+            <label class="tlp-label" for="project">
+                <translate>Project</translate>
+                <i class="fa fa-asterisk"></i>
+            </label>
             <select
                 class="cross-tracker-selector-project-input tlp-select"
                 id="project"
                 name="project"
                 v-bind:disabled="is_project_select_disabled"
                 v-model="selected_project"
+                data-test="cross-tracker-selector-project"
             >
-                <option v-for="project of projects"
-                        v-bind:value="project"
-                        v-bind:key="project.id"
-                >
+                <option v-for="project of projects" v-bind:value="project" v-bind:key="project.id">
                     {{ project.label }}
                 </option>
             </select>
         </div>
-        <div class="tlp-form-element" v-bind:class="{ 'tlp-form-element-disabled': is_tracker_select_disabled }">
-            <label class="tlp-label" for="tracker"><translate>Tracker</translate> <i class="fa fa-asterisk"></i></label>
+        <div
+            class="tlp-form-element"
+            v-bind:class="{ 'tlp-form-element-disabled': is_tracker_select_disabled }"
+        >
+            <label class="tlp-label" for="tracker">
+                <translate>Tracker</translate>
+                <i class="fa fa-asterisk"></i>
+            </label>
             <div class="tlp-form-element tlp-form-element-append">
                 <select
                     class="cross-tracker-selector-tracker-input tlp-select"
@@ -45,23 +55,37 @@
                     name="tracker"
                     v-bind:disabled="is_tracker_select_disabled"
                     v-model="selected_tracker"
+                    data-test="cross-tracker-selector-tracker"
                 >
-                    <option v-bind:value="null" class="cross-tracker-please-choose-option">{{ please_choose_label }}</option>
+                    <option
+                        v-bind:value="null"
+                        class="cross-tracker-please-choose-option"
+                        v-translate
+                    >
+                        Please choose...
+                    </option>
                     <option
                         v-for="tracker of tracker_options"
                         v-bind:value="{ id: tracker.id, label: tracker.label }"
                         v-bind:disabled="tracker.disabled"
                         v-bind:key="tracker.id"
-                    >{{ tracker.label }}</option>
+                    >
+                        {{ tracker.label }}
+                    </option>
                 </select>
                 <button
                     type="button"
                     class="tlp-append tlp-button-primary tlp-button-outline"
                     v-bind:disabled="is_add_button_disabled"
                     v-on:click="addTrackerToSelection"
+                    data-test="cross-tracker-selector-tracker-button"
                 >
-                    <i v-if="is_loader_shown" class="tlp-button-icon fa fa-circle-o-notch fa-spin"></i>
-                    <i v-else class="tlp-button-icon fa fa-plus"></i> <translate>Add</translate>
+                    <i
+                        v-if="is_loader_shown"
+                        class="tlp-button-icon fas fa-circle-notch fa-spin"
+                    ></i>
+                    <i v-else class="tlp-button-icon fa fa-plus"></i>
+                    <translate>Add</translate>
                 </button>
             </div>
         </div>
@@ -74,7 +98,7 @@ import { getTrackersOfProject } from "../api/rest-querier.js";
 export default {
     name: "TrackerSelection",
     props: {
-        selectedTrackers: Array
+        selectedTrackers: Array,
     },
     data() {
         return {
@@ -82,13 +106,10 @@ export default {
             selected_tracker: null,
             projects: [],
             trackers: [],
-            is_loader_shown: false
+            is_loader_shown: false,
         };
     },
     computed: {
-        please_choose_label() {
-            return this.$gettext("Please choose...");
-        },
         is_project_select_disabled() {
             return this.projects.length === 0;
         },
@@ -106,17 +127,17 @@ export default {
                 return {
                     id,
                     label,
-                    disabled: is_already_selected !== undefined
+                    disabled: is_already_selected !== undefined,
                 };
             });
-        }
+        },
     },
     watch: {
-        selected_project: function(new_value) {
+        selected_project: function (new_value) {
             this.selected_tracker = null;
             this.trackers = [];
             this.loadTrackers(new_value.id);
-        }
+        },
     },
     mounted() {
         this.loadProjects();
@@ -152,12 +173,12 @@ export default {
         },
 
         addTrackerToSelection() {
-            this.$emit("trackerAdded", {
+            this.$emit("tracker-added", {
                 selected_project: this.selected_project,
-                selected_tracker: this.selected_tracker
+                selected_tracker: this.selected_tracker,
             });
             this.selected_tracker = null;
-        }
-    }
+        },
+    },
 };
 </script>

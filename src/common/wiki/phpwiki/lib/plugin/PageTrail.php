@@ -33,26 +33,26 @@ rcs_id('$Id: PageTrail.php,v 1.8 2005/08/06 13:23:14 rurban Exp $');
  * <?plugin PageTrail invisible=1?>
  */
 
-if (!defined('PAGETRAIL_ARROW')) {
+if (! defined('PAGETRAIL_ARROW')) {
     define('PAGETRAIL_ARROW', " => ");
 }
 
 class WikiPlugin_PageTrail extends WikiPlugin
 {
     // Four required functions in a WikiPlugin.
-    var $def_numberlinks = 5;
+    public $def_numberlinks = 5;
 
-    function getName()
+    public function getName()
     {
         return _("PageTrail");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("PageTrail Plugin");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -62,15 +62,15 @@ class WikiPlugin_PageTrail extends WikiPlugin
     }
 
     // default values
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('numberlinks' => $this->def_numberlinks,
+        return ['numberlinks' => $this->def_numberlinks,
                      'invisible'   => false,
                      'duplicates'  => false,
-                     );
+                     ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
 
@@ -81,8 +81,8 @@ class WikiPlugin_PageTrail extends WikiPlugin
         // Get name of the current page we are on
         $thispage = $request->getArg('pagename');
         $Pages = $request->session->get("PageTrail");
-        if (!is_array($Pages)) {
-            $Pages = array();
+        if (! is_array($Pages)) {
+            $Pages = [];
         }
 
         if ($duplicates || ($thispage != $Pages[0])) {
@@ -92,9 +92,9 @@ class WikiPlugin_PageTrail extends WikiPlugin
 
         $numberlinks = min(count($Pages), $numberlinks);
         if (! $invisible and $numberlinks) {
-            $html = HTML::tt(WikiLink($Pages[$numberlinks-1], 'auto'));
+            $html = HTML::tt(WikiLink($Pages[$numberlinks - 1], 'auto'));
             for ($i = $numberlinks - 2; $i >= 0; $i--) {
-                if (!empty($Pages[$i])) {
+                if (! empty($Pages[$i])) {
                     $html->pushContent(
                         PAGETRAIL_ARROW,
                         WikiLink($Pages[$i], 'auto')
@@ -106,7 +106,7 @@ class WikiPlugin_PageTrail extends WikiPlugin
             return HTML();
         }
     }
-};
+}
 
 // $Log: PageTrail.php,v $
 // Revision 1.8  2005/08/06 13:23:14  rurban

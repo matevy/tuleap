@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 – 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,61 +19,48 @@
  */
 
 use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
-use Tuleap\AgileDashboard\Milestone\Pane\Details\DetailsPaneInfo;
 use Tuleap\AgileDashboard\Milestone\Pane\PaneInfo;
 use Tuleap\AgileDashboard\Milestone\Pane\PanePresenterData;
 use Tuleap\AgileDashboard\Milestone\Pane\TopPlanning\TopPlanningV2PaneInfo;
+use Tuleap\AgileDashboard\Planning\AllowedAdditionalPanesToDisplayCollector;
+use Tuleap\AgileDashboard\Planning\RootPlanning\DisplayTopPlanningAppEvent;
 
 /**
  * I build panes for a Planning_Milestone
  */
-class Planning_VirtualTopMilestonePaneFactory
+class Planning_VirtualTopMilestonePaneFactory // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 {
     public const TOP_MILESTONE_DUMMY_ARTIFACT_ID = "ABC";
 
-    /**
-     * If PRELOAD_ENABLED is set to true, planning v2 data will be injected to the view.
-     * If it's set to false, data will be asynchronously fetched via REST calls.
-     */
-    public const PRELOAD_ENABLED                 = false;
-    public const PRELOAD_PAGINATION_LIMIT        = 50;
-    public const PRELOAD_PAGINATION_OFFSET       = 0;
-    public const PRELOAD_PAGINATION_ORDER        = 'desc';
-
     /** @var PaneInfo[] */
-    private $list_of_pane_info = array();
+    private $list_of_pane_info = [];
 
-    /** @var AgileDashboard_Pane */
-    private $active_pane = array();
+    /**
+     * @var AgileDashboard_Pane[]
+     * @psalm-var array<int|string, AgileDashboard_Pane>
+     */
+    private $active_pane = [];
 
     /** @var Codendi_Request */
     private $request;
 
-    /** @var string */
-    private $theme_path;
-
-    /** @var AgileDashboard_Milestone_MilestoneRepresentationBuilder */
-    private $milestone_representation_builder;
-
-    /** @var AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentationsBuilder */
-    private $paginated_backlog_items_representations_builder;
     /**
      * @var ExplicitBacklogDao
      */
     private $explicit_backlog_dao;
+    /**
+     * @var EventManager
+     */
+    private $event_manager;
 
     public function __construct(
         Codendi_Request $request,
-        $theme_path,
-        AgileDashboard_Milestone_MilestoneRepresentationBuilder $milestone_representation_builder,
-        AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentationsBuilder $paginated_backlog_items_representations_builder,
-        ExplicitBacklogDao $explicit_backlog_dao
+        ExplicitBacklogDao $explicit_backlog_dao,
+        EventManager $event_manager
     ) {
-        $this->request                                         = $request;
-        $this->theme_path                                      = $theme_path;
-        $this->milestone_representation_builder                = $milestone_representation_builder;
-        $this->paginated_backlog_items_representations_builder = $paginated_backlog_items_representations_builder;
-        $this->explicit_backlog_dao                            = $explicit_backlog_dao;
+        $this->request              = $request;
+        $this->explicit_backlog_dao = $explicit_backlog_dao;
+        $this->event_manager        = $event_manager;
     }
 
     /** @return PanePresenterData */
@@ -120,80 +107,51 @@ class Planning_VirtualTopMilestonePaneFactory
         return $this->list_of_pane_info[$milestone_artifact_id];
     }
 
-    /** @return string */
-    public function getDefaultPaneIdentifier()
-    {
-        return DetailsPaneInfo::IDENTIFIER;
-    }
-
     private function buildListOfPaneInfo(Planning_Milestone $milestone)
     {
         $milestone_artifact_id = $this->getMilestoneArtifactId();
+        $top_planning_pane = $this->getTopPlanningV2PaneInfo($milestone);
 
-        $this->active_pane[$milestone_artifact_id] = null;
-
-        $this->list_of_pane_info[$milestone_artifact_id][] = $this->getTopPlanningV2PaneInfo($milestone);
+        $this->list_of_pane_info[$milestone_artifact_id][] = $top_planning_pane;
     }
 
-    /**
-     * @return \AgileDashboard_Milestone_Pane_Planning_PlanningPaneInfo
-     */
-    private function getTopPlanningV2PaneInfo(Planning_Milestone $milestone)
+    private function getTopPlanningV2PaneInfo(Planning_Milestone $milestone): ?TopPlanningV2PaneInfo
     {
         $milestone_artifact_id = $this->getMilestoneArtifactId();
 
         $milestone_tracker = $milestone->getPlanning()->getPlanningTracker();
         if (! $milestone_tracker) {
-            return;
+            return null;
         }
 
-        $pane_info = new TopPlanningV2PaneInfo($milestone, $this->theme_path, $milestone_tracker);
+        $allowed_additional_panes_to_display_collector = new AllowedAdditionalPanesToDisplayCollector();
+        $this->event_manager->processEvent($allowed_additional_panes_to_display_collector);
+
+        $pane_info = new TopPlanningV2PaneInfo($milestone, $milestone_tracker);
         $pane_info->setActive(true);
         $project                                   = $this->request->getProject();
         $user                                      = $this->request->getCurrentUser();
+
+        assert($milestone instanceof Planning_VirtualTopMilestone);
+        $display_pv2_event = new DisplayTopPlanningAppEvent(
+            $milestone,
+            $user
+        );
+        $this->event_manager->processEvent($display_pv2_event);
+
         $this->active_pane[$milestone_artifact_id] = new AgileDashboard_Milestone_Pane_Planning_PlanningV2Pane(
             $pane_info,
             new AgileDashboard_Milestone_Pane_Planning_PlanningV2Presenter(
                 $user,
                 $project,
                 $milestone_artifact_id,
-                null,
-                $this->getPaginatedBacklogItemsRepresentationsForTopMilestone($milestone, $user),
-                $this->getPaginatedTopMilestonesRepresentations($project, $user),
-                $this->explicit_backlog_dao->isProjectUsingExplicitBacklog((int) $project->getID())
+                $this->explicit_backlog_dao->isProjectUsingExplicitBacklog((int) $project->getID()),
+                $allowed_additional_panes_to_display_collector->getIdentifiers(),
+                $display_pv2_event->canUserCreateMilestone(),
+                $display_pv2_event->canBacklogItemsBeAdded()
             )
         );
 
         return $pane_info;
-    }
-
-    private function getPaginatedBacklogItemsRepresentationsForTopMilestone(Planning_Milestone $milestone, PFUser $user)
-    {
-        if (! self::PRELOAD_ENABLED) {
-            return null;
-        }
-
-        return $this->paginated_backlog_items_representations_builder->getPaginatedBacklogItemsRepresentationsForTopMilestone(
-            $user,
-            $milestone,
-            self::PRELOAD_PAGINATION_LIMIT,
-            self::PRELOAD_PAGINATION_OFFSET
-        );
-    }
-
-    private function getPaginatedTopMilestonesRepresentations(Project $project, PFUser $user)
-    {
-        if (! self::PRELOAD_ENABLED) {
-            return null;
-        }
-
-        return $this->milestone_representation_builder->getPaginatedTopMilestonesRepresentations(
-            $project,
-            $user,
-            new Tuleap\AgileDashboard\Milestone\Criterion\Status\StatusOpen(),
-            self::PRELOAD_PAGINATION_LIMIT,
-            self::PRELOAD_PAGINATION_OFFSET,
-            self::PRELOAD_PAGINATION_ORDER
-        );
     }
 }

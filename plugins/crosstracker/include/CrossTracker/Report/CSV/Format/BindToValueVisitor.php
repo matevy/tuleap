@@ -61,6 +61,9 @@ class BindToValueVisitor implements BindVisitor
         try {
             $bind_value_id = $this->getSelectedBindValueId($parameters);
             $list_value = $bind->getValue($bind_value_id);
+            if ($list_value === null) {
+                return new EmptyValue();
+            }
             return new TextValue($list_value->getLabel());
         } catch (BindValueIsEmptyException $e) {
             return new EmptyValue();
@@ -90,7 +93,7 @@ class BindToValueVisitor implements BindVisitor
             throw new BindValueIsEmptyException();
         }
         $bind_value_id = $selected_bind_value_ids[0];
-        if ((int)$bind_value_id === \Tracker_FormElement_Field_List_Bind_StaticValue_None::VALUE_ID) {
+        if ((int) $bind_value_id === \Tracker_FormElement_Field_List_Bind_StaticValue_None::VALUE_ID) {
             throw new BindValueIsEmptyException();
         }
 

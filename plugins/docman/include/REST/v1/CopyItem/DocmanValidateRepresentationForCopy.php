@@ -26,22 +26,22 @@ final class DocmanValidateRepresentationForCopy
 {
     private const COPY_PROPERTY_NAME = 'copy';
 
-    public function isValidAsACopyRepresentation(CanContainACopyRepresentation $representation) : bool
+    public function isValidAsACopyRepresentation(CanContainACopyRepresentation $representation): bool
     {
         return $this->isCopyPropertySet($representation) && $this->areNonCopyPropertySetToDefaultValues($representation);
     }
 
-    public function isValidAsANonCopyRepresentation(CanContainACopyRepresentation $representation) : bool
+    public function isValidAsANonCopyRepresentation(CanContainACopyRepresentation $representation): bool
     {
         return ! $this->isCopyPropertySet($representation) && $this->areRequiredObjectPropertiesNonEmpty($representation);
     }
 
-    private function isCopyPropertySet(object $representation) : bool
+    private function isCopyPropertySet(object $representation): bool
     {
         return isset($representation->{self::COPY_PROPERTY_NAME});
     }
 
-    private function areRequiredObjectPropertiesNonEmpty(CanContainACopyRepresentation $representation) : bool
+    private function areRequiredObjectPropertiesNonEmpty(CanContainACopyRepresentation $representation): bool
     {
         foreach ($representation::getNonCopyRequiredObjectProperties() as $required_property) {
             if (! isset($representation->{$required_property}) || empty($representation->{$required_property})) {
@@ -52,7 +52,7 @@ final class DocmanValidateRepresentationForCopy
         return true;
     }
 
-    private function areNonCopyPropertySetToDefaultValues(CanContainACopyRepresentation $representation) : bool
+    private function areNonCopyPropertySetToDefaultValues(CanContainACopyRepresentation $representation): bool
     {
         $representation_class_name = get_class($representation);
         /*
@@ -63,7 +63,7 @@ final class DocmanValidateRepresentationForCopy
         $default_representation          = new $representation_class_name();
         $default_representation_as_array = (array) $default_representation;
         unset($default_representation_as_array[self::COPY_PROPERTY_NAME]);
-        $representation_as_array = (array)$representation;
+        $representation_as_array = (array) $representation;
         unset($representation_as_array[self::COPY_PROPERTY_NAME]);
 
         return $representation_as_array === $default_representation_as_array;

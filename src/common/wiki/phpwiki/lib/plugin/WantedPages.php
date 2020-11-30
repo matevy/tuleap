@@ -35,15 +35,15 @@ include_once('lib/PageList.php');
 
 class WikiPlugin_WantedPages extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("WantedPages");
     }
-    function getDescription()
+    public function getDescription()
     {
         return _("Lists referenced page names which do not exist yet.");
     }
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -51,25 +51,25 @@ class WikiPlugin_WantedPages extends WikiPlugin
             "\$Revision: 1.16 $"
         );
     }
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array('page'     => '[pagename]', // just for a single page.
+            ['page'     => '[pagename]', // just for a single page.
                    'noheader' => false,
-                   'exclude_from'  => _("PgsrcTranslation").','._("InterWikiMap"),
+                   'exclude_from'  => _("PgsrcTranslation") . ',' . _("InterWikiMap"),
                    'limit'    => '100',
-            'paging'   => 'auto')
+            'paging'   => 'auto']
         );
     }
 
     // info arg allows multiple columns
     // info=mtime,hits,summary,version,author,locked,minor,markup or all
     // exclude arg allows multiple pagenames exclude=HomePage,RecentChanges
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
-        if (!empty($args['exclude_from'])) {
+        if (! empty($args['exclude_from'])) {
             $args['exclude_from'] = is_string($args['exclude_from'])
                 ? explodePageList($args['exclude_from'])
                 : $args['exclude_from']; // <! plugin-list !>
@@ -84,15 +84,15 @@ class WikiPlugin_WantedPages extends WikiPlugin
         // done.
         // TODO: Move this to backend/dumb/WantedPagesIter.php
 
-        if (!$page) {
+        if (! $page) {
             $GLOBALS['WikiTheme']->addPageListColumn(
-                array('wanted' => array('_PageList_Column_WantedPages_wanted', 'custom:wanted', _("Wanted From"), 'left'))
+                ['wanted' => ['_PageList_Column_WantedPages_wanted', 'custom:wanted', _("Wanted From"), 'left']]
             );
         }
         $pagelist = new PageList($page ? '' : 'pagename,wanted', $exclude, $args); // search button?
-        $pagelist->_wpagelist = array();
+        $pagelist->_wpagelist = [];
 
-        if (!$page) {
+        if (! $page) {
             list($offset, $maxcount) = $pagelist->limit($limit);
             $wanted_iter = $dbi->wantedPages($exclude_from, $exclude, $sortby, $limit);
             while ($row = $wanted_iter->next()) {
@@ -124,7 +124,7 @@ class WikiPlugin_WantedPages extends WikiPlugin
             ksort($this->_wpagelist);
             arsort($this->_wpagelist);
         }*/
-        if (!$noheader) {
+        if (! $noheader) {
             if ($page) {
                 $pagelist->setCaption(sprintf(_("Wanted Pages for %s:"), $page));
             } else {
@@ -137,17 +137,17 @@ class WikiPlugin_WantedPages extends WikiPlugin
         }
         return $pagelist;
     }
-};
+}
 
 // which links to the missing page
 class _PageList_Column_WantedPages_wanted extends _PageList_Column
 {
-    function __construct($params)
+    public function __construct($params)
     {
         $this->parentobj = $params[3];
         parent::__construct($params[0], $params[1], $params[2]);
     }
-    function _getValue(&$page, $revision_handle)
+    public function _getValue(&$page, $revision_handle)
     {
         $html = false;
         foreach ($this->parentobj->_wpagelist[$page->getName()] as $page) {

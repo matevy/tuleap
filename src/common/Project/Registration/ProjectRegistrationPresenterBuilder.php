@@ -19,12 +19,14 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Project\Registration;
 
+use Tuleap\Project\Admin\DescriptionFields\DescriptionFieldLabelBuilder;
 use Tuleap\Project\DefaultProjectVisibilityRetriever;
 use Tuleap\Project\DescriptionFieldsFactory;
+use Tuleap\Project\Registration\Template\CompanyTemplate;
 use Tuleap\Project\Registration\Template\ProjectTemplate;
 use Tuleap\Project\Registration\Template\TemplateFactory;
 use Tuleap\Project\Registration\Template\TemplatePresenter;
@@ -62,11 +64,30 @@ class ProjectRegistrationPresenterBuilder
 
     public function buildPresenter(): ProjectRegistrationPresenter
     {
+        $company_templates = array_map(
+            static function (CompanyTemplate $project_template) {
+                return new TemplatePresenter($project_template);
+            },
+            $this->template_factory->getCompanyTemplateList()
+        );
+
+        $formatted_field = [];
+        $fields          = $this->fields_factory->getAllDescriptionFields();
+        foreach ($fields as $field) {
+            $formatted_field[] = [
+                'group_desc_id'    => (string) $field['group_desc_id'],
+                'desc_name'        => DescriptionFieldLabelBuilder::getFieldTranslatedName($field['desc_name']),
+                'desc_type'        => $field['desc_type'],
+                'desc_description' => DescriptionFieldLabelBuilder::getFieldTranslatedDescription($field['desc_description']),
+                'desc_required'    => (string) $field['desc_required']
+            ];
+        }
 
         return new ProjectRegistrationPresenter(
             $this->default_project_visibility_retriever->getDefaultProjectVisibility(),
             $this->trove_cat_factory->getMandatoryParentCategoriesUnderRootOnlyWhenCategoryHasChildren(),
-            $this->fields_factory->getAllDescriptionFields(),
+            $formatted_field,
+            $company_templates,
             ...array_map(
                 static function (ProjectTemplate $project_template) {
                     return new TemplatePresenter($project_template);

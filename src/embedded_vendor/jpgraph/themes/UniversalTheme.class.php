@@ -9,9 +9,9 @@ class UniversalTheme extends Theme
     private $axis_color       = '#888888';
     private $grid_color       = '#E3E3E3';
 
-    function GetColorList()
+    public function GetColorList()
     {
-        return array(
+        return [
             '#61a9f3',// blue
             '#f381b9',// red
             '#61E3A9',// green
@@ -28,12 +28,11 @@ class UniversalTheme extends Theme
             '#EC8833',
             '#FFF100',
             '#87C9A5',
-        );
+        ];
     }
 
-    function SetupGraph($graph)
+    public function SetupGraph($graph)
     {
-
         // graph
         /*
         $img = $graph->img;
@@ -86,9 +85,8 @@ class UniversalTheme extends Theme
     }
 
 
-    function SetupPieGraph($graph)
+    public function SetupPieGraph($graph)
     {
-
         // graph
         $graph->SetFrame(false);
 
@@ -112,7 +110,7 @@ class UniversalTheme extends Theme
     }
 
 
-    function PreStrokeApply($graph)
+    public function PreStrokeApply($graph)
     {
         if ($graph->legend->HasItems()) {
             $img = $graph->img;
@@ -125,9 +123,8 @@ class UniversalTheme extends Theme
         }
     }
 
-    function ApplyPlot($plot)
+    public function ApplyPlot($plot)
     {
-
         switch (get_class($plot)) {
             case 'GroupBarPlot':
                 foreach ($plot->plots as $_plot) {
@@ -152,7 +149,7 @@ class UniversalTheme extends Theme
 
             case 'LinePlot':
                 $plot->Clear();
-                $plot->SetColor($this->GetNextColor().'@0.4');
+                $plot->SetColor($this->GetNextColor() . '@0.4');
                 $plot->SetWeight(2);
                 break;
 

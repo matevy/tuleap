@@ -29,32 +29,32 @@ class Tracker_Artifact_Presenter_FollowUpCommentsPresenter
     /**
      * @param Tracker_Artifact_Followup_Item[] $followups
      */
-    public function __construct(array $followups)
+    public function __construct(array $followups, PFUser $current_user)
     {
-        $this->followups = $this->buildFollowUpsPresenters($followups);
+        $this->followups = $this->buildFollowUpsPresenters($followups, $current_user);
     }
 
     public function no_comment()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_modal_artifact', 'no_comment');
+        return dgettext('tuleap-tracker', 'No comment');
     }
 
     /**
      * @param Tracker_Artifact_Followup_Item[] $followups
      * @return array
      */
-    private function buildFollowUpsPresenters(array $followups)
+    private function buildFollowUpsPresenters(array $followups, PFUser $current_user)
     {
-        $presenters = array();
+        $presenters = [];
         foreach ($followups as $followup) {
             $diff_to_previous = $followup->diffToPrevious();
-            $presenters[] = array(
+            $presenters[] = [
                 'getId'              => $followup->getId(),
                 'getAvatar'          => $followup->getAvatar(),
                 'getUserLink'        => $followup->getUserLink(),
-                'getTimeAgo'         => $followup->getTimeAgo(),
-                'getFollowupContent' => $followup->getFollowupContent($diff_to_previous)
-            );
+                'getTimeAgo'         => $followup->getTimeAgo($current_user),
+                'getFollowupContent' => $followup->getFollowupContent($diff_to_previous, $current_user)
+            ];
         }
 
         return $presenters;

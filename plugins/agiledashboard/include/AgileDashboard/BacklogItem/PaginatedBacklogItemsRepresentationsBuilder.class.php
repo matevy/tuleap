@@ -20,6 +20,8 @@
 
 use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
 use Tuleap\AgileDashboard\REST\v1\BacklogItemRepresentationFactory;
+use Tuleap\AgileDashboard\Milestone\Criterion\Status\ISearchOnStatus;
+use Tuleap\AgileDashboard\Milestone\Criterion\Status\StatusOpen;
 
 class AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentationsBuilder
 {
@@ -52,34 +54,35 @@ class AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentationsBuilder
     }
 
     /**
-     * @return AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentations;
+     * @return AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentations
      */
-    public function getPaginatedBacklogItemsRepresentationsForMilestone(PFUser $user, Planning_Milestone $milestone, $limit, $offset)
+    public function getPaginatedBacklogItemsRepresentationsForMilestone(PFUser $user, Planning_Milestone $milestone, ISearchOnStatus $criterion, $limit, $offset)
     {
         $backlog = $this->backlog_factory->getBacklog($milestone, $limit, $offset);
 
-        return $this->getBacklogItemsRepresentations($user, $milestone, $backlog, $limit, $offset);
+        return $this->getBacklogItemsRepresentations($user, $milestone, $backlog, $criterion, $limit, $offset);
     }
 
     /**
-     * @return AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentations;
+     * @return AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentations
      */
     public function getPaginatedBacklogItemsRepresentationsForTopMilestone(PFUser $user, Planning_Milestone $top_milestone, $limit, $offset)
     {
         $backlog = $this->backlog_factory->getSelfBacklog($top_milestone, $limit, $offset);
 
-        return $this->getBacklogItemsRepresentations($user, $top_milestone, $backlog, $limit, $offset);
+        return $this->getBacklogItemsRepresentations($user, $top_milestone, $backlog, new StatusOpen(), $limit, $offset);
     }
 
     private function getBacklogItemsRepresentations(
         PFUser $user,
         Planning_Milestone $milestone,
         AgileDashboard_Milestone_Backlog_Backlog $backlog,
+        ISearchOnStatus $criterion,
         int $limit,
         int $offset
     ): AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentations {
-        $backlog_items                 = $this->getMilestoneBacklogItems($user, $milestone, $backlog, $limit, $offset);
-        $backlog_items_representations = array();
+        $backlog_items                 = $this->getMilestoneBacklogItems($user, $milestone, $backlog, $criterion, $limit, $offset);
+        $backlog_items_representations = [];
 
         foreach ($backlog_items as $backlog_item) {
             $backlog_items_representations[] = $this->backlog_item_representation_factory->createBacklogItemRepresentation($backlog_item);
@@ -92,21 +95,27 @@ class AgileDashboard_BacklogItem_PaginatedBacklogItemsRepresentationsBuilder
         PFUser $user,
         Planning_Milestone $milestone,
         AgileDashboard_Milestone_Backlog_Backlog $backlog,
+        ISearchOnStatus $criterion,
         int $limit,
         int $offset
     ) {
-        if ($milestone instanceof Planning_VirtualTopMilestone &&
+        if (
+            $milestone instanceof Planning_VirtualTopMilestone &&
             $this->explicit_backlog_dao->isProjectUsingExplicitBacklog((int) $milestone->getGroupId())
         ) {
             return $this->backlog_item_collection_factory->getExplicitTopBacklogItems(
                 $user,
                 $milestone,
-                false,
+                null,
                 $limit,
                 $offset
             );
         }
 
-        return $this->backlog_item_collection_factory->getUnplannedOpenCollection($user, $milestone, $backlog, false);
+        if ($criterion instanceof StatusOpen) {
+            return $this->backlog_item_collection_factory->getUnplannedOpenCollection($user, $milestone, $backlog, null);
+        }
+
+        return $this->backlog_item_collection_factory->getOpenClosedUnplannedCollection($user, $milestone, $backlog, null);
     }
 }

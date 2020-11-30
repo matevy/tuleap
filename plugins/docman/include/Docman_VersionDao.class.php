@@ -28,7 +28,7 @@ class Docman_VersionDao extends DataAccessObject
     * Gets all tables of the db
     * @return DataAccessResult
     */
-    function searchAll()
+    public function searchAll()
     {
         $sql = "SELECT * FROM plugin_docman_version";
         return $this->retrieve($sql);
@@ -38,7 +38,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Id
     * @return DataAccessResult
     */
-    function searchById($id, $table = 'plugin_docman_version')
+    public function searchById($id, $table = 'plugin_docman_version')
     {
         $sql = sprintf(
             "SELECT item_id, number, user_id, label, changelog, filename, filesize, filetype, path FROM %s WHERE id = %s",
@@ -52,7 +52,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by ItemId
     * @return DataAccessResult
     */
-    function searchByItemId($itemId)
+    public function searchByItemId($itemId)
     {
         $sql = sprintf(
             "SELECT id, number, item_id, user_id, label, changelog, date, filename, filesize, filetype, path FROM plugin_docman_version WHERE item_id = %s ORDER BY number DESC",
@@ -65,7 +65,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Number
     * @return DataAccessResult
     */
-    function searchByNumber($item_id, $number)
+    public function searchByNumber($item_id, $number)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, user_id, label, changelog, date, filename, filesize, filetype, path FROM plugin_docman_version WHERE number = %s AND item_id = %s",
@@ -79,7 +79,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by UserId
     * @return DataAccessResult
     */
-    function searchByUserId($userId)
+    public function searchByUserId($userId)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, label, changelog, date, filename, filesize, filetype, path FROM plugin_docman_version WHERE user_id = %s",
@@ -92,7 +92,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Label
     * @return DataAccessResult
     */
-    function searchByLabel($label)
+    public function searchByLabel($label)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, user_id, changelog, date, filename, filesize, filetype, path FROM plugin_docman_version WHERE label = %s",
@@ -105,7 +105,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Changelog
     * @return DataAccessResult
     */
-    function searchByChangelog($changelog)
+    public function searchByChangelog($changelog)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, user_id, label, date, filename, filesize, filetype, path FROM plugin_docman_version WHERE changelog = %s",
@@ -118,7 +118,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Date
     * @return DataAccessResult
     */
-    function searchByDate($date)
+    public function searchByDate($date)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, user_id, label, changelog, filename, filesize, filetype, path FROM plugin_docman_version WHERE date = %s",
@@ -131,7 +131,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Filename
     * @return DataAccessResult
     */
-    function searchByFilename($filename)
+    public function searchByFilename($filename)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, user_id, label, changelog, date, filesize, filetype, path FROM plugin_docman_version WHERE filename = %s",
@@ -144,7 +144,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Filesize
     * @return DataAccessResult
     */
-    function searchByFilesize($filesize)
+    public function searchByFilesize($filesize)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, user_id, label, changelog, date, filename, filetype, path FROM plugin_docman_version WHERE filesize = %s",
@@ -157,7 +157,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Filetype
     * @return DataAccessResult
     */
-    function searchByFiletype($filetype)
+    public function searchByFiletype($filetype)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, user_id, label, changelog, date, filename, filesize, path FROM plugin_docman_version WHERE filetype = %s",
@@ -170,7 +170,7 @@ class Docman_VersionDao extends DataAccessObject
     * Searches Docman_VersionDao by Path
     * @return DataAccessResult
     */
-    function searchByPath($path)
+    public function searchByPath($path)
     {
         $sql = sprintf(
             "SELECT id, item_id, number, user_id, label, changelog, date, filename, filesize, filetype FROM plugin_docman_version WHERE path = %s",
@@ -188,13 +188,13 @@ class Docman_VersionDao extends DataAccessObject
      *
      * @return int|false
      */
-    function searchNextVersionNumber($itemId)
+    public function searchNextVersionNumber($itemId)
     {
-        $sql = 'SELECT * FROM'.
-               ' (SELECT MAX(number) AS v_max FROM plugin_docman_version WHERE item_id = '.$this->da->escapeInt($itemId).') AS v,'.
-               ' (SELECT MAX(number) AS d_max FROM plugin_docman_version_deleted WHERE item_id = '.$this->da->escapeInt($itemId).') AS d';
+        $sql = 'SELECT * FROM' .
+               ' (SELECT MAX(number) AS v_max FROM plugin_docman_version WHERE item_id = ' . $this->da->escapeInt($itemId) . ') AS v,' .
+               ' (SELECT MAX(number) AS d_max FROM plugin_docman_version_deleted WHERE item_id = ' . $this->da->escapeInt($itemId) . ') AS d';
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError()) {
+        if ($dar && ! $dar->isError()) {
             $row = $dar->getRow();
             if ($row['v_max'] === null && $row['d_max'] === null) {
                 return false;
@@ -209,14 +209,14 @@ class Docman_VersionDao extends DataAccessObject
     * create a row in the table plugin_docman_version
     * @return true or id(auto_increment) if there is no error
     */
-    function create($item_id, $number, $user_id, $label, $changelog, $date, $filename, $filesize, $filetype, $path)
+    public function create($item_id, $number, $user_id, $label, $changelog, $date, $filename, $filesize, $filetype, $path)
     {
         $sql = sprintf(
             "INSERT INTO plugin_docman_version (item_id, number, user_id, label, changelog, date, filename, filesize, filetype, path) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             $this->da->quoteSmart($item_id),
             $this->da->quoteSmart($number),
             $this->da->quoteSmart($user_id),
-            $this->da->quoteSmart($label, array('force_string' => true)),
+            $this->da->quoteSmart($label, ['force_string' => true]),
             $this->da->quoteSmart($changelog),
             $this->da->quoteSmart($date),
             $this->da->quoteSmart($filename),
@@ -226,15 +226,15 @@ class Docman_VersionDao extends DataAccessObject
         );
         return $this->_createAndReturnId($sql);
     }
-    function createFromRow($row)
+    public function createFromRow(array $row)
     {
-        if (!isset($row['date']) || $row['date'] == '') {
+        if (! isset($row['date']) || $row['date'] == '') {
             $row['date'] = time();
         }
-        $arg    = array();
-        $values = array();
-        $params = array('force_string' => false);
-        $cols   = array('item_id', 'number', 'user_id', 'label', 'changelog', 'date', 'filename', 'filesize', 'filetype', 'path');
+        $arg    = [];
+        $values = [];
+        $params = ['force_string' => false];
+        $cols   = ['item_id', 'number', 'user_id', 'label', 'changelog', 'date', 'filename', 'filesize', 'filetype', 'path'];
         foreach ($row as $key => $value) {
             if (in_array($key, $cols)) {
                 $arg[]    = $key;
@@ -244,14 +244,14 @@ class Docman_VersionDao extends DataAccessObject
         }
         if (count($arg)) {
             $sql = 'INSERT INTO plugin_docman_version '
-                .'('.implode(', ', $arg).')'
-                .' VALUES ('.implode(', ', $values).')';
+                . '(' . implode(', ', $arg) . ')'
+                . ' VALUES (' . implode(', ', $values) . ')';
             return $this->_createAndReturnId($sql);
         } else {
             return false;
         }
     }
-    function _createAndReturnId($sql)
+    public function _createAndReturnId($sql)
     {
         $inserted = $this->update($sql);
         if ($inserted) {
@@ -272,12 +272,11 @@ class Docman_VersionDao extends DataAccessObject
      * @param  String  $new_name
      * @return bool
      */
-    function renameProject($docman_path, $project, $new_name)
+    public function renameProject($docman_path, $project, $new_name)
     {
-
-        $sql_update = 'UPDATE plugin_docman_version '.
-                      'SET path = REPLACE (path,'.$this->da->quoteSmart($docman_path.$project->getUnixName(true).'/').' ,'.$this->da->quoteSmart($docman_path.strtolower($new_name).'/').') '.
-                      'WHERE path LIKE '.$this->da->quoteLikeValueSurround($docman_path.$project->getUnixName(true).'/');
+        $sql_update = 'UPDATE plugin_docman_version ' .
+                      'SET path = REPLACE (path,' . $this->da->quoteSmart($docman_path . $project->getUnixName(true) . '/') . ' ,' . $this->da->quoteSmart($docman_path . strtolower($new_name) . '/') . ') ' .
+                      'WHERE path LIKE ' . $this->da->quoteLikeValueSurround($docman_path . $project->getUnixName(true) . '/');
         return $this->update($sql_update);
     }
 
@@ -290,17 +289,17 @@ class Docman_VersionDao extends DataAccessObject
      *
      * @return bool
      */
-    function deleteSpecificVersion($itemId, $number)
+    public function deleteSpecificVersion($itemId, $number)
     {
-        $sql = 'INSERT INTO plugin_docman_version_deleted (id, item_id, number, user_id, label, '.
-                        ' changelog, create_date,  '.
-                        ' filename, filesize, filetype, path, delete_date) '.
-                        ' SELECT id, item_id, number, user_id, label, '.
-                        ' changelog, date, '.
-                        ' filename, filesize, filetype, path , '.$_SERVER['REQUEST_TIME'].' FROM plugin_docman_version '.
-                        ' WHERE item_id='.$this->da->quoteSmart($itemId).' AND number='.$this->da->quoteSmart($number);
+        $sql = 'INSERT INTO plugin_docman_version_deleted (id, item_id, number, user_id, label, ' .
+                        ' changelog, create_date,  ' .
+                        ' filename, filesize, filetype, path, delete_date) ' .
+                        ' SELECT id, item_id, number, user_id, label, ' .
+                        ' changelog, date, ' .
+                        ' filename, filesize, filetype, path , ' . $_SERVER['REQUEST_TIME'] . ' FROM plugin_docman_version ' .
+                        ' WHERE item_id=' . $this->da->quoteSmart($itemId) . ' AND number=' . $this->da->quoteSmart($number);
         if ($this->update($sql)) {
-            $sql= 'DELETE FROM plugin_docman_version WHERE item_id='.$this->da->quoteSmart($itemId).' AND number='.$this->da->quoteSmart($number);
+            $sql = 'DELETE FROM plugin_docman_version WHERE item_id=' . $this->da->quoteSmart($itemId) . ' AND number=' . $this->da->quoteSmart($number);
             return $this->update($sql);
         }
         return false;
@@ -314,17 +313,17 @@ class Docman_VersionDao extends DataAccessObject
      *
      * @return bool
      */
-    function restore($itemId, $number)
+    public function restore($itemId, $number)
     {
-        $sql = 'INSERT INTO plugin_docman_version (id, item_id, number, user_id, label, '.
-                        ' changelog, date,  '.
-                        ' filename, filesize, filetype, path) '.
-                        ' SELECT id, item_id, number, user_id, label, '.
-                        ' changelog, create_date, '.
-                        ' filename, filesize, filetype, path FROM plugin_docman_version_deleted '.
-                        ' WHERE item_id='.$this->da->quoteSmart($itemId).' AND number='.$this->da->quoteSmart($number);
+        $sql = 'INSERT INTO plugin_docman_version (id, item_id, number, user_id, label, ' .
+                        ' changelog, date,  ' .
+                        ' filename, filesize, filetype, path) ' .
+                        ' SELECT id, item_id, number, user_id, label, ' .
+                        ' changelog, create_date, ' .
+                        ' filename, filesize, filetype, path FROM plugin_docman_version_deleted ' .
+                        ' WHERE item_id=' . $this->da->quoteSmart($itemId) . ' AND number=' . $this->da->quoteSmart($number);
         if ($this->update($sql)) {
-            $sql= 'DELETE FROM plugin_docman_version_deleted WHERE item_id='.$this->da->quoteSmart($itemId).' AND number='.$this->da->quoteSmart($number);
+            $sql = 'DELETE FROM plugin_docman_version_deleted WHERE item_id=' . $this->da->quoteSmart($itemId) . ' AND number=' . $this->da->quoteSmart($number);
             return $this->update($sql);
         }
         return false;
@@ -340,23 +339,23 @@ class Docman_VersionDao extends DataAccessObject
      *
      * @return Array
      */
-    function listPendingVersions($groupId, $offset, $limit)
+    public function listPendingVersions($groupId, $offset, $limit)
     {
-        $sql=' SELECT SQL_CALC_FOUND_ROWS id, title, number,label,'.
-             '        plugin_docman_version_deleted.delete_date  as date, '.
-             '        plugin_docman_version_deleted.item_id as item_id '.
-             ' FROM plugin_docman_item, plugin_docman_version_deleted '.
-             ' WHERE plugin_docman_item.item_id = plugin_docman_version_deleted.item_id '.
-             '        AND group_id='.db_ei($groupId).
-             '        AND plugin_docman_version_deleted.delete_date <= '.$_SERVER['REQUEST_TIME'].
-             '        AND plugin_docman_version_deleted.purge_date IS NULL '.
-             '        AND plugin_docman_item.delete_date IS NULL'.
-             ' ORDER BY plugin_docman_version_deleted.delete_date DESC '.
-             ' LIMIT '.db_ei($offset).', '.db_ei($limit);
+        $sql = ' SELECT SQL_CALC_FOUND_ROWS id, title, number,label,' .
+             '        plugin_docman_version_deleted.delete_date  as date, ' .
+             '        plugin_docman_version_deleted.item_id as item_id ' .
+             ' FROM plugin_docman_item, plugin_docman_version_deleted ' .
+             ' WHERE plugin_docman_item.item_id = plugin_docman_version_deleted.item_id ' .
+             '        AND group_id=' . db_ei($groupId) .
+             '        AND plugin_docman_version_deleted.delete_date <= ' . $_SERVER['REQUEST_TIME'] .
+             '        AND plugin_docman_version_deleted.purge_date IS NULL ' .
+             '        AND plugin_docman_item.delete_date IS NULL' .
+             ' ORDER BY plugin_docman_version_deleted.delete_date DESC ' .
+             ' LIMIT ' . db_ei($offset) . ', ' . db_ei($limit);
 
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError() && $dar->rowCount() >0) {
-            $pendings = array();
+        if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
+            $pendings = [];
             foreach ($dar as $row) {
                 $pendings[] = $row;
             }
@@ -367,9 +366,9 @@ class Docman_VersionDao extends DataAccessObject
                 return [];
             }
             $row = $resNumrows->getRow();
-            return array('versions' => $pendings, 'nbVersions' => $row['nb']);
+            return ['versions' => $pendings, 'nbVersions' => $row['nb']];
         }
-        return array();
+        return [];
     }
 
     /**
@@ -379,11 +378,11 @@ class Docman_VersionDao extends DataAccessObject
      *
      * @return DataAccessResult|false
      */
-    function listVersionsToPurgeByItemId($itemId)
+    public function listVersionsToPurgeByItemId($itemId)
     {
-        $sql = 'SELECT v.id, v.number, v.item_id, v.user_id, v.label, v.changelog,'.
-               ' v.create_date as date, v.filename, v.filesize, v.filetype, v.path '.
-               ' FROM plugin_docman_version_deleted v '.
+        $sql = 'SELECT v.id, v.number, v.item_id, v.user_id, v.label, v.changelog,' .
+               ' v.create_date as date, v.filename, v.filesize, v.filetype, v.path ' .
+               ' FROM plugin_docman_version_deleted v ' .
                ' WHERE v.item_id = ' . $this->da->quoteSmart($itemId);
                ' AND purge_date IS NULL';
         return $this->retrieve($sql);
@@ -396,12 +395,12 @@ class Docman_VersionDao extends DataAccessObject
      *
      * @return DataAccessResult|false
      */
-    function listVersionsToPurge($time)
+    public function listVersionsToPurge($time)
     {
-        $sql=' SELECT id, item_id, number, user_id, label, changelog,'.
-             ' create_date AS date, filename, filesize, filetype, path '.
-             ' FROM plugin_docman_version_deleted '.
-             ' WHERE delete_date < '.$this->da->quoteSmart($time).
+        $sql = ' SELECT id, item_id, number, user_id, label, changelog,' .
+             ' create_date AS date, filename, filesize, filetype, path ' .
+             ' FROM plugin_docman_version_deleted ' .
+             ' WHERE delete_date < ' . $this->da->quoteSmart($time) .
              ' AND purge_date IS NULL ';
 
         return $this->retrieve($sql);
@@ -415,12 +414,12 @@ class Docman_VersionDao extends DataAccessObject
      *
      * @return DataAccessResult
      */
-    function searchDeletedVersion($itemId, $number)
+    public function searchDeletedVersion($itemId, $number)
     {
-        $sql = 'SELECT * '.
-               ' FROM plugin_docman_version_deleted'.
-               ' WHERE item_id = '.$this->da->escapeInt($itemId).
-               ' AND number = '.$this->da->escapeInt($number);
+        $sql = 'SELECT * ' .
+               ' FROM plugin_docman_version_deleted' .
+               ' WHERE item_id = ' . $this->da->escapeInt($itemId) .
+               ' AND number = ' . $this->da->escapeInt($number);
         return $this->retrieve($sql);
     }
 
@@ -432,11 +431,11 @@ class Docman_VersionDao extends DataAccessObject
      *
      * @return bool
      */
-    function setPurgeDate($id, $time)
+    public function setPurgeDate($id, $time)
     {
-        $sql = 'UPDATE plugin_docman_version_deleted'.
-               ' SET purge_date = '.$this->da->escapeInt($time).
-               ' WHERE id = '.$this->da->escapeInt($id);
+        $sql = 'UPDATE plugin_docman_version_deleted' .
+               ' SET purge_date = ' . $this->da->escapeInt($time) .
+               ' WHERE id = ' . $this->da->escapeInt($id);
         return $this->update($sql);
     }
 }

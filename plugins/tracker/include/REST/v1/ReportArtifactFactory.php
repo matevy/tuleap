@@ -33,8 +33,6 @@ class ReportArtifactFactory
     }
 
     /**
-     * @param Tracker_Report $report
-     * @param IProvideFromAndWhereSQLFragments $additional_from_where
      * @param int $limit
      * @param int $offset
      * @return ArtifactMatchingReportCollection
@@ -51,7 +49,6 @@ class ReportArtifactFactory
     }
 
     /**
-     * @param Tracker_Report $report
      * @param int $limit
      * @param int $offset
      * @return ArtifactMatchingReportCollection
@@ -70,7 +67,7 @@ class ReportArtifactFactory
     {
         if (! isset($matching_ids['id']) || ! $matching_ids['id']) {
             return new ArtifactMatchingReportCollection(
-                array(),
+                [],
                 0
             );
         }

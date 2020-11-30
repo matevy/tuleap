@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -17,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Tracker\Artifact\Artifact;
 
 class Tracker_Artifact_XMLImport_XMLImportFieldStrategyList extends Tracker_Artifact_XMLImport_XMLImportFieldStrategyAlphanumeric
 {
@@ -47,21 +49,17 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyList extends Tracker_Arti
     /**
      * Extract Field data from XML input
      *
-     * @param Tracker_FormElement_Field $field
-     * @param SimpleXMLElement $field_change
      *
-     * @param PFUser $submitted_by
-     * @param Tracker_Artifact $artifact
      * @return array
      */
     public function getFieldData(
         Tracker_FormElement_Field $field,
         SimpleXMLElement $field_change,
         PFUser $submitted_by,
-        Tracker_Artifact $artifact
+        Artifact $artifact
     ) {
         $bind = (string) $field_change['bind'];
-        $data = array();
+        $data = [];
 
         if ($bind === self::BIND_STATIC) {
             foreach ($field_change as $value) {
@@ -81,7 +79,7 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyList extends Tracker_Arti
         return $data;
     }
 
-    private function getStaticListDataValue(Tracker_FormElement_Field $field, $value)
+    private function getStaticListDataValue(Tracker_FormElement_Field $field, $value): ?int
     {
         if (isset($value['format']) && (string) $value['format'] === self::FORMAT_ID) {
             return $this->xml_fields_mapping->getNewValueId((int) $value);
@@ -89,6 +87,11 @@ class Tracker_Artifact_XMLImport_XMLImportFieldStrategyList extends Tracker_Arti
 
         $result = $this->static_value_dao->searchValueByLabel($field->getId(), (string) $value);
         $row    = $result->getRow();
+
+        if ($row === false) {
+            return null;
+        }
+
         return (int) $row['id'];
     }
 

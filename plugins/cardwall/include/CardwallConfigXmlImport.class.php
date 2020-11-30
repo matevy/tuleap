@@ -52,16 +52,28 @@ class CardwallConfigXmlImport
     /** @var Cardwall_OnTop_ColumnDao */
     private $column_dao;
 
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @var Tracker_XML_Importer_ArtifactImportedMapping
+     */
+    private $artifact_id_mapping;
+
     public function __construct(
         $group_id,
         array $mapping,
         array $field_mapping,
+        Tracker_XML_Importer_ArtifactImportedMapping $artifact_id_mapping,
         Cardwall_OnTop_Dao $cardwall_ontop_dao,
         Cardwall_OnTop_ColumnDao $column_dao,
         Cardwall_OnTop_ColumnMappingFieldDao $mapping_field_dao,
         Cardwall_OnTop_ColumnMappingFieldValueDao $mapping_field_value_dao,
         EventManager $event_manager,
-        XML_RNGValidator $xml_validator
+        XML_RNGValidator $xml_validator,
+        \Psr\Log\LoggerInterface $logger
     ) {
         $this->mapping                 = $mapping;
         $this->field_mapping           = $field_mapping;
@@ -72,12 +84,13 @@ class CardwallConfigXmlImport
         $this->group_id                = $group_id;
         $this->event_manager           = $event_manager;
         $this->xml_validator           = $xml_validator;
+        $this->logger                  = $logger;
+        $this->artifact_id_mapping     = $artifact_id_mapping;
     }
 
     /**
      * Import cardwall ontop from XML input
      *
-     * @param SimpleXMLElement $xml_input
      * @throws CardwallFromXmlImportCannotBeEnabledException
      */
     public function import(SimpleXMLElement $xml_input)
@@ -86,7 +99,7 @@ class CardwallConfigXmlImport
             return;
         }
 
-        $rng_path = realpath(CARDWALL_BASE_DIR.'/../www/resources/xml_project_cardwall.rng');
+        $rng_path = realpath(__DIR__ . '/../resources/xml_project_cardwall.rng');
         $this->xml_validator->validate($xml_input->{CardwallConfigXml::NODE_CARDWALL}, $rng_path);
 
         $this->cardwall_ontop_dao->startTransaction();
@@ -94,19 +107,22 @@ class CardwallConfigXmlImport
 
         $this->event_manager->processEvent(
             Event::IMPORT_XML_PROJECT_CARDWALL_DONE,
-            array(
-                'project_id'  => $this->group_id,
-                'xml_content' => $xml_input,
-                'mapping'     => $this->mapping
-            )
+            [
+                'project_id'          => $this->group_id,
+                'xml_content'         => $xml_input,
+                'mapping'             => $this->mapping,
+                'logger'              => $this->logger,
+                'artifact_id_mapping' => $this->artifact_id_mapping
+            ]
         );
+
         $this->cardwall_ontop_dao->commit();
     }
 
     private function importCardwalls(SimpleXMLElement $cardwalls)
     {
         foreach ($cardwalls->{CardwallConfigXml::NODE_TRACKERS}->children() as $cardwall_tracker) {
-            $cardwall_tracker_xml_id = (String) $cardwall_tracker[CardwallConfigXml::ATTRIBUTE_TRACKER_ID];
+            $cardwall_tracker_xml_id = (string) $cardwall_tracker[CardwallConfigXml::ATTRIBUTE_TRACKER_ID];
             if (array_key_exists($cardwall_tracker_xml_id, $this->mapping)) {
                 $tracker_id = $this->mapping[$cardwall_tracker_xml_id];
                 $this->importOneCardwall($cardwall_tracker, $tracker_id);
@@ -173,7 +189,7 @@ class CardwallConfigXmlImport
         } else {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
-                $GLOBALS['Language']->getText('plugin_cardwall', 'xml_import_field_error', array($field_xml_id))
+                sprintf(dgettext('tuleap-cardwall', 'Provided field value %1$s is not valid. Skipping mapping.'), $field_xml_id)
             );
         }
     }
@@ -187,7 +203,7 @@ class CardwallConfigXmlImport
         } else {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
-                $GLOBALS['Language']->getText('plugin_cardwall', 'xml_import_tracker_error', array($tracker_id_xml))
+                sprintf(dgettext('tuleap-cardwall', 'Provided tracker value %1$s is not valid. Skipping mapping.'), $tracker_id_xml)
             );
         }
     }
@@ -217,21 +233,21 @@ class CardwallConfigXmlImport
 
     private function getNewColumnId(SimpleXMLElement $xml_value, array $column_mapping)
     {
-        $xml_column_id = (string)$xml_value['column_id'];
+        $xml_column_id = (string) $xml_value['column_id'];
 
         if (isset($column_mapping[$xml_column_id])) {
             return $column_mapping[$xml_column_id];
         } else {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
-                $GLOBALS['Language']->getText('plugin_cardwall', 'xml_import_column_error', array($xml_column_id))
+                sprintf(dgettext('tuleap-cardwall', 'Provided column value %1$s is not valid. Skipping mapping value.'), $xml_column_id)
             );
         }
     }
 
     private function getNewValueId(SimpleXMLElement $xml_value)
     {
-        $xml_value_id = (string)$xml_value['value_id'];
+        $xml_value_id = (string) $xml_value['value_id'];
 
         if ($xml_value_id === Tracker_FormElement_Field_List_Bind_StaticValue_None::XML_VALUE_ID) {
             return Tracker_FormElement_Field_List_Bind_StaticValue_None::VALUE_ID;
@@ -244,7 +260,7 @@ class CardwallConfigXmlImport
         } else {
             $GLOBALS['Response']->addFeedback(
                 Feedback::WARN,
-                $GLOBALS['Language']->getText('plugin_cardwall', 'xml_import_value_error', array($xml_value_id))
+                sprintf(dgettext('tuleap-cardwall', 'Provided value %1$s is not valid. Skipping mapping value.'), $xml_value_id)
             );
         }
     }
@@ -255,11 +271,11 @@ class CardwallConfigXmlImport
      */
     private function importColumns(SimpleXMLElement $xml_columns, $cardwall_tracker_id)
     {
-        $column_mapping = array();
+        $column_mapping = [];
 
         foreach ($xml_columns->{CardwallConfigXml::NODE_COLUMN} as $xml_column) {
-            $label         = (string)$xml_column[CardwallConfigXml::ATTRIBUTE_COLUMN_LABEL];
-            $xml_column_id = (string)$xml_column[CardwallConfigXml::ATTRIBUTE_COLUMN_ID];
+            $label         = (string) $xml_column[CardwallConfigXml::ATTRIBUTE_COLUMN_LABEL];
+            $xml_column_id = (string) $xml_column[CardwallConfigXml::ATTRIBUTE_COLUMN_ID];
 
             $red       = $this->getColorValueFromXML($xml_column, CardwallConfigXml::ATTRIBUTE_COLUMN_BG_RED, $xml_column_id);
             $green     = $this->getColorValueFromXML($xml_column, CardwallConfigXml::ATTRIBUTE_COLUMN_BG_GREEN, $xml_column_id);
@@ -281,13 +297,13 @@ class CardwallConfigXmlImport
     private function getTLPColorNameFromXml(SimpleXMLElement $xml_column, $xml_column_id)
     {
         $color_label = CardwallConfigXml::ATTRIBUTE_COLUMN_TLP_COLOR_NAME;
-        $color_name  = $xml_column[ $color_label ];
 
-        if (! $color_name) {
+        if (! isset($xml_column[$color_label])) {
             return null;
         }
+        $color_name  = $xml_column[$color_label];
 
-        if (strlen($color_name) === 0) {
+        if ((string) $color_name === '') {
             $this->addColorImportErrorFeedback($color_label, $xml_column_id);
             return null;
         }
@@ -298,7 +314,7 @@ class CardwallConfigXmlImport
     private function getColorValueFromXML(SimpleXMLElement $xml_column, $color_label, $xml_column_id)
     {
         if ($xml_column[$color_label]) {
-            $color_value = (int)$xml_column[$color_label];
+            $color_value = (int) $xml_column[$color_label];
 
             if ($color_value >= 0 && $color_value <= 255) {
                 return $color_value;
@@ -314,14 +330,7 @@ class CardwallConfigXmlImport
     {
         $GLOBALS['Response']->addFeedback(
             Feedback::WARN,
-            $GLOBALS['Language']->getText(
-                'plugin_cardwall',
-                'xml_import_color_error',
-                [
-                    $color_label,
-                    $xml_column_id
-                ]
-            )
+            sprintf(dgettext('tuleap-cardwall', 'Provided color value %1$s for column %2$s is not valid.'), $color_label, $xml_column_id)
         );
     }
 }

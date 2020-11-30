@@ -35,7 +35,7 @@ export {
     setProjectUserGroups,
     toggleQuickLook,
     beginLoadingCurrentlyPreviewedItem,
-    stopLoadingCurrentlyPreviewedItem
+    stopLoadingCurrentlyPreviewedItem,
 };
 
 function initApp(
@@ -43,30 +43,50 @@ function initApp(
     [
         user_id,
         project_id,
+        project_name,
+        project_public_name,
+        project_url,
         user_is_admin,
         date_time_format,
         root_title,
         user_can_create_wiki,
         max_files_dragndrop,
         max_size_upload,
+        warning_threshold,
+        max_archive_size,
         embedded_are_allowed,
         is_deletion_allowed,
         is_item_status_metadata_used,
-        is_obsolescence_date_metadata_used
+        is_obsolescence_date_metadata_used,
+        is_changelog_proposed_after_dnd,
+        user_locale,
+        relative_dates_display,
+        privacy,
+        project_flags,
     ]
 ) {
     state.user_id = user_id;
     state.project_id = project_id;
+    state.project_name = project_name;
+    state.project_public_name = project_public_name;
+    state.project_url = project_url;
     state.is_user_administrator = user_is_admin;
     state.date_time_format = date_time_format;
     state.root_title = root_title;
     state.user_can_create_wiki = user_can_create_wiki;
     state.max_files_dragndrop = max_files_dragndrop;
     state.max_size_upload = max_size_upload;
+    state.warning_threshold = warning_threshold;
+    state.max_archive_size = max_archive_size;
     state.embedded_are_allowed = embedded_are_allowed;
     state.is_deletion_allowed = is_deletion_allowed;
     state.is_item_status_metadata_used = is_item_status_metadata_used;
     state.is_obsolescence_date_metadata_used = is_obsolescence_date_metadata_used;
+    state.is_changelog_proposed_after_dnd = is_changelog_proposed_after_dnd;
+    state.user_locale = user_locale;
+    state.relative_dates_display = relative_dates_display;
+    state.privacy = privacy;
+    state.project_flags = project_flags;
 }
 
 function saveAscendantHierarchy(state, hierarchy) {
@@ -95,7 +115,7 @@ function stopLoadingAscendantHierarchy(state) {
 
 function appendFolderToAscendantHierarchy(state, folder) {
     const parent_index_in_hierarchy = state.current_folder_ascendant_hierarchy.findIndex(
-        item => item.id === folder.parent_id
+        (item) => item.id === folder.parent_id
     );
 
     if (parent_index_in_hierarchy !== -1) {
@@ -103,7 +123,7 @@ function appendFolderToAscendantHierarchy(state, folder) {
         return;
     }
 
-    const folder_index = state.folder_content.findIndex(item => item.id === folder.id);
+    const folder_index = state.folder_content.findIndex((item) => item.id === folder.id);
     const ascendants = state.folder_content.slice(0, folder_index);
 
     let next_parent_id = folder.parent_id;
@@ -127,7 +147,7 @@ function setCurrentFolder(state, folder) {
 function replaceCurrentFolder(state, folder) {
     state.current_folder = folder;
     const folder_in_hierarchy_index = state.current_folder_ascendant_hierarchy.findIndex(
-        item => item.id === folder.id
+        (item) => item.id === folder.id
     );
     if (folder_in_hierarchy_index >= 0) {
         state.current_folder_ascendant_hierarchy[folder_in_hierarchy_index] = folder;

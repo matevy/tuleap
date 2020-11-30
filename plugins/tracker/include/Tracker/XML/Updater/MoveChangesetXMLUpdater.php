@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -136,6 +136,9 @@ class MoveChangesetXMLUpdater
         FeedbackFieldCollectorInterface $feedback_field_collector
     ) {
         $last_index = $artifact_xml->changeset === null ? -1 : count($artifact_xml->changeset) - 1;
+        if ($artifact_xml->changeset === null) {
+            return;
+        }
         for ($index = $last_index; $index >= 0; $index--) {
             $this->parseFieldChangeNodesInReverseOrder(
                 $source_tracker,
@@ -210,23 +213,28 @@ class MoveChangesetXMLUpdater
         $last_index = $changeset_xml->field_change === null ? -1 : count($changeset_xml->field_change) - 1;
         for ($index = $last_index; $index >= 0; $index--) {
             $modified = false;
-            if ($title_semantic_can_be_moved &&
+            if (
+                $title_semantic_can_be_moved &&
                 $this->isFieldChangeCorrespondingToTitleSemanticField($changeset_xml, $source_tracker, $index)
             ) {
                 $this->useTargetTrackerFieldName($changeset_xml, $target_title_field, $index);
                 continue;
-            } elseif ($description_semantic_can_be_moved &&
+            } elseif (
+                $description_semantic_can_be_moved &&
                 $this->isFieldChangeCorrespondingToDescriptionSemanticField($changeset_xml, $source_tracker, $index)
             ) {
                 $this->useTargetTrackerFieldName($changeset_xml, $target_description_field, $index);
                 continue;
-            } elseif ($status_semantic_can_be_moved &&
+            } elseif (
+                $status_semantic_can_be_moved &&
+                $target_status_field !== null &&
                 $this->isFieldChangeCorrespondingToStatusSemanticField($changeset_xml, $source_status_field, $index)
             ) {
                 $this->useTargetTrackerFieldName($changeset_xml, $target_status_field, $index);
                 $this->updateValue($changeset_xml, $source_status_field, $target_status_field, $index, $feedback_field_collector);
                 continue;
-            } elseif ($contributor_semantic_can_be_moved &&
+            } elseif (
+                $contributor_semantic_can_be_moved &&
                 $this->isFieldChangeCorrespondingToContributorSemanticField($changeset_xml, $source_contributor_field, $index)
             ) {
                 $this->useTargetTrackerFieldName($changeset_xml, $target_contributor_field, $index);
@@ -276,6 +284,9 @@ class MoveChangesetXMLUpdater
     private function deleteEmptyCommentNodes(SimpleXMLElement $comments_xml)
     {
         $last_index = $comments_xml->comment === null ? -1 : count($comments_xml->comment) - 1;
+        if ($comments_xml->comment === null) {
+            return;
+        }
         for ($index = $last_index; $index >= 0; $index--) {
             if ((string) $comments_xml->comment[$index]->body === '') {
                 unset($comments_xml->comment[$index]);
@@ -302,7 +313,8 @@ class MoveChangesetXMLUpdater
         $index
     ) {
         $source_description_field = $source_tracker->getDescriptionField();
-        if ($source_description_field &&
+        if (
+            $source_description_field &&
             $this->isFieldChangeCorrespondingToField($changeset_xml, $source_description_field, $index)
         ) {
             return true;
@@ -311,12 +323,15 @@ class MoveChangesetXMLUpdater
         return false;
     }
 
+    /**
+     * @psalm-assert-if-true !null $source_status_field
+     */
     private function isFieldChangeCorrespondingToStatusSemanticField(
         SimpleXMLElement $changeset_xml,
-        Tracker_FormElement_Field $source_status_field,
+        ?Tracker_FormElement_Field $source_status_field,
         $index
     ) {
-        return $this->isFieldChangeCorrespondingToField($changeset_xml, $source_status_field, $index);
+        return $source_status_field !== null && $this->isFieldChangeCorrespondingToField($changeset_xml, $source_status_field, $index);
     }
 
     private function isFieldChangeCorrespondingToContributorSemanticField(
@@ -334,7 +349,7 @@ class MoveChangesetXMLUpdater
     ) {
         $field_change = $changeset_xml->field_change[$index];
 
-        return (string)$field_change['field_name'] === $source_field->getName();
+        return (string) $field_change['field_name'] === $source_field->getName();
     }
 
     private function useTargetTrackerFieldName(
@@ -375,16 +390,18 @@ class MoveChangesetXMLUpdater
     private function removeNonPossibleUserValues(
         Tracker_FormElement_Field $source_contributor_field,
         SimpleXMLElement $changeset_xml,
-        Tracker_FormElement_Field_list $target_contributor_field,
+        Tracker_FormElement_Field_List $target_contributor_field,
         $field_change_index,
         FeedbackFieldCollectorInterface $feedback_field_collector
     ) {
         $last_index = count($changeset_xml->field_change[$field_change_index]->value) - 1;
         for ($value_index = $last_index; $value_index >= 0; $value_index--) {
-            if (! $this->field_value_matcher->isSourceUserValueMathingATargetUserValue(
-                $target_contributor_field,
-                $changeset_xml->field_change[$field_change_index]->value[$value_index]
-            )) {
+            if (
+                ! $this->field_value_matcher->isSourceUserValueMathingATargetUserValue(
+                    $target_contributor_field,
+                    $changeset_xml->field_change[$field_change_index]->value[$value_index]
+                )
+            ) {
                 unset($changeset_xml->field_change[$field_change_index]->value[$value_index]);
 
                 $feedback_field_collector->addFieldInPartiallyMigrated($source_contributor_field);
@@ -440,11 +457,14 @@ class MoveChangesetXMLUpdater
     ) {
         $last_changeset = $artifact_xml->addChild('changeset');
 
-        $submitted_on =$last_changeset->addChild('submitted_on', date('c', $moved_time));
-        $submitted_on->addAttribute('format', "ISO8601");
-
-        $submitted_by = $last_changeset->addChild('submitted_by', $current_user->getId());
-        $submitted_by->addAttribute('format', 'id');
+        $cdata = new \XML_SimpleXMLCDATAFactory();
+        $cdata->insertWithAttributes($last_changeset, 'submitted_by', $current_user->getId(), ['format' => 'id']);
+        $cdata->insertWithAttributes(
+            $last_changeset,
+            'submitted_on',
+            date('c', $moved_time),
+            ['format' => 'ISO8601']
+        );
 
         $this->addLastChangesetCommentContent($current_user, $last_changeset, $source_tracker, $moved_time);
     }
@@ -458,20 +478,23 @@ class MoveChangesetXMLUpdater
         $comments_tag = $last_changeset->addChild('comments');
         $comment_tag  = $comments_tag->addChild('comment');
 
-        $comment_submitted_on = $comment_tag->addChild('submitted_on', date('c', $moved_time));
-        $comment_submitted_on->addAttribute('format', "ISO8601");
-
-        $comment_submitted_by = $comment_tag->addChild('submitted_by', $current_user->getId());
-        $comment_submitted_by->addAttribute('format', 'id');
-
-        $comment_body = $comment_tag->addChild(
+        $cdata = new \XML_SimpleXMLCDATAFactory();
+        $cdata->insertWithAttributes($comment_tag, 'submitted_by', $current_user->getId(), ['format' => 'id']);
+        $cdata->insertWithAttributes(
+            $comment_tag,
+            'submitted_on',
+            date('c', $moved_time),
+            ['format' => 'ISO8601']
+        );
+        $cdata->insertWithAttributes(
+            $comment_tag,
             'body',
             sprintf(
                 dgettext('tuleap-tracker', "Artifact was moved from '%s' tracker in '%s' project."),
                 $source_tracker->getName(),
-                $source_tracker->getProject()->getUnconvertedPublicName()
-            )
+                $source_tracker->getProject()->getPublicName()
+            ),
+            ['format' => 'text']
         );
-        $comment_body->addAttribute('format', 'text');
     }
 }

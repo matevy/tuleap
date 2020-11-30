@@ -20,6 +20,7 @@
  *
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Workflow\Transition\OrphanTransitionException;
 
 class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
@@ -42,22 +43,22 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * @var Array of Transition_PostAction
      */
-    protected $post_actions = array();
+    protected $post_actions = [];
 
     /**
      * @var Array of Transition_PostAction run after fields validation
      */
-    protected $post_actions_after = array();
+    protected $post_actions_after = [];
 
     /**
      * @var Array of Workflow_Transition_Condition
      */
-    private $conditions = array();
+    private $conditions = [];
 
     /**
      * @var Array of permissions
      */
-    protected $cache_permissions = array();
+    protected $cache_permissions = [];
 
     /**
      * @var Workflow
@@ -130,13 +131,13 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 
         return is_null($source_from) && is_null($target_from) && is_null($source_to) && is_null($target_to)
 
-            || is_null($source_from) && is_null($target_from) && !is_null($source_to) && !is_null($target_to)
+            || is_null($source_from) && is_null($target_from) && ! is_null($source_to) && ! is_null($target_to)
                 && $source_to->getId() === $target_to->getId()
 
-            || !is_null($source_from) && !is_null($target_from) && is_null($source_to) && is_null($target_to)
+            || ! is_null($source_from) && ! is_null($target_from) && is_null($source_to) && is_null($target_to)
                 && $source_from->getId() === $target_from->getId()
 
-            || !is_null($source_from) && !is_null($target_from) && !is_null($source_to) && !is_null($target_to)
+            || ! is_null($source_from) && ! is_null($target_from) && ! is_null($source_to) && ! is_null($target_to)
                 && $source_from->getId() === $target_from->getId() && $source_to->getId() === $target_to->getId();
     }
 
@@ -173,12 +174,11 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Get parent workflow
      *
-     * @return Workflow
      * @throws OrphanTransitionException if this transition has no workflow
      */
-    public function getWorkflow()
+    public function getWorkflow(): Workflow
     {
-        if (!$this->workflow) {
+        if (! $this->workflow) {
             $this->workflow = WorkflowFactory::instance()->getWorkflow($this->workflow_id);
         }
         if ($this->workflow === null) {
@@ -202,7 +202,7 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Execute actions before transition happens
      *
-     * @param Array $fields_data Request field data (array[field_id] => data)
+     * @param array $fields_data Request field data (array[field_id] => data)
      * @param PFUser  $current_user The user who are performing the update
      *
      * @return void
@@ -218,7 +218,6 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Execute actions after transition happenstype
      *
-     * @param Tracker_Artifact_Changeset $changeset
      * @return void
      */
     public function after(Tracker_Artifact_Changeset $changeset)
@@ -232,19 +231,19 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Validate that transition can occur
      *
-     * @param Array $fields_data Request field data (array[field_id] => data)
+     * @param array $fields_data Request field data (array[field_id] => data)
      *
-     * @return bool, true if the transition can occur, false otherwise
+     * @return bool true if the transition can occur, false otherwise
      */
-    public function validate($fields_data, Tracker_Artifact $artifact, $comment_body)
+    public function validate($fields_data, Artifact $artifact, string $comment_body, PFUser $current_user): bool
     {
-        return $this->getConditions()->validate($fields_data, $artifact, $comment_body);
+        return $this->getConditions()->validate($fields_data, $artifact, $comment_body, $current_user);
     }
 
     /**
      * Set Post Actions for the transition
      *
-     * @param Array $post_actions array of Transition_PostAction
+     * @param array $post_actions array of Transition_PostAction
      *
      * @return void
      */
@@ -256,7 +255,7 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Get Post Actions for the transition
      *
-     * @return Array
+     * @return array
      */
     public function getPostActions()
     {
@@ -266,7 +265,7 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Get Post Actions for the transition
      *
-     * @return Array
+     * @return Transition_PostAction[]
      */
     public function getAllPostActions()
     {
@@ -276,58 +275,11 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     /**
      * Get Post Actions for the transition
      *
-     * @return Array
+     * @return array
      */
     public function getPostActionsAfter()
     {
         return $this->post_actions_after;
-    }
-
-    /**
-     * Get the html code needed to display the post actions in workflow admin
-     *
-     * @return string html
-     */
-    public function fetchPostActions()
-    {
-        $hp   = Codendi_HTMLPurifier::instance();
-        $html = '';
-        if ($post_actions = $this->getAllPostActions()) {
-            $html .= '<table class="workflow_actions" width="100%" cellpadding="0" cellspacing="10">';
-            foreach ($post_actions as $pa) {
-                $classnames = $pa->getCssClasses();
-                $html .= '<tr><td>';
-
-                // the action itself
-                $html .= '<div class="'. $hp->purify($classnames) .'">';
-                if (!$pa->isDefined()) {
-                    $html .= '<div class="alert-message block-message warning">'. $GLOBALS['Language']->getText('workflow_admin', 'post_action_not_defined') .'</div>';
-                }
-                $html .= $pa->fetch();
-                $html .= '</div>';
-                $html .= '</td><td>';
-
-                // the delete buttton
-                $html .= '<input type="hidden" name="remove_postaction['. (int)$pa->getId() .']" value="0" />';
-                $html .= '<label class="pc_checkbox" title="'. $hp->purify($GLOBALS['Language']->getText('workflow_admin', 'remove_postaction')) .'">&nbsp';
-                $html .= '<input type="checkbox" name="remove_postaction['. (int)$pa->getId() .']" value="1" />';
-                $html .= '</label>';
-
-                $html .= '</td></tr>';
-            }
-            $html .= '</table>';
-        } else {
-            $html .= '<p><i>'. $GLOBALS['Language']->getText('workflow_admin', 'no_postaction') .'</i></p>';
-        }
-        return $html;
-    }
-
-    /**
-     * @return string html permission form for the transition
-     */
-    public function fetchConditions()
-    {
-        return $this->getConditions()->fetch();
     }
 
     /**
@@ -387,7 +339,6 @@ class Transition // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
    /**
     * Indicates if permissions on a field can be bypassed
     *
-    * @param Tracker_FormElement_Field $field
     *
     * @return bool true if the permissions on the field can be by passed, false otherwise
     */

@@ -72,7 +72,6 @@ class ChangesetValueComputed extends Tracker_Artifact_ChangesetValue_Float
     /**
      * @param \Tracker_Artifact_ChangesetValue $changeset_value
      * @param string                           $format
-     * @param PFUser|null                      $user
      * @param bool                             $ignore_perms
      *
      * @return string|false
@@ -83,7 +82,8 @@ class ChangesetValueComputed extends Tracker_Artifact_ChangesetValue_Float
         $next_numeric     = $this->getValue();
 
         $purifier = Codendi_HTMLPurifier::instance();
-        if ($changeset_value->isManualValue() === $this->isManualValue()
+        if (
+            $changeset_value->isManualValue() === $this->isManualValue()
             && $previous_numeric === $next_numeric
         ) {
             return false;

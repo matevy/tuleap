@@ -67,7 +67,7 @@ class Tracker_FormElement_Field_List_Bind_UsersValue extends Tracker_FormElement
     {
         $display_name = $this->getLabel();
 
-        return '<a class="link-to-user" href="'. $this->getUserUrl() .'">'.
+        return '<a class="link-to-user" href="' . $this->getUserUrl() . '">' .
                $this->hp->purify($display_name, CODENDI_PURIFIER_CONVERT_HTML) .
                '</a>';
     }
@@ -79,7 +79,7 @@ class Tracker_FormElement_Field_List_Bind_UsersValue extends Tracker_FormElement
 
     public function __toString()
     {
-        return 'Tracker_FormElement_Field_List_Bind_UsersValue #'. $this->getId();
+        return 'Tracker_FormElement_Field_List_Bind_UsersValue #' . $this->getId();
     }
 
     public function fetchFormatted()
@@ -113,7 +113,7 @@ class Tracker_FormElement_Field_List_Bind_UsersValue extends Tracker_FormElement
         $user_id     = $this->getId();
 
         $html = '<div class="realname"
-                       title="'. $name . '"
+                       title="' . $name . '"
                        data-user-id = "' . $user_id . '"
                    >';
         $html .= $name;
@@ -132,9 +132,12 @@ class Tracker_FormElement_Field_List_Bind_UsersValue extends Tracker_FormElement
     public function fetchFormattedForJson()
     {
         $json = parent::fetchFormattedForJson();
-        $json['username'] = $this->getUsername();
-        $json['realname'] = $this->getUser()->getRealName();
-        $json['avatar_url'] = $this->getUser()->getAvatarUrl();
+
+        $json['username']     = $this->getUsername();
+        $json['realname']     = $this->getUser()->getRealName();
+        $json['avatar_url']   = $this->getUser()->getAvatarUrl();
+        $json['display_name'] = UserHelper::instance()->getDisplayNameFromUser($this->getUser());
+
         return $json;
     }
 
@@ -158,8 +161,6 @@ class Tracker_FormElement_Field_List_Bind_UsersValue extends Tracker_FormElement
 
     public function getFullRESTValue(Tracker_FormElement_Field $field)
     {
-        $user_representation = new UserRepresentation();
-
         if ($this->getId() == 100) {
             $user = new PFUser();
         } else {
@@ -167,8 +168,7 @@ class Tracker_FormElement_Field_List_Bind_UsersValue extends Tracker_FormElement
             $user         = $user_manager->getUserByUserName($this->getUsername());
         }
 
-        $user_representation->build($user);
-        return $user_representation;
+        return UserRepresentation::build($user);
     }
 
     public function getFullRESTValueForAnonymous(Tracker_Artifact_Changeset $changeset)
@@ -177,19 +177,16 @@ class Tracker_FormElement_Field_List_Bind_UsersValue extends Tracker_FormElement
         $user->setEmail($changeset->getEmail());
         $user->setRealName($changeset->getEmail());
 
-        $user_representation = new UserRepresentation();
-
-        $user_representation->build($user);
-        return $user_representation;
+        return UserRepresentation::build($user);
     }
 
     private function getUserUrl()
     {
         $user_name    = $this->user_name;
-        if (!$user_name) {
+        if (! $user_name) {
             $user_name = $this->getUser()->getUserName();
         }
 
-        return '/users/'. urlencode($user_name);
+        return '/users/' . urlencode($user_name);
     }
 }

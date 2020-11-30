@@ -27,7 +27,7 @@ describe(`Column module mutations`, () => {
             const column: ColumnDefinition = { is_collapsed: false } as ColumnDefinition;
 
             const state: ColumnState = {
-                columns: [column]
+                columns: [column],
             };
 
             mutations.collapseColumn(state, column);
@@ -40,35 +40,35 @@ describe(`Column module mutations`, () => {
             const column: ColumnDefinition = { is_collapsed: true } as ColumnDefinition;
 
             const state: ColumnState = {
-                columns: [column]
+                columns: [column],
             };
 
             mutations.expandColumn(state, column);
             expect(state.columns[0].is_collapsed).toBe(false);
         });
     });
-    describe("mouseEntersColumn", () => {
+    describe("pointerEntersColumn", () => {
         it("marks the column with hovering state", () => {
             const column: ColumnDefinition = { has_hover: false } as ColumnDefinition;
 
             const state: ColumnState = {
-                columns: [column]
+                columns: [column],
             };
 
-            mutations.mouseEntersColumn(state, column);
+            mutations.pointerEntersColumn(state, column);
             expect(state.columns[0].has_hover).toBe(true);
         });
     });
 
-    describe("mouseLeavesColumn", () => {
+    describe("pointerLeavesColumn", () => {
         it("removes the hovering state", () => {
             const column: ColumnDefinition = { has_hover: true } as ColumnDefinition;
 
             const state: ColumnState = {
-                columns: [column]
+                columns: [column],
             };
 
-            mutations.mouseLeavesColumn(state, column);
+            mutations.pointerLeavesColumn(state, column);
             expect(state.columns[0].has_hover).toBe(false);
         });
     });

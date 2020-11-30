@@ -22,10 +22,9 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets;
 
-use Tracker_Artifact;
 use Tracker_FormElement_Container_Fieldset;
-use Tracker_FormElement_Field;
 use Tracker_FormElementFactory;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use Tuleap\Tracker\Workflow\Transition\NoTransitionForStateException;
 
@@ -56,7 +55,7 @@ class HiddenFieldsetsDetector
         $this->form_element_factory       = $form_element_factory;
     }
 
-    public function doesArtifactContainHiddenFieldsets(Tracker_Artifact $artifact): bool
+    public function doesArtifactContainHiddenFieldsets(Artifact $artifact): bool
     {
         if (! $this->artifactIsEligibleToHiddenFieldsets($artifact)) {
             return false;
@@ -73,7 +72,7 @@ class HiddenFieldsetsDetector
         return false;
     }
 
-    public function isFieldsetHidden(Tracker_Artifact $artifact, Tracker_FormElement_Container_Fieldset $fieldset): bool
+    public function isFieldsetHidden(Artifact $artifact, Tracker_FormElement_Container_Fieldset $fieldset): bool
     {
         try {
             $current_state_transition     = $this->transition_retriever->getReferenceTransitionForCurrentState($artifact);
@@ -82,7 +81,7 @@ class HiddenFieldsetsDetector
             return false;
         }
 
-        $fieldset_id = (int)$fieldset->getID();
+        $fieldset_id = (int) $fieldset->getID();
 
         foreach ($hidden_fieldsets_post_action->getFieldsets() as $fieldset_in_post_action) {
             if ((int) $fieldset_in_post_action->getID() === $fieldset_id) {
@@ -93,7 +92,7 @@ class HiddenFieldsetsDetector
         return false;
     }
 
-    private function artifactIsEligibleToHiddenFieldsets(Tracker_Artifact $artifact) : bool
+    private function artifactIsEligibleToHiddenFieldsets(Artifact $artifact): bool
     {
         $workflow = $artifact->getWorkflow();
 

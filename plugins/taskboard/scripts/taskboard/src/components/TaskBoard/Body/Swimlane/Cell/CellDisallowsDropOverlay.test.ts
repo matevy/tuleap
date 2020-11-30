@@ -26,9 +26,9 @@ describe("CellDisallowsDropOverlay", () => {
         const wrapper = shallowMount(CellDisallowsDropOverlay, {
             propsData: {
                 isDropRejected: true,
-                isColumnCollapsed: false
+                isColumnCollapsed: false,
             },
-            localVue: await createTaskboardLocalVue()
+            localVue: await createTaskboardLocalVue(),
         });
         expect(wrapper.element).toMatchSnapshot();
     });
@@ -37,11 +37,11 @@ describe("CellDisallowsDropOverlay", () => {
         const wrapper = shallowMount(CellDisallowsDropOverlay, {
             propsData: {
                 isDropRejected: false,
-                isColumnCollapsed: true
+                isColumnCollapsed: true,
             },
-            localVue: await createTaskboardLocalVue()
+            localVue: await createTaskboardLocalVue(),
         });
 
-        expect(wrapper.contains("[data-test=overlay-error-message]")).toBe(false);
+        expect(wrapper.find("[data-test=overlay-error-message]").exists()).toBe(false);
     });
 });

@@ -18,13 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Links;
 
 use Tuleap\Docman\REST\v1\ItemRepresentation;
 use Tuleap\Docman\REST\v1\Metadata\ItemStatusMapper;
 
+/**
+ * @psalm-immutable
+ */
 class DocmanLinkPATCHRepresentation extends DocmanLinkVersionPOSTRepresentation
 {
     /**

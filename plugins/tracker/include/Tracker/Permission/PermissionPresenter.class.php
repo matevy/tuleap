@@ -31,30 +31,30 @@ class Tracker_Permission_PermissionPresenter
 
     public function title()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_include_type', 'manage_tracker_permissions');
+        return dgettext('tuleap-tracker', 'Manage Tracker Permissions');
     }
 
     public function intro()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_permissions', 'fields_tracker_intro');
+        return dgettext('tuleap-tracker', 'Please note that project administrators and tracker administrators are granted full access to the tracker.');
     }
 
     public function form_url()
     {
-        return '?'.http_build_query(array(
+        return '?' . http_build_query([
             'tracker' => $this->tracker->getId(),
             'func'    => 'admin-perms-tracker'
-        ));
+        ]);
     }
 
     public function ugroup_title()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_permissions', 'ugroup');
+        return dgettext('tuleap-tracker', 'User Group');
     }
 
     public function permissions_title()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_permissions', 'permissions');
+        return dgettext('tuleap-tracker', 'Access Permissions');
     }
 
     public function submit_permissions()
@@ -72,9 +72,9 @@ class Tracker_Permission_PermissionPresenter
         return $GLOBALS['Language']->getText(
             'project_admin_permissions',
             'admins_create_modify_ug',
-            array(
-                '/project/admin/ugroup.php?group_id='.(int)$this->tracker->getGroupID()
-            )
+            [
+                '/project/admin/ugroup.php?group_id=' . (int) $this->tracker->getGroupID()
+            ]
         );
     }
 }

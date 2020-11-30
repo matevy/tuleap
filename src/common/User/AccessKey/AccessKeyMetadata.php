@@ -18,8 +18,15 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\User\AccessKey;
 
+use Tuleap\Authentication\Scope\AuthenticationScope;
+
+/**
+ * @psalm-immutable
+ */
 class AccessKeyMetadata
 {
     /**
@@ -35,7 +42,7 @@ class AccessKeyMetadata
      */
     private $description;
     /**
-     * @var \DateTimeImmutable
+     * @var \DateTimeImmutable|null
      */
     private $last_used_date;
     /**
@@ -48,65 +55,73 @@ class AccessKeyMetadata
      */
     private $expiration_date;
 
-    public function __construct(
-        $id,
-        \DateTimeImmutable $creation_date,
-        $description,
-        ?\DateTimeImmutable $last_used_date = null,
-        $last_used_ip = null,
-        ?\DateTimeImmutable $expiration_date = null
-    ) {
+    /**
+     * @var AuthenticationScope[]
+     *
+     * @psalm-var non-empty-array<AuthenticationScope>
+     */
+    private $scopes;
 
+    /**
+     * @param AuthenticationScope[] $scopes
+     *
+     * @psalm-param non-empty-array<AuthenticationScope> $scopes
+     */
+    public function __construct(
+        int $id,
+        \DateTimeImmutable $creation_date,
+        string $description,
+        ?\DateTimeImmutable $last_used_date,
+        ?string $last_used_ip,
+        ?\DateTimeImmutable $expiration_date,
+        array $scopes
+    ) {
         $this->id               = $id;
         $this->creation_date    = $creation_date;
         $this->expiration_date  = $expiration_date;
         $this->description      = $description;
         $this->last_used_date   = $last_used_date;
         $this->last_used_ip     = $last_used_ip;
+        $this->scopes           = $scopes;
     }
 
-    public function getID()
+    public function getID(): int
     {
         return $this->id;
     }
 
-    /**
-     * @return \DateTimeImmutable
-     */
-    public function getCreationDate()
+    public function getCreationDate(): \DateTimeImmutable
     {
         return $this->creation_date;
     }
 
-    /**
-     * @return string
-     */
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
 
-    /**
-     * @return null|\DateTimeImmutable
-     */
-    public function getLastUsedDate()
+    public function getLastUsedDate(): ?\DateTimeImmutable
     {
         return $this->last_used_date;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getLastUsedIP()
+    public function getLastUsedIP(): ?string
     {
         return $this->last_used_ip;
     }
 
-    /**
-     * @return \DateTimeImmutable|null
-     */
     public function getExpirationDate(): ?\DateTimeImmutable
     {
         return $this->expiration_date;
+    }
+
+    /**
+     * @return AuthenticationScope[]
+     *
+     * @psalm-return non-empty-array<AuthenticationScope>
+     */
+    public function getScopes(): array
+    {
+        return $this->scopes;
     }
 }

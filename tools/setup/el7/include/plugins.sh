@@ -1,5 +1,5 @@
 _pluginGit() {
-    local -r git="/opt/rh/sclo-git212/root/usr/bin/git"
+    local -r git="/opt/rh/rh-git218/root/usr/bin/git"
     local -r gitolite="/usr/bin/gitolite"
     local -r git_group="gitolite"
     local -r git_user="gitolite"
@@ -100,19 +100,7 @@ _pluginGit() {
         plugin_git_configured="true"
     fi
 
-    ${awk} '{ gsub("# GROUPLIST_PGM", "GROUPLIST_PGM");
-              gsub(""'"ssh-authkeys"'"","#"'"ssh-authkeys"'",");
-              gsub("#0,#0,#0,7", "0007"); print}' \
-            ${tuleap_src_plugins}/git/etc/gitolite3.rc.dist > \
-            ${git_home}/.gitolite.rc
-    ${chown} ${git_user}:${git_group} ${git_home}/.gitolite.rc
-    ${chmod} 640 ${git_home}/.gitolite.rc
-
-    if [ ! -f "${git_home}/.profile" ]; then
-        ${printf} "source /opt/rh/sclo-git212/enable" > ${git_home}/.profile
-        ${chown} ${git_user}:${git_group} ${git_home}/.profile
-        plugin_git_configured="true"
-    fi
+    ${tuleapcfg} site-deploy:gitolite3-config
 
     if [ ! -f "${tuleap_data}/gitolite/admin/conf/gitolite.conf" ]; then
         ${install} --group=${tuleap_unix_user} \
@@ -123,7 +111,7 @@ _pluginGit() {
         plugin_git_configured="true"
     fi
 
-    if ! ${su} --command '/opt/rh/sclo-git212/root/usr/bin/git \
+    if ! ${su} --command '/opt/rh/rh-git218/root/usr/bin/git \
         --git-dir="/var/lib/tuleap/gitolite/admin/.git"  \
         cat-file -e origin/master:conf/gitolite.conf' \
         --login ${tuleap_unix_user}; then
@@ -157,6 +145,16 @@ _pluginGit() {
         plugin_git_configured="true"
     fi
 
+    if ! $(${tuleapcfg} systemctl is-enabled tuleap-process-system-events-grokmirror.timer); then
+        ${tuleapcfg} systemctl enable "tuleap-process-system-events-grokmirror.timer"
+        plugin_git_configured="true"
+    fi
+
+    if ! $(${tuleapcfg} systemctl is-active tuleap-process-system-events-grokmirror.timer); then
+        ${tuleapcfg} systemctl start "tuleap-process-system-events-grokmirror.timer"
+        plugin_git_configured="true"
+    fi
+
     if [ ${plugin_git_configured} = "true" ]; then
         _infoMessage "Plugin Git is configured"
         plugins_configured+=('true')
@@ -173,14 +171,14 @@ _pluginSVN() {
         if [ ${mysql_user:-NULL} != "NULL" ] && \
            [ ${mysql_password:-NULL} != "NULL" ]; then
             dbauthuser_password="$(_setupRandomPassword)"
-            _mysqlExecute "${mysql_user}" "${mysql_password:-NULL}" \
-                "$(_sqlDbauthuserPrivileges ${web_server_ip:-localhost} \
-                ${dbauthuser_password})"
-            ${sed} --in-place \
-                "s|sys_dbauth_passwd.*|sys_dbauth_passwd = '${dbauthuser_password}';|g" \
-                "${tuleap_conf}/${local_inc}"
-            _logPassword \
-                "MySQL dbauth user password (dbauthuser): ${dbauthuser_password}"
+
+            ${tuleapcfg} setup:mysql-init \
+                --host="${mysql_server}" \
+                --admin-user="${mysql_user}" \
+                --admin-password="${mysql_password}" \
+                --db-name="${sys_db_name}" \
+                --nss-password="${dbauthuser_password}"
+
             plugin_svn_configured="true"
         else
             _errorMessage "You must enter your MySQL user and password"
@@ -212,6 +210,9 @@ _pluginSVN() {
 }
 
 _pluginMediawiki() {
-    _mysqlExecute "${mysql_user}" "${mysql_password:-NULL}" \
-        "GRANT ALL PRIVILEGES ON \`plugin_mediawiki_%\`.* TO '${sys_db_user}'@'${web_server_ip:-localhost}'; FLUSH PRIVILEGES;"
+    ${tuleapcfg} setup:mysql-init \
+        --host="${mysql_server}" \
+        --admin-user="${mysql_user}" \
+        --admin-password="${mysql_password}" \
+        --mediawiki=per-project
 }

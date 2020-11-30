@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace Tuleap\PullRequest\Notification\Strategy;
 
-use Codendi_HTMLPurifier;
 use GitRepository;
 use GitRepositoryFactory;
 use MailBuilder;
@@ -79,7 +78,7 @@ final class PullRequestNotificationSendMail implements PullRequestNotificationSt
         $this->locale_switcher                 = $locale_switcher;
     }
 
-    public function execute(NotificationToProcess $notification) : void
+    public function execute(NotificationToProcess $notification): void
     {
         $pull_request           = $notification->getPullRequest();
         $destination_repository = $this->repository_factory->getRepositoryById($pull_request->getRepoDestId());
@@ -120,7 +119,7 @@ final class PullRequestNotificationSendMail implements PullRequestNotificationSt
         foreach ($notification->getRecipients() as $recipient) {
             try {
                 $this->pull_request_permission_checker->checkPullRequestIsReadableByUser($notification->getPullRequest(), $recipient);
-            } catch (\GitRepoNotFoundException|Project_AccessException|UserCannotReadGitRepositoryException $e) {
+            } catch (\GitRepoNotFoundException | Project_AccessException | UserCannotReadGitRepositoryException $e) {
                 continue;
             }
             $recipients[$recipient->getEmail()] = $recipient->getLocale();

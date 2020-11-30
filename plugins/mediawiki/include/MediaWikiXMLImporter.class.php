@@ -25,7 +25,7 @@ class MediaWikiXMLImporter
     public const SERVICE_NAME = 'mediawiki';
 
     /**
-     * @var Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
@@ -59,7 +59,7 @@ class MediaWikiXMLImporter
     private $event_manager;
 
     public function __construct(
-        Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         MediawikiManager $mediawiki_manager,
         MediawikiLanguageManager $language_manager,
         UGroupManager $ugroup_manager,
@@ -87,7 +87,7 @@ class MediaWikiXMLImporter
     public function import(ImportConfig $configuration, Project $project, PFUser $creator, SimpleXMLElement $xml_input, $extraction_path)
     {
         $xml_mediawiki = $xml_input->mediawiki;
-        if (!$xml_mediawiki) {
+        if (! $xml_mediawiki) {
             $this->logger->debug('No mediawiki node found into xml.');
             return true;
         }
@@ -108,10 +108,10 @@ class MediaWikiXMLImporter
 
         $this->importRights($project, $xml_mediawiki);
 
-        $mediawiki_storage_path = forge_get_config('projects_path', 'mediawiki') . "/". $project->getID();
+        $mediawiki_storage_path = forge_get_config('projects_path', 'mediawiki') . "/" . $project->getID();
         $owner = ForgeConfig::get('sys_http_user');
         if ($owner) {
-            $no_filter_file_extension = array();
+            $no_filter_file_extension = [];
             $this->backend->recurseChownChgrp($mediawiki_storage_path, $owner, $owner, $no_filter_file_extension);
         } else {
             $this->logger->error("Could not get sys_http_user, permission problems may occur on $mediawiki_storage_path");
@@ -136,7 +136,7 @@ class MediaWikiXMLImporter
         try {
             $this->language_manager->saveLanguageOption($project, $language);
         } catch (Mediawiki_UnsupportedLanguageException $e) {
-            $this->logger->warn("Could not set up the language for {$project->getUnixName()} mediawiki, $language is not sopported.");
+            $this->logger->warning("Could not set up the language for {$project->getUnixName()} mediawiki, $language is not sopported.");
         }
     }
 
@@ -176,12 +176,12 @@ class MediaWikiXMLImporter
 
     private function getUgroupIdsForPermissions(Project $project, SimpleXMLElement $permission_xmlnode)
     {
-        $ugroup_ids = array();
+        $ugroup_ids = [];
         foreach ($permission_xmlnode->ugroup as $ugroup) {
-            $ugroup_name = (string)$ugroup;
+            $ugroup_name = (string) $ugroup;
             $ugroup = $this->ugroup_manager->getUGroupByName($project, $ugroup_name);
             if ($ugroup === null) {
-                $this->logger->warn("Could not find any ugroup named $ugroup_name, skip it.");
+                $this->logger->warning("Could not find any ugroup named $ugroup_name, skip it.");
                 continue;
             }
             array_push($ugroup_ids, $ugroup->getId());
@@ -193,14 +193,14 @@ class MediaWikiXMLImporter
     {
         $this->event_manager->processEvent(
             Event::IMPORT_COMPAT_REF_XML,
-            array(
+            [
                 'logger'         => $this->logger,
-                'created_refs'   => array(),
+                'created_refs'   => [],
                 'service_name'   => self::SERVICE_NAME,
                 'xml_content'    => $xml_references,
                 'project'        => $project,
                 'configuration'  => $configuration,
-            )
+            ]
         );
     }
 }

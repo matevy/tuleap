@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,16 +23,16 @@ namespace Tuleap\FRS;
 use Codendi_Request;
 use PFUser;
 use Tracker_Artifact_View_View;
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class ArtifactView extends Tracker_Artifact_View_View
 {
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $release_id;
 
-    public function __construct($release_id, Tracker_Artifact $artifact, Codendi_Request $request, PFUser $user)
+    public function __construct($release_id, Artifact $artifact, Codendi_Request $request, PFUser $user)
     {
         parent::__construct($artifact, $request, $user);
 
@@ -43,7 +43,7 @@ class ArtifactView extends Tracker_Artifact_View_View
     public function getTitle()
     {
         return dgettext('tuleap-frs', 'File release')
-        . ' <i class="fa fa-external-link"></i>';
+        . ' <i class="fas fa-external-link-alt"></i>';
     }
 
     /** @see Tracker_Artifact_View_View::getIdentifier() */
@@ -60,6 +60,7 @@ class ArtifactView extends Tracker_Artifact_View_View
 
     public function getURL()
     {
-        return '/file/shownotes.php?release_id=' . (int)$this->release_id;
+        $release_id = urlencode((string) $this->release_id);
+        return "/frs/release/$release_id/release-notes";
     }
 }

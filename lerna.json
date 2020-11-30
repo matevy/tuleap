@@ -1,0 +1,9 @@
+{
+    "packages": [
+        "src/themes/tlp/",
+        "src/",
+        "src/themes/BurningParrot/",
+        "plugins/**/"
+    ],
+    "version": "independent"
+}

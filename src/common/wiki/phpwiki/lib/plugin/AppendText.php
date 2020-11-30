@@ -31,17 +31,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 class WikiPlugin_AppendText extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("AppendText");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Append text to any page in this wiki.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -50,26 +50,25 @@ class WikiPlugin_AppendText extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('page'     => '[pagename]',
+        return ['page'     => '[pagename]',
                      's'        => '',  // Text to append.
                      'before'   => '',  // Add before (ignores after if defined)
                      'after'    => '',  // Add after line beginning with this
                      'redirect' => false // Redirect to modified page
-                     );
+                     ];
     }
 
-    function _fallback($addtext, $oldtext, $notfound, &$message)
+    public function _fallback($addtext, $oldtext, $notfound, &$message)
     {
-        $message->pushContent(sprintf(_("%s not found"), $notfound).". ".
-                              _("Appending at the end.")."\n");
+        $message->pushContent(sprintf(_("%s not found"), $notfound) . ". " .
+                              _("Appending at the end.") . "\n");
         return $oldtext . "\n" . $addtext;
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
-
         $args = $this->getArgs($argstr, $request);
         $pagename = $args['page'];
 
@@ -85,7 +84,7 @@ class WikiPlugin_AppendText extends WikiPlugin
         $page = $dbi->getPage($pagename);
         $message = HTML();
 
-        if (!$page->exists()) { // We might want to create it?
+        if (! $page->exists()) { // We might want to create it?
             $message->pushContent(sprintf(
                 _("Page could not be updated. %s doesn't exist!\n"),
                 $pagename
@@ -98,7 +97,7 @@ class WikiPlugin_AppendText extends WikiPlugin
         $text = $args['s'];
 
         // If a "before" or "after" is specified but not found, we simply append text to the end.
-        if (!empty($args['before'])) {
+        if (! empty($args['before'])) {
             $before = preg_quote($args['before'], "/");
             // Insert before
             $newtext = preg_match("/\n${before}/", $oldtext)
@@ -108,7 +107,7 @@ class WikiPlugin_AppendText extends WikiPlugin
                     $oldtext
                 )
                 : $this->_fallback($text, $oldtext, $args['before'], $message);
-        } elseif (!empty($args['after'])) {
+        } elseif (! empty($args['after'])) {
             // Insert after
             $after = preg_quote($args['after'], "/");
             $newtext = preg_match("/\n${after}/", $oldtext)
@@ -148,7 +147,7 @@ class WikiPlugin_AppendText extends WikiPlugin
 
         return $message;
     }
-};
+}
 
 // $Log: AppendText.php,v $
 // Revision 1.7  2005/04/02 03:05:43  uckelman

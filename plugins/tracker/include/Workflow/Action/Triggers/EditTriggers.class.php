@@ -38,11 +38,11 @@ class Tracker_Workflow_Action_Triggers_EditTriggers extends Tracker_Workflow_Act
     ) {
         parent::__construct($tracker);
 
-        $this->url_query = TRACKER_BASE_URL.'/?'. http_build_query(
-            array(
-                'tracker' => (int)$this->tracker->id,
+        $this->url_query = TRACKER_BASE_URL . '/?' . http_build_query(
+            [
+                'tracker' => (int) $this->tracker->id,
                 'func'    => Workflow::FUNC_ADMIN_TRANSITIONS,
-            )
+            ]
         );
         $this->template_renderer = $renderer;
         $this->token             = $token;
@@ -56,7 +56,7 @@ class Tracker_Workflow_Action_Triggers_EditTriggers extends Tracker_Workflow_Act
 
     private function displayPane(Tracker_IDisplayTrackerLayout $layout)
     {
-        $this->displayHeader($layout, $GLOBALS['Language']->getText('workflow_admin', 'title_define_triggers'));
+        $this->displayHeader($layout, dgettext('tuleap-tracker', 'Define cross-tracker triggers'));
 
         $presenter = new Tracker_Workflow_Action_Triggers_TriggersPresenter(
             $this->tracker->getId(),

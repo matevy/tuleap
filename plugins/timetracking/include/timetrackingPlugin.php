@@ -31,7 +31,6 @@ use Tuleap\Timetracking\Permissions\PermissionsRetriever;
 use Tuleap\Timetracking\Plugin\TimetrackingPluginInfo;
 use Tuleap\Timetracking\REST\ResourcesInjector;
 use Tuleap\Timetracking\REST\v1\ProjectResource;
-use Tuleap\Timetracking\REST\v1\UserResource;
 use Tuleap\Timetracking\Router;
 use Tuleap\Timetracking\Time\DateFormatter;
 use Tuleap\Timetracking\Time\TimeChecker;
@@ -43,6 +42,7 @@ use Tuleap\Timetracking\Time\TimetrackingReportDao;
 use Tuleap\Timetracking\Time\TimeUpdater;
 use Tuleap\Timetracking\Widget\TimeTrackingOverview;
 use Tuleap\Timetracking\Widget\UserWidget;
+use Tuleap\Tracker\REST\v1\Event\GetTrackersWithCriteria;
 
 require_once __DIR__ . '/../../tracker/include/trackerPlugin.php';
 require_once 'constants.php';
@@ -55,7 +55,7 @@ class timetrackingPlugin extends PluginWithLegacyInternalRouting // @codingStand
         parent::__construct($id);
         $this->setScope(Plugin::SCOPE_PROJECT);
 
-        bindtextdomain('tuleap-timetracking', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-timetracking', __DIR__ . '/../site-content');
     }
 
     public function getHooksAndCallbacks()
@@ -65,10 +65,9 @@ class timetrackingPlugin extends PluginWithLegacyInternalRouting // @codingStand
         $this->addHook('project_admin_ugroup_deletion');
         $this->addHook(\Tuleap\Widget\Event\GetWidget::NAME);
         $this->addHook(\Tuleap\Widget\Event\GetUserWidgetList::NAME);
-        $this->addHook(\Tuleap\Widget\Event\UserTimeRetriever::NAME);
         $this->addHook(\Tuleap\REST\Event\GetAdditionalCriteria::NAME);
         $this->addHook(\Tuleap\Widget\Event\GetProjectsWithCriteria::NAME);
-        $this->addHook(\Tuleap\Widget\Event\GetTrackersWithCriteria::NAME);
+        $this->addHook(GetTrackersWithCriteria::NAME);
         $this->addHook('fill_project_history_sub_events');
         $this->addHook(Event::REST_RESOURCES);
 
@@ -93,23 +92,27 @@ class timetrackingPlugin extends PluginWithLegacyInternalRouting // @codingStand
 
     public function getDependencies()
     {
-        return array('tracker');
+        return ['tracker'];
     }
 
     public function cssfile($params)
     {
-        if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0 ||
+        if (
+            strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0 ||
             strpos($_SERVER['REQUEST_URI'], TRACKER_BASE_URL) === 0
         ) {
-            $include_assets = new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/timetracking/themes',
-                '/assets/timetracking/themes'
-            );
+            $style_css_url = $this->getAssets()->getFileURL('style-fp.css');
 
-            $style_css_url = $include_assets->getFileURL('style-fp.css');
-
-            echo '<link rel="stylesheet" type="text/css" href="'.$style_css_url.'" />';
+            echo '<link rel="stylesheet" type="text/css" href="' . $style_css_url . '" />';
         }
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/timetracking',
+            '/assets/timetracking'
+        );
     }
 
     /**
@@ -117,20 +120,21 @@ class timetrackingPlugin extends PluginWithLegacyInternalRouting // @codingStand
      */
     public function trackerEventFetchAdminButtons($params)
     {
-        $url = TIMETRACKING_BASE_URL . '/?'. http_build_query(array(
+        $url = TIMETRACKING_BASE_URL . '/?' . http_build_query([
                 'tracker' => $params['tracker_id'],
                 'action'  => 'admin-timetracking'
-        ));
+        ]);
 
-        $params['items']['timetracking'] = array(
+        $params['items']['timetracking'] = [
             'url'         => $url,
             'short_title' => dgettext('tuleap-timetracking', 'Time tracking'),
             'title'       => dgettext('tuleap-timetracking', 'Time tracking'),
             'description' => dgettext('tuleap-timetracking', 'Time tracking for Tuleap artifacts'),
-        );
+            'data-test'   => 'timetracking'
+        ];
     }
 
-    public function process() : void
+    public function process(): void
     {
         $router = new Router(
             TrackerFactory::instance(),
@@ -243,25 +247,12 @@ class timetrackingPlugin extends PluginWithLegacyInternalRouting // @codingStand
         }
     }
 
-    public function userTimeRetriever(\Tuleap\Widget\Event\UserTimeRetriever $user_time_retriever)
-    {
-        $user_resource = new UserResource();
-
-        $user_time_retriever->addTimes($user_resource->getUserTimes(
-            $user_time_retriever->getUserId(),
-            $user_time_retriever->getQuery(),
-            $user_time_retriever->getLimit(),
-            $user_time_retriever->getOffset()
-        ));
-    }
-
     public function getAdditionalCriteria(\Tuleap\REST\Event\GetAdditionalCriteria $get_projects)
     {
         $get_projects->addCriteria(ProjectResource::TIMETRACKING_CRITERION, "'with_time_tracking': true");
     }
 
     /**
-     * @param \Tuleap\Widget\Event\GetProjectsWithCriteria $get_projects
      * @throws \Luracast\Restler\RestException
      */
     public function getProjectsWithCriteria(\Tuleap\Widget\Event\GetProjectsWithCriteria $get_projects)
@@ -279,13 +270,12 @@ class timetrackingPlugin extends PluginWithLegacyInternalRouting // @codingStand
     }
 
     /**
-     * @param \Tuleap\Widget\Event\GetTrackersWithCriteria $get_trackers
      * @throws Rest_Exception_InvalidTokenException
      * @throws User_PasswordExpiredException
      * @throws User_StatusInvalidException
      * @throws \Luracast\Restler\RestException
      */
-    public function getTrackersWithCriteria(\Tuleap\Widget\Event\GetTrackersWithCriteria $get_trackers)
+    public function getTrackersWithCriteria(GetTrackersWithCriteria $get_trackers)
     {
         if (! isset($get_trackers->getQuery()[ProjectResource::TIMETRACKING_CRITERION])) {
             return;

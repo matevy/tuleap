@@ -29,24 +29,19 @@ class QueueInstrumentation
 {
     private const METRIC_NAME = 'queue_events_total';
 
-    public const STATUS_ENQUEUED = 'enqueued';
-    public const STATUS_DEQUEUED = 'dequeued';
-    public const STATUS_REQUEUED = 'requeued';
-    public const STATUS_DONE     = 'done';
-
-    private const STATUS_VALUES = [
-        self::STATUS_ENQUEUED,
-        self::STATUS_DEQUEUED,
-        self::STATUS_REQUEUED,
-        self::STATUS_DONE,
-    ];
+    public const STATUS_ENQUEUED  = 'enqueued';
+    public const STATUS_DEQUEUED  = 'dequeued';
+    public const STATUS_REQUEUED  = 'requeued';
+    public const STATUS_DISCARDED = 'discarded';
+    public const STATUS_TIMEDOUT  = 'timedout';
+    public const STATUS_DONE      = 'done';
 
     private const DURATION_NAME = 'queue_events_duration';
     private const DURATION_HELP = 'Duration of background worker events (from enqueue to done) in seconds';
     private const DURATION_BUCKETS = [0.1, 0.5, 1, 2, 5, 10, 20, 60, 120];
 
     /**
-     * @psalm-param value-of<self::STATUS_VALUES> $status
+     * @psalm-param self::STATUS_* $status
      */
     public static function increment(string $queue, string $topic, string $status): void
     {

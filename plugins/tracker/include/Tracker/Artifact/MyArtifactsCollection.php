@@ -25,7 +25,6 @@ namespace Tuleap\Tracker\Artifact;
 
 use PFUser;
 use Tracker;
-use Tracker_Artifact;
 use Tracker_Semantic_Title;
 use TrackerFactory;
 
@@ -56,7 +55,7 @@ class MyArtifactsCollection implements \Countable
         return isset($this->artifacts[(int) $tracker->getId()][$artifact_id]);
     }
 
-    public function addArtifactForTracker(Tracker $tracker, Tracker_Artifact $artifact): void
+    public function addArtifactForTracker(Tracker $tracker, Artifact $artifact): void
     {
         if ($artifact->userCanView()) {
             $this->artifacts[(int) $tracker->getId()][(int) $artifact->getId()] = $artifact;
@@ -78,15 +77,15 @@ class MyArtifactsCollection implements \Countable
 
     public function getArtifactsInTrackerCount(Tracker $tracker): int
     {
-        return count($this->artifacts[(int) $tracker->getId()]);
+        return count($this->getArtifactsInTracker($tracker));
     }
 
     /**
-     * @return Tracker_Artifact[]
+     * @return Artifact[]
      */
     public function getArtifactsInTracker(Tracker $tracker): array
     {
-        return $this->artifacts[(int) $tracker->getId()];
+        return $this->artifacts[(int) $tracker->getId()] ?? [];
     }
 
     public function getArtifacts(): \Generator
@@ -98,15 +97,13 @@ class MyArtifactsCollection implements \Countable
         }
     }
 
-    public function getTrackerById(int $tracker_id): Tracker
-    {
-        return $this->trackers[$tracker_id];
-    }
-
     public function setTracker(int $tracker_id, PFUser $user): Tracker
     {
         if (! isset($this->trackers[$tracker_id])) {
             $tracker = $this->tracker_factory->getTrackerById($tracker_id);
+            if ($tracker === null) {
+                throw new \RuntimeException('Tracker does not exist');
+            }
 
             $with_title = false;
             if (($title_field = Tracker_Semantic_Title::load($tracker)->getField()) && $title_field->userCanRead($user)) {

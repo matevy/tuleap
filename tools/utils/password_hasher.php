@@ -20,7 +20,7 @@
  */
 
 $password_hasher_short_options = 'p:u';
-$password_hasher_long_options  = array('password:', 'unix');
+$password_hasher_long_options  = ['password:', 'unix'];
 
 $options  = getopt($password_hasher_short_options, $password_hasher_long_options);
 $password = false;
@@ -47,14 +47,17 @@ if ($password === false) {
     exit(1);
 }
 
-require_once __DIR__ .'/../../src/vendor/autoload.php';
+require_once __DIR__ . '/../../src/vendor/autoload.php';
 
 $password_handler = PasswordHandlerFactory::getPasswordHandler();
 
+$concealed_password = new \Tuleap\Cryptography\ConcealedString($password);
+sodium_memzero($password);
+
 if ($is_unix) {
-    $hashed_password = $password_handler->computeUnixPassword($password);
+    $hashed_password = $password_handler->computeUnixPassword($concealed_password);
 } else {
-    $hashed_password = $password_handler->computeHashPassword($password);
+    $hashed_password = $password_handler->computeHashPassword($concealed_password);
 }
 
 echo($hashed_password);

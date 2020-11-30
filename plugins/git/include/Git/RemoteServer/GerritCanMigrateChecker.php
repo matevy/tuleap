@@ -22,8 +22,6 @@ namespace Tuleap\Git;
 
 use EventManager;
 use Git_RemoteServer_GerritServerFactory;
-use GitRepository;
-use Git_RemoteServer_GerritServer;
 use Project;
 
 class GerritCanMigrateChecker
@@ -54,9 +52,9 @@ class GerritCanMigrateChecker
 
         $this->event_manager->processEvent(
             GIT_EVENT_PLATFORM_CAN_USE_GERRIT,
-            array(
+            [
                 'platform_can_use_gerrit' => &$platform_can_use_gerrit
-            )
+            ]
         );
 
         $gerrit_servers = $this->gerrit_server_factory->getAvailableServersForProject($project);

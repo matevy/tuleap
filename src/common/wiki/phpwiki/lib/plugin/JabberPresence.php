@@ -13,24 +13,24 @@ rcs_id('$Id: JabberPresence.php,v 1.3 2004/11/21 11:59:26 rurban Exp $');
  * @author: Arnaud Fontaine
  */
 
-if (!defined('MY_JABBER_ID')) {
-    define('MY_JABBER_ID', $GLOBALS['request']->_user->UserName()."@jabber.com"); // or "@netflint.net"
+if (! defined('MY_JABBER_ID')) {
+    define('MY_JABBER_ID', $GLOBALS['request']->_user->UserName() . "@jabber.com"); // or "@netflint.net"
 }
 
 class WikiPlugin_JabberPresence extends WikiPlugin
 {
     // Five required functions in a WikiPlugin.
-    function getName()
+    public function getName()
     {
         return _("JabberPresence");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Simple jabber presence plugin");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -40,15 +40,15 @@ class WikiPlugin_JabberPresence extends WikiPlugin
     }
 
     // Establish default values for each of this plugin's arguments.
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('scripturl' => "http://edgar.netflint.net/status.php",
+        return ['scripturl' => "http://edgar.netflint.net/status.php",
                      'jid'       => MY_JABBER_ID,
         'type'      => 'image',
-                     'iconset'   => "gabber");
+                     'iconset'   => "gabber"];
     }
 
-    function run($dbi, $argstr, $request)
+    public function run($dbi, $argstr, $request)
     {
         extract($this->getArgs($argstr, $request));
         // Any text that is returned will not be further transformed,
@@ -56,14 +56,14 @@ class WikiPlugin_JabberPresence extends WikiPlugin
         if (empty($jid)) {
             $html = HTML();
         } else {
-            $html = HTML::img(array('src' => urlencode($scripturl).
-            '&jid='.urlencode($jid).
-            '&type='.urlencode($type).
-            '&iconset='.($iconset)));
+            $html = HTML::img(['src' => urlencode($scripturl) .
+            '&jid=' . urlencode($jid) .
+            '&type=' . urlencode($type) .
+            '&iconset=' . ($iconset)]);
         }
         return $html;
     }
-};
+}
 
 // For emacs users
 // Local Variables:

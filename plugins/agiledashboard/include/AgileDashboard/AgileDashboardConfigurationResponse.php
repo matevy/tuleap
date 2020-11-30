@@ -70,37 +70,37 @@ class AgileDashboardConfigurationResponse
 
     public function kanbanActivated()
     {
-        $this->info($GLOBALS['Language']->getText('plugin_agiledashboard', 'kanban_activated'));
+        $this->info(dgettext('tuleap-agiledashboard', 'Kanban successfully activated.'));
     }
 
     public function scrumActivated()
     {
-        $this->info($GLOBALS['Language']->getText('plugin_agiledashboard', 'scrum_activated'));
+        $this->info(dgettext('tuleap-agiledashboard', 'Scrum successfully activated.'));
     }
 
     public function emptyKanbanTitle()
     {
-        $this->warn($GLOBALS['Language']->getText('plugin_agiledashboard', 'kanban_title_empty'));
+        $this->warn(dgettext('tuleap-agiledashboard', 'Kanban title is empty.'));
     }
 
     public function emptyScrumTitle()
     {
-        $this->warn($GLOBALS['Language']->getText('plugin_agiledashboard', 'scrum_title_empty'));
+        $this->warn(dgettext('tuleap-agiledashboard', 'Scrum title is empty.'));
     }
 
     public function kanbanTitleChanged()
     {
-        $this->info($GLOBALS['Language']->getText('plugin_agiledashboard', 'kanban_title_changed'));
+        $this->info(dgettext('tuleap-agiledashboard', 'Kanban title successfully modified.'));
     }
 
     public function scrumTitleChanged()
     {
-        $this->info($GLOBALS['Language']->getText('plugin_agiledashboard', 'scrum_title_changed'));
+        $this->info(dgettext('tuleap-agiledashboard', 'Scrum title successfully modified.'));
     }
 
     private function notifyErrorAndRedirectToAdmin($pane)
     {
-        $this->error($GLOBALS['Language']->getText('plugin_agiledashboard', 'invalid_request'));
+        $this->error(dgettext('tuleap-agiledashboard', 'The request is invalid.'));
         $this->redirectToAdmin($pane);
     }
 
@@ -121,19 +121,19 @@ class AgileDashboardConfigurationResponse
 
     private function redirectToAdmin($pane)
     {
-        $query_parts = array(
+        $query_parts = [
             'group_id' => $this->project->getId(),
             'action'   => 'admin',
             'pane'     => $pane
-        );
-        $GLOBALS['Response']->redirect('/plugins/agiledashboard/?'. http_build_query($query_parts));
+        ];
+        $GLOBALS['Response']->redirect('/plugins/agiledashboard/?' . http_build_query($query_parts));
     }
 
     private function redirectToHome()
     {
-        $query_parts = array(
+        $query_parts = [
             'group_id' => $this->project->getId()
-        );
-        $GLOBALS['Response']->redirect('/plugins/agiledashboard/?'. http_build_query($query_parts));
+        ];
+        $GLOBALS['Response']->redirect('/plugins/agiledashboard/?' . http_build_query($query_parts));
     }
 }

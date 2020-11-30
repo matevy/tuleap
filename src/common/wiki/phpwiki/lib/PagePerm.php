@@ -83,18 +83,18 @@ function pagePermissions($pagename)
     // Page not found (new page); returned inherited permissions, to be displayed in gray
     if (! $page->exists()) {
         if ($pagename == '.') { // stop recursion
-            return array('default', new PagePermission());
+            return ['default', new PagePermission()];
         } else {
-            return array('inherited', pagePermissions(getParentPage($pagename)));
+            return ['inherited', pagePermissions(getParentPage($pagename))];
         }
     } elseif ($perm = getPagePermissions($page)) {
-        return array('page',$perm);
+        return ['page', $perm];
     // or no permissions defined; returned inherited permissions, to be displayed in gray
     } elseif ($pagename == '.') { // stop recursion in pathological case.
         // "." defined, without any acl
-        return array('default', new PagePermission());
+        return ['default', new PagePermission()];
     } else {
-        return array('inherited', pagePermissions(getParentPage($pagename)));
+        return ['inherited', pagePermissions(getParentPage($pagename))];
     }
 }
 
@@ -120,7 +120,7 @@ function pagePermissionsSimpleFormat($perm_tree, $owner, $group = false)
         return HTML::tt($perm->asRwxString($owner, $group));
     } elseif ($type == 'inherited') {
         return HTML::tt(
-            array('class'=>'inherited', 'style'=>'color:#aaa;'),
+            ['class' => 'inherited', 'style' => 'color:#aaa;'],
             $perm->asRwxString($owner, $group)
         );
     }
@@ -129,11 +129,11 @@ function pagePermissionsSimpleFormat($perm_tree, $owner, $group = false)
 function pagePermissionsAcl($type, $perm_tree)
 {
     $perm = $perm_tree[1];
-    while (!is_object($perm)) {
+    while (! is_object($perm)) {
         $perm_tree = pagePermissionsAcl($type, $perm);
         $perm = $perm_tree[1];
     }
-    return array($type,$perm);
+    return [$type, $perm];
 }
 
 // view => who
@@ -189,7 +189,7 @@ function action2access($action)
             return 'edit';
         case 'create':
             $page = $request->getPage();
-            if (!$page->exists()) {
+            if (! $page->exists()) {
                 return 'create';
             } else {
                 return 'view';
@@ -222,10 +222,12 @@ function action2access($action)
 // Maybe page-(current+edit+change?)action pairs will help
 function _requiredAuthorityForPagename($access, $pagename)
 {
-    static $permcache = array();
+    static $permcache = [];
 
-    if (array_key_exists($pagename, $permcache)
-        and array_key_exists($access, $permcache[$pagename])) {
+    if (
+        array_key_exists($pagename, $permcache)
+        and array_key_exists($access, $permcache[$pagename])
+    ) {
         return $permcache[$pagename][$access];
     }
 
@@ -244,7 +246,7 @@ function _requiredAuthorityForPagename($access, $pagename)
             $perm = new PagePermission();
             if ($perm->isAuthorized('change', $request->_user)) {
                 // warn the user to set ACL of ".", if he has permissions to do so.
-                trigger_error(". (dotpage == rootpage for inheriting pageperm ACLs) exists without any ACL!\n".
+                trigger_error(". (dotpage == rootpage for inheriting pageperm ACLs) exists without any ACL!\n" .
                               "Please do ?action=setacl&pagename=.", E_USER_WARNING);
             }
             $result = ($perm->isAuthorized($access, $request->_user) === true);
@@ -305,7 +307,7 @@ function getAccessDescription($access)
 {
     static $accessDescriptions;
     if (! $accessDescriptions) {
-        $accessDescriptions = array(
+        $accessDescriptions = [
                                     'list'     => _("List this page and all subpages"),
                                     'view'     => _("View this page and all subpages"),
                                     'edit'     => _("Edit this page and all subpages"),
@@ -313,7 +315,7 @@ function getAccessDescription($access)
                                     'dump'     => _("Download the page contents"),
                                     'change'   => _("Change page attributes"),
                                     'remove'   => _("Remove this page"),
-                                    );
+                                    ];
     }
     if (in_array($access, array_keys($accessDescriptions))) {
         return $accessDescriptions[$access];
@@ -327,7 +329,7 @@ function array_diff_assoc_recursive($array1, $array2)
 {
     foreach ($array1 as $key => $value) {
         if (is_array($value)) {
-            if (!is_array($array2[$key])) {
+            if (! is_array($array2[$key])) {
                 $difference[$key] = $value;
             } else {
                 $new_diff = array_diff_assoc_recursive($value, $array2[$key]);
@@ -335,11 +337,11 @@ function array_diff_assoc_recursive($array1, $array2)
                     $difference[$key] = $new_diff;
                 }
             }
-        } elseif (!isset($array2[$key]) || $array2[$key] != $value) {
+        } elseif (! isset($array2[$key]) || $array2[$key] != $value) {
             $difference[$key] = $value;
         }
     }
-    return !isset($difference) ? 0 : $difference;
+    return ! isset($difference) ? 0 : $difference;
 }
 
 /**
@@ -354,12 +356,12 @@ function array_diff_assoc_recursive($array1, $array2)
  */
 class PagePermission
 {
-    var $perm;
+    public $perm;
 
-    function __construct($hash = array())
+    public function __construct($hash = [])
     {
         $this->_group = &$GLOBALS['request']->getGroup();
-        if (is_array($hash) and !empty($hash)) {
+        if (is_array($hash) and ! empty($hash)) {
             $accessTypes = $this->accessTypes();
             foreach ($hash as $access => $requires) {
                 if (in_array($access, $accessTypes)) {
@@ -383,9 +385,9 @@ class PagePermission
      * Must translate the various special groups to the actual users settings
      * (userid, group membership).
      */
-    function isAuthorized($access, $user)
+    public function isAuthorized($access, $user)
     {
-        if (!empty($this->perm[$access])) {
+        if (! empty($this->perm[$access])) {
             foreach ($this->perm[$access] as $group => $bool) {
                 if ($this->isMember($user, $group)) {
                     return $bool;
@@ -399,13 +401,13 @@ class PagePermission
      * Translate the various special groups to the actual users settings
      * (userid, group membership).
      */
-    function isMember($user, $group)
+    public function isMember($user, $group)
     {
         global $request;
         if ($group === ACL_EVERY) {
             return true;
         }
-        if (!isset($this->_group)) {
+        if (! isset($this->_group)) {
             $member = $request->getGroup();
         } else {
             $member = $this->_group;
@@ -437,7 +439,7 @@ class PagePermission
             return $user->isAuthenticated();
         }
         if ($group === ACL_OWNER) {
-            if (!$user->isAuthenticated()) {
+            if (! $user->isAuthenticated()) {
                 return false;
             }
             $page = $request->getPage();
@@ -446,7 +448,7 @@ class PagePermission
                     or $member->isMember($owner));
         }
         if ($group === ACL_CREATOR) {
-            if (!$user->isAuthenticated()) {
+            if (! $user->isAuthenticated()) {
                 return false;
             }
             $page = $request->getPage();
@@ -466,42 +468,42 @@ class PagePermission
      * returns hash of default permissions.
      * check if the page '.' exists and returns this instead.
      */
-    function defaultPerms()
+    public function defaultPerms()
     {
         //Todo: check for the existance of '.' and take this instead.
         //Todo: honor more config.ini auth settings here
-        $perm = array('view'   => array(ACL_EVERY => true),
-                      'edit'   => array(ACL_EVERY => true),
-                      'create' => array(ACL_EVERY => true),
-                      'list'   => array(ACL_EVERY => true),
-                      'remove' => array(ACL_ADMIN => true,
-                                        ACL_OWNER => true),
-                      'change' => array(ACL_ADMIN => true,
-                                        ACL_OWNER => true));
+        $perm = ['view'   => [ACL_EVERY => true],
+                      'edit'   => [ACL_EVERY => true],
+                      'create' => [ACL_EVERY => true],
+                      'list'   => [ACL_EVERY => true],
+                      'remove' => [ACL_ADMIN => true,
+                                        ACL_OWNER => true],
+                      'change' => [ACL_ADMIN => true,
+                                        ACL_OWNER => true]];
         if (ZIPDUMP_AUTH) {
-            $perm['dump'] = array(ACL_ADMIN => true,
-                                  ACL_OWNER => true);
+            $perm['dump'] = [ACL_ADMIN => true,
+                                  ACL_OWNER => true];
         } else {
-            $perm['dump'] = array(ACL_EVERY => true);
+            $perm['dump'] = [ACL_EVERY => true];
         }
         if (defined('REQUIRE_SIGNIN_BEFORE_EDIT') && REQUIRE_SIGNIN_BEFORE_EDIT) {
-            $perm['edit'] = array(ACL_SIGNED => true);
+            $perm['edit'] = [ACL_SIGNED => true];
         }
         // view:
-        if (!ALLOW_ANON_USER) {
-            if (!ALLOW_USER_PASSWORDS) {
-                $perm['view'] = array(ACL_SIGNED => true);
+        if (! ALLOW_ANON_USER) {
+            if (! ALLOW_USER_PASSWORDS) {
+                $perm['view'] = [ACL_SIGNED => true];
             } else {
-                $perm['view'] = array(ACL_AUTHENTICATED => true);
+                $perm['view'] = [ACL_AUTHENTICATED => true];
             }
             $perm['view'][ACL_BOGOUSER] = ALLOW_BOGO_LOGIN ? true : false;
         }
         // edit:
-        if (!ALLOW_ANON_EDIT) {
-            if (!ALLOW_USER_PASSWORDS) {
-                $perm['edit'] = array(ACL_SIGNED => true);
+        if (! ALLOW_ANON_EDIT) {
+            if (! ALLOW_USER_PASSWORDS) {
+                $perm['edit'] = [ACL_SIGNED => true];
             } else {
-                $perm['edit'] = array(ACL_AUTHENTICATED => true);
+                $perm['edit'] = [ACL_AUTHENTICATED => true];
             }
             $perm['edit'][ACL_BOGOUSER] = ALLOW_BOGO_LOGIN ? true : false;
             $perm['create'] = $perm['edit'];
@@ -512,11 +514,11 @@ class PagePermission
     /**
      * FIXME: check valid groups and access
      */
-    function sanify()
+    public function sanify()
     {
         foreach ($this->perm as $access => $groups) {
             foreach ($groups as $group => $bool) {
-                $this->perm[$access][$group] = (boolean) $bool;
+                $this->perm[$access][$group] = (bool) $bool;
             }
         }
     }
@@ -524,7 +526,7 @@ class PagePermission
     /**
      * do a recursive comparison
      */
-    function equal($otherperm)
+    public function equal($otherperm)
     {
         $diff = array_diff_assoc_recursive($this->perm, $otherperm);
         return empty($diff);
@@ -533,7 +535,7 @@ class PagePermission
     /**
      * returns list of all supported access types.
      */
-    function accessTypes()
+    public function accessTypes()
     {
         return array_keys(PagePermission::defaultPerms());
     }
@@ -542,11 +544,11 @@ class PagePermission
      * special permissions for dot-files, beginning with '.'
      * maybe also for '_' files?
      */
-    function dotPerms()
+    public function dotPerms()
     {
-        $def = array(ACL_ADMIN => true,
-                     ACL_OWNER => true);
-        $perm = array();
+        $def = [ACL_ADMIN => true,
+                     ACL_OWNER => true];
+        $perm = [];
         foreach (PagePermission::accessTypes() as $access) {
             $perm[$access] = $def;
         }
@@ -556,7 +558,7 @@ class PagePermission
     /**
      *  dead code. not needed inside the object. see getPagePermissions($page)
      */
-    function retrieve($page)
+    public function retrieve($page)
     {
         $hash = $page->get('perm');
         if ($hash) {  // hash => object
@@ -568,36 +570,36 @@ class PagePermission
         return $perm;
     }
 
-    function store($page)
+    public function store($page)
     {
         // object => hash
         $this->sanify();
         return $page->set('perm', serialize($this->perm));
     }
 
-    function groupName($group)
+    public function groupName($group)
     {
         if ($group[0] == '_') {
-            return constant("GROUP".$group);
+            return constant("GROUP" . $group);
         } else {
             return $group;
         }
     }
 
     /* type: page, default, inherited */
-    function asTable($type)
+    public function asTable($type)
     {
         $table = HTML::table();
         foreach ($this->perm as $access => $perms) {
-            $td = HTML::table(array('class' => 'cal','valign' => 'top'));
+            $td = HTML::table(['class' => 'cal', 'valign' => 'top']);
             foreach ($perms as $group => $bool) {
                 $td->pushContent(HTML::tr(
-                    HTML::td(array('align'=>'right'), $group),
+                    HTML::td(['align' => 'right'], $group),
                     HTML::td($bool ? '[X]' : '[ ]')
                 ));
             }
             $table->pushContent(HTML::tr(
-                array('valign' => 'top'),
+                ['valign' => 'top'],
                 HTML::td($access),
                 HTML::td($td)
             ));
@@ -613,20 +615,20 @@ class PagePermission
     }
 
     /* type: page, default, inherited */
-    function asEditableTable($type)
+    public function asEditableTable($type)
     {
         global $WikiTheme;
-        if (!isset($this->_group)) {
+        if (! isset($this->_group)) {
             $this->_group = $GLOBALS['request']->getGroup();
         }
         $table = HTML::table();
         $table->pushContent(HTML::tr(
             HTML::th(
-                array('align' => 'left'),
+                ['align' => 'left'],
                 _("Access")
             ),
             HTML::th(
-                array('align'=>'right'),
+                ['align' => 'right'],
                 _("Group/User")
             ),
             HTML::th(_("Grant")),
@@ -636,7 +638,7 @@ class PagePermission
 
         $allGroups = $this->_group->_specialGroups();
         foreach ($this->_group->getAllGroupsIn() as $group) {
-            if (!in_array($group, $this->_group->specialGroups())) {
+            if (! in_array($group, $this->_group->specialGroups())) {
                 $allGroups[] = $group;
             }
         }
@@ -647,22 +649,22 @@ class PagePermission
         foreach ($this->perm as $access => $groups) {
             //$permlist = HTML::table(array('class' => 'cal','valign' => 'top'));
             $first_only = true;
-            $newperm = HTML::input(array('type' => 'checkbox',
+            $newperm = HTML::input(['type' => 'checkbox',
                                          'name' => "acl[_new_perm][$access]",
-                                         'value' => 1));
-            $addbutton = HTML::input(array('type' => 'checkbox',
+                                         'value' => 1]);
+            $addbutton = HTML::input(['type' => 'checkbox',
                                            'name' => "acl[_add_group][$access]",
                                            //'src'  => $addsrc,
                                            //'alt'   => "Add",
                                            'title' => _("Add this ACL"),
-                                           'value' => 1));
-            $newgroup = HTML::select(array('name' => "acl[_new_group][$access]",
-                                           'style'=> 'text-align: right;',
-                                           'size' => 1));
+                                           'value' => 1]);
+            $newgroup = HTML::select(['name' => "acl[_new_group][$access]",
+                                           'style' => 'text-align: right;',
+                                           'size' => 1]);
             foreach ($allGroups as $groupname) {
-                if (!isset($groups[$groupname])) {
+                if (! isset($groups[$groupname])) {
                     $newgroup->pushContent(HTML::option(
-                        array('value' => $groupname),
+                        ['value' => $groupname],
                         $this->groupName($groupname)
                     ));
                 }
@@ -672,8 +674,8 @@ class PagePermission
                 $newperm->setAttr('checked', 'checked');
                 $table->pushContent(
                     HTML::tr(
-                        array('valign' => 'top'),
-                        HTML::td(HTML::strong($access.":")),
+                        ['valign' => 'top'],
+                        HTML::td(HTML::strong($access . ":")),
                         HTML::td($newgroup),
                         HTML::td($nbsp, $newperm),
                         HTML::td($nbsp, $addbutton),
@@ -682,36 +684,36 @@ class PagePermission
                 );
             }
             foreach ($groups as $group => $bool) {
-                $checkbox = HTML::input(array('type' => 'checkbox',
+                $checkbox = HTML::input(['type' => 'checkbox',
                                               'name' => "acl[$access][$group]",
                                               'title' => _("Allow / Deny"),
-                                              'value' => 1));
+                                              'value' => 1]);
                 if ($bool) {
                     $checkbox->setAttr('checked', 'checked');
                 }
                 $checkbox = HTML(
-                    HTML::input(array('type' => 'hidden',
+                    HTML::input(['type' => 'hidden',
                                                    'name' => "acl[$access][$group]",
-                                                   'value' => 0)),
+                                                   'value' => 0]),
                     $checkbox
                 );
-                $deletebutton = HTML::input(array('type' => 'checkbox',
+                $deletebutton = HTML::input(['type' => 'checkbox',
                                                   'name' => "acl[_del_group][$access][$group]",
-                                                  'style' => 'background: #aaa url('.$deletesrc.')',
+                                                  'style' => 'background: #aaa url(' . $deletesrc . ')',
                                                   //'src'  => $deletesrc,
                                                   //'alt'   => "Del",
                                                   'title' => _("Delete this ACL"),
-                                                  'value' => 1));
+                                                  'value' => 1]);
                 if ($first_only) {
                     $table->pushContent(
                         HTML::tr(
-                            HTML::td(HTML::strong($access.":")),
+                            HTML::td(HTML::strong($access . ":")),
                             HTML::td(
-                                array('class' => 'cal-today','align'=>'right'),
+                                ['class' => 'cal-today', 'align' => 'right'],
                                 HTML::strong($this->groupName($group))
                             ),
-                            HTML::td(array('align'=>'center'), $nbsp, $checkbox),
-                            HTML::td(array('align'=>'right','style' => 'background: #aaa url('.$deletesrc.') no-repeat'), $deletebutton),
+                            HTML::td(['align' => 'center'], $nbsp, $checkbox),
+                            HTML::td(['align' => 'right', 'style' => 'background: #aaa url(' . $deletesrc . ') no-repeat'], $deletebutton),
                             HTML::td(HTML::em(getAccessDescription($access)))
                         )
                     );
@@ -721,24 +723,24 @@ class PagePermission
                         HTML::tr(
                             HTML::td(),
                             HTML::td(
-                                array('class' => 'cal-today','align'=>'right'),
+                                ['class' => 'cal-today', 'align' => 'right'],
                                 HTML::strong($this->groupName($group))
                             ),
-                            HTML::td(array('align'=>'center'), $nbsp, $checkbox),
-                            HTML::td(array('align'=>'right','style' => 'background: #aaa url('.$deletesrc.') no-repeat'), $deletebutton),
+                            HTML::td(['align' => 'center'], $nbsp, $checkbox),
+                            HTML::td(['align' => 'right', 'style' => 'background: #aaa url(' . $deletesrc . ') no-repeat'], $deletebutton),
                             HTML::td()
                         )
                     );
                 }
             }
-            if (!empty($groups)) {
+            if (! empty($groups)) {
                 $table->pushContent(
                     HTML::tr(
-                        array('valign' => 'top'),
-                        HTML::td(array('align'=>'right'), _("add ")),
+                        ['valign' => 'top'],
+                        HTML::td(['align' => 'right'], _("add ")),
                         HTML::td($newgroup),
-                        HTML::td(array('align'=>'center'), $nbsp, $newperm),
-                        HTML::td(array('align'=>'right','style' => 'background: #ccc url('.$addsrc.') no-repeat'), $addbutton),
+                        HTML::td(['align' => 'center'], $nbsp, $newperm),
+                        HTML::td(['align' => 'right', 'style' => 'background: #ccc url(' . $addsrc . ') no-repeat'], $addbutton),
                         HTML::td(HTML::small(_("Check to add this ACL")))
                     )
                 );
@@ -758,7 +760,7 @@ class PagePermission
     // Seperate acl's by "; " or whitespace
     // See http://opag.ca/wiki/HelpOnAccessControlLists
     // As used by WikiAdminSetAclSimple
-    function asAclLines()
+    public function asAclLines()
     {
         $s = '';
         $line = '';
@@ -766,12 +768,12 @@ class PagePermission
         foreach ($this->perm as $access => $groups) {
             // unify groups for same access+bool
             //    view:CREATOR,-OWNER,
-            $line = $access.':';
+            $line = $access . ':';
             foreach ($groups as $group => $bool) {
-                $line .= ($bool?'':'-').$group.",";
+                $line .= ($bool ? '' : '-') . $group . ",";
             }
             if (substr($line, -1) == ',') {
-                $s .= substr($line, 0, -1)."; ";
+                $s .= substr($line, 0, -1) . "; ";
             }
         }
         if (substr($s, -2) == '; ') {
@@ -784,49 +786,67 @@ class PagePermission
     // This is just a bad hack for testing.
     // Simplify the ACL to a unix-like "rwx------+" string
     // See getfacl(8)
-    function asRwxString($owner, $group = false)
+    public function asRwxString($owner, $group = false)
     {
         global $request;
         // simplify object => rwxrw---x+ string as in cygwin (+ denotes additional ACLs)
         $perm = $this->perm;
         // get effective user and group
         $s = '---------+';
-        if (isset($perm['view'][$owner]) or
-            (isset($perm['view'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+        if (
+            isset($perm['view'][$owner]) or
+            (isset($perm['view'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+        ) {
             $s[0] = 'r';
         }
-        if (isset($perm['edit'][$owner]) or
-            (isset($perm['edit'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+        if (
+            isset($perm['edit'][$owner]) or
+            (isset($perm['edit'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+        ) {
             $s[1] = 'w';
         }
-        if (isset($perm['change'][$owner]) or
-            (isset($perm['change'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+        if (
+            isset($perm['change'][$owner]) or
+            (isset($perm['change'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+        ) {
             $s[2] = 'x';
         }
-        if (!empty($group)) {
-            if (isset($perm['view'][$group]) or
-                (isset($perm['view'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+        if (! empty($group)) {
+            if (
+                isset($perm['view'][$group]) or
+                (isset($perm['view'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+            ) {
                 $s[3] = 'r';
             }
-            if (isset($perm['edit'][$group]) or
-                (isset($perm['edit'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+            if (
+                isset($perm['edit'][$group]) or
+                (isset($perm['edit'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+            ) {
                 $s[4] = 'w';
             }
-            if (isset($perm['change'][$group]) or
-                (isset($perm['change'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+            if (
+                isset($perm['change'][$group]) or
+                (isset($perm['change'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+            ) {
                 $s[5] = 'x';
             }
         }
-        if (isset($perm['view'][ACL_EVERY]) or
-            (isset($perm['view'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+        if (
+            isset($perm['view'][ACL_EVERY]) or
+            (isset($perm['view'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+        ) {
             $s[6] = 'r';
         }
-        if (isset($perm['edit'][ACL_EVERY]) or
-            (isset($perm['edit'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+        if (
+            isset($perm['edit'][ACL_EVERY]) or
+            (isset($perm['edit'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+        ) {
             $s[7] = 'w';
         }
-        if (isset($perm['change'][ACL_EVERY]) or
-            (isset($perm['change'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())) {
+        if (
+            isset($perm['change'][ACL_EVERY]) or
+            (isset($perm['change'][ACL_AUTHENTICATED]) and $request->_user->isAuthenticated())
+        ) {
             $s[8] = 'x';
         }
         return $s;

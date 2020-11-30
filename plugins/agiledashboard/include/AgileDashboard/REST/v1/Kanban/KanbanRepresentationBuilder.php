@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014-2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,12 @@
 namespace Tuleap\AgileDashboard\REST\v1\Kanban;
 
 use AgileDashboard_Kanban;
-use AgileDashboard_KanbanColumnFactory;
-use PFUser;
 use AgileDashboard_KanbanActionsChecker;
+use AgileDashboard_KanbanColumnFactory;
 use AgileDashboard_KanbanUserPreferences;
 use Exception;
+use PFUser;
+use Tuleap\AgileDashboard\KanbanUserCantAddArtifactException;
 
 class KanbanRepresentationBuilder
 {
@@ -54,10 +55,20 @@ class KanbanRepresentationBuilder
     }
 
     /**
-     * @return Tuleap\AgileDashboard\REST\v1\Kanban\KanbanRepresentation
+     * @return KanbanRepresentation
      */
     public function build(AgileDashboard_Kanban $kanban, PFUser $user)
     {
+        try {
+            $this->kanban_actions_checker->checkUserCanAddArtifact($user, $kanban);
+            $user_can_add_artifact = true;
+        } catch (KanbanUserCantAddArtifactException $exception) {
+            $user_can_add_artifact = false;
+        } catch (\Kanban_SemanticStatusNotDefinedException $e) {
+            $user_can_add_artifact = false;
+        } catch (\Kanban_TrackerNotDefinedException $e) {
+            $user_can_add_artifact = false;
+        }
 
         try {
             $this->kanban_actions_checker->checkUserCanAddInPlace($user, $kanban);
@@ -80,8 +91,7 @@ class KanbanRepresentationBuilder
             $user_can_reorder_columns = false;
         }
 
-        $kanban_representation = new KanbanRepresentation();
-        $kanban_representation->build(
+        return KanbanRepresentation::build(
             $kanban,
             $this->kanban_column_factory,
             $this->user_preferences,
@@ -89,9 +99,8 @@ class KanbanRepresentationBuilder
             $user_can_add_columns,
             $user_can_reorder_columns,
             $user_can_add_in_place,
+            $user_can_add_artifact,
             $user
         );
-
-        return $kanban_representation;
     }
 }

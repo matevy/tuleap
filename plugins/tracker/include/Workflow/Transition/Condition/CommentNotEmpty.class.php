@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,9 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Workflow\Transition\Condition\Visitor;
 
-class Workflow_Transition_Condition_CommentNotEmpty extends Workflow_Transition_Condition //phpcs:ignore
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
+class Workflow_Transition_Condition_CommentNotEmpty extends Workflow_Transition_Condition
 {
     /** @var bool */
     private $is_comment_required;
@@ -50,39 +52,12 @@ class Workflow_Transition_Condition_CommentNotEmpty extends Workflow_Transition_
     }
 
     /**
-     * @see Workflow_Transition_Condition::fetch()
-     * @return string The field wrapped in Html
-     */
-    public function fetch()
-    {
-        if (! $this->transition->getFieldValueFrom()) {
-            return '';
-        }
-
-        $purifier = Codendi_HTMLPurifier::instance();
-
-        $checked = '';
-        if ($this->is_comment_required) {
-            $checked = 'checked="checked"';
-        }
-
-        $html  = '<label class="checkbox workflow_conditions_commentnotempty_label">';
-        $html .= '<input type="checkbox"
-            name="is_comment_required"
-            class="workflow_conditions_commentnotempty_checkbox"
-            value="1" '. $checked .' />';
-        $html .= $GLOBALS['Language']->getText('workflow_admin', 'label_define_transition_required_comment');
-
-        return $html;
-    }
-
-    /**
      * @see Workflow_Transition_Condition::exportToXml()
      */
     public function exportToXml(SimpleXMLElement $root, $xmlMapping)
     {
         if (! $this->is_comment_required) {
-            return null;
+            return;
         }
 
         $child = $root->addChild('condition');
@@ -98,11 +73,7 @@ class Workflow_Transition_Condition_CommentNotEmpty extends Workflow_Transition_
         $this->dao->create($this->getTransition()->getId(), $this->is_comment_required);
     }
 
-    /**
-     *
-     * @return bool
-     */
-    public function validate($fields_data, Tracker_Artifact $artifact, $comment_body)
+    public function validate($fields_data, Artifact $artifact, string $comment_body, PFUser $current_user): bool
     {
         if (! $this->is_comment_required) {
             return true;
@@ -111,7 +82,7 @@ class Workflow_Transition_Condition_CommentNotEmpty extends Workflow_Transition_
         if (trim($comment_body) === '') {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
-                $GLOBALS['Language']->getText('workflow_admin', 'label_define_transition_required_comment')
+                dgettext('tuleap-tracker', 'Comment must not be empty.')
             );
             return false;
         }

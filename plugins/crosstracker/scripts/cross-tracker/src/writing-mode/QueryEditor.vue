@@ -17,6 +17,7 @@
   - along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
   -->
 
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
     <div class="cross-tracker-expert-content">
         <div class="cross-tracker-expert-content-query tlp-form-element">
@@ -29,14 +30,19 @@
                 id="expert-query-textarea"
                 v-bind:placeholder="placeholder"
                 v-model="writingCrossTrackerReport.expert_query"
+                data-test="expert-query-textarea"
             ></textarea>
             <p class="tlp-text-info">
                 <i class="fa fa-info-circle"></i>
-                <translate>You can use: AND, OR, parenthesis. Autocomplete is activated with Ctrl + Space.</translate>
+                <translate>
+                    You can use: AND, OR, parenthesis. Autocomplete is activated with Ctrl + Space.
+                </translate>
             </p>
         </div>
         <div class="tlp-form-element">
-            <label class="tlp-label" for="expert-query-allowed-fields" v-translate>Allowed fields</label>
+            <label class="tlp-label" for="expert-query-allowed-fields" v-translate>
+                Allowed fields
+            </label>
             <select
                 class="cross-tracker-expert-content-query-allowed-fields tlp-select"
                 name="allowed-fields"
@@ -56,25 +62,26 @@
         </div>
     </div>
 </template>
+<!-- eslint-disable vue/no-mutating-props -->
 <script>
 import {
     TQL_cross_tracker_autocomplete_keywords,
-    TQL_cross_tracker_mode_definition
+    TQL_cross_tracker_mode_definition,
 } from "./tql-configuration.js";
-import { insertAllowedFieldInCodeMirror } from "../../../../../tracker/www/scripts/report/TQL-CodeMirror/allowed-field-inserter.js";
+import { insertAllowedFieldInCodeMirror } from "../../../../../tracker/scripts/report/TQL-CodeMirror/allowed-field-inserter.js";
 import {
     initializeTQLMode,
-    codeMirrorify
-} from "../../../../../tracker/www/scripts/report/TQL-CodeMirror/builder.js";
+    codeMirrorify,
+} from "../../../../../tracker/scripts/report/TQL-CodeMirror/builder.js";
 
 export default {
     name: "QueryEditor",
     props: {
-        writingCrossTrackerReport: Object
+        writingCrossTrackerReport: Object,
     },
     data() {
         return {
-            code_mirror_instance: null
+            code_mirror_instance: null,
         };
     },
     computed: {
@@ -104,7 +111,7 @@ export default {
         },
         placeholder() {
             return this.$gettext("Example: @title = 'value'");
-        }
+        },
     },
     created() {
         initializeTQLMode(TQL_cross_tracker_mode_definition);
@@ -117,7 +124,7 @@ export default {
         this.code_mirror_instance = codeMirrorify({
             textarea_element: this.$refs.query_textarea,
             autocomplete_keywords: TQL_cross_tracker_autocomplete_keywords,
-            submitFormCallback
+            submitFormCallback,
         });
 
         this.code_mirror_instance.on("change", () => {
@@ -129,8 +136,8 @@ export default {
             insertAllowedFieldInCodeMirror(event, this.code_mirror_instance);
         },
         search() {
-            this.$emit("triggerSearch");
-        }
-    }
+            this.$emit("trigger-search");
+        },
+    },
 };
 </script>

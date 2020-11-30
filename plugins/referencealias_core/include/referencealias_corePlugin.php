@@ -24,7 +24,6 @@ require_once 'constants.php';
 use Tuleap\ReferenceAliasCore\Dao;
 use Tuleap\ReferenceAliasCore\ReferencesImporter;
 use Tuleap\ReferenceAliasCore\ReferencesBuilder;
-use Tuleap\Project\XML\Import\ImportConfig;
 
 // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class referencealias_corePlugin extends Plugin
@@ -36,7 +35,7 @@ class referencealias_corePlugin extends Plugin
     private $dao;
 
     /**
-     * @var ReferencesBuilder;
+     * @var ReferencesBuilder
      */
     private $references_builder;
 
@@ -56,7 +55,7 @@ class referencealias_corePlugin extends Plugin
      */
     public function getPluginInfo()
     {
-        if (!$this->pluginInfo) {
+        if (! $this->pluginInfo) {
             $this->pluginInfo = new Tuleap\ReferenceAliasCore\Plugin\PluginInfo($this);
         }
         return $this->pluginInfo;
@@ -87,7 +86,7 @@ class referencealias_corePlugin extends Plugin
         $project   = $params['project'];
         $reference = $this->references_builder->getReference($project, $keyword, $value);
 
-        if (!empty($reference)) {
+        if (! empty($reference)) {
             $params['reference'] = $reference;
         }
     }

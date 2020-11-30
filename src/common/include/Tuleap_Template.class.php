@@ -33,7 +33,7 @@ class Tuleap_Template
 {
 
     /**
-     * @var The variables to pass to the template
+     * @var array The variables to pass to the template
      */
     protected $vars;
 
@@ -50,7 +50,7 @@ class Tuleap_Template
     public function __construct($file = null)
     {
         $this->file = $file;
-        $this->vars = array();
+        $this->vars = [];
     }
 
     /**
@@ -72,10 +72,10 @@ class Tuleap_Template
      */
     public function fetch($file = null)
     {
-        if (!$file) {
+        if (! $file) {
             $file = $this->file;
         }
-        if (!$file) {
+        if (! $file) {
             throw new Exception('A template file name is required');
         }
 

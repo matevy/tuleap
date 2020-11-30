@@ -19,7 +19,7 @@
 
 import { shallowMount } from "@vue/test-utils";
 import TaskBoardHeader from "./TaskBoardHeader.vue";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import { ColumnDefinition } from "../../../type";
 import ExpandedHeaderCell from "./Expanded/ExpandedHeaderCell.vue";
 import CollapsedHeaderCell from "./Collapsed/CollapsedHeaderCell.vue";
@@ -29,17 +29,17 @@ describe("TaskBoardHeader", () => {
         const todo: ColumnDefinition = {
             id: 2,
             label: "To do",
-            is_collapsed: false
+            is_collapsed: false,
         } as ColumnDefinition;
         const ongoing: ColumnDefinition = {
             id: 3,
             label: "Ongoing",
-            is_collapsed: false
+            is_collapsed: false,
         } as ColumnDefinition;
         const done: ColumnDefinition = {
             id: 4,
             label: "Done",
-            is_collapsed: true
+            is_collapsed: true,
         } as ColumnDefinition;
 
         const wrapper = shallowMount(TaskBoardHeader, {
@@ -47,51 +47,27 @@ describe("TaskBoardHeader", () => {
                 $store: createStoreMock({
                     state: {
                         column: {
-                            columns: [todo, ongoing, done]
+                            columns: [todo, ongoing, done],
                         },
-                        fullscreen: {
-                            is_taskboard_in_fullscreen_mode: false
-                        }
+                        swimlane: {},
                     },
                     getters: {
-                        "fullscreen/fullscreen_class": ""
-                    }
-                })
-            }
+                        "swimlane/taskboard_cell_swimlane_header_classes": [],
+                    },
+                }),
+            },
         });
 
         const children = wrapper.findAll("*");
-        expect(children.at(1).is(".taskboard-cell-swimlane-header")).toBe(true);
+        expect(children.at(1).classes("taskboard-cell-swimlane-header")).toBe(true);
 
-        expect(children.at(2).is(ExpandedHeaderCell)).toBe(true);
+        expect(children.at(2).findComponent(ExpandedHeaderCell).exists()).toBe(true);
         expect(children.at(2).props("column")).toStrictEqual(todo);
 
-        expect(children.at(3).is(ExpandedHeaderCell)).toBe(true);
+        expect(children.at(3).findComponent(ExpandedHeaderCell).exists()).toBe(true);
         expect(children.at(3).props("column")).toStrictEqual(ongoing);
 
-        expect(children.at(4).is(CollapsedHeaderCell)).toBe(true);
+        expect(children.at(4).findComponent(CollapsedHeaderCell).exists()).toBe(true);
         expect(children.at(4).props("column")).toStrictEqual(done);
-    });
-
-    it("toggles the fullscreen class if taskboard is in fullscreen mode", () => {
-        const wrapper = shallowMount(TaskBoardHeader, {
-            mocks: {
-                $store: createStoreMock({
-                    state: {
-                        column: {
-                            columns: [{ id: 2, label: "To do" }, { id: 3, label: "Done" }]
-                        },
-                        fullscreen: {
-                            is_taskboard_in_fullscreen_mode: true
-                        }
-                    },
-                    getters: {
-                        "fullscreen/fullscreen_class": "taskboard-fullscreen"
-                    }
-                })
-            }
-        });
-
-        expect(wrapper.contains(".taskboard-fullscreen")).toBe(true);
     });
 });

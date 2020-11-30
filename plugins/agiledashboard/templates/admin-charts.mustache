@@ -1,6 +1,5 @@
-<div class="agiledashboard-admin-kanban">
-    <h1>{{# dgettext }} tuleap-agiledashboard | Configuration {{/ dgettext }}</h1>
-
+<h1 class="almost-tlp-title project-header-title">{{# dgettext }} tuleap-agiledashboard | Configuration {{/ dgettext }}</h1>
+<div class="main-project-tabs">
     <ul class="nav nav-tabs">
         <li>
             <a href="?group_id={{ project_id }}&action=admin&pane=scrum">{{# dgettext }} tuleap-agiledashboard | Scrum {{/ dgettext }}</a>
@@ -12,14 +11,15 @@
             <a href="?group_id={{ project_id }}&action=admin&pane=charts">{{# dgettext }} tuleap-agiledashboard | Charts {{/ dgettext }}</a>
         </li>
     </ul>
-
+</div>
+<div class="agiledashboard-admin-kanban agiledashboard-content">
     <form action="?group_id={{ project_id }}&action=updateConfiguration" method="POST">
         {{# csrf_token }}
             {{> csrf_token_input }}
         {{/ csrf_token }}
         <input type="hidden" name="burnup-count-mode" value="0">
         <section>
-            <h3><i class="fa fa-area-chart"></i> {{# dgettext }}tuleap-agiledashboard | Charts configuration{{/ dgettext }}</h3>
+            <h3><i class="fas fa-chart-area"></i> {{# dgettext }}tuleap-agiledashboard | Charts configuration{{/ dgettext }}</h3>
 
             <div class="agiledashboard-section-details">
                 <label class="checkbox active-scrum">

@@ -26,6 +26,7 @@ use Planning_MilestoneFactory;
 use Planning_MilestonePaneFactory;
 use Tuleap\AgileDashboard\Milestone\Criterion\Status\StatusOpen;
 use Tuleap\AgileDashboard\Milestone\Pane\Details\DetailsPaneInfo;
+use Tuleap\AgileDashboard\Milestone\Request\SiblingMilestoneRequest;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumb;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbLink;
 use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbLinkCollection;
@@ -56,8 +57,6 @@ class MilestoneCrumbBuilder
     }
 
     /**
-     * @param PFUser             $user
-     * @param Planning_Milestone $milestone
      *
      * @return BreadCrumb
      */
@@ -98,28 +97,22 @@ class MilestoneCrumbBuilder
     }
 
     /**
-     * @param PFUser             $user
-     * @param Planning_Milestone $milestone
      *
      * @return BreadCrumbSubItems
      */
     private function getSubItems(PFUser $user, Planning_Milestone $milestone)
     {
         $sub_items = new BreadCrumbSubItems();
-        $this->addDefaultSection($milestone, $sub_items);
+        $this->addDefaultSection($milestone, $sub_items, $user);
         $this->addSiblingsSection($user, $milestone, $sub_items);
 
         return $sub_items;
     }
 
-    /**
-     * @param Planning_Milestone $milestone
-     * @param BreadCrumbSubItems $sub_items
-     */
-    private function addDefaultSection(Planning_Milestone $milestone, BreadCrumbSubItems $sub_items)
+    private function addDefaultSection(Planning_Milestone $milestone, BreadCrumbSubItems $sub_items, PFUser $user): void
     {
         $links = [];
-        $panes = $this->pane_factory->getListOfPaneInfo($milestone);
+        $panes = $this->pane_factory->getListOfPaneInfo($milestone, $user);
         foreach ($panes as $pane) {
             $links[] = new BreadCrumbLinkWithIcon(
                 $pane->getTitle(),
@@ -128,7 +121,7 @@ class MilestoneCrumbBuilder
             );
         }
         $links[] = new BreadCrumbLinkWithIcon(
-            $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'artifact'),
+            dgettext('tuleap-tracker', 'Artifact'),
             $this->getArtifactUrl($milestone),
             'fa-list-ol'
         );
@@ -139,11 +132,6 @@ class MilestoneCrumbBuilder
         );
     }
 
-    /**
-     * @param PFUser             $user
-     * @param Planning_Milestone $milestone
-     * @param BreadCrumbSubItems $sub_items
-     */
     private function addSiblingsSection(PFUser $user, Planning_Milestone $milestone, BreadCrumbSubItems $sub_items)
     {
         $links = $this->getFirstTenOpenSiblings($user, $milestone);
@@ -156,7 +144,7 @@ class MilestoneCrumbBuilder
             new SubItemsSection(
                 sprintf(
                     dngettext('tuleap-agiledashboard', 'Other %s', 'Other %s', count($links)),
-                    $milestone->getArtifact()->getTracker()->getName()
+                    $milestone->getArtifact()->getTracker()->getItemName()
                 ),
                 new BreadCrumbLinkCollection($links)
             )
@@ -164,25 +152,17 @@ class MilestoneCrumbBuilder
     }
 
     /**
-     * @param PFUser             $user
-     * @param Planning_Milestone $milestone
      *
      * @return array
      */
     private function getFirstTenOpenSiblings(PFUser $user, Planning_Milestone $milestone)
     {
-        $links     = [];
-        $criterion = new StatusOpen();
-        $limit     = 10;
-        $offset    = 0;
+        $links   = [];
+        $limit   = 10;
+        $offset  = 0;
+        $request = new SiblingMilestoneRequest($user, $milestone, $limit, $offset, new StatusOpen());
         do {
-            $paginated_milestones = $this->milestone_factory->getPaginatedSiblingMilestonesWithStatusCriterion(
-                $user,
-                $milestone,
-                $criterion,
-                $limit,
-                $offset
-            );
+            $paginated_milestones = $this->milestone_factory->getPaginatedSiblingMilestones($request);
             foreach ($paginated_milestones->getMilestones() as $sibling) {
                 $links[] = new BreadCrumbLink(
                     $sibling->getArtifactTitle(),

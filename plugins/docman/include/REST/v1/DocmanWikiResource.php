@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1;
 
@@ -106,7 +106,7 @@ class DocmanWikiResource extends AuthenticatedResource
      * @throws RestException 404
      */
 
-    public function patch(int $id, DocmanPATCHItemRepresentation $representation) : void
+    public function patch(int $id, DocmanPATCHItemRepresentation $representation): void
     {
         $this->checkAccess();
         $this->setHeaders();
@@ -150,7 +150,7 @@ class DocmanWikiResource extends AuthenticatedResource
      * @throws I18NRestException 403
      * @throws I18NRestException 404
      */
-    public function delete(int $id, bool $delete_associated_wiki_page = false) : void
+    public function delete(int $id, bool $delete_associated_wiki_page = false): void
     {
         $this->checkAccess();
         $this->setHeaders();
@@ -161,7 +161,7 @@ class DocmanWikiResource extends AuthenticatedResource
         $project           = $item_request->getProject();
         $validator = $this->getValidator($project, $current_user, $item_to_delete);
         $item_to_delete->accept($validator);
-        /** @var \Docman_Wiki $item_to_delete */
+        assert($item_to_delete instanceof Docman_Wiki);
 
         $event_adder = $this->getDocmanItemsEventAdder();
         $event_adder->addLogEvents();
@@ -211,10 +211,10 @@ class DocmanWikiResource extends AuthenticatedResource
         $this->createNewWikiVersion(
             $representation,
             $item_request,
-            (int)$item->getStatus(),
-            (int)$item->getObsolescenceDate(),
-            (string)$item->getTitle(),
-            (string)$item->getDescription()
+            (int) $item->getStatus(),
+            (int) $item->getObsolescenceDate(),
+            (string) $item->getTitle(),
+            (string) $item->getDescription()
         );
     }
 
@@ -251,7 +251,6 @@ class DocmanWikiResource extends AuthenticatedResource
         int $id,
         PUTMetadataRepresentation $representation
     ): void {
-
         $this->checkAccess();
         $this->setMetadataHeaders();
 
@@ -374,7 +373,7 @@ class DocmanWikiResource extends AuthenticatedResource
     /**
      * @url OPTIONS {id}/permissions
      */
-    public function optionsPermissions(int $id) : void
+    public function optionsPermissions(int $id): void
     {
         Header::allowOptionsPost();
     }
@@ -392,7 +391,7 @@ class DocmanWikiResource extends AuthenticatedResource
      *
      * @throws RestException 400
      */
-    public function putPermissions(int $id, DocmanItemPermissionsForGroupsSetRepresentation $representation) : void
+    public function putPermissions(int $id, DocmanItemPermissionsForGroupsSetRepresentation $representation): void
     {
         $this->checkAccess();
         $this->optionsPermissions($id);
@@ -444,9 +443,7 @@ class DocmanWikiResource extends AuthenticatedResource
     /**
      * @param              $project
      * @param              $current_user
-     * @param \Docman_Item $item
      *
-     * @return DocumentBeforeModificationValidatorVisitor
      */
     private function getValidator(Project $project, \PFUser $current_user, \Docman_Item $item): DocumentBeforeModificationValidatorVisitor
     {
@@ -458,9 +455,6 @@ class DocmanWikiResource extends AuthenticatedResource
         );
     }
 
-    /**
-     * @param \Project $project
-     */
     private function addAllEvent(\Project $project): void
     {
         $event_adder = $this->getDocmanItemsEventAdder();
@@ -503,7 +497,7 @@ class DocmanWikiResource extends AuthenticatedResource
                 'project'       => $project
             ]
         );
-        /** @var \Docman_Wiki $item */
+        assert($item instanceof Docman_Wiki);
 
         $docman_item_version_creator = $this->getWikiVersionCreator();
         $docman_item_version_creator->createWikiVersion(

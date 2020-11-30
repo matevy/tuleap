@@ -24,7 +24,6 @@ class Mediawiki_Migration_MediawikiMigrator
     public const PATH_TO_LOCALSETTINGS    = "/plugins/mediawiki/www/LocalSettings.php";
 
     /**
-     * @param Project $project
      * @throws System_Command_CommandException
      */
     public function migrateProjectTo123(Project $project)
@@ -40,6 +39,6 @@ class Mediawiki_Migration_MediawikiMigrator
 
     private function getCommandToExecute(Project $project)
     {
-        return $GLOBALS['codendi_dir'] . self::PATH_TO_EXECUTION_SCRIPT . " " . escapeshellarg($project->getUnixName()) . " --conf " . $GLOBALS['codendi_dir'] . self::PATH_TO_LOCALSETTINGS . " --quick";
+        return ForgeConfig::get('codendi_dir') . self::PATH_TO_EXECUTION_SCRIPT . " " . escapeshellarg($project->getUnixName()) . " --conf " . ForgeConfig::get('codendi_dir') . self::PATH_TO_LOCALSETTINGS . " --quick";
     }
 }

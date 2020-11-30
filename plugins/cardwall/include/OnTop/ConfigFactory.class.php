@@ -31,32 +31,31 @@ class Cardwall_OnTop_ConfigFactory
      */
     private $element_factory;
 
-    function __construct(TrackerFactory $tracker_factory, Tracker_FormElementFactory $element_factory)
+    public function __construct(TrackerFactory $tracker_factory, Tracker_FormElementFactory $element_factory)
     {
         $this->tracker_factory = $tracker_factory;
         $this->element_factory = $element_factory;
     }
 
     /**
-     * @param Tracker $tracker
-     *
      * @return \Cardwall_OnTop_Config
      */
     public function getOnTopConfigByTrackerId($tracker_id)
     {
         $tracker = $this->tracker_factory->getTrackerById($tracker_id);
+        if ($tracker === null) {
+            throw new RuntimeException('Tracker does not exist');
+        }
         return $this->getOnTopConfig($tracker);
     }
 
     /**
-     * @param Tracker $tracker
      *
      * @return \Cardwall_OnTop_Config
      */
     public function getOnTopConfig(Tracker $tracker)
     {
-
-        $column_factory = new Cardwall_OnTop_Config_ColumnFactory($this->getOnTopColumnDao(), $this->getOnTopDao());
+        $column_factory = new Cardwall_OnTop_Config_ColumnFactory($this->getOnTopColumnDao());
 
         $value_mapping_factory = new Cardwall_OnTop_Config_ValueMappingFactory(
             $this->element_factory,
@@ -82,7 +81,6 @@ class Cardwall_OnTop_ConfigFactory
     /**
      * Returns the cardwall configuration of the given planning
      *
-     * @param Planning $planning
      *
      * @return Cardwall_OnTop_Config | null
      */

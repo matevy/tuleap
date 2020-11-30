@@ -87,24 +87,27 @@ class HierarchyController
         $this->renderer                           = TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../../../templates');
     }
 
-    public function edit() : void
+    public function edit(): void
     {
-        $presenter = new Tracker_Hierarchy_Presenter(
+        $this->render('admin-hierarchy', $this->buildPresenter());
+    }
+
+    public function buildPresenter(): Tracker_Hierarchy_Presenter
+    {
+        return new Tracker_Hierarchy_Presenter(
             $this->tracker,
             $this->factory->getPossibleChildren($this->tracker),
             $this->factory->getHierarchy($this->tracker->getUnhierarchizedTracker()),
             $this->isIsChildTypeDisabledForProject($this->tracker->getProject()),
             $this->getChildrenUsedInTriggerRules()
         );
-
-        $this->render('admin-hierarchy', $presenter);
     }
 
     /**
      * @return Tracker[]
      * @psalm-return array<int, Tracker> Array of tracker by tracker ID
      */
-    private function getChildrenUsedInTriggerRules() : array
+    private function getChildrenUsedInTriggerRules(): array
     {
         $rows = $this->tracker_workflow_trigger_rules_dao->searchTriggeringTrackersByTargetTrackerID($this->tracker->getId());
         if ($rows === false) {
@@ -125,7 +128,7 @@ class HierarchyController
         return $children_used_in_triggers_rules;
     }
 
-    private function isIsChildTypeDisabledForProject(Project $project) : bool
+    private function isIsChildTypeDisabledForProject(Project $project): bool
     {
         return $this->artifact_links_usage_dao->isProjectUsingArtifactLinkTypes($project->getID()) &&
             $this->artifact_links_usage_dao->isTypeDisabledInProject(
@@ -134,7 +137,7 @@ class HierarchyController
             );
     }
 
-    public function update() : void
+    public function update(): void
     {
         $vChildren = new Valid_UInt('children');
         $vChildren->required();
@@ -150,7 +153,7 @@ class HierarchyController
         }
 
         if (! $this->request->validArray($vChildren) && $this->request->exist('children')) {
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_hierarchy', 'controller_bad_request'));
+            $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker', 'Your request contains invalid data, cowardly doing nothing (children parameter)'));
             $this->redirectToAdminHierarchy();
             return;
         }
@@ -170,7 +173,7 @@ class HierarchyController
         $this->redirectToAdminHierarchy();
     }
 
-    private function redirectToAdminHierarchy() : void
+    private function redirectToAdminHierarchy(): void
     {
         $redirect = http_build_query(
             [
@@ -178,7 +181,7 @@ class HierarchyController
                 'func'    => 'admin-hierarchy'
             ]
         );
-        $GLOBALS['Response']->redirect(TRACKER_BASE_URL.'/?'.$redirect);
+        $GLOBALS['Response']->redirect(TRACKER_BASE_URL . '/?' . $redirect);
     }
 
     private function render($template_name, $presenter)

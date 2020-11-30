@@ -23,15 +23,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once __DIR__. '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 class tracker_date_reminderPlugin extends Plugin
 {
 
-    function __construct($id)
+    public function __construct($id)
     {
         parent::__construct($id);
         $this->setScope(self::SCOPE_PROJECT);
+        bindtextdomain('tuleap-tracker_date_reminder', __DIR__ . '/../site-content');
 
         $this->addHook('artifact_type_html_display_notification_form', 'artifact_type_html_display_notification_form', false);
         // Tracker admin "controller"
@@ -53,9 +54,9 @@ class tracker_date_reminderPlugin extends Plugin
         $this->addHook('tracker_postmod', 'tracker_update_artifact', false);
     }
 
-    function getPluginInfo()
+    public function getPluginInfo()
     {
-        if (!is_a($this->pluginInfo, 'TrackerDateReminderPluginInfo')) {
+        if (! is_a($this->pluginInfo, 'TrackerDateReminderPluginInfo')) {
             include_once('TrackerDateReminderPluginInfo.class.php');
             $this->pluginInfo = new TrackerDateReminderPluginInfo($this);
         }
@@ -67,13 +68,13 @@ class tracker_date_reminderPlugin extends Plugin
         return $this->getPluginInfo()->getPropertyValueForName('enable_log');
     }
 
-    function codendi_daily_start($params)
+    public function codendi_daily_start($params)
     {
         include_once 'ArtifactDateReminder.class.php';
         include_once 'TrackerDateReminder_Logger_Prefix.class.php';
 
         if ($this->isLoggingEnabled()) {
-            $logfile = $GLOBALS['codendi_log']."/tracker_date_reminder.log";
+            $logfile = ForgeConfig::get('codendi_log') . "/tracker_date_reminder.log";
         } else {
             $logfile = false;
         }
@@ -84,11 +85,11 @@ class tracker_date_reminderPlugin extends Plugin
         $artifactDateReminder->codexDaily();
     }
 
-    function artifact_type_factory_delete_artifact_type($params)
+    public function artifact_type_factory_delete_artifact_type($params)
     {
         // Delete artifact_date_reminder_settings
         $sql = sprintf(
-            'DELETE FROM artifact_date_reminder_settings'.
+            'DELETE FROM artifact_date_reminder_settings' .
                        ' WHERE group_artifact_id=%d',
             $params['tracker_id']
         );
@@ -96,25 +97,25 @@ class tracker_date_reminderPlugin extends Plugin
 
         // Delete artifact_date_reminder_processing
         $sql = sprintf(
-            'DELETE FROM artifact_date_reminder_processing'.
+            'DELETE FROM artifact_date_reminder_processing' .
                        ' WHERE group_artifact_id=%d',
             $params['tracker_id']
         );
         db_query($sql);
     }
 
-    function artifact_type_html_display_notification_form($params)
+    public function artifact_type_html_display_notification_form($params)
     {
         if ($params['at']->userIsAdmin()) {
-            echo '<br><h3>'.$GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'date_fields_mail_notif').' </h3>';
+            echo '<br><h3>' . dgettext('tuleap-tracker_date_reminder', 'Date Fields Email Notification') . ' </h3>';
 
-            $title_arr=array();
-            $title_arr[]=$GLOBALS['Language']->getText('tracker_include_type', 'df');
-            $title_arr[]=$GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'notification_status');
-            $title_arr[]=$GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'notification_settings');
+            $title_arr = [];
+            $title_arr[] = $GLOBALS['Language']->getText('tracker_include_type', 'df');
+            $title_arr[] = dgettext('tuleap-tracker_date_reminder', 'Notification Status');
+            $title_arr[] = dgettext('tuleap-tracker_date_reminder', 'Notification Settings');
 
             $out = html_build_list_table_top($title_arr);
-            $fmt = "\n".'<TR class=%s><td>%s</td><td align="center">%s</td><td align="center">%s</td></tr>';
+            $fmt = "\n" . '<TR class=%s><td>%s</td><td align="center">%s</td><td align="center">%s</td></tr>';
             $row_color = 0;
 
             $tdrArtifactFieldFactory = new TrackerDateReminder_ArtifactFieldFactory();
@@ -122,12 +123,12 @@ class tracker_date_reminderPlugin extends Plugin
             $fields = $tdrArtifactFieldFactory->getUsedDateFields($params['art_field_fact']);
             foreach ($fields as $field) {
                 // no notification status/settings for special Date field (Submitted on)
-                if (!$field->isSpecial()) {
-                    $notif_settings = '<A href="/tracker/admin/index.php?func=date_field_notification&group_id='.$params['group_id'].'&atid='.$params['at']->getID().'&field_id='.$field->getID().'">'.$GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'edit_notif_settings').'</A>';
+                if (! $field->isSpecial()) {
+                    $notif_settings = '<A href="/tracker/admin/index.php?func=date_field_notification&group_id=' . $params['group_id'] . '&atid=' . $params['at']->getID() . '&field_id=' . $field->getID() . '">' . dgettext('tuleap-tracker', '[Edit Reminder Settings]') . '</A>';
                     if ($tdrArtifactFieldFactory->notificationEnabled($field->getID())) {
-                        $notif_status = $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'active');
+                        $notif_status = dgettext('tuleap-tracker_date_reminder', 'active');
                     } else {
-                        $notif_status = $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'disabled');
+                        $notif_status = dgettext('tuleap-tracker_date_reminder', 'disabled');
                     }
 
                     $out .= sprintf(
@@ -155,51 +156,53 @@ class tracker_date_reminderPlugin extends Plugin
      *
      * @return void
      */
-    function tracker_graphic_report_admin($params)
+    public function tracker_graphic_report_admin($params)
     {
         $request = HTTPRequest::instance();
         if ($request->getValidated('func', 'string') != 'date_field_notification') {
             return;
         }
 
-        if (!user_isloggedin()) {
+        if (! user_isloggedin()) {
             exit_not_logged_in();
             return;
         }
 
-        if (!$params['ath']->userIsAdmin()) {
+        if (! $params['ath']->userIsAdmin()) {
             exit_permission_denied();
             return;
         }
 
         $field_id = $request->getValidated('field_id', 'uint');
         $field    = $params['art_field_fact']->getFieldFromId($field_id);
-        if ($field && $field->isDateField() && !$field->isSpecial()) {
+        if ($field && $field->isDateField() && ! $field->isSpecial()) {
             if ($request->isPost()) {
                 if ($request->existAndNonEmpty('delete_reminder')) {
                     $tdrArtifactField = new TrackerDateReminder_ArtifactField();
                     $tdrArtifactField->deleteFieldReminderSettings($field->getID(), $params['ath']->getID());
                 } elseif (array_key_exists('submit_notif_settings', $_REQUEST) && $_REQUEST['submit_notif_settings']) {
-                    if ((!isset($_REQUEST['notified_users']) || (isset($_REQUEST['notified_users']) && $_REQUEST['notified_users'] == null)) && _(!isset($_REQUEST['notified_groups']) || (isset($_REQUEST['notified_groups']) && $_REQUEST['notified_groups'] == null))) {
-                        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'specify_notified_users'));
-                    } elseif (count($_REQUEST['notified_users']) == 1 && $_REQUEST['notified_users'][0] == 100 &&
-                        count($_REQUEST['notified_groups']) == 1 && $_REQUEST['notified_groups'][0] == 100) {
-                        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'specify_notified_users'));
-                    } elseif (!isset($_REQUEST['start']) || (isset($_REQUEST['start']) && $_REQUEST['start'] == null)) {
-                        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'specify_notification_start'));
-                    } elseif (!preg_match("/^[0-9]+$/", $_REQUEST['start']) || $_REQUEST['start'] < 0) {
-                        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'positive_value'));
-                    } elseif (!isset($_REQUEST['frequency']) || (isset($_REQUEST['frequency']) && ($_REQUEST['frequency'] == null || $_REQUEST['frequency'] == 0))) {
-                        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'specify_notification_frequency'));
-                    } elseif (!preg_match("/^[0-9]+$/", $_REQUEST['frequency']) || $_REQUEST['frequency'] < 0) {
-                        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'positive_value'));
-                    } elseif (!isset($_REQUEST['recurse']) || (isset($_REQUEST['recurse']) && ($_REQUEST['recurse'] == null || $_REQUEST['recurse'] == 0))) {
-                        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'specify_notification_recurse'));
-                    } elseif (!preg_match("/^[0-9]+$/", $_REQUEST['recurse']) || $_REQUEST['recurse'] < 0) {
-                        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'positive_value'));
+                    if ((! isset($_REQUEST['notified_users']) || (isset($_REQUEST['notified_users']) && $_REQUEST['notified_users'] == null)) && (! isset($_REQUEST['notified_groups']) || (isset($_REQUEST['notified_groups']) && $_REQUEST['notified_groups'] == null))) {
+                        $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker_date_reminder', 'Error. You must specify the users to be notified.'));
+                    } elseif (
+                        count($_REQUEST['notified_users']) == 1 && $_REQUEST['notified_users'][0] == 100 &&
+                        count($_REQUEST['notified_groups']) == 1 && $_REQUEST['notified_groups'][0] == 100
+                    ) {
+                        $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker_date_reminder', 'Error. You must specify the users to be notified.'));
+                    } elseif (! isset($_REQUEST['start']) || (isset($_REQUEST['start']) && $_REQUEST['start'] == null)) {
+                        $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker_date_reminder', 'Error. You must specify the notification start date.'));
+                    } elseif (! preg_match("/^[0-9]+$/", $_REQUEST['start']) || $_REQUEST['start'] < 0) {
+                        $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker_date_reminder', 'Error. You must specify a positive value.'));
+                    } elseif (! isset($_REQUEST['frequency']) || (isset($_REQUEST['frequency']) && ($_REQUEST['frequency'] == null || $_REQUEST['frequency'] == 0))) {
+                        $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker_date_reminder', 'Error. You must specify the notification frequency.'));
+                    } elseif (! preg_match("/^[0-9]+$/", $_REQUEST['frequency']) || $_REQUEST['frequency'] < 0) {
+                        $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker_date_reminder', 'Error. You must specify a positive value.'));
+                    } elseif (! isset($_REQUEST['recurse']) || (isset($_REQUEST['recurse']) && ($_REQUEST['recurse'] == null || $_REQUEST['recurse'] == 0))) {
+                        $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker_date_reminder', 'Error. You must specify the number of mails to be sent.'));
+                    } elseif (! preg_match("/^[0-9]+$/", $_REQUEST['recurse']) || $_REQUEST['recurse'] < 0) {
+                        $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker_date_reminder', 'Error. You must specify a positive value.'));
                     } else {
                         //merge notified_users and notified_groups into one array
-                        $notified = array();
+                        $notified = [];
                         if (isset($_REQUEST['notified_users'])) {
                             foreach ($_REQUEST['notified_users'] as $u) {
                                 if ($u != 100) {
@@ -218,21 +221,21 @@ class tracker_date_reminderPlugin extends Plugin
                         $tdrArtifactField = new TrackerDateReminder_ArtifactField();
                         $res = $tdrArtifactField->updateDateFieldReminderSettings($params['ath'], $field, $params['ath']->getID(), $_REQUEST['start'], $_REQUEST['notif_type'], $_REQUEST['frequency'], $_REQUEST['recurse'], $notified);
                         if ($res) {
-                            $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'notif_update_success', array($field->getLabel())));
+                            $GLOBALS['Response']->addFeedback('info', sprintf(dgettext('tuleap-tracker_date_reminder', '\'%1$s\' Reminder Settings Update Successful.'), $field->getLabel()));
                         } else {
-                            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'notif_update_fail', array($field->getLabel())));
+                            $GLOBALS['Response']->addFeedback('error', sprintf(dgettext('tuleap-tracker_date_reminder', '\'%1$s\' Reminder Settings Update Failed.'), $field->getLabel()));
                         }
                     }
                 }
             }
-            $params['ath']->adminHeader(array ('title'=>$GLOBALS['Language']->getText('plugin_tracker_date_reminder', 'admin_date_field_notif'),
-            'help' => 'tracker.html#email-notification-settings'));
+            $params['ath']->adminHeader(['title' => dgettext('tuleap-tracker_date_reminder', 'Tracker Administration - Date Fields Reminder Settings'),
+            'help' => 'tracker.html#email-notification-settings']);
 
-            echo '<H2>'.$GLOBALS['Language']->getText('tracker_import_admin', 'tracker').' \'<a href="/tracker/admin/?group_id='.$params['ath']->Group->getID().'&atid='.$params['ath']->getID().'">'.$params['ath']->getName().'</a>\' - '.$GLOBALS['Language']->getText('tracker_include_type', 'mail_notif').'</h2>';
+            echo '<H2>' . dgettext('tuleap-tracker', 'Tracker') . ' \'<a href="/tracker/admin/?group_id=' . $params['ath']->Group->getID() . '&atid=' . $params['ath']->getID() . '">' . $params['ath']->getName() . '</a>\' - ' . dgettext('tuleap-tracker_date_reminder', 'Notification Settings') . '</h2>';
 
             $tdrArtifactFieldHtml = new TrackerDateReminder_ArtifactFieldHtml();
             $tdrArtifactFieldHtml->displayDateFieldNotificationSettings($params['ath'], $field);
-            $params['ath']->footer(array());
+            $params['ath']->footer([]);
             exit;
         }
     }
@@ -244,7 +247,7 @@ class tracker_date_reminderPlugin extends Plugin
      *
      * @return void
      */
-    function tracker_admin_field_delete($params)
+    public function tracker_admin_field_delete($params)
     {
         $tdrArtifactField = new TrackerDateReminder_ArtifactField();
         $tdrArtifactField->deleteFieldReminderSettings($params['field']->getID(), $params['ath']->getID());
@@ -259,7 +262,7 @@ class tracker_date_reminderPlugin extends Plugin
      *
      * @return void
      */
-    function tracker_create_artifact($params)
+    public function tracker_create_artifact($params)
     {
         if ($params['ah']->getStatusID() == 1) {
             $tdrArtifactType = new TrackerDateReminder_ArtifactType($params['ath']);
@@ -275,7 +278,7 @@ class tracker_date_reminderPlugin extends Plugin
      *
      * @return void
      */
-    function tracker_update_artifact($params)
+    public function tracker_update_artifact($params)
     {
         if ($params['ah']->getStatusID() == 1) {
             $tdrArtifactType = new TrackerDateReminder_ArtifactType($params['ath']);

@@ -26,10 +26,8 @@ namespace Tuleap\SVN\Admin;
 
 use Feedback;
 use HTTPRequest;
-use ProjectHistoryDao;
 use System_Command_CommandException;
 use Tuleap\SVN\Commit\Svnlook;
-use Tuleap\SVN\Repository\ProjectHistoryFormatter;
 use Tuleap\SVN\Repository\RepositoryManager;
 use Tuleap\SVN\ServiceSvn;
 use Valid_String;
@@ -66,7 +64,7 @@ class ImmutableTagController
             $existing_tree = ImmutableTagPresenter::$SO_MUCH_FOLDERS;
         }
 
-        $service->renderInPage(
+        $service->renderInPageRepositoryAdministration(
             $request,
             $repository->getName() . ' – ' . $title,
             'admin/immutable_tag',
@@ -75,7 +73,9 @@ class ImmutableTagController
                 $this->immutable_tag_factory->getByRepositoryId($repository),
                 $existing_tree,
                 $title
-            )
+            ),
+            '',
+            $repository,
         );
     }
 
@@ -90,7 +90,8 @@ class ImmutableTagController
             $vimmutable_tag_whitelist = new Valid_Text('immutable-tags-whitelist');
 
             try {
-                if ($request->valid($vimmutable_tag_path)
+                if (
+                    $request->valid($vimmutable_tag_path)
                     && $request->valid($vimmutable_tag_whitelist)
                 ) {
                     $immutable_tags_path = trim($request->get('immutable-tags-path'));

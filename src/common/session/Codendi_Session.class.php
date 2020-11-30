@@ -60,8 +60,8 @@ class Codendi_Session extends PHP_Session
     /**
      * This function unset data a the specified namespace level
      * It differs from "set" method since it allows to unset
-     * @param <type> $namespace
-     * @param <type> $key
+     * @param string $namespace
+     * @param string|null $key
      */
     public function remove($namespace, $key = null)
     {
@@ -77,7 +77,6 @@ class Codendi_Session extends PHP_Session
      * Readonly Wrapper for getNamespace
      * @param string $namespace
      * @param string $key
-     * @return <type>
      */
     public function &get($namespace, $key = null)
     {
@@ -93,8 +92,8 @@ class Codendi_Session extends PHP_Session
 
     /**
      * Changes a given namespace value
-     * @param <type> $namespace
-     * @param <type> $value
+     * @param string $namespace
+     * @param mixed $value
      */
     public function set($namespace, $value)
     {
@@ -115,27 +114,27 @@ class Codendi_Session extends PHP_Session
             //throw new Exception('ERROR - Empty session namespace');
         }
         //only array can be iterated
-        if (!is_array($session)) {
+        if (! is_array($session)) {
             return $session;
         }
         $pathway = explode('.', $namespace);
         $count   = count($pathway);
         $i = 0;
         foreach ($pathway as $path) {
-                $i = $i+1;
+                $i = $i + 1;
                 //last path element not reached yet <=> wrong path
-            if (!$create_path && $i < $count && ((is_array($session) && !isset($session[$path])) || !is_array($session) || !is_array($session[$path]) )) {
+            if (! $create_path && $i < $count && ((is_array($session) && ! isset($session[$path])) || ! is_array($session) || ! is_array($session[$path]) )) {
                 $r = null;
                 return $r;
             }
 
                 //only array can be iterated
-            if (!is_array($session)) {
+            if (! is_array($session)) {
                 return $session;
             }
-            if (!isset($session[$path])) {
+            if (! isset($session[$path])) {
                 if ($create_path) {
-                    $session[$path] = array();
+                    $session[$path] = [];
                 } else {
                //path does not exist and we do not want to create it
                     $r = null;
@@ -164,7 +163,7 @@ class Codendi_Session extends PHP_Session
     /**
      * !! WARNING !! : never use this in your code, it is only designed for unit testing
      * Set the current session namespace
-     * @param <type> $session_namespace
+     * @param string $session_namespace
      */
     public function setSessionNamespace(&$session_namespace)
     {
@@ -173,11 +172,10 @@ class Codendi_Session extends PHP_Session
 
     /**
      * Change global session namespace (only goes down into the tree)
-     * @param <type> $namespace
+     * @param string $namespace
      */
     public function changeSessionNamespace($namespace)
     {
-
         if (strpos($namespace, '.') === 0) {
             //absolute path
             $this->session_namespace_path = $namespace;
@@ -186,7 +184,7 @@ class Codendi_Session extends PHP_Session
         } else {
             //relative path (down the tree)
             if ($this->session_name_path != '.') {
-                $this->session_namespace_path .= '.'.$namespace;
+                $this->session_namespace_path .= '.' . $namespace;
             } else {
                 $this->session_namespace_path .= $namespace;
             }

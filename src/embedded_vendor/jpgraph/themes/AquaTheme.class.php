@@ -9,9 +9,9 @@ class AquaTheme extends Theme
     protected $axis_color       = '#0066CC';
     protected $grid_color       = '#3366CC';
 
-    function GetColorList()
+    public function GetColorList()
     {
-        return array(
+        return [
             '#183152',
             '#C4D7ED',
             '#375D81',
@@ -46,12 +46,11 @@ class AquaTheme extends Theme
             '#77AAFF',
             '#00FFCC',
 */
-        );
+        ];
     }
 
-    function SetupGraph($graph)
+    public function SetupGraph($graph)
     {
-
         // graph
         /*
         $img = $graph->img;
@@ -99,9 +98,8 @@ class AquaTheme extends Theme
     }
 
 
-    function SetupPieGraph($graph)
+    public function SetupPieGraph($graph)
     {
-
         // graph
         $graph->SetFrame(false);
 
@@ -125,7 +123,7 @@ class AquaTheme extends Theme
     }
 
 
-    function PreStrokeApply($graph)
+    public function PreStrokeApply($graph)
     {
         if ($graph->legend->HasItems()) {
             $img = $graph->img;
@@ -138,9 +136,8 @@ class AquaTheme extends Theme
         }
     }
 
-    function ApplyPlot($plot)
+    public function ApplyPlot($plot)
     {
-
         switch (get_class($plot)) {
             case 'GroupBarPlot':
                 foreach ($plot->plots as $_plot) {

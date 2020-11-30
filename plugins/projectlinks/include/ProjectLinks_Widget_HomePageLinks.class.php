@@ -23,28 +23,34 @@
  *
  */
 
-use Tuleap\Layout\CssAsset;
 use Tuleap\Layout\CssAssetCollection;
+use Tuleap\Layout\CssAssetWithoutVariantDeclinaisons;
 use Tuleap\Layout\IncludeAssets;
 
 /**
  * Display links from and to a project on the summary page.
  */
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 class ProjectLinks_Widget_HomePageLinks extends Widget
 {
     protected $pluginPath;
     protected $themePath;
+    /**
+     * @var Codendi_HTMLPurifier
+     */
+    private $html_purifier;
 
     /**
      * Constructor
      *
      * @param Plugin $plugin The plugin
      */
-    public function __construct(Plugin $plugin)
+    public function __construct(Plugin $plugin, Codendi_HTMLPurifier $html_purifier)
     {
         parent::__construct('projectlinkshomepage');
-        $this->pluginPath = $plugin->getPluginPath();
-        $this->themePath  = $plugin->getThemePath();
+        $this->pluginPath    = $plugin->getPluginPath();
+        $this->themePath     = $plugin->getThemePath();
+        $this->html_purifier = $html_purifier;
     }
 
     /**
@@ -55,12 +61,12 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
      */
     public function getTitle()
     {
-        return $GLOBALS['Language']->getText('plugin_plinks', 'project_links');
+        return dgettext('tuleap-projectlinks', 'Project Links');
     }
 
     public function getDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_plinks', 'descriptor_description');
+        return dgettext('tuleap-projectlinks', 'Create links between projects.');
     }
 
     /**
@@ -69,7 +75,7 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
      * @see src/common/Widget/Widget#getContent()
      * @return String
      */
-    function getContent()
+    public function getContent()
     {
         $request = HTTPRequest::instance();
         $groupId = $request->get('group_id');
@@ -85,16 +91,15 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
      * Get HTML display of all links from and to given project.
      *
      * @param int $groupId Group id
-     * @return String
      */
-    function getAllLinks($groupId)
+    private function getAllLinks($groupId): string
     {
         $dao      = $this->getProjectLinksDao();
         $html     = '';
         $forward  = $this->getLinksByLinkType('links', $dao->searchForwardLinks($groupId));
         $backward = $this->getLinksByLinkType('back_links', $dao->searchBackLinks($groupId));
         if ($forward === '' && $backward === '') {
-            $html .= "<div>" . $GLOBALS['Language']->getText('plugin_plinks', 'no_links_found') . "</div>";
+            $html .= "<div>" . dgettext('tuleap-projectlinks', 'No project link found.') . "</div>";
         } else {
             $html .= "<ul class=\"project-link-list project-link-list-content\">\n";
             $html .= $forward;
@@ -110,18 +115,25 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
      *
      * @param  String $way Either 'links' or 'back_links'
      * @param  String $sql The SQL to get the links
-     * @return String
      */
-    function getLinksByLinkType($way, \Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface $dar)
+    private function getLinksByLinkType($way, \Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface $dar): string
     {
         $html = '';
         if ($dar->rowCount() > 0) {
-            $linkTypeCmdId   = 'plugin_project_links_type_'.$way;
+            $linkTypeCmdId   = 'plugin_project_links_type_' . $way;
+
+            $title = dgettext('tuleap-projectlinks', 'Links');
+            if ($way === 'back_links') {
+                $title = dgettext('tuleap-projectlinks', 'Reverse Links');
+            }
 
             $cssClass = Toggler::getClassName($linkTypeCmdId);
-            $titleSpan = "<span id=\"".$linkTypeCmdId."\" class=\"".$cssClass."\">".$GLOBALS['Language']->getText('plugin_plinks', $way).'</span>';
+            $titleSpan = "<span id=\"" . $this->html_purifier->purify($linkTypeCmdId) .
+                "\" class=\"" . $this->html_purifier->purify($cssClass) . "\">" .
+                $this->html_purifier->purify($title) .
+                '</span>';
 
-            $html .= "<li>".$titleSpan;
+            $html .= "<li>" . $titleSpan;
             $links = $this->getLinks($way, $dar);
             if ($links != '') {
                 $html .= "\n";
@@ -142,26 +154,28 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
      *
      * @param  String $way Either 'links' or 'back_links'
      * @param  String $res One row of link
-     * @return String
      */
-    function getLinks($way, \Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface $dar)
+    private function getLinks($way, \Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface $dar): string
     {
         $html = '';
         $previousLinkName = '';
         $ulClosed = true;
         foreach ($dar as $row) {
             if ($row['link_name'] != $previousLinkName) {
-                if (!$ulClosed) {
+                if (! $ulClosed) {
                     // Do not close the list when the list is not started
                     $html .= "    </ul>\n";
                     $html .= "  </li>\n";
                     $ulClosed = true;
                 }
-                $spanId  = 'plugin_project_links_name_'.$way.'_'.$row['link_type_id'];
+                $spanId  = 'plugin_project_links_name_' . $way . '_' . $row['link_type_id'];
                 $cssClass = Toggler::getClassName($spanId);
 
                 // Link name title
-                $html     .= "  <li class='project-link-list'><span id=\"" . $spanId . "\" class=\"" . $cssClass . "\">" . $row['link_name'] . "</span>\n";
+                $html     .= "  <li class='project-link-list'><span id=\""
+                    . $this->html_purifier->purify($spanId) .
+                    "\" class=\"" . $this->html_purifier->purify($cssClass) . "\">" .
+                    $this->html_purifier->purify($row['link_name']) . "</span>\n";
                 $html     .= "    <ul class='project-link-list'>\n";
                 $ulClosed = false;
             }
@@ -173,7 +187,7 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
             $previousLinkName = $row['link_name'];
         }
 
-        if (!$ulClosed) {
+        if (! $ulClosed) {
             $html .= "    </ul>\n";
             $html .= "  </li>\n";
         }
@@ -185,19 +199,17 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
      * Build url for one link.
      *
      * @param  array $row One row for a link
-     * @return String
      */
-    function getOneLink(array $row)
+    private function getOneLink(array $row): string
     {
         $url = str_replace('$projname', $row['unix_group_name'], $row['uri_plus']);
         $ic = '';
         if ($row['type'] == 2) {
-            $path = $this->themePath."/images/template.png";
-            $alt = $GLOBALS['Language']->getText('plugin_plinks', 'template_marker');
-            $ic = '<img src="'.$path.'" alt="'.$alt.'" title="'.$alt.'" /> ';
+            $path = $this->html_purifier->purify($this->themePath . "/images/template.png");
+            $alt  = $this->html_purifier->purify(dgettext('tuleap-projectlinks', 'template project'));
+            $ic   = '<img src="' . $path . '" alt="' . $alt . '" title="' . $alt . '" /> ';
         }
-        $html = '<a href="'.$url.'">'.$ic.$row['group_name'].'</a>';
-        return $html;
+        return '<a href="' . $this->html_purifier->purify($url) . '">' . $ic . $this->html_purifier->purify($row['group_name']) . '</a>';
     }
 
     /**
@@ -205,7 +217,7 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
      *
      * @return ProjectLinksDao
      */
-    function getProjectLinksDao()
+    private function getProjectLinksDao()
     {
         include_once 'ProjectLinksDao.class.php';
         return new ProjectLinksDao(CodendiDataAccess::instance());
@@ -214,9 +226,9 @@ class ProjectLinks_Widget_HomePageLinks extends Widget
     public function getStylesheetDependencies()
     {
         $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/projectlinks/BurningParrot',
-            '/assets/projectlinks/BurningParrot'
+            __DIR__ . '/../../../src/www/assets/projectlinks',
+            '/assets/projectlinks'
         );
-        return new CssAssetCollection([new CssAsset($include_assets, 'style')]);
+        return new CssAssetCollection([new CssAssetWithoutVariantDeclinaisons($include_assets, 'projectlinks')]);
     }
 }

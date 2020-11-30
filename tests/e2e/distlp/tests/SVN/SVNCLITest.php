@@ -24,20 +24,20 @@ declare(strict_types=1);
 namespace Tuleap\Tests\Selenium\SVN;
 
 use PHPUnit\Framework\TestCase;
-use SimpleXmlElement;
+use SimpleXMLElement;
 
 class SVNCLITest extends TestCase
 {
     private $init_pwd;
 
-    protected function setUp() : void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->init_pwd = getcwd();
         system('/bin/rm -rf /tmp/sample');
     }
 
-    protected function tearDown() : void
+    protected function tearDown(): void
     {
         parent::tearDown();
         chdir($this->init_pwd);
@@ -54,9 +54,9 @@ class SVNCLITest extends TestCase
         $this->assertEqualsCanonicalizing(['tags', 'trunk', 'branches'], $content);
     }
 
-    private function getSvnCommand(string $username, string $command) : string
+    private function getSvnCommand(string $username, string $command): string
     {
-        return 'svn --username '.$username.' --password "Correct Horse Battery Staple" --non-interactive --trust-server-cert '.$command;
+        return 'svn --username ' . $username . ' --password "Correct Horse Battery Staple" --non-interactive --trust-server-cert ' . $command;
     }
 
     public function testWriteAccessByAlice()
@@ -90,7 +90,7 @@ class SVNCLITest extends TestCase
                 $got_exception = true;
             }
         }
-        $this->assertTrue($got_exception, "Message: ".$message);
+        $this->assertTrue($got_exception, "Message: " . $message);
     }
 
     public function testWriteAccessGrantedToAlice()
@@ -107,27 +107,27 @@ class SVNCLITest extends TestCase
         $this->assertFalse($got_exception);
     }
 
-    private function getWCRevision() : int
+    private function getWCRevision(): int
     {
         $xml = $this->getXML('svn --xml info');
         return (int) $xml->entry['revision'];
     }
 
-    private function getXML(string $command) : SimpleXMLElement
+    private function getXML(string $command): SimpleXMLElement
     {
         $xml = simplexml_load_string($this->command($command));
         return $xml;
     }
 
-    private function command(string $command) : string
+    private function command(string $command): string
     {
         $total_stdout = '';
         $total_stderr = '';
-        $descriptorspec = array(
-            0 => array("pipe", "r"),   // stdin is a pipe that the child will read from
-            1 => array("pipe", "w"),   // stdout is a pipe that the child will write to
-            2 => array("pipe", "w")    // stderr is a pipe that the child will write to
-        );
+        $descriptorspec = [
+            0 => ["pipe", "r"],   // stdin is a pipe that the child will read from
+            1 => ["pipe", "w"],   // stdout is a pipe that the child will write to
+            2 => ["pipe", "w"]    // stderr is a pipe that the child will write to
+        ];
         flush();
         $process = proc_open($command, $descriptorspec, $pipes);
         if (is_resource($process)) {
@@ -141,7 +141,7 @@ class SVNCLITest extends TestCase
             fclose($pipes[2]);
             $return_value = proc_close($process);
             if ($return_value !== 0) {
-                throw new \Exception("$command return code: ".$return_value." ".$total_stderr);
+                throw new \Exception("$command return code: " . $return_value . " " . $total_stderr);
             }
         }
         return $total_stdout;

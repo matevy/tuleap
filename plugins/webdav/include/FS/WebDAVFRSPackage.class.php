@@ -1,21 +1,22 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2010. All Rights Reserved.
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /**
@@ -43,9 +44,8 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return void
      */
-    function __construct($user, $project, $package, $maxFileSize)
+    public function __construct($user, $project, $package, $maxFileSize)
     {
-
         $this->user = $user;
         $this->project = $project;
         $this->package = $package;
@@ -55,17 +55,16 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
     /**
      * Generates the list of releases under the package
      *
-     * @return Array
+     * @return Sabre_DAV_INode[]
      *
      * @see plugins/webdav/lib/Sabre/DAV/Sabre_DAV_IDirectory#getChildren()
      */
-    function getChildren()
+    public function getChildren()
     {
-
-        $children = array();
+        $children = [];
 
         // Generate release list of the given package
-        $releases=$this->getReleaseList($this->getPackage());
+        $releases = $this->getReleaseList($this->getPackage());
         // Loop through the releases, and create objects for each node
         foreach ($releases as $rls) {
             $release = $this->getWebDAVRelease($rls);
@@ -97,11 +96,11 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
         // Check for errors
 
         // Check if Release exists
-        if (!$release->exist()) {
+        if (! $release->exist()) {
             throw new Sabre_DAV_Exception_FileNotFound($GLOBALS['Language']->getText('plugin_webdav_common', 'release_not_available'));
         }
 
-        if (!$release->userCanRead($this->getUser())) {
+        if (! $release->userCanRead($this->getUser())) {
             throw new Sabre_DAV_Exception_Forbidden($GLOBALS['Language']->getText('plugin_webdav_common', 'package_access_not_authorized'));
         }
 
@@ -115,9 +114,8 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @see plugins/webdav/lib/Sabre/DAV/Sabre_DAV_INode#getName()
      */
-    function getName()
+    public function getName()
     {
-
         /* To keep the Url correct the slashes "/" in the name
          *  of the package were replaced by its ascii code "%2F"
          *  same for the "%" replaced by "%25"  */
@@ -129,14 +127,11 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      * Packages don't have a last modified date this
      * is used only suit the class Sabre_DAV_Node
      *
-     * @return NULL
-     *
      * @see plugins/webdav/lib/Sabre/DAV/Sabre_DAV_Node#getLastModified()
      */
-    function getLastModified()
+    public function getLastModified()
     {
-
-        return;
+        return 0;
     }
 
     /**
@@ -164,9 +159,8 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return Project
      */
-    function getProject()
+    public function getProject()
     {
-
         return $this->project;
     }
 
@@ -175,9 +169,8 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return PFUser
      */
-    function getUser()
+    public function getUser()
     {
-
         return $this->user;
     }
 
@@ -186,9 +179,8 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return WebDAVUtils
      */
-    function getUtils()
+    public function getUtils()
     {
-
         return WebDAVUtils::getInstance();
     }
 
@@ -197,7 +189,7 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return int
      */
-    function getMaxFileSize()
+    public function getMaxFileSize()
     {
         return $this->maxFileSize;
     }
@@ -207,7 +199,6 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @param String $releaseName
      *
-     * @return FRSRelease|null
      */
     public function getFRSReleaseFromName($releaseName): ?FRSRelease
     {
@@ -222,9 +213,8 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return WebDAVFRSRelease
      */
-    function getWebDAVRelease($release)
+    public function getWebDAVRelease($release)
     {
-
         return new WebDAVFRSRelease($this->getUser(), $this->getProject(), $this->getPackage(), $release, $this->getMaxFileSize());
     }
 
@@ -246,10 +236,9 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return bool
      */
-    function exist()
+    public function exist()
     {
-
-        return($this->getPackage() && !$this->getPackage()->isDeleted());
+        return($this->getPackage() && ! $this->getPackage()->isDeleted());
     }
 
     /**
@@ -259,7 +248,7 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return bool
      */
-    function userCanRead($user)
+    public function userCanRead($user)
     {
         return (($this->getPackage()->isActive() && $this->getPackage()->userCanRead($user->getId()))
             || ($this->getPackage()->isHidden() && $this->userIsAdmin()));
@@ -270,9 +259,8 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return bool
      */
-    function userIsAdmin()
+    public function userIsAdmin()
     {
-
         $utils = $this->getUtils();
         return $utils->userIsAdmin($this->getUser(), $this->getProject()->getGroupId());
     }
@@ -282,7 +270,7 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @return bool
      */
-    function userCanWrite()
+    public function userCanWrite()
     {
         $utils = $this->getUtils();
         return $utils->userCanWrite($this->getUser(), $this->getProject()->getGroupId());
@@ -322,12 +310,11 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @see plugins/webdav/lib/Sabre/DAV/Sabre_DAV_Node#setName($name)
      */
-    function setName($name)
+    public function setName($name)
     {
-
         $utils = $this->getUtils();
         if ($this->userCanWrite()) {
-            if (!$utils->getPackageFactory()->isPackageNameExist($name, $this->getProject()->getGroupId())) {
+            if (! $utils->getPackageFactory()->isPackageNameExist($name, $this->getProject()->getGroupId())) {
                 $this->getPackage()->setName(htmlspecialchars($name));
                 $utils->getPackageFactory()->update($this->getPackage());
             } else {
@@ -372,12 +359,11 @@ class WebDAVFRSPackage extends Sabre_DAV_Directory
      *
      * @see plugins/webdav/lib/Sabre/DAV/Sabre_DAV_Directory#createDirectory($name)
      */
-    function createDirectory($name)
+    public function createDirectory($name)
     {
-
         if ($this->userCanWrite()) {
             $utils = $this->getUtils();
-            if (!$utils->getReleaseFactory()->isReleaseNameExist($name, $this->getPackageId())) {
+            if (! $utils->getReleaseFactory()->isReleaseNameExist($name, $this->getPackageId())) {
                 $releaseData['name'] = htmlspecialchars($name);
                 $releaseData['package_id'] = $this->getPackageId();
                 $releaseData['notes'] = '';

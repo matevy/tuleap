@@ -19,19 +19,21 @@
  */
 
 use Tuleap\BurningParrotCompatiblePageDetector;
+use Tuleap\Instrument\Prometheus\Prometheus;
 use Tuleap\Layout\ErrorRendering;
 use Tuleap\Request\CurrentPage;
 use Tuleap\Request\FrontRouter;
+use Tuleap\Request\RequestInstrumentation;
 use Tuleap\Request\RouteCollector;
 
 define('FRONT_ROUTER', true);
 
-require_once __DIR__.'/include/pre.php';
+require_once __DIR__ . '/include/pre.php';
 
 $router = new FrontRouter(
     new RouteCollector($event_manager),
     new URLVerificationFactory($event_manager),
-    new BackendLogger(),
+    BackendLogger::getDefaultLogger(),
     new ErrorRendering(),
     new ThemeManager(
         new BurningParrotCompatiblePageDetector(
@@ -41,6 +43,7 @@ $router = new FrontRouter(
             )
         )
     ),
-    PluginManager::instance()
+    PluginManager::instance(),
+    new RequestInstrumentation(Prometheus::instance())
 );
 $router->route($request);

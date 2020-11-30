@@ -18,13 +18,15 @@
   -->
 
 <template functional>
-    <a v-bind:href="props.user.user_url" class="cross-tracker-list-bind-user">{{ props.user.display_name }}</a>
+    <a v-bind:href="props.user.user_url" class="cross-tracker-list-bind-user">
+        {{ props.user.display_name }}
+    </a>
 </template>
 <script>
 export default {
     name: "ListBindUser",
     props: {
-        user: Object
-    }
+        user: Object,
+    },
 };
 </script>

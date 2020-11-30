@@ -17,7 +17,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-use Tuleap\AgileDashboard\REST\v1\Kanban\KanbanColumnPATCHRepresentation;
 
 class AgileDashboard_KanbanColumnManager
 {
@@ -79,7 +78,8 @@ class AgileDashboard_KanbanColumnManager
 
         $this->column_dao->startTransaction();
 
-        if (! $semantic->removeOpenValue($column->getId())
+        if (
+            ! $semantic->removeOpenValue($column->getId())
             || ! $this->hideColumnFromTrackerFieldStaticValues($column, $semantic)
             || ! $this->column_dao->deleteColumn($column->getKanbanId(), $column->getId())
         ) {

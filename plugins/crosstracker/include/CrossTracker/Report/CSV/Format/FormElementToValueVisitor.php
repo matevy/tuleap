@@ -37,6 +37,7 @@ use Tracker_FormElement_Field_MultiSelectbox;
 use Tracker_FormElement_Field_OpenList;
 use Tracker_FormElement_Field_PermissionsOnArtifact;
 use Tracker_FormElement_Field_PerTrackerArtifactId;
+use Tracker_FormElement_Field_Priority;
 use Tracker_FormElement_Field_Radiobutton;
 use Tracker_FormElement_Field_Selectbox;
 use Tracker_FormElement_Field_String;
@@ -65,8 +66,8 @@ class FormElementToValueVisitor implements \Tracker_FormElement_FieldVisitor
 
     public function visitDate(Tracker_FormElement_Field_Date $field)
     {
-        /** @var \Tracker_Artifact_ChangesetValue_Date $date_changeset_value */
         $date_changeset_value = $this->changeset_value;
+        \assert($date_changeset_value instanceof \Tracker_Artifact_ChangesetValue_Date);
         return new DateValue($date_changeset_value->getTimestamp(), $field->isTimeDisplayed());
     }
 
@@ -102,8 +103,8 @@ class FormElementToValueVisitor implements \Tracker_FormElement_FieldVisitor
 
     public function visitText(Tracker_FormElement_Field_Text $field)
     {
-        /** @var \Tracker_Artifact_ChangesetValue_Text $text_changeset_value */
         $text_changeset_value = $this->changeset_value;
+        \assert($text_changeset_value instanceof \Tracker_Artifact_ChangesetValue_Text);
         return new TextValue($text_changeset_value->getContentAsText());
     }
 
@@ -177,5 +178,10 @@ class FormElementToValueVisitor implements \Tracker_FormElement_FieldVisitor
     public function visitExternalField(TrackerFormElementExternalField $element)
     {
         throw new RuntimeException("External field is not supported for similar fields matching.");
+    }
+
+    public function visitPriority(Tracker_FormElement_Field_Priority $field)
+    {
+        throw new RuntimeException("Priority field is not supported for similar fields matching.");
     }
 }

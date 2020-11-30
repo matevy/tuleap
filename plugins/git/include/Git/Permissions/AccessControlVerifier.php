@@ -42,12 +42,9 @@ class AccessControlVerifier
         $this->system_command         = $system_command;
     }
 
-    /**
-     * @return bool
-     */
-    public function canWrite(PFUser $user, GitRepository $repository, $reference)
+    public function canWrite(PFUser $user, GitRepository $repository, $reference): bool
     {
-        if ($this->fine_grained_retriever->doesRepositoryUseFineGrainedPermissions($repository)) {
+        if ($repository->isMigratedToGerrit() || $this->fine_grained_retriever->doesRepositoryUseFineGrainedPermissions($repository)) {
             if ($reference === '') {
                 return false;
             }
@@ -63,7 +60,7 @@ class AccessControlVerifier
      */
     private function canWriteAccordingToGitolite(PFUser $user, GitRepository $repository, $reference)
     {
-        $repository_name = escapeshellarg(PathJoinUtil::unixPathJoin(array($repository->getProject()->getUnixName(), $repository->getFullName())));
+        $repository_name = escapeshellarg(PathJoinUtil::unixPathJoin([$repository->getProject()->getUnixName(), $repository->getFullName()]));
         $user_name       = escapeshellarg($user->getUserName());
         $reference       = escapeshellarg($reference);
 

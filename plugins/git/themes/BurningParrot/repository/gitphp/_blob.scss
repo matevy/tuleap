@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -17,8 +17,9 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+@import '../../code-font-parameters';
+
 $codemirror-like-line-numbers-color: #8c8c8c;
-$gitphp-code-font: normal normal 14px / 20px monospace;
 
 .git-repository-blob-header {
     display: flex;
@@ -44,7 +45,7 @@ $gitphp-code-font: normal normal 14px / 20px monospace;
 .git-repository-blob-header-plain,
 .git-repository-blob-header-actions-bar,
 .git-repository-blob-header-history-datatag {
-    margin: 0 0 0 $tlp-spacing;
+    margin: 0 0 0 $tlp-medium-spacing;
 }
 
 .git-repository-blob-body {
@@ -54,8 +55,17 @@ $gitphp-code-font: normal normal 14px / 20px monospace;
 }
 
 .git-repository-blob-image {
-    padding: $tlp-spacing;
+    padding: $tlp-medium-spacing;
     text-align: center;
+}
+
+#git-repository-blob-file-rendered {
+    padding: $tlp-medium-spacing;
+    background: $tlp-ui-white;
+
+    pre {
+        overflow-x: auto;
+    }
 }
 
 #git-repository-blob-file,
@@ -63,7 +73,7 @@ $gitphp-code-font: normal normal 14px / 20px monospace;
     display: flex;
     width: 100%;
     background: $tlp-ui-white;
-    font: $gitphp-code-font;
+    font-family: $code-font-family;
     line-height: 1.5;
 }
 
@@ -71,7 +81,7 @@ $gitphp-code-font: normal normal 14px / 20px monospace;
 .git-repository-blob-file-code,
 .git-repository-blob-file-linenumbers {
     border: 0;
-    font: $gitphp-code-font;
+    font-family: $code-font-family;
 }
 
 .git-repository-blob-file-linenumbers {
@@ -88,7 +98,7 @@ $gitphp-code-font: normal normal 14px / 20px monospace;
 
 .git-repository-blob-file-linenumbers-line {
     width: 100%;
-    padding: 0 $tlp-half-spacing;
+    padding: 0 $tlp-small-spacing;
     color: $codemirror-like-line-numbers-color;
 
     &:target {
@@ -109,22 +119,22 @@ $above-highlight-line: 2;
 .git-repository-blob-file-code {
     position: relative;
     width: 100%;
-    padding: 5px $tlp-half-spacing;
+    padding: 5px $tlp-small-spacing;
     background: none;
     color: $tlp-typo-default-text-color;
-    font: $gitphp-code-font;
+    font-family: $code-font-family;
     line-height: 1.5;
 
-    &[class*="language-"] {
+    &[class*='language-'] {
         margin: 0;
-        padding: 5px $tlp-half-spacing;
+        padding: 5px $tlp-small-spacing;
         background: none;
     }
 
-    > code[class*="language-"] {
+    > code[class*='language-'] {
         position: relative;
         z-index: $above-highlight-line;
-        font: $gitphp-code-font;
+        font-family: $code-font-family;
         text-shadow: none;
     }
 }
@@ -143,11 +153,11 @@ $above-highlight-line: 2;
 }
 
 .git-repository-blob-diff-header-link {
-    margin: 0 $tlp-half-spacing 0 0;
+    margin: 0 $tlp-small-spacing 0 0;
 }
 
 .git-repository-blame-line {
-    padding: 5px $tlp-half-spacing;
+    padding: 5px $tlp-small-spacing;
     border-right: 1px solid $tlp-ui-border-light;
     background: mix($tlp-theme-background-color, $tlp-ui-white, 50%);
     text-align: left;
@@ -166,5 +176,5 @@ $above-highlight-line: 2;
 }
 
 .git-repository-blob-empty-pane {
-    margin: 40px 0 0 0;
+    margin: 40px 0 0;
 }

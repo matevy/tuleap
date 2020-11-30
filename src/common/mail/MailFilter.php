@@ -21,7 +21,7 @@
 namespace Tuleap\Mail;
 
 use ForgeConfig;
-use Logger;
+use Psr\Log\LoggerInterface;
 use Project;
 use Project_AccessDeletedException;
 use Project_AccessPrivateException;
@@ -42,14 +42,14 @@ class MailFilter
      */
     private $project_access_checker;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
     public function __construct(
         UserManager $user_manager,
         ProjectAccessChecker $project_access_checker,
-        Logger $logger
+        LoggerInterface $logger
     ) {
         $this->user_manager           = $user_manager;
         $this->project_access_checker = $project_access_checker;
@@ -64,17 +64,17 @@ class MailFilter
             $this->logger->debug("Deduplicated email: " . $email);
         }
 
-        if ((bool)ForgeConfig::get('sys_mail_secure_mode') === false) {
+        if ((bool) ForgeConfig::get('sys_mail_secure_mode') === false) {
             $this->logger->info("Platform is in insecure send mail mode. All notifications sent");
             return $mails;
         }
 
         if ($project->isPublic()) {
-            $this->logger->info("Project " . $project->getUnconvertedPublicName() . " is public. All notifications sent");
+            $this->logger->info("Project " . $project->getPublicName() . " is public. All notifications sent");
             return $mails;
         }
 
-        $filtered_mails = array();
+        $filtered_mails = [];
         foreach ($mails as $email) {
             $users = $this->user_manager->getAllUsersByEmail($email);
             foreach ($users as $user) {
@@ -85,23 +85,23 @@ class MailFilter
                         $this->logger->info("Mail sent to " . $email);
                         break;
                     } else {
-                        $this->logger->warn("User is not alive - Mail not sent to " . $email);
+                        $this->logger->warning("User is not alive - Mail not sent to " . $email);
                     }
                 } catch (Project_AccessPrivateException $e) {
-                    $this->logger->warn("Project is private - Mail not sent to " . $email);
+                    $this->logger->warning("Project is private - Mail not sent to " . $email);
                 } catch (Project_AccessProjectNotFoundException $e) {
-                    $this->logger->warn("Project not found - Mail not sent to " . $email);
+                    $this->logger->warning("Project not found - Mail not sent to " . $email);
                 } catch (Project_AccessDeletedException $e) {
-                    $this->logger->warn("Project is deleted - Mail not sent to " . $email);
+                    $this->logger->warning("Project is deleted - Mail not sent to " . $email);
                 } catch (Project_AccessRestrictedException $e) {
-                    $this->logger->warn("Project is restricted - Mail not sent to " . $email);
+                    $this->logger->warning("Project is restricted - Mail not sent to " . $email);
                 } catch (ProjectAccessSuspendedException $e) {
-                    $this->logger->warn('Project is suspended - Mail not sent to ' . $email);
+                    $this->logger->warning('Project is suspended - Mail not sent to ' . $email);
                 }
             }
 
             if (count($users) === 0) {
-                $this->logger->warn("User not found - Mail not sent to " . $email);
+                $this->logger->warning("User not found - Mail not sent to " . $email);
             }
         }
         return $filtered_mails;

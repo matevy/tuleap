@@ -19,25 +19,26 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_FormElement_Container_Column extends Tracker_FormElement_Container
 {
 
     /**
      * Fetch the element for the update artifact form
      *
-     * @param Tracker_Artifact $artifact
      *
      * @return string html
      */
     public function fetchArtifact(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $submitted_values,
         array $additional_classes
     ) {
-        return $this->fetchWithColumnGroup('fetchArtifact', array($artifact, $submitted_values));
+        return $this->fetchWithColumnGroup('fetchArtifact', [$artifact, $submitted_values]);
     }
 
-    public function fetchArtifactInGroup(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactInGroup(Artifact $artifact, array $submitted_values)
     {
         return $this->fetchRecursiveArtifact('fetchArtifact', $artifact, $submitted_values, []);
     }
@@ -45,39 +46,39 @@ class Tracker_FormElement_Container_Column extends Tracker_FormElement_Container
     /**
      * Fetch the element for the update artifact form
      *
-     * @param Tracker_Artifact $artifact The artifact
+     * @param Artifact $artifact The artifact
      *
      * @return string html
      */
-    public function fetchArtifactReadOnly(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactReadOnly(Artifact $artifact, array $submitted_values)
     {
         return $this->fetchWithColumnGroup('fetchArtifactReadOnly', [$artifact, $submitted_values]);
     }
 
-    public function fetchArtifactReadOnlyInGroup(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactReadOnlyInGroup(Artifact $artifact, array $submitted_values)
     {
         return $this->fetchRecursiveArtifact('fetchArtifactReadOnly', $artifact, $submitted_values, []);
     }
 
-    public function fetchMailArtifact($recipient, Tracker_Artifact $artifact, $format = 'text', $ignore_perms = false)
+    public function fetchMailArtifact($recipient, Artifact $artifact, $format = 'text', $ignore_perms = false)
     {
-        return $this->fetchWithColumnGroup('fetchMailArtifact', array($recipient, $artifact, $format, $ignore_perms));
+        return $this->fetchWithColumnGroup('fetchMailArtifact', [$recipient, $artifact, $format, $ignore_perms]);
     }
 
-    public function fetchMailArtifactInGroup($recipient, Tracker_Artifact $artifact, $format = 'text', $ignore_perms = false)
+    public function fetchMailArtifactInGroup($recipient, Artifact $artifact, $format = 'text', $ignore_perms = false)
     {
-        return $this->fetchMailRecursiveArtifact($format, 'fetchMailArtifact', array($recipient, $artifact, $format, $ignore_perms));
+        return $this->fetchMailRecursiveArtifact($format, 'fetchMailArtifact', [$recipient, $artifact, $format, $ignore_perms]);
     }
 
     /**
      * @see Tracker_FormElement::fetchArtifactCopyMode
      */
-    public function fetchArtifactCopyMode(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactCopyMode(Artifact $artifact, array $submitted_values)
     {
         return $this->fetchWithColumnGroup('fetchArtifactCopyMode', [$artifact, $submitted_values]);
     }
 
-    public function fetchArtifactCopyModeInGroup(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactCopyModeInGroup(Artifact $artifact, array $submitted_values)
     {
         return $this->fetchRecursiveArtifact('fetchArtifactCopyMode', $artifact, $submitted_values, []);
     }
@@ -119,34 +120,34 @@ class Tracker_FormElement_Container_Column extends Tracker_FormElement_Container
      */
     public function fetchAdmin($tracker)
     {
-        return $this->fetchWithColumnGroup('fetchAdmin', array($tracker));
+        return $this->fetchWithColumnGroup('fetchAdmin', [$tracker]);
     }
     public function fetchAdminInGroup($tracker)
     {
         $html = '';
         $hp = Codendi_HTMLPurifier::instance();
-        $html .= $this->fetchColumnPrefix('class="tracker-admin-container tracker-admin-column" id="tracker-admin-formElements_'. $this->id .'" style="min-width:200px; min-height:80px; border:1px dashed #ccc; margin: 1px; padding: 4px;"');
-        $html .= '<div><label title="'. $hp->purify($this->getDescription(), CODENDI_PURIFIER_CONVERT_HTML) .'">';
+        $html .= $this->fetchColumnPrefix('class="tracker-admin-container tracker-admin-column" id="tracker-admin-formElements_' . $this->id . '" style="min-width:200px; min-height:80px; border:1px dashed #ccc; margin: 1px; padding: 4px;"');
+        $html .= '<div><label title="' . $hp->purify($this->getDescription(), CODENDI_PURIFIER_CONVERT_HTML) . '">';
         $html .= $hp->purify($this->getLabel(), CODENDI_PURIFIER_CONVERT_HTML);
         $html .= '<span class="tracker-admin-field-controls">';
-        $html .= '<a class="edit-field" href="'. $this->getAdminEditUrl() .'">'. $GLOBALS['HTML']->getImage('ic/edit.png', array('alt' => 'edit')) .'</a> ';
+        $html .= '<a class="edit-field" href="' . $this->getAdminEditUrl() . '">' . $GLOBALS['HTML']->getImage('ic/edit.png', ['alt' => 'edit']) . '</a> ';
 
         if ($this->canBeRemovedFromUsage()) {
-            $html .= '<a href="?'. http_build_query(array(
+            $html .= '<a href="?' . http_build_query([
                 'tracker'  => $this->tracker_id,
                 'func'     => 'admin-formElement-remove',
                 'formElement' => $this->id,
-            )) .'">'. $GLOBALS['HTML']->getImage('ic/cross.png', array('alt' => 'remove')) .'</a>';
+            ]) . '">' . $GLOBALS['HTML']->getImage('ic/cross.png', ['alt' => 'remove']) . '</a>';
         } else {
             $cannot_remove_message = $this->getCannotRemoveMessage();
-            $html .= '<span style="color:gray;" title="'. $cannot_remove_message .'">';
-            $html .= $GLOBALS['HTML']->getImage('ic/cross-disabled.png', array('alt' => 'remove'));
+            $html .= '<span style="color:gray;" title="' . $cannot_remove_message . '">';
+            $html .= $GLOBALS['HTML']->getImage('ic/cross-disabled.png', ['alt' => 'remove']);
             $html .= '</span>';
         }
 
         $html .= '</span></label>';
         $html .= '</div>';
-        $content = array();
+        $content = [];
         foreach ($this->getFormElements() as $formElement) {
             $content[] = $formElement->fetchAdmin($tracker);
         }
@@ -156,22 +157,22 @@ class Tracker_FormElement_Container_Column extends Tracker_FormElement_Container
         return $html;
     }
 
-    protected function fetchWithColumnGroup($method, $params = array())
+    protected function fetchWithColumnGroup($method, $params = [])
     {
         $html = '';
         //Fetch only if it has not been already done
-        if (!$this->hasBeenDisplayed()) {
+        if (! $this->hasBeenDisplayed()) {
             //search for next siblings
-            $next = array();
+            $next = [];
             $tf   = Tracker_FormElementFactory::instance();
             $cur = $this;
-            while (is_a($cur, 'Tracker_FormElement_Container_Column')) {
+            while ($cur instanceof \Tracker_FormElement_Container_Column) {
                 $next[] = $cur;
                 $cur = $tf->getNextSibling($cur);
             }
             //delegates the fetch to the group of next sibblings
             $group = new Tracker_FormElement_Container_Column_Group();
-            $html .= call_user_func_array(array($group, $method), array_merge(array($next), $params));
+            $html .= call_user_func_array([$group, $method], array_merge([$next], $params));
         }
         return $html;
     }
@@ -210,37 +211,25 @@ class Tracker_FormElement_Container_Column extends Tracker_FormElement_Container
      */
     protected function fetchColumnPrefix($htmlparams = '')
     {
-        $html = '<div '. $htmlparams .'>';
+        $html = '<div ' . $htmlparams . '>';
         return $html;
     }
 
-    /**
-     * @return the label of the field (mainly used in admin part)
-     */
     public static function getFactoryLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'column');
+        return dgettext('tuleap-tracker', 'Column');
     }
 
-    /**
-     * @return the description of the field (mainly used in admin part)
-     */
     public static function getFactoryDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'column_description');
+        return dgettext('tuleap-tracker', 'Group fields in a column');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconUseIt()
     {
         return $GLOBALS['HTML']->getImagePath('ic/layout-2.png');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconCreate()
     {
         return $GLOBALS['HTML']->getImagePath('ic/layout-2--plus.png');

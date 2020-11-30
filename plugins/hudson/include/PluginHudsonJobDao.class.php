@@ -29,7 +29,7 @@ class PluginHudsonJobDao extends DataAccessObject
     * Gets all jobs in the db
     * @return DataAccessResult
     */
-    function searchAll()
+    public function searchAll()
     {
         $sql = "SELECT * FROM plugin_hudson_job";
         return $this->retrieve($sql);
@@ -39,10 +39,10 @@ class PluginHudsonJobDao extends DataAccessObject
     * Searches PluginHudsonJob by Codendi group ID
     * @return DataAccessResult
     */
-    function searchByGroupID($group_id)
+    public function searchByGroupID($group_id)
     {
         $sql = sprintf(
-            "SELECT *  
+            "SELECT *
                         FROM plugin_hudson_job
                         WHERE group_id = %s",
             $this->da->quoteSmart($group_id)
@@ -54,10 +54,10 @@ class PluginHudsonJobDao extends DataAccessObject
     * Searches PluginHudsonJob by job ID
     * @return DataAccessResult
     */
-    function searchByJobID($job_id)
+    public function searchByJobID($job_id)
     {
         $sql = sprintf(
-            "SELECT *  
+            "SELECT *
                         FROM plugin_hudson_job
                         WHERE job_id = %s",
             $this->da->quoteSmart($job_id)
@@ -69,13 +69,14 @@ class PluginHudsonJobDao extends DataAccessObject
     * Searches PluginHudsonJob by job name
     * @return DataAccessResult
     */
-    function searchByJobName($job_name)
+    public function searchByJobName($job_name, $group_id)
     {
         $sql = sprintf(
-            "SELECT *  
+            "SELECT *
                         FROM plugin_hudson_job
-                        WHERE name = %s",
-            $this->da->quoteSmart($job_name)
+                        WHERE name = %s AND group_id = %s",
+            $this->da->quoteSmart($job_name),
+            $this->da->quoteSmart($group_id)
         );
         return $this->retrieve($sql);
     }
@@ -85,13 +86,13 @@ class PluginHudsonJobDao extends DataAccessObject
     * means "all the jobs of all projects the user is member of"
     * @return DataAccessResult
     */
-    function searchByUserID($user_id)
+    public function searchByUserID($user_id)
     {
         $sql = sprintf(
-            "SELECT j.*  
+            "SELECT j.*
                         FROM plugin_hudson_job j, user u, user_group ug
                         WHERE ug.group_id = j.group_id AND
-                              u.user_id = ug.user_id AND 
+                              u.user_id = ug.user_id AND
                               u.user_id = %s",
             $this->da->quoteSmart($user_id)
         );
@@ -106,9 +107,9 @@ class PluginHudsonJobDao extends DataAccessObject
         $project_id,
         $hudson_job_url,
         $job_name,
-        $use_svn_trigger = false,
-        $use_cvs_trigger = false,
-        $token = null,
+        $use_svn_trigger,
+        $use_cvs_trigger,
+        $token,
         $svn_paths
     ) {
         $project_id      = $this->da->quoteSmart($project_id);
@@ -116,7 +117,7 @@ class PluginHudsonJobDao extends DataAccessObject
         $job_name        = $this->da->quoteSmart($job_name);
         $use_svn_trigger = $this->da->escapeInt($use_svn_trigger);
         $use_cvs_trigger = $this->da->escapeInt($use_cvs_trigger);
-        $token           = ($token !== null)? $this->da->quoteSmart($token) : $this->da->quoteSmart('');
+        $token           = ($token !== null) ? $this->da->quoteSmart($token) : $this->da->quoteSmart('');
         $svn_paths       = $this->da->quoteSmart($svn_paths);
 
         $sql = "INSERT INTO plugin_hudson_job (group_id, job_url, name, use_svn_trigger, use_cvs_trigger, token, svn_paths)
@@ -129,9 +130,9 @@ class PluginHudsonJobDao extends DataAccessObject
         $job_id,
         $hudson_job_url,
         $job_name,
-        $use_svn_trigger = false,
-        $use_cvs_trigger = false,
-        $token = null,
+        $use_svn_trigger,
+        $use_cvs_trigger,
+        $token,
         $svn_paths
     ) {
         $job_id          = $this->da->quoteSmart($job_id);
@@ -139,7 +140,7 @@ class PluginHudsonJobDao extends DataAccessObject
         $job_name        = $this->da->quoteSmart($job_name);
         $use_svn_trigger = $this->da->escapeInt($use_svn_trigger);
         $use_cvs_trigger = $this->da->escapeInt($use_cvs_trigger);
-        $token           = ($token !== null)? $this->da->quoteSmart($token) : $this->da->quoteSmart('');
+        $token           = ($token !== null) ? $this->da->quoteSmart($token) : $this->da->quoteSmart('');
         $svn_paths       = $this->da->quoteSmart($svn_paths);
 
         $sql = "UPDATE plugin_hudson_job
@@ -154,7 +155,7 @@ class PluginHudsonJobDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function deleteHudsonJob($job_id)
+    public function deleteHudsonJob($job_id)
     {
         $sql = sprintf(
             "DELETE FROM plugin_hudson_job WHERE job_id = %s",
@@ -164,7 +165,7 @@ class PluginHudsonJobDao extends DataAccessObject
         return $updated;
     }
 
-    function deleteHudsonJobsByGroupID($group_id)
+    public function deleteHudsonJobsByGroupID($group_id)
     {
         $sql = sprintf(
             "DELETE FROM plugin_hudson_job WHERE group_id = %s",
@@ -181,17 +182,17 @@ class PluginHudsonJobDao extends DataAccessObject
     *
     * @return DataAccessResult
     */
-    function countJobs($groupId = null)
+    public function countJobs($groupId = null)
     {
         $condition = '';
         if ($groupId) {
-            $condition = "AND group_id = ".$this->da->escapeInt($groupId);
+            $condition = "AND group_id = " . $this->da->escapeInt($groupId);
         }
         $sql = "SELECT COUNT(*) AS count
                 FROM plugin_hudson_job
                 JOIN groups USING (group_id)
                 WHERE status = 'A'
-                  ".$condition;
+                  " . $condition;
         return $this->retrieve($sql);
     }
 }

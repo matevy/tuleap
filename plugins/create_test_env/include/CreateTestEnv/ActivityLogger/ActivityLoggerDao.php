@@ -46,4 +46,58 @@ class ActivityLoggerDao extends DataAccessObject
         $sql = 'DELETE FROM plugin_create_test_env_activity WHERE time <= ?';
         return $this->getDB()->run($sql, $timestamp);
     }
+
+    public function getLastWeekActiveUsers()
+    {
+        return $this->getDB()->run(<<<EOT
+            SELECT DISTINCT u.user_id, u.realname, u.user_name, u.email
+            FROM plugin_create_test_env_activity a
+                INNER JOIN user u ON (u.user_id = a.user_id)
+            WHERE a.time >= UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 7 DAY))
+            ORDER by a.time ASC
+            EOT
+        );
+    }
+
+    public function getConnexionCount(int $user_id): int
+    {
+        return (int) $this->getDB()->cell('select count(*) as nb from plugin_create_test_env_activity where user_id = ? and action IN ("Connexion", "Login")', $user_id);
+    }
+
+    public function getActionsCount(int $user_id): int
+    {
+        return (int) $this->getDB()->cell('select count(*) as nb from plugin_create_test_env_activity where user_id = ? group by action', $user_id);
+    }
+
+    public function getUsersMinMaxDates(int $user_id): array
+    {
+        return $this->getDB()->row(
+            <<<EOT
+            SELECT min(time) as min_time, max(time) as max_time
+            FROM plugin_create_test_env_activity
+            WHERE user_id = ?
+            EOT,
+            $user_id
+        );
+    }
+
+    public function getMinMaxTimeFromLogs(): array
+    {
+        return $this->getDB()->row(
+            <<<EOT
+            SELECT min(time) as min_time, max(time) as max_time
+            FROM plugin_create_test_env_activity
+            EOT
+        );
+    }
+
+    public function getActionCountBetweenDates(\DateTimeImmutable $start, \DateTimeImmutable $end): int
+    {
+        return (int) $this->getDB()->cell('select count(*) from plugin_create_test_env_activity WHERE time >= ? AND time < ?', $start->getTimestamp(), $end->getTimestamp());
+    }
+
+    public function getActionCountPerUsersBetweenDates(\DateTimeImmutable $start, \DateTimeImmutable $end)
+    {
+        return $this->getDB()->run('select user_id, count(*) nb FROM plugin_create_test_env_activity WHERE time >= ? AND time < ? group by user_id', $start->getTimestamp(), $end->getTimestamp());
+    }
 }

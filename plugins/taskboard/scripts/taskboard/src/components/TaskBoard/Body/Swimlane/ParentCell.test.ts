@@ -20,7 +20,7 @@
 import { shallowMount } from "@vue/test-utils";
 import ParentCell from "./ParentCell.vue";
 import NoMappingMessage from "./Header/NoMappingMessage.vue";
-import { createStoreMock } from "../../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import { Swimlane } from "../../../../type";
 import CardWithRemainingEffort from "./Card/CardWithRemainingEffort.vue";
 
@@ -31,26 +31,26 @@ describe("ParentCell", () => {
                 $store: createStoreMock({
                     state: {
                         fullscreen: {
-                            is_taskboard_in_fullscreen_mode: false
-                        }
+                            is_taskboard_in_fullscreen_mode: false,
+                        },
                     },
                     getters: {
-                        "fullscreen/fullscreen_class": ""
-                    }
-                })
+                        "fullscreen/fullscreen_class": "",
+                    },
+                }),
             },
             propsData: {
                 swimlane: {
                     card: {
                         id: 43,
-                        has_children: true
-                    }
-                } as Swimlane
-            }
+                        has_children: true,
+                    },
+                } as Swimlane,
+            },
         });
 
-        expect(wrapper.contains(CardWithRemainingEffort)).toBe(true);
-        expect(wrapper.contains(NoMappingMessage)).toBe(false);
+        expect(wrapper.findComponent(CardWithRemainingEffort).exists()).toBe(true);
+        expect(wrapper.findComponent(NoMappingMessage).exists()).toBe(false);
     });
 
     it("displays a no mapping message if card does not have any children", () => {
@@ -59,25 +59,55 @@ describe("ParentCell", () => {
                 $store: createStoreMock({
                     state: {
                         fullscreen: {
-                            is_taskboard_in_fullscreen_mode: false
-                        }
+                            is_taskboard_in_fullscreen_mode: false,
+                        },
                     },
                     getters: {
-                        "fullscreen/fullscreen_class": ""
-                    }
-                })
+                        "fullscreen/fullscreen_class": "",
+                    },
+                }),
             },
             propsData: {
                 swimlane: {
                     card: {
                         id: 43,
-                        has_children: false
-                    }
-                } as Swimlane
-            }
+                        has_children: false,
+                    },
+                } as Swimlane,
+            },
         });
 
-        expect(wrapper.contains(CardWithRemainingEffort)).toBe(true);
-        expect(wrapper.contains(NoMappingMessage)).toBe(true);
+        expect(wrapper.findComponent(CardWithRemainingEffort).exists()).toBe(true);
+        expect(wrapper.findComponent(NoMappingMessage).exists()).toBe(true);
+    });
+
+    it("the parent card has an 'edit-mode' class when it is being edited", () => {
+        const wrapper = shallowMount(ParentCell, {
+            mocks: {
+                $store: createStoreMock({
+                    state: {
+                        fullscreen: {
+                            is_taskboard_in_fullscreen_mode: false,
+                        },
+                    },
+                    getters: {
+                        "fullscreen/fullscreen_class": "",
+                    },
+                }),
+            },
+            propsData: {
+                swimlane: {
+                    card: {
+                        id: 43,
+                        has_children: false,
+                        is_in_edit_mode: true,
+                    },
+                } as Swimlane,
+            },
+        });
+
+        expect(wrapper.findComponent(CardWithRemainingEffort).classes()).toContain(
+            "taskboard-cell-parent-card-edit-mode"
+        );
     });
 });

@@ -49,7 +49,7 @@ class Codendi_HTMLPurifier
     public const CONFIG_MINIMAL_FORMATTING_NO_NEWLINE = 35;
     public const CONFIG_DISABLED                      = 100;
 
-    private static $allowed_schemes = array(
+    private static $allowed_schemes = [
         'http'   => true,
         'https'  => true,
         'mailto' => true,
@@ -57,13 +57,15 @@ class Codendi_HTMLPurifier
         'nntp'   => true,
         'news'   => true,
         'tel'    => true
-    );
+    ];
 
     /**
      * Hold an instance of the class
+     *
+     * @var self|null
      */
     private static $Codendi_HTMLPurifier_instance;
-    private $config = array();
+    private $config = [];
 
     /**
      * Constructor
@@ -79,7 +81,7 @@ class Codendi_HTMLPurifier
      */
     public static function instance()
     {
-        if (!isset(self::$Codendi_HTMLPurifier_instance)) {
+        if (! isset(self::$Codendi_HTMLPurifier_instance)) {
             self::$Codendi_HTMLPurifier_instance = new Codendi_HTMLPurifier();
         }
         return self::$Codendi_HTMLPurifier_instance;
@@ -115,7 +117,7 @@ class Codendi_HTMLPurifier
      * @see http://htmlpurifier.org/live/configdoc/plain.html#AutoFormat
      *
      */
-    function getLightConfig()
+    public function getLightConfig()
     {
         $config = $this->getCodendiConfig();
         $this->setConfigAttribute($config, 'HTML', 'Allowed', $this->getLightConfigMarkups());
@@ -139,23 +141,23 @@ class Codendi_HTMLPurifier
      * - 'ul', 'ol', 'li'
      * - 'cite', 'code', 'blockquote', 'strong', 'em', 'pre', 'b', 'i'
      */
-    function getLightConfigMarkups()
+    public function getLightConfigMarkups()
     {
-        $allowed = 'p,br,'.
-                   'a[href|title|class],img[src|alt],'.
-                   'ul,ol,li,'.
+        $allowed = 'p,br,' .
+                   'a[href|title|class],img[src|alt],' .
+                   'ul,ol,li,' .
                    'cite,code,blockquote,strong,em,pre,b,i';
         return $allowed;
     }
 
-    function getStripConfig()
+    public function getStripConfig()
     {
         $config = $this->getCodendiConfig();
         $this->setConfigAttribute($config, 'HTML', 'Allowed', '');
         return $config;
     }
 
-    private function getMinimalFormattingNoNewlineConfig() : HTMLPurifier_Config
+    private function getMinimalFormattingNoNewlineConfig(): HTMLPurifier_Config
     {
         $config = $this->getCodendiConfig();
         $this->setConfigAttribute($config, 'HTML', 'Allowed', 'a[href],strong,em,b,i');
@@ -165,7 +167,7 @@ class Codendi_HTMLPurifier
     /**
      * HTML Purifier configuration factory
      */
-    function getHPConfig($level)
+    public function getHPConfig($level)
     {
         if (isset($this->config[$level])) {
             return $this->config[$level];
@@ -251,10 +253,13 @@ class Codendi_HTMLPurifier
      *
      * - CONFIG_DISABLED
      *   No filter at all.
+     *
+     *
+     * @psalm-taint-specialize
+     * @psalm-taint-escape html
      */
     public function purify($html, $level = 0, $groupId = 0)
     {
-        $clean = '';
         switch ($level) {
             case self::CONFIG_DISABLED:
                 $clean = $html;
@@ -334,9 +339,9 @@ class Codendi_HTMLPurifier
         return $this->purify($html, CODENDI_PURIFIER_BASIC, $group_id);
     }
 
-    function purifyMap($array, $level = 0, $groupId = 0)
+    public function purifyMap($array, $level = 0, $groupId = 0)
     {
-        return array_map(array(&$this, "purify"), $array, array($level), array($groupId));
+        return array_map([&$this, "purify"], $array, [$level], [$groupId]);
     }
 
     /**

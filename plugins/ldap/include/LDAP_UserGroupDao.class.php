@@ -36,12 +36,12 @@ class LDAP_UserGroupDao extends DataAccessObject
      *
      * @return DataAccessResult
      */
-    function searchByGroupId($ugroupId)
+    public function searchByGroupId($ugroupId)
     {
-        $sql = 'SELECT * FROM plugin_ldap_ugroup'.
-            ' WHERE ugroup_id = '.db_ei($ugroupId);
+        $sql = 'SELECT * FROM plugin_ldap_ugroup' .
+            ' WHERE ugroup_id = ' . db_ei($ugroupId);
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             return $dar->getRow();
         } else {
             return false;
@@ -58,11 +58,11 @@ class LDAP_UserGroupDao extends DataAccessObject
      *
      * @return bool
      */
-    function linkGroupLdap($ugroupId, $ldapGroupDn, $bindOption, $synchroPolicy)
+    public function linkGroupLdap($ugroupId, $ldapGroupDn, $bindOption, $synchroPolicy)
     {
         $synchroPolicy = $this->da->quoteSmart($synchroPolicy);
-        $sql = 'INSERT INTO plugin_ldap_ugroup (ugroup_id, ldap_group_dn, synchro_policy, bind_option)'.
-            ' VALUES ('.db_ei($ugroupId).',"'.db_es($ldapGroupDn).'",'.$synchroPolicy.', "'.db_es($bindOption).'")';
+        $sql = 'INSERT INTO plugin_ldap_ugroup (ugroup_id, ldap_group_dn, synchro_policy, bind_option)' .
+            ' VALUES (' . db_ei($ugroupId) . ',"' . db_es($ldapGroupDn) . '",' . $synchroPolicy . ', "' . db_es($bindOption) . '")';
         return $this->update($sql);
     }
 
@@ -73,10 +73,10 @@ class LDAP_UserGroupDao extends DataAccessObject
      *
      * @return bool
      */
-    function unlinkGroupLdap($ugroupId)
+    public function unlinkGroupLdap($ugroupId)
     {
-        $sql = 'DELETE FROM plugin_ldap_ugroup'.
-            ' WHERE ugroup_id = '.db_ei($ugroupId);
+        $sql = 'DELETE FROM plugin_ldap_ugroup' .
+            ' WHERE ugroup_id = ' . db_ei($ugroupId);
         return $this->update($sql);
     }
 
@@ -88,7 +88,7 @@ class LDAP_UserGroupDao extends DataAccessObject
      *
      * @return void
      */
-    function addUserToGroup($ugroupId, $userId)
+    public function addUserToGroup($ugroupId, $userId)
     {
         $row = $this->_getUgroupRow($ugroupId);
         return ugroup_add_user_to_ugroup($row['group_id'], $ugroupId, $userId);
@@ -102,7 +102,7 @@ class LDAP_UserGroupDao extends DataAccessObject
      *
      * @return void
      */
-    function removeUserFromGroup($ugroupId, $userId)
+    public function removeUserFromGroup($ugroupId, $userId)
     {
         $row = $this->_getUgroupRow($ugroupId);
         return ugroup_remove_user_from_ugroup($row['group_id'], $ugroupId, $userId);
@@ -115,7 +115,7 @@ class LDAP_UserGroupDao extends DataAccessObject
      *
      * @return array
      */
-    function _getUgroupRow($ugroupId)
+    public function _getUgroupRow($ugroupId)
     {
         include_once __DIR__ . '/../../../src/www/project/admin/ugroup_utils.php';
         $Language = $GLOBALS['Language'];
@@ -123,13 +123,13 @@ class LDAP_UserGroupDao extends DataAccessObject
         return db_fetch_array($res);
     }
 
-    function getMembersId($id)
+    public function getMembersId($id)
     {
         include_once __DIR__ . '/../../../src/www/project/admin/ugroup_utils.php';
-        $ret = array();
+        $ret = [];
         $sql = ugroup_db_get_members($id);
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError()) {
+        if ($dar && ! $dar->isError()) {
             foreach ($dar as $row) {
                 $ret[$row['user_id']] = $row['user_id'];
             }
@@ -163,13 +163,13 @@ class LDAP_UserGroupDao extends DataAccessObject
      *
      * @return bool
      */
-    function isSynchronizedUgroup($ugroup_id)
+    public function isSynchronizedUgroup($ugroup_id)
     {
         $ugroup_id = $this->da->escapeInt($ugroup_id);
         $sql = "SELECT * FROM plugin_ldap_ugroup
-                WHERE ugroup_id = ".$ugroup_id." and synchro_policy = ".$this->da->quoteSmart(LDAP_GroupManager::AUTO_SYNCHRONIZATION);
+                WHERE ugroup_id = " . $ugroup_id . " and synchro_policy = " . $this->da->quoteSmart(LDAP_GroupManager::AUTO_SYNCHRONIZATION);
         $rs  = $this->retrieve($sql);
-        if (!empty($rs) && $rs->rowCount() == 1) {
+        if (! empty($rs) && $rs->rowCount() == 1) {
             return true;
         }
         return false;
@@ -182,13 +182,13 @@ class LDAP_UserGroupDao extends DataAccessObject
      *
      * @return bool
      */
-    function isMembersPreserving($ugroup_id)
+    public function isMembersPreserving($ugroup_id)
     {
         $ugroup_id = $this->da->escapeInt($ugroup_id);
         $sql = 'SELECT * FROM plugin_ldap_ugroup
-                WHERE ugroup_id = '.$ugroup_id.' and bind_option = '.$this->da->quoteSmart(LDAP_GroupManager::PRESERVE_MEMBERS_OPTION);
+                WHERE ugroup_id = ' . $ugroup_id . ' and bind_option = ' . $this->da->quoteSmart(LDAP_GroupManager::PRESERVE_MEMBERS_OPTION);
         $rs  = $this->retrieve($sql);
-        if (!empty($rs) && $rs->rowCount() == 1) {
+        if (! empty($rs) && $rs->rowCount() == 1) {
             return true;
         }
         return false;
@@ -205,11 +205,11 @@ class LDAP_UserGroupDao extends DataAccessObject
     {
         $ugroup_id = $this->da->escapeInt($ugroup_id);
         $sql       = "SELECT * FROM plugin_ldap_ugroup
-                      WHERE ugroup_id = ".$ugroup_id."
-                        AND bind_option = ".$this->da->quoteSmart(LDAP_GroupManager::BIND_OPTION)."
-                        AND synchro_policy = ".$this->da->quoteSmart(LDAP_GroupManager::AUTO_SYNCHRONIZATION);
+                      WHERE ugroup_id = " . $ugroup_id . "
+                        AND bind_option = " . $this->da->quoteSmart(LDAP_GroupManager::BIND_OPTION) . "
+                        AND synchro_policy = " . $this->da->quoteSmart(LDAP_GroupManager::AUTO_SYNCHRONIZATION);
         $rs  = $this->retrieve($sql);
-        if (!empty($rs) && $rs->rowCount() == 1) {
+        if (! empty($rs) && $rs->rowCount() == 1) {
             return false;
         }
         return true;

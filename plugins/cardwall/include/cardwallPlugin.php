@@ -18,16 +18,20 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once __DIR__ . '/../../tracker/include/trackerPlugin.php';
 require_once __DIR__ . '/constants.php';
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../../tracker/include/trackerPlugin.php';
 
+use Tuleap\AgileDashboard\Milestone\Pane\PaneInfoCollector;
 use Tuleap\Cardwall\Agiledashboard\CardwallPaneInfo;
 use Tuleap\Cardwall\AllowedFieldRetriever;
 use Tuleap\Cardwall\Semantic\BackgroundColorDao;
 use Tuleap\Cardwall\Semantic\BackgroundColorSemanticFactory;
 use Tuleap\Cardwall\Semantic\FieldUsedInSemanticObjectChecker;
+use Tuleap\date\RelativeDatesAssetsRetriever;
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Tracker\Artifact\RedirectAfterArtifactCreationOrUpdateEvent;
+use Tuleap\Tracker\Artifact\Renderer\BuildArtifactFormActionEvent;
 use Tuleap\Tracker\Events\AllowedFieldTypeChangesRetriever;
 use Tuleap\Tracker\Events\IsFieldUsedInASemanticEvent;
 use Tuleap\Tracker\Report\Renderer\ImportRendererFromXmlEvent;
@@ -51,7 +55,7 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
 
     public function getConfigFactory()
     {
-        if (!$this->config_factory) {
+        if (! $this->config_factory) {
             $tracker_factory  = TrackerFactory::instance();
             $element_factory  = Tracker_FormElementFactory::instance();
             $this->config_factory = new Cardwall_OnTop_ConfigFactory($tracker_factory, $element_factory);
@@ -70,8 +74,8 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
             $this->addHook('tracker_report_renderer_types');
             $this->addHook('tracker_report_renderer_instance');
             $this->addHook(TRACKER_EVENT_TRACKERS_DUPLICATED);
-            $this->addHook(TRACKER_EVENT_BUILD_ARTIFACT_FORM_ACTION);
-            $this->addHook(TRACKER_EVENT_REDIRECT_AFTER_ARTIFACT_CREATION_OR_UPDATE);
+            $this->addHook(BuildArtifactFormActionEvent::NAME);
+            $this->addHook(RedirectAfterArtifactCreationOrUpdateEvent::NAME);
             $this->addHook(Event::JAVASCRIPT);
             $this->addHook(Event::IMPORT_XML_PROJECT_TRACKER_DONE);
             $this->addHook(AllowedFieldTypeChangesRetriever::NAME);
@@ -84,7 +88,7 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
             $this->addHook(\Tuleap\Request\CollectRoutesEvent::NAME);
 
             if (defined('AGILEDASHBOARD_BASE_DIR')) {
-                $this->addHook(AGILEDASHBOARD_EVENT_ADDITIONAL_PANES_ON_MILESTONE);
+                $this->addHook(PaneInfoCollector::NAME);
                 $this->addHook(AGILEDASHBOARD_EVENT_MILESTONE_SELECTOR_REDIRECT);
                 $this->addHook(AGILEDASHBOARD_EVENT_PLANNING_CONFIG);
                 $this->addHook(AGILEDASHBOARD_EVENT_PLANNING_CONFIG_UPDATE);
@@ -104,20 +108,20 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
      */
     public function getDependencies()
     {
-        return array('tracker');
+        return ['tracker'];
     }
 
     public function tracker_event_export_full_xml($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $plannings = PlanningFactory::build()->getOrderedPlanningsWithBacklogTracker($params['user'], $params['group_id']);
-        $this->getAgileDashboardExplorer()->export($params['xml_content'], $plannings);
+        $this->getAgileDashboardExporter()->exportFull($params['project'], $params['xml_content'], $plannings);
 
         $this->getCardwallXmlExporter($params['group_id'])->export($params['xml_content']);
     }
 
-    private function getAgileDashboardExplorer()
+    private function getAgileDashboardExporter(): AgileDashboard_XMLExporter
     {
-        return new AgileDashboard_XMLExporter(new XML_RNGValidator(), new PlanningPermissionsManager());
+        return AgileDashboard_XMLExporter::build();
     }
 
     private function getCardwallXmlExporter($group_id)
@@ -149,7 +153,7 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
      */
     public function tracker_report_renderer_types($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $params['types'][self::RENDERER_TYPE] = $GLOBALS['Language']->getText('plugin_cardwall', 'title');
+        $params['types'][self::RENDERER_TYPE] = dgettext('tuleap-cardwall', 'Card Wall');
     }
 
     /**
@@ -183,7 +187,6 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
                 $params['row']['description'],
                 $params['row']['rank'],
                 $this->getFieldForInstance($params),
-                $this->getPluginInfo()->getPropVal('display_qr_code')
             );
 
             if ($params['store_in_session']) {
@@ -201,8 +204,10 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
         $field_id = null;
         if ($params['store_in_session']) {
             $this->report_session = new Tracker_Report_Session($params['report']->id);
-            $this->report_session->changeSessionNamespace("renderers.{$params['row']['id']}");
-            $field_id = $this->report_session->get("field_id");
+            if (isset($params['row']['id'])) {
+                $this->report_session->changeSessionNamespace("renderers.{$params['row']['id']}");
+                $field_id = $this->report_session->get("field_id");
+            }
         }
         if (! $field_id) {
             $dao = new Cardwall_RendererDao();
@@ -242,7 +247,7 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
 
     public function getPluginInfo()
     {
-        if (!is_a($this->pluginInfo, 'CardwallPluginInfo')) {
+        if (! is_a($this->pluginInfo, 'CardwallPluginInfo')) {
             $this->pluginInfo = new CardwallPluginInfo($this);
         }
         return $this->pluginInfo;
@@ -257,11 +262,7 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
 
     private function getCSSURL()
     {
-        $theme_include_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/cardwall/themes',
-            '/assets/cardwall/themes'
-        );
-        return $theme_include_assets->getFileURL('flamingparrot-theme.css');
+        return $this->getAssets()->getFileURL('flamingparrot-theme.css');
     }
 
     private function canIncludeStylesheets()
@@ -277,11 +278,23 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
         if ($this->isAgileDashboardOrTrackerUrl() && $this->canUseStandardJavsacript()) {
             $agiledashboard_plugin = PluginManager::instance()->getAvailablePluginByName('agiledashboard');
             if ($agiledashboard_plugin && $agiledashboard_plugin->currentRequestIsForPlugin()) {
-                $tracker_plugin = PluginManager::instance()->getPluginByName('tracker');
-                echo $tracker_plugin->getMinifiedAssetHTML()."\n";
+                $assets = new IncludeAssets(__DIR__ . '/../../../src/www/assets/trackers', '/assets/trackers');
+                echo $assets->getHTMLSnippet('tracker.js');
             }
-            echo $this->getMinifiedAssetHTML()."\n";
+            echo $this->getAssets()->getHTMLSnippet('cardwall.js');
         }
+
+        if (HTTPRequest::instance()->get('pane') === CardwallPaneInfo::IDENTIFIER) {
+            RelativeDatesAssetsRetriever::includeAssetsInSnippet();
+        }
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/cardwall/',
+            '/assets/cardwall/'
+        );
     }
 
     /**
@@ -290,8 +303,8 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
     public function tracker_event_manage_semantics($parameters) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $tracker   = $parameters['tracker'];
-        /** @var Tracker_SemanticCollection $semantics */
         $semantics = $parameters['semantics'];
+        \assert($semantics instanceof Tracker_SemanticCollection);
 
         $semantics->add(Cardwall_Semantic_CardFields::load($tracker));
     }
@@ -334,8 +347,8 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
     private function isAgileDashboardOrTrackerUrl()
     {
         return (defined('AGILEDASHBOARD_BASE_DIR') &&
-                strpos($_SERVER['REQUEST_URI'], AGILEDASHBOARD_BASE_URL.'/') === 0 ||
-                strpos($_SERVER['REQUEST_URI'], TRACKER_BASE_URL.'/') === 0);
+                strpos($_SERVER['REQUEST_URI'], AGILEDASHBOARD_BASE_URL . '/') === 0 ||
+                strpos($_SERVER['REQUEST_URI'], TRACKER_BASE_URL . '/') === 0);
     }
 
     private function canUseStandardJavsacript()
@@ -345,9 +358,9 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
         $em = EventManager::instance();
         $em->processEvent(
             CARDWALL_EVENT_USE_STANDARD_JAVASCRIPT,
-            array(
+            [
                 'use_standard' => &$use_standard
-            )
+            ]
         );
 
         return $use_standard;
@@ -356,16 +369,10 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
     public function javascript($params)
     {
         include $GLOBALS['Language']->getContent('script_locale', null, 'cardwall', '.js');
-        echo "var tuleap = tuleap || { };".PHP_EOL;
-        echo "tuleap.cardwall = tuleap.cardwall || { };".PHP_EOL;
-        echo "tuleap.cardwall.base_url = '". CARDWALL_BASE_URL ."/';".PHP_EOL;
+        echo "var tuleap = tuleap || { };" . PHP_EOL;
+        echo "tuleap.cardwall = tuleap.cardwall || { };" . PHP_EOL;
+        echo "tuleap.cardwall.base_url = '" . CARDWALL_BASE_URL . "/';" . PHP_EOL;
         echo PHP_EOL;
-    }
-
-    private function denyAccess($tracker_id)
-    {
-        $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_admin', 'access_denied'));
-        $GLOBALS['Response']->redirect(TRACKER_BASE_URL.'/?tracker='. $tracker_id);
     }
 
     /**
@@ -376,19 +383,33 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
         $parameters['card_fields_semantic'] = Cardwall_Semantic_CardFields::load($parameters['tracker']);
     }
 
-    public function agiledashboard_event_additional_panes_on_milestone($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    public function agiledashboardEventAdditionalPanesOnMilestone(PaneInfoCollector $collector): void
     {
-        $pane_info = $this->getPaneInfo($params['milestone']);
+        if (! $this->isCardwallAllowed($collector->getMilestone()->getProject())) {
+            return;
+        }
+
+        $pane_info = $this->getPaneInfo($collector->getMilestone());
 
         if (! $pane_info) {
             return;
         }
 
-        if ($params['request']->get('pane') == CardwallPaneInfo::IDENTIFIER) {
+        $active_pane_context = $collector->getActivePaneContext();
+        if ($active_pane_context && $active_pane_context->getRequest()->get('pane') === CardwallPaneInfo::IDENTIFIER) {
             $pane_info->setActive(true);
-            $params['active_pane'] = $this->getCardwallPane($pane_info, $params['milestone'], $params['user'], $params['milestone_factory']);
+            $collector->setActivePaneBuilder(
+                function () use ($pane_info, $collector, $active_pane_context): AgileDashboard_Pane {
+                    return $this->getCardwallPane(
+                        $pane_info,
+                        $collector->getMilestone(),
+                        $active_pane_context->getUser(),
+                        $active_pane_context->getMilestoneFactory()
+                    );
+                }
+            );
         }
-        $params['panes'][] = $pane_info;
+        $collector->addPane($pane_info);
     }
 
     private function getPaneInfo($milestone)
@@ -399,14 +420,14 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
             return;
         }
 
-        return new CardwallPaneInfo($milestone, $this->getThemePath());
+        return new CardwallPaneInfo($milestone);
     }
 
     public function agiledashboard_event_index_page($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         // Only display a cardwall if there is something to display
         if ($params['milestone'] && $params['milestone']->getPlannedArtifacts() && count($params['milestone']->getPlannedArtifacts()->getChildren()) > 0) {
-            $pane_info = new CardwallPaneInfo($params['milestone'], $this->getThemePath());
+            $pane_info = new CardwallPaneInfo($params['milestone']);
             $params['pane'] = $this->getCardwallPane($pane_info, $params['milestone'], $params['user'], $params['milestone_factory']);
         }
     }
@@ -436,12 +457,12 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
         }
     }
 
-    public function tracker_event_redirect_after_artifact_creation_or_update($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    public function redirectAfterArtifactCreationOrUpdateEvent(RedirectAfterArtifactCreationOrUpdateEvent $event): void
     {
-        $cardwall = $params['request']->get('cardwall');
-        $redirect = $params['redirect'];
+        $cardwall = $event->getRequest()->get('cardwall');
+        $redirect = $event->getRedirect();
         if ($cardwall) {
-            if (!$redirect->stayInTracker()) {
+            if (! $redirect->stayInTracker()) {
                 $redirect_to     = key($cardwall);
                 $redirect_params = current($cardwall);
                 switch ($redirect_to) {
@@ -465,13 +486,13 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
         $planning    = PlanningFactory::build()->getPlanning($planning_id);
         if ($planning) {
             $redirect->base_url         = AGILEDASHBOARD_BASE_URL;
-            $redirect->query_parameters = array(
+            $redirect->query_parameters = [
                 'group_id'    => $planning->getGroupId(),
                 'planning_id' => $planning->getId(),
                 'action'      => 'show',
                 'aid'         => $artifact_id,
                 'pane'        => 'cardwall',
-            );
+            ];
         }
     }
 
@@ -480,23 +501,23 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
         $report_id                   = key($redirect_params);
         $renderer_id                 = current($redirect_params);
         $redirect->base_url          = TRACKER_BASE_URL;
-        $redirect->query_parameters  = array(
+        $redirect->query_parameters  = [
             'report'   => $report_id,
             'renderer' => $renderer_id,
-        );
+        ];
     }
 
-    public function tracker_event_build_artifact_form_action($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    public function buildArtifactFormActionEvent(BuildArtifactFormActionEvent $event): void
     {
-        $cardwall = $params['request']->get('cardwall');
+        $cardwall = $event->getRequest()->get('cardwall');
         if ($cardwall) {
-            $this->appendCardwallParameter($params['redirect'], $cardwall);
+            $this->appendCardwallParameter($event->getRedirect(), $cardwall);
         }
     }
 
     private function appendCardwallParameter(Tracker_Artifact_Redirect $redirect, $cardwall)
     {
-        list($key, $value) = explode('=', urldecode(http_build_query(array('cardwall' => $cardwall))));
+        [$key, $value] = explode('=', urldecode(http_build_query(['cardwall' => $cardwall])));
         $redirect->query_parameters[$key] = $value;
     }
 
@@ -531,27 +552,40 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
             $params['project']->getId(),
             $params['mapping'],
             $params['field_mapping'],
-            new Cardwall_OnTop_Dao,
-            new Cardwall_OnTop_ColumnDao,
+            $params['artifact_id_mapping'],
+            new Cardwall_OnTop_Dao(),
+            new Cardwall_OnTop_ColumnDao(),
             new Cardwall_OnTop_ColumnMappingFieldDao(),
             new Cardwall_OnTop_ColumnMappingFieldValueDao(),
             EventManager::instance(),
-            new XML_RNGValidator()
+            new XML_RNGValidator(),
+            $params['logger']
         );
         $cardwall_ontop_import->import($params['xml_content']);
     }
 
     public function agiledashboard_event_rest_get_milestone($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $config = $this->getConfigFactory()->getOnTopConfig($params['milestone']->getPlanning()->getPlanningTracker());
+        $milestone = $params['milestone'];
+        assert($milestone instanceof \Planning_Milestone);
+
+        if (! $this->isCardwallAllowed($milestone->getProject())) {
+            return;
+        }
+
+        $config = $this->getConfigFactory()->getOnTopConfig($milestone->getPlanning()->getPlanningTracker());
         if ($config && $config->isEnabled()) {
-            $params['milestone_representation']->enableCardwall();
+            $milestone_representation_reference_holder                           = $params['milestone_representation_reference_holder'];
+            $milestone_representation_reference_holder->milestone_representation = \Tuleap\AgileDashboard\REST\v1\MilestoneRepresentation::buildWithCardwallEnabled($milestone_representation_reference_holder->milestone_representation);
         }
     }
 
     private function buildRightVersionOfMilestonesCardwallResource($version)
     {
-        $class_with_right_namespace = '\\Tuleap\\Cardwall\\REST\\'.$version.'\\MilestonesCardwallResource';
+        $class_with_right_namespace = '\\Tuleap\\Cardwall\\REST\\' . $version . '\\MilestonesCardwallResource';
+        if (! class_exists($class_with_right_namespace)) {
+            throw new LogicException("$class_with_right_namespace does not exist");
+        }
         return new $class_with_right_namespace($this->getConfigFactory());
     }
 
@@ -583,8 +617,21 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
     public function agiledashboard_event_is_cardwall_enabled($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $tracker = $params['tracker'];
+        assert($tracker instanceof Tracker);
+
+        if (! $this->isCardwallAllowed($tracker->getProject())) {
+            return;
+        }
+
         $params['enabled'] = $this->getConfigFactory()
             ->isOnTopConfigEnabledForPlanning($tracker);
+    }
+
+    private function isCardwallAllowed(Project $project): bool
+    {
+        $event = new Tuleap\Cardwall\CardwallIsAllowedEvent($project);
+        EventManager::instance()->processEvent($event);
+        return $event->isCardwallAllowed();
     }
 
     /**
@@ -652,14 +699,14 @@ class cardwallPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration
         $event_retriever->setAllowedTypes($allowed_types);
     }
 
-    public function collectRoutesEvent(\Tuleap\Request\CollectRoutesEvent $event) : void
+    public function collectRoutesEvent(\Tuleap\Request\CollectRoutesEvent $event): void
     {
         $event->getRouteCollector()->addGroup('/plugins/cardwall', function (FastRoute\RouteCollector $r) {
             $r->addRoute(['GET', 'POST'], '[/[index.php]]', $this->getRouteHandler('routeLegacyController'));
         });
     }
 
-    public function routeLegacyController() : \Tuleap\Cardwall\CardwallLegacyController
+    public function routeLegacyController(): \Tuleap\Cardwall\CardwallLegacyController
     {
         return new \Tuleap\Cardwall\CardwallLegacyController($this->getConfigFactory());
     }

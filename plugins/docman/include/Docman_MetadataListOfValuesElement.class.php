@@ -26,13 +26,13 @@
  */
 class Docman_MetadataListOfValuesElement
 {
-    var $id;
-    var $name;
-    var $description;
-    var $rank;
-    var $status;
+    public $id;
+    public $name;
+    public $description;
+    public $rank;
+    public $status;
 
-    function __construct()
+    public function __construct()
     {
         $this->id = null;
         $this->name = null;
@@ -41,52 +41,52 @@ class Docman_MetadataListOfValuesElement
         $this->status = null;
     }
 
-    function setId($v)
+    public function setId($v)
     {
         $this->id = $v;
     }
-    function getId()
+    public function getId()
     {
         return $this->id;
     }
 
-    function setName($v)
+    public function setName($v)
     {
         $this->name = $v;
     }
-    function getName()
+    public function getName()
     {
         return $this->name;
     }
 
-    function setDescription($v)
+    public function setDescription($v)
     {
         $this->description = $v;
     }
-    function getDescription()
+    public function getDescription()
     {
         return $this->description;
     }
 
-    function setRank($v)
+    public function setRank($v)
     {
         $this->rank = $v;
     }
-    function getRank()
+    public function getRank()
     {
         return $this->rank;
     }
 
-    function setStatus($v)
+    public function setStatus($v)
     {
         $this->status = $v;
     }
-    function getStatus()
+    public function getStatus()
     {
         return $this->status;
     }
 
-    function initFromRow($row)
+    public function initFromRow($row)
     {
         if (isset($row['value_id'])) {
             $this->id = $row['value_id'];
@@ -107,8 +107,8 @@ class Docman_MetadataListOfValuesElement
 
     public function getMetadataValue(): string
     {
-        if ((int)$this->getId() === PLUGIN_DOCMAN_ITEM_STATUS_NONE) {
-            return $GLOBALS['Language']->getText('plugin_docman', 'love_special_none_name_key');
+        if ((int) $this->getId() === PLUGIN_DOCMAN_ITEM_STATUS_NONE) {
+            return dgettext('tuleap-docman', 'None');
         }
 
         return $this->getName();

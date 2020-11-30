@@ -35,16 +35,16 @@ if ($request->valid($vGroupId) && $request->valid($vFileId)) {
   $frspf = new FRSPackageFactory();
   // Must have a group_id and file_id otherwise
   // we cannot do much
-if (!$file_id || !$group_id) {
+if (! $file_id || ! $group_id) {
     exit_missing_param();
 }
 
-if (!$GLOBALS['sys_frs_license_mandatory']) {
+if (! ForgeConfig::get('sys_frs_license_mandatory')) {
     // Display license popup
     // This is useful when using a 'file #123' reference, that points to this script
     $res = $frspf->getFRSPackageByFileIdFromDb($file_id);
     if ($res !== null) {
-        if ($res->getApproveLicense()==0) {
+        if ($res->getApproveLicense() == 0) {
             // Directly display file
             $location = 'Location: /file/download/' . urlencode($file_id);
             header($location);
@@ -54,11 +54,11 @@ if (!$GLOBALS['sys_frs_license_mandatory']) {
 }
 
 if ($request->exist('popup')) {
-    $dlscript='opener.download';
-    $cancelscript='window.close()';
+    $dlscript = 'opener.download';
+    $cancelscript = 'window.close()';
 } else {
-    $dlscript='download_local';
-    $cancelscript='history.back()';
+    $dlscript = 'download_local';
+    $cancelscript = 'history.back()';
 }
 ?>
 <html>
@@ -88,7 +88,7 @@ if (! $exchange_policy_url) {
     $exchange_policy_url = 'javascript:;';
 }
 
-echo $Language->getText('file_confirm_download', 'download_explain', array($GLOBALS['sys_org_name'], $GLOBALS['sys_email_contact'], $exchange_policy_url));
+echo $Language->getText('file_confirm_download', 'download_explain', [ForgeConfig::get('sys_org_name'), ForgeConfig::get('sys_email_contact'), $exchange_policy_url]);
 ?><br>
 
 <br><br>
@@ -101,8 +101,8 @@ echo $Language->getText('file_confirm_download', 'download_explain', array($GLOB
       <div align="center"><a href="javascript:<?php echo "$cancelscript"?>;"><b><?php echo $Language->getText('file_confirm_download', 'decline'); ?></b></a></div>
     </td>
   </tr>
-<?php if (!$request->exist('popup')) {
-    echo '<p>  <tr><td colspan="2" class="small"><a href="javascript:history.back();">'.$Language->getText('file_confirm_download', 'back').'</a></td></tr>';
+<?php if (! $request->exist('popup')) {
+    echo '<p>  <tr><td colspan="2" class="small"><a href="javascript:history.back();">' . $Language->getText('file_confirm_download', 'back') . '</a></td></tr>';
 } ?>
 </table>
 </span>

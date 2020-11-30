@@ -20,7 +20,6 @@
 
 namespace Tuleap\Git\Repository\View;
 
-use GitRepository;
 use HTTPRequest;
 use Tuleap\Git\GitPHP\Commit;
 use Tuleap\Git\GitPHP\Project;
@@ -28,8 +27,6 @@ use Tuleap\Git\GitPHP\Project;
 class CommitForCurrentTreeRetriever
 {
     /**
-     * @param HTTPRequest $request
-     * @param Project     $gitphp_project
      *
      * @return Commit|null
      */

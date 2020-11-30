@@ -16,8 +16,9 @@ if ($request->valid($vGroupId)) {
         $group_id = $request->get('form_grp');
     } else {
         exit_no_group();
+        exit();
     }
 }
 
 $pm = ProjectManager::instance();
-$GLOBALS['Response']->redirect('/projects/'.$pm->getProject($group_id)->getUnixName());
+$GLOBALS['Response']->redirect('/projects/' . $pm->getProject($group_id)->getUnixName());

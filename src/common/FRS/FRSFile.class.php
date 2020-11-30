@@ -19,11 +19,7 @@
  *
  */
 
-use GuzzleHttp\Psr7\ServerRequest;
 use Tuleap\FRS\FRSPermissionManager;
-use Tuleap\Http\HTTPFactoryBuilder;
-use Tuleap\Http\Response\BinaryFileResponseBuilder;
-use Zend\HttpHandlerRunner\Emitter\SapiStreamEmitter;
 
 class FRSFile
 {
@@ -36,59 +32,59 @@ class FRSFile
     /**
      * @var int $file_id the ID of this FRSFile
      */
-    var $file_id;
+    public $file_id;
     /**
      * @var String $filename the name of this FRSFile
      */
-    var $filename;
+    public $filename;
     /**
      * @var String $filepath the full path where the file is created
      */
-    var $filepath;
+    public $filepath;
     /**
      * @var int $release_id the ID of the release this FRSFile belong to
      */
-    var $release_id;
+    public $release_id;
     /**
      * @var int $type_id the ID of the type of this FRSFile
      */
-    var $type_id;
+    public $type_id;
     /**
      * @var int $processor_id the ID of the processor to use with this FRSFile
      */
-    var $processor_id;
+    public $processor_id;
     /**
      * @var int $release_time the ??? of this FRSFile
      */
-    var $release_time;
+    public $release_time;
     /**
      * @var int $file_size the size of this FRSFile
      */
-    var $file_size;
+    public $file_size;
     /**
      * @var int $post_date the ??? of this FRSFile
      */
-    var $post_date;
+    public $post_date;
     /**
      * @var string $status the status of this FRSFile (A=>Active; D=>Deleted)
      */
-    var $status;
+    public $status;
     /**
      * @var string $computed_md5 hash of the file computed in server side
      */
-    var $computed_md5;
+    public $computed_md5;
     /**
      * @var string $reference_md5 hash of the file submited by user (calculated in client side)
      */
-    var $reference_md5;
+    public $reference_md5;
     /**
      * @var int $user_id id of user that created the file
      */
-    var $user_id;
+    public $user_id;
     /**
      * @var string $file_location the full path of this FRSFile
      */
-    var $file_location;
+    public $file_location;
     /**
      * @var Group $group the project this file belong to
      */
@@ -105,7 +101,7 @@ class FRSFile
      */
     protected $release;
 
-    function __construct($data_array = null)
+    public function __construct($data_array = null)
     {
         $this->file_id       = null;
         $this->filename     = null;
@@ -128,22 +124,22 @@ class FRSFile
         }
     }
 
-    function getFileID()
+    public function getFileID()
     {
         return $this->file_id;
     }
 
-    function setFileID($file_id)
+    public function setFileID($file_id)
     {
         $this->file_id = (int) $file_id;
     }
 
-    function getFileName()
+    public function getFileName()
     {
         return $this->filename;
     }
 
-    function setFileName($filename)
+    public function setFileName($filename)
     {
         $this->filename = $filename;
     }
@@ -155,7 +151,7 @@ class FRSFile
      *
      * @return String
      */
-    function getFilePath()
+    public function getFilePath()
     {
         if ($this->filepath == null) {
             return $this->filename;
@@ -164,52 +160,52 @@ class FRSFile
         }
     }
 
-    function setFilePath($filepath)
+    public function setFilePath($filepath)
     {
         $this->filepath = $filepath;
     }
 
-    function getReleaseID()
+    public function getReleaseID()
     {
         return $this->release_id;
     }
 
-    function setReleaseID($release_id)
+    public function setReleaseID($release_id)
     {
         $this->release_id = (int) $release_id;
     }
 
-    function getTypeID()
+    public function getTypeID()
     {
         return $this->type_id;
     }
 
-    function setTypeID($type_id)
+    public function setTypeID($type_id)
     {
         $this->type_id = (int) $type_id;
     }
 
-    function getProcessorID()
+    public function getProcessorID()
     {
         return $this->processor_id;
     }
 
-    function setProcessorID($processor_id)
+    public function setProcessorID($processor_id)
     {
         $this->processor_id = (int) $processor_id;
     }
 
-    function getReleaseTime()
+    public function getReleaseTime()
     {
         return $this->release_time;
     }
 
-    function setReleaseTime($release_time)
+    public function setReleaseTime($release_time)
     {
         $this->release_time = (int) $release_time;
     }
 
-    function setFileLocation($location)
+    public function setFileLocation($location)
     {
         $this->file_location = $location;
     }
@@ -217,37 +213,34 @@ class FRSFile
     /**
      * Returns the location of the file on the server
      *
-     * @global $GLOBALS['ftp_frs_dir_prefix']
      * @return string the location of this file on the server
      */
-    function getFileLocation()
+    public function getFileLocation()
     {
         if ($this->file_location == null) {
             $group = $this->getGroup();
             $group_unix_name = $group->getUnixName(false);
             $basename = $this->getFilePath();
-            $this->file_location = $GLOBALS['ftp_frs_dir_prefix'].'/'.$group_unix_name.'/'.$basename;
+            $this->file_location = ForgeConfig::get('ftp_frs_dir_prefix') . '/' . $group_unix_name . '/' . $basename;
         }
         return $this->file_location;
     }
 
-    function getFileSize()
+    public function getFileSize()
     {
         if ($this->file_size == null) {
-            require_once __DIR__ . '/../../www/file/file_utils.php';
             $file_location = $this->getFileLocation();
-            // Use file_utils to provide a workaround for the 2 GB limitation
-            $this->file_size = file_utils_get_size($file_location);
+            $this->file_size = \filesize($file_location);
         }
         return $this->file_size;
     }
 
-    function setFileSize($file_size)
+    public function setFileSize($file_size)
     {
         $this->file_size = $file_size;
     }
 
-    static function convertBytesToKbytes($size_in_bytes, $decimals_precision = 0)
+    public static function convertBytesToKbytes($size_in_bytes, $decimals_precision = 0)
     {
         $size_in_kbytes = $size_in_bytes / 1024;
 
@@ -260,7 +253,7 @@ class FRSFile
         return number_format($size_in_kbytes, $decimals_precision, $decimal_separator, $thousand_separator);
     }
 
-    function getDisplayFileSize()
+    public function getDisplayFileSize()
     {
         $decimals_precision = 0;
         if ($this->getFileSize() < 1024) {
@@ -269,73 +262,73 @@ class FRSFile
         return $this->convertBytesToKbytes($this->getFileSize(), $decimals_precision);
     }
 
-    function getPostDate()
+    public function getPostDate()
     {
         return $this->post_date;
     }
 
-    function setPostDate($post_date)
+    public function setPostDate($post_date)
     {
         $this->post_date = (int) $post_date;
     }
 
-    function getStatus()
+    public function getStatus()
     {
         return $this->status;
     }
 
-    function setStatus($status)
+    public function setStatus($status)
     {
         $this->status = $status;
     }
 
-    function isActive()
+    public function isActive()
     {
         return ($this->status == 'A');
     }
 
-    function isDeleted()
+    public function isDeleted()
     {
         return ($this->status == 'D');
     }
 
-    function setComputedMd5($computedMd5)
+    public function setComputedMd5($computedMd5)
     {
         $this->computed_md5 = $computedMd5;
     }
 
-    function getComputedMd5()
+    public function getComputedMd5()
     {
         return $this->computed_md5;
     }
 
-    function setReferenceMd5($referenceMd5)
+    public function setReferenceMd5($referenceMd5)
     {
         $this->reference_md5 = $referenceMd5;
     }
 
-    function getReferenceMd5()
+    public function getReferenceMd5()
     {
         return $this->reference_md5;
     }
 
-    function setUserID($userId)
+    public function setUserID($userId)
     {
         $this->user_id = $userId;
     }
 
-    function getUserID()
+    public function getUserID()
     {
         return $this->user_id;
     }
 
-    function setRelease($release)
+    public function setRelease($release)
     {
         $this->release    = $release;
         $this->release_id = $release->getReleaseID();
     }
 
-    function getRelease()
+    public function getRelease()
     {
         return $this->release;
     }
@@ -350,7 +343,7 @@ class FRSFile
         $this->comment = $comment;
     }
 
-    function initFromArray($array)
+    public function initFromArray($array)
     {
         if (isset($array['file_id'])) {
             $this->setFileID($array['file_id']);
@@ -396,9 +389,9 @@ class FRSFile
         }
     }
 
-    function toArray()
+    public function toArray()
     {
-        $array = array();
+        $array = [];
         $array['file_id']       = $this->getFileID();
         $array['filename']      = $this->getFileName();
         $array['filepath']      = $this->getFilePath();
@@ -418,11 +411,11 @@ class FRSFile
         return $array;
     }
 
-    var $dao;
+    public $dao;
 
-    function &_getFRSFileDao()
+    public function &_getFRSFileDao()
     {
-        if (!$this->dao) {
+        if (! $this->dao) {
             $this->dao = new FRSFileDao(CodendiDataAccess::instance());
         }
         return $this->dao;
@@ -433,7 +426,7 @@ class FRSFile
      *
      * @return bool true if the file exists on the server, false otherwise
      */
-    function fileExists()
+    public function fileExists()
     {
         return file_exists($this->getFileLocation());
     }
@@ -443,7 +436,7 @@ class FRSFile
      *
      * @return int the packahe ID of this file
      */
-    function getPackageID()
+    public function getPackageID()
     {
         // retrieve the release the file belongs to
         $release_id = $this->getReleaseID();
@@ -459,7 +452,7 @@ class FRSFile
      *
      * @return Project the group the file belongs to
      */
-    function getGroup()
+    public function getGroup()
     {
         if (empty($this->group)) {
             $pm = ProjectManager::instance();
@@ -476,7 +469,7 @@ class FRSFile
     /**
      * Set the Group (the project) of this File
      */
-    function setGroup(Group $group)
+    public function setGroup(Group $group)
     {
         $this->group = $group;
     }
@@ -488,7 +481,7 @@ class FRSFile
      *
      * @return mixed the content of the file
      */
-    function getContent($offset = 0, $size = -1)
+    public function getContent($offset = 0, $size = -1)
     {
         if ($size == -1) {
             $size = $this->getFileSize();
@@ -506,14 +499,14 @@ class FRSFile
      * @param int $user_id the user that download the file (if 0, the current user will be taken)
      * @return bool true if there is no error, false otherwise
      */
-    function LogDownload($user_id = 0)
+    public function LogDownload($user_id = 0)
     {
         if ($user_id == 0) {
             $user_id = UserManager::instance()->getCurrentUser()->getId();
         }
         $time = $_SERVER['REQUEST_TIME'] - 3600;
         $dao  = $this->_getFrsFileDao();
-        if (!$dao->existsDownloadLogSince($this->getFileID(), $user_id, $time)) {
+        if (! $dao->existsDownloadLogSince($this->getFileID(), $user_id, $time)) {
             return $dao->logDownload($this, $user_id);
         }
         return true;
@@ -553,7 +546,7 @@ class FRSFile
      * Returns the HTML content for tooltip when hover a reference with the nature file
      * @returns string HTML content for file tooltip
      */
-    function getReferenceTooltip()
+    public function getReferenceTooltip()
     {
         $html_purifier = Codendi_HTMLPurifier::instance();
         $tooltip = '';
@@ -566,19 +559,19 @@ class FRSFile
         $tooltip .= '<table>';
         $tooltip .= ' <tr>';
         $tooltip .= '  <td><strong>' . $GLOBALS['Language']->getText('file_admin_editreleases', 'filename') . ':</strong></td>';
-        $tooltip .= '  <td>'.$html_purifier->purify(basename($this->getFileName())).'</td>';
+        $tooltip .= '  <td>' . $html_purifier->purify(basename($this->getFileName())) . '</td>';
         $tooltip .= ' </tr>';
         $tooltip .= ' <tr>';
         $tooltip .= '  <td><strong>' . $GLOBALS['Language']->getText('file_ref_tooltip', 'package_release') . ':</strong></td>';
-        $tooltip .= '  <td>'.$html_purifier->purify($package->getName().' / '.$release->getName()).'</td>';
+        $tooltip .= '  <td>' . $html_purifier->purify($package->getName() . ' / ' . $release->getName()) . '</td>';
         $tooltip .= ' </tr>';
         $tooltip .= ' <tr>';
         $tooltip .= '  <td><strong>' . $GLOBALS['Language']->getText('file_showfiles', 'date') . ':</strong></td>';
-        $tooltip .= '  <td>'.$html_purifier->purify(format_date($GLOBALS['Language']->getText('system', 'datefmt_short'), $release->getReleaseDate())).'</td>';
+        $tooltip .= '  <td>' . $html_purifier->purify(format_date($GLOBALS['Language']->getText('system', 'datefmt_short'), $release->getReleaseDate())) . '</td>';
         $tooltip .= ' </tr>';
         $tooltip .= ' <tr>';
         $tooltip .= '  <td><strong>' . $GLOBALS['Language']->getText('file_showfiles', 'size') . ':</strong></td>';
-        $tooltip .= '  <td>'.$html_purifier->purify($this->getDisplayFileSize()).'</td>';
+        $tooltip .= '  <td>' . $html_purifier->purify($this->getDisplayFileSize()) . '</td>';
         $tooltip .= ' </tr>';
         $tooltip .= '</table>';
         return $tooltip;

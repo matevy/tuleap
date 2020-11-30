@@ -19,10 +19,10 @@
   -->
 <template>
     <div class="taskboard-header" v-bind:class="classes">
-        <collapse-button v-bind:column="column"/>
+        <collapse-button v-bind:column="column" />
         <span class="taskboard-header-label" data-test="label">{{ column.label }}</span>
-        <cards-in-column-count v-bind:column="column"/>
-        <wrong-color-popover v-if="should_popover_be_displayed" v-bind:color="column.color"/>
+        <cards-in-column-count v-bind:column="column" />
+        <wrong-color-popover v-if="should_popover_be_displayed" v-bind:color="column.color" />
     </div>
 </template>
 <script lang="ts">
@@ -38,7 +38,7 @@ const user = namespace("user");
 const DEFAULT_COLOR = "#F8F8F8";
 
 @Component({
-    components: { CardsInColumnCount, CollapseButton, WrongColorPopover }
+    components: { CardsInColumnCount, CollapseButton, WrongColorPopover },
 })
 export default class ExpandedHeaderCell extends Mixins(HeaderCellMixin) {
     @user.State

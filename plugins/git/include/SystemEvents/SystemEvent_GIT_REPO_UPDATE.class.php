@@ -25,24 +25,14 @@ class SystemEvent_GIT_REPO_UPDATE extends SystemEvent
     /** @var GitRepositoryFactory */
     private $repository_factory;
 
-    /** @var SystemEventDao */
-    private $system_event_dao;
-
-    /** @var Logger */
-    private $logger;
-
     /** @var Git_SystemEventManager */
     private $system_event_manager;
 
     public function injectDependencies(
         GitRepositoryFactory $repository_factory,
-        SystemEventDao $system_event_dao,
-        Logger $logger,
         Git_SystemEventManager $system_event_manager
     ) {
         $this->repository_factory   = $repository_factory;
-        $this->system_event_dao     = $system_event_dao;
-        $this->logger               = $logger;
         $this->system_event_manager = $system_event_manager;
     }
 
@@ -81,7 +71,7 @@ class SystemEvent_GIT_REPO_UPDATE extends SystemEvent
         }
 
         if (! $repository->getBackend()->updateRepoConf($repository)) {
-            $this->error('Unable to update gitolite configuration for repoistory with ID '.$this->getRepositoryIdFromParameters());
+            $this->error('Unable to update gitolite configuration for repoistory with ID ' . $this->getRepositoryIdFromParameters());
             return;
         }
 
@@ -95,7 +85,7 @@ class SystemEvent_GIT_REPO_UPDATE extends SystemEvent
         if ($with_link) {
             $repository = $this->getRepositoryFromParameters();
             if ($repository) {
-                return '<a href="/plugins/git/?action=repo_management&group_id='.$repository->getProjectId().'&repo_id='.$repository->getId().'">'.$repository->getName().'</a>';
+                return '<a href="/plugins/git/?action=repo_management&group_id=' . $repository->getProjectId() . '&repo_id=' . $repository->getId() . '">' . $repository->getName() . '</a>';
             }
         }
         return $this->getRepositoryIdFromParameters();

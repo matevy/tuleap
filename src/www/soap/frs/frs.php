@@ -38,14 +38,14 @@ if (defined('NUSOAP')) {
         'struct',
         'sequence',
         '',
-        array(
-        'package_id' => array('name'=>'package_id', 'type' => 'xsd:int'),
-        'group_id' => array('name'=>'group_id', 'type' => 'xsd:int'),
-        'name' => array('name'=>'name', 'type' => 'xsd:string'),
-        'status_id' => array('name'=>'status_id', 'type' => 'xsd:int'),
-        'rank' => array('name'=>'rank', 'type' => 'xsd:int'),
-        'approve_license' => array('name'=>'approve_license', 'type' => 'xsd:boolean'),
-        )
+        [
+        'package_id' => ['name' => 'package_id', 'type' => 'xsd:int'],
+        'group_id' => ['name' => 'group_id', 'type' => 'xsd:int'],
+        'name' => ['name' => 'name', 'type' => 'xsd:string'],
+        'status_id' => ['name' => 'status_id', 'type' => 'xsd:int'],
+        'rank' => ['name' => 'rank', 'type' => 'xsd:int'],
+        'approve_license' => ['name' => 'approve_license', 'type' => 'xsd:boolean'],
+        ]
     );
 
     $server->wsdl->addComplexType(
@@ -54,8 +54,8 @@ if (defined('NUSOAP')) {
         'array',
         '',
         'SOAP-ENC:Array',
-        array(),
-        array(array('ref'=>'SOAP-ENC:arrayType','wsdl:arrayType'=>'tns:FRSPackage[]')),
+        [],
+        [['ref' => 'SOAP-ENC:arrayType', 'wsdl:arrayType' => 'tns:FRSPackage[]']],
         'tns:FRSPackage'
     );
 
@@ -65,16 +65,16 @@ if (defined('NUSOAP')) {
         'struct',
         'sequence',
         '',
-        array(
-        'release_id' => array('name'=>'release_id', 'type' => 'xsd:int'),
-        'package_id' => array('name'=>'package_id', 'type' => 'xsd:int'),
-        'name' => array('name'=>'name', 'type' => 'xsd:string'),
-        'notes' => array('name'=>'notes', 'type' => 'xsd:string'),
-        'changes' => array('name'=>'changes', 'type' => 'xsd:string'),
-        'status_id' => array('name'=>'description', 'type' => 'xsd:string'),
-        'release_date' => array('name'=>'release_date', 'type' => 'xsd:int'),
-        'released_by' => array('name'=>'released_by', 'type' => 'xsd:string'),
-        )
+        [
+        'release_id' => ['name' => 'release_id', 'type' => 'xsd:int'],
+        'package_id' => ['name' => 'package_id', 'type' => 'xsd:int'],
+        'name' => ['name' => 'name', 'type' => 'xsd:string'],
+        'notes' => ['name' => 'notes', 'type' => 'xsd:string'],
+        'changes' => ['name' => 'changes', 'type' => 'xsd:string'],
+        'status_id' => ['name' => 'description', 'type' => 'xsd:string'],
+        'release_date' => ['name' => 'release_date', 'type' => 'xsd:int'],
+        'released_by' => ['name' => 'released_by', 'type' => 'xsd:string'],
+        ]
     );
 
     $server->wsdl->addComplexType(
@@ -83,8 +83,8 @@ if (defined('NUSOAP')) {
         'array',
         '',
         'SOAP-ENC:Array',
-        array(),
-        array(array('ref'=>'SOAP-ENC:arrayType','wsdl:arrayType'=>'tns:FRSRelease[]')),
+        [],
+        [['ref' => 'SOAP-ENC:arrayType', 'wsdl:arrayType' => 'tns:FRSRelease[]']],
         'tns:FRSRelease'
     );
 
@@ -94,20 +94,20 @@ if (defined('NUSOAP')) {
         'struct',
         'sequence',
         '',
-        array(
-        'file_id'       => array('name'=>'file_id',       'type' => 'xsd:int'),
-        'release_id'    => array('name'=>'release_id',    'type' => 'xsd:int'),
-        'file_name'     => array('name'=>'file_name',     'type' => 'xsd:string'),
-        'file_size'     => array('name'=>'file_size',     'type' => 'xsd:int'),
-        'type_id'       => array('name'=>'type_id',       'type' => 'xsd:int'),
-        'processor_id'  => array('name'=>'processor_id',  'type' => 'xsd:int'),
-        'release_time'  => array('name'=>'release_time',  'type' => 'xsd:int'),
-        'post_date'     => array('name'=>'post_date',     'type' => 'xsd:int'),
-        'computed_md5'  => array('name'=>'computed_md5',  'type' => 'xsd:string'),
-        'reference_md5' => array('name'=>'reference_md5', 'type' => 'xsd:string'),
-        'user_id'       => array('name'=>'user_id',       'type' => 'xsd:int'),
-        'comment'       => array('name'=>'comment',       'type' => 'xsd:string'),
-        )
+        [
+        'file_id'       => ['name' => 'file_id',       'type' => 'xsd:int'],
+        'release_id'    => ['name' => 'release_id',    'type' => 'xsd:int'],
+        'file_name'     => ['name' => 'file_name',     'type' => 'xsd:string'],
+        'file_size'     => ['name' => 'file_size',     'type' => 'xsd:int'],
+        'type_id'       => ['name' => 'type_id',       'type' => 'xsd:int'],
+        'processor_id'  => ['name' => 'processor_id',  'type' => 'xsd:int'],
+        'release_time'  => ['name' => 'release_time',  'type' => 'xsd:int'],
+        'post_date'     => ['name' => 'post_date',     'type' => 'xsd:int'],
+        'computed_md5'  => ['name' => 'computed_md5',  'type' => 'xsd:string'],
+        'reference_md5' => ['name' => 'reference_md5', 'type' => 'xsd:string'],
+        'user_id'       => ['name' => 'user_id',       'type' => 'xsd:int'],
+        'comment'       => ['name' => 'comment',       'type' => 'xsd:string'],
+        ]
     );
 
     $server->wsdl->addComplexType(
@@ -116,20 +116,24 @@ if (defined('NUSOAP')) {
         'array',
         '',
         'SOAP-ENC:Array',
-        array(),
-        array(array('ref'=>'SOAP-ENC:arrayType','wsdl:arrayType'=>'tns:FRSFile[]')),
+        [],
+        [['ref' => 'SOAP-ENC:arrayType', 'wsdl:arrayType' => 'tns:FRSFile[]']],
         'tns:FRSFile'
     );
+
+    if (! isset($uri)) {
+        $uri = '';
+    }
 
 // Function definition
     $server->register(
         'getPackages',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int'),
-        array('getPackagesResponse'=>'tns:ArrayOfFRSPackage'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int'],
+        ['getPackagesResponse' => 'tns:ArrayOfFRSPackage'],
         $uri,
-        $uri.'#getPackages',
+        $uri . '#getPackages',
         'rpc',
         'encoded',
         'Returns the array of FRSPackages that belongs to the group identified by group ID.
@@ -138,16 +142,16 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'addPackage',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int',
-        'package_name'=>'xsd:string',
-        'status_id'=>'xsd:int',
-        'rank'=>'xsd:int',
-        'approve_license'=>'xsd:boolean'),
-        array('addPackageResponse'=>'xsd:int'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int',
+        'package_name' => 'xsd:string',
+        'status_id' => 'xsd:int',
+        'rank' => 'xsd:int',
+        'approve_license' => 'xsd:boolean'],
+        ['addPackageResponse' => 'xsd:int'],
         $uri,
-        $uri.'#addPackage',
+        $uri . '#addPackage',
         'rpc',
         'encoded',
         'Add a Package to the File Release Manager of the project group_id with the values given by 
@@ -158,13 +162,13 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'getReleases',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int',
-        'package_id'=>'xsd:int'),
-        array('getReleasesResponse'=>'tns:ArrayOfFRSRelease'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int',
+        'package_id' => 'xsd:int'],
+        ['getReleasesResponse' => 'tns:ArrayOfFRSRelease'],
         $uri,
-        $uri.'#getReleases',
+        $uri . '#getReleases',
         'rpc',
         'encoded',
         'Returns the array of FRSReleases that belongs to the group identified by group ID and 
@@ -175,17 +179,17 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'updateRelease',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int',
-        'package_id'=>'xsd:int',
-        'release_id'=>'xsd:int',
-        'notes'=>'xsd:string',
-        'changes'=>'xsd:string',
-        'status_id'=>'xsd:int',),
-        array('updateRelease'=>'xsd:boolean'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int',
+        'package_id' => 'xsd:int',
+        'release_id' => 'xsd:int',
+        'notes' => 'xsd:string',
+        'changes' => 'xsd:string',
+        'status_id' => 'xsd:int',],
+        ['updateRelease' => 'xsd:boolean'],
         $uri,
-        $uri.'#updateRelease',
+        $uri . '#updateRelease',
         'rpc',
         'encoded',
         'Updates a Release in the File Release Manager of the project group_id with
@@ -198,18 +202,18 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'addRelease',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int',
-        'package_id'=>'xsd:int',
-        'name'=>'xsd:string',
-        'notes'=>'xsd:string',
-        'changes'=>'xsd:string',
-        'status_id'=>'xsd:int',
-        'release_date'=>'xsd:int'),
-        array('addRelease'=>'xsd:int'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int',
+        'package_id' => 'xsd:int',
+        'name' => 'xsd:string',
+        'notes' => 'xsd:string',
+        'changes' => 'xsd:string',
+        'status_id' => 'xsd:int',
+        'release_date' => 'xsd:int'],
+        ['addRelease' => 'xsd:int'],
         $uri,
-        $uri.'#addRelease',
+        $uri . '#addRelease',
         'rpc',
         'encoded',
         'Add a Release to the File Release Manager of the project group_id with the values given by 
@@ -221,14 +225,14 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'getFiles',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int',
-        'package_id'=>'xsd:int',
-        'release_id'=>'xsd:int'),
-        array('getFilesResponse'=>'tns:ArrayOfFRSFile'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int',
+        'package_id' => 'xsd:int',
+        'release_id' => 'xsd:int'],
+        ['getFilesResponse' => 'tns:ArrayOfFRSFile'],
         $uri,
-        $uri.'#getFiles',
+        $uri . '#getFiles',
         'rpc',
         'encoded',
         'Returns the array of FRSFiles that belongs to the group identified by group ID, 
@@ -239,15 +243,15 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'getFileInfo',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int',
-        'package_id'=>'xsd:int',
-        'release_id'=>'xsd:int',
-        'file_id'=>'xsd:int'),
-        array('getFileInfoResponse'=>'tns:FRSFile'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int',
+        'package_id' => 'xsd:int',
+        'release_id' => 'xsd:int',
+        'file_id' => 'xsd:int'],
+        ['getFileInfoResponse' => 'tns:FRSFile'],
         $uri,
-        $uri.'#getFileInfo',
+        $uri . '#getFileInfo',
         'rpc',
         'encoded',
         'Returns the metadata of the file contained in 
@@ -259,15 +263,15 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'getFile',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int',
-        'package_id'=>'xsd:int',
-        'release_id'=>'xsd:int',
-        'file_id'=>'xsd:int'),
-        array('getFileResponse'=>'xsd:string'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int',
+        'package_id' => 'xsd:int',
+        'release_id' => 'xsd:int',
+        'file_id' => 'xsd:int'],
+        ['getFileResponse' => 'xsd:string'],
         $uri,
-        $uri.'#getFile',
+        $uri . '#getFile',
         'rpc',
         'encoded',
         'Returns the <strong>content</strong> (encoded in base64) of the file contained in 
@@ -279,17 +283,17 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'getFileChunk',
-        array(
+        [
         'sessionKey' => 'xsd:string',
         'group_id'   => 'xsd:int',
         'package_id' => 'xsd:int',
         'release_id' => 'xsd:int',
         'file_id'    => 'xsd:int',
         'offset'     => 'xsd:int',
-        'size'       => 'xsd:int'),
-        array('getFileChunkResponse'=>'xsd:string'),
+        'size'       => 'xsd:int'],
+        ['getFileChunkResponse' => 'xsd:string'],
         $uri,
-        $uri.'#getFileChunk',
+        $uri . '#getFileChunk',
         'rpc',
         'encoded',
         'Returns a part (chunk) of the <strong>content</strong>, encoded in base64, of the file contained in 
@@ -302,7 +306,7 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'addFile',
-        array(
+        [
         'sessionKey'        => 'xsd:string',
         'group_id'          => 'xsd:int',
         'package_id'        => 'xsd:int',
@@ -313,10 +317,10 @@ if (defined('NUSOAP')) {
         'processor_id'      => 'xsd:int',
         'reference_md5'     => 'xsd:string',
         'comment'           => 'xsd:string'
-        ),
-        array('addFile'=>'xsd:int'),
+        ],
+        ['addFile' => 'xsd:int'],
         $uri,
-        $uri.'#addFile',
+        $uri . '#addFile',
         'rpc',
         'encoded',
         'Add a File to the File Release Manager of the project group_id with the values given by 
@@ -331,15 +335,15 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'addFileChunk',
-        array(
+        [
         'sessionKey'     => 'xsd:string',
         'filename'       => 'xsd:string',
         'contents'       => 'xsd:string',
         'first_chunk'    => 'xsd:boolean',
-        ),
-        array('addFileChunk'=>'xsd:integer'),
+        ],
+        ['addFileChunk' => 'xsd:integer'],
         $uri,
-        $uri.'#addFileChunk',
+        $uri . '#addFileChunk',
         'rpc',
         'encoded',
         'Add a chunk to a file in the incoming directory to be released later in FRS. 
@@ -351,20 +355,20 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'addUploadedFile',
-        array(
-        'sessionKey'    =>'xsd:string',
-        'group_id'      =>'xsd:int',
-        'package_id'    =>'xsd:int',
-        'release_id'    =>'xsd:int',
-        'filename'      =>'xsd:string',
-        'type_id'       =>'xsd:int',
-        'processor_id'  =>'xsd:int',
-        'reference_md5' =>'xsd:string',
+        [
+        'sessionKey'    => 'xsd:string',
+        'group_id'      => 'xsd:int',
+        'package_id'    => 'xsd:int',
+        'release_id'    => 'xsd:int',
+        'filename'      => 'xsd:string',
+        'type_id'       => 'xsd:int',
+        'processor_id'  => 'xsd:int',
+        'reference_md5' => 'xsd:string',
         'comment'       => 'xsd:string'
-        ),
-        array('addUploadedFile'=>'xsd:int'),
+        ],
+        ['addUploadedFile' => 'xsd:int'],
         $uri,
-        $uri.'#addUploadedFile',
+        $uri . '#addUploadedFile',
         'rpc',
         'encoded',
         'Add a File to the File Release Manager of the project group_id with the values given by 
@@ -379,13 +383,13 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'getUploadedFiles',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int'
-        ),
-        array('getUploadedFilesResponse'=>'tns:ArrayOfstring'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int'
+        ],
+        ['getUploadedFilesResponse' => 'tns:ArrayOfstring'],
         $uri,
-        $uri.'#getUploadedFiles',
+        $uri . '#getUploadedFiles',
         'rpc',
         'encoded',
         'Get the file names of the file present in the incoming directory on the server.'
@@ -393,16 +397,16 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'deleteFile',
-        array(
-        'sessionKey'=>'xsd:string',
-        'group_id'=>'xsd:int',
-        'package_id'=>'xsd:int',
-        'release_id'=>'xsd:int',
-        'file_id'=>'xsd:int'
-        ),
-        array('deleteFileResponse'=>'xsd:boolean'),
+        [
+        'sessionKey' => 'xsd:string',
+        'group_id' => 'xsd:int',
+        'package_id' => 'xsd:int',
+        'release_id' => 'xsd:int',
+        'file_id' => 'xsd:int'
+        ],
+        ['deleteFileResponse' => 'xsd:boolean'],
         $uri,
-        $uri.'#deleteFile',
+        $uri . '#deleteFile',
         'rpc',
         'encoded',
         'Delete the file file_id in release release_id in package package_id.
@@ -411,15 +415,15 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'deleteEmptyPackage',
-        array(
+        [
         'sessionKey'  => 'xsd:string',
         'group_id'    => 'xsd:int',
         'package_id'  => 'xsd:int',
         'cleanup_all' => 'xsd:boolean'
-        ),
-        array('deleteEmptyPackageResponse'=>'tns:ArrayOfFRSPackage'),
+        ],
+        ['deleteEmptyPackageResponse' => 'tns:ArrayOfFRSPackage'],
         $uri,
-        $uri.'#deleteEmptyPackage',
+        $uri . '#deleteEmptyPackage',
         'rpc',
         'encoded',
         'Delete a package or all empty packages in project group_id.
@@ -428,16 +432,16 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'deleteEmptyRelease',
-        array(
+        [
         'sessionKey'  => 'xsd:string',
         'group_id'    => 'xsd:int',
         'package_id'  => 'xsd:int',
         'release_id'  => 'xsd:int',
         'cleanup_all' => 'xsd:boolean'
-        ),
-        array('deleteEmptyReleaseResponse'=>'tns:ArrayOfFRSRelease'),
+        ],
+        ['deleteEmptyReleaseResponse' => 'tns:ArrayOfFRSRelease'],
         $uri,
-        $uri.'#deleteEmptyRelease',
+        $uri . '#deleteEmptyRelease',
         'rpc',
         'encoded',
         'Delete a release or all empty releases in package package_id.
@@ -446,17 +450,17 @@ if (defined('NUSOAP')) {
 
     $server->register(
         'updateFileComment',
-        array(
+        [
         'sessionKey'        => 'xsd:string',
         'group_id'          => 'xsd:int',
         'package_id'        => 'xsd:int',
         'release_id'        => 'xsd:int',
         'file_id'           => 'xsd:int',
         'comment'           => 'xsd:string',
-        ),
-        array('updateFileCommentResponse'=>'xsd:boolean'),
+        ],
+        ['updateFileCommentResponse' => 'xsd:boolean'],
         $uri,
-        $uri.'#updateFileComment',
+        $uri . '#updateFileComment',
         'rpc',
         'encoded',
         'Update the comment of a File in a release with the values given by
@@ -508,21 +512,21 @@ if (defined('NUSOAP')) {
     {
         // check if current user is allowed to see this package
         if ($package->userCanRead()) {
-            return array(
+            return [
             'package_id' => $package->getPackageID(),
             'group_id' => $package->getGroupID(),
             'name' => util_unconvert_htmlspecialchars($package->getName()),
             'status_id' => $package->getStatusID(),
             'rank' => $package->getRank(),
             'approve_license' => $package->getApproveLicense()
-            );
+            ];
         }
         return null;
     }
 
     function packages_to_soap(&$pkg_arr)
     {
-        $return = array();
+        $return = [];
         foreach ($pkg_arr as $package) {
             $return[] = package_to_soap($package);
         }
@@ -559,13 +563,13 @@ if (defined('NUSOAP')) {
                 if ($pkg_fact->isPackageNameExist($package_name, $group_id)) {
                     return new SoapFault(INVALID_PACKAGE_FAULT, 'Package name already exists in this project', 'addPackage');
                 } else {
-                    $pkg_array = array('group_id'        => $group->getID(),
+                    $pkg_array = ['group_id'        => $group->getID(),
                                    'name'            => $package_name,
                                    'status_id'       => $status_id,
                                    'rank'            => $rank,
-                                   'approve_license' => $approve_license);
+                                   'approve_license' => $approve_license];
                     $dar = $pkg_fact->create($pkg_array);
-                    if (!$dar) {
+                    if (! $dar) {
                         return new SoapFault(INVALID_PACKAGE_FAULT, $dar->isError(), 'addPackage');
                     } else {
                         // if there is no error, $dar contains the package_id
@@ -600,7 +604,7 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->isDeleted() || $package->getGroupID() != $group_id) {
+            if (! $package || $package->isDeleted() || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'getReleases');
             }
             // check access rights to this package
@@ -630,7 +634,7 @@ if (defined('NUSOAP')) {
     {
         // check if the user can view
         if ($release->userCanRead()) {
-            return array(
+            return [
             'release_id' => $release->getReleaseID(),
             'package_id' => $release->getPackageID(),
             'name' => $release->getName(),
@@ -639,14 +643,14 @@ if (defined('NUSOAP')) {
             'status_id' => $release->getStatusID(),
             'release_date' => $release->getReleaseDate(),
             'released_by' => $release->getReleasedBy()
-            );
+            ];
         }
         return null;
     }
 
     function releases_to_soap($release_arr)
     {
-        $return = array();
+        $return = [];
         foreach ($release_arr as $release) {
             $soap_release = release_to_soap($release);
             if ($soap_release != null) {
@@ -687,7 +691,7 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->getGroupID() != $group_id) {
+            if (! $package || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'addRelease');
             }
 
@@ -696,14 +700,14 @@ if (defined('NUSOAP')) {
                 if ($release_fact->isReleaseNameExist($name, $package_id)) {
                     return new SoapFault(INVALID_RELEASE_FAULT, 'Release name already exists in this package', 'addRelease');
                 } else {
-                    $release_array = array ('package_id' => $package_id,
+                    $release_array =  ['package_id' => $package_id,
                                         'name' => $name,
                                         'notes' => $notes,
                                         'changes' => $changes,
                                         'status_id' => $status_id,
-                                        'release_date' => $release_date);
+                                        'release_date' => $release_date];
                     $dar = $release_fact->create($release_array);
-                    if (!$dar) {
+                    if (! $dar) {
                         return new SoapFault(INVALID_RELEASE_FAULT, $dar->isError(), 'addRelease');
                     } else {
                         // if there is no error, $dar contains the release_id
@@ -760,7 +764,7 @@ if (defined('NUSOAP')) {
 
         $pkg_fact = new FRSPackageFactory();
         $package = $pkg_fact->getFRSPackageFromDb($package_id);
-        if (!$package || $package->getGroupID() != $group_id) {
+        if (! $package || $package->getGroupID() != $group_id) {
             return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'updateRelease');
         }
 
@@ -773,13 +777,13 @@ if (defined('NUSOAP')) {
             return new SoapFault(INVALID_RELEASE_FAULT, 'Release does not exist', 'updateRelease');
         }
 
-        $release_array = array (
+        $release_array =  [
         'package_id'    => $package_id,
         'notes'         => $notes,
         'changes'       => $changes,
         'status_id'     => $status_id,
         'release_id'    => $release_id
-        );
+        ];
 
         if (! $release_factory->update($release_array)) {
             return new SoapFault(INVALID_RELEASE_FAULT, 'Update Failed', 'updateRelease');
@@ -810,7 +814,7 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->isDeleted() || $package->getGroupID() != $group_id) {
+            if (! $package || $package->isDeleted() || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'getFiles');
             }
             // check access rights to this package
@@ -821,7 +825,7 @@ if (defined('NUSOAP')) {
             // retrieve the release
             $release_fact = new FRSReleaseFactory();
             $release      = $release_fact->getFRSReleaseFromDb($release_id);
-            if (!$release || $release->isDeleted() || $release->getPackageID() != $package_id) {
+            if (! $release || $release->isDeleted() || $release->getPackageID() != $package_id) {
                 return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'getFiles');
             }
             // check access rights to this release
@@ -860,7 +864,7 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->isDeleted() || $package->getGroupID() != $group_id) {
+            if (! $package || $package->isDeleted() || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'getFileInfo');
             }
             // check access rights to this package
@@ -871,7 +875,7 @@ if (defined('NUSOAP')) {
             // retrieve the release
             $release_fact = new FRSReleaseFactory();
             $release = $release_fact->getFRSReleaseFromDb($release_id);
-            if (!$release || $release->isDeleted() || $release->getPackageID() != $package_id) {
+            if (! $release || $release->isDeleted() || $release->getPackageID() != $package_id) {
                 return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'getFileInfo');
             }
             // check access rights to this release
@@ -881,7 +885,7 @@ if (defined('NUSOAP')) {
 
             $file_fact = new FRSFileFactory();
             $file = $file_fact->getFRSFileFromDb($file_id);
-            if (!$file || !$file->isActive() || $file->getReleaseID() != $release_id) {
+            if (! $file || ! $file->isActive() || $file->getReleaseID() != $release_id) {
                 return new SoapFault(INVALID_FILE_FAULT, 'Invalid File', 'getFileInfo');
             }
             return file_to_soap($file);
@@ -903,7 +907,7 @@ if (defined('NUSOAP')) {
     {
         $return = null;
         // for the moment, no permissions on files
-        $return = array(
+        $return = [
         'file_id'       => $file->getFileID(),
         'release_id'    => $file->getReleaseID(),
         'file_name'     => $file->getFileName(),
@@ -916,13 +920,13 @@ if (defined('NUSOAP')) {
         'reference_md5' => $file->getReferenceMd5(),
         'user_id'       => $file->getUserID(),
         'comment'       => $file->getComment(),
-        );
+        ];
         return $return;
     }
 
     function files_to_soap($files_arr)
     {
-        $return = array();
+        $return = [];
         foreach ($files_arr as $file) {
             $return[] = file_to_soap($file);
         }
@@ -958,7 +962,7 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->isDeleted() || $package->getGroupID() != $group_id) {
+            if (! $package || $package->isDeleted() || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'getFile');
             }
             // check access rights to this package
@@ -969,7 +973,7 @@ if (defined('NUSOAP')) {
             // retrieve the release
             $release_fact = new FRSReleaseFactory();
             $release      = $release_fact->getFRSReleaseFromDb($release_id);
-            if (!$release || $release->isDeleted() || $release->getPackageID() != $package_id) {
+            if (! $release || $release->isDeleted() || $release->getPackageID() != $package_id) {
                 return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'getFile');
             }
             // check access rights to this release
@@ -979,11 +983,11 @@ if (defined('NUSOAP')) {
 
             $file_fact = new FRSFileFactory();
             $file      = $file_fact->getFRSFileFromDb($file_id);
-            if (!$file || !$file->isActive() || $file->getReleaseID() != $release_id) {
+            if (! $file || ! $file->isActive() || $file->getReleaseID() != $release_id) {
                 return new SoapFault(INVALID_FILE_FAULT, 'Invalid File', 'getFile');
             }
 
-            if (!$file->fileExists()) {
+            if (! $file->fileExists()) {
                 return new SoapFault(INVALID_FILE_FAULT, 'File doesn\'t exist on the server', 'getFile');
             }
 
@@ -1026,7 +1030,7 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->isDeleted() || $package->getGroupID() != $group_id) {
+            if (! $package || $package->isDeleted() || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'getFileChunk');
             }
             // check access rights to this package
@@ -1037,7 +1041,7 @@ if (defined('NUSOAP')) {
             // retrieve the release
             $release_fact = new FRSReleaseFactory();
             $release      = $release_fact->getFRSReleaseFromDb($release_id);
-            if (!$release || $release->isDeleted() || $release->getPackageID() != $package_id) {
+            if (! $release || $release->isDeleted() || $release->getPackageID() != $package_id) {
                 return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'getFileChunk');
             }
             // check access rights to this release
@@ -1047,11 +1051,11 @@ if (defined('NUSOAP')) {
 
             $file_fact = new FRSFileFactory();
             $file      = $file_fact->getFRSFileFromDb($file_id);
-            if (!$file || !$file->isActive() || $file->getReleaseID() != $release_id) {
+            if (! $file || ! $file->isActive() || $file->getReleaseID() != $release_id) {
                 return new SoapFault(INVALID_FILE_FAULT, 'Invalid File', 'getFileChunk');
             }
 
-            if (!$file->fileExists()) {
+            if (! $file->fileExists()) {
                 return new SoapFault(INVALID_FILE_FAULT, 'File doesn\'t exist on the server', 'getFileChunk');
             }
 
@@ -1101,14 +1105,14 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->getGroupID() != $group_id) {
+            if (! $package || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'addFile');
             }
 
             // retrieve the release
             $release_fact = new FRSReleaseFactory();
             $release      = $release_fact->getFRSReleaseFromDb($release_id);
-            if (!$release || $release->getPackageID() != $package_id) {
+            if (! $release || $release->getPackageID() != $package_id) {
                 return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'addFile');
             }
 
@@ -1116,15 +1120,15 @@ if (defined('NUSOAP')) {
             if ($file_fact->userCanAdd($group_id)) {
                 $tmpname = tempnam("/tmp", "codendi_soap_frs");
                 $fh = fopen($tmpname, "wb");
-                if (!$fh) {
+                if (! $fh) {
                     return new SoapFault(INVALID_FILE_FAULT, 'Could not create temporary file in directory /tmp', 'addFile');
                 }
                 fwrite($fh, base64_decode($base64_contents));
                 fclose($fh);
 
                 // move the file in the incoming dir
-                if (! rename($tmpname, $GLOBALS['ftp_incoming_dir'].'/'.basename($filename))) {
-                    return new SoapFault(INVALID_FILE_FAULT, 'Impossible to move the file in the incoming dir: '.$GLOBALS['ftp_incoming_dir'], 'addFile');
+                if (! rename($tmpname, ForgeConfig::get('ftp_incoming_dir') . '/' . basename($filename))) {
+                    return new SoapFault(INVALID_FILE_FAULT, 'Impossible to move the file in the incoming dir: ' . ForgeConfig::get('ftp_incoming_dir'), 'addFile');
                 }
 
                 // call addUploadedFile function
@@ -1167,14 +1171,14 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->getGroupID() != $group_id) {
+            if (! $package || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'updateFileComment');
             }
 
             // retrieve the release
             $release_fact = new FRSReleaseFactory();
             $release      = $release_fact->getFRSReleaseFromDb($release_id);
-            if (!$release || $release->getPackageID() != $package_id) {
+            if (! $release || $release->getPackageID() != $package_id) {
                 return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'updateFileComment');
             }
 
@@ -1190,10 +1194,10 @@ if (defined('NUSOAP')) {
                 return new SoapFault(INVALID_FILE_FAULT, 'Invalid File', 'updateFileComment');
             }
 
-            $data_array = array(
+            $data_array = [
                 'comment'   => $comment,
                 'file_id'   => $file_id
-            );
+            ];
             try {
                 $file_factory->update($data_array);
             } catch (Exception $e) {
@@ -1251,7 +1255,7 @@ if (defined('NUSOAP')) {
         $written = fwrite($fp, $chunk);
         fclose($fp);
         if ($written != $cLength) {
-            return new SoapFault(INVALID_FILE_FAULT, 'Sent '.$cLength.' of data but only '.$written.' saved in the server', 'addFileChunk');
+            return new SoapFault(INVALID_FILE_FAULT, 'Sent ' . $cLength . ' of data but only ' . $written . ' saved in the server', 'addFileChunk');
         }
         return $written;
     }
@@ -1292,14 +1296,14 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->getGroupID() != $group_id) {
+            if (! $package || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'addUploadedFile');
             }
 
             // retrieve the release
             $release_fact = new FRSReleaseFactory();
             $release      = $release_fact->getFRSReleaseFromDb($release_id);
-            if (!$release || $release->getPackageID() != $package_id) {
+            if (! $release || $release->getPackageID() != $package_id) {
                 return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'addUploadedFile');
             }
 
@@ -1352,7 +1356,7 @@ if (defined('NUSOAP')) {
 
             $file_fact = new FRSFileFactory();
             if ($file_fact->userCanAdd($group_id)) {
-                $soap_files = array();
+                $soap_files = [];
                 $file_names = $file_fact->getUploadedFileNames($project);
                 return $file_names;
             } else {
@@ -1390,14 +1394,14 @@ if (defined('NUSOAP')) {
             // retieve the package
             $pkg_fact = new FRSPackageFactory();
             $package  = $pkg_fact->getFRSPackageFromDb($package_id);
-            if (!$package || $package->getGroupID() != $group_id) {
+            if (! $package || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'deleteFile');
             }
 
             // retrieve the release
             $release_fact = new FRSReleaseFactory();
             $release      = $release_fact->getFRSReleaseFromDb($release_id);
-            if (!$release || $release->getPackageID() != $package_id) {
+            if (! $release || $release->getPackageID() != $package_id) {
                 return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'deleteFile');
             }
 
@@ -1446,17 +1450,17 @@ if (defined('NUSOAP')) {
                 return $e;
             }
             $packageFactory = new FRSPackageFactory();
-            $packages = array();
-            if ($package_id && !$cleanup_all) {
+            $packages = [];
+            if ($package_id && ! $cleanup_all) {
                 $package = $packageFactory->getFRSPackageFromDb($package_id);
-                if (!$package || $package->getGroupID() != $group_id) {
+                if (! $package || $package->getGroupID() != $group_id) {
                     return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'deletePackage');
                 }
                 $packages[] = $package;
             } elseif ($cleanup_all) {
                 $packages = $packageFactory->getFRSPackagesFromDb($group_id);
             }
-            $deleted = array();
+            $deleted = [];
             foreach ($packages as $package) {
                 $releaseFactory = new FRSReleaseFactory();
                 $releases = $releaseFactory->getFRSReleasesFromDb($package->getPackageID());
@@ -1465,10 +1469,10 @@ if (defined('NUSOAP')) {
                         if ($packageFactory->delete_package($group_id, $package->getPackageID())) {
                             $deleted[] = package_to_soap($package);
                         } else {
-                            return new SoapFault(INVALID_PACKAGE_FAULT, 'Package '.$package->getPackageID().' could not be deleted', 'deletePackage');
+                            return new SoapFault(INVALID_PACKAGE_FAULT, 'Package ' . $package->getPackageID() . ' could not be deleted', 'deletePackage');
                         }
                     } else {
-                        return new SoapFault(INVALID_PACKAGE_FAULT, 'You don\'t have permission to delete package '.$package->getPackageID(), 'deletePackage');
+                        return new SoapFault(INVALID_PACKAGE_FAULT, 'You don\'t have permission to delete package ' . $package->getPackageID(), 'deletePackage');
                     }
                 }
             }
@@ -1504,14 +1508,14 @@ if (defined('NUSOAP')) {
             }
             $packageFactory = new FRSPackageFactory();
             $package = $packageFactory->getFRSPackageFromDb($package_id);
-            if (!$package || $package->getGroupID() != $group_id) {
+            if (! $package || $package->getGroupID() != $group_id) {
                 return new SoapFault(INVALID_PACKAGE_FAULT, 'Invalid Package', 'deleteRelease');
             }
             $releaseFactory = new FRSReleaseFactory();
-            $releases = array();
-            if ($release_id && !$cleanup_all) {
+            $releases = [];
+            if ($release_id && ! $cleanup_all) {
                 $release = $releaseFactory->getFRSReleaseFromDb($release_id);
-                if (!$release || $release->getPackageID() != $package_id) {
+                if (! $release || $release->getPackageID() != $package_id) {
                     return new SoapFault(INVALID_RELEASE_FAULT, 'Invalid Release', 'deleteRelease');
                 }
                 $releases[] = $release;
@@ -1519,7 +1523,7 @@ if (defined('NUSOAP')) {
                 // retrieve all the releases
                 $releases = $releaseFactory->getFRSReleasesFromDb($package_id);
             }
-            $deleted                  = array();
+            $deleted                  = [];
             $fileFactory              = new FRSFileFactory();
             $uploaded_links_retriever = new UploadedLinksRetriever(new UploadedLinksDao(), UserManager::instance());
             foreach ($releases as $release) {
@@ -1530,10 +1534,10 @@ if (defined('NUSOAP')) {
                         if ($releaseFactory->delete_release($group_id, $release->getReleaseID())) {
                             $deleted[] = release_to_soap($release);
                         } else {
-                            return new SoapFault(INVALID_PACKAGE_FAULT, 'Release '.$release->getReleaseID().' could not be deleted', 'deleteRelease');
+                            return new SoapFault(INVALID_PACKAGE_FAULT, 'Release ' . $release->getReleaseID() . ' could not be deleted', 'deleteRelease');
                         }
                     } else {
-                        return new SoapFault(INVALID_PACKAGE_FAULT, 'You don\'t have permission to delete package '.$release->getReleaseID(), 'deleteRelease');
+                        return new SoapFault(INVALID_PACKAGE_FAULT, 'You don\'t have permission to delete package ' . $release->getReleaseID(), 'deleteRelease');
                     }
                 }
             }
@@ -1544,7 +1548,7 @@ if (defined('NUSOAP')) {
     }
 
     $server->addFunction(
-        array(
+        [
             'getPackages',
             'addPackage',
             'getReleases',
@@ -1562,6 +1566,6 @@ if (defined('NUSOAP')) {
             'deleteEmptyPackage',
             'deleteEmptyRelease',
             'updateFileComment',
-        )
+        ]
     );
 }

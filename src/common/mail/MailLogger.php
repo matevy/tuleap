@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,17 +20,16 @@
 
 namespace Tuleap\Mail;
 
-use TruncateLevelLogger;
+use Psr\Log\LoggerInterface;
 use BackendLogger;
-use ForgeConfig;
+use Tuleap\Log\LogForwarderTrait;
 
-class MailLogger extends TruncateLevelLogger
+final class MailLogger implements LoggerInterface
 {
+    use LogForwarderTrait;
+
     public function __construct()
     {
-        parent::__construct(
-            new BackendLogger(ForgeConfig::get('codendi_log') . '/mail_syslog'),
-            ForgeConfig::get('sys_logger_level')
-        );
+        $this->logger = BackendLogger::getDefaultLogger('mail_syslog');
     }
 }

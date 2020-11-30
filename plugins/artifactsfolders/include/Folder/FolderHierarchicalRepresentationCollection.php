@@ -21,14 +21,14 @@
 namespace Tuleap\ArtifactsFolders\Folder;
 
 use Codendi_HTMLPurifier;
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class FolderHierarchicalRepresentationCollection
 {
     public const DEFAULT_PREFIX = ' ';
 
     /** @var FolderHierarchicalRepresentation[] */
-    private $collection = array();
+    private $collection = [];
 
     public function add(FolderHierarchicalRepresentation $folder_hierarchical_representation)
     {
@@ -37,13 +37,13 @@ class FolderHierarchicalRepresentationCollection
         $this->collection[$folder_id] = $folder_hierarchical_representation;
     }
 
-    public function contains(Tracker_Artifact $artifact)
+    public function contains(Artifact $artifact)
     {
         return isset($this->collection[$artifact->getId()]);
     }
 
     /** @return FolderHierarchicalRepresentation */
-    public function get(Tracker_Artifact $artifact)
+    public function get(Artifact $artifact)
     {
         return $this->collection[$artifact->getId()];
     }
@@ -63,7 +63,7 @@ class FolderHierarchicalRepresentationCollection
         return $this->collection;
     }
 
-    public function collectOptions(array &$options, ?Tracker_Artifact $current_folder = null, $prefix = self::DEFAULT_PREFIX)
+    public function collectOptions(array &$options, ?Artifact $current_folder = null, $prefix = self::DEFAULT_PREFIX)
     {
         if ($prefix === self::DEFAULT_PREFIX) {
             $prefix_for_children = "└─$prefix";

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2017-2018. All rights reserved.
+ * Copyright Enalean (c) 2017-Present. All rights reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -37,14 +37,13 @@ class CollectionOfUserToBeNotifiedPresenterBuilder
 
     public function getCollectionOfUserToBeNotifiedPresenter(MailNotification $notification)
     {
-        $presenters = array();
+        $presenters = [];
         foreach ($this->dao->searchUsersByNotificationId($notification->getId()) as $row) {
             $user = new \PFUser($row);
             $presenters[] = new UserInvolvedInNotificationPresenter(
                 $row['user_id'],
                 $row['user_name'],
                 $row['realname'],
-                $row['has_avatar'],
                 $user->getAvatarUrl()
             );
         }

@@ -95,14 +95,13 @@ class Cardwall_Column
 
     public function autostack_title()
     {
-        return $GLOBALS['Language']->getText('plugin_cardwall', 'column_autostack');
+        return dgettext('tuleap-cardwall', 'Auto stack the cards in this column');
     }
 
     /**
      * Return true if the given status can belong to current column
      *
      * @param string|null                          $artifact_status
-     * @param Cardwall_OnTop_Config_TrackerMapping $tracker_mapping
      *
      * @return bool
      */

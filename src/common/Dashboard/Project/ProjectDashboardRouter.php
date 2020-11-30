@@ -20,7 +20,6 @@
 
 namespace Tuleap\Dashboard\Project;
 
-use ForgeConfig;
 use HTTPRequest;
 use Tuleap\Dashboard\Widget\WidgetDashboardController;
 
@@ -47,7 +46,6 @@ class ProjectDashboardRouter
 
     /**
      * Routes the request to the correct controller
-     * @param HTTPRequest $request
      * @return void
      */
     public function route(HTTPRequest $request)

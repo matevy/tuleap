@@ -19,13 +19,23 @@
 
 <template>
     <div class="document-app">
-        <permission-error v-if="has_folder_permission_error "/>
-        <document-breadcrumb v-if="! has_folder_permission_error"/>
-        <loading-error v-if="has_folder_loading_error || has_document_loading_error || has_document_lock_error"/>
-        <item-permission-error v-if="has_document_permission_error" v-bind:csrf_token="csrf_token" v-bind:csrf_token_name="csrf_token_name"/>
-        <router-view/>
-        <switch-to-old-u-i v-if="user_id !== 0"/>
-        <post-item-deletion-notification/>
+        <document-breadcrumb v-if="!has_folder_permission_error" />
+
+        <permission-error v-if="has_folder_permission_error" />
+        <item-permission-error
+            v-else-if="has_document_permission_error"
+            v-bind:csrf_token="csrf_token"
+            v-bind:csrf_token_name="csrf_token_name"
+        />
+        <loading-error
+            v-else-if="
+                has_folder_loading_error || has_document_loading_error || has_document_lock_error
+            "
+        />
+        <router-view v-else />
+        <global-error-modal v-if="has_global_modal_error" />
+        <switch-to-old-u-i v-if="user_id !== 0" />
+        <post-item-deletion-notification />
     </div>
 </template>
 <script>
@@ -34,6 +44,7 @@ import DocumentBreadcrumb from "./Breadcrumb/DocumentBreadcrumb.vue";
 import PermissionError from "./Folder/Error/PermissionError.vue";
 import ItemPermissionError from "./Folder/Error/ItemPermissionError.vue";
 import LoadingError from "./Folder/Error/LoadingError.vue";
+import GlobalErrorModal from "./Folder/Error/GlobalErrorModal.vue";
 import SwitchToOldUI from "./Folder/SwitchToOldUI.vue";
 import PostItemDeletionNotification from "./Folder/ModalDeleteItem/PostItemDeletionNotification.vue";
 
@@ -45,22 +56,33 @@ export default {
         LoadingError,
         SwitchToOldUI,
         ItemPermissionError,
-        PostItemDeletionNotification
+        PostItemDeletionNotification,
+        GlobalErrorModal,
     },
     props: {
         user_id: Number,
         project_id: Number,
+        project_name: String,
+        project_public_name: String,
+        project_url: String,
         user_is_admin: Boolean,
         user_can_create_wiki: Boolean,
         date_time_format: String,
         max_files_dragndrop: Number,
         max_size_upload: Number,
+        warning_threshold: Number,
+        max_archive_size: Number,
         embedded_are_allowed: Boolean,
         is_deletion_allowed: Boolean,
         is_item_status_metadata_used: Boolean,
         is_obsolescence_date_metadata_used: Boolean,
+        is_changelog_proposed_after_dnd: Boolean,
         csrf_token: String,
-        csrf_token_name: String
+        csrf_token_name: String,
+        user_locale: String,
+        relative_dates_display: String,
+        privacy: Object,
+        project_flags: Array,
     },
     computed: {
         ...mapState("error", [
@@ -68,9 +90,10 @@ export default {
             "has_folder_loading_error",
             "has_document_permission_error",
             "has_document_loading_error",
-            "has_document_lock_error"
+            "has_document_lock_error",
+            "has_global_modal_error",
         ]),
-        ...mapGetters(["is_uploading"])
+        ...mapGetters(["is_uploading"]),
     },
     created() {
         const base_title = document.title;
@@ -88,24 +111,34 @@ export default {
         this.$store.commit("initApp", [
             this.user_id,
             this.project_id,
+            this.project_name,
+            this.project_public_name,
+            this.project_url,
             this.user_is_admin,
             this.date_time_format,
             this.$gettext("Documents"),
             this.user_can_create_wiki,
             this.max_files_dragndrop,
             this.max_size_upload,
+            this.warning_threshold,
+            this.max_archive_size,
             this.embedded_are_allowed,
             this.is_deletion_allowed,
             this.is_item_status_metadata_used,
-            this.is_obsolescence_date_metadata_used
+            this.is_obsolescence_date_metadata_used,
+            this.is_changelog_proposed_after_dnd,
+            this.user_locale,
+            this.relative_dates_display,
+            this.privacy,
+            this.project_flags,
         ]);
 
-        window.addEventListener("beforeunload", event => {
+        window.addEventListener("beforeunload", (event) => {
             if (this.is_uploading) {
                 event.returnValue = true;
                 event.preventDefault();
             }
         });
-    }
+    },
 };
 </script>

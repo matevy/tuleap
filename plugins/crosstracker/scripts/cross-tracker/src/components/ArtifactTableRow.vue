@@ -19,11 +19,12 @@
 
 <template>
     <tr>
-        <td>
+        <td data-test="cross-tracker-results-artifact">
             <a class="direct-link-to-artifact" v-bind:href="artifact.badge.uri">
                 <span class="tlp-badge-outline link-to-tracker-badge" v-bind:class="badge_color">
                     {{ artifact.badge.cross_ref }}
-                </span>{{ artifact.title }}
+                </span>
+                {{ artifact.title }}
             </a>
         </td>
         <td>
@@ -33,11 +34,13 @@
         </td>
         <td>{{ artifact.status }}</td>
         <td class="cross-tracker-last-update-date">{{ artifact.formatted_last_update_date }}</td>
-        <td><list-bind-user v-bind:user="artifact.submitted_by"/></td>
-        <td><list-bind-user v-for="user in artifact.assigned_to"
-                            v-bind:user="user"
-                            v-bind:key="user.id"
-        />
+        <td><list-bind-user v-bind:user="artifact.submitted_by" /></td>
+        <td>
+            <list-bind-user
+                v-for="user in artifact.assigned_to"
+                v-bind:user="user"
+                v-bind:key="user.id"
+            />
         </td>
     </tr>
 </template>
@@ -48,12 +51,12 @@ export default {
     name: "ArtifactTableRow",
     components: { ListBindUser },
     props: {
-        artifact: Object
+        artifact: Object,
     },
     computed: {
         badge_color() {
             return "tlp-badge-" + this.artifact.badge.color;
-        }
-    }
+        },
+    },
 };
 </script>

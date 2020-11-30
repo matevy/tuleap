@@ -25,20 +25,23 @@ namespace Tuleap\FRS\LicenseAgreement\Admin;
 
 use HTTPRequest;
 use Project;
+use Tuleap\FRS\FRSPermissionManager;
+use Tuleap\FRS\LicenseAgreement\LicenseAgreementDao;
 use Tuleap\FRS\LicenseAgreement\LicenseAgreementFactory;
 use Tuleap\FRS\LicenseAgreement\LicenseAgreementInterface;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\IncludeAssets;
-use Tuleap\Request\DispatchableWithProject;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
-use Tuleap\Request\GetProjectTrait;
 use Tuleap\Request\NotFoundException;
+use Tuleap\Request\ProjectRetriever;
 
-class EditLicenseAgreementController implements DispatchableWithRequest, DispatchableWithProject
+class EditLicenseAgreementController implements DispatchableWithRequest
 {
-    use GetProjectTrait;
-
+    /**
+     * @var ProjectRetriever
+     */
+    private $project_retriever;
     /**
      * @var LicenseAgreementFactory
      */
@@ -61,14 +64,14 @@ class EditLicenseAgreementController implements DispatchableWithRequest, Dispatc
     private $helper;
 
     public function __construct(
-        \ProjectManager $project_manager,
+        ProjectRetriever $project_retriever,
         LicenseAgreementControllersHelper $helper,
         \TemplateRendererFactory $renderer_factory,
         LicenseAgreementFactory $factory,
         \CSRFSynchronizerToken $csrf_token,
         IncludeAssets $assets
     ) {
-        $this->project_manager   = $project_manager;
+        $this->project_retriever = $project_retriever;
         $this->helper            = $helper;
         $this->renderer_factory  = $renderer_factory;
         $this->factory           = $factory;
@@ -76,20 +79,34 @@ class EditLicenseAgreementController implements DispatchableWithRequest, Dispatc
         $this->assets            = $assets;
     }
 
+    public static function buildSelf(): self
+    {
+        return new self(
+            ProjectRetriever::buildSelf(),
+            new LicenseAgreementControllersHelper(
+                FRSPermissionManager::build(),
+                \TemplateRendererFactory::build(),
+            ),
+            \TemplateRendererFactory::build(),
+            new LicenseAgreementFactory(
+                new LicenseAgreementDao()
+            ),
+            SaveLicenseAgreementController::getCSRFTokenSynchronizer(),
+            new IncludeAssets(__DIR__ . '/../../../../www/assets/core', '/assets/core'),
+        );
+    }
+
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
-     * @param array       $variables
+     * @param array $variables
      * @return void
      * @throws ForbiddenException
      * @throws NotFoundException
      */
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
-        $project = $this->getProject($variables);
-
+        $project = $this->project_retriever->getProjectFromId($variables['project_id']);
         $this->helper->assertCanAccess($project, $request->getCurrentUser());
 
         $license = $this->factory->getLicenseAgreementById($project, (int) $variables['id']);
@@ -102,7 +119,7 @@ class EditLicenseAgreementController implements DispatchableWithRequest, Dispatc
             $can_be_deleted = $this->factory->canBeDeleted($project, $license);
             if (! $can_be_deleted) {
                 foreach ($this->factory->getListOfPackagesForLicenseAgreement($license) as $package) {
-                    $used_by []= new UsedByPresenter($project, $package);
+                    $used_by[] = new UsedByPresenter($project, $package);
                 }
             }
         }

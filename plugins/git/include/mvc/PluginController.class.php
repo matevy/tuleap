@@ -32,17 +32,17 @@ abstract class PluginController
      * List of PluginViews method name to execute
      * @var Array
      */
-    protected $views = array('header'=> array(), 'footer'=> array());
+    protected $views = ['header' => [], 'footer' => []];
     /**
      * List of PluginActions method name to execute
      * @var Array
      */
-    protected $actions = array();
+    protected $actions = [];
     /**
      * This array allows data storage and sharing between Actions and Views
      * @var Array
      */
-    protected $actionResultData = array('dummy'=>'dummy');
+    protected $actionResultData = ['dummy' => 'dummy'];
     /**
      * Logical actions, they allow one to control execution of user stories which usually call several PluginActions at one time
      * @var Array
@@ -132,10 +132,6 @@ abstract class PluginController
     {
         return $this->permittedActions;
     }
-    /**
-     *
-     * @param <type> $action
-     */
     public function addPermittedAction($action)
     {
         $this->permittedActions[] = $action;
@@ -154,11 +150,10 @@ abstract class PluginController
     /**
      * Add actions result data
      * @see getData()
-     * @param <type> $data
      */
     public function addData($data)
     {
-        if (!empty($data) && is_array($data)) {
+        if (! empty($data) && is_array($data)) {
             $this->actionResultData = array_merge($this->actionResultData, $data);
         }
     }
@@ -172,12 +167,12 @@ abstract class PluginController
         return $this->actionResultData;
     }
 
-    public function addView($viewName, $params = array())
+    public function addView($viewName, $params = [])
     {
         $this->views[$viewName] = $params;
     }
 
-    public function addAction($actionName, $params = array())
+    public function addAction($actionName, $params = [])
     {
         $this->actions[$actionName] = $params;
     }
@@ -188,7 +183,7 @@ abstract class PluginController
      * @TODO associate an action and a view in order to skip action call to provide data to a given view.(like Symfony framework component)
      * @return null
      */
-    function executeViews()
+    public function executeViews()
     {
         $wv = $this->instantiateView();
         //this allow to skip header
@@ -214,13 +209,16 @@ abstract class PluginController
      * @TODO associate an action and a view in order to skip action call to provide data to a given view.(like Symfony framework component)
      * @return null
      */
-    function executeActions()
+    public function executeActions()
     {
         if (empty($this->actions)) {
             return false;
         }
-        $results       = array();
-        $className     = static::class.'Actions';
+        $results       = [];
+        $className     = static::class . 'Actions';
+        if (! class_exists($className)) {
+            throw new LogicException("$className does not exist");
+        }
         $wa            = $this->instantiateAction($className);
         foreach ($this->actions as $name => $params) {
             $wa->process($name, $params);
@@ -234,6 +232,8 @@ abstract class PluginController
      *
      * @param string $action The name of the action
      *
+     * @psalm-param class-string $action
+     *
      * @return PluginActions
      */
     protected function instantiateAction($action)
@@ -244,7 +244,7 @@ abstract class PluginController
     /**
      * Render everything
      */
-    function process()
+    public function process()
     {
         $this->request();
         $this->executeActions();

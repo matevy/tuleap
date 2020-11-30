@@ -21,8 +21,8 @@
 class Tracker_Hierarchy_CyclicHierarchyException extends Exception
 {
 
-    function __construct()
+    public function __construct()
     {
-        parent::__construct($GLOBALS['Language']->getText('plugin_tracker_hierarchy', 'error_is_cyclic'));
+        parent::__construct(dgettext('tuleap-tracker', 'Tracker hierarchy is Cyclic'));
     }
 }

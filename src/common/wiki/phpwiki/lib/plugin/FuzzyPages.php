@@ -36,12 +36,12 @@ rcs_id('$Id: FuzzyPages.php,v 1.12 2004/11/23 15:17:19 rurban Exp $');
  */
 class WikiPlugin_FuzzyPages extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("FuzzyPages");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return sprintf(
             _("Search for page titles similar to %s."),
@@ -49,7 +49,7 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         );
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -58,13 +58,13 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('s'     => false,
-                     'debug' => false);
+        return ['s'     => false,
+                     'debug' => false];
     }
 
-    function spelling_similarity($subject)
+    public function spelling_similarity($subject)
     {
         $spelling_similarity_score = 0;
         similar_text(
@@ -75,7 +75,7 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         return $spelling_similarity_score;
     }
 
-    function sound_similarity($subject)
+    public function sound_similarity($subject)
     {
         $sound_similarity_score = 0;
         similar_text(
@@ -86,13 +86,13 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         return $sound_similarity_score;
     }
 
-    function averageSimilarities($subject)
+    public function averageSimilarities($subject)
     {
         return ($this->spelling_similarity($subject)
                 + $this->sound_similarity($subject)) / 2;
     }
 
-    function collectSimilarPages(&$list, &$dbi)
+    public function collectSimilarPages(&$list, &$dbi)
     {
         if (! defined('MIN_SCORE_CUTOFF')) {
             define('MIN_SCORE_CUTOFF', 33);
@@ -111,12 +111,12 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         }
     }
 
-    function sortCollectedPages(&$list)
+    public function sortCollectedPages(&$list)
     {
         arsort($list, SORT_NUMERIC);
     }
 
-    function addTableCaption(&$table, &$dbi)
+    public function addTableCaption(&$table, &$dbi)
     {
         if ($dbi->isWikiPage($this->_searchterm)) {
             $link = WikiLink($this->_searchterm, 'auto');
@@ -124,14 +124,14 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
             $link = $this->_searchterm;
         }
         $caption = fmt("These page titles match fuzzy with '%s'", $link);
-        $table->pushContent(HTML::caption(array('align'=>'top'), $caption));
+        $table->pushContent(HTML::caption(['align' => 'top'], $caption));
     }
 
-    function addTableHead(&$table)
+    public function addTableHead(&$table)
     {
         $row = HTML::tr(
             HTML::th(_("Name")),
-            HTML::th(array('align' => 'right'), _("Score"))
+            HTML::th(['align' => 'right'], _("Score"))
         );
         if ($this->debug) {
             $this->_pushDebugHeadingTDinto($row);
@@ -140,7 +140,7 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         $table->pushContent(HTML::thead($row));
     }
 
-    function addTableBody(&$list, &$table)
+    public function addTableBody(&$list, &$table)
     {
         if (! defined('HIGHLIGHT_ROWS_CUTOFF_SCORE')) {
             define('HIGHLIGHT_ROWS_CUTOFF_SCORE', 60);
@@ -149,12 +149,12 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         $tbody = HTML::tbody();
         foreach ($list as $found_pagename => $score) {
             $row = HTML::tr(
-                array('class' =>
+                ['class' =>
                                   $score > HIGHLIGHT_ROWS_CUTOFF_SCORE
-                                  ? 'evenrow' : 'oddrow'),
+                                  ? 'evenrow' : 'oddrow'],
                 HTML::td(WikiLink($found_pagename)),
                 HTML::td(
-                    array('align' => 'right'),
+                    ['align' => 'right'],
                     round($score)
                 )
             );
@@ -168,13 +168,12 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         $table->pushContent($tbody);
     }
 
-    function formatTable(&$list, &$dbi)
+    public function formatTable(&$list, &$dbi)
     {
-
-        $table = HTML::table(array('cellpadding' => 2,
+        $table = HTML::table(['cellpadding' => 2,
                                    'cellspacing' => 1,
                                    'border'      => 0,
-                                   'class' => 'pagelist'));
+                                   'class' => 'pagelist']);
         $this->addTableCaption($table, $dbi);
         $this->addTableHead($table);
         $this->addTableBody($list, $table);
@@ -182,7 +181,7 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
     }
 
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         extract($args);
@@ -192,7 +191,7 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         $this->debug = $debug;
 
         $this->_searchterm = $s;
-        $this->_list = array();
+        $this->_list = [];
 
         $this->collectSimilarPages($this->_list, $dbi);
         $this->sortCollectedPages($this->_list);
@@ -201,7 +200,7 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
 
 
 
-    function _pushDebugHeadingTDinto(&$row)
+    public function _pushDebugHeadingTDinto(&$row)
     {
         $row->pushContent(
             HTML::td(_("Spelling Score")),
@@ -210,7 +209,7 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         );
     }
 
-    function _pushDebugTDinto(&$row, $pagename)
+    public function _pushDebugTDinto(&$row, $pagename)
     {
         // This actually calculates everything a second time for each pagename
         // so the individual scores can be displayed separately for debugging.
@@ -223,12 +222,12 @@ class WikiPlugin_FuzzyPages extends WikiPlugin
         );
 
         $row->pushcontent(
-            HTML::td(array('align' => 'center'), $debug_spelling),
-            HTML::td(array('align' => 'center'), $debug_sound),
+            HTML::td(['align' => 'center'], $debug_spelling),
+            HTML::td(['align' => 'center'], $debug_sound),
             HTML::td($debug_metaphone)
         );
     }
-};
+}
 
 // $Log: FuzzyPages.php,v $
 // Revision 1.12  2004/11/23 15:17:19  rurban

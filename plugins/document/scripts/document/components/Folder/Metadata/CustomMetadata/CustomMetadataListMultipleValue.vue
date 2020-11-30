@@ -19,26 +19,36 @@
   -->
 
 <template>
-    <div class="tlp-form-element"
-         v-if="currentlyUpdatedItemMetadata.type === 'list' && currentlyUpdatedItemMetadata.is_multiple_value_allowed"
-         data-test="document-custom-metadata-list-multiple"
+    <div
+        class="tlp-form-element"
+        v-if="
+            currentlyUpdatedItemMetadata.type === 'list' &&
+            currentlyUpdatedItemMetadata.is_multiple_value_allowed
+        "
+        data-test="document-custom-metadata-list-multiple"
     >
         <label class="tlp-label" v-bind:for="`document-${currentlyUpdatedItemMetadata.short_name}`">
             {{ currentlyUpdatedItemMetadata.name }}
-            <i class="fa fa-asterisk" v-if="currentlyUpdatedItemMetadata.is_required" data-test="document-custom-metadata-is-required"></i>
+            <i
+                class="fa fa-asterisk"
+                v-if="currentlyUpdatedItemMetadata.is_required"
+                data-test="document-custom-metadata-is-required"
+            ></i>
         </label>
-        <select class="tlp-form-element tlp-select"
-                v-bind:id="`document-${currentlyUpdatedItemMetadata.short_name}`"
-                multiple
-                v-model="multiple_list_values"
-                data-test="document-custom-list-multiple-select"
-                v-on:change="updateMultipleMetadataListValue"
+        <select
+            class="tlp-form-element tlp-select"
+            v-bind:id="`document-${currentlyUpdatedItemMetadata.short_name}`"
+            multiple
+            v-model="multiple_list_values"
+            data-test="document-custom-list-multiple-select"
+            v-on:change="updateMultipleMetadataListValue"
         >
-            <option v-for="possible_value in project_metadata_list_possible_values.allowed_list_values"
-                    v-bind:key="possible_value.id"
-                    v-bind:value="possible_value.id"
-                    v-bind:data-test="`document-custom-list-multiple-value-${possible_value.id}`"
-                    v-bind:required="currentlyUpdatedItemMetadata.is_required"
+            <option
+                v-for="possible_value in project_metadata_list_possible_values.allowed_list_values"
+                v-bind:key="possible_value.id"
+                v-bind:value="possible_value.id"
+                v-bind:data-test="`document-custom-list-multiple-value-${possible_value.id}`"
+                v-bind:required="currentlyUpdatedItemMetadata.is_required"
             >
                 {{ possible_value.value }}
             </option>
@@ -53,16 +63,16 @@ import EventBus from "../../../../helpers/event-bus.js";
 export default {
     name: "CustomMetadataListMultipleValue",
     props: {
-        currentlyUpdatedItemMetadata: Object
+        currentlyUpdatedItemMetadata: Object,
     },
     data() {
         return {
             project_metadata_list_possible_values: [],
-            multiple_list_values: this.currentlyUpdatedItemMetadata.list_value
+            multiple_list_values: this.currentlyUpdatedItemMetadata.list_value,
         };
     },
     computed: {
-        ...mapState("metadata", ["project_metadata_list"])
+        ...mapState("metadata", ["project_metadata_list"]),
     },
     mounted() {
         if (
@@ -79,10 +89,10 @@ export default {
             EventBus.$emit("update-multiple-metadata-list-value", {
                 detail: {
                     value: this.multiple_list_values,
-                    id: this.currentlyUpdatedItemMetadata.short_name
-                }
+                    id: this.currentlyUpdatedItemMetadata.short_name,
+                },
             });
-        }
-    }
+        },
+    },
 };
 </script>

@@ -63,9 +63,6 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
     /** @var bool **/
     private $is_standard = false;
 
-    /** @var bool **/
-    private $is_smart_http = false;
-
     /** @var ProjectManager **/
     private $project_manager;
 
@@ -126,7 +123,7 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
 
         $this->repository = $this->repository_factory->getByProjectNameAndPath(
             $this->matches['project_name'],
-            $this->matches['path'].'.git'
+            $this->matches['path'] . '.git'
         );
         if (! $this->repository) {
             return;
@@ -174,12 +171,10 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
             return;
         }
 
-        $this->path_info    = '/'.$this->matches['project_name'].'/'.$repository_path.'/'.$this->matches['smart_http'];
+        $this->path_info    = '/' . $this->matches['project_name'] . '/' . $repository_path . '/' . $this->matches['smart_http'];
         if ($params_position !== false) {
-            $this->query_string = substr($this->uri, $params_position+1);
+            $this->query_string = substr($this->uri, $params_position + 1);
         }
-
-        $this->is_smart_http = true;
     }
 
     public function getPathInfo()
@@ -211,7 +206,7 @@ class Git_URL implements \Tuleap\Git\HTTP\GitHTTPOperation
         $repository_id_is_a_int = preg_match('/^([0-9]+)$/', $repository_id);
 
         if ($repository_id_is_a_int) {
-            return $this->repository_factory->getRepositoryById($repository_id);
+            return $this->repository_factory->getRepositoryById((int) $repository_id);
         } else {
             $project = $this->getProjectFromStandardURL();
             if (! $project->isError()) {

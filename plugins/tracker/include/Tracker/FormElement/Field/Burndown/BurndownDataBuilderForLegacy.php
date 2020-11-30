@@ -20,19 +20,19 @@
 
 namespace Tuleap\Tracker\FormElement\Field\Burndown;
 
-use Logger;
 use PFUser;
+use Psr\Log\LoggerInterface;
 use TimePeriodWithoutWeekEnd;
-use Tracker_Artifact;
 use Tracker_Chart_Data_Burndown;
 use Tuleap\TimezoneRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\ChartConfigurationFieldRetriever;
 use Tuleap\Tracker\FormElement\ChartConfigurationValueRetriever;
 
 class BurndownDataBuilderForLegacy
 {
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
     /**
@@ -53,7 +53,7 @@ class BurndownDataBuilderForLegacy
     private $remaining_effort_adder;
 
     public function __construct(
-        Logger $logger,
+        LoggerInterface $logger,
         ChartConfigurationFieldRetriever $field_retriever,
         ChartConfigurationValueRetriever $value_retriever,
         BurndownCacheGenerationChecker $cache_checker,
@@ -66,7 +66,7 @@ class BurndownDataBuilderForLegacy
         $this->remaining_effort_adder = $remaining_effort_adder;
     }
 
-    public function build(Tracker_Artifact $artifact, PFUser $user, TimePeriodWithoutWeekEnd $time_period)
+    public function build(Artifact $artifact, PFUser $user, TimePeriodWithoutWeekEnd $time_period)
     {
         $capacity      = $this->getCapacity($artifact, $user);
         $user_timezone = TimezoneRetriever::getUserTimezone($user);
@@ -97,7 +97,7 @@ class BurndownDataBuilderForLegacy
     /**
      * @return int|null
      */
-    private function getCapacity(Tracker_Artifact $artifact, PFUser $user)
+    private function getCapacity(Artifact $artifact, PFUser $user)
     {
         $capacity = null;
         if ($this->field_retriever->doesCapacityFieldExist($artifact->getTracker())) {
@@ -107,7 +107,7 @@ class BurndownDataBuilderForLegacy
     }
 
     private function getBurndownCalculationStatus(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         TimePeriodWithoutWeekEnd $time_period,
         $capacity,
@@ -134,7 +134,7 @@ class BurndownDataBuilderForLegacy
     }
 
     private function addBurndownRemainingEffortDotsBasedOnServerTimezone(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         TimePeriodWithoutWeekEnd $time_period,
         $capacity,
@@ -156,7 +156,7 @@ class BurndownDataBuilderForLegacy
         return $user_burndown_data;
     }
 
-    private function getTimePeriod(TimePeriodWithoutWeekEnd $time_period) : TimePeriodWithoutWeekEnd
+    private function getTimePeriod(TimePeriodWithoutWeekEnd $time_period): TimePeriodWithoutWeekEnd
     {
         if ($time_period->getStartDate() === null) {
             return TimePeriodWithoutWeekEnd::buildFromDuration($_SERVER['REQUEST_TIME'], $time_period->getDuration());

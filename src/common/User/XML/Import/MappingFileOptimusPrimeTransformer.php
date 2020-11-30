@@ -26,11 +26,11 @@ use PFUser;
 class MappingFileOptimusPrimeTransformer
 {
 
-    private static $ALLOWED_ACTIONS = array(
+    private static $ALLOWED_ACTIONS = [
         ToBeActivatedUser::ACTION,
         ToBeCreatedUser::ACTION,
         ToBeMappedUser::ACTION
-    );
+    ];
 
     /**
      * @var UserManager
@@ -48,7 +48,7 @@ class MappingFileOptimusPrimeTransformer
         $this->use_lame_password = $use_lame_password;
     }
 
-    /** @return User\XML\Import\ReadyToBeImportedUsersCollection */
+    /** @return \User\XML\Import\ReadyToBeImportedUsersCollection */
     public function transform(UsersToBeImportedCollection $collection_from_archive, $filename)
     {
         $csv_lines = $this->parseCSVFile($filename);
@@ -75,7 +75,7 @@ class MappingFileOptimusPrimeTransformer
                     $to_be_imported_user->getOriginalLdapId()
                 );
             } else {
-                throw new InvalidUserTypeException("$username: with --automap, user type `". get_class($to_be_imported_user) ."` is not supported. User: ".$to_be_imported_user->getUserName());
+                throw new InvalidUserTypeException("$username: with --automap, user type `" . get_class($to_be_imported_user) . "` is not supported. User: " . $to_be_imported_user->getUserName());
             }
         }
 
@@ -137,7 +137,7 @@ class MappingFileOptimusPrimeTransformer
         }
 
         if (! $to_be_imported_user->isActionAllowed($action)) {
-            throw new InvalidMappingFileException("Action $action is not allowed for user $username (".  get_class($to_be_imported_user) .")");
+            throw new InvalidMappingFileException("Action $action is not allowed for user $username (" .  get_class($to_be_imported_user) . ")");
         }
 
         if ($action === ToBeMappedUser::ACTION) {
@@ -212,7 +212,7 @@ class MappingFileOptimusPrimeTransformer
         }
 
         $header = fgetcsv($csv);
-        $lines  = array();
+        $lines  = [];
 
         while (($data = fgetcsv($csv)) !== false) {
             $username = $data[0];

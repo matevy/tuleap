@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,11 +18,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\ExternalLinks;
 
 use Docman_ItemDao;
+use Tuleap\Request\NotFoundException;
 
 class DocmanHTTPControllerProxy
 {
@@ -55,11 +56,16 @@ class DocmanHTTPControllerProxy
         $this->docman_item_dao        = $docman_item_dao;
     }
 
-    public function process(\HTTPRequest $request, \PFUser $user) : void
+    public function process(\HTTPRequest $request, \PFUser $user): void
     {
+        $project_id = $request->getProject()->getID();
+        if ($project_id === null) {
+            throw new NotFoundException(dgettext('tuleap-docman', 'Impossible to identify the requested project'));
+        }
+
         $folder_id = $this->parameters_extractor->extractFolderIdFromParams($request);
 
-        $root_folder = $this->docman_item_dao->searchRootItemForGroupId($request->getProject()->getID());
+        $root_folder = $this->docman_item_dao->searchRootItemForGroupId($project_id);
         if (! $root_folder) {
             throw new \RuntimeException('Project has no document root folder');
         }
@@ -81,7 +87,7 @@ class DocmanHTTPControllerProxy
     }
 
 
-    private function processEventWhenNeeded(\HTTPRequest $request, ExternalLinkRedirector $redirector) : void
+    private function processEventWhenNeeded(\HTTPRequest $request, ExternalLinkRedirector $redirector): void
     {
         if ($this->parameters_extractor->extractRequestIsForOldUIParams($request)) {
             $this->event_manager->processEvent($redirector);

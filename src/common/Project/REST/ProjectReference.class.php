@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,9 @@ namespace Tuleap\Project\REST;
 
 use Project;
 
+/**
+ * @psalm-immutable
+ */
 class ProjectReference
 {
     /**
@@ -38,13 +41,13 @@ class ProjectReference
      */
     public $label = null;
 
-    public function build($project)
+    public function __construct($project)
     {
         if ($project instanceof Project) {
             $this->id    = (int) $project->getId();
-            $this->label = (string) $project->getUnconvertedPublicName();
+            $this->label = (string) $project->getPublicName();
         } else {
-            $this->id = (int)$project;
+            $this->id = (int) $project;
         }
 
         $this->uri = ProjectRepresentation::ROUTE . '/' . $this->id;

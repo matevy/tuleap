@@ -19,32 +19,34 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_ReportDao extends DataAccessObject
 {
-    function __construct()
+    public function __construct()
     {
         parent::__construct();
         $this->table_name = 'tracker_report';
     }
 
-    function searchById($id, $user_id)
+    public function searchById($id, $user_id)
     {
         $id      = $this->da->escapeInt($id);
         $user_id = $this->da->escapeInt($user_id);
         $sql = "SELECT *
                 FROM $this->table_name
-                WHERE id = $id 
-                  AND (user_id IS NULL 
+                WHERE id = $id
+                  AND (user_id IS NULL
                       OR user_id = $user_id)";
         return $this->retrieve($sql);
     }
 
-    function searchByTrackerId($tracker_id, $user_id)
+    public function searchByTrackerId($tracker_id, $user_id)
     {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $user_stm   = " ";
         if ($user_id) {
-            $user_stm = "user_id = ". $this->da->escapeInt($user_id) ." OR ";
+            $user_stm = "user_id = " . $this->da->escapeInt($user_id) . " OR ";
         }
 
         $sql = "SELECT *
@@ -54,7 +56,7 @@ class Tracker_ReportDao extends DataAccessObject
                 ORDER BY name";
         return $this->retrieve($sql);
     }
-    function searchDefaultByTrackerId($tracker_id)
+    public function searchDefaultByTrackerId($tracker_id)
     {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT *
@@ -66,7 +68,7 @@ class Tracker_ReportDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function searchDefaultReportByTrackerId($tracker_id)
+    public function searchDefaultReportByTrackerId($tracker_id)
     {
         $tracker_id = $this->da->escapeInt($tracker_id);
         $sql = "SELECT *
@@ -76,9 +78,9 @@ class Tracker_ReportDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function searchByUserId($user_id)
+    public function searchByUserId($user_id)
     {
-        $user_id = $user_id ? '= '. $this->da->escapeInt($user_id) : 'IS NULL';
+        $user_id = $user_id ? '= ' . $this->da->escapeInt($user_id) : 'IS NULL';
 
         $sql = "SELECT *
                 FROM $this->table_name
@@ -87,7 +89,7 @@ class Tracker_ReportDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function create(
+    public function create(
         $name,
         $description,
         $current_renderer_id,
@@ -109,13 +111,13 @@ class Tracker_ReportDao extends DataAccessObject
         $is_query_displayed  = $this->da->escapeInt($is_query_displayed);
         $is_in_expert_mode   = $this->da->escapeInt($is_in_expert_mode);
         $expert_query        = $this->da->quoteSmart($expert_query);
-        $sql = "INSERT INTO $this->table_name 
+        $sql = "INSERT INTO $this->table_name
                 (name, description, current_renderer_id, parent_report_id, user_id, is_default, tracker_id, is_query_displayed, is_in_expert_mode, expert_query)
                 VALUES ($name, $description, $current_renderer_id, $parent_report_id, $user_id, $is_default, $tracker_id, $is_query_displayed, $is_in_expert_mode, $expert_query)";
         return $this->updateAndGetLastId($sql);
     }
 
-    function save(
+    public function save(
         $id,
         $name,
         $description,
@@ -142,8 +144,8 @@ class Tracker_ReportDao extends DataAccessObject
         $expert_query        = $this->da->quoteSmart($expert_query);
         $updated_by_id       = $this->da->escapeInt($updated_by_id);
         $updated_at          = $_SERVER['REQUEST_TIME'];
-        $sql = "UPDATE $this->table_name SET 
-                   name                = $name, 
+        $sql = "UPDATE $this->table_name SET
+                   name                = $name,
                    description         = $description,
                    current_renderer_id = $current_renderer_id,
                    parent_report_id    = $parent_report_id,
@@ -159,13 +161,13 @@ class Tracker_ReportDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function delete($id)
+    public function delete($id)
     {
-        $sql = "DELETE FROM $this->table_name WHERE id = ". $this->da->escapeInt($id);
+        $sql = "DELETE FROM $this->table_name WHERE id = " . $this->da->escapeInt($id);
         return $this->update($sql);
     }
 
-    function duplicate($from_report_id, $to_tracker_id)
+    public function duplicate($from_report_id, $to_tracker_id)
     {
         $from_report_id = $this->da->escapeInt($from_report_id);
         $to_tracker_id  = $this->da->escapeInt($to_tracker_id);
@@ -195,7 +197,7 @@ class Tracker_ReportDao extends DataAccessObject
      */
     public function searchMatchingIds($group_id, $tracker_id, $additional_from, $additional_where, PFUser $user, $permissions, $contributor_field_id)
     {
-        $instances         = array('artifact_type' => $tracker_id);
+        $instances         = ['artifact_type' => $tracker_id];
         $ugroups           = $user->getUgroups($group_id, $instances);
         $static_ugroups    = $user->getStaticUgroups($group_id);
         $dynamic_ugroups   = $user->getDynamicUgroups($group_id, $instances);
@@ -212,14 +214,14 @@ class Tracker_ReportDao extends DataAccessObject
         $where .= $artifact_perms['where'];
 
         if ($this->submitterOnlyApplies($user_is_admin, $permissions, $ugroups)) {
-            $where .= ' AND artifact.submitted_by = '.$user->getId().' ';
+            $where .= ' AND artifact.submitted_by = ' . $user->getId() . ' ';
         }
 
         if (count($additional_from)) {
             $from  .= implode("\n", $additional_from);
         }
         if (count($additional_where)) {
-            $where .= ' AND ( '. implode(' ) AND ( ', $additional_where) .' ) ';
+            $where .= ' AND ( ' . implode(' ) AND ( ', $additional_where) . ' ) ';
         }
 
         // $sqls => SELECT UNION SELECT UNION SELECT ...
@@ -229,8 +231,8 @@ class Tracker_ReportDao extends DataAccessObject
             return new DataAccessResultEmpty();
         } else {
             $this->setGroupConcatLimit();
-            $sql = " SELECT GROUP_CONCAT(DISTINCT id) AS id, GROUP_CONCAT(DISTINCT last_changeset_id) AS last_changeset_id ";
-            $sql .= " FROM (". implode(' UNION ', $sqls) .") AS R ";
+            $sql = " SELECT id, last_changeset_id";
+            $sql .= " FROM (" . implode(' UNION ', $sqls) . ") AS R GROUP BY id, last_changeset_id";
 
             return $this->retrieve($sql);
         }
@@ -254,10 +256,10 @@ class Tracker_ReportDao extends DataAccessObject
 
     public function getSqlFragmentsAccordinglyToTrackerPermissions($user_is_admin, $from, $where, $group_id, $tracker_id, $permissions, $ugroups, $static_ugroups, $dynamic_ugroups, $contributor_field_id)
     {
-        $sqls = array();
+        $sqls = [];
         //Does the user member of at least one group which has ACCESS_FULL or is super user?
         if ($user_is_admin || $this->hasPermissionFor(Tracker::PERMISSION_FULL, $permissions, $ugroups) || $this->submitterOnlyApplies($user_is_admin, $permissions, $ugroups)) {
-            $sqls[] = "SELECT c.artifact_id AS id, c.id AS last_changeset_id ". $from ." ". $where;
+            $sqls[] = "SELECT c.artifact_id AS id, c.id AS last_changeset_id " . $from . " " . $where;
         } else {
             $sqls = $this->getSqlFragmentsAccordinglyToAssigneeOrSubmitterAccessPermissions($from, $where, $group_id, $tracker_id, $permissions, $ugroups, $static_ugroups, $dynamic_ugroups, $contributor_field_id);
         }
@@ -266,14 +268,14 @@ class Tracker_ReportDao extends DataAccessObject
 
     public function getSqlFragmentForArtifactPermissions($user_is_admin, array $ugroups)
     {
-        $res = array('from' => '', 'where' => '');
-        if (!$user_is_admin) {
+        $res = ['from' => '', 'where' => ''];
+        if (! $user_is_admin) {
             $ugroups = $this->da->quoteSmartImplode(',', $ugroups);
-            $res['from']  = " LEFT JOIN permissions 
+            $res['from']  = " LEFT JOIN permissions
                               ON (permissions.object_id = CAST(c.artifact_id AS CHAR CHARACTER SET utf8)
-                                  AND permissions.permission_type = '".Tracker_Artifact::PERMISSION_ACCESS."')
+                                  AND permissions.permission_type = '" . Artifact::PERMISSION_ACCESS . "')
                             ";
-            $res['where'] = " AND (artifact.use_artifact_permissions = 0 
+            $res['where'] = " AND (artifact.use_artifact_permissions = 0
                                    OR (permissions.ugroup_id IN ($ugroups)))
                        ";
         }
@@ -282,7 +284,7 @@ class Tracker_ReportDao extends DataAccessObject
 
     private function getSqlFragmentsAccordinglyToAssigneeOrSubmitterAccessPermissions($from, $where, $group_id, $tracker_id, $permissions, $ugroups, $static_ugroups, $dynamic_ugroups, $contributor_field_id)
     {
-        $sqls = array();
+        $sqls = [];
 
         //Does the user member of at least one group which has ACCESS_SUBMITTER ?
         if ($this->hasPermissionFor(Tracker::PERMISSION_SUBMITTER, $permissions, $ugroups)) {
@@ -313,7 +315,7 @@ class Tracker_ReportDao extends DataAccessObject
 
     private function getSqlFragmentForAccessToArtifactSubmittedByGroup($from, $where, $group_id, $tracker_id, $allowed_ugroups, $static_ugroups, $dynamic_ugroups)
     {
-        $sqls = array();
+        $sqls = [];
 
         $tracker_id = $this->da->escapeInt($tracker_id);
         $group_id   = $this->da->escapeInt($group_id);
@@ -340,8 +342,8 @@ class Tracker_ReportDao extends DataAccessObject
 
         // {{{ project_members
         if ($this->hasPermissionForDynamicUgroup(ProjectUGroup::PROJECT_MEMBERS, $dynamic_ugroups, $allowed_ugroups)) {
-            $join_user_constraint = " INNER JOIN user_group AS ug ON ( 
-                                          artifact.submitted_by = ug.user_id 
+            $join_user_constraint = " INNER JOIN user_group AS ug ON (
+                                          artifact.submitted_by = ug.user_id
                                           AND ug.group_id = $group_id) ";
             $sqls[] = $this->getSqlFilterForSubmittedByGroup($from, $where, $join_user_constraint);
         }
@@ -350,7 +352,7 @@ class Tracker_ReportDao extends DataAccessObject
         // {{{ project_admins
         if ($this->hasPermissionForDynamicUgroup(ProjectUGroup::PROJECT_ADMIN, $dynamic_ugroups, $allowed_ugroups)) {
             $join_user_constraint = " INNER JOIN user_group ug ON (
-                                          artifact.submitted_by = ug.user_id 
+                                          artifact.submitted_by = ug.user_id
                                           AND ug.group_id = $group_id
                                           AND ug.admin_flags = 'A') ";
             $sqls[] = $this->getSqlFilterForSubmittedByGroup($from, $where, $join_user_constraint);
@@ -363,13 +365,13 @@ class Tracker_ReportDao extends DataAccessObject
 
     private function getSqlFilterForContributorGroup($from, $where, $contributor_field_id, $join_user_constraint)
     {
-        $sql = "SELECT c.artifact_id AS id, c.id AS last_changeset_id 
-                $from 
+        $sql = "SELECT c.artifact_id AS id, c.id AS last_changeset_id
+                $from
                   INNER JOIN tracker_changeset_value AS tcv ON (
                     tcv.field_id = $contributor_field_id
-                    AND tcv.changeset_id = c.id) 
+                    AND tcv.changeset_id = c.id)
                   INNER JOIN tracker_changeset_value_list AS tcvl ON (
-                    tcvl.changeset_value_id = tcv.id) 
+                    tcvl.changeset_value_id = tcv.id)
                   $join_user_constraint
                 $where";
         return $sql;
@@ -377,7 +379,7 @@ class Tracker_ReportDao extends DataAccessObject
 
     private function getSqlFragmentForAccessToArtifactAssignedToGroup($from, $where, $group_id, $tracker_id, $allowed_ugroups, $static_ugroups, $dynamic_ugroups, $contributor_field_id)
     {
-        $sqls = array();
+        $sqls = [];
 
         $tracker_id           = $this->da->escapeInt($tracker_id);
         $group_id             = $this->da->escapeInt($group_id);

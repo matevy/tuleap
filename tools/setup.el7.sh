@@ -33,8 +33,6 @@ declare -r include="${tools_dir}/setup/el7/include"
 . ${include}/helper.sh
 . ${include}/logger.sh
 . ${include}/php.sh
-. ${include}/mysqlcli.sh
-. ${include}/sql.sh
 . ${include}/core.sh
 . ${include}/plugins.sh
 
@@ -59,54 +57,51 @@ if [ ${tuleap_installed:-false} = "false" ] || \
     _checkCommand
     _checkSeLinux
     _optionMessages "${@}"
-    _checkWebServerIp
     _checkFilePassword
-
-    if [ "${mysql_password:-NULL}" = "NULL" -a "${mysql_server,,}" = "localhost" ] || \
-        [ "${mysql_password:-NULL}" = "NULL" -a "${mysql_server}" = "127.0.0.1" ]; then
-
-        if ! ${mysql} ${my_opt} --host=${mysql_server} \
-            --user=${mysql_user} --execute=";" 2> >(_logCatcher); then
-            _errorMessage "Your database already have a password"
-            _errorMessage "You need to use the '--mysql-password' option"
-            exit 1
-        fi
-
-        _infoMessage "Generate MySQL password"
-        mysql_password="$(_setupRandomPassword)"
-        _infoMessage "Set MySQL password for ${mysql_user}"
-        _setupMysqlPassword "${mysql_user}" ${mysql_password}
-        _logPassword "MySQL system user password (${mysql_user}): ${mysql_password}"
-    else
-        _checkMysqlStatus "${mysql_user}" "${mysql_password}"
-    fi
 
     admin_password="$(_setupRandomPassword)"
     sys_db_password="$(_setupRandomPassword)"
-    _setupMysqlPrivileges "${mysql_user}" "${mysql_password}" \
-        "${sys_db_user}"  "${sys_db_password}"
-    _logPassword "MySQL system user password (${sys_db_user}): ${sys_db_password}"
-    _logPassword "Site admin password (${project_admin}): ${admin_password}"
-    _checkMysqlMode "${mysql_user}" "${mysql_password}"
-    _checkDatabase "${mysql_user}" "${mysql_password}" "${sys_db_name}"
-    _setupDatabase "${mysql_user}" "${mysql_password}" "${sys_db_name}" "${db_exist}"
-    _infoMessage "Populating the tuleap database..."
+    if [ "${TULEAP_INSTALL_SKIP_DB:-false}" = "false" ]; then
+        if [ "${mysql_password:-NULL}" = "NULL" -a "${mysql_server,,}" = "localhost" ] || \
+            [ "${mysql_password:-NULL}" = "NULL" -a "${mysql_server}" = "127.0.0.1" ]; then
 
-    for file_sql in "${sql_structure}" "${sql_forgeupgrade}"; do
-        _setupSourceDb "${mysql_user}" "${mysql_password}" "${sys_db_name}" \
-            "${file_sql}"
-    done
+            if ! ${mysql} ${my_opt} --host=${mysql_server} \
+                --user=${mysql_user} --execute=";" 2> >(_logCatcher); then
+                _errorMessage "Your database already have a password"
+                _errorMessage "You need to use the '--mysql-password' option"
+                exit 1
+            fi
 
-    _setupInitValues $(_phpPasswordHasher "${admin_password}") "${server_name}" \
-        "${sql_init}" | \
-        $(_mysqlConnectDb "${mysql_user}" "${mysql_password}" "${sys_db_name}")
-
-    for directory in ${tuleap_conf} ${tuleap_plugins} ${pluginsadministration}; do
-        if [ ! -d ${directory} ]; then
-            _setupDirectory "${tuleap_unix_user}" "${tuleap_unix_user}" "0755" \
-                "${directory}"
+            _infoMessage "Generate MySQL password"
+            mysql_password="$(_setupRandomPassword)"
+            _infoMessage "Set MySQL password for ${mysql_user}"
+            _setupMysqlPassword "${mysql_user}" ${mysql_password}
+            _logPassword "MySQL system user password (${mysql_user}): ${mysql_password}"
         fi
-    done
+
+        _logPassword "Site admin password (${project_admin}): ${admin_password}"
+
+        # Only needed for short term tests as futur test containers will have this created out of rpms
+        if [ ! -d ${tuleap_conf} ]; then
+            install -d -m 0750 -o root -g ${tuleap_unix_user} ${tuleap_dir}
+            install -d -m 0750 -o ${tuleap_unix_user} -g ${tuleap_unix_user} ${tuleap_conf}
+        fi
+
+        ${tuleapcfg} setup:mysql-init \
+            --host="${mysql_server}" \
+            --admin-user="${mysql_user}" \
+            --admin-password="${mysql_password}" \
+            --db-name="${sys_db_name}" \
+            --app-password="${sys_db_password}" \
+            --log-password=${password_file}
+
+        ${tuleapcfg} setup:mysql \
+            --host="${mysql_server}" \
+            --dbname="${sys_db_name}" \
+            --password="${sys_db_password}" \
+            "${admin_password}" \
+            "${server_name}"
+    fi
 
     if [ -f "${tuleap_conf}/${local_inc}" ]; then
         _infoMessage "Saving ${local_inc} file"
@@ -114,21 +109,19 @@ if [ ${tuleap_installed:-false} = "false" ] || \
             "${tuleap_conf}/${local_inc}.$(date +%Y-%m-%d_%H-%M-%S)"
     fi
     _setupLocalInc
-
-    if [ -f "${tuleap_conf}/${database_inc}" ]; then
-        _infoMessage "Saving ${database_inc} file"
-        ${mv} "${tuleap_conf}/${database_inc}" \
-            "${tuleap_conf}/${database_inc}.$(date +%Y-%m-%d_%H-%M-%S)"
-    fi
-    _setupDatabaseInc
+    chown root:codendiadm "${tuleap_conf}/${local_inc}"
+    chmod 00640 "${tuleap_conf}/${local_inc}"
 
     _setupForgeupgrade
     _phpActivePlugin "tracker" "${tuleap_unix_user}"
-    _phpImportTrackerTemplate
     _phpForgeupgrade "record-only"
+
     ${tuleapcfg} systemctl enable "${timers[@]}"
     ${tuleapcfg} systemctl start "${timers[@]}"
-    _phpConfigureModule "nginx,fpm"
+
+    ${tuleapcfg} site-deploy --force
+
+    _phpConfigureModule "nginx"
     ${tuleapcfg} systemctl restart "nginx" "tuleap"
     ${tuleapcfg} systemctl enable "nginx"
     _endMessage

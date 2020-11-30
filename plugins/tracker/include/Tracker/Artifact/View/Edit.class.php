@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,11 +18,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\Artifact\FileUploadDataProvider;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfig;
 use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfigDao;
 use Tuleap\Tracker\Artifact\RichTextareaProvider;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
-use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
 use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
 use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
@@ -40,38 +41,31 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
      */
     protected $renderer;
 
-    /**
-     * @var EventManager
-     */
-    private $event_manager;
-
     public function __construct(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Codendi_Request $request,
         PFUser $user,
-        Tracker_Artifact_ArtifactRenderer $renderer,
-        EventManager $event_manager
+        Tracker_Artifact_ArtifactRenderer $renderer
     ) {
         parent::__construct($artifact, $request, $user);
 
         $this->renderer      = $renderer;
-        $this->event_manager = $event_manager;
     }
 
     /** @see Tracker_Artifact_View_View::getURL() */
     public function getURL()
     {
-        return TRACKER_BASE_URL .'/?'. http_build_query(
-            array(
+        return TRACKER_BASE_URL . '/?' . http_build_query(
+            [
                 'aid' => $this->artifact->getId(),
-            )
+            ]
         );
     }
 
     /** @see Tracker_Artifact_View_View::getTitle() */
     public function getTitle()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_artifact', 'edit_title');
+        return dgettext('tuleap-tracker', 'Artifact');
     }
 
     /** @see Tracker_Artifact_View_View::getIdentifier() */
@@ -102,8 +96,6 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
     /**
      * Returns HTML code to display the artifact follow-up comments
      *
-     * @param PFUser $current_user the current user
-     *
      * @return string The HTML code for artifact follow-up comments
      */
     private function fetchFollowUps($submitted_comment = '')
@@ -120,11 +112,11 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
             $classname = '';
         }
 
-        $html .= '<div id="tracker_artifact_followup_comments" class="'. $classname .'">';
+        $html .= '<div id="tracker_artifact_followup_comments" class="' . $classname . '">';
         $html .= '<div id="tracker_artifact_followup_comments-content">';
         $html .= $this->fetchSettingsButton($invert_order, $display_changes);
-        $html .= '<h1 id="tracker_artifact_followups">'.$GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'follow_ups').'</h1>';
-        $html .= '<ul class="tracker_artifact_followups">';
+        $html .= '<h1 id="tracker_artifact_followups">' . dgettext('tuleap-tracker', 'Follow-ups') . '</h1>';
+        $html .= '<ul class="tracker_artifact_followups" data-test="artifact-followups">';
 
         $comments = $this->artifact->getFollowupsContent();
         if ($invert_order) {
@@ -146,9 +138,9 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
 
     private function fetchSettingsButton($invert_order, $display_changes)
     {
-        $settings_label        = $GLOBALS['Language']->getText('plugin_tracker', 'followup_settings_label');
-        $invert_comment_label  = $GLOBALS['Language']->getText('plugin_tracker', 'followup_invert_comment_label');
-        $display_changes_label = $GLOBALS['Language']->getText('plugin_tracker', 'followup_display_changes_label');
+        $settings_label        = dgettext('tuleap-tracker', 'Display settings');
+        $invert_comment_label  = dgettext('tuleap-tracker', 'Comments are in reversed order');
+        $display_changes_label = dgettext('tuleap-tracker', 'Changes are displayed');
 
         $invert_order_style = '';
         if (! $invert_order) {
@@ -162,18 +154,18 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
 
         $html = '<div class="tracker_artifact_followup_comments_display_settings">';
         $html .= '<div class="btn-group">';
-        $html .= '<a href="#" class="btn dropdown-toggle" data-toggle="dropdown">';
+        $html .= '<a href="#" class="btn btn-small dropdown-toggle" data-toggle="dropdown">';
         $html .= '<i class="fa fa-cog"></i> ' . $settings_label . ' <span class="caret"></span>';
         $html .= '</a>';
         $html .= '<ul class="dropdown-menu pull-right">';
         $html .= '<li>';
         $html .= '<a href="#invert-order" id="invert-order-menu-item">';
-        $html .= '<i class="fa fa-check" '. $invert_order_style .'></i> ' . $invert_comment_label;
+        $html .= '<i class="fa fa-check" ' . $invert_order_style . '></i> ' . $invert_comment_label;
         $html .= '</a>';
         $html .= '</li>';
         $html .= '<li>';
         $html .= '<a href="#" id="display-changes-menu-item">';
-        $html .= '<i class="fa fa-check"  '. $display_changes_style .'></i> ' . $display_changes_label;
+        $html .= '<i class="fa fa-check"  ' . $display_changes_style . '></i> ' . $display_changes_label;
         $html .= '</a>';
         $html .= '</li>';
         $html .= '</ul>';
@@ -189,16 +181,16 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
         $i    = 0;
 
         $previous_item    = null;
-        $comments_content = array();
+        $comments_content = [];
 
         foreach ($comments as $item) {
-            /** @var Tracker_Artifact_Followup_Item $item */
+            \assert($item instanceof Tracker_Artifact_Followup_Item);
             if ($previous_item) {
                 $diff_to_previous = $item->diffToPreviousArtifactView($this->user, $previous_item);
                 $classnames  = 'tracker_artifact_followup ';
                 $classnames .= $item->getFollowUpClassnames($diff_to_previous);
-                $comment_html = '<li id="followup_'. $item->getId() .'" class="'. $classnames .'">';
-                $comment_html .= $item->fetchFollowUp($diff_to_previous);
+                $comment_html = '<li id="followup_' . $item->getId() . '" class="' . $classnames . '" data-test="artifact-follow-up">';
+                $comment_html .= $item->fetchFollowUp($diff_to_previous, $this->user);
                 $comment_html .= '</li>';
                 $comments_content[] = $comment_html;
             }
@@ -219,11 +211,11 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
         $hp = Codendi_HTMLPurifier::instance();
 
         if (count($responses = $tracker->getCannedResponseFactory()->getCannedResponses($tracker))) {
-            $html .= '<p><b>' . $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'use_canned') . '</b>&nbsp;';
+            $html .= '<p><b>' . dgettext('tuleap-tracker', 'Use a Canned Response:') . '</b>&nbsp;';
             $html .= '<select id="tracker_artifact_canned_response_sb">';
             $html .= '<option selected="selected" value="">--</option>';
             foreach ($responses as $r) {
-                $html .= '<option value="'.  $hp->purify($r->body, CODENDI_PURIFIER_CONVERT_HTML) .'">'.  $hp->purify($r->title, CODENDI_PURIFIER_CONVERT_HTML) .'</option>';
+                $html .= '<option value="' .  $hp->purify($r->body, CODENDI_PURIFIER_CONVERT_HTML) . '">' .  $hp->purify($r->title, CODENDI_PURIFIER_CONVERT_HTML) . '</option>';
             }
             $html .= '</select>';
             $html .= '<noscript> javascript must be enabled to use this feature! </noscript>';
@@ -232,20 +224,19 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
 
         if ($this->artifact->userCanUpdate($this->user)) {
             $rich_textarea_provider = new RichTextareaProvider(
-                Tracker_FormElementFactory::instance(),
                 TemplateRendererFactory::build(),
-                new FrozenFieldDetector(
-                    new TransitionRetriever(
-                        new StateFactory(
-                            new TransitionFactory(
-                                Workflow_Transition_ConditionFactory::build()
+                new \Tuleap\Tracker\Artifact\UploadDataAttributesForRichTextEditorBuilder(
+                    new FileUploadDataProvider(
+                        new FrozenFieldDetector(
+                            new TransitionRetriever(
+                                new StateFactory(
+                                    TransitionFactory::instance(),
+                                    new SimpleWorkflowDao()
+                                ),
+                                new TransitionExtractor()
                             ),
-                            new SimpleWorkflowDao()
+                            FrozenFieldsRetriever::instance(),
                         ),
-                        new TransitionExtractor()
-                    ),
-                    new FrozenFieldsRetriever(
-                        new FrozenFieldsDao(),
                         Tracker_FormElementFactory::instance()
                     )
                 )
@@ -278,7 +269,7 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
         if ($this->canUpdateArtifactByMail()) {
             $email = Codendi_HTMLPurifier::instance()->purify($this->artifact->getInsecureEmailAddress());
             $html .= '<p class="email-tracker-help"><i class="fa fa-info-circle"></i> ';
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'reply_by_mail_help', $email);
+            $html .= sprintf(dgettext('tuleap-tracker', 'You can also reply to this artifact <a href="javascript:;" class="email-tracker email-tracker-reply" data-email="%1$s"><span>by email</span></a>.'), $email);
             $html .= '</p>';
         }
 

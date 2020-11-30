@@ -25,24 +25,24 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
 class Docman_View_Admin_Permissions extends Docman_View_Extra
 {
 
-    function _title($params)
+    public function _title($params)
     {
-        echo '<h2>'. $this->_getTitle($params) .' - '. $GLOBALS['Language']->getText('plugin_docman', 'admin_permissions_title') .'</h2>';
+        echo '<h2 class="project-header-title">' . $this->_getTitle($params) . ' - ' . dgettext('tuleap-docman', 'Manage Permissions') . '</h2>';
     }
-    function _content($params)
+    public function _content($params)
     {
         $content  = '';
 
         //{{{ Explanations
         $content .= '<div>';
-        $content .= $GLOBALS['Language']->getText('plugin_docman', 'admin_permissions_instructions');
+        $content .= dgettext('tuleap-docman', 'Please select user groups that can administrate the document manager, in addition of project administrators:');
         $content .= '</div>';
         echo $content;
         //}}}
 
-        $postUrl = DocmanViewURLBuilder::buildUrl($params['default_url'], array(
+        $postUrl = DocmanViewURLBuilder::buildUrl($params['default_url'], [
             'action' => 'admin_set_permissions'
-        ));
+        ]);
         permission_display_selection_form("PLUGIN_DOCMAN_ADMIN", $params['group_id'], $params['group_id'], $postUrl);
     }
 }

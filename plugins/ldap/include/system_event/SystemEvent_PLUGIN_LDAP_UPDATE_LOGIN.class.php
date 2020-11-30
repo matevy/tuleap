@@ -62,7 +62,7 @@ class SystemEvent_PLUGIN_LDAP_UPDATE_LOGIN extends SystemEvent
     public function process()
     {
         $user_ids    = $this->getParametersAsArray();
-        $project_ids = array();
+        $project_ids = [];
 
         // Get all projects the user is member of (project member or user group member)
         $um = $this->getUserManager();
@@ -71,7 +71,7 @@ class SystemEvent_PLUGIN_LDAP_UPDATE_LOGIN extends SystemEvent
             if ($user && ($user->isActive() || $user->isRestricted())) {
                 $prjs = $user->getAllProjects();
                 foreach ($prjs as $pid) {
-                    if (!isset($project_ids[$pid])) {
+                    if (! isset($project_ids[$pid])) {
                         $project_ids[$pid] = $pid;
                     }
                 }
@@ -99,7 +99,7 @@ class SystemEvent_PLUGIN_LDAP_UPDATE_LOGIN extends SystemEvent
      */
     public function verbalizeParameters($with_link)
     {
-        return  $this->parameters;
+        return $this->parameters;
     }
 
     /**

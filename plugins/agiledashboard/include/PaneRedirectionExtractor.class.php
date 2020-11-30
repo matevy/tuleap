@@ -31,8 +31,6 @@ class AgileDashboard_PaneRedirectionExtractor
 
     /**
      * Get the parameters to redirect to proper pane on the AgileDashboard
-     * @param Codendi_Request $request
-     * @param Project $project
      * @return array || null
      */
     public function getRedirectToParameters(Codendi_Request $request, Project $project)
@@ -48,7 +46,6 @@ class AgileDashboard_PaneRedirectionExtractor
 
     /**
      * Extract the redirection parameters contained in the request
-     * @param Codendi_Request $request
      * @return array || null containing pane, planning_id, artifact_id and action
      */
     public function extractParametersFromRequest(Codendi_Request $request)
@@ -62,12 +59,12 @@ class AgileDashboard_PaneRedirectionExtractor
         if (is_array($from_planning) && count($from_planning)) {
             $planning_id          = key($from_planning);
             $planning_artifact_id = current($from_planning);
-            return array(
+            return [
                 self::PANE        => $pane_identifier,
                 self::PLANNING_ID => $planning_id,
                 self::ARTIFACT_ID => $planning_artifact_id,
                 self::ACTION      => 'show'
-            );
+            ];
         }
     }
 }

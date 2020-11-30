@@ -38,7 +38,7 @@ class AccessFileHistoryFactory
     /** return AccessFileHistory[] */
     public function getByRepository(Repository $repository)
     {
-        $accessFiles = array();
+        $accessFiles = [];
         foreach ($this->dao->searchByRepositoryId($repository->getId()) as $row) {
             $accessFiles[] = $this->instantiateFromRowAndRepository($row, $repository);
         }
@@ -51,7 +51,7 @@ class AccessFileHistoryFactory
     {
         $row = $this->dao->searchById($id, $repository->getId());
 
-        if (!$row) {
+        if (! $row) {
             throw new AccessFileHistoryNotFoundException();
         }
 
@@ -63,7 +63,7 @@ class AccessFileHistoryFactory
     {
         $row = $this->dao->searchByVersionNumber($id, $repository->getId());
 
-        if (!$row) {
+        if (! $row) {
             throw new AccessFileHistoryNotFoundException();
         }
 
@@ -75,7 +75,7 @@ class AccessFileHistoryFactory
     {
         $row = $this->dao->searchCurrentVersion($repository->getId());
 
-        if (!$row) {
+        if (! $row) {
             return new NullAccessFileHistory($repository);
         }
 
@@ -87,7 +87,7 @@ class AccessFileHistoryFactory
     {
         $row = $this->dao->searchLastVersion($repository->getId());
 
-        if (!$row) {
+        if (! $row) {
             return new NullAccessFileHistory($repository);
         }
 
@@ -98,10 +98,10 @@ class AccessFileHistoryFactory
     {
         return new AccessFileHistory(
             $repository,
-            $row['id'],
-            $row['version_number'],
-            $row['content'],
-            $row['version_date']
+            (int) $row['id'],
+            (int) $row['version_number'],
+            (string) $row['content'],
+            (int) $row['version_date']
         );
     }
 }

@@ -24,7 +24,6 @@ use EventManager;
 use PFUser;
 use Tuleap\Dashboard\Widget\DashboardWidgetDao;
 use Tuleap\Widget\MyWelcomeMessage;
-use Tuleap\Widget\WidgetFactory;
 
 class AtUserCreationDefaultWidgetsCreator
 {
@@ -33,31 +32,26 @@ class AtUserCreationDefaultWidgetsCreator
      */
     private $dao;
     /**
-     * @var WidgetFactory
-     */
-    private $widget_factory;
-    /**
      * @var EventManager
      */
     private $event_manager;
 
     public const DEFAULT_WIDGETS_FOR_NEW_USER = 'default_widgets_for_new_user';
 
-    public function __construct(DashboardWidgetDao $dao, WidgetFactory $widget_factory, EventManager $event_manager)
+    public function __construct(DashboardWidgetDao $dao, EventManager $event_manager)
     {
         $this->dao            = $dao;
-        $this->widget_factory = $widget_factory;
         $this->event_manager = $event_manager;
     }
 
     public function createDefaultDashboard(PFUser $user)
     {
-        $widgets = array(
+        $widgets = [
             MyWelcomeMessage::NAME,
             'myprojects',
-        );
+        ];
 
-        $this->event_manager->processEvent(self::DEFAULT_WIDGETS_FOR_NEW_USER, array('widgets' => &$widgets));
+        $this->event_manager->processEvent(self::DEFAULT_WIDGETS_FOR_NEW_USER, ['widgets' => &$widgets]);
 
         $this->dao->createDefaultDashboardForUser($user->getId(), $widgets);
     }

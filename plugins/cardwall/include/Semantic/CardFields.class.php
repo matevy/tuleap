@@ -65,7 +65,7 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
     private $html_purifier;
 
     /** @var Tracker_FormElement_Field[] */
-    private $card_fields = array();
+    private $card_fields = [];
 
     /** @var array
      * instances of this semantic
@@ -120,9 +120,9 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
         $fields = $this->getFields();
         $html   .= '<p>';
         if (! count($fields)) {
-            $html .= $GLOBALS['Language']->getText('plugin_cardwall', 'semantic_cardFields_no_fields_defined');
+            $html .= dgettext('tuleap-cardwall', 'There aren\'t any fields added to cards yet.');
         } else {
-            $html .= $GLOBALS['Language']->getText('plugin_cardwall', 'semantic_cardFields_fields');
+            $html .= dgettext('tuleap-cardwall', 'The following fields are added to the cards:');
             $html .= '<ul>';
             foreach ($fields as $field) {
                 $html .= '<li><strong>' . $this->html_purifier->purify($field->getLabel(), CODENDI_PURIFIER_CONVERT_HTML) . '</strong></li>';
@@ -141,7 +141,7 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
                 $this->getBackgroundColorField()->getLabel()
             );
         } catch (BackgroundColorSemanticFieldNotFoundException $exception) {
-            $html .= "</p><p>" . dgettext('tuleap-cardwall', 'No field is chosen to determine backgorund color');
+            $html .= "</p><p>" . dgettext('tuleap-cardwall', 'No field is chosen to determine the background color');
         }
 
         $html .= '</p>';
@@ -219,12 +219,12 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
 
     public function getDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_cardwall', 'semantic_cardFields_description');
+        return dgettext('tuleap-cardwall', 'Manage the Fields to be displayed on cards');
     }
 
     public function getLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_cardwall', 'semantic_cardFields_label');
+        return dgettext('tuleap-cardwall', 'Cards semantics');
     }
 
     public function getShortName()
@@ -303,7 +303,6 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
     /**
      * Load an instance of a Cardwall_Semantic_CardFields
      *
-     * @param Tracker $tracker
      * @return Cardwall_Semantic_CardFields
      */
     public static function load(Tracker $tracker)
@@ -324,7 +323,7 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
                 $background_color_dao
             );
 
-            $field_builder = new CardFieldsPresenterBuilder($tracker_form_element_factory);
+            $field_builder = new CardFieldsPresenterBuilder();
 
             $background_field_retriever = new BackgroundColorFieldRetriever(
                 $tracker_form_element_factory,
@@ -333,9 +332,7 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
 
             $xml_exporter = new CardFieldXmlExporter($background_color_dao);
 
-            $single_card_preview_details_builder = new SingleCardPreviewDetailsBuilder(
-                new Cardwall_UserPreferences_UserPreferencesDisplayUser(true)
-            );
+            $single_card_preview_details_builder = new SingleCardPreviewDetailsBuilder();
 
             $card_preview_builder = new CardsPreviewBuilder($single_card_preview_details_builder);
 
@@ -360,7 +357,7 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
         $dao                  = $this->getDao();
         $rows                 = $dao->searchByTrackerId($tracker->getId());
         $form_element_factory = Tracker_FormElementFactory::instance();
-        $this->card_fields    = array();
+        $this->card_fields    = [];
 
         foreach ($rows as $row) {
             $field = $form_element_factory->getFieldById($row['field_id']);
@@ -371,7 +368,7 @@ class Cardwall_Semantic_CardFields extends Tracker_Semantic
     }
 
     /**
-     * @return Tracker_FormElement_Field
+     * @return Tracker_FormElement_Field|null
      */
     public function instantiateFieldFromRow(array $row)
     {

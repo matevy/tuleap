@@ -25,24 +25,31 @@ namespace Tuleap\Http;
 use Http\Factory\Guzzle\RequestFactory;
 use Http\Factory\Guzzle\ResponseFactory;
 use Http\Factory\Guzzle\StreamFactory;
+use Http\Factory\Guzzle\UriFactory;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 
 final class HTTPFactoryBuilder
 {
-    public static function requestFactory() : RequestFactoryInterface
+    public static function requestFactory(): RequestFactoryInterface
     {
         return new RequestFactory();
     }
 
-    public static function responseFactory() : ResponseFactoryInterface
+    public static function responseFactory(): ResponseFactoryInterface
     {
         return new ResponseFactory();
     }
 
-    public static function streamFactory() : StreamFactoryInterface
+    public static function streamFactory(): StreamFactoryInterface
     {
         return new StreamFactory();
+    }
+
+    public static function URIFactory(): UriFactoryInterface
+    {
+        return new UriFactory();
     }
 }

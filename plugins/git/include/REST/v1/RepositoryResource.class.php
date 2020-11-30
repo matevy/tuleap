@@ -33,7 +33,6 @@ use Git_RemoteServer_Dao;
 use Git_RemoteServer_GerritServerFactory;
 use Git_RemoteServer_NotFoundException;
 use Git_SystemEventManager;
-use GitBackendLogger;
 use GitDao;
 use GitPermissionsManager;
 use GitRepoNotFoundException;
@@ -90,10 +89,11 @@ use Tuleap\Git\RemoteServer\Gerrit\MigrationHandler;
 use Tuleap\Git\Repository\GitRepositoryNameIsInvalidException;
 use Tuleap\Git\Repository\RepositoryCreator;
 use Tuleap\Git\XmlUgroupRetriever;
+use Tuleap\Http\HttpClientFactory;
+use Tuleap\PullRequest\REST\v1\RepositoryPullRequestRepresentation;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\ProjectStatusVerificator;
-use Tuleap\REST\v1\GitRepositoryRepresentationBase;
 use UserManager;
 
 include_once __DIR__ . '/../../../../../src/www/project/admin/permissions.php';
@@ -141,10 +141,6 @@ class RepositoryResource extends AuthenticatedResource
      * @var CITokenManager
      */
     private $ci_token_manager;
-    /**
-     * @var Git_GitRepositoryUrlManager
-     */
-    private $url_manager;
     /**
      * @var GitCommitRepresentationBuilder
      */
@@ -199,7 +195,12 @@ class RepositoryResource extends AuthenticatedResource
         $this->migration_handler = new MigrationHandler(
             $this->git_system_event_manager,
             $this->gerrit_server_factory,
-            new Git_Driver_Gerrit_GerritDriverFactory(new GitBackendLogger()),
+            new Git_Driver_Gerrit_GerritDriverFactory(
+                new \Tuleap\Git\Driver\GerritHTTPClientFactory(HttpClientFactory::createClient()),
+                \Tuleap\Http\HTTPFactoryBuilder::requestFactory(),
+                \Tuleap\Http\HTTPFactoryBuilder::streamFactory(),
+                \BackendLogger::getDefaultLogger(\GitPlugin::LOG_IDENTIFIER),
+            ),
             $project_history_dao,
             new Git_Driver_Gerrit_ProjectCreatorStatus(new Git_Driver_Gerrit_ProjectCreatorStatusDao()),
             $this->project_manager
@@ -231,7 +232,7 @@ class RepositoryResource extends AuthenticatedResource
             $regexp_retriever
         );
         $sorter               = new FineGrainedPermissionSorter();
-        $xml_ugroup_retriever = new XmlUgroupRetriever(new GitBackendLogger(), $ugroup_manager);
+        $xml_ugroup_retriever = new XmlUgroupRetriever(\BackendLogger::getDefaultLogger(\GitPlugin::LOG_IDENTIFIER), $ugroup_manager);
 
         $fine_grained_permission_factory    = new FineGrainedPermissionFactory(
             $fine_grained_dao,
@@ -283,7 +284,7 @@ class RepositoryResource extends AuthenticatedResource
             $this->repository_factory,
             new \Git_Backend_Gitolite(
                 new \Git_GitoliteDriver(
-                    new GitBackendLogger(),
+                    \BackendLogger::getDefaultLogger(\GitPlugin::LOG_IDENTIFIER),
                     $this->git_system_event_manager,
                     $url_manager,
                     $git_dao,
@@ -302,7 +303,7 @@ class RepositoryResource extends AuthenticatedResource
                     new VersionDetector()
                 ),
                 new GitoliteAccessURLGenerator($git_plugin->getPluginInfo()),
-                new GitBackendLogger()
+                \BackendLogger::getDefaultLogger(\GitPlugin::LOG_IDENTIFIER),
             ),
             $mirror_data_mapper,
             new \GitRepositoryManager(
@@ -325,7 +326,7 @@ class RepositoryResource extends AuthenticatedResource
             $event_manager
         );
 
-        $status_retriever   = new CommitStatusRetriever(new CommitStatusDAO);
+        $status_retriever   = new CommitStatusRetriever(new CommitStatusDAO());
         $metadata_retriever = new CommitMetadataRetriever($status_retriever, $this->user_manager);
         $url_manager        = new Git_GitRepositoryUrlManager(
             PluginFactory::instance()->getPluginByName('git'),
@@ -368,7 +369,7 @@ class RepositoryResource extends AuthenticatedResource
 
         $this->sendAllowHeaders();
 
-        return $this->representation_builder->build($user, $repository, GitRepositoryRepresentationBase::FIELDS_ALL);
+        return $this->representation_builder->build($user, $repository, GitRepositoryRepresentation::FIELDS_ALL);
     }
 
     /**
@@ -405,10 +406,10 @@ class RepositoryResource extends AuthenticatedResource
      *
      * @param int    $id     Id of the repository
      * @param string $query  JSON object of search criteria properties {@from path}
-     * @param int    $limit  Number of elements displayed per page {@from path}
-     * @param int    $offset Position of the first element to display {@from path}
+     * @param int    $limit  Number of elements displayed per page {@from path} {@min 0} {@max 50}
+     * @param int    $offset Position of the first element to display {@from path} {@min 0}
      *
-     * @return Tuleap\PullRequest\REST\v1\RepositoryPullRequestRepresentation
+     * @return RepositoryPullRequestRepresentation
      *
      * @throws RestException 403
      * @throws RestException 404
@@ -417,7 +418,6 @@ class RepositoryResource extends AuthenticatedResource
     {
         $this->checkAccess();
         $this->checkPullRequestEndpointsAvailable();
-        $this->checkLimit($limit);
 
         $user       = $this->getCurrentUser();
         $repository = $this->getRepository($user, $id);
@@ -521,7 +521,7 @@ class RepositoryResource extends AuthenticatedResource
     public function postCommitStatus($id_or_path, $commit_reference, $state, $token)
     {
         if (ctype_digit($id_or_path)) {
-            $repository = $this->repository_factory->getRepositoryById((int)$id_or_path);
+            $repository = $this->repository_factory->getRepositoryById((int) $id_or_path);
         } else {
             preg_match("/(.+?)\/(.+)/", $id_or_path, $path);
             if (count($path) !== 3) {
@@ -542,7 +542,7 @@ class RepositoryResource extends AuthenticatedResource
             throw new RestException(403, 'Invalid token');
         }
 
-        $commit_status_creator = new CommitStatusCreator(new CommitStatusDAO);
+        $commit_status_creator = new CommitStatusCreator(new CommitStatusDAO());
 
         try {
             $commit_status_creator->createCommitStatus(
@@ -716,12 +716,10 @@ class RepositoryResource extends AuthenticatedResource
      * @throws RestException 401
      * @throws RestException 403
      * @throws RestException 404
-     * @throws RestException 406
      */
     public function getBranches($id, $offset = 0, $limit = self::MAX_LIMIT)
     {
         $this->checkAccess();
-        $this->checkLimit($limit);
 
         $repository = $this->getRepositoryForCurrentUser($id);
 
@@ -797,12 +795,10 @@ class RepositoryResource extends AuthenticatedResource
      * @throws RestException 401
      * @throws RestException 403
      * @throws RestException 404
-     * @throws RestException 406
      */
     public function getTags($id, $offset = 0, $limit = self::MAX_LIMIT)
     {
         $this->checkAccess();
-        $this->checkLimit($limit);
 
         $repository = $this->getRepositoryForCurrentUser($id);
 
@@ -822,7 +818,10 @@ class RepositoryResource extends AuthenticatedResource
         $commits = [];
         foreach ($sliced_tags_refs as $tag) {
             try {
-                $commits[] = $tag->GetCommit();
+                $commit = $tag->GetCommit();
+                if ($commit) {
+                    $commits[] = $commit;
+                }
             } catch (GitRepoRefNotFoundException $e) {
                 // ignore the tag if by any chance it is invalid
             }
@@ -833,8 +832,13 @@ class RepositoryResource extends AuthenticatedResource
         $result = [];
         foreach ($sliced_tags_refs as $tag) {
             $name = $tag->GetName();
+            $commit = $tag->GetCommit();
+            if (! $commit) {
+                continue;
+            }
+
             try {
-                $commit_representation = $commit_representation_collection->getRepresentation($tag->GetCommit());
+                $commit_representation = $commit_representation_collection->getRepresentation($commit);
 
                 $tag_representation = new GitTagRepresentation();
                 $tag_representation->build($name, $commit_representation);
@@ -889,7 +893,7 @@ class RepositoryResource extends AuthenticatedResource
             throw new RestException(
                 400,
                 'Invalid permission provided. Valid values are ' .
-                self::MIGRATE_NO_PERMISSION. ' or ' . self::MIGRATE_PERMISSION_DEFAULT
+                self::MIGRATE_NO_PERMISSION . ' or ' . self::MIGRATE_PERMISSION_DEFAULT
             );
         }
 
@@ -932,14 +936,14 @@ class RepositoryResource extends AuthenticatedResource
 
         EventManager::instance()->processEvent(
             REST_GIT_PULL_REQUEST_GET_FOR_REPOSITORY,
-            array(
+            [
                 'version'    => 'v1',
                 'repository' => $repository,
                 'query'      => $query,
                 'limit'      => $limit,
                 'offset'     => $offset,
                 'result'     => &$result
-            )
+            ]
         );
 
         return $result;
@@ -951,9 +955,9 @@ class RepositoryResource extends AuthenticatedResource
 
         EventManager::instance()->processEvent(
             REST_GIT_PULL_REQUEST_ENDPOINTS,
-            array(
+            [
                 'available' => &$available
-            )
+            ]
         );
 
         if ($available === false) {
@@ -969,13 +973,6 @@ class RepositoryResource extends AuthenticatedResource
     private function sendPaginationHeaders($limit, $offset, $size)
     {
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
-    }
-
-    private function checkLimit($limit)
-    {
-        if ($limit > self::MAX_LIMIT) {
-            throw new RestException(406, 'Maximum value for limit exceeded');
-        }
     }
 
     /**

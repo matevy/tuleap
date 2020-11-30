@@ -32,15 +32,11 @@ use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\Project\Admin\ProjectUGroup\CannotAddRestrictedUserToProjectNotAllowingRestricted;
 use Tuleap\Project\UGroups\Membership\DynamicUGroups\DynamicUGroupMembersUpdater;
 use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdder;
-use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithoutStatusCheckAndNotifications;
 use Tuleap\Project\UGroups\Membership\StaticUGroups\StaticMemberAdder;
 use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
 use Tuleap\Project\UGroups\SynchronizedProjectMembershipDetector;
 use Tuleap\Project\UserPermissionsDao;
 use UGroup_Invalid_Exception;
-use UGroupBinding;
-use UGroupManager;
-use UGroupUserDao;
 
 class MemberAdder
 {
@@ -102,7 +98,8 @@ class MemberAdder
             throw new UGroup_Invalid_Exception();
         }
 
-        if ($project->getAccess() === Project::ACCESS_PRIVATE_WO_RESTRICTED
+        if (
+            $project->getAccess() === Project::ACCESS_PRIVATE_WO_RESTRICTED
             && ForgeConfig::areRestrictedUsersAllowed()
             && $user->isRestricted()
         ) {
@@ -129,7 +126,8 @@ class MemberAdder
         }
         $this->static_member_adder->addUserToStaticGroup($project_id, $ugroup_id, $user->getId());
 
-        if ($this->synchronized_project_membership_detector->isSynchronizedWithProjectMembers($project)
+        if (
+            $this->synchronized_project_membership_detector->isSynchronizedWithProjectMembers($project)
             && ! $user->isMember($project_id)
         ) {
             $this->project_member_adder->addProjectMember($user, $project);

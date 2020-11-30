@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\Permission\Fields\ByGroup;
 
-use Codendi_HTMLPurifier;
 use HTTPRequest;
 use Tracker_FormElementFactory;
 use Tuleap\Layout\BaseLayout;
@@ -53,8 +52,6 @@ class ByGroupController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @return void
      * @throws ForbiddenException
@@ -90,7 +87,7 @@ class ByGroupController implements DispatchableWithRequest
 
         $tracker_manager = new \TrackerManager();
 
-        $title = $GLOBALS['Language']->getText('plugin_tracker_include_type', 'manage_fields_tracker_permissions');
+        $title = dgettext('tuleap-tracker', 'Manage Fields Permissions');
 
         $tracker->displayAdminPermsHeader($tracker_manager, $title);
 
@@ -109,10 +106,10 @@ class ByGroupController implements DispatchableWithRequest
 
     public static function getUrl(\Tracker $tracker): string
     {
-        return TRACKER_BASE_URL.self::URL.'/'.$tracker->getId();
+        return TRACKER_BASE_URL . self::URL . '/' . $tracker->getId();
     }
 
-    private function getFieldsPermissionsPerGroup(\Tracker $tracker, int $selected_id) : ByGroupFieldsPermissions
+    private function getFieldsPermissionsPerGroup(\Tracker $tracker, int $selected_id): ByGroupFieldsPermissions
     {
         $ugroups_permissions = plugin_tracker_permission_get_field_tracker_ugroups_permissions(
             $tracker->getGroupId(),
@@ -153,7 +150,7 @@ class ByGroupController implements DispatchableWithRequest
         return $fields_for_selected_group;
     }
 
-    private function getFieldsPermissionForGroupWithFirstMatchingGroup(array $ugroups_permissions, int $selected_id) : ByGroupFieldsPermissions
+    private function getFieldsPermissionForGroupWithFirstMatchingGroup(array $ugroups_permissions, int $selected_id): ByGroupFieldsPermissions
     {
         foreach ($ugroups_permissions as $field_id => $value_field) {
             foreach ($value_field['ugroups'] as $ugroup_id => $value_ugroup) {

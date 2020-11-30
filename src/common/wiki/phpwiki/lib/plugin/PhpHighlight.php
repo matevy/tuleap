@@ -57,17 +57,17 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
 {
     // Four required functions in a WikiPlugin.
 
-    function getName()
+    public function getName()
     {
         return _("PhpHighlight");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("PHP syntax highlighting");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -77,22 +77,21 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
     }
 
     // Establish default values for each of this plugin's arguments.
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         // TODO: results of ini_get() should be static for multiple
         // invocations of plugin on one WikiPage
-        return array('wrap'    => true,
+        return ['wrap'    => true,
                      'string'  => ini_get("highlight.string"),  //'#00CC00',
                      'comment' => ini_get("highlight.comment"), //'#FF9900',
                      'keyword' => ini_get("highlight.keyword"), //'#006600',
                      'default' => ini_get("highlight.default"), //'#0000CC',
                      'html'    => ini_get("highlight.html")     //'#000000'
-                     );
+                     ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
-
         extract($this->getArgs($argstr, $request));
         $source = $this->source;
 
@@ -105,8 +104,8 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
             $source = "<?php\n" . $source . "\n?>";
         } else {
             $source = str_replace(
-                array('< ?php', '? >'),
-                array('<?php', '?>'),
+                ['< ?php', '? >'],
+                ['<?php', '?>'],
                 $source
             );
         }
@@ -115,7 +114,7 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
 
         if ($wrap) {
             /* Remove "<?php\n" and "\n?>" again: */
-            $str = str_replace(array('&lt;?php<br />', '?&gt;'), '', $str);
+            $str = str_replace(['&lt;?php<br />', '?&gt;'], '', $str);
         }
 
         /**
@@ -123,7 +122,7 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
          * str_replace string does not produce results on my system,
          * maybe a php bug? '<font color="$color"></font>')
          */
-        foreach (array($string, $comment, $keyword, $bg, $default, $html) as $color) {
+        foreach ([$string, $comment, $keyword, $bg, $default, $html] as $color) {
             $search = "<font color=\"$color\"></font>";
             $str = str_replace($search, '', $str);
         }
@@ -134,7 +133,7 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
         return new RawXml($str);
     }
 
-    function handle_plugin_args_cruft(&$argstr, &$args)
+    public function handle_plugin_args_cruft(&$argstr, &$args)
     {
         $this->source = $argstr;
     }
@@ -143,20 +142,21 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
      * Make sure color argument is valid
      * See http://www.w3.org/TR/REC-html40/types.html#h-6.5
      */
-    function sanify_colors($string, $comment, $keyword, $bg, $default, $html)
+    public function sanify_colors($string, $comment, $keyword, $bg, $default, $html)
     {
-        static $html4colors = array("black", "silver", "gray", "white",
+        static $html4colors = ["black", "silver", "gray", "white",
                                     "maroon", "red", "purple", "fuchsia",
                                     "green", "lime", "olive", "yellow",
-                                    "navy", "blue", "teal", "aqua");
+                                    "navy", "blue", "teal", "aqua"];
         /* max(strlen("fuchsia"), strlen("#00FF00"), ... ) = 7 */
         static $MAXLEN = 7;
-        foreach (array($string, $comment, $keyword, $bg, $default, $html) as $color) {
+        foreach ([$string, $comment, $keyword, $bg, $default, $html] as $color) {
             $length = strlen($color);
             //trigger_error(sprintf(_("DEBUG: color '%s' is length %d."), $color, $length), E_USER_NOTICE);
-            if (($length == 7 || $length == 4) && substr($color, 0, 1) == "#"
-            && "#" == preg_replace("/[a-fA-F0-9]/", "", $color)
-             ) {
+            if (
+                ($length == 7 || $length == 4) && substr($color, 0, 1) == "#"
+                && "#" == preg_replace("/[a-fA-F0-9]/", "", $color)
+            ) {
                 //trigger_error(sprintf(_("DEBUG: color '%s' appears to be hex."), $color), E_USER_NOTICE);
                 // stop checking, ok to go
             } elseif (($length < $MAXLEN + 1) && in_array($color, $html4colors)) {
@@ -172,7 +172,7 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
         }
     }
 
-    function set_colors($string, $comment, $keyword, $bg, $default, $html)
+    public function set_colors($string, $comment, $keyword, $bg, $default, $html)
     {
         // set highlight colors
         $this->oldstring = ini_set('highlight.string', $string);
@@ -182,7 +182,7 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
         $this->oldhtml = ini_set('highlight.html', $html);
     }
 
-    function restore_colors()
+    public function restore_colors()
     {
         // restore previous default highlight colors
         ini_set('highlight.string', $this->oldstring);
@@ -191,7 +191,7 @@ class WikiPlugin_PhpHighlight extends WikiPlugin
         ini_set('highlight.default', $this->olddefault);
         ini_set('highlight.html', $this->oldhtml);
     }
-};
+}
 
 // $Log: PhpHighlight.php,v $
 // Revision 1.9  2004/04/10 07:25:24  rurban

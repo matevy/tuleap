@@ -19,10 +19,13 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
+/**
+ * @psalm-immutable
+ */
 class PUTCustomMetadataRepresentation extends POSTCustomMetadataRepresentation
 {
     /**

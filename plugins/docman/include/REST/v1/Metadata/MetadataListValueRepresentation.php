@@ -19,10 +19,13 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
+/**
+ * @psalm-immutable
+ */
 class MetadataListValueRepresentation
 {
     /**
@@ -36,7 +39,6 @@ class MetadataListValueRepresentation
 
     public function __construct(int $id, string $name)
     {
-
         $this->id   = $id;
         $this->name = $name;
     }

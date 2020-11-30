@@ -33,16 +33,16 @@ require_once __DIR__ . '/../../../src/www/include/pre.php';
  */
 function extract_params($argv)
 {
-    $arguments = array();
+    $arguments = [];
     for ($i = 1; $i < count($argv); ++$i) {
         $arg = $argv[$i];
         // If arg start by "--" this is the beginning of a new option
         if (strpos($arg, "--") === 0) {
             $eqpos = strpos($arg, "=");
-            $argname=substr($arg, 2, $eqpos-2);
-            $arguments[$argname] = substr($arg, $eqpos+1);
+            $argname = substr($arg, 2, $eqpos - 2);
+            $arguments[$argname] = substr($arg, $eqpos + 1);
         } else {
-            $arguments[$argname] .= " ".$arg;
+            $arguments[$argname] .= " " . $arg;
         }
     }
     return $arguments;
@@ -62,10 +62,12 @@ if ($ldapPlugin && $pluginManager->isPluginAvailable($ldapPlugin)) {
 //print_r($_SERVER['argv']);
     $arg = extract_params($_SERVER['argv']);
 //print_r($arg);
-    if (isset($arg['ldapid'])
-    && isset($arg['realname'])
-    && isset($arg['email'])
-    && isset($arg['uid'])) {
+    if (
+        isset($arg['ldapid'])
+        && isset($arg['realname'])
+        && isset($arg['email'])
+        && isset($arg['uid'])
+    ) {
         //  Check if user exists
         $user = UserManager::instance()->getUserByLdapId($arg['ldapid']);
         if ($user) {
@@ -75,7 +77,7 @@ if ($ldapPlugin && $pluginManager->isPluginAvailable($ldapPlugin)) {
             $ldapUm = $ldapPlugin->getLdapUserManager();
             $user = $ldapUm->createAccount($arg['ldapid'], $arg['uid'], $arg['realname'], $arg['email']);
             if ($user) {
-                echo "ID=".$user->getId().":STATUS=".$user->getStatus()."\n";
+                echo "ID=" . $user->getId() . ":STATUS=" . $user->getStatus() . "\n";
                 return 0;
             }
         }

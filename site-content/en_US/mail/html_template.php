@@ -356,7 +356,7 @@ height:auto;
     background-color: #f0f0f0;
 }
 .bodyContent div.avatar {
-    background: transparent url(<?php echo $img_path ?>/avatar_default.png) 0 0 no-repeat;
+    background: transparent url(<?php echo $http_url ?>/themes/common/images/avatar_default.png) 0 0 no-repeat;
     background-size: contain;
     width:50px;
     height:50px;
@@ -527,7 +527,7 @@ display:inline;
                                    <tr>
                                       <td valign="bottom">
                                          <div>
-                                             <img src="<?php echo $img_path ?>/organization_logo_mail.png" alt="<?php echo $GLOBALS['sys_name'] ?>" />
+                                             <img src="<?php echo $http_url ?>/images/organization_logo_mail.png" alt="<?php echo \ForgeConfig::get('sys_name') ?>" />
                                          </div>
                                       </td>
                                     </tr>
@@ -538,7 +538,7 @@ display:inline;
                     </table>
                     <!-- // End Template Preheader \\ -->
                      <table border="0" cellpadding="0" cellspacing="0" width="750" id="templateContainer">
-                        <tr>
+                         <tr>
                              <td align="center" valign="top">
                                 <!-- // Begin Template Body \\ -->
                                 <table border="0" cellpadding="0" cellspacing="0" width="750" id="templateBody">
@@ -552,10 +552,10 @@ display:inline;
                                                         <table width="100%" border="0" cellpadding="0" cellspacing="0">
                                                             <tr>
                                                                 <td>
-                                                                    <?php echo !empty($breadcrumbs) ? '<div class="content-header">'. implode(' &raquo; ', $breadcrumbs) .'</div>' : ''; ?>
+                                                                    <?php echo ! empty($breadcrumbs) ? '<div class="content-header">' . implode(' &raquo; ', $breadcrumbs) . '</div>' : ''; ?>
                                                                 </td>
                                                                 <td align="right">
-                                                                    <?php echo !empty($unsubscribe_link) ? '<div class="content-header">'. $unsubscribe_link .'</div>' : ''; ?>
+                                                                    <?php echo ! empty($unsubscribe_link) ? '<div class="content-header">' . $unsubscribe_link . '</div>' : ''; ?>
                                                                 </td>
                                                             </tr>
                                                         </table>
@@ -569,8 +569,9 @@ display:inline;
                                 </table>
                                 <!-- // End Template Body \\ -->
                             </td>
-                        </tr>
-                        <tr>
+                         </tr>
+                         <?php if (! isset($remove_footer) || (bool) $remove_footer === false) : ?>
+                         <tr>
                              <td align="center" valign="top">
                                     <!-- // Begin Template Footer \\ -->
                                  <table border="0" cellpadding="10" cellspacing="0" width="750" id="templateFooter">
@@ -582,21 +583,22 @@ display:inline;
                                                     <tr>
                                                         <td colspan="2" valign="middle" id="social">
                                                             <div>
-                                                                <?php echo !empty($additional_footer_link) ? '&nbsp;'. $additional_footer_link . '&nbsp; |' : '' ?>
-                                                                &nbsp;<a href="<?php echo HTTPRequest::instance()->getServerUrl() ?>/account/preferences.php" target="_blank" rel="noreferrer"><?php echo $txt_can_update_prefs ?></a>&nbsp;
+                                                                <?php echo ! empty($additional_footer_link) ? '&nbsp;' . $additional_footer_link . '&nbsp; |' : '' ?>
+                                                                &nbsp;<a href="<?php echo $http_url ?>/account/information" target="_blank" rel="noreferrer"><?php echo $txt_can_update_prefs ?></a>&nbsp;
                                                             </div>
                                                         </td>
                                                     </tr>
                                                 </table>
                                                 <!-- // End Module: Standard Footer \\ -->
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <!-- // End Template Footer \\ -->
-                                </td>
-                            </tr>
-                        </table>
-                        <br />
+                                        </td>
+                                    </tr>
+                                </table>
+                                <!-- // End Template Footer \\ -->
+                            </td>
+                         </tr>
+                         <?php endif ?>
+                         </table>
+                         <br />
                     </td>
                 </tr>
             </table>

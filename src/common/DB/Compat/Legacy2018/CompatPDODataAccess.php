@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,6 @@
 
 namespace Tuleap\DB\Compat\Legacy2018;
 
-use ForgeConfig;
 use Tuleap\DB\DBConnection;
 
 /**
@@ -47,8 +46,11 @@ final class CompatPDODataAccess implements LegacyDataAccessInterface
      * @param $sql string the database query to run
      * @deprecated
      * @return object MySQLDataAccessResultInterface
+     *
+     * @psalm-taint-sink sql $sql
+     * @psalm-taint-sink sql $params
      */
-    public function query($sql, $params = array())
+    public function query($sql, $params = [])
     {
         if (! empty($params)) {
             $args = [];
@@ -82,7 +84,7 @@ final class CompatPDODataAccess implements LegacyDataAccessInterface
      *
      * @deprecated
      *
-     * @return int, or 0 if the previous query does not generate an AUTO_INCREMENT value, or FALSE if no MySQL connection was established
+     * @return false|int or 0 if the previous query does not generate an AUTO_INCREMENT value, or FALSE if no MySQL connection was established
      */
     public function lastInsertId()
     {
@@ -132,10 +134,7 @@ final class CompatPDODataAccess implements LegacyDataAccessInterface
         if (! $has_error) {
             return '';
         }
-        if (! ForgeConfig::get('DEBUG_MODE')) {
-            return 'DB error';
-        }
-        return $error_info[2];
+        return 'DB error';
     }
 
     /**
@@ -163,7 +162,7 @@ final class CompatPDODataAccess implements LegacyDataAccessInterface
      *
      * @return string
      */
-    public function quoteSmart($value, $params = array())
+    public function quoteSmart($value, $params = [])
     {
         return $this->db_connection->getDB()->quote((string) $value);
     }
@@ -176,7 +175,7 @@ final class CompatPDODataAccess implements LegacyDataAccessInterface
      *
      * @return string
      */
-    public function quoteSmartSchema($value, $params = array())
+    public function quoteSmartSchema($value, $params = [])
     {
         return $this->db_connection->getDB()->escapeIdentifier((string) $value);
     }
@@ -186,7 +185,7 @@ final class CompatPDODataAccess implements LegacyDataAccessInterface
      * @deprecated
      * @static
      */
-    public function quoteSmartImplode($glue, $pieces, $params = array())
+    public function quoteSmartImplode($glue, $pieces, $params = [])
     {
         $str         = '';
         $after_first = false;
@@ -242,7 +241,7 @@ final class CompatPDODataAccess implements LegacyDataAccessInterface
      */
     public function escapeIntImplode(array $ints)
     {
-        return implode(',', array_map(array($this, 'escapeInt'), $ints));
+        return implode(',', array_map([$this, 'escapeInt'], $ints));
     }
 
     /**
@@ -287,7 +286,7 @@ final class CompatPDODataAccess implements LegacyDataAccessInterface
      */
     public function quoteLikeValuePrefix($value)
     {
-        return $this->quoteSmart('%'. $this->escapeLikeValue($value));
+        return $this->quoteSmart('%' . $this->escapeLikeValue($value));
     }
 
     /**

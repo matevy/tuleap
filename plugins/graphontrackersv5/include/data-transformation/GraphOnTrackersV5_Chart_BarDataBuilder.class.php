@@ -30,17 +30,17 @@ class GraphOnTrackersV5_Chart_BarDataBuilder extends ChartDataBuilderV5
      *
      * @param Pie_Engine $engine object
      */
-    function buildProperties($engine)
+    public function buildProperties($engine)
     {
         parent::buildProperties($engine);
-        $engine->data   = array();
+        $engine->data   = [];
         $engine->xaxis  = null;
         $engine->labels = null;
         $engine->legend = null;
-        $result = array();
+        $result = [];
         $ff = Tracker_FormElementFactory::instance();
-        /** @var Tracker_FormElement_Field_List $af */
         $af = $ff->getUsedListFieldById($this->getTracker(), $this->chart->getField_base());
+        \assert($af instanceof Tracker_FormElement_Field_List);
         if (! $af) {
             $this->displayNoFieldError();
             return $result;
@@ -51,20 +51,20 @@ class GraphOnTrackersV5_Chart_BarDataBuilder extends ChartDataBuilderV5
             if ($this->chart->getField_group() != $this->chart->getField_base()) {
                 $gf = $ff->getFormElementById($this->chart->getField_group());
                 if ($gf && $gf->userCanRead()) {
-                    $select_group = ', '. $gf->getQuerySelect();
-                    $from_group   = '  '. $gf->getQueryFrom();
-                    $group_group  = ', '. $gf->getQueryGroupBy();
-                    $order_group  = ', '. $gf->getQueryOrderby();
+                    $select_group = ', ' . $gf->getQuerySelect();
+                    $from_group   = '  ' . $gf->getQueryFrom();
+                    $group_group  = ', ' . $gf->getQueryGroupBy();
+                    $order_group  = ', ' . $gf->getQueryOrderby();
                 }
             }
-            $select = " SELECT count(a.id) AS nb, ". $af->getQuerySelectWithDecorator() . $select_group;
+            $select = " SELECT count(a.id) AS nb, " . $af->getQuerySelectWithDecorator() . $select_group;
             $from   = " FROM tracker_artifact AS a 
                              INNER JOIN tracker_changeset AS c ON (c.artifact_id = a.id) " .
                              $af->getQueryFromWithDecorator() .
                              $from_group;
-            $where  = " WHERE a.id IN (". $this->artifacts['id'] .") 
-                          AND c.id IN (". $this->artifacts['last_changeset_id'] .") ";
-            $sql = $select . $from . $where . ' GROUP BY ' . $af->getQueryGroupBy() . $group_group . ' ORDER BY '. $af->getQueryOrderby() . $order_group;
+            $where  = " WHERE a.id IN (" . $this->artifacts['id'] . ") 
+                          AND c.id IN (" . $this->artifacts['last_changeset_id'] . ") ";
+            $sql = $select . $from . $where . ' GROUP BY ' . $af->getQueryGroupBy() . $group_group . ' ORDER BY ' . $af->getQueryOrderby() . $order_group;
             //echo($sql);
             $none = $GLOBALS['Language']->getText('global', 'none');
             $res = db_query($sql);

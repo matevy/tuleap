@@ -19,25 +19,25 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\SVN\DiskUsage\Collector as SVNCollector;
-use Tuleap\SVN\DiskUsage\Retriever as SVNRetriever;
-use Tuleap\CVS\DiskUsage\Retriever as CVSRetriever;
-use Tuleap\CVS\DiskUsage\Collector as CVSCollector;
-use Tuleap\CVS\DiskUsage\FullHistoryDao;
+use Tuleap\Statistics\DiskUsage\Subversion\Collector as SVNCollector;
+use Tuleap\Statistics\DiskUsage\Subversion\Retriever as SVNRetriever;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\Retriever as CVSRetriever;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\Collector as CVSCollector;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\FullHistoryDao;
 
 require_once __DIR__ . '/../../../src/www/include/pre.php';
 require_once __DIR__ . '/../../../src/www/project/export/project_export_utils.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 if ($argc !== 4) {
-    fwrite(STDERR, "Usage: {$argv[0]} start_date end_date output". PHP_EOL);
+    fwrite(STDERR, "Usage: {$argv[0]} start_date end_date output" . PHP_EOL);
     exit(1);
 }
 
 $posix_user = posix_getpwuid(posix_geteuid());
 $sys_user   = $posix_user['name'];
 if ($sys_user !== 'root' && $sys_user !== 'codendiadm') {
-    fwrite(STDERR, 'Unsufficient privileges for user '.$sys_user.PHP_EOL);
+    fwrite(STDERR, 'Unsufficient privileges for user ' . $sys_user . PHP_EOL);
     exit(1);
 }
 
@@ -48,17 +48,17 @@ $output     = $argv[3];
 $rule_valid_date = new Rule_Date();
 
 if (! $rule_valid_date->isValid($start_date)) {
-    fwrite(STDERR, 'Start date is not valid. Expected format is yyyy-mm-dd.'. PHP_EOL);
+    fwrite(STDERR, 'Start date is not valid. Expected format is yyyy-mm-dd.' . PHP_EOL);
     exit(1);
 }
 
 if (! $rule_valid_date->isValid($end_date)) {
-    fwrite(STDERR, 'End date is not valid. Expected format is yyyy-mm-dd.'. PHP_EOL);
+    fwrite(STDERR, 'End date is not valid. Expected format is yyyy-mm-dd.' . PHP_EOL);
     exit(1);
 }
 
 if ($start_date > $end_date) {
-    fwrite(STDERR, 'Start date must be lesser or equal than end date.'. PHP_EOL);
+    fwrite(STDERR, 'Start date must be lesser or equal than end date.' . PHP_EOL);
     exit(1);
 }
 

@@ -17,17 +17,12 @@
   - along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
   -->
 
-
 <template functional>
-    <span
-        class="tlp-dropdown-menu-separator"
-        role="separator"
-    >
-    </span>
+    <span class="tlp-dropdown-menu-separator" role="separator"></span>
 </template>
 
 <script>
 export default {
-    name: "DropDownSeparator"
+    name: "DropDownSeparator",
 };
 </script>

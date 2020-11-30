@@ -95,7 +95,7 @@ class PermissionItemUpdater
     /**
      * @psalm-param PermissionsPerUGroupIDAndType $permissions
      */
-    public function initPermissionsOnNewlyCreatedItem(Docman_Item $item, array $permissions) : void
+    public function initPermissionsOnNewlyCreatedItem(Docman_Item $item, array $permissions): void
     {
         $this->setPermissions($item, true, $permissions);
     }
@@ -103,24 +103,24 @@ class PermissionItemUpdater
     /**
      * @psalm-param PermissionsPerUGroupIDAndType $permissions
      */
-    public function updateItemPermissions(Docman_Item $item, PFUser $user, array $permissions) : void
+    public function updateItemPermissions(Docman_Item $item, PFUser $user, array $permissions): void
     {
         $this->setPermissions($item, false, $permissions);
 
         $this->event_manager->processEvent(
             'plugin_docman_event_perms_change',
-            array(
+            [
                 'group_id' => $item->getGroupId(),
                 'item'     => $item,
                 'user'     => $user,
-            )
+            ]
         );
     }
 
     /**
      * @psalm-param PermissionsPerUGroupIDAndType $permissions
      */
-    public function updateFolderAndChildrenPermissions(Docman_Folder $folder, PFUser $user, array $permissions) : void
+    public function updateFolderAndChildrenPermissions(Docman_Folder $folder, PFUser $user, array $permissions): void
     {
         $this->updateItemPermissions($folder, $user, $permissions);
 
@@ -130,9 +130,9 @@ class PermissionItemUpdater
         $this->item_factory->breathFirst(
             $folder->getId(),
             /**
-             * @psalm-param array{item_id:int,title:string}
+             * @psalm-param array{item_id:int,title:string} $data
              */
-            function (array $data) use ($user, $folder) : void {
+            function (array $data) use ($user, $folder): void {
                 $inspected_item_id = $data['item_id'];
                 if ($this->docman_permissions_manager->userCanManage($user, $inspected_item_id)) {
                     $this->global_permissions_manager->clonePermissions(
@@ -143,20 +143,20 @@ class PermissionItemUpdater
                 } else {
                     $this->response_feedback_wrapper->log(
                         Feedback::WARN,
-                        $GLOBALS['Language']->getText('plugin_docman', 'warning_recursive_perms', $data['title'])
+                        sprintf(dgettext('tuleap-docman', 'you cannot change permissions for sub-item %1$s since you do not have sufficient permissions.'), $data['title'])
                     );
                 }
             },
             []
         );
-        $this->response_feedback_wrapper->log(Feedback::INFO, $GLOBALS['Language']->getText('plugin_docman', 'info_perms_recursive_updated'));
+        $this->response_feedback_wrapper->log(Feedback::INFO, dgettext('tuleap-docman', 'Permissions for sub-items successfully updated.'));
     }
 
     /**
      * @param bool $force true if you want to bypass permissions checking (@see permission_add_ugroup)
      * @psalm-param PermissionsPerUGroupIDAndType $permissions
      */
-    private function setPermissions(Docman_Item $item, bool $force, array $permissions) : void
+    private function setPermissions(Docman_Item $item, bool $force, array $permissions): void
     {
         $old_permissions = permission_get_ugroups_permissions(
             $item->getGroupId(),
@@ -190,7 +190,7 @@ class PermissionItemUpdater
             }
         }
 
-        $this->response_feedback_wrapper->log(Feedback::INFO, $GLOBALS['Language']->getText('plugin_docman', 'info_perms_updated'));
+        $this->response_feedback_wrapper->log(Feedback::INFO, dgettext('tuleap-docman', 'Permissions successfully updated.'));
     }
 
     /**
@@ -219,7 +219,7 @@ class PermissionItemUpdater
      *
      * @psalm-param key-of<self::PERMISSIONS_DEFINITIONS> $wanted_permission
      * @psalm-param array<value-of<Docman_PermissionsManager::ITEM_PERMISSION_TYPES>,bool> $history
-     * @psalm-out array<value-of<Docman_PermissionsManager::ITEM_PERMISSION_TYPES>,bool> $history
+     * @param-out array<"PLUGIN_DOCMAN_MANAGE"|"PLUGIN_DOCMAN_READ"|"PLUGIN_DOCMAN_WRITE"|value-of<Docman_PermissionsManager::ITEM_PERMISSION_TYPES>, bool> $history
      *
      * @access protected
      */
@@ -254,15 +254,7 @@ class PermissionItemUpdater
                     //warn the user that there was a conflict
                     $this->response_feedback_wrapper->log(
                         Feedback::WARN,
-                        $GLOBALS['Language']->getText(
-                            'plugin_docman',
-                            'warning_perms',
-                            array(
-                                $old_permissions[$ugroup_id]['ugroup']['name'],
-                                $old_permissions[$parent]['ugroup']['name'],
-                                permission_get_name(self::PERMISSIONS_DEFINITIONS[$done_permissions[$parent]]['type'])
-                            )
-                        )
+                        sprintf(dgettext('tuleap-docman', 'Permissions for %1$s has been ignored because %2$s is %3$s.'), $old_permissions[$ugroup_id]['ugroup']['name'], $old_permissions[$parent]['ugroup']['name'], permission_get_name(self::PERMISSIONS_DEFINITIONS[$done_permissions[$parent]]['type']))
                     );
 
                     //remove permissions which was set for the ugroup
@@ -299,7 +291,7 @@ class PermissionItemUpdater
                 }
 
                 //If the user set an explicit permission and there was no perms before or they have been removed
-                if ($wanted_permission != 100 && (!count($old_permissions[$ugroup_id]['permissions']) || $perms_cleared)) {
+                if ($wanted_permission != 100 && (! count($old_permissions[$ugroup_id]['permissions']) || $perms_cleared)) {
                     //Then give the permission
                     if (isset(self::PERMISSIONS_DEFINITIONS[$wanted_permission]['type'])) {
                         /** @psalm-var value-of<Docman_PermissionsManager::ITEM_PERMISSION_TYPES> $permission */

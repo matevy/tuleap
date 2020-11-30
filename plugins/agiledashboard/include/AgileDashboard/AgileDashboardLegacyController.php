@@ -49,8 +49,6 @@ class AgileDashboardLegacyController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -61,7 +59,7 @@ class AgileDashboardLegacyController implements DispatchableWithRequest
         $project = $request->getProject();
 
         if ($project->isDeleted()) {
-            $layout->addFeedback(Feedback::ERROR, $GLOBALS['Language']->getText('include_exit', 'project_status_' . $project->getStatus()));
+            $layout->addFeedback(Feedback::ERROR, $GLOBALS['Language']->getText('include_exit', 'project_status_D'));
             $layout->redirect('/');
         }
 
@@ -69,8 +67,8 @@ class AgileDashboardLegacyController implements DispatchableWithRequest
             $layout->addCssAsset(
                 new CssAsset(
                     new IncludeAssets(
-                        __DIR__ . '/../../www/themes/BurningParrot/assets',
-                        '/plugins/agiledashboard/themes/BurningParrot/assets'
+                        __DIR__ . '/../../../../src/www/assets/agiledashboard',
+                        '/assets/agiledashboard'
                     ),
                     'kanban'
                 )
@@ -79,6 +77,10 @@ class AgileDashboardLegacyController implements DispatchableWithRequest
 
         $router = $this->router_builder->build($request);
 
-        $router->route($request);
+        try {
+            $router->route($request);
+        } catch (\Tuleap\AgileDashboard\Planning\NotFoundException $exception) {
+            throw new NotFoundException('', $exception);
+        }
     }
 }

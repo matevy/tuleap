@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -67,6 +67,16 @@ class TuleapConfig
     public function setForgeToRegular()
     {
         $this->setConfig(self::FORGE_ACCESS, self::REGULAR);
+    }
+
+    public function enableInviteBuddies(): void
+    {
+        $this->setConfig('max_invitations_by_day', "10");
+    }
+
+    public function disableInviteBuddies(): void
+    {
+        $this->setConfig('max_invitations_by_day', "0");
     }
 
     private function connect()

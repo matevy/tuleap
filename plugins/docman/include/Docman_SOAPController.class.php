@@ -19,33 +19,31 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_Controller.class.php');
-require_once('Docman_SOAPActions.class.php');
 class Docman_SOAPController extends Docman_Controller
 {
 
-    function __construct(&$plugin, $pluginPath, $themePath, &$request)
+    public function __construct(&$plugin, $pluginPath, $themePath, &$request)
     {
         parent::__construct($plugin, $pluginPath, $themePath, $request);
     }
 
-    /* protected */ function _includeView()
+    /* protected */ public function _includeView()
     {
-        $className = 'Docman_View_SOAP_'. $this->view;
-        require_once('view/soap/'. $className .'.class.php');
+        $className = 'Docman_View_SOAP_' . $this->view;
+        require_once('view/soap/' . $className . '.class.php');
         return $className;
     }
 
-    /* protected */ function _set_deleteView_errorPerms()
+    /* protected */ public function _set_deleteView_errorPerms()
     {
         $this->_setView('SOAP');
     }
-    /* protected */ function _set_redirectView()
+    /* protected */ public function _set_redirectView()
     {
         $this->_setView('SOAP');
     }
 
-    /* protected */ function _setView($view)
+    /* protected */ public function _setView($view)
     {
         switch ($view) {
             default:
@@ -53,31 +51,30 @@ class Docman_SOAPController extends Docman_Controller
                 break;
         }
     }
-    /* protected */ function _set_moveView_errorPerms()
+    /* protected */ public function _set_moveView_errorPerms()
     {
         $this->_setView('SOAP');
     }
-    /* protected */ function _set_createItemView_errorParentDoesNotExist(&$item, $get_show_view)
+    /* protected */ public function _set_createItemView_errorParentDoesNotExist(&$item, $get_show_view)
     {
         $this->_setView('SOAP');
     }
-    /* protected */ function _set_createItemView_afterCreate($view)
+    /* protected */ public function _set_createItemView_afterCreate($view)
     {
         $this->_setView('SOAP');
     }
-    /* protected */ function _set_doesnot_belong_to_project_error($item, $group)
+    /* protected */ public function _set_doesnot_belong_to_project_error($item, $group)
     {
-        $this->feedback->log('error', $GLOBALS['Language']->getText('plugin_docman', 'item_does_not_belong', array($item->getId(), util_unconvert_htmlspecialchars($group->getPublicName()))));
+        $this->feedback->log('error', sprintf(dgettext('tuleap-docman', 'The item %1$s doesn\'t exist or doesn\'t belong to project %2$s.'), $item->getId(), $group->getPublicName()));
         $this->_setView('SOAP');
     }
 
-    function _dispatch($view, $item, $root, $get_show_view)
+    public function _dispatch($view, $item, $root, $get_show_view)
     {
-
         switch ($view) {
             case 'permissions':
-                if (!$this->userCanManage($item->getId())) {
-                    $this->feedback->log('error', $GLOBALS['Language']->getText('plugin_docman', 'error_perms_perms'));
+                if (! $this->userCanManage($item->getId())) {
+                    $this->feedback->log('error', dgettext('tuleap-docman', 'You do not have sufficient access rights to set permissions for this item.'));
                 } else {
                     $this->action = $view;
                     $this->_setView('');
@@ -86,8 +83,8 @@ class Docman_SOAPController extends Docman_Controller
             case 'appendFileChunk':
             case 'new_version':
             case 'update':
-                if (!$this->userCanWrite($item->getId())) {
-                    $this->feedback->log('error', $GLOBALS['Language']->getText('plugin_docman', 'error_perms_edit'));
+                if (! $this->userCanWrite($item->getId())) {
+                    $this->feedback->log('error', dgettext('tuleap-docman', 'You do not have sufficient access rights to edit this item.'));
                 } else {
                     $this->action = $view;
                     $this->_setView('');
@@ -99,8 +96,8 @@ class Docman_SOAPController extends Docman_Controller
             case 'getTreeInfo':
             case 'getFileContents':
             case 'getFileChunk':
-                if (!$this->userCanRead($item->getId())) {
-                    $this->feedback->log('error', $GLOBALS['Language']->getText('plugin_docman', 'error_perms_view'));
+                if (! $this->userCanRead($item->getId())) {
+                    $this->feedback->log('error', dgettext('tuleap-docman', 'You do not have sufficient access rights to view this item.'));
                 } else {
                     $this->action = $view;
                     $this->_setView('');

@@ -32,17 +32,17 @@ rcs_id('$Id: CreateToc.php,v 1.20 2004/05/11 13:57:46 rurban Exp $');
 
 class WikiPlugin_CreateBib extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("CreateBib");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Automatically create a Bibtex file from linked pages");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -51,36 +51,34 @@ class WikiPlugin_CreateBib extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array( 'pagename'  => '[pagename]', // The page from which the BibTex file is generated
-                      );
+        return [ 'pagename'  => '[pagename]', // The page from which the BibTex file is generated
+                      ];
     }
 
-    function preg_quote($heading)
+    public function preg_quote($heading)
     {
         return str_replace(
-            array("/",".","?","*"),
-            array('\/','\.','\?','\*'),
+            ["/", ".", "?", "*"],
+            ['\/', '\.', '\?', '\*'],
             $heading
         );
     }
 
 
     // Have to include the $starttag and $endtag to the regexps...
-    function extractBibTeX(&$content, $starttag, $endtag)
+    public function extractBibTeX(&$content, $starttag, $endtag)
     {
-        $bib = array();
+        $bib = [];
 
         $start = false;
         $stop = false;
-        for ($i=0; $i<count($content); $i++) {
+        for ($i = 0; $i < count($content); $i++) {
             // $starttag shows when to start
             if (preg_match('/^@/', $content[$i], $match)) {
                 $start = true;
-            }
-            // $endtag shows when to stop
-            elseif (preg_match('/^\}/', $content[$i], $match)) {
+            } elseif (preg_match('/^\}/', $content[$i], $match)) { // $endtag shows when to stop
                 $stop = true;
             }
             if ($start) {
@@ -95,10 +93,10 @@ class WikiPlugin_CreateBib extends WikiPlugin
 
     // Extract article links. Current markup is by * characters...
     // Assume straight list
-    function extractArticles(&$content)
+    public function extractArticles(&$content)
     {
-        $articles = array();
-        for ($i=0; $i<count($content); $i++) {
+        $articles = [];
+        for ($i = 0; $i < count($content); $i++) {
             // Should match "* [WikiPageName] whatever"
             //if (preg_match('/^\s*\*\s+(\[.+\])/',$content[$i],$match))
             if (preg_match('/^\s*\*\s+\[(.+)\]/', $content[$i], $match)) {
@@ -109,12 +107,12 @@ class WikiPlugin_CreateBib extends WikiPlugin
     }
 
 
-    function dumpFile(&$thispage, $filename)
+    public function dumpFile(&$thispage, $filename)
     {
         include_once("lib/loadsave.php");
         $mailified = MailifyPage($thispage);
 
-        $attrib = array('mtime' => $thispage->get('mtime'), 'is_ascii' => 1);
+        $attrib = ['mtime' => $thispage->get('mtime'), 'is_ascii' => 1];
 
         $zip = new ZipWriter("Created by PhpWiki " . PHPWIKI_VERSION, $filename);
         $zip->addRegularFile(
@@ -125,7 +123,7 @@ class WikiPlugin_CreateBib extends WikiPlugin
         $zip->finish();
     }
 
-    function run($dbi, $argstr, $request, $basepage)
+    public function run($dbi, $argstr, $request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
         if ($pagename) {
@@ -133,7 +131,7 @@ class WikiPlugin_CreateBib extends WikiPlugin
             $page = new WikiPageName($pagename, $basepage);
             $pagename = $page->name;
         }
-        if (!$pagename) {
+        if (! $pagename) {
             return $this->error(_("no page specified"));
         }
 
@@ -143,7 +141,7 @@ class WikiPlugin_CreateBib extends WikiPlugin
         $content = $current->getContent();
 
     // Prepare the button to trigger dumping
-        $dump_url = $request->getURLtoSelf(array("file" => "tube.bib"));
+        $dump_url = $request->getURLtoSelf(["file" => "tube.bib"]);
         global $WikiTheme;
         $dump_button = $WikiTheme->makeButton(
             "To File",
@@ -151,10 +149,10 @@ class WikiPlugin_CreateBib extends WikiPlugin
             'foo'
         );
 
-        $html = HTML::div(array('class' => 'bib','align' => 'left'));
+        $html = HTML::div(['class' => 'bib', 'align' => 'left']);
         $html->pushContent($dump_button, ' ');
-        $list = HTML::pre(array('name'=>'biblist','id'=>'biblist',
-        'class' => 'bib'));
+        $list = HTML::pre(['name' => 'biblist','id' => 'biblist',
+        'class' => 'bib']);
 
         // Let's find the subpages
         if ($articles = $this->extractArticles($content)) {
@@ -185,7 +183,7 @@ class WikiPlugin_CreateBib extends WikiPlugin
 
         return $html;
     }
-};
+}
 
 // $Log: CreateBib.php,v $
 // Based on CreateTOC

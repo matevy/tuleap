@@ -18,7 +18,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\Dashboard\Project\ProjectDashboardController;
 use Tuleap\Label\REST\ResourcesInjector;
 use Tuleap\Label\Widget\Dao;
 use Tuleap\Label\Widget\ProjectLabeledItems;
@@ -28,16 +27,16 @@ use Tuleap\Project\Label\RemoveLabel;
 use Tuleap\Request\CurrentPage;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/constants.php';
 
-class labelPlugin extends Plugin // phpcs:ignore
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
+class labelPlugin extends Plugin
 {
     public function __construct($id)
     {
         parent::__construct($id);
         $this->setScope(self::SCOPE_SYSTEM);
 
-        bindtextdomain('tuleap-label', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-label', __DIR__ . '/../site-content');
     }
 
     public function getHooksAndCallbacks()
@@ -59,7 +58,7 @@ class labelPlugin extends Plugin // phpcs:ignore
      */
     public function getPluginInfo()
     {
-        if (!$this->pluginInfo) {
+        if (! $this->pluginInfo) {
             $this->pluginInfo = new Tuleap\Label\Plugin\PluginInfo($this);
         }
         return $this->pluginInfo;
@@ -124,23 +123,24 @@ class labelPlugin extends Plugin // phpcs:ignore
     public function burningParrotGetJavascriptFiles(array $params)
     {
         if ($this->isInProjectDashboard()) {
-            $assets = new IncludeAssets(LABEL_BASE_DIR . '/www/assets', LABEL_BASE_URL . '/assets');
-
-            $params['javascript_files'][] = $assets->getFileURL('configure-widget.js');
+            $params['javascript_files'][] = $this->getAssets()->getFileURL('configure-widget.js');
         }
     }
 
     public function burningParrotGetStylesheets(array $params)
     {
         if ($this->isInProjectDashboard()) {
-            $theme_include_assets = new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/label/themes',
-                '/assets/label/themes'
-            );
-
             $variant = $params['variant'];
-            $params['stylesheets'][] = $theme_include_assets->getFileURL('style-' . $variant->getName() . '.css');
+            $params['stylesheets'][] = $this->getAssets()->getFileURL('style-' . $variant->getName() . '.css');
         }
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/label',
+            '/assets/label'
+        );
     }
 
     private function isInProjectDashboard()

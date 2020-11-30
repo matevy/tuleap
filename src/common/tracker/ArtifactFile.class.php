@@ -21,14 +21,14 @@ class ArtifactFile
      *
      * @var        object    $Artifact.
      */
-    var $Artifact; //object
+    public $Artifact; //object
 
     /**
      * Array of file data
      *
      * @var        array    $data_array
      */
-    var $data_array;
+    public $data_array;
     /**
      * @var string
      */
@@ -45,18 +45,18 @@ class ArtifactFile
      *  @param    array    (all fields from artifact_file_user_vw) OR id from database.
      *  @return bool success.
      */
-    function __construct(&$Artifact, $data = false)
+    public function __construct(&$Artifact, $data = false)
     {
         global $Language;
 
      //was Artifact legit?
-        if (!$Artifact || !is_object($Artifact)) {
-            $this->setError('ArtifactFile: '.$Language->getText('tracker_common_file', 'invalid'));
+        if (! $Artifact || ! is_object($Artifact)) {
+            $this->setError('ArtifactFile: ' . $Language->getText('tracker_common_file', 'invalid'));
             return false;
         }
      //did ArtifactType have an error?
         if ($Artifact->isError()) {
-            $this->setError('ArtifactFile: '.$Artifact->getErrorMessage());
+            $this->setError('ArtifactFile: ' . $Artifact->getErrorMessage());
             return false;
         }
         $this->Artifact = $Artifact;
@@ -65,7 +65,7 @@ class ArtifactFile
                 $this->data_array = $data;
                 return true;
             } else {
-                if (!$this->fetchData($data)) {
+                if (! $this->fetchData($data)) {
                     return false;
                 } else {
                     return true;
@@ -84,44 +84,44 @@ class ArtifactFile
      *    @param    string    Item description.
      *  @return id on success / false on failure.
      */
-    function create($filename, $filetype, $filesize, $bin_data, $description = false, &$changes)
+    public function create($filename, $filetype, $filesize, $bin_data, $description, &$changes)
     {
         global $Language;
 
-        if (!$description) {
-            $description=$Language->getText('global', 'none');
+        if (! $description) {
+            $description = $Language->getText('global', 'none');
         }
         $old_value = $this->Artifact->getAttachedFileNames();
 
      // Some browsers don't supply mime type if they don't know it
-        if (!$filetype) {
+        if (! $filetype) {
          // Let's be on safe side?
             $filetype = 'application/octet-stream';
         }
 
      //    data validation
-        if (!$filename || !$filetype || !$filesize || !$bin_data) {
-            $GLOBALS['Response']->addFeedback('error', '<P>|'.$filename.'|'.$filetype.'|'.$filesize.'|'.$bin_data.'|');
-            $this->setError('ArtifactFile: '.$Language->getText('tracker_common_file', 'name_requ'));
+        if (! $filename || ! $filetype || ! $filesize || ! $bin_data) {
+            $GLOBALS['Response']->addFeedback('error', '<P>|' . $filename . '|' . $filetype . '|' . $filesize . '|' . $bin_data . '|');
+            $this->setError('ArtifactFile: ' . $Language->getText('tracker_common_file', 'name_requ'));
             return false;
         }
 
         if (user_isloggedin()) {
             $userid = UserManager::instance()->getCurrentUser()->getId();
         } else {
-            $userid=100;
+            $userid = 100;
         }
 
-        $res=db_query("INSERT INTO artifact_file
+        $res = db_query("INSERT INTO artifact_file
 			(artifact_id,description,bin_data,filename,filesize,filetype,adddate,submitted_by)
-			VALUES 
-			('". db_ei($this->Artifact->getID()) ."','". db_es($description) ."','','". db_es($filename) ."',
-			'".  db_ei($filesize)  ."','".  db_es($filetype)  ."','". time() ."','".  db_ei($userid)  ."')");
+			VALUES
+			('" . db_ei($this->Artifact->getID()) . "','" . db_es($description) . "','','" . db_es($filename) . "',
+			'" .  db_ei($filesize)  . "','" .  db_es($filetype)  . "','" . time() . "','" .  db_ei($userid)  . "')");
 
-        $id=db_insertid($res, 'artifact_file', 'id');
+        $id = db_insertid($res, 'artifact_file', 'id');
 
-        if (!$res || !$id) {
-            $this->setError('ArtifactFile: '.db_error());
+        if (! $res || ! $id) {
+            $this->setError('ArtifactFile: ' . db_error());
             return false;
         } else {
             $this->clearError();
@@ -134,12 +134,12 @@ class ArtifactFile
             if ($old_value == '') {
                     $new_value = $filename;
             } else {
-                $new_value = $old_value .",".$filename;
+                $new_value = $old_value . "," . $filename;
             }
             $this->Artifact->addHistory('attachment', $old_value, $new_value);
 
             $changes['attach']['href'] = HTTPRequest::instance()->getServerUrl() .
-             "/tracker/download.php?artifact_id=".$this->Artifact->getID()."&id=$id";
+             "/tracker/download.php?artifact_id=" . $this->Artifact->getID() . "&id=$id";
 
             return $id;
         }
@@ -184,16 +184,16 @@ class ArtifactFile
      *
      *    @return bool success.
      */
-    function delete()
+    public function delete()
     {
         global $Language;
 
         $old_value = $this->Artifact->getAttachedFileNames();
-        $sql = "DELETE FROM artifact_file WHERE id=". db_ei($this->getID()) ;
+        $sql = "DELETE FROM artifact_file WHERE id=" . db_ei($this->getID());
      //echo "sql=$sql<br>";
-        $res=db_query($sql);
-        if (!$res || db_affected_rows($res) < 1) {
-            $this->setError('ArtifactFile: '.$Language->getText('tracker_common_file', 'del_err'));
+        $res = db_query($sql);
+        if (! $res || db_affected_rows($res) < 1) {
+            $this->setError('ArtifactFile: ' . $Language->getText('tracker_common_file', 'del_err'));
             return false;
         } else {
                     $this->deleteOnFileSystem();
@@ -234,17 +234,17 @@ class ArtifactFile
      *    @param    int    The file_id.
      *    @return bool success.
      */
-    function fetchData($id)
+    public function fetchData($id)
     {
         global $Language;
 
-        $sql = "SELECT af.id, af.artifact_id, af.description, af.bin_data, af.filename, af.filesize, af.filetype, af.adddate, af.submitted_by, user.user_name, user.realname 
-                FROM artifact_file af, user 
-                WHERE (af.submitted_by = user.user_id) and af.id=". db_ei($id);
+        $sql = "SELECT af.id, af.artifact_id, af.description, af.bin_data, af.filename, af.filesize, af.filetype, af.adddate, af.submitted_by, user.user_name, user.realname
+                FROM artifact_file af, user
+                WHERE (af.submitted_by = user.user_id) and af.id=" . db_ei($id);
      //echo $sql;
-        $res=db_query($sql);
-        if (!$res || db_numrows($res) < 1) {
-            $this->setError('ArtifactFile: '.$Language->getText('tracker_common_file', 'invalid_id'));
+        $res = db_query($sql);
+        if (! $res || db_numrows($res) < 1) {
+            $this->setError('ArtifactFile: ' . $Language->getText('tracker_common_file', 'invalid_id'));
             return false;
         }
         $this->data_array = db_fetch_array($res);
@@ -257,7 +257,7 @@ class ArtifactFile
      *
      *    @return object    Artifact.
      */
-    function getArtifact()
+    public function getArtifact()
     {
         return $this->Artifact;
     }
@@ -267,7 +267,7 @@ class ArtifactFile
      *
      *    @return    int    The id #.
      */
-    function getID()
+    public function getID()
     {
         return $this->data_array['id'];
     }
@@ -277,7 +277,7 @@ class ArtifactFile
      *
      *    @return string filename.
      */
-    function getName()
+    public function getName()
     {
         return $this->data_array['filename'];
     }
@@ -287,7 +287,7 @@ class ArtifactFile
      *
      *    @return string type.
      */
-    function getType()
+    public function getType()
     {
         return $this->data_array['filetype'];
     }
@@ -297,7 +297,7 @@ class ArtifactFile
      *
      *    @return binary.
      */
-    function getData()
+    public function getData()
     {
         return base64_decode($this->data_array['bin_data']);
     }
@@ -307,7 +307,7 @@ class ArtifactFile
      *
      *    @return int size.
      */
-    function getSize()
+    public function getSize()
     {
         return $this->data_array['filesize'];
     }
@@ -317,7 +317,7 @@ class ArtifactFile
      *
      *    @return string description.
      */
-    function getDescription()
+    public function getDescription()
     {
         return $this->data_array['description'];
     }
@@ -327,7 +327,7 @@ class ArtifactFile
      *
      *    @return int unix time.
      */
-    function getDate()
+    public function getDate()
     {
         return $this->data_array['adddate'];
     }
@@ -337,7 +337,7 @@ class ArtifactFile
      *
      *    @return int user_id.
      */
-    function getSubmittedBy()
+    public function getSubmittedBy()
     {
         return $this->data_array['submitted_by'];
     }
@@ -347,7 +347,7 @@ class ArtifactFile
      *
      *    @return    string    name.
      */
-    function getSubmittedRealName()
+    public function getSubmittedRealName()
     {
         return $this->data_array['realname'];
     }
@@ -357,7 +357,7 @@ class ArtifactFile
      *
      *    @return    string    unixname.
      */
-    function getSubmittedUnixName()
+    public function getSubmittedUnixName()
     {
         return $this->data_array['user_name'];
     }

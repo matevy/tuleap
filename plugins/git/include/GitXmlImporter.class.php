@@ -18,6 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Git\Events\XMLImportExternalContentEvent;
 use Tuleap\Git\Permissions\FineGrainedPermissionFactory;
 use Tuleap\Git\Permissions\FineGrainedPermissionSaver;
 use Tuleap\Git\Permissions\FineGrainedUpdater;
@@ -42,7 +43,7 @@ class GitXmlImporter
     public const SERVICE_NAME = 'git';
 
     /**
-     * @var Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
@@ -70,11 +71,6 @@ class GitXmlImporter
      * @var Git_SystemEventManager
      */
     private $system_event_manager;
-
-    /**
-     * @var XML_RNGValidator
-     */
-    private $xml_validator;
 
     /**
      * @var EventManager
@@ -121,11 +117,10 @@ class GitXmlImporter
     private $user_finder;
 
     public function __construct(
-        Logger $logger,
-        GitRepositoryManager   $repository_manager,
-        GitRepositoryFactory   $repository_factory,
-        Git_Backend_Gitolite   $gitolite_backend,
-        XML_RNGValidator $rng_validator,
+        \Psr\Log\LoggerInterface $logger,
+        GitRepositoryManager $repository_manager,
+        GitRepositoryFactory $repository_factory,
+        Git_Backend_Gitolite $gitolite_backend,
         Git_SystemEventManager $system_event_manager,
         PermissionsManager $permissions_manager,
         EventManager $event_manager,
@@ -143,7 +138,6 @@ class GitXmlImporter
         $this->repository_manager            = $repository_manager;
         $this->repository_factory            = $repository_factory;
         $this->gitolite_backend              = $gitolite_backend;
-        $this->xml_validator                 = $rng_validator;
         $this->system_event_manager          = $system_event_manager;
         $this->event_manager                 = $event_manager;
         $this->fine_grained_updater          = $fine_grained_updater;
@@ -172,7 +166,7 @@ class GitXmlImporter
         $extraction_path
     ) {
         $xml_git = $xml_input->git;
-        if (!$xml_git) {
+        if (! $xml_git) {
             $this->logger->debug('No git node found into xml.');
             return true;
         }
@@ -185,14 +179,26 @@ class GitXmlImporter
         }
 
         $this->importAdmins($project, $xml_git->{"ugroups-admin"});
+        $this->importExternalContent($project, $xml_git);
 
         return true;
     }
 
+    private function importExternalContent(Project $project, SimpleXMLElement $xml_git): void
+    {
+        $this->event_manager->processEvent(
+            new XMLImportExternalContentEvent(
+                $project,
+                $xml_git,
+                $this->logger
+            )
+        );
+    }
+
     private function importAdmins(Project $project, SimpleXMLElement $admins_xmlnode)
     {
-        $ugroup_ids = array();
-        if (!empty($admins_xmlnode)) {
+        $ugroup_ids = [];
+        if (! empty($admins_xmlnode)) {
             $this->logger->debug($admins_xmlnode->count() . ' ugroups as admins.');
             $ugroup_ids = $this->xml_ugroup_retriever->getUgroupIdsForPermissionNode($project, $admins_xmlnode);
         }
@@ -214,7 +220,7 @@ class GitXmlImporter
         $this->logger->debug("Importing {$repository_info['name']} using {$repository_info['bundle-path']}");
         $description = isset($repository_info['description']) ? (string) $repository_info['description'] : GitRepository::DEFAULT_DESCRIPTION;
         $repository = $this->repository_factory->buildRepository($project, $repository_info['name'], $creator, $this->gitolite_backend, $description);
-        if (trim($repository_info['bundle-path']) !== '') {
+        if (trim((string) $repository_info['bundle-path']) !== '') {
             $this->repository_manager->createFromBundle(
                 $repository,
                 $this->gitolite_backend,
@@ -222,7 +228,7 @@ class GitXmlImporter
                 (string) $repository_info['bundle-path']
             );
         } else {
-            $this->repository_manager->create($repository, $this->gitolite_backend, array());
+            $this->repository_manager->create($repository, $this->gitolite_backend, []);
         }
         if ($this->hasLegacyPermissions($repository_xmlnode)) {
             $this->importPermissions($project, $repository_xmlnode, $repository);
@@ -232,7 +238,7 @@ class GitXmlImporter
         }
 
         $this->importLastPushDate($repository_xmlnode, $repository);
-        $this->system_event_manager->queueProjectsConfigurationUpdate(array($project->getGroupId()));
+        $this->system_event_manager->queueProjectsConfigurationUpdate([$project->getGroupId()]);
     }
 
     private function hasLegacyPermissions(SimpleXMLElement $repository_xmlnode)
@@ -306,7 +312,7 @@ class GitXmlImporter
                 $this->regexp_fine_grained_enabler->enableForRepository($repository);
             }
         } else {
-            $this->logger->warn('Regexp permissions disabled at site level');
+            $this->logger->warning('Regexp permissions disabled at site level');
         }
 
         $this->importPatterns($repository, $fine_grained_xmlnode);
@@ -326,14 +332,14 @@ class GitXmlImporter
             );
 
             if (! $permission_representation) {
-                $this->logger->warn("The $pattern_type pattern $pattern_value is not valid, skipping.");
+                $this->logger->warning("The $pattern_type pattern $pattern_value is not valid, skipping.");
                 continue;
             } elseif ($pattern_type === self::BRANCH_PATTERN) {
                 $this->fine_grained_saver->saveBranchPermission($permission_representation);
             } elseif ($pattern_type === self::TAG_PATTERN) {
                 $this->fine_grained_saver->saveTagPermission($permission_representation);
             } else {
-                $this->logger->warn("Unknown type $pattern_type, skipping.");
+                $this->logger->warning("Unknown type $pattern_type, skipping.");
                 continue;
             }
         }
@@ -347,7 +353,7 @@ class GitXmlImporter
     ) {
         $ugroup_ids = $this->xml_ugroup_retriever->getUgroupIdsForPermissionNode($project, $permission_xmlnode);
 
-        if (!empty($ugroup_ids)) {
+        if (! empty($ugroup_ids)) {
             $this->permission_manager->savePermissions($project, $repository->getId(), $permission_type, $ugroup_ids);
         }
     }
@@ -370,16 +376,16 @@ class GitXmlImporter
     ) {
         $this->event_manager->processEvent(
             Event::IMPORT_COMPAT_REF_XML,
-            array(
+            [
                 'logger'         => $this->logger,
-                'created_refs'   => array(
+                'created_refs'   => [
                     'repository' => $repository,
-                ),
+                ],
                 'service_name'   => self::SERVICE_NAME,
                 'xml_content'    => $xml_references,
                 'project'        => $project,
                 'configuration'  => $configuration,
-            )
+            ]
         );
     }
 
@@ -394,8 +400,8 @@ class GitXmlImporter
         $this->git_dao->logGitPush(
             $repository->getId(),
             $this->user_finder->getUser($push_informations->user)->getId(),
-            (int)$push_informations['push_date'],
-            (int)$push_informations['commits_number'],
+            (int) $push_informations['push_date'],
+            (int) $push_informations['commits_number'],
             $push_informations['refname'],
             $push_informations['operation_type'],
             $push_informations['refname_type']

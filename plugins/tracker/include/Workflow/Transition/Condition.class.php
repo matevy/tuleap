@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,14 +18,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Workflow\Transition\Condition\Visitor;
 
 /**
  * Condition on a transition
  */
+
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 abstract class Workflow_Transition_Condition
 {
-
     /** @var string */
     public $identifier = 'generic_condition';
 
@@ -53,18 +55,10 @@ abstract class Workflow_Transition_Condition
     abstract public function exportToXml(SimpleXMLElement $root, $xmlMapping);
 
     /**
-     * Get the html code needed to display the condition in workflow admin
-     *
-     * @return string html
-     */
-    abstract public function fetch();
-
-    /**
      * Validate the condition
      *
-     * @return bool
      */
-    abstract public function validate($fields_data, Tracker_Artifact $artifact, $comment_body);
+    abstract public function validate($fields_data, Artifact $artifact, string $comment_body, PFUser $current_user): bool;
 
     public function getTransition()
     {

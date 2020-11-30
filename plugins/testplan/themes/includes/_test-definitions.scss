@@ -1,0 +1,177 @@
+/**
+ * Copyright (c) Enalean, 2020 - Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+@use 'media-query-definitions' as media-query;
+@use '../../../../src/themes/tlp/src/scss/components/tooltips-mixins' as tooltip with (
+    $tlp-tooltip-background: $tlp-theme-sidebar-background-color
+);
+
+.test-plan-list-of-test-definitions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: $tlp-small-spacing;
+    border: 1px solid $tlp-ui-border-normal;
+    border-top: 0;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    background: $tlp-theme-color-dimmed-background;
+}
+
+.test-plan-list-of-test-definitions-empty-text {
+    margin: 24px 0;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 20px;
+}
+
+.test-plan-test-definition-skeleton {
+    display: flex;
+    width: 100%;
+    min-height: inherit;
+    margin: 0 0 $tlp-small-spacing;
+    padding: $tlp-medium-spacing $tlp-small-spacing;
+}
+
+.test-plan-test-definition-skeleton-xref {
+    width: 70px;
+    margin: 0 $tlp-small-spacing 0 0;
+}
+
+.test-plan-test-definition-skeleton-title {
+    width: 300px;
+}
+
+.test-plan-test-definition-card {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0 0 $tlp-small-spacing;
+    padding: $tlp-small-spacing;
+    transition: border-color 75ms ease-in-out, background-color 75ms ease-in-out;
+
+    &:last-of-type {
+        margin: 0;
+    }
+
+    &.test-plan-test-definition-is-just-refreshed {
+        animation: pulse-test-definition 500ms ease-in-out;
+        border-color: $tlp-ui-success;
+        background: mix($tlp-ui-white, $tlp-ui-success, 90%);
+    }
+}
+
+.test-plan-test-definition-xref-title {
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.test-plan-test-definition-xref {
+    margin: 0 4px 0 0;
+    color: $tlp-ui-dimmed;
+    font-size: 12px;
+
+    &:hover {
+        opacity: .7;
+        text-decoration: none;
+    }
+}
+
+.test-plan-test-definition-card-category-status {
+    display: flex;
+}
+
+.test-plan-test-definition-category {
+    align-self: center;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: $tlp-theme-color-hover-background;
+    color: $tlp-theme-color;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+}
+
+.test-plan-test-definition-icons {
+    flex: 0 0 auto;
+    min-width: 43px;
+    margin: 2px 0 0 $tlp-small-spacing;
+    text-align: end;
+}
+
+.test-plan-test-definition-icon-automated-tests:last-child {
+    margin: 0 26px 0 0;
+}
+
+.test-plan-test-definition-icon-automated-tests.test-plan-test-definition-icon-status-notrun,
+.test-plan-test-definition-icon-automated-tests:last-child {
+    opacity: .5;
+    color: $tlp-ui-dimmed;
+}
+
+.test-plan-test-definition-icon-status-passed,
+.test-plan-test-definition-icon-status-failed,
+.test-plan-test-definition-icon-status-blocked,
+.test-plan-test-definition-icon-status-notrun,
+.test-plan-test-definition-icon-status-notplanned {
+    margin: 0 0 0 2px;
+}
+
+.test-plan-test-definition-icon-status-passed {
+    color: $tlp-ui-success;
+}
+
+.test-plan-test-definition-icon-status-failed {
+    color: $tlp-ui-danger;
+}
+
+.test-plan-test-definition-icon-status-blocked {
+    color: $tlp-ui-info;
+}
+
+.test-plan-test-definition-icon-status-notrun {
+    color: $tlp-ui-dimmed;
+}
+
+.test-plan-test-definition-icon-status-notplanned {
+    color: $tlp-ui-dimmed;
+}
+
+.test-plan-test-definition-test-status-tooltip-position {
+    @include tooltip.tlp-tooltip-right();
+
+    @include media-query.not-large-screen() {
+        @include tooltip.tlp-tooltip-left();
+    }
+}
+
+@keyframes pulse-test-definition {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}

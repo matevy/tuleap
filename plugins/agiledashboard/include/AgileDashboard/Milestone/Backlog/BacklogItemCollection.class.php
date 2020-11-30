@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2013. All rights reserved.
+ * Copyright Enalean (c) 2013-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -24,14 +24,13 @@
 
 class AgileDashboard_Milestone_Backlog_BacklogItemCollection implements
     AgileDashboard_Milestone_Backlog_IBacklogItemCollection,
-    Iterator,
     Countable
 {
     /** @var AgileDashboard_Milestone_Backlog_IBacklogItem[] */
-    private $rows = array();
+    private $rows = [];
 
     /** @var int[] */
-    private $index = array();
+    private $index = [];
 
     /** @var string */
     private $parent_item_name = '';
@@ -72,7 +71,7 @@ class AgileDashboard_Milestone_Backlog_BacklogItemCollection implements
 
     public function next()
     {
-        return next($this->rows);
+        next($this->rows);
     }
 
     public function rewind()

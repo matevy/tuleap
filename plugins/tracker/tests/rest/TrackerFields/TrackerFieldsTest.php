@@ -20,7 +20,7 @@
 
 namespace Tuleap\Tracker\Tests\REST\TrackerFields;
 
-require_once __DIR__ .'/../TrackerBase.php';
+require_once __DIR__ . '/../TrackerBase.php';
 
 use Guzzle\Http\Client;
 use Tuleap\Tracker\Tests\REST\TrackerBase;
@@ -38,7 +38,7 @@ class TrackerFieldsTest extends TrackerBase
         $field_id = $this->getStaticSelectboxFieldId();
 
         $response = $this->getResponse($this->client->options("tracker_fields/$field_id"));
-        $this->assertEquals(array('OPTIONS', 'PATCH'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(['OPTIONS', 'PATCH'], $response->getHeader('Allow')->normalize()->toArray());
     }
 
     public function testPATCHAddsNewValuesInSelectboxBindToStaticValues()
@@ -196,7 +196,7 @@ class TrackerFieldsTest extends TrackerBase
         $artifact_id = $response->json()['id'];
 
         $response = $this->getResponse(
-            $this->client->get('artifacts/'. $artifact_id)
+            $this->client->get('artifacts/' . $artifact_id)
         );
         $this->assertEquals(200, $response->getStatusCode());
         foreach ($response->json()['values'] as $field) {

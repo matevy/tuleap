@@ -20,11 +20,11 @@
  */
 
 
-$G_SESSION=array();
+$G_SESSION = [];
 
 function session_make_url($loc)
 {
-    return HTTPRequest::instance()->getServerUrl(). $loc;
+    return HTTPRequest::instance()->getServerUrl() . $loc;
 }
 
 function session_redirect($loc)
@@ -47,12 +47,12 @@ function session_require($req)
     if (isset($req['group']) && $req['group']) {
         $db_escaped_user_id = db_ei(UserManager::instance()->getCurrentUser()->getId());
         $query = "SELECT user_id FROM user_group WHERE user_id=" . $db_escaped_user_id
-        . " AND group_id=".db_ei($req['group']);
+        . " AND group_id=" . db_ei($req['group']);
         if (isset($req['admin_flags']) && $req['admin_flags']) {
-            $query .= " AND admin_flags = '".db_escape_string($req['admin_flags'])."'";
+            $query .= " AND admin_flags = '" . db_escape_string($req['admin_flags']) . "'";
         }
 
-        if ((db_numrows(db_query($query)) < 1) || !$req['group']) {
+        if ((db_numrows(db_query($query)) < 1) || ! $req['group']) {
             exit_error($Language->getText('include_session', 'insufficient_g_access'), $Language->getText('include_session', 'no_perm_to_view'));
         }
     } elseif (isset($req['user']) && $req['user']) {
@@ -60,7 +60,7 @@ function session_require($req)
             exit_error($Language->getText('include_session', 'insufficient_u_access'), $Language->getText('include_session', 'no_perm_to_view'));
         }
     } elseif (isset($req['isloggedin']) && $req['isloggedin']) {
-        if (!user_isloggedin()) {
+        if (! user_isloggedin()) {
             exit_error($Language->getText('include_session', 'required_login'), $Language->getText('include_session', 'login'));
         }
     } else {

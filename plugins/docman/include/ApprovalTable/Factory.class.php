@@ -36,11 +36,11 @@
  */
 abstract class Docman_ApprovalTableFactory
 {
-    var $item;
-    var $table;
-    var $customizable;
+    public $item;
+    public $table;
+    public $customizable;
 
-    function __construct(Docman_Item $item)
+    public function __construct(Docman_Item $item)
     {
         $this->item = $item;
         $this->table = null;
@@ -50,7 +50,7 @@ abstract class Docman_ApprovalTableFactory
     /**
      * Return the ApprovalTableReviewerFactory that correspond to the item.
      */
-    static function getReviewerFactoryFromItem($item)
+    public static function getReviewerFactoryFromItem($item)
     {
         $appTableFactory = Docman_ApprovalTableFactoriesFactory::getFromItem($item);
         if ($appTableFactory !== null) {
@@ -75,7 +75,7 @@ abstract class Docman_ApprovalTableFactory
     /**
      * Create a new empty approbal table in database.
      */
-    function newTableEmpty($userId)
+    public function newTableEmpty($userId)
     {
         $table = $this->newTable();
         $this->_updateTableWithLastId($table);
@@ -95,7 +95,7 @@ abstract class Docman_ApprovalTableFactory
     /**
      * Create a new table object based on $row content.
      */
-    function createTableFromRow($row)
+    public function createTableFromRow($row)
     {
         $table = $this->newTable();
         $table->initFromRow($row);
@@ -111,7 +111,7 @@ abstract class Docman_ApprovalTableFactory
      * Return true if their is an approval table for the item the approval
      * table is based on.
      */
-    function tableExistsForItem()
+    public function tableExistsForItem()
     {
         return ($this->getTable() !== null);
     }
@@ -119,7 +119,7 @@ abstract class Docman_ApprovalTableFactory
     /**
      * Delete the approval table and all the reviewers that belong to.
      */
-    function deleteTable()
+    public function deleteTable()
     {
         $deleted = false;
         $table = $this->getTable();
@@ -159,7 +159,7 @@ abstract class Docman_ApprovalTableFactory
      * - notificationOccurence
      * - description
      */
-    function updateTable($status, $notification, $notificationOccurence, $description, $owner)
+    public function updateTable($status, $notification, $notificationOccurence, $description, $owner)
     {
         $table = $this->getTable();
         if ($table !== null) {
@@ -177,7 +177,7 @@ abstract class Docman_ApprovalTableFactory
      * Return an ApprovalTable object. If the parameter is 'true' (default),
      * it appends the list of reviewers to the table.
      */
-    function getTable($withReviewers = true)
+    public function getTable($withReviewers = true)
     {
         if ($this->table === null) {
             $this->table = $this->_getTable();
@@ -195,17 +195,37 @@ abstract class Docman_ApprovalTableFactory
     /**
      * @return bool
      */
-    abstract function userAccessedSinceLastUpdate($user);
+    abstract public function userAccessedSinceLastUpdate($user);
 
 
-    function getReviewStateName($state)
+    public function getReviewStateName($state)
     {
-        return $GLOBALS['Language']->getText('plugin_docman', 'approval_review_state_'.$state);
+        switch ($state) {
+            case PLUGIN_DOCMAN_APPROVAL_STATE_NOTYET:
+                return dgettext('tuleap-docman', 'Not Yet');
+            case PLUGIN_DOCMAN_APPROVAL_STATE_APPROVED:
+                return dgettext('tuleap-docman', 'Approved');
+            case PLUGIN_DOCMAN_APPROVAL_STATE_REJECTED:
+                return dgettext('tuleap-docman', 'Rejected');
+            case PLUGIN_DOCMAN_APPROVAL_STATE_COMMENTED:
+                return dgettext('tuleap-docman', 'Comment only');
+            case PLUGIN_DOCMAN_APPROVAL_STATE_DECLINED:
+                return dgettext('tuleap-docman', 'Will not review');
+        }
+        return '';
     }
 
-    function getNotificationTypeName($type)
+    public function getNotificationTypeName($type)
     {
-        return $GLOBALS['Language']->getText('plugin_docman', 'details_approval_notif_'.$type);
+        switch ($type) {
+            case PLUGIN_DOCMAN_APPROVAL_TABLE_DISABLED:
+                return dgettext('tuleap-docman', 'Disabled');
+            case PLUGIN_DOCMAN_APPROVAL_TABLE_ENABLED:
+                return dgettext('tuleap-docman', 'All at once');
+            case PLUGIN_DOCMAN_APPROVAL_TABLE_CLOSED:
+                return dgettext('tuleap-docman', 'Sequential');
+        }
+        return '';
     }
 
     // Class accessor
@@ -214,7 +234,7 @@ abstract class Docman_ApprovalTableFactory
         return new Docman_ApprovalTableItemDao(CodendiDataAccess::instance());
     }
 
-    function _getReviewerFactory($table, $item)
+    public function _getReviewerFactory($table, $item)
     {
         return new Docman_ApprovalTableReviewerFactory($table, $item);
     }

@@ -22,7 +22,7 @@ import VueRouter from "vue-router";
 import { shallowMount } from "@vue/test-utils";
 import FolderCellTitle from "./FolderCellTitle.vue";
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import * as abort_current_uploads from "../../../helpers/abort-current-uploads.js";
 
 describe("FolderCellTitle", () => {
@@ -32,20 +32,20 @@ describe("FolderCellTitle", () => {
             routes: [
                 {
                     path: "/folder/42",
-                    name: "folder"
-                }
-            ]
+                    name: "folder",
+                },
+            ],
         });
 
         item = {
             id: 42,
-            title: "my folder name"
+            title: "my folder name",
         };
 
         store_options = {
             state: {
-                files_uploads_list: []
-            }
+                files_uploads_list: [],
+            },
         };
         store = createStoreMock(store_options);
 
@@ -53,9 +53,9 @@ describe("FolderCellTitle", () => {
             localVue,
             router,
             propsData: {
-                item
+                item,
             },
-            mocks: { $store: store }
+            mocks: { $store: store },
         };
     });
     it(`Given folder is open
@@ -64,14 +64,15 @@ describe("FolderCellTitle", () => {
         item.is_expanded = true;
         const wrapper = shallowMount(FolderCellTitle, component_options);
         wrapper.setData({ is_closed: false });
+        await Vue.nextTick();
 
         expect(store.commit).toHaveBeenCalledWith("initializeFolderProperties", item);
         expect(store.dispatch).toHaveBeenCalledWith("getSubfolderContent", item.id);
         expect(store.commit).toHaveBeenCalledWith("unfoldFolderContent", item.id);
         await Vue.nextTick();
-        const toggle = wrapper.find("[data-test=toggle]");
+        const toggle = wrapper.get("[data-test=toggle]");
         expect(toggle.classes()).toContain("fa-caret-down");
-        expect(wrapper.find("[data-test=document-folder-icon-open]").classes()).toContain(
+        expect(wrapper.get("[data-test=document-folder-icon-open]").classes()).toContain(
             "fa-folder-open"
         );
 
@@ -87,7 +88,7 @@ describe("FolderCellTitle", () => {
 
         expect(store.commit).toHaveBeenCalledWith("initializeFolderProperties", item);
         await Vue.nextTick();
-        const toggle = wrapper.find("[data-test=toggle]");
+        const toggle = wrapper.get("[data-test=toggle]");
         expect(toggle.classes()).toContain("fa-caret-right");
 
         expect(wrapper.vm.is_loading).toBeFalsy();
@@ -101,20 +102,20 @@ describe("FolderCellTitle", () => {
                 routes: [
                     {
                         path: "/folder/42",
-                        name: "folder"
-                    }
-                ]
+                        name: "folder",
+                    },
+                ],
             });
 
             item = {
                 id: 42,
-                title: "my folder name"
+                title: "my folder name",
             };
 
             store_options = {
                 state: {
-                    files_uploads_list: []
-                }
+                    files_uploads_list: [],
+                },
             };
 
             store = createStoreMock(store_options);
@@ -123,9 +124,9 @@ describe("FolderCellTitle", () => {
                 localVue,
                 router,
                 propsData: {
-                    item
+                    item,
                 },
-                mocks: { $store: store }
+                mocks: { $store: store },
             };
         });
 
@@ -134,12 +135,13 @@ describe("FolderCellTitle", () => {
         Then its should open it and load its children, the user preferences is stored in backend`, async () => {
             item.is_expanded = true;
             const wrapper = shallowMount(FolderCellTitle, component_options);
-            wrapper.find("[data-test=toggle]").trigger("click");
+            wrapper.get("[data-test=toggle]").trigger("click");
 
             expect(store.commit).toHaveBeenCalledWith("initializeFolderProperties", item);
             await Vue.nextTick();
-            const toggle = wrapper.find("[data-test=toggle]");
+            const toggle = wrapper.get("[data-test=toggle]");
             toggle.trigger("click");
+            await Vue.nextTick();
             expect(toggle.classes()).toContain("fa-caret-down");
 
             expect(wrapper.vm.is_loading).toBeFalsy();
@@ -148,11 +150,11 @@ describe("FolderCellTitle", () => {
             expect(store.commit).toHaveBeenCalledWith("unfoldFolderContent", item.id);
             expect(store.commit).toHaveBeenCalledWith("toggleCollapsedFolderHasUploadingContent", [
                 item,
-                false
+                false,
             ]);
             expect(store.dispatch).toHaveBeenCalledWith("setUserPreferenciesForFolder", [
                 item.id,
-                false
+                false,
             ]);
         });
 
@@ -161,20 +163,20 @@ describe("FolderCellTitle", () => {
         Then it should close it and store the new user preferences in backend`, async () => {
             item.is_expanded = true;
             const wrapper = shallowMount(FolderCellTitle, component_options);
-            wrapper.find("[data-test=toggle]").trigger("click");
+            wrapper.get("[data-test=toggle]").trigger("click");
 
             await Vue.nextTick();
             expect(store.commit).toHaveBeenCalledWith("initializeFolderProperties", item);
-            const toggle = wrapper.find("[data-test=toggle]");
+            const toggle = wrapper.get("[data-test=toggle]");
             expect(toggle.classes()).toContain("fa-caret-right");
             expect(store.commit).toHaveBeenCalledWith("foldFolderContent", item.id);
             expect(store.commit).toHaveBeenCalledWith("toggleCollapsedFolderHasUploadingContent", [
                 item,
-                undefined
+                undefined,
             ]);
             expect(store.dispatch).toHaveBeenCalledWith("setUserPreferenciesForFolder", [
                 item.id,
-                true
+                true,
             ]);
         });
 
@@ -184,10 +186,10 @@ describe("FolderCellTitle", () => {
             item.is_expanded = false;
             const wrapper = shallowMount(FolderCellTitle, component_options);
             wrapper.setData({ have_children_been_loaded: true });
-            wrapper.find("[data-test=toggle]").trigger("click");
+            wrapper.get("[data-test=toggle]").trigger("click");
 
             await Vue.nextTick();
-            const toggle = wrapper.find("[data-test=toggle]");
+            const toggle = wrapper.get("[data-test=toggle]");
             expect(toggle.classes()).toContain("fa-caret-down");
             expect(store.dispatch).not.toHaveBeenCalledWith(
                 "getSubfolderContent",
@@ -203,21 +205,21 @@ describe("FolderCellTitle", () => {
                 routes: [
                     {
                         path: "/folder/42",
-                        name: "folder"
-                    }
-                ]
+                        name: "folder",
+                    },
+                ],
             });
 
             item = {
                 id: 42,
                 title: "my folder name",
-                is_expanded: true
+                is_expanded: true,
             };
 
             store_options = {
                 state: {
-                    files_uploads_list: [{ parent_id: 42, progress: 34 }]
-                }
+                    files_uploads_list: [{ parent_id: 42, progress: 34 }],
+                },
             };
 
             store = createStoreMock(store_options);
@@ -226,9 +228,9 @@ describe("FolderCellTitle", () => {
                 localVue,
                 router,
                 propsData: {
-                    item
+                    item,
                 },
-                mocks: { $store: store }
+                mocks: { $store: store },
             };
         });
 
@@ -236,20 +238,20 @@ describe("FolderCellTitle", () => {
         When we toggle it
         Then we should store that folder is collapsed with uploading content`, async () => {
             const wrapper = shallowMount(FolderCellTitle, component_options);
-            wrapper.find("[data-test=toggle]").trigger("click");
+            wrapper.get("[data-test=toggle]").trigger("click");
 
             await Vue.nextTick();
             expect(store.commit).toHaveBeenCalledWith("initializeFolderProperties", item);
-            const toggle = wrapper.find("[data-test=toggle]");
+            const toggle = wrapper.get("[data-test=toggle]");
             expect(toggle.classes()).toContain("fa-caret-right");
             expect(store.commit).toHaveBeenCalledWith("foldFolderContent", item.id);
             expect(store.commit).toHaveBeenCalledWith("toggleCollapsedFolderHasUploadingContent", [
                 item,
-                { parent_id: 42, progress: 34 }
+                { parent_id: 42, progress: 34 },
             ]);
             expect(store.dispatch).toHaveBeenCalledWith("setUserPreferenciesForFolder", [
                 item.id,
-                true
+                true,
             ]);
         });
     });
@@ -261,19 +263,19 @@ describe("FolderCellTitle", () => {
                 routes: [
                     {
                         path: "/folder/42",
-                        name: "folder"
-                    }
-                ]
+                        name: "folder",
+                    },
+                ],
             });
 
             item = {
                 id: 42,
                 title: "my folder name",
-                is_expanded: true
+                is_expanded: true,
             };
 
             store_options = {
-                state: {}
+                state: {},
             };
 
             store = createStoreMock(store_options);
@@ -282,9 +284,9 @@ describe("FolderCellTitle", () => {
                 localVue,
                 router,
                 propsData: {
-                    item
+                    item,
                 },
-                mocks: { $store: store }
+                mocks: { $store: store },
             };
 
             abortCurrentUploads = jest.spyOn(abort_current_uploads, "abortCurrentUploads");
@@ -295,7 +297,7 @@ describe("FolderCellTitle", () => {
             store.getters.is_uploading = true;
             abortCurrentUploads.mockReturnValue(false);
             const wrapper = shallowMount(FolderCellTitle, component_options);
-            wrapper.find("[data-test=document-go-to-folder-link]").trigger("click");
+            wrapper.get("[data-test=document-go-to-folder-link]").trigger("click");
 
             expect(store.commit).not.toHaveBeenCalledWith("appendFolderToAscendantHierarchy");
         });
@@ -305,7 +307,7 @@ describe("FolderCellTitle", () => {
             store.getters.is_uploading = false;
             abortCurrentUploads.mockReturnValue(false);
             const wrapper = shallowMount(FolderCellTitle, component_options);
-            wrapper.find("[data-test=document-go-to-folder-link]").trigger("click");
+            wrapper.get("[data-test=document-go-to-folder-link]").trigger("click");
 
             expect(store.commit).toHaveBeenCalledWith("appendFolderToAscendantHierarchy", item);
         });

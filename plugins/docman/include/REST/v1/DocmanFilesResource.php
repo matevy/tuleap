@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1;
 
@@ -179,7 +179,7 @@ class DocmanFilesResource extends AuthenticatedResource
      * @throws RestException 404
      */
 
-    public function patch(int $id, DocmanPATCHItemRepresentation $representation) : void
+    public function patch(int $id, DocmanPATCHItemRepresentation $representation): void
     {
         $this->checkAccess();
         $this->setHeaders();
@@ -221,7 +221,7 @@ class DocmanFilesResource extends AuthenticatedResource
      * @throws I18NRestException 403
      * @throws RestException 404
      */
-    public function delete(int $id) : void
+    public function delete(int $id): void
     {
         $this->checkAccess();
         $this->setHeaders();
@@ -273,7 +273,6 @@ class DocmanFilesResource extends AuthenticatedResource
      * @param int                                 $id             Id of the file
      * @param DocmanFileVersionPOSTRepresentation $representation {@from body}
      *
-     * @return CreatedItemFilePropertiesRepresentation
      *
      * @status 201
      * @throws RestException 400
@@ -296,9 +295,9 @@ class DocmanFilesResource extends AuthenticatedResource
         return $this->createNewFileVersion(
             $representation,
             $item_request,
-            (int)$item->getStatus(),
-            (int)$item->getObsolescenceDate(),
-            (string)$item->getTitle()
+            (int) $item->getStatus(),
+            (int) $item->getObsolescenceDate(),
+            (string) $item->getTitle()
         );
     }
 
@@ -329,7 +328,6 @@ class DocmanFilesResource extends AuthenticatedResource
         int $id,
         PUTMetadataRepresentation $representation
     ): void {
-
         $this->checkAccess();
         $this->setMetadataHeaders();
 
@@ -356,7 +354,7 @@ class DocmanFilesResource extends AuthenticatedResource
     /**
      * @url OPTIONS {id}/permissions
      */
-    public function optionsPermissions(int $id) : void
+    public function optionsPermissions(int $id): void
     {
         Header::allowOptionsPost();
     }
@@ -374,7 +372,7 @@ class DocmanFilesResource extends AuthenticatedResource
      *
      * @throws RestException 400
      */
-    public function putPermissions(int $id, DocmanItemPermissionsForGroupsSetRepresentation $representation) : void
+    public function putPermissions(int $id, DocmanItemPermissionsForGroupsSetRepresentation $representation): void
     {
         $this->checkAccess();
         $this->optionsPermissions($id);
@@ -464,9 +462,6 @@ class DocmanFilesResource extends AuthenticatedResource
         );
     }
 
-    /**
-     * @param \Project $project
-     */
     private function addAllEvent(\Project $project): void
     {
         $event_adder = $this->getDocmanItemsEventAdder();
@@ -475,7 +470,6 @@ class DocmanFilesResource extends AuthenticatedResource
     }
 
     /**
-     * @return CreatedItemFilePropertiesRepresentation
      * @throws I18NRestException
      * @throws RestException
      */

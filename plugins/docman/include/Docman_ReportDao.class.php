@@ -23,38 +23,38 @@
 class Docman_ReportDao extends DataAccessObject
 {
 
-    function searchById($id)
+    public function searchById($id)
     {
         $sql = sprintf(
-            'SELECT *'.
-                       ' FROM plugin_docman_report'.
+            'SELECT *' .
+                       ' FROM plugin_docman_report' .
                        ' WHERE report_id = %d',
             $id
         );
         return $this->retrieve($sql);
     }
 
-    function searchProjectReportByGroupId($id)
+    public function searchProjectReportByGroupId($id)
     {
         $sql = sprintf(
-            'SELECT *'.
-                       ' FROM plugin_docman_report'.
-                       ' WHERE group_id = %d'.
-                       ' AND scope = "P"'.
+            'SELECT *' .
+                       ' FROM plugin_docman_report' .
+                       ' WHERE group_id = %d' .
+                       ' AND scope = "P"' .
                        ' ORDER BY name',
             $id
         );
         return $this->retrieve($sql);
     }
 
-    function searchPersonalReportByUserId($groupId, $userId)
+    public function searchPersonalReportByUserId($groupId, $userId)
     {
         $sql = sprintf(
-            'SELECT *'.
-                       ' FROM plugin_docman_report'.
-                       ' WHERE group_id = %d'.
-                       ' AND user_id = %d'.
-                       ' AND scope = "I"'.
+            'SELECT *' .
+                       ' FROM plugin_docman_report' .
+                       ' WHERE group_id = %d' .
+                       ' AND user_id = %d' .
+                       ' AND scope = "I"' .
                        ' ORDER BY name',
             $groupId,
             $userId
@@ -62,28 +62,28 @@ class Docman_ReportDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function searchItemsInReports($groupId, $reportId = null)
+    public function searchItemsInReports($groupId, $reportId = null)
     {
-        $sql = 'SELECT i.*'.
-            ' FROM plugin_docman_report r'.
-            ' JOIN plugin_docman_item i ON (i.item_id = r.item_id)'.
-            ' WHERE r.group_id = '.$this->da->escapeInt($groupId).
-            ' AND r.item_id != 0 '.
-            ' AND r.item_id IS NOT NULL '.
-            ' AND '.Docman_ItemDao::getCommonExcludeStmt('i');
+        $sql = 'SELECT i.*' .
+            ' FROM plugin_docman_report r' .
+            ' JOIN plugin_docman_item i ON (i.item_id = r.item_id)' .
+            ' WHERE r.group_id = ' . $this->da->escapeInt($groupId) .
+            ' AND r.item_id != 0 ' .
+            ' AND r.item_id IS NOT NULL ' .
+            ' AND ' . Docman_ItemDao::getCommonExcludeStmt('i');
         if ($reportId !== null) {
-            $sql .= ' AND r.report_id = '.$this->da->escapeInt($reportId);
+            $sql .= ' AND r.report_id = ' . $this->da->escapeInt($reportId);
         }
         return $this->retrieve($sql);
     }
 
 
-    function create($name, $title, $groupId, $userId, $itemId, $scope, $isDefault, $advancedSearch, $description, $image)
+    public function create($name, $title, $groupId, $userId, $itemId, $scope, $isDefault, $advancedSearch, $description, $image)
     {
         $sql = sprintf(
-            'INSERT INTO plugin_docman_report'.
-                       ' (name, title, group_id, user_id, item_id, scope, is_default, advanced_search, description, image)'.
-                       ' VALUES '.
+            'INSERT INTO plugin_docman_report' .
+                       ' (name, title, group_id, user_id, item_id, scope, is_default, advanced_search, description, image)' .
+                       ' VALUES ' .
                        ' (%s, %s, %d, %d, %d, %s, %d, %d, %s, %d)',
             $this->da->quoteSmart($name),
             ($title === null ? 'NULL' : $this->da->quoteSmart($title)),
@@ -110,29 +110,28 @@ class Docman_ReportDao extends DataAccessObject
      * @param $scope (I/P) (personnel/project)
      * @return bool
      */
-    function verifyQueryUnicity($name, $groupId, $userId, $scope)
+    public function verifyQueryUnicity($name, $groupId, $userId, $scope)
     {
-
         $stm = 'SELECT NULL FROM plugin_docman_report WHERE 
-             name = '.$this->da->quoteSmart($name). ' AND  group_id = '.$this->da->escapeInt($groupId).' AND ';
-        if ($scope =='P') {
+             name = ' . $this->da->quoteSmart($name) . ' AND  group_id = ' . $this->da->escapeInt($groupId) . ' AND ';
+        if ($scope == 'P') {
             // Retrieve project report having same name for all users belonging to this project
             $clause = ' scope = "P" ';
         } else {
             // Retrieve personnel report having same name for specific user belonging to this project
-            $clause = ' scope = "I" AND user_id = '.$this->da->escapeInt($userId);
+            $clause = ' scope = "I" AND user_id = ' . $this->da->escapeInt($userId);
         }
-        $sql = $stm.$clause;
+        $sql = $stm . $clause;
         $dar = $this->retrieve($sql);
         return ($dar->rowCount() == 0);
     }
 
-    function addFieldToReport($reportId, $mdLabel, $type, $value)
+    public function addFieldToReport($reportId, $mdLabel, $type, $value)
     {
         $sql = sprintf(
-            'INSERT INTO plugin_docman_report_metadata'.
-                       '(report_id, label)'.
-                       ' VALUES'.
+            'INSERT INTO plugin_docman_report_metadata' .
+                       '(report_id, label)' .
+                       ' VALUES' .
                        ' (%d, %s)',
             $reportId,
             $this->da->quoteSmart($mdLabel)
@@ -140,7 +139,7 @@ class Docman_ReportDao extends DataAccessObject
         $this->update($sql);
     }
 
-    function createAndReturnId($sql)
+    public function createAndReturnId($sql)
     {
         $inserted = $this->update($sql);
         if ($inserted) {
@@ -154,17 +153,17 @@ class Docman_ReportDao extends DataAccessObject
         return $inserted;
     }
 
-    function updateReport($id, $name, $title, $itemId, $advancedSearch, $scope, $description, $image)
+    public function updateReport($id, $name, $title, $itemId, $advancedSearch, $scope, $description, $image)
     {
         $sql = sprintf(
-            'UPDATE plugin_docman_report'.
-                       ' SET advanced_search = %d,'.
-                       ' name = %s,'.
-                       ' title = %s,'.
-                       ' item_id = %d,'.
-                       ' scope = %s,'.
-                       ' description = %s,'.
-                       ' image = %d'.
+            'UPDATE plugin_docman_report' .
+                       ' SET advanced_search = %d,' .
+                       ' name = %s,' .
+                       ' title = %s,' .
+                       ' item_id = %d,' .
+                       ' scope = %s,' .
+                       ' description = %s,' .
+                       ' image = %d' .
                        ' WHERE report_id = %d',
             $advancedSearch,
             $this->da->quoteSmart($name),
@@ -178,21 +177,21 @@ class Docman_ReportDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function deleteById($id)
+    public function deleteById($id)
     {
         $sql = sprintf(
-            'DELETE FROM plugin_docman_report'.
+            'DELETE FROM plugin_docman_report' .
                        ' WHERE report_id = %d',
             $id
         );
         return $this->update($sql);
     }
 
-    function getMinLengthForPattern()
+    public function getMinLengthForPattern()
     {
         $sql = 'show variables like "ft_min_word_len"';
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError() && $dar->rowCount()>0) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
             $row = $dar->getRow();
             return $row['Value'];
         } else {

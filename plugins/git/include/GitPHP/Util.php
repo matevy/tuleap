@@ -51,7 +51,7 @@ class Util
 
         $end = substr($path, -1);
 
-        if (!(( ($end == '/') || ($end == ':')))) {
+        if (! (( ($end == '/') || ($end == ':')))) {
             $path .= '/';
         }
 
@@ -70,12 +70,12 @@ class Util
      */
     public static function MakeSlug($str) // @codingStandardsIgnoreLine
     {
-        $from = array(
+        $from = [
             '/'
-        );
-        $to = array(
+        ];
+        $to = [
             '-'
-        );
+        ];
         return str_replace($from, $to, $str);
     }
 }

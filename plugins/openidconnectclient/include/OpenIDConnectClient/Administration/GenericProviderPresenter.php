@@ -20,9 +20,7 @@
 
 namespace Tuleap\OpenIDConnectClient\Administration;
 
-use Tuleap\OpenIDConnectClient\Provider\AzureADProvider\AzureADProvider;
 use Tuleap\OpenIDConnectClient\Provider\GenericProvider\GenericProvider;
-use Tuleap\OpenIDConnectClient\Provider\Provider;
 
 class GenericProviderPresenter
 {
@@ -46,6 +44,12 @@ class GenericProviderPresenter
      */
     public $can_user_enable_unique_authentication_endpoint;
 
+    /**
+     * @var string
+     * @psalm-readonly
+     */
+    public $jwks_endpoint;
+
     public function __construct(
         GenericProvider $provider,
         $can_user_enable_unique_authentication_endpoint,
@@ -56,6 +60,7 @@ class GenericProviderPresenter
         $this->can_user_enable_unique_authentication_endpoint = $can_user_enable_unique_authentication_endpoint;
         $this->icons_presenters                               = $icons_presenters;
         $this->colors_presenters                              = $colors_presenters;
+        $this->jwks_endpoint                                  = $provider->getJWKSEndpoint() ?? '';
     }
 
     public function getId()
@@ -113,7 +118,7 @@ class GenericProviderPresenter
         return false;
     }
 
-    public function getCallbackUrl() : string
+    public function getCallbackUrl(): string
     {
         return strtolower($this->provider->getRedirectUri());
     }

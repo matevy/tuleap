@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -25,20 +25,20 @@ class Tracker_Artifact_MailGateway_CitationStripper
     public const HTML_CITATION_PATTERN = '%<blockquote[^>]*>.*</blockquote>%';
     public const DEFAULT_REPLACEMENT   = "\n[citation removed]";
 
-    private $outlook_header = array(
-        'en' => array(
+    private $outlook_header = [
+        'en' => [
             'from'    => 'From:',
             'sent'    => 'Sent:',
             'to'      => 'To:',
             'subject' => 'Subject:',
-        ),
-        'fr' => array(
+        ],
+        'fr' => [
             'from'    => 'De :',
             'sent'    => 'Envoyé :',
             'to'      => 'À :',
             'subject' => 'Objet :',
-        ),
-    );
+        ],
+    ];
 
     public function stripText($mail_content)
     {
@@ -88,7 +88,9 @@ class Tracker_Artifact_MailGateway_CitationStripper
 
     private function removeNode(DOMNode $node)
     {
-        $node->parentNode->removeChild($node);
+        if ($node->parentNode !== null) {
+            $node->parentNode->removeChild($node);
+        }
     }
 
     private function getContentInsideBody(DOMDocument $doc)

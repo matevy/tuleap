@@ -7,32 +7,30 @@
 * Docman_View_PositionWithinFolder
 */
 
-require_once('Docman_View_View.class.php');
-
 class Docman_View_PositionWithinFolder extends Docman_View_View  /* implements Visitor*/
 {
 
-    /* protected */ function _content($params)
+    /* protected */ public function _content($params)
     {
         echo '<select name="ordering">';
-        echo '<option value="beginning" '. ($params['force_ordering'] === 'beginning' ? 'selected="selected"' : '') .'>'. $GLOBALS['Language']->getText('plugin_docman', 'move_position_beginning') .'</option>';
-        echo '<option value="end"'. ($params['force_ordering'] === 'end' ? 'selected="selected"' : '') .'>'. $GLOBALS['Language']->getText('plugin_docman', 'move_position_end') .'</option>';
-        $params['hierarchy']->accept($this, array(
+        echo '<option value="beginning" ' . ($params['force_ordering'] === 'beginning' ? 'selected="selected"' : '') . '>' . dgettext('tuleap-docman', 'At the beginning') . '</option>';
+        echo '<option value="end"' . ($params['force_ordering'] === 'end' ? 'selected="selected"' : '') . '>' . dgettext('tuleap-docman', 'At the end') . '</option>';
+        $params['hierarchy']->accept($this, [
             'parent_id'      => $params['item']->getId(),
             'force_ordering' => $params['force_ordering'],
             'exclude'         => $params['exclude']
-        ));
+        ]);
 
         echo '</select>';
     }
-    function _displayItem($item, $params)
+    public function _displayItem($item, $params)
     {
         $hp = Codendi_HTMLPurifier::instance();
-        if (!$params['exclude'] || $params['exclude'] != $item->getId()) {
-            echo '<option value="'. ($item->getRank()+1) .'" '. ($params['force_ordering'] === ("".($item->getRank()+1)) ? 'selected="selected"' : '') .'>After '.  $hp->purify($item->getTitle(), CODENDI_PURIFIER_CONVERT_HTML)  .'</option>';
+        if (! $params['exclude'] || $params['exclude'] != $item->getId()) {
+            echo '<option value="' . ($item->getRank() + 1) . '" ' . ($params['force_ordering'] === ("" . ($item->getRank() + 1)) ? 'selected="selected"' : '') . '>After ' .  $hp->purify($item->getTitle(), CODENDI_PURIFIER_CONVERT_HTML)  . '</option>';
         }
     }
-    function visitFolder(&$item, $params = array())
+    public function visitFolder(&$item, $params = [])
     {
         if ($item->getParentId() == $params['parent_id']) {
             $this->_displayItem($item, $params);
@@ -47,30 +45,30 @@ class Docman_View_PositionWithinFolder extends Docman_View_View  /* implements V
         }
     }
 
-    function visitDocument(&$item, $params = array())
+    public function visitDocument(&$item, $params = [])
     {
         if ($item->getParentId() == $params['parent_id']) {
             $this->_displayItem($item, $params);
         }
     }
-    function visitWiki(&$item, $params = array())
+    public function visitWiki(&$item, $params = [])
     {
         return $this->visitDocument($item, $params);
     }
-    function visitLink(&$item, $params = array())
+    public function visitLink(&$item, $params = [])
     {
         return $this->visitDocument($item, $params);
     }
-    function visitFile(&$item, $params = array())
+    public function visitFile(&$item, $params = [])
     {
         return $this->visitDocument($item, $params);
     }
-    function visitEmbeddedFile(&$item, $params = array())
+    public function visitEmbeddedFile(&$item, $params = [])
     {
         return $this->visitDocument($item, $params);
     }
 
-    function visitEmpty(&$item, $params = array())
+    public function visitEmpty(&$item, $params = [])
     {
         return $this->visitDocument($item, $params);
     }

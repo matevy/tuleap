@@ -40,17 +40,17 @@ require_once("lib/ASCIIMathPHP/ASCIIMathPHP.class.php");
  */
 class WikiPlugin_AsciiMath extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("AsciiMath");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Render ASCII Math as MathML");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -59,16 +59,16 @@ class WikiPlugin_AsciiMath extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array();
+        return [];
     }
-    function handle_plugin_args_cruft(&$argstr, &$args)
+    public function handle_plugin_args_cruft(&$argstr, &$args)
     {
         $this->source = $argstr;
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         if (empty($this->source)) {
@@ -80,7 +80,7 @@ class WikiPlugin_AsciiMath extends WikiPlugin
         $ascii_math->genMathML();
         return HTML::Raw($ascii_math->getMathML());
     }
-};
+}
 
 // $Log: AsciiMath.php,v $
 // Revision 1.1  2005/01/29 21:50:38  rurban

@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Metadata;
 
@@ -58,8 +58,8 @@ class MetadataValueCreator
 
         $docman_metadata_value = $this->metadata_value_object_factory->createMetadataValueObjectWithCorrectValue(
             $id,
-            (int)$metadata_to_create->getId(),
-            (int)$metadata_to_create->getType(),
+            (int) $metadata_to_create->getId(),
+            (int) $metadata_to_create->getType(),
             $validated_value
         );
 

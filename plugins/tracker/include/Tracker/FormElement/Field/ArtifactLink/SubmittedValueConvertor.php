@@ -20,10 +20,10 @@
 
 namespace Tuleap\Tracker\FormElement\Field\ArtifactLink;
 
-use Tracker_Artifact;
-use Tracker_ArtifactLinkInfo;
 use Tracker_Artifact_ChangesetValue_ArtifactLink;
 use Tracker_ArtifactFactory;
+use Tracker_ArtifactLinkInfo;
+use Tuleap\Tracker\Artifact\Artifact;
 
 /**
  * I convert submitted value into something that can be given to ArtifactLinkValueSaver.
@@ -85,7 +85,7 @@ class SubmittedValueConvertor
     public function convert(
         array $submitted_value,
         SourceOfAssociationCollection $source_of_association_collection,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue_ArtifactLink $previous_changesetvalue = null
     ) {
         $submitted_value['list_of_artifactlinkinfo'] = $this->getListOfArtifactLinkInfo(
@@ -101,11 +101,11 @@ class SubmittedValueConvertor
     /** @return Tracker_ArtifactLinkInfo[] */
     private function getListOfArtifactLinkInfo(
         SourceOfAssociationCollection $source_of_association_collection,
-        Tracker_Artifact $from_artifact,
+        Artifact $from_artifact,
         array $submitted_value,
         ?Tracker_Artifact_ChangesetValue_ArtifactLink $previous_changesetvalue = null
     ) {
-        $list_of_artifactlinkinfo = array();
+        $list_of_artifactlinkinfo = [];
         if ($previous_changesetvalue != null) {
             $list_of_artifactlinkinfo = $previous_changesetvalue->getValue();
             $this->removeLinksFromSubmittedValue($list_of_artifactlinkinfo, $submitted_value);
@@ -123,7 +123,7 @@ class SubmittedValueConvertor
 
     private function removeAlreadyLinkedParentArtifacts(
         SourceOfAssociationCollection $source_of_association_collection,
-        Tracker_Artifact $from_artifact,
+        Artifact $from_artifact,
         array &$list_of_artifactlinkinfo
     ) {
         foreach ($list_of_artifactlinkinfo as $id => $artifactinfo) {
@@ -195,7 +195,7 @@ class SubmittedValueConvertor
         }
     }
 
-    private function extractNatureFromSubmittedValue(array $submitted_value, $artifact_id) : string
+    private function extractNatureFromSubmittedValue(array $submitted_value, $artifact_id): string
     {
         if (isset($submitted_value['natures'])) {
             $natures = $submitted_value['natures'];
@@ -209,7 +209,7 @@ class SubmittedValueConvertor
 
     private function extractNewValuesFromSubmittedValue(array $submitted_value)
     {
-        $new_values          = (string)$submitted_value['new_values'];
+        $new_values          = (string) $submitted_value['new_values'];
         $removed_values      = $this->extractRemovedValuesFromSubmittedValue($submitted_value);
         $new_values_as_array = array_filter(array_map('intval', explode(',', $new_values)));
 
@@ -229,12 +229,12 @@ class SubmittedValueConvertor
     private function extractArrayFromSubmittedValue(array $submitted_value, $key)
     {
         if (! isset($submitted_value[$key])) {
-            return array();
+            return [];
         }
 
         $values = $submitted_value[$key];
         if (! is_array($values)) {
-            return array();
+            return [];
         }
 
         return $values;

@@ -23,7 +23,6 @@ namespace Tuleap\Tracker\Workflow\PostAction\Update;
 
 use DataAccessQueryException;
 use Transition;
-use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\InvalidPostActionException;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\PostActionUpdater;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\UnknownPostActionIdsException;
@@ -35,7 +34,7 @@ class PostActionCollectionUpdater
      */
     private $post_action_updaters;
 
-    public function __construct(PostActionUpdater...$post_action_updaters)
+    public function __construct(PostActionUpdater ...$post_action_updaters)
     {
         $this->post_action_updaters = $post_action_updaters;
     }

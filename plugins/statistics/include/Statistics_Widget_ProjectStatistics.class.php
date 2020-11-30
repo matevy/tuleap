@@ -19,11 +19,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
-use Tuleap\SVN\DiskUsage\Collector as SVNCollector;
-use Tuleap\SVN\DiskUsage\Retriever as SVNRetriever;
-use Tuleap\CVS\DiskUsage\Retriever as CVSRetriever;
-use Tuleap\CVS\DiskUsage\Collector as CVSCollector;
-use Tuleap\CVS\DiskUsage\FullHistoryDao;
+use Tuleap\Statistics\DiskUsage\Subversion\Collector as SVNCollector;
+use Tuleap\Statistics\DiskUsage\Subversion\Retriever as SVNRetriever;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\Retriever as CVSRetriever;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\Collector as CVSCollector;
+use Tuleap\Statistics\DiskUsage\ConcurrentVersionsSystem\FullHistoryDao;
 
 /**
  * Statisitics_Widget_ProjectStatistics
@@ -50,7 +50,7 @@ class Statistics_Widget_ProjectStatistics extends Widget
      */
     public function getTitle()
     {
-        return $GLOBALS['Language']->getText('plugin_statistics', 'widget_title_projectstatistics');
+        return dgettext('tuleap-statistics', 'Project statistics');
     }
 
     /**
@@ -92,9 +92,9 @@ class Statistics_Widget_ProjectStatistics extends Widget
      *
      * @see Widget::getDescription()
      */
-    function getDescription()
+    public function getDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_statistics', 'widget_desc_projectstatistics');
+        return dgettext('tuleap-statistics', 'Show project disk statistics');
     }
 
     /**
@@ -104,7 +104,7 @@ class Statistics_Widget_ProjectStatistics extends Widget
      *
      * @see Widget::getCategory()
      */
-    function getCategory()
+    public function getCategory()
     {
         return dgettext('tuleap-statistics', 'Project statistics');
     }

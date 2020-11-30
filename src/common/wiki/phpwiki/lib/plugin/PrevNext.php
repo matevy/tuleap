@@ -28,17 +28,17 @@ rcs_id('$Id: PrevNext.php,v 1.4 2004/06/14 11:31:39 rurban Exp $');
  */
 class WikiPlugin_PrevNext extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("PrevNext");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return sprintf(_("Easy navigation buttons for %s"), '[pagename]');
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -47,9 +47,9 @@ class WikiPlugin_PrevNext extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array(
+        return [
                      'prev'    => '',
                      'next'    => '',
                      'up'      => '',
@@ -61,24 +61,23 @@ class WikiPlugin_PrevNext extends WikiPlugin
                      'order'   => '',
                      'style'   => 'button', // or 'text'
                      'class'   => 'wikiaction'
-                     );
+                     ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
-
         $args = $this->getArgs($argstr, $request);
         extract($args);
-        $directions = array ('first'    => _("First"),
+        $directions =  ['first'    => _("First"),
                              'prev'     => _("Previous"),
                              'next'     => _("Next"),
                              'last'     => _("Last"),
                              'up'       => _("Up"),
                              'contents'  => _("Contents"),
                              'index'    => _("Index")
-                             );
+                             ];
         if ($order) { // reorder the buttons: comma-delimited
-            $new_directions = array();
+            $new_directions = [];
             foreach (explode(',', $order) as $o) {
                 $new_directions[$o] = $directions[$o];
             }
@@ -90,7 +89,7 @@ class WikiPlugin_PrevNext extends WikiPlugin
         $sep = $WikiTheme->getButtonSeparator();
         $links = HTML();
         if ($style == 'text') {
-            if (!$sep) {
+            if (! $sep) {
                 $sep = " | "; // force some kind of separator
             }
             $links->pushcontent(" [ ");
@@ -99,7 +98,7 @@ class WikiPlugin_PrevNext extends WikiPlugin
         $this_is_first = true;
         foreach ($directions as $dir => $label) {
             // if ($last_is_text) $links->pushContent($sep);
-            if (!empty($args[$dir])) {
+            if (! empty($args[$dir])) {
                 $url = $args[$dir];
                 if ($style == 'button') {
                     // localized version: _("Previous").gif

@@ -73,12 +73,12 @@ class ChartMessageFetcher
         assert($tracker instanceof Tracker);
         $user    = $this->user_manager->getCurrentUser();
 
-        $warnings = array();
+        $warnings = [];
         if ($usage->getUseStartDate()) {
             try {
                 $this->configuration_field_retriever->getStartDateField($tracker, $user);
             } catch (Tracker_FormElement_Chart_Field_Exception $e) {
-                $warnings[] = '<li>'. $e->getMessage() . '</li>';
+                $warnings[] = '<li>' . $e->getMessage() . '</li>';
             }
         }
 
@@ -89,17 +89,17 @@ class ChartMessageFetcher
                 try {
                     $this->configuration_field_retriever->getEndDateField($tracker, $user);
                 } catch (Tracker_FormElement_Chart_Field_Exception $exception_end_date) {
-                    $warnings[] = '<li>'. $exception_duration->getMessage() . '</li>';
-                    $warnings[] = '<li>'. $exception_end_date->getMessage() . '</li>';
+                    $warnings[] = '<li>' . $exception_duration->getMessage() . '</li>';
+                    $warnings[] = '<li>' . $exception_end_date->getMessage() . '</li>';
                 }
             }
         }
 
         if ($usage->getUseCapacity()) {
-            $warning_message = $this->fetchMissingFieldWarning(
+            $warning_message = $this->fetchMissingCapacityFieldWarning(
                 $tracker,
                 ChartConfigurationFieldRetriever::CAPACITY_FIELD_NAME,
-                array('int', 'computed')
+                ['int', 'computed']
             );
             if ($warning_message !== null) {
                 $warnings[] = $warning_message;
@@ -125,14 +125,10 @@ class ChartMessageFetcher
         return null;
     }
 
-    /**
-     * @return String
-     */
-    public function fetchMissingFieldWarning(Tracker $tracker, $name, $type)
+    public function fetchMissingCapacityFieldWarning(Tracker $tracker, string $name, array $type): ?string
     {
         if (! $tracker->hasFormElementWithNameAndType($name, $type)) {
-            $key     = "burndown_missing_${name}_warning";
-            $warning = $GLOBALS['Language']->getText('plugin_tracker', $key);
+            $warning = dgettext('tuleap-tracker', 'The tracker doesn\'t have a "capacity" Integer or Computed field or you don\'t have the permission to access it.');
 
             return '<li>' . $warning . '</li>';
         }
@@ -161,7 +157,9 @@ class ChartMessageFetcher
     private function getLinksToChildTrackersWithoutRemainingEffort(Tracker $tracker)
     {
         return array_map(
-            array($this, 'getLinkToTracker'),
+            function (Tracker $tracker): string {
+                return $this->getLinkToTracker($tracker);
+            },
             $this->getChildTrackersWithoutRemainingEffort($tracker)
         );
     }
@@ -173,7 +171,7 @@ class ChartMessageFetcher
     {
         return array_filter(
             $this->getChildTrackers($tracker),
-            array($this->configuration_field_retriever, 'doesRemainingEffortFieldExists')
+            [$this->configuration_field_retriever, 'doesRemainingEffortFieldExists']
         );
     }
 
@@ -188,7 +186,6 @@ class ChartMessageFetcher
     /**
      * Renders a link to the given tracker.
      *
-     * @param Tracker $tracker
      * @return String
      */
     private function getLinkToTracker(Tracker $tracker)

@@ -19,7 +19,7 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\SVN\Repository;
 
@@ -45,14 +45,11 @@ class RepositoryByProjectCollection
     /**
      * @var Repository[] $repository_list
      */
-    public static function build(Project $project, array $repository_list) : self
+    public static function build(Project $project, array $repository_list): self
     {
         return new self($project, $repository_list);
     }
 
-    /**
-     * @return Project
-     */
     public function getProject(): Project
     {
         return $this->project;

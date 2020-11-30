@@ -24,10 +24,10 @@
 use Tuleap\GraphOnTrackersV5\Chart\Visitor;
 
 require_once('GraphOnTrackersV5_Chart.class.php');
-require_once(dirname(__FILE__).'/../data-transformation/GraphOnTrackersV5_CumulativeFlow_DataBuilder.class.php');
-require_once(dirname(__FILE__).'/../graphic-library/GraphOnTrackersV5_Engine_CumulativeFlow.class.php');
+require_once(dirname(__FILE__) . '/../data-transformation/GraphOnTrackersV5_CumulativeFlow_DataBuilder.class.php');
+require_once(dirname(__FILE__) . '/../graphic-library/GraphOnTrackersV5_Engine_CumulativeFlow.class.php');
 require_once('GraphOnTrackersV5_Chart_CumulativeFlowDao.class.php');
-require_once(dirname(__FILE__).'/../common/HTML_Element_Selectbox_TrackerFields_NumericFieldsV5.class.php');
+require_once(dirname(__FILE__) . '/../common/HTML_Element_Selectbox_TrackerFields_NumericFieldsV5.class.php');
 
 /**
  * Base class to provide a cumulative flow Chart
@@ -158,12 +158,12 @@ class GraphOnTrackersV5_Chart_CumulativeFlow extends GraphOnTrackersV5_Chart
      */
     public function getSpecificRow()
     {
-        return array(
+        return [
             'field_id'   => $this->getFieldId(),
             'start_date' => $this->getStartDate(),
             'stop_date'  => $this->getStopDate(),
             'scale'      => $this->getScale(),
-        );
+        ];
     }
 
     /**
@@ -232,44 +232,44 @@ class GraphOnTrackersV5_Chart_CumulativeFlow extends GraphOnTrackersV5_Chart
     public function getProperties()
     {
         $scaleSelect = new HTML_Element_Selectbox(
-            $GLOBALS['Language']->getText('plugin_graphontrackersv5_cumulative_flow', 'cumulative_flow_property_scale'),
+            dgettext('tuleap-graphontrackersv5', 'Time scale'),
             'chart[scale]',
             'value'
         );
-        $scaleSelect->addMultipleOptions(array(
-                                              GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_DAY => $GLOBALS['Language']->getText('plugin_graphontrackersv5_cumulative_flow', 'cumulative_flow_property_day'),
-                                              GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_WEEK => $GLOBALS['Language']->getText('plugin_graphontrackersv5_cumulative_flow', 'cumulative_flow_property_week'),
-                                              GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_MONTH => $GLOBALS['Language']->getText('plugin_graphontrackersv5_cumulative_flow', 'cumulative_flow_property_month'),
-                                              ), $this->getScale());
+        $scaleSelect->addMultipleOptions([
+                                              GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_DAY => dgettext('tuleap-graphontrackersv5', 'Day'),
+                                              GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_WEEK => dgettext('tuleap-graphontrackersv5', 'Week'),
+                                              GraphOnTrackersV5_Chart_CumulativeFlow::SCALE_MONTH => dgettext('tuleap-graphontrackersv5', 'Month'),
+                                              ], $this->getScale());
         return array_merge(
             parent::getProperties(),
-            array(
+            [
                 'field_id'   => new HTML_Element_Selectbox_TrackerFields_SelectboxesV5(
                     $this->getTracker(),
-                    $GLOBALS['Language']->getText('plugin_graphontrackersv5_cumulative_flow', 'cumulative_flow_property_field'),
+                    dgettext('tuleap-graphontrackersv5', 'Source data'),
                     'chart[field_id]',
                     $this->getFieldId()
                 ),
                 'start_date' => new HTML_Element_Input_Date(
-                    $GLOBALS['Language']->getText('plugin_graphontrackersv5_cumulative_flow', 'cumulative_flow_property_start_date'),
+                    dgettext('tuleap-graphontrackersv5', 'Start date'),
                     'chart[start_date]',
                     $this->getStartDate()
                 ),
                     'scale'   => ( $scaleSelect),
                 'stop_date'   => new HTML_Element_Input_Date(
-                    $GLOBALS['Language']->getText('plugin_graphontrackersv5_cumulative_flow', 'cumulative_flow_property_stop_date'),
+                    dgettext('tuleap-graphontrackersv5', 'Finish date (optionnal)'),
                     'chart[stop_date]',
                     $this->getStopDate()
                 ),
 
-            )
+            ]
         );
     }
 
     public function createDb($id)
     {
         $field_id   = $this->getFieldId();
-        if (!is_int($field_id) && !is_string($field_id) && $field_id) {
+        if (! is_int($field_id) && ! is_string($field_id) && $field_id) {
             $field_id = $field_id->getid();
         }
         $start_date = $this->getStartDate();
@@ -296,16 +296,16 @@ class GraphOnTrackersV5_Chart_CumulativeFlow extends GraphOnTrackersV5_Chart
     public function setSpecificPropertiesFromXML($xml, $formsMapping)
     {
         if ($xml['start_date']) {
-            $this->setStartDate((int)$xml['start_date']);
+            $this->setStartDate((int) $xml['start_date']);
         }
         if ($xml['scale']) {
-            $this->setScale((int)$xml['scale']);
+            $this->setScale((int) $xml['scale']);
         }
         if ($xml['stop_date']) {
-            $this->setStopDate((int)$xml['stop_date']);
+            $this->setStopDate((int) $xml['stop_date']);
         }
-        if (isset($formsMapping[(int)$xml['field_id']])) {
-            $this->setFieldId($formsMapping[(int)$xml['field_id']]);
+        if (isset($formsMapping[(int) $xml['field_id']])) {
+            $this->setFieldId($formsMapping[(int) $xml['field_id']]);
         }
     }
 
@@ -316,10 +316,10 @@ class GraphOnTrackersV5_Chart_CumulativeFlow extends GraphOnTrackersV5_Chart
      */
     public function arrayOfSpecificProperties()
     {
-        return array('start_date' => $this->getStartDate(),
+        return ['start_date' => $this->getStartDate(),
                      'field_id'   => $this->getFieldId(),
                      'scale'      => $this->getScale(),
-                     'stop_date'  => $this->getStopDate());
+                     'stop_date'  => $this->getStopDate()];
     }
 
     public function exportToXml(SimpleXMLElement $root, $formsMapping)

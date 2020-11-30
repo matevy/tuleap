@@ -20,17 +20,21 @@
 namespace Tuleap\REST;
 
 use Luracast\Restler\Restler;
+use Tuleap\InviteBuddy\REST\v1\InvitationsResource;
 use Tuleap\JWT\REST\JWTRepresentation;
 use Tuleap\JWT\REST\v1\JWTResource;
 use Tuleap\Label\REST\LabelRepresentation;
 use Tuleap\PhpWiki\REST\v1\PhpWikiResource;
+use Tuleap\Platform\Banner\REST\v1\BannerResource;
 use Tuleap\Project\REST\ProjectRepresentation;
+use Tuleap\Project\REST\UserGroupRepresentation;
 use Tuleap\Project\REST\v1\ServiceRepresentation;
 use Tuleap\Project\REST\v1\ServiceResource;
 use Tuleap\Project\REST\v1\UserGroupResource;
+use Tuleap\REST\v1\ProjectFieldRepresentation;
+use Tuleap\REST\v1\ProjectFieldsResource;
 use Tuleap\SystemEvent\REST\v1\SystemEventResource;
 use Tuleap\Token\REST\TokenRepresentation;
-use Tuleap\Project\REST\UserGroupRepresentation;
 use Tuleap\Token\REST\v1\TokenResource;
 use Tuleap\User\AccessKey\REST\AccessKeyResource;
 use Tuleap\User\REST\UserRepresentation;
@@ -55,11 +59,14 @@ class ResourcesInjector
         $restler->addAPIClass(UserGroupResource::class, UserGroupRepresentation::ROUTE);
         $restler->addAPIClass(UserResource::class, UserRepresentation::ROUTE);
         $restler->addAPIClass(UserMembershipResource::class, UserMembershipRepresentation::ROUTE);
+        $restler->addAPIClass(ProjectFieldsResource::class, ProjectFieldRepresentation::ROUTE);
         $restler->addAPIClass(PhpWikiResource::class, PhpWikiPageRepresentation::ROUTE);
         $restler->addAPIClass(JWTResource::class, JWTRepresentation::ROUTE);
         $restler->addAPIClass(SystemEventResource::class, SystemEventRepresentation::ROUTE);
         $restler->addAPIClass(AccessKeyResource::class, AccessKeyResource::ROUTE);
         $restler->addAPIClass(ServiceResource::class, ServiceRepresentation::ROUTE);
+        $restler->addAPIClass(InvitationsResource::class, InvitationsResource::ROUTE);
+        $restler->addAPIClass(BannerResource::class, BannerResource::ROUTE);
     }
 
     public function declareProjectResources(array &$resources, Project $project)

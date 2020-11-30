@@ -38,7 +38,7 @@ class HTTPController implements DispatchableWithRequestNoAuthz, DispatchableWith
      */
     private $repository_factory;
     /**
-     * @var \Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
     /**
@@ -68,7 +68,7 @@ class HTTPController implements DispatchableWithRequestNoAuthz, DispatchableWith
     private $http_command_factory;
 
     public function __construct(
-        \Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         \ProjectManager $project_manager,
         \GitRepositoryFactory $repository_factory,
         HTTPAccessControl $http_access_control
@@ -90,7 +90,7 @@ class HTTPController implements DispatchableWithRequestNoAuthz, DispatchableWith
      *
      * @throws NotFoundException
      */
-    public function getProject(array $variables) : Project
+    public function getProject(array $variables): Project
     {
         $project = $this->project_manager->getProjectByCaseInsensitiveUnixName($variables['project_name']);
         if (! $project || $project->isError()) {
@@ -132,8 +132,6 @@ class HTTPController implements DispatchableWithRequestNoAuthz, DispatchableWith
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
      * @param array $variables
      *
      * @return void
@@ -149,7 +147,7 @@ class HTTPController implements DispatchableWithRequestNoAuthz, DispatchableWith
     private function getRepoPathWithFinalDotGit($path)
     {
         if (substr($path, strlen($path) - 4) !== '.git') {
-            return $path.'.git';
+            return $path . '.git';
         }
         return $path;
     }

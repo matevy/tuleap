@@ -21,6 +21,7 @@
 
 namespace Tuleap\CreateTestEnv;
 
+use Tuleap\Cryptography\ConcealedString;
 use Tuleap\Password\PasswordSanityChecker;
 
 class CreateTestEnvironment
@@ -55,7 +56,6 @@ class CreateTestEnvironment
      * @param string $lastname
      * @param string $email
      * @param string $login
-     * @param string $password
      * @param string $archive
      *
      * @throws Exception\EmailNotUniqueException
@@ -69,7 +69,7 @@ class CreateTestEnvironment
      * @throws Exception\UnableToCreateTemporaryDirectoryException
      * @throws Exception\UnableToWriteFileException
      */
-    public function main($firstname, $lastname, $email, $login, $password, $archive)
+    public function main($firstname, $lastname, $email, $login, ConcealedString $password, $archive)
     {
         if (! $this->password_sanity_checker->check($password)) {
             throw new Exception\InvalidPasswordException($this->password_sanity_checker->getErrors());
@@ -89,6 +89,7 @@ class CreateTestEnvironment
         $this->serializeXmlIntoFile($create_test_project->generateXML(), 'project.xml');
 
         $this->copyExtraFiles($archive_base_dir);
+        $this->copyDataDirectoryContent($archive_base_dir);
 
         $this->execImport();
 
@@ -109,12 +110,12 @@ class CreateTestEnvironment
 
     private function getArchiveBaseDir($archive_dir_name)
     {
-        $etc_base_dir = \ForgeConfig::get('sys_custompluginsroot').'/'.\create_test_envPlugin::NAME.'/resources';
-        $project_xml_path = $etc_base_dir.'/'.$archive_dir_name.'/project.xml';
+        $etc_base_dir = \ForgeConfig::get('sys_custompluginsroot') . '/' . \create_test_envPlugin::NAME . '/resources';
+        $project_xml_path = $etc_base_dir . '/' . $archive_dir_name . '/project.xml';
         if (file_exists($project_xml_path)) {
-            return $etc_base_dir.'/'.$archive_dir_name;
+            return $etc_base_dir . '/' . $archive_dir_name;
         }
-        return __DIR__.'/../../resources/sample-project';
+        return __DIR__ . '/../../resources/sample-project';
     }
 
     public function getProject()
@@ -123,18 +124,17 @@ class CreateTestEnvironment
     }
 
     /**
-     * @param \SimpleXMLElement $xml
      * @param $filename
      * @throws Exception\UnableToCreateTemporaryDirectoryException
      * @throws Exception\UnableToWriteFileException
      */
     private function serializeXmlIntoFile(\SimpleXMLElement $xml, $filename)
     {
-        if (!is_dir($this->output_dir) && !mkdir($this->output_dir, 0770, true) && !is_dir($this->output_dir)) {
+        if (! is_dir($this->output_dir) && ! mkdir($this->output_dir, 0770, true) && ! is_dir($this->output_dir)) {
             throw new Exception\UnableToCreateTemporaryDirectoryException(sprintf('Directory "%s" was not created', $this->output_dir));
         }
-        if ($xml->saveXML($this->output_dir.DIRECTORY_SEPARATOR.$filename) !== true) {
-            throw new Exception\UnableToWriteFileException("Unable to write file ".$this->output_dir.DIRECTORY_SEPARATOR.$filename);
+        if ($xml->saveXML($this->output_dir . DIRECTORY_SEPARATOR . $filename) !== true) {
+            throw new Exception\UnableToWriteFileException("Unable to write file " . $this->output_dir . DIRECTORY_SEPARATOR . $filename);
         }
     }
 
@@ -143,7 +143,24 @@ class CreateTestEnvironment
         $iterator = new \DirectoryIterator($archive_base_dir);
         foreach ($iterator as $file) {
             if ($file->isFile() && ! in_array($file->getBasename(), ['project.xml', 'users.xml'])) {
-                copy($file->getPathname(), $this->output_dir.'/'.$file->getBasename());
+                copy($file->getPathname(), $this->output_dir . '/' . $file->getBasename());
+            }
+        }
+    }
+
+    private function copyDataDirectoryContent(string $archive_base_dir): void
+    {
+        $data_dir = $archive_base_dir . '/data';
+        if (! is_dir($data_dir)) {
+            return;
+        }
+        $output_data_dir = $this->output_dir . '/data';
+        if (! is_dir($output_data_dir) && ! mkdir($output_data_dir, 0755) && ! is_dir($output_data_dir)) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $output_data_dir));
+        }
+        foreach (new \DirectoryIterator($data_dir) as $file) {
+            if ($file->isFile()) {
+                copy($file->getPathname(), $output_data_dir . '/' . $file->getBasename());
             }
         }
     }

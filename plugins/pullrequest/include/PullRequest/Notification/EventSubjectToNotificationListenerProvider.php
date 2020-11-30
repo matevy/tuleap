@@ -24,20 +24,18 @@ namespace Tuleap\PullRequest\Notification;
 
 use Psr\EventDispatcher\ListenerProviderInterface;
 
-/**
- * @psalm-immutable
- */
 final class EventSubjectToNotificationListenerProvider implements ListenerProviderInterface
 {
     /**
      * @var callable[][]
      * @psalm-var array<class-string<EventSubjectToNotification>,non-empty-array<callable():EventSubjectToNotificationListener>>
+     * @psalm-readonly
      */
     private $mapping;
 
     /**
      * @param callable[][] $mapping
-     * @psalm-param array<class-string<EventSubjectToNotification>,non-empty-array<callable():EventSubjectToNotificationListener>>
+     * @psalm-param array<class-string<EventSubjectToNotification>,non-empty-array<callable():EventSubjectToNotificationListener>> $mapping
      */
     public function __construct(array $mapping)
     {
@@ -46,6 +44,7 @@ final class EventSubjectToNotificationListenerProvider implements ListenerProvid
 
     /**
      * @psalm-return array<callable():EventSubjectToNotificationListener>
+     * @psalm-mutation-free
      */
     public function getListenersForEvent(object $event): iterable
     {

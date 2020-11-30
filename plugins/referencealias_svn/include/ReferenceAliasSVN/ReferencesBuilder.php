@@ -57,11 +57,11 @@ class ReferencesBuilder
     /**
      * Get a reference given a project, keyword and value (number after '#')
      *
-     * @return Reference or null
+     * @return Reference|null
      */
     public function getReference($keyword, $value)
     {
-        return $this->findReference($keyword, $keyword.$value);
+        return $this->findReference($keyword, $keyword . $value);
     }
 
     /**
@@ -71,24 +71,24 @@ class ReferencesBuilder
      */
     public function getExtraReferenceSpecs()
     {
-        return array(
-            array(
-                'cb'     => array($this, 'referenceFromMatch'),
+        return [
+            [
+                'cb'     => [$this, 'referenceFromMatch'],
                 'regexp' => '/
                     (?<![_a-zA-Z0-9])  # ensure the pattern is not following digits or letters
                     (?P<ref>
-                        (?P<key>'. ReferencesImporter::XREF_CMMT .')
+                        (?P<key>' . ReferencesImporter::XREF_CMMT . ')
                         (?P<val>[0-9]+)
                     )
                     (?![_A-Za-z0-9])   # ensure the pattern is not folloed by digits or letters
                 /x'
-            )
-        );
+            ]
+        ];
     }
 
     /**
      * Callback for when references are matched in a text
-     * @return ReferenceInstance or null
+     * @return ReferenceInstance|null
      */
     public function referenceFromMatch($match, $project_id)
     {
@@ -110,7 +110,7 @@ class ReferencesBuilder
 
     /**
      * Find a reference given a keyword and the original complete reference
-     * @return Reference or null
+     * @return Reference|null
      */
     private function findReference($keyword, $reference)
     {

@@ -72,7 +72,6 @@ class Planning_NoMilestone implements Planning_Milestone
     }
 
     /**
-     * @param PFUser $user
      * @return bool
      */
     public function userCanView(PFUser $user)
@@ -115,7 +114,7 @@ class Planning_NoMilestone implements Planning_Milestone
 
     public function getAncestors()
     {
-        return array();
+        return [];
     }
 
     public function setAncestors(array $ancestors)

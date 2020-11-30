@@ -37,6 +37,7 @@ import { mapGetters, mapState } from "vuex";
 import CurrentFolderDropZone from "./CurrentFolderDropZone.vue";
 import { TYPE_FILE, TYPE_FOLDER } from "../../../constants.js";
 import { highlightItem } from "../../../helpers/highlight-items-helper.js";
+import EventBus from "./../../../helpers/event-bus.js";
 
 export default {
     components: { CurrentFolderDropZone },
@@ -54,7 +55,7 @@ export default {
             DOCUMENT_NEEDS_APPROVAL: "document_needs_approval",
             DROPPED_ITEM_IS_NOT_A_FILE: "dropped_item_is_not_a_file",
             IE11_NOT_SUPPORTED: "ie11_is_not_supported",
-            highlighted_item_id: null
+            highlighted_item_id: null,
         };
     },
     computed: {
@@ -64,7 +65,8 @@ export default {
             "folder_content",
             "max_files_dragndrop",
             "max_size_upload",
-            "user_id"
+            "user_id",
+            "is_changelog_proposed_after_dnd",
         ]),
         user_can_dragndrop_in_current_folder() {
             return (
@@ -78,40 +80,56 @@ export default {
 
             if (this.error_modal_shown === this.MAX_SIZE_ERROR) {
                 return () =>
-                    import(/* webpackChunkName: "document-max-size-dragndrop-error-modal" */ "./MaxSizeDragndropErrorModal.vue");
+                    import(
+                        /* webpackChunkName: "document-max-size-dragndrop-error-modal" */ "./MaxSizeDragndropErrorModal.vue"
+                    );
             }
 
             if (this.error_modal_shown === this.ALREADY_EXISTS_ERROR) {
                 return () =>
-                    import(/* webpackChunkName: "document-max-size-dragndrop-error-modal" */ "./FileAlreadyExistsDragndropErrorModal.vue");
+                    import(
+                        /* webpackChunkName: "document-max-size-dragndrop-error-modal" */ "./FileAlreadyExistsDragndropErrorModal.vue"
+                    );
             }
 
             if (this.error_modal_shown === this.CREATION_ERROR) {
                 return () =>
-                    import(/* webpackChunkName: "document-max-size-dragndrop-error-modal" */ "./CreationErrorDragndropErrorModal.vue");
+                    import(
+                        /* webpackChunkName: "document-max-size-dragndrop-error-modal" */ "./CreationErrorDragndropErrorModal.vue"
+                    );
             }
 
             if (this.error_modal_shown === this.EDITION_LOCKED) {
                 return () =>
-                    import(/* webpackChunkName: "document-edition-locked-error-modal" */ "./DocumentLockedForEditionErrorModal.vue");
+                    import(
+                        /* webpackChunkName: "document-edition-locked-error-modal" */ "./DocumentLockedForEditionErrorModal.vue"
+                    );
             }
             if (this.error_modal_shown === this.DOCUMENT_NEEDS_APPROVAL) {
                 return () =>
-                    import(/* webpackChunkName: "document-needs-approval-error-modal" */ "./DocumentNeedsApprovalErrorModal.vue");
+                    import(
+                        /* webpackChunkName: "document-needs-approval-error-modal" */ "./DocumentNeedsApprovalErrorModal.vue"
+                    );
             }
             if (this.error_modal_shown === this.IE11_NOT_SUPPORTED) {
                 return () =>
-                    import(/* webpackChunkName: "document-needs-approval-error-modal" */ "./BrowserNotSupported.vue");
+                    import(
+                        /* webpackChunkName: "document-needs-approval-error-modal" */ "./BrowserNotSupported.vue"
+                    );
             }
 
             if (this.error_modal_shown === this.DROPPED_ITEM_IS_NOT_A_FILE) {
                 return () =>
-                    import(/* webpackChunkName: "document-droppped-item-is-folder-error" */ "./DroppedItemIsAFolderErrorModal.vue");
+                    import(
+                        /* webpackChunkName: "document-droppped-item-is-folder-error" */ "./DroppedItemIsAFolderErrorModal.vue"
+                    );
             }
 
             return () =>
-                import(/* webpackChunkName: "document-max-files-dragndrop-error-modal" */ "./MaxFilesDragndropErrorModal.vue");
-        }
+                import(
+                    /* webpackChunkName: "document-max-files-dragndrop-error-modal" */ "./MaxFilesDragndropErrorModal.vue"
+                );
+        },
     },
     created() {
         this.main = document.querySelector(".document-main");
@@ -185,7 +203,7 @@ export default {
             }
 
             for (const file of files) {
-                const is_item_a_file = await this.isDroppedItemAFile(file);
+                const is_item_a_file = this.isDroppedItemAFile(file);
                 if (!is_item_a_file) {
                     this.error_modal_shown = this.DROPPED_ITEM_IS_NOT_A_FILE;
                     this.error_modal_reasons.push({ nb_dropped_files: files.length });
@@ -200,7 +218,7 @@ export default {
 
                 if (
                     this.folder_content.find(
-                        item =>
+                        (item) =>
                             item.title === file.name &&
                             item.type !== TYPE_FOLDER &&
                             item.parent_id === dropzone_item.id
@@ -221,7 +239,7 @@ export default {
             if (is_uploading_in_subfolder && !dropzone_item.is_expanded) {
                 this.$store.commit("toggleCollapsedFolderHasUploadingContent", [
                     dropzone_item,
-                    true
+                    true,
                 ]);
             }
 
@@ -232,7 +250,7 @@ export default {
                         dropzone_item,
                         file.name,
                         "",
-                        should_display_fake_item
+                        should_display_fake_item,
                     ]);
                 } catch (error) {
                     this.error_modal_shown = this.CREATION_ERROR;
@@ -275,7 +293,7 @@ export default {
             const target_drop_zones = [
                 ".document-tree-item-folder",
                 ".document-quick-look-folder-dropzone",
-                ".document-quick-look-file-dropzone"
+                ".document-quick-look-file-dropzone",
             ];
 
             if (!event.dataTransfer.items) {
@@ -299,12 +317,12 @@ export default {
                 this.is_dropzone_highlighted = true;
             }
         },
-        getDropZoneItem: function() {
+        getDropZoneItem: function () {
             if (!this.highlighted_item_id) {
                 return this.current_folder;
             }
 
-            return this.folder_content.find(item => item.id === this.highlighted_item_id);
+            return this.folder_content.find((item) => item.id === this.highlighted_item_id);
         },
         async uploadNewFileVersion(event, dropzone_item) {
             const { lock_info, approval_table } = dropzone_item;
@@ -316,7 +334,7 @@ export default {
                 this.error_modal_shown = this.EDITION_LOCKED;
                 this.error_modal_reasons.push({
                     filename: dropzone_item.title,
-                    lock_owner: lock_info.locked_by
+                    lock_owner: lock_info.locked_by,
                 });
 
                 return;
@@ -331,7 +349,7 @@ export default {
                     filename: dropzone_item.title,
                     approval_table_owner: approval_table.table_owner,
                     approval_table_state: approval_table.approval_state,
-                    item_id: dropzone_item.id
+                    item_id: dropzone_item.id,
                 });
 
                 return;
@@ -340,7 +358,7 @@ export default {
             const files = event.dataTransfer.files;
             const file = files[0];
 
-            const is_item_a_file = await this.isDroppedItemAFile(file);
+            const is_item_a_file = this.isDroppedItemAFile(file);
             if (!is_item_a_file) {
                 this.error_modal_shown = this.DROPPED_ITEM_IS_NOT_A_FILE;
                 this.error_modal_reasons.push({ nb_dropped_files: 1 });
@@ -354,35 +372,26 @@ export default {
             }
 
             try {
+                if (this.is_changelog_proposed_after_dnd) {
+                    EventBus.$emit("show-changelog-modal", {
+                        detail: {
+                            updated_file: dropzone_item,
+                            dropped_file: file,
+                        },
+                    });
+
+                    return;
+                }
+
                 await this.$store.dispatch("createNewFileVersion", [dropzone_item, file]);
             } catch (error) {
                 this.error_modal_shown = this.CREATION_ERROR;
                 this.error_modal_reasons.push({ filename: file.name, message: error });
             }
         },
-        async isDroppedItemAFile(file) {
-            const read_file_operation = new Promise(resolve => {
-                const reader = new FileReader();
-
-                reader.onload = () => {
-                    resolve(true);
-                };
-
-                reader.onerror = () => {
-                    resolve(false);
-                };
-
-                try {
-                    reader.readAsText(file);
-                } catch (error) {
-                    resolve(false);
-                }
-            });
-
-            const is_a_file = await read_file_operation;
-
-            return is_a_file;
-        }
-    }
+        isDroppedItemAFile(file) {
+            return file.size % 4096 !== 0 || file.type !== "";
+        },
+    },
 };
 </script>

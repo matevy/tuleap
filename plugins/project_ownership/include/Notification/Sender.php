@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -26,6 +26,7 @@ use ForgeConfig;
 use PFUser;
 use Project;
 use ProjectManager;
+use Tuleap\Language\LocaleSwitcher;
 use Tuleap\ProjectOwnership\Exceptions\FailedToNotifyProjectMemberException;
 
 class Sender
@@ -35,10 +36,15 @@ class Sender
      * @var ProjectManager
      */
     private $project_manager;
+    /**
+     * @var LocaleSwitcher
+     */
+    private $locale_switcher;
 
-    public function __construct(ProjectManager $project_manager)
+    public function __construct(ProjectManager $project_manager, LocaleSwitcher $locale_switcher)
     {
         $this->project_manager = $project_manager;
+        $this->locale_switcher = $locale_switcher;
     }
 
     /**
@@ -54,28 +60,43 @@ class Sender
         }
 
         foreach ($project->getMembers() as $project_member) {
-            $this->sendMailPerProjectMember($project, $project_member, $status);
+            $this->locale_switcher->setLocaleForSpecificExecutionContext(
+                $project_member->getLocale(),
+                function () use (
+                    $status,
+                    $project_member,
+                    $project
+                ): void {
+                    $this->sendMailPerProjectMember($project, $project_member, $status);
+                }
+            );
         }
     }
 
     /**
      * @throws FailedToNotifyProjectMemberException
      */
-    private function sendMailPerProjectMember(Project $project, PFUser $user, $status)
+    private function sendMailPerProjectMember(Project $project, PFUser $user, $status): void
     {
-        $user_language = $user->getLanguage();
         $purifier      = Codendi_HTMLPurifier::instance();
 
-        $title = $user_language->getText(
-            'plugin_project_ownership',
-            'email_status_change_title'
-        );
+        $title = dgettext('tuleap-project_ownership', 'Project status updated');
 
-        $body = $user_language->getText(
-            'plugin_project_ownership',
-            "email_status_change_body_status_$status",
-            $project->getPublicName()
-        );
+        switch ($status) {
+            case 'H':
+                $body = sprintf(dgettext('tuleap-project_ownership', 'The project %1$s is now suspended.'), $project->getPublicName());
+                break;
+            case 'P':
+                $body = sprintf(dgettext('tuleap-project_ownership', 'The project %1$s is now pending.'), $project->getPublicName());
+                break;
+            case 'D':
+                $body = sprintf(dgettext('tuleap-project_ownership', 'The project %1$s is now deleted.'), $project->getPublicName());
+                break;
+            case 'A':
+            default:
+                $body = sprintf(dgettext('tuleap-project_ownership', 'The project %1$s is now active.'), $project->getPublicName());
+                break;
+        }
 
         $body_text = $purifier->purify($body, CODENDI_PURIFIER_STRIP_HTML);
 

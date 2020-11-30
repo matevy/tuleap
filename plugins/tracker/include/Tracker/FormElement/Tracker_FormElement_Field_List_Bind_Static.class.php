@@ -19,9 +19,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Colorpicker\ColorpickerMountPointPresenter;
 use Tuleap\Tracker\Events\IsFieldUsedInASemanticEvent;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindParameters;
+use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindStaticXmlExporter;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindVisitor;
+use Tuleap\Tracker\FormElement\View\Admin\Field\ListFields\BindValuesAdder;
+use Tuleap\Tracker\FormElement\FormElementListValueAdminViewPresenterBuilder;
 use Tuleap\Tracker\REST\FieldListStaticValueRepresentation;
 
 class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Field_List_Bind
@@ -54,7 +58,7 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
     protected function format($value)
     {
         $hp = Codendi_HTMLPurifier::instance();
-        return  $hp->purify($value->getLabel(), CODENDI_PURIFIER_CONVERT_HTML);
+        return $hp->purify($value->getLabel(), CODENDI_PURIFIER_CONVERT_HTML);
     }
 
     /**
@@ -88,7 +92,7 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
      */
     public function getBindtableSqlFragment()
     {
-        return array(
+        return [
             'select'     => "tracker_field_list_bind_static_value.id,
                              tracker_field_list_bind_static_value.label,
                              tracker_field_list_bind_static_value.description,
@@ -97,13 +101,13 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
             'select_nb'  => 5,
             'from'       => 'tracker_field_list_bind_static_value',
             'join_on_id' => 'tracker_field_list_bind_static_value.id',
-        );
+        ];
     }
 
     protected function getRESTBindingList()
     {
         // returns empty array as static are already listed in 'values'
-        return array();
+        return [];
     }
 
     /**
@@ -181,7 +185,7 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
     {
         $values = $this->getAllValues();
         if ($is_multiple) {
-            $return = array();
+            $return = [];
             $submitted_values = explode(",", $submitted_value);
             foreach ($values as $id => $value) {
                 if (in_array($value->getLabel(), $submitted_values)) {
@@ -234,27 +238,10 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
         return $this->values[$value]->getLabel();
     }
 
-    /**
-     * Fetch the value in a specific changeset
-     * @param Tracker_Artifact_Changeset $changeset
-     * @return string
-     */
-    /*public function fetchRawValueFromChangeset($changeset) {
-        $value = '';
-        if ($v = $changeset->getValue($this->field)) {
-            if (isset($v['value_id'])) {
-                $v = array($v);
-            }
-            foreach($v as $val) {
-                $value .= $this->values[$val['value_id']]['label'];
-            }
-        }
-        return $value;
-    }*/
     public function fetchRawValueFromChangeset($changeset)
     {
         $value = '';
-        $values_array = array();
+        $values_array = [];
         if ($v = $changeset->getValue($this->field)) {
             $values = $v->getListValues();
             foreach ($values as $val) {
@@ -269,7 +256,7 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
      */
     public function getChangesetValues($changeset_id)
     {
-        $values = array();
+        $values = [];
         foreach ($this->getValueDao()->searchChangesetValues($changeset_id, $this->field->id, $this->is_rank_alpha) as $row) {
             $values[] = $row;
         }
@@ -288,9 +275,9 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
      */
     public function getQuerySelect()
     {
-        $R1 = 'R1_'. $this->field->id;
-        $R2 = 'R2_'. $this->field->id;
-        return "$R2.id AS `". $this->field->name ."`";
+        $R1 = 'R1_' . $this->field->id;
+        $R2 = 'R2_' . $this->field->id;
+        return "$R2.id AS `" . $this->field->name . "`";
     }
 
     /**
@@ -314,28 +301,30 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
      */
     public function getQueryFrom($changesetvalue_table = 'tracker_changeset_value_list')
     {
-        $R1 = 'R1_'. $this->field->id;
-        $R2 = 'R2_'. $this->field->id;
-        $R3 = 'R3_'. $this->field->id;
+        $R1 = 'R1_' . $this->field->id;
+        $R2 = 'R2_' . $this->field->id;
+        $R3 = 'R3_' . $this->field->id;
 
         return "LEFT JOIN (
                     tracker_changeset_value AS $R1
                     INNER JOIN $changesetvalue_table AS $R3 ON ($R3.changeset_value_id = $R1.id)
-                    LEFT JOIN tracker_field_list_bind_static_value AS $R2 ON ($R2.id = $R3.bindvalue_id AND $R2.field_id = ". $this->field->id ." )
-                ) ON ($R1.changeset_id = c.id AND $R1.field_id = ". $this->field->id ." )
+                    LEFT JOIN tracker_field_list_bind_static_value AS $R2 ON ($R2.id = $R3.bindvalue_id AND $R2.field_id = " . $this->field->id . " )
+                ) ON ($R1.changeset_id = c.id AND $R1.field_id = " . $this->field->id . " )
                ";
     }
 
-/**
-     * Get the "from" statement to retrieve field values with the RGB values of their decorator
-     * Has no sense for fields other than lists
-     * @return string
-     */
-    public function getQueryFromWithDecorator($changesetvalue_table = 'tracker_changeset_value_list')
+    public function getQueryFromWithDecorator($changesetvalue_table = 'tracker_changeset_value_list'): string
     {
-        $R2 = 'R2_'. $this->field->id;
+        $current_field_id = (int) $this->field->id;
+        $R2               = 'R2_' . $current_field_id;
+        $none_value       = (int) self::NONE_VALUE;
 
-        return $this->getQueryFrom($changesetvalue_table) . " LEFT OUTER JOIN tracker_field_list_bind_decorator AS color ON ($R2.field_id = color.field_id AND color.value_id = $R2.id)";
+        $sql = "LEFT OUTER JOIN tracker_field_list_bind_decorator AS color ON (
+                ($R2.field_id = color.field_id AND color.value_id = $R2.id)
+                OR ($R2.field_id IS null AND color.value_id = $none_value AND color.field_id = $current_field_id)
+            )";
+
+        return $this->getQueryFrom($changesetvalue_table) . $sql;
     }
 
     /**
@@ -343,8 +332,8 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
      */
     public function getQueryOrderby()
     {
-        $R1 = 'R1_'. $this->field->id;
-        $R2 = 'R2_'. $this->field->id;
+        $R1 = 'R1_' . $this->field->id;
+        $R2 = 'R2_' . $this->field->id;
         return $this->is_rank_alpha ? "$R2.label" : "$R2.rank";
     }
 
@@ -353,8 +342,8 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
      */
     public function getQueryGroupby()
     {
-        $R1 = 'R1_'. $this->field->id;
-        $R2 = 'R2_'. $this->field->id;
+        $R1 = 'R1_' . $this->field->id;
+        $R2 = 'R2_' . $this->field->id;
         return "$R2.id";
     }
 
@@ -387,36 +376,36 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
      */
     public function getQuerySelectAggregate($functions)
     {
-        $R1  = 'R1_'. $this->field->id;
-        $R2  = 'R2_'. $this->field->id;
-        $same     = array();
-        $separate = array();
+        $R1  = 'R1_' . $this->field->id;
+        $R2  = 'R2_' . $this->field->id;
+        $same     = [];
+        $separate = [];
         foreach ($functions as $f) {
             if (in_array($f, $this->field->getAggregateFunctions())) {
                 if (substr($f, -5) === '_GRBY') {
-                    $separate[] = array(
+                    $separate[] = [
                         'function' => $f,
                         'select'   => "$R2.label AS label, count(*) AS value",
                         'group_by' => "$R2.label",
-                    );
+                    ];
                 } else {
-                    $select = "$f($R2.label) AS `". $this->field->name ."_$f`";
+                    $select = "$f($R2.label) AS `" . $this->field->name . "_$f`";
                     if ($this->field->isMultiple()) {
-                        $separate[] = array(
+                        $separate[] = [
                             'function' => $f,
                             'select'   => $select,
                             'group_by' => null,
-                        );
+                        ];
                     } else {
                         $same[] = $select;
                     }
                 }
             }
         }
-        return array(
+        return [
             'same_query'       => implode(', ', $same),
             'separate_queries' => $separate,
-        );
+        ];
     }
 
     public function getDao()
@@ -427,6 +416,32 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
     private function getOpenValueDao()
     {
         return new Tracker_FormElement_Field_List_OpenValueDao();
+    }
+
+    private function getTemplateRenderer(): TemplateRenderer
+    {
+        return TemplateRendererFactory::build()->getRenderer(TRACKER_TEMPLATE_DIR);
+    }
+
+    private function getFormElementListAdminViewBuilder(): FormElementListValueAdminViewPresenterBuilder
+    {
+        return new FormElementListValueAdminViewPresenterBuilder($this->getValueDao());
+    }
+
+    private function getAdminEditRowModifiable(
+        Tracker_FormElement_Field_List_Value $value,
+        ?ColorpickerMountPointPresenter $decorator,
+        bool $is_custom_value
+    ): string {
+        return $this->getTemplateRenderer()->renderToString(
+            'admin-edit-row-modifiable',
+            $this->getFormElementListAdminViewBuilder()->buildPresenter(
+                $this->field,
+                $value,
+                $decorator,
+                $is_custom_value
+            )
+        );
     }
 
     /**
@@ -450,22 +465,20 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
     public static function fetchAdminCreateForm($field)
     {
         $html = '';
-        $h = new HTML_Element_Input_Checkbox($GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'alphabetically_sort'), 'bind[is_rank_alpha]', 0);
+        $h = new HTML_Element_Input_Checkbox(dgettext('tuleap-tracker', 'alphabetically sort values'), 'bind[is_rank_alpha]', 0);
         $h->setId('is_rank_alpha');
-        $html .= '<p>'. $h->render() .'</p>';
+        $html .= '<p>' . $h->render() . '</p>';
         $html .= '<p>';
         $html .= '<textarea name="formElement_data[bind][add]" rows="5" cols="30"></textarea><br />';
-        $html .= '<span style="color:#999; font-size:0.8em;">'. $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'add_row') .'</span>';
+        $html .= '<span style="color:#999; font-size:0.8em;">' . dgettext('tuleap-tracker', 'Add one value per row') . '</span>';
         $html .= '</p>';
         return $html;
     }
 
     /**
      * Fetch the form to edit the formElement
-     *
-     * @return string html
      */
-    public function fetchAdminEditForm()
+    public function fetchAdminEditForm(): string
     {
         if ($this->field->isTargetSharedField()) {
             return $this->fetchAdminEditFormNotModifiable();
@@ -474,20 +487,31 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
         }
     }
 
-    private function fetchAdminEditFormModifiable()
+    private function fetchAdminEditFormModifiable(): string
     {
         $html = '';
-        $html .= '<h3>'. $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'static_values') .'</h3>';
 
-        $h = new HTML_Element_Input_Checkbox($GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'alphabetically_sort'), 'bind[is_rank_alpha]', $this->is_rank_alpha);
+        $html .= $this->fetchAdminEditFormModifiableWithUsersValues();
+
+        $html .= '<h3>' . dgettext('tuleap-tracker', 'Static values') . '</h3>';
+
+        $h = new HTML_Element_Input_Checkbox(
+            dgettext('tuleap-tracker', 'alphabetically sort values'),
+            'bind[is_rank_alpha]',
+            $this->is_rank_alpha
+        );
         $h->setId('is_rank_alpha');
         $h->addParam('class', 'is_rank_alpha');
-        $html .= '<p>'. $h->render() .'</p>';
+        $html .= '<p>' . $h->render() . '</p>';
 
         $html .= '<table><tr><td>';
         $html .= '<input type="hidden" name="bind[order]" class="bind_order_values" value="" />';
-        $html .= '<ul class="tracker-admin-bindvalue_list">';
-        foreach ($this->getAllValues() as $v) {
+        $html .= '<ul class="tracker-admin-bindvalue_list tracker-admin-bindvalue_list_sortable">';
+
+        $retriever = new BindValuesAdder();
+        $possible_values = $retriever->addNoneValue($this->getAllValues());
+
+        foreach ($possible_values as $v) {
             $html .= $this->fetchAdminEditRowModifiable($v);
         }
         $html .= '</ul>';
@@ -495,9 +519,12 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
 
         //Add new values
         $html .= '<p id="tracker-admin-bind-static-addnew">';
-        $html .= '<strong>' . $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'add_new_values') . '</strong><br />';
+        $html .= '<strong>' . dgettext('tuleap-tracker', 'Add new values') . '</strong><br />';
         $html .= '<textarea name="bind[add]" rows="5" cols="30"></textarea><br />';
-        $html .= '<span style="color:#999; font-size:0.8em;">' . $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'add_row') . '</span><br />';
+        $html .= '<span style="color:#999; font-size:0.8em;">' . dgettext(
+            'tuleap-tracker',
+            'Add one value per row'
+        ) . '</span><br />';
         $html .= '</p>';
 
         //Select default values
@@ -506,93 +533,67 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
         return $html;
     }
 
-    private function fetchAdminEditRowModifiable(Tracker_FormElement_Field_List_Value $v)
+    private function fetchAdminEditFormModifiableWithUsersValues(): string
     {
-        $html = '';
+        $html            = '';
+        $user_row_values = $this->getOpenValueDao()->searchByFieldId($this->getField()->getId());
 
-        $hp = Codendi_HTMLPurifier::instance();
+        if ($user_row_values->count() === 0) {
+            return $html;
+        }
 
-        $is_hidden = $v->isHidden();
+        $html        .= '<h3>' . dgettext('tuleap-tracker', 'Values added by users') . '</h3>';
+        $user_values = [];
 
-        $html .= '<li id="staticvalue_'. $v->getId() .'" class="' . ($is_hidden ? 'tracker_admin_static_value_hidden' : '') . '">';
+        foreach ($user_row_values as $row_value) {
+            $user_values[] = new Tracker_FormElement_Field_List_OpenValue(
+                $row_value['id'],
+                $row_value['label'],
+                $row_value['is_hidden']
+            );
+        }
 
-        $html .= '<span class="tracker-admin-bindvalue_grip">';
-        $html .= $GLOBALS['HTML']->getImage('ic/grip.png');
-        $html .= '</span>';
+        $html .= '<table><tr><td>';
+        $html .= '<input type="hidden" name="bind[order]" value="" />';
+        $html .= '<ul class="tracker-admin-bindvalue_list">';
 
-        $html .= '<span class="tracker-admin-bindvalue_decorator">';
+        foreach ($user_values as $value) {
+            $html .= $this->getAdminEditRowModifiable($value, null, true);
+        }
+
+        $html .= '</ul>';
+        $html .= '</td></tr></table>';
+
+        return $html;
+    }
+
+    private function fetchAdminEditRowModifiable(Tracker_FormElement_Field_List_Value $value): string
+    {
+        assert($value instanceof Tracker_FormElement_Field_List_Bind_StaticValue);
 
         $event = new IsFieldUsedInASemanticEvent($this->field);
 
         EventManager::instance()->processEvent($event);
 
         $is_used_in_semantics = $event->isUsed();
-
-        if (isset($this->decorators[$v->getId()])) {
-            $html .= $this->decorators[$v->getId()]->decorateEdit($is_used_in_semantics);
+        if (isset($this->decorators[$value->getId()])) {
+            $decorator = $this->decorators[$value->getId()]->decorateEdit($is_used_in_semantics);
         } else {
-            $html .= Tracker_FormElement_Field_List_BindDecorator::noDecoratorEdit($this->field->id, $v->getId(), $is_used_in_semantics);
-        }
-        $html .= '</span>';
-
-        //{{{ Actions
-        $html .= '<span class="tracker-admin-bindvalue_actions">';
-
-        $img_params = array();
-        $icon_suffix = '';
-        if ($this->canValueBeHidden($v)) {
-            $checked = '';
-            if ($is_hidden) {
-                $icon_suffix = '-half';
-            } else {
-                $checked = 'checked="checked"';
-            }
-            $html .= '<input type="hidden" name="bind[edit][' . $v->getId() . '][is_hidden]" value="1" />';
-            $html .= '<input type="checkbox" name="bind[edit][' . $v->getId() . '][is_hidden]" value="0" ' . $checked . ' class="tracker_admin_static_value_hidden_chk" />';
-            $img_params['alt'] = 'show/hide value';
-            $img_params['title'] = $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'hide_value');
-        } else {
-            $icon_suffix = '--exclamation-hidden';
-            $img_params['alt'] = 'cannot hide';
-            $img_params['title'] = $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'hide_value_impossible');
-        }
-        $html .= $GLOBALS['HTML']->getImage('ic/eye' . $icon_suffix . '.png', $img_params);
-
-        $html .= ' ';
-
-        if ($this->canValueBeDeleted($v)) {
-            $html .= '<a title="Delete the value"
-                href="' . TRACKER_BASE_URL . '/?' . http_build_query(array(
-                        'tracker' => $this->field->getTracker()->id,
-                        'func' => 'admin-formElement-update',
-                        'formElement' => $this->field->getId(),
-                        'bind-update' => 1,
-                        'bind[delete]' => $v->getId(),
-                    )) . '">' . $GLOBALS['HTML']->getImage('ic/cross.png') . '</a>';
-        } else {
-            $html .= $GLOBALS['HTML']->getImage('ic/cross-disabled.png', array('title' => "You can't delete"));
+            $decorator = Tracker_FormElement_Field_List_BindDecorator::noDecoratorEdit(
+                $this->field->id,
+                $value->getId(),
+                $is_used_in_semantics
+            );
         }
 
-        $html .= '</span>';
-        //}}}
-
-        $html .= '<span class="tracker-admin-bindvalue_label">';
-        $html .= '<input type="text" name="bind[edit][' . $v->getId() . '][label]" required value="' . $hp->purify($v->getLabel(), CODENDI_PURIFIER_CONVERT_HTML) . '" />';
-        $placeholder = $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'description_placeholder');
-        $html .= '<textarea name="bind[edit][' . $v->getId() . '][description]" class="tracker-admin-bindvalue_description_field" placeholder="'. $placeholder .'" cols="50" rows="3">';
-        $html .= $hp->purify($v->getDescription(), CODENDI_PURIFIER_CONVERT_HTML);
-        $html .= '</textarea>';
-        $html .= '</span>';
-
-        $html .= '</li>';
-        return $html;
+        return $this->getAdminEditRowModifiable($value, $decorator, false);
     }
 
     private function fetchAdminEditFormNotModifiable()
     {
         $html = '';
 
-        $html .= '<h3>'. $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'static_values') .'</h3>';
+        $html .= '<h3>' . dgettext('tuleap-tracker', 'Static values') . '</h3>';
         $html .= '<table cellpadding="2" cellspacing="0" border="0">';
         foreach ($this->getAllValues() as $v) {
             $html .= $this->fetchAdminEditRowNotModifiable($v);
@@ -608,21 +609,9 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
     {
         $html = '';
         $html .= '<tr valign="top" class="' . ($v->isHidden() ? 'tracker_admin_static_value_hidden' : '') . '">';
-        $html .= '<td>'.$this->formatChangesetValue(array('id' => $v->getId())).'</td>';
+        $html .= '<td>' . $this->formatChangesetValue(['id' => $v->getId()]) . '</td>';
         $html .= '</tr>';
         return $html;
-    }
-
-    /**
-     * Say if a value can be hidden
-     *
-     * @param Tracker_FormElement_Field_List_Bind_StaticValue $value the value
-     *
-     * @return bool true if the value can be hidden
-     */
-    public function canValueBeHidden(Tracker_FormElement_Field_List_Bind_StaticValue $value)
-    {
-        return $this->getValueDao()->canValueBeHidden($this->field, $value->getId());
     }
 
     /**
@@ -635,18 +624,6 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
     public function canValueBeHiddenWithoutCheckingSemanticStatus(Tracker_FormElement_Field_List_Bind_StaticValue $value)
     {
         return $this->getValueDao()->canValueBeHiddenWithoutCheckingSemanticStatus($this->field, $value->getId());
-    }
-
-    /**
-     * Say if a value can be deleted
-     *
-     * @param Tracker_FormElement_Field_List_Bind_StaticValue $value the value
-     *
-     * @return bool true if the value can be deleted
-     */
-    public function canValueBeDeleted(Tracker_FormElement_Field_List_Bind_StaticValue $value)
-    {
-        return $this->getValueDao()->canValueBeDeleted($this->field, $value->getId());
     }
 
     /**
@@ -670,13 +647,13 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
                         if (! empty($this->field->getSharedTargets())) {
                             $this->getDao()->updateChildrenAlphaRank($this->field->id, $is_rank_alpha);
                         }
-                        $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'alpha_ranking_updated'));
+                        $GLOBALS['Response']->addFeedback('info', dgettext('tuleap-tracker', 'Alpha Ranking updated'));
                     }
                     break;
                 case 'delete':
-                    if (($row = $value_dao->searchById((int)$value)->getRow()) && $value_dao->delete((int)$value)) {
-                        $params['decorator'] = array((int)$value => null);
-                        $GLOBALS['Response']->addFeedback('info', 'Value '.  $hp->purify($row['label'], CODENDI_PURIFIER_CONVERT_HTML)  .' deleted');
+                    if (($row = $value_dao->searchById((int) $value)->getRow()) && $value_dao->delete((int) $value)) {
+                        $params['decorator'] = [(int) $value => null];
+                        $GLOBALS['Response']->addFeedback('info', 'Value ' .  $hp->purify($row['label'], CODENDI_PURIFIER_CONVERT_HTML)  . ' deleted');
                     }
                     break;
                 case 'order':
@@ -706,17 +683,20 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
                             if (isset($info['description']) && trim($info['description']) != $bind_static_value->getDescription()) {
                                 $new_description = trim($info['description']);
                             }
-                            if (isset($info['is_hidden']) && trim($info['is_hidden']) != $bind_static_value->isHidden()) {
-                                $new_is_hidden = trim($info['is_hidden']);
+
+                            if ($value_dao->canValueBeHidden($this->field, $value_id)) {
+                                $new_is_hidden = ! isset($info['is_hidden']);
                             }
+
                             if ($new_label !== null || $new_description !== null || $new_is_hidden !== null) {
+                                $original_value = $this->value_dao->searchById($value_id)->getRow();
                                 //something has changed. we can save it
                                 $value_dao->save(
                                     $value_id,
                                     $this->field->getId(),
                                     isset($new_label)       ? $new_label       : $bind_static_value->getLabel(),
                                     isset($new_description) ? $new_description : $bind_static_value->getDescription(),
-                                    $bind_static_value->getRank(),
+                                    $original_value['rank'],
                                     isset($new_is_hidden)   ? $new_is_hidden   : $bind_static_value->isHidden()
                                 );
                                 unset($new_label, $new_description);
@@ -724,8 +704,19 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
                         }
                     }
                     break;
+                case "edit_custom":
+                    $values = $this->getOpenValueDao()->searchByFieldId($this->field->getId());
+                    foreach ($values as $row) {
+                        $new_is_hidden = ! isset($value[$row['id']]['is_hidden']);
+                        $this->getOpenValueDao()->updateOpenValue(
+                            (int) $row['id'],
+                            $new_is_hidden,
+                            $value[$row['id']]['label']
+                        );
+                    }
+                    break;
                 case 'add':
-                    $valueMapping = array();
+                    $valueMapping = [];
                     foreach (explode("\n", $value) as $new_value) {
                         $id = $this->addValue($new_value);
                         if ($id) {
@@ -734,7 +725,7 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
                         }
                     }
                     if (isset($params['decorators'])) {
-                        $params['decorator'] = array();
+                        $params['decorator'] = [];
                         foreach ($params['decorators'] as $key => $deco) {
                             $params['decorator'][$valueMapping[$key]] =
                                    ColorHelper::RGBtoHexa($deco->r, $deco->g, $deco->b);
@@ -745,6 +736,7 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
                     break;
             }
         }
+
         return parent::process($params, $no_redirect);
     }
 
@@ -776,46 +768,25 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
         $value_dao->propagateCreation($field, $original_value_id);
     }
 
-    /**
-     * Transforms Bind into a SimpleXMLElement
-     */
     public function exportToXml(
         SimpleXMLElement $root,
         &$xmlMapping,
         $project_export_context,
         UserXMLExporter $user_xml_exporter
     ) {
-        $cdata_section_factory = new XML_SimpleXMLCDATAFactory();
-        $root->addAttribute('is_rank_alpha', $this->is_rank_alpha);
-        if ($this->getAllValues()) {
-            $child = $root->addChild('items');
-            foreach ($this->getAllValues() as $val) {
-                $grandchild = $child->addChild('item');
-                $ID = $val->getXMLId();
-                $grandchild->addAttribute('ID', $ID);
-                $xmlMapping['values'][$ID] = $val->getId();
-                $grandchild->addAttribute('label', $val->getLabel());
-                $grandchild->addAttribute('is_hidden', $val->isHidden());
-
-                if ($val->getDescription() != '') {
-                    $cdata_section_factory->insert($grandchild, 'description', $val->getDescription());
-                }
-            }
-            if ($this->decorators) {
-                $child = $root->addChild('decorators');
-                foreach ($this->decorators as $deco) {
-                    $deco->exportToXML($child, array_search($deco->value_id, $xmlMapping['values']));
-                }
-            }
-            if ($this->default_values) {
-                $default_child = $root->addChild('default_values');
-                foreach ($this->default_values as $id => $nop) {
-                    if ($ref = array_search($id, $xmlMapping['values'])) {
-                        $default_child->addChild('value')->addAttribute('REF', $ref);
-                    }
-                }
-            }
+        $root->addAttribute('is_rank_alpha', $this->is_rank_alpha ? "1" : "0");
+        if (! $this->getAllValues()) {
+            return;
         }
+
+        $exporter = new BindStaticXmlExporter(new XML_SimpleXMLCDATAFactory());
+        $exporter->exportToXml(
+            $root,
+            $this->getAllValues(),
+            $this->decorators,
+            $this->default_values,
+            $xmlMapping
+        );
     }
 
     /**
@@ -853,7 +824,7 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
      */
     private function extractBindValuesByIds(array $bindvalue_ids)
     {
-        $list_of_bindvalues = array();
+        $list_of_bindvalues = [];
         foreach ($bindvalue_ids as $i) {
             if (isset($this->values[$i])) {
                 $list_of_bindvalues[$i] = $this->values[$i];
@@ -907,9 +878,9 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
         return $this->extractNumericValues($bind_values);
     }
 
-    private function extractNumericValues(Array $bind_values)
+    private function extractNumericValues(array $bind_values)
     {
-        $numeric_values = array();
+        $numeric_values = [];
 
         foreach ($bind_values as $bind_value) {
             $value = $bind_value->getLabel();
@@ -935,12 +906,12 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
                 $this->getValue($id);
             } catch (Tracker_FormElement_InvalidFieldValueException $e) {
                 if (! $this->getOpenValueDao()->searchById($field->getId(), $id)->getRow()) {
-                    throw new Tracker_FormElement_InvalidFieldValueException('Bind Value with ID '.$id.' does not exist for field ID '.$field->getId());
+                    throw new Tracker_FormElement_InvalidFieldValueException('Bind Value with ID ' . $id . ' does not exist for field ID ' . $field->getId());
                 }
 
-                return Tracker_FormElement_Field_OpenList::OPEN_PREFIX.$id;
+                return Tracker_FormElement_Field_OpenList::OPEN_PREFIX . $id;
             }
-            return Tracker_FormElement_Field_OpenList::BIND_PREFIX.$id;
+            return Tracker_FormElement_Field_OpenList::BIND_PREFIX . $id;
         }
         if (isset($rest_data['label'])) {
             $identifier = (string) $rest_data['label'];
@@ -950,15 +921,15 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
 
         $row = $this->getOpenValueDao()->searchByExactLabel($field->getId(), $identifier)->getRow();
         if ($row) {
-            return Tracker_FormElement_Field_OpenList::OPEN_PREFIX.$row['id'];
+            return Tracker_FormElement_Field_OpenList::OPEN_PREFIX . $row['id'];
         }
 
-        return Tracker_FormElement_Field_OpenList::NEW_VALUE_PREFIX.$identifier;
+        return Tracker_FormElement_Field_OpenList::NEW_VALUE_PREFIX . $identifier;
     }
 
     public function getRESTAvailableValues()
     {
-        $rest_values = array();
+        $rest_values = [];
         foreach ($this->getAllValues() as $value) {
             $rest_values[] = $this->getRESTBindValue($value);
         }
@@ -988,10 +959,10 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
 
     public function getFullRESTValue(Tracker_FormElement_Field_List_Value $value)
     {
-        return array(
+        return [
             'label' => $value->getLabel(),
             'id'    => $value->getId(),
-        );
+        ];
     }
 
     public function accept(BindVisitor $visitor, BindParameters $parameters)
@@ -1011,10 +982,7 @@ class Tracker_FormElement_Field_List_Bind_Static extends Tracker_FormElement_Fie
         return $this->getValueFromRow($row);
     }
 
-    /**
-     * @return array
-     */
-    protected function filterDefaultValues(array $bind_default)
+    protected function filterDefaultValues(array $bind_default): array
     {
         return array_intersect($bind_default, array_keys($this->getAllVisibleValues()));
     }

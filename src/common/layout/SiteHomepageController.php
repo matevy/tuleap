@@ -30,12 +30,15 @@ use Event;
 use ProjectManager;
 use SVN_LogDao;
 use TemplateRendererFactory;
+use Tuleap\date\RelativeDatesAssetsRetriever;
+use Tuleap\layout\HomePage\NewsCollection;
 use Tuleap\layout\HomePage\NewsCollectionBuilder;
 use Tuleap\layout\HomePage\StatisticsCollectionBuilder;
 use Tuleap\News\NewsDao;
 use Tuleap\Request\DispatchableWithBurningParrot;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Theme\BurningParrot\HomePagePresenter;
+use Tuleap\User\Account\RegistrationGuardEvent;
 use User_LoginPresenterBuilder;
 use UserManager;
 
@@ -77,29 +80,34 @@ class SiteHomepageController implements DispatchableWithRequest, DispatchableWit
     {
         $event_manager = EventManager::instance();
 
-        $event_manager->processEvent(Event::DISPLAYING_HOMEPAGE, array());
+        $event_manager->processEvent(Event::DISPLAYING_HOMEPAGE, []);
 
-        $display_new_account_button  = true;
-        $event_manager->processEvent('display_newaccount', array('allow' => &$display_new_account_button));
+        $registration_guard = $event_manager->dispatch(new RegistrationGuardEvent());
+        assert($registration_guard instanceof RegistrationGuardEvent);
+
         $login_url = '';
-        $event_manager->processEvent(\Event::GET_LOGIN_URL, array('return_to' => '', 'login_url' => &$login_url));
+        $event_manager->processEvent(\Event::GET_LOGIN_URL, ['return_to' => '', 'login_url' => &$login_url]);
 
-        $header_params = array(
+        $header_params = [
             'title' => $GLOBALS['Language']->getText('homepage', 'title'),
-        );
+        ];
 
-        $header_params['body_class'] = array('homepage');
+        $header_params['body_class'] = ['homepage'];
+        $news_collection_builder = new NewsCollectionBuilder(new NewsDao(), $this->project_manager, $this->user_manager, \Codendi_HTMLPurifier::instance());
+        $news_collection = $news_collection_builder->build();
 
         $layout->header($header_params);
         $this->displayStandardHomepage(
-            $display_new_account_button,
+            $registration_guard->isRegistrationPossible(),
             $login_url,
-            $request->isSecure()
+            $request->isSecure(),
+            $news_collection
         );
-        $layout->footer(array());
+        $layout->footer([]);
+        $this->includeRelativeDatesAssetsIfNeeded($news_collection);
     }
 
-    private function displayStandardHomepage(bool $display_new_account_button, string $login_url, bool $is_secure) : void
+    private function displayStandardHomepage(bool $display_new_account_button, string $login_url, bool $is_secure, NewsCollection $news_collection): void
     {
         $current_user = UserManager::instance()->getCurrentUser();
 
@@ -113,7 +121,7 @@ class SiteHomepageController implements DispatchableWithRequest, DispatchableWit
 
         $most_secure_url = '';
         if (ForgeConfig::get('sys_https_host')) {
-            $most_secure_url = 'https://'. ForgeConfig::get('sys_https_host');
+            $most_secure_url = 'https://' . ForgeConfig::get('sys_https_host');
         }
 
         $login_presenter_builder = new User_LoginPresenterBuilder();
@@ -128,10 +136,8 @@ class SiteHomepageController implements DispatchableWithRequest, DispatchableWit
             $this->event_manager,
             new SVN_LogDao()
         );
-        $statistics_collection = $statistics_collection_builder->build();
 
-        $news_collection_builder = new NewsCollectionBuilder(new NewsDao(), $this->project_manager, $this->user_manager, \Codendi_HTMLPurifier::instance());
-        $news_collection = $news_collection_builder->build();
+        $statistics_collection = $statistics_collection_builder->build();
 
         $templates_dir = ForgeConfig::get('codendi_dir') . '/src/templates/homepage/';
         $renderer      = TemplateRendererFactory::build()->getRenderer($templates_dir);
@@ -146,5 +152,13 @@ class SiteHomepageController implements DispatchableWithRequest, DispatchableWit
             $news_collection
         );
         $renderer->renderToPage('homepage', $presenter);
+    }
+
+    private function includeRelativeDatesAssetsIfNeeded(NewsCollection $news_collection): void
+    {
+        if (! $news_collection->hasNews()) {
+            return;
+        }
+        RelativeDatesAssetsRetriever::includeAssetsInSnippet();
     }
 }

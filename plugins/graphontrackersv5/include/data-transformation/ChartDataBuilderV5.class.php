@@ -25,13 +25,13 @@ abstract class ChartDataBuilderV5
     protected $chart;
     protected $artifacts;
 
-    function __construct($chart, $artifacts)
+    public function __construct($chart, $artifacts)
     {
         $this->chart     = $chart;
         $this->artifacts = $artifacts;
     }
 
-    function buildProperties($engine)
+    public function buildProperties($engine)
     {
         $engine->title       = $this->chart->getTitle();
         $engine->description = $this->chart->getDescription();
@@ -40,7 +40,7 @@ abstract class ChartDataBuilderV5
     }
 
     /**
-     * @return string or array (r,g,b) color from $data if exist, else a null triple
+     * @return string|array string or array (r,g,b) color from $data if exist, else a null triple
      */
     protected function getColor(array $data)
     {
@@ -49,10 +49,10 @@ abstract class ChartDataBuilderV5
         }
 
         if (! isset($data['red'])) {
-            return array(null, null, null);
+            return [null, null, null];
         }
 
-        return array($data['red'], $data['green'], $data['blue']);
+        return [$data['red'], $data['green'], $data['blue']];
     }
 
     protected function getTracker()
@@ -62,11 +62,7 @@ abstract class ChartDataBuilderV5
 
     protected function displayNoFieldError()
     {
-        $error_message = $GLOBALS['Language']->getText(
-            'plugin_graphontrackersv5',
-            'field_not_found',
-            $this->chart->getTitle()
-        );
+        $error_message = sprintf(dgettext('tuleap-graphontrackersv5', 'Unable to find the needed field to build the chart "%1$s". Please edit the chart and ajust settings.'), $this->chart->getTitle());
         echo "<p class='feedback_error'>$error_message</p>";
     }
 }

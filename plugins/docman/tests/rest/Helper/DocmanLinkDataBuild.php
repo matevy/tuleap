@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Test\rest\Helper;
 
@@ -299,7 +299,7 @@ class DocmanLinkDataBuild
             $version
         );
         $link_version = $version_link_factory->getLatestVersion($docman_link);
-        return (int)$link_version->getId();
+        return (int) $link_version->getId();
     }
 
     public function createLinkWithApprovalTable(
@@ -319,6 +319,6 @@ class DocmanLinkDataBuild
 
         $version_id = $this->addLinkWithCustomVersionNumber($item_id, $version);
 
-        $this->common_builder->addApprovalTable($title, (int)$version_id, $approval_status, 'link_version_id');
+        $this->common_builder->addApprovalTable($title, (int) $version_id, $approval_status, 'link_version_id');
     }
 }

@@ -25,6 +25,7 @@ class Tracker_TooltipFactory implements IBuildSemanticFromXML
 {
     /**
      * Hold an instance of the class
+     * @var self|null
      */
     protected static $instance;
 
@@ -35,9 +36,9 @@ class Tracker_TooltipFactory implements IBuildSemanticFromXML
      */
     public static function instance()
     {
-        if (!isset(self::$instance)) {
+        if (! isset(self::$instance)) {
             $c = self::class;
-            self::$instance = new $c;
+            self::$instance = new $c();
         }
         return self::$instance;
     }
@@ -59,13 +60,13 @@ class Tracker_TooltipFactory implements IBuildSemanticFromXML
 
     public function getInstanceFromXML(SimpleXMLElement $xml, array $xml_mapping, Tracker $tracker): Tracker_Semantic
     {
-        $row = array();
+        $row = [];
         foreach ($xml->field as $field) {
             $att = $field->attributes();
-            if (!isset($xml_mapping[(string)$att['REF']])) {
+            if (! isset($xml_mapping[(string) $att['REF']])) {
                 continue;
             }
-            $row[] = $xml_mapping[(string)$att['REF']];
+            $row[] = $xml_mapping[(string) $att['REF']];
         }
 
         return $this->getInstanceFromRow($row, $tracker);

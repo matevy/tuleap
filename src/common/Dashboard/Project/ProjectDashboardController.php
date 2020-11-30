@@ -115,7 +115,7 @@ class ProjectDashboardController
         AssetsIncluder $assets_includer,
         EventManager $event_manager,
         BaseLayout $layout,
-        IncludeAssets $javascript_assets,
+        IncludeAssets $core_assets,
         CssAsset $css_asset
     ) {
         $this->csrf                     = $csrf;
@@ -129,13 +129,10 @@ class ProjectDashboardController
         $this->assets_includer          = $assets_includer;
         $this->event_manager            = $event_manager;
         $this->layout                   = $layout;
-        $this->javascript_assets        = $javascript_assets;
+        $this->javascript_assets        = $core_assets;
         $this->css_asset                = $css_asset;
     }
 
-    /**
-     * @param HTTPRequest $request
-     */
     public function display(HTTPRequest $request)
     {
         $project            = $request->getProject();
@@ -146,7 +143,9 @@ class ProjectDashboardController
         $should_display_project_created_modal = $request->get("should-display-created-project-modal");
 
         if ($should_display_project_created_modal) {
-            $this->layout->includeFooterJavascriptFile($this->javascript_assets->getFileURL('project-registration-creation.js'));
+            $this->layout->includeFooterJavascriptFile(
+                $this->javascript_assets->getFileURL('project/project-registration-creation.js')
+            );
             $this->layout->addCssAsset($this->css_asset);
         }
 
@@ -162,23 +161,11 @@ class ProjectDashboardController
             $dashboard_id,
             $project_dashboards
         );
-        $trove_cats                   = array();
+        $trove_cats                   = [];
         if (ForgeConfig::get('sys_use_trove')) {
             $trove_dao = new TroveCatLinkDao();
             foreach ($trove_dao->searchTroveCatForProject($project->getID()) as $row_trovecat) {
                 $trove_cats[] = $row_trovecat['fullname'];
-            }
-
-            if (ForgeConfig::get('sys_trove_cat_mandatory')
-                && $request->getCurrentUser()->isAdmin($project->getID())
-                && empty($trove_cats)
-            ) {
-                $trove_url = '/project/'. (int) $project->getID() .'/admin/categories';
-                $GLOBALS['Response']->addFeedback(
-                    Feedback::WARN,
-                    $GLOBALS['Language']->getText('include_html', 'no_trovcat', $trove_url),
-                    CODENDI_PURIFIER_DISABLED
-                );
             }
         }
 
@@ -186,12 +173,14 @@ class ProjectDashboardController
 
         $purifier = Codendi_HTMLPurifier::instance();
         $title    = $purifier->purify($this->getPageTitle($project_dashboards_presenter, $project));
+
         site_project_header(
-            array(
-                'title'  => $title,
-                'group'  => $project->getID(),
-                'toptab' => 'summary'
-            )
+            [
+                'title'                          => $title,
+                'group'                          => $project->getID(),
+                'toptab'                         => 'summary',
+                'without-project-in-breadcrumbs' => true,
+            ]
         );
         $renderer = TemplateRendererFactory::build()->getRenderer(
             ForgeConfig::get('tuleap_dir') . '/src/templates/dashboard'
@@ -204,7 +193,7 @@ class ProjectDashboardController
             'project',
             new ProjectPagePresenter(
                 $this->csrf,
-                '/projects/'.urlencode($this->project->getUnixName()).'/',
+                '/projects/' . urlencode($this->project->getUnixName()) . '/',
                 new ProjectPresenter(
                     $this->project,
                     ProjectManager::instance(),
@@ -216,7 +205,7 @@ class ProjectDashboardController
                 $should_display_project_created_modal
             )
         );
-        $GLOBALS['Response']->footer(array());
+        $GLOBALS['Response']->footer([]);
     }
 
     public function createDashboard(HTTPRequest $request)
@@ -239,7 +228,7 @@ class ProjectDashboardController
                 Feedback::ERROR,
                 sprintf(
                     _('You have not rights to update dashboards of the project "%s".'),
-                    $project->getUnconvertedPublicName()
+                    $project->getPublicName()
                 )
             );
         } catch (NameDashboardAlreadyExistsException $exception) {
@@ -288,7 +277,7 @@ class ProjectDashboardController
                 Feedback::ERROR,
                 sprintf(
                     _('You have not rights to update dashboards of the project "%s".'),
-                    $project->getUnconvertedPublicName()
+                    $project->getPublicName()
                 )
             );
         } catch (NameDashboardAlreadyExistsException $exception) {
@@ -345,7 +334,7 @@ class ProjectDashboardController
                 Feedback::ERROR,
                 sprintf(
                     _('You have not rights to update dashboards of the project "%s".'),
-                    $project->getUnconvertedPublicName()
+                    $project->getPublicName()
                 )
             );
         } catch (DashboardDoesNotExistException $exception) {
@@ -376,7 +365,7 @@ class ProjectDashboardController
      */
     private function getProjectDashboardsPresenter(PFUser $user, Project $project, $dashboard_id, array $project_dashboards)
     {
-        $project_dashboards_presenter = array();
+        $project_dashboards_presenter = [];
 
         foreach ($project_dashboards as $index => $dashboard) {
             if (! $dashboard_id && $index === 0) {
@@ -385,7 +374,7 @@ class ProjectDashboardController
                 $is_active = $dashboard->getId() === $dashboard_id;
             }
 
-            $widgets_presenter = array();
+            $widgets_presenter = [];
             if ($is_active) {
                 $widgets_lines = $this->widget_retriever->getAllWidgets($dashboard->getId(), self::DASHBOARD_TYPE);
                 if ($widgets_lines) {
@@ -428,13 +417,11 @@ class ProjectDashboardController
     private function redirectToDashboard($dashboard_id)
     {
         $GLOBALS['Response']->redirect(
-            '/projects/' . urlencode($this->project->getUnixName()) . '/?dashboard_id='. urlencode($dashboard_id)
+            '/projects/' . urlencode($this->project->getUnixName()) . '/?dashboard_id=' . urlencode($dashboard_id)
         );
     }
 
     /**
-     * @param PFUser $user
-     * @param Project $project
      * @return bool
      */
     private function canUpdateDashboards(PFUser $user, Project $project)
@@ -532,7 +519,7 @@ class ProjectDashboardController
                 $title = $presenter->name . ' - ';
             }
         }
-        $title .= $project->getUnconvertedPublicName();
+        $title .= $project->getPublicName();
 
         return $title;
     }

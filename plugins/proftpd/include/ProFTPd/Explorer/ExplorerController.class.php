@@ -32,7 +32,7 @@ use Tuleap\ProFTPd\Xferlog\Dao;
 use HTTPRequest;
 use PFUser;
 use Project;
-use Zend\HttpHandlerRunner\Emitter\SapiStreamEmitter;
+use Laminas\HttpHandlerRunner\Emitter\SapiStreamEmitter;
 
 class ExplorerController
 {
@@ -118,7 +118,7 @@ class ExplorerController
 
         $service->renderInPage(
             $request,
-            $project->getPublicName().' / '.$path,
+            $project->getPublicName() . ' / ' . $path,
             'index',
             new ExplorerPresenter(
                 $path_parser->getPathParts($path),

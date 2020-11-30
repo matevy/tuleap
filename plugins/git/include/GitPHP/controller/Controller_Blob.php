@@ -23,9 +23,12 @@ namespace Tuleap\Git\GitPHP;
 
 use EventManager;
 use Tuleap\Git\BinaryDetector;
-use Tuleap\Git\Repository\View\LanguageDetectorForPrismJS;
+use Tuleap\Git\CommonMarkExtension\LinkToGitFileBlobFinder;
+use Tuleap\Git\CommonMarkExtension\LinkToGitFileExtension;
 use Tuleap\Git\GitPHP\Events\DisplayFileContentInGitView;
+use Tuleap\Git\Repository\View\LanguageDetectorForPrismJS;
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Markdown\CommonMarkInterpreter;
 
 /**
  * Blob controller class
@@ -36,7 +39,7 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
     public function __construct()
     {
         parent::__construct();
-        if (!$this->project) {
+        if (! $this->project) {
             throw new MessageException(dgettext("gitphp", 'Project is required'), true);
         }
     }
@@ -94,6 +97,7 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
         if (isset($_GET['h'])) {
             $this->params['hash'] = $_GET['h'];
         }
+        $this->params['show_source'] = isset($_GET['show_source']);
     }
 
     /**
@@ -112,11 +116,11 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
                 $saveas = $this->params['hash'] . ".txt";
             }
 
-            $headers = array();
+            $headers = [];
 
             $mime = null;
             if (Config::GetInstance()->GetValue('filemimetype', true)) {
-                if ((!isset($this->params['hash'])) && (isset($this->params['file']))) {
+                if ((! isset($this->params['hash'])) && (isset($this->params['file']))) {
                     $commit = $this->project->GetCommit($this->params['hashbase']);
                     $this->params['hash'] = $commit->PathToHash($this->params['file']);
                 }
@@ -152,7 +156,7 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
         $commit = $this->project->GetCommit($this->params['hashbase']);
         $this->tpl->assign('commit', $commit);
 
-        if ((!isset($this->params['hash'])) && (isset($this->params['file']))) {
+        if ((! isset($this->params['hash'])) && (isset($this->params['file']))) {
             $this->params['hash'] = $commit->PathToHash($this->params['file']);
         }
 
@@ -161,7 +165,7 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
             throw new NotFoundException();
         }
 
-        if (!empty($this->params['file'])) {
+        if (! empty($this->params['file'])) {
             $blob->SetPath($this->params['file']);
         }
 
@@ -175,7 +179,7 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
             $pathtree[] = $pathtreepiece;
 
             $path = dirname($path);
-        };
+        }
         $this->tpl->assign('pathtree', array_reverse($pathtree));
 
         $blob->SetCommit($commit);
@@ -217,12 +221,28 @@ class Controller_Blob extends ControllerBase // @codingStandardsIgnoreLine
             return;
         }
 
-        $this->tpl->assign('extrascripts', array('blame'));
+        $this->tpl->assign('extrascripts', ['blame']);
 
-        $detector = new LanguageDetectorForPrismJS();
-        $this->tpl->assign('language', $detector->getLanguage($blob->GetName()));
-        $this->tpl->assign('bloblines', $blob->GetData(true));
-        $include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets', GIT_BASE_URL . '/assets');
+        $detector          = new LanguageDetectorForPrismJS();
+        $detected_language = $detector->getLanguage($blob->GetName());
+        $this->tpl->assign('language', $detected_language);
+        $can_file_be_rendered = $detected_language === 'md' || $detected_language === 'markdown';
+        $this->tpl->assign('can_be_rendered', $can_file_be_rendered);
+        if ($can_file_be_rendered && ! $this->params['show_source']) {
+            $content_interpretor = CommonMarkInterpreter::build(
+                \Codendi_HTMLPurifier::instance(),
+                new LinkToGitFileExtension(new LinkToGitFileBlobFinder($blob->GetPath(), $commit))
+            );
+            $this->tpl->assign(
+                'rendered_file',
+                $content_interpretor->getInterpretedContent(
+                    $blob->GetData()
+                )
+            );
+        } else {
+            $this->tpl->assign('bloblines', $blob->GetData(true));
+        }
+        $include_assets = new IncludeAssets(__DIR__ . '/../../../../../src/www/assets/git', '/assets/git');
         $GLOBALS['Response']->includeFooterJavascriptFile(
             $include_assets->getFileURL('repository-blob.js')
         );

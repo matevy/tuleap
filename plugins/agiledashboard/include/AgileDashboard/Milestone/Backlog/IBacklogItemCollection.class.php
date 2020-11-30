@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,16 +22,16 @@
 /**
  * First class collection of Backlog Items
  */
-interface AgileDashboard_Milestone_Backlog_IBacklogItemCollection
+interface AgileDashboard_Milestone_Backlog_IBacklogItemCollection extends Iterator
 {
 
-    function getParentItemName();
+    public function getParentItemName();
 
-    function setParentItemName($name);
+    public function setParentItemName($name);
 
-    function push(AgileDashboard_Milestone_Backlog_IBacklogItem $item);
+    public function push(AgileDashboard_Milestone_Backlog_IBacklogItem $item);
 
-    function containsId($id);
+    public function containsId($id);
 
     public function getTotalAvaialableSize();
 

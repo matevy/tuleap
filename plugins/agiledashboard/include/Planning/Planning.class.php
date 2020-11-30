@@ -71,7 +71,7 @@ class Planning
      */
     private $backlog_trackers;
 
-    function __construct($id, $name, $group_id, $backlog_title, $plan_title, array $backlog_trackers_ids = array(), $planning_tracker_id = null)
+    public function __construct($id, $name, $group_id, $backlog_title, $plan_title, array $backlog_trackers_ids = [], $planning_tracker_id = null)
     {
         $this->id                   = $id;
         $this->name                 = $name;
@@ -124,7 +124,7 @@ class Planning
     }
 
     /**
-     * @return int[] The id as the tracker used as backlog
+     * @return int[] The list of ids of trackers used as backlog
      */
     public function getBacklogTrackersIds()
     {
@@ -160,12 +160,12 @@ class Planning
     }
 
     /**
-     * @param Tracker[] $backlog_tracker The trackers used as a backlog
+     * @param Tracker[] $backlog_trackers The trackers used as a backlog
      */
     public function setBacklogTrackers(array $backlog_trackers)
     {
         $this->backlog_trackers = $backlog_trackers;
-        $this->backlog_trackers_ids = array();
+        $this->backlog_trackers_ids = [];
 
         foreach ($this->backlog_trackers as $backlog_tracker) {
             $this->backlog_trackers_ids[] = $backlog_tracker->getId();

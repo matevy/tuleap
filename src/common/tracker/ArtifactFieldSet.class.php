@@ -27,47 +27,47 @@ class ArtifactFieldSet
      *
      * @var    object{ArtifactType} $ArtifactType
      */
-    var $ArtifactType;
+    public $ArtifactType;
 
     /**
      * The ID of this ArtifactfieldSet
      *
      * @var    int $field_set_id
      */
-    var $field_set_id;
+    public $field_set_id;
 
     /**
      * The name of this ArtifactFieldSet
      *
      * @var    string $name
      */
-    var $name;
+    public $name;
 
     /**
      * The description of this ArtifactFieldSet
      *
      * @var    string $description
      */
-    var $description;
+    public $description;
 
     /**
      * The rank of this ArtifactFieldSet
      *
      * @var    string $rank
      */
-    var $rank;
+    public $rank;
 
     /**
      * The array of ArtifactFields Object contained in this ArtifactFieldSet
      *
      * @var    array of object{ArtifactField} $ArtifactFields
      */
-    var $ArtifactFields;
+    public $ArtifactFields;
 
     /**
      *    ArtifactFieldSet - constructor.
      */
-    function __construct()
+    public function __construct()
     {
     }
 
@@ -76,13 +76,13 @@ class ArtifactFieldSet
      *
      *  @return bool success.
      */
-    function fetchData()
+    public function fetchData()
     {
         $sql = "SELECT *
-                FROM artifact_field_set 
-                WHERE artifact_field_set_id=". db_ei($this->getID()) ."";
+                FROM artifact_field_set
+                WHERE artifact_field_set_id=" . db_ei($this->getID()) . "";
         $res = db_query($sql);
-        if (!$res || db_numrows($res) < 1) {
+        if (! $res || db_numrows($res) < 1) {
             return false;
         }
         // set the attributes of this fieldset
@@ -100,7 +100,7 @@ class ArtifactFieldSet
      * @param array $fieldset_array the values array
      * @return void
      */
-    function setFromArray($fieldset_array)
+    public function setFromArray($fieldset_array)
     {
         $this->field_set_id = $fieldset_array['field_set_id'];
         $this->group_artifact_id = $fieldset_array['group_artifact_id'];
@@ -114,7 +114,7 @@ class ArtifactFieldSet
      *
      * @param ArtifactField[] $fields the array of fields contained in this Field set
      */
-    function setArtifactFields($fields)
+    public function setArtifactFields($fields)
     {
         $this->ArtifactFields = $fields;
     }
@@ -123,7 +123,7 @@ class ArtifactFieldSet
      *
      * @return ArtifactField[] The ArtifactType object.
      */
-    function getArtifactFields()
+    public function getArtifactFields()
     {
         return $this->ArtifactFields;
     }
@@ -133,7 +133,7 @@ class ArtifactFieldSet
      *
      * @return Object{ArtifactType} The ArtifactType object.
      */
-    function &getArtifactType()
+    public function &getArtifactType()
     {
         return $this->ArtifactType;
     }
@@ -143,7 +143,7 @@ class ArtifactFieldSet
      *
      * @return int The field_set_id #.
      */
-    function getID()
+    public function getID()
     {
         return $this->field_set_id;
     }
@@ -153,7 +153,7 @@ class ArtifactFieldSet
      *
      * @return int The group_artifact_id #.
      */
-    function getArtifactTypeID()
+    public function getArtifactTypeID()
     {
         return $this->group_artifact_id;
     }
@@ -163,7 +163,7 @@ class ArtifactFieldSet
      *
      * @return string name.
      */
-    function getName()
+    public function getName()
     {
         return $this->name;
     }
@@ -173,7 +173,7 @@ class ArtifactFieldSet
      *
      * @return string description.
      */
-    function getDescription()
+    public function getDescription()
     {
         return $this->description;
     }
@@ -183,7 +183,7 @@ class ArtifactFieldSet
      *
      * @return int rank
      */
-    function getRank()
+    public function getRank()
     {
         return $this->rank;
     }
@@ -195,11 +195,11 @@ class ArtifactFieldSet
      *
      * @return string label, the name if the name is not internationalized, or the localized text if so
      */
-    function getLabel()
+    public function getLabel()
     {
         global $Language;
         if ($this->isNameMustBeLocalized()) {
-            return $Language->getText('tracker_common_fieldset', $this->getName());
+            return $Language->getOverridableText('tracker_common_fieldset', $this->getName());
         } else {
             return $this->getName();
         }
@@ -212,11 +212,11 @@ class ArtifactFieldSet
      *
      * @return string description, the description text if the description is not internationalized, or the localized text if so
      */
-    function getDescriptionText()
+    public function getDescriptionText()
     {
         global $Language;
         if ($this->isDescriptionMustBeLocalized()) {
-            return $Language->getText('tracker_common_fieldset', $this->getDescription());
+            return $Language->getOverridableText('tracker_common_fieldset', $this->getDescription());
         } else {
             return $this->getDescription();
         }
@@ -251,9 +251,9 @@ class ArtifactFieldSet
      *
      *    @return    array{ArtifactField}
      */
-    function getAllUsedFields()
+    public function getAllUsedFields()
     {
-        $result_fields = array();
+        $result_fields = [];
         foreach ($this->ArtifactFields as $key => $field) {
             if ($field->IsUsed()) {
                 $result_fields[$key] = $field;
@@ -267,9 +267,9 @@ class ArtifactFieldSet
      *
      *    @return    array{ArtifactField}
      */
-    function getAllUnusedFields()
+    public function getAllUnusedFields()
     {
-        $result_fields = array();
+        $result_fields = [];
         foreach ($this->ArtifactFields as $key => $field) {
             if (! $field->IsUsed()) {
                 $result_fields[$key] = $field;
@@ -283,7 +283,7 @@ class ArtifactFieldSet
      *
      * @param user_id: if not given or false take the current user
      */
-    function userCanSubmit($group_id, $group_artifact_id, $user_id = false)
+    public function userCanSubmit($group_id, $group_artifact_id, $user_id = false)
     {
         $um = UserManager::instance();
         if (! $user_id) {
@@ -301,7 +301,7 @@ class ArtifactFieldSet
                 if ($ok) {
                     break;
                 }
-                if (!$field->isSpecial()) {
+                if (! $field->isSpecial()) {
                     $ok = $field->userCanSubmit($group_id, $group_artifact_id, $user_id);
                 }
             }
@@ -317,20 +317,20 @@ class ArtifactFieldSet
      *  @param    int        The rank.
      *  @return true on success, false on failure.
      */
-    function update($name, $description, $rank)
+    public function update($name, $description, $rank)
     {
-        if (!$name || trim($name) == "") {
+        if (! $name || trim($name) == "") {
             return false;
         }
 
-        $sql = "UPDATE artifact_field_set 
-                SET name='". db_es($name) ."', 
-                    description='". db_es($description) ."',
-                    rank='". db_ei($rank) ."'
-                WHERE field_set_id='".  db_ei($this->getID())  ."'";
+        $sql = "UPDATE artifact_field_set
+                SET name='" . db_es($name) . "',
+                    description='" . db_es($description) . "',
+                    rank='" . db_ei($rank) . "'
+                WHERE field_set_id='" .  db_ei($this->getID())  . "'";
 
-        $res=db_query($sql);
-        if (!$res) {
+        $res = db_query($sql);
+        if (! $res) {
             return false;
         } else {
             $this->fetchData();

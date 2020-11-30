@@ -36,10 +36,10 @@ abstract class Tracker_Rule
      *
      * @var int
      */
-    var $id;
-    var $tracker_id;
-    var $source_field;
-    var $target_field;
+    public $id;
+    public $tracker_id;
+    public $source_field;
+    public $target_field;
 
     /** @var Tracker_FormElement_Field */
     protected $source_field_obj;
@@ -69,7 +69,7 @@ abstract class Tracker_Rule
 
     /**
      *
-     * @param int $tracker
+     * @param int $tracker_id
      * @return \Tracker_Rule
      */
     public function setTrackerId($tracker_id)
@@ -110,7 +110,6 @@ abstract class Tracker_Rule
 
     /**
      *
-     * @param Tracker_FormElement_Field $field
      * @return \Tracker_Rule
      */
     public function setSourceField(Tracker_FormElement_Field $field)
@@ -131,7 +130,6 @@ abstract class Tracker_Rule
 
     /**
      *
-     * @param Tracker_FormElement_Field $field
      * @return \Tracker_Rule
      */
     public function setTargetField(Tracker_FormElement_Field $field)

@@ -40,7 +40,7 @@ class AgileDashboard_KanbanFactory
     public function getListOfKanbansForProject(PFUser $user, $project_id)
     {
         $rows    = $this->dao->getKanbansForProject($project_id);
-        $kanbans = array();
+        $kanbans = [];
 
         foreach ($rows as $kanban_data) {
             if ($this->isUserAllowedToAccessKanban($user, $kanban_data['tracker_id'])) {
@@ -72,33 +72,53 @@ class AgileDashboard_KanbanFactory
         return $this->instantiateFromRow($row);
     }
 
+    public function getKanbanForXmlImport(int $kanban_id)
+    {
+        $row = $this->dao->getKanbanById($kanban_id)->getRow();
+
+        if (! $row) {
+            throw new AgileDashboard_KanbanNotFoundException();
+        }
+        return $this->instantiateFromRow($row);
+    }
+
     /**
      * @return int[]
      */
-    public function getKanbanTrackerIds($project_id)
+    public function getKanbanTrackerIds($project_id): array
     {
         $rows               = $this->dao->getKanbansForProject($project_id);
-        $kanban_tracker_ids = array();
+        $kanban_tracker_ids = [];
 
         foreach ($rows as $kanban_data) {
-            $kanban_tracker_ids[] = $kanban_data['tracker_id'];
+            $kanban_tracker_ids[] = (int) $kanban_data['tracker_id'];
         }
 
         return $kanban_tracker_ids;
     }
 
     /**
-     * @return int
+     * @return int|null
      */
     public function getKanbanIdByTrackerId($tracker_id)
     {
-        $row    = $this->dao->getKanbanByTrackerId($tracker_id)->getRow();
-        $kanban = $this->instantiateFromRow($row);
+        $kanban = $this->getKanbanByTrackerId($tracker_id);
+        if ($kanban === null) {
+            return null;
+        }
         return $kanban->getId();
     }
 
-    /** @return AgileDashboard_Kanban */
-    private function instantiateFromRow($kanban_data)
+    public function getKanbanByTrackerId(int $tracker_id): ?AgileDashboard_Kanban
+    {
+        $row = $this->dao->getKanbanByTrackerId($tracker_id)->getRow();
+        if ($row === false) {
+            return null;
+        }
+        return $this->instantiateFromRow($row);
+    }
+
+    private function instantiateFromRow(array $kanban_data): AgileDashboard_Kanban
     {
         return new AgileDashboard_Kanban(
             $kanban_data['id'],

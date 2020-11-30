@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -52,7 +52,7 @@ class OrderedColumnRepresentationsBuilder
      */
     public function getDates(DateTime $start_date, DateTime $end_date, $interval_between_point)
     {
-        $dates = array();
+        $dates = [];
 
         $period = new DateInterval('P' . $interval_between_point . 'D');
         while ($end_date >= $start_date) {
@@ -68,8 +68,6 @@ class OrderedColumnRepresentationsBuilder
     }
 
     /**
-     * @param AgileDashboard_Kanban $kanban
-     * @param PFUser $user
      * @param array $dates
      * @param $items_in_columns
      * @return array
@@ -81,9 +79,9 @@ class OrderedColumnRepresentationsBuilder
         $items_in_columns
     ) {
         $items_count_for_archive = array_fill_keys($dates, 0);
-        $items_count_grouped_by_open_column = array(
+        $items_count_grouped_by_open_column = [
             self::BACKLOG_BINDVALUE_ID => array_fill_keys($dates, 0)
-        );
+        ];
         $columns = $this->kanban_column_factory->getAllKanbanColumnsForAKanban(
             $kanban,
             $user
@@ -104,7 +102,7 @@ class OrderedColumnRepresentationsBuilder
         }
 
         $ordered_column_representations = array_merge(
-            array($this->buildArchiveColumnRepresentation($items_count_for_archive)),
+            [$this->buildArchiveColumnRepresentation($items_count_for_archive)],
             $this->buildOpenColumnsRepresentation($items_count_grouped_by_open_column, $columns)
         );
 
@@ -116,7 +114,7 @@ class OrderedColumnRepresentationsBuilder
      */
     private function buildOpenColumnsRepresentation(array $items_count_grouped_by_open_column, array $open_columns)
     {
-        $open_column_representations_item_counts = array();
+        $open_column_representations_item_counts = [];
         foreach ($items_count_grouped_by_open_column as $column_id => $items_count) {
             foreach ($items_count as $day => $count) {
                 $diagram_point_representation = new DiagramPointRepresentation();
@@ -128,14 +126,13 @@ class OrderedColumnRepresentationsBuilder
             }
         }
 
-        $ordered_open_column_representations = array();
+        $ordered_open_column_representations = [];
 
         $reversed_columns = array_reverse($open_columns);
         foreach ($reversed_columns as $column) {
             $values = $open_column_representations_item_counts[$column->getId()];
 
-            $column_representation = new DiagramColumnRepresentation();
-            $column_representation->build(
+            $column_representation = new DiagramColumnRepresentation(
                 $column->getId(),
                 $column->getLabel(),
                 $values
@@ -156,13 +153,11 @@ class OrderedColumnRepresentationsBuilder
      */
     private function buildBacklogColumnRepresentation(array $open_column_representations_item_counts)
     {
-        $backlog_representation = new DiagramColumnRepresentation();
-        $backlog_representation->build(
+        return new DiagramColumnRepresentation(
             ColumnIdentifier::BACKLOG_COLUMN,
             'Backlog',
             $open_column_representations_item_counts[self::BACKLOG_BINDVALUE_ID]
         );
-        return $backlog_representation;
     }
 
     /**
@@ -170,7 +165,7 @@ class OrderedColumnRepresentationsBuilder
      */
     private function buildArchiveColumnRepresentation(array $archive_items_count)
     {
-        $archive_representation_item_counts = array();
+        $archive_representation_item_counts = [];
         foreach ($archive_items_count as $day => $kanban_item_counts) {
             $diagram_representation = new DiagramPointRepresentation();
             $diagram_representation->build(
@@ -180,13 +175,10 @@ class OrderedColumnRepresentationsBuilder
             $archive_representation_item_counts[] = $diagram_representation;
         }
 
-        $archive_representation = new DiagramColumnRepresentation();
-        $archive_representation->build(
+        return new DiagramColumnRepresentation(
             ColumnIdentifier::ARCHIVE_COLUMN,
             'Archive',
             $archive_representation_item_counts
         );
-
-        return $archive_representation;
     }
 }

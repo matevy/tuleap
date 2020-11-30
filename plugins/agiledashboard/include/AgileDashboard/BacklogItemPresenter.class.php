@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2013 - 2018. All rights reserved.
+ * Copyright Enalean (c) 2013-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -21,6 +21,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
+
+use Tuleap\Tracker\Artifact\Artifact;
 
 class AgileDashboard_BacklogItemPresenter implements
     AgileDashboard_Milestone_Backlog_IBacklogItem,
@@ -60,38 +62,43 @@ class AgileDashboard_BacklogItemPresenter implements
     /** @var String */
     private $color;
 
-    /** @var Tracker_Artifact */
+    /** @var Artifact */
     private $artifact;
 
-    /** @var Tracker_Artifact */
+    /** @var Artifact */
     private $parent;
 
     /** @var bool */
     private $has_children = null;
     /**
-     * @var
+     * @var bool
      */
     private $is_inconsistent;
+    /**
+     * @var string
+     */
+    private $short_type;
 
-    public function __construct(Tracker_Artifact $artifact, $redirect_to_self, $is_inconsistent)
+    public function __construct(Artifact $artifact, $redirect_to_self, bool $is_inconsistent)
     {
         $this->id               = $artifact->getId();
-        $this->title            = $artifact->getTitle();
+        $this->title            = $artifact->getTitle() ?? '';
         $this->url              = $artifact->getUri();
         $this->redirect_to_self = $redirect_to_self;
         $this->artifact         = $artifact;
         $this->type             = $this->artifact->getTracker()->getName();
         $this->color            = $this->artifact->getTracker()->getColor()->getName();
+        $this->short_type       = $this->artifact->getTracker()->getItemName();
         $this->is_inconsistent  = $is_inconsistent;
     }
 
-    public function setParent(Tracker_Artifact $parent)
+    public function setParent(Artifact $parent)
     {
         $this->parent = $parent;
     }
 
     /**
-     * @return Tracker_Artifact
+     * @return Artifact
      */
     public function getParent()
     {
@@ -119,7 +126,7 @@ class AgileDashboard_BacklogItemPresenter implements
         return $this->id;
     }
 
-    public function title()
+    public function title(): string
     {
         return $this->title;
     }
@@ -168,20 +175,20 @@ class AgileDashboard_BacklogItemPresenter implements
     private function getUrlWithRedirect($url)
     {
         if ($this->redirect_to_self) {
-            return $url.'&'.$this->redirect_to_self;
+            return $url . '&' . $this->redirect_to_self;
         }
         return $url;
     }
 
     /**
-     * @return Tracker_Artifact
+     * @return Artifact
      */
     public function getArtifact()
     {
         return $this->artifact;
     }
 
-    public function color()
+    public function color(): string
     {
         return $this->color;
     }
@@ -229,5 +236,10 @@ class AgileDashboard_BacklogItemPresenter implements
     public function setRemainingEffort($value)
     {
         $this->remaining_effort = $value;
+    }
+
+    public function getShortType(): string
+    {
+        return $this->short_type;
     }
 }

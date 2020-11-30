@@ -22,22 +22,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once('Docman_View_View.class.php');
-
 class Docman_View_AjaxReferenceTooltip extends Docman_View_View
 {
-    function display($params = array())
+    public function display($params = [])
     {
         $html_purifier = Codendi_HTMLPurifier::instance();
         $di = $this->_getDocmanIcons($params);
         $icon_src = $di->getIconForItem($params['item'], $params);
-        echo '<img src="'. $icon_src .'" class="docman_item_icon" style="vertical-align:middle; text-decoration:none;" />';
+        echo '<img src="' . $icon_src . '" class="docman_item_icon" style="vertical-align:middle; text-decoration:none;" />';
 
-        echo '<strong style="padding-left:6px;">'. $html_purifier->purify($params['item']->getTitle()) .'</strong>';
+        echo '<strong style="padding-left:6px;">' . $html_purifier->purify($params['item']->getTitle()) . '</strong>';
 
         $desc = $params['item']->getDescription();
         if ($desc) {
-            echo '<br />'. $html_purifier->purify($desc);
+            echo '<br />' . $html_purifier->purify($desc);
         }
     }
 }

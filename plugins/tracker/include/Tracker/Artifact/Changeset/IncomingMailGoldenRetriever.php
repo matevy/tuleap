@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever
 {
 
@@ -25,7 +27,7 @@ class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever
     private $dao;
 
     /** @var array */
-    private $cache = array();
+    private $cache = [];
 
     /** @var Tracker_Artifact_Changeset_IncomingMailGoldenRetriever */
     private static $instance;
@@ -37,7 +39,7 @@ class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever
 
     public static function instance()
     {
-        if (!isset(self::$instance)) {
+        if (! isset(self::$instance)) {
             $c = self::class;
             self::$instance = new $c(
                 new Tracker_Artifact_Changeset_IncomingMailDao()
@@ -47,7 +49,7 @@ class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever
     }
 
     /** @return string | null */
-    public function getRawMailThatCreatedArtifact(Tracker_Artifact $artifact)
+    public function getRawMailThatCreatedArtifact(Artifact $artifact)
     {
         return $this->getRawMailForChangeset($artifact->getFirstChangeset());
     }
@@ -70,10 +72,10 @@ class Tracker_Artifact_Changeset_IncomingMailGoldenRetriever
         return null;
     }
 
-    private function getCachedRawMailByChangesetsForArtifact(Tracker_Artifact $artifact)
+    private function getCachedRawMailByChangesetsForArtifact(Artifact $artifact)
     {
         if (! isset($this->cache[$artifact->getId()])) {
-            $this->cache[$artifact->getId()] = array();
+            $this->cache[$artifact->getId()] = [];
             foreach ($this->dao->searchByArtifactId($artifact->getId()) as $row) {
                 $this->cache[$artifact->getId()][$row['changeset_id']] = $row['raw_mail'];
             }

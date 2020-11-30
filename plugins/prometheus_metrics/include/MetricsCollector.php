@@ -24,27 +24,30 @@ declare(strict_types=1);
 namespace Tuleap\PrometheusMetrics;
 
 use SystemEvent;
+use Project;
 use Tuleap\Admin\Homepage\NbUsersByStatusBuilder;
+use Tuleap\BuildVersion\VersionPresenter;
 use Tuleap\Instrument\Prometheus\CollectTuleapComputedMetrics;
 use Tuleap\Instrument\Prometheus\Prometheus;
 use Tuleap\Queue\Worker;
 
 class MetricsCollector
 {
+    private const PROJECT_STATUS = [
+        Project::STATUS_ACTIVE  => 'active',
+        Project::STATUS_PENDING => 'pending',
+        Project::STATUS_DELETED => 'deleted',
+    ];
+
     /**
      * @var Prometheus
      */
     private $prometheus;
+
     /**
      * @var MetricsCollectorDao
      */
     private $dao;
-
-    private $project_status = [
-        \Project::STATUS_ACTIVE  => 'active',
-        \Project::STATUS_PENDING => 'pending',
-        \Project::STATUS_DELETED => 'deleted',
-    ];
     /**
      * @var NbUsersByStatusBuilder
      */
@@ -53,6 +56,10 @@ class MetricsCollector
      * @var \EventManager
      */
     private $event_manager;
+    /**
+     * @var VersionPresenter
+     */
+    private $version_presenter;
     /**
      * @var \Redis|null
      */
@@ -63,13 +70,15 @@ class MetricsCollector
         MetricsCollectorDao $dao,
         NbUsersByStatusBuilder $nb_user_builder,
         \EventManager $event_manager,
+        VersionPresenter $version_presenter,
         ?\Redis $redis
     ) {
-        $this->prometheus      = $prometheus;
-        $this->dao             = $dao;
-        $this->nb_user_builder = $nb_user_builder;
-        $this->event_manager   = $event_manager;
-        $this->redis           = $redis;
+        $this->prometheus        = $prometheus;
+        $this->dao               = $dao;
+        $this->nb_user_builder   = $nb_user_builder;
+        $this->event_manager     = $event_manager;
+        $this->version_presenter = $version_presenter;
+        $this->redis             = $redis;
     }
 
     public function collect(): void
@@ -78,6 +87,7 @@ class MetricsCollector
         $this->setProjectsByStatus();
         $this->setWorkerStatus();
         $this->setSystemEventsStatus();
+        $this->setBuildInfo();
         $this->event_manager->processEvent(new CollectTuleapComputedMetrics($this->prometheus));
     }
 
@@ -85,15 +95,15 @@ class MetricsCollector
     {
         $nb_users_by_status = $this->nb_user_builder->getNbUsersByStatusBuilder();
 
-        $this->setUsersTotal('pending', $nb_users_by_status->getNbPending());
-        $this->setUsersTotal('active', $nb_users_by_status->getNbActive());
-        $this->setUsersTotal('validated', $nb_users_by_status->getNbAllValidated());
-        $this->setUsersTotal('restricted', $nb_users_by_status->getNbRestricted());
-        $this->setUsersTotal('suspended', $nb_users_by_status->getNbSuspended());
-        $this->setUsersTotal('deleted', $nb_users_by_status->getNbDeleted());
+        $this->setUsersTotal('pending', (float) $nb_users_by_status->getNbPending());
+        $this->setUsersTotal('active', (float) $nb_users_by_status->getNbActive());
+        $this->setUsersTotal('validated', (float) $nb_users_by_status->getNbAllValidated());
+        $this->setUsersTotal('restricted', (float) $nb_users_by_status->getNbRestricted());
+        $this->setUsersTotal('suspended', (float) $nb_users_by_status->getNbSuspended());
+        $this->setUsersTotal('deleted', (float) $nb_users_by_status->getNbDeleted());
     }
 
-    private function setUsersTotal($type, $value): void
+    private function setUsersTotal(string $type, float $value): void
     {
         $this->prometheus->gaugeSet('users_total', 'Total number of users by type', $value, ['type' => $type]);
     }
@@ -101,7 +111,7 @@ class MetricsCollector
     private function setProjectsByStatus(): void
     {
         foreach ($this->dao->getProjectsByStatus() as $row) {
-            $this->setProjectsTotal($this->project_status[$row['status']], $row['nb']);
+            $this->setProjectsTotal(self::PROJECT_STATUS[$row['status']], $row['nb']);
         }
     }
 
@@ -130,5 +140,18 @@ class MetricsCollector
         foreach ($all_status as $status => $count) {
             $this->prometheus->gaugeSet('system_events_count', 'Actual number (as in the database) of system_events per type', $count, ['status' => $status]);
         }
+    }
+
+    private function setBuildInfo(): void
+    {
+        $this->prometheus->gaugeSet(
+            'build_info',
+            "A metric with a constant '1' value labelled by flavor and version",
+            1,
+            [
+                'flavor'  => $this->version_presenter->flavor_name,
+                'version' => $this->version_presenter->version_number,
+            ]
+        );
     }
 }

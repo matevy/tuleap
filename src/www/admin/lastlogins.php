@@ -2,7 +2,7 @@
 /**
  * SourceForge: Breaking Down the Barriers to Open Source Development
  * Copyright 1999-2000 (c) The SourceForge Crew
- * Copyright (c) Enalean, 2016 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -30,8 +30,7 @@ use Tuleap\Layout\IncludeAssets;
 $request = HTTPRequest::instance();
 $request->checkUserIsSuperUser();
 
-$assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-$include_assets = new IncludeAssets($assets_path, '/assets');
+$include_assets = new IncludeAssets(__DIR__ . '/../assets/core', '/assets/core');
 
 $GLOBALS['HTML']->includeFooterJavascriptFile(
     $include_assets->getFileURL('site-admin-most-recent-logins.js')
@@ -44,7 +43,7 @@ $res_logins = db_query("SELECT session.user_id AS user_id,"
     . "WHERE session.user_id=user.user_id AND "
     . "session.user_id>0 AND session.time>0 ORDER BY session.time DESC LIMIT 5000");
 
-$most_recent_login_presenters = array();
+$most_recent_login_presenters = [];
 
 while ($row_logins = db_fetch_array($res_logins)) {
     $most_recent_login_presenters[] = new MostRecentLoginPresenter(

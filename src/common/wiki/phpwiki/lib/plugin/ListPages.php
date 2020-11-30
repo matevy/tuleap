@@ -34,17 +34,17 @@ require_once('lib/PageList.php');
  */
 class WikiPlugin_ListPages extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("ListPages");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("List pages that are explicitly given as the pages argument.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -53,15 +53,15 @@ class WikiPlugin_ListPages extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array('pages'    => false,
+            ['pages'    => false,
                    //'exclude'  => false,
                    'info'     => 'pagename',
                    'dimension' => 0,
-            )
+            ]
         );
     }
 
@@ -72,7 +72,7 @@ class WikiPlugin_ListPages extends WikiPlugin
     //   numbacklinks  : number of backlinks (links to the given page)
     //   numpagelinks  : number of forward links (links at the given page)
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         extract($args);
@@ -84,7 +84,7 @@ class WikiPlugin_ListPages extends WikiPlugin
         if ($info) {
             $info = preg_split('/,/D', $info);
         } else {
-            $info = array();
+            $info = [];
         }
 
         if (in_array('top3recs', $info)) {
@@ -95,23 +95,25 @@ class WikiPlugin_ListPages extends WikiPlugin
             $active_userid = $active_user->_userid;
 
             // if userids is null or empty, fill it with just the active user
-            if (!isset($userids) || !is_array($userids) || !count($userids)) {
+            if (! isset($userids) || ! is_array($userids) || ! count($userids)) {
                 // TKL: moved getBuddies call inside if statement because it was
                 // causing the userids[] parameter to be ignored
-                if (is_string($active_userid)
-                and strlen($active_userid)
-                and $active_user->isSignedIn()) {
+                if (
+                    is_string($active_userid)
+                    and strlen($active_userid)
+                    and $active_user->isSignedIn()
+                ) {
                     $userids = getBuddies($active_userid, $dbi);
                 } else {
-                    $userids = array();
+                    $userids = [];
                     // XXX: this wipes out the category caption...
                     $caption = _("You must be logged in to view ratings.");
                 }
             }
 
             // find out which users we should show ratings for
-            $options = array('dimension' => $dimension,
-                             'users' => array());
+            $options = ['dimension' => $dimension,
+                             'users' => []];
             $args = array_merge($options, $args);
         }
         if (empty($pages) and $pages != '0') {
@@ -126,21 +128,21 @@ class WikiPlugin_ListPages extends WikiPlugin
         }
 
         $pagelist = new PageList($info, $exclude, $args);
-        $pages_array = is_string($pages) ? explodePageList($pages) : (is_array($pages) ? $pages : array());
+        $pages_array = is_string($pages) ? explodePageList($pages) : (is_array($pages) ? $pages : []);
         $pagelist->addPageList($pages_array);
         return $pagelist;
     }
-};
+}
 
 // how many back-/forwardlinks for this page
 class _PageList_Column_ListPages_count extends _PageList_Column
 {
-    function __construct($field, $display, $backwards = false)
+    public function __construct($field, $display, $backwards = false)
     {
         $this->_direction = $backwards;
         return parent::__construct($field, $display, 'center');
     }
-    function _getValue($page, &$revision_handle)
+    public function _getValue($page, &$revision_handle)
     {
         $iter = $page->getLinks($this->_direction);
         $count = $iter->count();

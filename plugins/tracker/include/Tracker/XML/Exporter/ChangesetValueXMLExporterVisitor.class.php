@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,8 +18,10 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\Tracker\XML\Exporter\ChangesetValue\ChangesetValueComputedXMLExporter;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\ChangesetValueComputed;
+use Tuleap\Tracker\XML\Exporter\ChangesetValue\ChangesetValueComputedXMLExporter;
+use Tuleap\Tracker\XML\Exporter\ChangesetValue\ExternalExporterCollector;
 
 class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitor implements Tracker_Artifact_ChangesetValueVisitor
 {
@@ -83,6 +85,10 @@ class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitor implements Tracker_A
      * @var ChangesetValueComputedXMLExporter
      */
     private $computed_exporter;
+    /**
+     * @var ExternalExporterCollector
+     */
+    private $collector;
 
     public function __construct(
         Tracker_XML_Exporter_ChangesetValue_ChangesetValueDateXMLExporter $date_exporter,
@@ -96,7 +102,8 @@ class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitor implements Tracker_A
         Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter $open_list_exporter,
         Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporter $artlink_exporter,
         ChangesetValueComputedXMLExporter $computed_exporter,
-        Tracker_XML_Exporter_ChangesetValue_ChangesetValueUnknownXMLExporter $unknown_exporter
+        Tracker_XML_Exporter_ChangesetValue_ChangesetValueUnknownXMLExporter $unknown_exporter,
+        ExternalExporterCollector $collector
     ) {
         $this->file_exporter      = $file_exporter;
         $this->date_exporter      = $date_exporter;
@@ -110,16 +117,17 @@ class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitor implements Tracker_A
         $this->unknown_exporter   = $unknown_exporter;
         $this->artlink_exporter   = $artlink_exporter;
         $this->computed_exporter  = $computed_exporter;
+        $this->collector          = $collector;
     }
 
     public function export(
         SimpleXMLElement $artifact_xml,
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_Artifact_ChangesetValue $changeset_value
     ) {
-        /** @var Tracker_XML_Exporter_ChangesetValue_ChangesetValueXMLExporter $exporter */
         $exporter = $changeset_value->accept($this);
+        \assert($exporter instanceof Tracker_XML_Exporter_ChangesetValue_ChangesetValueXMLExporter);
         $exporter->export($artifact_xml, $changeset_xml, $artifact, $changeset_value);
     }
 
@@ -180,6 +188,12 @@ class Tracker_XML_Exporter_ChangesetValueXMLExporterVisitor implements Tracker_A
 
     public function visitExternalField(Tracker_Artifact_ChangesetValue $changeset_value)
     {
+        $external_exporter = $this->collector->collectExporter($changeset_value);
+
+        if ($external_exporter) {
+            return $external_exporter;
+        }
+
         return $this->unknown_exporter;
     }
 }

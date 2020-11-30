@@ -27,7 +27,9 @@
  */
 class LDAP_UserSync
 {
-
+    /**
+     * @var self
+     */
     private static $instance;
     protected $attributes;
 
@@ -47,11 +49,11 @@ class LDAP_UserSync
      */
     public static function instance()
     {
-        if (!isset(self::$instance)) {
+        if (! isset(self::$instance)) {
             $syncClass = self::class;
             // Allows site defined user update
             include_once($GLOBALS['Language']->getContent('synchronize_user', 'en_US', 'ldap'));
-            self::$instance = new $syncClass;
+            self::$instance = new $syncClass();
         }
         return self::$instance;
     }
@@ -59,12 +61,14 @@ class LDAP_UserSync
     /**
      * Return the sync attributes
      *
+     * @param LDAP $ldap
+     *
      * @return array
      */
     public function getSyncAttributes($ldap)
     {
         //Define the default sync attributes
-        $this->attributes = array($ldap->getLDAPParam('cn'), $ldap->getLDAPParam('mail'), $ldap->getLDAPParam('uid'));
+        $this->attributes = [$ldap->getLDAPParam('cn'), $ldap->getLDAPParam('mail'), $ldap->getLDAPParam('uid')];
         return $this->attributes;
     }
 
@@ -109,6 +113,5 @@ class LDAP_UserSync
     public function getCommonName(LDAPResult $lr)
     {
         return $lr->getCommonName();
-        ;
     }
 }

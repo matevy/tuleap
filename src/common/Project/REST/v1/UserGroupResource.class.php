@@ -95,34 +95,35 @@ class UserGroupResource extends AuthenticatedResource
      *
      * @url GET {id}
      * @access hybrid
+     * @oauth2-scope read:user_membership
      *
      * @param string $id Id of the ugroup This should be one of two formats<br>
      * - format: projectId_ugroupId for dynamic project user groups (project members...)<br>
      * - format: ugroupId for all other groups (registered users, custom groups, ...)
      *
-     * @throws RestException 400
+     * @return \Tuleap\Project\REST\UserGroupRepresentation
      * @throws RestException 403
      * @throws RestException 404
      *
-     * @return \Tuleap\Project\REST\UserGroupRepresentation
+     * @throws RestException 400
      */
     public function getId($id)
     {
         $this->checkAccess();
 
         $ugroup     = $this->user_group_retriever->getExistingUserGroup($id);
-        $project_id = $ugroup->getProjectId();
+        $project    = $ugroup->getProject();
+        $project_id = $project->getGroupId();
 
         if ($project_id) {
             ProjectStatusVerificator::build()->checkProjectStatusAllowsOnlySiteAdminToAccessIt(
                 $this->user_manager->getCurrentUser(),
-                $ugroup->getProject()
+                $project
             );
             $this->userCanSeeUserGroups($project_id);
         }
 
-        $ugroup_representation = new UserGroupRepresentation();
-        $ugroup_representation->build((int) $project_id, $ugroup);
+        $ugroup_representation = new UserGroupRepresentation($project, $ugroup);
         $this->sendAllowHeadersForUserGroupId();
 
         return $ugroup_representation;
@@ -163,22 +164,19 @@ class UserGroupResource extends AuthenticatedResource
      * @param string $id Id of the ugroup This should be one of two formats<br>
      * - format: projectId_ugroupId for dynamic project user groups (project members...)<br>
      * - format: ugroupId for all other groups (registered users, custom groups, ...)
-     * @param int    $limit Number of elements displayed per page
-     * @param int    $offset Position of the first element to display
+     * @param int    $limit Number of elements displayed per page {@min 0} {@max 50}
+     * @param int    $offset Position of the first element to display {@min 0}
      * @param string $query User name to look for
      *
      *
      * @throws RestException 400
      * @throws RestException 403
      * @throws RestException 404
-     * @throws RestException 406
      *
      * @return array {@type \Tuleap\User\REST\UserRepresentation}
      */
     protected function getUsers($id, $limit = 10, $offset = 0, $query = null)
     {
-        $this->checkLimitValueIsAcceptable($limit);
-
         $user_group = $this->user_group_retriever->getExistingUserGroup($id);
 
         ProjectStatusVerificator::build()->checkProjectStatusAllowsOnlySiteAdminToAccessIt(
@@ -190,7 +188,7 @@ class UserGroupResource extends AuthenticatedResource
         $project_id = $user_group->getProjectId();
         $this->userCanSeeUserGroupMembers($user_group);
 
-        $member_representations = array();
+        $member_representations = [];
 
         try {
             $identifier = $this->query_parser->getString($query, 'identifier');
@@ -210,7 +208,7 @@ class UserGroupResource extends AuthenticatedResource
 
             $nb_member = 0;
             if ($member !== null) {
-                $member_representations   = array_slice(array($member), $offset, $limit);
+                $member_representations   = array_slice([$member], $offset, $limit);
                 $nb_member                = 1;
             }
             $this->sendPaginationHeaders($limit, $offset, $nb_member);
@@ -311,7 +309,7 @@ class UserGroupResource extends AuthenticatedResource
 
         try {
             $this->ugroup_manager->syncUgroupMembers($user_group, $users_from_references);
-        } catch (CannotAddRestrictedUserToProjectNotAllowingRestricted|CannotRemoveUserMembershipToUserGroupException $exception) {
+        } catch (CannotAddRestrictedUserToProjectNotAllowingRestricted | CannotRemoveUserMembershipToUserGroupException $exception) {
             throw new RestException(400, $exception->getMessage());
         } catch (\Exception $ex) {
             throw $ex;
@@ -320,9 +318,11 @@ class UserGroupResource extends AuthenticatedResource
 
     private function checkUgroupValidity(ProjectUGroup $user_group)
     {
-        if (! $user_group->isStatic() &&
+        if (
+            ! $user_group->isStatic() &&
             (int) $user_group->getId() !== ProjectUGroup::PROJECT_MEMBERS &&
-            (int) $user_group->getId() !== ProjectUGroup::PROJECT_ADMIN) {
+            (int) $user_group->getId() !== ProjectUGroup::PROJECT_ADMIN
+        ) {
             throw new RestException(
                 400,
                 'Only project members or administrators can be taken into account for the dynamic user groups'
@@ -367,6 +367,7 @@ class UserGroupResource extends AuthenticatedResource
     {
         $first_key = null;
         foreach ($representations as $representation) {
+            /** @psalm-suppress RawObjectIteration */
             foreach ($representation as $key => $value) {
                 if ($value === null) {
                     continue;
@@ -415,16 +416,12 @@ class UserGroupResource extends AuthenticatedResource
     /**
      * Get the UserRepresentation of a user
      *
-     * @param PFUser $member
      *
      * @return \Tuleap\User\REST\UserRepresentation
      */
     private function getUserRepresentation(PFUser $member)
     {
-        $user_representation = new UserRepresentation();
-        $user_representation->build($member);
-
-        return $user_representation;
+        return UserRepresentation::build($member);
     }
 
     /**
@@ -461,7 +458,6 @@ class UserGroupResource extends AuthenticatedResource
     }
 
     /**
-     * @param int $ugroup_id
      *
      * @throws RestException 404
      *
@@ -489,25 +485,6 @@ class UserGroupResource extends AuthenticatedResource
     private function sendPaginationHeaders($limit, $offset, $size)
     {
         Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
-    }
-
-    /**
-     * Checks if the limit provided by the request is valid
-     *
-     * @param int $limit Number of elements displayed per page
-     *
-     * @return bool
-     *
-     * @throws RestException 406
-     */
-
-    private function checkLimitValueIsAcceptable($limit)
-    {
-        if ($limit > self::MAX_LIMIT) {
-             throw new RestException(406, 'limit value is not acceptable');
-        }
-
-        return true;
     }
 
     /**
@@ -546,7 +523,7 @@ class UserGroupResource extends AuthenticatedResource
      *
      * @param \Tuleap\Project\REST\UserGroupPOSTRepresentation $user_group_representation Ugroup representation {@from body}
      *
-     * @return UserGroupRepresentation {@type \Tuleap\Project\REST\v1\UserGroupRepresentation}
+     * @return UserGroupRepresentation {@type \Tuleap\Project\REST\UserGroupRepresentation}
      *
      * @throws RestException 401
      * @throws RestException 403
@@ -576,10 +553,7 @@ class UserGroupResource extends AuthenticatedResource
             );
 
             $new_ugroup                = $this->ugroup_manager->getById($new_ugroup_id);
-            $new_ugroup_representation = new UserGroupRepresentation();
-            $new_ugroup_representation->build((int) $project_id, $new_ugroup);
-
-            return $new_ugroup_representation;
+            return new UserGroupRepresentation($project, $new_ugroup);
         } catch (CannotCreateUGroupException $exception) {
             throw new RestException(400, $exception->getMessage());
         } finally {

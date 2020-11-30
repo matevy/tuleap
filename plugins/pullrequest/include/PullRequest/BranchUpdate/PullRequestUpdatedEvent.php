@@ -30,7 +30,7 @@ use Tuleap\PullRequest\PullRequest;
 /**
  * @psalm-immutable
  */
-final class PullRequestUpdatedEvent implements EventSubjectToNotification, \JsonSerializable
+final class PullRequestUpdatedEvent implements EventSubjectToNotification
 {
     /**
      * @var int
@@ -91,7 +91,7 @@ final class PullRequestUpdatedEvent implements EventSubjectToNotification, \Json
         );
     }
 
-    public static function fromWorkerEventPayload(array $payload) : EventSubjectToNotification
+    public static function fromWorkerEventPayload(array $payload): EventSubjectToNotification
     {
         if (! isset($payload['user_id'], $payload['pr_id'], $payload['old_src'], $payload['new_src'], $payload['old_dst'], $payload['new_dst'])) {
             throw new InvalidWorkerEventPayloadException(
@@ -109,7 +109,7 @@ final class PullRequestUpdatedEvent implements EventSubjectToNotification, \Json
         );
     }
 
-    public function jsonSerialize()
+    public function toWorkerEventPayload(): array
     {
         return [
             'user_id' => $this->user_id,

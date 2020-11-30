@@ -19,6 +19,7 @@
  */
 
 require_once __DIR__ . '/../../Configuration/vendor/autoload.php';
+require_once __DIR__ . '/../../../src/vendor/autoload.php';
 
 // Make all warnings or notices fatal
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
@@ -43,4 +44,4 @@ $supervisord->configure();
 $mysql_config->configure();
 
 $setup = new \Tuleap\Configuration\Setup\DistributedSVN();
-$setup->backendSVN(\Tuleap\Configuration\Setup\DistributedSVN::PID_ONE_SUPERVISORD);
+$setup->backendSVN();

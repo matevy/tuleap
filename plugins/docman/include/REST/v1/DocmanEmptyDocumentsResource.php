@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1;
 
@@ -116,7 +116,7 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
      * @throws RestException 404
      */
 
-    public function patch(int $id, DocmanPATCHItemRepresentation $representation) : void
+    public function patch(int $id, DocmanPATCHItemRepresentation $representation): void
     {
         $this->checkAccess();
         $this->setHeaders();
@@ -159,7 +159,7 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
      * @throws I18NRestException 403
      * @throws I18NRestException 404
      */
-    public function delete(int $id) : void
+    public function delete(int $id): void
     {
         $this->checkAccess();
         $this->setHeaders();
@@ -342,8 +342,8 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
 
         $project      = $item_request->getProject();
 
-        /** @var Docman_Empty $item */
         $item         = $item_request->getItem();
+        \assert($item instanceof Docman_Empty);
 
         $current_user = $this->user_manager->getCurrentUser();
 
@@ -401,7 +401,7 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
 
         $validator = $this->getDocumentBeforeModificationValidatorVisitor($project, $current_user, $item);
         $item->accept($validator);
-        /** @var Docman_Empty $item */
+        assert($item instanceof Docman_Empty);
 
         $docman_item_version_creator = $this->getLinkVersionCreator();
         $docman_item_version_creator->createLinkVersionFromEmpty(
@@ -429,7 +429,6 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
      * @param int                                   $id             Id of the file
      * @param FilePropertiesPOSTPATCHRepresentation $representation {@from body}
      *
-     * @return CreatedItemFilePropertiesRepresentation
      *
      * @status 201
      * @throws RestException 400
@@ -445,8 +444,8 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
 
         $item_request = $this->request_builder->buildFromItemId($id);
         $project      = $item_request->getProject();
-        /** @var Docman_Empty $item */
         $item         = $item_request->getItem();
+        \assert($item instanceof Docman_Empty);
         $current_user = $this->user_manager->getCurrentUser();
 
         $this->addAllEvent($project);
@@ -461,8 +460,8 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
                 $current_user,
                 $representation,
                 new \DateTimeImmutable(),
-                (int)$item->getStatus(),
-                (int)$item->getObsolescenceDate()
+                (int) $item->getStatus(),
+                (int) $item->getObsolescenceDate()
             );
         } catch (UploadMaxSizeExceededException $exception) {
             throw new RestException(
@@ -489,7 +488,7 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
     /**
      * @url OPTIONS {id}/permissions
      */
-    public function optionsPermissions(int $id) : void
+    public function optionsPermissions(int $id): void
     {
         Header::allowOptionsPost();
     }
@@ -507,7 +506,7 @@ class DocmanEmptyDocumentsResource extends AuthenticatedResource
      *
      * @throws RestException 400
      */
-    public function putPermissions(int $id, DocmanItemPermissionsForGroupsSetRepresentation $representation) : void
+    public function putPermissions(int $id, DocmanItemPermissionsForGroupsSetRepresentation $representation): void
     {
         $this->checkAccess();
         $this->optionsPermissions($id);

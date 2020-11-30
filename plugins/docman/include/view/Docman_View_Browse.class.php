@@ -27,7 +27,7 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
     /**
      * @access: protected
      */
-    function _getTitle($params)
+    public function _getTitle($params)
     {
         // If a title is defined in the report, use it instead of the  default one
         $title = $this->getTitleWhenFilterIsSet($params);
@@ -52,7 +52,7 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
 
     private function getTitleWhenFilterIsSet(array $params)
     {
-        if (isset($params['filter']) || $params['filter'] === null) {
+        if (! isset($params['filter']) || $params['filter'] === null) {
             return false;
         }
 
@@ -63,7 +63,7 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
         return htmlentities($params['filter']->getTitle(), ENT_COMPAT, 'UTF-8');
     }
 
-    /* protected */ function _mode($params)
+    /* protected */ public function _mode($params)
     {
         $html = '';
         // No mode selector in printer version
@@ -76,23 +76,30 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
         }
 
         $html .= '<td align="right">';
-        $html .= '<form action="'. $params['default_url'] .'" method="POST">';
+        $html .= '<form action="' . $params['default_url'] . '" method="POST">';
         $html .= '<span id="docman_browse_viewas">';
-        $html .= $GLOBALS['Language']->getText('plugin_docman', 'browse_viewas') .' ';
-        $actual = Docman_View_Browse::getViewForCurrentUser($params['group_id']);
-        $views  = Docman_View_Browse::getDefaultViews();
-        foreach ($views as $val => $view) {
-            $html .= '<input type="image" 
-            				 name="selected_view['. $val .']" 
-            				 src="'. $this->_controller->plugin->getThemePath() .'/images/ic/view-'. $view .'.png" 
-            				 title="'. $GLOBALS['Language']->getText('plugin_docman', 'browse_viewas') .' '. $GLOBALS['Language']->getText('plugin_docman', 'view_'. $view) .'"
-            				 alt="'. $GLOBALS['Language']->getText('plugin_docman', 'view_'. $view) .'"
-            				 /> ';
-            //($actual == $val ? '&gt;&nbsp;' : '&nbsp;&nbsp;');
-        }
+        $html .= dgettext('tuleap-docman', 'View as:') . ' ';
+        $html .= '<input type="image"
+                         name="selected_view[Tree]"
+                         src="' . $this->_controller->plugin->getThemePath() . '/images/ic/view-Tree.png"
+                         title="' . dgettext('tuleap-docman', 'Tree') . '"
+                         alt="' . dgettext('tuleap-docman', 'Tree') . '"
+                         /> ';
+        $html .= '<input type="image"
+                         name="selected_view[Icons]"
+                         src="' . $this->_controller->plugin->getThemePath() . '/images/ic/view-Icons.png"
+                         title="' . dgettext('tuleap-docman', 'Icons') . '"
+                         alt="' . dgettext('tuleap-docman', 'Icons') . '"
+                         /> ';
+        $html .= '<input type="image"
+                         name="selected_view[Table]"
+                         src="' . $this->_controller->plugin->getThemePath() . '/images/ic/view-Table.png"
+                         title="' . dgettext('tuleap-docman', 'Table') . '"
+                         alt="' . dgettext('tuleap-docman', 'Table') . '"
+                         /> ';
         $html .= '</span>';
         $html .= '<input type="hidden" name="action" value="change_view" />';
-        $html .= '<input type="hidden" name="id" value="'. $params['item']->getId() .'" />';
+        $html .= '<input type="hidden" name="id" value="' . $params['item']->getId() . '" />';
         $html .= '</form>';
         $html .= '</td>';
 
@@ -103,19 +110,19 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
         echo $html;
     }
 
-    var $dfltParams = null;
-    function _getDefaultUrlParams($params)
+    public $dfltParams = null;
+    public function _getDefaultUrlParams($params)
     {
         if ($this->dfltParams === null) {
-            $this->dfltParams = array('action' => 'search',
-                                      'id'     => $params['item']->getId());
+            $this->dfltParams = ['action' => 'search',
+                                      'id'     => $params['item']->getId()];
 
             $this->_initSearchAndSortParams($params);
         }
         return array_merge($this->dfltParams, $this->dfltSearchParams, $this->dfltSortParams);
     }
 
-    function _buildSearchUrl($params, $extraParams = array())
+    public function _buildSearchUrl($params, $extraParams = [])
     {
         $parameters = array_merge($this->_getDefaultUrlParams($params), $extraParams);
         return DocmanViewURLBuilder::buildActionUrl($params['item'], $params, $parameters);
@@ -124,7 +131,7 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
     /**
      * @access: protected
      */
-    function _filter($params)
+    public function _filter($params)
     {
         $html = '';
 
@@ -144,16 +151,16 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
         echo $html;
     }
 
-    function getActionOnIconForFolder()
+    public function getActionOnIconForFolder()
     {
         return 'show';
     }
-    function getClassForFolderLink()
+    public function getClassForFolderLink()
     {
         return '';
     }
 
-    /* static */ function getItemClasses($params)
+    public static function getItemClasses($params)
     {
         $li_classes = 'docman_item';
         if (isset($params['is_last']) && $params['is_last']) {
@@ -165,20 +172,20 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
     public static function isViewAllowed($view)
     {
         //List is part of SOAP api
-        return in_array($view, array_merge(array_keys(Docman_View_Browse::getDefaultViews()), array('List')));
+        return in_array($view, array_merge(array_keys(Docman_View_Browse::getDefaultViews()), ['List']));
     }
-    /* static */ function getViewForCurrentUser($group_id, $report = '')
+    /* static */ public function getViewForCurrentUser($group_id, $report = '')
     {
         if ($report != '') {
             $pref = $report;
         } else {
-            $pref = user_get_preference(PLUGIN_DOCMAN_VIEW_PREF .'_'. $group_id);
-            if (!$pref) {
+            $pref = user_get_preference(PLUGIN_DOCMAN_VIEW_PREF . '_' . $group_id);
+            if (! $pref) {
                 $sBo = Docman_SettingsBo::instance($group_id);
                 $pref = $sBo->getView();
             }
         }
-        if (!$pref || !Docman_View_Browse::isViewAllowed($pref)) {
+        if (! $pref || ! Docman_View_Browse::isViewAllowed($pref)) {
             $pref = 'Tree';
         }
         return $pref;
@@ -186,9 +193,9 @@ use Tuleap\Docman\View\DocmanViewURLBuilder;
 
     public static function getDefaultViews()
     {
-        return array('Tree'   => 'Tree',
+        return ['Tree'   => 'Tree',
                      'Icons'  => 'Icons',
                      'Table'  => 'Table',
-        );
+        ];
     }
 }

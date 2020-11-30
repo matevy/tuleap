@@ -23,10 +23,10 @@
         v-if="has_metadata_to_create"
         data-test="document-other-information"
     >
-        <hr class="tlp-modal-separator">
+        <hr class="tlp-modal-separator" />
         <div class="document-modal-other-information-title-container">
             <div
-                v-if="! has_loaded_metadata"
+                v-if="!has_loaded_metadata"
                 class="document-modal-other-information-title-container-spinner"
                 data-test="document-other-information-spinner"
             >
@@ -39,7 +39,7 @@
                 v-if="is_obsolescence_date_metadata_used"
                 v-model="obsolescence_date_value"
             />
-            <custom-metadata v-bind:item-metadata="currentlyUpdatedItem.metadata"/>
+            <custom-metadata v-bind:item-metadata="currentlyUpdatedItem.metadata" />
         </template>
     </div>
 </template>
@@ -53,14 +53,14 @@ export default {
     name: "OtherInformationMetadataForCreate",
     components: {
         CustomMetadata,
-        ObsolescenceDateMetadataForCreate
+        ObsolescenceDateMetadataForCreate,
     },
     props: {
         currentlyUpdatedItem: Object,
         value: {
             required: true,
-            type: String
-        }
+            type: String,
+        },
     },
     computed: {
         ...mapState(["is_obsolescence_date_metadata_used"]),
@@ -77,13 +77,13 @@ export default {
             },
             set(value) {
                 this.$emit("input", value);
-            }
-        }
+            },
+        },
     },
     mounted() {
         if (!this.has_loaded_metadata) {
             this.$store.dispatch("metadata/loadProjectMetadata", [this.$store]);
         }
-    }
+    },
 };
 </script>

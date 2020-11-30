@@ -28,19 +28,19 @@
 /* abstract */ class PasswordRegexpValidator extends PasswordValidator
 {
 
-    var $regexp;
+    public $regexp;
 
     /**
     * Constructor
     */
-    function __construct($regexp, $description)
+    public function __construct($regexp, $description)
     {
         parent::__construct($description);
         $this->regexp = $regexp;
     }
 
-    function validate($password)
+    public function validate($password)
     {
-        return preg_match($this->regexp, $password);
+        return preg_match($this->regexp, $password) === 1;
     }
 }

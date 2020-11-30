@@ -20,20 +20,23 @@
 
 <template>
     <div class="taskboard-card-label-editor">
-        <textarea class="tlp-textarea taskboard-card-label-input-mirror"
-                  v-bind:value="value"
-                  rows="1"
-                  ref="mirror"
+        <textarea
+            class="tlp-textarea taskboard-card-label-input-mirror"
+            v-bind:value="value"
+            rows="1"
+            ref="mirror"
         ></textarea>
-        <textarea class="tlp-textarea taskboard-card-label-input"
-                  v-bind:value="value"
-                  v-on:input="$emit('input', $event.target.value)"
-                  v-on:keydown.enter="enter"
-                  v-on:keyup="keyup"
-                  v-bind:rows="rows"
-                  v-bind:placeholder="$gettext('Card label…')"
-                  v-bind:readonly="readonly"
-                  ref="textarea"
+        <textarea
+            class="tlp-textarea taskboard-card-label-input"
+            v-bind:value="value"
+            v-on:input="$emit('input', $event.target.value)"
+            v-on:keydown.enter="enter"
+            v-on:keyup="keyup"
+            v-bind:rows="rows"
+            v-bind:placeholder="$gettext('Card label…')"
+            v-bind:readonly="readonly"
+            ref="textarea"
+            data-test="label-editor"
         ></textarea>
     </div>
 </template>
@@ -58,8 +61,10 @@ export default class LabelEditor extends Vue {
     mirror!: HTMLTextAreaElement;
 
     mounted(): void {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const textarea = this.$refs.textarea as HTMLTextAreaElement;
+        const textarea = this.$refs.textarea;
+        if (!(textarea instanceof HTMLTextAreaElement)) {
+            throw new Error("Did not get the expected textarea element, is the ref valid?");
+        }
 
         setTimeout(this.computeRows, 10);
 
@@ -77,8 +82,10 @@ export default class LabelEditor extends Vue {
     }
 
     computeRows(): void {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const mirror = this.$refs.mirror as HTMLTextAreaElement;
+        const mirror = this.$refs.mirror;
+        if (!(mirror instanceof HTMLElement)) {
+            throw new Error("The mirror refs is not an HTMLElement");
+        }
         this.rows = Math.ceil(
             (mirror.scrollHeight - TOP_AND_BOTTOM_PADDING_IN_PX) / LINE_HEIGHT_IN_PX
         );

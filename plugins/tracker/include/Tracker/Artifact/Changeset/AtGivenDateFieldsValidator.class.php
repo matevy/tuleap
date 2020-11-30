@@ -18,20 +18,23 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 /**
  * I validate fields for both initial and new changesets but in the past (thus no check on required or permissions)
  */
 class Tracker_Artifact_Changeset_AtGivenDateFieldsValidator extends Tracker_Artifact_Changeset_FieldsValidator //phpcs:ignore
 {
     protected function canValidateField(
-        Tracker_Artifact $artifact,
-        Tracker_FormElement_Field $field
-    ) {
+        Artifact $artifact,
+        Tracker_FormElement_Field $field,
+        PFUser $user
+    ): bool {
         return true;
     }
 
     protected function validateField(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_FormElement_Field $field,
         \PFUser $user,
         $submitted_value

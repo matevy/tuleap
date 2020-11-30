@@ -41,7 +41,7 @@ class Git_GitoliteDriver
 {
 
     /**
-     * @var Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
@@ -85,11 +85,11 @@ class Git_GitoliteDriver
     /** @var GitDao */
     private $git_dao;
 
-    public static $permissions_types = array(
+    public static $permissions_types = [
         Git::PERM_READ  => ' R  ',
         Git::PERM_WRITE => ' RW ',
         Git::PERM_WPLUS => ' RW+'
-    );
+    ];
 
     public const OLD_AUTHORIZED_KEYS_PATH = "/usr/com/gitolite/.ssh/authorized_keys";
     public const NEW_AUTHORIZED_KEYS_PATH = "/var/lib/gitolite/.ssh/authorized_keys";
@@ -102,7 +102,7 @@ class Git_GitoliteDriver
      *                          Default is $sys_data_dir . "/gitolite/admin"
      */
     public function __construct(
-        Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         Git_SystemEventManager $git_system_event_manager,
         Git_GitRepositoryUrlManager $url_manager,
         GitDao $git_dao,
@@ -120,7 +120,7 @@ class Git_GitoliteDriver
         $this->git_dao = $git_dao;
         $this->logger                   = $logger;
         $this->git_system_event_manager = $git_system_event_manager;
-        $adminPath = $GLOBALS['sys_data_dir'] . '/gitolite/admin';
+        $adminPath = ForgeConfig::get('sys_data_dir') . '/gitolite/admin';
         $this->setAdminPath($adminPath);
         $this->gitExec = $gitExec ? $gitExec : new Git_Exec($adminPath);
         $this->repository_factory = $repository_factory ? $repository_factory : new GitRepositoryFactory(
@@ -201,7 +201,7 @@ class Git_GitoliteDriver
      */
     public function getRepositoriesPath()
     {
-        return realpath($this->adminPath .'/../repositories');
+        return realpath($this->adminPath . '/../repositories');
     }
 
     public function setAdminPath($adminPath)
@@ -222,11 +222,11 @@ class Git_GitoliteDriver
     public function isInitialized($repoPath)
     {
         try {
-            $headsPath = $repoPath.'/refs/heads';
+            $headsPath = $repoPath . '/refs/heads';
             if (is_dir($headsPath)) {
                 $dir = new DirectoryIterator($headsPath);
                 foreach ($dir as $fileinfo) {
-                    if (!$fileinfo->isDot()) {
+                    if (! $fileinfo->isDot()) {
                         return true;
                     }
                 }
@@ -244,14 +244,13 @@ class Git_GitoliteDriver
      */
     public function isRepositoryCreated($repoPath)
     {
-        $headsPath = $repoPath.'/refs/heads';
+        $headsPath = $repoPath . '/refs/heads';
         return is_dir($headsPath);
     }
 
     /**
      * Save on filesystem all permission configuration for a project
      *
-     * @param Project $project
      */
     public function dumpProjectRepoConf(Project $project)
     {
@@ -323,7 +322,7 @@ class Git_GitoliteDriver
      * @param String $oldName The old name of the project
      * @param String $newName The new name of the project
      *
-     * @return true if success, false otherwise
+     * @return bool true if success, false otherwise
      */
     public function renameProject($oldName, $newName)
     {
@@ -340,7 +339,7 @@ class Git_GitoliteDriver
         }
 
         if ($ok) {
-            $ok = $this->gitExec->commit('Rename project '. $oldName .' to '. $newName) && $this->gitExec->push();
+            $ok = $this->gitExec->commit('Rename project ' . $oldName . ' to ' . $newName) && $this->gitExec->push();
         }
 
         return $ok;
@@ -348,14 +347,14 @@ class Git_GitoliteDriver
 
     public function delete($path)
     {
-        if (empty($path) || !is_writable($path)) {
-            throw new GitDriverErrorException('Empty path or permission denied '.$path);
+        if (empty($path) || ! is_writable($path)) {
+            throw new GitDriverErrorException('Empty path or permission denied ' . $path);
         }
         $rcode = 0;
         $this->logger->debug('Removing physically the repository...');
-        $output = system('rm -fr '.escapeshellarg($path), $rcode);
+        $output = system('rm -fr ' . escapeshellarg($path), $rcode);
         if ($rcode != 0) {
-            throw new GitDriverErrorException('Unable to delete path '.$path);
+            throw new GitDriverErrorException('Unable to delete path ' . $path);
         }
         $this->logger->debug('Removing physically the repository: done');
         return true;
@@ -363,15 +362,15 @@ class Git_GitoliteDriver
 
     public function fork($repo, $old_ns, $new_ns)
     {
-        $source = PathJoinUtil::unixPathJoin(array($this->getRepositoriesPath(), $old_ns, $repo)) .'.git';
-        $target = PathJoinUtil::unixPathJoin(array($this->getRepositoriesPath(), $new_ns, $repo)) .'.git';
+        $source = PathJoinUtil::unixPathJoin([$this->getRepositoriesPath(), $old_ns, $repo]) . '.git';
+        $target = PathJoinUtil::unixPathJoin([$this->getRepositoriesPath(), $new_ns, $repo]) . '.git';
 
         $this->executeShellCommand('sudo -u gitolite /usr/share/tuleap/plugins/git/bin/gl-clone-bundle.sh ' . escapeshellarg($source) . ' ' . escapeshellarg($target));
     }
 
     protected function executeShellCommand($cmd)
     {
-        $cmd = $cmd.' 2>&1';
+        $cmd = $cmd . ' 2>&1';
         exec($cmd, $output, $retVal);
         if ($retVal == 0) {
             return true;
@@ -390,7 +389,7 @@ class Git_GitoliteDriver
 
     private function getAuthorizedKeysPath()
     {
-        if (!file_exists(self::OLD_AUTHORIZED_KEYS_PATH)) {
+        if (! file_exists(self::OLD_AUTHORIZED_KEYS_PATH)) {
             return self::NEW_AUTHORIZED_KEYS_PATH;
         }
         return self::OLD_AUTHORIZED_KEYS_PATH;
@@ -407,10 +406,10 @@ class Git_GitoliteDriver
     public function backup(GitRepository $repository, $backup_directory)
     {
         if (! is_readable($repository->getFullPath())) {
-            throw new GitDriverErrorException('Gitolite backup: Empty path or permission denied '.$repository->getFullPath());
+            throw new GitDriverErrorException('Gitolite backup: Empty path or permission denied ' . $repository->getFullPath());
         }
         if (! is_writable($backup_directory)) {
-            throw new GitDriverErrorException('Gitolite backup: Empty backup path or permission denied '.$backup_directory);
+            throw new GitDriverErrorException('Gitolite backup: Empty backup path or permission denied ' . $backup_directory);
         }
 
         $backup_path      = $this->getBackupPath($repository, $backup_directory);
@@ -418,20 +417,20 @@ class Git_GitoliteDriver
 
         if (! is_dir($target_directory)) {
             if (! mkdir($target_directory, 0700, true)) {
-                throw new GitDriverErrorException('Unable to create git backup directory: '.$target_directory);
+                throw new GitDriverErrorException('Unable to create git backup directory: ' . $target_directory);
             }
         }
 
         try {
             $exec    = new System_Command();
-            $command = 'umask 77 && tar cvzf '.escapeshellarg($backup_path).' '.escapeshellarg($repository->getFullPath());
+            $command = 'umask 77 && tar cvzf ' . escapeshellarg($backup_path) . ' ' . escapeshellarg($repository->getFullPath());
             $exec->exec($command);
-            $command = 'chmod 640 '.escapeshellarg($backup_path);
+            $command = 'chmod 640 ' . escapeshellarg($backup_path);
             $exec->exec($command);
             chgrp($backup_path, 'gitolite');
-            $this->logger->info('[Gitolite][Backup] Repository backup done in ['.$backup_path.']');
+            $this->logger->info('[Gitolite][Backup] Repository backup done in [' . $backup_path . ']');
         } catch (System_Command_CommandException $exception) {
-            $this->logger->error('[Gitolite][Backup] Error when backuping repository in ['.$backup_path.'] error message : '.$exception->getMessage());
+            $this->logger->error('[Gitolite][Backup] Error when backuping repository in [' . $backup_path . '] error message : ' . $exception->getMessage());
             throw new GitDriverErrorException($exception->getMessage());
         }
     }
@@ -441,10 +440,10 @@ class Git_GitoliteDriver
         $archive = $this->getBackupPath($repository, $backup_directory);
         if (is_file($archive)) {
             if (! unlink($archive)) {
-                $this->logger->error("Unable to delete archived Gitolite repository: ".$archive);
-                throw new GitDriverErrorException("Unable to purge archived Gitolite repository: ".$archive);
+                $this->logger->error("Unable to delete archived Gitolite repository: " . $archive);
+                throw new GitDriverErrorException("Unable to purge archived Gitolite repository: " . $archive);
             } else {
-                $this->logger->info('Purge of Gitolite repository: '.$repository->getName().' terminated');
+                $this->logger->info('Purge of Gitolite repository: ' . $repository->getName() . ' terminated');
             }
         }
     }
@@ -453,7 +452,6 @@ class Git_GitoliteDriver
      *
      * Restore archived repository
      *
-     * @param GitRepository $repository
      * @param String git_root_path
      * @param String $backup_directory
      *
@@ -462,29 +460,29 @@ class Git_GitoliteDriver
      */
     public function restoreRepository(GitRepository $repository, $git_root_path, $backup_directory)
     {
-        $repository_path = $git_root_path.$repository->getPath();
+        $repository_path = $git_root_path . $repository->getPath();
         $backup_path     = $this->getBackupPath($repository, $backup_directory);
         if (! file_exists($backup_path)) {
-            $this->logger->error('[Gitolite][Restore] Unable to find repository archive: '.$backup_path);
+            $this->logger->error('[Gitolite][Restore] Unable to find repository archive: ' . $backup_path);
             return false;
         }
 
         $backup_path = realpath($backup_path);
 
-        if (!$this->extractRepository($backup_path)) {
-            $this->logger->error('[Gitolite][Restore] Unable to restore repository: '.$repository->getName());
+        if (! $this->extractRepository($backup_path)) {
+            $this->logger->error('[Gitolite][Restore] Unable to restore repository: ' . $repository->getName());
             return false;
         }
         $this->deleteBackup($repository, $backup_directory);
 
-        if (!$this->getDao()->activate($repository->getId())) {
-            $this->logger->error('[Gitolite][Restore] Unable to activate repository after restore: '.$repository->getName());
+        if (! $this->getDao()->activate($repository->getId())) {
+            $this->logger->error('[Gitolite][Restore] Unable to activate repository after restore: ' . $repository->getName());
         }
-        if (!$repository->getBackend()->updateRepoConf($repository)) {
-            $this->logger->warn('[Gitolite][Restore] Unable to update repository configuration after restore : '.$repository->getName());
+        if (! $repository->getBackend()->updateRepoConf($repository)) {
+            $this->logger->warning('[Gitolite][Restore] Unable to update repository configuration after restore : ' . $repository->getName());
         }
 
-        $this->logger->info('[Gitolite] Restore of repository "'.$repository->getName().'" completed');
+        $this->logger->info('[Gitolite] Restore of repository "' . $repository->getName() . '" completed');
         return true;
     }
 
@@ -502,22 +500,22 @@ class Git_GitoliteDriver
         $base = realpath(ForgeConfig::get('codendi_bin_prefix'));
 
         $system_command = new System_Command();
-        $command        = "sudo -u gitolite $base/restore-tar-repository.php  ".escapeshellarg($backup_path) . ' /';
+        $command        = "sudo -u gitolite $base/restore-tar-repository.php  " . escapeshellarg($backup_path) . ' /';
 
         try {
             $system_command->exec($command);
         } catch (System_Command_CommandException $exception) {
-            $this->logger->error('[Gitolite][Restore] Unable to extract repository from backup: ['.$backup_path.'] error message : '.$exception->getMessage());
+            $this->logger->error('[Gitolite][Restore] Unable to extract repository from backup: [' . $backup_path . '] error message : ' . $exception->getMessage());
             return false;
         }
 
-        $this->logger->info('[Gitolite][Restore] Repository extracted from backup: '.$backup_path);
+        $this->logger->info('[Gitolite][Restore] Repository extracted from backup: ' . $backup_path);
         return true;
     }
 
     private function getBackupPath(GitRepository $repository, $backup_directory)
     {
-        return $backup_directory .'/'. $repository->getBackupPath() .'.tar.gz';
+        return $backup_directory . '/' . $repository->getBackupPath() . '.tar.gz';
     }
 
     /**
@@ -552,7 +550,7 @@ class Git_GitoliteDriver
         }
 
         foreach ($git_modifications->toRemove() as $file) {
-            $file_path = $this->getAdminPath().'/'.$file;
+            $file_path = $this->getAdminPath() . '/' . $file;
 
             if (is_dir($file_path)) {
                 if (! $this->gitExec->recursiveRm($file)) {
@@ -573,7 +571,7 @@ class Git_GitoliteDriver
         $git_modifications = $this->gitolite_conf_writer->deleteMirror($old_hostname);
 
         foreach ($git_modifications->toRemove() as $file) {
-            $file_path = $this->getAdminPath().'/'.$file;
+            $file_path = $this->getAdminPath() . '/' . $file;
 
             if (is_dir($file_path)) {
                 if (! $this->gitExec->recursiveRm($file)) {

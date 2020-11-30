@@ -1,7 +1,7 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2012. All Rights Reserved.
- * Copyright (c) Enalean, 2016. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -94,7 +94,7 @@ class GitForkPermissionsManager
      *
      * @return ProjectManager
      */
-    function getProjectManager()
+    public function getProjectManager()
     {
         return $this->repository->_getProjectManager();
     }
@@ -104,7 +104,7 @@ class GitForkPermissionsManager
      *
      * @return Codendi_HTMLPurifier
      */
-    function getPurifier()
+    public function getPurifier()
     {
         return Codendi_HTMLPurifier::instance();
     }
@@ -120,7 +120,10 @@ class GitForkPermissionsManager
     {
         if ($params['scope'] == 'project') {
             $project         = $this->getProjectManager()->getProject($params['group_id']);
-            $destinationHTML = sprintf(dgettext('tuleap-git', 'Into project <b>%1$s</b>'), $project->getPublicName());
+            $destinationHTML = sprintf(
+                dgettext('tuleap-git', 'Into project <b>%1$s</b>'),
+                Codendi_HTMLPurifier::instance()->purify($project->getPublicName())
+            );
         } else {
             $destinationHTML = dgettext('tuleap-git', 'As personal fork');
         }
@@ -130,7 +133,7 @@ class GitForkPermissionsManager
     /**
      * Prepare fork repository message
      *
-     * @param String $repos Comma separated repositories Ids selected for fork
+     * @param array $repository_ids Repositories Ids selected for fork
      *
      * @return String
      */
@@ -142,7 +145,7 @@ class GitForkPermissionsManager
 
         foreach ($repository_ids as $repositoryId) {
             $repository       = $repoFactory->getRepositoryById($repositoryId);
-            $sourceReposHTML .= '"'.$this->getPurifier()->purify($repository->getFullName()).'" ';
+            $sourceReposHTML .= '"' . $this->getPurifier()->purify($repository->getFullName()) . '" ';
         }
         return $sourceReposHTML;
     }
@@ -160,27 +163,28 @@ class GitForkPermissionsManager
     {
         $repository_ids  = explode(',', $params['repos']);
         $sourceReposHTML = $this->displayForkSourceRepositories($repository_ids);
-        $form  = '<h2>'.dgettext('tuleap-git', 'Fork repositories').'</h2>';
+        $form  = '<h1 class="almost-tlp-title administration-title">' . dgettext('tuleap-git', 'Fork repositories') . '</h1>';
+        $form .= '<div class="git-fork-creation-content">';
         $form .= sprintf(dgettext('tuleap-git', 'You are going to fork repository: %1$s'), $sourceReposHTML);
         $form .= $this->displayForkDestinationMessage($params);
         $form .= '<h3>Set permissions for the repository to be created</h3>';
         $form .= '<form action="" method="POST">';
-        $form .= '<input type="hidden" name="group_id" value="'.(int)$groupId.'" />';
+        $form .= '<input type="hidden" name="group_id" value="' . (int) $groupId . '" />';
         $form .= '<input type="hidden" name="action" value="do_fork_repositories" />';
-        $token = new CSRFSynchronizerToken('/plugins/git/?group_id='.(int)$groupId.'&action=fork_repositories');
+        $token = new CSRFSynchronizerToken('/plugins/git/?group_id=' . (int) $groupId . '&action=fork_repositories');
         $form .= $token->fetchHTMLInput();
-        $form .= '<input id="fork_repositories_repo" type="hidden" name="repos" value="'.$this->getPurifier()->purify($params['repos']).'" />';
-        $form .= '<input id="choose_personal" type="hidden" name="choose_destination" value="'.$this->getPurifier()->purify($params['scope']).'" />';
-        $form .= '<input id="to_project" type="hidden" name="to_project" value="'.$this->getPurifier()->purify($params['group_id']).'" />';
-        $form .= '<input type="hidden" id="fork_repositories_path" name="path" value="'.$this->getPurifier()->purify($params['namespace']).'" />';
-        $form .= '<input type="hidden" id="fork_repositories_prefix" value="u/'. $userName .'" />';
+        $form .= '<input id="fork_repositories_repo" type="hidden" name="repos" value="' . $this->getPurifier()->purify($params['repos']) . '" />';
+        $form .= '<input id="choose_personal" type="hidden" name="choose_destination" value="' . $this->getPurifier()->purify($params['scope']) . '" />';
+        $form .= '<input id="to_project" type="hidden" name="to_project" value="' . $this->getPurifier()->purify($params['group_id']) . '" />';
+        $form .= '<input type="hidden" id="fork_repositories_path" name="path" value="' . $this->getPurifier()->purify($params['namespace']) . '" />';
+        $form .= '<input type="hidden" id="fork_repositories_prefix" value="u/' . $userName . '" />';
         if (count($repository_ids) > 1) {
             $form .= $this->displayDefaultAccessControlWhileForkingMultipleRepositories($groupId);
         } else {
             $form .= $this->displayAccessControlWhileForkingASingleRepository($groupId);
         }
-        $form .= '<input type="submit" class="btn btn-primary" value="'.dgettext('tuleap-git', 'Fork repositories').'" />';
-        $form .= '</form>';
+        $form .= '<input type="submit" class="btn btn-primary" value="' . dgettext('tuleap-git', 'Fork repositories') . '" />';
+        $form .= '</form></div>';
         return $form;
     }
 
@@ -194,7 +198,7 @@ class GitForkPermissionsManager
         $branches_permissions = $this->default_fine_grained_factory->getBranchesFineGrainedPermissionsForProject($project);
         $tags_permissions     = $this->default_fine_grained_factory->getTagsFineGrainedPermissionsForProject($project);
 
-        $branches_permissions_representation = array();
+        $branches_permissions_representation = [];
         foreach ($branches_permissions as $permission) {
             $branches_permissions_representation[] = $this->fine_grained_builder->buildDefaultPermission(
                 $permission,
@@ -202,7 +206,7 @@ class GitForkPermissionsManager
             );
         }
 
-        $tags_permissions_representation = array();
+        $tags_permissions_representation = [];
         foreach ($tags_permissions as $permission) {
             $tags_permissions_representation[] = $this->fine_grained_builder->buildDefaultPermission(
                 $permission,
@@ -212,17 +216,17 @@ class GitForkPermissionsManager
 
         $new_fine_grained_ugroups = $this->getAllOptions($project);
 
-        $delete_url = '?action=delete-permissions&pane=perms&repo_id='.$this->repository->getId().'&group_id='.$project->getID();
-        $url        = '?action=repo_management&pane=perms&group_id='.$project->getID();
+        $delete_url = '?action=delete-permissions&pane=perms&repo_id=' . $this->repository->getId() . '&group_id=' . $project->getID();
+        $url        = '?action=repo_management&pane=perms&group_id=' . $project->getID();
         $csrf       = new CSRFSynchronizerToken($url);
         $is_fork    = true;
 
-        $renderer  = TemplateRendererFactory::build()->getRenderer(dirname(GIT_BASE_DIR).'/templates');
+        $renderer  = TemplateRendererFactory::build()->getRenderer(dirname(GIT_BASE_DIR) . '/templates');
         $presenter = new GitPresenters_AccessControlPresenter(
             $this->isRWPlusBlocked(),
-            'repo_access['.Git::PERM_READ.']',
-            'repo_access['.Git::PERM_WRITE.']',
-            'repo_access['.Git::PERM_WPLUS.']',
+            'repo_access[' . Git::PERM_READ . ']',
+            'repo_access[' . Git::PERM_WRITE . ']',
+            'repo_access[' . Git::PERM_WPLUS . ']',
             $this->getDefaultOptions($project, Git::DEFAULT_PERM_READ),
             $this->getDefaultOptions($project, Git::DEFAULT_PERM_WRITE),
             $this->getDefaultOptions($project, Git::DEFAULT_PERM_WPLUS),
@@ -264,7 +268,7 @@ class GitForkPermissionsManager
         $project = ($project_id) ? ProjectManager::instance()->getProject($project_id) : $this->repository->getProject();
         $user    = UserManager::instance()->getCurrentUser();
 
-        $can_use_fine_grained_permissions = (boolean) ($this->git_permission_manager->userIsGitAdmin($user, $project) ||
+        $can_use_fine_grained_permissions = (bool) ($this->git_permission_manager->userIsGitAdmin($user, $project) ||
             $is_fork ||
             $this->repository->belongsTo($user));
 
@@ -275,10 +279,10 @@ class GitForkPermissionsManager
         $branches_permissions = $this->fine_grained_factory->getBranchesFineGrainedPermissionsForRepository($this->repository);
         $tags_permissions     = $this->fine_grained_factory->getTagsFineGrainedPermissionsForRepository($this->repository);
 
-        $delete_url = '?action=delete-permissions&pane=perms&repo_id='.$this->repository->getId().'&group_id='.$project->getID();
-        $url        = '?action=repo_management&pane=perms&group_id='.$project->getID();
+        $delete_url = '?action=delete-permissions&pane=perms&repo_id=' . $this->repository->getId() . '&group_id=' . $project->getID();
+        $url        = '?action=repo_management&pane=perms&group_id=' . $project->getID();
         $csrf       = new CSRFSynchronizerToken($url);
-        $branches_permissions_representation = array();
+        $branches_permissions_representation = [];
         foreach ($branches_permissions as $permission) {
             $branches_permissions_representation[] = $this->fine_grained_builder->buildRepositoryPermission(
                 $permission,
@@ -286,7 +290,7 @@ class GitForkPermissionsManager
             );
         }
 
-        $tags_permissions_representation = array();
+        $tags_permissions_representation = [];
         foreach ($tags_permissions as $permission) {
             $tags_permissions_representation[] = $this->fine_grained_builder->buildRepositoryPermission(
                 $permission,
@@ -294,12 +298,12 @@ class GitForkPermissionsManager
             );
         }
 
-        $renderer  = TemplateRendererFactory::build()->getRenderer(dirname(GIT_BASE_DIR).'/templates');
+        $renderer  = TemplateRendererFactory::build()->getRenderer(dirname(GIT_BASE_DIR) . '/templates');
         $presenter = new GitPresenters_AccessControlPresenter(
             $this->isRWPlusBlocked(),
-            'repo_access['.Git::PERM_READ.']',
-            'repo_access['.Git::PERM_WRITE.']',
-            'repo_access['.Git::PERM_WPLUS.']',
+            'repo_access[' . Git::PERM_READ . ']',
+            'repo_access[' . Git::PERM_WRITE . ']',
+            'repo_access[' . Git::PERM_WPLUS . ']',
             $this->getOptions($project, Git::PERM_READ),
             $this->getOptions($project, Git::PERM_WRITE),
             $this->getOptions($project, Git::PERM_WPLUS),

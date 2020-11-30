@@ -41,17 +41,16 @@ class NewsItemForWidgetDataMapper
     {
         $rows = $this->dao->fetchAll($project->getID());
 
-        $items = array();
+        $items = [];
         foreach ($rows as $row) {
             $items[] = new NewsItem($row);
         }
 
         return $items;
-        ;
     }
 
     public function updatePromotedItems(Project $project, $promoted_ids)
     {
-        $this->dao->updatePromotedItems((array)$promoted_ids, $project->getID());
+        $this->dao->updatePromotedItems((array) $promoted_ids, $project->getID());
     }
 }

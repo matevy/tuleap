@@ -64,7 +64,6 @@ class PackagePermissionPerGroupRepresentationBuilder
     }
 
     /**
-     * @param Project $project
      * @param null $selected_ugroup_id
      * @return PackagePermissionPerGroupRepresentation[]
      */
@@ -126,11 +125,11 @@ class PackagePermissionPerGroupRepresentationBuilder
     ) {
         return new PackagePermissionPerGroupRepresentation(
             '/file/admin/package.php?' . http_build_query(
-                array(
+                [
                     "func"     => "edit",
                     "group_id" => $project->getID(),
                     "id"       => $package->getPackageID()
-                )
+                ]
             ),
             $package->getName(),
             $formatted_package_permissions,

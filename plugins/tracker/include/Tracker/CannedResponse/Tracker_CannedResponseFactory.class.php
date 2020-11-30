@@ -37,13 +37,13 @@ class Tracker_CannedResponseFactory
     /**
      * The singleton method
      *
-     * @return Tracker_ResponseFactory An instance of canned response factory
+     * @return self An instance of canned response factory
      */
     public static function instance()
     {
-        if (!isset(self::$instance)) {
+        if (! isset(self::$instance)) {
             $c = self::class;
-            self::$instance = new $c;
+            self::$instance = new $c();
         }
         return self::$instance;
     }
@@ -74,7 +74,7 @@ class Tracker_CannedResponseFactory
      */
     public function getInstanceFromXML($xml)
     {
-        return new Tracker_CannedResponse(0, null, (string)$xml->title, (string)$xml->body);
+        return new Tracker_CannedResponse(0, null, (string) $xml->title, (string) $xml->body);
     }
 
     /**
@@ -86,7 +86,7 @@ class Tracker_CannedResponseFactory
      */
     public function getCannedResponses($tracker)
     {
-        $responses = array();
+        $responses = [];
         foreach ($this->getDao()->searchByTrackerId($tracker->id) as $row) {
             $row['tracker'] = $tracker;
             $responses[$row['id']] = $this->getInstanceFromRow($row);
@@ -100,7 +100,7 @@ class Tracker_CannedResponseFactory
      * @param Tracker $tracker the tracker
      * @param int     $id      the id of the canned response
      *
-     * @return CannedResponse or null if not found
+     * @return Tracker_CannedResponse|null or null if not found
      */
     public function getCannedResponse($tracker, $id)
     {
@@ -173,9 +173,15 @@ class Tracker_CannedResponseFactory
     {
         $tf = $this->getTrackerFactory();
         $from_tracker = $tf->getTrackerById($from_tracker_id);
+        if ($from_tracker === null) {
+            throw new RuntimeException('Tracker does not exist');
+        }
         $to_tracker = $tf->getTrackerById($to_tracker_id);
         $from_canned_responses = $this->getCannedResponses($from_tracker);
         foreach ($from_canned_responses as $from_canned_response) {
+            if ($to_tracker === null) {
+                throw new RuntimeException('Tracker does not exist');
+            }
             $this->create($to_tracker, $from_canned_response->getTitle(), $from_canned_response->getBody());
         }
     }

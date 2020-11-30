@@ -27,13 +27,21 @@ use Project;
 use ProjectManager;
 use ServiceManager;
 use Tuleap\Layout\BaseLayout;
-use Tuleap\Request\DispatchableWithProject;
+use Tuleap\Project\Admin\Routing\ProjectAdministratorChecker;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
-use Tuleap\Request\NotFoundException;
+use Tuleap\Request\ProjectRetriever;
 
-class EditController implements DispatchableWithRequest, DispatchableWithProject
+class EditController implements DispatchableWithRequest
 {
+    /**
+     * @var ProjectRetriever
+     */
+    private $project_retriever;
+    /**
+     * @var ProjectAdministratorChecker
+     */
+    private $administrator_checker;
     /**
      * @var ServiceUpdator
      */
@@ -47,47 +55,50 @@ class EditController implements DispatchableWithRequest, DispatchableWithProject
      */
     private $service_manager;
     /**
-     * @var ProjectManager
-     */
-    private $project_manager;
-    /**
      * @var CSRFSynchronizerToken
      */
     private $csrf_token;
 
     public function __construct(
+        ProjectRetriever $project_retriever,
+        ProjectAdministratorChecker $administrator_checker,
         ServiceUpdator $service_updator,
         ServicePOSTDataBuilder $builder,
         ServiceManager $service_manager,
-        ProjectManager $project_manager,
         CSRFSynchronizerToken $csrf_token
     ) {
-        $this->service_updator = $service_updator;
-        $this->builder         = $builder;
-        $this->service_manager = $service_manager;
-        $this->project_manager = $project_manager;
-        $this->csrf_token      = $csrf_token;
+        $this->service_updator       = $service_updator;
+        $this->administrator_checker = $administrator_checker;
+        $this->builder               = $builder;
+        $this->service_manager       = $service_manager;
+        $this->project_retriever     = $project_retriever;
+        $this->csrf_token            = $csrf_token;
+    }
+
+    public static function buildSelf(): self
+    {
+        return new self(
+            ProjectRetriever::buildSelf(),
+            new ProjectAdministratorChecker(),
+            new ServiceUpdator(new \ServiceDao(), ProjectManager::instance(), ServiceManager::instance()),
+            new ServicePOSTDataBuilder(
+                \EventManager::instance(),
+                \ServiceManager::instance(),
+                new ServiceLinkDataBuilder()
+            ),
+            ServiceManager::instance(),
+            IndexController::getCSRFTokenSynchronizer()
+        );
     }
 
     /**
-     * @throws NotFoundException
+     * @throws ForbiddenException
+     * @throws \Tuleap\Request\NotFoundException
      */
-    public function getProject(array $variables): Project
-    {
-        $project = $this->project_manager->getProject($variables['id']);
-        if (! $project || $project->isError()) {
-            throw new NotFoundException();
-        }
-        return $project;
-    }
-
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
-        $project = $this->getProject($variables);
-
-        if (! $request->getCurrentUser()->isAdmin($project->getID())) {
-            throw new ForbiddenException();
-        }
+        $project = $this->project_retriever->getProjectFromId($variables['id']);
+        $this->administrator_checker->checkUserIsProjectAdministrator($request->getCurrentUser(), $project);
 
         $this->csrf_token->check(IndexController::getUrl($project));
 

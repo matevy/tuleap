@@ -26,16 +26,16 @@ describe(`Swimlane state mutations`, () => {
     describe("addSwimlanes", () => {
         it("add swimlanes to existing ones and will keep the swimlanes sorted by rank", () => {
             const state: SwimlaneState = {
-                swimlanes: [{ card: { id: 42, rank: 1 } }]
+                swimlanes: [{ card: { id: 42, rank: 1 } }],
             } as SwimlaneState;
             mutations.addSwimlanes(state, [
                 { card: { id: 43, rank: 3 } } as Swimlane,
-                { card: { id: 44, rank: 2 } } as Swimlane
+                { card: { id: 44, rank: 2 } } as Swimlane,
             ]);
             expect(state.swimlanes).toStrictEqual([
                 { card: { id: 42, rank: 1 } },
                 { card: { id: 44, rank: 2 } },
-                { card: { id: 43, rank: 3 } }
+                { card: { id: 43, rank: 3 } },
             ]);
         });
     });
@@ -43,7 +43,7 @@ describe(`Swimlane state mutations`, () => {
     describe("beginLoadingSwimlanes", () => {
         it("set swimlane to loading state", () => {
             const state: SwimlaneState = {
-                is_loading_swimlanes: false
+                is_loading_swimlanes: false,
             } as SwimlaneState;
             mutations.beginLoadingSwimlanes(state);
             expect(state.is_loading_swimlanes).toStrictEqual(true);
@@ -53,7 +53,7 @@ describe(`Swimlane state mutations`, () => {
     describe("endLoadingSwimlanes", () => {
         it("set swimlane to no loading state", () => {
             const state: SwimlaneState = {
-                is_loading_swimlanes: true
+                is_loading_swimlanes: true,
             } as SwimlaneState;
             mutations.endLoadingSwimlanes(state);
             expect(state.is_loading_swimlanes).toStrictEqual(false);
@@ -64,20 +64,20 @@ describe(`Swimlane state mutations`, () => {
         let state: SwimlaneState;
         const swimlane = ({
             card: { id: 86, rank: 1 },
-            children_cards: [{ id: 188, rank: 20 }]
+            children_cards: [{ id: 188, rank: 20 }],
         } as unknown) as Swimlane;
         const unrelated_swimlane = ({
             card: { id: 19, rank: 2 },
-            children_cards: []
+            children_cards: [],
         } as unknown) as Swimlane;
         const children_cards: Card[] = [
             { id: 189, rank: 22 } as Card,
-            { id: 190, rank: 21 } as Card
+            { id: 190, rank: 21 } as Card,
         ];
         beforeEach(() => {
             state = {
                 is_loading_swimlanes: false,
-                swimlanes: [swimlane, unrelated_swimlane]
+                swimlanes: [swimlane, unrelated_swimlane],
             } as SwimlaneState;
         });
 
@@ -90,7 +90,7 @@ describe(`Swimlane state mutations`, () => {
             expect(state_swimlane.children_cards).toStrictEqual([
                 { id: 188, rank: 20 },
                 { id: 190, rank: 21 },
-                { id: 189, rank: 22 }
+                { id: 189, rank: 22 },
             ]);
         });
 
@@ -113,14 +113,14 @@ describe(`Swimlane state mutations`, () => {
         it(`Given a swimlane with no children, it adds children and updates the card property to inform that now there are children`, () => {
             const swimlane: Swimlane = {
                 card: { id: 42, has_children: false },
-                children_cards: [] as Card[]
+                children_cards: [] as Card[],
             } as Swimlane;
             const state: SwimlaneState = {
-                swimlanes: [swimlane]
+                swimlanes: [swimlane],
             } as SwimlaneState;
             mutations.addChildrenToSwimlane(state, {
                 swimlane,
-                children_cards: [{ id: 1001 } as Card]
+                children_cards: [{ id: 1001 } as Card],
             });
 
             const state_swimlane = findSwimlane(state, swimlane);
@@ -130,10 +130,10 @@ describe(`Swimlane state mutations`, () => {
         it(`Given a swimlane with no children, it does not update the card if the new children list is empty`, () => {
             const swimlane: Swimlane = {
                 card: { id: 42, has_children: false },
-                children_cards: [] as Card[]
+                children_cards: [] as Card[],
             } as Swimlane;
             const state: SwimlaneState = {
-                swimlanes: [swimlane]
+                swimlanes: [swimlane],
             } as SwimlaneState;
             mutations.addChildrenToSwimlane(state, { swimlane, children_cards: [] });
 
@@ -153,16 +153,16 @@ describe(`Swimlane state mutations`, () => {
                     has_children: false,
                     mapped_list_value: { id: 1234, label: "Todo" },
                     initial_effort: 5,
-                    remaining_effort: { value: 5 }
+                    remaining_effort: { value: 5 },
                 } as Card,
                 children_cards: [],
-                is_loading_children_cards: false
+                is_loading_children_cards: false,
             };
             const state = {
                 swimlanes: [
                     { card: { id: 21, label: "Unrelated swimlane" }, children_cards: [] },
-                    swimlane
-                ]
+                    swimlane,
+                ],
             } as SwimlaneState;
             const card = {
                 id: 42,
@@ -170,9 +170,9 @@ describe(`Swimlane state mutations`, () => {
                 has_children: false,
                 mapped_list_value: { id: 2345, label: "On going" },
                 initial_effort: 4,
-                remaining_effort: { value: 3 }
+                remaining_effort: { value: 3 },
             } as Card;
-            mutations.refreshCard(state, { swimlane, refreshed_card: card });
+            mutations.refreshCard(state, { refreshed_card: card });
 
             expect(state.swimlanes[1].card).toStrictEqual(card);
         });
@@ -189,25 +189,60 @@ describe(`Swimlane state mutations`, () => {
                         label: "Child card in state",
                         mapped_list_value: { id: 1234, label: "Todo" },
                         initial_effort: 8,
-                        remaining_effort: { value: 7 }
-                    } as Card
+                        remaining_effort: { value: 7 },
+                    } as Card,
                 ],
-                is_loading_children_cards: false
+                is_loading_children_cards: false,
             };
             const state = {
                 swimlanes: [
                     { card: { id: 21, label: "Unrelated swimlane" }, children_cards: [] },
-                    swimlane
-                ]
+                    swimlane,
+                ],
             } as SwimlaneState;
             const card = {
                 id: 59,
                 label: "Refreshed child card",
                 mapped_list_value: { id: 2345, label: "On going" },
                 initial_effort: 2,
-                remaining_effort: { value: 0.5 }
+                remaining_effort: { value: 0.5 },
             } as Card;
-            mutations.refreshCard(state, { swimlane, refreshed_card: card });
+            mutations.refreshCard(state, { refreshed_card: card });
+
+            expect(state.swimlanes[1].children_cards[1]).toStrictEqual(card);
+        });
+
+        it(`Given a swimlane and a card,
+            when it is a child card without remaining effort,
+            it will find it in the state and leave it as is`, () => {
+            const swimlane = {
+                card: { id: 78, label: "Parent card", has_children: true } as Card,
+                children_cards: [
+                    { id: 61, label: "Unrelated card" } as Card,
+                    {
+                        id: 59,
+                        label: "Child card without remaining effort in state",
+                        mapped_list_value: { id: 1234, label: "Todo" },
+                        initial_effort: 8,
+                        remaining_effort: null,
+                    } as Card,
+                ],
+                is_loading_children_cards: false,
+            };
+            const state = {
+                swimlanes: [
+                    { card: { id: 21, label: "Unrelated swimlane" }, children_cards: [] },
+                    swimlane,
+                ],
+            } as SwimlaneState;
+            const card = {
+                id: 59,
+                label: "Refreshed child card",
+                mapped_list_value: { id: 2345, label: "On going" },
+                initial_effort: 2,
+                remaining_effort: null,
+            } as Card;
+            mutations.refreshCard(state, { refreshed_card: card });
 
             expect(state.swimlanes[1].children_cards[1]).toStrictEqual(card);
         });
@@ -222,16 +257,16 @@ describe(`Swimlane state mutations`, () => {
                     has_children: true,
                     mapped_list_value: { id: 1234, label: "Todo" },
                     initial_effort: 2,
-                    remaining_effort: { value: 1.5 }
+                    remaining_effort: { value: 1.5 },
                 } as Card,
                 children_cards: [{ id: 61, label: "Unrelated card" } as Card],
-                is_loading_children_cards: false
+                is_loading_children_cards: false,
             };
             const state = {
                 swimlanes: [
-                    { card: { id: 21, label: "Unrelated swimlane " }, children_cards: [] },
-                    swimlane
-                ]
+                    { card: { id: 21, label: "Unrelated swimlane" }, children_cards: [] },
+                    swimlane,
+                ],
             } as SwimlaneState;
             const card = {
                 id: 78,
@@ -239,11 +274,59 @@ describe(`Swimlane state mutations`, () => {
                 has_children: true,
                 mapped_list_value: { id: 3456, label: "Done" },
                 initial_effort: 1,
-                remaining_effort: { value: 0 }
+                remaining_effort: { value: 0 },
             } as Card;
-            mutations.refreshCard(state, { swimlane, refreshed_card: card });
+            mutations.refreshCard(state, { refreshed_card: card });
 
             expect(state.swimlanes[1].card).toStrictEqual(card);
+        });
+
+        it(`When the user is editing the remaining effort of the swimlane,
+            it does not erase remaining effort's edit flags`, () => {
+            const swimlane = {
+                card: {
+                    id: 78,
+                    label: "Parent card",
+                    has_children: true,
+                    mapped_list_value: { id: 1234, label: "Todo" },
+                    initial_effort: 2,
+                    remaining_effort: {
+                        value: 1.5,
+                        is_in_edit_mode: true,
+                        is_being_saved: false,
+                        can_update: true,
+                    },
+                } as Card,
+                children_cards: [{ id: 61, label: "Unrelated card" } as Card],
+                is_loading_children_cards: false,
+            };
+            const state = {
+                swimlanes: [
+                    { card: { id: 21, label: "Unrelated swimlane" }, children_cards: [] },
+                    swimlane,
+                ],
+            } as SwimlaneState;
+            const card = {
+                id: 78,
+                label: "Refreshed parent card",
+                has_children: true,
+                mapped_list_value: { id: 3456, label: "Done" },
+                initial_effort: 2,
+                remaining_effort: { value: 0, can_update: true },
+            } as Card;
+            mutations.refreshCard(state, { refreshed_card: card });
+
+            const state_swimlane = state.swimlanes[1];
+            expect(state_swimlane.card.remaining_effort).not.toBeNull();
+            if (!state_swimlane.card.remaining_effort) {
+                throw new Error("Expected the swimlane's card to have a remaining effort");
+            }
+            expect(state_swimlane.card.remaining_effort).toStrictEqual({
+                value: 0,
+                can_update: true,
+                is_in_edit_mode: true,
+                is_being_saved: false,
+            });
         });
     });
 
@@ -252,12 +335,12 @@ describe(`Swimlane state mutations`, () => {
         const swimlane = { card: { id: 86 }, is_loading_children_cards: false } as Swimlane;
         const unrelated_swimlane = {
             card: { id: 19 },
-            is_loading_children_cards: false
+            is_loading_children_cards: false,
         } as Swimlane;
         beforeEach(() => {
             state = {
                 is_loading_swimlanes: false,
-                swimlanes: [swimlane, unrelated_swimlane]
+                swimlanes: [swimlane, unrelated_swimlane],
             } as SwimlaneState;
         });
 
@@ -280,13 +363,13 @@ describe(`Swimlane state mutations`, () => {
         let state: SwimlaneState;
         const unrelated_swimlane = {
             card: { id: 19 },
-            is_loading_children_cards: true
+            is_loading_children_cards: true,
         } as Swimlane;
         const swimlane = { card: { id: 86 }, is_loading_children_cards: true } as Swimlane;
         beforeEach(() => {
             state = {
                 is_loading_swimlanes: false,
-                swimlanes: [unrelated_swimlane, swimlane]
+                swimlanes: [unrelated_swimlane, swimlane],
             } as SwimlaneState;
         });
 
@@ -310,7 +393,7 @@ describe(`Swimlane state mutations`, () => {
             const swimlane: Swimlane = { card: { is_collapsed: false } } as Swimlane;
 
             const state: SwimlaneState = {
-                swimlanes: [swimlane]
+                swimlanes: [swimlane],
             } as SwimlaneState;
 
             mutations.collapseSwimlane(state, swimlane);
@@ -323,7 +406,7 @@ describe(`Swimlane state mutations`, () => {
             const swimlane: Swimlane = { card: { is_collapsed: true } } as Swimlane;
 
             const state: SwimlaneState = {
-                swimlanes: [swimlane]
+                swimlanes: [swimlane],
             } as SwimlaneState;
 
             mutations.expandSwimlane(state, swimlane);
@@ -340,8 +423,8 @@ describe(`Swimlane state mutations`, () => {
                 { id: 100, tracker_id: 7, mapped_list_value: { id: 49 } } as Card,
                 { id: 101, tracker_id: 7, mapped_list_value: { id: 49 } } as Card,
                 card_to_move,
-                { id: 103, tracker_id: 7, mapped_list_value: { id: 49 } } as Card
-            ]
+                { id: 103, tracker_id: 7, mapped_list_value: { id: 49 } } as Card,
+            ],
         } as Swimlane;
 
         beforeEach(() => {
@@ -355,8 +438,8 @@ describe(`Swimlane state mutations`, () => {
                 position: {
                     ids: [card_to_move.id],
                     direction: Direction.BEFORE, // Card is moved to the top
-                    compared_to: 100
-                }
+                    compared_to: 100,
+                },
             });
 
             expect(swimlane.children_cards[0]).toEqual(card_to_move);
@@ -373,11 +456,11 @@ describe(`Swimlane state mutations`, () => {
                 id: 102,
                 tracker_id: 7,
                 mapped_list_value: { id: 48 },
-                has_children: false
+                has_children: false,
             } as Card;
             swimlane = {
                 card: card_to_move,
-                children_cards: [] as Card[]
+                children_cards: [] as Card[],
             } as Swimlane;
             state = { is_loading_swimlanes: false, swimlanes: [swimlane] } as SwimlaneState;
         });
@@ -387,7 +470,7 @@ describe(`Swimlane state mutations`, () => {
             const column = {
                 id: 10,
                 label: "Ongoing",
-                mappings: [{ field_id: 1234, tracker_id: 7, accepts: [{ id: 50 }] } as Mapping]
+                mappings: [{ field_id: 1234, tracker_id: 7, accepts: [{ id: 50 }] } as Mapping],
             } as ColumnDefinition;
 
             jest.spyOn(mutations, "changeCardPosition");
@@ -395,7 +478,7 @@ describe(`Swimlane state mutations`, () => {
             mutations.moveCardToColumn(state, {
                 card: card_to_move,
                 swimlane,
-                column
+                column,
             });
 
             expect(mutations.changeCardPosition).not.toHaveBeenCalled();
@@ -407,27 +490,27 @@ describe(`Swimlane state mutations`, () => {
             const column = {
                 id: 10,
                 label: "Ongoing",
-                mappings: [{ field_id: 1234, tracker_id: 7, accepts: [{ id: 50 }] } as Mapping]
+                mappings: [{ field_id: 1234, tracker_id: 7, accepts: [{ id: 50 }] } as Mapping],
             } as ColumnDefinition;
 
             swimlane.children_cards = [
                 { id: 100, tracker_id: 7, mapped_list_value: { id: 49, label: "Todo" } } as Card,
                 card_to_move,
                 { id: 101, tracker_id: 7, mapped_list_value: { id: 49, label: "Todo" } } as Card,
-                { id: 103, tracker_id: 7, mapped_list_value: { id: 50, label: "Ongoing" } } as Card
+                { id: 103, tracker_id: 7, mapped_list_value: { id: 50, label: "Ongoing" } } as Card,
             ];
 
             const position = {
                 ids: [card_to_move.id],
                 direction: Direction.BEFORE, // Card is moved to the top
-                compared_to: 103
+                compared_to: 103,
             };
 
             mutations.moveCardToColumn(state, {
                 card: card_to_move,
                 swimlane,
                 column,
-                position
+                position,
             });
 
             expect(swimlane.card.mapped_list_value).toEqual({ id: 50, label: "Ongoing" });
@@ -436,7 +519,7 @@ describe(`Swimlane state mutations`, () => {
                 { id: 100, tracker_id: 7, mapped_list_value: { id: 49, label: "Todo" } } as Card,
                 { id: 101, tracker_id: 7, mapped_list_value: { id: 49, label: "Todo" } } as Card,
                 card_to_move,
-                { id: 103, tracker_id: 7, mapped_list_value: { id: 50, label: "Ongoing" } } as Card
+                { id: 103, tracker_id: 7, mapped_list_value: { id: 50, label: "Ongoing" } } as Card,
             ]);
         });
     });
@@ -453,29 +536,29 @@ describe(`Swimlane state mutations`, () => {
                 id: 2,
                 tracker_id: 45,
                 mapped_list_value: { id: 9999 },
-                has_children: true
+                has_children: true,
             } as Card;
             solo_card = {
                 id: 3,
                 tracker_id: 45,
                 mapped_list_value: { id: 6666 },
-                has_children: false
+                has_children: false,
             } as Card;
 
             swimlane = {
                 card: {
-                    id: 1
+                    id: 1,
                 },
-                children_cards: [card]
+                children_cards: [card],
             } as Swimlane;
 
             solo_card_swimlane = {
                 card: solo_card,
-                children_cards: [] as Card[]
+                children_cards: [] as Card[],
             } as Swimlane;
 
             state = {
-                swimlanes: [swimlane, solo_card_swimlane]
+                swimlanes: [swimlane, solo_card_swimlane],
             } as SwimlaneState;
         });
 
@@ -483,8 +566,8 @@ describe(`Swimlane state mutations`, () => {
             const column = {
                 mappings: [
                     { tracker_id: 45, accepts: [{ id: 5398 }] },
-                    { tracker_id: 46, accepts: [{ id: 4366 }] }
-                ]
+                    { tracker_id: 46, accepts: [{ id: 4366 }] },
+                ],
             } as ColumnDefinition;
 
             mutations.setColumnOfCard(state, { card, column, swimlane });
@@ -497,14 +580,14 @@ describe(`Swimlane state mutations`, () => {
             const column = {
                 mappings: [
                     { tracker_id: 45, accepts: [{ id: 5398 }] },
-                    { tracker_id: 46, accepts: [{ id: 4366 }] }
-                ]
+                    { tracker_id: 46, accepts: [{ id: 4366 }] },
+                ],
             } as ColumnDefinition;
 
             mutations.setColumnOfCard(state, {
                 card: solo_card,
                 column,
-                swimlane: solo_card_swimlane
+                swimlane: solo_card_swimlane,
             });
 
             expect(solo_card_swimlane.card.mapped_list_value).toEqual({ id: 5398 });
@@ -514,8 +597,8 @@ describe(`Swimlane state mutations`, () => {
             const column = {
                 mappings: [
                     { tracker_id: 46, accepts: [{ id: 5398 }] },
-                    { tracker_id: 47, accepts: [{ id: 4366 }] }
-                ]
+                    { tracker_id: 47, accepts: [{ id: 4366 }] },
+                ],
             } as ColumnDefinition;
 
             mutations.setColumnOfCard(state, { card, column, swimlane });
@@ -527,8 +610,8 @@ describe(`Swimlane state mutations`, () => {
             const column = {
                 mappings: [
                     { tracker_id: 45, accepts: [] },
-                    { tracker_id: 47, accepts: [{ id: 4366 }] }
-                ]
+                    { tracker_id: 47, accepts: [{ id: 4366 }] },
+                ],
             } as ColumnDefinition;
 
             mutations.setColumnOfCard(state, { card, column, swimlane });

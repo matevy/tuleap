@@ -117,15 +117,12 @@ class TrackerFieldsResource extends AuthenticatedResource
         $request['add'] = implode("\n", $patch->new_values);
         $field->getBind()->process($request, true);
 
-        $field_representation = new Tracker_REST_FormElementRepresentation();
-        $field_representation->build(
+        return Tracker_REST_FormElementRepresentation::build(
             $field,
             $form_element_factory->getType($field),
             [],
             null
         );
-
-        return $field_representation;
     }
 
     /**
@@ -152,9 +149,7 @@ class TrackerFieldsResource extends AuthenticatedResource
      * @access protected
      *
      * @param int                    $id                        The id of the field
-     * @param FilePOSTRepresentation $file_post_representation
      *
-     * @return CreatedFileRepresentation
      *
      * @status 201
      * @throws RestException 403
@@ -215,8 +210,8 @@ class TrackerFieldsResource extends AuthenticatedResource
 
     private function getFileFieldUserCanUpdate(int $id, PFUser $user): Tracker_FormElement_Field_File
     {
-        /** @var Tracker_FormElement_Field_File $field */
         $field = $this->getField($id, $user);
+        \assert($field instanceof Tracker_FormElement_Field_File);
 
         $form_element_factory = Tracker_FormElementFactory::instance();
         if (! $form_element_factory->isFieldAFileField($field)) {

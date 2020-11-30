@@ -20,7 +20,6 @@
 
 namespace Tuleap\Project\Admin\PermissionsPerGroup;
 
-use HTTPRequest;
 use Project;
 use Tuleap\Event\Dispatchable;
 
@@ -36,7 +35,7 @@ class PermissionPerGroupPaneCollector implements Dispatchable
     /**
      * @var string[]
      */
-    private $panes = array();
+    private $panes = [];
     /**
      * @var Project
      */
@@ -69,7 +68,7 @@ class PermissionPerGroupPaneCollector implements Dispatchable
      */
     public function addPane($additional_pane, $service_rank)
     {
-        $this->panes[ $service_rank ] = $additional_pane;
+        $this->panes[$service_rank] = $additional_pane;
     }
 
     /**

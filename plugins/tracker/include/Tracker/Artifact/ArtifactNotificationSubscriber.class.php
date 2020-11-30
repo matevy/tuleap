@@ -19,16 +19,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_ArtifactNotificationSubscriber
 {
 
-    /** @var Tracker_Artifact */
+    /** @var Artifact */
     private $artifact;
 
     /** @var Tracker_ArtifactDao */
     private $artifact_dao;
 
-    public function __construct(Tracker_Artifact $artifact, Tracker_ArtifactDao $artifact_dao)
+    public function __construct(Artifact $artifact, Tracker_ArtifactDao $artifact_dao)
     {
         $this->artifact     = $artifact;
         $this->artifact_dao = $artifact_dao;
@@ -44,7 +46,7 @@ class Tracker_ArtifactNotificationSubscriber
         $this->sendResponse(
             $request,
             'info',
-            $GLOBALS['Language']->getText('plugin_tracker_artifact', 'user_unsubscribed'),
+            dgettext('tuleap-tracker', 'You will no-longer receive notifications for this artifact'),
             true
         );
 
@@ -70,7 +72,7 @@ class Tracker_ArtifactNotificationSubscriber
         $this->sendResponse(
             $request,
             'info',
-            $GLOBALS['Language']->getText('plugin_tracker_artifact', 'user_subscribed'),
+            dgettext('tuleap-tracker', 'You are now receiving notifications for this artifact'),
             false
         );
 
@@ -83,7 +85,7 @@ class Tracker_ArtifactNotificationSubscriber
             $this->sendResponse(
                 $request,
                 'error',
-                $GLOBALS['Language']->getText('plugin_tracker_artifact', 'request_not_valid'),
+                dgettext('tuleap-tracker', 'The request is not valid'),
                 null
             );
             return false;

@@ -32,13 +32,13 @@ class ArtifactMultiListCurrentValueExporter
     public const TV3_ALTERNATE_BIND_TO_USER_DATA_TYPE = '2';
 
     /** @var array */
-    private $current_field_values = array();
+    private $current_field_values = [];
 
     /** @var array */
-    private $user_names = array();
+    private $user_names = [];
 
-     /** @var array() */
-    private $labels = array();
+     /** @var array */
+    private $labels = [];
 
     /** @var ArtifactXMLExporterDao */
     private $dao;
@@ -60,7 +60,7 @@ class ArtifactMultiListCurrentValueExporter
 
         $this->addCurrentValueLabel($field_value_row);
 
-        return $this->current_field_values[$field_name];
+        return $this->current_field_values[$field_name] ?? null;
     }
 
     private function initCurrentFieldValues(array $field_value_row)

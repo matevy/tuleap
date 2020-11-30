@@ -23,7 +23,7 @@
 class Git_PostReceiveMailManager
 {
 
-    var $dao;
+    public $dao;
 
     /**
      * Constructor of the class
@@ -43,7 +43,7 @@ class Git_PostReceiveMailManager
      *
      * @return bool
      */
-    function addMail($repositoryId, $mail)
+    public function addMail($repositoryId, $mail)
     {
         try {
             $this->dao->createNotification($repositoryId, $mail);
@@ -80,7 +80,6 @@ class Git_PostReceiveMailManager
      * As repository is meant to be deleted, there is no need to propagate
      * change to backend.
      *
-     * @param GitRepository $repository
      *
      * @return bool
      */
@@ -100,9 +99,9 @@ class Git_PostReceiveMailManager
     {
         $dar = $this->dao->searchByRepositoryId($repositoryId);
 
-        $mailList = array();
+        $mailList = [];
         foreach ($dar as $row) {
-            $mailList [] = $row['recipient_mail'];
+            $mailList[] = $row['recipient_mail'];
         }
         return $mailList;
     }
@@ -112,18 +111,18 @@ class Git_PostReceiveMailManager
      *
      * @return Git_PostReceiveMailDao
      */
-    function _getDao()
+    public function _getDao()
     {
-        if (!$this->dao) {
+        if (! $this->dao) {
             $this->dao = new Git_PostReceiveMailDao();
         }
-        return  $this->dao;
+        return $this->dao;
     }
 
     /**
      * Wrapper used for tests to get a new GitDao
      */
-    function _getGitDao()
+    public function _getGitDao()
     {
         return new GitDao();
     }
@@ -131,7 +130,7 @@ class Git_PostReceiveMailManager
     /**
      * Wrapper used for tests to get a new GitRepository
      */
-    function _getGitRepository()
+    public function _getGitRepository()
     {
         return new GitRepository();
     }

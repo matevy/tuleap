@@ -26,6 +26,7 @@ use stdClass;
 use Tuleap\AgileDashboard\Milestone\Criterion\Status\StatusAll;
 use Tuleap\AgileDashboard\Milestone\Criterion\Status\StatusClosed;
 use Tuleap\AgileDashboard\Milestone\Criterion\Status\StatusOpen;
+use Tuleap\AgileDashboard\Milestone\Request\MalformedQueryParameterException;
 
 /**
  * I convert a json query string to a ISearchOnStatus criterion.
@@ -45,7 +46,7 @@ class QueryToCriterionStatusConverter
             throw MalformedQueryParameterException::invalidQueryStatusParameter();
         }
 
-        if ($query_object == new stdClass) {
+        if ($query_object == new stdClass()) {
             return new StatusAll();
         }
 

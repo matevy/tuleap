@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\layout\HomePage;
 
@@ -29,6 +29,10 @@ use UserManager;
 
 class StatisticsCollectionBuilder
 {
+    /**
+     * Toggle display of site statistics on site home page
+     * @tlp-config-key
+     */
     public const CONFIG_DISPLAY_STATISTICS = 'display_homepage_statistics';
 
     /**
@@ -60,7 +64,7 @@ class StatisticsCollectionBuilder
         $this->svn_dao         = $svn_dao;
     }
 
-    public function build() : StatisticsCollection
+    public function build(): StatisticsCollection
     {
         $collection = new StatisticsCollection();
 

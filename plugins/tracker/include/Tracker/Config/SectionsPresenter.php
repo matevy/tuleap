@@ -37,19 +37,19 @@ class SectionsPresenter
 
     public function __construct()
     {
-        $this->emailgateway        = $GLOBALS['Language']->getText('plugin_tracker_config', 'email_gateway');
-        $this->natures             = $GLOBALS['Language']->getText('plugin_tracker_artifact_links_natures', 'title');
-        $this->report_config_panel = $GLOBALS['Language']->getText('plugin_tracker_report_config', 'report_config_panel');
+        $this->emailgateway        = dgettext('tuleap-tracker', 'Email Gateway');
+        $this->natures             = dgettext('tuleap-tracker', 'Artifact Links Types');
+        $this->report_config_panel = dgettext('tuleap-tracker', 'Report');
 
-        $this->emailgateway_url = TRACKER_BASE_URL .'/config.php?'. http_build_query(array(
+        $this->emailgateway_url = TRACKER_BASE_URL . '/config.php?' . http_build_query([
             'action'   => 'emailgateway'
-        ));
-        $this->natures_url = TRACKER_BASE_URL .'/config.php?'. http_build_query(array(
+        ]);
+        $this->natures_url = TRACKER_BASE_URL . '/config.php?' . http_build_query([
             'action'   => 'natures'
-        ));
-        $this->report_config_url = TRACKER_BASE_URL .'/config.php?'. http_build_query(array(
+        ]);
+        $this->report_config_url = TRACKER_BASE_URL . '/config.php?' . http_build_query([
             'action' => 'report-config'
-        ));
+        ]);
 
         $this->artifacts_deletion_url = TRACKER_BASE_URL . '/config.php?' . http_build_query([
             'action' => 'artifacts-deletion'

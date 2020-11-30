@@ -49,11 +49,6 @@ class SVN_IntroPresenter
         $this->uses_ldap_info         = $uses_ldap_info;
     }
 
-    public function help_link()
-    {
-        return "javascript:help_window('/doc/".$this->user->getShortLocale()."/user-guide/svn.html')";
-    }
-
     public function svn_intro_title()
     {
         return $GLOBALS['Language']->getText('svn_intro', 'title');
@@ -92,7 +87,7 @@ class SVN_IntroPresenter
 
     public function svn_command()
     {
-        return "svn checkout --username ".strtolower($this->svn_user_username())." ". $this->svn_url;
+        return "svn checkout --username " . strtolower($this->svn_user_username()) . " " . $this->svn_url;
     }
 
     public function username_is_in_lowercase()

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,26 +21,50 @@
 namespace Tuleap\OpenIDConnectClient\UserMapping;
 
 use PFUser;
+use Tuleap\DB\DBTransactionExecutor;
 use Tuleap\OpenIDConnectClient\Provider\Provider;
+use UserDao;
 
 class UserMappingManager
 {
-
     /**
      * @var UserMappingDao
      */
     private $dao;
+    /**
+     * @var UserDao
+     */
+    private $user_dao;
+    /**
+     * @var CanRemoveUserMappingChecker
+     */
+    private $can_remove_user_mapping_checker;
+    /**
+     * @var DBTransactionExecutor
+     */
+    private $transaction_executor;
 
-    public function __construct(UserMappingDao $dao)
-    {
-        $this->dao = $dao;
+    public function __construct(
+        UserMappingDao $dao,
+        UserDao $user_dao,
+        CanRemoveUserMappingChecker $can_remove_user_mapping_checker,
+        DBTransactionExecutor $transaction_executor
+    ) {
+        $this->dao                             = $dao;
+        $this->user_dao                        = $user_dao;
+        $this->can_remove_user_mapping_checker = $can_remove_user_mapping_checker;
+        $this->transaction_executor            = $transaction_executor;
     }
 
     /**
      * @throws UserMappingDataAccessException
      */
-    public function create($user_id, $provider_id, $identifier, $last_used)
+    public function create(int $user_id, $provider_id, $identifier, $last_used): void
     {
+        if ($user_id < \UserManager::SPECIAL_USERS_LIMIT) {
+            throw new CannotCreateAMappingForASpecialUserException($user_id);
+        }
+        $this->user_dao->storeLoginSuccess($user_id, $last_used);
         $is_saved  = $this->dao->save($user_id, $provider_id, $identifier, $last_used);
         if (! $is_saved) {
             throw new UserMappingDataAccessException();
@@ -95,7 +119,7 @@ class UserMappingManager
      */
     public function getUsageByUser(PFUser $user)
     {
-        $user_mappings_usage = array();
+        $user_mappings_usage = [];
         $rows                = $this->dao->searchUsageByUserId($user->getId());
 
         if ($rows === false) {
@@ -109,22 +133,44 @@ class UserMappingManager
         return $user_mappings_usage;
     }
 
-    /**
-     * @throws UserMappingDataAccessException
-     */
-    public function remove(UserMapping $user_mapping)
+    public function userHasProvider(PFUser $user): bool
     {
-        $is_deleted = $this->dao->deleteById($user_mapping->getId());
-        if (! $is_deleted) {
-            throw new UserMappingDataAccessException();
+        $results = $this->dao->searchUsageByUserId($user->getId());
+        if ($results === false) {
+            return false;
         }
+        return count($results) > 0;
     }
 
     /**
      * @throws UserMappingDataAccessException
      */
-    public function updateLastUsed(UserMapping $user_mapping, $last_used)
+    public function remove(PFUser $user, UserMapping $user_mapping): void
     {
+        if ((int) $user->getId() !== $user_mapping->getUserId()) {
+            throw new \InvalidArgumentException('The provided user is not part of this user mapping');
+        }
+
+        $this->transaction_executor->execute(
+            function () use ($user, $user_mapping): void {
+                if (! $this->can_remove_user_mapping_checker->canAUserMappingBeRemoved($user, $this->getUsageByUser($user))) {
+                    throw new UserMappingDataAccessException();
+                }
+
+                $is_deleted = $this->dao->deleteById($user_mapping->getId());
+                if (! $is_deleted) {
+                    throw new UserMappingDataAccessException();
+                }
+            }
+        );
+    }
+
+    /**
+     * @throws UserMappingDataAccessException
+     */
+    public function updateLastUsed(UserMapping $user_mapping, int $last_used): void
+    {
+        $this->user_dao->storeLoginSuccess($user_mapping->getUserId(), $last_used);
         $is_updated = $this->dao->updateLastUsed(
             $user_mapping->getId(),
             $last_used

@@ -28,7 +28,7 @@ class ProftpdRouter
     public const DEFAULT_CONTROLLER = 'explorer';
     public const DEFAULT_ACTION     = 'index';
 
-    private $controllers = array();
+    private $controllers = [];
 
     public function __construct(array $controllers)
     {
@@ -39,7 +39,6 @@ class ProftpdRouter
 
     /**
      * Routes the request to the correct controller
-     * @param HTTPRequest $request
      * @return void
      */
     public function route(HTTPRequest $request)
@@ -84,12 +83,13 @@ class ProftpdRouter
     /**
      * Retrieves the Proftpd Service instance matching the request group id.
      *
-     * @param HTTPRequest $request
      *
      * @return ServiceProFTPd
      */
     private function getService(HTTPRequest $request)
     {
-        return $request->getProject()->getService('plugin_proftpd');
+        $service = $request->getProject()->getService('plugin_proftpd');
+        assert($service instanceof ServiceProFTPd);
+        return $service;
     }
 }

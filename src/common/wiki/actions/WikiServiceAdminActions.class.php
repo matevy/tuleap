@@ -24,10 +24,10 @@
 use Tuleap\PHPWiki\WikiPage;
 
 require_once('WikiActions.class.php');
-require_once(dirname(__FILE__).'/../lib/WikiEntry.class.php');
-require_once(dirname(__FILE__).'/../lib/WikiPage.class.php');
-require_once(dirname(__FILE__).'/../lib/WikiAttachment.class.php');
-require_once(dirname(__FILE__).'/../lib/Wiki.class.php');
+require_once(dirname(__FILE__) . '/../lib/WikiEntry.class.php');
+require_once(dirname(__FILE__) . '/../lib/WikiPage.class.php');
+require_once(dirname(__FILE__) . '/../lib/WikiAttachment.class.php');
+require_once(dirname(__FILE__) . '/../lib/Wiki.class.php');
 
 
 class WikiServiceAdminActions extends WikiActions
@@ -36,7 +36,7 @@ class WikiServiceAdminActions extends WikiActions
    * @access private
    * @var int
    */
-    var $gid;
+    public $gid;
 
     public function __construct($controler)
     {
@@ -44,7 +44,7 @@ class WikiServiceAdminActions extends WikiActions
         $this->gid = (int) $controler->gid;
     }
 
-    function checkPage($page)
+    public function checkPage($page)
     {
         global $feedback;
 
@@ -69,11 +69,11 @@ class WikiServiceAdminActions extends WikiActions
     }
 
 
-    function create()
+    public function create()
     {
-        $page=$_POST['page'];
-        if (!empty($_POST['upage'])) {
-            $page=$_POST['upage'];
+        $page = $_POST['page'];
+        if (! empty($_POST['upage'])) {
+            $page = $_POST['upage'];
         }
 
         if ($this->checkPage($page)) {
@@ -89,7 +89,7 @@ class WikiServiceAdminActions extends WikiActions
         }
     }
 
-    function delete()
+    public function delete()
     {
         $we = new WikiEntry();
         $we->setGid($this->gid);
@@ -101,7 +101,7 @@ class WikiServiceAdminActions extends WikiActions
   /**
    * Perform wiki attachment removal.
    */
-    function deleteAttachments()
+    public function deleteAttachments()
     {
         $request = HTTPRequest::instance();
         if ($request->isPost() && $request->exist('attachments_to_delete')) {
@@ -116,7 +116,7 @@ class WikiServiceAdminActions extends WikiActions
                     $wa = new WikiAttachment();
                     $wa->initWithId($id);
                     if ($wa->validate() && $wa->gid == $_REQUEST['group_id'] && $wa->isAutorized($user->getId())) {
-                        if (!$wa->deleteAttachment()) {
+                        if (! $wa->deleteAttachment()) {
                             $deleteStatus = false;
                         }
                     } else {
@@ -134,11 +134,11 @@ class WikiServiceAdminActions extends WikiActions
         }
     }
 
-    function update()
+    public function update()
     {
-        $page=$_POST['page'];
-        if (!empty($_POST['upage'])) {
-            $page=$_POST['upage'];
+        $page = $_POST['page'];
+        if (! empty($_POST['upage'])) {
+            $page = $_POST['upage'];
         }
 
         if ($this->checkPage($page)) {
@@ -155,7 +155,7 @@ class WikiServiceAdminActions extends WikiActions
         }
     }
 
-    function setWikiPerms()
+    public function setWikiPerms()
     {
         global $feedback;
 
@@ -166,23 +166,23 @@ class WikiServiceAdminActions extends WikiActions
             $ret = $w->setPermissions($_POST['ugroups']);
         }
 
-        if (!$ret) {
+        if (! $ret) {
             exit_error(
                 $GLOBALS['Language']->getText('global', 'error'),
-                $GLOBALS['Language']->getText('wiki_actions_wikiserviceadmin', 'update_perm_err', array($feedback))
+                $GLOBALS['Language']->getText('wiki_actions_wikiserviceadmin', 'update_perm_err', [$feedback])
             );
         }
 
         $event_manager = EventManager::instance();
         $event_manager->processEvent(
             "wiki_service_permissions_updated",
-            array(
+            [
             'group_id' => $this->gid
-            )
+            ]
         );
     }
 
-    function setWikiPagePerms()
+    public function setWikiPagePerms()
     {
         global $feedback;
 
@@ -194,13 +194,13 @@ class WikiServiceAdminActions extends WikiActions
             $ret = $wp->setPermissions($_POST['ugroups']);
         }
 
-        if (!$ret) {
+        if (! $ret) {
             exit_error(
                 $GLOBALS['Language']->getText('global', 'error'),
                 $GLOBALS['Language']->getText(
                     'wiki_actions_wikiserviceadmin',
                     'update_page_perm_err',
-                    array($feedback)
+                    [$feedback]
                 )
             );
         }
@@ -208,10 +208,10 @@ class WikiServiceAdminActions extends WikiActions
         $event_manager = EventManager::instance();
         $event_manager->processEvent(
             "wiki_page_permissions_updated",
-            array(
+            [
             'group_id'         => $wp->getGid(),
             'wiki_page'        => $wp->getPagename(),
-            )
+            ]
         );
     }
 
@@ -219,7 +219,7 @@ class WikiServiceAdminActions extends WikiActions
     /**
      * Wrapper to set permissions on wiki attachments.
      */
-    function setWikiAttachmentPerms()
+    public function setWikiAttachmentPerms()
     {
         global $feedback;
 
@@ -230,10 +230,10 @@ class WikiServiceAdminActions extends WikiActions
         } else {
             $ret = $wa->setPermissions($_POST['ugroups']);
         }
-        if (!$ret) {
+        if (! $ret) {
             exit_error(
                 $GLOBALS['Language']->getText('global', 'error'),
-                $GLOBALS['Language']->getText('wiki_actions_wikiserviceadmin', 'update_attachment_perm_err', array($feedback))
+                $GLOBALS['Language']->getText('wiki_actions_wikiserviceadmin', 'update_attachment_perm_err', [$feedback])
             );
         }
     }

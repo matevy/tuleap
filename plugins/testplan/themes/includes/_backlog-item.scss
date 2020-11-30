@@ -1,0 +1,146 @@
+/**
+ * Copyright (c) Enalean, 2020 - Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.test-plan-list-of-backlogitems {
+    grid-area: backlog-items;
+}
+
+.test-plan-list-of-backlogitems-header {
+    display: flex;
+    align-items: center;
+    margin: 0 0 $tlp-medium-spacing;
+}
+
+.test-plan-list-of-backlogitems-title {
+    margin: 0;
+    color: $tlp-theme-sidebar-background-color;
+}
+
+.test-plan-export-button {
+    margin-left: $tlp-medium-spacing;
+}
+
+.test-plan-backlog-item-container {
+    margin: 0 0 $tlp-small-spacing;
+}
+
+.test-plan-backlog-item-card {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 0;
+    padding: $tlp-medium-spacing ($tlp-medium-spacing - 1px) $tlp-medium-spacing $tlp-medium-spacing;
+
+    &.test-plan-backlog-item-is-just-refreshed {
+        animation: pulse-backlog-item-card 500ms ease-in-out;
+        border-color: $tlp-ui-success;
+        background: mix($tlp-ui-white, $tlp-ui-success, 90%);
+    }
+}
+
+.test-plan-backlog-item-card-expanded {
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.test-plan-backlog-item-skeleton-xref {
+    width: 70px;
+    margin: 0 10px 0 0;
+}
+
+.test-plan-backlog-item-skeleton-title {
+    width: 300px;
+}
+
+.test-plan-backlog-item-caret {
+    color: $tlp-ui-dimmed;
+    font-size: 12px;
+}
+
+.test-plan-backlog-item-title {
+    margin: 0 4px;
+    color: $tlp-ui-dimmed;
+    font-weight: 600;
+    line-height: 28px;
+}
+
+.test-plan-backlog-item-coverage {
+    margin: 0 0 0 $tlp-large-spacing;
+    white-space: nowrap;
+}
+
+.test-plan-backlog-item-coverage-text-skeleton {
+    width: 50px;
+}
+
+.test-plan-backlog-item-coverage-icon-skeleton {
+    width: 24px;
+    margin: 0 0 0 $tlp-medium-spacing;
+}
+
+.test-plan-backlog-item-coverage-text {
+    color: $tlp-ui-dimmed;
+    font-size: 14px;
+}
+
+.test-plan-backlog-item-coverage-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin: 0 0 0 $tlp-medium-spacing;
+    border-radius: 50%;
+    font-size: 15px;
+}
+
+.test-plan-backlog-item-coverage-icon-symbol {
+    color: $tlp-ui-white;
+    line-height: 0;
+}
+
+.test-plan-backlog-item-coverage-icon-failed {
+    background: $tlp-ui-danger;
+}
+
+.test-plan-backlog-item-coverage-icon-blocked {
+    background: $tlp-ui-info;
+}
+
+.test-plan-backlog-item-coverage-icon-passed {
+    background: $tlp-ui-success;
+}
+
+.test-plan-backlog-item-coverage-icon-notrun {
+    background: $tlp-ui-dimmed;
+}
+
+@keyframes pulse-backlog-item-card {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.025);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}

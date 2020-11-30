@@ -30,7 +30,7 @@ use ProjectUGroup;
 use Tuleap\FRS\FRSPermission;
 use Tuleap\FRS\FRSPermissionFactory;
 use Tuleap\FRS\FRSPermissionManager;
-use Tuleap\Project\REST\UserGroupRepresentation;
+use Tuleap\Project\REST\MinimalUserGroupRepresentation;
 
 class ServiceRepresentationBuilder
 {
@@ -55,9 +55,6 @@ class ServiceRepresentationBuilder
     }
 
     /**
-     * @param PFUser  $user
-     * @param Project $project
-     * @return ServiceRepresentation
      * @throws RestException
      */
     public function getServiceRepresentation(PFUser $user, Project $project): ServiceRepresentation
@@ -65,13 +62,12 @@ class ServiceRepresentationBuilder
         if (! $project->usesFile()) {
             throw new RestException(404, 'File Release System service is not used by the project');
         }
-        $service_representation = new ServiceRepresentation();
         if (! $this->permission_manager->isAdmin($project, $user)) {
-            return $service_representation;
+            return ServiceRepresentation::withoutPermissions();
         }
 
-        return $service_representation->build(
-            (new ServicePermissionsForGroupsRepresentation())->build($this->getCanAdmin($project), $this->getCanRead($project))
+        return ServiceRepresentation::withPermissions(
+            new ServicePermissionsForGroupsRepresentation($this->getCanAdmin($project), $this->getCanRead($project))
         );
     }
 
@@ -96,7 +92,7 @@ class ServiceRepresentationBuilder
         foreach ($frs_permissions as $frs_permission) {
             $ugroup = $this->ugroup_manager->getUGroup($project, $frs_permission->getUGroupId());
             if ($ugroup && (int) $ugroup->getId() !== ProjectUGroup::NONE) {
-                $ugroups[] = (new UserGroupRepresentation())->build((int) $project->getID(), $ugroup);
+                $ugroups[] = new MinimalUserGroupRepresentation((int) $project->getID(), $ugroup);
             }
         }
         return $ugroups;

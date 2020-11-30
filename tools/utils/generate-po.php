@@ -27,9 +27,10 @@ use Tuleap\Templating\Mustache\GettextCollector;
 use Tuleap\Templating\Mustache\GettextExtractor;
 use Tuleap\Templating\Mustache\GettextSectionContentTransformer;
 
-require_once __DIR__ .'/../../src/vendor/autoload.php';
+require_once __DIR__ . '/../../src/vendor/autoload.php';
 
 $basedir = $argv[1];
+$plugin  = $argv[2] ?: '';
 
 function info($message)
 {
@@ -48,11 +49,11 @@ function error($message)
 
 function executeCommandAndExitIfStderrNotEmpty($command)
 {
-    $descriptorspec = array(
+    $descriptorspec = [
         0 => STDIN,
         1 => STDOUT,
-        2 => array('pipe', 'wb')
-    );
+        2 => ['pipe', 'wb']
+    ];
 
     $process = proc_open($command, $descriptorspec, $pipes);
     if (! is_resource($process)) {
@@ -82,10 +83,12 @@ $gettext_in_mustache_extractor = new DomainExtractor(
     )
 );
 
-info("[core] Generating .pot file");
-$core_src = escapeshellarg("$basedir/src");
-$template = escapeshellarg("$basedir/site-content/tuleap-core.pot");
-executeCommandAndExitIfStderrNotEmpty("find $core_src -name '*.php' \
+if (! $plugin) {
+    info("[core] Generating .pot file");
+    $core_src = escapeshellarg("$basedir/src");
+    $template = escapeshellarg("$basedir/site-content/tuleap-core.pot");
+    executeCommandAndExitIfStderrNotEmpty(
+        "find $core_src -name '*.php' \
     | grep -v -E '(common/wiki/phpwiki|common/include/lib|vendor)' \
     | xargs xgettext \
         --default-domain=core \
@@ -95,39 +98,50 @@ executeCommandAndExitIfStderrNotEmpty("find $core_src -name '*.php' \
         --omit-header \
         -o - \
     | sed '/^msgctxt/d' \
-    > $template");
+    > $template"
+    );
 
-info("[core] Ensure .pot strings uniquness");
-executeCommandAndExitIfStderrNotEmpty("msguniq --sort-output --use-first -o $template $template");
+    info("[core] Ensure .pot strings uniquness");
+    executeCommandAndExitIfStderrNotEmpty("msguniq --sort-output --use-first -o $template $template");
 
-info("[core] Generating .pot file for .mustache files");
-$mustache_template = "$basedir/site-content/tuleap-core.mustache.pot";
-$gettext_in_mustache_extractor->extract(
-    'tuleap-core',
-    [
-        "$basedir/src/templates",
-        "$basedir/src/common/FRS",
-    ],
-    $mustache_template
-);
+    info("[core] Generating .pot file for .mustache files");
+    $mustache_template = "$basedir/site-content/tuleap-core.mustache.pot";
+    $gettext_in_mustache_extractor->extract(
+        'tuleap-core',
+        [
+            "$basedir/src/templates",
+            "$basedir/src/themes/BurningParrot/templates",
+            "$basedir/src/themes/FlamingParrot/templates",
+            "$basedir/src/common/FRS",
+            "$basedir/src/common/User",
+        ],
+        $mustache_template
+    );
 
-info("[core] Combining .pot files into one");
-executeCommandAndExitIfStderrNotEmpty("msgcat --sort-output -o $template $template ". escapeshellarg($mustache_template));
-unlink($mustache_template);
+    info("[core] Combining .pot files into one");
+    executeCommandAndExitIfStderrNotEmpty(
+        "msgcat --sort-output -o $template $template " . escapeshellarg($mustache_template)
+    );
+    unlink($mustache_template);
 
-info("[core] Merging .pot file into .po files");
-$site_content = escapeshellarg("$basedir/site-content");
-exec("find $site_content -name 'tuleap-core.po' -exec msgmerge --update \"{}\" $template \;");
+    info("[core] Merging .pot file into .po files");
+    $site_content = escapeshellarg("$basedir/site-content");
+    exec("find $site_content -name 'tuleap-core.po' -exec msgmerge --update \"{}\" $template \;");
 
-$core_manifest = "$basedir/build-manifest.json";
-$json = json_decode(file_get_contents($core_manifest), true);
+    $core_manifest = "$basedir/build-manifest.json";
+    $json          = json_decode(file_get_contents($core_manifest), true);
 
-gettextJS("core", $basedir, $json);
-gettextVue("core", $basedir, $json);
-
+    gettextJS("core", $basedir, $json);
+    gettextTS("core", $basedir, $json);
+    gettextVue("core", $basedir, $json);
+}
 
 foreach (glob("$basedir/plugins/*", GLOB_ONLYDIR) as $path) {
     $translated_plugin = basename($path);
+    if ($plugin && $translated_plugin !== $plugin) {
+        continue;
+    }
+
     gettextPHP($path, $translated_plugin, $gettext_in_mustache_extractor);
 
     $manifest = "$path/build-manifest.json";
@@ -143,8 +157,6 @@ foreach (glob("$basedir/plugins/*", GLOB_ONLYDIR) as $path) {
 
 /**
  * @param                 $path
- * @param string          $translated_plugin
- * @param DomainExtractor $gettext_in_mustache_extractor
  */
 function gettextPHP($path, string $translated_plugin, DomainExtractor $gettext_in_mustache_extractor): void
 {
@@ -192,7 +204,7 @@ function gettextPHP($path, string $translated_plugin, DomainExtractor $gettext_i
     info("[$translated_plugin] Generating .pot file for .mustache files");
     $gettext_in_mustache_extractor->extract(
         "tuleap-$translated_plugin",
-        ["$path/templates"],
+        ["$path/templates", "$path/include"],
         "$path/site-content/tuleap-$translated_plugin-mustache.pot"
     );
 
@@ -240,7 +252,6 @@ EOS;
 
 function gettextJS($translated_plugin, $path, $manifest_json)
 {
-
     if (! isset($manifest_json['gettext-js']) || ! is_array($manifest_json['gettext-js'])) {
         return;
     }

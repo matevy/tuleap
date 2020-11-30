@@ -28,22 +28,20 @@ use Http\Message\CookieJar;
 use Tuleap\Http\HttpClientFactory;
 use Tuleap\Http\HTTPFactoryBuilder;
 use Tuleap\HudsonSvn\BuildParams;
-use Tuleap\HudsonSvn\Plugin\HudsonSvnPluginInfo;
 use Tuleap\HudsonSvn\ContinuousIntegrationCollector;
-use Tuleap\HudsonSvn\SvnBackendLogger;
 use Tuleap\HudsonSvn\Job\Dao as JobDao;
-use Tuleap\HudsonSvn\Job\Manager;
 use Tuleap\HudsonSvn\Job\Factory;
 use Tuleap\HudsonSvn\Job\Launcher;
+use Tuleap\HudsonSvn\Job\Manager;
+use Tuleap\HudsonSvn\Plugin\HudsonSvnPluginInfo;
 use Tuleap\Jenkins\JenkinsCSRFCrumbRetriever;
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\SVN\AccessControl\AccessFileHistoryDao;
 use Tuleap\SVN\AccessControl\AccessFileHistoryFactory;
+use Tuleap\SVN\Dao as SvnDao;
+use Tuleap\SVN\Hooks\PostCommit;
 use Tuleap\SVN\Repository\Destructor;
 use Tuleap\SVN\Repository\RepositoryManager;
-use Tuleap\SVN\Hooks\PostCommit;
-use Tuleap\SVN\Dao as SvnDao;
-use Tuleap\SVN\SvnLogger;
 use Tuleap\SVN\SvnAdmin;
 
 class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
@@ -53,6 +51,8 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
     {
         parent::__construct($id);
         $this->setScope(self::SCOPE_SYSTEM);
+
+        bindtextdomain('tuleap-hudson_svn', __DIR__ . '/../site-content');
 
         $this->addHook('cssfile');
         $this->addHook('javascript_file');
@@ -72,7 +72,7 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
      */
     public function getDependencies()
     {
-        return array('svn', 'hudson');
+        return ['svn', 'hudson'];
     }
 
     /**
@@ -80,7 +80,7 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
      */
     public function getPluginInfo()
     {
-        if (!$this->pluginInfo) {
+        if (! $this->pluginInfo) {
             $this->pluginInfo = new HudsonSvnPluginInfo($this);
         }
         return $this->pluginInfo;
@@ -89,19 +89,23 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
     public function cssfile($params)
     {
         if (strpos($_SERVER['REQUEST_URI'], HUDSON_BASE_URL) === 0) {
-            $asset = new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/hudson_svn/themes',
-                '/assets/hudson_svn/themes'
-            );
-            echo '<link rel="stylesheet" type="text/css" href="'. $asset->getFileURL('default-style.css') .'" />';
+            echo '<link rel="stylesheet" type="text/css" href="' . $this->getAssets()->getFileURL('default-style.css') . '" />';
         }
     }
 
     public function javascript_file($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         if (strpos($_SERVER['REQUEST_URI'], HUDSON_BASE_URL) === 0) {
-            echo '<script type="text/javascript" src="'.$this->getPluginPath().'/scripts/form.js"></script>';
+            echo $this->getAssets()->getHTMLSnippet('form.js');
         }
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/hudson_svn',
+            '/assets/hudson_svn'
+        );
     }
 
     public function collect_ci_triggers($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
@@ -131,7 +135,7 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
 
     private function getRenderer()
     {
-        return TemplateRendererFactory::build()->getRenderer(HUDSON_SVN_BASE_DIR.'/templates');
+        return TemplateRendererFactory::build()->getRenderer(HUDSON_SVN_BASE_DIR . '/templates');
     }
 
     private function getRepositoryManager()
@@ -142,7 +146,7 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
             $dao,
             $this->getProjectManager(),
             $this->getSvnAdmin(),
-            $this->getLogger(),
+            SvnPlugin::getLogger(),
             $this->getSystemCommand(),
             $this->getDestructor(),
             EventManager::instance(),
@@ -163,7 +167,7 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
     {
         return new Destructor(
             new SvnDao(),
-            $this->getLogger()
+            SvnPlugin::getLogger()
         );
     }
 
@@ -172,14 +176,9 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
         return new System_Command();
     }
 
-    private function getLogger()
-    {
-        return new SvnLogger();
-    }
-
     private function getSvnAdmin()
     {
-        return new SvnAdmin($this->getSystemCommand(), $this->getLogger(), Backend::instance(Backend::SVN));
+        return new SvnAdmin($this->getSystemCommand(), SvnPlugin::getLogger(), Backend::instance(Backend::SVN));
     }
 
     private function getProjectManager()
@@ -194,14 +193,14 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
 
     private function isJobValid($job_id)
     {
-        return isset($job_id) && !empty($job_id);
+        return isset($job_id) && ! empty($job_id);
     }
 
     private function isRequestWellFormed(array $params)
     {
         return $this->isJobValid($params['job_id']) &&
                isset($params['request']) &&
-               !empty($params['request']);
+               ! empty($params['request']);
     }
 
     private function isPluginConcerned(array $params)
@@ -234,7 +233,7 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
     {
         if ($this->isJobValid($params['job_id'])) {
             if (! $this->getJobManager()->delete($params['job_id'])) {
-                $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_hudson_svn', 'ci_trigger_not_deleted'));
+                $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-hudson_svn', 'An error occurred while deleting job.'));
             }
         }
     }
@@ -246,7 +245,7 @@ class hudson_svnPlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDeclarati
         $jenkins_csrf_crumb_retriever = new JenkinsCSRFCrumbRetriever($http_client, $http_request_factory);
         $launcher                     = new Launcher(
             $this->getJobFactory(),
-            new SvnBackendLogger(),
+            \BackendLogger::getDefaultLogger('hudson_svn_syslog'),
             new Jenkins_Client($http_client, $http_request_factory, HTTPFactoryBuilder::streamFactory(), $jenkins_csrf_crumb_retriever),
             new BuildParams()
         );

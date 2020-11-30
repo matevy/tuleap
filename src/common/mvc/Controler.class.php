@@ -29,19 +29,19 @@
  */
 class Controler
 {
-  /* protected */ var $gid;
-  /* protected */ var $view;
-  /* protected */ var $action;
-  /* protected */ var $_viewParams   = array();
-  /* protected */ var $_actionParams = array();
+  /* protected */ public $gid;
+  /* protected */ public $view;
+  /* protected */ public $action;
+  /* protected */ public $_viewParams   = [];
+  /* protected */ public $_actionParams = [];
 
-    function request()
+    public function request()
     {
     }
 
-    function viewsManagement()
+    public function viewsManagement()
     {
-        $className = static::class.'Views';
+        $className = static::class . 'Views';
         if (! class_exists($className)) {
             throw new LogicException(sprintf('View class %s does not exist, nothing can be displayed', $className));
         }
@@ -49,9 +49,9 @@ class Controler
         return $wv->display($this->view);
     }
 
-    function actionsManagement()
+    public function actionsManagement()
     {
-        $className = static::class.'Actions';
+        $className = static::class . 'Actions';
         if (! class_exists($className)) {
             throw new LogicException(sprintf('Action class %s does not exist, nothing can be processed', $className));
         }
@@ -59,7 +59,7 @@ class Controler
         $wa->process($this->action, $this->_actionParams);
     }
 
-    function process()
+    public function process()
     {
         $this->request();
 

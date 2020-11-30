@@ -18,16 +18,17 @@
   -->
 
 <template>
-    <a href="#"
-       v-on:click.prevent="showNewFolderModal"
-       class="tlp-dropdown-menu-item"
-       role="menuitem"
-       v-if="is_item_a_folder(item) && item.user_can_write"
-       data-test="document-new-folder-creation-button"
+    <button
+        v-on:click.prevent="showNewFolderModal"
+        class="tlp-dropdown-menu-item"
+        type="button"
+        role="menuitem"
+        v-if="is_item_a_folder(item) && item.user_can_write"
+        data-test="document-new-folder-creation-button"
     >
-        <i class="fa fa-fw fa-folder-open-o tlp-dropdown-menu-item-icon"></i>
+        <i class="far fa-fw fa-folder-open tlp-dropdown-menu-item-icon"></i>
         <translate>New folder</translate>
-    </a>
+    </button>
 </template>
 <script>
 import { mapGetters } from "vuex";
@@ -39,7 +40,7 @@ export default {
     methods: {
         showNewFolderModal() {
             EventBus.$emit("show-new-folder-modal", { detail: { parent: this.item } });
-        }
-    }
+        },
+    },
 };
 </script>

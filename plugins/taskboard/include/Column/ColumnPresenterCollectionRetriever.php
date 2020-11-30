@@ -25,7 +25,6 @@ namespace Tuleap\Taskboard\Column;
 use Cardwall_Column;
 use Cardwall_OnTop_ColumnDao;
 use Cardwall_OnTop_Config_ColumnFactory;
-use Cardwall_OnTop_Dao;
 use PFUser;
 use Tuleap\Taskboard\Column\FieldValuesToColumnMapping\TrackerMappingPresenterBuilder;
 
@@ -47,7 +46,7 @@ class ColumnPresenterCollectionRetriever
     public static function build(): self
     {
         return new self(
-            new Cardwall_OnTop_Config_ColumnFactory(new Cardwall_OnTop_ColumnDao(), new Cardwall_OnTop_Dao()),
+            new Cardwall_OnTop_Config_ColumnFactory(new Cardwall_OnTop_ColumnDao()),
             TrackerMappingPresenterBuilder::build()
         );
     }
@@ -60,8 +59,8 @@ class ColumnPresenterCollectionRetriever
         $collection = [];
         $planning   = $milestone->getPlanning();
         $columns    = $this->column_factory->getDashboardColumns($planning->getPlanningTracker());
-        /** @var Cardwall_Column $column */
         foreach ($columns as $column) {
+            \assert($column instanceof Cardwall_Column);
             $mappings = $this->tracker_mapping_builder->buildMappings($milestone, $column);
             $collection[] = new ColumnPresenter(
                 $column,
@@ -76,6 +75,6 @@ class ColumnPresenterCollectionRetriever
     {
         $preference_name = 'plugin_taskboard_collapse_column_' . $milestone->getArtifactId() . '_' . $column->getId();
 
-        return !empty($user->getPreference($preference_name));
+        return ! empty($user->getPreference($preference_name));
     }
 }

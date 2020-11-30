@@ -1,12 +1,21 @@
 module.exports = {
     extends: ["stylelint-config-sass-guidelines", "stylelint-config-property-sort-order-smacss"],
+    syntax: "scss",
+    reportNeedlessDisables: true,
+    reportInvalidScopeDisables: true,
     rules: {
         indentation: [4],
+        "comment-word-disallowed-list": [
+            [/^!/],
+            {
+                message: `Never use the "/*!" style of comments. Those comments are output in compressed CSS. (comment-word-disallowed-list)`
+            }
+        ],
         "color-hex-length": ["long"],
         "color-named": [
             "never",
             {
-                message: "Colors should be written in hexadecimal format"
+                message: "Colors should be written in hexadecimal format (color-named)"
             }
         ],
         "declaration-block-no-duplicate-properties": true,
@@ -30,7 +39,7 @@ module.exports = {
                 ignore: ["attribute"]
             }
         ],
-        "unit-whitelist": [
+        "unit-allowed-list": [
             "em",
             "rem",
             "px",
@@ -44,7 +53,8 @@ module.exports = {
             "turn",
             "ms",
             "s",
-            "%"
+            "%",
+            "fr"
         ],
         // Plugins
         "order/properties-alphabetical-order": null,

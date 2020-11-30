@@ -19,14 +19,18 @@
   -->
 
 <template>
-    <div class="taskboard-cell taskboard-cell-swimlane-header" v-bind:class="fullscreen_class">
-        <i class="fa fa-minus-square taskboard-swimlane-toggle"
-           v-bind:class="additional_classnames"
-           role="button"
-           v-bind:title="title"
-           v-on:click="collapseSwimlane(swimlane)"
+    <div
+        class="taskboard-cell taskboard-cell-swimlane-header"
+        v-bind:class="taskboard_cell_swimlane_header_classes"
+    >
+        <i
+            class="fa fa-minus-square taskboard-swimlane-toggle"
+            v-bind:class="additional_classnames"
+            role="button"
+            v-bind:title="title"
+            v-on:click="collapseSwimlane(swimlane)"
         ></i>
-        <slot/>
+        <slot />
     </div>
 </template>
 
@@ -49,6 +53,9 @@ export default class SwimlaneHeader extends Vue {
 
     @swimlane_store.Action
     readonly collapseSwimlane!: (swimlane: Swimlane) => void;
+
+    @swimlane_store.Getter
+    readonly taskboard_cell_swimlane_header_classes!: string[];
 
     get additional_classnames(): string {
         return `tlp-swatch-${this.swimlane.card.color}`;

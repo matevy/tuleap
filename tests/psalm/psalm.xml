@@ -5,26 +5,43 @@
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config file:///../../../src/vendor/vimeo/psalm/config.xsd"
     autoloader="tests/lib/bootstrap.php"
-    errorBaseline="tests/psalm/tuleap-baseline.xml"
+    resolveFromConfigFile="false"
+    errorBaseline="./tests/psalm/tuleap-baseline.xml"
 >
     <projectFiles>
         <directory name="src/common/" />
         <directory name="src/www/" />
         <directory name="src/utils/" />
+        <directory name="src/tuleap-cfg/" />
         <directory name="plugins/*/include/" />
+        <directory name="plugins/*/bin/" />
         <directory name="tests/phpcs/TuleapCodingStandard/" />
         <ignoreFiles>
             <directory name="src/common/wiki/phpwiki/"/>
             <directory name="src/www/assets/"/>
-            <directory name="src/www/scripts/node_modules/"/>
-            <directory name="src/www/themes/FlamingParrot/vendor/"/>
-            <directory name="src/www/themes/BurningParrot/vendor/"/>
+            <directory name="src/themes/FlamingParrot/vendor/"/>
+            <directory name="src/themes/BurningParrot/vendor/"/>
         </ignoreFiles>
     </projectFiles>
 
-    <issueHandlers>
-        <LessSpecificReturnType errorLevel="info" />
+    <taintAnalysis>
+        <ignoreFiles>
+            <directory name="src/www/tracker/"/>
+            <directory name="src/common/tracker/"/>
+        </ignoreFiles>
+    </taintAnalysis>
 
+    <stubs>
+        <file name="tests/psalm/stubs/Psr/EventDispatcher/EventDispatcherInterface.phpstub"/>
+        <file name="tests/psalm/stubs/ParagonIE/EasyDB/EasyDB.phpstub"/>
+    </stubs>
+
+    <plugins>
+        <plugin filename="tests/lib/Psalm/Plugin/ConcealedString/PreventConcealedStringMisuses.php" />
+        <plugin filename="tests/lib/Psalm/Plugin/NoWritableRESTRepresentation/DoNotAllowWritableRESTRepresentation.php" />
+    </plugins>
+
+    <issueHandlers>
         <DeprecatedMethod errorLevel="info" />
         <DeprecatedProperty errorLevel="info" />
         <DeprecatedClass errorLevel="info" />
@@ -32,20 +49,8 @@
         <DeprecatedInterface errorLevel="info" />
         <DeprecatedTrait errorLevel="info" />
 
-        <InternalMethod errorLevel="info" />
-        <InternalProperty errorLevel="info" />
-        <InternalClass errorLevel="info" />
-
-        <MissingClosureReturnType errorLevel="info" />
-        <MissingReturnType errorLevel="info" />
-        <MissingPropertyType errorLevel="info" />
-        <InvalidDocblock errorLevel="info" />
-        <MisplacedRequiredParam errorLevel="info" />
-
         <PropertyNotSetInConstructor errorLevel="info" />
         <MissingConstructor errorLevel="info" />
-        <MissingClosureParamType errorLevel="info" />
-        <MissingParamType errorLevel="info" />
 
         <RedundantCondition errorLevel="info" />
 
@@ -53,9 +58,5 @@
         <RedundantConditionGivenDocblockType errorLevel="info" />
 
         <UnresolvableInclude errorLevel="info" />
-
-        <RawObjectIteration errorLevel="info" />
-
-        <InvalidStringClass errorLevel="info" />
     </issueHandlers>
 </psalm>

@@ -20,14 +20,17 @@
 
 <template>
     <div class="document-quick-look-document-action">
-        <button type="button" class="tlp-button-primary tlp-button-small document-quick-look-action-button-margin"
-                v-on:click="downloadFile"
+        <button
+            type="button"
+            class="tlp-button-primary tlp-button-small document-quick-look-action-button-margin"
+            v-on:click="downloadFile"
         >
-            <i class="fa fa-download tlp-button-icon"></i> <translate>Download</translate>
+            <i class="fa fa-download tlp-button-icon"></i>
+            <translate>Download</translate>
         </button>
-        <drop-down-quick-look v-bind:item="item"/>
+        <drop-down-quick-look v-bind:item="item" />
         <div class="document-header-spacer"></div>
-        <quick-look-delete-button v-bind:item="item"/>
+        <quick-look-delete-button v-bind:item="item" />
     </div>
 </template>
 
@@ -39,12 +42,12 @@ export default {
     name: "QuickLookFile",
     components: { QuickLookDeleteButton, DropDownQuickLook },
     props: {
-        item: Object
+        item: Object,
     },
     methods: {
         downloadFile() {
             window.location.assign(encodeURI(this.item.file_properties.download_href));
-        }
-    }
+        },
+    },
 };
 </script>

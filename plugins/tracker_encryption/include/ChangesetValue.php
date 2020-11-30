@@ -23,14 +23,11 @@ namespace Tuleap\TrackerEncryption;
 use Codendi_Diff;
 use Codendi_HTMLPurifier;
 use Codendi_HtmlUnifiedDiffFormatter;
-use Codendi_UnifiedDiffFormatter;
-use Encoding_SupportedXmlCharEncoding;
 use PFUser;
 use Tracker_Artifact_Changeset;
 use Tracker_Artifact_ChangesetValue;
 use Tracker_Artifact_ChangesetValueVisitor;
 use Tracker_FormElementFactory;
-use Tracker_XML_Exporter_ChangesetValue_ChangesetValueUnknownXMLExporter;
 use Tuleap;
 use Tuleap\Tracker\REST\Artifact\EncryptedRepresentation;
 
@@ -83,7 +80,7 @@ class ChangesetValue extends Tracker_Artifact_ChangesetValue
 
     private function getFormatedDiff($previous, $next)
     {
-        $callback = array(Codendi_HTMLPurifier::instance(), 'purify');
+        $callback = [Codendi_HTMLPurifier::instance(), 'purify'];
         $formater = new Codendi_HtmlUnifiedDiffFormatter();
         $diff     = new Codendi_Diff(
             array_map($callback, $previous, array_fill(0, count($previous), CODENDI_PURIFIER_CONVERT_HTML)),
@@ -104,7 +101,6 @@ class ChangesetValue extends Tracker_Artifact_ChangesetValue
     }
 
     /**
-     * @param PFUser $user
      *
      * @return Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation
      */
@@ -114,7 +110,6 @@ class ChangesetValue extends Tracker_Artifact_ChangesetValue
     }
 
     /**
-     * @param PFUser $user
      *
      * @return Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation
      */

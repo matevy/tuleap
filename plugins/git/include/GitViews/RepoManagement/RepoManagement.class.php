@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -205,7 +205,7 @@ class GitViews_RepoManagement
 
         $collection->add(new Pane\Delete($repository, $this->request));
 
-        $indexed_panes = array();
+        $indexed_panes = [];
         foreach ($collection->getPanes() as $pane) {
             if ($pane->canBeDisplayed()) {
                 $indexed_panes[$pane->getIdentifier()] = $pane;
@@ -219,12 +219,12 @@ class GitViews_RepoManagement
      */
     public function display()
     {
-        echo '<div class="tabbable">';
-        echo '<ul class="nav nav-tabs">';
+        echo '<div class="main-project-tabs"><ul class="nav nav-tabs">';
         foreach ($this->panes as $pane) {
             $this->displayTab($pane);
         }
-        echo '</ul>';
+        echo '</ul></div>';
+        echo '<div class="git-administration-content">';
         echo '<div id="git_repomanagement" class="tab-content git_repomanagement">';
         echo '<div class="tab-pane active">';
         echo $this->panes[$this->current_pane]->getContent();
@@ -234,17 +234,17 @@ class GitViews_RepoManagement
 
     private function displayTab(Pane\Pane $pane)
     {
-        echo '<li class="'. ($this->current_pane == $pane->getIdentifier() ? 'active' : '') .'">';
-        $url = GIT_BASE_URL .'/?'. http_build_query(
-            array(
+        echo '<li class="' . ($this->current_pane == $pane->getIdentifier() ? 'active' : '') . '">';
+        $url = GIT_BASE_URL . '/?' . http_build_query(
+            [
                 'action' => 'repo_management',
                 'group_id' => $this->repository->getProjectId(),
                 'repo_id'  => $this->repository->getId(),
                 'pane'     => $pane->getIdentifier(),
-            )
+            ]
         );
         $purifier = Codendi_HTMLPurifier::instance();
 
-        echo '<a href="'. $url .'" title="'. $purifier->purify($pane->getTitle()) .'">'. $purifier->purify($pane->getLabel()) .'</a></li>';
+        echo '<a href="' . $url . '" title="' . $purifier->purify($pane->getTitle()) . '">' . $purifier->purify($pane->getLabel()) . '</a></li>';
     }
 }

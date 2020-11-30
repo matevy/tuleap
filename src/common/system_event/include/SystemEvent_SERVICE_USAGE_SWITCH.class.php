@@ -41,23 +41,23 @@ class SystemEvent_SERVICE_USAGE_SWITCH extends SystemEvent
     {
         $txt = '';
         list($group_id, $shortname, $is_used) = $this->getParametersAsArray();
-        $txt .= 'project: '. $this->verbalizeProjectId($group_id, $with_link) .', service: '. $shortname .', service is used: '. ($is_used ? 'true' : 'false');
+        $txt .= 'project: ' . $this->verbalizeProjectId($group_id, $with_link) . ', service: ' . $shortname . ', service is used: ' . ($is_used ? 'true' : 'false');
         return $txt;
     }
 
     /**
      * Process stored event
      */
-    function process()
+    public function process()
     {
         list($group_id, $shortname, $is_used) = $this->getParametersAsArray();
 
         if ($project = $this->getProject($group_id)) {
             // If 'CVS' was activated, create the repo (if it does not exist) and regenerate cvs_root_allow.
             // if 'CVS' was inactivated... keep the repository, and do nothing.
-            if (($shortname == 'cvs')&&($is_used)) {
+            if (($shortname == 'cvs') && ($is_used)) {
                 // This function will not create the repo if it already exists
-                if (!Backend::instance('CVS')->createProjectCVS($group_id)) {
+                if (! Backend::instance('CVS')->createProjectCVS($group_id)) {
                     $this->error("Could not create CVS repo for project $group_id after service activation");
                     return false;
                 }
@@ -65,9 +65,9 @@ class SystemEvent_SERVICE_USAGE_SWITCH extends SystemEvent
             }
 
             // Same as for CVS.
-            if (($shortname == 'svn')&&($is_used)) {
+            if (($shortname == 'svn') && ($is_used)) {
                 $backendSVN    = Backend::instance('SVN');
-                if (!$backendSVN->createProjectSVN($group_id)) {
+                if (! $backendSVN->createProjectSVN($group_id)) {
                     $this->error("Could not create SVN repo for project $group_id after service activation");
                     return false;
                 }

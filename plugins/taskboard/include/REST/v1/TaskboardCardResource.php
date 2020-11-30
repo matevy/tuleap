@@ -36,6 +36,8 @@ use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\Taskboard\AgileDashboard\MilestoneIsAllowedChecker;
 use Tuleap\Taskboard\AgileDashboard\MilestoneIsNotAllowedException;
+use Tuleap\Taskboard\AgileDashboard\TaskboardUsage;
+use Tuleap\Taskboard\AgileDashboard\TaskboardUsageDao;
 use Tuleap\Taskboard\REST\v1\Card\CardPatcher;
 use Tuleap\Taskboard\REST\v1\Card\CardPatchRepresentation;
 use Tuleap\Tracker\Artifact\SlicedArtifactsBuilder;
@@ -84,6 +86,7 @@ class TaskboardCardResource extends AuthenticatedResource
         }
         $this->milestone_checker = new MilestoneIsAllowedChecker(
             new Cardwall_OnTop_Dao(),
+            new TaskboardUsage(new TaskboardUsageDao()),
             $plugin_manager,
             $taskboard_plugin
         );
@@ -171,7 +174,6 @@ class TaskboardCardResource extends AuthenticatedResource
      * @param int $id           Id of the card
      * @param int $milestone_id Id of the milestone {@from path}
      *
-     * @return CardRepresentation
      *
      * @throws RestException 401
      * @throws RestException 404
@@ -258,7 +260,7 @@ class TaskboardCardResource extends AuthenticatedResource
     /**
      * @throws RestException
      */
-    private function getArtifact(PFUser $user, int $id): \Tracker_Artifact
+    private function getArtifact(PFUser $user, int $id): \Tuleap\Tracker\Artifact\Artifact
     {
         $artifact = $this->artifact_factory->getArtifactByIdUserCanView($user, $id);
         if (! $artifact) {

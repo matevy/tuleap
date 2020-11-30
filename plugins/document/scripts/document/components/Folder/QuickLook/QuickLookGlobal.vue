@@ -20,30 +20,34 @@
 <template>
     <section class="tlp-pane-container">
         <div class="tlp-pane-header document-quick-look-header">
-            <h2 class="tlp-pane-title document-quick-look-title" v-bind:title="currently_previewed_item.title">
+            <h2
+                class="tlp-pane-title document-quick-look-title"
+                v-bind:title="currently_previewed_item.title"
+            >
                 <i class="tlp-pane-title-icon fa" v-bind:class="icon_class"></i>
                 {{ currently_previewed_item.title }}
             </h2>
-            <div class="document-quick-look-close-button" v-on:click="closeQuickLookEvent">
-                ×
-            </div>
+            <div class="document-quick-look-close-button" v-on:click="closeQuickLookEvent">×</div>
         </div>
         <section class="tlp-pane-section">
-            <quick-look-item-is-locked-message v-if="currently_previewed_item.lock_info !== null"/>
-            <quick-look-document-preview v-bind:icon-class="icon_class" v-bind:item="currently_previewed_item"/>
+            <quick-look-item-is-locked-message v-if="currently_previewed_item.lock_info !== null" />
+            <quick-look-document-preview
+                v-bind:icon-class="icon_class"
+                v-bind:item="currently_previewed_item"
+            />
             <component
                 v-bind:is="quick_look_component_action"
                 v-bind:item="currently_previewed_item"
             />
         </section>
-        <quick-look-document-metadata v-bind:item="currently_previewed_item"/>
+        <quick-look-document-metadata v-bind:item="currently_previewed_item" />
         <section class="tlp-pane-section" v-if="currently_previewed_item.description">
             <div class="tlp-property">
-                <label class="tlp-label" for="item-description" v-translate>
-                    Description
-                </label>
-                <p id="item-description" v-dompurify-html="currently_previewed_item.post_processed_description">
-                </p>
+                <label class="tlp-label" for="item-description" v-translate>Description</label>
+                <p
+                    id="item-description"
+                    v-dompurify-html="currently_previewed_item.post_processed_description"
+                ></p>
             </div>
         </section>
     </section>
@@ -62,7 +66,7 @@ import {
     TYPE_FOLDER,
     TYPE_LINK,
     TYPE_WIKI,
-    TYPE_EMPTY
+    TYPE_EMPTY,
 } from "../../../constants.js";
 import { iconForMimeType } from "../../../helpers/icon-for-mime-type.js";
 import QuickLookDocumentMetadata from "./QuickLookDocumentMetadata.vue";
@@ -74,7 +78,7 @@ export default {
     components: {
         QuickLookItemIsLockedMessage,
         QuickLookDocumentPreview,
-        QuickLookDocumentMetadata
+        QuickLookDocumentMetadata,
     },
     computed: {
         ...mapState(["currently_previewed_item"]),
@@ -98,34 +102,34 @@ export default {
             }
         },
         quick_look_component_action() {
-            let name = "";
             switch (this.currently_previewed_item.type) {
                 case TYPE_FILE:
-                    name = "File";
-                    break;
+                    return () =>
+                        import(/* webpackChunkName: "quick-look-file" */ `./QuickLookFile.vue`);
                 case TYPE_WIKI:
-                    name = "Wiki";
-                    break;
+                    return () =>
+                        import(/* webpackChunkName: "quick-look-wiki" */ `./QuickLookWiki.vue`);
                 case TYPE_FOLDER:
-                    name = "Folder";
-                    break;
+                    return () =>
+                        import(/* webpackChunkName: "quick-look-folder" */ `./QuickLookFolder.vue`);
                 case TYPE_LINK:
-                    name = "Link";
-                    break;
+                    return () =>
+                        import(/* webpackChunkName: "quick-look-link" */ `./QuickLookLink.vue`);
                 case TYPE_EMPTY:
                 case TYPE_EMBEDDED:
-                    name = "EmptyOrEmbedded";
-                    break;
+                    return () =>
+                        import(
+                            /* webpackChunkName: "quick-look-empty-embedded" */ `./QuickLookEmptyOrEmbedded.vue`
+                        );
                 default:
                     return null;
             }
-            return () => import(/* webpackChunkName: "quick-look-" */ `./QuickLook${name}.vue`);
-        }
+        },
     },
     methods: {
         closeQuickLookEvent() {
-            this.$emit("closeQuickLookEvent");
-        }
-    }
+            this.$emit("close-quick-look-event");
+        },
+    },
 };
 </script>

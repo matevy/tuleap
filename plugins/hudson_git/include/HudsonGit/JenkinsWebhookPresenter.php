@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,49 +20,66 @@
 
 namespace Tuleap\HudsonGit;
 
-use Tuleap\Git\Webhook\WebhookPresenter;
+use Tuleap\Git\Webhook\GenericWebhookPresenter;
 use Tuleap\Git\Webhook\WebhookLogPresenter;
 use Codendi_HTMLPurifier;
 use GitRepository;
 use CSRFSynchronizerToken;
+use Tuleap\HudsonGit\Log\Log;
 
-class JenkinsWebhookPresenter extends WebhookPresenter
+class JenkinsWebhookPresenter extends GenericWebhookPresenter
 {
     public function __construct(GitRepository $repository, $url, array $hooklogs, CSRFSynchronizerToken $csrf)
     {
         $use_default_edit_modal = false;
-        parent::__construct($repository, 'jenkins', $url, array(), $csrf, $use_default_edit_modal);
+        parent::__construct($repository, 'jenkins', $url, [], $csrf, $use_default_edit_modal);
 
-        $this->remove_form_action   = '/plugins/hudson_git/?group_id='. (int)$repository->getProjectId();
+        $this->remove_form_action   = '/plugins/hudson_git/?group_id=' . (int) $repository->getProjectId();
 
-        $this->remove_webhook_desc   = $GLOBALS['Language']->getText('plugin_hudson_git', 'remove_jenkins_desc');
-        $this->modal_logs_time_label = $GLOBALS['Language']->getText('plugin_hudson_git', 'label_push_date');
-        $this->modal_logs_info_label = $GLOBALS['Language']->getText('plugin_hudson_git', 'label_triggered');
-        $this->empty_logs            = $GLOBALS['Language']->getText('plugin_hudson_git', 'empty_jobs');
+        $this->remove_webhook_desc   = dgettext('tuleap-hudson_git', 'You are about to remove the Jenkins server. Please confirm your action.');
+        $this->modal_logs_time_label = dgettext('tuleap-hudson_git', 'Push date');
+        $this->modal_logs_info_label = dgettext('tuleap-hudson_git', 'Logs');
+        $this->empty_logs            = dgettext('tuleap-hudson_git', 'No triggered jobs');
 
-        $this->purified_last_push_info = '<span class="text-info">'. $GLOBALS['Language']->getText(
-            'plugin_hudson_git',
-            'n_jobs_triggered',
-            $this->countNbJobsTriggeredOnLastPush($hooklogs)
-        ) .'</span>';
+        $this->purified_last_push_info = '<span class="text-info">' . sprintf(dgettext('tuleap-hudson_git', '%1$s jobs triggered'), $this->countNumberOfPollingJobsTriggeredOnLastPush($hooklogs)) . '</span>';
 
         $this->generateHooklogs($hooklogs);
     }
 
-    private function generateHooklogs(array $hooklogs)
+    /**
+     * @param Log[] $hooklogs
+     */
+    private function generateHooklogs(array $hooklogs): void
     {
         $hp = Codendi_HTMLPurifier::instance();
         foreach ($hooklogs as $log) {
             $purified_information = '';
-            foreach ($log->getJobUrlList() as $triggered_job_url) {
-                $purfied_job_url = $hp->purify($triggered_job_url);
-                $purified_information .= '<a href="'. $purfied_job_url .'">'. $purfied_job_url .'</a><br>';
+            $job_list = $log->getJobUrlList();
+            if (count($job_list) > 0) {
+                $purified_information .= '<div class="hook-log-triggered-jobs">';
+                $purified_information .= '<h4>' . dgettext("tuleap-hudson_git", "Git plugin triggered jobs:") . '</h4>';
+                foreach ($job_list as $triggered_job_url) {
+                    $purfied_job_url = $hp->purify($triggered_job_url);
+                    $purified_information .= '<a href="' . $purfied_job_url . '">' . $purfied_job_url . '</a><br>';
+                }
+                $purified_information .= '</div>';
             }
+
+            if ($log->getStatusCode() !== null) {
+                $purified_information .= '<div class="hook-log-branch-source-status">';
+                $purified_information .= '<h4>' . dgettext("tuleap-hudson_git", "Branch source plugin:") . '</h4>';
+                $purified_information .= $log->getStatusCode();
+                $purified_information .= '</div>';
+            }
+
             $this->hooklogs[] = new WebhookLogPresenter($log->getFormattedPushDate(), $purified_information);
         }
     }
 
-    public function countNbJobsTriggeredOnLastPush($hooklogs)
+    /**
+     * @param Log[] $hooklogs
+     */
+    private function countNumberOfPollingJobsTriggeredOnLastPush(array $hooklogs): int
     {
         if (count($hooklogs) > 0) {
             return count($hooklogs[0]->getJobUrlList());

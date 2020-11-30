@@ -20,6 +20,7 @@
  */
 
 use Tuleap\Project\Admin\DescriptionFields\ProjectDescriptionFieldBuilder;
+use Tuleap\Project\DeletedProjectStatusChangeException;
 use Tuleap\User\Admin\PendingProjectBuilder;
 use Tuleap\Admin\AdminPageRenderer;
 use Tuleap\Admin\ProjectPendingPresenter;
@@ -51,7 +52,7 @@ $csrf_token      = new CSRFSynchronizerToken('/admin/approve-pending.php');
 // group public choice
 if ($action == 'activate') {
     $csrf_token->check();
-    $groups = array();
+    $groups = [];
     if ($request->exist('list_of_groups')) {
         $groups = array_filter(array_map('intval', explode(",", $request->get('list_of_groups'))));
     }
@@ -65,9 +66,14 @@ if ($action == 'activate') {
     $group_id = $request->get('group_id');
     $project  = $project_manager->getProject($group_id);
     (new ProjectHistoryDao())->groupAddHistory('deleted', 'x', $project->getID());
-    $project_manager->updateStatus($project, Project::STATUS_DELETED);
 
-    $event_manager->processEvent('project_is_deleted', array('group_id' => $group_id));
+    try {
+        $project_manager->updateStatus($project, Project::STATUS_DELETED);
+    } catch (DeletedProjectStatusChangeException $exception) {
+        // Do nothing
+    }
+
+    $event_manager->processEvent('project_is_deleted', ['group_id' => $group_id]);
     $GLOBALS['Response']->redirect('/admin/approve-pending.php');
 }
 

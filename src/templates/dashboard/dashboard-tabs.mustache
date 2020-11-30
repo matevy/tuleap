@@ -1,3 +1,4 @@
+<div class="main-project-tabs">
 <nav class="tlp-tabs dashboard-tabs">
     {{# dashboards }}
         <a class="tlp-tab {{# is_active }}tlp-tab-active{{/ is_active }}" href="{{ url }}?dashboard_id={{ id }}">
@@ -5,12 +6,13 @@
             {{# is_active }}
                 {{# can_update_dashboards }}
                     <div class="tlp-dropdown dashboard-tabs-dropdown">
-                        <i class="fa fa-cog fa-fw" id="dashboard-tabs-dropdown-trigger"></i>
+                        <i class="fa fa-cog fa-fw" id="dashboard-tabs-dropdown-trigger" data-test="dashboard-configuration-button"></i>
                         <div class="tlp-dropdown-menu tlp-dropdown-menu-on-icon" role="menu">
                             <span class="tlp-dropdown-menu-item add-widget-button"
                                   data-target-modal-id="add-widget-modal"
                                   data-href="{{ url_add_widget_content }}"
                                   role="menuitem"
+                                  data-test="dashboard-add-widget-button"
                             >
                                 <i class="tlp-dropdown-menu-item-icon fa fa-fw fa-plus"></i> {{ add_widget_title }}
                             </span>
@@ -20,14 +22,15 @@
                                   data-target-modal-id="edit-dashboard-modal"
                                   role="menuitem"
                             >
-                                <i class="tlp-dropdown-menu-item-icon fa fa-fw fa-pencil"></i> {{ edit_dashboard_title }}
+                                <i class="tlp-dropdown-menu-item-icon fas fa-fw fa-pencil-alt"></i> {{ edit_dashboard_title }}
                             </span>
                             <span class="tlp-dropdown-menu-item tlp-dropdown-menu-item-danger"
                                   id="delete-dashboard-button"
                                   data-target-modal-id="delete-dashboard-modal"
                                   role="menuitem"
+                                  data-test="dashboard-delete-tab-button"
                             >
-                                <i class="tlp-dropdown-menu-item-icon fa fa-fw fa-trash-o"></i> {{ delete_dashboard_title }}
+                                <i class="tlp-dropdown-menu-item-icon far fa-fw fa-trash-alt"></i> {{ delete_dashboard_title }}
                             </span>
                         </div>
                     </div>
@@ -38,11 +41,13 @@
     {{# can_update_dashboards }}
         <a href="javascript:;"
            id="add-dashboard-button"
-           class="tlp-button-primary tlp-button-mini tlp-button-outline"
+           class="tlp-button-secondary tlp-button-mini tlp-button-outline"
            data-target-modal-id="add-dashboard"
+           data-test="dashboard-add-button"
         >
             <i class="fa fa-plus tlp-button-icon"></i>
             {{ add_dashboard_label }}
         </a>
     {{/ can_update_dashboards }}
 </nav>
+</div>

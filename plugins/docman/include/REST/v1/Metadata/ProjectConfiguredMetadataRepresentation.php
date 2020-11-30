@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
@@ -87,9 +87,9 @@ class ProjectConfiguredMetadataRepresentation
         $this->name                      = $name;
         $this->description               = $description;
         $this->type                      = self::METADATA_TYPE_LABEL[$type];
-        $this->is_required               = JSONCast::toBoolean(!$is_empty_allowed);
-        $this->is_multiple_value_allowed = JSONCast::toBoolean($is_multiple_value_allowed);
-        $this->is_used                   = JSONCast::toBoolean($is_used);
+        $this->is_required               = JsonCast::toBoolean(! $is_empty_allowed);
+        $this->is_multiple_value_allowed = JsonCast::toBoolean($is_multiple_value_allowed);
+        $this->is_used                   = JsonCast::toBoolean($is_used);
         $this->allowed_list_values       = $allowed_list_values;
     }
 }

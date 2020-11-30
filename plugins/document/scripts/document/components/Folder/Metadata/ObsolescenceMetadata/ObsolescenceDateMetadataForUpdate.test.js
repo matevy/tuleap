@@ -19,7 +19,7 @@
  */
 
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import localVue from "../../../../helpers/local-vue.js";
 import ObsolescenceDateMetadataUpdate from "./ObsolescenceDateMetadataForUpdate.vue";
 import moment from "moment/moment";
@@ -28,7 +28,7 @@ describe("ObsolescenceDateMetadataForUpdate", () => {
     let metadata_factory, state, store;
     beforeEach(() => {
         state = {
-            is_obsolescence_date_metadata_used: false
+            is_obsolescence_date_metadata_used: false,
         };
 
         const store_options = { state };
@@ -39,44 +39,48 @@ describe("ObsolescenceDateMetadataForUpdate", () => {
             return shallowMount(ObsolescenceDateMetadataUpdate, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
     describe("Component display", () => {
-        it(`Displays the component if the obsolescence date metadata is used`, () => {
+        it(`Displays the component if the obsolescence date metadata is used`, async () => {
             const wrapper = metadata_factory();
 
             store.state.is_obsolescence_date_metadata_used = true;
+            await wrapper.vm.$nextTick();
 
             expect(wrapper.find("[data-test=obsolescence-date-metadata]").exists()).toBeTruthy();
         });
-        it(`Does not display the component if the obsolescence date metadata is not used`, () => {
+        it(`Does not display the component if the obsolescence date metadata is not used`, async () => {
             const wrapper = metadata_factory();
 
             store.state.is_obsolescence_date_metadata_used = false;
+            await wrapper.vm.$nextTick();
 
             expect(wrapper.find("[data-test=obsolescence-date-metadata]").exists()).toBeFalsy();
         });
     });
     describe(`Should link flat picker and select helper`, () => {
-        it(`Obsolescence date should be null if the option "permanent" is chosen by the user `, () => {
+        it(`Obsolescence date should be null if the option "permanent" is chosen by the user`, async () => {
             const wrapper = metadata_factory({ value: "" });
             store.state.is_obsolescence_date_metadata_used = true;
+            await wrapper.vm.$nextTick();
 
-            const select = wrapper.find("[data-test=document-obsolescence-date-select-update]");
+            const select = wrapper.get("[data-test=document-obsolescence-date-select-update]");
             select.trigger("change");
 
             expect(wrapper.vm.selected_value).toEqual("permanent");
             expect(wrapper.vm.obsolescence_date).toEqual(null);
         });
-        it(`Obsolescence date should be the current day + 3 months if the option "3months" is chosen by the user `, () => {
+        it(`Obsolescence date should be the current day + 3 months if the option "3months" is chosen by the user`, async () => {
             const wrapper = metadata_factory({ value: "" });
             store.state.is_obsolescence_date_metadata_used = true;
+            await wrapper.vm.$nextTick();
 
             wrapper.findAll("option").at(1).element.selected = true;
 
-            wrapper.find("[data-test=document-obsolescence-date-select-update]").trigger("change");
+            wrapper.get("[data-test=document-obsolescence-date-select-update]").trigger("change");
 
             const current_date = moment().format("YYYY-MM-DD");
 

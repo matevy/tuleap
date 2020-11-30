@@ -87,7 +87,8 @@ export {
     getProjectMetadata,
     postNewLinkVersionFromEmpty,
     postNewEmbeddedFileVersionFromEmpty,
-    postNewFileVersionFromEmpty
+    postNewFileVersionFromEmpty,
+    getItemWithSize,
 };
 
 async function getDocumentManagerServiceInformation(project_id) {
@@ -106,11 +107,11 @@ async function getItem(id) {
 
 async function addNewDocumentType(url, item) {
     const headers = {
-        "content-type": "application/json"
+        "content-type": "application/json",
     };
 
     const json_body = {
-        ...item
+        ...item,
     };
     const body = JSON.stringify(json_body);
 
@@ -163,13 +164,13 @@ function addNewFolder(item, parent_id) {
 
 async function moveDocumentType(url, destination_folder_id) {
     const headers = {
-        "content-type": "application/json"
+        "content-type": "application/json",
     };
 
     const body = JSON.stringify({
         move: {
-            destination_folder_id: destination_folder_id
-        }
+            destination_folder_id: destination_folder_id,
+        },
     });
 
     await patch(url, { headers, body });
@@ -207,13 +208,13 @@ function moveFolder(moved_item_id, parent_id) {
 
 async function copyDocumentType(url, copied_item_id) {
     const headers = {
-        "content-type": "application/json"
+        "content-type": "application/json",
     };
 
     const body = JSON.stringify({
         copy: {
-            item_id: copied_item_id
-        }
+            item_id: copied_item_id,
+        },
     });
 
     const response = await post(url, { headers, body });
@@ -273,7 +274,7 @@ async function createNewVersion(
 ) {
     const response = await post(`/api/docman_files/${encodeURIComponent(item.id)}/version`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             version_title,
@@ -282,11 +283,11 @@ async function createNewVersion(
             description: item.description,
             file_properties: {
                 file_name: dropped_file.name,
-                file_size: dropped_file.size
+                file_size: dropped_file.size,
             },
             should_lock_file,
-            approval_table_action
-        })
+            approval_table_action,
+        }),
     });
 
     return response.json();
@@ -296,8 +297,8 @@ function getFolderContent(folder_id) {
     return recursiveGet("/api/docman_items/" + encodeURIComponent(folder_id) + "/docman_items", {
         params: {
             limit: 50,
-            offset: 0
-        }
+            offset: 0,
+        },
     });
 }
 
@@ -305,20 +306,20 @@ function getParents(folder_id) {
     return recursiveGet("/api/docman_items/" + encodeURIComponent(folder_id) + "/parents", {
         params: {
             limit: 50,
-            offset: 0
-        }
+            offset: 0,
+        },
     });
 }
 
 async function patchUserPreferenciesForFolderInProject(user_id, project_id, folder_id) {
     await patch(`/api/users/${encodeURIComponent(user_id)}/preferences`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             key: `plugin_docman_hide_${project_id}_${folder_id}`,
-            value: DOCMAN_FOLDER_EXPANDED_VALUE
-        })
+            value: DOCMAN_FOLDER_EXPANDED_VALUE,
+        }),
     });
 }
 
@@ -332,31 +333,31 @@ function postEmbeddedFile(
 ) {
     return post(`/api/docman_embedded_files/${encodeURIComponent(item.id)}/version`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             version_title,
             change_log,
             embedded_properties: {
-                content
+                content,
             },
             should_lock_file,
-            approval_table_action
-        })
+            approval_table_action,
+        }),
     });
 }
 
 function postWiki(item, page_name, version_title, change_log, should_lock_file) {
     return post(`/api/docman_wikis/${encodeURIComponent(item.id)}/version`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             wiki_properties: {
-                page_name
+                page_name,
             },
-            should_lock_file
-        })
+            should_lock_file,
+        }),
     });
 }
 
@@ -370,17 +371,17 @@ function postLinkVersion(
 ) {
     return post(`/api/docman_links/${encodeURIComponent(item.id)}/version`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             version_title,
             change_log,
             link_properties: {
-                link_url
+                link_url,
             },
             should_lock_file,
-            approval_table_action
-        })
+            approval_table_action,
+        }),
     });
 }
 
@@ -401,20 +402,20 @@ async function addUserLegacyUIPreferency(user_id, project_id) {
 
     await patch(`/api/users/${encodeURIComponent(user_id)}/preferences`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             key,
-            value: "0"
-        })
+            value: "0",
+        }),
     });
 }
 
 function cancelUpload(item) {
     return del(item.uploader.url, {
         headers: {
-            "Tus-Resumable": "1.0.0"
-        }
+            "Tus-Resumable": "1.0.0",
+        },
     });
 }
 
@@ -461,7 +462,7 @@ async function getItemsReferencingSameWikiPage(page_id) {
 
 function postLockFile(item) {
     const headers = {
-        "content-type": "application/json"
+        "content-type": "application/json",
     };
 
     const escaped_item_id = encodeURIComponent(item.id);
@@ -477,7 +478,7 @@ function deleteLockFile(item) {
 
 function postLockEmbedded(item) {
     const headers = {
-        "content-type": "application/json"
+        "content-type": "application/json",
     };
 
     const escaped_item_id = encodeURIComponent(item.id);
@@ -493,7 +494,7 @@ function deleteLockEmbedded(item) {
 
 function postLockWiki(item) {
     const headers = {
-        "content-type": "application/json"
+        "content-type": "application/json",
     };
 
     const escaped_item_id = encodeURIComponent(item.id);
@@ -509,7 +510,7 @@ function deleteLockWiki(item) {
 
 function postLockLink(item) {
     const headers = {
-        "content-type": "application/json"
+        "content-type": "application/json",
     };
 
     const escaped_item_id = encodeURIComponent(item.id);
@@ -525,7 +526,7 @@ function deleteLockLink(item) {
 
 function postLockEmpty(item) {
     const headers = {
-        "content-type": "application/json"
+        "content-type": "application/json",
     };
 
     const escaped_item_id = encodeURIComponent(item.id);
@@ -542,12 +543,12 @@ function deleteLockEmpty(item) {
 async function setNarrowModeForEmbeddedDisplay(user_id, project_id, document_id) {
     await patch(`/api/users/${encodeURIComponent(user_id)}/preferences`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             key: `plugin_docman_display_embedded_${project_id}_${document_id}`,
-            value: "narrow"
-        })
+            value: "narrow",
+        }),
     });
 }
 
@@ -574,7 +575,7 @@ async function getPreferenceForEmbeddedDisplay(user_id, project_id, document_id)
 function putFileMetadata(id, title, description, owner_id, status, obsolescence_date, metadata) {
     return put(`/api/docman_files/${encodeURIComponent(id)}/metadata`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             title,
@@ -582,8 +583,8 @@ function putFileMetadata(id, title, description, owner_id, status, obsolescence_
             owner_id,
             status,
             obsolescence_date,
-            metadata
-        })
+            metadata,
+        }),
     });
 }
 
@@ -598,7 +599,7 @@ function putEmbeddedFileMetadata(
 ) {
     return put(`/api/docman_embedded_files/${encodeURIComponent(id)}/metadata`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             title,
@@ -606,15 +607,15 @@ function putEmbeddedFileMetadata(
             owner_id,
             status,
             obsolescence_date,
-            metadata
-        })
+            metadata,
+        }),
     });
 }
 
 function putLinkMetadata(id, title, description, owner_id, status, obsolescence_date, metadata) {
     return put(`/api/docman_links/${encodeURIComponent(id)}/metadata`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             title,
@@ -622,15 +623,15 @@ function putLinkMetadata(id, title, description, owner_id, status, obsolescence_
             owner_id,
             status,
             obsolescence_date,
-            metadata
-        })
+            metadata,
+        }),
     });
 }
 
 function putWikiMetadata(id, title, description, owner_id, status, obsolescence_date, metadata) {
     return put(`/api/docman_wikis/${encodeURIComponent(id)}/metadata`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             title,
@@ -638,8 +639,8 @@ function putWikiMetadata(id, title, description, owner_id, status, obsolescence_
             owner_id,
             status,
             obsolescence_date,
-            metadata
-        })
+            metadata,
+        }),
     });
 }
 
@@ -654,7 +655,7 @@ function putEmptyDocumentMetadata(
 ) {
     return put(`/api/docman_empty_documents/${encodeURIComponent(id)}/metadata`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             title,
@@ -662,8 +663,8 @@ function putEmptyDocumentMetadata(
             owner_id,
             status,
             obsolescence_date,
-            metadata
-        })
+            metadata,
+        }),
     });
 }
 
@@ -678,7 +679,7 @@ function putFolderDocumentMetadata(
 ) {
     return put(`/api/docman_folders/${encodeURIComponent(id)}/metadata`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             title,
@@ -686,62 +687,62 @@ function putFolderDocumentMetadata(
             owner_id,
             status,
             obsolescence_date,
-            metadata
-        })
+            metadata,
+        }),
     });
 }
 
 function putEmbeddedFilePermissions(id, permissions) {
     return put(`/api/docman_embedded_files/${encodeURIComponent(id)}/permissions`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify(permissions)
+        body: JSON.stringify(permissions),
     });
 }
 
 function putFilePermissions(id, permissions) {
     return put(`/api/docman_files/${encodeURIComponent(id)}/permissions`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify(permissions)
+        body: JSON.stringify(permissions),
     });
 }
 
 function putLinkPermissions(id, permissions) {
     return put(`/api/docman_links/${encodeURIComponent(id)}/permissions`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify(permissions)
+        body: JSON.stringify(permissions),
     });
 }
 
 function putWikiPermissions(id, permissions) {
     return put(`/api/docman_wikis/${encodeURIComponent(id)}/permissions`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify(permissions)
+        body: JSON.stringify(permissions),
     });
 }
 
 function putEmptyDocumentPermissions(id, permissions) {
     return put(`/api/docman_empty_documents/${encodeURIComponent(id)}/permissions`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify(permissions)
+        body: JSON.stringify(permissions),
     });
 }
 
 function putFolderPermissions(id, permissions) {
     return put(`/api/docman_folders/${encodeURIComponent(id)}/permissions`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify(permissions)
+        body: JSON.stringify(permissions),
     });
 }
 
@@ -761,8 +762,8 @@ function getProjectMetadata(project_id) {
     return recursiveGet(`/api/projects/${escaped_project_id}/docman_metadata`, {
         params: {
             limit: 50,
-            offset: 0
-        }
+            offset: 0,
+        },
     });
 }
 
@@ -770,11 +771,11 @@ function postNewLinkVersionFromEmpty(item_id, link_url) {
     const escaped_item_id = encodeURIComponent(item_id);
     return post(`/api/docman_empty_documents/${escaped_item_id}/link`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            link_url
-        })
+            link_url,
+        }),
     });
 }
 
@@ -782,24 +783,30 @@ function postNewEmbeddedFileVersionFromEmpty(item_id, content) {
     const escaped_item_id = encodeURIComponent(item_id);
     return post(`/api/docman_empty_documents/${escaped_item_id}/embedded_file`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            content
-        })
+            content,
+        }),
     });
 }
 
 async function postNewFileVersionFromEmpty(item_id, dropped_file) {
     const response = await post(`/api/docman_empty_documents/${encodeURIComponent(item_id)}/file`, {
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         },
         body: JSON.stringify({
             file_name: dropped_file.name,
-            file_size: dropped_file.size
-        })
+            file_size: dropped_file.size,
+        }),
     });
+
+    return response.json();
+}
+
+async function getItemWithSize(folder_id) {
+    const response = await get(`/api/docman_items/${encodeURIComponent(folder_id)}?with_size=true`);
 
     return response.json();
 }

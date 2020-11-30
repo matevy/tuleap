@@ -130,8 +130,8 @@ class Admin_PermissionDelegationController
     private function redirect($id = null)
     {
         if ($id) {
-            $redirect = http_build_query(array('id' => $id));
-            $GLOBALS['Response']->redirect(self::REDIRECT_URL.'?'.$redirect);
+            $redirect = http_build_query(['id' => $id]);
+            $GLOBALS['Response']->redirect(self::REDIRECT_URL . '?' . $redirect);
         }
 
         $GLOBALS['Response']->redirect(self::REDIRECT_URL);
@@ -244,8 +244,7 @@ class Admin_PermissionDelegationController
             $add_perm_presenter = new Admin_PermissionDelegationPermissionsModalPresenter($current_group, $unused_permissions);
         }
 
-        $assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-        $include_assets = new IncludeAssets($assets_path, '/assets');
+        $include_assets = new IncludeAssets(__DIR__ . '/../../www/assets/core', '/assets/core');
 
         $presenter = new Admin_PermissionDelegationIndexPresenter(
             $this->csrf_token,
@@ -295,14 +294,14 @@ class Admin_PermissionDelegationController
 
     private function getFormattedGroups(array $groups, $current_id)
     {
-        $formatted_groups = array();
+        $formatted_groups = [];
 
         foreach ($groups as $group) {
-            $formatted_groups[] = array(
+            $formatted_groups[] = [
                 'id'         => $group->getId(),
                 'name'       => $group->getName(),
                 'is_current' => $group->getId() == $current_id,
-            );
+            ];
         }
 
         if (! $current_id && $formatted_groups) {
@@ -378,7 +377,7 @@ class Admin_PermissionDelegationController
 
     private function getTemplatesDir()
     {
-        return ForgeConfig::get('codendi_dir') .'/src/templates/admin/permission_delegation/';
+        return ForgeConfig::get('codendi_dir') . '/src/templates/admin/permission_delegation/';
     }
 
     private function manageUsers()

@@ -34,18 +34,18 @@ rcs_id('$Id: ExternalSearch.php,v 1.12 2004/11/28 20:42:33 rurban Exp $');
 
 class WikiPlugin_ExternalSearch extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("ExternalSearch");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Redirects to an external web site based on form input");
         //fixme: better description
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -54,7 +54,7 @@ class WikiPlugin_ExternalSearch extends WikiPlugin
         );
     }
 
-    function _getInterWikiUrl(&$request)
+    public function _getInterWikiUrl(&$request)
     {
         $intermap = getInterwikiMap();
         $map = $intermap->_map;
@@ -70,9 +70,9 @@ class WikiPlugin_ExternalSearch extends WikiPlugin
         }
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('s'        => false,
+        return ['s'        => false,
                      'formsize' => 30,
                      'url'      => false,
                      'name'     => '',
@@ -80,10 +80,10 @@ class WikiPlugin_ExternalSearch extends WikiPlugin
                      'width'    => false,
                      'height'   => false,
                      'debug'    => false
-                     );
+                     ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
         if (empty($args['url'])) {
@@ -116,44 +116,44 @@ class WikiPlugin_ExternalSearch extends WikiPlugin
         $this->_url = $url;
         $this->_getInterWikiUrl($request);
         $form = HTML::form(
-            array('action' => $request->getPostURL(),
+            ['action' => $request->getPostURL(),
                                  'method' => 'post',
                                  //'class'  => 'class', //fixme
-                                 'accept-charset' => $GLOBALS['charset']),
-            HiddenInputs(array('pagename' => $basepage))
+                                 'accept-charset' => $GLOBALS['charset']],
+            HiddenInputs(['pagename' => $basepage])
         );
 
-        $form->pushContent(HTML::input(array('type' => 'hidden',
+        $form->pushContent(HTML::input(['type' => 'hidden',
                                              'name'  => 'url',
-                                             'value' => $this->_url)));
-        if (!empty($args["useimage"])) {
+                                             'value' => $this->_url]));
+        if (! empty($args["useimage"])) {
             //FIXME: This does not work with Gecko
-            $button = HTML::img(array('src' => $useimage, 'alt' => 'imagebutton'));
-            if (!empty($width)) {
+            $button = HTML::img(['src' => $useimage, 'alt' => 'imagebutton']);
+            if (! empty($width)) {
                 $button->setAttr('width', $width);
             }
-            if (!empty($height)) {
+            if (! empty($height)) {
                 $button->setAttr('height', $height);
             }
             $form->pushContent(HTML::button(
-                array('type' => 'button',
+                ['type' => 'button',
                                                   'class' => 'button',
                                                   'value' => $this->_name,
-                                                  ),
+                                                  ],
                 $button
             ));
         } else {
-            $form->pushContent(HTML::input(array('type' => 'submit',
+            $form->pushContent(HTML::input(['type' => 'submit',
                                                  'class' => 'button',
-                                                 'value' => $this->_name)));
-            $form->pushContent(HTML::input(array('type' => 'text',
+                                                 'value' => $this->_name]));
+            $form->pushContent(HTML::input(['type' => 'text',
                                                  'value' => $this->_s,
                                                  'name'  => 's',
-                                                 'size'  => $formsize)));
+                                                 'size'  => $formsize]));
         }
         return $form;
     }
-};
+}
 
 // $Log: ExternalSearch.php,v $
 // Revision 1.12  2004/11/28 20:42:33  rurban

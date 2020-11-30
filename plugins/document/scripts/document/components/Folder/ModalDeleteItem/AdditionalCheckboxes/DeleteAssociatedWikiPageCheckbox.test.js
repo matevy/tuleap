@@ -20,7 +20,7 @@
 import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../../helpers/local-vue.js";
 import { TYPE_WIKI } from "../../../../constants.js";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import WikiCheckbox from "./DeleteAssociatedWikiPageCheckbox.vue";
 
 describe("ModalConfirmationDeletion", () => {
@@ -33,15 +33,15 @@ describe("ModalConfirmationDeletion", () => {
             propsData: {
                 item: { ...item },
                 model: {},
-                wikiPageReferencers
-            }
+                wikiPageReferencers,
+            },
         });
     }
 
     beforeEach(() => {
         state = { project_id: 104 };
         store_options = {
-            state
+            state,
         };
         store = createStoreMock(store_options);
 
@@ -49,44 +49,47 @@ describe("ModalConfirmationDeletion", () => {
             id: 42,
             title: "my wiki",
             wiki_properties: {
-                page_name: "my wiki"
+                page_name: "my wiki",
             },
-            type: TYPE_WIKI
+            type: TYPE_WIKI,
         };
     });
 
-    it("It shows the warning only when option is checked", () => {
+    it("shows the warning only when option is checked", async () => {
         const wiki_checkbox = getWikiCheckbox(item, [
             {
                 id: 43,
-                path: "Project documentation/another wiki"
-            }
+                path: "Project documentation/another wiki",
+            },
         ]);
 
-        const checkbox_input = wiki_checkbox.find(
+        const checkbox_input = wiki_checkbox.get(
             "[data-test=delete-associated-wiki-page-checkbox]"
         );
 
         checkbox_input.trigger("click");
+        await wiki_checkbox.vm.$nextTick();
 
         expect(
             wiki_checkbox.find("[data-test=delete-associated-wiki-page-warning-message]").exists()
         ).toBeTruthy();
 
         checkbox_input.trigger("click");
+        await wiki_checkbox.vm.$nextTick();
 
         expect(
             wiki_checkbox.find("[data-test=delete-associated-wiki-page-warning-message]").exists()
         ).toBeFalsy();
     });
 
-    it("It does not show the warning when wikiPageReferencers is empty no matter if the option is checked or not", () => {
+    it("does not show the warning when wikiPageReferencers is empty no matter if the option is checked or not", async () => {
         const wiki_checkbox = getWikiCheckbox(item, []);
-        const checkbox_input = wiki_checkbox.find(
+        const checkbox_input = wiki_checkbox.get(
             "[data-test=delete-associated-wiki-page-checkbox]"
         );
 
         checkbox_input.trigger("click");
+        await wiki_checkbox.vm.$nextTick();
 
         expect(
             wiki_checkbox.find("[data-test=delete-associated-wiki-page-warning-message]").exists()
@@ -99,35 +102,36 @@ describe("ModalConfirmationDeletion", () => {
         ).toBeFalsy();
     });
 
-    it("It renders a list of links", () => {
+    it("renders a list of links", async () => {
         const wiki_checkbox = getWikiCheckbox(item, [
             {
                 id: 43,
-                path: "Project documentation/another wiki"
+                path: "Project documentation/another wiki",
             },
             {
                 id: 44,
-                path: "Project documentation/some folder/another wiki"
-            }
+                path: "Project documentation/some folder/another wiki",
+            },
         ]);
 
-        const checkbox_input = wiki_checkbox.find(
+        const checkbox_input = wiki_checkbox.get(
             "[data-test=delete-associated-wiki-page-checkbox]"
         );
 
         checkbox_input.trigger("click");
+        await wiki_checkbox.vm.$nextTick();
 
         const links = wiki_checkbox.findAll("[data-test=wiki-page-referencer-link]");
 
         expect(links.length).toEqual(2);
 
-        expect(links.at(0).is("a")).toBeTruthy();
+        expect(links.at(0).element.tagName).toEqual("A");
         expect(links.at(0).attributes("href")).toEqual(
             "/plugins/docman/?group_id=104&action=show&id=43"
         );
         expect(links.at(0).text()).toEqual("Project documentation/another wiki");
 
-        expect(links.at(1).is("a")).toBeTruthy();
+        expect(links.at(1).element.tagName).toEqual("A");
         expect(links.at(1).attributes("href")).toEqual(
             "/plugins/docman/?group_id=104&action=show&id=44"
         );

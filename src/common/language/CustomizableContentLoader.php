@@ -30,21 +30,33 @@ class CustomizableContentLoader
 {
     public function getContent(PFUser $user, $file)
     {
-        $possible_locations = array(
+        $possible_locations = [
             $this->getLocalPath($user->getLanguageID(), $file),
             $this->getDefaultPath($user->getLanguageID(), $file),
             $this->getLocalPath(BaseLanguage::DEFAULT_LANG, $file),
             $this->getDefaultPath(BaseLanguage::DEFAULT_LANG, $file),
-        );
+        ];
 
         foreach ($possible_locations as $location) {
-            $location = URIModifier::removeEmptySegments($location);
-            if ($location === URIModifier::removeDotSegments($location) && is_file($location)) {
+            $location = $this->getValidatedLocation($location);
+            if ($location !== null) {
                 return file_get_contents($location);
             }
         }
 
         throw new CustomContentNotFoundException();
+    }
+
+    /**
+     * @psalm-taint-escape text
+     */
+    private function getValidatedLocation(string $location): ?string
+    {
+        $location = URIModifier::removeEmptySegments($location);
+        if ($location === URIModifier::removeDotSegments($location) && is_file($location)) {
+            return $location;
+        }
+        return null;
     }
 
     private function getLocalPath($lang, $file)

@@ -19,6 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\REST\Artifact\FileInfoRepresentation;
 
 class Tracker_FileInfo
 {
@@ -33,7 +34,7 @@ class Tracker_FileInfo
     protected $filesize;
     protected $filetype;
 
-    protected $supported_image_types = array('gif', 'png', 'jpeg', 'jpg');
+    protected $supported_image_types = ['gif', 'png', 'jpeg', 'jpg'];
 
     /**
      * @param int $id
@@ -55,14 +56,9 @@ class Tracker_FileInfo
         $this->filetype     = $filetype;
     }
 
-    /**
-     * @return Tuleap\Tracker\REST\Artifact\FileInfoRepresentation
-     */
-    public function getRESTValue()
+    public function getRESTValue(): FileInfoRepresentation
     {
-        $classname_with_namespace = 'Tuleap\Tracker\REST\Artifact\FileInfoRepresentation';
-        $file_info_representation = new $classname_with_namespace;
-        $file_info_representation->build(
+        return new FileInfoRepresentation(
             $this->id,
             $this->submitted_by,
             $this->description,
@@ -72,17 +68,11 @@ class Tracker_FileInfo
             $this->field->getFileHTMLUrl($this),
             $this->field->getFileHTMLPreviewUrl($this)
         );
-        return $file_info_representation;
     }
 
-    /**
-     * @return Tuleap\Tracker\REST\Artifact\FileInfoFullRepresentation
-     */
-    public function getFullRESTValue()
+    public function getFullRESTValue(): FileInfoRepresentation
     {
-        $classname_with_namespace = 'Tuleap\Tracker\REST\Artifact\FileInfoRepresentation';
-        $file_info_representation = new $classname_with_namespace;
-        $file_info_representation->build(
+        return new FileInfoRepresentation(
             $this->id,
             $this->submitted_by,
             $this->description,
@@ -92,7 +82,6 @@ class Tracker_FileInfo
             $this->field->getFileHTMLUrl($this),
             $this->field->getFileHTMLPreviewUrl($this)
         );
-        return $file_info_representation;
     }
 
     /**
@@ -158,12 +147,15 @@ class Tracker_FileInfo
      */
     public function getHumanReadableFilesize()
     {
-        $s = array('B', 'kB', 'MB', 'GB', 'TB', 'PB');
+        $s = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
         $e = 0;
         if ($this->getFilesize()) {
-            $e = floor(log($this->getFilesize()) / log(1024));
+            $e = (int) floor(log($this->getFilesize()) / log(1024));
+            if ($e > 5) {
+                $e = 5;
+            }
         }
-        return sprintf('%.0f '.$s[$e], ($this->getFilesize() / pow(1024, floor($e))));
+        return sprintf('%.0f ' . $s[$e], ($this->getFilesize() / pow(1024, floor($e))));
     }
 
     /**
@@ -188,7 +180,7 @@ class Tracker_FileInfo
     public function isImage()
     {
         $parts = explode('/', $this->getFileType());
-        return $parts[0] == 'image' && in_array(strtolower($parts[1]), $this->supported_image_types) ;
+        return $parts[0] == 'image' && in_array(strtolower($parts[1]), $this->supported_image_types);
     }
 
     /**
@@ -196,7 +188,7 @@ class Tracker_FileInfo
      */
     public function getPath()
     {
-        return $this->getRootPath() .'/'. $this->id;
+        return $this->getRootPath() . '/' . $this->id;
     }
 
     /**
@@ -205,7 +197,7 @@ class Tracker_FileInfo
     public function getThumbnailPath()
     {
         if ($this->isImage()) {
-            return $this->getRootPath() .'/thumbnails/'. $this->id;
+            return $this->getRootPath() . '/thumbnails/' . $this->id;
         }
         return null;
     }
@@ -221,7 +213,7 @@ class Tracker_FileInfo
 
     public function __toString()
     {
-        return '#'. $this->getId() .' '. $this->getFilename();
+        return '#' . $this->getId() . ' ' . $this->getFilename();
     }
 
     public function fileExists()
@@ -278,25 +270,25 @@ class Tracker_FileInfo
         switch ($size[2]) {
             case IMAGETYPE_GIF:
                 $source      = imagecreatefromgif($this->getPath());
-                $destination = imagecreate((int)$thumbnail_width, (int)$thumbnail_height);
+                $destination = imagecreate((int) $thumbnail_width, (int) $thumbnail_height);
                 imagepalettecopy($destination, $source);
                 $store       = 'imagegif';
                 break;
             case IMAGETYPE_JPEG:
                 $source      = imagecreatefromjpeg($this->getPath());
-                $destination = imagecreatetruecolor((int)$thumbnail_width, (int)$thumbnail_height);
+                $destination = imagecreatetruecolor((int) $thumbnail_width, (int) $thumbnail_height);
                 $store       = 'imagejpeg';
                 break;
             case IMAGETYPE_PNG:
                 $source      = imagecreatefrompng($this->getPath());
-                $destination = imagecreatetruecolor((int)$thumbnail_width, (int)$thumbnail_height);
+                $destination = imagecreatetruecolor((int) $thumbnail_width, (int) $thumbnail_height);
                 $store       = 'imagepng';
                 break;
             default:
                 // Not an image, exit;
                 return false;
         }
-        imagecopyresized($destination, $source, 0, 0, 0, 0, (int)$thumbnail_width, (int)$thumbnail_height, $size[0], $size[1]);
+        imagecopyresized($destination, $source, 0, 0, 0, 0, (int) $thumbnail_width, (int) $thumbnail_height, $size[0], $size[1]);
         $store($destination, $this->getThumbnailPath());
         imagedestroy($source);
         imagedestroy($destination);

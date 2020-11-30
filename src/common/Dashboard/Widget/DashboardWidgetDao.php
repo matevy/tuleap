@@ -28,10 +28,10 @@ use Tuleap\Widget\WidgetFactory;
 
 class DashboardWidgetDao extends DataAccessObject
 {
-    private $legacy_types_to_new_types = array(
+    private $legacy_types_to_new_types = [
         ProjectDashboardController::LEGACY_DASHBOARD_TYPE => 'project',
         UserDashboardController::LEGACY_DASHBOARD_TYPE    => 'user'
-    );
+    ];
 
     /**
      * @var WidgetFactory
@@ -214,7 +214,7 @@ class DashboardWidgetDao extends DataAccessObject
 
         $position = 1;
         foreach ($this->retrieve($sql) as $row) {
-            if ((int)$row['id'] === (int)$column_id) {
+            if ((int) $row['id'] === (int) $column_id) {
                 break;
             }
             $position++;
@@ -227,7 +227,7 @@ class DashboardWidgetDao extends DataAccessObject
     {
         $line_id = $this->da->escapeInt($line_id);
 
-        $nb_columns = (int)$this->getNbColumns($line_id);
+        $nb_columns = (int) $this->getNbColumns($line_id);
 
         if ($nb_columns > 3) {
             return;

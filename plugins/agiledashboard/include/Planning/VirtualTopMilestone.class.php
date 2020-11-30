@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 /**
  * This class represents a virtual TopMilestone
  *
@@ -56,10 +58,6 @@ class Planning_VirtualTopMilestone implements Planning_Milestone
      */
     private $planning;
 
-    /**
-     * @param Project  $project
-     * @param Planning $planning
-     */
     public function __construct(Project $project, Planning $planning)
     {
         $this->project  = $project;
@@ -84,7 +82,7 @@ class Planning_VirtualTopMilestone implements Planning_Milestone
         return null;
     }
 
-    public function setArtifact(Tracker_Artifact $artifact)
+    public function setArtifact(Artifact $artifact)
     {
         $this->artifact = $artifact;
     }
@@ -100,12 +98,11 @@ class Planning_VirtualTopMilestone implements Planning_Milestone
     }
 
     /**
-     * @param PFUser $user
      * @return bool
      */
     public function userCanView(PFUser $user)
     {
-        return null;
+        return false;
     }
 
     public function getLinkedArtifacts(PFUser $user)
@@ -143,7 +140,7 @@ class Planning_VirtualTopMilestone implements Planning_Milestone
 
     public function getAncestors()
     {
-        return array();
+        return [];
     }
 
     public function setAncestors(array $ancestors)

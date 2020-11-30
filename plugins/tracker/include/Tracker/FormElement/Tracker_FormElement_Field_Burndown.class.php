@@ -19,9 +19,9 @@
  */
 
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\BurndownCacheIsCurrentlyCalculatedException;
 use Tuleap\Tracker\FormElement\BurndownFieldPresenter;
-use Tuleap\Tracker\FormElement\BurndownLogger;
 use Tuleap\Tracker\FormElement\ChartCachedDaysComparator;
 use Tuleap\Tracker\FormElement\ChartConfigurationFieldRetriever;
 use Tuleap\Tracker\FormElement\ChartConfigurationValueChecker;
@@ -33,10 +33,12 @@ use Tuleap\Tracker\FormElement\Field\Burndown\BurndownCacheGenerator;
 use Tuleap\Tracker\FormElement\Field\Burndown\BurndownCommonDataBuilder;
 use Tuleap\Tracker\FormElement\Field\Burndown\BurndownDataBuilderForLegacy;
 use Tuleap\Tracker\FormElement\Field\Burndown\BurndownDataBuilderForREST;
+use Tuleap\Tracker\FormElement\Field\Burndown\BurndownFieldDao;
 use Tuleap\Tracker\FormElement\Field\Burndown\BurndownRemainingEffortAdderForLegacy;
 use Tuleap\Tracker\FormElement\Field\Burndown\BurndownRemainingEffortAdderForREST;
+use Tuleap\Tracker\FormElement\Field\Computed\ComputedFieldDao;
 use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
-use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueRepresentation;
+use Tuleap\Tracker\REST\Artifact\ArtifactFieldValueFullRepresentation;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
 use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
@@ -44,6 +46,7 @@ use Tuleap\Tracker\UserWithReadAllPermissionBuilder;
 
 class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field implements Tracker_FormElement_Field_ReadOnly
 {
+    public const LOG_IDENTIFIER = 'burndown_syslog';
 
     /**
      * Request parameter to display burndown image
@@ -55,33 +58,21 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
      */
     private $hierarchy_factory;
 
-    /**
-     * @return the label of the field (mainly used in admin part)
-     */
     public static function getFactoryLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'burndown_label');
+        return dgettext('tuleap-tracker', 'Burndown Chart');
     }
 
-    /**
-     * @return the description of the field (mainly used in admin part)
-     */
     public static function getFactoryDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_formelement_admin', 'burndown_description');
+        return dgettext('tuleap-tracker', 'Display the burndown chart for the artifact');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconUseIt()
     {
         return $GLOBALS['HTML']->getImagePath('ic/burndown.png');
     }
 
-    /**
-     * @return the path to the icon
-     */
     public static function getFactoryIconCreate()
     {
         return $GLOBALS['HTML']->getImagePath('ic/burndown--plus.png');
@@ -118,7 +109,7 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     }
 
     public function fetchArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value,
         array $submitted_values
     ) {
@@ -128,13 +119,13 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     /**
      * Fetch the html code to display the field value in artifact in read only mode
      *
-     * @param Tracker_Artifact $artifact The artifact
-     * @param Tracker_Artifact_ChangesetValue $value The actual value of the field
+     * @param Artifact                        $artifact The artifact
+     * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
      *
      * @return string
      */
     public function fetchArtifactValueReadOnly(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ?Tracker_Artifact_ChangesetValue $value = null
     ) {
         $html = $this->fetchBurndownReadOnly($artifact);
@@ -143,7 +134,7 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         return $html;
     }
 
-    public function fetchBurndownReadOnly(Tracker_Artifact $artifact)
+    public function fetchBurndownReadOnly(Artifact $artifact)
     {
         $user               = $this->getCurrentUser();
         $burndown_presenter = $this->buildPresenter($artifact, $user);
@@ -151,13 +142,13 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         return $this->renderPresenter($burndown_presenter);
     }
 
-    public function buildPresenter(Tracker_Artifact $artifact, PFUser $user)
+    public function buildPresenter(Artifact $artifact, PFUser $user)
     {
         $warning                      = "";
         $burndown_rest_representation = null;
 
         try {
-            $value_retriever= $this->getBurndownConfigurationValueRetriever();
+            $value_retriever = $this->getBurndownConfigurationValueRetriever();
 
             $burndown_data = $this->getBurndownData(
                 $artifact,
@@ -181,21 +172,13 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
             $warning                 = $error->getMessage();
         }
 
-        $burndown_chart_include_assets = new IncludeAssets(
-            TRACKER_BASE_DIR . '/../www/assets',
-            TRACKER_BASE_URL . '/assets'
+        $assets = new IncludeAssets(
+            __DIR__ . '/../../../../../src/www/assets/trackers',
+            '/assets/trackers'
         );
 
-        $theme_include_assets = new IncludeAssets(
-            TRACKER_BASE_DIR . '/../www/themes/'. $GLOBALS['sys_user_theme'] .'/assets',
-            TRACKER_BASE_URL . '/themes/'. $GLOBALS['sys_user_theme'] .'/assets'
-        );
-
-        $css_file_url = $theme_include_assets->getFileURL('burndown-chart.css');
-
-        $GLOBALS['HTML']->includeFooterJavascriptFile(
-            $burndown_chart_include_assets->getFileURL('burndown-chart.js')
-        );
+        $css_file_url = $assets->getFileURL('burndown-chart.css');
+        $GLOBALS['HTML']->includeFooterJavascriptFile($assets->getFileURL('burndown-chart.js'));
 
         return new BurndownFieldPresenter(
             $user,
@@ -205,7 +188,7 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         );
     }
 
-    public function fetchArtifactForOverlay(Tracker_Artifact $artifact, array $submitted_values)
+    public function fetchArtifactForOverlay(Artifact $artifact, array $submitted_values)
     {
         $purifier = Codendi_HTMLPurifier::instance();
         $html     = '';
@@ -215,21 +198,19 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         return $html;
     }
 
-    private function fetchBurndownCacheGenerationButton(Tracker_Artifact $artifact)
+    private function fetchBurndownCacheGenerationButton(Artifact $artifact)
     {
         $user = $this->getCurrentUser();
 
         $html = "";
-        if ($user->isAdmin($artifact->getTracker()->getGroupId())
+        if (
+            $user->isAdmin($artifact->getTracker()->getGroupId())
             && $this->getBurndownCacheChecker()->isCacheBurndownAlreadyAsked($artifact) === false
             && $this->getBurndownConfigurationValueChecker()->areBurndownFieldsCorrectlySet($artifact, $user)
             && ! strpos($_SERVER['REQUEST_URI'], 'from_agiledashboard')
         ) {
             $html .= '<a class="btn chart-cache-button-generate" data-toggle="modal" href="#burndown-generate">' .
-                $GLOBALS['Language']->getText(
-                    'plugin_tracker',
-                    'burndown_generate'
-                ) . '</a>';
+                dgettext('tuleap-tracker', 'Force cache regeneration') . '</a>';
 
             $html .= $this->fetchBurndownGenerationModal($artifact);
         }
@@ -237,27 +218,15 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         return $html;
     }
 
-    private function fetchBurndownGenerationModal(Tracker_Artifact $artifact)
+    private function fetchBurndownGenerationModal(Artifact $artifact)
     {
-        $header = $GLOBALS['Language']->getText(
-            'plugin_tracker',
-            'burndown_generate'
-        );
+        $header = dgettext('tuleap-tracker', 'Force cache regeneration');
 
-        $body = $GLOBALS['Language']->getText(
-            'plugin_tracker',
-            'force_cache_generation_info'
-        );
+        $body = dgettext('tuleap-tracker', 'Do you really want to force burndown cache generation? Cache generation will end up on a non availability of burndown for few minutes.');
 
-        $cancel = $GLOBALS['Language']->getText(
-            'plugin_tracker',
-            'burndown_cancel'
-        );
+        $cancel = dgettext('tuleap-tracker', 'Cancel');
 
-        $generate = $GLOBALS['Language']->getText(
-            'plugin_tracker',
-            'burndown_generate'
-        );
+        $generate = dgettext('tuleap-tracker', 'Force cache regeneration');
 
         return '<div id="burndown-generate" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                 <div class="modal-header">
@@ -268,7 +237,7 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
                 </div>
                 <div class="modal-footer">
                     <button class="btn" data-dismiss="modal" aria-hidden="true">' . $cancel . '</button>
-                    <a href="?aid='.$artifact->getId().'&func=burndown-cache-generate&field='.$this->getId().'"
+                    <a href="?aid=' . $artifact->getId() . '&func=burndown-cache-generate&field=' . $this->getId() . '"
                         class="btn btn-primary force-burndown-generation" name="add-keys">' . $generate . '</a>
                 </div>
             </div>';
@@ -276,7 +245,6 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
 
     /**
      *
-     * @param Tracker_IDisplayTrackerLayout $layout
      * @param Codendi_Request               $request
      * @param PFUser                        $current_user
      */
@@ -288,13 +256,13 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
                     $artifact_id = $request->getValidated('src_aid', 'uint', 0);
                     $artifact    = $this->getArtifactFactory()->getArtifactById($artifact_id);
                     if (! $artifact) {
-                        return false;
+                        return;
                     }
                     $this->fetchBurndownImage($artifact, $current_user);
                 } catch (Tracker_FormElement_Chart_Field_Exception $e) {
                     $this->displayErrorImage($e->getMessage());
                 } catch (BurndownCacheIsCurrentlyCalculatedException $e) {
-                    $this->displayErrorImage($GLOBALS['Language']->getText('plugin_tracker', 'burndown_cache_generating'));
+                    $this->displayErrorImage(dgettext('tuleap-tracker', 'Burndown is under calculation. It will be available in few minutes.'));
                 }
                 break;
             default:
@@ -305,12 +273,11 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     /**
      * Render a burndown image based on $artifact artifact links
      *
-     * @param Tracker_Artifact $artifact
      *
      * @throws Tracker_FormElement_Chart_Field_Exception
      * @throws BurndownCacheIsCurrentlyCalculatedException
      */
-    public function fetchBurndownImage(Tracker_Artifact $artifact, PFUser $user)
+    public function fetchBurndownImage(Artifact $artifact, PFUser $user)
     {
         if ($this->userCanRead($user)) {
             $burndown_data = $this->buildBurndownDataForLegacy($user, $artifact);
@@ -341,13 +308,15 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         $child->addAttribute('use_cache', '1');
     }
 
-    public function getRESTValue(PFUser $user, Tracker_Artifact_Changeset $changeset)
+    public function getRESTValue(PFUser $user, Tracker_Artifact_Changeset $changeset): ArtifactFieldValueFullRepresentation
     {
         $artifact = $changeset->getArtifact();
+        $form_element = $this->getFormElementFactory()->getFormElementById($this->getId());
 
-        $artifact_field_value_representation = new ArtifactFieldValueRepresentation();
+        $artifact_field_value_representation = new ArtifactFieldValueFullRepresentation();
         $artifact_field_value_representation->build(
             $this->getId(),
+            $this->getFormElementFactory()->getType($form_element),
             $this->getLabel(),
             $this->getBurndownDataForREST(
                 $artifact,
@@ -359,23 +328,23 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         return $artifact_field_value_representation;
     }
 
-    private function getTimePeriodForRESTRepresentation(Tracker_Artifact $artifact, PFUser $user)
+    private function getTimePeriodForRESTRepresentation(Artifact $artifact, PFUser $user)
     {
         $builder = $this->getTimeframeBuilder();
 
         return $builder->buildTimePeriodWithoutWeekendForArtifactForREST($artifact, $user);
     }
 
-    protected function getLogger()
+    protected function getLogger(): \Psr\Log\LoggerInterface
     {
-        return new BurndownLogger();
+        return \BackendLogger::getDefaultLogger(self::LOG_IDENTIFIER);
     }
 
     /**
      * @return Tracker_Chart_Data_Burndown
      * @throws BurndownCacheIsCurrentlyCalculatedException
      */
-    public function getBurndownData(Tracker_Artifact $artifact, PFUser $user, TimePeriodWithoutWeekEnd $time_period)
+    public function getBurndownData(Artifact $artifact, PFUser $user, TimePeriodWithoutWeekEnd $time_period)
     {
         $builder = $this->getBurndownDataBuilderForREST();
         return $builder->build($artifact, $user, $time_period);
@@ -385,7 +354,7 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
      * @return Tracker_Chart_Data_Burndown
      * @throws BurndownCacheIsCurrentlyCalculatedException
      */
-    public function getBurndownDataForREST(Tracker_Artifact $artifact, PFUser $user, TimePeriodWithoutWeekEnd $time_period)
+    public function getBurndownDataForREST(Artifact $artifact, PFUser $user, TimePeriodWithoutWeekEnd $time_period)
     {
         return $this->getBurndownData($artifact, $user, $time_period);
     }
@@ -419,17 +388,17 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     /**
      * Fetch data to display the field value in mail
      *
-     * @param Tracker_Artifact                $artifact         The artifact
-     * @param PFUser                          $user             The user who will receive the email
-     * @param bool $ignore_perms
-     * @param Tracker_Artifact_ChangesetValue $value            The actual value of the field
-     * @param string                          $format           output format
+     * @param Artifact                        $artifact The artifact
+     * @param PFUser                          $user     The user who will receive the email
+     * @param bool                            $ignore_perms
+     * @param Tracker_Artifact_ChangesetValue $value    The actual value of the field
+     * @param string                          $format   output format
      *
      * @return string
      */
 
     public function fetchMailArtifactValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         $ignore_perms,
         ?Tracker_Artifact_ChangesetValue $value = null,
@@ -438,8 +407,8 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         $purifier = Codendi_HTMLPurifier::instance();
         $output   = '';
         if ($format == Codendi_Mail::FORMAT_HTML) {
-            $output .= '<img src="'.HTTPRequest::instance()->getServerUrl().$this->getBurndownImageUrl($artifact).'" alt="'.$purifier->purify($this->getLabel()).'" width="640" height="480" />';
-            $output .= '<p><em>'.$GLOBALS['Language']->getText('plugin_tracker', 'burndown_email_as_of_today').'</em></p>';
+            $output .= '<img src="' . HTTPRequest::instance()->getServerUrl() . $this->getBurndownImageUrl($artifact) . '" alt="' . $purifier->purify($this->getLabel()) . '" width="640" height="480" />';
+            $output .= '<p><em>' . dgettext('tuleap-tracker', 'Please note that the image above is rendered in real time so it represents burndown as of today, not as when the email was sent.') . '</em></p>';
         }
         return $output;
     }
@@ -454,7 +423,7 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         $html .= $this->getBurndownMessageFetcher()->fetchWarnings($this, $this->getChartFieldUsage());
         $html .= '<img src="' . TRACKER_BASE_URL . '/images/fake-burndown-admin.png" />';
         $html .= '<a class="btn chart-cache-button-generate" disabled="disabled">' .
-            $GLOBALS['Language']->getText('plugin_tracker', 'burndown_generate') .
+            dgettext('tuleap-tracker', 'Force cache regeneration') .
             '</a>';
 
         return $html;
@@ -503,10 +472,6 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     }
 
     public function afterCreate(array $form_element_data, $tracker_is_empty)
-    {
-    }
-
-    public function fetchFollowUp($artifact, $from, $to)
     {
     }
 
@@ -559,14 +524,13 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
      */
     protected function displayErrorImage($msg)
     {
-        $error = new ErrorChart($GLOBALS['Language']->getText('plugin_tracker', 'unable_to_render_the_chart'), $msg, 640, 480);
+        $error = new ErrorChart(dgettext('tuleap-tracker', 'Unable to render the chart'), $msg, 640, 480);
         $error->Stroke();
     }
 
     /**
      * Returns a Burndown rendering object for given data
      *
-     * @param Tracker_Chart_Data_Burndown $burndown_data
      *
      * @return \Tracker_Chart_BurndownView
      */
@@ -578,11 +542,10 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     /**
      * Fetch the html code to display the field value in tooltip
      *
-     * @param Tracker_Artifact $artifact
      * @param Tracker_Artifact_ChangesetValue_Integer $value The changeset value of this field
      * @return string The html code to display the field value in tooltip
      */
-    protected function fetchTooltipValue(Tracker_Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
+    protected function fetchTooltipValue(Artifact $artifact, ?Tracker_Artifact_ChangesetValue $value = null)
     {
         return $this->fetchArtifactValueReadOnly($artifact, $value);
     }
@@ -590,12 +553,12 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     /**
      * Validate a value
      *
-     * @param Tracker_Artifact $artifact The artifact
-     * @param mixed            $value    data coming from the request.
+     * @param Artifact $artifact The artifact
+     * @param mixed    $value    data coming from the request.
      *
      * @return bool true if the value is considered ok
      */
-    protected function validate(Tracker_Artifact $artifact, $value)
+    protected function validate(Artifact $artifact, $value)
     {
         //No need to validate artifact id (read only for all)
         return true;
@@ -604,21 +567,20 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     /**
      * Return the relative url to the burndown chart image.
      *
-     * @param Tracker_Artifact $artifact
      *
      * @return String
      */
-    public function getBurndownImageUrl(Tracker_Artifact $artifact)
+    public function getBurndownImageUrl(Artifact $artifact)
     {
         $url_query = http_build_query(
-            array(
+            [
                 'formElement' => $this->getId(),
                 'func'        => self::FUNC_SHOW_BURNDOWN,
                 'src_aid'     => $artifact->getId()
-            )
+            ]
         );
 
-        return TRACKER_BASE_URL .'/?'.$url_query;
+        return TRACKER_BASE_URL . '/?' . $url_query;
     }
 
     public function accept(Tracker_FormElement_FieldVisitor $visitor)
@@ -627,20 +589,20 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     }
 
     /**
-     * @return Tracker_FormElement_Field_BurndownDao The dao
+     * @return BurndownFieldDao The dao
      */
     protected function getDao()
     {
-        return new Tracker_FormElement_Field_BurndownDao();
+        return new BurndownFieldDao();
     }
     /**
      * Return the Field_Date_Dao
      *
-     * @return Tracker_FormElement_Field_ComputedDao The dao
+     * @return ComputedFieldDao The dao
      */
     protected function getComputedDao()
     {
-        return new Tracker_FormElement_Field_ComputedDao();
+        return new ComputedFieldDao();
     }
 
     public function canBeUsedAsReportCriterion()
@@ -652,14 +614,14 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
      * @see Tracker_FormElement_Field::postSaveNewChangeset()
      */
     public function postSaveNewChangeset(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $submitter,
         Tracker_Artifact_Changeset $new_changeset,
         ?Tracker_Artifact_Changeset $previous_changeset = null
     ) {
-
         try {
-            if ($previous_changeset !== null &&
+            if (
+                $previous_changeset !== null &&
                 $this->getBurndownCacheChecker()->isCacheBurndownAlreadyAsked($artifact) === false &&
                 $this->getBurdownConfigurationFieldRetriever()->getBurndownRemainingEffortField($artifact, $submitter)
             ) {
@@ -807,7 +769,7 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
     /**
      * For testing purpose
      */
-    protected function buildBurndownDataForLegacy(PFUser $user, Tracker_Artifact $artifact)
+    protected function buildBurndownDataForLegacy(PFUser $user, Artifact $artifact)
     {
         $time_period = $this->getBurndownConfigurationValueRetriever()->getTimePeriod($artifact, $user);
         $builder     = $this->getBurndownDataBuilderForLegacy();
@@ -837,18 +799,15 @@ class Tracker_FormElement_Field_Burndown extends Tracker_FormElement_Field imple
         );
     }
 
-    private function getTimeframeBuilder() : TimeframeBuilder
+    private function getTimeframeBuilder(): TimeframeBuilder
     {
-        $form_element_factory = $this->getFormElementFactory();
-
         return new TimeframeBuilder(
-            $form_element_factory,
             $this->getSemanticTimeframeBuilder(),
             $this->getLogger()
         );
     }
 
-    private function getSemanticTimeframeBuilder() : SemanticTimeframeBuilder
+    private function getSemanticTimeframeBuilder(): SemanticTimeframeBuilder
     {
         return new SemanticTimeframeBuilder(
             new SemanticTimeframeDao(),

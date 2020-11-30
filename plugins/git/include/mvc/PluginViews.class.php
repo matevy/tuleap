@@ -52,17 +52,17 @@ class PluginViews
         return $this->controller->getData();
     }
 
-    public function display($name, $params = array())
+    public function display($name, $params = [])
     {
         if (empty($name)) {
             return false;
         }
-        call_user_func_array(array($this,$name), $params);
+        call_user_func_array([$this, $name], $params);
     }
 
     public static function linkTo($link, $href, $options = '')
     {
-        $linkTo = '<a href="'.$href.'" '.$options.' >'.$link.'</a>';
+        $linkTo = '<a href="' . $href . '" ' . $options . ' >' . $link . '</a>';
         return $linkTo;
     }
 }

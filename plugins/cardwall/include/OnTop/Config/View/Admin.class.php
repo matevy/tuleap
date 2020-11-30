@@ -38,8 +38,8 @@ class Cardwall_OnTop_Config_View_Admin
         $html  = '<p>';
         $html .= '<input type="hidden" name="cardwall_on_top" value="0" />';
         $html .= '<label class="checkbox">';
-        $html .= '<input type="checkbox" name="cardwall_on_top" value="1" id="cardwall_on_top" '. $checked .'/> ';
-        $html .= $this->translate('plugin_cardwall', 'on_top_label');
+        $html .= '<input type="checkbox" name="cardwall_on_top" value="1" id="cardwall_on_top" ' . $checked . '/> ';
+        $html .= dgettext('tuleap-cardwall', 'Enable cardwall on top of this planning');
         $html .= '</label>';
         $html .= '</p>';
         $html .= '<input type="hidden" name="update_cardwall" value="1" />';
@@ -51,14 +51,6 @@ class Cardwall_OnTop_Config_View_Admin
         }
 
         return $html;
-    }
-
-     /**
-     * @return string
-     */
-    private function translate($page, $category, $args = "")
-    {
-        return $GLOBALS['Language']->getText($page, $category, $args);
     }
 
     public function visitColumnFreestyleCollection($collection, Cardwall_OnTop_Config $config)

@@ -31,9 +31,6 @@ class AgileDashboard_Milestone_Backlog_DescendantItemsFinder
     /** @var Tracker_ArtifactFactory */
     private $artifact_factory;
 
-    /** @var Planning_Milestone */
-    private $milestone;
-
     /** @var int */
     private $milestone_id;
 
@@ -56,8 +53,7 @@ class AgileDashboard_Milestone_Backlog_DescendantItemsFinder
         $this->item_dao               = $item_dao;
         $this->artifact_dao           = $artifact_dao;
         $this->artifact_factory       = $artifact_factory;
-        $this->milestone              = $milestone;
-        $this->milestone_id           = $milestone->getArtifactId();
+        $this->milestone_id           = $milestone->getArtifactId() ?? 0;
 
         $this->descendant_tracker_ids = $descendant_tracker_ids;
         $this->backlog_tracker_ids    = $milestone->getPlanning()->getBacklogTrackersIds();
@@ -142,6 +138,20 @@ class AgileDashboard_Milestone_Backlog_DescendantItemsFinder
         return $this->getItemsForUser($user, $result, $this->item_dao->foundRows());
     }
 
+    public function getTopMilestoneOpenClosedUnplannedBacklogItemsWithLimitAndOffset(
+        PFUser $user,
+        ?int $limit,
+        ?int $offset
+    ): AgileDashboard_Milestone_Backlog_DescendantItemsCollection {
+        $result = $this->item_dao->getOpenClosedUnplannedTopBacklogArtifactsWithLimitAndOffset(
+            $this->descendant_tracker_ids,
+            $limit,
+            $offset
+        );
+
+        return $this->getItemsForUser($user, $result, $this->item_dao->foundRows());
+    }
+
     /** @return AgileDashboard_Milestone_Backlog_DescendantItemsCollection */
     public function getTopMilestoneUnplannedBacklogItemsWithLimitAndOffset(PFUser $user, $limit, $offset)
     {
@@ -207,9 +217,12 @@ class AgileDashboard_Milestone_Backlog_DescendantItemsFinder
         return $this->getItemsForUser($user, $result, $this->artifact_dao->foundRows());
     }
 
-    /** @return AgileDashboard_Milestone_Backlog_DescendantItemsCollection */
-    public function getMilestoneUnplannedBacklogItemsWithLimitAndOffset(PFUser $user, $sub_milestone_ids, $limit, $offset)
-    {
+    public function getMilestoneUnplannedBacklogItemsWithLimitAndOffset(
+        PFUser $user,
+        array $sub_milestone_ids,
+        ?int $limit,
+        ?int $offset
+    ): AgileDashboard_Milestone_Backlog_DescendantItemsCollection {
         $result = $this->artifact_dao->getLinkedArtifactsOfTrackersNotLinkedToOthersWithLimitAndOffset(
             $this->milestone_id,
             $this->descendant_tracker_ids,
@@ -222,12 +235,35 @@ class AgileDashboard_Milestone_Backlog_DescendantItemsFinder
         return $this->getItemsForUser($user, $result, $this->artifact_dao->foundRows());
     }
 
+    public function getMilestoneOpenClosedUnplannedBacklogItemsWithLimitAndOffset(
+        PFUser $user,
+        array $sub_milestone_ids,
+        ?int $limit,
+        ?int $offset
+    ): AgileDashboard_Milestone_Backlog_DescendantItemsCollection {
+        $result = $this->artifact_dao->getLinkedOpenClosedArtifactsOfTrackersNotLinkedToOthersWithLimitAndOffset(
+            $this->milestone_id,
+            $this->descendant_tracker_ids,
+            $sub_milestone_ids,
+            $this->getDescendantPlannifiableItems(),
+            $limit,
+            $offset
+        );
+
+        return $this->getItemsForUser($user, $result, $this->artifact_dao->foundRows());
+    }
+
     /**
+     * @param LegacyDataAccessResultInterface|false $result
      * @return AgileDashboard_Milestone_Backlog_DescendantItemsCollection
      */
-    private function getItemsForUser(PFUser $user, LegacyDataAccessResultInterface $result, $found_rows)
+    private function getItemsForUser(PFUser $user, $result, $found_rows)
     {
         $items = new AgileDashboard_Milestone_Backlog_DescendantItemsCollection();
+        if ($result === false) {
+            return $items;
+        }
+
         foreach ($result as $row) {
             $item = $this->artifact_factory->getInstanceFromRow($row);
             if ($item->userCanView($user)) {
@@ -255,7 +291,7 @@ class AgileDashboard_Milestone_Backlog_DescendantItemsFinder
      */
     private function getDescendantPlannifiableItems()
     {
-        $item_list = array();
+        $item_list = [];
         foreach ($this->getHierarchiesToSearchIn() as $hierarchy) {
             reset($hierarchy);
 
@@ -288,7 +324,7 @@ class AgileDashboard_Milestone_Backlog_DescendantItemsFinder
         $hierarchy_factory                          = Tracker_HierarchyFactory::instance();
         $types_in_submilestone_but_not_in_milestone = array_diff($this->descendant_tracker_ids, $this->backlog_tracker_ids);
 
-        $hierarchies = array();
+        $hierarchies = [];
         foreach ($types_in_submilestone_but_not_in_milestone as $tracker_id) {
             $submilestone_backlog_tracker_hierarchy_tree = array_reverse($hierarchy_factory->getUpwardsHierarchyForTracker($tracker_id));
 

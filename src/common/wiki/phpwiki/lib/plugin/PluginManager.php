@@ -27,17 +27,17 @@ define('REQUIRE_ADMIN', false);
 
 class WikiPlugin_PluginManager extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("PluginManager");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Description: Provides a list of plugins on this wiki.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -46,12 +46,12 @@ class WikiPlugin_PluginManager extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('info' => 'args');
+        return ['info' => 'args'];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
 
@@ -61,7 +61,7 @@ class WikiPlugin_PluginManager extends WikiPlugin
         if (! REQUIRE_ADMIN || $request->_user->isadmin()) {
             $h->pushContent(HTML::h2(_("Plugins")));
 
-            $table = HTML::table(array('class' => "pagelist"));
+            $table = HTML::table(['class' => "pagelist"]);
             $this->_generateColgroups($info, $table);
             $this->_generateColheadings($info, $table);
             $this->_generateTableBody($info, $dbi, $request, $table);
@@ -77,32 +77,32 @@ class WikiPlugin_PluginManager extends WikiPlugin
         return $h;
     }
 
-    function _generatePageheader(&$info, &$html)
+    public function _generatePageheader(&$info, &$html)
     {
         $html->pushContent(HTML::p($this->getDescription()));
     }
 
-    function _generateColgroups(&$info, &$table)
+    public function _generateColgroups(&$info, &$table)
     {
         // specify last two column widths
         $colgroup = HTML::colgroup();
-        $colgroup->pushContent(HTML::col(array('width' => '0*')));
-        $colgroup->pushContent(HTML::col(array('width' => '0*',
-                                               'align' => 'right')));
-        $colgroup->pushContent(HTML::col(array('width' => '9*')));
+        $colgroup->pushContent(HTML::col(['width' => '0*']));
+        $colgroup->pushContent(HTML::col(['width' => '0*',
+                                               'align' => 'right']));
+        $colgroup->pushContent(HTML::col(['width' => '9*']));
         if ($info == 'args') {
-            $colgroup->pushContent(HTML::col(array('width' => '2*')));
+            $colgroup->pushContent(HTML::col(['width' => '2*']));
         }
         $table->pushcontent($colgroup);
     }
 
-    function _generateColheadings(&$info, &$table)
+    public function _generateColheadings(&$info, &$table)
     {
         // table headings
         $tr = HTML::tr();
-        $headings = array(_("Plugin"), _("Version"), _("Description"));
+        $headings = [_("Plugin"), _("Version"), _("Description")];
         if ($info == 'args') {
-            $headings []= _("Arguments");
+            $headings[] = _("Arguments");
         }
         foreach ($headings as $title) {
             $tr->pushContent(HTML::td($title));
@@ -110,7 +110,7 @@ class WikiPlugin_PluginManager extends WikiPlugin
         $table->pushContent(HTML::thead($tr));
     }
 
-    function _generateTableBody(&$info, &$dbi, &$request, &$table)
+    public function _generateTableBody(&$info, &$dbi, &$request, &$table)
     {
         $plugin_dir = 'lib/plugin';
         if (defined('PHPWIKI_DIR')) {
@@ -125,14 +125,14 @@ class WikiPlugin_PluginManager extends WikiPlugin
         $tbody = HTML::tbody();
         $row_no = 0;
 
-        $w = new WikiPluginLoader;
+        $w = new WikiPluginLoader();
         foreach ($plugins as $pluginName) {
             // instantiate a plugin
             $pluginName = str_replace(".php", "", $pluginName);
             $temppluginclass = "<? plugin $pluginName ?>"; // hackish
             $p = $w->getPlugin($pluginName, false); // second arg?
             // trap php files which aren't WikiPlugin~s
-            if (!strtolower(substr(get_parent_class($p), 0, 10)) == 'wikiplugin') {
+            if (! strtolower(substr(get_parent_class($p), 0, 10)) == 'wikiplugin') {
                 // Security: Hide names of extraneous files within
                 // plugin dir from non-admins.
                 if ($request->_user->isAdmin()) {
@@ -168,8 +168,10 @@ class WikiPlugin_PluginManager extends WikiPlugin
                 if (_($pluginDocPageName) != $pluginDocPageName) {
                     $localizedPluginDocPageName = _($pluginDocPageName);
                 }
-                if ($localizedPluginDocPageName &&
-                   $dbi->isWikiPage($localizedPluginDocPageName)) {
+                if (
+                    $localizedPluginDocPageName &&
+                    $dbi->isWikiPage($localizedPluginDocPageName)
+                ) {
                     $pluginDocPageNamelink =
                     WikiLink($localizedPluginDocPageName, 'if_known');
                 }
@@ -183,10 +185,10 @@ class WikiPlugin_PluginManager extends WikiPlugin
 
             // highlight alternate rows
             $row_no++;
-            $group = (int)($row_no / 1); //_group_rows
+            $group = (int) ($row_no / 1); //_group_rows
             $class = ($group % 2) ? 'evenrow' : 'oddrow';
             // generate table row
-            $tr = HTML::tr(array('class' => $class));
+            $tr = HTML::tr(['class' => $class]);
             if ($pluginDocPageNamelink) {
                 // plugin has a description page 'PluginName' . 'Plugin'
                 $tr->pushContent(HTML::td(
@@ -202,15 +204,15 @@ class WikiPlugin_PluginManager extends WikiPlugin
             $tr->pushContent(HTML::td($ver), HTML::td($desc));
             if ($info == 'args') {
                 // add Arguments column
-                $style = array('style'
-                               => 'font-family:monospace;font-size:smaller');
+                $style = ['style'
+                               => 'font-family:monospace;font-size:smaller'];
                 $tr->pushContent(HTML::td($style, $arguments));
             }
             $tbody->pushContent($tr);
         }
         $table->pushContent($tbody);
     }
-};
+}
 
 // $Log: PluginManager.php,v $
 // Revision 1.19  2005/10/12 06:15:25  rurban

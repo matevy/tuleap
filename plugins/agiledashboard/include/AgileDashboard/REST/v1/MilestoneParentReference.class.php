@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,18 +21,40 @@ namespace Tuleap\AgileDashboard\REST\v1;
 
 use Tuleap\Tracker\REST\TrackerReference;
 use Planning_Milestone;
-use Tuleap\REST\v1\MilestoneParentReferenceBase;
 use Tuleap\REST\JsonCast;
 
-class MilestoneParentReference extends MilestoneParentReferenceBase
+/**
+ * @psalm-immutable
+ */
+class MilestoneParentReference
 {
+    /**
+     * @var int ID of the milestone
+     */
+    public $id;
 
-    public function build(Planning_Milestone $milestone)
+    /**
+     * @var string URI of the milestone
+     */
+    public $uri;
+
+    /**
+     * @var \Tuleap\Tracker\REST\TrackerReference
+     */
+    public $tracker;
+
+    private function __construct(int $id, TrackerReference $tracker)
     {
-        $this->id  = JsonCast::toInt($milestone->getArtifactId());
-        $this->uri = MilestoneRepresentation::ROUTE . '/' . $this->id;
+        $this->id      = $id;
+        $this->uri     = MilestoneRepresentation::ROUTE . '/' . $id;
+        $this->tracker = $tracker;
+    }
 
-        $this->tracker = new TrackerReference();
-        $this->tracker->build($milestone->getArtifact()->getTracker());
+    public static function build(Planning_Milestone $milestone): self
+    {
+        return new self(
+            JsonCast::toInt($milestone->getArtifactId()),
+            TrackerReference::build($milestone->getArtifact()->getTracker())
+        );
     }
 }

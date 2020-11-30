@@ -20,6 +20,8 @@
 
 declare(strict_types=1);
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\Artifact\Changeset\FieldsToBeSavedInSpecificOrderRetriever;
 use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 
 /**
@@ -32,7 +34,7 @@ class Tracker_Artifact_Changeset_InitialChangesetCreator extends Tracker_Artifac
      */
     protected function saveNewChangesetForField(
         Tracker_FormElement_Field $field,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $fields_data,
         PFUser $submitter,
         int $changeset_id,
@@ -43,7 +45,7 @@ class Tracker_Artifact_Changeset_InitialChangesetCreator extends Tracker_Artifac
         $workflow      = $artifact->getWorkflow();
 
         if ($this->isFieldSubmitted($field, $fields_data)) {
-            if ($field->userCanSubmit()) {
+            if ($field->userCanSubmit($submitter)) {
                 $field->saveNewChangeset(
                     $artifact,
                     null,
@@ -92,5 +94,22 @@ class Tracker_Artifact_Changeset_InitialChangesetCreator extends Tracker_Artifac
     private function pushDefaultValueInSubmittedValues(Tracker_FormElement_Field $field, array &$fields_data): void
     {
         $fields_data[$field->getId()] = $field->getDefaultValue();
+    }
+
+    public static function build(\Psr\Log\LoggerInterface $logger): self
+    {
+        $form_element_factory    = \Tracker_FormElementFactory::instance();
+        $artifact_factory        = Tracker_ArtifactFactory::instance();
+
+        return new Tracker_Artifact_Changeset_InitialChangesetCreator(
+            Tracker_Artifact_Changeset_InitialChangesetFieldsValidator::build(),
+            new FieldsToBeSavedInSpecificOrderRetriever($form_element_factory),
+            new Tracker_Artifact_ChangesetDao(),
+            $artifact_factory,
+            EventManager::instance(),
+            new Tracker_Artifact_Changeset_ChangesetDataInitializator($form_element_factory),
+            $logger,
+            \Tuleap\Tracker\Artifact\Changeset\ArtifactChangesetSaver::build()
+        );
     }
 }

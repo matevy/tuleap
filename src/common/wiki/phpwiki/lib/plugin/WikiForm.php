@@ -30,12 +30,12 @@ rcs_id('$Id: WikiForm.php,v 1.16 2004/07/01 13:14:01 rurban Exp $');
  */
 class WikiPlugin_WikiForm extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("WikiForm");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -44,58 +44,58 @@ class WikiPlugin_WikiForm extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('action' => 'upload', // 'upload', 'loadfile', or
+        return ['action' => 'upload', // 'upload', 'loadfile', or
                                            // 'dumpserial'
                      'default' => false,
                      'buttontext' => false,
                      'overwrite' => false,
-                     'size' => 50);
+                     'size' => 50];
     }
 
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
         $form = HTML::form(
-            array('action' => $request->getPostURL(),
+            ['action' => $request->getPostURL(),
                                  'method' => 'post',
                                  'class'  => 'wikiadmin',
-                                 'accept-charset' => $GLOBALS['charset']),
-            HiddenInputs(array('action' => $action,
-            'pagename' => $basepage))
+                                 'accept-charset' => $GLOBALS['charset']],
+            HiddenInputs(['action' => $action,
+            'pagename' => $basepage])
         );
-        $input = array('type' => 'text',
+        $input = ['type' => 'text',
                        'value' => $default,
-                       'size' => $size);
+                       'size' => $size];
 
         switch ($action) {
             case 'loadfile':
                 $input['name'] = 'source';
-                if (!$default) {
+                if (! $default) {
                     $input['value'] = DEFAULT_DUMP_DIR;
                 }
-                if (!$buttontext) {
+                if (! $buttontext) {
                     $buttontext = _("Load File");
                 }
                 $class = false;
                 break;
             case 'login':
                 $input['name'] = 'source';
-                if (!$buttontext) {
+                if (! $buttontext) {
                     $buttontext = _("Login");
                 }
                 $class = 'wikiadmin';
                 break;
             case 'upload':
                 $form->setAttr('enctype', 'multipart/form-data');
-                $form->pushContent(HTML::input(array('name' => 'MAX_FILE_SIZE',
+                $form->pushContent(HTML::input(['name' => 'MAX_FILE_SIZE',
                                                  'value' =>  MAX_UPLOAD_SIZE,
-                                                 'type'  => 'hidden')));
+                                                 'type'  => 'hidden']));
                 $input['name'] = 'file';
                 $input['type'] = 'file';
-                if (!$buttontext) {
+                if (! $buttontext) {
                     $buttontext = _("Upload");
                 }
                 $class = false; // local OS function, so use native OS button
@@ -108,19 +108,19 @@ class WikiPlugin_WikiForm extends WikiPlugin
         $input->addTooltip($buttontext);
         $button = Button('submit:', $buttontext, $class);
         if ($request->getArg('start_debug')) {
-            $form->pushContent(HTML::input(array('name' => 'start_debug',
+            $form->pushContent(HTML::input(['name' => 'start_debug',
                                                  'value' =>  $request->getArg('start_debug'),
-                                                 'type'  => 'hidden')));
+                                                 'type'  => 'hidden']));
         }
         $form->pushContent(HTML::span(
-            array('class' => $class),
+            ['class' => $class],
             $input,
             $button
         ));
 
         return $form;
     }
-};
+}
 
 // $Log: WikiForm.php,v $
 // Revision 1.16  2004/07/01 13:14:01  rurban

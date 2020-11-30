@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 /**
  * Describe what a Milestone business object should present.
  */
@@ -38,7 +40,7 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
     public function getProject();
 
         /**
-     * @return Tracker_Artifact
+     * @return Artifact
      */
     public function getArtifact();
 
@@ -48,17 +50,17 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
     public function userCanView(PFUser $user);
 
     /**
-     * @return int
+     * @return int|int[]
      */
     public function getTrackerId();
 
     /**
-     * @return int
+     * @return int|null
      */
     public function getArtifactId();
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getArtifactTitle();
 
@@ -85,8 +87,7 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
 
     /**
      * All artifacts linked by either the root artifact or any of the artifacts in plannedArtifacts()
-     * @param PFUser $user
-     * @return Tracker_Artifact[]
+     * @return Artifact[]
      */
     public function getLinkedArtifacts(PFUser $user);
 
@@ -142,7 +143,7 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
     /**
      * Get the timestamp of the last modification of the milestone
      *
-     * @return int timestamp
+     * @return int|null timestamp
      */
     public function getLastModifiedDate();
 
@@ -156,21 +157,20 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
     /**
      * Return capacity
      *
-     * @return float
+     * @return float|null
      */
     public function getCapacity();
 
     /**
      * Return remaining_effort
      *
-     * @return float
+     * @return float|null
      */
     public function getRemainingEffort();
 
     /**
      * Return If type of element is compatible.
      *
-     * @param Planning_Milestone $potential_submilestone
      * @return bool
      */
     public function milestoneCanBeSubmilestone(Planning_Milestone $potential_submilestone);
@@ -180,7 +180,6 @@ interface Planning_Milestone // @codingStandardsIgnoreLine
     /**
      * Get the Burndown data of the milestone
      *
-     * @param PFUser $user
      *
      * @return mixed Tracker_Chart_Data_Burndown | null
      */

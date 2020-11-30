@@ -1,7 +1,7 @@
 <div class="artifact-event-popup">
     <p class="artifact-event-popup-title">
         {{author_updated}}
-        <span class="artifact-event-popup-time">({{time}})</span>
+        <span class="artifact-event-popup-time">({{{purified_time}}})</span>
     </p>
     <div class="artifact-event-popup-content">
         {{{comment}}}
@@ -13,6 +13,6 @@
         </ul>
     </div>
     <div class="artifact-event-popup-actions">
-        <button class="btn btn-small" href="#">{{got_it}}</button>
+        <button class="btn btn-small" href="#" data-test="acknowledge-concurrent-edition-button">{{got_it}}</button>
     </div>
 </div>

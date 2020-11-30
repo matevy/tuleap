@@ -17,6 +17,7 @@
   - along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
   -->
 
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
     <div class="document-metadata">
         <div class="document-metadata-title-and-status-properties-container">
@@ -26,9 +27,12 @@
                 v-bind:parent="parent"
                 v-bind:is-in-update-context="false"
             />
-            <status-metadata-with-custom-binding-for-document-create v-bind:currently-updated-item="currentlyUpdatedItem" v-bind:parent="parent"/>
+            <status-metadata-with-custom-binding-for-document-create
+                v-bind:currently-updated-item="currentlyUpdatedItem"
+                v-bind:parent="parent"
+            />
         </div>
-        <description-metadata v-model="currentlyUpdatedItem.description"/>
+        <description-metadata v-model="currentlyUpdatedItem.description" />
         <slot></slot>
     </div>
 </template>
@@ -43,11 +47,11 @@ export default {
     components: {
         StatusMetadataWithCustomBindingForDocumentCreate,
         DescriptionMetadata,
-        TitleMetadata
+        TitleMetadata,
     },
     props: {
         currentlyUpdatedItem: Object,
-        parent: Object
-    }
+        parent: Object,
+    },
 };
 </script>

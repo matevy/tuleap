@@ -20,16 +20,17 @@
 <template>
     <div
         class="taskboard-child"
-        v-bind:class="{'taskboard-draggable-item': ! card.is_in_edit_mode }"
+        v-bind:class="{ 'taskboard-draggable-item': !card.is_in_edit_mode }"
         v-if="card.is_open || are_closed_items_displayed"
         v-bind:data-card-id="card.id"
         v-bind:data-tracker-id="card.tracker_id"
-        v-bind:data-is-draggable="! card.is_in_edit_mode"
+        v-bind:draggable="!card.is_in_edit_mode"
     >
-        <base-card
+        <base-card v-bind:card="card" />
+        <edit-card-buttons
+            class="taskboard-card-cancel-save-buttons-for-child"
             v-bind:card="card"
         />
-        <edit-card-buttons class="taskboard-card-cancel-save-buttons-for-child" v-bind:card="card"/>
     </div>
 </template>
 
@@ -42,7 +43,7 @@ import { Card } from "../../../../../type";
 import EditCardButtons from "./EditMode/EditCardButtons.vue";
 
 @Component({
-    components: { EditCardButtons, BaseCard }
+    components: { EditCardButtons, BaseCard },
 })
 export default class ChildCard extends Vue {
     @State

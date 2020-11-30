@@ -20,14 +20,17 @@
 
 <template>
     <div class="document-quick-look-document-action">
-        <button type="button" class="tlp-button-primary tlp-button-small document-quick-look-action-button-margin"
-                v-on:click="redirectUrl"
+        <button
+            type="button"
+            class="tlp-button-primary tlp-button-small document-quick-look-action-button-margin"
+            v-on:click="redirectUrl"
         >
-            <i class="fa fa-external-link tlp-button-icon"></i> <translate>Open link</translate>
+            <i class="fas fa-external-link-alt tlp-button-icon"></i>
+            <translate>Open link</translate>
         </button>
-        <drop-down-quick-look v-bind:item="item"/>
+        <drop-down-quick-look v-bind:item="item" />
         <div class="document-header-spacer"></div>
-        <quick-look-delete-button v-bind:item="item"/>
+        <quick-look-delete-button v-bind:item="item" />
     </div>
 </template>
 
@@ -40,10 +43,10 @@ export default {
     name: "QuickLookLink",
     components: { DropDownQuickLook, QuickLookDeleteButton },
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
-        ...mapState(["project_id"])
+        ...mapState(["project_id"]),
     },
     methods: {
         redirectUrl() {
@@ -52,7 +55,7 @@ export default {
                     `/plugins/docman/?group_id=${this.project_id}&action=show&id=${this.item.id}`
                 )
             );
-        }
-    }
+        },
+    },
 };
 </script>

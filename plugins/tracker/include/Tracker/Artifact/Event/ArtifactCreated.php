@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+/*
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,27 +20,55 @@
 
 namespace Tuleap\Tracker\Artifact\Event;
 
-use Tracker_Artifact;
 use Tuleap\Event\Dispatchable;
 
-class ArtifactCreated implements Dispatchable
+final class ArtifactCreated implements Dispatchable
 {
     public const NAME = 'trackerArtifactCreated';
     /**
-     * @var Tracker_Artifact
+     * @var \Tuleap\Tracker\Artifact\Artifact
+     * @psalm-readonly
      */
     private $artifact;
+    /**
+     * @var \Tracker_Artifact_Changeset
+     * @psalm-readonly
+     */
+    private $changeset;
+    /**
+     * @var \PFUser
+     * @psalm-readonly
+     */
+    private $user;
 
-    public function __construct(Tracker_Artifact $artifact)
+    public function __construct(\Tuleap\Tracker\Artifact\Artifact $artifact, \Tracker_Artifact_Changeset $changeset, \PFUser $user)
     {
-        $this->artifact = $artifact;
+        $this->artifact  = $artifact;
+        $this->changeset = $changeset;
+        $this->user      = $user;
     }
 
     /**
-     * @return Tracker_Artifact
+     * @psalm-mutation-free
      */
-    public function getArtifact()
+    public function getArtifact(): \Tuleap\Tracker\Artifact\Artifact
     {
         return $this->artifact;
+    }
+
+    /**
+     * @psalm-mutation-free
+     */
+    public function getChangeset(): \Tracker_Artifact_Changeset
+    {
+        return $this->changeset;
+    }
+
+    /**
+     * @psalm-mutation-free
+     */
+    public function getUser(): \PFUser
+    {
+        return $this->user;
     }
 }

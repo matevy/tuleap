@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,9 +20,7 @@
 
 namespace Tuleap\Docman\Notifications;
 
-use Codendi_HTMLPurifier;
 use Docman_Item;
-use Tuleap\Notifications\UgroupToBeNotifiedPresenter;
 use Tuleap\Notifications\UserInvolvedInNotificationPresenter;
 use UserManager;
 
@@ -52,32 +50,31 @@ class NotificationListPresenter
         $this->placeholder     = dgettext('tuleap-docman', 'User, group');
         $this->notified_people = dgettext('tuleap-docman', 'Notified people');
         $this->validate_button = dgettext('tuleap-docman', 'Validate');
-        $this->monitored_doc   = $GLOBALS['Language']->getText('plugin_docman', 'details_notifications_monitored_doc');
-        $this->empty_state     = $GLOBALS['Language']->getText('plugin_docman', 'empty_state');
+        $this->monitored_doc   = dgettext('tuleap-docman', 'Monitored document');
+        $this->empty_state     = dgettext('tuleap-docman', 'No notifications set');
 
-        $this->enable_sub_hierarchy = $GLOBALS['Language']->getText('plugin_docman', 'notifications_add_user_cascade');
-        $this->cannot_delete_title  = $GLOBALS['Language']->getText('plugin_docman', 'details_notifications_help');
+        $this->enable_sub_hierarchy = dgettext('tuleap-docman', 'Enable monitoring for the whole sub-hierarchy');
+        $this->cannot_delete_title  = dgettext('tuleap-docman', 'You cannot delete because a parent folder is monitored with its sub-hierarchy. You can delete that monitoring only from the parent itself.');
     }
 
     private function buildNotificationsFromUsers(array $users, Docman_Item $item)
     {
         $user_manager    = UserManager::instance();
-        $users_to_notify = array();
+        $users_to_notify = [];
 
         foreach ($users as $user_id => $monitored_item) {
             $user = $user_manager->getUserById($user_id);
 
-            $users_to_notify[] = array(
+            $users_to_notify[] = [
                 'can_be_deleted' => $monitored_item == $item,
                 'item_title'     => $item->getTitle(),
                 'user'           => new UserInvolvedInNotificationPresenter(
                     $user->getId(),
                     $user->getName(),
                     $user->getRealName(),
-                    $user->hasAvatar(),
                     $user->getAvatarUrl()
                 )
-            );
+            ];
         }
 
         return $users_to_notify;
@@ -85,16 +82,16 @@ class NotificationListPresenter
 
     private function buildNotificationsFromUGroups(array $ugroups, Docman_Item $item)
     {
-        $groups_to_notify = array();
+        $groups_to_notify = [];
 
         foreach ($ugroups as $ugroup_monitored_item) {
             $monitored_item     = $ugroup_monitored_item->getMonitoredItem();
             $monitoring_ugroup  = $ugroup_monitored_item->getUgroupPresenter();
-            $groups_to_notify[] = array(
+            $groups_to_notify[] = [
                 'can_be_deleted' => ($monitored_item == $item),
                 'item_title'     => $monitored_item->getTitle(),
                 'ugroup'         => $monitoring_ugroup
-            );
+            ];
         }
 
         return $groups_to_notify;

@@ -19,8 +19,8 @@
 
 /* global $$:readonly, Ajax:readonly, tuleap:readonly */
 
-(function() {
-    $$("td.artifacts-folders-rollup > a.direct-link-to-artifact").each(function(link) {
+(function () {
+    $$("td.artifacts-folders-rollup > a.direct-link-to-artifact").each(function (link) {
         initRollupViewOfLink(link, 1);
     });
 
@@ -45,21 +45,21 @@
                 method: "GET",
                 parameters: {
                     action: "get-children",
-                    aid: artifact_id
+                    aid: artifact_id,
                 },
-                onSuccess: function(transport) {
+                onSuccess: function (transport) {
                     var children = transport.responseJSON;
                     if (children.length) {
                         injectChildrenInTable(children);
                     }
-                }
+                },
             });
         }
 
         function injectChildrenInTable(children_to_inject) {
             icon.classList.add("fa-caret-right");
 
-            icon.addEventListener("click", function() {
+            icon.addEventListener("click", function () {
                 simpleExpandCollapse(this, children_to_inject);
             });
         }
@@ -74,7 +74,7 @@
 
             if (subrows.length <= 0) {
                 subrows = children_to_inject.map(injectChildInTable);
-                subrows.forEach(function(row) {
+                subrows.forEach(function (row) {
                     initRollupViewOfLink(row.querySelector("a.direct-link-to-artifact"), depth + 1);
                 });
             } else {
@@ -90,7 +90,7 @@
             var additional_row = document.createElement("tr");
 
             additional_row.dataset.childOf = row_id;
-            /* eslint-disable no-multi-str */
+            /* eslint-disable no-multi-str,no-unsanitized/property */
             additional_row.innerHTML =
                 ' \
                     <td class="artifacts-folders-rollup" style="padding-left: ' +
@@ -125,7 +125,7 @@
                     <td>" +
                 child.assignees.map(formatUser).join(", ") +
                 "</td>";
-            /* eslint-enable no-multi-str */
+            /* eslint-enable no-multi-str,no-unsanitized/property */
 
             if (next_row) {
                 tbody.insertBefore(additional_row, next_row);
@@ -140,7 +140,7 @@
     function formatFolders(folder_hierarchy) {
         var html = "";
 
-        folder_hierarchy.forEach(function(folder) {
+        folder_hierarchy.forEach(function (folder) {
             /* eslint-disable no-multi-str */
             html +=
                 '<i class="fa fa-angle-right"></i> \

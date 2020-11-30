@@ -17,7 +17,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { createStoreMock } from "../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import localVue from "../../helpers/local-vue.js";
 import { shallowMount } from "@vue/test-utils";
 import FolderContentRow from "./FolderContentRow.vue";
@@ -27,7 +27,10 @@ function getFolderContentRowInstance(store, props) {
     return shallowMount(FolderContentRow, {
         localVue,
         propsData: props,
-        mocks: { $store: store }
+        mocks: { $store: store },
+        stubs: {
+            "tlp-relative-date": true,
+        },
     });
 }
 
@@ -40,14 +43,15 @@ describe("FolderContentRow", () => {
             is_uploading: false,
             is_uploading_new_version: false,
             is_uploading_in_collapsed_folder: false,
-            type: TYPE_FILE
+            type: TYPE_FILE,
+            file_type: "text",
         };
 
         store_options = {
             state: {
                 folded_items_ids: [],
-                date_time_format: "YYYY-MM-DD"
-            }
+                date_time_format: "YYYY-MM-DD",
+            },
         };
 
         store = createStoreMock(store_options);
@@ -57,12 +61,12 @@ describe("FolderContentRow", () => {
         it("Should render the quick look button and the dropdown menu when no upload action is in progress", () => {
             wrapper = getFolderContentRowInstance(store, {
                 item,
-                isQuickLookDisplayed: false
+                isQuickLookDisplayed: false,
             });
 
-            expect(wrapper.contains("[data-test=quick-look-button]")).toBeTruthy();
-            expect(wrapper.contains("[data-test=dropdown-button]")).toBeTruthy();
-            expect(wrapper.contains("[data-test=dropdown-menu]")).toBeTruthy();
+            expect(wrapper.find("[data-test=quick-look-button]").exists()).toBeTruthy();
+            expect(wrapper.find("[data-test=dropdown-button]").exists()).toBeTruthy();
+            expect(wrapper.find("[data-test=dropdown-menu]").exists()).toBeTruthy();
         });
 
         it("Should not render the quick look button and the dropdown menu when the item is being uploaded in a collapsed folder", () => {
@@ -70,12 +74,12 @@ describe("FolderContentRow", () => {
 
             wrapper = getFolderContentRowInstance(store, {
                 item,
-                isQuickLookDisplayed: false
+                isQuickLookDisplayed: false,
             });
 
-            expect(wrapper.contains("[data-test=quick-look-button]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=dropdown-button]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=dropdown-menu]")).toBeFalsy();
+            expect(wrapper.find("[data-test=quick-look-button]").exists()).toBeFalsy();
+            expect(wrapper.find("[data-test=dropdown-button]").exists()).toBeFalsy();
+            expect(wrapper.find("[data-test=dropdown-menu]").exists()).toBeFalsy();
         });
 
         it("Should not render the quick look button and the dropdown menu when the item is being uploaded", () => {
@@ -83,12 +87,12 @@ describe("FolderContentRow", () => {
 
             wrapper = getFolderContentRowInstance(store, {
                 item,
-                isQuickLookDisplayed: false
+                isQuickLookDisplayed: false,
             });
 
-            expect(wrapper.contains("[data-test=quick-look-button]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=dropdown-button]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=dropdown-menu]")).toBeFalsy();
+            expect(wrapper.find("[data-test=quick-look-button]").exists()).toBeFalsy();
+            expect(wrapper.find("[data-test=dropdown-button]").exists()).toBeFalsy();
+            expect(wrapper.find("[data-test=dropdown-menu]").exists()).toBeFalsy();
         });
 
         it("Should not render the quick look button and the dropdown menu when a new version of the item is being uploaded", () => {
@@ -96,12 +100,12 @@ describe("FolderContentRow", () => {
 
             wrapper = getFolderContentRowInstance(store, {
                 item,
-                isQuickLookDisplayed: false
+                isQuickLookDisplayed: false,
             });
 
-            expect(wrapper.contains("[data-test=quick-look-button]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=dropdown-button]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=dropdown-menu]")).toBeFalsy();
+            expect(wrapper.find("[data-test=quick-look-button]").exists()).toBeFalsy();
+            expect(wrapper.find("[data-test=dropdown-button]").exists()).toBeFalsy();
+            expect(wrapper.find("[data-test=dropdown-menu]").exists()).toBeFalsy();
         });
     });
 
@@ -112,15 +116,15 @@ describe("FolderContentRow", () => {
 
                 wrapper = getFolderContentRowInstance(store, {
                     item,
-                    isQuickLookDisplayed: true
+                    isQuickLookDisplayed: true,
                 });
 
                 expect(
-                    wrapper.contains("[data-test=progress-bar-quick-look-pane-open]")
+                    wrapper.find("[data-test=progress-bar-quick-look-pane-open]").exists()
                 ).toBeTruthy();
 
-                expect(wrapper.contains(".document-tree-cell-owner")).toBeFalsy();
-                expect(wrapper.contains(".document-tree-cell-updatedate")).toBeFalsy();
+                expect(wrapper.find(".document-tree-cell-owner").exists()).toBeFalsy();
+                expect(wrapper.find(".document-tree-cell-updatedate").exists()).toBeFalsy();
             });
 
             it("Should render the progress bar when the quick look pane is open and a new version of the item is being uploaded", () => {
@@ -128,15 +132,15 @@ describe("FolderContentRow", () => {
 
                 wrapper = getFolderContentRowInstance(store, {
                     item,
-                    isQuickLookDisplayed: true
+                    isQuickLookDisplayed: true,
                 });
 
                 expect(
-                    wrapper.contains("[data-test=progress-bar-quick-look-pane-open]")
+                    wrapper.find("[data-test=progress-bar-quick-look-pane-open]").exists()
                 ).toBeTruthy();
 
-                expect(wrapper.contains(".document-tree-cell-owner")).toBeFalsy();
-                expect(wrapper.contains(".document-tree-cell-updatedate")).toBeFalsy();
+                expect(wrapper.find(".document-tree-cell-owner").exists()).toBeFalsy();
+                expect(wrapper.find(".document-tree-cell-updatedate").exists()).toBeFalsy();
             });
         });
 
@@ -146,15 +150,15 @@ describe("FolderContentRow", () => {
 
                 wrapper = getFolderContentRowInstance(store, {
                     item,
-                    isQuickLookDisplayed: false
+                    isQuickLookDisplayed: false,
                 });
 
                 expect(
-                    wrapper.contains("[data-test=progress-bar-quick-look-pane-closed]")
+                    wrapper.find("[data-test=progress-bar-quick-look-pane-closed]").exists()
                 ).toBeTruthy();
 
-                expect(wrapper.contains(".document-tree-cell-owner")).toBeFalsy();
-                expect(wrapper.contains(".document-tree-cell-updatedate")).toBeFalsy();
+                expect(wrapper.find(".document-tree-cell-owner").exists()).toBeFalsy();
+                expect(wrapper.find(".document-tree-cell-updatedate").exists()).toBeFalsy();
             });
         });
 
@@ -163,15 +167,15 @@ describe("FolderContentRow", () => {
 
             wrapper = getFolderContentRowInstance(store, {
                 item,
-                isQuickLookDisplayed: false
+                isQuickLookDisplayed: false,
             });
 
             expect(
-                wrapper.contains("[data-test=progress-bar-quick-look-pane-closed]")
+                wrapper.find("[data-test=progress-bar-quick-look-pane-closed]").exists()
             ).toBeTruthy();
 
-            expect(wrapper.contains(".document-tree-cell-owner")).toBeFalsy();
-            expect(wrapper.contains(".document-tree-cell-updatedate")).toBeFalsy();
+            expect(wrapper.find(".document-tree-cell-owner").exists()).toBeFalsy();
+            expect(wrapper.find(".document-tree-cell-updatedate").exists()).toBeFalsy();
         });
     });
 
@@ -179,21 +183,21 @@ describe("FolderContentRow", () => {
         it("Should render the user badge and the last update date only when the quick look pane is closed", () => {
             wrapper = getFolderContentRowInstance(store, {
                 item,
-                isQuickLookDisplayed: false
+                isQuickLookDisplayed: false,
             });
 
-            expect(wrapper.contains(".document-tree-cell-owner")).toBeTruthy();
-            expect(wrapper.contains(".document-tree-cell-updatedate")).toBeTruthy();
+            expect(wrapper.find(".document-tree-cell-owner").exists()).toBeTruthy();
+            expect(wrapper.find(".document-tree-cell-updatedate").exists()).toBeTruthy();
         });
 
         it("Should not render the user badge and the last update date when the quick look pane is open", () => {
             wrapper = getFolderContentRowInstance(store, {
                 item,
-                isQuickLookDisplayed: true
+                isQuickLookDisplayed: true,
             });
 
-            expect(wrapper.contains(".document-tree-cell-owner")).toBeFalsy();
-            expect(wrapper.contains(".document-tree-cell-updatedate")).toBeFalsy();
+            expect(wrapper.find(".document-tree-cell-owner").exists()).toBeFalsy();
+            expect(wrapper.find(".document-tree-cell-updatedate").exists()).toBeFalsy();
         });
     });
 });

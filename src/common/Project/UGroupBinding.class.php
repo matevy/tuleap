@@ -80,8 +80,8 @@ class UGroupBinding //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespac
     public function getUGroupsByBindingSource($ugroupId)
     {
         $dar     = $this->getUGroupManager()->searchUGroupByBindingSource($ugroupId);
-        $ugroups = array();
-        if ($dar && !$dar->isError()) {
+        $ugroups = [];
+        if ($dar && ! $dar->isError()) {
             foreach ($dar as $row) {
                 $cloneId                        = $row['ugroup_id'];
                 $ugroups[$cloneId]['cloneName'] = $row['name'];
@@ -102,9 +102,9 @@ class UGroupBinding //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespac
     {
         $bindedUgroups  = $this->getUGroupsByBindingSource($ugroupId);
         $bindingRemoved = true;
-        if (!empty($bindedUgroups)) {
+        if (! empty($bindedUgroups)) {
             foreach ($bindedUgroups as $ugroupKey => $ugroupData) {
-                if (!$this->getUGroupManager()->updateUgroupBinding($ugroupKey)) {
+                if (! $this->getUGroupManager()->updateUgroupBinding($ugroupKey)) {
                     $bindingRemoved = false;
                 }
             }
@@ -124,7 +124,7 @@ class UGroupBinding //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespac
         $ugroups        = $this->getUGroupManager()->getExistingUgroups($groupId);
         $bindingRemoved = true;
         foreach ($ugroups as $ugroup) {
-            if (!$this->removeAllUGroupsBinding($ugroup['ugroup_id'])) {
+            if (! $this->removeAllUGroupsBinding($ugroup['ugroup_id'])) {
                 $bindingRemoved = false;
             }
         }
@@ -141,7 +141,7 @@ class UGroupBinding //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespac
     public function updateBindedUGroups($ugroupId)
     {
         $bindedUgroups = $this->getUGroupsByBindingSource($ugroupId);
-        if (!empty($bindedUgroups)) {
+        if (! empty($bindedUgroups)) {
             foreach ($bindedUgroups as $ugroupKey => $ugroupData) {
                 try {
                     $this->reloadUgroupBinding($ugroupKey, $ugroupId);
@@ -162,13 +162,14 @@ class UGroupBinding //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespac
      */
     public function getLinkTitle($ugroupId)
     {
-        $ugroup = new ProjectUGroup(array('ugroup_id' => $ugroupId));
+        $ugroup = new ProjectUGroup(['ugroup_id' => $ugroupId]);
         if ($ugroup->isBound()) {
-            $action = 'update_binding';
+            $text = $GLOBALS['Language']->getText('project_ugroup_binding', 'update_binding');
         } else {
-            $action = 'add_binding';
+            $text = $GLOBALS['Language']->getText('project_ugroup_binding', 'add_binding');
         }
-        return '- ' . $GLOBALS['Language']->getText('project_ugroup_binding', $action);
+
+        return '- ' . $text;
     }
 
     /**
@@ -181,7 +182,7 @@ class UGroupBinding //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespac
      */
     public function updateUgroupBinding($ugroupId, $sourceId)
     {
-        if (!$this->getUGroupManager()->updateUgroupBinding($ugroupId, $sourceId)) {
+        if (! $this->getUGroupManager()->updateUgroupBinding($ugroupId, $sourceId)) {
             throw new Exception('Unable to store ugroup binding');
         }
     }
@@ -222,7 +223,7 @@ class UGroupBinding //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespac
     {
         $source_ugroup = $this->getUGroupManager()->getUgroupBindingSource($ugroupId);
         if ($source_ugroup && $source_ugroup->getId() == $sourceId) {
-            $GLOBALS['Response']->addFeedback('warning', $GLOBALS['Language']->getText('project_ugroup_binding', 'duplicate_binding_warning', array($sourceId)));
+            $GLOBALS['Response']->addFeedback('warning', $GLOBALS['Language']->getText('project_ugroup_binding', 'duplicate_binding_warning', [$sourceId]));
             return false;
         }
         try {

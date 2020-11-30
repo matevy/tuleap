@@ -22,9 +22,8 @@ namespace Tuleap\ArtifactsFolders\Folder;
 
 use PFUser;
 use Project;
-use Tracker_Artifact;
 use Tracker_ArtifactFactory;
-use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class FolderHierarchicalRepresentationCollectionBuilder
 {
@@ -36,24 +35,18 @@ class FolderHierarchicalRepresentationCollectionBuilder
      * @var Dao
      */
     private $folder_dao;
-    /**
-     * @var NatureIsChildLinkRetriever
-     */
-    private $child_retriever;
 
     public function __construct(
         Tracker_ArtifactFactory $artifact_factory,
-        Dao $folder_dao,
-        NatureIsChildLinkRetriever $child_retriever
+        Dao $folder_dao
     ) {
         $this->artifact_factory = $artifact_factory;
         $this->folder_dao       = $folder_dao;
-        $this->child_retriever  = $child_retriever;
     }
 
     /** @return FolderHierarchicalRepresentationCollection */
     public function buildFolderHierarchicalRepresentationCollection(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Project $project,
         PFUser $current_user
     ) {
@@ -72,8 +65,8 @@ class FolderHierarchicalRepresentationCollectionBuilder
         FolderHierarchicalRepresentationCollection $all_folders
     ) {
         $top_level_folders = new FolderHierarchicalRepresentationCollection();
-        /** @var FolderHierarchicalRepresentation $folder_representation */
         foreach ($all_folders->toArray() as $folder_representation) {
+            \assert($folder_representation instanceof FolderHierarchicalRepresentation);
             $parent = $this->getParent($all_folders, $folder_representation->getParentId(), $current_user);
             if ($parent && $all_folders->contains($parent)) {
                 $all_folders->get($parent)->addChild($folder_representation);
@@ -87,7 +80,7 @@ class FolderHierarchicalRepresentationCollectionBuilder
 
     /** @return FolderHierarchicalRepresentationCollection */
     private function getAllFoldersAsFolderHierarchicalRepresentationCollection(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Project $project,
         PFUser $current_user
     ) {
@@ -103,7 +96,7 @@ class FolderHierarchicalRepresentationCollectionBuilder
         return $all_folders;
     }
 
-    /** @return Tracker_Artifact */
+    /** @return Artifact */
     private function getParent(
         FolderHierarchicalRepresentationCollection $all_folders,
         $parent_id,

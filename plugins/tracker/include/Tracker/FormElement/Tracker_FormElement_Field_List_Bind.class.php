@@ -19,6 +19,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BoundDecoratorEditor;
+use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BoundDecoratorSaver;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindVisitable;
 use Tuleap\Tracker\REST\FieldValueRepresentation;
 
@@ -72,13 +74,13 @@ abstract class Tracker_FormElement_Field_List_Bind implements
     {
         $bind_values = $this->getBindValues(array_keys($this->getDefaultValues()));
 
-        $rest_array = array();
+        $rest_array = [];
         foreach ($bind_values as $value) {
             $representation = new FieldValueRepresentation();
-            $representation->build(array(
+            $representation->build([
                 Tracker_FormElement_Field_List_Bind::REST_ID_KEY    => $value->getId(),
                 Tracker_FormElement_Field_List_Bind::REST_LABEL_KEY => $value->getAPIValue()
-            ));
+            ]);
             $rest_array[] = $representation;
         }
         return $rest_array;
@@ -127,7 +129,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
 
     public function fetchFormattedForJson()
     {
-        $values = array();
+        $values = [];
         foreach ($this->getAllValues() as $value) {
             $values[] = $value->fetchFormattedForJson();
         }
@@ -138,10 +140,10 @@ abstract class Tracker_FormElement_Field_List_Bind implements
     {
         $bind_factory = new Tracker_FormElement_Field_List_BindFactory();
         $bind_type = $bind_factory->getType($this);
-        return array(
+        return [
             self::REST_TYPE_KEY => $bind_type,
             self::REST_LIST_KEY => $this->getRESTBindingList()
-        );
+        ];
     }
 
     /**
@@ -253,8 +255,8 @@ abstract class Tracker_FormElement_Field_List_Bind implements
     {
         //Only filter query if criteria is valuated
         if ($criteria_value) {
-            $a = 'A_'. $this->field->id;
-            $b = 'B_'. $this->field->id;
+            $a = 'A_' . $this->field->id;
+            $b = 'B_' . $this->field->id;
             if ($this->isSearchingNone($criteria_value)) {
                 return " LEFT JOIN (
                     tracker_changeset_value AS $a
@@ -262,13 +264,13 @@ abstract class Tracker_FormElement_Field_List_Bind implements
                         $b.changeset_value_id = $a.id
                     )
                 ) ON ($a.changeset_id = c.id
-                    AND $a.field_id = ". $this->field->id ."
+                    AND $a.field_id = " . $this->field->id . "
                 )";
             }
 
             return " INNER JOIN tracker_changeset_value AS $a
                      ON ($a.changeset_id = c.id
-                         AND $a.field_id = ". $this->field->id ."
+                         AND $a.field_id = " . $this->field->id . "
                      )
                      INNER JOIN tracker_changeset_value_list AS $b ON (
                         $b.changeset_value_id = $a.id
@@ -287,15 +289,15 @@ abstract class Tracker_FormElement_Field_List_Bind implements
     {
         //Only filter query if criteria is valuated
         if ($criteria_value) {
-            $a = 'A_'. $this->field->id;
-            $b = 'B_'. $this->field->id;
+            $a = 'A_' . $this->field->id;
+            $b = 'B_' . $this->field->id;
 
             $data_access = CodendiDataAccess::instance();
 
             if ($this->isSearchingNone($criteria_value)) {
                 $values_id = $data_access->escapeIntImplode(array_values($criteria_value));
 
-                return " $b.bindvalue_id IN (". $values_id .") OR $b.bindvalue_id IS NULL ";
+                return " $b.bindvalue_id IN (" . $values_id . ") OR $b.bindvalue_id IS NULL ";
             }
 
             $ids_to_search = $data_access->escapeIntImplode($this->getIdsToSearch($criteria_value));
@@ -304,7 +306,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
                 return '';
             }
 
-            return " $b.bindvalue_id IN(". $ids_to_search .") ";
+            return " $b.bindvalue_id IN(" . $ids_to_search . ") ";
         }
         return '';
     }
@@ -314,7 +316,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
         return array_intersect(
             array_values($criteria_value),
             array_merge(
-                array(100),
+                [100],
                 array_keys($this->getAllValues())
             )
         );
@@ -349,12 +351,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
      */
     abstract public function getQueryFrom($changesetvalue_table = 'tracker_changeset_value_list');
 
-    /**
-     * Get the "from" statement to retrieve field values with their decorator if they exist
-     * @return string
-     * @see getQueryFrom
-     */
-    public function getQueryFromWithDecorator($changesetvalue_table = 'tracker_changeset_value_list')
+    public function getQueryFromWithDecorator($changesetvalue_table = 'tracker_changeset_value_list'): string
     {
         return $this->getQueryFrom($changesetvalue_table);
     }
@@ -405,10 +402,10 @@ abstract class Tracker_FormElement_Field_List_Bind implements
     {
         $html = '';
         if (is_array($this->decorators) && count($this->decorators)) {
-            $html .= '<script type="text/javascript">'.PHP_EOL;
-            $html .= 'codendi.tracker.decorator.decorators['. $this->field->id .'] = [];'. PHP_EOL;
+            $html .= '<script type="text/javascript">' . PHP_EOL;
+            $html .= 'codendi.tracker.decorator.decorators[' . $this->field->id . '] = [];' . PHP_EOL;
             foreach ($this->decorators as $d) {
-                $html .= 'codendi.tracker.decorator.decorators['. $this->field->id .']['. $d->value_id .'] = '. $d->toJSON() .';'. PHP_EOL;
+                $html .= 'codendi.tracker.decorator.decorators[' . $this->field->id . '][' . $d->value_id . '] = ' . $d->toJSON() . ';' . PHP_EOL;
             }
             $html .= '</script>';
         }
@@ -423,7 +420,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
             if (isset($this->decorators[$value_id])) {
                 return $this->decorators[$value_id]->decorateSelectOptionWithStyles();
             } else {
-                $default_styles[ 'classes' ] = 'select-option-not-colored';
+                $default_styles['classes'] = 'select-option-not-colored';
 
                 return $default_styles;
             }
@@ -452,10 +449,12 @@ abstract class Tracker_FormElement_Field_List_Bind implements
      */
     public function process($params, $no_redirect = false)
     {
+        $decorator_editor = new BoundDecoratorEditor(new Tracker_FormElement_Field_List_BindDecoratorDao());
+
         if (isset($params['decorator'])) {
             foreach ($params['decorator'] as $value_id => $hexacolor) {
                 if ($hexacolor) {
-                    Tracker_FormElement_Field_List_BindDecorator::update($this->field->getId(), $value_id, $hexacolor);
+                    $decorator_editor->update($this->field, $value_id, $hexacolor, $params['required']);
                 } else {
                     Tracker_FormElement_Field_List_BindDecorator::delete($this->field->getId(), $value_id);
                 }
@@ -466,42 +465,30 @@ abstract class Tracker_FormElement_Field_List_Bind implements
 
         $this->getDefaultValueDao()->save($this->field->getId(), $default);
 
-        if (!$no_redirect) {
+        if (! $no_redirect) {
             $tracker = $this->field->getTracker();
             if ($tracker === null) {
                 $GLOBALS['Response']->redirect('/');
                 return true;
             }
-            $GLOBALS['Response']->redirect('?'. http_build_query(array(
+            $GLOBALS['Response']->redirect('?' . http_build_query([
                     'tracker'            => $tracker->getId(),
                     'func'               => 'admin-formElements',
-            )));
+            ]));
         }
         return true;
     }
 
-    private function extractDefaultValues(array $params)
+    private function extractDefaultValues(array $params): array
     {
-        $default = array();
-        if (isset($params['default'])) {
-            if (isset($params['default'][0])) {
-                $bind_default = str_replace('b', '', $params['default'][0]);
-                $bind_default = explode(',', $bind_default);
-                $bind_default = $this->filterDefaultValues($bind_default);
-
-                return $bind_default;
-            }
-
-            $default = $params['default'];
+        if (! isset($params['default'])) {
+            return [];
         }
 
-        return $default;
+        return $this->filterDefaultValues($params['default']);
     }
 
-    /**
-     * @return array
-     */
-    protected function filterDefaultValues(array $bind_default)
+    protected function filterDefaultValues(array $bind_default): array
     {
         return $bind_default;
     }
@@ -511,7 +498,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
      */
     protected function getDefaultValueDao()
     {
-        if (!$this->default_value_dao) {
+        if (! $this->default_value_dao) {
             $this->default_value_dao = new Tracker_FormElement_Field_List_Bind_DefaultvalueDao();
         }
         return $this->default_value_dao;
@@ -621,6 +608,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
         }
 
         if (is_array($this->decorators) && ! empty($this->decorators)) {
+            $saver = $this->getBoundDecoratorSaver();
             $values = $this->getBindValues();
             foreach ($this->decorators as $decorator) {
                 if (! $decorator->isUsingOldPalette()) {
@@ -629,13 +617,20 @@ abstract class Tracker_FormElement_Field_List_Bind implements
                     $color = ColorHelper::RGBtoHexa($decorator->r, $decorator->g, $decorator->b);
                 }
 
-                Tracker_FormElement_Field_List_BindDecorator::save(
-                    $this->field->getId(),
-                    $values[$decorator->value_id]->getId(),
-                    $color
-                );
+                if (isset($values[$decorator->value_id])) {
+                    $value_id = $values[$decorator->value_id]->getId();
+                } else {
+                    $value_id = $decorator->value_id;
+                }
+
+                $saver->save($this->field, $value_id, $color);
             }
         }
+    }
+
+    private function getBoundDecoratorSaver(): BoundDecoratorSaver
+    {
+        return new BoundDecoratorSaver(new Tracker_FormElement_Field_List_BindDecoratorDao());
     }
 
     /**
@@ -647,7 +642,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
      */
     public function getRecipients(Tracker_Artifact_ChangesetValue_List $changeset_value)
     {
-        return array();
+        return [];
     }
 
     /**
@@ -670,7 +665,7 @@ abstract class Tracker_FormElement_Field_List_Bind implements
      */
     public function getValuesByKeyword($keyword, $limit = 10)
     {
-        $values = array();
+        $values = [];
         //pretty slow, but we do not have a better way to filter a value function
         foreach ($this->getAllValues($keyword) as $v) {
             if (false !== stripos($v->getLabel(), $keyword)) {
@@ -686,7 +681,6 @@ abstract class Tracker_FormElement_Field_List_Bind implements
     /**
      * Retrieve all the numeric values of the binded values
      *
-     * @param Tracker_Artifact_ChangesetValue $changeset_value
      * @return array of numeric bind values
      */
     abstract public function getNumericValues(Tracker_Artifact_ChangesetValue $changeset_value);
@@ -697,17 +691,17 @@ abstract class Tracker_FormElement_Field_List_Bind implements
     protected function getRESTBindValue(Tracker_FormElement_Field_List_Value $value)
     {
         $representation = new FieldValueRepresentation();
-        $values = array(
+        $values = [
             self::REST_ID_KEY    => $value->getId(),
             self::REST_LABEL_KEY => $value->getAPIValue()
-        );
+        ];
         $representation->build($values);
         return $representation;
     }
 
     public function getRESTAvailableValues()
     {
-        $rest_values = array();
+        $rest_values = [];
         foreach ($this->getAllValues() as $value) {
             $rest_values[] = $this->getRESTBindValue($value);
         }
@@ -718,9 +712,9 @@ abstract class Tracker_FormElement_Field_List_Bind implements
 
     abstract public function getFieldDataFromRESTObject(array $rest_data, Tracker_FormElement_Field_List $field);
 
-    public function getFieldDataFromRESTValue($value)
+    public function getFieldDataFromRESTValue($value): int
     {
-        return intval($value);
+        return (int) $value;
     }
 
     public function addValue($new_value)
@@ -734,7 +728,8 @@ abstract class Tracker_FormElement_Field_List_Bind implements
             return true;
         }
 
-        if (is_array($criteria_value)
+        if (
+            is_array($criteria_value)
             && in_array(Tracker_FormElement_Field_List::NONE_VALUE, $criteria_value)
         ) {
             return true;

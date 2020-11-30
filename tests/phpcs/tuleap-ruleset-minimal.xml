@@ -6,7 +6,7 @@
 >
     <description>Tuleap minimal coding standard.</description>
 
-    <rule ref="PSR2">
+    <rule ref="PSR12">
         <exclude name="Generic.Files.LineLength.TooLong"/>
         <exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
         <!-- checked by SlevomatCodingStandard.Namespaces.UseSpacing -->
@@ -15,15 +15,24 @@
         <exclude name="Squiz.Classes.ValidClassName.NotCamelCaps"/>
         <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
         <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
-        <exclude name="Squiz.Scope.MethodScope.Missing"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.ScopeMissing"/>
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
-        <exclude name="PSR2.Classes.PropertyDeclaration.VarUsed"/>
-        <exclude name="PSR1.Classes.ClassDeclaration.MultipleClasses"/>
-        <exclude name="PSR2.Classes.ClassDeclaration.CloseBraceSameLine"/>
-        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace"/>
-        <exclude name="PEAR.Functions.ValidDefaultValue.NotAtEnd"/>
+        <!-- conflict and mostly checked by TuleapCodingStandard.Sniffs.Commenting.FileCopyrightSniff -->
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
     </rule>
+
+    <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
+      <exclude-pattern>*/phpwiki/*</exclude-pattern>
+      <exclude-pattern>*/embedded_vendor/*</exclude-pattern>
+      <exclude-pattern>*/www/include/nusoap.php$</exclude-pattern>
+      <exclude-pattern>*/fusionforge/FusionForge.php$</exclude-pattern>
+      <exclude-pattern>*/mediawiki/www/skins/Tuleap123/Tuleap123.php$</exclude-pattern>
+      <exclude-pattern>*/mediawiki/www/LocalSettings.php$</exclude-pattern>
+      <exclude-pattern>*/mediawiki-skin/Tuleap.php$</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR12.Operators.OperatorSpacing"/>
+    <!-- Type casting operators MUST NOT have any space within the parentheses. -->
+    <rule ref="Squiz.WhiteSpace.CastSpacing"/>
     <!-- Forbid superfluous whitespaces -->
     <rule ref="Squiz.WhiteSpace.SuperfluousWhitespace">
         <properties>

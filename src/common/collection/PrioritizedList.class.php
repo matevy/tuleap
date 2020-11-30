@@ -25,11 +25,11 @@ require_once('LinkedList.class.php');
  */
 class PrioritizedList extends LinkedList
 {
-    var $priorities;
-    function __construct($initial_array = '')
+    public $priorities;
+    public function __construct($initial_array = '')
     {
         parent::__construct($initial_array);
-        $this->priorities = array();
+        $this->priorities = [];
         if (count($this->elements)) {
             $this->priorities[] = array_keys(array_fill(0, count($this->elements), 0));
         }
@@ -38,15 +38,15 @@ class PrioritizedList extends LinkedList
     /**
      * add the element add the end of the PrioritizedList
      */
-    function add($element, $priority = 0)
+    public function add($element, $priority = 0)
     {
         $this->elements[] = $element;
         $this->priorities[$priority][] = count($this->elements) - 1;
     }
 
-    function iterator()
+    public function iterator()
     {
-        $tab = array();
+        $tab = [];
         krsort($this->priorities);
         foreach ($this->priorities as $elements) {
             foreach ($elements as $position) {

@@ -19,24 +19,30 @@
 
 namespace Tuleap\User\REST\v1;
 
-use EventManager;
 use Luracast\Restler\RestException;
 use PaginatedUserCollection;
 use PFUser;
+use Tuleap\Authentication\Scope\AggregateAuthenticationScopeBuilder;
+use Tuleap\date\DefaultRelativeDatesDisplayPreferenceRetriever;
+use Tuleap\Project\REST\UserGroupRepresentation;
+use Tuleap\Project\REST\UserGroupRetriever;
+use Tuleap\Project\UGroupLiteralizer;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\JsonDecoder;
-use Tuleap\REST\v1\TimetrackingRepresentationBase;
 use Tuleap\User\AccessKey\AccessKeyDAO;
 use Tuleap\User\AccessKey\AccessKeyMetadataRetriever;
 use Tuleap\User\AccessKey\REST\UserAccessKeyRepresentation;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeBuilderCollector;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeDAO;
+use Tuleap\User\AccessKey\Scope\AccessKeyScopeRetriever;
+use Tuleap\User\AccessKey\Scope\CoreAccessKeyScopeBuilderFactory;
+use Tuleap\User\Admin\UserStatusChecker;
 use Tuleap\User\History\HistoryCleaner;
 use Tuleap\User\History\HistoryEntry;
 use Tuleap\User\History\HistoryRetriever;
 use Tuleap\User\REST\MinimalUserRepresentation;
 use Tuleap\User\REST\UserRepresentation;
-use Tuleap\Widget\Event\UserTimeRetriever;
-use UGroupLiteralizer;
 use User_ForgeUserGroupPermission_RetrieveUserMembershipInformation;
 use User_ForgeUserGroupPermission_UserManagement;
 use User_ForgeUserGroupPermissionsDao;
@@ -49,11 +55,13 @@ use UserManager;
 class UserResource extends AuthenticatedResource
 {
 
-    public const SELF_ID         = 'self';
-    public const MAX_LIMIT       = 50;
-    public const DEFAULT_LIMIT   = 10;
-    public const DEFAULT_OFFSET  = 0;
-    public const MAX_TIMES_BATCH = 100;
+    public const SELF_ID                        = 'self';
+    public const MAX_LIMIT                      = 50;
+    public const DEFAULT_LIMIT                  = 10;
+    public const DEFAULT_OFFSET                 = 0;
+    public const MAX_TIMES_BATCH                = 100;
+    public const DEFAULT_USER_MEMBERSHIP_SCOPE  = null;
+    public const DEFAULT_USER_MEMBERSHIP_FORMAT = null;
 
     /** @var JsonDecoder */
     private $json_decoder;
@@ -69,19 +77,21 @@ class UserResource extends AuthenticatedResource
      */
     private $history_retriever;
 
-    /** @var EventManager */
-    private $event_manager;
-
     /** @var User_ForgeUserGroupPermissionsManager */
     private $forge_ugroup_permissions_manager;
 
+    /**
+     * @var UserGroupRetriever
+     */
+    private $user_group_retriever;
+
     public function __construct()
     {
-        $this->user_manager       = UserManager::instance();
-        $this->json_decoder       = new JsonDecoder();
-        $this->ugroup_literalizer = new UGroupLiteralizer();
-        $this->history_retriever  = new HistoryRetriever(\EventManager::instance());
-        $this->event_manager      = EventManager::instance();
+        $this->user_manager         = UserManager::instance();
+        $this->json_decoder         = new JsonDecoder();
+        $this->ugroup_literalizer   = new UGroupLiteralizer();
+        $this->history_retriever    = new HistoryRetriever(\EventManager::instance());
+        $this->user_group_retriever = new UserGroupRetriever(new \UGroupManager());
 
         $this->forge_ugroup_permissions_manager = new User_ForgeUserGroupPermissionsManager(
             new User_ForgeUserGroupPermissionsDao()
@@ -95,25 +105,32 @@ class UserResource extends AuthenticatedResource
      * <pre> Note that when accessing this route without authentication certain properties<br>
      * will not be returned in the response.
      * </pre>
+     * <br>
+     * The user ID can be either:
+     * <ul>
+     *   <li>an integer value to get this specific user information</li>
+     *   <li>the "self" value to get our own user information</li>
+     * </ul>
      *
      * @url GET {id}
      * @access hybrid
      *
-     * @param int $id Id of the desired user
+     * @param string $id Id of the desired user
      *
      * @throws RestException 400
      * @throws RestException 403
      * @throws RestException 404
      *
-     * @return UserRepresentation {@type UserRepresentation}
+     * @return MinimalUserRepresentation {@type MinimalUserRepresentation}
      */
-    public function getId($id)
+    public function getId(string $id)
     {
         $this->checkAccess();
 
-        $user                = $this->getUserById($id);
-        $user_representation = ($this->is_authenticated) ? new UserRepresentation() : new MinimalUserRepresentation();
-        return $user_representation->build($user);
+        $user_id = $this->getUserIDFromIDOrSelf($id);
+
+        $user                = $this->getUserById($user_id);
+        return ($this->is_authenticated) ? UserRepresentation::build($user) : MinimalUserRepresentation::build($user);
     }
 
     /**
@@ -186,7 +203,7 @@ class UserResource extends AuthenticatedResource
             throw new RestException(400, 'You can only search on "username"');
         }
         $user  = $this->user_manager->getUserByUserName($json_query['username']);
-        $users = array();
+        $users = [];
         if ($user !== null) {
             $users[] = $user;
         }
@@ -217,10 +234,10 @@ class UserResource extends AuthenticatedResource
             self::MAX_LIMIT
         );
 
-        $list_of_user_representation = array();
+        $list_of_user_representation = [];
         foreach ($user_collection->getUsers() as $user) {
-            $user_representation = ($this->is_authenticated) ? new UserRepresentation() : new MinimalUserRepresentation();
-            $list_of_user_representation[] = $user_representation->build($user);
+            $user_representation = ($this->is_authenticated) ? UserRepresentation::build($user) : MinimalUserRepresentation::build($user);
+            $list_of_user_representation[] = $user_representation;
         }
 
         return $list_of_user_representation;
@@ -228,6 +245,12 @@ class UserResource extends AuthenticatedResource
 
     /**
      * Get the list of user groups the given user is member of
+     *
+     * The user ID can be either:
+     * <ul>
+     *   <li>an integer value to get this specific user information</li>
+     *   <li>the "self" value to get our own user information</li>
+     * </ul>
      *
      * This list of groups is displayed as an array of string:
      * <pre>
@@ -240,33 +263,113 @@ class UserResource extends AuthenticatedResource
      * ]
      * </pre>
      *
-     * @url GET {id}/membership
-     * @access protected
+     * If you choose the "project" scope, any platform group will not be
+     * presented as a result (ie: site_active in this case").
      *
-     * @param int $id Id of the desired user
+     * <br />
+     * <br />
      *
-     * @throws RestException 400
+     * If you choose the "id" format, which is only compatible with "project" scope
+     * you will get an array of group ids instead:
+     * <pre>
+     * [
+     *     "102_3",
+     *     "102_4",
+     *     "108"
+     *     ...
+     * ]
+     * </pre>
+     *
+     * If you choose the "full" format, which is only compatible with "project" scope
+     * you will get an array of group of user groups:
+     * <pre>
+     * [  <br/>
+     *    &nbsp; { <br/>
+     *  &nbsp;"id": "106_3",  <br/>
+     *   &nbsp;"uri": "user_groups/106_3",  <br/>
+     *  &nbsp;"label": "Project members",  <br/>
+     *  &nbsp;"users_uri": "user_groups/106_3/users",  <br/>
+     *  &nbsp;"short_name": "project_members",  <br/>
+     *  &nbsp;"key": "ugroup_project_members_name_key",  <br/>
+     *  &nbsp;"project": {  <br/>
+     *   &nbsp; &nbsp;"id": 114,  <br/>
+     *     &nbsp; &nbsp; "uri": "projects/114",  <br/>
+     *    &nbsp; &nbsp;"label": "test",  <br/>
+     *    &nbsp; &nbsp; "shortname": "test",  <br/>
+     *     &nbsp; &nbsp; "status": "active",  <br/>
+     *     &nbsp; &nbsp; "access": "public",  <br/>
+     *     &nbsp; &nbsp; "is_template": false  <br/>
+     *      &nbsp; &nbsp; }  <br/>
+     *     &nbsp; },  <br/>
+     * ... <br/>
+     * ]
+     * </pre>
+     *
+     * @url          GET {id}/membership
+     * @access       protected
+     * @oauth2-scope read:user_membership
+     *
+     * @param string        $id     Id of the desired user
+     * @param string | null $scope  Scope to project permissions or platform permissions {@from path} {@choice project}
+     * @param string | null $format Special format to display the groups, only works with project scope {@from path} {@choice id,full}
+     *
+     * @return array {@type UserGroupRepresentation | string}
      * @throws RestException 403
      * @throws RestException 404
      *
-     * @return array {@type string}
+     * @throws RestException 400
      */
-    public function getMembership($id)
-    {
+    public function getMembership(
+        $id,
+        $scope = self::DEFAULT_USER_MEMBERSHIP_SCOPE,
+        $format = self::DEFAULT_USER_MEMBERSHIP_FORMAT
+    ) {
         $this->checkAccess();
 
-        $watchee = $this->getUserById($id);
+        $user_id = $this->getUserIDFromIDOrSelf($id);
+
+        $watchee = $this->getUserById($user_id);
         $watcher = $this->user_manager->getCurrentUser();
         if ($this->checkUserCanSeeOtherUser($watcher, $watchee)) {
+            if ($scope === "project") {
+                if ($format === "id") {
+                    return $this->ugroup_literalizer->getProjectUserGroupsIdsForUser($watchee);
+                } elseif ($format === "full") {
+                    return $this->getUserGroupsRepresentation($watchee);
+                }
+                return $this->ugroup_literalizer->getProjectUserGroupsForUser($watchee);
+            }
+
+            if ($format === "id" || $format === 'full') {
+                throw new RestException(400, "format=id or format=full are only supported for project scope");
+            }
+
             return $this->ugroup_literalizer->getUserGroupsForUser($watchee);
         }
-        throw new RestException(403, "Cannot see other's membreship");
+        throw new RestException(403, "Cannot see other's membership");
     }
 
     /**
-     * @url OPTIONS {id}/preferences
+     * @return UserGroupRepresentation[]
+     * @throws RestException
+     */
+    private function getUserGroupsRepresentation(PFUser $watchee): array
+    {
+        $ugroup_ids  = $this->ugroup_literalizer->getProjectUserGroupsIdsForUser($watchee);
+        $user_groups = [];
+        foreach ($ugroup_ids as $id) {
+            $ugroup                    = $this->user_group_retriever->getExistingUserGroup($id);
+            $project                   = $ugroup->getProject();
+            $user_group_representation = new UserGroupRepresentation($project, $ugroup);
+            $user_groups[] = $user_group_representation;
+        }
+        return $user_groups;
+    }
+
+    /**
+     * @url    OPTIONS {id}/preferences
      *
-     * @param int $id Id of the user
+     * @param string $id Id of the user
      *
      * @access public
      */
@@ -278,23 +381,33 @@ class UserResource extends AuthenticatedResource
     /**
      * Get a user preference
      *
+     * The user ID can be either:
+     * <ul>
+     *   <li>an integer value to get this specific user information</li>
+     *   <li>the "self" value to get our own user information</li>
+     * </ul>
+     *
      * @url GET {id}/preferences
      *
      * @access hybrid
      *
-     * @param int    $id  Id of the desired user
+     * @param string    $id  Id of the desired user
      * @param string $key Preference key
      *
      * @throws RestException 401
      * @throws RestException 403
      * @throws RestException 404
+     * @throws RestException 400
      *
      * @return UserPreferenceRepresentation
      */
     public function getPreferences($id, $key)
     {
         $this->checkAccess();
+
         $this->optionPreferences($id);
+
+        $id = $this->getUserIDFromIDOrSelf($id);
 
         if ($id != $this->user_manager->getCurrentUser()->getId()) {
             throw new RestException(403, 'You can only access to your own preferences');
@@ -302,110 +415,77 @@ class UserResource extends AuthenticatedResource
 
         $value = $this->getUserPreference($id, $key);
 
-        $preference_representation = new UserPreferenceRepresentation();
-        $preference_representation->build($key, $value);
-
-        return $preference_representation;
-    }
-
-    /**
-     * Get Timetracking times
-     *
-     * Get the times in all projects for the current user and a given time period
-     *
-     * <br><br>
-     * Notes on the query parameter
-     * <ol>
-     *  <li>You have to specify a start_date and an end_date</li>
-     *  <li>One day minimum between the two dates</li>
-     *  <li>end_date must be greater than start_date</li>
-     *  <li>Dates must be in ISO date format</li>
-     * </ol>
-     *
-     * Example of query:
-     * <br><br>
-     * {
-     *   "start_date": "2018-03-01T00:00:00+01",
-     *   "end_date"  : "2018-03-31T00:00:00+01"
-     * }
-     * @url GET/{id}/timetracking
-     * @access protected
-     *
-     * @param int $id user's id
-     * @param string $query JSON object of search criteria properties {@from query}
-     * @param int $limit Number of elements displayed per page {@from path}{@min 1}{@max 100}
-     * @param int $offset Position of the first element to display {@from path}{@min 0}
-     *
-     * @return TimetrackingRepresentationBase[] {@type TimetrackingRepresentationBase}
-     * @throws RestException
-     */
-    protected function getUserTimes($id, $query, $limit = self::MAX_TIMES_BATCH, $offset = self::DEFAULT_OFFSET)
-    {
-        $this->checkAccess();
-
-        $this->sendAllowHeaders();
-        $user_time_retriever = new UserTimeRetriever(
-            $id,
-            $query,
-            $limit,
-            $offset
-        );
-
-        $this->event_manager->processEvent($user_time_retriever);
-
-        if ($user_time_retriever->getTimes() !== null) {
-            return $user_time_retriever->getTimes();
-        } else {
-            throw new RestException(404, 'Timetracking plugin not activated');
+        if (! $value && $key === DefaultRelativeDatesDisplayPreferenceRetriever::DEFAULT_RELATIVE_DATES_DISPLAY) {
+            $value = DefaultRelativeDatesDisplayPreferenceRetriever::retrieveDefaultValue();
         }
+
+        return UserPreferenceRepresentation::build($key, $value);
     }
 
     /**
      * Delete a user preference
      *
+     * The user ID can be either:
+     * <ul>
+     *   <li>an integer value to get this specific user information</li>
+     *   <li>the "self" value to get our own user information</li>
+     * </ul>
+     *
      * @url DELETE {id}/preferences
      *
      * @access hybrid
      *
-     * @param int    $id Id of the desired user
+     * @param string $id Id of the desired user
      * @param string $key Preference key
      *
      * @throws RestException 401
      * @throws RestException 500
+     * @throws RestException 400
      */
     public function deletePreferences($id, $key)
     {
         $this->checkAccess();
+
         $this->optionPreferences($id);
+
+        $id = $this->getUserIDFromIDOrSelf($id);
 
         if ($id != $this->user_manager->getCurrentUser()->getId()) {
             throw new RestException(403, 'You can only set your own preferences');
         }
 
-        if (! $this->deleteUserPreference($id, $key)) {
-            throw new RestException(500, 'Unable to delete the user preference');
-        }
+        $this->deleteUserPreference($id, $key);
     }
 
     /**
      * Set a user preference
      *
+     * The user ID can be either:
+     * <ul>
+     *   <li>an integer value to get this specific user information</li>
+     *   <li>the "self" value to get our own user information</li>
+     * </ul>
+     *
      * @url PATCH {id}/preferences
      *
      * @access hybrid
      *
-     * @param int $id Id of the desired user
+     * @param string $id Id of the desired user
      * @param UserPreferenceRepresentation $preference Preference representation {@from body}
      *
      * @throws RestException 401
      * @throws RestException 500
+     * @throws RestException 400
      *
      * @return UserPreferenceRepresentation
      */
     public function patchPreferences($id, $preference)
     {
         $this->checkAccess();
+
         $this->optionPreferences($id);
+
+        $id = $this->getUserIDFromIDOrSelf($id);
 
         if ($id != $this->user_manager->getCurrentUser()->getId()) {
             throw new RestException(403, 'You can only set your own preferences');
@@ -415,9 +495,7 @@ class UserResource extends AuthenticatedResource
             throw new RestException(404, 'User not found');
         }
 
-        if (! $this->setUserPreference($id, $preference->key, $preference->value)) {
-            throw new RestException(500, 'Unable to set the user preference');
-        }
+        $this->setUserPreference($id, $preference->key, $preference->value);
     }
 
     private function getUserPreference($user_id, $key)
@@ -425,14 +503,14 @@ class UserResource extends AuthenticatedResource
         return $this->user_manager->getUserById($user_id)->getPreference($key);
     }
 
-    private function setUserPreference($user_id, $key, $value)
+    private function setUserPreference($user_id, $key, $value): void
     {
-        return $this->user_manager->getUserById($user_id)->setPreference($key, $value);
+        $this->user_manager->getUserById($user_id)->setPreference($key, $value);
     }
 
-    private function deleteUserPreference($user_id, $key)
+    private function deleteUserPreference($user_id, $key): void
     {
-        return $this->user_manager->getUserById($user_id)->delPreference($key);
+        $this->user_manager->getUserById($user_id)->delPreference($key);
     }
 
     private function checkUserCanSeeOtherUser(PFUser $watcher, PFUser $watchee)
@@ -480,53 +558,70 @@ class UserResource extends AuthenticatedResource
      * @param string  $id        Id of the user
      * @param Array   $values    User fields values
      *
+     * @throws RestException
      */
     protected function patchUserDetails($id, array $values)
     {
-        $watchee = $this->getUserById($id);
-        $watcher = $this->user_manager->getCurrentUser();
-        if ($this->checkUserCanUpdateOtherUser($watcher, $watchee)) {
+        $user_to_update = $this->getUserById($id);
+        $current_user = $this->user_manager->getCurrentUser();
+        if ($this->checkUserCanUpdate($current_user)) {
             foreach ($values as $key => $value) {
                 switch ($key) {
                     case "status":
-                        $watchee->setStatus($value);
+                        $this->updateUserStatus($user_to_update, $value);
                         break;
                     case "email":
-                        $watchee->setEmail($value);
+                        $user_to_update->setEmail($value);
                         break;
                     case "real_name":
-                        $watchee->setRealName($value);
+                        $user_to_update->setRealName($value);
                         break;
                     case "username":
-                        $watchee->setUserName($value);
+                        $user_to_update->setUserName($value);
                         break;
                     default:
                         break;
                 }
             }
-            return $this->user_manager->updateDb($watchee);
+            return $this->user_manager->updateDb($user_to_update);
         }
         throw new RestException(403, "Cannot update other's details");
     }
 
     /**
      * Check if user has permission to update user details
-     * @param PFUser $watcher
-     * @param PFUser $watchee
      *
      * @return bool
      *
      */
-    private function checkUserCanUpdateOtherUser(PFUser $watcher, PFUser $watchee)
+    private function checkUserCanUpdate(PFUser $current_user)
     {
-        if ($watcher->isSuperUser()) {
+        if ($current_user->isSuperUser()) {
             return true;
         }
 
         return $this->forge_ugroup_permissions_manager->doesUserHavePermission(
-            $watcher,
+            $current_user,
             new User_ForgeUserGroupPermission_UserManagement()
         );
+    }
+
+    /**
+     * @throws RestException
+     */
+    private function updateUserStatus(PFUser $user_to_update, string $value): void
+    {
+        if ($value === PFUser::STATUS_RESTRICTED) {
+            $user_status_checker = new UserStatusChecker();
+            if (! $user_status_checker->doesPlatformAllowRestricted()) {
+                throw new RestException(400, "Restricted users are not authorized.");
+            }
+            if (! $user_status_checker->isRestrictedStatusAllowedForUser($user_to_update)) {
+                throw new RestException(400, "This user can't be restricted.");
+            }
+        }
+
+        $user_to_update->setStatus($value);
     }
 
     private function getUserById($id)
@@ -584,8 +679,7 @@ class UserResource extends AuthenticatedResource
         $current_user = $this->user_manager->getCurrentUser();
         $this->checkUserCanAccessToTheHistory($current_user, $id);
 
-        $history_representation = new UserHistoryRepresentation();
-        $history                = $this->history_retriever->getHistory($current_user);
+        $history = $this->history_retriever->getHistory($current_user);
 
         $filtered_history = array_filter(
             $history,
@@ -594,9 +688,7 @@ class UserResource extends AuthenticatedResource
             }
         );
 
-        $history_representation->build($filtered_history);
-
-        return $history_representation;
+        return UserHistoryRepresentation::build($filtered_history);
     }
 
     /**
@@ -676,7 +768,16 @@ class UserResource extends AuthenticatedResource
             throw new RestException(403, 'You can only access to your own access keys');
         }
 
-        $access_key_metadata_retriever = new AccessKeyMetadataRetriever(new AccessKeyDAO());
+        $access_key_metadata_retriever = new AccessKeyMetadataRetriever(
+            new AccessKeyDAO(),
+            new AccessKeyScopeRetriever(
+                new AccessKeyScopeDAO(),
+                AggregateAuthenticationScopeBuilder::fromBuildersList(
+                    CoreAccessKeyScopeBuilderFactory::buildCoreAccessKeyScopeBuilder(),
+                    AggregateAuthenticationScopeBuilder::fromEventDispatcher(\EventManager::instance(), new AccessKeyScopeBuilderCollector())
+                )
+            )
+        );
         $all_access_key_medatada       = $access_key_metadata_retriever->getMetadataByUser($current_user);
 
         Header::sendPaginationHeaders($limit, $offset, count($all_access_key_medatada), self::MAX_LIMIT);
@@ -689,5 +790,25 @@ class UserResource extends AuthenticatedResource
         }
 
         return $access_key_representations;
+    }
+
+
+    /**
+     * @throws RestException 400
+     */
+    private function getUserIDFromIDOrSelf(string $id): int
+    {
+        $user_id = null;
+        if ($id === self::SELF_ID) {
+            $user_id = (int) $this->user_manager->getCurrentUser()->getId();
+        } elseif (ctype_digit($id)) {
+            $user_id = (int) $id;
+        }
+
+        if ($user_id === null) {
+            throw new RestException(400, 'Provided User Id is not well formed.');
+        }
+
+        return $user_id;
     }
 }

@@ -31,19 +31,12 @@ class AgileDashboard_KanbanManager
      */
     private $dao;
 
-    /**
-     * @var AgileDashboard_HierarchyChecker
-     */
-    private $hierarchy_checker;
-
     public function __construct(
         AgileDashboard_KanbanDao $dao,
-        TrackerFactory $tracker_factory,
-        AgileDashboard_HierarchyChecker $hierarchy_checker
+        TrackerFactory $tracker_factory
     ) {
         $this->dao               = $dao;
         $this->tracker_factory   = $tracker_factory;
-        $this->hierarchy_checker = $hierarchy_checker;
     }
 
     public function doesKanbanExistForTracker(Tracker $tracker)
@@ -63,11 +56,11 @@ class AgileDashboard_KanbanManager
 
     public function getTrackersWithKanbanUsage($project_id, PFUser $user)
     {
-        $trackers     = array();
+        $trackers     = [];
         $all_trackers = $this->tracker_factory->getTrackersByGroupIdUserCanView($project_id, $user);
 
         foreach ($all_trackers as $tracker) {
-            $tracker_representation         = array();
+            $tracker_representation         = [];
             $tracker_representation['id']   = $tracker->getId();
             $tracker_representation['name'] = $tracker->getName();
 
@@ -89,7 +82,7 @@ class AgileDashboard_KanbanManager
      */
     public function getTrackersUsedAsKanban(Project $project)
     {
-        $trackers = array();
+        $trackers = [];
         foreach ($this->dao->getKanbansForProject($project->getId()) as $row) {
             $tracker = $this->tracker_factory->getTrackerById($row['tracker_id']);
             if ($tracker) {

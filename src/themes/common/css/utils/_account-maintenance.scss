@@ -1,0 +1,82 @@
+body.account-maintenance .content { /* stylelint-disable-line selector-no-qualifying-type */
+    padding: 0;
+}
+
+h3.account-title { /* stylelint-disable-line selector-no-qualifying-type */
+    font-size: 1.2em;
+
+    i.help-button { /* stylelint-disable-line selector-no-qualifying-type */
+        vertical-align: initial;
+    }
+}
+
+#account-maintenance {
+    padding-left: 25px;
+
+    > div {
+        margin-bottom: 35px;
+    }
+
+    h4 {
+        color: #666666;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+}
+
+#account-third-party-applications {
+    > div {
+        margin-bottom: 35px;
+    }
+}
+
+.user-username {
+    display: block;
+    color: #808080;
+    font-size: 1.4em;
+    font-weight: bold;
+}
+
+.user-info-label {
+    color: #808080;
+}
+
+.table-label {
+    padding-right: 10px;
+    text-align: right;
+}
+
+.first-user-info {
+    display: flex;
+    padding: 15px 0 0;
+}
+
+.user-info-table {
+    margin-top: 30px;
+}
+
+#account-email-settings {
+    > p {
+        margin: 0;
+    }
+}
+
+.table-content-centered {
+    display: inline;
+    vertical-align: middle;
+}
+
+#user-info-separation {
+    margin-bottom: 30px;
+}
+
+i.help-button { /* stylelint-disable-line selector-no-qualifying-type */
+    color: #c2c2c2;
+    font-size: 1.3em;
+    text-decoration: none;
+    vertical-align: middle;
+}
+
+.account-maintenance > .wrapper {
+    min-height: initial;
+}

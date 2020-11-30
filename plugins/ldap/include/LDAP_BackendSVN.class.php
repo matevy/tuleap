@@ -37,7 +37,6 @@ class LDAP_BackendSVN extends BackendSVN
     /**
      * Return a SVNAccessFile group definition based on given userids
      *
-     * @param Project  $project
      * @param string   $group_name
      * @param PFUser[] $users
      *
@@ -81,7 +80,7 @@ class LDAP_BackendSVN extends BackendSVN
      *
      * @return String
      */
-    function getSVNAccessProjectMembers($project)
+    public function getSVNAccessProjectMembers($project)
     {
         if (! $project instanceof Project) {
             throw new InvalidArgumentException('Expected Project, got ' . get_class($project));
@@ -99,11 +98,10 @@ class LDAP_BackendSVN extends BackendSVN
      *
      * @see src/common/backend/BackendSVN#getSVNAccessUserGroupMembers()
      *
-     * @param Project $project
      *
      * @return String
      */
-    function getSVNAccessUserGroupMembers(Project $project)
+    public function getSVNAccessUserGroupMembers(Project $project)
     {
         $ldapPrjMgr = $this->getLDAPProjectManager();
         if ($ldapPrjMgr->hasSVNLDAPAuth($project->getID())) {
@@ -146,12 +144,12 @@ class LDAP_BackendSVN extends BackendSVN
      *
      * @return String
      */
-    function getSVNAccessRootPathDef($project)
+    public function getSVNAccessRootPathDef($project)
     {
         $ldapPrjMgr = $this->getLDAPProjectManager();
         if ($ldapPrjMgr->hasSVNLDAPAuth($project->getID())) {
             $conf = "[/]\n";
-            if (!$project->isPublic() || $project->isSVNPrivate() || ForgeConfig::areRestrictedUsersAllowed()) {
+            if (! $project->isPublic() || $project->isSVNPrivate() || ForgeConfig::areRestrictedUsersAllowed()) {
                 $conf .= "* = \n";
             } else {
                 $conf .= "* = r\n";

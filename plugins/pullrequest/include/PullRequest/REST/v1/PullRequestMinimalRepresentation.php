@@ -84,7 +84,7 @@ class PullRequestMinimalRepresentation
      */
     public $status;
 
-    public function __construct(GitoliteAccessURLGenerator$gitolite_access_URL_generator)
+    public function __construct(GitoliteAccessURLGenerator $gitolite_access_URL_generator)
     {
         $this->gitolite_access_URL_generator = $gitolite_access_URL_generator;
     }
@@ -117,11 +117,11 @@ class PullRequestMinimalRepresentation
 
     private function expandStatusName($status_acronym)
     {
-        $status_name = array(
+        $status_name = [
             PullRequest::STATUS_ABANDONED => PullRequestRepresentation::STATUS_ABANDON,
             PullRequest::STATUS_MERGED    => PullRequestRepresentation::STATUS_MERGE,
             PullRequest::STATUS_REVIEW    => PullRequestRepresentation::STATUS_REVIEW
-        );
+        ];
 
         return $status_name[$status_acronym];
     }

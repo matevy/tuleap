@@ -26,6 +26,7 @@
 use Tuleap\SVN\AccessControl\AccessFileHistoryCreator;
 use Tuleap\SVN\AccessControl\AccessFileHistoryDao;
 use Tuleap\SVN\AccessControl\AccessFileHistoryFactory;
+use Tuleap\SVN\Repository\CoreRepository;
 use Tuleap\SVN\Repository\Destructor;
 use Tuleap\SVN\Admin\ImmutableTagCreator;
 use Tuleap\SVN\Admin\ImmutableTagDao;
@@ -34,7 +35,6 @@ use Tuleap\SVN\Admin\MailNotificationDao;
 use Tuleap\SVN\Admin\MailNotificationManager;
 use Tuleap\SVN\Dao;
 use Tuleap\SVN\Migration\BareRepositoryCreator;
-use Tuleap\SVN\Migration\RepositoryCopier;
 use Tuleap\SVN\Migration\SettingsRetriever;
 use Tuleap\SVN\Migration\SvnMigratorException;
 use Tuleap\SVN\Notifications\NotificationsEmailsBuilder;
@@ -46,7 +46,6 @@ use Tuleap\SVN\Repository\HookConfigSanitizer;
 use Tuleap\SVN\Repository\HookConfigUpdator;
 use Tuleap\SVN\Repository\HookDao;
 use Tuleap\SVN\Repository\ProjectHistoryFormatter;
-use Tuleap\SVN\Repository\Repository;
 use Tuleap\SVN\Repository\RepositoryCreator;
 use Tuleap\SVN\Repository\RepositoryManager;
 use Tuleap\SVN\Repository\RepositoryRegexpBuilder;
@@ -61,19 +60,18 @@ function usage()
     global $argv;
 
     echo <<< EOT
-Usage: $argv[0] project repository_name
+Usage: $argv[0] <project> <user>
 
 Migrate the core repository into plugin
 
   - <project>    The id of the project to import the archive
-  - <repository> The repository name we want to create
   - <user>       The user we want to use for creation
 
 EOT;
     exit(1);
 }
 
-if (count($argv) != 4) {
+if (count($argv) != 3) {
     usage();
 }
 
@@ -93,16 +91,13 @@ if (! $project->getID()) {
     exit(1);
 }
 
-$repository_name = $argv[2];
-$user_name       = $argv[3];
-
 $system_command = new System_Command();
-$logger         = new BackendLogger();
+$logger         = BackendLogger::getDefaultLogger();
 $backend_svn    = Backend::instance('SVN');
+assert($backend_svn instanceof BackendSVN);
 $svn_admin      = new SvnAdmin($system_command, $logger, $backend_svn);
 $dao            = new Dao();
 
-$repository                  = new Repository("", $repository_name, '', '', $project);
 $hook_dao                    = new HookDao();
 $immutable_tag_dao           = new ImmutableTagDao();
 $project_history_formatter   = new ProjectHistoryFormatter();
@@ -121,7 +116,6 @@ $repository_creator = new RepositoryCreator(
     SystemEventManager::instance(),
     new ProjectHistoryDao(),
     new SvnPermissionManager(
-        new \User_ForgeUserGroupFactory(new \UserGroupDao()),
         \PermissionsManager::instance()
     ),
     new HookConfigUpdator(
@@ -156,34 +150,28 @@ $repository_manager = new RepositoryManager(
     $logger,
     $system_command,
     new Destructor(new Dao(), $logger),
-    $event_manager,
+    EventManager::instance(),
     BackendSVN::instance(),
     $access_file_factory
 );
 
 $svn_creator = new BareRepositoryCreator(
     $repository_creator,
-    $access_file_history_creator,
-    $repository_manager,
-    $user_manager,
-    $backend_svn,
-    Backend::instance(Backend::SYSTEM),
-    new RepositoryCopier($system_command),
     new SettingsRetriever(new SVN_Immutable_Tags_DAO(), new SvnNotificationDao(), new SVN_AccessFile_DAO())
 );
 
 $permission_manager = new SvnPermissionManager(
-    new User_ForgeUserGroupFactory(new UserGroupDao()),
     new PermissionsManager(new PermissionsDao())
 );
 
-$user = UserManager::instance()->getUserByUserName($user_name);
+$user = UserManager::instance()->getUserByUserName($argv[2]);
 if (! $permission_manager->isAdmin($project, $user)) {
     fwrite(STDERR, "User should be SVN administrator to be able to do the migration\n");
     exit(1);
 }
 
 try {
+    $repository = CoreRepository::buildToBeCreatedRepository($project);
     $svn_creator->create($repository, $user);
 } catch (SvnMigratorException $e) {
     fwrite(STDERR, $e->getMessage() . "\n");

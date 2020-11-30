@@ -21,10 +21,9 @@ namespace Tuleap\User\REST\v1;
 
 use Luracast\Restler\RestException;
 use PFUser;
+use Tuleap\Project\UGroupLiteralizer;
 use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
-use Tuleap\REST\JsonDecoder;
-use UGroupLiteralizer;
 use User_ForgeUserGroupPermission_RetrieveUserMembershipInformation;
 use User_ForgeUserGroupPermission_UserManagement;
 use User_ForgeUserGroupPermissionsDao;
@@ -43,9 +42,6 @@ class UserMembershipResource extends AuthenticatedResource
     /** @var UserManager */
     private $user_manager;
 
-    /** @var JsonDecoder */
-    private $json_decoder;
-
     /** @var UGroupLiteralizer */
     private $ugroup_literalizer;
 
@@ -55,7 +51,6 @@ class UserMembershipResource extends AuthenticatedResource
     public function __construct()
     {
         $this->user_manager       = UserManager::instance();
-        $this->json_decoder       = new JsonDecoder();
         $this->ugroup_literalizer = new UGroupLiteralizer();
 
         $this->forge_ugroup_permissions_manager = new User_ForgeUserGroupPermissionsManager(
@@ -72,28 +67,24 @@ class UserMembershipResource extends AuthenticatedResource
      *
      * @url GET
      * @access protected
-     * @throws RestException 406
+     * @throws RestException 400
      *
      * @param string $query Criterion to filter the results {@choice with_ssh_key}
-     * @param int $limit  Number of elements displayed per page
-     * @param int $offset Position of the first element to display
+     * @param int $limit  Number of elements displayed per page {@min 0} {@max 1000}
+     * @param int $offset Position of the first element to display {@min 0}
      *
      * @return array {@type Tuleap\User\REST\v1\UserMembershipRepresentation}
      */
     public function get($query, $offset = 0, $limit = 10)
     {
-        if ($limit > self::MAX_LIMIT) {
-            throw new RestException(406, 'Maximum value for limit exceeded');
-        }
-
         if ($query !== self::CRITERION_WITH_SSH_KEY) {
-            throw new RestException(406, 'Invalid query criteria');
+            throw new RestException(400, 'Invalid query criteria');
         }
 
         $current_user = $this->user_manager->getCurrentUser();
         $this->checkUserCanSeeOtherUsers($current_user);
 
-        $users_memberships = array();
+        $users_memberships = [];
         $paginated_users   = $this->user_manager->getPaginatedUsersWithSshKey($offset, $limit);
         foreach ($paginated_users->getUsers() as $user) {
             $representation = new UserMembershipRepresentation();
@@ -114,17 +105,21 @@ class UserMembershipResource extends AuthenticatedResource
             return;
         }
 
-        if ($this->forge_ugroup_permissions_manager->doesUserHavePermission(
-            $user,
-            new User_ForgeUserGroupPermission_RetrieveUserMembershipInformation()
-        )) {
+        if (
+            $this->forge_ugroup_permissions_manager->doesUserHavePermission(
+                $user,
+                new User_ForgeUserGroupPermission_RetrieveUserMembershipInformation()
+            )
+        ) {
             return;
         }
 
-        if ($this->forge_ugroup_permissions_manager->doesUserHavePermission(
-            $user,
-            new User_ForgeUserGroupPermission_UserManagement()
-        )) {
+        if (
+            $this->forge_ugroup_permissions_manager->doesUserHavePermission(
+                $user,
+                new User_ForgeUserGroupPermission_UserManagement()
+            )
+        ) {
             return;
         }
 

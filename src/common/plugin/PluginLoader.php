@@ -24,8 +24,7 @@ namespace Tuleap\Plugin;
 use Backend;
 use EventManager;
 use ForgeConfig;
-use Logger;
-use RuntimeException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\VarExporter\VarExporter;
 use Webimpress\SafeWriter\Exception\ExceptionInterface;
 use Webimpress\SafeWriter\FileWriter;
@@ -45,11 +44,11 @@ class PluginLoader
     private $plugin_factory;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
-    public function __construct(EventManager $event_manager, \PluginFactory $plugin_factory, Logger $logger)
+    public function __construct(EventManager $event_manager, \PluginFactory $plugin_factory, LoggerInterface $logger)
     {
         $this->event_manager  = $event_manager;
         $this->plugin_factory = $plugin_factory;
@@ -89,7 +88,7 @@ class PluginLoader
         return ForgeConfig::get('codendi_cache_dir') . '/' . self::HOOK_CACHE_KEY;
     }
 
-    private function getFromCache() : ?SerializedPluginProxy
+    private function getFromCache(): ?SerializedPluginProxy
     {
         if (! file_exists(self::getHooksCacheFile())) {
             return null;
@@ -103,15 +102,15 @@ class PluginLoader
         return new SerializedPluginProxy($cache);
     }
 
-    private function storeInCache(SerializedPluginProxy $proxy) : void
+    private function storeInCache(SerializedPluginProxy $proxy): void
     {
         self::invalidateCache();
         $this->serializeInFile(self::getHooksCacheFile(), $proxy->getSerializablePluginCache());
     }
 
-    private function serializeInFile(string $path, EventPluginCache $var) : void
+    private function serializeInFile(string $path, EventPluginCache $var): void
     {
-        $content = '<?php'.PHP_EOL.'return '.VarExporter::export($var).';';
+        $content = '<?php' . PHP_EOL . 'return ' . VarExporter::export($var) . ';';
         try {
             FileWriter::writeFile($path, $content);
         } catch (ExceptionInterface $exception) {
@@ -130,7 +129,7 @@ class PluginLoader
         return $proxy;
     }
 
-    public static function restoreOwnershipOnCacheFile(Logger $logger, Backend $backend)
+    public static function restoreOwnershipOnCacheFile(LoggerInterface $logger, Backend $backend)
     {
         $plugin_cache_file = self::getHooksCacheFile();
         if (! file_exists($plugin_cache_file)) {

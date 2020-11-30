@@ -24,6 +24,8 @@ import { getColumnOfCard } from "../../helpers/list-value-to-column-mapper";
 import { RootState } from "../type";
 import { findSwimlane } from "./swimlane-helpers";
 
+export * from "./card/card-getters";
+
 export const cards_in_cell = (state: SwimlaneState, getters: [], root_state: RootState) => (
     current_swimlane: Swimlane,
     current_column: ColumnDefinition
@@ -48,7 +50,7 @@ export const has_at_least_one_card_in_edit_mode = (state: SwimlaneState): boolea
 export const is_loading_cards = (state: SwimlaneState): boolean => {
     return (
         state.is_loading_swimlanes ||
-        state.swimlanes.some(swimlane => swimlane.is_loading_children_cards)
+        state.swimlanes.some((swimlane) => swimlane.is_loading_children_cards)
     );
 };
 
@@ -87,4 +89,24 @@ function isCardInEditMode(card: Card): boolean {
     }
 
     return card.remaining_effort.is_in_edit_mode;
+}
+
+export function taskboard_cell_swimlane_header_classes(
+    state: SwimlaneState,
+    getters: [],
+    root_state: RootState
+): string[] {
+    const fullscreen_class = root_state.fullscreen.is_taskboard_in_fullscreen_mode
+        ? "taskboard-fullscreen"
+        : "";
+
+    if (is_a_parent_card_in_edit_mode(state)) {
+        return [fullscreen_class, "taskboard-cell-swimlane-header-edit-mode"];
+    }
+
+    return [fullscreen_class];
+}
+
+export function is_a_parent_card_in_edit_mode(state: SwimlaneState): boolean {
+    return state.swimlanes.some((swimlane) => swimlane.card.is_in_edit_mode);
 }

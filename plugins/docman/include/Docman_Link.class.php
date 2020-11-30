@@ -30,32 +30,32 @@ class Docman_Link extends Docman_Document
      */
     private $current_version;
 
-    function __construct($data = null)
+    public function __construct($data = null)
     {
         parent::__construct($data);
     }
 
-    var $url;
-    function getUrl()
+    public $url;
+    public function getUrl()
     {
         return $this->url;
     }
-    function setUrl($url)
+    public function setUrl($url)
     {
         $this->url = $url;
     }
 
     public function getType()
     {
-        return $GLOBALS['Language']->getText('plugin_docman', 'doc_type_link');
+        return dgettext('tuleap-docman', 'Link');
     }
 
-    function initFromRow($row)
+    public function initFromRow($row)
     {
         parent::initFromRow($row);
         $this->setUrl($row['link_url']);
     }
-    function toRow()
+    public function toRow()
     {
         $row = parent::toRow();
         $row['link_url'] = $this->getUrl();
@@ -63,7 +63,7 @@ class Docman_Link extends Docman_Document
         return $row;
     }
 
-    public function accept($visitor, $params = array())
+    public function accept($visitor, $params = [])
     {
         return $visitor->visitLink($this, $params);
     }

@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Lock;
 
@@ -50,7 +50,7 @@ class RestLockUpdater
      */
     public function lockItem(Docman_Item $item, PFUser $user): void
     {
-        if ($this->lock_factory->itemIsLockedByItemId((int)$item->getId())) {
+        if ($this->lock_factory->itemIsLockedByItemId((int) $item->getId())) {
             $this->throwItemIsLockedError();
         }
 
@@ -62,7 +62,7 @@ class RestLockUpdater
      */
     public function unlockItem(Docman_Item $item, PFUser $user): void
     {
-        if ($this->permissions_manager->_itemIsLockedForUser($user, (int)$item->getId())) {
+        if ($this->permissions_manager->_itemIsLockedForUser($user, (int) $item->getId())) {
             $this->throwItemIsLockedError();
         }
 

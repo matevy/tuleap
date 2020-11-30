@@ -1,7 +1,7 @@
 <?php
 /**
-  * Copyright 1999-2000 (c) The SourceForge Crew
   * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
+  * Copyright 1999-2000 (c) The SourceForge Crew
   *
   * This file is a part of Tuleap.
   *
@@ -20,6 +20,8 @@
   */
 
 use Tuleap\Dashboard\AssetsIncluder;
+use Tuleap\Dashboard\Project\DisabledProjectWidgetsChecker;
+use Tuleap\Dashboard\Project\DisabledProjectWidgetsDao;
 use Tuleap\Dashboard\User\UserDashboardController;
 use Tuleap\Dashboard\User\UserDashboardDao;
 use Tuleap\Dashboard\User\UserDashboardDeletor;
@@ -60,6 +62,7 @@ $csrf_token                 = new CSRFSynchronizerToken('/my/');
 $dashboard_widget_dao       = new DashboardWidgetDao($widget_factory);
 $user_dashboard_dao         = new UserDashboardDao($dashboard_widget_dao);
 $dashboard_widget_retriever = new DashboardWidgetRetriever($dashboard_widget_dao);
+$core_assets                = new IncludeAssets(__DIR__ . '/../assets/core', '/assets/core');
 $router                     = new UserDashboardRouter(
     new UserDashboardController(
         $csrf_token,
@@ -68,21 +71,16 @@ $router                     = new UserDashboardRouter(
         new UserDashboardDeletor($user_dashboard_dao),
         new UserDashboardUpdator($user_dashboard_dao),
         $dashboard_widget_retriever,
-        new DashboardWidgetPresenterBuilder($widget_factory),
+        new DashboardWidgetPresenterBuilder(
+            $widget_factory,
+            new DisabledProjectWidgetsChecker(new DisabledProjectWidgetsDao())
+        ),
         new WidgetDeletor($dashboard_widget_dao),
         new WidgetMinimizor($dashboard_widget_dao),
         new AssetsIncluder(
             $GLOBALS['Response'],
-            new IncludeAssets(__DIR__ . '/../assets', '/assets'),
-            new CssAssetCollection(
-                [new CssAsset(
-                    new IncludeAssets(
-                        __DIR__ . '/../assets/dashboards/themes',
-                        '/assets/dashboards/themes'
-                    ),
-                    'dashboards'
-                )]
-            )
+            $core_assets,
+            new CssAssetCollection([new CssAsset($core_assets, 'dashboards/dashboards')])
         )
     ),
     new WidgetDashboardController(
@@ -93,7 +91,6 @@ $router                     = new UserDashboardRouter(
         $dashboard_widget_retriever,
         new DashboardWidgetReorder(
             $dashboard_widget_dao,
-            $dashboard_widget_retriever,
             new DashboardWidgetRemoverInList()
         ),
         new DashboardWidgetChecker($dashboard_widget_dao),

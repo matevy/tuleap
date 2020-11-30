@@ -67,6 +67,7 @@ abstract class SystemEvent
     public const TYPE_SVN_AUTH_CACHE_CHANGE                    = "SVN_AUTH_CACHE_CHANGE";
     public const TYPE_MOVE_FRS_FILE                            = "MOVE_FRS_FILE";
     public const TYPE_UPDATE_ALIASES                           = "UPDATE_ALIASES";
+    public const TYPE_SVN_UPDATE_PROJECT_ACCESS_FILES          = 'UPDATE_SVN_ACCESS_FILE';
 
     // Define status value (in sync with DB enum)
     public const STATUS_NONE       = "NONE";
@@ -112,7 +113,7 @@ abstract class SystemEvent
      * @param string $end_date
      * @param string $log
      */
-    function __construct($id, $type, $owner, $parameters, $priority, $status, $create_date, $process_date, $end_date, $log)
+    public function __construct($id, $type, $owner, $parameters, $priority, $status, $create_date, $process_date, $end_date, $log)
     {
         $this->id           = $id;
         $this->type         = $type;
@@ -128,22 +129,22 @@ abstract class SystemEvent
 
     // Getters
 
-    function getId()
+    public function getId()
     {
         return $this->id;
     }
 
-    function getType()
+    public function getType()
     {
         return $this->type;
     }
 
-    function getOwner()
+    public function getOwner()
     {
         return $this->owner;
     }
 
-    function getParameters()
+    public function getParameters()
     {
         return $this->parameters;
     }
@@ -169,9 +170,9 @@ abstract class SystemEvent
      */
     public function verbalizeUserId($user_id, $with_link)
     {
-        $txt = '#'. $user_id;
+        $txt = '#' . $user_id;
         if ($with_link) {
-            $txt = '<a href="/admin/usergroup.php?user_id='. $user_id .'">'. $txt .'</a>';
+            $txt = '<a href="/admin/usergroup.php?user_id=' . $user_id . '">' . $txt . '</a>';
         }
         return $txt;
     }
@@ -186,19 +187,19 @@ abstract class SystemEvent
      */
     public function verbalizeProjectId($group_id, $with_link)
     {
-        $txt = '#'. $group_id;
+        $txt = '#' . $group_id;
         if ($with_link) {
-            $txt = '<a href="/admin/groupedit.php?group_id='. $group_id .'">'. $txt .'</a>';
+            $txt = '<a href="/admin/groupedit.php?group_id=' . $group_id . '">' . $txt . '</a>';
         }
         return $txt;
     }
 
-    function getParametersAsArray()
+    public function getParametersAsArray()
     {
         return explode(self::PARAMETER_SEPARATOR, $this->parameters);
     }
 
-    function getPriority()
+    public function getPriority()
     {
         return $this->priority;
     }
@@ -211,37 +212,37 @@ abstract class SystemEvent
         return $this->status;
     }
 
-    function getLog()
+    public function getLog()
     {
         return $this->log;
     }
 
-    function setStatus($status)
+    public function setStatus($status)
     {
-        $this->status=$status;
+        $this->status = $status;
     }
 
-    function setLog($log)
+    public function setLog($log)
     {
-        $this->log=$log;
+        $this->log = $log;
     }
 
-    function setParameters($params)
+    public function setParameters($params)
     {
         $this->parameters = $params;
     }
 
-    function getCreateDate()
+    public function getCreateDate()
     {
         return $this->create_date;
     }
 
-    function getProcessDate()
+    public function getProcessDate()
     {
         return $this->process_date;
     }
 
-    function getEndDate()
+    public function getEndDate()
     {
         return $this->end_date;
     }
@@ -288,15 +289,15 @@ abstract class SystemEvent
      * Checks if the given value represents integer
      * is_int() won't work on string containing integers...
      */
-    function int_ok($val)
+    public function int_ok($val)
     {
-        return ((string) $val) === ((string)(int) $val);
+        return ((string) $val) === ((string) (int) $val);
     }
 
     /**
      * A few functions to parse the parameters string
      */
-    function getIdFromParam()
+    public function getIdFromParam()
     {
         if ($this->int_ok($this->parameters)) {
             return $this->parameters;
@@ -315,7 +316,7 @@ abstract class SystemEvent
     {
         $param = $this->getParameter($index);
         if ($param === null) {
-            throw new SystemEventMissingParameterException('Missing parameter n°'. (int)$index);
+            throw new SystemEventMissingParameterException('Missing parameter n°' . (int) $index);
         }
         return $param;
     }
@@ -323,9 +324,9 @@ abstract class SystemEvent
     /**
      * Error functions
      */
-    function setErrorBadParam()
+    public function setErrorBadParam()
     {
-        $this->error("Bad parameter for event ".$this->getType().": ".$this->getParameters());
+        $this->error("Bad parameter for event " . $this->getType() . ": " . $this->getParameters());
         return 0;
     }
 
@@ -334,7 +335,7 @@ abstract class SystemEvent
      * Process stored event
      * Virtual method redeclared in children
      */
-    function process()
+    public function process()
     {
         return null;
     }
@@ -401,13 +402,13 @@ abstract class SystemEvent
      */
     protected function getProject($group_id)
     {
-        if (!$group_id) {
+        if (! $group_id) {
             return $this->setErrorBadParam();
         }
 
         $project = ProjectManager::instance()->getProject($group_id);
 
-        if (!$project) {
+        if (! $project) {
             $this->error("Could not create/initialize project object");
         }
 
@@ -421,13 +422,13 @@ abstract class SystemEvent
      */
     protected function getUser($user_id)
     {
-        if (!$user_id) {
+        if (! $user_id) {
             return $this->setErrorBadParam();
         }
 
         $user = UserManager::instance()->getUserById($user_id);
 
-        if (!$user) {
+        if (! $user) {
             $this->error("Could not create/initialize user object");
         }
 
@@ -451,16 +452,16 @@ abstract class SystemEvent
         if (is_null($dao)) {
             $dao = new SystemEventsFollowersDao(CodendiDataAccess::instance());
         }
-        $listeners = array();
+        $listeners = [];
         foreach ($dao->searchByType($this->getStatus()) as $row) {
             $listeners = array_merge($listeners, explode(',', $row['emails']));
         }
         if (count($listeners)) {
             $listeners = array_unique($listeners);
             $m = new Codendi_Mail();
-            $m->setFrom($GLOBALS['sys_noreply']);
+            $m->setFrom(ForgeConfig::get('sys_noreply'));
             $m->setTo(implode(',', $listeners));
-            $m->setSubject('['. $this->getstatus() .'] '. $this->getType());
+            $m->setSubject('[' . $this->getstatus() . '] ' . $this->getType());
             $m->setBodyText("
 Event:        #{$this->getId()}
 Type:         {$this->getType()}
@@ -472,7 +473,7 @@ Create Date:  {$this->getCreateDate()}
 Process Date: {$this->getProcessDate()}
 End Date:     {$this->getEndDate()}
 ---------------
-<". HTTPRequest::instance()->getServerUrl() ."/admin/system_events/>
+<" . HTTPRequest::instance()->getServerUrl() . "/admin/system_events/>
 ");
             $m->send();
         }
@@ -497,7 +498,7 @@ End Date:     {$this->getEndDate()}
      */
     public static function encode($data)
     {
-        return str_replace(self::PARAMETER_SEPARATOR, self::PARAMETER_SEPARATOR_ESCAPE, json_encode(array('data' => $data)));
+        return str_replace(self::PARAMETER_SEPARATOR, self::PARAMETER_SEPARATOR_ESCAPE, json_encode(['data' => $data]));
     }
 
     /**

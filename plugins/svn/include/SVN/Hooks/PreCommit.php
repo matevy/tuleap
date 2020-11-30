@@ -24,7 +24,7 @@
 
 namespace Tuleap\SVN\Hooks;
 
-use Logger;
+use Psr\Log\LoggerInterface;
 use ReferenceManager;
 use SVN_CommitToTagDeniedException;
 use Tuleap\SVN\Admin\ImmutableTagFactory;
@@ -71,7 +71,7 @@ class PreCommit
         ImmutableTagFactory $immutable_tag_factory,
         Svnlook $svnlook,
         SHA1CollisionDetector $sha1_collision_detector,
-        Logger $logger,
+        LoggerInterface $logger,
         HookConfigRetriever $hook_config_retriever
     ) {
         $this->repository_manager      = $repository_manager;
@@ -106,8 +106,9 @@ class PreCommit
 
     public function assertCommitToTagIsAllowed()
     {
-        if ($this->repositoryUsesImmutableTags()
-            && !$this->isCommitAllowed()
+        if (
+            $this->repositoryUsesImmutableTags()
+            && ! $this->isCommitAllowed()
         ) {
             throw new SVN_CommitToTagDeniedException("Commit to tag is not allowed");
         }
@@ -121,7 +122,7 @@ class PreCommit
     {
         $changed_paths = $this->svnlook->getTransactionPath($this->repository, $this->transaction);
         foreach ($changed_paths as $path) {
-            $matches = array();
+            $matches = [];
             if ($this->extractFilenameFromNonDeletedPath($path, $matches)) {
                 continue;
             }
@@ -198,7 +199,7 @@ class PreCommit
             )%x";
 
         if (preg_match($pattern, $path)) {
-            return !$this->isCommitDoneOnWhitelistElement($path);
+            return ! $this->isCommitDoneOnWhitelistElement($path);
         }
 
         return false;
@@ -207,11 +208,11 @@ class PreCommit
     private function isCommitDoneOnWhitelistElement($path)
     {
         $whitelist = $this->getImmutableTagFromRepository()->getWhitelist();
-        if (!$whitelist) {
+        if (! $whitelist) {
             return false;
         }
 
-        $whitelist_regexp = array();
+        $whitelist_regexp = [];
         foreach ($whitelist as $whitelist_path) {
             $whitelist_regexp[] = $this->getWellFormedRegexImmutablePath($whitelist_path);
         }
@@ -232,6 +233,7 @@ class PreCommit
         $immutable_path = trim($immutable_path, '/');
         $immutable_path = preg_quote($immutable_path);
         $immutable_path = str_replace('\*', '[^/]+', $immutable_path);
+        $immutable_path = str_replace(" ", "\s", $immutable_path);
 
         return $immutable_path;
     }

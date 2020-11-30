@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -42,28 +42,27 @@ class PushPayload implements Payload
      */
     private function buildPayload(GitRepository $repository, PFUser $user, $oldrev, $newrev, $refname)
     {
-        $repository_representation = array(
+        $repository_representation = [
             'id'        => $repository->getId(),
             'name'      => $repository->getName(),
             'full_name' => $repository->getFullName(),
-        );
+        ];
 
-        $pusher_representation = array(
+        $pusher_representation = [
             'name'  => $user->getUserName(),
             'email' => $user->getEmail(),
-        );
+        ];
 
-        $sender_representation = new MinimalUserRepresentation();
-        $sender_representation->build($user);
+        $sender_representation = MinimalUserRepresentation::build($user);
 
-        return array(
+        return [
             'ref'        => $refname,
             'after'      => $newrev,
             'before'     => $oldrev,
             'repository' => $repository_representation,
             'pusher'     => $pusher_representation,
             'sender'     => $sender_representation,
-        );
+        ];
     }
 
     /**

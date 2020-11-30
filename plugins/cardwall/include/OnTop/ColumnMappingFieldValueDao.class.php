@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -35,6 +35,8 @@ class Cardwall_OnTop_ColumnMappingFieldValueDao extends DataAccessObject
     {
         $cardwall_tracker_id = $this->da->escapeInt($cardwall_tracker_id);
         $tracker_id          = $this->da->escapeInt($tracker_id);
+        $value_id            = $this->da->escapeInt($value_id);
+        $column_id           = $this->da->escapeInt($column_id);
         if ($field_id === null) {
             $field_id = " NULL ";
         } else {
@@ -88,7 +90,7 @@ class Cardwall_OnTop_ColumnMappingFieldValueDao extends DataAccessObject
 
         $to_value_when_then = ' WHEN 100 THEN 100 ';
         $to_field_when_then = '';
-        $all_values         = array(100 => 100);
+        $all_values         = [100 => 100];
         foreach ($field_mapping as $mapping) {
             $from                = $this->da->escapeInt($mapping['from']);
             $to                  = $this->da->escapeInt($mapping['to']);

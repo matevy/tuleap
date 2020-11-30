@@ -18,17 +18,26 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\XML\Exporter\FileInfoXMLExporter;
+
 class Tracker_XML_Exporter_ArtifactXMLExporter
 {
-
     /**
      * @var Tracker_XML_Exporter_ChangesetXMLExporter
      */
     private $changeset_exporter;
+    /**
+     * @var FileInfoXMLExporter
+     */
+    private $file_info_xml_exporter;
 
-    public function __construct(Tracker_XML_Exporter_ChangesetXMLExporter $changeset_exporter)
-    {
-        $this->changeset_exporter = $changeset_exporter;
+    public function __construct(
+        Tracker_XML_Exporter_ChangesetXMLExporter $changeset_exporter,
+        FileInfoXMLExporter $file_info_xml_exporter
+    ) {
+        $this->changeset_exporter     = $changeset_exporter;
+        $this->file_info_xml_exporter = $file_info_xml_exporter;
     }
 
     /**
@@ -43,6 +52,8 @@ class Tracker_XML_Exporter_ArtifactXMLExporter
         $artifact_xml->addAttribute('tracker_id', $changeset->getArtifact()->getTrackerId());
 
         $this->changeset_exporter->exportWithoutComments($artifact_xml, $changeset);
+        $this->file_info_xml_exporter->export($artifact_xml, $changeset->getArtifact());
+
         return $artifacts_xml;
     }
 
@@ -51,7 +62,7 @@ class Tracker_XML_Exporter_ArtifactXMLExporter
      */
     public function exportFullHistory(
         SimpleXMLElement $artifacts_xml,
-        Tracker_Artifact $artifact
+        Artifact $artifact
     ) {
         $artifact_xml = $artifacts_xml->addChild('artifact');
         $artifact_xml->addAttribute('id', $artifact->getId());
@@ -59,5 +70,6 @@ class Tracker_XML_Exporter_ArtifactXMLExporter
         foreach ($artifact->getChangesets() as $changeset) {
             $this->changeset_exporter->exportFullHistory($artifact_xml, $changeset);
         }
+        $this->file_info_xml_exporter->export($artifact_xml, $artifact);
     }
 }

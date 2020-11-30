@@ -25,7 +25,6 @@ use CSRFSynchronizerToken;
 use Feedback;
 use PermissionsNormalizer;
 use PermissionsNormalizerOverrideCollection;
-use Project;
 use ProjectHistoryDao;
 use TemplateRendererFactory;
 use Tracker;
@@ -128,13 +127,13 @@ class AdminController
         $user_groups      = $this->user_group_factory->getProjectUGroupsWithAdministratorAndMembers($tracker->getProject());
         $selected_ugroups = $this->timetracking_ugroup_retriever->getReaderIdsForTracker($tracker);
 
-        $read_ugroups = array();
+        $read_ugroups = [];
         foreach ($user_groups as $ugroup) {
-            $read_ugroups[] = array(
+            $read_ugroups[] = [
                 'label'    => $ugroup->getName(),
                 'value'    => $ugroup->getId(),
                 'selected' => in_array($ugroup->getId(), $selected_ugroups)
-            );
+            ];
         }
 
         return $read_ugroups;
@@ -145,13 +144,13 @@ class AdminController
         $user_groups      = $this->user_group_factory->getProjectUGroupsWithAdministratorAndMembers($tracker->getProject());
         $selected_ugroups = $this->timetracking_ugroup_retriever->getWriterIdsForTracker($tracker);
 
-        $write_ugroups = array();
+        $write_ugroups = [];
         foreach ($user_groups as $ugroup) {
-            $write_ugroups[] = array(
+            $write_ugroups[] = [
                 'label'    => $ugroup->getName(),
                 'value'    => $ugroup->getId(),
                 'selected' => in_array($ugroup->getId(), $selected_ugroups)
-            );
+            ];
         }
 
         return $write_ugroups;

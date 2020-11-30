@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -29,11 +29,7 @@ use Tuleap\REST\ProjectStatusVerificator;
 use Tuleap\Tracker\REST\WorkflowTransitionPOSTRepresentation;
 use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
 use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionCreator;
-use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
-use Tuleap\Tracker\Workflow\SimpleMode\TransitionReplicator;
-use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
 use Tuleap\Tracker\Workflow\Transition\Condition\ConditionsUpdateException;
-use Tuleap\Tracker\Workflow\Transition\NoSiblingTransitionException;
 use UserManager;
 use Workflow;
 use WorkflowFactory;
@@ -130,9 +126,7 @@ class TransitionPOSTHandler
 
     private function buildRepresentation(\Transition $transition): WorkflowTransitionPOSTRepresentation
     {
-        $transition_representation = new WorkflowTransitionPOSTRepresentation();
-        $transition_representation->build($transition);
-        return $transition_representation;
+        return new WorkflowTransitionPOSTRepresentation($transition);
     }
 
     /**

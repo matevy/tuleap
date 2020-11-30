@@ -21,7 +21,7 @@
 class Planning_ImportTemplateFormPresenter
 {
 
-    public const TULEAP_TEMPLATE_URL = AGILEDASHBOARD_BASE_URL . '/resources/scrum_dashboard_template.xml';
+    public const TULEAP_TEMPLATE_URL = __DIR__ . '/../../resources/templates/scrum_dashboard_template.xml';
 
     public $group_id;
 
@@ -33,26 +33,26 @@ class Planning_ImportTemplateFormPresenter
 
     public function adminTitle()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'Admin');
+        return dgettext('tuleap-agiledashboard', 'Agile Dashboard Administration');
     }
 
     public function importTemplateHeader()
     {
-        return  $GLOBALS['Language']->getText('plugin_agiledashboard', 'import_template');
+        return dgettext('tuleap-agiledashboard', 'Import a configuration from a template file');
     }
 
     public function btnSubmit()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'btn_import');
+        return dgettext('tuleap-agiledashboard', 'Import');
     }
 
     public function importInstructions()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'import_instructions', array(self::TULEAP_TEMPLATE_URL));
+        return $GLOBALS['Language']->getOverridableText('plugin_agiledashboard', 'import_instructions', [self::TULEAP_TEMPLATE_URL]);
     }
 
     public function importNotes()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'import_notes');
+        return dgettext('tuleap-agiledashboard', 'Note:<br>Importing a template will create new trackers. The import will not work if any existing tracker match those in the template');
     }
 }

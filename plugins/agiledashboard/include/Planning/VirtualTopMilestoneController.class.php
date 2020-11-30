@@ -52,12 +52,6 @@ class Planning_VirtualTopMilestoneController extends BaseController
      * TODO:
      *   - pass $request to actions (e.g. show).
      *
-     * @param Codendi_Request $request
-     * @param Planning_MilestoneFactory $milestone_factory
-     * @param ProjectManager $project_manager
-     * @param Planning_VirtualTopMilestonePaneFactory $top_milestone_pane_factory
-     * @param AgileDashboardCrumbBuilder $agile_dashboard_crumb_builder
-     * @param VirtualTopMilestoneCrumbBuilder $top_milestone_crumb_builder
      */
     public function __construct(
         Codendi_Request $request,
@@ -80,7 +74,7 @@ class Planning_VirtualTopMilestoneController extends BaseController
         try {
             $this->generateVirtualTopMilestone();
         } catch (Planning_NoPlanningsException $e) {
-            $query_parts = array('group_id' => $this->request->get('group_id'));
+            $query_parts = ['group_id' => $this->request->get('group_id')];
             $this->redirect($query_parts);
         }
 
@@ -112,13 +106,21 @@ class Planning_VirtualTopMilestoneController extends BaseController
             $this->generateVirtualTopMilestone();
             $pane_info_identifier = new AgileDashboard_PaneInfoIdentifier();
 
-            return array(
-                Layout::INCLUDE_FAT_COMBINED => ! $pane_info_identifier->isPaneAPlanningV2(
-                    $this->getActivePaneIdentifier()
-                )
+            $is_pane_a_planning_v2 = $pane_info_identifier->isPaneAPlanningV2(
+                $this->getActivePaneIdentifier()
             );
+
+            $header_options = [
+                Layout::INCLUDE_FAT_COMBINED => ! $is_pane_a_planning_v2
+            ];
+
+            if ($is_pane_a_planning_v2) {
+                $header_options['body_class'] = ['has-sidebar-with-pinned-header'];
+            }
+
+            return $header_options;
         } catch (Planning_NoPlanningsException $e) {
-            return array();
+            return [];
         }
     }
 

@@ -24,7 +24,17 @@ class ForgeAccess
 {
     public const SUPER_PUBLIC_PROJECTS = 'super_public_projects';
 
+    /**
+     * Set to 1 if anonymous users should be allowed to site site home page
+     *
+     * @tlp-config-key
+     */
     public const ANONYMOUS_CAN_SEE_SITE_HOMEPAGE = 'anonymous_can_see_site_homepage';
+    /**
+     * Set to 1 if anonymous users should be allowed to see Contact page
+     *
+     * @tlp-config-key
+     */
     public const ANONYMOUS_CAN_SEE_CONTACT       = 'anonymous_can_see_contact';
 
     public const CONFIG     = 'access_mode';
@@ -42,7 +52,7 @@ class ForgeAccess
         $this->permissions_overrider_manager = $permissions_overrider_manager;
     }
 
-    public function doesPlatformRequireLogin() : bool
+    public function doesPlatformRequireLogin(): bool
     {
         if (ForgeConfig::areAnonymousAllowed() && ! $this->permissions_overrider_manager->doesOverriderForceUsageOfAnonymous()) {
             return false;

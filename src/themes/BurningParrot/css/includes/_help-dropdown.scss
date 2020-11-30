@@ -1,0 +1,133 @@
+/**
+ * Copyright (c) Enalean, 2020-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.help-dropdown {
+    position: fixed;
+    z-index: 1000;
+    right: $tlp-medium-spacing;
+    bottom: $tlp-medium-spacing;
+
+    #help {
+        display: flex;
+        position: relative;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        overflow: visible;
+        border-radius: 50%;
+        border-color: $tlp-theme-sidebar-background-color;
+        background: $tlp-theme-sidebar-background-color;
+
+        > .fa {
+            font-size: 20px;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.15);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        &.new-release-note-available {
+            animation: pulse 300ms ease-in-out 1s 3 both;
+            border-color: $tlp-ui-warning;
+            background: $tlp-ui-warning;
+            color: $tlp-ui-white;
+
+            > .fa-star {
+                display: inline-block;
+            }
+
+            > .svg-question-mark {
+                display: none;
+            }
+        }
+
+        > .fa-star {
+            display: none;
+            position: relative;
+            transition: color 200ms ease-in-out;
+        }
+    }
+
+    .tlp-dropdown-menu {
+        border-color: $tlp-theme-sidebar-background-color;
+        background: $tlp-theme-sidebar-background-color;
+
+        &::before {
+            display: none;
+        }
+
+        &::after {
+            border-top-color: $tlp-theme-sidebar-background-color;
+        }
+
+        .help-dropdown-link {
+            &.tlp-dropdown-menu-item {
+                background: $tlp-theme-sidebar-background-color;
+                color: $tlp-ui-border-dark;
+                font-size: 13px;
+
+                &:hover {
+                    background: darken($tlp-theme-sidebar-background-color, 3%);
+                }
+            }
+
+            &.help-dropdown-link-highlight {
+                color: $tlp-ui-warning;
+            }
+        }
+
+        .tlp-dropdown-menu-separator {
+            opacity: .1;
+            background: $tlp-ui-border-dark;
+        }
+
+        .tlp-dropdown-menu-item-alt {
+            display: flex;
+            align-items: baseline;
+            padding: 10px 20px;
+            font-size: 12px;
+
+            > a {
+                margin: 0 10px 0 0;
+                opacity: .6;
+                color: $tlp-ui-border-dark;
+            }
+        }
+    }
+}
+
+.help-modal-shortcuts-kbds {
+    white-space: nowrap;
+}
+
+.help-modal-shortcuts-action {
+    width: 100%;
+}

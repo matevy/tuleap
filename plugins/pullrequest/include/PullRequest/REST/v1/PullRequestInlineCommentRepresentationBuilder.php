@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -43,11 +43,10 @@ class PullRequestInlineCommentRepresentationBuilder
     {
         $res = $this->dao->searchUpToDateByFilePath($pull_request->getId(), $file_path);
 
-        $inline_comments = array();
+        $inline_comments = [];
         foreach ($res as $row) {
             $user_id = $row['user_id'];
-            $user_representation = new MinimalUserRepresentation();
-            $user_representation->build($this->user_manager->getUserById($user_id));
+            $user_representation = MinimalUserRepresentation::build($this->user_manager->getUserById($user_id));
 
             $inline_comments[] = new PullRequestInlineCommentRepresentation(
                 (int) $row['unidiff_offset'],

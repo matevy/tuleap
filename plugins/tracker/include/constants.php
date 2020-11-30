@@ -19,7 +19,7 @@
  */
 define('TRACKER_BASE_URL', '/plugins/tracker');
 define('TRACKER_BASE_DIR', dirname(__FILE__));
-define('TRACKER_TEMPLATE_DIR', realpath(dirname(__FILE__).'/../templates'));
+define('TRACKER_TEMPLATE_DIR', realpath(dirname(__FILE__) . '/../templates'));
 
 define('TRACKER_EVENT_INCLUDE_CSS_FILE', 'tracker_event_include_css_file');
 
@@ -38,29 +38,6 @@ define('TRACKER_SERVICE_ICON', '\e80d');
  * No expected results
  */
 define('TRACKER_EVENT_TRACKERS_DUPLICATED', 'tracker_event_trackers_duplicated');
-
-/**
- * An artifact has just been created/updated. Redirect to a plugin specific url if needed.
- *
- * Parameters:
- * 'request'  => The initial request
- * 'artifact' => The involved artifact
- *
- * Either a redirection has been done or nothing has been done
- * (in this case plugins/tracker will commpute the redirection)
- */
-define('TRACKER_EVENT_REDIRECT_AFTER_ARTIFACT_CREATION_OR_UPDATE', 'tracker_event_redirect_after_artifact_creation_or_update');
-
-/**
- * We build the form action for a new artifact. Let the plugin inject its own variable.
- *
- * Parameters:
- * 'request'          => The initial request
- * 'query_parameters' => The actual form action parameters
- *
- * No expected results than the query_parameters modified if needed
- */
-define('TRACKER_EVENT_BUILD_ARTIFACT_FORM_ACTION', 'tracker_event_build_artifact_form_action');
 
 /**
  * An artifact has just been (un)associated to another one
@@ -162,20 +139,6 @@ define('TRACKER_EVENT_GET_SEMANTIC_DUPLICATORS', 'tracker_event_get_semantic_dup
 define('TRACKER_EVENT_REPORT_DISPLAY_ADDITIONAL_CRITERIA', 'tracker_event_report_display_additional_criteria');
 
 /**
- * We are searching the matching ids
- *
- * Parameters:
- * 'request'                CodendiRequest
- * 'result'                 array
- * 'search_performed'       Boolean
- * 'tracker'                Tracker  (IN)     the current tracker
- * 'additional_criteria'    Tracker_Report_AdditionalCriteria[]  (IN)
- * 'user'                   PFUser
- * 'form_element_factory'   Tracker_FormElementFactory
- */
-define('TRACKER_EVENT_REPORT_PROCESS_ADDITIONAL_QUERY', 'tracker_event_report_process_additional_query');
-
-/**
  * We want to save in database additional criteria
  *
  * Parameters:
@@ -192,14 +155,6 @@ define('TRACKER_EVENT_REPORT_SAVE_ADDITIONAL_CRITERIA', 'tracker_event_report_sa
  * 'report'                        Tracker_Report        (IN)
  */
 define('TRACKER_EVENT_REPORT_LOAD_ADDITIONAL_CRITERIA', 'tracker_event_report_load_additional_criteria');
-
-/**
- * Event emitted when an artifact is updated but before notification
- *
- * Parameters:
- *   'artifact' Tracker_Artifact (IN)
- */
-define('TRACKER_EVENT_ARTIFACT_POST_UPDATE', 'tracker_event_artifact_post_update');
 
 /**
  * Event emitted when a field data can be augmented by plugins
@@ -219,14 +174,6 @@ define('TRACKER_EVENT_FIELD_AUGMENT_DATA_FOR_REPORT', 'tracker_event_field_augme
  *   'artifact'    Tracker_Artifact
  */
 define('TRACKER_EVENT_ARTIFACT_DELETE', 'tracker_event_artifact_delete');
-
-/**
- * Event emitted when a tracker is deleted
- *
- * Parameters:
- *   'tracker'    Tracker
- */
-define('TRACKER_EVENT_TRACKER_DELETE', 'tracker_event_tracker_delete');
 
 /**
  * Event emitted when a tracker has its permissions changed

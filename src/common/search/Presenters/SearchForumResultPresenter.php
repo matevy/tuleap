@@ -20,15 +20,6 @@
 
 class Search_SearchForumResultPresenter
 {
-    /** @var  string */
-    private $project_name;
-
-    /** @var  string */
-    private $project_unix_name;
-
-    /** @var  string */
-    private $project_description;
-
     public function __construct(array $result)
     {
         $this->message_id      = $result['msg_id'];
@@ -44,7 +35,7 @@ class Search_SearchForumResultPresenter
 
     public function message_uri()
     {
-        return "/forum/message.php?msg_id=".$this->message_id;
+        return "/forum/message.php?msg_id=" . $this->message_id;
     }
 
     public function message_author()

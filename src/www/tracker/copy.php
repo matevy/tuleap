@@ -6,7 +6,7 @@
 //
 //  Written for Codendi by Marie-Luise Schneider
 // Check if this tracker is valid (not deleted)
-if (!$ath->isValid()) {
+if (! $ath->isValid()) {
     exit_error($Language->getText('global', 'error'), $Language->getText('tracker_add', 'invalid'));
 }
 
@@ -14,7 +14,8 @@ if (!$ath->isValid()) {
 $art_field_fact = new ArtifactFieldFactory($ath);
 
 // Printer version ?
-if (!$request->exist('pv')) {
+$ro = false;
+if (! $request->exist('pv')) {
     $pv = false;
     $ro = false;
 } else {
@@ -24,12 +25,11 @@ if (!$request->exist('pv')) {
     }
 }
 
-$params=array('title'=>$group->getPublicName().' '.$ath->getName().' #'.$ah->getID(). ' - \'' . $ah->getSummary().'\'',
-              'pagename'=>'tracker',
-              'atid'=>$ath->getID(),
-              'sectionvals'=>array($group->getPublicName()),
-              'pv'=>$pv,
-              'help' => 'tracker-v3.html#artifact-update');
+$params = ['title' => $group->getPublicName() . ' ' . $ath->getName() . ' #' . $ah->getID() . ' - \'' . $ah->getSummary() . '\'',
+              'pagename' => 'tracker',
+              'atid' => $ath->getID(),
+              'pv' => $pv,
+              'help' => 'tracker-v3.html#artifact-update'];
 
 $ath->header($params);
 echo '<div id="tracker_toolbar_clear"></div>';
@@ -43,7 +43,7 @@ echo "<script type=\"text/javascript\">\n";
 $armh = new ArtifactRulesManagerHtml($ath);
 $armh->displayRulesAsJavascript();
 echo "new UserAutoCompleter('tracker_cc',
-                          '".util_get_dir_image_theme()."',
+                          '" . util_get_dir_image_theme() . "',
                           true);\n";
 echo "</script>";
 

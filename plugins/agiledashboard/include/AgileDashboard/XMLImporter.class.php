@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All rights reserved
+ * Copyright (c) Enalean, 2013 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
+use Tuleap\AgileDashboard\Planning\XML\XMLExporter;
+
 /**
  * Transforms imported xml into php values
  */
@@ -26,7 +28,6 @@ class AgileDashboard_XMLImporter
 
     /**
      *
-     * @param SimpleXMLElement $xml_object
      * @param array $tracker_mappings
      *  These should be in the form of an array, e.g. :
      *    array(
@@ -40,10 +41,9 @@ class AgileDashboard_XMLImporter
      */
     public function toArray(SimpleXMLElement $xml_object, array $tracker_mappings)
     {
-
-        $plannings_node_name = AgileDashboard_XMLExporter::NODE_PLANNINGS;
-        $plannings = array();
-        $plannings[$plannings_node_name] = array();
+        $plannings_node_name = XMLExporter::NODE_PLANNINGS;
+        $plannings = [];
+        $plannings[$plannings_node_name] = [];
 
         if (! $xml_object->$plannings_node_name) {
             return $plannings;
@@ -57,13 +57,13 @@ class AgileDashboard_XMLImporter
                 $tracker_mappings
             );
 
-            $planning_parameters = array(
+            $planning_parameters = [
                 PlanningParameters::NAME                => (string) $attributes[PlanningParameters::NAME],
                 PlanningParameters::BACKLOG_TITLE       => (string) $attributes[PlanningParameters::BACKLOG_TITLE],
                 PlanningParameters::PLANNING_TITLE      => (string) $attributes[PlanningParameters::PLANNING_TITLE],
                 PlanningParameters::PLANNING_TRACKER_ID => (string) $planning_tracker_id,
                 PlanningParameters::BACKLOG_TRACKER_IDS => $this->toArrayBacklogIds($planning, $tracker_mappings)
-            );
+            ];
 
             foreach ($this->toArrayPermissions($planning) as $permission_name => $ugroups) {
                 $planning_parameters[$permission_name] = $ugroups;
@@ -77,8 +77,8 @@ class AgileDashboard_XMLImporter
 
     private function toArrayBacklogIds(SimpleXMLElement $planning_node, array $tracker_mappings)
     {
-        $backlog_tracker_ids = array();
-        foreach ($planning_node->{AgileDashboard_XMLExporter::NODE_BACKLOGS}->children() as $backlog) {
+        $backlog_tracker_ids = [];
+        foreach ($planning_node->{XMLExporter::NODE_BACKLOGS}->children() as $backlog) {
             $backlog_tracker_ids[] = $this->getTrackerIdFromMappings(
                 (string) $backlog,
                 $tracker_mappings
@@ -89,7 +89,7 @@ class AgileDashboard_XMLImporter
 
     private function toArrayPermissions(SimpleXMLElement $planning_node)
     {
-        $permissions = array();
+        $permissions = [];
 
         if (! isset($planning_node->permissions)) {
             return $permissions;
@@ -100,7 +100,7 @@ class AgileDashboard_XMLImporter
             $type   = (string) $permission['type'];
 
             if (! isset($permissions[$type])) {
-                $permissions[$type] = array();
+                $permissions[$type] = [];
             }
 
             if (isset($GLOBALS['UGROUPS'][$ugroup])) {
@@ -120,7 +120,7 @@ class AgileDashboard_XMLImporter
     private function getTrackerIdFromMappings($tracker_id, array $tracker_mappings)
     {
         if (! isset($tracker_mappings[$tracker_id])) {
-            throw new AgileDashboard_XMLImporterInvalidTrackerMappingsException('Missing data for key: '.$tracker_id);
+            throw new AgileDashboard_XMLImporterInvalidTrackerMappingsException('Missing data for key: ' . $tracker_id);
         }
 
         return (int) $tracker_mappings[$tracker_id];

@@ -20,22 +20,16 @@
 
 <template>
     <div class="tlp-form-element" v-show="is_displayed">
-        <label
-            class="tlp-label"
-            for="document-new-item-embedded"
-            v-translate
-        >
-            Content
-        </label>
+        <label class="tlp-label" for="document-new-item-embedded" v-translate>Content</label>
         <div class="tlp-form-element">
-            <textarea class="tlp-textarea"
-                      id="document-new-item-embedded"
-                      name="embedded-content"
-                      ref="embedded_editor"
-                      v-bind:placeholder="placeholder"
-                      v-bind:value="value.content"
-            >
-            </textarea>
+            <textarea
+                class="tlp-textarea"
+                id="document-new-item-embedded"
+                name="embedded-content"
+                ref="embedded_editor"
+                v-bind:placeholder="placeholder"
+                v-bind:value="value.content"
+            ></textarea>
         </div>
     </div>
 </template>
@@ -47,11 +41,11 @@ export default {
     name: "EmbeddedProperties",
     props: {
         value: Object,
-        item: Object
+        item: Object,
     },
     data() {
         return {
-            editor: null
+            editor: null,
         };
     },
     computed: {
@@ -60,7 +54,7 @@ export default {
         },
         placeholder() {
             return this.$gettext("My content...");
-        }
+        },
     },
     mounted() {
         const text_area = this.$refs.embedded_editor;
@@ -82,13 +76,22 @@ export default {
                     "Redo",
                     "Link",
                     "Unlink",
-                    "Anchor"
+                    "Anchor",
                 ],
                 ["Image", "Table", "HorizontalRule", "SpecialChar", "-", "Source"],
                 "/",
-                ["Bold", "Italic", "Underline", "Strike", "Subscript", "Superscript", "-"],
-                ["RemoveFormat", "NumberedList", "BulletedList", "Format"]
-            ]
+                ["Bold", "Italic", "Strike", "-"],
+                ["RemoveFormat", "NumberedList", "BulletedList", "Styles", "Format"],
+            ],
+            stylesSet: [
+                { name: "Bold", element: "strong", overrides: "b" },
+                { name: "Italic", element: "em", overrides: "i" },
+                { name: "Strike", element: "s" },
+                { name: "Code", element: "code" },
+                { name: "Subscript", element: "sub" },
+                { name: "Superscript", element: "sup" },
+            ],
+            disableNativeSpellChecker: false,
         });
 
         this.editor.on("instanceReady", this.onInstanceReady);
@@ -114,7 +117,7 @@ export default {
             if (this.editor) {
                 this.editor.destroy();
             }
-        }
-    }
+        },
+    },
 };
 </script>

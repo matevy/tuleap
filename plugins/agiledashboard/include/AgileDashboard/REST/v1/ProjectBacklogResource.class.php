@@ -40,9 +40,13 @@ use Tracker_Artifact_PriorityManager;
 use Tracker_ArtifactDao;
 use Tracker_ArtifactFactory;
 use Tracker_FormElementFactory;
-use TrackerFactory;
+use Tuleap\AgileDashboard\Artifact\PlannedArtifactDao;
 use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
 use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
+use Tuleap\AgileDashboard\ExplicitBacklog\UnplannedArtifactsAdder;
+use Tuleap\AgileDashboard\Milestone\Backlog\NoRootPlanningException;
+use Tuleap\AgileDashboard\Milestone\Backlog\ProvidedAddedIdIsNotInPartOfTopBacklogException;
+use Tuleap\AgileDashboard\Milestone\Backlog\TopBacklogElementsToAddChecker;
 use Tuleap\AgileDashboard\MonoMilestone\MonoMilestoneBacklogItemDao;
 use Tuleap\AgileDashboard\MonoMilestone\MonoMilestoneItemsFinder;
 use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
@@ -51,8 +55,6 @@ use Tuleap\AgileDashboard\Planning\MilestoneBurndownFieldChecker;
 use Tuleap\AgileDashboard\RemainingEffortValueRetriever;
 use Tuleap\AgileDashboard\REST\v1\Milestone\MilestoneElementAdder;
 use Tuleap\AgileDashboard\REST\v1\Milestone\MilestoneElementRemover;
-use Tuleap\AgileDashboard\REST\v1\Milestone\NoRootPlanningException;
-use Tuleap\AgileDashboard\REST\v1\Milestone\ProvidedAddedIdIsNotInPartOfTopBacklogException;
 use Tuleap\AgileDashboard\REST\v1\Milestone\ProvidedRemoveIdIsNotInExplicitBacklogException;
 use Tuleap\AgileDashboard\REST\v1\Milestone\RemoveNotAvailableInClassicBacklogModeException;
 use Tuleap\AgileDashboard\REST\v1\Rank\ArtifactsRankOrderer;
@@ -60,9 +62,9 @@ use Tuleap\Cardwall\BackgroundColor\BackgroundColorBuilder;
 use Tuleap\DB\DBFactory;
 use Tuleap\DB\DBTransactionExecutorWithConnection;
 use Tuleap\REST\Header;
-use Tuleap\REST\v1\OrderRepresentationBase;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\ArtifactLinkUpdater;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\ItemListedTwiceException;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
-use Tuleap\Tracker\REST\v1\ArtifactLinkUpdater;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeDao;
 use Tuleap\Tracker\Semantic\Timeframe\TimeframeBuilder;
@@ -132,15 +134,13 @@ class ProjectBacklogResource
             $planning_factory,
             Tracker_ArtifactFactory::instance(),
             $tracker_form_element_factory,
-            TrackerFactory::instance(),
             $status_counter,
             $this->planning_permissions_manager,
             new AgileDashboard_Milestone_MilestoneDao(),
             new ScrumForMonoMilestoneChecker(new ScrumForMonoMilestoneDao(), $planning_factory),
             new TimeframeBuilder(
-                $tracker_form_element_factory,
                 new SemanticTimeframeBuilder(new SemanticTimeframeDao(), $tracker_form_element_factory),
-                new \BackendLogger()
+                \BackendLogger::getDefaultLogger()
             ),
             new MilestoneBurndownFieldChecker($tracker_form_element_factory)
         );
@@ -169,7 +169,6 @@ class ProjectBacklogResource
         $this->milestone_validator = new MilestoneResourceValidator(
             $this->planning_factory,
             $tracker_artifact_factory,
-            $tracker_form_element_factory,
             $this->backlog_factory,
             $this->milestone_factory,
             $this->backlog_item_collection_factory,
@@ -184,7 +183,7 @@ class ProjectBacklogResource
         );
 
         $this->artifactlink_updater      = new ArtifactLinkUpdater($priority_manager);
-        $this->milestone_content_updater = new MilestoneContentUpdater($tracker_form_element_factory, $this->artifactlink_updater);
+        $this->milestone_content_updater = new MilestoneContentUpdater($this->artifactlink_updater);
         $this->resources_patcher         = new ResourcesPatcher(
             $this->artifactlink_updater,
             $tracker_artifact_factory,
@@ -211,9 +210,6 @@ class ProjectBacklogResource
      */
     public function get(PFUser $user, Project $project, $limit, $offset)
     {
-        if (! $this->limitValueIsAcceptable($limit)) {
-             throw new RestException(406, 'Maximum value for limit exceeded');
-        }
         $this->sendAllowHeaders();
 
         try {
@@ -230,11 +226,6 @@ class ProjectBacklogResource
         }
     }
 
-    private function limitValueIsAcceptable($limit)
-    {
-        return $limit <= self::MAX_LIMIT;
-    }
-
     public function options(PFUser $user, Project $project, $limit, $offset)
     {
         $this->sendAllowHeaders();
@@ -247,7 +238,7 @@ class ProjectBacklogResource
         $this->validateArtifactIdsAreInUnassignedTopBacklog($ids, $user, $project);
 
         try {
-            $this->artifactlink_updater->setOrderWithHistoryChangeLogging($ids, self::TOP_BACKLOG_IDENTIFIER, $project->getId());
+            $this->artifactlink_updater->setOrderWithHistoryChangeLogging($ids, (int) self::TOP_BACKLOG_IDENTIFIER, $project->getId());
         } catch (ItemListedTwiceException $exception) {
             throw new RestException(400, $exception->getMessage());
         }
@@ -270,7 +261,7 @@ class ProjectBacklogResource
     public function patch(
         PFUser $user,
         Project $project,
-        ?OrderRepresentationBase $order = null,
+        ?OrderRepresentation $order = null,
         ?array $add = null,
         ?array $remove = null
     ) {
@@ -279,10 +270,16 @@ class ProjectBacklogResource
             try {
                 $adder = new MilestoneElementAdder(
                     new ExplicitBacklogDao(),
-                    new ArtifactsInExplicitBacklogDao(),
+                    new UnplannedArtifactsAdder(
+                        new ExplicitBacklogDao(),
+                        new ArtifactsInExplicitBacklogDao(),
+                        new PlannedArtifactDao()
+                    ),
                     $this->resources_patcher,
-                    $this->planning_factory,
-                    Tracker_ArtifactFactory::instance(),
+                    new TopBacklogElementsToAddChecker(
+                        $this->planning_factory,
+                        Tracker_ArtifactFactory::instance()
+                    ),
                     new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection())
                 );
                 $adder->addElementToBacklog($project, $add, $user);
@@ -296,7 +293,7 @@ class ProjectBacklogResource
         if ($order) {
             $order->checkFormat();
 
-            $all_ids = array_merge(array($order->compared_to), $order->ids);
+            $all_ids = array_merge([$order->compared_to], $order->ids);
             $this->validateArtifactIdsAreInUnassignedTopBacklog($all_ids, $user, $project);
 
             $orderer = ArtifactsRankOrderer::build();
@@ -319,7 +316,7 @@ class ProjectBacklogResource
     }
 
     /**
-     * @throws RestException 403
+     * @throws RestException
      */
     private function checkIfUserCanChangePrioritiesInMilestone(PFUser $user, Project $project)
     {
@@ -341,6 +338,9 @@ class ProjectBacklogResource
         }
     }
 
+    /**
+     * @throws RestException
+     */
     private function validateArtifactIdsAreInUnassignedTopBacklog(array $ids, PFUser $user, Project $project)
     {
         try {

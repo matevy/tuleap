@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2011-2018. All rights reserved.
+ * Copyright Enalean (c) 2011-Present. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
@@ -22,7 +22,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\Git\Gitolite\SSHKey\SystemEvent\MigrateToTuleapSSHKeyManagement;
 use Tuleap\Git\SystemEvents\ParseGitolite3Logs;
 use Tuleap\Git\SystemEvents\ProjectIsSuspended;
 
@@ -56,7 +55,8 @@ class Git_SystemEventManager
 
     public function queueRepositoryUpdate(GitRepository $repository)
     {
-        if ($repository->getBackend() instanceof Git_Backend_Gitolite &&
+        if (
+            $repository->getBackend() instanceof Git_Backend_Gitolite &&
             ! $this->isRepositoryUpdateAlreadyQueued($repository)
         ) {
             $this->system_event_manager->createEvent(
@@ -91,7 +91,7 @@ class Git_SystemEventManager
     {
         $this->system_event_manager->createEvent(
             SystemEvent_GIT_GERRIT_PROJECT_DELETE::NAME,
-            $repository->getId(). SystemEvent::PARAMETER_SEPARATOR . $repository->getRemoteServerId(),
+            $repository->getId() . SystemEvent::PARAMETER_SEPARATOR . $repository->getRemoteServerId(),
             SystemEvent::PRIORITY_HIGH,
             SystemEvent::OWNER_APP
         );
@@ -101,7 +101,7 @@ class Git_SystemEventManager
     {
         $this->system_event_manager->createEvent(
             SystemEvent_GIT_GERRIT_PROJECT_READONLY::NAME,
-            $repository->getId(). SystemEvent::PARAMETER_SEPARATOR . $repository->getRemoteServerId(),
+            $repository->getId() . SystemEvent::PARAMETER_SEPARATOR . $repository->getRemoteServerId(),
             SystemEvent::PRIORITY_HIGH,
             SystemEvent::OWNER_APP
         );
@@ -285,17 +285,6 @@ class Git_SystemEventManager
         );
     }
 
-    public function queueMigrateToTuleapSSHKeyManagement()
-    {
-        $this->system_event_manager->createEvent(
-            MigrateToTuleapSSHKeyManagement::NAME,
-            null,
-            SystemEvent::PRIORITY_MEDIUM,
-            SystemEvent::OWNER_ROOT,
-            'Tuleap\\Git\\Gitolite\\SSHKey\\SystemEvent\\MigrateToTuleapSSHKeyManagement'
-        );
-    }
-
     public function isRepositoryUpdateAlreadyQueued(GitRepository $repository)
     {
         return $this->system_event_manager->areThereMultipleEventsQueuedMatchingFirstParameter(
@@ -321,7 +310,7 @@ class Git_SystemEventManager
 
     public function getTypes()
     {
-        return array(
+        return [
             SystemEvent_GIT_REPO_UPDATE::NAME,
             SystemEvent_GIT_REPO_DELETE::NAME,
             SystemEvent_GIT_REPO_FORK::NAME,
@@ -339,17 +328,17 @@ class Git_SystemEventManager
             SystemEvent_GIT_DELETE_MIRROR::NAME,
             SystemEvent_GIT_REGENERATE_GITOLITE_CONFIG::NAME,
             ProjectIsSuspended::NAME
-        );
+        ];
     }
 
     public function getGrokMirrorTypes()
     {
-        return array(
+        return [
             SystemEvent_GIT_GROKMIRROR_MANIFEST_UPDATE::NAME,
             SystemEvent_GIT_GROKMIRROR_MANIFEST_UPDATE_FOLLOWING_A_GIT_PUSH::NAME,
             SystemEvent_GIT_GROKMIRROR_MANIFEST_CHECK::NAME,
             SystemEvent_GIT_GROKMIRROR_MANIFEST_REPODELETE::NAME,
-        );
+        ];
     }
 
     /**
@@ -359,21 +348,22 @@ class Git_SystemEventManager
      * - This mean that for all new platforms there would be a new empty pane (git root
      *   events)
      * So it's better to make them run in the default queue like before
+     *
+     * @return string[]
      */
-    public function getTypesForDefaultQueue()
+    public function getTypesForDefaultQueue(): array
     {
-        $types = array(
+        $types = [
             ParseGitolite3Logs::NAME,
-            MigrateToTuleapSSHKeyManagement::NAME
-        );
+        ];
 
         if ($this->repository_factory->hasGitShellRepositories()) {
             return array_merge(
                 $types,
-                array(
+                [
                     SystemEvent_GIT_LEGACY_REPO_ACCESS::NAME,
                     SystemEvent_GIT_LEGACY_REPO_DELETE::NAME,
-                )
+                ]
             );
         }
 

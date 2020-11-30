@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<grammar xmlns="http://relaxng.org/ns/structure/1.0">
-  <include href="artifact-definition.rng"/>
-  <start>
-    <element name="artifacts">
-      <ref name="artifacts"/>
-    </element>
-  </start>
-</grammar>

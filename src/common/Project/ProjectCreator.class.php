@@ -35,15 +35,16 @@ use Tuleap\Dashboard\Widget\DashboardWidgetRetriever;
 use Tuleap\FRS\FRSPermissionCreator;
 use Tuleap\FRS\LicenseAgreement\LicenseAgreementDao;
 use Tuleap\FRS\LicenseAgreement\LicenseAgreementFactory;
+use Tuleap\Project\Admin\Service\ProjectServiceActivator;
 use Tuleap\Project\DefaultProjectVisibilityRetriever;
 use Tuleap\Project\DescriptionFieldsDao;
 use Tuleap\Project\DescriptionFieldsFactory;
-use Tuleap\Project\Event\ProjectRegistrationActivateService;
 use Tuleap\Project\Label\LabelDao;
 use Tuleap\Project\ProjectDescriptionMandatoryException;
 use Tuleap\Project\ProjectDescriptionUsageRetriever;
 use Tuleap\Project\ProjectRegistrationDisabledException;
 use Tuleap\Project\Registration\Template\TemplateFromProjectForCreation;
+use Tuleap\Project\Service\ServiceLinkDataBuilder;
 use Tuleap\Project\UgroupDuplicator;
 use Tuleap\Project\UGroups\Membership\DynamicUGroups\ProjectMemberAdderWithoutStatusCheckAndNotifications;
 use Tuleap\Project\UGroups\Membership\MemberAdder;
@@ -70,12 +71,9 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
      */
     public const PROJECT_CREATION_REMOVE_LEGACY_SERVICES = 'project_creation_remove_legacy_services';
 
-    /**
-     * Waiting for "private const" in PHP 7.1 https://wiki.php.net/rfc/class_const_visibility
-     */
-    private static $TYPE_PROJECT  = 1;
-    private static $TYPE_TEMPLATE = 2;
-    private static $TYPE_TEST     = 3;
+    private const TYPE_PROJECT  = 1;
+    private const TYPE_TEMPLATE = 2;
+    private const TYPE_TEST     = 3;
 
     /**
      * @var UgroupDuplicator
@@ -123,10 +121,6 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
      */
     private $dashboard_duplicator;
     /**
-     * @var ServiceCreator
-     */
-    private $service_creator;
-    /**
      * @var LabelDao
      */
     private $label_dao;
@@ -150,6 +144,10 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
      * @var \Tuleap\Project\Admin\DescriptionFields\FieldUpdator
      */
     private $field_updator;
+    /**
+     * @var ProjectServiceActivator
+     */
+    private $project_service_activator;
 
     public function __construct(
         ProjectManager $projectManager,
@@ -160,7 +158,6 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         FRSPermissionCreator $frs_permissions_creator,
         \Tuleap\FRS\LicenseAgreement\LicenseAgreementFactory $frs_license_agreement_factory,
         ProjectDashboardDuplicator $dashboard_duplicator,
-        ServiceCreator $service_creator,
         LabelDao $label_dao,
         DefaultProjectVisibilityRetriever $default_project_visibility_retriever,
         SynchronizedProjectMembershipDuplicator $synchronized_project_membership_duplicator,
@@ -168,6 +165,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         Rule_ProjectFullName $rule_full_name,
         EventManager $event_manager,
         \Tuleap\Project\Admin\DescriptionFields\FieldUpdator $field_updator,
+        ProjectServiceActivator $project_service_activator,
         $force_activation = false
     ) {
         $this->send_notifications                   = $send_notifications;
@@ -180,13 +178,13 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         $this->frs_permissions_creator              = $frs_permissions_creator;
         $this->ugroup_duplicator                    = $ugroup_duplicator;
         $this->dashboard_duplicator                 = $dashboard_duplicator;
-        $this->service_creator                      = $service_creator;
         $this->label_dao                            = $label_dao;
         $this->default_project_visibility_retriever = $default_project_visibility_retriever;
         $this->synchronized_project_membership_duplicator  = $synchronized_project_membership_duplicator;
         $this->frs_license_agreement_factory = $frs_license_agreement_factory;
         $this->event_manager = $event_manager;
         $this->field_updator = $field_updator;
+        $this->project_service_activator = $project_service_activator;
     }
 
     public static function buildSelfByPassValidation(): self
@@ -197,30 +195,31 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     public static function buildSelfRegularValidation(): self
     {
         return self::buildSelf(
-            (bool)ForgeConfig::get(\ProjectManager::CONFIG_PROJECT_APPROVAL, true) === false,
+            (bool) ForgeConfig::get(\ProjectManager::CONFIG_PROJECT_APPROVAL, true) === false,
             true
         );
     }
 
     private static function buildSelf(bool $force_activation, bool $send_notifications): self
     {
-        $ugroup_dao         = new UGroupDao();
-        $ugroup_user_dao    = new UGroupUserDao();
-        $ugroup_manager     = new UGroupManager();
-        $ugroup_binding     = new UGroupBinding($ugroup_user_dao, $ugroup_manager);
-        $ugroup_duplicator  = new Tuleap\Project\UgroupDuplicator(
+        $ugroup_dao        = new UGroupDao();
+        $ugroup_user_dao   = new UGroupUserDao();
+        $ugroup_manager    = new UGroupManager();
+        $ugroup_binding    = new UGroupBinding($ugroup_user_dao, $ugroup_manager);
+        $event_manager     = EventManager::instance();
+        $ugroup_duplicator = new Tuleap\Project\UgroupDuplicator(
             $ugroup_dao,
             $ugroup_manager,
             $ugroup_binding,
             MemberAdder::build(ProjectMemberAdderWithoutStatusCheckAndNotifications::build()),
-            EventManager::instance()
+            $event_manager
         );
 
         $user_manager   = UserManager::instance();
         $widget_factory = new WidgetFactory(
             $user_manager,
             new User_ForgeUserGroupPermissionsManager(new User_ForgeUserGroupPermissionsDao()),
-            EventManager::instance()
+            $event_manager
         );
 
         $widget_dao        = new DashboardWidgetDao($widget_factory);
@@ -237,6 +236,8 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
             new DisabledProjectWidgetsChecker(new DisabledProjectWidgetsDao())
         );
 
+        $service_dao = new ServiceDao();
+
         return new self(
             ProjectManager::instance(),
             ReferenceManager::instance(),
@@ -250,17 +251,24 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
             ),
             new LicenseAgreementFactory(new LicenseAgreementDao()),
             $duplicator,
-            new ServiceCreator(new ServiceDao()),
             new LabelDao(),
             new DefaultProjectVisibilityRetriever(),
             new SynchronizedProjectMembershipDuplicator(new SynchronizedProjectMembershipDao()),
             new \Rule_ProjectName(),
             new \Rule_ProjectFullName(),
-            EventManager::instance(),
+            $event_manager,
             new \Tuleap\Project\Admin\DescriptionFields\FieldUpdator(
                 new DescriptionFieldsFactory(new DescriptionFieldsDao()),
                 new \Tuleap\Project\Admin\ProjectDetails\ProjectDetailsDAO(),
-                new ProjectXMLImporterLogger()
+                ProjectXMLImporter::getLogger(),
+            ),
+            new ProjectServiceActivator(
+                new ServiceCreator($service_dao),
+                $event_manager,
+                $service_dao,
+                ServiceManager::instance(),
+                new ServiceLinkDataBuilder(),
+                ReferenceManager::instance()
             ),
             $force_activation
         );
@@ -394,18 +402,18 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
 
         $template_group = $data->getBuiltFromTemplateProject()->getProject();
 
-        $legacy = array(
+        $legacy = [
             Service::SVN       => true,
             Service::TRACKERV3 => true
-        );
+        ];
 
-        $this->event_manager->processEvent(self::PROJECT_CREATION_REMOVE_LEGACY_SERVICES, array(
+        $this->event_manager->processEvent(self::PROJECT_CREATION_REMOVE_LEGACY_SERVICES, [
             'template'              => $template_group,
             'project_creation_data' => &$data,
             'use_legacy_services'   => &$legacy
-        ));
+        ]);
 
-        $this->activateServicesFromTemplate($group, $template_group, $data, $legacy);
+        $this->project_service_activator->activateServicesFromTemplate($group, $template_group, $data, $legacy);
         $this->setMessageToRequesterFromTemplate($group_id, $template_group->getID());
         $this->initForumModuleFromTemplate($group_id, $template_group->getID());
         $this->initCVSModuleFromTemplate($group_id, $template_group->getID());
@@ -419,7 +427,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
 
         $this->synchronized_project_membership_duplicator->duplicate((int) $template_group->getID(), $group);
         //Copy ugroups
-        $ugroup_mapping = array();
+        $ugroup_mapping = [];
         $this->ugroup_duplicator->duplicateOnProjectCreation($template_group, $group_id, $ugroup_mapping);
 
         $this->initFRSModuleFromTemplate($group, $template_group, $ugroup_mapping);
@@ -428,13 +436,13 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
             [$tracker_mapping, $report_mapping] =
                 $this->initTrackerV3ModuleFromTemplate($group, $template_group, $ugroup_mapping);
         } else {
-            $tracker_mapping = array();
-            $report_mapping  = array();
+            $tracker_mapping = [];
+            $report_mapping  = [];
         }
         $this->initWikiModuleFromTemplate($group_id, $template_group->getID());
 
         //Create project specific references if template is not default site template
-        if (!$template_group->isSystem()) {
+        if (! $template_group->isSystem()) {
             $this->reference_manager->addProjectReferences($template_group->getID(), $group_id);
         }
 
@@ -443,7 +451,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         $this->label_dao->duplicateLabelsIfNeededBetweenProjectsId($template_group->getID(), $group_id);
 
         // Raise an event for plugin configuration
-        $this->event_manager->processEvent(Event::REGISTER_PROJECT_CREATION, array(
+        $this->event_manager->processEvent(Event::REGISTER_PROJECT_CREATION, [
             'reportMapping'         => $report_mapping, // Trackers v3
             'trackerMapping'        => $tracker_mapping, // Trackers v3
             'ugroupsMapping'        => $ugroup_mapping,
@@ -452,7 +460,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
             'project_creation_data' => $data,
             'legacy_service_usage'  => $legacy,
             'project_administrator' => $admin_user,
-        ));
+        ]);
 
         if ($data->projectShouldInheritFromTemplate()) {
             $this->initLayoutFromTemplate($group, $template_group);
@@ -467,48 +475,45 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
 
     /**
      * for testing purpose
-     * @return int, the group id created
+     * @return int|false the group id created
      */
     protected function createGroupEntry(ProjectCreationData $data)
     {
-        srand((double)microtime()*1000000);
-        $random_num=rand(0, 1000000);
-
-        if (isset($GLOBALS['sys_disable_subdomains']) && $GLOBALS['sys_disable_subdomains']) {
-            $http_domain=$GLOBALS['sys_default_domain'];
+        if (ForgeConfig::get('sys_disable_subdomains')) {
+            $http_domain = ForgeConfig::get('sys_default_domain');
         } else {
-            $http_domain=$data->getUnixName().'.'.$GLOBALS['sys_default_domain'];
+            $http_domain = $data->getUnixName() . '.' . ForgeConfig::get('sys_default_domain');
         }
 
         $access = $data->getAccess();
 
-        $type = self::$TYPE_PROJECT;
+        $type = self::TYPE_PROJECT;
         if ($data->isTest()) {
-            $type = self::$TYPE_TEST;
+            $type = self::TYPE_TEST;
         } elseif ($data->isTemplate()) {
-            $type = self::$TYPE_TEMPLATE;
+            $type = self::TYPE_TEMPLATE;
         }
 
         // make group entry
-        $insert_data = array(
-            'group_name'          => "'". db_es(htmlspecialchars($data->getFullName())) ."'",
-            'access'              => "'".$access."'",
-            'unix_group_name'     => "'". db_es($data->getUnixName()) ."'",
-            'http_domain'         => "'". db_es($http_domain) ."'",
+        $insert_data = [
+            'group_name'          => "'" . db_es($data->getFullName()) . "'",
+            'access'              => "'" . $access . "'",
+            'unix_group_name'     => "'" . db_es($data->getUnixName()) . "'",
+            'http_domain'         => "'" . db_es($http_domain) . "'",
             'status'              => "'P'",
             'unix_box'            => "'shell1'",
             'cvs_box'             => "'cvs1'",
-            'short_description'   => "'". db_es(htmlspecialchars($data->getShortDescription())) ."'",
+            'short_description'   => "'" . db_es($data->getShortDescription()) . "'",
             'register_time'       => time(),
-            'rand_hash'           => "'". md5($random_num) ."'",
+            'rand_hash'           => "'" . db_es(bin2hex(random_bytes(16))) . "'",
             'built_from_template' => db_ei($data->getBuiltFromTemplateProject()->getProject()->getID()),
             'type'                => db_ei($type)
-        );
-        $sql = 'INSERT INTO groups('. implode(', ', array_keys($insert_data)) .') VALUES ('. implode(', ', array_values($insert_data)) .')';
-        $result=db_query($sql);
+        ];
+        $sql = 'INSERT INTO groups(' . implode(', ', array_keys($insert_data)) . ') VALUES (' . implode(', ', array_values($insert_data)) . ')';
+        $result = db_query($sql);
 
-        if (!$result) {
-            exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'upd_fail', array($GLOBALS['sys_email_admin'],db_error())));
+        if (! $result) {
+            exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'upd_fail', [ForgeConfig::get('sys_email_admin'), db_error()]));
             return false;
         } else {
             $group_id = db_insertid($result);
@@ -525,7 +530,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         foreach ($data->getTroveData() as $root => $values) {
             foreach ($values as $value) {
                 db_query("INSERT INTO trove_group_link (trove_cat_id,trove_cat_version,"
-                         ."group_id,trove_cat_root) VALUES (". db_ei($value) .",". time() .",". db_ei($group_id) .",". db_ei($root) .")");
+                         . "group_id,trove_cat_root) VALUES (" . db_ei($value) . "," . time() . "," . db_ei($group_id) . "," . db_ei($root) . ")");
             }
         }
     }
@@ -535,10 +540,10 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
      */
     protected function initFileModule($group_id)
     {
-        $result=db_query("INSERT INTO filemodule (group_id,module_name) VALUES ('$group_id','".$this->project_manager->getProject($group_id)->getUnixName()."')");
-        if (!$result) {
-            [$host,$port] = explode(':', $GLOBALS['sys_default_domain']);
-            exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'ins_file_fail', array($host,db_error())));
+        $result = db_query("INSERT INTO filemodule (group_id,module_name) VALUES ('$group_id','" . $this->project_manager->getProject($group_id)->getUnixName() . "')");
+        if (! $result) {
+            [$host, $port] = explode(':', ForgeConfig::get('sys_default_domain'));
+            exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'ins_file_fail', [$host, db_error()]));
         }
     }
 
@@ -548,7 +553,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
      */
     protected function setProjectAdmin($group_id, PFUser $user)
     {
-        $result=db_query("INSERT INTO user_group (user_id,group_id,admin_flags,bug_flags,forum_flags,project_flags,patch_flags,support_flags,file_flags,wiki_flags,svn_flags,news_flags) VALUES ("
+        $result = db_query("INSERT INTO user_group (user_id,group_id,admin_flags,bug_flags,forum_flags,project_flags,patch_flags,support_flags,file_flags,wiki_flags,svn_flags,news_flags) VALUES ("
             . $user->getId() . ","
             . $group_id . ","
             . "'A'," // admin flags
@@ -561,67 +566,12 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
             . "2," // wiki_flags
             . "2," // svn_flags
             . "2)"); // news_flags
-        if (!$result) {
-            exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'set_owner_fail', array($GLOBALS['sys_email_admin'],db_error())));
+        if (! $result) {
+            exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'set_owner_fail', [ForgeConfig::get('sys_email_admin'), db_error()]));
         }
 
         // clear the user data to take into account this new group.
         $user->clearGroupData();
-    }
-
-    private function getServiceInfoQueryForNewProject(array $legacy, $template_id)
-    {
-        $template_id      = db_ei($template_id);
-        $additional_where = '';
-
-        foreach ($legacy as $service_shortname => $legacy_service_usage) {
-            if (! $legacy_service_usage) {
-                $service_shortname = db_es($service_shortname);
-                $additional_where .= " AND short_name <> '$service_shortname'";
-            }
-        }
-
-        return "SELECT * FROM service WHERE group_id=$template_id AND is_active=1 $additional_where";
-    }
-
-    /**
-     * Activate the same services on $group_id than those activated on $template_group
-     * protected for testing purpose
-     */
-    protected function activateServicesFromTemplate(Project $group, Group $template_group, ProjectCreationData $data, array $legacy)
-    {
-        $group_id    = $group->getID();
-        $template_id = $template_group->getID();
-        $sql         = $this->getServiceInfoQueryForNewProject($legacy, $template_id);
-        $result      = db_query($sql);
-
-        while ($arr = db_fetch_array($result)) {
-            $service_info = $data->getServiceInfo($arr['service_id']);
-            if (isset($service_info['is_used'])) {
-                 $is_used = $service_info['is_used'];
-            } else {
-                $is_used = '0';
-                if ($arr['short_name'] == 'admin' || $arr['short_name'] == 'summary') {
-                    $is_used = '1';
-                }
-            }
-
-            if (! $this->service_creator->createService(
-                $arr,
-                $group_id,
-                array(
-                    'system' => $template_group->isSystem(),
-                    'name' => $template_group->isSystem() ? '' : $template_group->getUnixName(),
-                    'id' => $template_id,
-                    'is_used' => $is_used,
-                )
-            )) {
-                exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'cant_create_service') .'<br>'. db_error());
-            }
-        }
-
-        $event = new ProjectRegistrationActivateService($group, $template_group, $legacy);
-        EventManager::instance()->processEvent($event);
     }
 
     /**
@@ -631,13 +581,13 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     protected function setMessageToRequesterFromTemplate($group_id, $template_id)
     {
         $dar = $this->project_manager->getMessageToRequesterForAccessProject($template_id);
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             $row = $dar->getRow();
             $result = $this->project_manager->setMessageToRequesterForAccessProject($group_id, $row['msg_to_requester']);
         } else {
             $result = $this->project_manager->setMessageToRequesterForAccessProject($group_id, 'member_request_delegation_msg_to_requester');
         }
-        if (!$result) {
+        if (! $result) {
             exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'cant_copy_msg_to_requester'));
         }
     }
@@ -648,7 +598,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     protected function initForumModuleFromTemplate($group_id, $template_id)
     {
         $sql = "SELECT forum_name, is_public, description FROM forum_group_list WHERE group_id=$template_id ";
-        $result=db_query($sql);
+        $result = db_query($sql);
         while ($arr = db_fetch_array($result)) {
             $fid = forum_create_forum(
                 $group_id,
@@ -673,14 +623,14 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         $result = db_query($sql);
         $arr = db_fetch_array($result);
         $query = "UPDATE groups
-                  SET cvs_tracker='".db_ei($arr['cvs_tracker'])."',
-                      cvs_watch_mode='".db_ei($arr['cvs_watch_mode'])."' ,
-                      cvs_preamble='".db_escape_string($arr['cvs_preamble'])."',
-                      cvs_is_private = ".db_escape_int($arr['cvs_is_private']) ."
+                  SET cvs_tracker='" . db_ei($arr['cvs_tracker']) . "',
+                      cvs_watch_mode='" . db_ei($arr['cvs_watch_mode']) . "' ,
+                      cvs_preamble='" . db_escape_string($arr['cvs_preamble']) . "',
+                      cvs_is_private = " . db_escape_int($arr['cvs_is_private']) . "
                   WHERE group_id = '$group_id'";
 
-        $result=db_query($query);
-        if (!$result) {
+        $result = db_query($query);
+        if (! $result) {
             exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'cant_copy_cvs_infos'));
         }
     }
@@ -696,7 +646,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
                 VALUES (1, $group_id, $current_timestamp)";
 
         $result = db_query($sql);
-        if (!$result) {
+        if (! $result) {
             exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'cant_copy_svn_infos'));
         }
 
@@ -704,16 +654,16 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         $result = db_query($sql);
         $arr = db_fetch_array($result);
         $query = "UPDATE groups, svn_accessfile_history
-                  SET svn_tracker='".db_ei($arr['svn_tracker'])."',
-                      svn_mandatory_ref='".db_ei($arr['svn_mandatory_ref'])."',
-                      svn_preamble='".db_escape_string($arr['svn_preamble'])."',
-                      svn_commit_to_tag_denied='".db_ei($arr['svn_commit_to_tag_denied'])."',
+                  SET svn_tracker='" . db_ei($arr['svn_tracker']) . "',
+                      svn_mandatory_ref='" . db_ei($arr['svn_mandatory_ref']) . "',
+                      svn_preamble='" . db_escape_string($arr['svn_preamble']) . "',
+                      svn_commit_to_tag_denied='" . db_ei($arr['svn_commit_to_tag_denied']) . "',
                       svn_accessfile_version_id = svn_accessfile_history.id
                   WHERE groups.group_id = $group_id
                       AND groups.group_id = svn_accessfile_history.group_id";
 
-        $result=db_query($query);
-        if (!$result) {
+        $result = db_query($query);
+        if (! $result) {
             exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'cant_copy_svn_infos'));
         }
     }
@@ -727,13 +677,13 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         if (is_array($ugroup_mapping) && count($ugroup_mapping)) {
             $sql_ugroup_mapping = ' CASE ugroup_id ';
             foreach ($ugroup_mapping as $key => $val) {
-                $sql_ugroup_mapping .= ' WHEN '. $key .' THEN '. $val;
+                $sql_ugroup_mapping .= ' WHEN ' . $key . ' THEN ' . $val;
             }
             $sql_ugroup_mapping .= ' ELSE ugroup_id END ';
         }
         //Copy packages from template project
         $packages_mapping = [];
-        $sql  = "SELECT package_id, name, status_id, rank, approve_license FROM frs_package WHERE group_id = ".db_ei($template_project->getID());
+        $sql  = "SELECT package_id, name, status_id, rank, approve_license FROM frs_package WHERE group_id = " . db_ei($template_project->getID());
         if ($result = db_query($sql)) {
             while ($p_data = db_fetch_array($result)) {
                 $template_package_id = $p_data['package_id'];
@@ -775,8 +725,8 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     protected function initTrackerV3ModuleFromTemplate(Group $group, Group $template_group, $ugroup_mapping)
     {
         $group_id = $group->getID();
-        $tracker_mapping = array();
-        $report_mapping  = array();
+        $tracker_mapping = [];
+        $report_mapping  = [];
         if (TrackerV3::instance()->available()) {
             $atf = new ArtifactTypeFactory($template_group);
             //$tracker_error = "";
@@ -784,9 +734,9 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
             $res = $atf->getTrackerTemplatesForNewProjects();
             while ($arr_template = db_fetch_array($res)) {
                 $ath_temp = new ArtifactType($template_group, $arr_template['group_artifact_id']);
-                $report_mapping_for_this_tracker = array();
+                $report_mapping_for_this_tracker = [];
                 $new_at_id = $atf->create($group_id, $template_group->getID(), $ath_temp->getID(), db_escape_string($ath_temp->getName()), db_escape_string($ath_temp->getDescription()), $ath_temp->getItemName(), $ugroup_mapping, $report_mapping_for_this_tracker);
-                if (!$new_at_id) {
+                if (! $new_at_id) {
                     $GLOBALS['Response']->addFeedback('error', $atf->getErrorMessage());
                 } else {
                     $report_mapping = $report_mapping + $report_mapping_for_this_tracker;
@@ -816,7 +766,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
                 }
             }
         }
-        return array($tracker_mapping, $report_mapping);
+        return [$tracker_mapping, $report_mapping];
     }
 
     /**
@@ -847,12 +797,12 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     {
         $sql = "UPDATE groups AS g1
                 JOIN groups AS g2
-                  ON g2.group_id = ".db_ei($template_id)."
+                  ON g2.group_id = " . db_ei($template_id) . "
                 SET g1.truncated_emails = g2.truncated_emails
-                WHERE g1.group_id = ".db_ei($group_id);
+                WHERE g1.group_id = " . db_ei($group_id);
 
         $result = db_query($sql);
-        if (!$result) {
+        if (! $result) {
             exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('register_confirmation', 'cant_copy_truncated_emails'));
         }
     }
@@ -875,19 +825,18 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     }
 
     /**
-     * @param ProjectCreationData $data
      *
      * @throws Project_InvalidFullName_Exception
      * @throws Project_InvalidShortName_Exception
      * @throws ProjectDescriptionMandatoryException
      */
-    private function checkProjectCreationData(ProjectCreationData $data) : void
+    private function checkProjectCreationData(ProjectCreationData $data): void
     {
-        if (!$this->rule_short_name->isValid($data->getUnixName())) {
+        if (! $this->rule_short_name->isValid($data->getUnixName())) {
             throw new Project_InvalidShortName_Exception($this->rule_short_name->getErrorMessage());
         }
 
-        if (!$this->rule_full_name->isValid($data->getFullName())) {
+        if (! $this->rule_full_name->isValid($data->getFullName())) {
             throw new Project_InvalidFullName_Exception($this->rule_full_name->getErrorMessage());
         }
 
@@ -898,8 +847,6 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     }
 
     /**
-     * @param ProjectCreationData $data
-     * @return Project
      * @throws Project_Creation_Exception
      *
      * protected for testing purpose
@@ -907,7 +854,7 @@ class ProjectCreator //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     protected function processProjectCreation(ProjectCreationData $data): Project
     {
         $id = $this->createProject($data);
-        if (!$id) {
+        if (! $id) {
             throw new Project_Creation_Exception();
         }
 

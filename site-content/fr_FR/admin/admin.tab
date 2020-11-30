@@ -28,7 +28,6 @@ admin_sidebar	utils_nav_news	Approbation des annonces
 admin_sidebar	utils_nav_mass_mail	Envoi d'emails en masse
 admin_sidebar	links_nav_plugins	Plugins
 admin_sidebar	links_nav_doc	Doc
-admin_sidebar	collapse_sidebar_label	Réduire la barre latérale
 
 #-----------------------------------------------
 # Script: SF/www/admin/index.php
@@ -279,7 +278,7 @@ admin_groupedit	other_info	Autre information
 admin_groupedit	grp_name	Nom du projet
 admin_groupedit	unix_grp	Nom du groupe unix
 admin_groupedit	description	Description
-admin_groupedit	built_from_template	Créé à partir du patron
+admin_groupedit	built_from_template	Créé à partir du modèle
 admin_groupedit	rename_project_title	Renommage du Projet
 admin_groupedit	rename_project_label	Renommage du Projet en
 admin_groupedit	rename_project_msg	Le changement du nom du projet sur le système va être traité dans quelques instants ($1 -> $2).
@@ -380,7 +379,6 @@ admin_search	grp_name	Nom du projet
 admin_user_changepw	error_userid	Pas d'ID utilisateur
 admin_user_changepw	error_nopasswd	Vous devez fournir un mot de passe.
 admin_user_changepw	error_passwd	Les mots de passe ne sont pas identiques.
-admin_user_changepw	error_update	Le mot de passe n'a pu être mis à jour.
 admin_user_changepw	title_changed	Mot de passe modifié avec succès
 admin_user_changepw	header_changed	Confirmation du changement de mot de passe
 admin_user_changepw	msg_changed	Le mot de passe utilisateur a été modifié.

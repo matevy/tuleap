@@ -38,7 +38,7 @@ class Git_Gitolite_GitoliteConfWriter
     /** @var Git_Mirror_MirrorDataMapper */
     private $mirror_data_mapper;
 
-    /** @var Logger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
     /** @var ProjectManager */
@@ -49,7 +49,7 @@ class Git_Gitolite_GitoliteConfWriter
         Git_Gitolite_ProjectSerializer $project_serializer,
         Git_Gitolite_GitoliteRCReader $gitoliterc_reader,
         Git_Mirror_MirrorDataMapper $mirror_data_mapper,
-        Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         ProjectManager $project_manager,
         $gitolite_administration_path
     ) {
@@ -228,7 +228,7 @@ class Git_Gitolite_GitoliteConfWriter
             return;
         }
 
-        $repositories = $this->mirror_data_mapper->fetchAllProjectRepositoriesForMirror($mirror, array($project->getGroupId()));
+        $repositories = $this->mirror_data_mapper->fetchAllProjectRepositoriesForMirror($mirror, [$project->getGroupId()]);
         $this->createConfFolderForMirrorIfNeeded($mirror);
 
         $config_file  = $this->getProjectPermissionConfFileForMirror($project, $mirror);
@@ -244,7 +244,7 @@ class Git_Gitolite_GitoliteConfWriter
             return;
         }
 
-        $repositories = $this->mirror_data_mapper->fetchAllProjectRepositoriesForMirror($mirror, array($project->getGroupId()));
+        $repositories = $this->mirror_data_mapper->fetchAllProjectRepositoriesForMirror($mirror, [$project->getGroupId()]);
         $this->createConfFolderForMirrorIfNeeded($mirror);
 
         $config_file  = $this->getProjectPermissionConfFileForMirror($project, $mirror);
@@ -261,20 +261,20 @@ class Git_Gitolite_GitoliteConfWriter
     private function getProjectPermissionConfFile(Project $project)
     {
         $prjConfDir = 'conf/projects';
-        if (!is_dir($prjConfDir)) {
+        if (! is_dir($prjConfDir)) {
             mkdir($prjConfDir);
         }
-        return $prjConfDir.'/'.$project->getUnixName().'.conf';
+        return $prjConfDir . '/' . $project->getUnixName() . '.conf';
     }
 
     private function getProjectPermissionConfFileForMirror(Project $project, Git_Mirror_Mirror $mirror)
     {
-        return $this->getConfFolderForMirror($mirror).'/'.$project->getUnixName().'.conf';
+        return $this->getConfFolderForMirror($mirror) . '/' . $project->getUnixName() . '.conf';
     }
 
     private function createConfFolderForMirrorIfNeeded(Git_Mirror_Mirror $mirror)
     {
-        if (!is_dir($this->getConfFolderForMirror($mirror))) {
+        if (! is_dir($this->getConfFolderForMirror($mirror))) {
             mkdir($this->getConfFolderForMirror($mirror));
         }
     }
@@ -286,7 +286,7 @@ class Git_Gitolite_GitoliteConfWriter
 
     private function getConfFolderForHostname($hostname)
     {
-        return 'conf/'.$hostname;
+        return 'conf/' . $hostname;
     }
 
     private function writeGitConfig($config_file, $config_datas, Git_Gitolite_GitModifications $git_modifications)
@@ -337,20 +337,20 @@ class Git_Gitolite_GitoliteConfWriter
     private function proceedRenameInMirrorIncluderConf($hostname, $file_path, $old_name, $new_name)
     {
         $orig = file_get_contents($file_path);
-        $dest = str_replace('include "' . $hostname . '/'. $old_name .'.conf"', 'include "'. $hostname .'/'. $new_name .'.conf"', $orig);
+        $dest = str_replace('include "' . $hostname . '/' . $old_name . '.conf"', 'include "' . $hostname . '/' . $new_name . '.conf"', $orig);
         file_put_contents($file_path, $dest);
     }
 
     private function proceedRenameInIncluderConf($file_path, $old_name, $new_name)
     {
         $orig = file_get_contents($file_path);
-        $dest = str_replace('include "projects/'. $old_name .'.conf"', 'include "projects/'. $new_name .'.conf"', $orig);
+        $dest = str_replace('include "projects/' . $old_name . '.conf"', 'include "projects/' . $new_name . '.conf"', $orig);
         file_put_contents($file_path, $dest);
     }
 
     private function modifyProjectConf($old_name, $new_name, Git_Gitolite_GitModifications $git_modifications, Project $project)
     {
-        $original_file = 'conf/projects/'. $old_name .'.conf';
+        $original_file = 'conf/projects/' . $old_name . '.conf';
 
         $this->proceedToRenameInSpecifiedProjectFile($original_file, $old_name, $new_name);
         $git_modifications->add($original_file);
@@ -371,7 +371,7 @@ class Git_Gitolite_GitoliteConfWriter
         if (empty($mirror->hostname)) {
             return;
         }
-        $original_file = dirname($this->getProjectPermissionConfFileForMirror($project, $mirror)).'/'. $old_name .'.conf';
+        $original_file = dirname($this->getProjectPermissionConfFileForMirror($project, $mirror)) . '/' . $old_name . '.conf';
         $this->proceedToRenameInSpecifiedProjectFile($original_file, $old_name, $new_name);
 
         $git_modifications->add($original_file);
@@ -381,16 +381,16 @@ class Git_Gitolite_GitoliteConfWriter
     {
         $orig = file_get_contents($project_file_path);
 
-        $dest = preg_replace('`(^|\n)repo '. preg_quote($old_name, '`') .'/`', '$1repo '. $new_name .'/', $orig);
-        $dest = str_replace('@'. $old_name .'_project_', '@'. $new_name .'_project_', $dest);
+        $dest = preg_replace('`(^|\n)repo ' . preg_quote($old_name, '`') . '/`', '$1repo ' . $new_name . '/', $orig);
+        $dest = str_replace('@' . $old_name . '_project_', '@' . $new_name . '_project_', $dest);
         $dest = preg_replace("%" . preg_quote($old_name, '%') . "/(.*) = \"%", "$new_name/$1 = \"", $dest);
         file_put_contents($project_file_path, $dest);
     }
 
     private function moveProjectFiles($old_name, $new_name, Git_Gitolite_GitModifications $git_modifications, Project $project)
     {
-        $old_file = 'conf/projects/'.$old_name.'.conf';
-        $new_file = 'conf/projects/'.$new_name.'.conf';
+        $old_file = 'conf/projects/' . $old_name . '.conf';
+        $new_file = 'conf/projects/' . $new_name . '.conf';
 
         $this->proceedToFileMove($old_file, $new_file, $git_modifications);
 
@@ -418,8 +418,8 @@ class Git_Gitolite_GitoliteConfWriter
             return;
         }
 
-        $old_file = $this->getConfFolderForMirror($mirror).'/'.$old_name.'.conf';
-        $new_file = $this->getConfFolderForMirror($mirror).'/'.$new_name.'.conf';
+        $old_file = $this->getConfFolderForMirror($mirror) . '/' . $old_name . '.conf';
+        $new_file = $this->getConfFolderForMirror($mirror) . '/' . $new_name . '.conf';
 
         $this->proceedToFileMove($old_file, $new_file, $git_modifications);
     }
@@ -443,7 +443,7 @@ class Git_Gitolite_GitoliteConfWriter
     private function getFullConfigFilePathFromHostname($hostname)
     {
         if ($hostname) {
-            return dirname($this->getGitoliteConfFilePath()).'/'.$hostname.'.conf';
+            return dirname($this->getGitoliteConfFilePath()) . '/' . $hostname . '.conf';
         }
 
         return $this->getGitoliteConfFilePath();
@@ -451,24 +451,24 @@ class Git_Gitolite_GitoliteConfWriter
 
     private function getRelativeConfigFilePathFromHostname($hostname)
     {
-        return 'conf/'.$hostname.'.conf';
+        return 'conf/' . $hostname . '.conf';
     }
 
     private function getProjectList()
     {
-        $dir_path = dirname($this->getGitoliteConfFilePath()).'/projects';
+        $dir_path = dirname($this->getGitoliteConfFilePath()) . '/projects';
         return $this->readProjectListFromPath($dir_path);
     }
 
     private function getProjectsListForMirror(Git_Mirror_Mirror $mirror)
     {
-        $dir_path = dirname($this->getGitoliteConfFilePath()).'/'.$mirror->hostname;
+        $dir_path = dirname($this->getGitoliteConfFilePath()) . '/' . $mirror->hostname;
         return $this->readProjectListFromPath($dir_path);
     }
 
     private function readProjectListFromPath($dir_path)
     {
-        $project_names = array();
+        $project_names = [];
 
         if (! is_dir($dir_path)) {
             return $project_names;

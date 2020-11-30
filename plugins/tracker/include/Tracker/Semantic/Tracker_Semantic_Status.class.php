@@ -19,6 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\REST\SemanticStatusRepresentation;
 use Tuleap\Tracker\Semantic\SemanticStatusCanBeDeleted;
 use Tuleap\Tracker\Semantic\SemanticStatusFieldCanBeUpdated;
@@ -47,7 +48,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
      * @param Tracker_FormElement_Field_List $list_field  The field
      * @param array                          $open_values The values with the meaning "Open"
      */
-    public function __construct(Tracker $tracker, ?Tracker_FormElement_Field_List $list_field = null, $open_values = array())
+    public function __construct(Tracker $tracker, ?Tracker_FormElement_Field_List $list_field = null, $open_values = [])
     {
         parent::__construct($tracker);
         $this->list_field  = $list_field;
@@ -76,7 +77,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
      */
     public function getLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_label');
+        return dgettext('tuleap-tracker', 'Status');
     }
 
     /**
@@ -86,7 +87,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
      */
     public function getDescription()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_description');
+        return dgettext('tuleap-tracker', 'Define the status of an artifact');
     }
 
     /**
@@ -123,7 +124,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
         return $this->open_values;
     }
 
-    public function isOpen(Tracker_Artifact $artifact)
+    public function isOpen(Artifact $artifact)
     {
         if (! $this->getField()) {
             return true;
@@ -150,10 +151,9 @@ class Tracker_Semantic_Status extends Tracker_Semantic
     /**
      * Get status label independent of language (hence english)
      *
-     * @param Tracker_Artifact $artifact
      * @return string
      */
-    public function getNormalizedStatusLabel(Tracker_Artifact $artifact)
+    public function getNormalizedStatusLabel(Artifact $artifact)
     {
         if ($this->isOpen($artifact)) {
             return self::OPEN;
@@ -165,30 +165,32 @@ class Tracker_Semantic_Status extends Tracker_Semantic
     /**
      * Get status label according to current user language preference
      *
-     * @param Tracker_Artifact $artifact
      * @return string
      */
-    public function getLocalizedStatusLabel(Tracker_Artifact $artifact)
+    public function getLocalizedStatusLabel(Artifact $artifact)
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_'. $this->getNormalizedStatusLabel($artifact));
+        if ($this->isOpen($artifact)) {
+            return dgettext('tuleap-tracker', 'Open');
+        }
+
+        return dgettext('tuleap-tracker', 'Closed');
     }
 
     /**
      * @deprecated in favor of getLocalizedStatusLabel
      * @return string
      */
-    public function getStatus(Tracker_Artifact $artifact)
+    public function getStatus(Artifact $artifact)
     {
         return $this->getLocalizedStatusLabel($artifact);
     }
 
     /**
-     *
-     * @return array
+     * @return string[]
      */
-    private function getOpenLabels()
+    public function getOpenLabels(): array
     {
-        $labels = array();
+        $labels = [];
 
         if (! $this->list_field instanceof Tracker_FormElement_Field_List) {
             return $labels;
@@ -213,32 +215,28 @@ class Tracker_Semantic_Status extends Tracker_Semantic
     {
         if ($this->list_field) {
             $purifier = Codendi_HTMLPurifier::instance();
-            echo $GLOBALS['Language']->getText(
-                'plugin_tracker_admin_semantic',
-                'status_long_desc',
-                array($purifier->purify($this->list_field->getLabel()))
-            );
+            echo sprintf(dgettext('tuleap-tracker', '<p>An artifact is considered to be <strong>open</strong> when its field <strong>%1$s</strong> will have one of the following values:</p>'), $purifier->purify($this->list_field->getLabel()));
             if ($this->open_values) {
                 echo '<ul>';
                 $field_values = $this->list_field->getAllValues();
                 foreach ($this->open_values as $v) {
                     if (isset($field_values[$v])) {
-                        echo '<li><strong>'. $purifier->purify($field_values[$v]->getLabel()) .'</strong></li>';
+                        echo '<li><strong>' . $purifier->purify($field_values[$v]->getLabel()) . '</strong></li>';
                     }
                 }
                 echo '</ul>';
             } else {
-                echo '<blockquote><em>' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_no_value') . '</em></blockquote>';
+                echo '<blockquote><em>' . dgettext('tuleap-tracker', 'No value has been set') . '</em></blockquote>';
             }
         } else {
-            echo $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_no_field');
+            echo dgettext('tuleap-tracker', '<p>The artifacts of this tracker does not have any <em>status</em> yet.</p>');
         }
     }
 
     /**
      * Display the form to let the admin change the semantic
      *
-     * @param Tracker_SemanticManager $sm              The semantic manager
+     * @param Tracker_SemanticManager $semantic_manager              The semantic manager
      * @param TrackerManager          $tracker_manager The tracker manager
      * @param Codendi_Request         $request         The request
      * @param PFUser                    $current_user    The user who made the request
@@ -246,7 +244,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
      * @return void
      */
     public function displayAdmin(
-        Tracker_SemanticManager $sm,
+        Tracker_SemanticManager $semantic_manager,
         TrackerManager $tracker_manager,
         Codendi_Request $request,
         PFUser $current_user
@@ -255,9 +253,9 @@ class Tracker_Semantic_Status extends Tracker_Semantic
         $html = '';
 
         if ($list_fields = Tracker_FormElementFactory::instance()->getUsedListFields($this->tracker)) {
-            $html .= '<form method="POST" action="'. $this->getUrl() .'">';
+            $html .= '<form method="POST" action="' . $this->getUrl() . '">';
             $html .= $this->getCSRFToken()->fetchHTMLInput();
-            $html .= '<input type="hidden" name="field_id" value="'. (int) $this->getFieldId() .'">';
+            $html .= '<input type="hidden" name="field_id" value="' . (int) $this->getFieldId() . '">';
 
             // field selectbox
             $field = null;
@@ -267,7 +265,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
             if (! $this->list_field) {
                 $selected = 'selected="selected"';
             }
-            $select .= '<option value="-1" '. $selected .'>' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'choose_a_field') . '</option>';
+            $select .= '<option value="-1" ' . $selected . '>' . dgettext('tuleap-tracker', 'Choose a field...') . '</option>';
 
             foreach ($list_fields as $list_field) {
                 $selected = '';
@@ -282,9 +280,9 @@ class Tracker_Semantic_Status extends Tracker_Semantic
             // open values selectbox
             $params = '';
             if ($field) {
-                $params = 'name="open_values['. $this->getFieldId() .'][]" multiple="multiple" size="7" style="vertical-align:top;"';
+                $params = 'name="open_values[' . $this->getFieldId() . '][]" multiple="multiple" size="7" style="vertical-align:top;"';
             }
-            $values = '<select '. $params .'>';
+            $values = '<select ' . $params . '>';
             if ($field) {
                 $disabled_values = $this->getDisabledValues();
 
@@ -299,17 +297,17 @@ class Tracker_Semantic_Status extends Tracker_Semantic
                         $disabled = ' disabled="disabled" ';
                     }
 
-                    $values .= '<option value="' . $v->getId() . '" ' . $selected . $disabled .'>' . $hp->purify($v->getLabel(), CODENDI_PURIFIER_CONVERT_HTML) . '</option>';
+                    $values .= '<option value="' . $v->getId() . '" ' . $selected . $disabled . '>' . $hp->purify($v->getLabel(), CODENDI_PURIFIER_CONVERT_HTML) . '</option>';
                 }
             }
             $values .= '</select>';
 
             // submit button
-            $submit = '<input type="submit" name="update" value="'. $GLOBALS['Language']->getText('global', 'btn_submit') .'" />';
+            $submit = '<input type="submit" name="update" value="' . $GLOBALS['Language']->getText('global', 'btn_submit') . '" />';
 
-            if (!$this->getFieldId()) {
-                $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_no_field');
-                $html .= '<p>' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'choose_one_advice') . $select .' '. $submit .'</p>';
+            if (! $this->getFieldId()) {
+                $html .= dgettext('tuleap-tracker', '<p>The artifacts of this tracker does not have any <em>status</em> yet.</p>');
+                $html .= '<p>' . dgettext('tuleap-tracker', 'Feel free to choose one:') . $select . ' ' . $submit . '</p>';
             } else {
                 $event = new SemanticStatusFieldCanBeUpdated($this->tracker);
 
@@ -320,17 +318,17 @@ class Tracker_Semantic_Status extends Tracker_Semantic
                     $select = $this->getField()->getLabel();
                 }
 
-                $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_long_desc', array($select)) . $values .' '. $submit;
+                $html .= sprintf(dgettext('tuleap-tracker', '<p>An artifact is considered to be <strong>open</strong> when its field <strong>%1$s</strong> will have one of the following values:</p>'), $select) . $values . ' ' . $submit;
             }
             $html .= '</form>';
         } else {
-            $html .= $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_impossible');
+            $html .= dgettext('tuleap-tracker', 'You cannot define the <em>status</em> semantic since there isn\'t any list field in the tracker');
         }
-        $html .= '<p><a href="'.TRACKER_BASE_URL.'/?tracker='. $this->tracker->getId() .'&amp;func=admin-semantic">&laquo; ' . $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'go_back_overview') . '</a></p>';
+        $html .= '<p><a href="' . TRACKER_BASE_URL . '/?tracker=' . $this->tracker->getId() . '&amp;func=admin-semantic">&laquo; ' . dgettext('tuleap-tracker', 'go back to semantic overview') . '</a></p>';
 
-        $sm->displaySemanticHeader($this, $tracker_manager);
+        $semantic_manager->displaySemanticHeader($this, $tracker_manager);
         echo $html;
-        $sm->displaySemanticFooter($this, $tracker_manager);
+        $semantic_manager->displaySemanticFooter($this, $tracker_manager);
     }
 
     private function getDisabledValues()
@@ -345,14 +343,14 @@ class Tracker_Semantic_Status extends Tracker_Semantic
     /**
      * Process the form
      *
-     * @param Tracker_SemanticManager $sm              The semantic manager
+     * @param Tracker_SemanticManager $semantic_manager              The semantic manager
      * @param TrackerManager          $tracker_manager The tracker manager
      * @param Codendi_Request         $request         The request
      * @param PFUser                    $current_user    The user who made the request
      *
      * @return void
      */
-    public function process(Tracker_SemanticManager $sm, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user)
+    public function process(Tracker_SemanticManager $semantic_manager, TrackerManager $tracker_manager, Codendi_Request $request, PFUser $current_user)
     {
         if ($request->exist('update')) {
             $this->getCSRFToken()->check();
@@ -362,7 +360,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
                 $this->processUpdate($request);
             }
         }
-        $this->displayAdmin($sm, $tracker_manager, $request, $current_user);
+        $this->displayAdmin($semantic_manager, $tracker_manager, $request, $current_user);
     }
 
     /**
@@ -370,10 +368,11 @@ class Tracker_Semantic_Status extends Tracker_Semantic
      */
     private function getFilteredOpenValues(Codendi_Request $request)
     {
-        $filtered_values = array();
+        $filtered_values = [];
         $open_values     = $request->get('open_values');
 
-        if (! $open_values ||
+        if (
+            ! $open_values ||
             ! is_array($open_values) ||
             ! isset($open_values[$this->getFieldId()]) ||
             ! is_array($open_values[$this->getFieldId()])
@@ -420,7 +419,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
         }
 
         $this->list_field  = null;
-        $this->open_values = array();
+        $this->open_values = [];
         $dao = new Tracker_Semantic_StatusDao();
         $dao->delete($this->tracker->getId());
     }
@@ -438,7 +437,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
     public function save()
     {
         $dao = new Tracker_Semantic_StatusDao();
-        $open_values = array();
+        $open_values = [];
         foreach ($this->open_values as $v) {
             if (is_scalar($v)) {
                 $open_values[] = $v;
@@ -468,7 +467,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
 
     public function removeOpenValue($value)
     {
-        $this->open_values = array_diff($this->open_values, array($value));
+        $this->open_values = array_diff($this->open_values, [$value]);
         return $this->save();
     }
 
@@ -492,15 +491,15 @@ class Tracker_Semantic_Status extends Tracker_Semantic
     public static function forceLoad(Tracker $tracker)
     {
         $field_id    = null;
-        $open_values = array();
+        $open_values = [];
         $dao         = new Tracker_Semantic_StatusDao();
 
         foreach ($dao->searchByTrackerId($tracker->getId()) as $row) {
             $field_id      = $row['field_id'];
-            $open_values[] = (int)$row['open_value_id'];
+            $open_values[] = (int) $row['open_value_id'];
         }
 
-        if (!$open_values) {
+        if (! $open_values) {
             $open_values[] = 100;
         }
 
@@ -516,22 +515,23 @@ class Tracker_Semantic_Status extends Tracker_Semantic
      * Export semantic to XML
      *
      * @param SimpleXMLElement &$root      the node to which the semantic is attached (passed by reference)
-     * @param array            $xmlMapping correspondance between real ids and xml IDs
+     * @param array            $xml_mapping correspondance between real ids and xml IDs
      *
      * @return void
      */
-    public function exportToXml(SimpleXMLElement $root, $xmlMapping)
+    public function exportToXml(SimpleXMLElement $root, $xml_mapping)
     {
-        if ($this->getFieldId() && in_array($this->getFieldId(), $xmlMapping)) {
+        if ($this->getFieldId() && in_array($this->getFieldId(), $xml_mapping)) {
             $child = $root->addChild('semantic');
             $child->addAttribute('type', $this->getShortName());
-            $child->addChild('shortname', $this->getShortName());
-            $child->addChild('label', $this->getLabel());
-            $child->addChild('description', $this->getDescription());
-            $child->addChild('field')->addAttribute('REF', array_search($this->getFieldId(), $xmlMapping));
+            $cdata = new \XML_SimpleXMLCDATAFactory();
+            $cdata->insert($child, 'shortname', $this->getShortName());
+            $cdata->insert($child, 'label', $this->getLabel());
+            $cdata->insert($child, 'description', $this->getDescription());
+            $child->addChild('field')->addAttribute('REF', array_search($this->getFieldId(), $xml_mapping));
             $node_open_values = $child->addChild('open_values');
             foreach ($this->open_values as $value) {
-                if ($ref = array_search($value, $xmlMapping['values'])) {
+                if ($ref = array_search($value, $xml_mapping['values'])) {
                     $node_open_values->addChild('open_value')->addAttribute('REF', $ref);
                 }
             }
@@ -594,9 +594,6 @@ class Tracker_Semantic_Status extends Tracker_Semantic
         self::$_instances = null;
     }
 
-    /**
-     * @param Codendi_Request $request
-     */
     private function processUpdate(Codendi_Request $request): void
     {
         $field = Tracker_FormElementFactory::instance()->getUsedListFieldById(
@@ -606,7 +603,7 @@ class Tracker_Semantic_Status extends Tracker_Semantic
         if (! $field) {
             $GLOBALS['Response']->addFeedback(
                 'error',
-                $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'bad_field_status')
+                dgettext('tuleap-tracker', 'The field you submitted is not a list field')
             );
             return;
         }
@@ -636,13 +633,13 @@ class Tracker_Semantic_Status extends Tracker_Semantic
         if ($this->save()) {
             $GLOBALS['Response']->addFeedback(
                 Feedback::INFO,
-                $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'status_now', [$field->getLabel()])
+                sprintf(dgettext('tuleap-tracker', 'The status is now bind to: %1$s'), $field->getLabel())
             );
             $GLOBALS['Response']->redirect($this->getUrl());
         } else {
             $GLOBALS['Response']->addFeedback(
                 Feedback::ERROR,
-                $GLOBALS['Language']->getText('plugin_tracker_admin_semantic', 'unable_save_status')
+                dgettext('tuleap-tracker', 'Unable to save the status')
             );
         }
     }

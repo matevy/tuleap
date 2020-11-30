@@ -27,60 +27,56 @@ use Gumlet\ImageResizeException;
 use HTTPRequest;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithRequest;
-use Tuleap\Request\ForbiddenException;
-use Tuleap\Request\NotFoundException;
 
 class ChangeAvatarController implements DispatchableWithRequest
 {
     /**
-     * @var \UserManager
-     */
-    private $user_manager;
-    /**
      * @var UserAvatarSaver
      */
     private $user_avatar_saver;
+    /**
+     * @var CSRFSynchronizerToken
+     */
+    private $csrf;
+    /**
+     * @var \UserManager
+     */
+    private $user_manager;
 
-    public function __construct(\UserManager $user_manager, UserAvatarSaver $user_avatar_saver)
-    {
-        $this->user_manager      = $user_manager;
+    public function __construct(
+        CSRFSynchronizerToken $csrf,
+        UserAvatarSaver $user_avatar_saver,
+        \UserManager $user_manager
+    ) {
+        $this->csrf              = $csrf;
         $this->user_avatar_saver = $user_avatar_saver;
+        $this->user_manager = $user_manager;
     }
 
-    /**
-     * Is able to process a request routed by FrontRouter
-     *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
-     * @param array $variables
-     * @throws NotFoundException
-     * @throws ForbiddenException
-     * @return void
-     */
-    public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
+    public function process(HTTPRequest $request, BaseLayout $layout, array $variables): void
     {
         $user = $request->getCurrentUser();
         if ($user->isAnonymous()) {
             $layout->redirect('/');
         }
 
-        $csrf = new CSRFSynchronizerToken('/account/index.php');
-        $csrf->check();
+        $this->csrf->check();
 
         if ($request->get('use-default-avatar')) {
-            $user->setHasAvatar(false);
-            if ($this->user_manager->updateDb($user)) {
-                $layout->addFeedback(Feedback::INFO, $GLOBALS['Language']->getText('account_change_avatar', 'success'));
-            } else {
-                $layout->addFeedback(Feedback::ERROR, $GLOBALS['Language']->getText('account_change_avatar', 'error'));
+            $avatar_path = $user->getAvatarFilePath();
+            if (is_file($avatar_path)) {
+                unlink($avatar_path);
             }
+            $user->setHasCustomAvatar(false);
+            $this->user_manager->updateDb($user);
+            $layout->addFeedback(Feedback::INFO, $GLOBALS['Language']->getText('account_change_avatar', 'success'));
         } elseif (isset($_FILES['avatar'])) {
             if ($_FILES['avatar']['error']) {
                 $GLOBALS['Response']->addFeedback(
                     Feedback::ERROR,
                     _('An error occurred with your upload. Please try again or choose another image.')
                 );
-                $layout->redirect('/account');
+                $layout->redirect(DisplayAccountInformationController::URL);
             }
             try {
                 $this->user_avatar_saver->saveAvatar($user, $_FILES['avatar']['tmp_name']);
@@ -90,6 +86,6 @@ class ChangeAvatarController implements DispatchableWithRequest
                 $layout->addFeedback(Feedback::ERROR, $exception->getMessage());
             }
         }
-        $layout->redirect('/account');
+        $layout->redirect(DisplayAccountInformationController::URL);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,196 +20,395 @@
 namespace Tuleap\AgileDashboard\REST\v1;
 
 use AgileDashboard_MilestonesCardwallRepresentation;
-use EventManager;
 use Planning_Milestone;
-use PlanningFactory;
-use TrackerFactory;
-use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneChecker;
-use Tuleap\AgileDashboard\MonoMilestone\ScrumForMonoMilestoneDao;
+use Tuleap\AgileDashboard\Milestone\Pane\PaneInfoCollector;
 use Tuleap\Project\REST\ProjectReference;
 use Tuleap\REST\JsonCast;
-use Tuleap\REST\v1\MilestoneRepresentationBase;
 use Tuleap\Tracker\REST\Artifact\ArtifactReference;
 use Tuleap\Tracker\REST\Artifact\BurndownRepresentation;
 use Tuleap\Tracker\REST\TrackerReference;
 
 /**
- * Representation of a milestone
+ * @psalm-immutable
  */
-class MilestoneRepresentation extends MilestoneRepresentationBase
+class MilestoneRepresentation
 {
+    public const ROUTE      = 'milestones';
+    public const ALL_FIELDS = 'all';
+    public const SLIM       = 'slim';
 
-    public function build(
+    /**
+     * @var int
+     */
+    public $id;
+
+    /**
+     * @var string
+     */
+    public $description;
+
+    /**
+     * @var string
+     */
+    public $post_processed_description;
+
+    /**
+     * @var String
+     */
+    public $uri;
+
+    /**
+     * @var String
+     */
+    public $label;
+
+    /**
+     * @var int
+     */
+    public $submitted_by;
+
+    /**
+     * @var String
+     */
+    public $submitted_on;
+
+    /**
+     * @var \Tuleap\REST\v1\PlanningReferenceBase
+     */
+    public $planning;
+
+    /**
+     * @var ProjectReference
+     */
+    public $project;
+
+    /**
+     * @var string | null
+     */
+    public $start_date;
+
+    /**
+     * @var string | null
+     */
+    public $end_date;
+
+    /**
+     * @var int | null
+     */
+    public $number_days_since_start;
+
+    /**
+     * @var int | null
+     */
+    public $number_days_until_end;
+
+    /**
+     * @var float | null
+     */
+    public $capacity;
+
+    /**
+     * @var float | null
+     */
+    public $remaining_effort;
+
+    /**
+     * @var string
+     */
+    public $status_value;
+
+    /**
+     * @var string
+     */
+    public $semantic_status;
+
+    /**
+     * @var MilestoneParentReference | null
+     */
+    public $parent;
+
+    /**
+     * @var \Tuleap\Tracker\REST\Artifact\ArtifactReference
+     */
+    public $artifact;
+
+    /**
+     * @var string
+     */
+    public $sub_milestones_uri;
+
+    /**
+     * @var \Tuleap\Tracker\REST\TrackerReference | null
+     */
+    public $sub_milestone_type;
+
+    /**
+     * @var string
+     */
+    public $backlog_uri;
+
+    /**
+     * @var string
+     */
+    public $content_uri;
+
+    /**
+     * @var string
+     */
+    public $cardwall_uri = null;
+
+    /**
+     * @var string
+     */
+    public $burndown_uri = null;
+
+    /**
+     * @var string | null Date, when the last modification occurs
+     */
+    public $last_modified_date;
+
+    /**
+     * @var array | null
+     */
+    public $status_count;
+
+    /**
+     * @var bool
+     */
+    public $has_user_priority_change_permission;
+
+    /**
+     * @var array
+     */
+    public $resources = [
+        'milestones'       => null,
+        'backlog'          => null,
+        'content'          => null,
+        'cardwall'         => null,
+        'burndown'         => null,
+        'siblings'         => null,
+        'additional_panes' => [],
+    ];
+
+    private function __construct(
+        int $id,
+        string $uri,
+        string $label,
+        string $status_value,
+        string $semantic_status,
+        int $submitted_by,
+        string $submitted_on,
+        ?float $capacity,
+        ?float $remaining_effort,
+        ?TrackerReference $sub_milestone_type,
+        PlanningReference $planning,
+        ProjectReference $project,
+        ArtifactReference $artifact,
+        string $description,
+        string $post_processed_description,
+        ?string $start_date,
+        ?int $number_days_since_start,
+        ?string $end_date,
+        ?int $number_days_until_end,
+        ?MilestoneParentReference $parent,
+        bool $has_user_priority_change_permission,
+        ?string $last_modified_date,
+        ?array $status_count,
+        array $resources
+    ) {
+        $this->id                                  = $id;
+        $this->uri                                 = $uri;
+        $this->label                               = $label;
+        $this->status_value                        = $status_value;
+        $this->semantic_status                     = $semantic_status;
+        $this->submitted_by                        = $submitted_by;
+        $this->submitted_on                        = $submitted_on;
+        $this->capacity                            = $capacity;
+        $this->remaining_effort                    = $remaining_effort;
+        $this->sub_milestone_type                  = $sub_milestone_type;
+        $this->planning                            = $planning;
+        $this->project                             = $project;
+        $this->artifact                            = $artifact;
+        $this->description                         = $description;
+        $this->post_processed_description          = $post_processed_description;
+        $this->start_date                          = $start_date;
+        $this->number_days_since_start             = $number_days_since_start;
+        $this->end_date                            = $end_date;
+        $this->number_days_until_end               = $number_days_until_end;
+        $this->parent                              = $parent;
+        $this->has_user_priority_change_permission = $has_user_priority_change_permission;
+        $this->sub_milestones_uri = $this->uri . '/' . self::ROUTE;
+        $this->backlog_uri        = $this->uri . '/' . BacklogItemRepresentation::BACKLOG_ROUTE;
+        $this->content_uri        = $this->uri . '/' . BacklogItemRepresentation::CONTENT_ROUTE;
+        $this->last_modified_date                  = $last_modified_date;
+        $this->status_count                        = $status_count;
+        $this->resources                           = $resources;
+    }
+
+    public static function build(
         Planning_Milestone $milestone,
         array $status_count,
         array $backlog_trackers,
         array $parent_trackers,
         $has_user_priority_change_permission,
         $representation_type,
-        $is_mono_milestone_enabled
-    ) {
-        $this->id                   = JsonCast::toInt($milestone->getArtifactId());
-        $this->uri                  = self::ROUTE . '/' . $this->id;
-        $this->label                = $milestone->getArtifactTitle();
-        $this->status_value         = $milestone->getArtifact()->getStatus();
-        $this->semantic_status      = $milestone->getArtifact()->getSemanticStatusValue();
-        $this->submitted_by         = JsonCast::toInt($milestone->getArtifact()->getFirstChangeset()->getSubmittedBy());
-        $this->submitted_on         = JsonCast::toDate($milestone->getArtifact()->getFirstChangeset()->getSubmittedOn());
-        $this->capacity             = JsonCast::toFloat($milestone->getCapacity());
-        $this->remaining_effort     = JsonCast::toFloat($milestone->getRemainingEffort());
-        $this->sub_milestone_type   = $this->getSubmilestoneType($milestone, $is_mono_milestone_enabled);
+        ?\Planning $sub_planning,
+        PaneInfoCollector $pane_info_collector,
+        ?\Tracker $sub_milestone_tracker
+    ): self {
+        $artifact_id = $milestone->getArtifactId();
+        $uri         = self::ROUTE . '/' . $artifact_id;
 
-        $this->planning = new PlanningReference();
-        $this->planning->build($milestone->getPlanning());
-
-        $this->project = new ProjectReference();
-        $this->project->build($milestone->getProject());
-
-        $this->artifact = new ArtifactReference();
-        $this->artifact->build($milestone->getArtifact());
-
-        $this->description = (string) $milestone->getArtifact()->getDescription();
-
-        $this->start_date = null;
+        $start_date              = null;
+        $number_days_since_start = null;
         if ($milestone->getStartDate()) {
-            $this->start_date              = JsonCast::toDate($milestone->getStartDate());
+            $start_date = JsonCast::toDate($milestone->getStartDate());
             if ($representation_type === self::ALL_FIELDS) {
-                $this->number_days_since_start = JsonCast::toInt($milestone->getDaysSinceStart());
+                $number_days_since_start = JsonCast::toInt($milestone->getDaysSinceStart());
             }
         }
 
-        $this->end_date = null;
+        $end_date              = null;
+        $number_days_until_end = null;
         if ($milestone->getEndDate()) {
-            $this->end_date              = JsonCast::toDate($milestone->getEndDate());
+            $end_date = JsonCast::toDate($milestone->getEndDate());
             if ($representation_type === self::ALL_FIELDS) {
-                $this->number_days_until_end = JsonCast::toInt($milestone->getDaysUntilEnd());
+                $number_days_until_end = JsonCast::toInt($milestone->getDaysUntilEnd());
             }
         }
 
+        $parent_reference = null;
         if ($representation_type === self::ALL_FIELDS) {
-            $this->parent = null;
-            $parent       = $milestone->getParent();
+            $parent = $milestone->getParent();
             if ($parent) {
-                $this->parent = new MilestoneParentReference();
-                $this->parent->build($parent);
+                $parent_reference = MilestoneParentReference::build($parent);
             }
         }
 
-        $this->has_user_priority_change_permission = $has_user_priority_change_permission;
-
-        $this->sub_milestones_uri = $this->uri . '/'. self::ROUTE;
-        $this->backlog_uri        = $this->uri . '/'. BacklogItemRepresentation::BACKLOG_ROUTE;
-        $this->content_uri        = $this->uri . '/'. BacklogItemRepresentation::CONTENT_ROUTE;
-        $this->last_modified_date = JsonCast::toDate($milestone->getLastModifiedDate());
+        $status_count_ref = null;
         if ($representation_type === self::ALL_FIELDS && $status_count) {
-            $this->status_count = $status_count;
+            $status_count_ref = $status_count;
         }
 
-        $finder = new \AgileDashboard_Milestone_Pane_Planning_SubmilestoneFinder(
-            \Tracker_HierarchyFactory::instance(),
-            PlanningFactory::build(),
-            new ScrumForMonoMilestoneChecker(new ScrumForMonoMilestoneDao(), PlanningFactory::build()),
-            TrackerFactory::instance()
-        );
-        $submilestone_tracker = $finder->findFirstSubmilestoneTracker($milestone);
-
-        $submilestone_trackers = array();
-        if ($submilestone_tracker) {
-            $submilestone_tracker_ref = new TrackerReference();
-            $submilestone_tracker_ref->build($finder->findFirstSubmilestoneTracker($milestone));
-            $submilestone_trackers = array($submilestone_tracker_ref);
+        $submilestone_trackers = [];
+        if ($sub_milestone_tracker) {
+            $submilestone_tracker_ref = TrackerReference::build($sub_milestone_tracker);
+            $submilestone_trackers = [$submilestone_tracker_ref];
         }
 
-        $this->resources['milestones'] = array(
-            'uri'    => $this->uri . '/'. self::ROUTE,
-            'accept' => array(
+        $resources = [];
+
+        $resources['milestones'] = [
+            'uri'    => $uri . '/' . self::ROUTE,
+            'accept' => [
                 'trackers' => $submilestone_trackers
-            )
-        );
-        $this->resources['backlog'] = array(
-            'uri'    => $this->uri . '/'. BacklogItemRepresentation::BACKLOG_ROUTE,
-            'accept' => array(
-                'trackers'        => $this->getTrackersRepresentation($backlog_trackers),
-                'parent_trackers' => $this->getTrackersRepresentation($parent_trackers)
-            )
-        );
-        $this->resources['content'] = array(
-            'uri'    => $this->uri . '/'. BacklogItemRepresentation::CONTENT_ROUTE,
-            'accept' => array(
-                'trackers' => $this->getContentTrackersRepresentation($milestone)
-            )
-        );
-        $this->resources['siblings'] = [
-            'uri' => $this->uri . '/siblings'
+            ]
         ];
+        $resources['backlog'] = [
+            'uri'    => $uri . '/' . BacklogItemRepresentation::BACKLOG_ROUTE,
+            'accept' => [
+                'trackers'        => self::getTrackersRepresentation($backlog_trackers),
+                'parent_trackers' => self::getTrackersRepresentation($parent_trackers)
+            ]
+        ];
+        $resources['content'] = [
+            'uri'    => $uri . '/' . BacklogItemRepresentation::CONTENT_ROUTE,
+            'accept' => [
+                'trackers' => self::getContentTrackersRepresentation($milestone)
+            ]
+        ];
+        $resources['siblings'] = [
+            'uri' => $uri . '/siblings'
+        ];
+        $resources['cardwall'] = null;
+        $resources['burndown'] = null;
 
-        $event = new AdditionalPanesForMilestoneEvent($milestone);
-        EventManager::instance()->processEvent($event);
+        $resources['additional_panes'] = [];
+        foreach ($pane_info_collector->getPanes() as $pane_info) {
+            $representation = new PaneInfoRepresentation();
+            $representation->build($pane_info);
+            $resources['additional_panes'][] = $representation;
+        }
 
-        $this->resources['additional_panes'] = $event->getPaneInfoRepresentations();
+        return new self(
+            JsonCast::toInt($artifact_id),
+            $uri,
+            $milestone->getArtifactTitle() ?? '',
+            $milestone->getArtifact()->getStatus(),
+            $milestone->getArtifact()->getSemanticStatusValue(),
+            JsonCast::toInt($milestone->getArtifact()->getFirstChangeset()->getSubmittedBy()),
+            JsonCast::toDate($milestone->getArtifact()->getFirstChangeset()->getSubmittedOn()),
+            JsonCast::toFloat($milestone->getCapacity()),
+            JsonCast::toFloat($milestone->getRemainingEffort()),
+            self::getSubmilestoneType($sub_planning),
+            new PlanningReference($milestone->getPlanning()),
+            new ProjectReference($milestone->getProject()),
+            ArtifactReference::build($milestone->getArtifact()),
+            $milestone->getArtifact()->getDescription(),
+            $milestone->getArtifact()->getPostProcessedDescription(),
+            $start_date,
+            $number_days_since_start,
+            $end_date,
+            $number_days_until_end,
+            $parent_reference,
+            $has_user_priority_change_permission,
+            JsonCast::toDate($milestone->getLastModifiedDate()),
+            $status_count_ref,
+            $resources
+        );
     }
 
-    private function getContentTrackersRepresentation(Planning_Milestone $milestone)
+    public static function buildWithBurndownEnabled(self $representation): self
     {
-        return $this->getTrackersRepresentation(
+        $representation_with_burndown = clone $representation;
+
+        $representation_with_burndown->burndown_uri = $representation_with_burndown->uri . '/' . BurndownRepresentation::ROUTE;
+        $representation_with_burndown->resources['burndown'] = [
+            'uri' => $representation_with_burndown->burndown_uri
+        ];
+
+        return $representation_with_burndown;
+    }
+
+    public static function buildWithCardwallEnabled(self $representation): self
+    {
+        $representation_with_cardwall = clone $representation;
+
+        $representation_with_cardwall->cardwall_uri = $representation_with_cardwall->uri . '/' . AgileDashboard_MilestonesCardwallRepresentation::ROUTE;
+        $representation_with_cardwall->resources['cardwall'] = [
+            'uri' => $representation_with_cardwall->cardwall_uri
+        ];
+
+        return $representation_with_cardwall;
+    }
+
+    private static function getContentTrackersRepresentation(Planning_Milestone $milestone)
+    {
+        return self::getTrackersRepresentation(
             $milestone->getPlanning()->getBacklogTrackers()
         );
     }
 
-    private function getTrackersRepresentation(array $trackers)
+    private static function getTrackersRepresentation(array $trackers)
     {
-        $trackers_representation = array();
+        $trackers_representation = [];
         foreach ($trackers as $tracker) {
-            $tracker_reference = new TrackerReference();
-            $tracker_reference->build($tracker);
+            $tracker_reference = TrackerReference::build($tracker);
             $trackers_representation[] = $tracker_reference;
         }
         return $trackers_representation;
     }
 
-    public function enableCardwall()
-    {
-        $this->cardwall_uri = $this->uri . '/'. AgileDashboard_MilestonesCardwallRepresentation::ROUTE;
-        $this->resources['cardwall'] = array(
-            'uri' => $this->cardwall_uri
-        );
-    }
-
-    public function enableBurndown()
-    {
-        $this->burndown_uri = $this->uri . '/'. BurndownRepresentation::ROUTE;
-        $this->resources['burndown'] = array(
-            'uri' => $this->burndown_uri
-        );
-    }
-
-    private function getSubmilestoneType(Planning_Milestone $milestone, $is_mono_milestone_enabled)
+    private static function getSubmilestoneType(?\Planning $planning): ?TrackerReference
     {
         $submilestone_type = null;
 
-        if ($is_mono_milestone_enabled === true) {
-            $planning = $this->getPlanning($milestone);
-        } else {
-            $planning = $this->getChildrenPlanning($milestone);
-        }
-
         if ($planning) {
-            $tracker_reference = new TrackerReference();
-            $tracker_reference->build($planning->getPlanningTracker());
+            $tracker_reference = TrackerReference::build($planning->getPlanningTracker());
 
             $submilestone_type = $tracker_reference;
         }
 
         return $submilestone_type;
-    }
-
-    private function getChildrenPlanning(Planning_Milestone $milestone)
-    {
-        return PlanningFactory::build()->getChildrenPlanning($milestone->getPlanning());
-    }
-
-    private function getPlanning(Planning_Milestone $milestone)
-    {
-        return PlanningFactory::build()->getPlanning($milestone->getPlanning()->getId());
     }
 }

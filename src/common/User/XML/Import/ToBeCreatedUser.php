@@ -24,23 +24,23 @@ use PFUser;
 class ToBeCreatedUser extends ActionToBeTakenForUser
 {
 
-    private static $ALLOWED_ACTIONS = array('create', 'map');
+    private static $ALLOWED_ACTIONS = ['create', 'map'];
 
     public const ACTION = 'create';
 
     /** @return array */
     public function getCSVData()
     {
-        return array(
+        return [
             $this->username,
-            self::ACTION .':'. PFUser::STATUS_SUSPENDED,
+            self::ACTION . ':' . PFUser::STATUS_SUSPENDED,
             sprintf(
                 '%s (%s) <%s> must be created',
                 $this->realname,
                 $this->username,
                 $this->email
             )
-        );
+        ];
     }
 
     public function isActionAllowed($action)

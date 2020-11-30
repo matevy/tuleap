@@ -50,7 +50,7 @@ class TimetrackingReportFactory
     /**
      * @throws TimetrackingReportNotFoundException
      */
-    public function getReportById(int $id) : TimetrackingReport
+    public function getReportById(int $id): TimetrackingReport
     {
         $report_id = $this->report_dao->searchReportById($id);
 
@@ -58,11 +58,11 @@ class TimetrackingReportFactory
             throw new TimetrackingReportNotFoundException();
         }
 
-        $report_trackers = array();
+        $report_trackers = [];
         $tracker_rows    = $this->report_dao->searchReportTrackersById($id);
 
         foreach ($tracker_rows as $row) {
-            $tracker = $this->tracker_factory->getTrackerById($row[ 'tracker_id' ]);
+            $tracker = $this->tracker_factory->getTrackerById($row['tracker_id']);
             if ($tracker !== null) {
                 $report_trackers[] = $tracker;
             }

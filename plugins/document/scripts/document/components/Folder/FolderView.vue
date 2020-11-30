@@ -19,14 +19,20 @@
 
 <template>
     <div>
-        <folder-header/>
-        <clipboard-content-information/>
-        <drag-n-drop-handler v-if="! is_loading_folder"/>
-        <under-the-fold-notification v-if="! is_loading_folder"/>
-        <folder-loading-screen v-if="is_loading_folder"/>
-        <empty-folder-for-writers v-else-if="is_folder_empty && current_folder && current_folder.user_can_write"/>
-        <empty-folder-for-readers v-else-if="is_folder_empty && current_folder && ! current_folder.user_can_write"/>
-        <folder-content v-else/>
+        <folder-header />
+        <div class="tlp-framed">
+            <clipboard-content-information />
+            <drag-n-drop-handler v-if="!is_loading_folder" />
+            <under-the-fold-notification v-if="!is_loading_folder" />
+            <folder-loading-screen v-if="is_loading_folder" />
+            <empty-folder-for-writers
+                v-else-if="is_folder_empty && current_folder && current_folder.user_can_write"
+            />
+            <empty-folder-for-readers
+                v-else-if="is_folder_empty && current_folder && !current_folder.user_can_write"
+            />
+            <folder-content v-else />
+        </div>
     </div>
 </template>
 <script>
@@ -51,11 +57,11 @@ export default {
         FolderLoadingScreen,
         FolderContent,
         UnderTheFoldNotification,
-        ClipboardContentInformation
+        ClipboardContentInformation,
     },
     computed: {
         ...mapState(["is_loading_folder", "current_folder"]),
-        ...mapGetters(["is_folder_empty"])
-    }
+        ...mapGetters(["is_folder_empty"]),
+    },
 };
 </script>

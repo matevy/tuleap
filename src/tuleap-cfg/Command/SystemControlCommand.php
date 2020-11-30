@@ -28,7 +28,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 class SystemControlCommand extends Command
 {
@@ -71,7 +70,7 @@ class SystemControlCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $help  = "systemctl is a wrapper for commands to init system\n";
         $help .= "\n";
@@ -84,7 +83,7 @@ class SystemControlCommand extends Command
             ->setHelp($help);
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $action       = $input->getArgument('action');
         assert(is_string($action));
@@ -120,7 +119,7 @@ class SystemControlCommand extends Command
         return 0;
     }
 
-    private function getSystemControlContext() : string
+    private function getSystemControlContext(): string
     {
         $env = getenv(self::ENV_SYSTEMCTL);
         if ($env === false) {
@@ -131,7 +130,6 @@ class SystemControlCommand extends Command
 
     private function getAllCommands(array $targets, string $action, bool $quiet): array
     {
-
         if ($this->getSystemControlContext() === self::ENV_SYSTEMCTL_DOCKER_C7) {
             $all_commands = [];
             if (in_array(SystemControlTuleapCron::TARGET_NAME, $targets, true)) {
@@ -151,30 +149,30 @@ class SystemControlCommand extends Command
         ];
     }
 
-    private function formatErrorMessage(SystemControlInterface $command) : string
+    private function formatErrorMessage(SystemControlInterface $command): string
     {
-        $error_message = '<error>Error while running `'.$command->getCommandLine().'`';
+        $error_message = '<error>Error while running `' . $command->getCommandLine() . '`';
         $stdout = $command->getOutput();
         $stderr = $command->getErrorOutput();
         if ($stdout && $stderr) {
-            $error_message .= PHP_EOL.'Got on stdout:'.PHP_EOL;
+            $error_message .= PHP_EOL . 'Got on stdout:' . PHP_EOL;
             $error_message .= $this->addTrailingCRLFWhenMissing($stdout);
-            $error_message .= 'Got on stderr:'.PHP_EOL;
+            $error_message .= 'Got on stderr:' . PHP_EOL;
             $error_message .= $this->addTrailingCRLFWhenMissing($stderr);
         } elseif ($stderr) {
-            $error_message .= PHP_EOL.$this->addTrailingCRLFWhenMissing($stderr);
+            $error_message .= PHP_EOL . $this->addTrailingCRLFWhenMissing($stderr);
         } elseif ($stdout) {
-            $error_message .= PHP_EOL.$this->addTrailingCRLFWhenMissing($stdout);
+            $error_message .= PHP_EOL . $this->addTrailingCRLFWhenMissing($stdout);
         } else {
-            $error_message .= ' without output'.PHP_EOL;
+            $error_message .= ' without output' . PHP_EOL;
         }
         $error_message .= '</error>';
 
         return $error_message;
     }
 
-    private function addTrailingCRLFWhenMissing(string $string) : string
+    private function addTrailingCRLFWhenMissing(string $string): string
     {
-        return substr($string, -1) === PHP_EOL ? $string : $string.PHP_EOL;
+        return substr($string, -1) === PHP_EOL ? $string : $string . PHP_EOL;
     }
 }

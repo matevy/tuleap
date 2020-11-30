@@ -26,10 +26,13 @@ use PFUser;
 use Project;
 use Tracker_FormElementFactory;
 use Tracker_REST_TrackerRestBuilder;
+use Tracker_URLVerification;
 use TrackerFactory;
 use TransitionFactory;
+use Tuleap\REST\AuthenticatedResource;
 use Tuleap\REST\Header;
 use Tuleap\REST\JsonDecoder;
+use Tuleap\REST\ProjectAuthorization;
 use Tuleap\Tracker\FormElement\Container\Fieldset\HiddenFieldsetChecker;
 use Tuleap\Tracker\FormElement\Container\FieldsExtractor;
 use Tuleap\Tracker\PermissionsFunctionsWrapper;
@@ -38,6 +41,7 @@ use Tuleap\Tracker\REST\MinimalTrackerRepresentation;
 use Tuleap\Tracker\REST\PermissionsExporter;
 use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
 use Tuleap\Tracker\REST\Tracker\PermissionsRepresentationBuilder;
+use Tuleap\Tracker\REST\v1\Event\GetTrackersWithCriteria;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
@@ -48,27 +52,57 @@ use Tuleap\Tracker\Workflow\SimpleMode\SimpleWorkflowDao;
 use Tuleap\Tracker\Workflow\SimpleMode\State\StateFactory;
 use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionExtractor;
 use Tuleap\Tracker\Workflow\SimpleMode\State\TransitionRetriever;
-use Tuleap\Widget\Event\GetTrackersWithCriteria;
-use Workflow_Transition_ConditionFactory;
 
-/**
- * Wrapper for tracker related REST methods
- */
-class ProjectTrackersResource
+class ProjectTrackersResource extends AuthenticatedResource
 {
     public const MAX_LIMIT              = 50;
     public const MINIMAL_REPRESENTATION = 'minimal';
 
     /**
-     * Get all the tracker representation of a given project
+     * Get trackers
      *
-     * @throws RestException
+     * Get the trackers of a given project.
+     *
+     * Fetching reference representations can be helpful if you encounter performance issues with complex trackers.
+     *
+     * <br/>
+     * query is optional. When filled, it is a json object with a property "is_tracker_admin" or "with_time_tracking" to filter trackers.
+     * <br/>
+     * <br/>
+     * Example: <pre>{"is_tracker_admin": true}</pre>
+     *          <pre>{"with_time_tracking": true}</pre>
+     * <br/>
+     * <p>
+     *   <strong>/!\</strong> Please note that {"is_tracker_admin": false} is not supported and will result
+     *   in a 400 Bad Request error.
+     * </p>
+     *
+     * @url    GET {id}/trackers
+     * @access hybrid
+     * @oauth2-scope read:tracker
+     *
+     * @param int    $id             Id of the project
+     * @param string $representation Whether you want to fetch full or reference only representations {@from path}{@choice full,minimal}
+     * @param int    $limit          Number of elements displayed per page {@from path} {@min 0} {@max 50}
+     * @param int    $offset         Position of the first element to display {@from path} {@min 0}
+     * @param string $query          JSON object of search criteria properties {@from path}
+     *
+     * @return array {@type Tuleap\Tracker\REST\TrackerRepresentation}
+     *
+     * @throws RestException 400
+     * @throws RestException 403
+     * @throws RestException 404
      */
-    public function get(PFUser $user, Project $project, $representation, $query, $limit, $offset)
+    public function getTrackers($id, $representation = 'full', $limit = 10, $offset = 0, $query = '')
     {
-        if (! $this->limitValueIsAcceptable($limit)) {
-            throw new RestException(406, 'Maximum value for limit exceeded');
-        }
+        $this->checkAccess();
+        $this->optionsTrackers($id);
+
+
+        $project = \ProjectManager::instance()->getProject($id);
+        $user    = \UserManager::instance()->getCurrentUser();
+
+        ProjectAuthorization::userCanAccessProject($user, $project, new Tracker_URLVerification());
 
         $json_decoder                                = new JsonDecoder();
         $json_query                                  = $json_decoder->decodeAsAnArray('query', $query);
@@ -89,6 +123,16 @@ class ProjectTrackersResource
     }
 
     /**
+     * @url OPTIONS {id}/trackers
+     *
+     * @param int $id Id of the project
+     */
+    public function optionsTrackers($id)
+    {
+        $this->sendAllowHeaders();
+    }
+
+    /**
      * @return bool
      * @throws RestException
      */
@@ -98,7 +142,7 @@ class ProjectTrackersResource
             return false;
         }
 
-        if (!$json_decoder->looksLikeJson($query)) {
+        if (! $json_decoder->looksLikeJson($query)) {
             throw new RestException(400, 'Query must be in Json');
         }
         $event_manager = EventManager::instance();
@@ -108,22 +152,9 @@ class ProjectTrackersResource
         return true;
     }
 
-    private function limitValueIsAcceptable($limit)
+    private function sendPaginationHeaders(int $limit, int $offset, int $size): void
     {
-        return $limit <= self::MAX_LIMIT;
-    }
-
-    public function options(PFUser $user, Project $project, $limit, $offset)
-    {
-        $this->sendAllowHeaders();
-    }
-
-    private function sendPaginationHeaders($limit, $offset, $size)
-    {
-        header('X-PAGINATION-LIMIT: '. $limit);
-        header('X-PAGINATION-OFFSET: '. $offset);
-        header('X-PAGINATION-SIZE: '. $size);
-        header('X-PAGINATION-LIMIT-MAX: '. self::MAX_LIMIT);
+        Header::sendPaginationHeaders($limit, $offset, $size, self::MAX_LIMIT);
     }
 
     private function sendAllowHeaders()
@@ -132,7 +163,6 @@ class ProjectTrackersResource
     }
 
     /**
-     * @param Project $project
      * @param         $limit
      * @param         $offset
      * @param         $json_query
@@ -153,8 +183,6 @@ class ProjectTrackersResource
     }
 
     /**
-     * @param PFUser  $user
-     * @param Project $project
      * @param String  $representation
      * @param int     $limit
      * @param int     $offset
@@ -177,9 +205,7 @@ class ProjectTrackersResource
 
         $transition_retriever = new TransitionRetriever(
             new StateFactory(
-                new TransitionFactory(
-                    Workflow_Transition_ConditionFactory::build()
-                ),
+                TransitionFactory::instance(),
                 new SimpleWorkflowDao()
             ),
             new TransitionExtractor()
@@ -229,8 +255,7 @@ class ProjectTrackersResource
                 continue;
             }
             if ($representation === self::MINIMAL_REPRESENTATION) {
-                $tracker_minimal_representation = new MinimalTrackerRepresentation();
-                $tracker_minimal_representation->build($tracker);
+                $tracker_minimal_representation = MinimalTrackerRepresentation::build($tracker);
                 $tracker_representations[] = $tracker_minimal_representation;
             } else {
                 $tracker_representations[] = $builder->getTrackerRepresentationInTrackerContext($user, $tracker);

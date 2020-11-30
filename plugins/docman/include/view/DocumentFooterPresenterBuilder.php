@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\view;
 
@@ -44,15 +44,12 @@ class DocumentFooterPresenterBuilder
         $this->event_manager   = $event_manager;
     }
 
-    /**
-     * @return DocumentFooterPresenter
-     */
     public function build(
         array $params,
         int $project_id,
         array $item,
         PFUser $user
-    ) : DocumentFooterPresenter {
+    ): DocumentFooterPresenter {
         $is_folder_in_migrated_view = $this->isFolderInMigratedView($params, $item);
         $folder_id                  = $this->getFolderId($is_folder_in_migrated_view, $item);
 
@@ -66,7 +63,7 @@ class DocumentFooterPresenterBuilder
         return new DocumentFooterPresenter($project, $collector);
     }
 
-    private function getFolderId(bool $is_folder_in_migrated_view, array $item) : int
+    private function getFolderId(bool $is_folder_in_migrated_view, array $item): int
     {
         if ($is_folder_in_migrated_view && $item['parent_id'] !== 0) {
             return $item['item_id'];
@@ -74,7 +71,7 @@ class DocumentFooterPresenterBuilder
         return 0;
     }
 
-    private function isFolderInMigratedView(array $params, array $item) : bool
+    private function isFolderInMigratedView(array $params, array $item): bool
     {
         return $item['item_type'] === PLUGIN_DOCMAN_ITEM_TYPE_FOLDER && isset($params['action']) && $params['action']
             === "show";

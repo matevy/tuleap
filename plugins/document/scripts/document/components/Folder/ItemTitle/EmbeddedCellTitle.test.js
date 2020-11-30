@@ -33,15 +33,15 @@ describe("EmbeddedCellTitle", () => {
             routes: [
                 {
                     path: "/folder/1/42",
-                    name: "item"
-                }
-            ]
+                    name: "item",
+                },
+            ],
         });
 
         store = new Vuex.Store();
         store.state.current_folder = {
             id: 1,
-            title: "My current folder"
+            title: "My current folder",
         };
 
         store.getters.current_folder_title = "My folder";
@@ -51,7 +51,7 @@ describe("EmbeddedCellTitle", () => {
                 localVue,
                 router,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -63,14 +63,14 @@ describe("EmbeddedCellTitle", () => {
             id: 42,
             title: "my corrupted embedded document",
             embedded_file_properties: null,
-            type: TYPE_EMBEDDED
+            type: TYPE_EMBEDDED,
         };
 
         const wrapper = embedded_cell_title_factory({
-            item
+            item,
         });
 
-        expect(wrapper.contains(".document-badge-corrupted")).toBeTruthy();
+        expect(wrapper.find(".document-badge-corrupted").exists()).toBeTruthy();
     });
 
     it(`Given embedded_file_properties is set
@@ -82,14 +82,14 @@ describe("EmbeddedCellTitle", () => {
             embedded_file_properties: {
                 file_type: "text/html",
                 content: "<p>this is my custom embedded content</p>",
-                type: TYPE_EMBEDDED
-            }
+                type: TYPE_EMBEDDED,
+            },
         };
 
         const wrapper = embedded_cell_title_factory({
-            item
+            item,
         });
 
-        expect(wrapper.contains(".document-badge-corrupted")).toBeFalsy();
+        expect(wrapper.find(".document-badge-corrupted").exists()).toBeFalsy();
     });
 });

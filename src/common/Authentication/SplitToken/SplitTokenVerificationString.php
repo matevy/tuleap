@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,6 +22,9 @@ namespace Tuleap\Authentication\SplitToken;
 
 use Tuleap\Cryptography\ConcealedString;
 
+/**
+ * @psalm-immutable
+ */
 class SplitTokenVerificationString
 {
     public const VERIFICATION_STRING_LENGTH = 32;
@@ -36,7 +39,7 @@ class SplitTokenVerificationString
      */
     public function __construct(ConcealedString $verification_string)
     {
-        $verification_string_size = strlen($verification_string->getString());
+        $verification_string_size = \mb_strlen($verification_string->getString(), '8bit');
         if ($verification_string_size !== self::VERIFICATION_STRING_LENGTH) {
             throw new IncorrectSizeVerificationStringException(
                 self::VERIFICATION_STRING_LENGTH,
@@ -46,10 +49,7 @@ class SplitTokenVerificationString
         $this->verification_string = $verification_string;
     }
 
-    /**
-     * @return self
-     */
-    public static function generateNewSplitTokenVerificationString()
+    public static function generateNewSplitTokenVerificationString(): self
     {
         return new self(
             new ConcealedString(
@@ -58,10 +58,7 @@ class SplitTokenVerificationString
         );
     }
 
-    /**
-     * @return ConcealedString
-     */
-    public function getString()
+    public function getString(): ConcealedString
     {
         return $this->verification_string;
     }

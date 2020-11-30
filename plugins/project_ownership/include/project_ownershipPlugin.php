@@ -20,15 +20,14 @@
 
 use Tuleap\DB\DBFactory;
 use Tuleap\DB\DBTransactionExecutorWithConnection;
-use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
-use Tuleap\Project\Admin\Navigation\NavigationItemPresenter;
+use Tuleap\Project\Admin\Navigation\NavigationDropdownItemPresenter;
 use Tuleap\Project\Admin\Navigation\NavigationPresenter;
+use Tuleap\Project\Admin\Navigation\NavigationPresenterBuilder;
 use Tuleap\Project\Admin\ProjectUGroup\ApproveProjectAdministratorRemoval;
 use Tuleap\Project\Admin\ProjectUGroup\ProjectImportCleanupUserCreatorFromAdministrators;
 use Tuleap\Project\Admin\ProjectUGroup\ProjectUGroupMemberUpdatable;
 use Tuleap\ProjectOwnership\ProjectAdmin\CannotRemoveProjectOwnerFromTheProjectAdministratorsException;
 use Tuleap\ProjectOwnership\ProjectAdmin\IndexController;
-use Tuleap\ProjectOwnership\ProjectAdmin\ProjectOwnerPresenterBuilder;
 use Tuleap\ProjectOwnership\ProjectOwner\ProjectOwnerDAO;
 use Tuleap\ProjectOwnership\ProjectOwner\ProjectOwnerRetriever;
 use Tuleap\ProjectOwnership\ProjectOwner\ProjectOwnerUpdater;
@@ -49,7 +48,7 @@ class project_ownershipPlugin extends Plugin // phpcs:ignore
         parent::__construct($id);
         $this->setScope(self::SCOPE_SYSTEM);
 
-        bindtextdomain('tuleap-project_ownership', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-project_ownership', __DIR__ . '/../site-content');
     }
 
     public function getPluginInfo()
@@ -102,29 +101,18 @@ class project_ownershipPlugin extends Plugin // phpcs:ignore
     {
         $project_id = $presenter->getProjectId();
         $html_url = $this->getPluginPath() . '/project/' . urlencode($project_id) . '/admin';
-        $presenter->addItem(
-            new NavigationItemPresenter(
+        $presenter->addDropdownItem(
+            NavigationPresenterBuilder::OTHERS_ENTRY_SHORTNAME,
+            new NavigationDropdownItemPresenter(
                 dgettext('tuleap-project_ownership', 'Project ownership'),
-                $html_url,
-                IndexController::PANE_SHORTNAME,
-                $presenter->getCurrentPaneShortname()
+                $html_url
             )
         );
     }
 
     public function routeGetProjectAdmin(): IndexController
     {
-        return new IndexController(
-            TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../templates'),
-            ProjectManager::instance(),
-            new HeaderNavigationDisplayer(),
-            new ProjectOwnerPresenterBuilder(
-                new ProjectOwnerDAO(),
-                UserManager::instance(),
-                UserHelper::instance(),
-                $GLOBALS['Language']
-            )
-        );
+        return IndexController::buildSelf();
     }
 
     public function collectRoutesEvent(CollectRoutesEvent $routes)
@@ -143,8 +131,10 @@ class project_ownershipPlugin extends Plugin // phpcs:ignore
     public function projectUGroupMemberUpdatable(ProjectUGroupMemberUpdatable $ugroup_member_update)
     {
         $ugroup = $ugroup_member_update->getGroup();
-        if ((int) $ugroup->getId() !== ProjectUGroup::PROJECT_ADMIN &&
-            (int) $ugroup->getId() !== ProjectUGroup::PROJECT_MEMBERS) {
+        if (
+            (int) $ugroup->getId() !== ProjectUGroup::PROJECT_ADMIN &&
+            (int) $ugroup->getId() !== ProjectUGroup::PROJECT_MEMBERS
+        ) {
             return;
         }
         $project_owner_retriever = new ProjectOwnerRetriever(new ProjectOwnerDAO(), UserManager::instance());
@@ -183,7 +173,7 @@ class project_ownershipPlugin extends Plugin // phpcs:ignore
 
     public function projectImportCleanupUserCreatorFromAdministrators(
         ProjectImportCleanupUserCreatorFromAdministrators $cleanup_user_creator_from_administrators
-    ) : void {
+    ): void {
         $xml_project_user_creator_project_owner_updater = new XMLProjectImportUserCreatorProjectOwnerCleaner(
             new ProjectOwnerUpdater(
                 new ProjectOwnerDAO(),
@@ -197,7 +187,7 @@ class project_ownershipPlugin extends Plugin // phpcs:ignore
     public function userWithStarBadgeCollector(UserWithStarBadgeCollector $collector)
     {
         $dao    = new ProjectOwnerDAO();
-        $finder = new UserWithStarBadgeFinder($dao, $GLOBALS['Language']);
+        $finder = new UserWithStarBadgeFinder($dao);
         $finder->findBadgedUser($collector);
     }
 
@@ -207,7 +197,7 @@ class project_ownershipPlugin extends Plugin // phpcs:ignore
             case ProjectOwnerStatusNotificationSystemEvent::NAME:
                 $params['class'] = ProjectOwnerStatusNotificationSystemEvent::class;
                 $params['dependencies'] = [
-                    new \Tuleap\ProjectOwnership\Notification\Sender(\ProjectManager::instance())
+                    new \Tuleap\ProjectOwnership\Notification\Sender(\ProjectManager::instance(), new \Tuleap\Language\LocaleSwitcher())
                 ];
                 break;
         }

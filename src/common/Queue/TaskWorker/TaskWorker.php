@@ -24,5 +24,8 @@ namespace Tuleap\Queue\TaskWorker;
 
 interface TaskWorker
 {
-    public function run(string $event) : void;
+    /**
+     * @throws TaskWorkerTimedOutException
+     */
+    public function run(string $event): void;
 }

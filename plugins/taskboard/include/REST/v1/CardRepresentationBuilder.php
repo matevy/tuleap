@@ -24,14 +24,13 @@ namespace Tuleap\Taskboard\REST\v1;
 
 use Cardwall_Semantic_CardFields;
 use PFUser;
-use Tracker_Artifact;
 use Tracker_FormElement_Field_List_BindValue;
 use Tuleap\AgileDashboard\RemainingEffortValueRetriever;
 use Tuleap\Cardwall\BackgroundColor\BackgroundColorBuilder;
 use Tuleap\Taskboard\Column\FieldValuesToColumnMapping\ArtifactMappedFieldValueRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
 use Tuleap\User\REST\MinimalUserRepresentation;
-use Tuleap\User\REST\UserRepresentation;
 
 class CardRepresentationBuilder
 {
@@ -60,7 +59,7 @@ class CardRepresentationBuilder
 
     public function build(
         \Planning_ArtifactMilestone $milestone,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         int $rank
     ): CardRepresentation {
@@ -71,8 +70,7 @@ class CardRepresentationBuilder
         $initial_effort       = $this->getInitialEffort($artifact, $user);
         $remaining_effort     = $this->remaining_effort_representation_builder->getRemainingEffort($user, $artifact);
 
-        $representation = new CardRepresentation();
-        $representation->build(
+        return CardRepresentation::build(
             $artifact,
             $background_color,
             $rank,
@@ -82,13 +80,11 @@ class CardRepresentationBuilder
             $remaining_effort,
             $this->isCollapsed($user, $artifact, $milestone)
         );
-
-        return $representation;
     }
 
     private function getMappedListValue(
         \Planning_ArtifactMilestone $milestone,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user
     ): ?MappedListValueRepresentation {
         $mapped_list_value = $this->mapped_field_value_retriever->getValueAtLastChangeset($milestone, $artifact, $user);
@@ -96,29 +92,26 @@ class CardRepresentationBuilder
             return null;
         }
 
-        $representation = new MappedListValueRepresentation();
-        $representation->build($mapped_list_value);
-
-        return $representation;
+        return MappedListValueRepresentation::build($mapped_list_value);
     }
 
     /**
      * @return MinimalUserRepresentation[]
      * @psalm-return list<MinimalUserRepresentation>
      */
-    private function getAssignees(Tracker_Artifact $artifact, PFUser $user): array
+    private function getAssignees(Artifact $artifact, PFUser $user): array
     {
         $assignees = $artifact->getAssignedTo($user);
 
         return array_map(
             function (PFUser $user): MinimalUserRepresentation {
-                return (new MinimalUserRepresentation())->build($user);
+                return MinimalUserRepresentation::build($user);
             },
             $assignees
         );
     }
 
-    private function getInitialEffort(Tracker_Artifact $artifact, PFUser $user)
+    private function getInitialEffort(Artifact $artifact, PFUser $user)
     {
         $initial_effort_field = \AgileDashBoard_Semantic_InitialEffort::load($artifact->getTracker())->getField();
 
@@ -164,7 +157,7 @@ class CardRepresentationBuilder
         );
     }
 
-    private function isCollapsed(PFUser $user, Tracker_Artifact $artifact, \Planning_ArtifactMilestone $milestone): bool
+    private function isCollapsed(PFUser $user, Artifact $artifact, \Planning_ArtifactMilestone $milestone): bool
     {
         $preference_name = 'plugin_taskboard_collapse_' . $milestone->getArtifactId() . '_' . $artifact->getId();
 

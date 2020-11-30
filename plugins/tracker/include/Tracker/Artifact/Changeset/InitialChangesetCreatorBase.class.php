@@ -20,8 +20,12 @@
 
 declare(strict_types=1);
 
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\Artifact\Changeset\ArtifactChangesetSaver;
 use Tuleap\Tracker\Artifact\Changeset\FieldsToBeSavedInSpecificOrderRetriever;
 use Tuleap\Tracker\Artifact\Event\ArtifactCreated;
+use Tuleap\Tracker\Artifact\XMLImport\TrackerImportConfig;
+use Tuleap\Tracker\Changeset\Validation\ChangesetValidationContext;
 use Tuleap\Tracker\FormElement\Field\File\CreatedFileURLMapping;
 
 /**
@@ -32,9 +36,13 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
     /** @var Tracker_Artifact_ChangesetDao */
     protected $changeset_dao;
     /**
-     * @var Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
+    /**
+     * @var ArtifactChangesetSaver
+     */
+    private $artifact_changeset_saver;
 
     public function __construct(
         Tracker_Artifact_Changeset_FieldsValidator $fields_validator,
@@ -43,7 +51,8 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
         Tracker_ArtifactFactory $artifact_factory,
         EventManager $event_manager,
         Tracker_Artifact_Changeset_ChangesetDataInitializator $field_initializator,
-        Logger $logger
+        \Psr\Log\LoggerInterface $logger,
+        ArtifactChangesetSaver $artifact_changeset_saver
     ) {
         parent::__construct(
             $fields_validator,
@@ -55,6 +64,7 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
 
         $this->changeset_dao = $changeset_dao;
         $this->logger        = $logger;
+        $this->artifact_changeset_saver = $artifact_changeset_saver;
     }
 
     /**
@@ -67,13 +77,21 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
      * @return int The Id of the initial changeset, or null if fields were not valid
      */
     public function create(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $fields_data,
         PFUser $submitter,
         int $submitted_on,
-        CreatedFileURLMapping $url_mapping
+        CreatedFileURLMapping $url_mapping,
+        TrackerImportConfig $import_config,
+        ChangesetValidationContext $changeset_validation_context
     ): ?int {
-        if (! $this->doesRequestAppearToBeValid($artifact, $fields_data, $submitter)) {
+        $are_fields_valid = $this->doesRequestAppearToBeValid(
+            $artifact,
+            $fields_data,
+            $submitter,
+            $changeset_validation_context
+        );
+        if (! $are_fields_valid) {
             $this->logger->debug(
                 sprintf(
                     'Creation of the first changeset of artifact #%d failed: request does not appear to be valid',
@@ -95,8 +113,9 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
             return null;
         }
 
-        $changeset_id = $this->createChangesetId($artifact, $submitter, $submitted_on);
-        if (! $changeset_id) {
+        try {
+            $changeset_id = $this->artifact_changeset_saver->saveChangeset($artifact, $submitter, $submitted_on, $import_config);
+        } catch (Tracker_Artifact_Exception_CannotCreateNewChangeset $exception) {
             $this->logger->debug(
                 sprintf(
                     'Creation of the first changeset of artifact #%d failed: DB failure',
@@ -108,23 +127,20 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
 
         $this->storeFieldsValues($artifact, $fields_data, $submitter, $changeset_id, $url_mapping);
 
-        $this->saveArtifactAfterNewChangeset(
-            $artifact,
-            $fields_data,
-            $submitter,
-            $artifact->getChangeset($changeset_id)
-        );
+        $changeset = $artifact->getChangeset($changeset_id);
+        assert($changeset !== null);
+        $this->saveArtifactAfterNewChangeset($artifact, $fields_data, $submitter, $changeset);
 
         $artifact->clearChangesets();
 
-        $this->event_manager->processEvent(new ArtifactCreated($artifact));
+        $this->event_manager->processEvent(new ArtifactCreated($artifact, $changeset, $submitter));
 
         return $changeset_id;
     }
 
     abstract protected function saveNewChangesetForField(
         Tracker_FormElement_Field $field,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $fields_data,
         PFUser $submitter,
         int $changeset_id,
@@ -132,7 +148,7 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
     ): void;
 
     private function storeFieldsValues(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $fields_data,
         PFUser $submitter,
         int $changeset_id,
@@ -143,47 +159,28 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
         }
     }
 
-    /**
-     * @return int|false
-     */
-    private function createChangesetId(
-        Tracker_Artifact $artifact,
-        PFUser $submitter,
-        int $submitted_on
-    ) {
-        $email = null;
-        if ($submitter->isAnonymous()) {
-            $email = $submitter->getEmail();
-        }
-
-        return $this->changeset_dao->create($artifact->getId(), $submitter->getId(), $email, $submitted_on);
-    }
-
     private function doesRequestAppearToBeValid(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $fields_data,
-        PFUser $submitter
+        PFUser $submitter,
+        ChangesetValidationContext $changeset_validation_context
     ): bool {
         if ($submitter->isAnonymous() && ! trim($submitter->getEmail())) {
-            $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('plugin_tracker_artifact', 'email_required'));
+            $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-tracker', 'You are not logged in.'));
             return false;
         }
 
-        if (! $this->fields_validator->validate($artifact, $submitter, $fields_data)) {
-            return false;
-        }
-
-        return true;
+        return $this->fields_validator->validate($artifact, $submitter, $fields_data, $changeset_validation_context);
     }
 
     private function askWorkflowToUpdateTheRequestAndCheckGlobalRules(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array &$fields_data,
         PFUser $submitter
     ): bool {
         try {
             $workflow = $artifact->getWorkflow();
-            $workflow->validate($fields_data, $artifact, "");
+            $workflow->validate($fields_data, $artifact, "", $submitter);
             $workflow->before($fields_data, $submitter, $artifact);
             $augmented_data = $this->field_initializator->process($artifact, $fields_data);
             $workflow->checkGlobalRules($augmented_data);
@@ -201,8 +198,8 @@ abstract class Tracker_Artifact_Changeset_InitialChangesetCreatorBase extends Tr
         }
     }
 
-    private function initializeAFakeChangesetSoThatListAndWorkflowEncounterAnEmptyState(Tracker_Artifact $artifact): void
+    private function initializeAFakeChangesetSoThatListAndWorkflowEncounterAnEmptyState(Artifact $artifact): void
     {
-        $artifact->setChangesets(array(new Tracker_Artifact_Changeset_Null()));
+        $artifact->setChangesets([new Tracker_Artifact_Changeset_Null()]);
     }
 }

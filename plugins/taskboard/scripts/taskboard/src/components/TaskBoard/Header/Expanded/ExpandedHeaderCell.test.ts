@@ -19,7 +19,7 @@
 
 import { shallowMount } from "@vue/test-utils";
 import ExpandedHeaderCell from "./ExpandedHeaderCell.vue";
-import { createStoreMock } from "../../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import { UserState } from "../../../../store/user/type";
 import { ColumnDefinition } from "../../../../type";
 import WrongColorPopover from "./WrongColorPopover.vue";
@@ -28,18 +28,18 @@ describe("ExpandedHeaderCell", () => {
     it("displays a cell with the column label", () => {
         const wrapper = shallowMount(ExpandedHeaderCell, {
             mocks: {
-                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } })
+                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } }),
             },
             propsData: {
                 column: {
                     id: 2,
                     label: "To do",
-                    color: ""
-                } as ColumnDefinition
-            }
+                    color: "",
+                } as ColumnDefinition,
+            },
         });
 
-        const label = wrapper.find("[data-test=label]");
+        const label = wrapper.get("[data-test=label]");
         expect(label.classes("taskboard-header-label")).toBe(true);
         expect(label.text()).toBe("To do");
     });
@@ -47,15 +47,15 @@ describe("ExpandedHeaderCell", () => {
     it("displays a cell without color", () => {
         const wrapper = shallowMount(ExpandedHeaderCell, {
             mocks: {
-                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } })
+                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } }),
             },
             propsData: {
                 column: {
                     id: 2,
                     label: "To do",
-                    color: ""
-                } as ColumnDefinition
-            }
+                    color: "",
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("tlp-swatch-fiesta-red")).toBe(false);
@@ -64,15 +64,15 @@ describe("ExpandedHeaderCell", () => {
     it("displays a cell with color", () => {
         const wrapper = shallowMount(ExpandedHeaderCell, {
             mocks: {
-                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } })
+                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } }),
             },
             propsData: {
                 column: {
                     id: 2,
                     label: "To do",
-                    color: "fiesta-red"
-                } as ColumnDefinition
-            }
+                    color: "fiesta-red",
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("tlp-swatch-fiesta-red")).toBe(true);
@@ -81,15 +81,15 @@ describe("ExpandedHeaderCell", () => {
     it("displays a cell with default color", () => {
         const wrapper = shallowMount(ExpandedHeaderCell, {
             mocks: {
-                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } })
+                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } }),
             },
             propsData: {
                 column: {
                     id: 2,
                     label: "To do",
-                    color: "#F8F8F8"
-                } as ColumnDefinition
-            }
+                    color: "#F8F8F8",
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("tlp-swatch-fiesta-red")).toBe(false);
@@ -98,36 +98,36 @@ describe("ExpandedHeaderCell", () => {
     it("displays a cell with legacy color to regular users", () => {
         const wrapper = shallowMount(ExpandedHeaderCell, {
             mocks: {
-                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } })
+                $store: createStoreMock({ state: { user: { user_is_admin: false } as UserState } }),
             },
             propsData: {
                 column: {
                     id: 2,
                     label: "To do",
-                    color: "#87DBEF"
-                } as ColumnDefinition
-            }
+                    color: "#87DBEF",
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("tlp-swatch-fiesta-red")).toBe(false);
-        expect(wrapper.contains(WrongColorPopover)).toBe(false);
+        expect(wrapper.findComponent(WrongColorPopover).exists()).toBe(false);
     });
 
     it("displays a cell with legacy color to admin users", () => {
         const wrapper = shallowMount(ExpandedHeaderCell, {
             mocks: {
-                $store: createStoreMock({ state: { user: { user_is_admin: true } as UserState } })
+                $store: createStoreMock({ state: { user: { user_is_admin: true } as UserState } }),
             },
             propsData: {
                 column: {
                     id: 2,
                     label: "To do",
-                    color: "#87DBEF"
-                } as ColumnDefinition
-            }
+                    color: "#87DBEF",
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("tlp-swatch-fiesta-red")).toBe(false);
-        expect(wrapper.contains(WrongColorPopover)).toBe(true);
+        expect(wrapper.findComponent(WrongColorPopover).exists()).toBe(true);
     });
 });

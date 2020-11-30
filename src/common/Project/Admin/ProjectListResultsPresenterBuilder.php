@@ -34,7 +34,7 @@ class ProjectListResultsPresenterBuilder
         $limit,
         $offset
     ) {
-        $matching_projects = array();
+        $matching_projects = [];
 
         foreach ($projects as $row) {
             if (! $this->isProjectStatusValid($row['status'])) {
@@ -51,7 +51,7 @@ class ProjectListResultsPresenterBuilder
 
             list($status_label, $status_class) = $this->getStatusDisplay($row['status']);
             $type_label = $this->getTypeLabel($row['type']);
-            $project_name = util_unconvert_htmlspecialchars($row['group_name']);
+            $project_name = $row['group_name'];
 
             $matching_projects[] = new ProjectListResultsProjectPresenter(
                 $row['group_id'],
@@ -104,7 +104,7 @@ class ProjectListResultsPresenterBuilder
                 break;
         }
 
-        return array($status_label, $status_class);
+        return [$status_label, $status_class];
     }
 
     /**

@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_XML_Exporter_ChangesetValuesXMLExporter
 {
 
@@ -49,14 +51,12 @@ class Tracker_XML_Exporter_ChangesetValuesXMLExporter
     /**
      *
      * @param Tracker_FormElement_Field $field
-     * @param SimpleXMLElement $artifact_xml
-     * @param SimpleXMLElement $changeset_xml
      * @param Tracker_Artifact_ChangesetValue[] $changeset_values
      */
     public function exportSnapshot(
         SimpleXMLElement $artifact_xml,
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $changeset_values
     ) {
         $this->exportValues($artifact_xml, $changeset_xml, $artifact, $changeset_values, self::EXPORT_SNAPSHOT);
@@ -65,7 +65,7 @@ class Tracker_XML_Exporter_ChangesetValuesXMLExporter
     public function exportChangedFields(
         SimpleXMLElement $artifact_xml,
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $changeset_values
     ) {
         $this->exportValues($artifact_xml, $changeset_xml, $artifact, $changeset_values, self::EXPORT_CHANGES);
@@ -74,16 +74,16 @@ class Tracker_XML_Exporter_ChangesetValuesXMLExporter
     private function exportValues(
         SimpleXMLElement $artifact_xml,
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         array $changeset_values,
         $export_mode
     ) {
-        $params = array(
+        $params = [
             self::ARTIFACT_KEY      => $artifact,
             self::ARTIFACT_XML_KEY  => $artifact_xml,
             self::CHANGESET_XML_KEY => $changeset_xml,
             self::EXPORT_MODE_KEY   => $export_mode
-        );
+        ];
 
         foreach ($changeset_values as $changeset_value) {
             if ($changeset_value === null) {
@@ -115,7 +115,8 @@ class Tracker_XML_Exporter_ChangesetValuesXMLExporter
             return true;
         }
 
-        if ($this->is_in_archive_context &&
+        if (
+            $this->is_in_archive_context &&
             $this->isComputedField($changeset_value) &&
             $changeset_value->getChangeset()->isLastChangesetOfArtifact()
         ) {

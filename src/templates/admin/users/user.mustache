@@ -28,7 +28,7 @@
 
             <div class="tlp-pane-container">
                 <div class="tlp-pane-header">
-                    <h1 class="tlp-pane-title"><i class="tlp-pane-title-icon fa fa-address-card-o"></i> {{ account_details }}</h1>
+                    <h1 class="tlp-pane-title"><i class="tlp-pane-title-icon far fa-address-card"></i> {{ account_details }}</h1>
                 </div>
                 <section class="tlp-pane-section">
                     <div class="siteadmin-user-details-row">
@@ -41,7 +41,7 @@
                     <div class="siteadmin-user-details-row">
                         <div class="tlp-form-element siteadmin-user-details-row-field">
                             <label class="tlp-label" for="login">{{ login_label }} <i class="fa fa-asterisk"></i></label>
-                            <input type="text" class="tlp-input" id="login" name="form_user_login_name" placeholder="{{ login }}" value="{{ login }}">
+                            <input type="text" data-test="user-login" class="tlp-input" id="login" name="form_user_login_name" placeholder="{{ login }}" value="{{ login }}">
                         </div>
                         {{# is_in_limbo }}
                             <div class="tlp-property siteadmin-user-details-row-field">
@@ -70,9 +70,9 @@
                             >
                                 <div class="tlp-modal-header">
                                     <h1 class="tlp-modal-title" id="modal-warning-removal-project-not-including-restricted-label">
-                                        <i class="fa fa-trash-o tlp-modal-title-icon"></i> {{# gettext }}Removal from projects{{/ gettext }}
+                                        <i class="far fa-trash-alt tlp-modal-title-icon"></i> {{# gettext }}Removal from projects{{/ gettext }}
                                     </h1>
-                                    <div class="tlp-modal-close" data-dismiss="modal" aria-label="{{# gettext }}Close{{/ gettext }}">
+                                    <div class="tlp-modal-close" tabindex="0" role="button" data-dismiss="modal" aria-label="{{# gettext }}Close{{/ gettext }}">
                                         &times;
                                     </div>
                                 </div>
@@ -89,7 +89,7 @@
                                         {{# gettext }}Cancel{{/ gettext }}
                                     </button>
                                     <button type="submit" class="tlp-button-primary tlp-modal-action tlp-button-danger" id="modal-warning-removal-project-not-including-restricted-confirm">
-                                        <i class="fa fa-trash-o tlp-button-icon"></i>
+                                        <i class="far fa-trash-alt tlp-button-icon"></i>
                                         {{# gettext }}Confirm{{/ gettext }}
                                     </button>
                                 </div>
@@ -105,7 +105,7 @@
                         <div class="tlp-form-element siteadmin-user-details-row-field">
                             <label for="expiry" class="tlp-label">{{ expiry_date_label }}</label>
                             <div class="tlp-form-element tlp-form-element-prepend">
-                                <span class="tlp-prepend"><i class="fa fa-calendar"></i></span>
+                                <span class="tlp-prepend"><i class="fas fa-calendar-alt"></i></span>
                                 <input type="text" id="expiry" class="tlp-input tlp-input-date" size="11" name="expiry_date" value="{{ expiry }}">
                             </div>
                         </div>
@@ -217,7 +217,7 @@
                             <label class="tlp-label">{{ last_access_date_label }}</label>
                             <p>
                                 <span class="tlp-tooltip tlp-tooltip-right" data-tlp-tooltip="{{ last_access_date }}">
-                                    {{ last_access_date_ago }}
+                                    {{{ purified_last_access_date_ago }}}
                                 </span>
                             </p>
                         </div>
@@ -225,7 +225,7 @@
                             <label class="tlp-label">{{ last_pwd_update_label }}</label>
                             <p>
                                 <span class="tlp-tooltip tlp-tooltip-right" data-tlp-tooltip="{{ last_pwd_update }}">
-                                    {{ last_pwd_update_ago }}
+                                    {{{ purified_last_pwd_update_ago }}}
                                 </span>
                             </p>
                         </div>
@@ -233,7 +233,7 @@
                             <label class="tlp-label">{{ auth_attempt_last_success_label }}</label>
                             <p>
                                 <span class="tlp-tooltip tlp-tooltip-right" data-tlp-tooltip="{{ auth_attempt_last_success }}">
-                                    {{ auth_attempt_last_success_ago }}
+                                    {{{ purified_auth_attempt_last_success_ago }}}
                                 </span>
                             </p>
                         </div>
@@ -246,7 +246,7 @@
                                 <label class="tlp-label">{{ auth_attempt_last_failure_label }}</label>
                                 <p>
                                     <span class="tlp-tooltip tlp-tooltip-right" data-tlp-tooltip="{{ auth_attempt_last_failure }}">
-                                        {{ auth_attempt_last_failure_ago }}
+                                        {{{ purified_auth_attempt_last_failure_ago }}}
                                     </span>
                                 </p>
                             </div>
@@ -255,7 +255,7 @@
                             <label class="tlp-label">{{ auth_attempt_prev_success_label }}</label>
                             <p>
                                 <span class="tlp-tooltip tlp-tooltip-right" data-tlp-tooltip="{{ auth_attempt_prev_success }}">
-                                    {{ auth_attempt_prev_success_ago }}
+                                    {{{ purified_auth_attempt_prev_success_ago }}}
                                 </span>
                             </p>
                         </div>
@@ -263,10 +263,30 @@
                             <label class="tlp-label">{{ member_since_label }}</label>
                             <p>
                                 <span class="tlp-tooltip tlp-tooltip-right" data-tlp-tooltip="{{ member_since }}">
-                                    {{ member_since_ago }}
+                                    {{{ purified_member_since_ago }}}
                                 </span>
                             </p>
                         </div>
+                        {{# invited_by }}
+                            <div class="tlp-property">
+                                <label class="tlp-label">{{# gettext }}Invited by{{/gettext}}</label>
+                                {{# has_been_invited }}
+                                    {{# invited_by_users }}
+                                        <div>
+                                            <div class="tlp-avatar-mini">
+                                                {{# has_avatar }}
+                                                    <img src="{{ avatar_url }}">
+                                                {{/ has_avatar }}
+                                            </div>
+                                            {{ display_name }}
+                                        </div>
+                                    {{/ invited_by_users }}
+                                {{/ has_been_invited }}
+                                {{^ has_been_invited }}
+                                    <span class="tlp-property-empty">{{# gettext }}Nobody{{/ gettext }}</span>
+                                {{/ has_been_invited }}
+                            </div>
+                        {{/ invited_by }}
                     {{/ access }}
                 </section>
             </div>

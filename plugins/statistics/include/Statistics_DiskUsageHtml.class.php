@@ -28,29 +28,29 @@ class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput
 
     protected function _displayEvolutionData($row)
     {
-        echo '<td>'.$this->sizeReadable($row['start_size']).'</td>';
-        echo '<td>'.$this->sizeReadable($row['end_size']).'</td>';
-        echo '<td>'.$this->sizeReadable($row['evolution']).'</td>';
+        echo '<td>' . $this->sizeReadable($row['start_size']) . '</td>';
+        echo '<td>' . $this->sizeReadable($row['end_size']) . '</td>';
+        echo '<td>' . $this->sizeReadable($row['evolution']) . '</td>';
         if ($row['evolution'] == 0) {
             echo '<td>-</td>';
         } else {
-            echo '<td>'.sprintf('%01.2f %%', (($row['evolution_rate']))*100).'</td>';
+            echo '<td>' . sprintf('%01.2f %%', (($row['evolution_rate'])) * 100) . '</td>';
         }
     }
 
     /**
      * Apply a jpgraph compliant color modifier on color and return a css rgb() rule
      */
-    function applyColorModifier($color)
+    public function applyColorModifier($color)
     {
         $jpgraphRgb = new RGB();
-        $newColor   = $jpgraphRgb->color($color.':1.5');
+        $newColor   = $jpgraphRgb->color($color . ':1.5');
         // Unset alpha channel
         unset($newColor[3]);
 
         // floor value to match jpgraph behaviour
         $col = implode(',', array_map('floor', $newColor));
-        return 'rgb('.$col.')';
+        return 'rgb(' . $col . ')';
     }
 
     /**
@@ -72,7 +72,7 @@ class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput
 
             $colors_for_charts = new ColorsForCharts();
 
-            $titles = array('Service', 'Start size', 'End size', 'Size evolution', 'Rate evolution');
+            $titles = ['Service', 'Start size', 'End size', 'Size evolution', 'Rate evolution'];
 
             echo html_build_list_table_top($titles);
             $totalStartSize = 0;
@@ -80,29 +80,29 @@ class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput
             $totalEvolution = 0;
             $i = 0;
             foreach ($res as $row) {
-                echo '<tr class="'. util_get_alt_row_color($i++) .'">';
+                echo '<tr class="' . util_get_alt_row_color($i++) . '">';
                 echo '<td>';
                 if ($colored) {
                     $color = $colors_for_charts->getColorCodeFromColorName($this->_dum->getServiceColor($row['service']));
-                    $color = $this->applyColorModifier($color.':1.5');
-                    echo '<span class="plugin_statistics_table_legend" style="background-color:'.$color.';">&nbsp;</span>';
+                    $color = $this->applyColorModifier($color . ':1.5');
+                    echo '<span class="plugin_statistics_table_legend" style="background-color:' . $color . ';">&nbsp;</span>';
                 }
-                echo $services[$row['service']].'</td>';
-                $totalStartSize  +=$row['start_size'];
-                $totalEndSize    +=$row['end_size'];
-                $totalEvolution  +=$row['evolution'];
+                echo $services[$row['service']] . '</td>';
+                $totalStartSize  += $row['start_size'];
+                $totalEndSize    += $row['end_size'];
+                $totalEvolution  += $row['evolution'];
                 $this->_displayEvolutionData($row);
                 echo '</tr>';
             }
-            echo '<tr class="'. util_get_alt_row_color($i++) .'">';
+            echo '<tr class="' . util_get_alt_row_color($i++) . '">';
             echo '<th>Total size</th>';
-            echo '<td>'.$this->sizeReadable($totalStartSize).'</td>';
-            echo '<td>'.$this->sizeReadable($totalEndSize).'</td>';
-            echo '<td>'.$this->sizeReadable($totalEvolution).'</td>';
+            echo '<td>' . $this->sizeReadable($totalStartSize) . '</td>';
+            echo '<td>' . $this->sizeReadable($totalEndSize) . '</td>';
+            echo '<td>' . $this->sizeReadable($totalEvolution) . '</td>';
             if ($totalEvolution == 0 || $totalStartSize == 0) {
                 echo '<td>-</td>';
             } else {
-                echo '<td>'.sprintf('%01.2f %%', (($totalEndSize/$totalStartSize)-1)*100).'</td>';
+                echo '<td>' . sprintf('%01.2f %%', (($totalEndSize / $totalStartSize) - 1) * 100) . '</td>';
             }
             echo '</tr>';
             echo '</tbody>';
@@ -125,22 +125,22 @@ class Statistics_DiskUsageHtml extends Statistics_DiskUsageOutput
         $pqm          = new ProjectQuotaManager();
         $allowedQuota = $pqm->getProjectCustomQuota($groupId);
         if ($allowedQuota) {
-            $html = '<div style="text-align:center"><p>'.$GLOBALS['Language']->getText('plugin_statistics_admin_page', 'disk_usage_proportion', array($this->sizeReadable($totalSize), $allowedQuota.'GiB')).'</p></div>';
+            $html = '<div style="text-align:center"><p>' . sprintf(dgettext('tuleap-statistics', 'This project uses <b>%1$s</b> of the <b>%2$s</b> allowed quota.'), $this->sizeReadable($totalSize), $allowedQuota . 'GiB') . '</p></div>';
         } else {
             $html  = '<LABEL><b>';
-            $html .= $GLOBALS['Language']->getText('plugin_statistics', 'widget_total_project_size');
+            $html .= dgettext('tuleap-statistics', 'Total project size:');
             $html .= '</b></LABEL>';
             $html .= $this->sizeReadable($totalSize);
         }
 
         $html .= '<div style="text-align:center"><p>';
-        $graph = '<img src="/plugins/statistics/project_cumulativeDiskUsage_graph.php?func=progress&group_id='.$groupId.'" title="Project total disk usage graph" />';
+        $graph = '<img src="/plugins/statistics/project_cumulativeDiskUsage_graph.php?func=progress&group_id=' . $groupId . '" title="Project total disk usage graph" />';
         $user  = UserManager::instance()->getCurrentUser();
         $project = ProjectManager::instance()->getProject($groupId);
         if ($project->userIsAdmin($user)) {
             $pluginManager = PluginManager::instance();
             $p     = $pluginManager->getPluginByName('statistics');
-            $html .= '<a href="'.$p->getPluginPath().'/project_stat.php?group_id='.$groupId.'">'.$graph.'</a>';
+            $html .= '<a href="' . $p->getPluginPath() . '/project_stat.php?group_id=' . $groupId . '">' . $graph . '</a>';
         } else {
             $html .= $graph;
         }

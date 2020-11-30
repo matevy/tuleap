@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All rights reserved
+ * Copyright (c) Enalean, 2016 - Present. All rights reserved
  *
  * This file is a part of Tuleap.
  *
@@ -25,30 +25,65 @@ use CSRFSynchronizerToken;
 
 class BaseGlobalAdminPresenter
 {
-
+    /**
+     * @var bool
+     * @psalm-readonly
+     */
     public $admin_groups_active;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
     public $admin_groups_url;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
     public $admin_groups;
+    /**
+     * @var int|null
+     * @psalm-readonly
+     */
     public $project_id;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
     public $csrf_input;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
     public $submit;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
     public $title;
+    /**
+     * @var bool
+     * @psalm-readonly
+     */
+    public $has_migrate_from_core = false;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
+    public $migrate_from_core_url;
 
-    public function text($prefix, $name)
-    {
-        return $GLOBALS['Language']->getText($prefix, $name);
-    }
-
-    public function __construct(Project $project, CSRFSynchronizerToken $token)
+    public function __construct(Project $project, CSRFSynchronizerToken $token, bool $has_migrate_from_core)
     {
         $this->project_id = $project->getId();
 
         $this->admin_groups_active = false;
-        $this->admin_groups_url    = "?group_id=". urlencode($project->getId()) . "&action=admin-groups";
+        $this->admin_groups_url    = GlobalAdministratorsController::getURL($project);
         $this->admin_groups        = dgettext('tuleap-svn', 'Admin Groups');
 
         $this->csrf_input          = $token->fetchHTMLInput();
         $this->title               = dgettext('tuleap-svn', 'SVN Administration');
         $this->submit              = dgettext('tuleap-svn', 'Save');
+
+        $this->has_migrate_from_core = $has_migrate_from_core;
+        $this->migrate_from_core_url = DisplayMigrateFromCoreController::getURL($project);
     }
 }

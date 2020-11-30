@@ -25,13 +25,13 @@ abstract class Tracker_Artifact_Followup_Item
 
     abstract public function getFollowUpClassnames($diff_to_previous);
 
-    abstract public function fetchFollowUp($diff_to_previous);
+    abstract public function fetchFollowUp($diff_to_previous, PFUser $current_user);
 
     abstract public function getHTMLAvatar();
 
     abstract public function getSubmitterUrl();
 
-    abstract public function getFollowupContent($diff_to_previous);
+    abstract public function getFollowupContent(string $diff_to_previous, \PFUser $current_user): string;
 
     /**
      * Return diff between this followup and previous one (HTML code)
@@ -42,8 +42,7 @@ abstract class Tracker_Artifact_Followup_Item
         $format = 'html',
         $user = null,
         $ignore_perms = false,
-        $for_mail = false,
-        $for_modal = false
+        $for_mail = false
     );
 
     public function diffToPreviousArtifactView(PFUser $user, Tracker_Artifact_Followup_Item $previous_item)
@@ -71,11 +70,11 @@ abstract class Tracker_Artifact_Followup_Item
 
     public function getUserLink()
     {
-        return '<span class="tracker_artifact_followup_title_user">'. $this->getSubmitterUrl() .'</span>';
+        return '<span class="tracker_artifact_followup_title_user">' . $this->getSubmitterUrl() . '</span>';
     }
 
-    public function getTimeAgo()
+    public function getTimeAgo(PFUser $current_user)
     {
-        return DateHelper::timeAgoInWords($this->getFollowUpDate(), false, true);
+        return DateHelper::relativeDateInlineContext($this->getFollowUpDate(), $current_user);
     }
 }

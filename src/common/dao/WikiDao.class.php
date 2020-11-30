@@ -35,18 +35,18 @@ class WikiDao extends DataAccessObject
     * @param int $group_id
     * @return int $id id in wiki of a wiki page.
     */
-    function retrieveWikiPageId($pagename, $group_id)
+    public function retrieveWikiPageId($pagename, $group_id)
     {
         $sql = sprintf(
-            'SELECT id'.
-            ' FROM wiki_page'.
-            ' WHERE pagename = %s'.
+            'SELECT id' .
+            ' FROM wiki_page' .
+            ' WHERE pagename = %s' .
             ' AND group_id = %d',
             $this->da->quoteSmart($pagename),
             $this->da->escapeInt($group_id)
         );
         $res = $this->retrieve($sql);
-        if ($res && !$res->isError() && $res->rowCount() == 1) {
+        if ($res && ! $res->isError() && $res->rowCount() == 1) {
             $res->rewind();
             if ($res->valid()) {
                 $row = $res->current();
@@ -65,22 +65,22 @@ class WikiDao extends DataAccessObject
     *
     * @param int $groupId
     * @param string $pagename
-    * @return int version number
+    * @return int|null version number
     */
-    function searchCurrentWikiVersion($groupId, $pagename)
+    public function searchCurrentWikiVersion($groupId, $pagename)
     {
         $version = null;
         $sql = sprintf(
-            'SELECT MAX(version) AS version'.
-                       ' FROM wiki_page '.
-                       '  INNER JOIN wiki_version USING(id)'.
-                       ' WHERE group_id = %d'.
+            'SELECT MAX(version) AS version' .
+                       ' FROM wiki_page ' .
+                       '  INNER JOIN wiki_version USING(id)' .
+                       ' WHERE group_id = %d' .
                        ' AND pagename = %s',
             $groupId,
             $this->da->quoteSmart($pagename)
         );
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             $row = $dar->current();
             $version = $row['version'];
         }
@@ -93,9 +93,9 @@ class WikiDao extends DataAccessObject
      * @param int $id id of wiki page
      * @return true if there is no error
      */
-    function deleteWikiPage($id)
+    public function deleteWikiPage($id)
     {
-        $sql = sprintf('DELETE FROM wiki_page'.
+        $sql = sprintf('DELETE FROM wiki_page' .
                     ' WHERE id=%d', $id);
         return $this->update($sql);
     }
@@ -106,9 +106,9 @@ class WikiDao extends DataAccessObject
      * @param int $id id of wiki page
      * @return true if there is no error
      */
-    function deleteWikiPageVersion($id)
+    public function deleteWikiPageVersion($id)
     {
-        $sql = sprintf('DELETE FROM wiki_version'.
+        $sql = sprintf('DELETE FROM wiki_version' .
                     ' WHERE id=%d', $id);
         return $this->update($sql);
     }
@@ -119,10 +119,10 @@ class WikiDao extends DataAccessObject
      * @param int $id id of wiki page
      * @return true if there is no error
      */
-    function deleteLinksFromToWikiPage($id)
+    public function deleteLinksFromToWikiPage($id)
     {
-        $sql = sprintf('DELETE FROM wiki_link'.
-                    ' WHERE linkfrom=%d'.
+        $sql = sprintf('DELETE FROM wiki_link' .
+                    ' WHERE linkfrom=%d' .
                     ' OR linkto=%d', $id, $id);
         return $this->update($sql);
     }
@@ -133,9 +133,9 @@ class WikiDao extends DataAccessObject
      * @param int $id id of wiki page
      * @return true if there is no error
      */
-    function deleteWikiPageFromNonEmptyList($id)
+    public function deleteWikiPageFromNonEmptyList($id)
     {
-        $sql = sprintf('DELETE FROM wiki_nonempty'.
+        $sql = sprintf('DELETE FROM wiki_nonempty' .
                     ' WHERE id=%d', $id);
         return $this->update($sql);
     }
@@ -146,9 +146,9 @@ class WikiDao extends DataAccessObject
      * @param int $id id of wiki page
      * @return true if there is no error
      */
-    function deleteWikiPageRecentInfos($id)
+    public function deleteWikiPageRecentInfos($id)
     {
-        $sql = sprintf('DELETE FROM wiki_recent'.
+        $sql = sprintf('DELETE FROM wiki_recent' .
                     ' WHERE id=%d', $id);
         return $this->update($sql);
     }
@@ -159,10 +159,10 @@ class WikiDao extends DataAccessObject
      * @param String $new_name
      * @return bool
      */
-    function updatePageName($user, $new_name)
+    public function updatePageName($user, $new_name)
     {
-        $sql = 'UPDATE wiki_page SET pagename = '.$this->da->quoteSmart($new_name).
-               ' WHERE pagename = '.$this->da->quoteSmart($user->getUserName());
+        $sql = 'UPDATE wiki_page SET pagename = ' . $this->da->quoteSmart($new_name) .
+               ' WHERE pagename = ' . $this->da->quoteSmart($user->getUserName());
         return $this->update($sql);
     }
 

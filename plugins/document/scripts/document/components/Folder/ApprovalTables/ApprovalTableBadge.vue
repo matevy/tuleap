@@ -18,45 +18,55 @@
   -->
 
 <template>
-    <span v-bind:class="approval_data.badge_class" class="document-approval-badge" v-if="has_an_approval_table">
-        <i class="fa tlp-badge-icon" v-bind:class="approval_data.icon_badge"></i> {{ approval_data.badge_label }}
+    <span
+        v-bind:class="approval_data.badge_class"
+        class="document-approval-badge"
+        v-if="has_an_approval_table"
+    >
+        <i class="fa tlp-badge-icon" v-bind:class="approval_data.icon_badge"></i>
+        {{ approval_data.badge_label }}
     </span>
 </template>
 
 <script>
 import { extractApprovalTableData } from "../../../helpers/approval-table-helper.js";
+import { APPROVAL_APPROVED, APPROVAL_NOT_YET, APPROVAL_REJECTED } from "../../../constants.js";
 
 export default {
     props: {
-        item: Object,
-        isInFolderContentRow: Boolean
+        item: {
+            type: Object,
+            default: () => ({}),
+        },
+        isInFolderContentRow: Boolean,
     },
     data() {
         return {
-            approval_data: {}
+            approval_data: {},
         };
     },
     computed: {
         has_an_approval_table() {
             return this.item.approval_table;
-        }
+        },
+        translated_approval_states_map() {
+            const approval_states_map = {};
+
+            approval_states_map[this.$gettext("Approved")] = APPROVAL_APPROVED;
+            approval_states_map[this.$gettext("Not yet")] = APPROVAL_NOT_YET;
+            approval_states_map[this.$gettext("Rejected")] = APPROVAL_REJECTED;
+
+            return approval_states_map;
+        },
     },
     mounted() {
         if (this.item.approval_table) {
-            const translated_approval_states = {
-                "Not yet": this.$gettext("Not yet"),
-                Approved: this.$gettext("Approved"),
-                Rejected: this.$gettext("Rejected"),
-                Declined: this.$gettext("Declined"),
-                Commented: this.$gettext("Commented")
-            };
-
             this.approval_data = extractApprovalTableData(
-                translated_approval_states,
+                this.translated_approval_states_map,
                 this.item.approval_table.approval_state,
                 this.isInFolderContentRow
             );
         }
-    }
+    },
 };
 </script>

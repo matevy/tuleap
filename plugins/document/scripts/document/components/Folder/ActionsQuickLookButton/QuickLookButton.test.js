@@ -19,7 +19,7 @@
 
 import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import QuickLookButton from "./QuickLookButton.vue";
 import { TYPE_FOLDER } from "../../../constants.js";
 import EventBus from "../../../helpers/event-bus.js";
@@ -33,7 +33,7 @@ describe("QuickLookButton", () => {
             return shallowMount(QuickLookButton, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -43,9 +43,9 @@ describe("QuickLookButton", () => {
         const event_bus_emit = jest.spyOn(EventBus, "$emit");
         const wrapper = factory({ item });
 
-        wrapper.find("[data-test=document-quick-look-button]").trigger("click");
+        wrapper.get("[data-test=document-quick-look-button]").trigger("click");
         expect(event_bus_emit).toHaveBeenCalledWith("toggle-quick-look", {
-            details: { item }
+            details: { item },
         });
     });
 });

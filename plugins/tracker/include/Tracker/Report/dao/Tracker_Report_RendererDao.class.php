@@ -20,13 +20,13 @@
 
 class Tracker_Report_RendererDao extends DataAccessObject
 {
-    function __construct()
+    public function __construct()
     {
         parent::__construct();
         $this->table_name = 'tracker_report_renderer';
     }
 
-    function searchById($id)
+    public function searchById($id)
     {
         $id      = $this->da->escapeInt($id);
         $sql = "SELECT *
@@ -35,7 +35,7 @@ class Tracker_Report_RendererDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function searchByReportId($report_id)
+    public function searchByReportId($report_id)
     {
         $report_id = $this->da->escapeInt($report_id);
         $sql = "SELECT *
@@ -45,7 +45,7 @@ class Tracker_Report_RendererDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function searchByIdAndReportId($id, $report_id)
+    public function searchByIdAndReportId($id, $report_id)
     {
         $id      = $this->da->escapeInt($id);
         $report_id = $this->da->escapeInt($report_id);
@@ -55,35 +55,35 @@ class Tracker_Report_RendererDao extends DataAccessObject
         return $this->retrieve($sql);
     }
 
-    function create($report_id, $type, $name, $description, $rank)
+    public function create($report_id, $type, $name, $description, $rank)
     {
         $report_id   = $this->da->escapeInt($report_id);
         $type        = $this->da->quoteSmart($type);
         $name        = $this->da->quoteSmart($name);
         $description = $this->da->quoteSmart($description);
-        $rank        = (int)$this->prepareRanking(0, $report_id, $rank, 'id', 'report_id');
+        $rank        = (int) $this->prepareRanking('tracker_report_renderer', 0, $report_id, $rank, 'id', 'report_id');
         $sql = "INSERT INTO $this->table_name
                 (report_id, renderer_type, name, description, rank)
                 VALUES ($report_id, $type, $name, $description, $rank)";
         return $this->updateAndGetLastId($sql);
     }
 
-    function move($id, $report_id, $rank)
+    public function move($id, $report_id, $rank)
     {
         $id   = $this->da->escapeInt($id);
         $report_id   = $this->da->escapeInt($report_id);
-        $rank = (int)$this->prepareRanking($id, $report_id, $rank, 'id', 'report_id');
+        $rank = (int) $this->prepareRanking('tracker_report_renderer', $id, $report_id, $rank, 'id', 'report_id');
         $sql = "UPDATE $this->table_name SET rank = $rank WHERE id = $id";
         return $this->update($sql);
     }
 
-    function save($id, $name, $description, $rank)
+    public function save($id, $name, $description, $rank)
     {
         $id          = $this->da->escapeInt($id);
         $name        = $this->da->quoteSmart($name);
         $description = $this->da->quoteSmart($description);
         $rank        = $this->da->escapeInt($rank);
-        $sql = "UPDATE $this->table_name SET 
+        $sql = "UPDATE $this->table_name SET
                    name          = $name,
                    description   = $description,
                    rank          = $rank
@@ -91,25 +91,25 @@ class Tracker_Report_RendererDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function delete($id)
+    public function delete($id)
     {
-        $sql = "DELETE FROM $this->table_name WHERE id = ". $this->da->escapeInt($id);
+        $sql = "DELETE FROM $this->table_name WHERE id = " . $this->da->escapeInt($id);
         return $this->update($sql);
     }
 
-    function rename($id, $name, $description)
+    public function rename($id, $name, $description)
     {
         $id   = $this->da->escapeInt($id);
         $name = $this->da->quoteSmart($name);
         $description = $this->da->quoteSmart($description);
-        $sql = "UPDATE $this->table_name SET 
+        $sql = "UPDATE $this->table_name SET
                    name        = $name,
                    description = $description
                 WHERE id = $id ";
         return $this->update($sql);
     }
 
-    function duplicate($from_renderer_id, $to_report_id)
+    public function duplicate($from_renderer_id, $to_report_id)
     {
         $from_renderer_id = $this->da->escapeInt($from_renderer_id);
         $to_report_id     = $this->da->escapeInt($to_report_id);
@@ -123,7 +123,7 @@ class Tracker_Report_RendererDao extends DataAccessObject
     public function forceOrder($report_id, $renderers_order)
     {
         $report_id = $this->da->escapeInt($report_id);
-        $case = array();
+        $case = [];
         foreach ($renderers_order as $rank => $id) {
             $rank = $this->da->escapeInt($rank);
             $id   = $this->da->escapeInt($id);
@@ -131,7 +131,7 @@ class Tracker_Report_RendererDao extends DataAccessObject
             $case[] = "WHEN $id THEN $rank ";
         }
         if (count($case)) {
-            $case = 'CASE id '. implode('', $case) .' ELSE rank END';
+            $case = 'CASE id ' . implode('', $case) . ' ELSE rank END';
             $sql = "UPDATE $this->table_name
                     SET rank = $case
                     WHERE report_id = $report_id";

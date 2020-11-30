@@ -18,6 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 
 class Tracker_FileInfoFactory
 {
@@ -43,9 +44,9 @@ class Tracker_FileInfoFactory
         $this->artifact_factory    = $artifact_factory;
     }
 
-    public function getById(int $id) : ?Tracker_FileInfo
+    public function getById(int $id): ?Tracker_FileInfo
     {
-        static $cache = array();
+        static $cache = [];
 
         if (isset($cache[$id])) {
             return $cache[$id];
@@ -86,11 +87,10 @@ class Tracker_FileInfoFactory
     }
 
     /**
-     * @return Tracker_Artifact
      * @throws Tracker_FileInfo_InvalidFileInfoException
      * @throws Tracker_FileInfo_UnauthorisedException
      */
-    public function getArtifactByFileInfoIdAndUser(PFUser $user, int $id) : Tracker_Artifact
+    public function getArtifactByFileInfoIdAndUser(PFUser $user, int $id): Artifact
     {
         $row = $this->dao->searchArtifactIdByFileInfoIdInLastChangeset($id)->getRow();
         if (! $row) {
@@ -105,7 +105,7 @@ class Tracker_FileInfoFactory
     }
 
     /**
-     * @return Tracker_Artifact|null
+     * @return Artifact|null
      */
     public function getArtifactByFileInfoIdInLastChangeset(int $id)
     {
@@ -121,11 +121,11 @@ class Tracker_FileInfoFactory
      *
      * @param int $id
      *
-     * @return Tracker_Artifact | null
+     * @return Artifact | null
      */
     public function getArtifactByFileInfoId($id)
     {
-        static $cache = array();
+        static $cache = [];
         if (! isset($cache[$id])) {
             $row = $this->dao->searchArtifactIdByFileInfoId($id)->getRow();
             if (! $row) {
@@ -140,7 +140,7 @@ class Tracker_FileInfoFactory
 
     public function buildFileInfoData(Tracker_Artifact_Attachment_TemporaryFile $file, $path)
     {
-        return array(
+        return [
             'id'           => $file->getTemporaryName(),
             'submitted_by' => $file->getCreatorId(),
             'description'  => $file->getDescription(),
@@ -150,6 +150,6 @@ class Tracker_FileInfoFactory
             'type'         => $file->getType(),
             'error'        => UPLOAD_ERR_OK,
             'action'       => ''
-        );
+        ];
     }
 }

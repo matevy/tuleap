@@ -23,8 +23,8 @@ declare(strict_types=1);
 namespace Tuleap\Taskboard\REST\v1\Cell;
 
 use PFUser;
-use Tracker_Artifact;
 use Tuleap\REST\I18NRestException;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class AddValidator
 {
@@ -32,11 +32,12 @@ class AddValidator
      * @throws I18NRestException
      */
     public function validateArtifacts(
-        Tracker_Artifact $swimlane_artifact,
-        Tracker_Artifact $artifact_to_add,
+        Artifact $swimlane_artifact,
+        Artifact $artifact_to_add,
         PFUser $current_user
     ): void {
-        if (! $this->isSoloItem($swimlane_artifact, $artifact_to_add) &&
+        if (
+            ! $this->isSoloItem($swimlane_artifact, $artifact_to_add) &&
             ! $this->isSwimlaneParentOfArtifactToAdd($swimlane_artifact, $artifact_to_add, $current_user)
         ) {
             throw new I18NRestException(
@@ -50,14 +51,14 @@ class AddValidator
         }
     }
 
-    private function isSoloItem(Tracker_Artifact $swimlane_artifact, Tracker_Artifact $artifact_to_add): bool
+    private function isSoloItem(Artifact $swimlane_artifact, Artifact $artifact_to_add): bool
     {
         return $swimlane_artifact->getId() === $artifact_to_add->getId();
     }
 
     private function isSwimlaneParentOfArtifactToAdd(
-        Tracker_Artifact $swimlane_artifact,
-        Tracker_Artifact $artifact_to_add,
+        Artifact $swimlane_artifact,
+        Artifact $artifact_to_add,
         PFUser $current_user
     ): bool {
         $parent_of_artifact_to_add = $artifact_to_add->getParent($current_user);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2004-2011. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -20,14 +20,12 @@
  */
 
 use Tuleap\Mail\MailLogger;
-use Zend\Mail;
-use Zend\Mime\Message as MimeMessage;
-use Zend\Mime\Mime;
-use Zend\Mime\Part as MimePart;
+use Laminas\Mail;
+use Laminas\Mime\Message as MimeMessage;
+use Laminas\Mime\Mime;
+use Laminas\Mime\Part as MimePart;
 
 /**
- * Class for sending an email using the zend lib.
- *
  * It allows to send mails in html format
  *
  */
@@ -45,7 +43,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
      */
     public const DISCARD_COMMON_LOOK_AND_FEEL = false;
     /**
-     * @var BackendLogger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
@@ -82,12 +80,12 @@ class Codendi_Mail implements Codendi_Mail_Interface
     /**
      * @var MimePart[]
      */
-    private $attachments = array();
+    private $attachments = [];
 
     /**
      * @var MimePart[]
      */
-    private $inline_attachments = array();
+    private $inline_attachments = [];
 
     public function __construct()
     {
@@ -128,15 +126,15 @@ class Codendi_Mail implements Codendi_Mail_Interface
      *
      * @return Array
      */
-    function _cleanupMailFormat($mail)
+    public function _cleanupMailFormat($mail)
     {
         $pattern = '/(.*)<(.*)>/';
         if (preg_match($pattern, $mail, $matches)) {
             // Remove extra spaces and quotes
             $name = trim(trim($matches[1]), '"\'');
-            return array($matches[2], $name);
+            return [$matches[2], $name];
         } else {
-            return array($mail, '');
+            return [$mail, ''];
         }
     }
 
@@ -161,13 +159,13 @@ class Codendi_Mail implements Codendi_Mail_Interface
      */
     private function getRecipientsFromHeader($recipient_type)
     {
-        $allowed = array('To', 'Cc', 'Bcc');
+        $allowed = ['To', 'Cc', 'Bcc'];
         if (in_array($recipient_type, $allowed)) {
             $headers = $this->message->getHeaders();
             if ($headers->has($recipient_type)) {
                 $recipient_header = $headers->get($recipient_type);
                 $list_addresses   = $recipient_header->getAddressList();
-                $addresses = array();
+                $addresses = [];
                 foreach ($list_addresses as $address) {
                     $addresses[] = $address->getEmail();
                 }
@@ -185,7 +183,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
 
     public function clearFrom()
     {
-        $this->message->setFrom(array());
+        $this->message->setFrom([]);
     }
 
     public function setSubject($subject)
@@ -206,9 +204,9 @@ class Codendi_Mail implements Codendi_Mail_Interface
     public function setTo($to, $raw = false)
     {
         list($to,) = $this->_cleanupMailFormat($to);
-        if (!$raw) {
+        if (! $raw) {
             $to = $this->validateCommaSeparatedListOfAddresses($to);
-            if (!empty($to)) {
+            if (! empty($to)) {
                 foreach ($to as $row) {
                     $this->addTo($row['email'], $row['real_name']);
                 }
@@ -244,9 +242,9 @@ class Codendi_Mail implements Codendi_Mail_Interface
      */
     public function setBcc($bcc, $raw = false)
     {
-        if (!$raw) {
+        if (! $raw) {
             $bcc = $this->validateCommaSeparatedListOfAddresses($bcc);
-            if (!empty($bcc)) {
+            if (! empty($bcc)) {
                 foreach ($bcc as $row) {
                     $this->addBcc($row['email'], $row['real_name']);
                 }
@@ -282,9 +280,9 @@ class Codendi_Mail implements Codendi_Mail_Interface
      */
     public function setCc($cc, $raw = false)
     {
-        if (!$raw) {
+        if (! $raw) {
             $cc = $this->validateCommaSeparatedListOfAddresses($cc);
-            if (!empty($cc)) {
+            if (! empty($cc)) {
                 foreach ($cc as $row) {
                     $this->addCc($row['email'], $row['real_name']);
                 }
@@ -308,7 +306,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
      *
      * @return String
      */
-    function getCc()
+    public function getCc()
     {
         return $this->getRecipientsFromHeader('Cc');
     }
@@ -366,7 +364,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
      */
     public function getLookAndFeelTemplate()
     {
-        if (!$this->look_and_feel_template) {
+        if (! $this->look_and_feel_template) {
             $this->look_and_feel_template = new Tuleap_Template_Mail();
         }
         return $this->look_and_feel_template;
@@ -428,7 +426,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
             $html_message->addPart($attachment);
         }
         $html_part           = new MimePart($html_message->generateMessage());
-        $html_part->type     = Zend\Mime\Mime::MULTIPART_RELATED;
+        $html_part->type     = Laminas\Mime\Mime::MULTIPART_RELATED;
         $html_part->boundary = $html_message->getMime()->boundary();
 
         return $html_part;
@@ -437,7 +435,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
     /**
      * @param String $message
      */
-    function setBody($message)
+    public function setBody($message)
     {
         $this->setBodyHtml($message);
     }
@@ -447,7 +445,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
      *
      * @return String
      */
-    function getBody()
+    public function getBody()
     {
         return $this->getBodyHtml();
     }
@@ -461,7 +459,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
     public function setToUser($to)
     {
         $arrayTo = $this->validateArrayOfUsers($to);
-        $arrayToRealName = array();
+        $arrayToRealName = [];
         foreach ($arrayTo as $to) {
             $this->message->addTo($to['email'], $to['real_name']);
             $arrayToRealName[] = $to['real_name'];
@@ -473,12 +471,12 @@ class Codendi_Mail implements Codendi_Mail_Interface
      *
      * @param array of User $bcc
      *
-     * @return array;
+     * @return array
      */
     public function setBccUser($bcc)
     {
         $arrayBcc = $this->validateArrayOfUsers($bcc);
-        $arrayBccRealName = array();
+        $arrayBccRealName = [];
         foreach ($arrayBcc as $user) {
             $this->message->addBcc($user['email'], $user['real_name']);
             $arrayBccRealName[] = $user['real_name'];
@@ -495,7 +493,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
     public function setCcUser($cc)
     {
         $arrayCc = $this->validateArrayOfUsers($cc);
-        $arrayCcRealName = array();
+        $arrayCcRealName = [];
         foreach ($arrayCc as $user) {
             $this->message->addCc($user['email'], $user['real_name']);
             $arrayCcRealName[] = $user['real_name'];
@@ -526,7 +524,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
             \Tuleap\Mail\MailInstrumentation::incrementFailure();
             $GLOBALS['Response']->addFeedback('warning', $GLOBALS['Language']->getText('global', 'mail_failed', ForgeConfig::get('sys_email_admin')), CODENDI_PURIFIER_DISABLED);
             $this->logger->debug("Mail notification failed");
-            $this->logger->debug("Zend mail Exception: " . $e->getMessage());
+            $this->logger->debug("Laminas mail Exception: " . $e->getMessage());
 
             if ($this->message->getHeaders()->get('to')) {
                 $list = $this->message->getHeaders()->get('to')->getAddressList();
@@ -565,7 +563,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
             $body_message->addPart($html_part);
         }
         $body_part           = new MimePart($body_message->generateMessage());
-        $body_part->type     = Zend\Mime\Mime::MULTIPART_ALTERNATIVE;
+        $body_part->type     = Laminas\Mime\Mime::MULTIPART_ALTERNATIVE;
         $body_part->boundary = $body_message->getMime()->boundary();
 
         return $body_part;
@@ -573,9 +571,9 @@ class Codendi_Mail implements Codendi_Mail_Interface
 
     private function clearRecipients()
     {
-        $this->message->setTo(array());
-        $this->message->setCc(array());
-        $this->message->setBcc(array());
+        $this->message->setTo([]);
+        $this->message->setCc([]);
+        $this->message->setBcc([]);
     }
 
     public function addAdditionalHeader($name, $value)
@@ -588,7 +586,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
     {
         $mime_part               = $this->getMimePartAttachment($data, $mime_type);
         $mime_part->filename     = $filename;
-        $mime_part->disposition  = Zend\Mime\Mime::DISPOSITION_ATTACHMENT;
+        $mime_part->disposition  = Laminas\Mime\Mime::DISPOSITION_ATTACHMENT;
         $this->attachments[]     = $mime_part;
     }
 
@@ -596,7 +594,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
     {
         $mime_part                  = $this->getMimePartAttachment($data, $mime_type);
         $mime_part->id              = $cid;
-        $mime_part->disposition     = Zend\Mime\Mime::DISPOSITION_INLINE;
+        $mime_part->disposition     = Laminas\Mime\Mime::DISPOSITION_INLINE;
         $this->inline_attachments[] = $mime_part;
     }
 
@@ -604,7 +602,7 @@ class Codendi_Mail implements Codendi_Mail_Interface
     {
         $mime_part           = new MimePart($data);
         $mime_part->type     = $mime_type;
-        $mime_part->encoding = Zend\Mime\Mime::ENCODING_BASE64;
+        $mime_part->encoding = Laminas\Mime\Mime::ENCODING_BASE64;
 
         return $mime_part;
     }

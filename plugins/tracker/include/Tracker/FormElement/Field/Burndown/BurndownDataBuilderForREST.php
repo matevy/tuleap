@@ -20,17 +20,17 @@
 
 namespace Tuleap\Tracker\FormElement\Field\Burndown;
 
-use Logger;
 use PFUser;
+use Psr\Log\LoggerInterface;
 use TimePeriodWithoutWeekEnd;
-use Tracker_Artifact;
 use Tracker_Chart_Data_Burndown;
 use Tuleap\TimezoneRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class BurndownDataBuilderForREST
 {
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -45,7 +45,7 @@ class BurndownDataBuilderForREST
     private $common_data_builder;
 
     public function __construct(
-        Logger $logger,
+        LoggerInterface $logger,
         BurndownRemainingEffortAdderForREST $remaining_effort_adder,
         BurndownCommonDataBuilder $common_data_builder
     ) {
@@ -54,7 +54,7 @@ class BurndownDataBuilderForREST
         $this->common_data_builder    = $common_data_builder;
     }
 
-    public function build(Tracker_Artifact $artifact, PFUser $user, TimePeriodWithoutWeekEnd $time_period)
+    public function build(Artifact $artifact, PFUser $user, TimePeriodWithoutWeekEnd $time_period)
     {
         $capacity      = $this->common_data_builder->getCapacity($artifact, $user);
         $user_timezone = TimezoneRetriever::getUserTimezone($user);
@@ -83,7 +83,7 @@ class BurndownDataBuilderForREST
     }
 
     private function addBurndownRemainingEffortDotsBasedOnServerTimezoneForREST(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         PFUser $user,
         TimePeriodWithoutWeekEnd $time_period,
         $capacity,

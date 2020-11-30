@@ -78,7 +78,7 @@ abstract class Docman_ApprovalTableVersionnedFactory extends Docman_ApprovalTabl
      * The new table should be transparent for reviewers, they should not see
      * any difference between the 2 tables.
      */
-    function newTableCopy($srcTable, $dstTable, $userId)
+    public function newTableCopy($srcTable, $dstTable, $userId)
     {
         $dstTable->setOwner($userId);
         return $this->importTable($srcTable, $dstTable, 'copy');
@@ -91,7 +91,7 @@ abstract class Docman_ApprovalTableVersionnedFactory extends Docman_ApprovalTabl
      * commitment is deleted.
      * It acts like if the table was 'reset' by the admin.
      */
-    function newTableReset($srcTable, $dstTable, $userId)
+    public function newTableReset($srcTable, $dstTable, $userId)
     {
         $dstTable->setOwner($userId);
         $dstTable->setDate(time());
@@ -101,12 +101,12 @@ abstract class Docman_ApprovalTableVersionnedFactory extends Docman_ApprovalTabl
     /**
      * Create a new approval table based on the last active one.
      */
-    function createTable($userId, $import)
+    public function createTable($userId, $import)
     {
         $tableCreated = false;
         if ($import == 'copy' || $import == 'reset' || $import == 'empty') {
             $srcTable = $this->getLastTableForItem();
-            if ($import == 'copy' || $import == 'reset') {
+            if (($import == 'copy' || $import == 'reset') && $srcTable !== null) {
                 $dstTable = clone $srcTable;
                 $this->_updateTableWithLastId($dstTable);
                 if ($import == 'copy') {
@@ -118,7 +118,7 @@ abstract class Docman_ApprovalTableVersionnedFactory extends Docman_ApprovalTabl
                 $tableCreated = $this->newTableEmpty($userId);
             }
             // Close source table
-            if (!$srcTable->isClosed()) {
+            if ($srcTable !== null && ! $srcTable->isClosed()) {
                 $srcTable->setStatus(PLUGIN_DOCMAN_APPROVAL_TABLE_CLOSED);
                 $this->_updateTable($srcTable);
             }
@@ -131,14 +131,14 @@ abstract class Docman_ApprovalTableVersionnedFactory extends Docman_ApprovalTabl
     /**
      * Return the last created approval table for the item
      *
-     * @return Docman_ApprovalTable object
+     * @return Docman_ApprovalTable|null object
      */
-    function getLastTableForItem()
+    public function getLastTableForItem()
     {
         $table = null;
         $dao = $this->_getDao();
         $dar = $dao->getLatestTableByItemId($this->item->getId());
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             $row = $dar->current();
             $table = $this->createTableFromRow($row);
         }
@@ -148,12 +148,12 @@ abstract class Docman_ApprovalTableVersionnedFactory extends Docman_ApprovalTabl
     /**
      * Return all the approval table of for the item
      */
-    function getAllApprovalTable()
+    public function getAllApprovalTable()
     {
-        $tableArray = array();
+        $tableArray = [];
         $dao = $this->_getDao();
         $dar = $dao->getApprovalTableItemId($this->item->getId(), 'app.*', '', true);
-        if ($dar && !$dar->isError()) {
+        if ($dar && ! $dar->isError()) {
             while ($row = $dar->getRow()) {
                 $tableArray[] = $this->createTableFromRow($row);
             }
@@ -161,5 +161,5 @@ abstract class Docman_ApprovalTableVersionnedFactory extends Docman_ApprovalTabl
         return $tableArray;
     }
 
-    abstract function getLastDocumentVersionNumber();
+    abstract public function getLastDocumentVersionNumber();
 }

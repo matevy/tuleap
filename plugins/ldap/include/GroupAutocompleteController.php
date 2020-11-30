@@ -46,8 +46,6 @@ class GroupAutocompleteController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @return void
      * @throws ForbiddenException
@@ -55,7 +53,7 @@ class GroupAutocompleteController implements DispatchableWithRequest
      */
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
-        $group_list   = array();
+        $group_list   = [];
         $more_results = false;
 
         $vGroupName = new Valid_String('ldap_group_name');
@@ -65,13 +63,13 @@ class GroupAutocompleteController implements DispatchableWithRequest
             if ($lri !== false) {
                 while ($lri->valid()) {
                     $lr = $lri->current();
-                    $common_name = $lr->getCommonName();
+                    $common_name = $lr->getGroupCommonName();
                     $display_name = $lr->getGroupDisplayName();
 
-                    $group_list[] = array(
-                        'id' =>$common_name,
-                        'text' =>$display_name
-                    );
+                    $group_list[] = [
+                        'id' => $common_name,
+                        'text' => $display_name
+                    ];
                     $lri->next();
                 }
                 if ($this->ldap->getErrno() == LDAP::ERR_SIZELIMIT) {
@@ -80,12 +78,12 @@ class GroupAutocompleteController implements DispatchableWithRequest
             }
         }
 
-        $output = array(
+        $output = [
             'results'    => $group_list,
-            'pagination' => array(
+            'pagination' => [
                 'more' => $more_results
-            )
-        );
+            ]
+        ];
 
         $layout->sendJSON($output);
     }

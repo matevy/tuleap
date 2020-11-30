@@ -26,27 +26,24 @@ class LDAP_SVN_Apache_ModPerl extends SVN_Apache_ModPerl
      */
     private $ldap;
 
-    public function __construct(LDAP $ldap, Parameters $cache_parameters, array $project)
+    public function __construct(LDAP $ldap, Parameters $cache_parameters)
     {
-        parent::__construct($cache_parameters, $project);
+        parent::__construct($cache_parameters);
         $this->ldap = $ldap;
     }
 
-    /**
-     * @return String
-     */
-    public function getProjectAuthentication($row)
+    public function getProjectAuthentication(Project $project): string
     {
-        $conf        = parent::getProjectAuthentication($row);
-        $server_list = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('server'));
-        $ldap_dn     = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('dn'));
-        $ldap_uid    = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('uid'));
+        $conf        = parent::getProjectAuthentication($project);
+        $server_list = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('server') ?? '');
+        $ldap_dn     = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('dn') ?? '');
+        $ldap_uid    = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('uid') ?? '');
         $conf       .= '    TuleapLdapServers "' . $server_list . '"' . PHP_EOL;
         $conf       .= '    TuleapLdapDN "' . $ldap_dn . '"' . PHP_EOL;
         $conf       .= '    TuleapLdapUid "' . $ldap_uid . '"' . PHP_EOL;
         if ($this->ldap->getLDAPParam('bind_dn') && $this->ldap->getLDAPParam('bind_passwd')) {
-            $ldap_bind_dn     = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('bind_dn'));
-            $ldap_bind_passwd = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('bind_passwd'));
+            $ldap_bind_dn     = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('bind_dn') ?? '');
+            $ldap_bind_passwd = $this->escapeStringForApacheConf($this->ldap->getLDAPParam('bind_passwd') ?? '');
             $conf            .= '    TuleapLdapBindDN "' . $ldap_bind_dn . '"' . PHP_EOL;
             $conf            .= '    TuleapLdapBindPassword "' . $ldap_bind_passwd . '"' . PHP_EOL;
         }

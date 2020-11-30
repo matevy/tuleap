@@ -19,15 +19,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_NotificationsManager.class.php');
-require_once('Docman_Path.class.php');
-
 class Docman_NotificationsManager_Delete extends Docman_NotificationsManager
 {
     public const MESSAGE_REMOVED_FROM = 'removed_from'; // X has been removed from folder F
     public const MESSAGE_REMOVED      = 'removed'; // X has been removed
 
-    function somethingHappen($event, $params)
+    public function somethingHappen($event, $params)
     {
         //search for users who monitor the item
         if ($event == 'plugin_docman_event_del') {
@@ -35,7 +32,7 @@ class Docman_NotificationsManager_Delete extends Docman_NotificationsManager
             $this->_storeEvents($params['item']->getParentId(), self::MESSAGE_REMOVED_FROM, $params);
         }
     }
-    function sendNotifications($event, $params)
+    public function sendNotifications($event, $params)
     {
         $path = $this->_getDocmanPath();
         foreach ($this->_listeners as $l) {
@@ -56,22 +53,23 @@ class Docman_NotificationsManager_Delete extends Docman_NotificationsManager
                         break;
                     }
                 }
+                assert(isset($t));
                 $this->_addMessage(
                     $l['user'],
                     $t == self::MESSAGE_REMOVED ? $last['item']->getTitle() : $p->getTitle(),
                     $this->_getMessageForUser(
                         $u,
                         $t,
-                        array('path' => &$path, 'parent' => &$p, 'item' => &$last['item'])
+                        ['path' => &$path, 'parent' => &$p, 'item' => &$last['item']]
                     ),
-                    $this->getMessageLink($t, array('path' => &$path, 'parent' => &$p, 'item' => &$last['item']))
+                    $this->getMessageLink($t, ['path' => &$path, 'parent' => &$p, 'item' => &$last['item']])
                 );
             } else {
                 $i = array_pop($l['items']);
-                $params = array(
+                $params = [
                     'item' => $i['item'],
                     'path' => &$path
-                );
+                ];
                 if (count($i['events']) > 1) {
                     // A folder A has a subitem B
                     // User U monitor A and B
@@ -117,7 +115,7 @@ class Docman_NotificationsManager_Delete extends Docman_NotificationsManager
             parent::sendNotifications($event, $params);
         }
     }
-    function _getMessageForUser($user, $message_type, $params)
+    public function _getMessageForUser($user, $message_type, $params)
     {
         $msg = '';
         switch ($message_type) {
@@ -168,33 +166,33 @@ class Docman_NotificationsManager_Delete extends Docman_NotificationsManager
         return $link;
     }
 
-    function _storeEvents($id, $message_type, $params)
+    public function _storeEvents($id, $message_type, $params)
     {
         $dpm   = $this->_getPermissionsManager();
         $users = $this->notified_people_retriever->getNotifiedUsers($this->project, $id);
         while ($users->valid()) {
             $row  = $users->current();
-            if (!isset($this->_listeners[$row['user_id']])) {
+            if (! isset($this->_listeners[$row['user_id']])) {
                 $um   = $this->_getUserManager();
                 $user = $um->getUserById($row['user_id']);
                 if ($user && $dpm->userCanRead($user, $params['item']->getId()) && $dpm->userCanAccess($user, $params['item']->getParentId()) && $dpm->userCanAccess($user, $row['item_id'])) {
-                    $this->_listeners[$user->getId()] = array(
+                    $this->_listeners[$user->getId()] = [
                         'user'  => $user,
-                        'items' => array()
-                    );
+                        'items' => []
+                    ];
                 }
             }
             if (isset($this->_listeners[$row['user_id']])) {
-                if (!isset($this->_listeners[$row['user_id']]['items'][$params['item']->getId()])) {
-                    $this->_listeners[$row['user_id']]['items'][$params['item']->getId()] = array(
+                if (! isset($this->_listeners[$row['user_id']]['items'][$params['item']->getId()])) {
+                    $this->_listeners[$row['user_id']]['items'][$params['item']->getId()] = [
                         'item'   => &$params['item'],
-                        'events' => array()
-                    );
+                        'events' => []
+                    ];
                 }
-                $event = array(
+                $event = [
                     'type' => $message_type,
                     'user' => &$params['user']
-                );
+                ];
                 if (isset($params['parent'])) {
                     $event['parent'] = $params['parent'];
                 }

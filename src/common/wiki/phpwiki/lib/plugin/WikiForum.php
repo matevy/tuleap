@@ -48,17 +48,17 @@ include_once("lib/plugin/WikiBlog.php");
 
 class WikiPlugin_WikiForum extends WikiPlugin_WikiBlog
 {
-    function getName()
+    public function getName()
     {
         return _("WikiForum");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Handles threaded topics with comments/news and provide a input form");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -67,20 +67,20 @@ class WikiPlugin_WikiForum extends WikiPlugin_WikiBlog
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('pagename'   => '[pagename]',
+        return ['pagename'   => '[pagename]',
                      'order'      => 'normal',   // oldest first
                      'mode'       => 'show,add', // 'summary',
                      'info'       => '',
                      'noheader'   => false
-                    );
+                    ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         $args = $this->getArgs($argstr, $request);
-        if (!$args['pagename']) {
+        if (! $args['pagename']) {
             return $this->error(_("No pagename specified"));
         }
 
@@ -88,7 +88,7 @@ class WikiPlugin_WikiForum extends WikiPlugin_WikiBlog
         $forum = $request->getArg('forum');
         $request->setArg('forum', false);
 
-        if ($request->isPost() and !empty($forum['add'])) {
+        if ($request->isPost() and ! empty($forum['add'])) {
             return $this->add($request, $forum, 'wikiforum');
         }
 
@@ -96,7 +96,7 @@ class WikiPlugin_WikiForum extends WikiPlugin_WikiBlog
         // for new comments
         $html = HTML();
         foreach (explode(',', $args['mode']) as $show) {
-            if (!empty($seen[$show])) {
+            if (! empty($seen[$show])) {
                 continue;
             }
             $seen[$show] = 1;
@@ -121,13 +121,13 @@ class WikiPlugin_WikiForum extends WikiPlugin_WikiBlog
 
     // Table of titles(subpages) without content
     // TODO: use $args['info']
-    function showTopics($request, $args)
+    public function showTopics($request, $args)
     {
         global $WikiTheme;
 
         $dbi = $request->getDbh();
         $topics = $this->findBlogs($dbi, $args['pagename'], 'wikiforum');
-        $html = HTML::table(array('border'=>0));
+        $html = HTML::table(['border' => 0]);
         $row = HTML::tr(
             HTML::th('title'),
             HTML::th('last post'),
@@ -148,7 +148,7 @@ class WikiPlugin_WikiForum extends WikiPlugin_WikiBlog
         }
         return $html;
     }
-};
+}
 
 // $Log: WikiForum.php,v $
 // Revision 1.3  2004/06/14 11:31:39  rurban

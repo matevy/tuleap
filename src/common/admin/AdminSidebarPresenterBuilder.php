@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,6 +20,7 @@
 
 namespace Tuleap\Admin;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Tuleap\News\Admin\AdminNewsDao;
 use Tuleap\News\Admin\NewsRetriever;
 use UserManager;
@@ -27,7 +28,6 @@ use PFUser;
 use ProjectManager;
 use Project;
 use EventManager;
-use Event;
 
 class AdminSidebarPresenterBuilder
 {
@@ -37,18 +37,20 @@ class AdminSidebarPresenterBuilder
     /** @var ProjectManager */
     private $project_manager;
 
-    /** @var EventManager */
-    private $event_manager;
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $event_dispatcher;
 
     /** @var NewsRetriever */
     private $news_manager;
 
     public function __construct()
     {
-        $this->user_manager    = UserManager::instance();
-        $this->project_manager = ProjectManager::instance();
-        $this->event_manager   = EventManager::instance();
-        $this->news_manager    = new NewsRetriever(new AdminNewsDao());
+        $this->user_manager     = UserManager::instance();
+        $this->project_manager  = ProjectManager::instance();
+        $this->event_dispatcher = EventManager::instance();
+        $this->news_manager     = new NewsRetriever(new AdminNewsDao());
     }
 
     public function build()
@@ -65,22 +67,15 @@ class AdminSidebarPresenterBuilder
         );
     }
 
-    private function getPlugins()
+    /**
+     * @return SiteAdministrationPluginOption[]
+     */
+    private function getPlugins(): array
     {
-        $plugins = array();
+        $site_administration_add_option = new SiteAdministrationAddOption();
+        $this->event_dispatcher->dispatch($site_administration_add_option);
 
-        EventManager::instance()->processEvent(
-            'site_admin_option_hook',
-            array(
-                'plugins' => &$plugins
-            )
-        );
-
-        usort($plugins, function ($plugin_a, $plugin_b) {
-            return strnatcasecmp($plugin_a['label'], $plugin_b['label']);
-        });
-
-        return $plugins;
+        return $site_administration_add_option->getPluginOptions();
     }
 
     private function allUsersCount()
@@ -90,7 +85,7 @@ class AdminSidebarPresenterBuilder
 
     private function usersNeedApproval()
     {
-        return $GLOBALS['sys_user_approval'] == 1;
+        return \ForgeConfig::get('sys_user_approval') == 1;
     }
 
     private function pendingUsersCount()
@@ -100,10 +95,10 @@ class AdminSidebarPresenterBuilder
 
     private function validatedUsersCount()
     {
-        return $this->user_manager->countUsersByStatus(array(
+        return $this->user_manager->countUsersByStatus([
             PFUser::STATUS_VALIDATED,
             PFUser::STATUS_VALIDATED_RESTRICTED
-        ));
+        ]);
     }
 
     private function allProjectsCount()

@@ -51,7 +51,7 @@ class SVN_Hook_PreCommit extends SVN_Hook
         SVN_Svnlook $svn_look,
         SVN_Immutable_Tags_Handler $handler,
         SHA1CollisionDetector $sha1_collision_detector,
-        Logger $logger
+        \Psr\Log\LoggerInterface $logger
     ) {
         parent::__construct($svn_hooks, $message_validator);
 
@@ -94,7 +94,8 @@ class SVN_Hook_PreCommit extends SVN_Hook
     {
         $project = $this->getProjectFromRepositoryPath($repository);
 
-        if ($this->handler->doesProjectUsesImmutableTags($project) &&
+        if (
+            $this->handler->doesProjectUsesImmutableTags($project) &&
             ! $this->isCommitAllowed($project, $transaction)
         ) {
             throw new SVN_CommitToTagDeniedException("Commit to tag is not allowed");
@@ -110,7 +111,7 @@ class SVN_Hook_PreCommit extends SVN_Hook
         $project       = $this->getProjectFromRepositoryPath($repository);
         $changed_paths = $this->svn_look->getTransactionPath($project, $transaction);
         foreach ($changed_paths as $path) {
-            $matches = array();
+            $matches = [];
             if ($this->extractFilenameFromNonDeletedPath($path, $matches)) {
                 continue;
             }
@@ -188,7 +189,7 @@ class SVN_Hook_PreCommit extends SVN_Hook
             (?:U|D)\s+$immutable_path_regexp            # U  moduleA/tags/v1
                                                         # U  moduleA/tags/v1/toto
             |
-            A\s+".$immutable_path_regexp."/[^/]+/[^/]+  # A  moduleA/tags/v1/toto
+            A\s+" . $immutable_path_regexp . "/[^/]+/[^/]+  # A  moduleA/tags/v1/toto
             )%x";
 
         if (preg_match($pattern, $path)) {
@@ -203,7 +204,7 @@ class SVN_Hook_PreCommit extends SVN_Hook
             return false;
         }
 
-        $whitelist_regexp = array();
+        $whitelist_regexp = [];
         foreach ($whitelist as $whitelist_path) {
             $whitelist_regexp[] = $this->getWellFormedRegexImmutablePath($whitelist_path);
         }

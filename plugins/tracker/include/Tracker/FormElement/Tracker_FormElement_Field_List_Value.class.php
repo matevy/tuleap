@@ -1,21 +1,22 @@
 <?php
 /**
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
- * This file is a part of Codendi.
+ * This file is a part of Tuleap.
  *
- * Codendi is free software; you can redistribute it and/or modify
+ * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Codendi is distributed in the hope that it will be useful,
+ * Tuleap is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
 abstract class Tracker_FormElement_Field_List_Value implements Tracker_IProvideJsonFormatOfMyself
@@ -40,6 +41,9 @@ abstract class Tracker_FormElement_Field_List_Value implements Tracker_IProvideJ
         $this->is_hidden = $is_hidden;
     }
 
+    /**
+     * @psalm-mutation-free
+    */
     public function getId()
     {
         return $this->id;
@@ -58,11 +62,11 @@ abstract class Tracker_FormElement_Field_List_Value implements Tracker_IProvideJ
      */
     public function fetchFormattedForJson()
     {
-        return array(
+        return [
             'id'        => $this->getId(),
             'label'     => $this->getLabel(),
-            'is_hidden' => (boolean) $this->isHidden(),
-        );
+            'is_hidden' => (bool) $this->isHidden(),
+        ];
     }
 
     /**
@@ -73,17 +77,15 @@ abstract class Tracker_FormElement_Field_List_Value implements Tracker_IProvideJ
      *
      * If you are looking for a JSon representation of the current object,
      * @see Tracker_FormElement_Field_List_Value::fetchFormattedForJson
-     *
-     * @return type
      */
-    public function fetchForOpenListJson()
+    public function fetchForOpenListJson(): array
     {
-        return array(
+        return [
             'id'         => $this->getId(),
             'value'      => $this->getJsonId(),
             'caption'    => $this->getLabel(),
             'rest_value' => $this->getAPIValue(),
-        );
+        ];
     }
 
     abstract public function getJsonId();
@@ -94,7 +96,7 @@ abstract class Tracker_FormElement_Field_List_Value implements Tracker_IProvideJ
 
     public function fetchFormatted()
     {
-        return $this->getLabel();
+        return Codendi_HTMLPurifier::instance()->purify(html_entity_decode($this->getLabel()));
     }
 
     public function fetchFormattedForCSV()
@@ -119,14 +121,14 @@ abstract class Tracker_FormElement_Field_List_Value implements Tracker_IProvideJ
 
     public function getXMLId()
     {
-        return self::XML_ID_PREFIX.$this->getId();
+        return self::XML_ID_PREFIX . $this->getId();
     }
 
     public function getFullRESTValue(Tracker_FormElement_Field $field)
     {
-        return array(
+        return [
             'label' => $this->getLabel()
-        );
+        ];
     }
 
     public function getRESTId()

@@ -34,7 +34,6 @@ class Tracker_Workflow_Trigger_RulesBuilderFactory
     /**
      * Return the trigger RulesBuilder data for a tracker
      *
-     * @param Tracker $tracker
      *
      * @return Tracker_Workflow_Trigger_RulesBuilderData
      */
@@ -48,7 +47,7 @@ class Tracker_Workflow_Trigger_RulesBuilderFactory
 
     private function getTriggeringFields(Tracker $target_tracker)
     {
-        return array_map(array($this, 'getTriggeringFieldForTracker'), $target_tracker->getChildren());
+        return array_map([$this, 'getTriggeringFieldForTracker'], $target_tracker->getChildren());
     }
 
     public function getTriggeringFieldForTracker(Tracker $tracker)

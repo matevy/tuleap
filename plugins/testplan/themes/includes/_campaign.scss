@@ -1,0 +1,228 @@
+/**
+ * Copyright (c) Enalean, 2020 - Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.test-plan-list-of-campaigns {
+    grid-area: campaigns;
+}
+
+.test-plan-list-of-campaigns-header {
+    display: flex;
+    align-items: center;
+    margin: 0 0 $tlp-medium-spacing;
+}
+
+.test-plan-list-of-campaigns-new-button {
+    margin: 0 0 0 $tlp-medium-spacing;
+}
+
+.test-plan-list-of-campaigns-title {
+    margin: 0;
+    color: $tlp-theme-sidebar-background-color;
+}
+
+.test-plan-campaign-progress-skeleton {
+    width: 100%;
+}
+
+.test-plan-list-of-campaigns-error {
+    margin: 0 0 $tlp-large-spacing;
+}
+
+.test-plan-campaign {
+    margin: 0 0 $tlp-small-spacing;
+    transition: border-color 75ms ease-in-out, background-color 75ms ease-in-out;
+    cursor: pointer;
+
+    &.test-plan-campaign-is-error {
+        opacity: .5;
+    }
+
+    &.test-plan-campaign-is-being-refreshed {
+        animation: blink-campaign 1200ms ease-in-out alternate infinite;
+    }
+
+
+    &.test-plan-campaign-is-just-refreshed {
+        animation: pulse-campaign 500ms ease-in-out;
+        border-color: $tlp-ui-success;
+        background: mix($tlp-ui-white, $tlp-ui-success, 90%);
+    }
+
+    &:hover {
+        text-decoration: none;
+
+        &:not(.test-plan-campaign-is-just-refreshed) {
+            border-color: $tlp-theme-color;
+        }
+    }
+
+    &:focus {
+        outline: 1px dotted #808080;
+    }
+
+    > .tlp-pane-container > .tlp-pane-section:last-child {
+        padding: $tlp-small-spacing $tlp-medium-spacing $tlp-medium-spacing;
+    }
+}
+
+.test-plan-campaign-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.test-plan-campaign-header-stats {
+    color: $tlp-ui-dimmed;
+    font-size: 14px;
+}
+
+.test-plan-campaign-header-stats-info {
+    margin: 0 0 0 $tlp-medium-spacing;
+    white-space: nowrap;
+
+    > .fa {
+        font-size: 12px;
+    }
+}
+
+
+.test-plan-campaign-progressions {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.test-plan-campaign-progression-value {
+    margin: 2px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    text-align: center;
+}
+
+.test-plan-campaign-progression-bar {
+    height: 6px;
+}
+
+.test-plan-campaign-progression {
+    min-width: 10px;
+    margin: -$tlp-small-spacing 1px 0;
+
+    &:first-child > .test-plan-campaign-progression-bar {
+        border-radius: 5px 0 0 5px;
+    }
+
+    &:last-child > .test-plan-campaign-progression-bar {
+        border-radius: 0 5px 5px 0;
+    }
+
+    &:only-child > .test-plan-campaign-progression-bar {
+        border-radius: 5px;
+    }
+
+    &.passed {
+        flex: 1 1 auto;
+
+        > .test-plan-campaign-progression-value {
+            color: $tlp-ui-success;
+        }
+
+        > .test-plan-campaign-progression-bar {
+            background-image: linear-gradient(45deg, $tlp-ui-success, mix($tlp-ui-success, $tlp-ui-white, 80%));
+        }
+    }
+
+    &.failed {
+        flex: 0 0 auto;
+
+        > .test-plan-campaign-progression-value {
+            color: $tlp-ui-danger;
+        }
+
+        > .test-plan-campaign-progression-bar {
+            background-image: linear-gradient(45deg, $tlp-ui-danger, mix($tlp-ui-danger, $tlp-ui-white, 80%));
+        }
+    }
+
+    &.blocked {
+        flex: 0 0 auto;
+
+        > .test-plan-campaign-progression-value {
+            color: $tlp-ui-info;
+        }
+
+        > .test-plan-campaign-progression-bar {
+            background-image: linear-gradient(45deg, $tlp-ui-info, mix($tlp-ui-info, $tlp-ui-white, 80%));
+        }
+    }
+
+    &.notrun {
+        flex: 0 0 auto;
+
+        > .test-plan-campaign-progression-value {
+            color: $tlp-ui-dimmed;
+        }
+
+        > .test-plan-campaign-progression-bar {
+            background-image: linear-gradient(45deg, $tlp-ui-border-dark, mix($tlp-ui-border-dark, $tlp-ui-white, 80%));
+        }
+    }
+}
+
+@for $i from 1 through 100 {
+    .test-plan-campaign-progression-width-#{$i} {
+        width: $i * 1%;
+    }
+}
+
+@keyframes blink-campaign {
+    0% {
+        border-color: $tlp-ui-info;
+        background: transparentize($tlp-ui-info, .9);
+    }
+
+    50% {
+        border-color: transparent;
+        background: $tlp-ui-white;
+    }
+
+    100% {
+        border-color: $tlp-ui-info;
+        background: transparentize($tlp-ui-info, .9);
+    }
+}
+
+@keyframes pulse-campaign {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.test-plan-campaign-modal-creation-loading {
+    height: 100px;
+    margin-top: 50px;
+    text-align: center;
+}

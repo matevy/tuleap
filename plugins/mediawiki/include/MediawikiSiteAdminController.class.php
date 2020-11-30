@@ -84,7 +84,7 @@ class MediawikiSiteAdminController
         $token->check();
 
         $project_to_add  = $request->get('project-to-allow');
-        if ($request->get('allow-project') && !empty($project_to_add)) {
+        if ($request->get('allow-project') && ! empty($project_to_add)) {
             $this->allowProject($project_to_add);
         }
 
@@ -101,7 +101,7 @@ class MediawikiSiteAdminController
 
         $GLOBALS['Response']->addFeedback(
             Feedback::INFO,
-            $GLOBALS['Language']->getText('plugin_mediawiki', 'allowed_project_allow_project')
+            dgettext('tuleap-mediawiki', 'Submitted project will be converted to Mediawiki 1.23 shortly (check System Events).')
         );
     }
 
@@ -118,7 +118,7 @@ class MediawikiSiteAdminController
 
             $GLOBALS['Response']->addFeedback(
                 Feedback::INFO,
-                $GLOBALS['Language']->getText('plugin_mediawiki', 'allowed_project_allow_project')
+                dgettext('tuleap-mediawiki', 'Submitted project will be converted to Mediawiki 1.23 shortly (check System Events).')
             );
         } else {
             $this->sendUpdateProjectListError();
@@ -129,7 +129,7 @@ class MediawikiSiteAdminController
     {
         $GLOBALS['Response']->addFeedback(
             Feedback::ERROR,
-            $GLOBALS['Language']->getText('plugin_mediawiki', 'allowed_project_update_project_list_error')
+            dgettext('tuleap-mediawiki', 'Something went wrong during the update.')
         );
     }
 

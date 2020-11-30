@@ -47,7 +47,7 @@ class HTMLOutputStrategy implements OutputStrategy
     /** @return string */
     public function fetchFormatted(Tracker_ArtifactLinkInfo $artifact_link_info, $formatted_value)
     {
-        $artlink_as_html  = '<a href="'. $artifact_link_info->getUrl() .'">';
+        $artlink_as_html  = '<a href="' . $artifact_link_info->getUrl() . '">';
         $artlink_as_html .= $this->purifier->purify($formatted_value);
         $artlink_as_html .= '</a>';
 
@@ -59,7 +59,7 @@ class HTMLOutputStrategy implements OutputStrategy
     {
         return $this->getDefaultFormatWithWarning(
             $artifact_link_info,
-            $GLOBALS['Language']->getText('plugin_tracker_artifact_links_natures', 'cannot_format')
+            dgettext('tuleap-tracker', 'Cannot be formatted because at least one field needed for the format is missing.')
         );
     }
 
@@ -68,7 +68,7 @@ class HTMLOutputStrategy implements OutputStrategy
     {
         return $this->getDefaultFormatWithWarning(
             $artifact_link_info,
-            $GLOBALS['Language']->getText('plugin_tracker_artifact_links_natures', 'unsupported_field')
+            dgettext('tuleap-tracker', 'A field needed for the format cannot be formatted.')
         );
     }
 
@@ -77,6 +77,6 @@ class HTMLOutputStrategy implements OutputStrategy
         $title = $this->purifier->purify($warning);
 
         return $artifact_link_info->getLink() .
-            ' <i class="fa fa-exclamation-triangle format-warning" title="'. $title .'"></i>';
+            ' <i class="fa fa-exclamation-triangle format-warning" title="' . $title . '"></i>';
     }
 }

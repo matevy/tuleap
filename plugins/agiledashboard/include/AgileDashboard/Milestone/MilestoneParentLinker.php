@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class MilestoneParentLinker
 {
 
@@ -39,7 +41,7 @@ class MilestoneParentLinker
         $this->backlog_factory   = $backlog_factory;
     }
 
-    public function linkToMilestoneParent(Planning_Milestone $milestone, PFUser $user, Tracker_Artifact $artifact_added)
+    public function linkToMilestoneParent(Planning_Milestone $milestone, PFUser $user, Artifact $artifact_added)
     {
         $this->milestone_factory->addMilestoneAncestors($user, $milestone);
 
@@ -55,11 +57,12 @@ class MilestoneParentLinker
             return;
         }
 
-        if (! $this->isParentLinkedToParentMilestone(
-            $artifact_added,
-            $parent_milestone_artifact,
-            $user
-        )
+        if (
+            ! $this->isParentLinkedToParentMilestone(
+                $artifact_added,
+                $parent_milestone_artifact,
+                $user
+            )
         ) {
             $parent_milestone_artifact->linkArtifact($artifact_added->getId(), $user);
             $this->linkToMilestoneParent($parent_milestone, $user, $artifact_added);
@@ -76,7 +79,7 @@ class MilestoneParentLinker
      */
     private function parentMilestoneHasItemTrackerInItsBacklogTracker(
         Planning_Milestone $parent_milestone,
-        Tracker_Artifact $artifact_added
+        Artifact $artifact_added
     ) {
         $backlog_trackers = $this->getBacklogTrackers($parent_milestone);
 
@@ -90,11 +93,10 @@ class MilestoneParentLinker
     }
 
     private function isParentLinkedToParentMilestone(
-        Tracker_Artifact $artifact_added,
-        Tracker_Artifact $parent_milestone_artifact,
+        Artifact $artifact_added,
+        Artifact $parent_milestone_artifact,
         PFUser $user
     ) {
-
         $parent = $artifact_added->getParent($user);
 
         if (! $parent) {

@@ -17,27 +17,34 @@
   - along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
   -->
 
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
-    <div class="tlp-form-element"
-         v-if="currentlyUpdatedItemMetadata.type === 'list' && ! currentlyUpdatedItemMetadata.is_multiple_value_allowed"
-         data-test="document-custom-metadata-list"
+    <div
+        class="tlp-form-element"
+        v-if="
+            currentlyUpdatedItemMetadata.type === 'list' &&
+            !currentlyUpdatedItemMetadata.is_multiple_value_allowed
+        "
+        data-test="document-custom-metadata-list"
     >
         <label class="tlp-label" v-bind:for="`document-${currentlyUpdatedItemMetadata.short_name}`">
             {{ currentlyUpdatedItemMetadata.name }}
             <i class="fa fa-asterisk" v-if="currentlyUpdatedItemMetadata.is_required"></i>
         </label>
-        <select class="tlp-form-element tlp-select"
-                v-bind:id="`document-${currentlyUpdatedItemMetadata.short_name}`"
-                v-on:input="$emit('input', $event.target.value)"
-                v-model="currentlyUpdatedItemMetadata.value"
-                v-bind:required="currentlyUpdatedItemMetadata.is_required"
-                data-test="document-custom-list-select"
+        <select
+            class="tlp-form-element tlp-select"
+            v-bind:id="`document-${currentlyUpdatedItemMetadata.short_name}`"
+            v-on:input="$emit('input', $event.target.value)"
+            v-model="currentlyUpdatedItemMetadata.value"
+            v-bind:required="currentlyUpdatedItemMetadata.is_required"
+            data-test="document-custom-list-select"
         >
-            <option v-for="possible_value in project_metadata_list_possible_values.allowed_list_values"
-                    v-bind:key="possible_value.id"
-                    v-bind:value="possible_value.id"
-                    v-bind:selected="possible_value.id === currentlyUpdatedItemMetadata.value"
-                    v-bind:data-test="`document-custom-list-value-${possible_value.id}`"
+            <option
+                v-for="possible_value in project_metadata_list_possible_values.allowed_list_values"
+                v-bind:key="possible_value.id"
+                v-bind:value="possible_value.id"
+                v-bind:selected="possible_value.id === currentlyUpdatedItemMetadata.value"
+                v-bind:data-test="`document-custom-list-value-${possible_value.id}`"
             >
                 {{ possible_value.value }}
             </option>
@@ -50,20 +57,20 @@ import { mapState } from "vuex";
 export default {
     name: "CustomMetadataListSingleValue",
     props: {
-        currentlyUpdatedItemMetadata: Object
+        currentlyUpdatedItemMetadata: Object,
     },
     data() {
         return {
-            project_metadata_list_possible_values: []
+            project_metadata_list_possible_values: [],
         };
     },
     computed: {
-        ...mapState("metadata", ["project_metadata_list"])
+        ...mapState("metadata", ["project_metadata_list"]),
     },
     mounted() {
         this.project_metadata_list_possible_values = this.project_metadata_list.find(
             ({ short_name }) => short_name === this.currentlyUpdatedItemMetadata.short_name
         );
-    }
+    },
 };
 </script>

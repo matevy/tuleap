@@ -23,7 +23,6 @@ namespace Tuleap\Velocity;
 use PFUser;
 use Planning_Milestone;
 use Planning_MilestoneFactory;
-use Tracker_Artifact;
 use Tuleap\AgileDashboard\Semantic\SemanticDoneFactory;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 use Tuleap\Velocity\Semantic\SemanticVelocityFactory;
@@ -62,7 +61,7 @@ class VelocityRepresentationBuilder
         $this->semantic_timeframe_builder = $semantic_timeframe_builder;
     }
 
-    public function buildCollectionOfRepresentations(Planning_Milestone $milestone, PFUser $user) : VelocityCollection
+    public function buildCollectionOfRepresentations(Planning_Milestone $milestone, PFUser $user): VelocityCollection
     {
         $representations = new VelocityCollection();
 

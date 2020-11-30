@@ -22,17 +22,17 @@ import DetailsItemButton from "./DetailsItemButton.vue";
 
 import localVue from "../../../helpers/local-vue.js";
 import * as location_helper from "../../../helpers/location-helper.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 
 describe("CreateNewItemVersionButton", () => {
     let factory;
     beforeEach(() => {
         const state = {
-            project_id: 101
+            project_id: 101,
         };
 
         const store_options = {
-            state
+            state,
         };
 
         const store = createStoreMock(store_options);
@@ -41,7 +41,7 @@ describe("CreateNewItemVersionButton", () => {
             return shallowMount(DetailsItemButton, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -54,11 +54,11 @@ describe("CreateNewItemVersionButton", () => {
                 id: 1,
                 title: "my item title",
                 type: "empty",
-                user_can_write: true
-            }
+                user_can_write: true,
+            },
         });
 
-        wrapper.find("[data-test=docman-go-to-details]").trigger("click");
+        wrapper.get("[data-test=docman-go-to-details]").trigger("click");
 
         expect(redirect_to_url).toHaveBeenCalledWith(
             "/plugins/docman/?group_id=101&id=1&action=details&section=details"

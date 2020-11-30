@@ -2,7 +2,9 @@
     <h1 class="tlp-framed-horizontally">{{# dgettext }}tuleap-docman | Document{{/ dgettext }}</h1>
 
     <nav class="tlp-tabs">
-        <a class="tlp-tab tlp-tab-active" href="/admin/document/files-upload-limits">{{# dgettext }}tuleap-docman | File upload limits{{/ dgettext }}</a>
+        {{# tabs }}
+            <a class="tlp-tab {{# is_active }}tlp-tab-active{{/ is_active }}" href="{{ url }}">{{ label }}</a>
+        {{/ tabs }}
     </nav>
 
     <div class="tlp-framed-horizontally">
@@ -35,7 +37,7 @@
                             value="{{ max_number_of_files }}"
                         >
                         <p class="tlp-text-info">
-                            <i class="fa fa-life-saver"></i>
+                            <i class="far fa-life-ring"></i>
                             {{# dgettext }} tuleap-docman | This limit prevents a user to upload more than x files at a time.{{/ dgettext }}
                         </p>
                     </div>
@@ -57,7 +59,7 @@
                             value="{{ max_size_of_file }}"
                         >
                         <p class="tlp-text-info">
-                            <i class="fa fa-life-saver"></i>
+                            <i class="far fa-life-ring"></i>
                             {{# dgettext }} tuleap-docman | This limit prevents a user to upload a file which size exceed x Bytes.{{/ dgettext }}
                         </p>
                     </div>

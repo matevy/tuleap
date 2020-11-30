@@ -37,11 +37,6 @@ class GroupSyncAdminEmailNotificationsManager implements GroupSyncNotificationsM
     private $ldap_user_manager;
 
     /**
-     * @var \ProjectManager
-     * */
-    private $project_manager;
-
-    /**
      * @var \Codendi_Mail
      * */
     private $mail;
@@ -58,12 +53,10 @@ class GroupSyncAdminEmailNotificationsManager implements GroupSyncNotificationsM
 
     public function __construct(
         \LDAP_UserManager $ldap_user_manager,
-        \ProjectManager $project_manager,
         \Codendi_Mail $mail,
         \UserManager $user_manager
     ) {
         $this->ldap_user_manager = $ldap_user_manager;
-        $this->project_manager   = $project_manager;
         $this->mail              = $mail;
         $this->renderer          = \TemplateRendererFactory::build()->getRenderer(LDAP_TEMPLATE_DIR);
         $this->user_manager      = $user_manager;
@@ -85,7 +78,7 @@ class GroupSyncAdminEmailNotificationsManager implements GroupSyncNotificationsM
         $to_remove = $this->getUsersFromIds($to_remove);
 
         $admins = $project->getAdmins();
-        $project_name = $project->getUnconvertedPublicName();
+        $project_name = $project->getPublicName();
 
         $this->sendMailToAdmins($admins, $project, $to_add, $to_remove);
     }
@@ -96,7 +89,7 @@ class GroupSyncAdminEmailNotificationsManager implements GroupSyncNotificationsM
      * */
     private function getUsersFromIds(array $user_ids)
     {
-        $users = array();
+        $users = [];
         foreach ($user_ids as $id) {
             $user = $this->getUserFromId($id);
             if ($user !== null) {
@@ -106,7 +99,7 @@ class GroupSyncAdminEmailNotificationsManager implements GroupSyncNotificationsM
         return $users;
     }
 
-    private function getUserFromId($id) : ?\PFUser
+    private function getUserFromId($id): ?\PFUser
     {
         $user_lr = $this->ldap_user_manager->getLdapFromUserId($id);
         if ($user_lr && (($user = $this->ldap_user_manager->getUserFromLdap($user_lr)) !== false)) {
@@ -140,7 +133,7 @@ class GroupSyncAdminEmailNotificationsManager implements GroupSyncNotificationsM
         $this->mail->setBody($this->getEmailBody($to_add, $to_remove));
 
         $subject = dgettext('tuleap-ldap', 'LDAP Sync Results for %projectName%');
-        $subject = str_replace('%projectName%', $project->getUnconvertedPublicName(), $subject);
+        $subject = str_replace('%projectName%', $project->getPublicName(), $subject);
         $this->mail->setSubject($subject);
 
         setlocale(LC_CTYPE, "$current_locale.UTF-8");

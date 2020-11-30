@@ -2,6 +2,11 @@
 
 set -ex
 
+# Basic usage of this script: `./tools/rpm/build_and_run_packages.sh --src-dir="$(pwd)"`
+# Two environnements variables can be set for additional behaviors:
+#  * `ENTERPRISE=1` to build Tuleap Enterprise packages
+#  * `EXPERIMENTAL_BUILD=1` to build experimental parts (e.g. a Tuleap Enterprise package not yet ready to be included in a major release)
+
 options=$(getopt -o h -l src-dir: -- "$@")
 
 eval set -- "$options"
@@ -50,9 +55,13 @@ else
     cp -R "$SRC_DIR" "$clean_tuleap_sources/"
 fi
 
+if [ "$ENTERPRISE" == "1" ]; then
+    touch "$clean_tuleap_sources/ENTERPRISE_BUILD"
+fi
+
 docker run -i --rm -v "$clean_tuleap_sources":/tuleap -v "$clean_tuleap_sources":/output tuleap-generated-files-builder
 
-docker run -i --name rpm-builder -v "$clean_tuleap_sources":/tuleap:ro enalean/tuleap-buildrpms:"$OS"-without-srpms
+docker run -i --name rpm-builder -e "EXPERIMENTAL_BUILD=${EXPERIMENTAL_BUILD:-0}" -v "$clean_tuleap_sources":/tuleap:ro enalean/tuleap-buildrpms:"$OS"-without-srpms
 
 if [ "$OS" == "centos7" ]; then
     docker run -t -d --rm --name rpm-installer --volumes-from rpm-builder -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
@@ -60,5 +69,5 @@ if [ "$OS" == "centos7" ]; then
     docker logs -f rpm-installer | tee >( grep -q 'Started Install and run Tuleap.' ) || true
     docker exec -ti rpm-installer bash
 else
-    docker run --rm -ti --name rpm-installer --volumes-from rpm-builder enalean/tuleap-installrpms:centos6
+    docker run --rm -ti --name rpm-installer -e DB=mysql57 --volumes-from rpm-builder enalean/tuleap-installrpms:centos6
 fi

@@ -24,8 +24,10 @@ use Tuleap\Tracker\Workflow\PostAction\Visitor;
  *
  * Post action occuring when transition is run
  */
+
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 abstract class Transition_PostAction
-{ //phpcs:ignore
+{
 
     /**
      * @var Transition the transition
@@ -65,26 +67,6 @@ abstract class Transition_PostAction
     }
 
     /**
-     * Return all the relevant concatenated CSS classes for this PostAction.
-     *
-     * @return string
-     */
-    public function getCssClasses()
-    {
-        return 'workflow_action '.$this->getCssClass();
-    }
-
-    /**
-     * Return the most specific CSS class for this PostAction.
-     *
-     * @return string
-     */
-    public function getCssClass()
-    {
-        return 'workflow_action_'.$this->getShortName();
-    }
-
-    /**
      * Return the transition
      *
      * @return Transition
@@ -94,28 +76,15 @@ abstract class Transition_PostAction
         return $this->transition;
     }
 
-    /**
-     * Log feedback to be displayed to the user
-     *
-     * @param string $level    One of info|warning|error
-     * @param string $pagename The primary key for BaseLanguage::getText()
-     * @param string $category The secondary key for BaseLanguage::getText()
-     * @param string $args     The args for BaseLanguage::getText()
-     *
-     * @see Response::addFeedback()
-     *
-     * @return void
-     */
-    protected function addFeedback($level, $pagename, $category, $args)
+    protected function addFeedback(string $level, string $message)
     {
-        $feedback = $GLOBALS['Language']->getText($pagename, $category, $args);
-        $GLOBALS['Response']->addUniqueFeedback($level, $feedback);
+        $GLOBALS['Response']->addUniqueFeedback($level, $message);
     }
 
     /**
      * Execute actions before transition happens
      *
-     * @param Array  &$fields_data Request field data (array[field_id] => data)
+     * @param array  &$fields_data Request field data (array[field_id] => data)
      * @param PFUser $current_user The user who are performing the update
      *
      * @return void
@@ -127,7 +96,6 @@ abstract class Transition_PostAction
     /**
      * Execute actions after transition happens
      *
-     * @param Tracker_Artifact_Changeset $changeset
      * @return void
      */
     public function after(Tracker_Artifact_Changeset $changeset)
@@ -149,27 +117,11 @@ abstract class Transition_PostAction
     abstract public static function getLabel();
 
     /**
-     * Get the html code needed to display the post action in workflow admin
-     *
-     * @return string html
-     */
-    abstract public function fetch();
-
-    /**
      * Say if the action is well defined
      *
      * @return bool
      */
     abstract public function isDefined();
-
-    /**
-     * Update/Delete action
-     *
-     * @param Codendi_Request $request The request
-     *
-     * @return void
-     */
-    abstract public function process(Codendi_Request $request);
 
     /**
      * Export postactions to XML
@@ -184,7 +136,6 @@ abstract class Transition_PostAction
     /**
      * Get the value of bypass_permissions
      *
-     * @param Tracker_FormElement_Field $field
      *
      * @return bool
      */

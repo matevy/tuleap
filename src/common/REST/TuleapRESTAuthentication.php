@@ -20,12 +20,20 @@
 namespace Tuleap\REST;
 
 use Luracast\Restler\iAuthenticate;
+use Luracast\Restler\Restler;
 
 class TuleapRESTAuthentication implements iAuthenticate
 {
+    /**
+     * @var Restler|null
+     * @psalm-readonly
+     */
+    public $restler;
+
     public function __isAllowed() // phpcs:ignore
     {
-        return (new RESTAuthenticationFlowIsAllowed)->isAllowed();
+        $rest_authentication_flow = new RESTAuthenticationFlowIsAllowed(UserManager::build(), RESTLogger::getLogger());
+        return $rest_authentication_flow->isAllowed($this->restler->apiMethodInfo ?? null);
     }
 
     public static function __getMaximumSupportedVersion() // phpcs:ignore
@@ -38,6 +46,9 @@ class TuleapRESTAuthentication implements iAuthenticate
      */
     public function __getWWWAuthenticateString() // phpcs:ignore
     {
-        return 'Basic realm="'.AuthenticatedResource::REALM.'" Token realm="'.AuthenticatedResource::REALM.'" AccessKey realm="'.AuthenticatedResource::REALM.'"';
+        return 'Basic realm="' . AuthenticatedResource::REALM . ' ' .
+            'Token realm="' . AuthenticatedResource::REALM . '" ' .
+            'AccessKey realm="' . AuthenticatedResource::REALM . '" ' .
+            'Bearer realm="' . AuthenticatedResource::REALM . '"';
     }
 }

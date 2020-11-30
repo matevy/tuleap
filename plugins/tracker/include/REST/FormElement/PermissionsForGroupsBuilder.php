@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\REST\FormElement;
 
-use Tracker_Artifact;
 use Tracker_FormElement;
-use Tuleap\Project\REST\UserGroupRepresentation;
+use Tuleap\Project\REST\MinimalUserGroupRepresentation;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\PermissionsFunctionsWrapper;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
 
@@ -52,7 +52,7 @@ class PermissionsForGroupsBuilder
         $this->permissions_functions_wrapper = $permissions_functions_wrapper;
     }
 
-    public function getPermissionsForGroups(Tracker_FormElement $form_element, ?Tracker_Artifact $artifact, \PFUser $user) : ?PermissionsForGroupsRepresentation
+    public function getPermissionsForGroups(Tracker_FormElement $form_element, ?Artifact $artifact, \PFUser $user): ?PermissionsForGroupsRepresentation
     {
         $tracker = $form_element->getTracker();
         if (! $tracker) {
@@ -83,12 +83,10 @@ class PermissionsForGroupsBuilder
                 }
             }
         }
-        $representation = new PermissionsForGroupsRepresentation();
-        $representation->build($can_read, $can_submit, $can_update);
-        return $representation;
+        return new PermissionsForGroupsRepresentation($can_read, $can_submit, $can_update);
     }
 
-    private function getPermissions(Tracker_FormElement $form_element) : array
+    private function getPermissions(Tracker_FormElement $form_element): array
     {
         if ($form_element instanceof \Tracker_FormElement_Container) {
             return [];
@@ -99,12 +97,11 @@ class PermissionsForGroupsBuilder
         return $this->permissions_functions_wrapper->getFieldUGroupsPermissions($form_element);
     }
 
-    private function addUserGroupRepresentationToArray(array &$ugroups_collection, \Tracker $tracker, $result_array) : void
+    private function addUserGroupRepresentationToArray(array &$ugroups_collection, \Tracker $tracker, $result_array): void
     {
         $ugroup = $this->ugroup_manager->getUGroup($tracker->getProject(), $result_array['ugroup']['id']);
         if ($ugroup) {
-            $representation = new UserGroupRepresentation();
-            $representation->build((int) $ugroup->getProjectId(), $ugroup);
+            $representation = new MinimalUserGroupRepresentation((int) $ugroup->getProjectId(), $ugroup);
             $ugroups_collection[] = $representation;
         }
     }

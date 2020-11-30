@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,35 +21,37 @@
 namespace Tuleap\Admin;
 
 use ForgeConfig;
-use UserManager;
 use TemplateRendererFactory;
+use Tuleap\BuildVersion\FlavorFinderFromFilePresence;
+use Tuleap\BuildVersion\VersionPresenter;
+use Tuleap\Layout\CssAsset;
+use Tuleap\Layout\JavascriptAsset;
 use Tuleap\Layout\SidebarPresenter;
 
 class AdminPageRenderer
 {
     public function header($title, $is_framed = true)
     {
-        $current_user = UserManager::instance()->getCurrentUser();
-        $body_class   = array();
-
-        if ($current_user->getPreference('admin_sidebar_state')) {
-            $body_class[] = $current_user->getPreference('admin_sidebar_state');
-        }
+        $body_class = [];
 
         $GLOBALS['HTML']->header(
-            array(
+            [
                 'in_siteadmin' => true,
                 'title'        => $title,
                 'body_class'   => $body_class,
-                'main_classes' => $is_framed ? array('tlp-framed') : array(),
-                'sidebar'      => new SidebarPresenter('siteadmin-sidebar', $this->renderSideBar())
-            )
+                'main_classes' => $is_framed ? ['tlp-framed'] : [],
+                'sidebar'      => new SidebarPresenter(
+                    'siteadmin-sidebar',
+                    $this->renderSideBar(),
+                    VersionPresenter::fromFlavorFinder(new FlavorFinderFromFilePresence())
+                )
+            ]
         );
     }
 
     public function footer()
     {
-        $GLOBALS['HTML']->footer(array());
+        $GLOBALS['HTML']->footer([]);
     }
 
     public function renderAPresenter($title, $template_path, $template_name, $presenter)
@@ -92,5 +94,15 @@ class AdminPageRenderer
         $presenter = $builder->build();
 
         return $presenter;
+    }
+
+    public function addJavascriptAsset(JavascriptAsset $asset): void
+    {
+        $GLOBALS['HTML']->addJavascriptAsset($asset);
+    }
+
+    public function addCssAsset(CssAsset $asset): void
+    {
+        $GLOBALS['HTML']->addCssAsset($asset);
     }
 }

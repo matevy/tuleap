@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2018-2019. All rights reserved.
+ * Copyright Enalean (c) 2018-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -24,12 +24,13 @@
 
 namespace Tuleap\Timetracking\REST;
 
-use DBTablesDao;
 use EventManager;
 use PFUser;
 use Project;
 use REST_TestDataBuilder;
 use Tracker_ArtifactFactory;
+use Tuleap\Cryptography\ConcealedString;
+use Tuleap\DAO\DBTablesDao;
 use Tuleap\Dashboard\User\UserDashboardDao;
 use Tuleap\Dashboard\User\UserDashboardRetriever;
 use Tuleap\Dashboard\Widget\DashboardWidgetDao;
@@ -77,14 +78,14 @@ class TimetrackingDataBuilder extends REST_TestDataBuilder
     private function createUser()
     {
         $user = $this->user_manager->getUserByUserName(self::USER_TESTER_NAME);
-        $user->setPassword(self::USER_TESTER_PASS);
+        $user->setPassword(new ConcealedString(self::USER_TESTER_PASS));
         $this->user_manager->updateDb($user);
     }
 
     private function installPlugin()
     {
-        $dbtables = new DBTablesDAO();
-        $dbtables->updateFromFile(dirname(__FILE__) . '/../../db/install.sql');
+        $dbtables = new DBTablesDao();
+        $dbtables->updateFromFile(__DIR__ . '/../../db/install.sql');
     }
 
     private function addTimesInDB(Project $project)
@@ -103,7 +104,6 @@ class TimetrackingDataBuilder extends REST_TestDataBuilder
 
     /**
      * @param Tracker_Artifact[] $artifacts
-     * @param PFUser $user
      */
     private function addTimes(array $artifacts, PFUser $user)
     {
@@ -116,7 +116,7 @@ class TimetrackingDataBuilder extends REST_TestDataBuilder
         $this->addTimeOnLastMonthPeriod($time_dao, $artifact, $user);
     }
 
-    private function addTimesIn2018(TimeDao $time_dao, \Tracker_Artifact $artifact, PFUser $user)
+    private function addTimesIn2018(TimeDao $time_dao, \Tuleap\Tracker\Artifact\Artifact $artifact, PFUser $user)
     {
         $time_dao->addTime(
             $user->getId(),
@@ -129,13 +129,13 @@ class TimetrackingDataBuilder extends REST_TestDataBuilder
 
     private function addTimeOnLastMonthPeriod(
         TimeDao $time_dao,
-        \Tracker_Artifact $artifact,
+        \Tuleap\Tracker\Artifact\Artifact $artifact,
         PFUser $user
     ) {
         $time_dao->addTime(
             $user->getId(),
             $artifact->getId(),
-            date('Y-m-d', $_SERVER[ 'REQUEST_TIME' ]),
+            date('Y-m-d', $_SERVER['REQUEST_TIME']),
             200,
             'test'
         );

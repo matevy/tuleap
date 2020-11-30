@@ -23,32 +23,25 @@ declare(strict_types=1);
 namespace Tuleap\Project\Banner;
 
 use HTTPRequest;
-use Project;
-use ProjectManager;
 use TemplateRendererFactory;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\IncludeAssets;
-use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
+use Tuleap\Project\Admin\Navigation\NavigationPresenterBuilder;
+use Tuleap\Project\Admin\Routing\AdministrationLayoutHelper;
+use Tuleap\Project\Admin\Routing\LayoutHelper;
 use Tuleap\Request\DispatchableWithBurningParrot;
-use Tuleap\Request\DispatchableWithProject;
 use Tuleap\Request\DispatchableWithRequest;
-use Tuleap\Request\ForbiddenException;
-use Tuleap\Request\NotFoundException;
 
-final class BannerAdministrationController implements DispatchableWithRequest, DispatchableWithProject, DispatchableWithBurningParrot
+final class BannerAdministrationController implements DispatchableWithRequest, DispatchableWithBurningParrot
 {
     /**
-     * @var TemplateRendererFactory
+     * @var LayoutHelper
      */
-    private $template_renderer_factory;
+    private $layout_helper;
     /**
-     * @var HeaderNavigationDisplayer
+     * @var \TemplateRenderer
      */
-    private $navigation_displayer;
-    /**
-     * @var ProjectManager
-     */
-    private $project_manager;
+    private $renderer;
     /**
      * @var IncludeAssets
      */
@@ -59,56 +52,48 @@ final class BannerAdministrationController implements DispatchableWithRequest, D
     private $banner_retriever;
 
     public function __construct(
-        TemplateRendererFactory $template_renderer_factory,
-        HeaderNavigationDisplayer $navigation_displayer,
+        LayoutHelper $layout_helper,
+        \TemplateRenderer $renderer,
         IncludeAssets $banner_assets,
-        ProjectManager $project_manager,
         BannerRetriever $banner_retriever
     ) {
-        $this->template_renderer_factory = $template_renderer_factory;
-        $this->navigation_displayer      = $navigation_displayer;
-        $this->banner_assets             = $banner_assets;
-        $this->project_manager           = $project_manager;
-        $this->banner_retriever          = $banner_retriever;
+        $this->layout_helper    = $layout_helper;
+        $this->renderer         = $renderer;
+        $this->banner_assets    = $banner_assets;
+        $this->banner_retriever = $banner_retriever;
+    }
+
+    public static function buildSelf(): self
+    {
+        return new self(
+            AdministrationLayoutHelper::buildSelf(),
+            TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../../../templates/project/admin/banner/'),
+            new IncludeAssets(__DIR__ . '/../../../www/assets/core', '/assets/core'),
+            new BannerRetriever(new BannerDao())
+        );
     }
 
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
-        $project      = $this->getProject($variables);
-        $current_user = $request->getCurrentUser();
-
-        if (! $current_user->isAdmin($project->getID())) {
-            throw new ForbiddenException();
-        }
-
         $layout->includeFooterJavascriptFile($this->banner_assets->getFileURL('ckeditor.js'));
-        $layout->includeFooterJavascriptFile($this->banner_assets->getFileURL('project-admin-banner.js'));
-        $this->navigation_displayer->displayBurningParrotNavigation(
-            _('Project banner'),
-            $project,
-            'banner'
-        );
+        $layout->includeFooterJavascriptFile($this->banner_assets->getFileURL('project/project-admin-banner.js'));
 
-        $banner = $this->banner_retriever->getBannerForProject($project);
-
-        $this->template_renderer_factory
-            ->getRenderer(__DIR__ . '/../../../templates/project/admin/banner/')
-            ->renderToPage(
+        $callback = function (\Project $project, \PFUser $current_user) use ($layout): void {
+            $banner = $this->banner_retriever->getBannerForProject($project);
+            $this->renderer->renderToPage(
                 'administration',
                 [
-                    'message' => $banner === null ? '' : $banner->getMessage(),
+                    'message'    => $banner === null ? '' : $banner->getMessage(),
                     'project_id' => $project->getID()
                 ]
             );
-        project_admin_footer([]);
-    }
-
-    public function getProject(array $variables): Project
-    {
-        $project = $this->project_manager->getProject($variables['id']);
-        if (! $project || $project->isError()) {
-            throw new NotFoundException();
-        }
-        return $project;
+        };
+        $this->layout_helper->renderInProjectAdministrationLayout(
+            $request,
+            $variables['id'],
+            _('Project banner'),
+            NavigationPresenterBuilder::OTHERS_ENTRY_SHORTNAME,
+            $callback
+        );
     }
 }

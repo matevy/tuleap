@@ -22,28 +22,20 @@ import { isDraggedOverAnotherSwimlane, isDraggedOverTheSourceCell } from "./html
 import { Store } from "vuex";
 import { RootState } from "../store/type";
 
-export function isContainer(element?: Element): boolean {
-    if (!element || !(element instanceof HTMLElement)) {
-        return false;
-    }
-
+export function isContainer(element: HTMLElement): boolean {
     return Boolean(element.dataset.isContainer) === true;
 }
 
-export function canMove(element?: Element): boolean {
-    if (!element || !(element instanceof HTMLElement)) {
-        return false;
-    }
-
-    return Boolean(element.dataset.isDraggable) === true;
+export function canMove(element: HTMLElement): boolean {
+    return element.draggable === true;
 }
 
-export function invalid(element?: Element, handle?: Element): boolean {
-    if (!handle || !(handle instanceof HTMLElement)) {
-        return true;
-    }
-
+export function invalid(handle: HTMLElement): boolean {
     return Boolean(handle.closest("[data-not-drag-handle]"));
+}
+
+export function isConsideredInDropzone(child: Element): boolean {
+    return child.hasAttribute("draggable");
 }
 
 export function checkCellAcceptsDrop(store: Store<RootState>, payload: HandleDragPayload): boolean {

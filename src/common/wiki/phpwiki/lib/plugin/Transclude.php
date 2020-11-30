@@ -45,17 +45,17 @@ rcs_id('$Id: Transclude.php,v 1.9 2004/06/14 11:31:39 rurban Exp $');
  */
 class WikiPlugin_Transclude extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("Transclude");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Include an external web page within the body of a wiki page.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -64,21 +64,21 @@ class WikiPlugin_Transclude extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array( 'src'     => false, // the src url to include
+        return [ 'src'     => false, // the src url to include
                       'height'  => 450 // height of the iframe
-                    );
+                    ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         global $WikiTheme;
 
         $args = ($this->getArgs($argstr, $request));
         extract($args);
 
-        if (!$src) {
+        if (! $src) {
             return $this->error(fmt("%s parameter missing", "'src'"));
         }
         // FIXME: Better recursion detection.
@@ -94,20 +94,20 @@ class WikiPlugin_Transclude extends WikiPlugin
         $uri_sanitizer = new \Tuleap\Sanitizer\URISanitizer(new Valid_LocalURI(), new Valid_FTPURI());
         $sanitized_src = $uri_sanitizer->sanitizeForHTMLAttribute($src);
 
-        $params = array('title' => _("Transcluded page"),
+        $params = ['title' => _("Transcluded page"),
                         'src' => $sanitized_src,
                         'width' => "100%",
                         'height' => $height,
                         'marginwidth' => 0,
                         'marginheight' => 0,
                         'class' => 'transclude',
-                        "onload" => "adjust_iframe_height(this);");
+                        "onload" => "adjust_iframe_height(this);"];
 
-        $noframe_msg[] = fmt("See: %s", HTML::a(array('href' => $sanitized_src), $src));
+        $noframe_msg[] = fmt("See: %s", HTML::a(['href' => $sanitized_src], $src));
 
         $noframe_msg = HTML::div(
-            array('class' => 'transclusion'),
-            HTML::p(array(), $noframe_msg)
+            ['class' => 'transclusion'],
+            HTML::p([], $noframe_msg)
         );
 
         $iframe = HTML::div(HTML::iframe($params, $noframe_msg));
@@ -118,7 +118,7 @@ class WikiPlugin_Transclude extends WikiPlugin
 
         return HTML(
             HTML::p(
-                array('class' => 'transclusion-title'),
+                ['class' => 'transclusion-title'],
                 fmt("Transcluded from %s", LinkURL($sanitized_src))
             ),
             $this->_js(),
@@ -135,7 +135,7 @@ class WikiPlugin_Transclude extends WikiPlugin
      *
      * @access private
      */
-    function _js()
+    public function _js()
     {
         static $seen = false;
 
@@ -164,7 +164,7 @@ class WikiPlugin_Transclude extends WikiPlugin
           }, false);
           ');
     }
-};
+}
 
 // $Log: Transclude.php,v $
 // Revision 1.9  2004/06/14 11:31:39  rurban

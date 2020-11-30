@@ -49,22 +49,11 @@ class Tracker_FormElement_View_Admin_CreateVisitor extends Tracker_FormElement_V
         $this->label = $label;
     }
 
-    /**
-     * Display the form to create a new formElement
-     *
-     * @param TrackerManager  $tracker_manager The service
-     * @param HTTPRequest     $request         The data coming from the user
-     * @param string          $type            The internal name of type of the field
-     * @param string          $factory_label   The label of the field (At factory
-     *                                         level 'Selectbox, File, ...')
-     *
-     * @return void
-     */
-    public function display(TrackerManager $tracker_manager, HTTPRequest $request)
+    public function display(TrackerManager $tracker_manager, HTTPRequest $request): void
     {
         $hp    = Codendi_HTMLPurifier::instance();
         $title = 'Create a new ' . $this->label;
-        $url   = TRACKER_BASE_URL.'/?tracker='. (int)$this->element->getTracker()->getId() .'&amp;func=admin-formElements&amp;create-formElement['.  $hp->purify($this->type, CODENDI_PURIFIER_CONVERT_HTML) .']=1';
+        $url   = TRACKER_BASE_URL . '/?tracker=' . (int) $this->element->getTracker()->getId() . '&amp;func=admin-formElements&amp;create-formElement[' .  $hp->purify($this->type, CODENDI_PURIFIER_CONVERT_HTML) . ']=1';
 
         echo $this->displayForm($tracker_manager, $request, $url, $title, $this->fetchForm());
     }

@@ -57,17 +57,17 @@ class AgileDashboard_MilestonePresenter
 
     public function artifact()
     {
-        return $GLOBALS['Language']->getText('plugin_tracker_include_artifact', 'artifact');
+        return dgettext('tuleap-tracker', 'Artifact');
     }
 
     public function editArtifact()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'edit_item_dropdown', array($this->milestoneTitle()));
+        return sprintf(dgettext('tuleap-agiledashboard', 'Edit %1$s'), $this->milestoneTitle());
     }
 
     public function editArtifactUrl()
     {
-        return '/plugins/tracker/?aid='.$this->milestone->getArtifactId();
+        return '/plugins/tracker/?aid=' . $this->milestone->getArtifactId();
     }
 
     public function getActivePane()

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2011-2015. All Rights Reserved.
+ * Copyright (c) Enalean, 2011-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,8 +23,10 @@ use Tuleap\Tracker\Workflow\PostAction\Visitor;
 /**
  * Set the date of a field
  */
+
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 class Transition_PostAction_Field_Int extends Transition_PostAction_Field_Numeric
-{//phpcs:ignore
+{
 
     public const XML_TAG_NAME = 'postaction_field_int';
     public const SHORT_NAME   = 'field_int';
@@ -46,73 +48,7 @@ class Transition_PostAction_Field_Int extends Transition_PostAction_Field_Numeri
      */
     public static function getLabel()
     {
-        return $GLOBALS['Language']->getText('workflow_admin', 'post_action_change_value_int_field');
-    }
-
-    /**
-     * Get the html code needed to display the post action in workflow admin
-     *
-     * @return string html
-     */
-    public function fetch()
-    {
-        $purifier    = Codendi_HTMLPurifier::instance();
-        $html        = '';
-        $input_value = '<input type="text" name="workflow_postaction_field_int_value['. $purifier->purify($this->id) .
-            ']" value="'.$purifier->purify($this->getValue()).'"/>';
-
-        //define the selectbox for date fields
-        $tracker = $this->transition->getWorkflow()->getTracker();
-        $tff = $this->getFormElementFactory();
-        $fields_int = $tff->getUsedFormElementsByType($tracker, array('int'));
-
-        $select_field  = '<select name="workflow_postaction_field_int['.$purifier->purify($this->id).']">';
-        $options_field = '';
-        $one_selected  = false;
-        foreach ($fields_int as $field_int) {
-            $selected = '';
-            if ($this->field && ($this->field->getId() == $field_int->getId())) {
-                $selected     = 'selected="selected"';
-                $one_selected = true;
-            }
-            $options_field .= '<option value="'. $purifier->purify($field_int->getId()) .'" '. $selected.'>'.
-                $purifier->purify($field_int->getLabel()).'</option>';
-        }
-        if (!$one_selected) {
-            $select_field .= '<option value="0" '. ($this->field ? 'selected="selected"' : '') .'>' .$GLOBALS['Language']->getText('global', 'please_choose_dashed'). '</option>';
-        }
-        $select_field .= $options_field;
-        $select_field .= '</select>';
-
-        $html .= $GLOBALS['Language']->getText('workflow_admin', 'change_value_int_field_to', array($select_field, $input_value));
-        return $html;
-    }
-
-    /**
-     * @see Transition_PostAction
-     */
-    public function process(Codendi_Request $request)
-    {
-        if ($request->getInArray('remove_postaction', $this->id)) {
-            $this->getDao()->deletePostAction($this->id);
-        } else {
-            $field_id = $this->getFieldId();
-            $value    = $request->getInArray('workflow_postaction_field_int_value', $this->id);
-
-            if ($request->validInArray('workflow_postaction_field_int', new Valid_UInt($this->id))) {
-                $new_field_id = $request->getInArray('workflow_postaction_field_int', $this->id);
-                $field_id = $this->getFieldIdOfPostActionToUpdate($new_field_id);
-                //Check if value is an int
-                $field = $this->getFormElementFactory()->getUsedFormElementById($field_id);
-                if ($field) {
-                    $field->validateValue($value);
-                }
-            }
-            // Update if something changed
-            if ($field_id != $this->getFieldId() || $value != $this->value) {
-                $this->getDao()->updatePostAction($this->id, $field_id, $value);
-            }
-        }
+        return dgettext('tuleap-tracker', 'Change the value of an int field');
     }
 
     /**

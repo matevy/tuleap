@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -16,51 +16,66 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 declare(strict_types=1);
 
 namespace Tuleap\Project\Admin\Categories;
 
-use ForgeConfig;
 use HTTPRequest;
 use Project;
-use ProjectManager;
+use TemplateRenderer;
 use TemplateRendererFactory;
 use TroveCatDao;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\IncludeAssets;
-use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
+use Tuleap\Project\Admin\Navigation\NavigationPresenterBuilder;
+use Tuleap\Project\Admin\Routing\AdministrationLayoutHelper;
+use Tuleap\Project\Admin\Routing\LayoutHelper;
 use Tuleap\Request\DispatchableWithBurningParrot;
-use Tuleap\Request\DispatchableWithProject;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
 
-class IndexController implements DispatchableWithRequest, DispatchableWithProject, DispatchableWithBurningParrot
+class IndexController implements DispatchableWithRequest, DispatchableWithBurningParrot
 {
     /**
      * @var TroveCatDao
      */
     private $dao;
+    /**
+     * @var LayoutHelper
+     */
+    private $layout_helper;
+    /**
+     * @var TemplateRenderer
+     */
+    private $renderer;
+    /**
+     * @var IncludeAssets
+     */
+    private $assets;
 
-    public function __construct(TroveCatDao $dao)
-    {
-        $this->dao = $dao;
+    public function __construct(
+        LayoutHelper $layout_helper,
+        TroveCatDao $dao,
+        TemplateRenderer $renderer,
+        IncludeAssets $assets
+    ) {
+        $this->layout_helper = $layout_helper;
+        $this->dao           = $dao;
+        $this->renderer      = $renderer;
+        $this->assets        = $assets;
     }
 
-    /**
-     * @throws NotFoundException
-     */
-    public function getProject(array $variables): Project
+    public static function buildSelf(): self
     {
-        $project = ProjectManager::instance()->getProject($variables['id']);
-        if (!$project || $project->isError()) {
-            throw new NotFoundException(dgettext('tuleap-document', "Project does not exist"));
-        }
-
-        return $project;
+        return new self(
+            AdministrationLayoutHelper::buildSelf(),
+            new TroveCatDao(),
+            TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../../../../templates/project/admin'),
+            new IncludeAssets(__DIR__ . '/../../../../www/assets/core', '/assets/core')
+        );
     }
 
     /**
@@ -69,22 +84,17 @@ class IndexController implements DispatchableWithRequest, DispatchableWithProjec
      */
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables): void
     {
-        $project = $this->getProject($variables);
-        if (! $request->getCurrentUser()->isAdmin($project->getId())) {
-            throw new ForbiddenException(_("You don't have permission to access administration of this project."));
-        }
-
-        $assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-        $include_assets = new IncludeAssets($assets_path, '/assets');
-
-        $layout->includeFooterJavascriptFile($include_assets->getFileURL('project-admin.js'));
-
-        $navigation_displayer = new HeaderNavigationDisplayer();
-        $navigation_displayer->displayBurningParrotNavigation(_('Project categories'), $project, 'categories');
-
-        $renderer = TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../../../../templates/project/admin');
-        $renderer->renderToPage('categories', $this->getPresenter($project));
-        site_project_footer([]);
+        $layout->includeFooterJavascriptFile($this->assets->getFileURL('project-admin.js'));
+        $callback = function (\Project $project, \PFUser $current_user): void {
+            $this->renderer->renderToPage('categories', $this->getPresenter($project));
+        };
+        $this->layout_helper->renderInProjectAdministrationLayout(
+            $request,
+            $variables['id'],
+            _('Project categories'),
+            NavigationPresenterBuilder::OTHERS_ENTRY_SHORTNAME,
+            $callback
+        );
     }
 
     private function getPresenter(Project $project): array

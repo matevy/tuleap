@@ -19,21 +19,23 @@
 
 <template>
     <div>
-        <div class="document-header-global-progress tlp-tooltip tlp-tooltip-left"
-             v-if="should_display_progress_bar"
-             v-bind:data-tlp-tooltip="progress_bar_tooltip"
-             v-on:click="modal.show()"
+        <div
+            class="document-header-global-progress tlp-tooltip tlp-tooltip-left"
+            v-if="should_display_progress_bar"
+            v-bind:data-tlp-tooltip="progress_bar_tooltip"
+            v-on:click="modal.show()"
         >
-            <global-upload-progress-bar v-bind:progress="global_upload_progress"
-                                        v-bind:nb_uploads_in_error="nb_uploads_in_error"
+            <global-upload-progress-bar
+                v-bind:progress="global_upload_progress"
+                v-bind:nb_uploads_in_error="nb_uploads_in_error"
             />
         </div>
-        <files-uploads-modal ref="uploads_modal"/>
+        <files-uploads-modal ref="uploads_modal" />
     </div>
 </template>
 <script>
 import { mapGetters, mapState } from "vuex";
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 import FilesUploadsModal from "./FilesUploadsModal.vue";
 import GlobalUploadProgressBar from "../ProgressBar/GlobalUploadProgressBar.vue";
 
@@ -42,7 +44,7 @@ export default {
     data() {
         return {
             modal: null,
-            nb_uploads_in_error: 0
+            nb_uploads_in_error: 0,
         };
     },
     computed: {
@@ -54,15 +56,15 @@ export default {
             );
         },
         should_display_progress_bar() {
-            return this.files_uploads_list.filter(file => file.upload_error === null).length > 0;
-        }
+            return this.files_uploads_list.filter((file) => file.upload_error === null).length > 0;
+        },
     },
     mounted() {
         this.modal = createModal(this.$refs.uploads_modal.$el);
 
         this.$store.watch(
-            state => state.files_uploads_list.filter(file => file.upload_error !== null),
-            uploads_in_error => {
+            (state) => state.files_uploads_list.filter((file) => file.upload_error !== null),
+            (uploads_in_error) => {
                 if (uploads_in_error.length > this.nb_uploads_in_error && !this.modal.is_shown) {
                     this.modal.show();
                 }
@@ -70,6 +72,6 @@ export default {
                 this.nb_uploads_in_error = uploads_in_error.length;
             }
         );
-    }
+    },
 };
 </script>

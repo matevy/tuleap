@@ -21,9 +21,9 @@
 
 require_once __DIR__ . '/../include/pre.php';
 
-$HTML->header(array(
-    'title'=>$Language->getText('include_layout', 'Help'),
-    'main_classes' => array('tlp-framed')
-));
+$HTML->header([
+    'title' => $Language->getText('include_layout', 'Help'),
+    'main_classes' => ['tlp-framed']
+]);
 $HTML->displayHelpPage();
-$HTML->footer(array());
+$HTML->footer([]);

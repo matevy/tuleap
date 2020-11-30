@@ -24,12 +24,12 @@
 class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine
 {
 
-    var $title;
-    var $field_base;
-    var $height;
-    var $width;
-    var $size_pie;
-    var $legend;
+    public $title;
+    public $field_base;
+    public $height;
+    public $width;
+    public $size_pie;
+    public $legend;
 
 
     public function validData()
@@ -39,7 +39,7 @@ class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine
         } else {
             $GLOBALS['Response']->addFeedback(
                 'error',
-                $GLOBALS['Language']->getText('plugin_graphontrackersv5_engine', 'no_datas', array($this->title))
+                sprintf(dgettext('tuleap-graphontrackersv5', 'No datas to display for graph %1$s'), $this->title)
             );
 
             return false;
@@ -49,7 +49,7 @@ class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine
     /**
      * Builds pie graph
      */
-    function buildGraph()
+    public function buildGraph()
     {
         $this->graph = new Chart_Pie($this->width, $this->height);
 
@@ -63,7 +63,7 @@ class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine
 
         $colors = $this->getColors();
 
-        if ((is_array($this->data)) && (array_sum($this->data)>0)) {
+        if ((is_array($this->data)) && (array_sum($this->data) > 0)) {
             $p = new PiePlot($this->data);
 
             $p->setSliceColors($colors);
@@ -83,13 +83,13 @@ class GraphOnTrackersV5_Engine_Pie extends GraphOnTrackersV5_Engine
 
     public function toArray()
     {
-        return parent::toArray() + array(
+        return parent::toArray() + [
             'type'   => 'pie',
             'title'  => $this->title,
             'height' => $this->height,
             'width'  => $this->width,
             'legend' => $this->legend,
             'data'   => $this->data,
-        );
+        ];
     }
 }

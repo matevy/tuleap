@@ -1,7 +1,7 @@
 #!/usr/share/tuleap/src/utils/php-launcher.sh
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -26,7 +26,7 @@ use Tuleap\Project\XML\Import;
 $posix_user = posix_getpwuid(posix_geteuid());
 $sys_user   = $posix_user['name'];
 if ($sys_user !== 'root' && $sys_user !== 'codendiadm') {
-    fwrite(STDERR, 'Unsufficient privileges for user '.$sys_user.PHP_EOL);
+    fwrite(STDERR, 'Unsufficient privileges for user ' . $sys_user . PHP_EOL);
     exit(1);
 }
 
@@ -35,7 +35,10 @@ $usage_options .= 'u:'; // give me a user
 $usage_options .= 'i:'; // give me the archive path to import
 $usage_options .= 'o:'; // give me the output path of the csv file
 
-function usage()
+/**
+ * @psalm-return never-return
+ */
+function usage(): void
 {
     global $argv;
 
@@ -63,6 +66,7 @@ if (! isset($arguments['u'])) {
     usage();
 } else {
     $username = $arguments['u'];
+    assert(is_string($username));
 }
 
 if (! isset($arguments['o'])) {
@@ -77,15 +81,12 @@ if (! isset($arguments['i'])) {
     $archive_path = $arguments['i'];
 }
 
-$security      = new XML_Security();
 $xml_validator = new XML_RNGValidator();
 $user_manager  = UserManager::instance();
-$logger        = new ProjectXMLImporterLogger();
+$logger        = ProjectXMLImporter::getLogger();
 $console       = new Log_ConsoleLogger();
 $builder       = new User\XML\Import\UsersToBeImportedCollectionBuilder(
     $user_manager,
-    $logger,
-    $security,
     $xml_validator
 );
 

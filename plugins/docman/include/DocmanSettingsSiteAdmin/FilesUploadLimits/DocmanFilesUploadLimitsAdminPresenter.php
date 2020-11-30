@@ -22,6 +22,10 @@ declare(strict_types=1);
 
 namespace Tuleap\Docman\DocmanSettingsSiteAdmin\FilesUploadLimits;
 
+use Tuleap\Docman\DocmanSettingsSiteAdmin\DocmanSettingsTabPresenter;
+use Tuleap\Docman\DocmanSettingsSiteAdmin\DocmanSettingsTabsPresenterCollection;
+use Tuleap\Docman\DocmanSettingsSiteAdmin\FileUploadTabPresenter;
+
 class DocmanFilesUploadLimitsAdminPresenter
 {
     /**
@@ -36,14 +40,20 @@ class DocmanFilesUploadLimitsAdminPresenter
      * @var int
      */
     public $max_number_of_files;
+    /**
+     * @var DocmanSettingsTabPresenter[]
+     */
+    public $tabs;
 
     public function __construct(
         \CSRFSynchronizerToken $csrf_token,
         int $max_number_of_files,
-        int $max_size_of_file
+        int $max_size_of_file,
+        DocmanSettingsTabsPresenterCollection $tabs_collection
     ) {
         $this->csrf_token          = $csrf_token;
         $this->max_size_of_file    = $max_size_of_file;
         $this->max_number_of_files = $max_number_of_files;
+        $this->tabs                = $tabs_collection->getTabs(FileUploadTabPresenter::URL);
     }
 }

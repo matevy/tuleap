@@ -19,8 +19,8 @@
   -->
 <template>
     <div class="taskboard-header taskboard-header-collapsed" v-bind:class="classes">
-        <expand-button v-bind:column="column"/>
-        <collapsed-label v-bind:column="column"/>
+        <expand-button v-bind:column="column" />
+        <collapsed-label v-bind:column="column" />
     </div>
 </template>
 <script lang="ts">
@@ -31,7 +31,7 @@ import CardsInColumnCount from "../Expanded/CardsInColumnCount.vue";
 import CollapsedLabel from "./CollapsedLabel.vue";
 
 @Component({
-    components: { CollapsedLabel, CardsInColumnCount, ExpandButton }
+    components: { CollapsedLabel, CardsInColumnCount, ExpandButton },
 })
 export default class CollapsedHeaderCell extends Mixins(HeaderCellMixin) {
     get classes(): string {

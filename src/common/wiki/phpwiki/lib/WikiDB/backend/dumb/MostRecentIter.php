@@ -12,7 +12,7 @@ require_once('lib/WikiDB/backend.php');
  */
 class WikiDB_backend_dumb_MostRecentIter extends WikiDB_backend_iterator
 {
-    function __construct(&$backend, &$pages, $params)
+    public function __construct(&$backend, &$pages, $params)
     {
         $limit = false;
         extract($params);
@@ -24,14 +24,14 @@ class WikiDB_backend_dumb_MostRecentIter extends WikiDB_backend_iterator
         if ($reverse) {
             $limit = -$limit;
         }
-        $this->_revisions = array();
+        $this->_revisions = [];
         while ($page = $pages->next()) {
             $revs = $backend->get_all_revisions($page['pagename']);
             while ($revision = &$revs->next()) {
                 $vdata = &$revision['versiondata'];
                 assert(is_array($vdata));
-                if (!empty($vdata['is_minor_edit'])) {
-                    if (!$include_minor_revisions) {
+                if (! empty($vdata['is_minor_edit'])) {
+                    if (! $include_minor_revisions) {
                         continue;
                     }
                 } else {
@@ -39,13 +39,13 @@ class WikiDB_backend_dumb_MostRecentIter extends WikiDB_backend_iterator
                         continue;
                     }
                 }
-                if (!empty($since) && $vdata['mtime'] < $since) {
+                if (! empty($since) && $vdata['mtime'] < $since) {
                     break;
                 }
 
                 $this->_revisions[] = $revision;
 
-                if (!$include_all_revisions) {
+                if (! $include_all_revisions) {
                     break;
                 }
             }
@@ -56,17 +56,17 @@ class WikiDB_backend_dumb_MostRecentIter extends WikiDB_backend_iterator
         } else {
             usort($this->_revisions, 'WikiDB_backend_dumb_MostRecentIter_sortf');
         }
-        if (!empty($limit) && $limit < count($this->_revisions)) {
+        if (! empty($limit) && $limit < count($this->_revisions)) {
             array_splice($this->_revisions, $limit);
         }
     }
 
-    function next()
+    public function next()
     {
         return array_shift($this->_revisions);
     }
 
-    function free()
+    public function free()
     {
         unset($this->_revisions);
     }

@@ -19,7 +19,7 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Project\REST\v1;
 
@@ -28,7 +28,6 @@ use PFUser;
 use Project;
 use ProjectCreationData;
 use Tuleap\Project\Admin\Categories\CategoryCollection;
-use Tuleap\Project\Admin\Categories\MissingMandatoryCategoriesException;
 use Tuleap\Project\Admin\Categories\ProjectCategoriesException;
 use Tuleap\Project\Admin\Categories\ProjectCategoriesUpdater;
 use Tuleap\Project\Admin\DescriptionFields\FieldDoesNotExistException;
@@ -44,6 +43,7 @@ use Tuleap\Project\Registration\Template\TemplateFromProjectForCreation;
 use Tuleap\Project\SystemEventRunnerForProjectCreationFromXMLTemplate;
 use Tuleap\Project\XML\Import\DirectoryArchive;
 use Tuleap\Project\XML\Import\ImportConfig;
+use Tuleap\Project\XML\Import\ImportNotValidException;
 use Tuleap\Project\XML\XMLFileContentRetriever;
 
 class RestProjectCreator
@@ -65,7 +65,7 @@ class RestProjectCreator
      */
     private $service_manager;
     /**
-     * @var \Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
     /**
@@ -98,7 +98,7 @@ class RestProjectCreator
         \ProjectCreator $project_creator,
         XMLFileContentRetriever $XML_file_content_retriever,
         \ServiceManager $service_manager,
-        \Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         \XML_RNGValidator $validator,
         \ProjectXMLImporter $project_XML_importer,
         TemplateFactory $template_factory,
@@ -151,9 +151,19 @@ class RestProjectCreator
             throw new RestException(400, $exception->getMessage());
         } catch (MissingMandatoryFieldException $exception) {
             throw new RestException(400, $exception->getMessage());
+        } catch (ImportNotValidException $exception) {
+            throw new RestException(400, $exception->getMessage());
         }
     }
 
+    /**
+     * @throws ImportNotValidException
+     * @throws InvalidTemplateException
+     * @throws \Project_Creation_Exception
+     * @throws \Project_InvalidFullName_Exception
+     * @throws \Project_InvalidShortName_Exception
+     * @throws \Tuleap\Project\ProjectDescriptionMandatoryException
+     */
     public function createProjectWithSelectedTemplate(PFUser $user, ProjectPostRepresentation $post_representation): Project
     {
         if ($post_representation->template_id !== null) {
@@ -168,7 +178,6 @@ class RestProjectCreator
     }
 
     /**
-     * @return Project
      * @throws \Project_Creation_Exception
      * @throws \Project_InvalidFullName_Exception
      * @throws \Project_InvalidShortName_Exception
@@ -200,9 +209,8 @@ class RestProjectCreator
     }
 
     /**
-     * @param ProjectPostRepresentation $post_representation
-     * @return Project
      * @throws InvalidTemplateException
+     * @throws ImportNotValidException
      */
     private function createProjectFromSystemTemplate(ProjectPostRepresentation $post_representation): Project
     {

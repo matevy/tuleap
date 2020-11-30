@@ -103,8 +103,8 @@ class Tracker_XML_Updater_FieldChangeXMLUpdaterVisitor implements Tracker_FormEl
         Tracker_FormElement_Field $field,
         $submitted_value
     ) {
-        /** @var Tracker_XML_Updater_FieldChange_FieldChangeXMLUpdater $updater */
         $updater = $field->accept($this);
+        \assert($updater instanceof Tracker_XML_Updater_FieldChange_FieldChangeXMLUpdater);
         $updater->update($field_change_xml, $submitted_value);
     }
 
@@ -219,6 +219,11 @@ class Tracker_XML_Updater_FieldChangeXMLUpdaterVisitor implements Tracker_FormEl
     }
 
     public function visitExternalField(TrackerFormElementExternalField $element)
+    {
+        return $this->unknown_updater;
+    }
+
+    public function visitPriority(Tracker_FormElement_Field_Priority $field)
     {
         return $this->unknown_updater;
     }

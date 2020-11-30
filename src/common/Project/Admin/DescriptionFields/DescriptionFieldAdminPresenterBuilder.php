@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,7 +20,6 @@
 
 namespace Tuleap\Project\Admin\DescriptionFields;
 
-use Tuleap\DB\Compat\Legacy2018\LegacyDataAccessResultInterface;
 use Tuleap\Project\ProjectDescriptionUsageRetriever;
 
 class DescriptionFieldAdminPresenterBuilder
@@ -31,7 +30,7 @@ class DescriptionFieldAdminPresenterBuilder
      * @return FieldPresenter[]
      */
     public function build(
-        LegacyDataAccessResultInterface $description_fields_infos
+        array $description_fields_infos
     ): array {
         $field_presenters = [];
 
@@ -50,8 +49,8 @@ class DescriptionFieldAdminPresenterBuilder
         foreach ($description_fields_infos as $field) {
             $field_presenters[] = new FieldPresenter(
                 $field['group_desc_id'],
-                $this->getFieldTranslatedTextLabel($field['desc_name']),
-                $this->getFieldTranslatedTextLabel($field['desc_description']),
+                DescriptionFieldLabelBuilder::getFieldTranslatedName($field['desc_name']),
+                DescriptionFieldLabelBuilder::getFieldTranslatedDescription($field['desc_description']),
                 $field['desc_required'],
                 $this->getTranslatedRequiredLabel($field['desc_required']),
                 $field['desc_type'],
@@ -62,17 +61,6 @@ class DescriptionFieldAdminPresenterBuilder
         }
 
         return $field_presenters;
-    }
-
-    private function getFieldTranslatedTextLabel($field_value)
-    {
-        if (preg_match('/(.*):(.*)/', $field_value, $matches)) {
-            if ($GLOBALS['Language']->hasText($matches[1], $matches[2])) {
-                $field_value = $GLOBALS['Language']->getText($matches[1], $matches[2]);
-            }
-        }
-
-        return $field_value;
     }
 
     private function getTranslatedRequiredLabel($is_required)

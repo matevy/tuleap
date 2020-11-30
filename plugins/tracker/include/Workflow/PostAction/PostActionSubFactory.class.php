@@ -21,30 +21,21 @@
 /**
  * Interface to define the factory for a dedicated type of PostAction.
  */
+
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 interface Transition_PostActionSubFactory
 {
+    /**
+     * Prepare what needs to be prepared to efficiently fetch data from the DB in case of workflow load
+     */
+    public function warmUpCacheForWorkflow(Workflow $workflow): void;
 
     /**
-     * Get html code to let someone choose a post action for a transition
+     * Instantiate the post actions of a given transition
      *
-     * @return string html
+     * @return Transition_PostAction[]
      */
-    public function fetchPostActions();
-
-    /**
-     * @param Transition $transition
-     * @param string     $requested_postaction
-     */
-    public function addPostAction(Transition $transition, $requested_postaction);
-
-    /**
-     * Instanciate the post actions of a given transition
-     *
-     * @param Transition $transition The transition
-     *
-     * @return array of Transition_PostAction
-     */
-    public function loadPostActions(Transition $transition);
+    public function loadPostActions(Transition $transition): array;
 
     /**
      * Save a postaction object
@@ -63,14 +54,6 @@ interface Transition_PostActionSubFactory
      * @return bool
      */
     public function isFieldUsedInPostActions(Tracker_FormElement_Field $field);
-
-    /**
-     * Delete a workflow
-     *
-     * @param int $workflow_id the id of the workflow
-     *
-     */
-    public function deleteWorkflow($workflow_id);
 
     /**
      * Duplicate postactions of a transition

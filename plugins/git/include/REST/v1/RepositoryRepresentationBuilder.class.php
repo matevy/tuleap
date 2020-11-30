@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -75,19 +75,21 @@ class RepositoryRepresentationBuilder
     }
 
     /**
-     * @param PFUser $user
      * @param GitRepository[] $repositories
      * @param $fields
-     * @return \Generator
+     * @return GitRepositoryRepresentation[]
      */
-    public function buildWithList(PFUser $user, array $repositories, $fields)
+    public function buildWithList(PFUser $user, array $repositories, $fields): array
     {
+        $representations = [];
         if (count($repositories) > 0) {
             $this->cacheRepositoriesMetadata($repositories);
             foreach ($repositories as $repository) {
-                yield $this->build($user, $repository, $fields);
+                $representations[] = $this->build($user, $repository, $fields);
             }
         }
+
+        return $representations;
     }
 
     private function cacheRepositoriesMetadata(array $repositories)
@@ -120,8 +122,6 @@ class RepositoryRepresentationBuilder
 
     /**
      *
-     * @param PFUser $user
-     * @param GitRepository $repository
      * @param string $fields
      *
      * @return GitRepositoryRepresentation
@@ -133,29 +133,27 @@ class RepositoryRepresentationBuilder
         $additional_information = new AdditionalInformationRepresentationRetriever($repository);
         $this->event_manager->processEvent($additional_information);
 
-        $html_url = $this->url_manager->getRepositoryBaseUrl($repository);
+        $html_url         = $this->url_manager->getRepositoryBaseUrl($repository);
+        $last_update_date = $this->getLastUpdateDate($repository);
 
-        $repository_representation = new GitRepositoryRepresentation();
-        $last_update_date          = $this->getLastUpdateDate($repository);
-        $repository_representation->build(
+        $permission_representation = null;
+        if (
+            $fields == GitRepositoryRepresentation::FIELDS_ALL && $this->permissions_manger->userIsGitAdmin(
+                $user,
+                $repository->getProject()
+            )
+        ) {
+            $permission_representation = GitRepositoryPermissionRepresentation::build($repository);
+        }
+
+        return GitRepositoryRepresentation::build(
             $repository,
             $html_url,
             $server_representation,
             $last_update_date,
-            $additional_information->getAdditionalInformation()
+            $additional_information->getAdditionalInformation(),
+            $permission_representation
         );
-
-        if ($fields == GitRepositoryRepresentation::FIELDS_ALL && $this->permissions_manger->userIsGitAdmin(
-            $user,
-            $repository->getProject()
-        )) {
-            $permission_representation = new GitRepositoryPermissionRepresentation();
-            $permission_representation->build($repository);
-
-            $repository_representation->permissions = $permission_representation;
-        }
-
-        return $repository_representation;
     }
 
     /**
@@ -169,24 +167,18 @@ class RepositoryRepresentationBuilder
 
         $remote_server_id = $repository->getRemoteServerId();
         if ($this->remote_server[$remote_server_id] !== null) {
-            $server_representation = new GerritServerRepresentation();
-            $server_representation->build($this->remote_server[$remote_server_id]);
-            return $server_representation;
+            return new GerritServerRepresentation($this->remote_server[$remote_server_id]);
         }
 
         try {
             $server = $this->gerrit_server_factory->getServerById($remote_server_id);
-            $server_representation = new GerritServerRepresentation();
-            $server_representation->build($server);
-
-            return $server_representation;
+            return new GerritServerRepresentation($server);
         } catch (Git_RemoteServer_NotFoundException $ex) {
             return null;
         }
     }
 
     /**
-     * @param GitRepository $repository
      * @return string
      */
     private function getLastUpdateDate(GitRepository $repository)

@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Tracker\Semantic\Timeframe\Administration;
 
@@ -50,11 +50,6 @@ class SemanticTimeframeAdministrationPresenter
     public $start_date_field;
 
     /**
-     * @var \Tracker_FormElement_Field_Date|null
-     */
-    private $end_date_field;
-
-    /**
      * @var \Tracker_FormElement_Field_Numeric|null
      */
     public $duration_field;
@@ -84,11 +79,6 @@ class SemanticTimeframeAdministrationPresenter
      */
     public $is_semantic_in_start_date_duration_mode;
 
-    /**
-     * @var \Tracker
-     */
-    private $tracker;
-
     public function __construct(
         \CSRFSynchronizerToken $csrf,
         \Tracker $tracker,
@@ -104,12 +94,11 @@ class SemanticTimeframeAdministrationPresenter
     ) {
         $this->csrf                                    = $csrf;
         $this->start_date_field                        = $start_date_field;
-        $this->end_date_field                          = $end_date_field;
         $this->duration_field                          = $duration_field;
         $this->usable_start_date_fields                = $usable_start_date_fields;
         $this->usable_end_date_fields                  = $usable_end_date_fields;
         $this->usable_numeric_fields                   = $usable_numeric_fields;
-        $this->is_semantic_configured                  = $start_date_field !== null && ($duration_field !== null || $end_date_field !==null);
+        $this->is_semantic_configured                  = $start_date_field !== null && ($duration_field !== null || $end_date_field !== null);
         $this->has_tracker_charts                      = $has_tracker_charts;
         $this->is_semantic_in_start_date_duration_mode = $is_semantic_in_start_date_duration_mode;
         $this->target_url                              = $target_url;

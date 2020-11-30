@@ -21,7 +21,7 @@ import { shallowMount } from "@vue/test-utils";
 import UploadProgressBar from "./UploadProgressBar.vue";
 
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 
 describe("UploadProgressBar", () => {
     let upload_progress_bar, store;
@@ -34,7 +34,7 @@ describe("UploadProgressBar", () => {
             return shallowMount(UploadProgressBar, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -47,11 +47,11 @@ describe("UploadProgressBar", () => {
             title: "my item title",
             type: "file",
             user_can_write: true,
-            is_uploading_new_version: true
+            is_uploading_new_version: true,
         };
         const wrapper = upload_progress_bar({ item });
 
-        wrapper.find("[data-test=cancel-upload]").trigger("click");
+        wrapper.get("[data-test=cancel-upload]").trigger("click");
 
         expect(store.dispatch).toHaveBeenCalledWith("cancelVersionUpload", item);
     });
@@ -63,12 +63,12 @@ describe("UploadProgressBar", () => {
             id: 1,
             title: "my item title",
             type: "file",
-            user_can_write: true
+            user_can_write: true,
         };
 
         const wrapper = upload_progress_bar({ item });
 
-        wrapper.find("[data-test=cancel-upload]").trigger("click");
+        wrapper.get("[data-test=cancel-upload]").trigger("click");
 
         expect(store.dispatch).toHaveBeenCalledWith("cancelFileUpload", item);
     });
@@ -80,11 +80,11 @@ describe("UploadProgressBar", () => {
             id: 1,
             title: "my item title",
             type: "folder",
-            user_can_write: true
+            user_can_write: true,
         };
         const wrapper = upload_progress_bar({ item });
 
-        wrapper.find("[data-test=cancel-upload]").trigger("click");
+        wrapper.get("[data-test=cancel-upload]").trigger("click");
 
         expect(store.dispatch).toHaveBeenCalledWith("cancelFolderUpload", item);
     });

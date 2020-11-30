@@ -24,19 +24,19 @@ class ForumML_MessageManager
 {
     private $_dao;
 
-    function getHeaderValue($messageId, $headerId)
+    public function getHeaderValue($messageId, $headerId)
     {
         $dar = $this->getDao()->searchHeaderValue($messageId, $headerId);
-        if ($dar && !$dar->isError()) {
+        if ($dar && ! $dar->isError()) {
             $row = $dar->current();
             return $row['value'];
         }
         return false;
     }
 
-    function getDao()
+    public function getDao()
     {
-        if (!isset($this->_dao)) {
+        if (! isset($this->_dao)) {
             $this->_dao = new ForumML_MessageDao(CodendiDataAccess::instance());
         }
         return $this->_dao;

@@ -19,20 +19,18 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Test\rest;
 
 use RestBase;
-
-require_once __DIR__ . '/../../../../src/vendor/autoload.php';
 
 class DocmanWithMetadataActivatedBase extends RestBase
 {
     public const PROJECT_NAME = 'docmanprojectmetadata';
     protected $project_id;
 
-    public function setUp() : void
+    public function setUp(): void
     {
         parent::setUp();
         $this->project_id = $this->getProjectId(self::PROJECT_NAME);

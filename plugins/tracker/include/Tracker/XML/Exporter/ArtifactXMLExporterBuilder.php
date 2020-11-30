@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015 - 2016. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,37 +18,66 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 use Tuleap\Tracker\XML\Exporter\ChangesetValue\ChangesetValueComputedXMLExporter;
+use Tuleap\Tracker\XML\Exporter\ChangesetValue\ExternalExporterCollector;
+use Tuleap\Tracker\XML\Exporter\FieldChange\FieldChangeDateBuilder;
+use Tuleap\Tracker\XML\Exporter\FieldChange\FieldChangeFloatBuilder;
+use Tuleap\Tracker\XML\Exporter\FieldChange\FieldChangeListBuilder;
+use Tuleap\Tracker\XML\Exporter\FieldChange\FieldChangeStringBuilder;
+use Tuleap\Tracker\XML\Exporter\FieldChange\FieldChangeTextBuilder;
+use Tuleap\Tracker\XML\Exporter\FileInfoXMLExporter;
 
 class Tracker_XML_Exporter_ArtifactXMLExporterBuilder
 {
-
-    /** @var Tracker_XML_Exporter_ArtifactXMLExporter */
     public function build(
         Tracker_XML_ChildrenCollector $children_collector,
         Tracker_XML_Exporter_FilePathXMLExporter $file_path_xml_exporter,
         PFUser $current_user,
         UserXMLExporter $user_xml_exporter,
         $is_in_archive_context
-    ) {
+    ): Tracker_XML_Exporter_ArtifactXMLExporter {
+        $file_info_xml_exporter = new FileInfoXMLExporter($file_path_xml_exporter);
+
         $visitor = new Tracker_XML_Exporter_ChangesetValueXMLExporterVisitor(
-            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueDateXMLExporter(),
-            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter(
-                $file_path_xml_exporter
+            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueDateXMLExporter(
+                new FieldChangeDateBuilder(
+                    new XML_SimpleXMLCDATAFactory()
+                )
             ),
-            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueFloatXMLExporter(),
+            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueFileXMLExporter($file_info_xml_exporter),
+            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueFloatXMLExporter(
+                new FieldChangeFloatBuilder(
+                    new XML_SimpleXMLCDATAFactory()
+                )
+            ),
             new Tracker_XML_Exporter_ChangesetValue_ChangesetValueIntegerXMLExporter(),
-            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueStringXMLExporter(),
-            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueTextXMLExporter(),
+            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueStringXMLExporter(
+                new FieldChangeStringBuilder(
+                    new XML_SimpleXMLCDATAFactory()
+                )
+            ),
+            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueTextXMLExporter(
+                new FieldChangeTextBuilder(
+                    new XML_SimpleXMLCDATAFactory()
+                )
+            ),
             new Tracker_XML_Exporter_ChangesetValue_ChangesetValuePermissionsOnArtifactXMLExporter(),
-            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter($user_xml_exporter),
+            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueListXMLExporter(
+                new FieldChangeListBuilder(
+                    new XML_SimpleXMLCDATAFactory(),
+                    $user_xml_exporter
+                )
+            ),
             new Tracker_XML_Exporter_ChangesetValue_ChangesetValueOpenListXMLExporter($user_xml_exporter),
             new Tracker_XML_Exporter_ChangesetValue_ChangesetValueArtifactLinkXMLExporter(
                 $children_collector,
                 $current_user
             ),
             new ChangesetValueComputedXMLExporter($current_user, $is_in_archive_context),
-            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueUnknownXMLExporter()
+            new Tracker_XML_Exporter_ChangesetValue_ChangesetValueUnknownXMLExporter(),
+            new ExternalExporterCollector(EventManager::instance())
         );
         $values_exporter    = new Tracker_XML_Exporter_ChangesetValuesXMLExporter($visitor, $is_in_archive_context);
         $changeset_exporter = new Tracker_XML_Exporter_ChangesetXMLExporter(
@@ -56,6 +85,6 @@ class Tracker_XML_Exporter_ArtifactXMLExporterBuilder
             $user_xml_exporter
         );
 
-        return new Tracker_XML_Exporter_ArtifactXMLExporter($changeset_exporter);
+        return new Tracker_XML_Exporter_ArtifactXMLExporter($changeset_exporter, $file_info_xml_exporter);
     }
 }

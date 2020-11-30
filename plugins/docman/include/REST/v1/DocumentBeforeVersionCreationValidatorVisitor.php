@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1;
 
@@ -75,8 +75,10 @@ class DocumentBeforeVersionCreationValidatorVisitor implements ItemVisitor
     {
         $this->checkExpectedType($item, $params['document_type']);
 
-        if ($item->getTitle() !== $params['title']
-            && $this->item_factory->doesTitleCorrespondToExistingFolder($params['title'], (int)$item->getParentId())) {
+        if (
+            $item->getTitle() !== $params['title']
+            && $this->item_factory->doesTitleCorrespondToExistingFolder($params['title'], (int) $item->getParentId())
+        ) {
             throw new RestException(400, "A folder with same title already exists in the given folder.");
         }
     }
@@ -85,10 +87,8 @@ class DocumentBeforeVersionCreationValidatorVisitor implements ItemVisitor
     {
         $this->checkExpectedType($item, $params['document_type']);
 
-        /**
-         * @var Project $project
-         */
         $project = $params['project'];
+        \assert($project instanceof Project);
         if (! $project->usesWiki()) {
             throw new RestException(
                 400,
@@ -141,7 +141,7 @@ class DocumentBeforeVersionCreationValidatorVisitor implements ItemVisitor
      * @psalm-param class-string<Docman_Item> $expected_type
      * @throws I18NRestException
      */
-    private function checkExpectedType(Docman_Item $item, string $expected_type) : void
+    private function checkExpectedType(Docman_Item $item, string $expected_type): void
     {
         if (! $item->accept(new DoesItemHasExpectedTypeVisitor($expected_type))) {
             $this->throwItemHasNotTheRightType($expected_type);
@@ -190,7 +190,6 @@ class DocumentBeforeVersionCreationValidatorVisitor implements ItemVisitor
     }
 
     /**
-     * @param Docman_Item $item
      * @param array        $params
      *
      * @throws \Tuleap\Docman\ApprovalTable\ApprovalTableException
@@ -205,7 +204,7 @@ class DocumentBeforeVersionCreationValidatorVisitor implements ItemVisitor
      */
     private function checkDocumentIsNotAlreadyLocked(Docman_Item $item, array $params): void
     {
-        if ($this->permission_manager->_itemIsLockedForUser($params['user'], (int)$item->getId())) {
+        if ($this->permission_manager->_itemIsLockedForUser($params['user'], (int) $item->getId())) {
             throw new I18NRestException(
                 403,
                 dgettext('tuleap-docman', 'Document is locked by another user.')
@@ -219,7 +218,7 @@ class DocumentBeforeVersionCreationValidatorVisitor implements ItemVisitor
             return;
         }
 
-        if ($this->item_factory->doesTitleCorrespondToExistingDocument($new_title, (int)$item->getParentId())) {
+        if ($this->item_factory->doesTitleCorrespondToExistingDocument($new_title, (int) $item->getParentId())) {
             throw new RestException(400, "A file with same title already exists in the given folder.");
         }
     }

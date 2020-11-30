@@ -32,7 +32,7 @@ class Controller_Commitdiff extends Controller_DiffBase // @codingStandardsIgnor
     public function __construct()
     {
         parent::__construct();
-        if (!$this->project) {
+        if (! $this->project) {
             throw new MessageException(dgettext("gitphp", 'Project is required'), true);
         }
     }
@@ -131,7 +131,7 @@ class Controller_Commitdiff extends Controller_DiffBase // @codingStandardsIgnor
 
         if (isset($this->params['sidebyside']) && ($this->params['sidebyside'] === true)) {
             $this->tpl->assign('sidebyside', true);
-            $this->tpl->assign('extrascripts', array('commitdiff'));
+            $this->tpl->assign('extrascripts', ['commitdiff']);
         }
 
         $treediff = new TreeDiff(

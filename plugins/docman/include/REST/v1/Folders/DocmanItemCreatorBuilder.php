@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Folders;
 
@@ -144,7 +144,7 @@ class DocmanItemCreatorBuilder
             ),
             new EmptyFileToUploadFinisher(
                 new DocumentUploadFinisher(
-                    new \BackendLogger(),
+                    \BackendLogger::getDefaultLogger(),
                     $document_upload_path_allocator,
                     $item_factory,
                     $version_factory,

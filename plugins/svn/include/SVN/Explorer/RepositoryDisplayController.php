@@ -23,16 +23,14 @@ namespace Tuleap\SVN\Explorer;
 use Event;
 use EventManager;
 use HTTPRequest;
+use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbCollection;
 use Tuleap\SVN\Repository\Exception\CannotFindRepositoryException;
 use Tuleap\SVN\Repository\RepositoryManager;
 use Tuleap\SVN\ServiceSvn;
-use Tuleap\SVN\SvnPermissionManager;
 use Tuleap\SVN\ViewVC\ViewVCProxy;
 
 class RepositoryDisplayController
 {
-    /** @var SvnPermissionManager */
-    private $permissions_manager;
     /**
      * @var RepositoryManager
      */
@@ -48,11 +46,9 @@ class RepositoryDisplayController
 
     public function __construct(
         RepositoryManager $repository_manager,
-        SvnPermissionManager $permissions_manager,
         ViewVCProxy $viewvc_proxy,
         EventManager $event_manager
     ) {
-        $this->permissions_manager = $permissions_manager;
         $this->repository_manager  = $repository_manager;
         $this->proxy               = $viewvc_proxy;
         $this->event_manager       = $event_manager;
@@ -65,39 +61,39 @@ class RepositoryDisplayController
 
             $has_plugin_intro  = false;
             $plugin_intro_info = '';
-            $this->event_manager->processEvent(Event::SVN_INTRO, array(
+            $this->event_manager->processEvent(Event::SVN_INTRO, [
                 'svn_intro_in_plugin' => &$has_plugin_intro,
                 'svn_intro_info'      => &$plugin_intro_info,
                 'group_id'            => $repository->getProject()->getID(),
                 'user_id'             => $request->getCurrentUser()->getId()
-            ));
+            ]);
             $username = $request->getCurrentUser()->getUserName();
             if ($plugin_intro_info) {
                 $username = $plugin_intro_info->getLogin();
             }
 
-            $service->renderInPageWithBodyClass(
+            $service->renderInPageRepository(
                 $request,
                 dgettext('tuleap-svn', 'SVN with multiple repositories'),
                 'explorer/repository_display',
                 new RepositoryDisplayPresenter(
                     $repository,
-                    $request,
-                    $this->proxy->getContent($request, $this->fixPathInfo($url_variables)),
-                    $this->permissions_manager,
+                    $this->proxy->getContent($request, $request->getCurrentUser(), $repository, $this->fixPathInfo($url_variables)),
                     $username
                 ),
-                $this->proxy->getBodyClass()
+                $this->proxy->getBodyClass(),
+                $repository,
+                new BreadCrumbCollection(),
             );
         } catch (CannotFindRepositoryException $e) {
             $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-svn', 'Repository not found.'));
             $GLOBALS['Response']->redirect(
-                SVN_BASE_URL.'/?'. http_build_query(array('group_id' => $request->getProject()->getID()))
+                SVN_BASE_URL . '/?' . http_build_query(['group_id' => $request->getProject()->getID()])
             );
         }
     }
 
-    private function fixPathInfo(array $variables) : string
+    private function fixPathInfo(array $variables): string
     {
         if (isset($variables['path']) && $variables['path'] !== '') {
             return $this->addTrailingSlash($this->addLeadingSlash($variables['path']));
@@ -105,18 +101,18 @@ class RepositoryDisplayController
         return '/';
     }
 
-    private function addLeadingSlash(string $path) : string
+    private function addLeadingSlash(string $path): string
     {
         if ($path[0] !== '/') {
-            return '/'.$path;
+            return '/' . $path;
         }
         return $path;
     }
 
-    private function addTrailingSlash(string $path) : string
+    private function addTrailingSlash(string $path): string
     {
         if (strrpos($path, "/") !== (strlen($path) - 1)) {
-            return $path.'/';
+            return $path . '/';
         }
         return $path;
     }

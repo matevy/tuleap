@@ -22,7 +22,7 @@ import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue";
 import CreateNewVersionEmptyModal from "./CreateNewVersionEmptyModal.vue";
 import { TYPE_EMPTY, TYPE_FILE, TYPE_LINK } from "../../../constants.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import * as tlp from "tlp";
 
 jest.mock("tlp");
@@ -33,44 +33,44 @@ describe("CreateNewVersionEmptyModal", () => {
     beforeEach(() => {
         store = createStoreMock({}, { project_ugroups: null, error: {} });
 
-        factory = props => {
+        factory = (props) => {
             return shallowMount(CreateNewVersionEmptyModal, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
 
-        jest.spyOn(tlp, "modal").mockReturnValue({
+        jest.spyOn(tlp, "createModal").mockReturnValue({
             addEventListener: () => {},
             show: () => {},
-            hide: () => {}
+            hide: () => {},
         });
     });
 
     it("Default type for creation of new link version of an empty document is file", () => {
         const wrapper = factory({
-            item: { id: 10, type: TYPE_EMPTY }
+            item: { id: 10, type: TYPE_EMPTY },
         });
 
         expect(wrapper.vm.new_item_version.type).toBe(TYPE_FILE);
     });
-    it("It should create a new link version from an empty document", () => {
+    it("should create a new link version from an empty document", () => {
         const wrapper = factory({
-            item: { id: 10, type: TYPE_EMPTY }
+            item: { id: 10, type: TYPE_EMPTY },
         });
         wrapper.setData({
             new_item_version: {
-                type: TYPE_LINK
-            }
+                type: TYPE_LINK,
+            },
         });
-        store.dispatch.mockImplementation(actionMethodName => {
+        store.dispatch.mockImplementation((actionMethodName) => {
             if (actionMethodName === "createNewVersionFromEmpty") {
-                expect(wrapper.vm.is_loading).toBe(true);
-                expect(wrapper.vm.new_item_version.type).toBe(TYPE_LINK);
                 store.state.error.has_modal_error = false;
             }
         });
-        wrapper.find("form").trigger("submit.prevent");
+        wrapper.get("form").trigger("submit.prevent");
+        expect(wrapper.vm.is_loading).toBe(true);
+        expect(wrapper.vm.new_item_version.type).toBe(TYPE_LINK);
     });
 });

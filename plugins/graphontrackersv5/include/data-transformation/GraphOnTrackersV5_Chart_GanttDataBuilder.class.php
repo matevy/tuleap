@@ -27,11 +27,11 @@ class GraphOnTrackersV5_Chart_GanttDataBuilder extends ChartDataBuilderV5
      *
      * @param Bar_Engine $engine object
      */
-    function buildProperties($engine)
+    public function buildProperties($engine)
     {
         parent::buildProperties($engine);
         $engine->title      = $this->chart->getTitle();
-        $engine->description= $this->chart->getDescription();
+        $engine->description = $this->chart->getDescription();
         $engine->scale      = $this->chart->getScale();
         $engine->asOfDate   = $this->chart->getAs_of_date();
         $af = Tracker_FormElementFactory::instance()->getFormElementById($this->chart->getSummary());
@@ -47,9 +47,9 @@ class GraphOnTrackersV5_Chart_GanttDataBuilder extends ChartDataBuilderV5
      * @param Gantt_Engine object
      * @return array data array
      */
-    function buildData($engine)
+    public function buildData($engine)
     {
-        $engine->data = array();
+        $engine->data = [];
 
         $ff = Tracker_FormElementFactory::instance();
         $field_start      = $this->chart->getField_start()      ? $ff->getFormElementById($this->chart->getField_start())      : null;
@@ -68,14 +68,14 @@ class GraphOnTrackersV5_Chart_GanttDataBuilder extends ChartDataBuilderV5
             $aid  = $artifact->getId();
             $data = [
                 'id'       => $aid,
-                'summary'  => '#'. $aid,
+                'summary'  => '#' . $aid,
                 'start'    => 0,
                 'due'      => 0,
                 'finish'   => 0,
                 'progress' => 0,
                 'right'    => '',
-                'hint'     => '#'. $aid,
-                'links'    => TRACKER_BASE_URL.'/?aid='. $aid,
+                'hint'     => '#' . $aid,
+                'links'    => TRACKER_BASE_URL . '/?aid=' . $aid,
             ];
 
             if ($field_start) {

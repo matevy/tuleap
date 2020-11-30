@@ -18,59 +18,71 @@
   -->
 
 <template>
-    <div class="tlp-dropdown-menu document-dropdown-menu"
-         v-bind:class="{
-             'tlp-dropdown-menu-large tlp-dropdown-menu-top': isInFolderEmptyState,
-             'tlp-dropdown-menu-right': isInQuickLookMode
-         }"
-         role="menu"
+    <div
+        class="tlp-dropdown-menu document-dropdown-menu"
+        v-bind:class="{
+            'tlp-dropdown-menu-large tlp-dropdown-menu-top': isInFolderEmptyState,
+            'tlp-dropdown-menu-right': isInQuickLookMode,
+        }"
+        role="menu"
     >
-        <slot name="new-folder-secondary-action"/>
+        <slot name="new-folder-secondary-action" />
 
-        <slot name="new-item-version"/>
-        <slot name="new-document"/>
+        <slot name="new-item-version" />
+        <slot name="new-document" />
 
-        <slot name="lock-item"/>
-        <slot name="unlock-item"/>
+        <slot name="lock-item" />
+        <slot name="unlock-item" />
 
-        <slot name="display-item-title-separator"/>
-        <slot name="display-item-title"/>
+        <slot name="display-item-title-separator" />
+        <slot name="display-item-title" />
 
-        <slot name="update-properties"/>
+        <slot name="update-properties" />
 
-        <a v-bind:href="getUrlForPane(NOTIFS_PANE_NAME)" class="tlp-dropdown-menu-item" role="menuitem">
-            <i class="fa fa-fw fa-bell-o tlp-dropdown-menu-item-icon"></i>
-            <span v-translate>
-                Notifications
-            </span>
-        </a>
-        <a v-bind:href="getUrlForPane(HISTORY_PANE_NAME)" class="tlp-dropdown-menu-item" role="menuitem">
-            <i class="fa fa-fw fa-history tlp-dropdown-menu-item-icon"></i>
-            <span v-translate>
-                History
-            </span>
-        </a>
-        <slot name="update-permissions"/>
-        <a v-if="! is_item_an_empty_document(item)"
-           v-bind:href="getUrlForPane(APPROVAL_TABLES_PANE_NAME)"
-           class="tlp-dropdown-menu-item"
-           role="menuitem"
-           data-test="document-dropdown-approval-tables"
+        <a
+            v-bind:href="getUrlForPane(NOTIFS_PANE_NAME)"
+            class="tlp-dropdown-menu-item"
+            role="menuitem"
         >
-            <i class="fa fa-fw fa-check-square-o tlp-dropdown-menu-item-icon"></i>
-            <span v-translate>
-                Approval tables
-            </span>
+            <i class="far fa-fw fa-bell tlp-dropdown-menu-item-icon"></i>
+            <span v-translate>Notifications</span>
+        </a>
+        <a
+            v-bind:href="getUrlForPane(HISTORY_PANE_NAME)"
+            class="tlp-dropdown-menu-item"
+            role="menuitem"
+        >
+            <i class="fa fa-fw fa-history tlp-dropdown-menu-item-icon"></i>
+            <span v-translate>History</span>
+        </a>
+        <slot name="update-permissions" />
+        <a
+            v-if="!is_item_an_empty_document(item)"
+            v-bind:href="getUrlForPane(APPROVAL_TABLES_PANE_NAME)"
+            class="tlp-dropdown-menu-item"
+            role="menuitem"
+            data-test="document-dropdown-approval-tables"
+        >
+            <i class="far fa-fw fa-check-square tlp-dropdown-menu-item-icon"></i>
+            <span v-translate>Approval tables</span>
         </a>
 
-        <drop-down-separator/>
+        <drop-down-separator />
 
-        <cut-item v-bind:item="item"/>
-        <copy-item v-bind:item="item"/>
-        <paste-item v-bind:destination="item"/>
+        <cut-item v-bind:item="item" />
+        <copy-item v-bind:item="item" />
+        <paste-item v-bind:destination="item" />
 
-        <slot name="delete-item-separator" v-if="is_deletion_allowed"/>
-        <slot name="delete-item"/>
+        <template v-if="is_item_a_folder(item)">
+            <drop-down-separator />
+            <download-folder-as-zip
+                data-test="document-dropdown-download-folder-as-zip"
+                v-bind:item="item"
+            />
+        </template>
+
+        <slot name="delete-item-separator" v-if="is_deletion_allowed" />
+        <slot name="delete-item" />
     </div>
 </template>
 <script>
@@ -79,6 +91,7 @@ import CutItem from "./CutItem.vue";
 import CopyItem from "./CopyItem.vue";
 import PasteItem from "./PasteItem.vue";
 import DropDownSeparator from "./DropDownSeparator.vue";
+import DownloadFolderAsZip from "./DownloadFolderAsZip/DownloadFolderAsZip.vue";
 
 export default {
     name: "DropDownMenu",
@@ -86,32 +99,31 @@ export default {
         DropDownSeparator,
         CutItem,
         CopyItem,
-        PasteItem
+        PasteItem,
+        DownloadFolderAsZip,
     },
     props: {
         isInFolderEmptyState: Boolean,
         isInQuickLookMode: Boolean,
         hideItemTitle: Boolean,
         hideDetailsEntry: Boolean,
-        item: Object
+        item: Object,
     },
     data() {
         return {
             NOTIFS_PANE_NAME: "notifications",
             HISTORY_PANE_NAME: "history",
-            APPROVAL_TABLES_PANE_NAME: "approval"
+            APPROVAL_TABLES_PANE_NAME: "approval",
         };
     },
     computed: {
         ...mapState(["project_id", "is_deletion_allowed"]),
-        ...mapGetters(["is_item_an_empty_document"])
+        ...mapGetters(["is_item_an_empty_document", "is_item_a_folder"]),
     },
     methods: {
         getUrlForPane(pane_name) {
-            return `/plugins/docman/?group_id=${this.project_id}&id=${
-                this.item.id
-            }&action=details&section=${pane_name}`;
-        }
-    }
+            return `/plugins/docman/?group_id=${this.project_id}&id=${this.item.id}&action=details&section=${pane_name}`;
+        },
+    },
 };
 </script>

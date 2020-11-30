@@ -18,16 +18,17 @@
   -->
 
 <template>
-    <a
+    <button
         v-if="can_unlock_document"
         class="tlp-dropdown-menu-item"
+        type="button"
         role="menuitem"
         data-test="document-dropdown-menu-unlock-item"
         v-on:click.prevent="unlockDocument"
     >
         <i class="fa fa-fw fa-unlock tlp-dropdown-menu-item-icon"></i>
         <translate>Unlock</translate>
-    </a>
+    </button>
 </template>
 
 <script>
@@ -35,7 +36,7 @@ import { mapState } from "vuex";
 export default {
     name: "UnlockItem",
     props: {
-        item: Object
+        item: Object,
     },
     computed: {
         ...mapState(["user_id"]),
@@ -45,12 +46,12 @@ export default {
             }
 
             return this.item.user_can_write;
-        }
+        },
     },
     methods: {
         async unlockDocument() {
             await this.$store.dispatch("unlockDocument", this.item);
-        }
-    }
+        },
+    },
 };
 </script>

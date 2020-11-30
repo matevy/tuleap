@@ -18,7 +18,7 @@
  */
 
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import localVue from "../../../../helpers/local-vue.js";
 import OtherInformationMetadataForUpdate from "./OtherInformationMetadataForUpdate.vue";
 import { TYPE_FILE } from "../../../../constants.js";
@@ -36,30 +36,31 @@ describe("OtherInformationMetadataForUpdate", () => {
             return shallowMount(OtherInformationMetadataForUpdate, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
     describe("Custom metadata", () => {
         it(`Given custom component are loading
-        Then it displays spinner`, () => {
+        Then it displays spinner`, async () => {
             const wrapper = other_metadata({
                 currentlyUpdatedItem: {
                     metadata: [],
                     status: 100,
                     type: TYPE_FILE,
-                    title: "title"
+                    title: "title",
                 },
                 metadataToUpdate: [],
-                value: ""
+                value: "",
             });
 
             store.state = {
                 is_obsolescence_date_metadata_used: true,
                 metadata: {
-                    has_loaded_metadata: false
-                }
+                    has_loaded_metadata: false,
+                },
             };
+            await wrapper.vm.$nextTick();
 
             expect(wrapper.find("[data-test=document-other-information]").exists()).toBeTruthy();
             expect(
@@ -69,7 +70,7 @@ describe("OtherInformationMetadataForUpdate", () => {
 
         it("Load project metadata at first load", async () => {
             store.state.metadata = {
-                has_loaded_metadata: false
+                has_loaded_metadata: false,
             };
 
             const wrapper = other_metadata({
@@ -77,14 +78,14 @@ describe("OtherInformationMetadataForUpdate", () => {
                     metadata: [],
                     status: 100,
                     type: TYPE_FILE,
-                    title: "title"
+                    title: "title",
                 },
                 metadataToUpdate: [],
-                value: ""
+                value: "",
             });
 
             EventBus.$emit("show-new-document-modal", {
-                detail: { parent: store.state.current_folder }
+                detail: { parent: store.state.current_folder },
             });
             await wrapper.vm.$nextTick().then(() => {});
 
@@ -94,29 +95,30 @@ describe("OtherInformationMetadataForUpdate", () => {
 
     describe("Other information display", () => {
         it(`Given obsolescence date is enabled for project
-            Then we should display the obsolescence date component`, () => {
+            Then we should display the obsolescence date component`, async () => {
             const wrapper = other_metadata({
                 currentlyUpdatedItem: {
                     metadata: [
                         {
                             short_name: "obsolescence_date",
-                            value: null
-                        }
+                            value: null,
+                        },
                     ],
                     obsolescence_date: null,
                     type: TYPE_FILE,
-                    title: "title"
+                    title: "title",
                 },
                 metadataToUpdate: [],
-                value: ""
+                value: "",
             });
 
             store.state = {
                 is_obsolescence_date_metadata_used: true,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
+            await wrapper.vm.$nextTick();
 
             expect(wrapper.find("[data-test=document-other-information]").exists()).toBeTruthy();
         });
@@ -130,26 +132,26 @@ describe("OtherInformationMetadataForUpdate", () => {
                             short_name: "field_1234",
                             list_value: [
                                 {
-                                    id: 103
-                                }
+                                    id: 103,
+                                },
                             ],
                             type: "list",
-                            is_multiple_value_allowed: false
-                        }
+                            is_multiple_value_allowed: false,
+                        },
                     ],
                     status: 100,
                     type: TYPE_FILE,
-                    title: "title"
+                    title: "title",
                 },
                 metadataToUpdate: [{ id: 1 }],
-                value: ""
+                value: "",
             });
 
             store.state = {
                 is_obsolescence_date_metadata_used: false,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             expect(wrapper.find("[data-test=document-other-information]").exists()).toBeTruthy();
@@ -162,17 +164,17 @@ describe("OtherInformationMetadataForUpdate", () => {
                     metadata: [],
                     status: 100,
                     type: TYPE_FILE,
-                    title: "title"
+                    title: "title",
                 },
                 metadataToUpdate: [],
-                value: ""
+                value: "",
             });
 
             store.state = {
                 is_obsolescence_date_metadata_used: false,
                 metadata: {
-                    has_loaded_metadata: true
-                }
+                    has_loaded_metadata: true,
+                },
             };
 
             expect(wrapper.find("[data-test=document-other-information]").exists()).toBeFalsy();

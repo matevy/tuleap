@@ -33,7 +33,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Http\Adapter\Guzzle6\Client;
+use Http\Adapter\Guzzle7\Client;
 
 class GerritSetupCommand extends Command
 {
@@ -45,8 +45,8 @@ class GerritSetupCommand extends Command
             ->addOption('gerrit-admin-login', 'u', InputOption::VALUE_OPTIONAL, 'Login name of gerrit administrator (eg. gerrit-admin)', 'gerrit-admin')
             ->addOption('tuleap-server', '', InputOption::VALUE_OPTIONAL, 'Tuleap server name', 'tuleap-web.tuleap-aio-dev.docker')
             ->addOption('gerrit-uri', '', InputOption::VALUE_OPTIONAL, 'Gerrit server URI', 'http://gerrit.tuleap-aio-dev.docker:8080')
-            ->addOption('ssh-private-key-path', '', InputOption::VALUE_OPTIONAL, 'Where is stored the codendiadm ssh private key for gerrit', '/home/codendiadm/.ssh/id_rsa-gerrit')
-            ->addOption('ssh-public-key-path', '', InputOption::VALUE_OPTIONAL, 'Where is stored the codendiadm ssh public key for gerrit', '/home/codendiadm/.ssh/id_rsa-gerrit.pub');
+            ->addOption('ssh-private-key-path', '', InputOption::VALUE_OPTIONAL, 'Where is stored the codendiadm ssh private key for gerrit', '/var/lib/tuleap/.ssh/id_rsa-gerrit')
+            ->addOption('ssh-public-key-path', '', InputOption::VALUE_OPTIONAL, 'Where is stored the codendiadm ssh public key for gerrit', '/var/lib/tuleap/.ssh/id_rsa-gerrit.pub');
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -75,6 +75,8 @@ class GerritSetupCommand extends Command
         $this->pushReplicationGroup($input, $output, $message_factory, $gerrit_server, $plugin_client);
         $this->pushAdminPermissions($output, $message_factory, $gerrit_server, $plugin_client);
         $this->pairWithGerritServer($input, $output, $gerrit_server);
+
+        return 0;
     }
 
     private function firstLogin(
@@ -88,7 +90,7 @@ class GerritSetupCommand extends Command
             'POST',
             $gerrit_server . '/login',
             ['Content-type' => 'application/x-www-form-urlencoded'],
-            'username='.urlencode($input->getOption('gerrit-admin-login')).'&password='.urlencode($input->getOption('gerrit-admin-password'))
+            'username=' . urlencode($input->getOption('gerrit-admin-login')) . '&password=' . urlencode($input->getOption('gerrit-admin-password'))
         );
         $response = $client->sendRequest($request);
         if ($response->getStatusCode() !== 302) {
@@ -99,15 +101,15 @@ class GerritSetupCommand extends Command
         $output->writeln("First Login successful");
     }
 
-    private function generateSSHKey(InputInterface $input, OutputInterface $output) : void
+    private function generateSSHKey(InputInterface $input, OutputInterface $output): void
     {
         $ssh_key_path = $input->getOption('ssh-private-key-path');
         if (! file_exists($ssh_key_path)) {
             $cmd_output = [];
             $return_value = -1;
-            exec('ssh-keygen -P "" -f '.escapeshellarg($ssh_key_path), $output_cmd, $return_value);
+            exec('ssh-keygen -P "" -f ' . escapeshellarg($ssh_key_path), $output_cmd, $return_value);
             if ($return_value !== 0) {
-                throw new RuntimeException('Unable to generate ssh key '.$ssh_key_path.': '.implode(PHP_EOL, $cmd_output));
+                throw new RuntimeException('Unable to generate ssh key ' . $ssh_key_path . ': ' . implode(PHP_EOL, $cmd_output));
             }
             $output->writeln('SSH key for Tuleap -> Gerrit connexion generated');
         }
@@ -167,7 +169,6 @@ class GerritSetupCommand extends Command
         string $gerrit_server,
         ClientInterface $plugin_client
     ): void {
-
         $admin_group_uuid = $this->getAdministratorGroupUUID($message_factory, $gerrit_server, $plugin_client);
         $permission = [
             'add' => [
@@ -226,9 +227,9 @@ class GerritSetupCommand extends Command
         $output->writeln("Permissions on All-Projects updated");
     }
 
-    private function getAdministratorGroupUUID(MessageFactory $message_factory, string $gerrit_server, ClientInterface $plugin_client) : string
+    private function getAdministratorGroupUUID(MessageFactory $message_factory, string $gerrit_server, ClientInterface $plugin_client): string
     {
-        $request  = $message_factory->createRequest('GET', $gerrit_server.'/a/groups/Administrators');
+        $request  = $message_factory->createRequest('GET', $gerrit_server . '/a/groups/Administrators');
         $response = $plugin_client->sendRequest($request);
         if ($response->getStatusCode() !== 200) {
             throw new RuntimeException(
@@ -240,7 +241,7 @@ class GerritSetupCommand extends Command
         return $group['id'];
     }
 
-    private function getJsonFromResponse(string $body) : array
+    private function getJsonFromResponse(string $body): array
     {
         return json_decode(substr($body, 5), true);
     }
@@ -273,13 +274,13 @@ class GerritSetupCommand extends Command
         $cmd_output = [];
         $return_value = -1;
         exec(
-            'ssh -i ' . escapeshellarg($input->getOption('ssh-private-key-path')) . ' -oStrictHostKeyChecking=no -p 29418 ' . escapeshellarg($input->getOption('gerrit-admin-login') . '@'.$url_parts['host']) . ' gerrit version',
+            'ssh -i ' . escapeshellarg($input->getOption('ssh-private-key-path')) . ' -oStrictHostKeyChecking=no -p 29418 ' . escapeshellarg($input->getOption('gerrit-admin-login') . '@' . $url_parts['host']) . ' gerrit version',
             $cmd_output,
             $return_value
         );
         if ($return_value !== 0) {
-            throw new RuntimeException('Unable to connect to gerrit via ssh '.implode(PHP_EOL, $cmd_output));
+            throw new RuntimeException('Unable to connect to gerrit via ssh ' . implode(PHP_EOL, $cmd_output));
         }
-        $output->writeln('SSH connection done with '.$cmd_output[0]);
+        $output->writeln('SSH connection done with ' . $cmd_output[0]);
     }
 }

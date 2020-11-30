@@ -45,14 +45,11 @@ final class PluginLegacyController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
-     * @return void
      * @throws ForbiddenException
      * @throws NotFoundException
      */
-    public function process(HTTPRequest $request, BaseLayout $layout, array $variables) : void
+    public function process(HTTPRequest $request, BaseLayout $layout, array $variables): void
     {
         ServiceInstrumentation::increment($this->plugin->getName());
         $this->plugin->process();

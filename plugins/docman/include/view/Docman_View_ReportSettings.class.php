@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © Enalean, 2011 - 2018. All Rights Reserved.
+ * Copyright © Enalean, 2011 - Present. All Rights Reserved.
  * Copyright(c) STMicroelectronics, 2007
  *
  * Originally written by Manuel VACELET, STMicroelectronics, 2007
@@ -22,22 +22,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-require_once('Docman_View_Extra.class.php');
-
 class Docman_View_ReportSettings extends Docman_View_Extra
 {
-    var $groupId;
-    var $defaultUrl;
-    var $controller;
+    public $groupId;
+    public $defaultUrl;
+    public $controller;
 
-    function _title($params)
+    public function _title($params)
     {
         $request = HTTPRequest::instance();
         $hp = Codendi_HTMLPurifier::instance();
         if ($request->exist('report_id')) {
-            echo '<h2>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_name').' "'. $hp->purify($params['filter']->getName(), CODENDI_PURIFIER_CONVERT_HTML) .'"</h2>';
+            echo '<h2 class="project-header-title">' . dgettext('tuleap-docman', 'Report') . ' "' . $hp->purify($params['filter']->getName(), CODENDI_PURIFIER_CONVERT_HTML) . '"</h2>';
         } else {
-            echo '<h2>'. $GLOBALS['Language']->getText('plugin_docman', 'report_settings_title') .'</h2>';
+            echo '<h2 class="project-header-title">' . dgettext('tuleap-docman', 'Search report administration') . '</h2>';
         }
     }
 
@@ -48,7 +46,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         $this->controller  = $params['docman'];
     }
 
-    function _getReportTableContent($reportIter, $isAdmin, &$altRowClass)
+    public function _getReportTableContent($reportIter, $isAdmin, &$altRowClass)
     {
         $hp = Codendi_HTMLPurifier::instance();
         $html = '';
@@ -56,24 +54,32 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         while ($reportIter->valid()) {
             $r = $reportIter->current();
             $trclass = html_get_alt_row_color($altRowClass++);
-            $html .=  '<tr class="'.$trclass.'">';
+            $html .=  '<tr class="' . $trclass . '">';
 
             // Name
-            $rUrl  = $this->defaultUrl.'&action=report_settings&report_id='.$r->getId();
-            $rName = '<a href="'.$rUrl.'">'. $hp->purify($r->getName(), CODENDI_PURIFIER_CONVERT_HTML) .'</a>';
-            $html .= '<td align="left">'.$rName.'</td>';
+            $rUrl  = $this->defaultUrl . '&action=report_settings&report_id=' . $r->getId();
+            $rName = '<a href="' . $rUrl . '">' . $hp->purify($r->getName(), CODENDI_PURIFIER_CONVERT_HTML) . '</a>';
+            $html .= '<td align="left">' . $rName . '</td>';
 
             // Scope
-            $scopeName = $GLOBALS['Language']->getText('plugin_docman', 'report_scope_'.$r->getScope());
-            $html .= '<td align="center">'.$scopeName.'</td>';
+            $html .= '<td align="center">';
+            switch ($r->getScope()) {
+                case 'I':
+                    $html .= dgettext('tuleap-docman', 'Personal');
+                    break;
+                case 'P':
+                    $html .= dgettext('tuleap-docman', 'Project');
+                    break;
+            }
+            $html .= '</td>';
 
             // Delete
-            $trashLink = $this->defaultUrl.'&action=report_del&report_id='.$r->getId();
-            $trashWarn = $GLOBALS['Language']->getText('plugin_docman', 'report_settings_delete', $hp->purify(addslashes($r->getName()), CODENDI_PURIFIER_CONVERT_HTML));
-            $trashAlt  = $GLOBALS['Language']->getText('plugin_docman', 'report_settings_delete_alt', $hp->purify($r->getName(), CODENDI_PURIFIER_CONVERT_HTML));
-            $delUrl = $this->defaultUrl.'&action=report_del&report_id='.$r->getId();
+            $trashLink = $this->defaultUrl . '&action=report_del&report_id=' . $r->getId();
+            $trashWarn = sprintf(dgettext('tuleap-docman', 'Are your sure you want to delete report \'%1$s\'?'), $hp->purify(addslashes($r->getName()), CODENDI_PURIFIER_CONVERT_HTML));
+            $trashAlt  = sprintf(dgettext('tuleap-docman', 'Delete report \'%1$s\''), $hp->purify($r->getName(), CODENDI_PURIFIER_CONVERT_HTML));
+            $delUrl = $this->defaultUrl . '&action=report_del&report_id=' . $r->getId();
             $delName = html_trash_link($trashLink, $trashWarn, $trashAlt);
-            $html .= '<td align="center">'.$delName.'</td>';
+            $html .= '<td align="center">' . $delName . '</td>';
 
             $html .= "</tr>\n";
             $reportIter->next();
@@ -81,7 +87,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         return $html;
     }
 
-    function _getReportTable()
+    public function _getReportTable()
     {
         $html = '';
 
@@ -90,9 +96,9 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         $dpm  = Docman_PermissionsManager::instance($this->groupId);
         $isAdmin = $dpm->userCanAdmin($user);
 
-        $html .= html_build_list_table_top(array($GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_name'),
-                                                 $GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_scope'),
-                                                 $GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_delete'),));
+        $html .= html_build_list_table_top([dgettext('tuleap-docman', 'Report'),
+                                                 dgettext('tuleap-docman', 'Scope:'),
+                                                 dgettext('tuleap-docman', 'Delete'),]);
 
         $reportFactory = new Docman_ReportFactory($this->groupId);
 
@@ -109,7 +115,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         return $html;
     }
 
-    function _getReportSettings($reportId)
+    public function _getReportSettings($reportId)
     {
         $html = '';
 
@@ -121,25 +127,27 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         $reportFactory = new Docman_ReportFactory($this->groupId);
         $r = $reportFactory->getReportById($reportId);
 
-        if ($r != null
-           && $r->getGroupId() == $this->groupId) {
-            $txts = array($GLOBALS['Language']->getText('plugin_docman', 'report_scope_I'),
-                          $GLOBALS['Language']->getText('plugin_docman', 'report_scope_P'));
-            $vals = array('I', 'P');
+        if (
+            $r != null
+            && $r->getGroupId() == $this->groupId
+        ) {
+            $txts = [dgettext('tuleap-docman', 'Personal'),
+                          dgettext('tuleap-docman', 'Project')];
+            $vals = ['I', 'P'];
 
-            $html .= '<p>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_info').'</p>';
+            $html .= '<p>' . dgettext('tuleap-docman', 'You can customize your report by adding text and an image. Note: an image is just a reference on any valid image available in documentation manager (across projects).') . '</p>';
 
             $html .= '<form name="docman_report_update" method="post" action="?" class="docman_form">';
-            $html .= '<input type="hidden" name="group_id" value="'.$this->groupId.'">';
+            $html .= '<input type="hidden" name="group_id" value="' . $this->groupId . '">';
             $html .= '<input type="hidden" name="action" value="report_upd">';
-            $html .= '<input type="hidden" name="report_id" value="'.$r->getId().'">';
+            $html .= '<input type="hidden" name="report_id" value="' . $r->getId() . '">';
 
             $html .= '<table>';
 
             // Scope
             if ($dpm->userCanAdmin($user)) {
                 $html .= '<tr>';
-                $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_scope').'</td>';
+                $html .= '<td>' . dgettext('tuleap-docman', 'Scope:') . '</td>';
                 $html .= '<td>';
                 $html .= html_build_select_box_from_arrays($vals, $txts, 'scope', $r->getScope(), false);
                 $html .= '</td>';
@@ -148,9 +156,9 @@ class Docman_View_ReportSettings extends Docman_View_Extra
 
             // Description
             $html .= '<tr>';
-            $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_description').'</td>';
+            $html .= '<td>' . dgettext('tuleap-docman', 'Description:') . '</td>';
             $html .= '<td>';
-            $html .= '<textarea name="description">'.$r->getDescription().'</textarea>';
+            $html .= '<textarea name="description">' . $r->getDescription() . '</textarea>';
             $html .= '</td>';
             $html .= '</tr>';
 
@@ -160,9 +168,9 @@ class Docman_View_ReportSettings extends Docman_View_Extra
                 $title = $r->getTitle();
             }
             $html .= '<tr>';
-            $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_title').'</td>';
+            $html .= '<td>' . dgettext('tuleap-docman', 'Title:') . '</td>';
             $html .= '<td>';
-            $html .= '<input type="text" name="title" value="'.$title.'" class="text_field" />';
+            $html .= '<input type="text" name="title" value="' . $title . '" class="text_field" />';
             $html .= '</td>';
             $html .= '</tr>';
 
@@ -172,17 +180,17 @@ class Docman_View_ReportSettings extends Docman_View_Extra
                 $image = $r->getImage();
             }
             $html .= '<tr>';
-            $html .= '<td>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_image').'</td>';
+            $html .= '<td>' . dgettext('tuleap-docman', 'Image Id:') . '</td>';
             $html .= '<td>';
-            $html .= '<input type="text" name="image" value="'.$image.'" />';
-            $html .= ' '.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_image_help');
+            $html .= '<input type="text" name="image" value="' . $image . '" />';
+            $html .= ' ' . dgettext('tuleap-docman', 'Refer to a document id available in the document manager (Warning: <strong>permissions apply</strong>).');
             $html .= '</td>';
             $html .= '</tr>';
 
             // Current image
             $html .= '<tr>';
             $html .= '<td>';
-            $html .= $GLOBALS['Language']->getText('plugin_docman', 'report_settings_report_image_current');
+            $html .= dgettext('tuleap-docman', 'Current image:');
             $html .= '</td>';
             $reportHtml = new Docman_ReportHtml($r, $this, $this->defaultUrl);
             $html .= '<td>';
@@ -193,7 +201,7 @@ class Docman_View_ReportSettings extends Docman_View_Extra
             // Submit
             $html .= '<tr>';
             $html .= '<td colspan="2">';
-            $html .= '<input type="submit" name="sub" value="'.$GLOBALS['Language']->getText('global', 'btn_update').'">';
+            $html .= '<input type="submit" name="sub" value="' . $GLOBALS['Language']->getText('global', 'btn_update') . '">';
             $html .= '</td>';
             $html .= '</tr>';
 
@@ -205,32 +213,32 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         return $html;
     }
 
-    function _getImportForm()
+    public function _getImportForm()
     {
-        $GLOBALS['HTML']->includeFooterJavascriptSnippet("new ProjectAutoCompleter('import_search_report_from_group', '".util_get_dir_image_theme()."', false);");
+        $GLOBALS['HTML']->includeFooterJavascriptSnippet("new ProjectAutoCompleter('import_search_report_from_group', '" . util_get_dir_image_theme() . "', false);");
 
         $html = '';
 
         $html .= '<form name="docman_report_import" method="post" action="?">';
-        $html .= '<input type="hidden" name="group_id" value="'.$this->groupId.'">';
+        $html .= '<input type="hidden" name="group_id" value="' . $this->groupId . '">';
         $html .= '<input type="hidden" name="action" value="report_import">';
 
         $html .= '<table border="0">';
 
         // Select project
         $html .= '<tr>';
-        $html .= '<td valign="top">'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_sel_prj').'</td>';
+        $html .= '<td valign="top">' . dgettext('tuleap-docman', 'Project:') . '</td>';
         // Group id selector
         $html .= '<td>';
         $html .= '<input type="text" id="import_search_report_from_group" name="import_search_report_from_group" size="60" value="';
-        $html .= $GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_sel_prj_hint');
+        $html .= dgettext('tuleap-docman', 'Enter project short name or identifier here.');
         $html .= '" />';
         $html .= '</td>';
         $html .= '</tr>';
 
         // Select report
         $html .= '<tr>';
-        $html .= '<td valign="top">'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_sel_rpt').'('.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_sel_rpt_id').')'.'</td>';
+        $html .= '<td valign="top">' . dgettext('tuleap-docman', 'Report:') . '(' . dgettext('tuleap-docman', 'report_id') . ')' . '</td>';
         $html .= '<td>';
         $html .= '<input type="text" name="import_report_id" value="" />';
         $html .= '</td>';
@@ -239,13 +247,13 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         $html .= '</table>';
 
         // Submit
-        $html .= '<input type="submit" name="submit" value="'.$GLOBALS['Language']->getText('global', 'btn_create').'">';
+        $html .= '<input type="submit" name="submit" value="' . $GLOBALS['Language']->getText('global', 'btn_create') . '">';
         $html .= '</form>';
 
         return $html;
     }
 
-    function _content($params)
+    public function _content($params)
     {
         $html = '';
 
@@ -258,13 +266,13 @@ class Docman_View_ReportSettings extends Docman_View_Extra
         } else {
             // Default screen
             // Personal and project report list
-            $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_table_title').'</h3>';
-            $html .= '<p>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_table_intro').'</p>';
+            $html .= '<h3>' . dgettext('tuleap-docman', 'Report list') . '</h3>';
+            $html .= '<p>' . dgettext('tuleap-docman', 'You can modify the settings of the report you already saved for this project.') . '</p>';
             $html .= $this->_getReportTable();
 
             // Import from another project
-            $html .= '<h3>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_title').'</h3>';
-            $html .= '<p>'.$GLOBALS['Language']->getText('plugin_docman', 'report_settings_import_intro').'</p>';
+            $html .= '<h3>' . dgettext('tuleap-docman', 'Import reports from another project.') . '</h3>';
+            $html .= '<p>' . dgettext('tuleap-docman', 'You can import in this project a report defined in another project (either your \'Personal\' reports or any \'Project\' wide). The import only works if properties and values are the same in the two projects (same name, case sensitive). The import will work as best by trying to import as much as possible.') . '</p>';
             $html .= $this->_getImportForm();
         }
 

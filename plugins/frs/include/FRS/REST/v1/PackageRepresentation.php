@@ -24,6 +24,9 @@ use FRSPackage;
 use Project;
 use Tuleap\Project\REST\ProjectReference;
 
+/**
+ * @psalm-immutable
+ */
 class PackageRepresentation extends PackageMinimalRepresentation
 {
     /**
@@ -41,19 +44,18 @@ class PackageRepresentation extends PackageMinimalRepresentation
      */
     public $permissions_for_groups;
 
-    public function buildFullRepresentation(FRSPackage $package, Project $project, ?PermissionsForGroupsRepresentation $permissions_for_groups)
+    public function __construct(FRSPackage $package, Project $project, ?PermissionsForGroupsRepresentation $permissions_for_groups)
     {
-        $this->build($package);
+        parent::__construct($package);
 
-        $this->project = new ProjectReference();
-        $this->project->build($project);
+        $this->project = new ProjectReference($project);
 
         $this->permissions_for_groups = $permissions_for_groups;
 
-        $this->resources = array(
-            'releases' => array(
-                'uri' => $this->uri .'/'. ReleaseRepresentation::ROUTE
-            )
-        );
+        $this->resources = [
+            'releases' => [
+                'uri' => $this->uri . '/' . ReleaseRepresentation::ROUTE
+            ]
+        ];
     }
 }

@@ -23,9 +23,9 @@ class Docman_View_Extra extends Docman_View_Docman
 {
     protected function addDocmanTool($params, &$toolbar)
     {
-        $toolbar[] = array(
-            'title' => $GLOBALS['Language']->getText('plugin_docman', 'toolbar_docman'),
+        $toolbar[] = [
+            'title' => dgettext('tuleap-docman', 'Project Documentation'),
             'url'   => $params['default_url']
-        );
+        ];
     }
 }

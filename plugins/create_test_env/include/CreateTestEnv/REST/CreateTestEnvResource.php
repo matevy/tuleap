@@ -23,6 +23,7 @@ namespace Tuleap\CreateTestEnv\REST;
 
 use Tuleap\CreateTestEnv\Exception\InvalidPasswordException;
 use Tuleap\CreateTestEnv\Notifier;
+use Tuleap\Cryptography\ConcealedString;
 use Tuleap\Password\PasswordSanityChecker;
 use Tuleap\REST\Header;
 use Tuleap\CreateTestEnv\NotificationBotDao;
@@ -69,7 +70,7 @@ class CreateTestEnvResource
      * @throws RestException 400 Invalid request
      * @throws RestException 500 Server error
      */
-    public function post($secret, $firstname, $lastname, $email, $login, $password, $archive)
+    public function post($secret, $firstname, $lastname, $email, $login, string $password, $archive)
     {
         $tmp_name = null;
         try {
@@ -81,22 +82,24 @@ class CreateTestEnvResource
                 PasswordSanityChecker::build(),
                 $tmp_name
             );
-            $test_env->main($firstname, $lastname, $email, $login, $password, $archive);
+            $test_env->main($firstname, $lastname, $email, $login, new ConcealedString($password), $archive);
+            sodium_memzero($password);
 
             return (new TestEnvironmentRepresentation())->build(
                 $test_env->getProject(),
                 \HTTPRequest::instance()->getServerUrl()
             );
         } catch (InvalidPasswordException $exception) {
-            $this->notifier->notify('Client error at environment creation: '.$exception->getMessage());
+            $this->notifier->notify('Client error at environment creation: ' . $exception->getMessage());
             throw new RestException(400, $exception->getMessage(), ['exception' => get_class($exception), 'password_exceptions' => $exception->getPasswordErrors()]);
         } catch (InvalidInputException $exception) {
-            $this->notifier->notify('Client error at environment creation: '.$exception->getMessage());
+            $this->notifier->notify('Client error at environment creation: ' . $exception->getMessage());
             throw new RestException(400, $exception->getMessage(), ['exception' => get_class($exception)]);
         } catch (CreateTestEnvException $exception) {
-            $this->notifier->notify('Server error at environment creation: '.$exception->getMessage());
+            $this->notifier->notify('Server error at environment creation: ' . $exception->getMessage());
             throw new RestException(500, $exception->getMessage(), ['exception' => get_class($exception)]);
         } finally {
+            $this->cleanUpTempDir($tmp_name . '/data');
             $this->cleanUpTempDir($tmp_name);
         }
     }
@@ -144,7 +147,7 @@ class CreateTestEnvResource
      */
     private function getSecret()
     {
-        $path = $this->getPlugin()->getPluginEtcRoot().'/creation_secret';
+        $path = $this->getPlugin()->getPluginEtcRoot() . '/creation_secret';
         if (! file_exists($path)) {
             $random = (new \RandomNumberGenerator(32))->getNumber();
             touch($path);

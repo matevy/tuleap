@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -25,33 +25,23 @@ use GitRepository;
 use GitRepositoryFactory;
 use Luracast\Restler\RestException;
 use ProjectManager;
+use Psr\Log\LoggerInterface;
 use ReferenceManager;
 use Tuleap\Git\Gitolite\GitoliteAccessURLGenerator;
-use Tuleap\Git\Permissions\AccessControlVerifier;
-use Tuleap\Git\Permissions\FineGrainedDao;
-use Tuleap\Git\Permissions\FineGrainedRetriever;
 use Tuleap\PullRequest\Dao as PullRequestDao;
 use Tuleap\PullRequest\Exception\MalformedQueryParameterException;
 use Tuleap\PullRequest\Factory as PullRequestFactory;
-use Tuleap\PullRequest\Logger;
-use UserManager;
 
 class RepositoryResource
 {
-    /** @var AccessControlVerifier */
-    private $access_control_verifier;
-
-    /** @var Tuleap\PullRequest\Dao */
+    /** @var \Tuleap\PullRequest\Dao */
     private $pull_request_dao;
 
-    /** @var Tuleap\PullRequest\Factory */
+    /** @var \Tuleap\PullRequest\Factory */
     private $pull_request_factory;
 
     /** @var GitRepositoryFactory */
     private $git_repository_factory;
-
-    /** @var UserManager */
-    private $user_manager;
 
     /** @var QueryToCriterionConverter */
     private $query_to_criterion_converter;
@@ -62,7 +52,7 @@ class RepositoryResource
     private $gitolite_access_URL_generator;
 
     /**
-     * @var Tuleap\PullRequest\Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -74,18 +64,12 @@ class RepositoryResource
             new GitDao(),
             ProjectManager::instance()
         );
-        $this->user_manager                 = UserManager::instance();
         $this->query_to_criterion_converter = new QueryToCriterionConverter();
-
-        $this->access_control_verifier = new AccessControlVerifier(
-            new FineGrainedRetriever(new FineGrainedDao()),
-            new \System_Command()
-        );
 
         $git_plugin                          = \PluginFactory::instance()->getPluginByName('git');
         $this->gitolite_access_URL_generator = new GitoliteAccessURLGenerator($git_plugin->getPluginInfo());
 
-        $this->logger = new Logger();
+        $this->logger = \pullrequestPlugin::getLogger();
     }
 
     public function getPaginatedPullRequests(GitRepository $repository, $query, $limit, $offset)
@@ -99,7 +83,7 @@ class RepositoryResource
         $result     = $this->pull_request_dao->getPaginatedPullRequests($repository->getId(), $criterion, $limit, $offset);
         $total_size = (int) $this->pull_request_dao->foundRows();
 
-        $collection = array();
+        $collection = [];
         foreach ($result as $row) {
             $pull_request      = $this->pull_request_factory->getInstanceFromRow($row);
 
@@ -119,12 +103,6 @@ class RepositoryResource
             }
         }
 
-        $representation = new RepositoryPullRequestRepresentation();
-        $representation->build(
-            $collection,
-            $total_size
-        );
-
-        return $representation;
+        return new RepositoryPullRequestRepresentation($collection, $total_size);
     }
 }

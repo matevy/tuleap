@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -19,6 +19,7 @@
  */
 
 use Tuleap\AgileDashboard\Milestone\Pane\Details\DetailsPaneInfo;
+use Tuleap\AgileDashboard\Planning\Presenters\AlternativeBoardLinkPresenter;
 
 abstract class Planning_Presenter_MilestoneSummaryPresenterAbstract
 {
@@ -28,24 +29,29 @@ abstract class Planning_Presenter_MilestoneSummaryPresenterAbstract
     /** @var string */
     private $plugin_path;
 
-    /** @var string */
-    public $has_cardwall;
+    /**
+     * @var AlternativeBoardLinkPresenter|null
+     */
+    public $alternative_board_link;
 
-    public function __construct(Planning_Milestone $milestone, $plugin_path, $has_cardwall)
-    {
-        $this->milestone    = $milestone;
-        $this->plugin_path  = $plugin_path;
-        $this->has_cardwall = $has_cardwall;
+    public function __construct(
+        Planning_Milestone $milestone,
+        $plugin_path,
+        ?AlternativeBoardLinkPresenter $alternative_board_link
+    ) {
+        $this->milestone              = $milestone;
+        $this->plugin_path            = $plugin_path;
+        $this->alternative_board_link = $alternative_board_link;
     }
 
     public function content()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'details_pane_title');
+        return dgettext('tuleap-agiledashboard', 'Overview');
     }
 
     public function cardwall()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'cardwall');
+        return dgettext('tuleap-agiledashboard', 'Cardwall');
     }
 
     public function breadcrumbs()

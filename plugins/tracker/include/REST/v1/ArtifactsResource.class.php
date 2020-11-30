@@ -22,12 +22,11 @@ namespace Tuleap\Tracker\REST\v1;
 
 use EventManager;
 use FeedbackDao;
-use Log_NoopLogger;
 use Luracast\Restler\RestException;
 use PFUser;
 use Project_AccessException;
 use Project_AccessProjectNotFoundException;
-use Tracker_Artifact;
+use Psr\Log\NullLogger;
 use Tracker_Artifact_Attachment_AlreadyLinkedToAnotherArtifactException;
 use Tracker_Artifact_Attachment_FileNotFoundException;
 use Tracker_Artifact_Changeset as Changeset;
@@ -71,6 +70,7 @@ use Tuleap\Tracker\Action\MoveTitleSemanticChecker;
 use Tuleap\Tracker\Admin\ArtifactDeletion\ArtifactsDeletionConfig;
 use Tuleap\Tracker\Admin\ArtifactDeletion\ArtifactsDeletionConfigDAO;
 use Tuleap\Tracker\Admin\ArtifactsDeletion\UserDeletionRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\ArtifactsDeletion\ArtifactDeletionLimitRetriever;
 use Tuleap\Tracker\Artifact\ArtifactsDeletion\ArtifactDeletorBuilder;
 use Tuleap\Tracker\Artifact\ArtifactsDeletion\ArtifactsDeletionDAO;
@@ -87,18 +87,19 @@ use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
 use Tuleap\Tracker\FormElement\Field\ListFields\FieldValueMatcher;
 use Tuleap\Tracker\PermissionsFunctionsWrapper;
 use Tuleap\Tracker\REST\Artifact\ArtifactReference;
+use Tuleap\Tracker\REST\Artifact\ArtifactRepresentation;
 use Tuleap\Tracker\REST\Artifact\ArtifactRepresentationBuilder;
 use Tuleap\Tracker\REST\Artifact\MovedArtifactValueBuilder;
 use Tuleap\Tracker\REST\ChangesetCommentRepresentation;
+use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
 use Tuleap\Tracker\REST\FormElementRepresentationsBuilder;
 use Tuleap\Tracker\REST\MinimalTrackerRepresentation;
 use Tuleap\Tracker\REST\PermissionsExporter;
-use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
 use Tuleap\Tracker\REST\Tracker\PermissionsRepresentationBuilder;
 use Tuleap\Tracker\REST\TrackerReference;
 use Tuleap\Tracker\REST\v1\Event\ArtifactPartialUpdate;
-use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldDetector;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
@@ -111,7 +112,6 @@ use Tuleap\Tracker\XML\Updater\MoveChangesetXMLUpdater;
 use UserManager;
 use UserXMLExportedCollection;
 use UserXMLExporter;
-use Workflow_Transition_ConditionFactory;
 use XML_RNGValidator;
 use XML_SimpleXMLCDATAFactory;
 use XMLImportHelper;
@@ -216,9 +216,7 @@ class ArtifactsResource extends AuthenticatedResource
 
         $transition_retriever = new TransitionRetriever(
             new StateFactory(
-                new TransitionFactory(
-                    Workflow_Transition_ConditionFactory::build()
-                ),
+                TransitionFactory::instance(),
                 new SimpleWorkflowDao()
             ),
             new TransitionExtractor()
@@ -275,16 +273,18 @@ class ArtifactsResource extends AuthenticatedResource
      *
      * @url GET
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param string $query JSON object of search criteria properties {@from query}
      * @param int $limit Number of elements displayed per page {@from path}{@min 1}{@max 100}
      * @param int $offset Position of the first element to display {@from path}{@min 0}
      *
      * @return array
+     * @psalm-return array{"collection":ArtifactRepresentation[]}
      *
      * @throws RestException 403
      */
-    public function getArtifacts($query, $limit = self::MAX_ARTIFACT_BATCH, $offset = self::DEFAULT_OFFSET)
+    public function getArtifacts(string $query, int $limit = self::MAX_ARTIFACT_BATCH, int $offset = self::DEFAULT_OFFSET): array
     {
         $this->checkAccess();
 
@@ -298,39 +298,33 @@ class ArtifactsResource extends AuthenticatedResource
             throw new RestException(400, $ex->getMessage());
         }
         if (count($requested_artifact_ids) > 100) {
-            throw new RestException(403, 'No more than '. self::MAX_ARTIFACT_BATCH .' artifacts can be requested at once.');
+            throw new RestException(403, 'No more than ' . self::MAX_ARTIFACT_BATCH . ' artifacts can be requested at once.');
         }
 
         $user                     = $this->user_manager->getCurrentUser();
-        $artifact_representations = array();
+        $artifact_representations = [];
 
         $artifacts = $this->artifact_factory->getArtifactsByArtifactIdList(
             array_slice($requested_artifact_ids, $offset, $limit)
         );
 
-        if (! count($artifacts) > 0) {
+        if (! (count($artifacts) > 0)) {
             Header::sendPaginationHeaders($limit, $offset, count($requested_artifact_ids), self::MAX_ARTIFACT_BATCH);
-            return array(self::VALUES_FORMAT_COLLECTION => $artifact_representations);
+            return [self::VALUES_FORMAT_COLLECTION => $artifact_representations];
         }
-
-        $first_artifact = $artifacts[0];
-
-        ProjectStatusVerificator::build()->checkProjectStatusAllowsOnlySiteAdminToAccessIt(
-            $user,
-            $first_artifact->getTracker()->getProject()
-        );
-
-        $tracker_representation = new MinimalTrackerRepresentation();
-        $tracker_representation->build($first_artifact->getTracker());
 
         foreach ($artifacts as $artifact) {
             if ($artifact->userCanView($user)) {
-                $artifact_representations[] = $this->builder->getArtifactRepresentationWithFieldValuesInBothFormat($user, $artifact, $tracker_representation);
+                $artifact_representations[] = $this->builder->getArtifactRepresentationWithFieldValuesInBothFormat(
+                    $user,
+                    $artifact,
+                    MinimalTrackerRepresentation::build($artifact->getTracker())
+                );
             }
         }
 
         Header::sendPaginationHeaders($limit, $offset, count($requested_artifact_ids), self::MAX_ARTIFACT_BATCH);
-        return array(self::VALUES_FORMAT_COLLECTION => $artifact_representations);
+        return [self::VALUES_FORMAT_COLLECTION => $artifact_representations];
     }
 
     /**
@@ -385,12 +379,13 @@ class ArtifactsResource extends AuthenticatedResource
      *
      * @url GET {id}
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id Id of the artifact
      * @param string $values_format The format of the value {@from query} {@choice ,collection,by_field,all}
      * @param string $tracker_structure_format The format of the structure {@from query} {@choice ,minimal,complete}
      *
-     * @return Tuleap\Tracker\REST\Artifact\ArtifactRepresentation
+     * @return ArtifactRepresentation
      *
      * @throws RestException 403
      */
@@ -416,8 +411,7 @@ class ArtifactsResource extends AuthenticatedResource
                 $artifact
             );
         } else {
-            $tracker_representation = new MinimalTrackerRepresentation();
-            $tracker_representation->build($artifact->getTracker());
+            $tracker_representation = MinimalTrackerRepresentation::build($artifact->getTracker());
         }
 
         if ($values_format === self::VALUES_DEFAULT || $values_format === self::VALUES_FORMAT_COLLECTION) {
@@ -436,10 +430,11 @@ class ArtifactsResource extends AuthenticatedResource
      *
      * @url GET {id}/links
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id Id of the artifact
      *
-     * @return Tuleap\Tracker\REST\v1\ArtifactLinkRepresentation
+     * @return ArtifactLinkRepresentation
      *
      * @throws RestException 403
      */
@@ -455,8 +450,7 @@ class ArtifactsResource extends AuthenticatedResource
             $artifact->getTracker()->getProject()
         );
 
-        $artifact_link_representation = new ArtifactLinkRepresentation();
-        $artifact_link_representation->build($artifact);
+        $artifact_link_representation = ArtifactLinkRepresentation::build($artifact);
 
         $this->sendAllowHeadersForLinkNatures();
         return $artifact_link_representation;
@@ -481,6 +475,7 @@ class ArtifactsResource extends AuthenticatedResource
      * @url GET {id}/linked_artifacts
      *
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id Id of the artifact
      * @param string $direction The artifact link direction {@from query} {@choice forward,reverse}
@@ -488,7 +483,8 @@ class ArtifactsResource extends AuthenticatedResource
      * @param int $limit Number of elements displayed per page {@from path}{@min 1}{@max 50}
      * @param int $offset Position of the first element to display {@from path}{@min 0}
      *
-     * @return Tuleap\Tracker\REST\v1\ArtifactLinkRepresentation
+     * @return array
+     * @psalm-return array{collection:list<\Tuleap\Tracker\REST\Artifact\ArtifactRepresentation>}
      *
      * @throws RestException 403
      */
@@ -523,8 +519,7 @@ class ArtifactsResource extends AuthenticatedResource
 
         $artifact_representations = [];
         foreach ($linked_artifacts->getArtifacts() as $linked_artifact) {
-            $tracker_representation = new MinimalTrackerRepresentation();
-            $tracker_representation->build($linked_artifact->getTracker());
+            $tracker_representation = MinimalTrackerRepresentation::build($linked_artifact->getTracker());
 
             $artifact_representations[] = $this->builder->getArtifactRepresentationWithFieldValuesInBothFormat(
                 $user,
@@ -533,9 +528,9 @@ class ArtifactsResource extends AuthenticatedResource
             );
         }
 
-        return array(
+        return [
             self::VALUES_FORMAT_COLLECTION => $artifact_representations
-        );
+        ];
     }
 
     /**
@@ -565,6 +560,7 @@ class ArtifactsResource extends AuthenticatedResource
      *
      * @url GET {id}/changesets
      * @access hybrid
+     * @oauth2-scope read:tracker
      *
      * @param int $id Id of the artifact
      * @param string $fields Whether you want to fetch all fields or just comments {@from path}{@choice all,comments}
@@ -763,8 +759,8 @@ class ArtifactsResource extends AuthenticatedResource
      */
     protected function post(
         TrackerReference $tracker,
-        array $values = array(),
-        array $values_by_field = array(),
+        array $values = [],
+        array $values_by_field = [],
         ?ArtifactReference $from_artifact = null
     ) {
         $this->options();
@@ -801,7 +797,7 @@ class ArtifactsResource extends AuthenticatedResource
             $artifact_reference = null;
 
             if (! empty($values)) {
-                $artifact_reference = $creator->create($user, $tracker, $values);
+                $artifact_reference = $creator->create($user, $tracker, $values, true);
             } elseif (! empty($values_by_field)) {
                 $artifact_reference = $creator->createWithValuesIndexedByFieldName($user, $tracker, $values_by_field);
             } else {
@@ -981,13 +977,13 @@ class ArtifactsResource extends AuthenticatedResource
             $source_tracker = $artifact->getTracker();
             $target_tracker = $this->tracker_factory->getTrackerById($patch->move->tracker_id);
 
+            if ($target_tracker === null || $target_tracker->isDeleted()) {
+                throw new RestException(404, "Target tracker not found");
+            }
+
             $status_verificator->checkProjectStatusAllowsAllUsersToAccessIt(
                 $target_tracker->getProject()
             );
-
-            if (! $target_tracker || $target_tracker->isDeleted()) {
-                throw new RestException(404, "Target tracker not found");
-            }
 
             if (! $source_tracker->userIsAdmin($user) || ! $target_tracker->userIsAdmin($user)) {
                 throw new RestException(400, "User must be admin of both trackers");
@@ -1009,13 +1005,12 @@ class ArtifactsResource extends AuthenticatedResource
             }
 
             $move_action             = $this->getMoveAction($user);
-            $response_representation = new ArtifactPatchResponseRepresentation();
 
             if ($patch->move->dry_run) {
                 $feedback_collector = new FeedbackFieldCollector();
                 $feedback_collector->initAllTrackerFieldAsNotMigrated($source_tracker);
                 $move_action->checkMoveIsPossible($artifact, $target_tracker, $user, $feedback_collector);
-                $response_representation->build($feedback_collector);
+                $response_representation = ArtifactPatchResponseRepresentation::fromFeedbackFieldCollector($feedback_collector);
             } else {
                 $feedback_collector  = new NoFeedbackFieldCollector();
                 $remaining_deletions = $move_action->move($artifact, $target_tracker, $user, $feedback_collector);
@@ -1023,6 +1018,8 @@ class ArtifactsResource extends AuthenticatedResource
                 if ($patch->move->should_populate_feedback_on_success) {
                     $this->post_move_action->addFeedback($source_tracker, $target_tracker, $artifact, $user);
                 }
+
+                $response_representation = ArtifactPatchResponseRepresentation::withoutDryRun();
             }
 
             return $response_representation;
@@ -1093,7 +1090,7 @@ class ArtifactsResource extends AuthenticatedResource
             ),
             $xml_import_builder->build(
                 $user_finder,
-                new Log_NoopLogger()
+                new NullLogger()
             ),
             new Tracker_Artifact_PriorityManager(
                 new Tracker_Artifact_PriorityDao(),
@@ -1128,7 +1125,7 @@ class ArtifactsResource extends AuthenticatedResource
     /**
      * @param int $id
      *
-     * @return Tracker_Artifact
+     * @return Artifact
      * @throws Project_AccessProjectNotFoundException 404
      * @throws Project_AccessException 403
      * @throws RestException 404
@@ -1167,12 +1164,12 @@ class ArtifactsResource extends AuthenticatedResource
         Header::allowOptionsGetPutDeletePatch();
     }
 
-    private function sendLastModifiedHeader(Tracker_Artifact $artifact)
+    private function sendLastModifiedHeader(Artifact $artifact)
     {
         Header::lastModified($artifact->getLastUpdateDate());
     }
 
-    private function sendETagHeader(Tracker_Artifact $artifact)
+    private function sendETagHeader(Artifact $artifact)
     {
         Header::eTag($artifact->getVersionIdentifier());
     }
@@ -1196,13 +1193,13 @@ class ArtifactsResource extends AuthenticatedResource
         $from_artifact
     ) {
         $nb_sources_to_create_artifact = 0;
-        if (!empty($values)) {
+        if (! empty($values)) {
             $nb_sources_to_create_artifact++;
         }
-        if (!empty($values_by_field)) {
+        if (! empty($values_by_field)) {
             $nb_sources_to_create_artifact++;
         }
-        if (!empty($from_artifact)) {
+        if (! empty($from_artifact)) {
             $nb_sources_to_create_artifact++;
         }
         if ($nb_sources_to_create_artifact > 1) {

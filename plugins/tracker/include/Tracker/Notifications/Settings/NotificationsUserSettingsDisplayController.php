@@ -69,7 +69,7 @@ class NotificationsUserSettingsDisplayController implements DispatchableWithRequ
 
         $current_user = $request->getCurrentUser();
         if (! $current_user->isLoggedIn()) {
-            $layout->addFeedback(\Feedback::ERROR, $GLOBALS['Language']->getText('plugin_tracker_admin', 'access_denied'));
+            $layout->addFeedback(\Feedback::ERROR, dgettext('tuleap-tracker', 'Access denied. You don\'t have permissions to perform this action.'));
             $layout->redirect(TRACKER_BASE_URL . '/?tracker=' . urlencode($tracker->getId()));
         }
 
@@ -86,7 +86,7 @@ class NotificationsUserSettingsDisplayController implements DispatchableWithRequ
             [
                ['title' => dgettext('tuleap-tracker', 'Email Notifications Settings'), 'url' => $current_uri]
             ],
-            $tracker->getDefaultToolbar()
+            []
         );
 
         $this->template_renderer->renderToPage(

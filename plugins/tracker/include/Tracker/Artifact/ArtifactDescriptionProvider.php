@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace Tuleap\Tracker\Artifact;
 
-use Tracker_Artifact;
 use Tracker_Artifact_ChangesetValue_Text;
 use Tracker_Semantic_Description;
 
@@ -38,27 +37,45 @@ class ArtifactDescriptionProvider
         $this->semantic_description = $semantic_description;
     }
 
-    public function getDescription(Tracker_Artifact $artifact): string
+    public function getDescription(Artifact $artifact): string
+    {
+        $changeset_value = $this->getChangesetValue($artifact);
+        if (! $changeset_value) {
+            return '';
+        }
+        return $changeset_value->getContentAsText();
+    }
+
+    public function getPostProcessedDescription(Artifact $artifact): string
+    {
+        $changeset_value = $this->getChangesetValue($artifact);
+        if (! $changeset_value) {
+            return '';
+        }
+        return $changeset_value->getTextWithReferences((int) $artifact->getTracker()->getGroupId());
+    }
+
+    private function getChangesetValue(Artifact $artifact): ?Tracker_Artifact_ChangesetValue_Text
     {
         $description_field = $this->semantic_description->getField();
         if (! $description_field) {
-            return '';
+            return null;
         }
 
         if (! $description_field->userCanRead()) {
-            return '';
+            return null;
         }
 
         $last_changeset = $artifact->getLastChangeset();
         if (! $last_changeset) {
-            return '';
+            return null;
         }
 
         $description_field_value = $last_changeset->getValue($description_field);
         if (! $description_field_value instanceof Tracker_Artifact_ChangesetValue_Text) {
-            return '';
+            return null;
         }
 
-        return $description_field_value->getContentAsText();
+        return $description_field_value;
     }
 }

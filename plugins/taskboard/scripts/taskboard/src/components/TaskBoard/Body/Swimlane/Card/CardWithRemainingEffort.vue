@@ -19,9 +19,9 @@
 
 <template>
     <div>
-        <parent-card v-bind:card="card"/>
-        <parent-card-remaining-effort v-bind:card="card"/>
-        <edit-card-buttons v-bind:card="card"/>
+        <parent-card v-bind:card="card" />
+        <parent-card-remaining-effort v-bind:card="card" />
+        <edit-card-buttons v-bind:card="card" />
     </div>
 </template>
 
@@ -34,7 +34,7 @@ import ParentCardRemainingEffort from "./ParentCardRemainingEffort.vue";
 import EditCardButtons from "./EditMode/EditCardButtons.vue";
 
 @Component({
-    components: { EditCardButtons, ParentCard, ParentCardRemainingEffort }
+    components: { EditCardButtons, ParentCard, ParentCardRemainingEffort },
 })
 export default class CardWithRemainingEffort extends Vue {
     @Prop({ required: true })

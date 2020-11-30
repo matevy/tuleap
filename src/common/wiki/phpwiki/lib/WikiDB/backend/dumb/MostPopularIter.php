@@ -14,13 +14,13 @@ require_once('lib/WikiDB/backend.php');
  */
 class WikiDB_backend_dumb_MostPopularIter extends WikiDB_backend_iterator
 {
-    function __construct($backend, &$all_pages, $limit)
+    public function __construct($backend, &$all_pages, $limit)
     {
-        $this->_pages = array();
+        $this->_pages = [];
         $pages = &$this->_pages;
 
         while ($page = & $all_pages->next()) {
-            if (!isset($page['pagedata'])) {
+            if (! isset($page['pagedata'])) {
                 $page['pagedata'] = $backend->get_pagedata($page['pagename']);
             }
             $pages[] = $page;
@@ -43,12 +43,12 @@ class WikiDB_backend_dumb_MostPopularIter extends WikiDB_backend_iterator
         }
     }
 
-    function next()
+    public function next()
     {
         return array_shift($this->_pages);
     }
 
-    function free()
+    public function free()
     {
         unset($this->_pages);
     }
@@ -58,10 +58,10 @@ function WikiDB_backend_dumb_MostPopularIter_sortf($a, $b)
 {
     $ahits = $bhits = 0;
     if (isset($a['pagedata']['hits'])) {
-        $ahits = (int)$a['pagedata']['hits'];
+        $ahits = (int) $a['pagedata']['hits'];
     }
     if (isset($b['pagedata']['hits'])) {
-        $bhits = (int)$b['pagedata']['hits'];
+        $bhits = (int) $b['pagedata']['hits'];
     }
     return $bhits - $ahits;
 }
@@ -70,10 +70,10 @@ function WikiDB_backend_dumb_MostPopularIter_sortf_rev($a, $b)
 {
     $ahits = $bhits = 0;
     if (isset($a['pagedata']['hits'])) {
-        $ahits = (int)$a['pagedata']['hits'];
+        $ahits = (int) $a['pagedata']['hits'];
     }
     if (isset($b['pagedata']['hits'])) {
-        $bhits = (int)$b['pagedata']['hits'];
+        $bhits = (int) $b['pagedata']['hits'];
     }
     return $ahits - $bhits;
 }

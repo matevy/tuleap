@@ -27,7 +27,7 @@
                 v-if="metadata.type === METADATA_DATE_TYPE"
                 v-bind:metadata="metadata"
             />
-            <template v-else-if="metadata.type === METADATA_LIST_TYPE && ! is_list_empty">
+            <template v-else-if="metadata.type === METADATA_LIST_TYPE && !is_list_empty">
                 <ul v-if="metadata.list_value.length > 1">
                     <li v-for="value in metadata.list_value" v-bind:key="value.id">
                         {{ value.name }}
@@ -38,8 +38,11 @@
                 </template>
             </template>
 
-            <span class="document-quick-look-property-empty"
-                  v-else-if="! has_metadata_a_value " v-translate>
+            <span
+                class="document-quick-look-property-empty"
+                v-else-if="!has_metadata_a_value"
+                v-translate
+            >
                 Empty
             </span>
             <template v-else>
@@ -56,12 +59,12 @@ export default {
     name: "QuickLookDocumentAdditionalMetadataList",
     components: { QuicklookMetadataDate },
     props: {
-        metadata: Object
+        metadata: Object,
     },
     data() {
         return {
             METADATA_LIST_TYPE: "list",
-            METADATA_DATE_TYPE: "date"
+            METADATA_DATE_TYPE: "date",
         };
     },
     computed: {
@@ -83,12 +86,12 @@ export default {
             }
 
             return this.metadata.value;
-        }
+        },
     },
     methods: {
         isMetadataObsolescenceDate() {
             return this.metadata.short_name === METADATA_OBSOLESCENCE_DATE_SHORT_NAME;
-        }
-    }
+        },
+    },
 };
 </script>

@@ -23,9 +23,9 @@ namespace Tuleap\Timetracking\Time;
 use PFUser;
 use Project;
 use ProjectManager;
-use Tracker_Artifact;
 use Tuleap\Timetracking\Admin\AdminDao;
 use Tuleap\Timetracking\Permissions\PermissionsRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class TimeRetriever
 {
@@ -59,9 +59,9 @@ class TimeRetriever
     /**
      * @return Time[]
      */
-    public function getTimesForUser(PFUser $user, Tracker_Artifact $artifact)
+    public function getTimesForUser(PFUser $user, Artifact $artifact)
     {
-        $times = array();
+        $times = [];
 
         if ($this->permissions_retriever->userCanSeeAggregatedTimesInTracker($user, $artifact->getTracker())) {
             foreach ($this->dao->getAllTimesAddedInArtifact($artifact->getId()) as $row_time) {
@@ -121,7 +121,7 @@ class TimeRetriever
     /**
      * @return Time
      */
-    public function getLastTime(PFUser $user, Tracker_Artifact $artifact)
+    public function getLastTime(PFUser $user, Artifact $artifact)
     {
         return $this->buildTimeFromRow($this->dao->getLastTime($user->getId(), $artifact->getId()));
     }

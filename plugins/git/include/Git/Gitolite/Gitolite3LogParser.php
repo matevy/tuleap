@@ -25,9 +25,8 @@ use DirectoryIterator;
 use Git;
 use GitRepositoryFactory;
 use GitRepositoryGitoliteAdmin;
-use Logger;
+use Psr\Log\LoggerInterface;
 use PFUser;
-use System_Command;
 use Tuleap\Git\History\Dao;
 use Tuleap\Git\RemoteServer\Gerrit\HttpUserValidator;
 use UserDao;
@@ -43,11 +42,8 @@ class Gitolite3LogParser
     public const EXPECTED_NUMBER_OF_FIELDS_IN_LOG_LINE = 8;
 
 
-    /** @var Logger */
+    /** @var LoggerInterface */
     private $logger;
-
-    /** @var System_Command */
-    private $system_command;
 
     /**
      * @var HttpUserValidator
@@ -82,12 +78,7 @@ class Gitolite3LogParser
     /**
      * @var array
      */
-    private $access_cache = array();
-
-    /**
-     * @var array
-     */
-    private $day_accesses_cache = array();
+    private $access_cache = [];
 
     /**
      * @var array
@@ -95,8 +86,7 @@ class Gitolite3LogParser
     private $user_last_access_cache = [];
 
     public function __construct(
-        Logger $logger,
-        System_Command $system_command,
+        LoggerInterface $logger,
         HttpUserValidator $user_validator,
         Dao $history_dao,
         GitRepositoryFactory $repository_factory,
@@ -105,7 +95,6 @@ class Gitolite3LogParser
         UserDao $user_dao
     ) {
         $this->logger             = $logger;
-        $this->system_command     = $system_command;
         $this->user_validator     = $user_validator;
         $this->history_dao        = $history_dao;
         $this->repository_factory = $repository_factory;
@@ -117,7 +106,7 @@ class Gitolite3LogParser
     public function parseAllLogs($path)
     {
         $iterator = new DirectoryIterator($path);
-        $this->logger->info('Starting import logs from '. $path);
+        $this->logger->info('Starting import logs from ' . $path);
         foreach ($iterator as $file) {
             if (! $file->isDot() && preg_match('/^gitolite-\d{4}-\d{2}.log$/', $file->getFilename())) {
                 $this->parseLogs($path . $file);
@@ -139,15 +128,15 @@ class Gitolite3LogParser
         if (file_exists($log)) {
             $log_file = fopen("$log", "r");
             if (! $log_file) {
-                $this->logger->error('Cannot open '.$log_file);
+                $this->logger->error('Cannot open ' . $log_file);
                 throw new CannotAccessToGitoliteLogException();
             } else {
                 $last_read_char = $this->file_logs_dao->getLastReadLine($log);
                 if (! $last_read_char) {
-                    $this->logger->info('Start import of new file: '.$log);
+                    $this->logger->info('Start import of new file: ' . $log);
                     $last_read_char = ['end_line' => 0];
                 } else {
-                    $this->logger->info('Import file: '.$log . ' from last position');
+                    $this->logger->info('Import file: ' . $log . ' from last position');
                 }
                 fseek($log_file, $last_read_char['end_line']);
                 while (! feof($log_file)) {
@@ -167,8 +156,10 @@ class Gitolite3LogParser
 
     private function parseLine(array $line, $filename)
     {
-        if (count($line) === self::EXPECTED_NUMBER_OF_FIELDS_IN_LOG_LINE &&
-                $this->isAReadAccess($line) && $this->isNotASystemUser($line[4])) {
+        if (
+            count($line) === self::EXPECTED_NUMBER_OF_FIELDS_IN_LOG_LINE &&
+                $this->isAReadAccess($line) && $this->isNotASystemUser($line[4])
+        ) {
             $this->logger->debug(
                 'File ' . $filename . '. Add one Read access for repository ' . $line[3] . ' pattern ' . $line[7] . ' for user ' . $line[4]
             );
@@ -178,7 +169,7 @@ class Gitolite3LogParser
             );
 
             if (! $repository) {
-                $this->logger->warn(
+                $this->logger->warning(
                     "Git repository $line[3] seems deleted. Skipping."
                 );
 
@@ -205,8 +196,7 @@ class Gitolite3LogParser
 
     private function resetCaches()
     {
-        $this->access_cache = array();
-        $this->day_accesses_cache = array();
+        $this->access_cache = [];
     }
 
     private function cacheAccess(GitRepository $repository, $user_id, DateTime $day)

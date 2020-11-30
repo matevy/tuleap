@@ -4,12 +4,12 @@ rcs_id('$Id: TextSearchIter.php,v 1.7 2005/11/14 22:24:33 rurban Exp $');
 
 class WikiDB_backend_dumb_TextSearchIter extends WikiDB_backend_iterator
 {
-    function __construct(
+    public function __construct(
         &$backend,
         &$pages,
         $search,
         $fulltext = false,
-        $options = array()
+        $options = []
     ) {
         $this->_backend = &$backend;
         $this->_pages = $pages;
@@ -17,7 +17,7 @@ class WikiDB_backend_dumb_TextSearchIter extends WikiDB_backend_iterator
         $this->_search  = $search;
         $this->_index   = 0;
         $this->_stoplist = $search->_stoplist;
-        $this->stoplisted = array();
+        $this->stoplisted = [];
 
         if (isset($options['limit'])) {
             $this->_limit = $options['limit'];
@@ -31,19 +31,19 @@ class WikiDB_backend_dumb_TextSearchIter extends WikiDB_backend_iterator
         }
     }
 
-    function _get_content(&$page)
+    public function _get_content(&$page)
     {
         $backend = $this->_backend;
         $pagename = $page['pagename'];
 
-        if (!isset($page['versiondata'])) {
+        if (! isset($page['versiondata'])) {
             $version = $backend->get_latest_version($pagename);
             $page['versiondata'] = $backend->get_versiondata($pagename, $version, true);
         }
         return $page['versiondata']['%content'];
     }
 
-    function _match(&$page)
+    public function _match(&$page)
     {
         $text = $page['pagename'];
         if ($result = $this->_search->match($text)) { // first match the pagename only
@@ -52,7 +52,7 @@ class WikiDB_backend_dumb_TextSearchIter extends WikiDB_backend_iterator
 
         if ($this->_fulltext) {
             // eliminate stoplist words from fulltext search
-            if (preg_match("/^".$this->_stoplist."$/i", $text)) {
+            if (preg_match("/^" . $this->_stoplist . "$/i", $text)) {
                 $this->stoplisted[] = $text;
                 return $result;
             }
@@ -63,7 +63,7 @@ class WikiDB_backend_dumb_TextSearchIter extends WikiDB_backend_iterator
         }
     }
 
-    function next()
+    public function next()
     {
         $pages = &$this->_pages;
         while ($page = $pages->next()) {
@@ -77,11 +77,11 @@ class WikiDB_backend_dumb_TextSearchIter extends WikiDB_backend_iterator
         return false;
     }
 
-    function free()
+    public function free()
     {
         $this->_pages->free();
     }
-};
+}
 
 // (c-file-style: "gnu")
 // Local Variables:

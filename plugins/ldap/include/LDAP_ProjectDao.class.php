@@ -35,13 +35,13 @@ class LDAP_ProjectDao extends DataAccessObject
      *
      * @return bool
      */
-    function hasLdapSvn($groupId)
+    public function hasLdapSvn($groupId)
     {
-        $sql = 'SELECT NULL'.
-            ' FROM plugin_ldap_svn_repository'.
-            ' WHERE group_id = '.$this->da->escapeInt($groupId);
+        $sql = 'SELECT NULL' .
+            ' FROM plugin_ldap_svn_repository' .
+            ' WHERE group_id = ' . $this->da->escapeInt($groupId);
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             return true;
         } else {
             return false;
@@ -53,21 +53,21 @@ class LDAP_ProjectDao extends DataAccessObject
      *
      * @param int $groupId Project id
      */
-    function activateLdapAuthForProject($groupId)
+    public function activateLdapAuthForProject($groupId)
     {
-        $sql = 'INSERT INTO plugin_ldap_svn_repository(group_id, ldap_auth)'.
-            ' VALUES ('.$this->da->escapeInt($groupId).',1)';
+        $sql = 'INSERT INTO plugin_ldap_svn_repository(group_id, ldap_auth)' .
+            ' VALUES (' . $this->da->escapeInt($groupId) . ',1)';
         $this->update($sql);
     }
 
-    function hasLdapAuthByName($groupName)
+    public function hasLdapAuthByName($groupName)
     {
-        $sql = 'SELECT NULL'.
-            ' FROM plugin_ldap_svn_repository'.
-            ' JOIN groups USING (group_id)'.
-            ' WHERE unix_group_name='.$this->da->quoteSmart($groupName);
+        $sql = 'SELECT NULL' .
+            ' FROM plugin_ldap_svn_repository' .
+            ' JOIN groups USING (group_id)' .
+            ' WHERE unix_group_name=' . $this->da->quoteSmart($groupName);
         $dar = $this->retrieve($sql);
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             return true;
         } else {
             return false;

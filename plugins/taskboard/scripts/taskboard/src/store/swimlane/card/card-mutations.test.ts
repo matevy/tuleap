@@ -17,10 +17,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Card, Swimlane, Tracker } from "../../../type";
+import { Card, Swimlane, Tracker, User } from "../../../type";
 import * as mutations from "./card-mutations";
 import { SwimlaneState } from "../type";
 import { UpdateCardPayload, NewRemainingEffortPayload } from "./type";
+import { UserForPeoplePicker } from "../../../store/swimlane/card/type";
 
 jest.useFakeTimers();
 
@@ -29,7 +30,7 @@ describe(`Card mutations`, () => {
         it("switch is_in_edit_mode to true", () => {
             const card: Card = { id: 123, is_in_edit_mode: false } as Card;
             const state: SwimlaneState = {
-                swimlanes: [{ card } as Swimlane]
+                swimlanes: [{ card } as Swimlane],
             } as SwimlaneState;
 
             mutations.addCardToEditMode(state, card);
@@ -42,7 +43,7 @@ describe(`Card mutations`, () => {
         it("switch is_in_edit_mode to false", () => {
             const card: Card = { id: 123, is_in_edit_mode: true } as Card;
             const state: SwimlaneState = {
-                swimlanes: [{ card } as Swimlane]
+                swimlanes: [{ card } as Swimlane],
             } as SwimlaneState;
 
             mutations.removeCardFromEditMode(state, card);
@@ -52,61 +53,62 @@ describe(`Card mutations`, () => {
     });
 
     describe("startSavingRemainingEffort", () => {
-        it("switch is_being_saved to true", () => {
-            const card: Card = { remaining_effort: { is_being_saved: false } } as Card;
+        it(`saves the new value
+            and switches is_being_saved to true
+            and is_in_edit_mode to false`, () => {
+            const card: Card = {
+                remaining_effort: { value: 3.14, is_being_saved: false, is_in_edit_mode: true },
+            } as Card;
             const state: SwimlaneState = {
-                swimlanes: [{ card } as Swimlane]
+                swimlanes: [{ card } as Swimlane],
             } as SwimlaneState;
+            const payload: NewRemainingEffortPayload = { card, value: 42 };
 
-            mutations.startSavingRemainingEffort(state, card);
+            mutations.startSavingRemainingEffort(state, payload);
 
-            expect.assertions(1);
-            if (state.swimlanes[0].card.remaining_effort) {
-                expect(state.swimlanes[0].card.remaining_effort.is_being_saved).toBe(true);
+            if (!state.swimlanes[0].card.remaining_effort) {
+                throw new Error("Expected the first swimlane's card to have a remaining effort");
             }
+            expect(state.swimlanes[0].card.remaining_effort.value).toBe(42);
+            expect(state.swimlanes[0].card.remaining_effort.is_being_saved).toBe(true);
+            expect(state.swimlanes[0].card.remaining_effort.is_in_edit_mode).toBe(false);
         });
     });
 
     describe("resetSavingRemainingEffort", () => {
-        it("switch is_being_saved and is_in_edit_mode to false", () => {
+        it("switches is_being_saved to false", () => {
             const card: Card = {
-                remaining_effort: { is_being_saved: true, is_in_edit_mode: true }
+                remaining_effort: { is_being_saved: true, is_in_edit_mode: false },
             } as Card;
             const state: SwimlaneState = {
-                swimlanes: [{ card } as Swimlane]
+                swimlanes: [{ card } as Swimlane],
             } as SwimlaneState;
 
             mutations.resetSavingRemainingEffort(state, card);
 
-            expect.assertions(2);
-            if (state.swimlanes[0].card.remaining_effort) {
-                expect(state.swimlanes[0].card.remaining_effort.is_being_saved).toBe(false);
-                expect(state.swimlanes[0].card.remaining_effort.is_in_edit_mode).toBe(false);
+            if (!state.swimlanes[0].card.remaining_effort) {
+                throw new Error("Expected the first swimlane's card to have a remaining effort");
             }
+            expect(state.swimlanes[0].card.remaining_effort.is_being_saved).toBe(false);
+            expect(state.swimlanes[0].card.remaining_effort.is_in_edit_mode).toBe(false);
         });
     });
 
-    describe("finishSavingRemainingEffort", () => {
-        it("saves the new value and switch is_being_saved and is_in_edit_mode to false", () => {
-            const card: Card = {
-                remaining_effort: { value: 3.14, is_being_saved: true, is_in_edit_mode: true }
+    describe(`removeRemainingEffortFromEditMode`, () => {
+        it(`switches is_in_edit_mode to false`, () => {
+            const card = {
+                remaining_effort: { is_in_edit_mode: true, is_being_saved: false },
             } as Card;
-            const state: SwimlaneState = {
-                swimlanes: [{ card } as Swimlane]
-            } as SwimlaneState;
-            const payload: NewRemainingEffortPayload = {
-                card,
-                value: 42
-            };
+            const state = { swimlanes: [{ card } as Swimlane] } as SwimlaneState;
 
-            mutations.finishSavingRemainingEffort(state, payload);
+            mutations.removeRemainingEffortFromEditMode(state, card);
 
-            expect.assertions(3);
-            if (state.swimlanes[0].card.remaining_effort) {
-                expect(state.swimlanes[0].card.remaining_effort.value).toBe(42);
-                expect(state.swimlanes[0].card.remaining_effort.is_being_saved).toBe(false);
-                expect(state.swimlanes[0].card.remaining_effort.is_in_edit_mode).toBe(false);
+            if (!state.swimlanes[0].card.remaining_effort) {
+                throw new Error("Expected the first swimlane's card to have a remaining effort");
             }
+            const remaining_effort = state.swimlanes[0].card.remaining_effort;
+            expect(remaining_effort.is_in_edit_mode).toBe(false);
+            expect(remaining_effort.is_being_saved).toBe(false);
         });
     });
 
@@ -114,7 +116,7 @@ describe(`Card mutations`, () => {
         it("exits edit mode in order to save the card", () => {
             const card: Card = { is_being_saved: false, is_in_edit_mode: true } as Card;
             const state: SwimlaneState = {
-                swimlanes: [{ card } as Swimlane]
+                swimlanes: [{ card } as Swimlane],
             } as SwimlaneState;
 
             mutations.startSavingCard(state, card);
@@ -128,7 +130,7 @@ describe(`Card mutations`, () => {
         it("switch is_being_saved to false", () => {
             const card: Card = { is_being_saved: true } as Card;
             const state: SwimlaneState = {
-                swimlanes: [{ card } as Swimlane]
+                swimlanes: [{ card } as Swimlane],
             } as SwimlaneState;
 
             mutations.resetSavingCard(state, card);
@@ -142,18 +144,25 @@ describe(`Card mutations`, () => {
             const card: Card = {
                 label: "Lorem ipsum",
                 is_being_saved: true,
-                is_just_saved: false
+                is_just_saved: false,
+                assignees: [{ id: 123 }],
             } as Card;
             const state: SwimlaneState = {
-                swimlanes: [{ card } as Swimlane]
+                swimlanes: [{ card } as Swimlane],
             } as SwimlaneState;
-            const payload: UpdateCardPayload = { card, label: "Lorem", tracker: {} as Tracker };
+            const payload: UpdateCardPayload = {
+                card,
+                label: "Lorem",
+                tracker: {} as Tracker,
+                assignees: [{ id: 234 }] as User[],
+            };
 
             mutations.finishSavingCard(state, payload);
 
             expect(state.swimlanes[0].card.label).toBe("Lorem");
             expect(state.swimlanes[0].card.is_being_saved).toBe(false);
             expect(state.swimlanes[0].card.is_just_saved).toBe(true);
+            expect(state.swimlanes[0].card.assignees[0].id).toBe(234);
 
             jest.advanceTimersByTime(1000);
 
@@ -164,7 +173,7 @@ describe(`Card mutations`, () => {
     describe("startCreatingCard", () => {
         it("Informs the store that the process of creating a new card has begun", () => {
             const state: SwimlaneState = {
-                is_card_creation_blocked_due_to_ongoing_creation: false
+                is_card_creation_blocked_due_to_ongoing_creation: false,
             } as SwimlaneState;
 
             mutations.startCreatingCard(state);
@@ -176,7 +185,7 @@ describe(`Card mutations`, () => {
     describe("cardIsHalfwayCreated", () => {
         it("Informs the store that the process of creating a new card is advanced enough to allow creation of another one", () => {
             const state: SwimlaneState = {
-                is_card_creation_blocked_due_to_ongoing_creation: true
+                is_card_creation_blocked_due_to_ongoing_creation: true,
             } as SwimlaneState;
 
             mutations.cardIsHalfwayCreated(state);
@@ -190,11 +199,11 @@ describe(`Card mutations`, () => {
             const card: Card = {
                 label: "Lorem ipsum",
                 is_being_saved: true,
-                is_just_saved: false
+                is_just_saved: false,
             } as Card;
             const state: SwimlaneState = {
                 swimlanes: [{ card } as Swimlane],
-                is_card_creation_blocked_due_to_ongoing_creation: true
+                is_card_creation_blocked_due_to_ongoing_creation: true,
             } as SwimlaneState;
 
             mutations.finishCreatingCard(state, card);
@@ -205,6 +214,36 @@ describe(`Card mutations`, () => {
             jest.advanceTimersByTime(1000);
 
             expect(state.swimlanes[0].card.is_just_saved).toBe(false);
+        });
+    });
+
+    describe("setPossibleAssigneesForFieldId", () => {
+        it("Caches the assignees indexed by the assigned_to field id", () => {
+            const state: SwimlaneState = {
+                possible_assignees: new Map<number, UserForPeoplePicker[]>(),
+            } as SwimlaneState;
+
+            mutations.setPossibleAssigneesForFieldId(state, {
+                assigned_to_field_id: 1234,
+                users: [
+                    { id: 1, display_name: "John" },
+                    { id: 2, display_name: "Steeve" },
+                    { id: 3, display_name: "Bob" },
+                ] as UserForPeoplePicker[],
+            });
+
+            expect(state.possible_assignees).toEqual(
+                new Map([
+                    [
+                        1234,
+                        [
+                            { id: 1, display_name: "John" },
+                            { id: 2, display_name: "Steeve" },
+                            { id: 3, display_name: "Bob" },
+                        ],
+                    ],
+                ])
+            );
         });
     });
 });

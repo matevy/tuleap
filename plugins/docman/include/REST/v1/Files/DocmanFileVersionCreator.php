@@ -82,10 +82,7 @@ class DocmanFileVersionCreator
             throw new RestException(400, $exception->getMessage());
         }
 
-        $file_properties_representation = new CreatedItemFilePropertiesRepresentation();
-        $file_properties_representation->build($document_to_upload->getUploadHref());
-
-        return $file_properties_representation;
+        return CreatedItemFilePropertiesRepresentation::build($document_to_upload->getUploadHref());
     }
 
     /**
@@ -99,7 +96,6 @@ class DocmanFileVersionCreator
         int $status,
         int $obsolesence_date
     ): CreatedItemFilePropertiesRepresentation {
-
         $is_item_locked = $this->lock_factory->itemIsLocked($item);
         try {
             $document_to_upload = $this->creator->create(
@@ -124,8 +120,6 @@ class DocmanFileVersionCreator
         } catch (UploadMaxSizeExceededException $exception) {
             throw new RestException(400, $exception->getMessage());
         }
-        $file_properties_representation = new CreatedItemFilePropertiesRepresentation();
-        $file_properties_representation->build($document_to_upload->getUploadHref());
-        return $file_properties_representation;
+        return CreatedItemFilePropertiesRepresentation::build($document_to_upload->getUploadHref());
     }
 }

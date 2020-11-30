@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Tuleap\SVN\ApacheConfRepository;
+
 /**
  * Manage generation of Apache svnroot.conf file with all project subversion
  * configuration
@@ -26,38 +28,39 @@ class SVN_Apache_SvnrootConf
     public const CONFIG_SVN_LOG_PATH = 'svn_log_path';
 
     /**
-     * @var Array
+     * @var ApacheConfRepository[]
      */
-    private $projects;
+    private $repositories;
 
     /**
      * @var SVN_Apache_Auth_Factory
      */
     private $authFactory;
 
-    private $apacheConfHeaders = array();
+    private $apacheConfHeaders = [];
 
-    function __construct(SVN_Apache_Auth_Factory $authFactory, $projects)
+    /**
+     * @param ApacheConfRepository[] $repositories
+     */
+    public function __construct(SVN_Apache_Auth_Factory $authFactory, array $repositories)
     {
-        $this->authFactory = $authFactory;
-        $this->projects    = $projects;
+        $this->authFactory  = $authFactory;
+        $this->repositories = $repositories;
     }
 
     /**
      * Generate the SVN apache authentication configuration for each project
-     *
-     * @return String
      */
-    public function getFullConf()
+    public function getFullConf(): string
     {
         $conf = '';
-        foreach ($this->projects as $row) {
-            $auth = $this->authFactory->get($row);
+        foreach ($this->repositories as $repository) {
+            $auth = $this->authFactory->get($repository->getProject());
             $this->collectApacheConfHeaders($auth);
-            $conf .= $auth->getConf($row['public_path'], $row['system_path']);
+            $conf .= $auth->getConf($repository);
         }
 
-        return $this->getApacheConfHeaders().$conf;
+        return $this->getApacheConfHeaders() . $conf;
     }
 
     private function collectApacheConfHeaders(SVN_Apache $auth)
@@ -71,9 +74,10 @@ class SVN_Apache_SvnrootConf
     {
         $log_file_path = ForgeConfig::get(self::CONFIG_SVN_LOG_PATH);
         $headers  = '';
-        $headers .= "# " . $GLOBALS['sys_name'] . " SVN repositories\n";
+        $headers .= "# " . ForgeConfig::get('sys_name') . " SVN repositories\n";
+        $headers .= '# Generated at ' . date('c') . "\n";
         $headers .= "# Custom log file for SVN queries\n";
-        $headers .= 'CustomLog '.$log_file_path.' "%h %l %u %t %U %>s \"%{SVN-ACTION}e\"" env=SVN-ACTION' . "\n\n";
+        $headers .= 'CustomLog ' . $log_file_path . ' "%h %l %u %t %U %>s \"%{SVN-ACTION}e\"" env=SVN-ACTION' . "\n\n";
         $headers .= implode(PHP_EOL, $this->apacheConfHeaders);
         return $headers;
     }

@@ -22,10 +22,10 @@ namespace Tuleap\Tracker\FormElement;
 
 use PFUser;
 use Tracker;
-use Tracker_Artifact;
 use Tracker_FormElement_Chart_Field_Exception;
 use Tracker_FormElement_Field;
 use Tracker_FormElementFactory;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Semantic\Timeframe\SemanticTimeframeBuilder;
 
 class ChartConfigurationFieldRetriever
@@ -38,7 +38,7 @@ class ChartConfigurationFieldRetriever
      */
     private $form_element_field_factory;
     /**
-     * @var \Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
 
@@ -50,7 +50,7 @@ class ChartConfigurationFieldRetriever
     public function __construct(
         Tracker_FormElementFactory $form_element_field_factory,
         SemanticTimeframeBuilder $semantic_timeframe_builder,
-        \Logger $logger
+        \Psr\Log\LoggerInterface $logger
     ) {
         $this->form_element_field_factory = $form_element_field_factory;
         $this->semantic_timeframe_builder = $semantic_timeframe_builder;
@@ -58,7 +58,6 @@ class ChartConfigurationFieldRetriever
     }
 
     /**
-     * @param Tracker $tracker
      * @return Tracker_FormElement_Field
      */
     public function getCapacityField(Tracker $tracker)
@@ -136,11 +135,9 @@ class ChartConfigurationFieldRetriever
     }
 
     /**
-     * @param Tracker_Artifact $artifact
-     * @param PFUser $user
      * @return bool|Tracker_FormElement_Field
      */
-    public function getBurndownRemainingEffortField(Tracker_Artifact $artifact, PFUser $user)
+    public function getBurndownRemainingEffortField(Artifact $artifact, PFUser $user)
     {
         return $this->form_element_field_factory->getNumericFieldByNameForUser(
             $artifact->getTracker(),
@@ -150,7 +147,6 @@ class ChartConfigurationFieldRetriever
     }
 
     /**
-     * @param Tracker $tracker
      * @return bool
      */
     public function doesRemainingEffortFieldExists(Tracker $tracker)
@@ -162,7 +158,6 @@ class ChartConfigurationFieldRetriever
     }
 
     /**
-     * @param Tracker $tracker
      * @return bool
      */
     public function doesCapacityFieldExist(Tracker $tracker)

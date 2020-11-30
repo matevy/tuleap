@@ -15,7 +15,7 @@
             <div class="ad-homepage-title" data-test="scrum_title">
                 <h2>{{ scrum_title }}</h2>
                 {{^ is_mono_milestone_enabled }}
-                    <a href="?action=show-top&group_id={{ group_id }}&pane=topplanning-v2" class="btn go-to-backlog">
+                    <a href="?action=show-top&group_id={{ group_id }}&pane=topplanning-v2" class="btn go-to-backlog" data-test="go-to-top-backlog">
                         <i class="fa fa-inbox"></i> {{ project_backlog }}
                     </a>
                 {{/ is_mono_milestone_enabled }}
@@ -65,9 +65,9 @@
                                     <table class="table">
                                         {{# milestones }}
                                         <tr>
-                                            <td class="name">{{ getArtifactTitle }} <a href="{{ edit_base_link }}{{ getArtifactId }}" class="backlog-item-link" data-artifact-id="{{ getArtifactId }}"><i class="fa fa-pencil-square-o"></i></a></td>
+                                            <td class="name">{{ getArtifactTitle }} <a href="{{ edit_base_link }}{{ getArtifactId }}" class="backlog-item-link" data-artifact-id="{{ getArtifactId }}"><i class="far fa-edit"></i></a></td>
                                             <td class="actions">
-                                                <a href="?group_id={{ group_id }}&planning_id={{ getPlanningId }}&action=show&aid={{ getArtifactId }}&pane=planning-v2"><i class="fa fa-sign-in"></i> {{ planning }}</a>
+                                                <a href="?group_id={{ group_id }}&planning_id={{ getPlanningId }}&action=show&aid={{ getArtifactId }}&pane=planning-v2" data-test="go-to-planning"><i class="fas fa-sign-in-alt"></i> {{ planning }}</a>
                                             </td>
                                         </tr>
                                         {{/ milestones }}
@@ -91,7 +91,12 @@
                                         {{# milestone_summary_presenters }}
                                             <div class="milestone">
                                                 <div class="header">
-                                                    <p class="title">{{ milestone_title }} <a href="{{ edit_base_link }}{{ artifact_id }}" class="backlog-item-link" data-artifact-id="{{ artifact_id }}"><i class="fa fa-pencil-square-o"></i></a></p>
+                                                    <p class="title">{{ milestone_title }}
+                                                        <a href="{{ edit_base_link }}{{ artifact_id }}"
+                                                           class="backlog-item-link"
+                                                           data-test="release-id"
+                                                           data-artifact-id="{{ artifact_id }}"><i class="far fa-edit"></i>
+                                                        </a></p>
                                                     <p class="hierarchy">
                                                     <i class="fa fa-angle-right"></i>
                                                     {{# breadcrumbs }}
@@ -120,10 +125,10 @@
                                                     {{/ has_burndown }}
                                                 </div>
                                                 <div class="footer">
-                                                    <a href="?group_id={{ group_id }}&planning_id={{ planning_id }}&action=show&aid={{ artifact_id }}&pane=details"><i class="fa fa-bar-chart-o"></i> {{ content }}</a>
-                                                    {{# has_cardwall }}
-                                                        <a href="?group_id={{ group_id }}&planning_id={{ planning_id }}&action=show&aid={{ artifact_id }}&pane=cardwall"><i class="fa fa-th-large"></i> {{ cardwall }}</a>
-                                                    {{/ has_cardwall }}
+                                                    <a href="?group_id={{ group_id }}&planning_id={{ planning_id }}&action=show&aid={{ artifact_id }}&pane=details"><i class="far fa-chart-bar"></i> {{ content }}</a>
+                                                    {{# alternative_board_link }}
+                                                        <a href="{{ url }}"><i class="fa {{ icon }}"></i> {{ label }}</a>
+                                                    {{/ alternative_board_link }}
                                                 </div>
                                             </div>
                                         {{/ milestone_summary_presenters }}

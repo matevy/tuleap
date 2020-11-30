@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS tracker_workflow_transition (
   from_id int(11) default NULL,
   to_id int(11) NOT NULL,
   workflow_id int(11) NOT NULL,
-  INDEX idx_wf_workflow_id( workflow_id )
+  INDEX idx_wf_workflow_id(workflow_id, transition_id)
 ) ENGINE=InnoDB;
 
 DROP TABLE IF EXISTS tracker_workflow_transition_condition_field_notempty;
@@ -157,7 +157,7 @@ DROP TABLE IF EXISTS tracker_field_text;
 CREATE TABLE tracker_field_text(
     field_id INT(11) NOT NULL PRIMARY KEY,
     default_value TEXT NULL,
-    rows INT(11) NOT NULL,
+    `rows` INT(11) NOT NULL,
     cols INT(11) NOT NULL
 ) ENGINE=InnoDB;
 
@@ -208,6 +208,7 @@ CREATE TABLE tracker_field_openlist_value(
     id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     field_id INT(11) UNSIGNED NOT NULL,
     label VARCHAR(255) NOT NULL DEFAULT '',
+    is_hidden BOOL DEFAULT FALSE,
     INDEX idx_search(field_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=101;
 
@@ -296,12 +297,19 @@ CREATE TABLE tracker_changeset_comment_fulltext(
     comment_id INT(11) NOT NULL PRIMARY KEY,
     stripped_body TEXT DEFAULT NULL,
     FULLTEXT stripped_body_idx(stripped_body)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 DROP TABLE IF EXISTS tracker_changeset_incomingmail;
 CREATE TABLE tracker_changeset_incomingmail(
     changeset_id INT(11) NOT NULL PRIMARY KEY,
     raw_mail TEXT NOT NULL
+) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS plugin_tracker_changeset_from_xml;
+CREATE TABLE plugin_tracker_changeset_from_xml(
+   changeset_id INT(11) NOT NULL PRIMARY KEY,
+   user_id INT(11) NOT NULL,
+   timestamp INT(11) NOT NULL
 ) ENGINE=InnoDB;
 
 DROP TABLE IF EXISTS tracker_changeset_value;
@@ -962,9 +970,28 @@ CREATE TABLE IF NOT EXISTS plugin_tracker_workflow_postactions_hidden_fieldsets_
     PRIMARY KEY (postaction_id, fieldset_id)
 ) ENGINE=InnoDB;
 
-DROP TABLE IF EXISTS plugin_tracker_new_layout_modal_user;
-CREATE TABLE IF NOT EXISTS plugin_tracker_new_layout_modal_user (
-    user_id INT(11) PRIMARY KEY
+DROP TABLE IF EXISTS plugin_tracker_pending_jira_import;
+CREATE TABLE IF NOT EXISTS plugin_tracker_pending_jira_import (
+    id INT(11) UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    created_on INT(11) UNSIGNED NOT NULL,
+    project_id INT(11) NOT NULL,
+    user_id INT(11) NOT NULL,
+    jira_server TEXT NOT NULL,
+    jira_user_email TEXT NOT NULL,
+    encrypted_jira_token BLOB NOT NULL,
+    jira_project_id TEXT NOT NULL,
+    jira_issue_type_name TEXT NOT NULL,
+    tracker_name TEXT NOT NULL,
+    tracker_shortname TEXT NOT NULL,
+    tracker_color VARCHAR(64) NOT NULL,
+    tracker_description TEXT NOT NULL,
+    INDEX idx_project_id(project_id),
+    INDEX idx_created_on(created_on)
+) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS plugin_tracker_in_new_dropdown;
+CREATE TABLE IF NOT EXISTS plugin_tracker_in_new_dropdown(
+    tracker_id int(11) NOT NULL PRIMARY KEY
 ) ENGINE=InnoDB;
 
 -- Enable service for project 100
@@ -1043,6 +1070,35 @@ INSERT INTO user SET
 INSERT INTO user_access SET
         user_id = 90,
         last_access_date = '0';
+
+INSERT INTO user SET
+     user_id = 91,
+     user_name = 'forge__tracker_importer_user',
+     email = 'noreply+tracker_importer@_DOMAIN_NAME_',
+     user_pw = '#~2mouahahaha',
+     realname = 'Tracker Importer',
+     register_purpose = NULL,
+     status = 'S',
+     shell = '0',
+     unix_pw = '0',
+     unix_status = '0',
+     unix_uid = 0,
+     unix_box = '0',
+     ldap_id = NULL,
+     add_date = 370514700,
+     confirm_hash = NULL,
+     mail_siteupdates = 0,
+     mail_va = 0,
+     sticky_login = 0,
+     authorized_keys = NULL,
+     email_new = NULL,
+     timezone = 'GMT',
+     language_id = 'en_US',
+     last_pwd_update = '0';
+
+INSERT INTO user_access SET
+    user_id = 91,
+    last_access_date = '0';
 
 INSERT INTO tracker_report_config (query_limit) VALUES (30);
 

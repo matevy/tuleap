@@ -11,10 +11,12 @@
             id="siteadmin-config-providers-modal-update-{{ getId }}-title"
             class="tlp-modal-title"
         >
-            <i class="fa fa-pencil tlp-modal-title-icon"></i> {{ update_provider }}
+            <i class="fas fa-pencil-alt tlp-modal-title-icon"></i> {{ update_provider }}
         </h1>
         <div
             class="tlp-modal-close"
+            tabindex="0"
+            role="button"
             data-dismiss="modal"
             aria-label="Close"
         >&times;</div>
@@ -97,6 +99,21 @@
                     placeholder="{{ https_placeholder }}"
                     value="{{ getTokenEndpoint }}"
                     required
+                >
+            </div>
+
+            <div class="tlp-form-element">
+                <label class="tlp-label" for="jwks_endpoint-{{ getId }}">
+                    {{# dgettext }} tuleap-openidconnectclient | JWKS endpoint {{/ dgettext }}
+                </label>
+                <input
+                        type="url"
+                        class="tlp-input"
+                        id="jwks_endpoint-{{ getId }}"
+                        name="jwks_endpoint"
+                        pattern="https://.+"
+                        placeholder="{{ https_placeholder }}"
+                        value="{{ jwks_endpoint }}"
                 >
             </div>
 
@@ -186,7 +203,7 @@
                 data-dismiss="modal"
             >{{ btn_cancel }}</button>
             <button type="submit" class="tlp-button-primary tlp-modal-action">
-                <i class="fa fa-pencil tlp-button-icon"></i> {{ btn_update }}
+                <i class="fas fa-pencil-alt tlp-button-icon"></i> {{ btn_update }}
             </button>
         </div>
     </form>

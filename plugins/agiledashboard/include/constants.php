@@ -20,23 +20,7 @@
 
 define('AGILEDASHBOARD_BASE_URL', '/plugins/agiledashboard');
 define('AGILEDASHBOARD_BASE_DIR', dirname(__FILE__));
-define('AGILEDASHBOARD_TEMPLATE_DIR', dirname(__FILE__).'/../templates');
-define('AGILEDASHBOARD_RESOURCE_DIR', dirname(__FILE__).'/../www/resources');
-
-/**
- * Get the additional panes to display next to a milestone in the agiledashboard
- *
- * Parameters:
- * 'milestone'         => The current Planning_Milestone
- * 'user'              => The current user
- * 'request'           => The current HTTP request
- * 'milestone_factory' => Planning_MilestoneFactory
- *
- * Expected results
- * 'panes'       => Input/Output parameter, array of type AgileDashboard_PaneInfo
- * 'active_pane' => Input/Output parameter, the current active pane (type AgileDashboard_Pane)
- */
-define('AGILEDASHBOARD_EVENT_ADDITIONAL_PANES_ON_MILESTONE', 'agiledashboard_event_additional_panes_on_milestone');
+define('AGILEDASHBOARD_TEMPLATE_DIR', dirname(__FILE__) . '/../templates');
 
 /**
  * Get the pane to display on agile dashboard index page
@@ -115,9 +99,9 @@ define('AGILEDASHBOARD_EVENT_REST_OPTIONS_BURNDOWN', 'agiledashboard_event_rest_
  * Allow plugins to modify the milestone requested by a RESt call
  *
  * Parameters:
- * 'user'                     => The user who requested
- * 'milestone'                => The Milestone object
- * 'milestone_representation' => The RESt representation of the milestone
+ * 'user'                                       => The user who requested
+ * 'milestone'                                  => The Milestone object
+ * 'milestone_representation_reference_holder' => The reference to a RESt representation of the milestone
  */
 define('AGILEDASHBOARD_EVENT_REST_GET_MILESTONE', 'agiledashboard_event_rest_get_milestone');
 

@@ -20,20 +20,19 @@
 
 use FastRoute\RouteCollector;
 use Tuleap\Admin\AdminPageRenderer;
+use Tuleap\Admin\SiteAdministrationAddOption;
+use Tuleap\Admin\SiteAdministrationPluginOption;
 use Tuleap\Bugzilla\Administration\Controller;
 use Tuleap\Bugzilla\Administration\Router;
 use Tuleap\Bugzilla\CrossReferenceCreator;
 use Tuleap\Bugzilla\Plugin\Info;
-use Tuleap\Bugzilla\BugzillaLogger;
 use Tuleap\Bugzilla\Reference\Dao;
 use Tuleap\Bugzilla\Reference\ReferenceDestructor;
 use Tuleap\Bugzilla\Reference\ReferenceRetriever;
 use Tuleap\Bugzilla\Reference\ReferenceSaver;
 use Tuleap\Bugzilla\Reference\RESTReferenceCreator;
-use Tuleap\BurningParrotCompatiblePageEvent;
 use Tuleap\Http\HttpClientFactory;
 use Tuleap\Http\HTTPFactoryBuilder;
-use Tuleap\Layout\IncludeAssets;
 use Tuleap\reference\ReferenceValidator;
 use Tuleap\reference\ReservedKeywordsRetriever;
 use Tuleap\Request\CollectRoutesEvent;
@@ -50,7 +49,7 @@ class bugzilla_referencePlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassD
 
         bindtextdomain('tuleap-bugzilla_reference', BUGZILLA_REFERENCE_BASE_DIR . '/site-content');
 
-        $this->addHook('site_admin_option_hook', 'addSiteAdministrationOptionHook');
+        $this->addHook(SiteAdministrationAddOption::NAME);
         $this->addHook(Event::GET_PLUGINS_AVAILABLE_KEYWORDS_REFERENCES);
         $this->addHook(Event::GET_AVAILABLE_REFERENCE_NATURE);
         $this->addHook(Event::POST_REFERENCE_EXTRACTED);
@@ -72,15 +71,14 @@ class bugzilla_referencePlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassD
         return $this->pluginInfo;
     }
 
-    public function addSiteAdministrationOptionHook(array $params)
+    public function siteAdministrationAddOption(SiteAdministrationAddOption $site_administration_add_option): void
     {
-        $params['plugins'][] = array(
-            'label' => $this->getPluginInfo()->getPluginDescriptor()->getFullName(),
-            'href'  => BUGZILLA_REFERENCE_BASE_URL . '/admin/'
+        $site_administration_add_option->addPluginOption(
+            SiteAdministrationPluginOption::build($this->getPluginInfo()->getPluginDescriptor()->getFullName(), BUGZILLA_REFERENCE_BASE_URL . '/admin/')
         );
     }
 
-    public function routeAdmin() : DispatchableWithRequest
+    public function routeAdmin(): DispatchableWithRequest
     {
         $encryption_key = $this->getEncryptionKey();
 
@@ -120,10 +118,10 @@ class bugzilla_referencePlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassD
     public function get_available_reference_natures($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $params['natures']['bugzilla'] =
-            array(
+            [
                 'keyword' => 'bugzilla',
                 'label'   => dgettext('tuleap-bugzilla_reference', 'Bugzilla')
-            );
+            ];
     }
 
     /**
@@ -146,8 +144,8 @@ class bugzilla_referencePlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassD
     /** @see \Event::POST_REFERENCE_EXTRACTED */
     public function post_reference_extracted(array $params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        /** @var CrossReference $cross_reference */
         $cross_reference = $params['cross_reference'];
+        \assert($cross_reference instanceof CrossReference);
 
         $bugzilla = $this->getBugzillaReferenceFromKeyword($cross_reference->targetKey);
         if (! $bugzilla) {
@@ -162,21 +160,21 @@ class bugzilla_referencePlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassD
         return new CrossReferenceCreator(new CrossReferenceDao(), $this->getRESTReferenceCreator());
     }
 
-    private function getRESTReferenceCreator() : RESTReferenceCreator
+    private function getRESTReferenceCreator(): RESTReferenceCreator
     {
         return new RESTReferenceCreator(
             HttpClientFactory::createClient(),
             HTTPFactoryBuilder::requestFactory(),
             HTTPFactoryBuilder::streamFactory(),
-            new BugzillaLogger()
+            \BackendLogger::getDefaultLogger('bugzilla_syslog')
         );
     }
 
     /** @see \Event::REMOVE_CROSS_REFERENCE */
     public function remove_cross_reference(array $params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        /** @var CrossReference $cross_reference */
         $cross_reference = $params['cross_reference'];
+        \assert($cross_reference instanceof CrossReference);
 
         $bugzilla = $this->getBugzillaReferenceFromKeyword($cross_reference->targetKey);
         if (! $bugzilla) {
@@ -190,8 +188,8 @@ class bugzilla_referencePlugin extends Plugin //phpcs:ignore PSR1.Classes.ClassD
     /** @see \Event::GET_REFERENCE_ADMIN_CAPABILITIES */
     public function get_reference_admin_capabilities(array $params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        /** @var Reference $reference */
         $reference = $params['reference'];
+        \assert($reference instanceof Reference);
 
         if ($reference->getNature() === 'bugzilla') {
             $params['can_be_deleted'] = false;

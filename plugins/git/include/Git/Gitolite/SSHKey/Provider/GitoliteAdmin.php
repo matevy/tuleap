@@ -32,7 +32,7 @@ class GitoliteAdmin extends ArrayIterator implements IProvideKey
 
     public function __construct()
     {
-        $keys = array($this->getGitoliteAdminKey());
+        $keys = [$this->getGitoliteAdminKey()];
         parent::__construct($keys);
     }
 
@@ -63,6 +63,6 @@ class GitoliteAdmin extends ArrayIterator implements IProvideKey
                 return $file_path;
             }
         }
-        throw new AccessException("No valid ".self::GITOLITE_ADMIN_KEY_FILE." found");
+        throw new AccessException("No valid " . self::GITOLITE_ADMIN_KEY_FILE . " found");
     }
 }

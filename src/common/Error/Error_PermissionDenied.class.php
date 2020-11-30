@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2010. All Rights Reserved.
  *
  * This file is a part of Tuleap.
@@ -39,13 +39,6 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
     }
 
     /**
-     * Returns the type of the error to manage
-     *
-     * @return String
-     */
-    abstract function getType(); // phpcs:ignore Squiz.Scope.MethodScope.Missing
-
-    /**
      * Returns the base on language file
      *
      * @return String
@@ -54,14 +47,6 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
     {
         return 'include_exit';
     }
-
-
-     /**
-     * Returns the build interface parameters
-     *
-     * @return Array
-     */
-    abstract function returnBuildInterfaceParam();  // phpcs:ignore Squiz.Scope.MethodScope.Missing
 
     /**
      * Returns the url link after modification if needed else returns the same string
@@ -72,21 +57,6 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
     function getRedirectLink($link, $language)  // phpcs:ignore Squiz.Scope.MethodScope.Missing
     {
         return $link;
-    }
-
-    /**
-     * Build the user interface to ask for membership
-     *
-     */
-    function buildInterface(PFUser $user, ?Project $project = null)  // phpcs:ignore Squiz.Scope.MethodScope.Missing
-    {
-        if ($user->isAnonymous()) {
-            $event_manager = EventManager::instance();
-            $redirect = new URLRedirect($event_manager);
-            $redirect->redirectToLogin();
-        } else {
-            $this->buildPermissionDeniedInterface($project);
-        }
     }
 
 
@@ -100,14 +70,14 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
      */
     function extractReceiver($project, $urlData)  // phpcs:ignore Squiz.Scope.MethodScope.Missing
     {
-        $admins = array();
+        $admins = [];
         $status  = true;
         $pm = ProjectManager::instance();
         $res = $pm->getMembershipRequestNotificationUGroup($project->getId());
-        if ($res && !$res->isError()) {
+        if ($res && ! $res->isError()) {
             if ($res->rowCount() == 0) {
                 $dar = $pm->returnProjectAdminsByGroupId($project->getId());
-                if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
+                if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
                     foreach ($dar as $row) {
                         $admins[] = $row['email'];
                     }
@@ -118,12 +88,12 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
                  * 2 - UGROUP_PROJECT_ADMIN, UGROUP_1, UGROUP_2,.., UGROUP_n
                  * 3 - UGROUP_1, UGROUP_2,.., UGROUP_n
                  */
-                $ugroups = array();
-                $dars = array();
+                $ugroups = [];
+                $dars = [];
                 foreach ($res as $row) {
                     if ($row['ugroup_id'] == $GLOBALS['UGROUP_PROJECT_ADMIN']) {
                         $dar = $pm->returnProjectAdminsByGroupId($project->getId());
-                        if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
+                        if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
                             $dars[] = $dar;
                         }
                     } else {
@@ -132,7 +102,7 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
                 }
                 if (count($ugroups) > 0) {
                     $dar = $this->getUGroup()->returnProjectAdminsByStaticUGroupId($project->getId(), $ugroups);
-                    if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
+                    if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
                         $dars[] = $dar;
                     }
                 }
@@ -147,14 +117,14 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
             if (count($admins) == 0) {
                 $status = false;
                 $dar = $pm->returnProjectAdminsByGroupId($project->getId());
-                if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
+                if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
                     foreach ($dar as $row) {
                         $admins[] = $row['email'];
                     }
                 }
             }
         }
-        return array('admins' => $admins, 'status' => $status);
+        return ['admins' => $admins, 'status' => $status];
     }
 
     /**
@@ -163,7 +133,7 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
      */
     function processMail($messageToAdmin)  // phpcs:ignore Squiz.Scope.MethodScope.Missing
     {
-        $request =HTTPRequest::instance();
+        $request = HTTPRequest::instance();
 
         $pm = $this->getProjectManager();
         $project = $pm->getProject($request->get('groupId'));
@@ -172,10 +142,10 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
         $user         = $user_manager->getCurrentUser();
 
         $messageToAdmin = trim($messageToAdmin);
-        $messageToAdmin ='>'.$messageToAdmin;
-        $messageToAdmin = str_replace(array("\r\n"), "\n>", $messageToAdmin);
+        $messageToAdmin = '>' . $messageToAdmin;
+        $messageToAdmin = str_replace(["\r\n"], "\n>", $messageToAdmin);
 
-        $hrefApproval = $request->getServerUrl() . '/project/admin/?group_id='.$request->get('groupId');
+        $hrefApproval = $request->getServerUrl() . '/project/admin/?group_id=' . $request->get('groupId');
         $urlData      = $request->getServerUrl() . $request->get('url_data');
         return $this->sendMail($project, $user, $urlData, $hrefApproval, $messageToAdmin);
     }
@@ -207,13 +177,13 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
 
         $link = $this->getRedirectLink($urlData, $GLOBALS['Language']);
         $body = $this->getPermissionDeniedMailBody($project, $user, $hrefApproval, $messageToAdmin, $link);
-        if ($adminList['status']== false) {
-            $body .= "\n\n". $GLOBALS['Language']->getText($this->getTextBase(), 'mail_content_unvalid_ugroup', array($project->getPublicName()));
+        if ($adminList['status'] == false) {
+            $body .= "\n\n" . $GLOBALS['Language']->getText('include_exit', 'mail_content_unvalid_ugroup', [$project->getPublicName()]);
         }
         $mail->setBodyText($body);
 
-        if (!$mail->send()) {
-            exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('global', 'mail_failed', array($GLOBALS['sys_email_admin'])));
+        if (! $mail->send()) {
+            exit_error($GLOBALS['Language']->getText('global', 'error'), $GLOBALS['Language']->getText('global', 'mail_failed', [ForgeConfig::get('sys_email_admin')]));
         }
 
         $GLOBALS['Response']->addFeedback(Feedback::INFO, $GLOBALS['Language']->getText('include_exit', 'request_sent'));
@@ -251,74 +221,13 @@ abstract class Error_PermissionDenied // phpcs:ignore PSR1.Classes.ClassDeclarat
         return new ProjectUGroup();
     }
 
-    /**
-     * Build the Permission Denied error interface
-     */
-    private function buildPermissionDeniedInterface(?Project $project = null)
-    {
-        $purifier = Codendi_HTMLPurifier::instance();
-        $param    = $this->returnBuildInterfaceParam();
-
-        site_header(array('title' => $GLOBALS['Language']->getText('include_exit', 'exit_error')));
-
-        echo "<b>" . $purifier->purify($GLOBALS['Language']->getText($this->getTextBase(), 'perm_denied')) . "</b>";
-        echo '<br></br>';
-        echo "<br>" . $purifier->purify($GLOBALS['Language']->getText($this->getTextBase(), $param['index']), CODENDI_PURIFIER_FULL);
-
-        //In case of restricted user, we only show the zone text area to ask for membership
-        //just when the requested page belongs to a project
-        if (!(($param['func'] == 'restricted_user_request') && ($project === null))) {
-            $message = $GLOBALS['Language']->getText('project_admin_index', 'member_request_delegation_msg_to_requester');
-            $pm = ProjectManager::instance();
-            $dar = $pm->getMessageToRequesterForAccessProject($project->getID());
-            if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
-                $row = $dar->current();
-                if ($row['msg_to_requester'] != "member_request_delegation_msg_to_requester") {
-                    $message = $row['msg_to_requester'];
-                }
-            }
-            echo $GLOBALS['Language']->getText($this->getTextBase(), 'request_to_admin');
-            echo '<br></br>';
-            echo '<form action="' . $purifier->purify($param['action']) . '" method="post" name="display_form">
-                  <textarea wrap="virtual" rows="5" cols="70" name="' . $purifier->purify($param['name']) . '">' . $purifier->purify($message) . ' </textarea></p>
-                  <input type="hidden" id="func" name="func" value="' . $purifier->purify($param['func']) . '">
-                  <input type="hidden" id="groupId" name="groupId" value="' . $purifier->purify($project->getID()) . '">
-                  <input type="hidden" id="data" name="url_data" value="' . $purifier->purify($_SERVER['REQUEST_URI']) . '">
-                  <br><input name="Submit" type="submit" value="' . $purifier->purify($GLOBALS['Language']->getText('include_exit', 'send_mail')) . '"/></br>
-              </form>';
-        }
-
-        $GLOBALS['HTML']->footer(array('showfeedback' => false));
-    }
-
-    protected function getPermissionDeniedMailBody(
+    abstract protected function getPermissionDeniedMailBody(
         Project $project,
         PFUser $user,
         string $href_approval,
         string $message_to_admin,
         string $link
-    ) {
-        return $GLOBALS['Language']->getText(
-            $this->getTextBase(),
-            'mail_content_' . $this->getType(),
-            [
-                $user->getRealName(),
-                $user->getName(),
-                $link,
-                $project->getPublicName(),
-                $href_approval,
-                $message_to_admin,
-                $user->getEmail()
-            ]
-        );
-    }
+    ): string;
 
-    protected function getPermissionDeniedMailSubject(Project $project, PFUser $user)
-    {
-        return $GLOBALS['Language']->getText(
-            $this->getTextBase(),
-            'mail_subject_' . $this->getType(),
-            [$project->getPublicName(), $user->getRealName()]
-        );
-    }
+    abstract protected function getPermissionDeniedMailSubject(Project $project, PFUser $user): string;
 }

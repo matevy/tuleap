@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 /**
  * A swimline in the dashboard
  */
@@ -25,17 +27,15 @@ class Cardwall_SwimlineSoloNoMatchingColumns extends Cardwall_Swimline
 {
 
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $artifact;
 
     /**
      *
-     * @param Cardwall_CardInCellPresenter $swimline_artifact_presenter
-     * @param Tracker_Artifact $artifact
      * @param array $cells
      */
-    public function __construct(Cardwall_CardInCellPresenter $swimline_artifact_presenter, Tracker_Artifact $artifact, array $cells)
+    public function __construct(Cardwall_CardInCellPresenter $swimline_artifact_presenter, Artifact $artifact, array $cells)
     {
         parent::__construct($swimline_artifact_presenter, $cells);
 
@@ -53,6 +53,6 @@ class Cardwall_SwimlineSoloNoMatchingColumns extends Cardwall_Swimline
         $tracker_name      = $this->artifact->getTracker()->getName();
         $uri               = $this->artifact->getUri();
 
-        return $GLOBALS['Language']->getText('plugin_cardwall', 'cells_not_displayed', array($backlog_item_name, $tracker_name, $uri));
+        return sprintf(dgettext('tuleap-cardwall', 'The backlog item <a href="%3$s"><u>%1$s</u></a> cannot be displayed since the column matchings have not be defined between <b>%2$s</b> and this planning'), $backlog_item_name ?? '', $tracker_name, $uri);
     }
 }

@@ -30,14 +30,14 @@ describe("CollapsedHeaderCell", () => {
                     id: 2,
                     label: "To do",
                     color: "",
-                    has_hover: false
-                } as ColumnDefinition
-            }
+                    has_hover: false,
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("taskboard-header-collapsed")).toBe(true);
         expect(wrapper.classes("tlp-swatch-fiesta-red")).toBe(false);
-        expect(wrapper.contains(ExpandButton)).toBe(true);
+        expect(wrapper.findComponent(ExpandButton).exists()).toBe(true);
     });
 
     it("displays a cell with color", () => {
@@ -47,9 +47,9 @@ describe("CollapsedHeaderCell", () => {
                     id: 2,
                     label: "To do",
                     color: "fiesta-red",
-                    has_hover: false
-                } as ColumnDefinition
-            }
+                    has_hover: false,
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("tlp-swatch-fiesta-red")).toBe(true);
@@ -62,9 +62,9 @@ describe("CollapsedHeaderCell", () => {
                     id: 2,
                     label: "To do",
                     color: "fiesta-red",
-                    has_hover: true
-                } as ColumnDefinition
-            }
+                    has_hover: true,
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("taskboard-header-collapsed-show-label")).toBe(true);
@@ -77,9 +77,9 @@ describe("CollapsedHeaderCell", () => {
                     id: 2,
                     label: "To do",
                     color: "fiesta-red",
-                    has_hover: false
-                } as ColumnDefinition
-            }
+                    has_hover: false,
+                } as ColumnDefinition,
+            },
         });
 
         expect(wrapper.classes("taskboard-header-collapsed-show-label")).toBe(false);

@@ -1,7 +1,4 @@
 <div class="tlp-framed git-repository-header">
-    {{# repository_path }}
-        <div class="git-repository-path">{{ repository_path }}/</div>
-    {{/ repository_path }}
     <div class="git-repository-subheader">
         <div>
             <h1 class="git-repository-name git-repository-forked-name"
@@ -10,7 +7,7 @@
             </h1>
             {{# parent_repository_presenter }}
                 <div class="git-repository-parent">
-                    <i class="fa fa-code-fork"></i>
+                    <i class="fas fa-code-branch"></i>
                     {{# dgettext }}
                         tuleap-git
                         | Forked from %s
@@ -33,7 +30,6 @@
                     data-parent-project-id="{{ parent_project_id }}"
                 {{/ parent_repository_presenter }}
             ></div>
-            <div class="git-repository-actions-spacer"></div>
             {{# clone_presenter }}
                 {{> repository/clone-bar }}
             {{/ clone_presenter }}

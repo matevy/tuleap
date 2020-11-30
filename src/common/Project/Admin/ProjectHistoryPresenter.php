@@ -20,13 +20,7 @@
 
 namespace Tuleap\Project\Admin;
 
-use EventManager;
-use ForgeConfig;
 use Project;
-use ProjectManager;
-use TemplateSingleton;
-use UserManager;
-use UserHelper;
 use Tuleap\Layout\PaginationPresenter;
 
 class ProjectHistoryPresenter
@@ -53,7 +47,7 @@ class ProjectHistoryPresenter
         ProjectHistorySearchPresenter $search
     ) {
         $this->id          = $project->getID();
-        $this->public_name = $project->getUnconvertedPublicName();
+        $this->public_name = $project->getPublicName();
         $this->search      = $search;
         $this->is_active   = $project->isActive();
 
@@ -89,9 +83,9 @@ class ProjectHistoryPresenter
         $offset
     ) {
         $base_url       = '/admin/projecthistory.php';
-        $default_params = array(
+        $default_params = [
             'group_id' => $project->getId()
-        );
+        ];
 
         if ($search->selected_event) {
             $default_params['events_box'] = $search->selected_event;

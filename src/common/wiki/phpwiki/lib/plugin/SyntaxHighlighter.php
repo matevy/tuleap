@@ -47,7 +47,7 @@ Fixes by Reini Urban:
   php version switch
   HIGHLIGHT_DATA_DIR, HIGHLIGHT_EXE
 */
-if (!defined('HIGHLIGHT_EXE')) {
+if (! defined('HIGHLIGHT_EXE')) {
     define('HIGHLIGHT_EXE', 'highlight');
 }
 //define('HIGHLIGHT_EXE','/usr/local/bin/highlight');
@@ -56,7 +56,7 @@ if (!defined('HIGHLIGHT_EXE')) {
 // highlight requires two subdirs themes and langDefs somewhere.
 // Best by highlight.conf in $HOME, but the webserver user usually
 // doesn't have a $HOME
-if (!defined('HIGHLIGHT_DATA_DIR')) {
+if (! defined('HIGHLIGHT_DATA_DIR')) {
     if (isWindows()) {
         define('HIGHLIGHT_DATA_DIR', 'f:\cygnus\usr\local\share\highlight');
     } else {
@@ -67,19 +67,19 @@ if (!defined('HIGHLIGHT_DATA_DIR')) {
 
 class WikiPlugin_SyntaxHighlighter extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("SyntaxHighlighter");
     }
-    function getDescription()
+    public function getDescription()
     {
         return _("Source code syntax highlighter (via http://www.andre-simon.de)");
     }
-    function managesValidators()
+    public function managesValidators()
     {
         return true;
     }
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -87,28 +87,28 @@ class WikiPlugin_SyntaxHighlighter extends WikiPlugin
             "\$Revision: 1.7 $"
         );
     }
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array(
+        return [
                      'syntax' => null, // required argument
                      'style'  => null, // optional argument ["ansi", "gnu", "kr", "java", "linux"]
                      'color'  => null, // optional, see highlight/themes
                      'number' => 0,
                      'wrap'   => 0,
-                     );
+                     ];
     }
-    function handle_plugin_args_cruft(&$argstr, &$args)
+    public function handle_plugin_args_cruft(&$argstr, &$args)
     {
         $this->source = $argstr;
     }
 
     private function filterThroughCmd($input, $commandLine)
     {
-        $descriptorspec = array(
-               0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
-               1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
-               2 => array("pipe", "w"),  // stdout is a pipe that the child will write to
-        );
+        $descriptorspec = [
+               0 => ["pipe", "r"],  // stdin is a pipe that the child will read from
+               1 => ["pipe", "w"],  // stdout is a pipe that the child will write to
+               2 => ["pipe", "w"],  // stdout is a pipe that the child will write to
+        ];
 
         $process = proc_open("$commandLine", $descriptorspec, $pipes);
         if (is_resource($process)) {
@@ -119,12 +119,12 @@ class WikiPlugin_SyntaxHighlighter extends WikiPlugin
             fwrite($pipes[0], $input);
             fclose($pipes[0]);
             $buf = "";
-            while (!feof($pipes[1])) {
+            while (! feof($pipes[1])) {
                 $buf .= fgets($pipes[1], 1024);
             }
             fclose($pipes[1]);
             $stderr = '';
-            while (!feof($pipes[2])) {
+            while (! feof($pipes[2])) {
                 $stderr .= fgets($pipes[2], 1024);
             }
             fclose($pipes[2]);
@@ -138,14 +138,14 @@ class WikiPlugin_SyntaxHighlighter extends WikiPlugin
         }
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
         $source = $this->source;
         if (empty($syntax)) {
             return $this->error(_("Syntax language not specified."));
         }
-        if (!empty($source)) {
+        if (! empty($source)) {
             $args = "";
             if (defined('HIGHLIGHT_DATA_DIR')) {
                 $args .= " --data-dir " . escapeshellarg(HIGHLIGHT_DATA_DIR);
@@ -158,7 +158,7 @@ class WikiPlugin_SyntaxHighlighter extends WikiPlugin
             }
             $html = HTML();
 
-            if (!empty($style)) {
+            if (! empty($style)) {
                 $args .= ' -F ' . escapeshellarg($style);
             }
             $commandLine = HIGHLIGHT_EXE . "$args -q -f -S " . escapeshellarg($syntax);
@@ -175,7 +175,7 @@ class WikiPlugin_SyntaxHighlighter extends WikiPlugin
             return $this->error(fmt("empty source"));
         }
     }
-};
+}
 
 // $Log: SyntaxHighlighter.php,v $
 // Revision 1.7  2004/07/08 20:30:07  rurban

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,14 +20,13 @@
 
 class XML_RNGValidator
 {
-
-    public function validate(SimpleXMLElement $xml_element, $rng_path)
+    /**
+     * @throws XML_ParseException
+     */
+    public function validate(SimpleXMLElement $xml_element, string $rng_path): void
     {
-        $dom          = $this->simpleXmlElementToDomDocument($xml_element);
-        $xml_security = new XML_Security();
-        $xml_security->enableExternalLoadOfEntities();
-        $is_valid = @$dom->relaxNGValidate($rng_path);
-        $xml_security->disableExternalLoadOfEntities();
+        $dom      = $this->simpleXmlElementToDomDocument($xml_element);
+        $is_valid = @$dom->relaxNGValidateSource(\file_get_contents($rng_path));
 
         if (! $is_valid) {
             $this->extractErrors($dom, $rng_path);
@@ -36,12 +35,8 @@ class XML_RNGValidator
 
     /**
      * Create a dom document based on a SimpleXMLElement
-     *
-     * @param SimpleXMLElement $xml_element
-     *
-     * @return \DOMDocument
      */
-    private function simpleXmlElementToDomDocument(SimpleXMLElement $xml_element)
+    private function simpleXmlElementToDomDocument(SimpleXMLElement $xml_element): DOMDocument
     {
         $dom = new DOMDocument("1.0", "UTF-8");
         $dom_element = $dom->importNode(dom_import_simplexml($xml_element), true);
@@ -50,11 +45,10 @@ class XML_RNGValidator
     }
 
     /**
-     * @param DOMDocument $dom
      * @param             $rng_path
      * @throws XML_ParseException
      */
-    private function extractErrors(DOMDocument $dom, $rng_path): void
+    private function extractErrors(DOMDocument $dom, string $rng_path): void
     {
         $system_command = new System_Command();
         $temp           = tempnam(ForgeConfig::get('tmp_dir'), 'xml');
@@ -72,12 +66,12 @@ class XML_RNGValidator
         }
 
         try {
-            $jing   = __DIR__ .'/../../utils/xml/jing.jar';
+            $jing   = __DIR__ . '/../../utils/xml/jing.jar';
             $system_command->exec('java -jar ' . escapeshellarg($jing) . ' ' .  escapeshellarg($rng_path) . ' ' . escapeshellarg($temp));
         } catch (System_Command_CommandException $ex) {
             $errors = [];
             foreach ($ex->getOutput() as $o) {
-                $matches = array();
+                $matches = [];
                 if (preg_match('/:(\d+):(\d+):([^:]+):(.*)/', $o, $matches)) {
                     //1 line
                     //2 column

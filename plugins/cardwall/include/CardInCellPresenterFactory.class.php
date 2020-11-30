@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright Enalean (c) 2013. All rights reserved.
  *
  * Tuleap and Enalean names and logos are registrated trademarks owned by
@@ -45,7 +45,6 @@ class Cardwall_CardInCellPresenterFactory
     /**
      * Instanciate a new Cardwall_CardInCellPresenter
      *
-     * @param Cardwall_CardPresenter $card_presenter
      *
      * @return Cardwall_CardInCellPresenter
      */

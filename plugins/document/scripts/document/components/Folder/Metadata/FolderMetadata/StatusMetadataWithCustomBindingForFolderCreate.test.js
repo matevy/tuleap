@@ -18,7 +18,7 @@
  */
 
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import localVue from "../../../../helpers/local-vue.js";
 import { TYPE_FILE } from "../../../../constants.js";
 import StatusMetadataWithCustomBindingForFolderCreate from "./StatusMetadataWithCustomBindingForFolderCreate.vue";
@@ -29,8 +29,8 @@ describe("StatusMetadataWithCustomBindingForFolderCreate", () => {
         state = {
             is_item_status_metadata_used: false,
             current_folder: {
-                id: 4
-            }
+                id: 4,
+            },
         };
 
         const store_options = { state };
@@ -41,17 +41,17 @@ describe("StatusMetadataWithCustomBindingForFolderCreate", () => {
             return shallowMount(StatusMetadataWithCustomBindingForFolderCreate, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
 
-    it(`It display status selectbox only when status property is enabled for project`, () => {
+    it(`display status selectbox only when status property is enabled for project`, async () => {
         const wrapper = status_metadata({
             currentlyUpdatedItem: {
                 status: 100,
                 type: TYPE_FILE,
-                title: "title"
+                title: "title",
             },
             parent: {
                 id: 40,
@@ -60,26 +60,27 @@ describe("StatusMetadataWithCustomBindingForFolderCreate", () => {
                         short_name: "status",
                         list_value: [
                             {
-                                id: 103
-                            }
-                        ]
-                    }
-                ]
-            }
+                                id: 103,
+                            },
+                        ],
+                    },
+                ],
+            },
         });
 
         store.state.is_item_status_metadata_used = true;
+        await wrapper.vm.$nextTick();
 
         expect(
-            wrapper.contains("[data-test=document-status-metadata-for-item-create]")
+            wrapper.find("[data-test=document-status-metadata-for-item-create]").exists()
         ).toBeTruthy();
     });
 
-    it(`It does not display status if property is not available`, () => {
+    it(`does not display status if property is not available`, () => {
         const wrapper = status_metadata({
             currentlyUpdatedItem: {
                 type: TYPE_FILE,
-                title: "title"
+                title: "title",
             },
             parent: {
                 id: 40,
@@ -88,18 +89,18 @@ describe("StatusMetadataWithCustomBindingForFolderCreate", () => {
                         short_name: "status",
                         list_value: [
                             {
-                                id: 103
-                            }
-                        ]
-                    }
-                ]
-            }
+                                id: 103,
+                            },
+                        ],
+                    },
+                ],
+            },
         });
 
         store.state.is_item_status_metadata_used = false;
 
         expect(
-            wrapper.contains("[data-test=document-status-metadata-for-item-create]")
+            wrapper.find("[data-test=document-status-metadata-for-item-create]").exists()
         ).toBeFalsy();
         expect(wrapper.vm.status_value).toEqual(undefined);
     });
@@ -108,7 +109,7 @@ describe("StatusMetadataWithCustomBindingForFolderCreate", () => {
         const wrapper = status_metadata({
             currentlyUpdatedItem: {
                 type: TYPE_FILE,
-                title: "title"
+                title: "title",
             },
             parent: {
                 id: 40,
@@ -117,12 +118,12 @@ describe("StatusMetadataWithCustomBindingForFolderCreate", () => {
                         short_name: "status",
                         list_value: [
                             {
-                                id: 103
-                            }
-                        ]
-                    }
-                ]
-            }
+                                id: 103,
+                            },
+                        ],
+                    },
+                ],
+            },
         });
 
         store.state.is_item_status_metadata_used = true;
@@ -138,14 +139,14 @@ describe("StatusMetadataWithCustomBindingForFolderCreate", () => {
                         short_name: "status",
                         list_value: [
                             {
-                                id: 100
-                            }
-                        ]
-                    }
+                                id: 100,
+                            },
+                        ],
+                    },
                 ],
                 status: 100,
                 type: TYPE_FILE,
-                title: "title"
+                title: "title",
             },
             parent: {
                 id: 40,
@@ -154,12 +155,12 @@ describe("StatusMetadataWithCustomBindingForFolderCreate", () => {
                         short_name: "status",
                         list_value: [
                             {
-                                id: 103
-                            }
-                        ]
-                    }
-                ]
-            }
+                                id: 103,
+                            },
+                        ],
+                    },
+                ],
+            },
         });
 
         store.state.is_item_status_metadata_used = true;

@@ -33,18 +33,18 @@ class LDAP_SearchPeople extends Search_SearchPeople
         $this->ldap    = $ldap;
     }
 
-    public function search(Search_SearchQuery $query, Search_SearchResults $result)
+    public function search(Search_SearchQuery $query, Search_SearchResults $search_results)
     {
         $limit = $query->getNumberOfResults();
 
         if (! $this->ldap->connect()) {
-            $users = array();
+            $users = [];
         } else {
             $users = $this->getMatchingUsers($query, $limit);
         }
 
         $has_more = count($users) == $limit ? true : false;
-        $result->setHasMore($has_more);
+        $search_results->setHasMore($has_more);
 
         return new Search_SearchResultsPresenter(
             new Search_SearchResultsIntroPresenter($users, $query->getWords()),
@@ -56,7 +56,7 @@ class LDAP_SearchPeople extends Search_SearchPeople
 
     private function getMatchingUsers(Search_SearchQuery $query, $limit)
     {
-        $users = array();
+        $users = [];
         $ldap_result_iterator  = $this->ldap->searchUser($query->getWords());
         if ($ldap_result_iterator !== false && $ldap_result_iterator->count() > 0) {
             $ldap_result_iterator->count();

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -17,7 +17,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-@import '../../../../../src/www/themes/BurningParrot/css/includes/global-variables';
+@import '../../../../../src/themes/BurningParrot/css/includes/global-variables';
 
 .document-tree-head-name {
     width: 100%;
@@ -44,7 +44,7 @@
 
     .quick-look-button,
     .document-dropdown-menu,
-    .document-dropdown-menu-button {
+    .document-dropdown-menu-button>button {
         visibility: hidden;
     }
 }
@@ -55,7 +55,7 @@
 
 .document-tree-item-toggle-quicklook-lock-icon,
 .document-tree-item-toggle-quicklook-approval-badge {
-    margin: 0 0 0 $tlp-spacing;
+    margin: 0 0 0 $tlp-medium-spacing;
 }
 
 .document-preview-item-is-locked-icon {
@@ -66,10 +66,20 @@
 
 .document-tree-item-toggle-quicklook:hover {
     .quick-look-button,
-    .document-dropdown-menu,
-    .document-dropdown-menu-button {
+    .document-dropdown-menu-button>button {
         visibility: visible;
     }
+}
+
+.document-tree-item-toggle-quicklook:focus-within {
+    .quick-look-button,
+    .document-dropdown-menu-button>button {
+        visibility: visible;
+    }
+}
+
+.document-tree-item-toggle-quicklook .document-dropdown-menu.tlp-dropdown-shown {
+    visibility: visible;
 }
 
 /* stylelint-disable selector-no-qualifying-type */
@@ -117,7 +127,7 @@
 }
 
 .quick-look-button {
-    margin: 0 0 0 $tlp-spacing;
+    margin: 0 0 0 $tlp-medium-spacing;
 }
 
 .document-badge-avatar {
@@ -159,8 +169,9 @@
         transform: scale(0);
         transition: opacity ease-in-out 100ms, transform ease-in-out 100ms;
         opacity: 0;
-        font-family: FontAwesome;
+        font-family: 'Font Awesome 5 Free';
         font-size: 12px;
+        font-weight: 900;
     }
 }
 
@@ -175,8 +186,9 @@
     color: $tlp-ui-dimmed;
     cursor: pointer;
 
-    &:hover {
-        color: #222222;
+    &:hover,
+    &:focus {
+        color: #111111;
     }
 }
 
@@ -185,7 +197,7 @@
 }
 
 .document-folder-error-link {
-    margin: $tlp-spacing 0 0;
+    margin: $tlp-medium-spacing 0 0;
     font-size: 20px;
     line-height: 20px;
 }
@@ -199,7 +211,7 @@
 }
 
 .document-empty-folder-for-writers {
-    margin: $tlp-double-spacing auto $tlp-spacing;
+    margin: $tlp-x-large-spacing auto;
 }
 
 .document-folder-with-error,
@@ -219,10 +231,14 @@
 
 .document-folder-right-container {
     position: sticky;
-    top: calc(#{$navbar-height} + #{$tlp-spacing});
+    top: calc(#{$navbar-height} + #{$tlp-medium-spacing});
     min-width: 400px;
     max-width: 35%;
-    margin: 0 0 0 $tlp-spacing;
+    margin: 0 0 0 $tlp-medium-spacing;
+}
+
+.has-visible-platform-banner .document-folder-right-container {
+    top: calc(#{$navbar-height} + #{$tlp-medium-spacing} + #{$platform-banner-base-height});
 }
 
 .document-folder-content-quick-look-and-item-uploading {
@@ -240,5 +256,5 @@
 }
 
 .document-badge-corrupted {
-    margin: 0 0 0 $tlp-half-spacing;
+    margin: 0 0 0 $tlp-small-spacing;
 }

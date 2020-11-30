@@ -126,7 +126,7 @@ define('MAX_PAGENAME_LENGTH', 100);
  */
 function MangleXmlIdentifier($str)
 {
-    if (!$str) {
+    if (! $str) {
         return 'empty.';
     }
 
@@ -167,8 +167,8 @@ function WikiURL($pagename, $args = '', $get_abs_url = false)
             $pagename = $pagename->name;
         }
     }
-    if (!$get_abs_url and DEBUG and $GLOBALS['request']->getArg('start_debug')) {
-        if (!$args) {
+    if (! $get_abs_url and DEBUG and $GLOBALS['request']->getArg('start_debug')) {
+        if (! $args) {
             $args = 'start_debug=' . $GLOBALS['request']->getArg('start_debug');
         } elseif (is_array($args)) {
             $args['start_debug'] = $GLOBALS['request']->getArg('start_debug');
@@ -177,22 +177,22 @@ function WikiURL($pagename, $args = '', $get_abs_url = false)
         }
     }
     if (is_array($args)) {
-        $enc_args = array();
+        $enc_args = [];
         foreach ($args as $key => $val) {
             // avoid default args
             if (USE_PATH_INFO and $key == 'pagename') {
             } elseif ($key == 'action' and $val == 'browse') {
-            } elseif (!is_array($val)) { // ugly hack for getURLtoSelf() which also takes POST vars
+            } elseif (! is_array($val)) { // ugly hack for getURLtoSelf() which also takes POST vars
                 $enc_args[] = urlencode($key) . '=' . urlencode($val);
             }
         }
         $args = join('&', $enc_args);
     }
 
-    if (USE_PATH_INFO or !empty($GLOBALS['WikiTheme']->HTML_DUMP_SUFFIX)) {
+    if (USE_PATH_INFO or ! empty($GLOBALS['WikiTheme']->HTML_DUMP_SUFFIX)) {
         $url = $get_abs_url ? (SERVER_URL . VIRTUAL_PATH . "/") : "";
         $url = $url . preg_replace('/%2f/i', '/', rawurlencode($pagename));
-        if (!empty($GLOBALS['WikiTheme']->HTML_DUMP_SUFFIX)) {
+        if (! empty($GLOBALS['WikiTheme']->HTML_DUMP_SUFFIX)) {
             $url .= $GLOBALS['WikiTheme']->HTML_DUMP_SUFFIX;
         }
         if ($args) {
@@ -206,10 +206,10 @@ function WikiURL($pagename, $args = '', $get_abs_url = false)
         }
     }
     global $group_id;
-    $url .= '&group_id='.$group_id;
+    $url .= '&group_id=' . $group_id;
     global $pv;
     if ($pv) {
-        $url .= '&pv='.$pv;
+        $url .= '&pv=' . $pv;
     }
     if ($anchor) {
         $url .= "#" . MangleXmlIdentifier($anchor);
@@ -279,7 +279,7 @@ function IconForLink($protocol_or_url)
         list ($proto) = explode(':', $protocol_or_url, 2);
         $src = $WikiTheme->getLinkIconURL($proto);
         if ($src) {
-            return HTML::img(array('src' => $src, 'alt' => "", 'class' => 'linkicon', 'border' => 0));
+            return HTML::img(['src' => $src, 'alt' => "", 'class' => 'linkicon', 'border' => 0]);
         } else {
             return false;
         }
@@ -306,7 +306,7 @@ function PossiblyGlueIconToText($proto_or_url, $text)
         return $text;
     }
     $icon = IconForLink($proto_or_url);
-    if (!$icon) {
+    if (! $icon) {
         return $text;
     }
     if ($where = $WikiTheme->getLinkIconAttr()) {
@@ -322,7 +322,7 @@ function PossiblyGlueIconToText($proto_or_url, $text)
     if ($where == 'after') {
         // span the icon only to the last word (tie them together),
         // to let the previous words wrap on line breaks.
-        if (!is_object($text)) {
+        if (! is_object($text)) {
             preg_match('/^(\s*\S*)(\s*)$/', $text, $m);
             list (, $prefix, $last_word) = $m;
         } else {
@@ -330,7 +330,7 @@ function PossiblyGlueIconToText($proto_or_url, $text)
             $prefix = false;
         }
         $text = HTML::span(
-            array('style' => 'white-space: nowrap'),
+            ['style' => 'white-space: nowrap'],
             $last_word,
             HTML::Raw('&nbsp;'),
             $icon
@@ -342,7 +342,7 @@ function PossiblyGlueIconToText($proto_or_url, $text)
     }
     // span the icon only to the first word (tie them together),
     // to let the next words wrap on line breaks
-    if (!is_object($text)) {
+    if (! is_object($text)) {
         preg_match('/^\s*(\S*)(.*?)\s*$/', $text, $m);
         list (, $first_word, $tail) = $m;
     } else {
@@ -350,7 +350,7 @@ function PossiblyGlueIconToText($proto_or_url, $text)
         $tail = false;
     }
     $text = HTML::span(
-        array('style' => 'white-space: nowrap'),
+        ['style' => 'white-space: nowrap'],
         $icon,
         $first_word
     );
@@ -374,7 +374,7 @@ function IsSafeURL($url)
     $valid_ftp_uri    = new Valid_FTPURI();
     $valid_mailto_uri = new Valid_MailtoURI();
 
-    return !preg_match('/([<>"])|(%3C)|(%3E)|(%22)/', $url) && (
+    return ! preg_match('/([<>"])|(%3C)|(%3E)|(%22)/', $url) && (
             $valid_local_uri->validate($url) || $valid_ftp_uri->validate($url) || $valid_mailto_uri->validate($url)
         );
 }
@@ -391,14 +391,14 @@ function LinkURL($url, $linktext = '')
     // FIXME: Is this needed (or sufficient?)
     if (! IsSafeURL($url)) {
         $link = HTML::strong(HTML::u(
-            array('class' => 'baduri'),
+            ['class' => 'baduri'],
             _("BAD URL -- remove all of <, >, \"")
         ));
     } else {
-        if (!$linktext) {
+        if (! $linktext) {
             $linktext = preg_replace("/mailto:/A", "", $url);
         }
-        $args = array('href' => $url, 'rel' => 'noreferrer');
+        $args = ['href' => $url, 'rel' => 'noreferrer'];
         if (defined('EXTERNAL_LINK_TARGET')) { // can also be set in the css
             $args['target'] = is_string(EXTERNAL_LINK_TARGET) ? EXTERNAL_LINK_TARGET : "_blank";
         }
@@ -424,12 +424,12 @@ function LinkImage($url, $alt = false)
     // FIXME: Is this needed (or sufficient?)
     if (! IsSafeURL($url)) {
         $link = HTML::strong(HTML::u(
-            array('class' => 'baduri'),
+            ['class' => 'baduri'],
             _("BAD URL -- remove all of <, >, \"")
         ));
     } else {
         // support new syntax: [image.jpg size=50% border=n]
-        if (!preg_match("/\.(".$force_img.")/i", $url)) {
+        if (! preg_match("/\.(" . $force_img . ")/i", $url)) {
             $ori_url = $url;
         }
         $arr = preg_split('/ /D', $url);
@@ -439,7 +439,7 @@ function LinkImage($url, $alt = false)
         if (empty($alt)) {
             $alt = basename($url);
         }
-        $link = HTML::img(array('src' => $url, 'alt' => $alt, 'title' => $alt));
+        $link = HTML::img(['src' => $url, 'alt' => $alt, 'title' => $alt]);
         if (count($arr) > 1) {
             array_shift($arr);
             foreach ($arr as $attr) {
@@ -469,19 +469,23 @@ function LinkImage($url, $alt = false)
         if (($width  = $link->getAttr('width')) and ($height = $link->getAttr('height'))) {
             //$width  = (int) $width; // px or % or other suffix
             //$height = (int) $height;
-            if (($width < 3 and $height < 10) or
+            if (
+                ($width < 3 and $height < 10) or
                 ($height < 3 and $width < 20) or
-                ($height < 7 and $width < 7)) {
+                ($height < 7 and $width < 7)
+            ) {
                 trigger_error(_("Invalid image size"), E_USER_WARNING);
                 return '';
             }
         } else {
-            if (!DISABLE_GETIMAGESIZE and ($size = @getimagesize($url))) {
+            if (! DISABLE_GETIMAGESIZE and ($size = @getimagesize($url))) {
                 $width  = $size[0];
                 $height = $size[1];
-                if (($width < 3 and $height < 10)
+                if (
+                    ($width < 3 and $height < 10)
                     or ($height < 3 and $width < 20)
-                    or ($height < 7 and $width < 7)) {
+                    or ($height < 7 and $width < 7)
+                ) {
                     trigger_error(_("Invalid image size"), E_USER_WARNING);
                     return '';
                 }
@@ -494,7 +498,7 @@ function LinkImage($url, $alt = false)
      * png|jpg|gif|jpeg|bmp|pl|cgi
      * Note: Allow cgi's (pl,cgi) returning images.
      */
-    if (!preg_match("/\.(".$force_img.")/i", $url)) {
+    if (! preg_match("/\.(" . $force_img . ")/i", $url)) {
         //HTML::img(array('src' => $url, 'alt' => $alt, 'title' => $alt));
         // => HTML::object(array('src' => $url)) ...;
         return ImgObject($link, $ori_url);
@@ -528,13 +532,13 @@ function ImgObject($img, $url)
         }
     }
     $type = $img->getAttr('type');
-    if (!$type) {
+    if (! $type) {
         // TODO: map extension to mime-types if type is not given and php < 4.3
         if (function_exists('mime_content_type')) {
             $type = mime_content_type($url);
         }
     }
-    $link = HTML::object(array_merge($img->_attr, array('src' => $url, 'type' => $type)));
+    $link = HTML::object(array_merge($img->_attr, ['src' => $url, 'type' => $type]));
     $link->setAttr('class', 'inlineobject');
     if (isBrowserSafari()) {
         return HTML::embed($link->_attr);
@@ -548,19 +552,19 @@ class Stack
 {
 
     // var in php5 deprecated
-    function __construct()
+    public function __construct()
     {
-        $this->items = array();
+        $this->items = [];
         $this->size = 0;
     }
-    function push($item)
+    public function push($item)
     {
         $this->items[$this->size] = $item;
         $this->size++;
         return true;
     }
 
-    function pop()
+    public function pop()
     {
         if ($this->size == 0) {
             return false; // stack is empty
@@ -569,12 +573,12 @@ class Stack
         return $this->items[$this->size];
     }
 
-    function cnt()
+    public function cnt()
     {
         return $this->size;
     }
 
-    function top()
+    public function top()
     {
         if ($this->size) {
             return $this->items[$this->size - 1];
@@ -589,7 +593,7 @@ function SplitQueryArgs($query_args = '')
 {
     // FIXME: use the arg-seperator which might not be &
     $split_args = preg_split('/&/D', $query_args);
-    $args = array();
+    $args = [];
     foreach ($split_args as $val) {
         if (preg_match('/^ ([^=]+) =? (.*) /x', $val, $m)) {
             $args[$m[1]] = $m[2];
@@ -600,13 +604,13 @@ function SplitQueryArgs($query_args = '')
 
 function LinkPhpwikiURL($url, $text = '', $basepage = false)
 {
-    $args = array();
+    $args = [];
 
-    if (!preg_match('/^ phpwiki: ([^?]*) [?]? (.*) $/x', $url, $m)) {
+    if (! preg_match('/^ phpwiki: ([^?]*) [?]? (.*) $/x', $url, $m)) {
         return HTML::strong(
-            array('class' => 'rawurl'),
+            ['class' => 'rawurl'],
             HTML::u(
-                array('class' => 'baduri'),
+                ['class' => 'baduri'],
                 _("BAD phpwiki: URL")
             )
         );
@@ -617,12 +621,14 @@ function LinkPhpwikiURL($url, $text = '', $basepage = false)
     }
     $qargs = $m[2];
 
-    if (empty($pagename) &&
-        preg_match('/^(diff|edit|links|info)=([^&]+)$/', $qargs, $m)) {
+    if (
+        empty($pagename) &&
+        preg_match('/^(diff|edit|links|info)=([^&]+)$/', $qargs, $m)
+    ) {
         // Convert old style links (to not break diff links in
         // RecentChanges).
         $pagename = urldecode($m[2]);
-        $args = array("action" => $m[1]);
+        $args = ["action" => $m[1]];
     } else {
         $args = SplitQueryArgs($qargs);
     }
@@ -647,28 +653,28 @@ function LinkPhpwikiURL($url, $text = '', $basepage = false)
         // Don't allow administrative links on unlocked pages.
         $dbi = $GLOBALS['request']->getDbh();
         $page = $dbi->getPage($basepage ? $basepage : $pagename);
-        if (!$page->get('locked')) {
+        if (! $page->get('locked')) {
             return HTML::span(
-                array('class' => 'wikiunsafe'),
+                ['class' => 'wikiunsafe'],
                 HTML::u(_("Lock page to enable link"))
             );
         }
         $class = 'wikiadmin';
     }
 
-    if (!$text) {
-        $text = HTML::span(array('class' => 'rawurl'), $url);
+    if (! $text) {
+        $text = HTML::span(['class' => 'rawurl'], $url);
     }
 
     $wikipage = new WikiPageName($pagename);
-    if (!$wikipage->isValid()) {
+    if (! $wikipage->isValid()) {
         global $WikiTheme;
         return $WikiTheme->linkBadWikiWord($wikipage, $url);
     }
 
     return HTML::a(
-        array('href'  => WikiURL($pagename, $args),
-                         'class' => $class),
+        ['href'  => WikiURL($pagename, $args),
+                         'class' => $class],
         $text
     );
 }
@@ -712,7 +718,7 @@ class WikiPageName
      * @param mixed $basename Page name from which to interpret
      * relative or other non-fully-specified page names.
      */
-    function __construct($name, $basename = false, $anchor = false)
+    public function __construct($name, $basename = false, $anchor = false)
     {
         if (is_string($name)) {
             $this->shortName = $name;
@@ -756,41 +762,41 @@ class WikiPageName
         }
 
         $this->name = $this->_check($name);
-        $this->anchor = (string)$anchor;
+        $this->anchor = (string) $anchor;
     }
 
-    function getName()
+    public function getName()
     {
         return $this->name;
     }
 
-    function getParent()
+    public function getParent()
     {
         $name = $this->name;
-        if (!($tail = strrchr($name, SUBPAGE_SEPARATOR))) {
+        if (! ($tail = strrchr($name, SUBPAGE_SEPARATOR))) {
             return false;
         }
         return substr($name, 0, -strlen($tail));
     }
 
-    function isValid($strict = false)
+    public function isValid($strict = false)
     {
         if ($strict) {
-            return !isset($this->_errors);
+            return ! isset($this->_errors);
         }
         return (is_string($this->name) and $this->name != '');
     }
 
-    function getWarnings()
+    public function getWarnings()
     {
-        $warnings = array();
+        $warnings = [];
         if (isset($this->_warnings)) {
             $warnings = array_merge($warnings, $this->_warnings);
         }
         if (isset($this->_errors)) {
             $warnings = array_merge($warnings, $this->_errors);
         }
-        if (!$warnings) {
+        if (! $warnings) {
             return false;
         }
 
@@ -801,7 +807,7 @@ class WikiPageName
         );
     }
 
-    function _pagename($page)
+    public function _pagename($page)
     {
         if (isa($page, 'WikiDB_Page')) {
             return $page->getName();
@@ -811,7 +817,7 @@ class WikiPageName
             return $page->name;
         }
         // '0' or e.g. '1984' should be allowed though
-        if (!is_string($page) and !is_integer($page)) {
+        if (! is_string($page) and ! is_integer($page)) {
             trigger_error(
                 sprintf(
                     "Non-string pagename '%s' (%s)(%s)",
@@ -826,7 +832,7 @@ class WikiPageName
         return $page;
     }
 
-    function _normalize_bad_pagename($name)
+    public function _normalize_bad_pagename($name)
     {
         trigger_error("Bad pagename: " . $name, E_USER_WARNING);
 
@@ -841,7 +847,7 @@ class WikiPageName
     }
 
 
-    function _check($pagename)
+    public function _check($pagename)
     {
         // Compress internal white-space to single space character.
          //WARNING : MODIFICATIONS FOR CODENDI
@@ -885,8 +891,10 @@ class WikiPageName
         }
 
         // disallow some chars only on file and cvs
-        if ((DATABASE_TYPE == 'cvs' or DATABASE_TYPE == 'file')
-            and preg_match('/(:|\.\.)/', $pagename, $m)) {
+        if (
+            (DATABASE_TYPE == 'cvs' or DATABASE_TYPE == 'file')
+            and preg_match('/(:|\.\.)/', $pagename, $m)
+        ) {
             $this->_warnings[] = sprintf(_("Illegal chars %s removed"), $m[1]);
             $pagename = str_replace('..', '', $pagename);
             $pagename = str_replace(':', '', $pagename);
@@ -920,7 +928,6 @@ class WikiPageName
  */
 function ConvertOldMarkup($text, $markup_type = "block")
 {
-
     static $subs;
     static $block_re;
 
@@ -931,11 +938,13 @@ function ConvertOldMarkup($text, $markup_type = "block")
     // also known to crash, even with Apache1.
     $debug_skip = false;
     // I suspect this only to crash with Apache2 and IIS.
-    if (in_array(php_sapi_name(), array('apache2handler','apache2filter','isapi'))
-        and preg_match("/plugin CreateToc/", $text)) {
+    if (
+        in_array(php_sapi_name(), ['apache2handler', 'apache2filter', 'isapi'])
+        and preg_match("/plugin CreateToc/", $text)
+    ) {
         trigger_error(_("The CreateTocPlugin is not yet old markup compatible! ")
-                     ._("Please remove the CreateToc line to be able to reformat this page to old markup. ")
-                     ._("Skipped."), E_USER_WARNING);
+                     . _("Please remove the CreateToc line to be able to reformat this page to old markup. ")
+                     . _("Skipped."), E_USER_WARNING);
         $debug_skip = true;
         //if (!DEBUG) return $text;
         return $text;
@@ -966,7 +975,7 @@ function ConvertOldMarkup($text, $markup_type = "block")
         $orig[] = '/!((?:' . join(')|(', $bang_esc) . '))/';
         $repl[] = '~\\1';
 
-        $subs["links"] = array($orig, $repl);
+        $subs["links"] = [$orig, $repl];
 
         // Temporarily URL-encode pairs of underscores in links to hide
         // them from the re for bold markup.
@@ -1000,7 +1009,7 @@ function ConvertOldMarkup($text, $markup_type = "block")
         $orig = '/\[[^\[\]]*?%5F%5F[^\[\]]*?\]/e';
         $repl = 'str_replace(\'%5F%5F\', \'__\', \'\\0\')';
 
-        $subs["inline"] = array($orig, $repl);
+        $subs["inline"] = [$orig, $repl];
 
         /*****************************************************************
          * Patterns which match block markup constructs which take
@@ -1018,7 +1027,7 @@ function ConvertOldMarkup($text, $markup_type = "block")
         // Footnote definitions
         $blockpats[] = '\[\s*(\d+)\s*\]';
 
-        if (!$debug_skip) {
+        if (! $debug_skip) {
         // Plugins
             $blockpats[] = '<\?plugin(?:-form)?\b.*\?>\s*$';
         }
@@ -1142,7 +1151,6 @@ function expand_tabs($str, $tab_width = 8)
  */
 function SplitPagename($page)
 {
-
     if (preg_match("/\s/", $page)) {
         return $page;           // Already split --- don't split any more.
     }
@@ -1151,7 +1159,7 @@ function SplitPagename($page)
     // (Thanks to Pierrick MEIGNEN)
     // Improvements for other languages welcome.
     static $RE;
-    if (!isset($RE)) {
+    if (! isset($RE)) {
         // This mess splits between a lower-case letter followed by
         // either an upper-case or a numeral; except that it wont
         // split the prefixes 'Mc', 'De', or 'Di' off of their tails.
@@ -1300,31 +1308,37 @@ function Rfc1123DateTime($time = false)
 function ParseRfc1123DateTime($timestr)
 {
     $timestr = trim($timestr);
-    if (preg_match(
-        '/^ \w{3},\s* (\d{1,2}) \s* (\w{3}) \s* (\d{4}) \s*'
-                   .'(\d\d):(\d\d):(\d\d) \s* GMT $/ix',
-        $timestr,
-        $m
-    )) {
+    if (
+        preg_match(
+            '/^ \w{3},\s* (\d{1,2}) \s* (\w{3}) \s* (\d{4}) \s*'
+                   . '(\d\d):(\d\d):(\d\d) \s* GMT $/ix',
+            $timestr,
+            $m
+        )
+    ) {
         list(, $mday, $mon, $year, $hh, $mm, $ss) = $m;
-    } elseif (preg_match(
-        '/^ \w+,\s* (\d{1,2})-(\w{3})-(\d{2}|\d{4}) \s*'
-                       .'(\d\d):(\d\d):(\d\d) \s* GMT $/ix',
-        $timestr,
-        $m
-    )) {
+    } elseif (
+        preg_match(
+            '/^ \w+,\s* (\d{1,2})-(\w{3})-(\d{2}|\d{4}) \s*'
+                       . '(\d\d):(\d\d):(\d\d) \s* GMT $/ix',
+            $timestr,
+            $m
+        )
+    ) {
         list(, $mday, $mon, $year, $hh, $mm, $ss) = $m;
         if ($year < 70) {
             $year += 2000;
         } elseif ($year < 100) {
             $year += 1900;
         }
-    } elseif (preg_match(
-        '/^\w+\s* (\w{3}) \s* (\d{1,2}) \s*'
-                       .'(\d\d):(\d\d):(\d\d) \s* (\d{4})$/ix',
-        $timestr,
-        $m
-    )) {
+    } elseif (
+        preg_match(
+            '/^\w+\s* (\w{3}) \s* (\d{1,2}) \s*'
+                       . '(\d\d):(\d\d):(\d\d) \s* (\d{4})$/ix',
+            $timestr,
+            $m
+        )
+    ) {
         list(, $mon, $mday, $hh, $mm, $ss, $year) = $m;
     } else {
         // Parse failed.
@@ -1477,7 +1491,7 @@ function PHPWikiVsprintf($fmt, $args)
         }
 
         $fmt = preg_replace('/(?<!%)%\d+\$/x', '%', $fmt);
-        $newargs = array();
+        $newargs = [];
 
         // Reorder arguments appropriately.
         foreach ($m[1] as $argnum) {
@@ -1510,7 +1524,7 @@ function sort_file_mtime($a, $b)
 {
     $ma = file_mtime($a);
     $mb = file_mtime($b);
-    if (!$ma or !$mb or $ma == $mb) {
+    if (! $ma or ! $mb or $ma == $mb) {
         return 0;
     }
     return ($ma > $mb) ? -1 : 1;
@@ -1525,7 +1539,7 @@ class fileSet
      * (This was a function LoadDir in lib/loadsave.php)
      * See also http://www.php.net/manual/en/function.readdir.php
      */
-    function getFiles($exclude = false, $sortby = false, $limit = false)
+    public function getFiles($exclude = false, $sortby = false, $limit = false)
     {
         $list = $this->_fileList;
 
@@ -1552,7 +1566,7 @@ class fileSet
         return $list;
     }
 
-    function _filenameSelector($filename)
+    public function _filenameSelector($filename)
     {
         if (! $this->_pattern) {
             return true;
@@ -1567,14 +1581,14 @@ class fileSet
         }
     }
 
-    function __construct($directory, $filepattern = false)
+    public function __construct($directory, $filepattern = false)
     {
-        $this->_fileList = array();
+        $this->_fileList = [];
         $this->_pattern = $filepattern;
         if ($filepattern) {
             $this->_pcre_pattern = glob_to_pcre($this->_pattern);
         }
-        $this->_case = !isWindows();
+        $this->_case = ! isWindows();
         $this->_pathsep = '/';
 
         if (empty($directory)) {
@@ -1606,7 +1620,7 @@ class fileSet
         }
         closedir($dir_handle);
     }
-};
+}
 
 // File globbing
 
@@ -1614,28 +1628,30 @@ class fileSet
 class ListRegexExpand
 {
     //var $match, $list, $index, $case_sensitive;
-    function __construct(&$list, $match, $case_sensitive = true)
+    public function __construct(&$list, $match, $case_sensitive = true)
     {
         $this->match = $match;
         $this->list = &$list;
         $this->case_sensitive = $case_sensitive;
         //$this->index = false;
     }
-    function listMatchCallback($item, $key)
+    public function listMatchCallback($item, $key)
     {
         $quoted = str_replace('/', '\/', $item);
-        if (preg_match(
-            '/' . $this->match . ($this->case_sensitive ? '/' : '/i'),
-            $quoted
-        )) {
+        if (
+            preg_match(
+                '/' . $this->match . ($this->case_sensitive ? '/' : '/i'),
+                $quoted
+            )
+        ) {
             unset($this->list[$this->index]);
             $this->list[] = $item;
         }
     }
-    function expandRegex($index, &$pages)
+    public function expandRegex($index, &$pages)
     {
         $this->index = $index;
-        array_walk($pages, array($this, 'listMatchCallback'));
+        array_walk($pages, [$this, 'listMatchCallback']);
         return $this->list;
     }
 }
@@ -1657,7 +1673,7 @@ function glob_to_pcre($glob)
     // first convert some unescaped expressions to pcre style: . => \.
     $special = ".^$";
     $re = preg_replace(
-        '/([^\xff])?(['.preg_quote($special, '/').'])/',
+        '/([^\xff])?([' . preg_quote($special, '/') . '])/',
         "\\1\xff\\2",
         $glob
     );
@@ -1665,17 +1681,17 @@ function glob_to_pcre($glob)
     // * => .*, ? => .
     $re = preg_replace('/([^\xff])?\*/', '$1.*', $re);
     $re = preg_replace('/([^\xff])?\?/', '$1.', $re);
-    if (!preg_match('/^[\?\*]/', $glob)) {
+    if (! preg_match('/^[\?\*]/', $glob)) {
         $re = '^' . $re;
     }
-    if (!preg_match('/[\?\*]$/', $glob)) {
+    if (! preg_match('/[\?\*]$/', $glob)) {
         $re = $re . '$';
     }
 
     // .*? handled above, now escape the rest
     //while (strcspn($re, $escape) != strlen($re)) // loop strangely needed
     $re = preg_replace(
-        '/([^\xff])(['.preg_quote($escape, "/").'])/',
+        '/([^\xff])([' . preg_quote($escape, "/") . '])/',
         "\\1\xff\\2",
         $re
     );
@@ -1771,8 +1787,8 @@ function can($object, $method)
 function function_usable($function_name)
 {
     static $disabled;
-    if (!is_array($disabled)) {
-        $disabled = array();
+    if (! is_array($disabled)) {
+        $disabled = [];
         // Use get_cfg_var since ini_get() is one of the disabled functions
         // (on Lycos, at least.)
         $split = preg_split('/\s*,\s*/', trim(get_cfg_var('disable_functions')));
@@ -1804,34 +1820,12 @@ function wikihash($x)
     trigger_error("Can't hash $x", E_USER_ERROR);
 }
 
-
-/**
- * Seed the random number generator.
- *
- * better_srand() ensures the randomizer is seeded only once.
- *
- * How random do you want it? See:
- * http://www.php.net/manual/en/function.srand.php
- * http://www.php.net/manual/en/function.mt-srand.php
- */
-function better_srand($seed = '')
-{
-    static $wascalled = false;
-    if (!$wascalled) {
-        $seed = $seed === '' ? (double) microtime() * 1000000 : $seed;
-        mt_srand($seed);
-        $wascalled = true;
-        //trigger_error("new random seed", E_USER_NOTICE); //debugging
-    }
-}
-
 function rand_ascii($length = 1)
 {
-    better_srand();
     $s = "";
     for ($i = 1; $i <= $length; $i++) {
         // return only typeable 7 bit ascii, avoid quotes
-        $s .= chr(mt_rand(40, 126));
+        $s .= chr(random_int(40, 126));
     }
     return $s;
 }
@@ -1849,7 +1843,7 @@ function count_all($arg)
         //print_r($arg); //debugging
         $count = 0;
         // not an array, return 1 (base case)
-        if (!is_array($arg)) {
+        if (! is_array($arg)) {
             return 1;
         }
         // else call recursively for all elements $arg
@@ -1893,20 +1887,20 @@ class Alert
      * @param hash $buttons  An array mapping button labels to URLs.
      *    The default is a single "Okay" button pointing to $request->getURLtoSelf().
      */
-    function __construct($head, $body, $buttons = false)
+    public function __construct($head, $body, $buttons = false)
     {
         if ($buttons === false) {
-            $buttons = array();
+            $buttons = [];
         }
 
-        $this->_tokens = array('HEADER' => $head, 'CONTENT' => $body);
+        $this->_tokens = ['HEADER' => $head, 'CONTENT' => $body];
         $this->_buttons = $buttons;
     }
 
     /**
      * Show the alert box.
      */
-    function show()
+    public function show()
     {
         global $request;
 
@@ -1920,13 +1914,13 @@ class Alert
     }
 
 
-    function _getButtons()
+    public function _getButtons()
     {
         global $request;
 
         $buttons = $this->_buttons;
-        if (!$buttons) {
-            $buttons = array(_("Okay") => $request->getURLtoSelf());
+        if (! $buttons) {
+            $buttons = [_("Okay") => $request->getURLtoSelf()];
         }
 
         global $WikiTheme;
@@ -1946,10 +1940,10 @@ class Alert
 function phpwiki_version()
 {
     static $PHPWIKI_VERSION;
-    if (!isset($PHPWIKI_VERSION)) {
+    if (! isset($PHPWIKI_VERSION)) {
         $arr = explode('.', preg_replace('/\D+$/', '', PHPWIKI_VERSION)); // remove the pre
         $arr[2] = preg_replace('/\.+/', '.', preg_replace('/\D/', '.', $arr[2]));
-        $PHPWIKI_VERSION = $arr[0]*1000 + $arr[1]*10 + 0.01*$arr[2];
+        $PHPWIKI_VERSION = $arr[0] * 1000 + $arr[1] * 10 + 0.01 * $arr[2];
         if (strstr(PHPWIKI_VERSION, 'pre') or strstr(PHPWIKI_VERSION, 'rc')) {
             $PHPWIKI_VERSION -= 0.01;
         }
@@ -1963,7 +1957,7 @@ function phpwiki_gzhandler($ob)
         $ob = gzencode($ob);
     }
         $GLOBALS['request']->_ob_get_length = strlen($ob);
-    if (!headers_sent()) {
+    if (! headers_sent()) {
         header(sprintf("Content-Length: %d", $GLOBALS['request']->_ob_get_length));
     }
     return $ob;
@@ -1979,7 +1973,7 @@ function isWikiWord($word)
 // needed to store serialized objects-values only (perm, pref)
 function obj2hash($obj, $exclude = false, $fields = false)
 {
-    $a = array();
+    $a = [];
     if (! $fields) {
         $fields = get_object_vars($obj);
     }
@@ -2047,7 +2041,7 @@ function fixTitleEncoding($s)
         }
     }
 
-    if ($locharset == "utf-8" and $ishigh and !$isutf) {
+    if ($locharset == "utf-8" and $ishigh and ! $isutf) {
         return utf8_encode($s);
     }
 
@@ -2079,25 +2073,23 @@ function stripForSearch( $string ) {
  */
 function url_get_contents($uri)
 {
-    if (get_cfg_var('allow_url_fopen')) { // was ini_get('allow_url_fopen'))
-        return @file_get_contents($uri);
-    } else {
-        require_once("lib/HttpClient.php");
-        $bits = parse_url($uri);
-        $host = $bits['host'];
-        $port = isset($bits['port']) ? $bits['port'] : 80;
-        $path = isset($bits['path']) ? $bits['path'] : '/';
-        if (isset($bits['query'])) {
-            $path .= '?'.$bits['query'];
-        }
-        $client = new HttpClient($host, $port);
-        $client->use_gzip = false;
-        if (!$client->get($path)) {
-            return false;
-        } else {
-            return $client->getContent();
-        }
+    $client          = \Tuleap\Http\HttpClientFactory::createClient();
+    $request_factory = \Tuleap\Http\HTTPFactoryBuilder::requestFactory();
+    try {
+        $response = $client->sendRequest(
+            $request_factory->createRequest('GET', $uri)
+        );
+    } catch (\Psr\Http\Client\ClientExceptionInterface $e) {
+        return false;
     }
+
+    $content = $response->getBody()->getContents();
+
+    if ($content === '') {
+        return false;
+    }
+
+    return $content;
 }
 
 /**
@@ -2106,7 +2098,7 @@ function url_get_contents($uri)
  */
 function GenerateId($name)
 {
-    static $ids = array();
+    static $ids = [];
     if (empty($ids[$name])) {
         $ids[$name] = 1;
         return $name;
@@ -2158,27 +2150,29 @@ function extractSection($section, $content, $page, $quiet = false, $sectionhead 
 {
     $qsection = preg_replace('/\s+/', '\s+', preg_quote($section, '/'));
 
-    if (preg_match(
-        "/ ^(!{1,})\\s*$qsection" // section header
+    if (
+        preg_match(
+            "/ ^(!{1,})\\s*$qsection" // section header
                    . "  \\s*$\\n?"           // possible blank lines
                    . "  ( (?: ^.*\\n? )*? )" // some lines
                    . "  (?= ^\\1 | \\Z)/xm", // sec header (same or higher level) (or EOF)
-        implode("\n", $content),
-        $match
-    )) {
+            implode("\n", $content),
+            $match
+        )
+    ) {
         // Strip trailing blanks lines and ---- <hr>s
         $text = preg_replace("/\\s*^-{4,}\\s*$/m", "", $match[2]);
         if ($sectionhead) {
-            $text = $match[1] . $section ."\n". $text;
+            $text = $match[1] . $section . "\n" . $text;
         }
         return explode("\n", $text);
     }
     if ($quiet) {
-        $mesg = $page ." ". $section;
+        $mesg = $page . " " . $section;
     } else {
         $mesg = $section;
     }
-    return array(sprintf(_("<%s: no such section>"), $mesg));
+    return [sprintf(_("<%s: no such section>"), $mesg)];
 }
 
 // use this faster version: only load ExternalReferrer if we came from an external referrer
@@ -2224,7 +2218,7 @@ function longer_timeout($secs = 30)
     $timeout = @ini_get("max_execution_time") ? ini_get("max_execution_time") : 30;
     $timeleft = $timeout - $GLOBALS['RUNTIMER']->getTime();
     if ($timeleft < $secs) {
-        @set_time_limit(max($timeout, (integer)($secs + $timeleft)));
+        @set_time_limit(max($timeout, (int) ($secs + $timeleft)));
     }
 }
 
@@ -2233,7 +2227,7 @@ function printSimpleTrace($bt)
     //print_r($bt);
     echo "Traceback:\n";
     foreach ($bt as $i => $elem) {
-        if (!array_key_exists('file', $elem)) {
+        if (! array_key_exists('file', $elem)) {
             continue;
         }
         echo join(" ", array_values($elem)),"\n";

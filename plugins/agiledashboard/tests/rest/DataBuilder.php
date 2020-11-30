@@ -20,9 +20,7 @@
 
 namespace Tuleap\AgileDashboard\REST;
 
-use AgileDashboard_HierarchyChecker;
 use AgileDashboard_KanbanDao;
-use AgileDashboard_KanbanFactory;
 use AgileDashboard_KanbanManager;
 use BackendLogger;
 use BrokerLogger;
@@ -30,13 +28,11 @@ use EventManager;
 use Exception;
 use ForgeConfig;
 use Log_ConsoleLogger;
-use PlanningFactory;
 use REST_TestDataBuilder;
 use SystemEvent;
 use SystemEventManager;
 use SystemEventProcessor_Factory;
 use TruncateLevelLogger;
-use Tuleap\AgileDashboard\ExplicitBacklog\ExplicitBacklogDao;
 use Tuleap\AgileDashboard\FormElement\SystemEvent\SystemEvent_BURNUP_GENERATE;
 use Tuleap\Project\SystemEventRunner;
 
@@ -74,25 +70,17 @@ class DataBuilder extends REST_TestDataBuilder
         $this->instanciateFactories();
 
         $kanban_dao            = new AgileDashboard_KanbanDao();
-        $kanban_factory        = new AgileDashboard_KanbanFactory($this->tracker_factory, $kanban_dao);
-        $planning_factory      = PlanningFactory::build();
-        $hierarchy_checker     = new AgileDashboard_HierarchyChecker(
-            $planning_factory,
-            $kanban_factory,
-            $this->tracker_factory
-        );
         $this->kanban_manager  = new AgileDashboard_KanbanManager(
             $kanban_dao,
-            $this->tracker_factory,
-            $hierarchy_checker
+            $this->tracker_factory
         );
 
         $this->tracker_artifact_factory = \Tracker_ArtifactFactory::instance();
         $this->system_event_manager     = SystemEventManager::instance();
 
         $console    = new TruncateLevelLogger(new Log_ConsoleLogger(), ForgeConfig::get('sys_logger_level'));
-        $logger     = new BackendLogger();
-        $broker_log = new BrokerLogger(array($logger, $console));
+        $logger     = BackendLogger::getDefaultLogger();
+        $broker_log = new BrokerLogger([$logger, $console]);
 
         $factory                   = new SystemEventProcessor_Factory(
             $broker_log,
@@ -106,7 +94,6 @@ class DataBuilder extends REST_TestDataBuilder
     {
         $this->createKanbanCumulativeFlow();
         $this->generateBurnupCache();
-        $this->setExplicitBacklog();
     }
 
     private function createKanbanCumulativeFlow()
@@ -144,15 +131,5 @@ class DataBuilder extends REST_TestDataBuilder
         );
 
         $this->system_event_runner->runSystemEvents();
-    }
-
-    private function setExplicitBacklog(): void
-    {
-        $project_explicit_backlog = $this->project_manager->getProjectByUnixName(
-            self::EXPLICIT_BACKLOG_PROJECT_SHORTNAME
-        );
-
-        $dao = new ExplicitBacklogDao();
-        $dao->setProjectIsUsingExplicitBacklog((int) $project_explicit_backlog->getID());
     }
 }

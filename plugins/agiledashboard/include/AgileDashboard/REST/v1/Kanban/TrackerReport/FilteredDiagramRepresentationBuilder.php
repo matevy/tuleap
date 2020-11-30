@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -67,12 +67,7 @@ class FilteredDiagramRepresentationBuilder
             $report
         );
 
-        $diagram_representation = new DiagramRepresentation();
-        $diagram_representation->build(
-            $cumulative_flow_columns_representation
-        );
-
-        return $diagram_representation;
+        return new DiagramRepresentation($cumulative_flow_columns_representation);
     }
 
     private function getFilteredColumnsRepresentation(
@@ -83,7 +78,7 @@ class FilteredDiagramRepresentationBuilder
     ) {
         $matching_ids = $report->getMatchingIds();
         if (! $matching_ids['id']) {
-            return $this->column_builder->build($kanban, $user, $dates, array());
+            return $this->column_builder->build($kanban, $user, $dates, []);
         }
 
         $matching_artifact_ids = explode(',', $matching_ids['id']);

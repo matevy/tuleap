@@ -43,9 +43,8 @@ class MediawikiLanguageManager
     }
 
     /**
-     * @param Project $project
      *
-     * @return string
+     * @return string|null
      */
     public function getUsedLanguageForProject(Project $project)
     {
@@ -75,13 +74,13 @@ class MediawikiLanguageManager
 
     private function formatAvailableLanguagesWithUsage(array $available_languages, $project_language)
     {
-        $formatted_available_languages = array();
+        $formatted_available_languages = [];
 
         foreach ($available_languages as $available_language) {
-            $formatted_available_languages[] = array(
+            $formatted_available_languages[] = [
                 'language' => $available_language,
                 'used'     => $available_language == $project_language
-            );
+            ];
         }
 
         return $formatted_available_languages;

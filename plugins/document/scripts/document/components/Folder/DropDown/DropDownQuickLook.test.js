@@ -18,7 +18,7 @@
  */
 
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import localVue from "../../../helpers/local-vue.js";
 import DropDownQuickLook from "./DropDownQuickLook.vue";
 
@@ -33,7 +33,7 @@ describe("DropDownQuickLook", () => {
             return shallowMount(DropDownQuickLook, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -46,13 +46,13 @@ describe("DropDownQuickLook", () => {
                 id: 1,
                 title: "my item title",
                 type: "file",
-                user_can_write: true
-            }
+                user_can_write: true,
+            },
         });
 
-        expect(wrapper.contains("[data-test=dropdown-menu-folder-creation]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=dropdown-menu-file-creation]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-dropdown-menu-lock-item]")).toBeTruthy();
+        expect(wrapper.find("[data-test=dropdown-menu-folder-creation]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=dropdown-menu-file-creation]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=document-dropdown-menu-lock-item]").exists()).toBeTruthy();
     });
 
     it(`Given item is not a folder and user can read
@@ -63,12 +63,12 @@ describe("DropDownQuickLook", () => {
                 id: 1,
                 title: "my item title",
                 type: "file",
-                user_can_write: false
-            }
+                user_can_write: false,
+            },
         });
 
-        expect(wrapper.contains("[data-test=document-dropdown-menu-lock-item]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-dropdown-menu-unlock-item]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-dropdown-menu-lock-item]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=document-dropdown-menu-unlock-item]").exists()).toBeFalsy();
     });
 
     describe("Given item is a folder", () => {
@@ -78,7 +78,7 @@ describe("DropDownQuickLook", () => {
             id: 1,
             title: "my folder",
             type: "folder",
-            user_can_write: true
+            user_can_write: true,
         };
 
         beforeEach(() => {
@@ -90,15 +90,17 @@ describe("DropDownQuickLook", () => {
             wrapper = factory({ item });
 
             expect(
-                wrapper.contains("[data-test=document-quicklook-action-button-new-item]")
+                wrapper.find("[data-test=document-quicklook-action-button-new-item]").exists()
             ).toBeTruthy();
             expect(
-                wrapper.contains("[data-test=document-quicklook-action-button-new-version]")
+                wrapper.find("[data-test=document-quicklook-action-button-new-version]").exists()
             ).toBeFalsy();
             expect(
-                wrapper.contains("[data-test=document-dropdown-menu-update-properties]")
+                wrapper.find("[data-test=document-dropdown-menu-update-properties]").exists()
             ).toBeTruthy();
-            expect(wrapper.contains("[data-test=document-dropdown-menu-lock-item]")).toBeFalsy();
+            expect(
+                wrapper.find("[data-test=document-dropdown-menu-lock-item]").exists()
+            ).toBeFalsy();
         });
 
         it(`When user cannot write and the menu is displayed
@@ -107,12 +109,14 @@ describe("DropDownQuickLook", () => {
 
             wrapper = factory({ item });
 
-            expect(wrapper.contains("[data-test=dropdown-menu-folder-creation]")).toBeFalsy();
-            expect(wrapper.contains("[data-test=dropdown-menu-file-creation]")).toBeFalsy();
+            expect(wrapper.find("[data-test=dropdown-menu-folder-creation]").exists()).toBeFalsy();
+            expect(wrapper.find("[data-test=dropdown-menu-file-creation]").exists()).toBeFalsy();
             expect(
-                wrapper.contains("[data-test=document-dropdown-menu-update-properties]")
+                wrapper.find("[data-test=document-dropdown-menu-update-properties]").exists()
             ).toBeFalsy();
-            expect(wrapper.contains("[data-test=document-dropdown-menu-lock-item]")).toBeFalsy();
+            expect(
+                wrapper.find("[data-test=document-dropdown-menu-lock-item]").exists()
+            ).toBeFalsy();
         });
     });
 });

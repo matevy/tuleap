@@ -23,6 +23,12 @@ namespace Tuleap\ProFTPd;
 use Service;
 use HTTPRequest;
 use TemplateRendererFactory;
+use Tuleap\Layout\BreadCrumbDropdown\BreadCrumb;
+use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbCollection;
+use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbLink;
+use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbLinkCollection;
+use Tuleap\Layout\BreadCrumbDropdown\BreadCrumbSubItems;
+use Tuleap\Layout\BreadCrumbDropdown\SubItemsUnlabelledSection;
 
 class ServiceProFTPd extends Service
 {
@@ -46,30 +52,43 @@ class ServiceProFTPd extends Service
 
     private function getRenderer()
     {
-        return TemplateRendererFactory::build()->getRenderer(dirname(PROFTPD_BASE_DIR).'/templates');
+        return TemplateRendererFactory::build()->getRenderer(dirname(PROFTPD_BASE_DIR) . '/templates');
     }
 
     private function displayServiceHeader(HTTPRequest $request, $title)
     {
-        $toolbar = array();
+        $proftpd_breadcrumb = new BreadCrumb(
+            new BreadCrumbLink($this->getInternationalizedName(), $this->getUrl()),
+        );
+
+        $breadcrumbs = new BreadCrumbCollection();
+        $breadcrumbs->addBreadCrumb($proftpd_breadcrumb);
+
         if ($this->userIsAdmin($request)) {
-            $toolbar[] = array(
-                'title' => $GLOBALS['Language']->getText('global', 'Admin'),
-                'url'   => PROFTPD_BASE_URL .'/?'. http_build_query(array(
-                    'group_id'   => $request->get('group_id'),
-                    'controller' => 'admin',
-                    'action'     => 'index',
-                ))
+            $sub_items = new BreadCrumbSubItems();
+            $sub_items->addSection(
+                new SubItemsUnlabelledSection(
+                    new BreadCrumbLinkCollection(
+                        [
+                            new BreadCrumbLink(
+                                _('Administration'),
+                                PROFTPD_BASE_URL . '/?' . http_build_query([
+                                    'group_id'   => $request->get('group_id'),
+                                    'controller' => 'admin',
+                                    'action'     => 'index',
+                                ]),
+                            )]
+                    )
+                )
             );
+            $proftpd_breadcrumb->setSubItems($sub_items);
         }
 
-        $title       = $title.' - '.$GLOBALS['Language']->getText('plugin_proftpd', 'service_lbl_key');
-        $breadcrumbs = array();
-        parent::displayHeader($title, $breadcrumbs, $toolbar);
+        $title .= ' - ' . $this->getInternationalizedName();
+        $this->displayHeader($title, $breadcrumbs, []);
     }
 
     /**
-     * @param HTTPRequest $request
      * @return bool
      */
     private function userIsAdmin(HTTPRequest $request)

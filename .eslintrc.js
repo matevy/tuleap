@@ -5,25 +5,31 @@ module.exports = {
         "vue",
         "jest",
         "@typescript-eslint",
-        "import"
+        "import",
+        "no-unsanitized",
+        "no-only-tests",
     ],
     extends: [
         "eslint:recommended",
         "plugin:you-dont-need-lodash-underscore/all",
         "plugin:vue/recommended",
-        "plugin:@typescript-eslint/eslint-recommended",
         "plugin:import/typescript",
-        "plugin:@typescript-eslint/recommended"
+        "plugin:@typescript-eslint/recommended",
+        "prettier",
+        "prettier/@typescript-eslint",
+        "prettier/vue",
+        "plugin:prettier/recommended",
     ],
     parser: "vue-eslint-parser",
     parserOptions: {
         parser: "@typescript-eslint/parser",
-        extraFileExtensions: [".vue"]
+        extraFileExtensions: [".vue"],
     },
     env: {
         es6: true,
-        browser: true
+        browser: true,
     },
+    reportUnusedDisableDirectives: true,
     rules: {
         // Possible Errors
         "no-template-curly-in-string": "error",
@@ -69,66 +75,75 @@ module.exports = {
         radix: "error",
         "require-await": "error",
         // Vue
-        "vue/attributes-order": "off",
-        "vue/component-name-in-template-casing": ["error", "kebab-case"],
+        // Priority B: Strongly Recommended (Improving Readability)
         "vue/html-self-closing": [
             "error",
             {
                 html: {
+                    void: "any",
                     normal: "any",
-                    component: "always"
+                    component: "always",
                 },
-                svg: "any"
-            }
+                svg: "any",
+                math: "any",
+            },
         ],
-        "vue/html-closing-bracket-spacing": [
-            "error",
-            {
-                selfClosingTag: "never"
-            }
-        ],
-        "vue/html-indent": ["error", 4],
-        "vue/match-component-file-name": "error",
-        "vue/max-attributes-per-line": "off",
-        "vue/multiline-html-element-content-newline": "off", // Just annoying and would be better adressed with prettier
-        "vue/no-spaces-around-equal-signs-in-attribute": "error",
-        "vue/no-unused-components": "error",
-        "vue/order-in-components": "error",
-        "vue/prop-name-casing": "off", // This would be interesting, but the --fix does not rename all instances, which will silently break your code
-        "vue/require-component-is": "error",
-        "vue/require-default-prop": "off",
-        "vue/require-direct-export": "off",
-        "vue/singleline-html-element-content-newline": "off", // Just annoying and would be better adressed with prettier
-        "vue/html-closing-bracket-newline": "off",
         "vue/v-bind-style": ["error", "longform"],
         "vue/v-on-style": ["error", "longform"],
+        "vue/attributes-order": "off",
+        "vue/prop-name-casing": "off", // This would be interesting, but the --fix does not rename all instances, which will silently break your code
+        // Uncategorized
+        "vue/component-name-in-template-casing": ["error", "kebab-case"],
+        "vue/match-component-file-name": "error",
+        "vue/require-direct-export": "off",
         // Typescript
         "@typescript-eslint/camelcase": "off",
+        "@typescript-eslint/class-literal-property-style": "error",
         "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "never" }],
         "@typescript-eslint/explicit-function-return-type": "error",
         "@typescript-eslint/no-explicit-any": "error",
         "@typescript-eslint/no-non-null-assertion": "error",
         "@typescript-eslint/no-unused-vars": "error",
-        "@typescript-eslint/no-use-before-define": ["error", { functions: false, typedefs: false }],
+        "@typescript-eslint/no-use-before-define": [
+            "error",
+            { functions: false, typedefs: false, classes: false },
+        ],
         // import
-        "import/no-extraneous-dependencies": "error"
+        "import/no-extraneous-dependencies": "error",
+        "no-unsanitized/property": [
+            "error",
+            {
+                escape: {
+                    methods: ["sanitize", "render"],
+                },
+            },
+        ],
+        "no-unsanitized/method": [
+            "error",
+            {
+                escape: {
+                    methods: ["sanitize", "render", "getPOFileFromLocale"],
+                },
+            },
+        ],
     },
     overrides: [
         {
             // Disable some rules enabled by @typescript-eslint/recommended for existing JS files
             files: ["*.js"],
             rules: {
-                "@typescript-eslint/no-var-requires": "off",
                 "@typescript-eslint/explicit-function-return-type": "off",
-                "prefer-const": "off",
+                "@typescript-eslint/explicit-module-boundary-types": "off",
+                "@typescript-eslint/no-array-constructor": "off",
+                "@typescript-eslint/no-empty-function": "off",
+                "@typescript-eslint/no-this-alias": "off",
+                "@typescript-eslint/no-use-before-define": "off",
+                "@typescript-eslint/no-var-requires": "off",
                 "no-var": "off",
+                "prefer-const": "off",
                 "prefer-rest-params": "off",
                 "prefer-spread": "off",
-                "@typescript-eslint/no-array-constructor": "off",
-                "@typescript-eslint/no-use-before-define": "off",
-                "@typescript-eslint/no-this-alias": "off",
-                "@typescript-eslint/no-empty-function": "off"
-            }
+            },
         },
         {
             // Disable some rules enabled by @typescript-eslint/recommended for existing Vue files
@@ -144,56 +159,71 @@ module.exports = {
                 "plugins/baseline/**/*.vue",
                 "plugins/create_test_env/**/*.vue",
                 "plugins/crosstracker/**/*.vue",
-                "plugins/agiledashboard/www/js/permissions-per-group/**/*.vue",
-                "src/www/scripts/project/admin/services/**/*.vue",
-                "src/www/scripts/*/permissions-per-group/**/*.vue",
-                "src/www/scripts/vue-components/skeletons/SkeletonTable.vue"
+                "plugins/agiledashboard/scripts/permissions-per-group/**/*.vue",
+                "src/scripts/project/admin/services/**/*.vue",
+                "src/scripts/*/permissions-per-group/**/*.vue",
+                "src/scripts/vue-components/skeletons/SkeletonTable.vue",
             ],
             rules: {
                 "@typescript-eslint/explicit-function-return-type": "off",
+                "@typescript-eslint/explicit-module-boundary-types": "off",
                 "prefer-const": "off",
-                "no-var": "off"
-            }
+                "no-var": "off",
+            },
         },
         {
             files: ["*.test.js", "*.test.ts", "tests/jest/fail-console-error-warning.js"],
             extends: ["plugin:jest/recommended"],
             rules: {
                 "jest/consistent-test-it": "error",
-                "jest/no-empty-title": "error",
+                "jest/valid-title": "error",
                 "jest/no-expect-resolves": "error",
                 "jest/no-large-snapshots": ["error", { maxSize: 100 }],
-                "jest/prefer-spy-on": "error"
-            }
+                "jest/prefer-spy-on": "error",
+                "jest/require-top-level-describe": "error",
+                "jest/prefer-hooks-on-top": "error",
+            },
         },
         {
             files: ["*.test.ts"],
             rules: {
-                "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "as" }]
-            }
+                "@typescript-eslint/consistent-type-assertions": [
+                    "error",
+                    { assertionStyle: "as" },
+                ],
+            },
         },
         {
             files: [
+                ".eslintrc.js",
                 "gulpfile.js",
                 "webpack.*.js",
                 "plugins/tracker/grammar/",
                 "tools/**/*.js",
                 "jest.config.js",
-                "jest.projects.config.js",
-                "tests/jest/*.js"
+                "jest.*.config.js",
+                "tests/jest/*.js",
             ],
             env: {
-                node: true
+                node: true,
             },
             rules: {
-                "no-console": "off"
-            }
+                "no-console": "off",
+            },
         },
         {
-            files: ["tests/e2e/**/*.js"],
+            files: ["tests/e2e/**/*.ts", "plugins/**/tests/e2e/**/**/*.ts"],
             env: {
-                "cypress/globals": true
-            }
-        }
-    ]
+                "cypress/globals": true,
+            },
+            rules: {
+                "cypress/require-data-selectors": "error",
+                "cypress/no-unnecessary-waiting": "error",
+                "cypress/no-assigning-return-values": "error",
+                "cypress/assertion-before-screenshot": "error",
+                "cypress/no-force": "warn",
+                "no-only-tests/no-only-tests": "error",
+            },
+        },
+    ],
 };

@@ -52,7 +52,7 @@ class ReferencesBuilder
      */
     public function getReference(Project $project, $keyword, $value)
     {
-        return $this->findReference($project, $keyword, $keyword.$value);
+        return $this->findReference($project, $keyword, $keyword . $value);
     }
 
     /**
@@ -62,20 +62,20 @@ class ReferencesBuilder
      */
     public function getExtraReferenceSpecs()
     {
-        return array(
-            array(
-                'cb'     => array($this, 'referenceFromMatch'),
+        return [
+            [
+                'cb'     => [$this, 'referenceFromMatch'],
                 'regexp' => '/
                     (?<![_a-zA-Z0-9])  # ensure the pattern is not following digits or letters
                     (?P<ref>
-                        (?P<key>'. ReferencesImporter::XREF_PKG .'
-                            |'. ReferencesImporter::XREF_REL .')
+                        (?P<key>' . ReferencesImporter::XREF_PKG . '
+                            |' . ReferencesImporter::XREF_REL . ')
                         (?P<val>[0-9]+)
                     )
                     (?![_A-Za-z0-9])   # ensure the pattern is not folloed by digits or letters
                 /x'
-            )
-        );
+            ]
+        ];
     }
 
     /**

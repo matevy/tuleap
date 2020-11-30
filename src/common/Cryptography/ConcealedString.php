@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,7 +22,12 @@ declare(strict_types=1);
 
 namespace Tuleap\Cryptography;
 
-class ConcealedString
+use Tuleap\Cryptography\Symmetric\SymmetricCrypto;
+
+/**
+ * @psalm-immutable
+ */
+final class ConcealedString
 {
     /**
      * @var string
@@ -34,18 +39,56 @@ class ConcealedString
         $this->value = $value;
     }
 
-    public function getString() : string
+    public function getString(): string
     {
         return $this->value;
     }
 
-    public function __toString() : string
+    public function __toString(): string
     {
         return $this->value;
     }
 
-    public function __debugInfo() : array
+    public function __debugInfo(): array
     {
         return ['value' => '** protected value, invoke getString instead of trying to dump it **'];
+    }
+
+    public function __sleep()
+    {
+        self::throwSerializationException();
+    }
+
+    public function __wakeup()
+    {
+        self::throwSerializationException();
+    }
+
+    /**
+     * @psalm-mutation-free
+     */
+    private static function throwSerializationException(): void
+    {
+        throw new \LogicException(
+            'A concealed string is not supposed to be serialized directly, if need to do so please call ' .
+            SymmetricCrypto::class . '::encrypt() and ' . SymmetricCrypto::class . '::decrypt()'
+        );
+    }
+
+    public function isIdenticalTo(ConcealedString $string_b): bool
+    {
+        return \hash_equals($string_b->value, $this->value);
+    }
+
+    public function __destruct()
+    {
+        /**
+         * While is indeed correct about this, it is only an issue if a developer manually call __destruct() (please don't)
+         * In the expected object lifecycle this method will only called when the object will not be reused
+         * again so mutability is not a problem.
+         * @psalm-suppress ImpureFunctionCall
+         * @psalm-suppress InaccessibleProperty
+         */
+        \sodium_memzero($this->value);
     }
 }

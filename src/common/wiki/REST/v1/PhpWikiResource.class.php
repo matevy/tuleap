@@ -97,10 +97,7 @@ class PhpWikiResource extends AuthenticatedResource
         $this->checkUserCanAccessPhpWikiService($current_user, $wiki_page->getGid());
         $this->checkUserCanSeeWikiPage($current_user, $wiki_page);
 
-        $wiki_page_representation = new PhpWikiPageFullRepresentation();
-        $wiki_page_representation->build($wiki_page);
-
-        return $wiki_page_representation;
+        return PhpWikiPageFullRepresentation::buildFull($wiki_page);
     }
 
     /**
@@ -146,10 +143,9 @@ class PhpWikiResource extends AuthenticatedResource
 
         $page_version = $this->getVersion($wiki_page, $version_id);
 
-        $wiki_page_representation = new PhpWikiPageVersionFullRepresentation();
-        $wiki_page_representation->build($page_version, $wiki_page);
+        $wiki_page_representation = PhpWikiPageVersionFullRepresentation::buildFull($page_version, $wiki_page);
 
-        return array($wiki_page_representation);
+        return [$wiki_page_representation];
     }
 
     /**
@@ -170,7 +166,7 @@ class PhpWikiResource extends AuthenticatedResource
      * @throws RestException 403
      * @throws RestException 404
      */
-    public function getItemsReferencingWikiPage(int $id) : array
+    public function getItemsReferencingWikiPage(int $id): array
     {
         $this->checkAccess();
         $this->checkPhpWikiPageExists($id);

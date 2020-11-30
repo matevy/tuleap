@@ -2,8 +2,12 @@
 
 set -euxo pipefail
 
+DB_HOST="mysql57"
+
 setup_lhs() {
     touch /etc/aliases.codendi
+
+    cat /etc/passwd
 
     mkdir -p /etc/tuleap/conf \
         /etc/tuleap/plugins \
@@ -27,12 +31,6 @@ setup_lhs() {
 setup_tuleap() {
     echo "Setup Tuleap"
 
-    cat /usr/share/tuleap/src/etc/database.inc.dist | \
-        sed \
-         -e "s/%sys_dbname%/tuleap/" \
-         -e "s/%sys_dbuser%/tuleapadm/" \
-         -e "s/%sys_dbpasswd%/welcome0/" > /etc/tuleap/conf/database.inc
-
     cat /usr/share/tuleap/src/etc/local.inc.dist | \
     sed \
     -e "s#/var/lib/tuleap/ftp/codendi#/var/lib/tuleap/ftp/tuleap#g" \
@@ -54,29 +52,35 @@ setup_tuleap() {
 }
 
 setup_database() {
-    MYSQL_HOST=localhost
     MYSQL_USER=tuleapadm
     MYSQL_PASSWORD=welcome0
     MYSQL_DBNAME=tuleap
-    MYSQL="mysql -h$MYSQL_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD"
 
-    echo "Setup database"
-    mkdir -p /tmp/mysql
-    chown mysql:mysql /tmp/mysql
+    MYSQLROOT="/opt/rh/rh-mysql57/root/bin/mysql -h$DB_HOST -uroot -pwelcome0"
 
-    service mysqld start
-    mysql -e "GRANT ALL PRIVILEGES on *.* to '$MYSQL_USER'@'$MYSQL_HOST' identified by '$MYSQL_PASSWORD'"
-    $MYSQL -e "DROP DATABASE IF EXISTS $MYSQL_DBNAME"
-    $MYSQL -e "CREATE DATABASE $MYSQL_DBNAME CHARACTER SET utf8"
-    $MYSQL $MYSQL_DBNAME < "/usr/share/tuleap/src/db/mysql/database_structure.sql"
-    $MYSQL $MYSQL_DBNAME < "/usr/share/tuleap/src/db/mysql/database_initvalues.sql"
-    $MYSQL $MYSQL_DBNAME < "/usr/share/tuleap/tests/e2e/full/tuleap/cypress_database_init_values.sql"
+    /usr/share/tuleap/src/tuleap-cfg/tuleap-cfg.php setup:mysql-init \
+        --host="$DB_HOST" \
+        --admin-user=root \
+        --admin-password=welcome0 \
+        --db-name="$MYSQL_DBNAME" \
+        --app-user="$MYSQL_USER" \
+        --app-password="$MYSQL_PASSWORD" \
+        --mediawiki="per-project"
 
-    mysql -e "GRANT SELECT ON $MYSQL_DBNAME.user to dbauthuser@'localhost' identified by '$MYSQL_PASSWORD';"
-    mysql -e "GRANT SELECT ON $MYSQL_DBNAME.groups to dbauthuser@'localhost';"
-    mysql -e "GRANT SELECT ON $MYSQL_DBNAME.user_group to dbauthuser@'localhost';"
-    mysql -e "GRANT SELECT,UPDATE ON $MYSQL_DBNAME.svn_token to dbauthuser@'localhost';"
-    mysql -e "FLUSH PRIVILEGES;"
+    /usr/share/tuleap/src/tuleap-cfg/tuleap-cfg.php setup:mysql \
+        --host="$DB_HOST" \
+        --user="$MYSQL_USER" \
+        --dbname="$MYSQL_DBNAME" \
+        --password="$MYSQL_PASSWORD" \
+        welcome0 \
+        localhost
+
+    $MYSQLROOT -e "DELETE FROM tuleap.password_configuration"
+    $MYSQLROOT -e "INSERT INTO tuleap.password_configuration values (0)"
+
+    enable_plugins
+
+    $MYSQLROOT $MYSQL_DBNAME < "/usr/share/tuleap/tests/e2e/full/tuleap/cypress_database_init_values.sql"
 }
 
 load_project() {
@@ -93,8 +97,7 @@ load_project() {
         $user_mapping
 }
 
-seed_data() {
-    mysql -e "DELETE FROM tuleap.password_configuration;"
+enable_plugins() {
     su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php tracker" -l codendiadm
     su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php cardwall" -l codendiadm
     su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php agiledashboard" -l codendiadm
@@ -103,33 +106,44 @@ seed_data() {
     su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php docman" -l codendiadm
     su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php mediawiki" -l codendiadm
     su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php document" -l codendiadm
+    su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php taskboard" -l codendiadm
+    su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php crosstracker" -l codendiadm
+    su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php timetracking" -l codendiadm
+    su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php oauth2_server" -l codendiadm
+    su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php projectmilestones " -l codendiadm
+    su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php testmanagement " -l codendiadm
+    su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php testplan " -l codendiadm
+    su -c "/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/tools/utils/admin/activate_plugin.php frs " -l codendiadm
+}
+
+seed_data() {
     sed -i -e 's#/var/lib/codendi#/var/lib/tuleap#g' /etc/tuleap/plugins/docman/etc/docman.inc
 
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/permission_project
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/docman_project
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/document_project
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/git_project
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/frs_project
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/project_administration
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/mediawiki_public_project
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/platform_allows_anonymous
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/platform_allows_restricted
-    load_project /usr/share/tuleap/tests/e2e/_fixtures/tracker_project
+    for project in $(find /usr/share/tuleap/tests/e2e/full/_fixtures/ -maxdepth 1 -mindepth 1 -type d) ; do
+        load_project "$project"
+    done
+
+    for project in $(find /usr/share/tuleap/plugins/*/tests/e2e/cypress/_fixtures/ -maxdepth 1 -mindepth 1 -type d) ; do
+        load_project "$project"
+    done
 
     chown -R codendiadm:codendiadm /var/log/tuleap
 }
 
 setup_lhs
 setup_tuleap
-/usr/share/tuleap/tools/utils/php73/run.php --modules=nginx,fpm
 setup_database
+/usr/share/tuleap/tools/utils/php73/run.php --modules=nginx,fpm
+/usr/share/tuleap/src/tuleap-cfg/tuleap-cfg.php site-deploy
 seed_data
 
 /usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/src/utils/tuleap.php config-set sys_project_approval 0
 /usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/src/utils/tuleap.php config-set project_admin_can_choose_visibility 1
-/usr/share/tuleap/src/utils/php-launcher.sh /usr/share/tuleap/src/utils/tuleap.php set-user-password admin welcome0
 
-service php73-php-fpm start
-service nginx start
+sed -i 's/inet_interfaces = localhost/inet_interfaces = 127.0.0.1/' /etc/postfix/main.cf
+/usr/sbin/postfix -c /etc/postfix start
+
+/opt/remi/php73/root/usr/sbin/php-fpm --daemonize
+nginx
 
 exec tail -f /var/log/nginx/error.log

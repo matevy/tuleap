@@ -32,26 +32,22 @@ class Tracker_Artifact_PossibleParentsRetriever
     public function getPossibleArtifactParents(Tracker $parent_tracker, PFUser $user, $limit, $offset)
     {
         $label            = '';
-        $possible_parents = array();
+        $possible_parents = [];
         $display_selector = true;
         EventManager::instance()->processEvent(
             TRACKER_EVENT_ARTIFACT_PARENTS_SELECTOR,
-            array(
+            [
                 'user'             => $user,
                 'parent_tracker'   => $parent_tracker,
                 'possible_parents' => &$possible_parents,
                 'label'            => &$label,
                 'display_selector' => &$display_selector,
-            )
+            ]
         );
 
         $paginated_possible_parents = null;
         if (! $possible_parents) {
-            $label = $GLOBALS['Language']->getText(
-                'plugin_tracker_artifact',
-                'formelement_artifactlink_open_parent',
-                array($parent_tracker->getName())
-            );
+            $label = sprintf(dgettext('tuleap-tracker', 'Open %1$s'), $parent_tracker->getName());
 
             $paginated_possible_parents = $this->artifact_factory->getPaginatedPossibleParentArtifactsUserCanView(
                 $user,
@@ -63,6 +59,6 @@ class Tracker_Artifact_PossibleParentsRetriever
             $paginated_possible_parents = new Tracker_Artifact_PaginatedArtifacts($possible_parents, count($possible_parents));
         }
 
-        return array($label, $paginated_possible_parents, $display_selector);
+        return [$label, $paginated_possible_parents, $display_selector];
     }
 }

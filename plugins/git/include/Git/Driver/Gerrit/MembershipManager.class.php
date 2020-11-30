@@ -41,16 +41,16 @@ class Git_Driver_Gerrit_MembershipManager
     /** @var ProjectManager */
     private $project_manager;
 
-    private $cache_groups = array();
+    private $cache_groups = [];
 
     public function __construct(
-        Git_Driver_Gerrit_MembershipDao       $dao,
+        Git_Driver_Gerrit_MembershipDao $dao,
         Git_Driver_Gerrit_GerritDriverFactory $driver_factory,
-        Git_Driver_Gerrit_UserAccountManager  $gerrit_usermanager,
-        Git_RemoteServer_GerritServerFactory  $gerrit_server_factory,
-        Logger                                $logger,
-        UGroupManager                         $ugroup_manager,
-        ProjectManager                        $project_manager
+        Git_Driver_Gerrit_UserAccountManager $gerrit_usermanager,
+        Git_RemoteServer_GerritServerFactory $gerrit_server_factory,
+        \Psr\Log\LoggerInterface $logger,
+        UGroupManager $ugroup_manager,
+        ProjectManager $project_manager
     ) {
         $this->dao                    = $dao;
         $this->driver_factory         = $driver_factory;
@@ -64,8 +64,6 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * Add a user into a user group
      *
-     * @param PFUser $user
-     * @param ProjectUGroup $ugroup
      */
     public function addUserToGroup(PFUser $user, ProjectUGroup $ugroup)
     {
@@ -74,9 +72,6 @@ class Git_Driver_Gerrit_MembershipManager
         );
     }
 
-    /**
-     * @param PFUser $user
-     */
     public function addUserToAllTheirGroups(PFUser $user)
     {
         $static_user_groups  = $this->ugroup_manager->getByUserId($user);
@@ -91,19 +86,18 @@ class Git_Driver_Gerrit_MembershipManager
     }
 
     /**
-     * @param PFUser $user
      * @return ProjectUGroup[]
      */
     private function getDynamicUgroupsForUser(PFUser $user)
     {
         $project_ids = $user->getProjects();
-        $ugroups     = array();
+        $ugroups     = [];
 
         foreach ($project_ids as $group_id) {
-            $ugroups[] = new ProjectUGroup(array('ugroup_id' => ProjectUGroup::PROJECT_MEMBERS, 'group_id' => $group_id));
+            $ugroups[] = new ProjectUGroup(['ugroup_id' => ProjectUGroup::PROJECT_MEMBERS, 'group_id' => $group_id]);
 
             if ($user->isAdmin($group_id)) {
-                $ugroups[] = new ProjectUGroup(array('ugroup_id' => ProjectUGroup::PROJECT_ADMIN, 'group_id' => $group_id));
+                $ugroups[] = new ProjectUGroup(['ugroup_id' => ProjectUGroup::PROJECT_ADMIN, 'group_id' => $group_id]);
             }
         }
 
@@ -113,8 +107,6 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * Remove a user from a user group
      *
-     * @param PFUser $user
-     * @param ProjectUGroup $ugroup
      */
     public function removeUserFromGroup(PFUser $user, ProjectUGroup $ugroup)
     {
@@ -134,8 +126,6 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * Bind $ugroup with $source_ugroup
      *
-     * @param ProjectUGroup $ugroup
-     * @param ProjectUGroup $source_ugroup
      */
     public function addUGroupBinding(ProjectUGroup $ugroup, ProjectUGroup $source_ugroup)
     {
@@ -147,7 +137,6 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * Remove binding set on a user group
      *
-     * @param ProjectUGroup $ugroup
      */
     public function removeUGroupBinding(ProjectUGroup $ugroup)
     {
@@ -167,7 +156,6 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * Create a user group on all gerrit servers a project use
      *
-     * @param ProjectUGroup $ugroup
      */
     public function createGroupOnProjectsServers(ProjectUGroup $ugroup)
     {
@@ -193,13 +181,12 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * Create groups during repository migration
      *
-     * @param Git_RemoteServer_GerritServer $server
      * @param ProjectUGroup[]                      $ugroups
      * @return ProjectUGroup[]
      */
     public function createArrayOfGroupsForServer(Git_RemoteServer_GerritServer $server, array $ugroups)
     {
-        $migrated_ugroups = array();
+        $migrated_ugroups = [];
 
         $need_flush = false;
 
@@ -227,8 +214,6 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * Create a user group
      *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param ProjectUGroup $ugroup
      *
      * @return String Name of group on gerrit server | false in case of error
      */
@@ -303,19 +288,16 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * This should probably be in a dedicated GerritUserGroup object.
      *
-     * @param ProjectUGroup $ugroup
      * @return String
      */
     public function getFullyQualifiedUGroupName(ProjectUGroup $ugroup)
     {
-        return $ugroup->getProject()->getUnixName().'/'.$ugroup->getNormalizedName();
+        return $ugroup->getProject()->getUnixName() . '/' . $ugroup->getNormalizedName();
     }
 
     /**
      * Returns true if the user group exists on given server
      *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param ProjectUGroup $ugroup
      * @return bool
      */
     public function doesGroupExistOnServer(Git_RemoteServer_GerritServer $server, ProjectUGroup $ugroup)
@@ -327,8 +309,7 @@ class Git_Driver_Gerrit_MembershipManager
     /**
      * Returns gerrit user group uuid
      *
-     * @param Git_RemoteServer_GerritServer $server
-     * @param String                        $ugroup
+     * @param string                        $gerrit_group_name
      * @return String
      * @throws Exception
      */
@@ -338,7 +319,7 @@ class Git_Driver_Gerrit_MembershipManager
         if (isset($this->cache_groups[$server->getId()][$gerrit_group_name])) {
             return $this->cache_groups[$server->getId()][$gerrit_group_name];
         }
-        throw new Exception("Group $gerrit_group_name doesn't not exist on server ".$server->getId()." ".$server->getBaseUrl());
+        throw new Exception("Group $gerrit_group_name doesn't not exist on server " . $server->getId() . " " . $server->getBaseUrl());
     }
 
     private function cacheGroupDefinitionForServer(Git_RemoteServer_GerritServer $server)
@@ -350,7 +331,6 @@ class Git_Driver_Gerrit_MembershipManager
 
     /**
      *
-     * @param ProjectUGroup $ugroup
      * @return bool
      */
     private function ugroupCanBeMigrated(ProjectUGroup $ugroup)

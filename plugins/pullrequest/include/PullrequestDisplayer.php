@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -22,20 +22,15 @@ namespace Tuleap\PullRequest;
 
 use GitRepositoryFactory;
 use TemplateRenderer;
-use ThemeManager;
 use Tuleap\Git\Repository\GitRepositoryHeaderDisplayer;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\CssAsset;
 use Tuleap\Layout\IncludeAssets;
-use Tuleap\layout\ScriptAsset;
+use Tuleap\Layout\JavascriptAsset;
 use Tuleap\PullRequest\MergeSetting\MergeSettingRetriever;
 
 class PullrequestDisplayer
 {
-    /**
-     * @var ThemeManager
-     */
-    private $theme_manager;
     /**
      * @var Factory
      */
@@ -58,14 +53,12 @@ class PullrequestDisplayer
     private $repository_factory;
 
     public function __construct(
-        ThemeManager $theme_manager,
         Factory $factory,
         TemplateRenderer $template_renderer,
         MergeSettingRetriever $merge_setting_retriever,
         GitRepositoryHeaderDisplayer $header_displayer,
         GitRepositoryFactory $repository_factory
     ) {
-        $this->theme_manager           = $theme_manager;
         $this->factory                 = $factory;
         $this->template_renderer       = $template_renderer;
         $this->merge_setting_retriever = $merge_setting_retriever;
@@ -82,12 +75,14 @@ class PullrequestDisplayer
 
             $GLOBALS['HTML'] = $GLOBALS['Response'] = $layout;
 
+            $assets = new IncludeAssets(
+                __DIR__ . '/../../../src/www/assets/pullrequest',
+                '/assets/pullrequest'
+            );
+
             $layout->addCssAsset(
                 new CssAsset(
-                    new IncludeAssets(
-                        __DIR__ . '/../../../src/www/assets/pullrequest/BurningParrot',
-                        '/assets/pullrequest/BurningParrot'
-                    ),
+                    $assets,
                     'pull-requests'
                 )
             );
@@ -99,12 +94,9 @@ class PullrequestDisplayer
                 $repository
             );
 
-            $scripts_assets = new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/pullrequest/scripts',
-                '/assets/pullrequest/scripts'
-            );
 
-            $pull_requests_app = new ScriptAsset($scripts_assets, 'tuleap-pullrequest.js');
+
+            $pull_requests_app = new JavascriptAsset($assets, 'tuleap-pullrequest.js');
             $layout->includeFooterJavascriptFile($pull_requests_app->getFileURL());
 
             $presenter = new PullRequestPresenter(

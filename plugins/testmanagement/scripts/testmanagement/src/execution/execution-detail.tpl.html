@@ -1,0 +1,206 @@
+<div class="tlp-alert-danger" ng-if="execution.error">{{ execution.error }}</div>
+
+<div class="tuleap-modal-loading"
+     ng-if="artifact_links_graph_modal_loading.is_loading || edit_artifact_modal_loading.loading"></div>
+
+<div class="linked-issue-alert tlp-alert-success" ng-if="linkedIssueAlertVisible">
+    <span class="linked-issue-alert-text">
+    {{ "Bug" | translate }} <a ng-href="/plugins/tracker/?aid={{ linkedIssueId }}">#{{ linkedIssueId }}</a> {{ "has been successfully linked to this test." | translate }}
+    </span>
+    <button type="button"
+            class="linked-issue-alert-close tlp-button-success tlp-button-outline tlp-button-mini"
+            ng-click="closeLinkedIssueAlert()"
+    >
+        <i class="fa fa-times-circle" aria-hidden="true"></i>
+    </button>
+</div>
+
+<section id="test" class="tlp-pane current-test" ng-class="execution.status" data-test="current-test">
+    <div class="tlp-pane-container">
+        <section class="tlp-pane-header current-test-header">
+            <div class="loader" ng-if="! execution.id"></div>
+            <h1 class="current-test-header-title" data-test="current-test-header-title">
+                <i ng-if="execution.is_automated" class="fa current-test-title-icon-auto" ng-class="{
+                    'fa-tlp-robot notrun': execution.status === 'notrun',
+                    'fa-tlp-robot blocked': execution.status === 'blocked',
+                    'fa-tlp-robot-happy passed': execution.status ===  'passed',
+                    'fa-tlp-robot-unhappy failed': execution.status ===  'failed'
+                }"></i>
+                {{ execution.definition.summary }}
+            </h1>
+
+            <div class="current-test-header-actions">
+                <div class="tlp-dropdown" ng-if="linkMenuIsVisible">
+                    <i class="fa fa-bug fa-fw current-test-header-action" id="dropdown-link-bug" open-tlp-dropdown></i>
+                    <div class="tlp-dropdown-menu tlp-dropdown-menu-right tlp-dropdown-menu-on-icon" role="menu">
+                        <a class="tlp-dropdown-menu-item" role="menuitem" ng-if="canCreateIssue"
+                           ng-click="showLinkToNewBugModal()">
+                            <i class="tlp-dropdown-menu-item-icon fa fa-fw fa-plus"></i>
+                            <span translate>Create a new bug</span>
+                        </a>
+                        <a class="tlp-dropdown-menu-item" role="menuitem" ng-if="canLinkIssue"
+                           ng-click="showLinkToExistingBugModal()">
+                            <i class="tlp-dropdown-menu-item-icon fa fa-fw fa-link"></i>
+                            <span translate>Link to an existing bug</span>
+                        </a>
+                        <span
+                                ng-if="execution.linked_bugs.length > 0"
+                                class="tlp-dropdown-menu-title"
+                                role="menuitem"
+                                translate
+                        >Linked bugs</span>
+                        <a class="tlp-dropdown-menu-item"
+                           role="menuitem"
+                           href="/plugins/tracker/?aid={{ bug.id }}"
+                           ng-repeat="bug in execution.linked_bugs track by bug.id"
+                        >
+                            <span ng-class="['tlp-badge-outline', 'tlp-badge-' + bug.tracker.color_name, 'linked-issues-dropdown-content-badge']">
+                                {{ bug.xref }}
+                            </span> {{ bug.title }}
+                        </a>
+                    </div>
+                </div>
+
+                <a class="current-test-header-action"
+                   ng-if="! linkMenuIsVisible && canCreateIssue"
+                   ng-click="showLinkToNewBugModal()"
+                   title="{{ 'Create a new bug' | translate }}"
+                >
+                    <i class="fa fa-fw fa-bug"></i>
+                </a>
+
+                <a href="/plugins/tracker/?aid={{ execution.definition.id }}" class="current-test-header-action">
+                    <i class="fas fa-fw fa-pencil-alt"
+                       data-test="current-test-edit"
+                       ng-click="showEditArtifactModal($event, execution.definition)"
+                       title="{{ 'Edit this test' | translate }}"></i>
+                </a>
+                <span class="current-test-header-action"
+                      ng-click="showArtifactLinksGraphModal(execution)"
+                      title="{{ 'Show dependencies graph for this test' | translate }}"
+                >
+                    <i class="fa fa-tlp-dependencies-graph"></i>
+                </span>
+            </div>
+        </section>
+
+        <section class="tlp-pane-section current-test-latest-result" ng-if="execution.previous_result.has_been_run_at_least_once">
+            <i class="fa fa-check-circle current-test-status" ng-if="execution.status === 'passed'"></i>
+            <i class="fa fa-times-circle current-test-status" ng-if="execution.status === 'failed'"></i>
+            <i class="fa fa-exclamation-circle current-test-status" ng-if="execution.status === 'blocked'"></i>
+            <div class="current-test-latest-result-description">
+                <div class="current-test-header-who">
+                    <span ng-if="execution.previous_result.submitted_on">
+                        {{ execution.previous_result.submitted_on | amCalendar }}
+                    </span>
+                    <span ng-if="execution.previous_result.submitted_by.real_name">
+                        <span translate>by</span> {{ execution.previous_result.submitted_by.real_name }}
+                    </span>
+                </div>
+                <div class="current-test-header-comment" ng-if="execution.previous_result.result">
+                    <div ng-bind-html="truncateExecutionResult(execution, 200)" data-test="current-test-preview-latest-result"></div>
+                    <button type="button"
+                            data-test="view-details-button"
+                            class="tlp-button-outline tlp-button-small"
+                            ng-class="{'tlp-button-danger': execution.status === 'failed', 'tlp-button-success': execution.status === 'passed', 'tlp-button-info': execution.status === 'blocked', 'tlp-button-secondary': execution.status === 'notrun'}"
+                            ng-click="showExecutionDetailsModal()"
+                            translate
+                    >View details</button>
+                </div>
+            </div>
+        </section>
+
+        <section ng-if="execution.definition.requirement && execution.is_automated === false" class="tlp-pane-section current-test-requirement">
+            <div>
+                <i class="fas fa-long-arrow-alt-right current-test-requirement-arrow"></i>
+                <a href="/plugins/tracker/?aid={{ execution.definition.requirement.id }}">
+                    <span ng-class="['current-test-requirement-badge', 'tlp-badge-outline', 'tlp-badge-' + execution.definition.requirement.tracker.color_name]">
+                        {{ execution.definition.requirement.xref }}
+                    </span> {{ execution.definition.requirement.title }}
+                </a>
+            </div>
+        </section>
+
+        <section class="tlp-pane-section current-test-content" ng-if="! execution.definition.steps.length && execution.is_automated === false">
+            <execution-detail-just-updated></execution-detail-just-updated>
+            <h2>Steps</h2>
+            <p class="current-test-description-empty-state"
+               ng-if="execution.definition.description.length === 0"
+               translate
+            >This test has no description. Please edit it.</p>
+            <div ng-bind-html="execution.definition.description"></div>
+        </section>
+
+        <execution-with-steps class="current-test-content"
+                              ng-if="execution.definition.steps.length && execution.is_automated === false"
+                              execution="execution"
+        ></execution-with-steps>
+
+        <section ng-if="execution.is_automated === false" class="tlp-pane-section current-test-footer-section">
+            <div class="tlp-form-element">
+                <label class="tlp-label" for="execution_{{execution.id}}" translate>Comment</label>
+                <div class="current-test-results-container">
+                    <div class="current-test-comment" id="execution_{{execution.id}}" data-test="current-test-comment">
+                    </div>
+                    <div class="current-test-results" ng-if="! execution.userCanReloadTestBecauseDefinitionIsUpdated">
+                        <button id="test-result-passed" type="button"
+                                data-test="mark-test-as-passed"
+                                class="current-test-result tlp-button-large tlp-button-success"
+                                title="{{ 'Passed' | translate }}" ng-click="pass(execution)"
+                                ng-disabled="execution.saving">
+                            <i class="fa fa-fw fa-check-circle"></i>
+                        </button>
+                        <button id="test-result-failed" type="button"
+                                data-test="mark-test-as-failed"
+                                class="current-test-result tlp-button-large tlp-button-danger"
+                                title="{{ 'Failed' | translate }}" ng-click="fail(execution)"
+                                ng-disabled="execution.saving">
+                            <i class="fa fa-fw fa-times-circle"></i>
+                        </button>
+                        <button id="test-result-blocked" type="button"
+                                data-test="mark-test-as-blocked"
+                                class="current-test-result tlp-button-large tlp-button-info"
+                                title="{{ 'Blocked' | translate }}"
+                                ng-click="block(execution)" ng-disabled="execution.saving">
+                            <i class="fa fa-fw fa-exclamation-circle"></i>
+                        </button>
+                        <button id="test-result-notrun" type="button"
+                                data-test="mark-test-as-notrun"
+                                class="current-test-result tlp-button-large tlp-button-secondary"
+                                title="{{ 'Not run' | translate }}" ng-click="notrun(execution)"
+                                ng-disabled="execution.saving">
+                            <i class="fa fa-fw fa-question-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="tlp-alert-warning current-test-should-be-reloaded-warning"
+                 ng-if="execution.userCanReloadTestBecauseDefinitionIsUpdated">
+                <span translate>The test has been changed by someone else. You should reload the test before executing it.</span>
+                <button type="button"
+                        class="tlp-button-warning tlp-button-outline current-test-should-be-reloaded-button"
+                        ng-click="execution.userCanReloadTestBecauseDefinitionIsUpdated()">
+                    <i class="fas fa-fw fa-sync tlp-button-icon"></i> <span translate>Reload the test</span>
+                </button>
+            </div>
+        </section>
+        <div ng-if="execution.is_automated === true" class="current-test-automated-message">
+            <robot-svg-displayer test-status="execution.status"></robot-svg-displayer>
+
+            <span>{{ "This is an automated test." | translate }}</span>
+
+            <span ng-if="execution.status === 'notrun'">
+                {{ "Please come back later to see the result." | translate }}
+            </span>
+            <span ng-if="execution.status === 'passed'">
+                {{ "Its status is passed." | translate }}
+            </span>
+            <span ng-if="execution.status === 'failed'">
+                {{ "Its status is failed." | translate }}
+            </span>
+            <span ng-if="execution.status === 'blocked'">
+                {{ "Its status is blocked." | translate }}
+            </span>
+        </div>
+    </div>
+</section>

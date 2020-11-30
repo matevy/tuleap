@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\EmbeddedFiles;
 
@@ -82,7 +82,7 @@ class EmbeddedFileVersionCreator
     ): void {
         $this->transaction_executor->execute(
             function () use ($item, $current_user, $representation, $status, $obsolesence_date, $current_time, $title, $description) {
-                $next_version_id = (int)$this->version_factory->getNextVersionNumber($item);
+                $next_version_id = (int) $this->version_factory->getNextVersionNumber($item);
 
                 $created_file_path = $this->file_storage->store(
                     $representation->embedded_properties->content,

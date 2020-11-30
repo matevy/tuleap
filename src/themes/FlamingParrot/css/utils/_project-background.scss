@@ -1,0 +1,173 @@
+/**
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+@use '../../../common/css/project-background/background';
+
+$tlp-theme-sidebar-background-color: $sidebar-background;
+$sidebar-expanded-width: $sidebar-width;
+$sidebar-collapsed-width: $sidebar-width-collapsed;
+
+@import '../../../common/css/project-background/project-background';
+
+.project-with-background {
+    .project-administration-title,
+    .administration-title,
+    .cvs-header > .administration-title,
+    .project-header-title {
+        @include background.project-background-title-header-typography($white);
+        margin: 0;
+        padding: 0 $tlp-medium-spacing 30px;
+    }
+
+    .toolbar.nav-pills {
+        border-bottom: initial;
+
+        li > a {
+            @include background.project-background-title-header-typography($white);
+        }
+
+        li > a:hover,
+        li > a:focus {
+            color: $grey;
+        }
+    }
+
+    .breadcrumb-container {
+        padding: $tlp-medium-spacing $tlp-medium-spacing 0;
+    }
+
+    .breadcrumb,
+    .breadcrumb-link {
+        @include background.project-background-title-header-typography($white); }
+
+    .breadcrumb-dropdown-item,
+    .breadcrumb-dropdown-section-title {
+        text-shadow: initial;
+    }
+
+    .breadcrumb-item:not(.breadcrumb-item-disabled):hover > .breadcrumb-link {
+        background: rgba(0, 0, 0, .3);
+        color: $white;
+    }
+
+    .breadcrumb-switchable:hover > .breadcrumb-link::after {
+        color: $white;
+    }
+
+    .breadcrumb-project-privacy-icon {
+        &.fa-lock,
+        &.fa-tlp-lock-plus-r {
+            background: $white;
+            color: $sidebar-background;
+        }
+
+        &.fa-lock-open,
+        &.fa-tlp-unlock-plus-r {
+            background: rgba(0, 0, 0, .3);
+            color: $white;
+        }
+    }
+
+    .breadcrumb-project-privacy-icon-with-flags {
+        background: rgba(0, 0, 0, .3);
+        color: $white;
+
+        > .fas {
+            background: none;
+            color: $white;
+        }
+    }
+
+    // stylelint-disable selector-no-qualifying-type,max-nesting-depth,selector-max-compound-selectors
+    .main-project-tabs > .nav-tabs {
+        margin: 0;
+        background: rgba(0, 0, 0, .3);
+        box-shadow: none;
+
+        > li {
+            border: 0;
+
+            &:hover {
+                border: 0;
+                box-shadow: none;
+            }
+
+            > a {
+                padding: ($tlp-medium-spacing - 2) $tlp-large-spacing $tlp-medium-spacing;
+                border: 0;
+                border-top: 2px solid transparent;
+                color: $white;
+
+                &.active,
+                &:focus,
+                &:hover {
+                    border-bottom: 0;
+                    border-top-color: $white;
+                    background: rgba(0, 0, 0, .3);
+
+                    > .caret {
+                        border-top-color: $white;
+                        border-bottom-color: $white;
+                    }
+                }
+            }
+
+            &.dropdown.open > a:hover > .caret {
+                border-top-color: $white;
+                border-bottom-color: $white;
+            }
+
+            &.active {
+                &.open {
+                    color: $white;
+                }
+
+                > a {
+                    border-bottom: 0;
+                    border-top-color: $white;
+                    background: rgba(0, 0, 0, .3);
+                }
+            }
+
+            > .dropdown-toggle > .caret {
+                border-top-color: $white;
+                border-bottom-color: $white;
+            }
+        }
+    }
+    // stylelint-enable
+
+    #feedback {
+        padding: $tlp-medium-spacing 0;
+
+        // stylelint-disable selector-class-pattern
+        > .feedback_error,
+        > .feedback_warning,
+        > .feedback_info {
+            &:first-child {
+                margin-top: 0;
+            }
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+        // stylelint-enable
+    }
+}

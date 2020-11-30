@@ -22,7 +22,6 @@ namespace Tuleap\CLI\Command;
 
 use BrokerLogger;
 use ProjectXMLImporter;
-use ProjectXMLImporterLogger;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputInterface;
@@ -33,15 +32,7 @@ use Tuleap\CLI\ConsoleLogger;
 use Tuleap\Project\XML\Import;
 use Tuleap\Project\XML\Import\ImportConfig;
 use Tuleap\Project\XML\Import\ImportNotValidException;
-use Tuleap\Project\XML\XMLFileContentRetriever;
-use Tuleap\Service\ServiceCreator;
-use Tuleap\Widget\WidgetFactory;
-use UGroupDao;
-use UGroupManager;
-use User_ForgeUserGroupPermissionsDao;
-use User_ForgeUserGroupPermissionsManager;
 use XML_RNGValidator;
-use XML_Security;
 
 class ImportProjectXMLCommand extends Command
 {
@@ -74,8 +65,8 @@ class ImportProjectXMLCommand extends Command
     {
         if ($input->getOption('project') === null && $input->getOption('update')) {
             throw new \InvalidArgumentException(
-                "Can't use option --update\n".
-                "If you want create a new project, retry without --update.\n".
+                "Can't use option --update\n" .
+                "If you want create a new project, retry without --update.\n" .
                 "If you want update an existing project, retry with option --project / -p instead of option --name / -s"
             );
         }
@@ -94,7 +85,7 @@ class ImportProjectXMLCommand extends Command
         $configuration->setUpdate($update);
 
         $project_id = $input->getOption("project");
-        $project_name_override = (string)$input->getOption("name");
+        $project_name_override = (string) $input->getOption("name");
 
         $username = $input->getOption("user-name");
         if ($username === null) {
@@ -111,14 +102,14 @@ class ImportProjectXMLCommand extends Command
             $automap = true;
             $automap_arg = trim($input->getOption("automap"));
             $exception =
-                "Automatically map users without taking email into account\n".
-                "the second argument is the default action for accounts to\n".
-                "create.\n".
-                "Supported strategies:\n".
-                "           no-email    Map with matching ldap id or username.\n".
-                "                       Email is not taken into account\n".
-                "Supported actions:\n".
-                "           create:A    Create account with status Active\n".
+                "Automatically map users without taking email into account\n" .
+                "the second argument is the default action for accounts to\n" .
+                "create.\n" .
+                "Supported strategies:\n" .
+                "           no-email    Map with matching ldap id or username.\n" .
+                "                       Email is not taken into account\n" .
+                "Supported actions:\n" .
+                "           create:A    Create account with status Active\n" .
                 "           create:S    Create account with status Suspended\n\n\n";
             if (strpos($automap_arg, ',') !== false) {
                 [$automap_strategy, $default_action] = explode(',', $automap_arg);
@@ -136,7 +127,7 @@ class ImportProjectXMLCommand extends Command
                 $is_template = true;
             } else {
                 $exception =
-                    "If the project is created, then it can be defined as a template\n".
+                    "If the project is created, then it can be defined as a template\n" .
                     "Unsupported type argument, eg --type template";
                 throw new \InvalidArgumentException($exception);
             }
@@ -159,24 +150,21 @@ class ImportProjectXMLCommand extends Command
 
         $user_manager  = \UserManager::instance();
         $event_manager = \EventManager::instance();
-        $security      = new XML_Security();
         $xml_validator = new XML_RNGValidator();
 
         $transformer    = new \User\XML\Import\MappingFileOptimusPrimeTransformer($user_manager, $use_lame_password);
         $console_logger = new ConsoleLogger($output);
-        $file_logger    = new ProjectXMLImporterLogger();
-        $broker_log  = new BrokerLogger(array($file_logger, $console_logger));
+        $file_logger    = ProjectXMLImporter::getLogger();
+        $broker_log  = new BrokerLogger([$file_logger, $console_logger]);
         $builder     = new \User\XML\Import\UsersToBeImportedCollectionBuilder(
             $user_manager,
-            $broker_log,
-            $security,
             $xml_validator
         );
 
         try {
             $user = $user_manager->forceLogin($username);
             if ((! $user->isSuperUser() && ! $user->isAdmin($project_id)) || ! $user->isActive()) {
-                throw new \RuntimeException($GLOBALS['Language']->getText('project_import', 'invalid_user', array($username)));
+                throw new \RuntimeException($GLOBALS['Language']->getText('project_import', 'invalid_user', [$username]));
             }
 
             $absolute_archive_path = realpath($archive_path);
@@ -221,18 +209,18 @@ class ImportProjectXMLCommand extends Command
         } catch (\XML_ParseException $exception) {
             $broker_log->error($exception->getMessage());
             foreach ($exception->getErrors() as $parse_error) {
-                $broker_log->error('XML: '.$parse_error.' line:'.$exception->getSourceXMLForError($parse_error));
+                $broker_log->error('XML: ' . $parse_error . ' line:' . $exception->getSourceXMLForError($parse_error));
             }
         } catch (ImportNotValidException $exception) {
             if ($exception->getMessage() !== '') {
                 $broker_log->error($exception->getMessage());
             } else {
-                $broker_log->error("Some natures used in trackers are not created on plateform.");
+                $broker_log->error("There are some errors in the XML content that prevent the project to be created.");
             }
         } catch (\Exception $exception) {
-            $broker_log->error(get_class($exception).': '.$exception->getMessage().' in '.$exception->getFile().' L'.$exception->getLine());
+            $broker_log->error(get_class($exception) . ': ' . $exception->getMessage() . ' in ' . $exception->getFile() . ' L' . $exception->getLine());
         } finally {
-            if ($archive) {
+            if (isset($archive) && $archive) {
                 $archive->cleanUp();
             }
         }

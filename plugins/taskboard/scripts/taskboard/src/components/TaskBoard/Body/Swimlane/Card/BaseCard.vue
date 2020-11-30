@@ -20,19 +20,25 @@
 
 <template>
     <div class="taskboard-card" v-bind:class="additional_classnames">
-        <span v-if="can_user_update_card" class="taskboard-card-edit-trigger" v-on:click="switchToEditMode">
-            <i class="fa fa-pencil"></i>
+        <span
+            v-if="can_user_update_card"
+            class="taskboard-card-edit-trigger"
+            v-on:click="switchToEditMode"
+            data-test="card-edit-button"
+        >
+            <i class="fas fa-pencil-alt"></i>
         </span>
         <div class="taskboard-card-content">
-            <card-xref-label v-bind:card="card" v-bind:label="label"/>
-            <div class="taskboard-card-info">
-                <slot name="initial_effort"/>
-                <card-assignees v-bind:assignees="card.assignees"/>
-            </div>
+            <card-xref-label v-bind:card="card" v-bind:label="label" />
+            <card-info v-bind:card="card" v-bind:tracker="tracker" v-model="assignees">
+                <template v-slot:initial_effort>
+                    <slot name="initial_effort" />
+                </template>
+            </card-info>
         </div>
-        <label-editor v-model="label" v-if="card.is_in_edit_mode" v-on:save="save"/>
+        <label-editor v-model="label" v-if="card.is_in_edit_mode" v-on:save="save" />
         <div class="taskboard-card-accessibility" v-if="show_accessibility_pattern"></div>
-        <slot name="remaining_effort"/>
+        <slot name="remaining_effort" />
     </div>
 </template>
 
@@ -40,22 +46,25 @@
 import Vue from "vue";
 import { Component, Prop } from "vue-property-decorator";
 import CardXrefLabel from "./CardXrefLabel.vue";
-import CardAssignees from "./CardAssignees.vue";
-import { Card, TaskboardEvent, Tracker } from "../../../../../type";
+import { Card, TaskboardEvent, Tracker, User } from "../../../../../type";
 import { namespace, Getter } from "vuex-class";
 import EventBus from "../../../../../helpers/event-bus";
 import { UpdateCardPayload } from "../../../../../store/swimlane/card/type";
 import LabelEditor from "./Editor/Label/LabelEditor.vue";
+import CardInfo from "./CardInfo.vue";
+import { haveAssigneesChanged } from "../../../../../helpers/have-assignees-changed";
+import { scrollToItemIfNeeded } from "../../../../../helpers/scroll-to-item";
 
 const user = namespace("user");
 const swimlane = namespace("swimlane");
+const fullscreen = namespace("fullscreen");
 
 @Component({
     components: {
+        CardInfo,
         LabelEditor,
         CardXrefLabel,
-        CardAssignees
-    }
+    },
 })
 export default class BaseCard extends Vue {
     @user.State
@@ -76,10 +85,15 @@ export default class BaseCard extends Vue {
     @swimlane.Action
     readonly saveCard!: (payload: UpdateCardPayload) => Promise<void>;
 
+    @fullscreen.State
+    readonly is_taskboard_in_fullscreen_mode!: boolean;
+
     private label = "";
+    private assignees: User[] = [];
 
     mounted(): void {
         this.label = this.card.label;
+        this.assignees = this.card.assignees;
         EventBus.$on(TaskboardEvent.CANCEL_CARD_EDITION, this.cancelButtonCallback);
         EventBus.$on(TaskboardEvent.SAVE_CARD_EDITION, this.saveButtonCallback);
     }
@@ -102,7 +116,7 @@ export default class BaseCard extends Vue {
     }
 
     save(): void {
-        if (this.label === this.card.label) {
+        if (!this.is_label_changed && !haveAssigneesChanged(this.card.assignees, this.assignees)) {
             this.cancel();
             return;
         }
@@ -110,7 +124,8 @@ export default class BaseCard extends Vue {
         const payload: UpdateCardPayload = {
             card: this.card,
             label: this.label,
-            tracker: this.tracker
+            assignees: this.assignees,
+            tracker: this.tracker,
         };
         this.saveCard(payload);
     }
@@ -130,6 +145,20 @@ export default class BaseCard extends Vue {
         }
 
         this.addCardToEditMode(this.card);
+
+        setTimeout((): void => {
+            let fullscreen_element = null;
+
+            if (this.is_taskboard_in_fullscreen_mode) {
+                fullscreen_element = document.querySelector(".taskboard");
+            }
+
+            scrollToItemIfNeeded(this.$el, fullscreen_element);
+        }, 100);
+    }
+
+    get is_label_changed(): boolean {
+        return this.label !== this.card.label;
     }
 
     get additional_classnames(): string {

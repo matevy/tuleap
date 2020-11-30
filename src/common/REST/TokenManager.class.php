@@ -45,13 +45,11 @@ class Rest_TokenManager
     }
 
     /**
-     * @param Rest_Token $token
      * @return PFUser or null if the user is not found
      * @throws Rest_Exception_InvalidTokenException
      */
     public function checkToken(Rest_Token $token)
     {
-
         if ($this->token_factory->doesTokenExist($token->getUserId(), $token->getTokenValue())) {
             return $this->user_manager->getUserById($token->getUserId());
         }

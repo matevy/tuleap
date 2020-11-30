@@ -24,8 +24,8 @@ use DateHelper;
 use Git_Driver_Gerrit_GerritDriverFactory;
 use Git_Driver_Gerrit_ProjectCreatorStatus;
 use GitRepository;
+use Tuleap\date\RelativeDatesAssetsRetriever;
 use Tuleap\Git\Driver\Gerrit\GerritUnsupportedVersionDriver;
-use Tuleap\Git\Driver\Gerrit\UnsupportedGerritVersionException;
 
 class GerritStatusPresenter
 {
@@ -42,7 +42,7 @@ class GerritStatusPresenter
     /** @var string */
     public $gerrit_project;
     /** @var string */
-    public $migration_time_ago;
+    public $purified_migration_time_ago;
     /** @var string */
     public $settings_gerrit_url;
 
@@ -50,9 +50,9 @@ class GerritStatusPresenter
         GitRepository $repository,
         Git_Driver_Gerrit_ProjectCreatorStatus $project_creator_status,
         Git_Driver_Gerrit_GerritDriverFactory $driver_factory,
-        array $gerrit_servers
+        array $gerrit_servers,
+        \PFUser $user
     ) {
-
         $status                      = $project_creator_status->getStatus($repository);
         $this->is_migration_queued   = ($status === Git_Driver_Gerrit_ProjectCreatorStatus::QUEUE);
         $this->is_migrated_to_gerrit = ($status === Git_Driver_Gerrit_ProjectCreatorStatus::DONE);
@@ -67,14 +67,8 @@ class GerritStatusPresenter
         }
 
         if ($this->has_migration_error === true) {
-            $this->migration_time_ago  = \Codendi_HTMLPurifier::instance()->purify(
-                DateHelper::timeAgoInWords(
-                    $project_creator_status->getEventDate($repository),
-                    false,
-                    true
-                ),
-                CODENDI_PURIFIER_LIGHT
-            );
+            RelativeDatesAssetsRetriever::includeAssetsInSnippet();
+            $this->purified_migration_time_ago  = DateHelper::relativeDateInlineContext((int) $project_creator_status->getEventDate($repository), $user);
             $this->settings_gerrit_url = $url = GIT_BASE_URL . '/?'
                 . http_build_query(
                     [

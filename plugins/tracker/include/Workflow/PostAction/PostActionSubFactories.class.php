@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -26,14 +26,16 @@
  * common behaviors (deleteWorkflow, duplicate, ...) are silently aggregated
  * without having to heavily modify the PostActionFactory.
  */
+
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 class Transition_PostActionSubFactories
 {
 
-    /** @var array of Transition_PostActionSubFactory */
+    /** @var Transition_PostActionSubFactory[] */
     private $factories;
 
     /**
-     * @param array of Transition_PostActionSubFactory
+     * @param Transition_PostActionSubFactory[] $factories
      */
     public function __construct(array $factories)
     {
@@ -41,15 +43,24 @@ class Transition_PostActionSubFactories
     }
 
     /**
-     * Load the post actions that belong to a transition
-     *
-     * @param Transition $transition The transition
-     *
-     * @return void
+     * Prepare what needs to be prepared to efficiently fetch data from the DB in case of workflow load
      */
-    public function loadPostActions(Transition $transition)
+    public function warmUpCacheForWorkflow(Workflow $workflow): void
     {
-        $post_actions = array();
+        array_map(
+            static function (Transition_PostActionSubFactory $factory) use ($workflow) {
+                $factory->warmUpCacheForWorkflow($workflow);
+            },
+            $this->factories
+        );
+    }
+
+    /**
+     * Load the post actions that belong to a transition
+     */
+    public function loadPostActions(Transition $transition): void
+    {
+        $post_actions = [];
         foreach ($this->factories as $factory) {
             $post_actions = array_merge($post_actions, $factory->loadPostActions($transition));
         }
@@ -73,45 +84,16 @@ class Transition_PostActionSubFactories
     }
 
     /**
-     * Delete a workflow
-     *
-     * @param int $workflow_id the id of the workflow
-     *
-     */
-    public function deleteWorkflow($workflow_id)
-    {
-        $status = true;
-        foreach ($this->factories as $factory) {
-            $status = $factory->deleteWorkflow($workflow_id) && $status;
-        }
-        return $status;
-    }
-
-    /**
      * Duplicate postactions of a transition
      *
      * @param Transition $from_transition the template transition
      * @param int $to_transition_id the id of the transition
-     * @param Array $field_mapping the field mapping
+     * @param array $field_mapping the field mapping
      */
     public function duplicate(Transition $from_transition, $to_transition_id, array $field_mapping)
     {
         foreach ($this->factories as $factory) {
             $factory->duplicate($from_transition, $to_transition_id, $field_mapping);
         }
-    }
-
-    /**
-     * Get html code to let someone choose a post action for a transition
-     *
-     * @return string html
-     */
-    public function fetchPostActions()
-    {
-        $html  = '';
-        foreach ($this->factories as $factory) {
-            $html .= $factory->fetchPostActions();
-        }
-        return $html;
     }
 }

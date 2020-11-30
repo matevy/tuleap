@@ -20,13 +20,10 @@
 
 namespace Tuleap\Project\Label;
 
-use Project;
-use Tuleap\Event\Dispatchable;
-
 class CollectionOfLabelPresenter
 {
     /** @var LabelPresenter[] */
-    private $labels_presenter = array();
+    private $labels_presenter = [];
 
     public function add(LabelPresenter $presenter)
     {

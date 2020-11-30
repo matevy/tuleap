@@ -15,14 +15,14 @@
 class StockPlot extends Plot
 {
     protected $iTupleSize = 4;
-    private $iWidth=9;
-    private $iEndLines=1;
-    private $iStockColor1='white';
-    private $iStockColor2='darkred';
-    private $iStockColor3='darkred';
+    private $iWidth = 9;
+    private $iEndLines = 1;
+    private $iStockColor1 = 'white';
+    private $iStockColor2 = 'darkred';
+    private $iStockColor3 = 'darkred';
     //---------------
     // CONSTRUCTOR
-    function __construct($datay, $datax = false)
+    public function __construct($datay, $datax = false)
     {
         if (count($datay) % $this->iTupleSize) {
             JpGraphError::RaiseL(21001, $this->iTupleSize);
@@ -34,7 +34,7 @@ class StockPlot extends Plot
     //---------------
     // PUBLIC METHODS
 
-    function SetColor($aColor, $aColor1 = 'white', $aColor2 = 'darkred', $aColor3 = 'darkred')
+    public function SetColor($aColor, $aColor1 = 'white', $aColor2 = 'darkred', $aColor3 = 'darkred')
     {
         $this->color = $aColor;
         $this->iStockColor1 = $aColor1;
@@ -42,41 +42,41 @@ class StockPlot extends Plot
         $this->iStockColor3 = $aColor3;
     }
 
-    function SetWidth($aWidth)
+    public function SetWidth($aWidth)
     {
         // Make sure it's odd
-        $this->iWidth = 2*floor($aWidth/2)+1;
+        $this->iWidth = 2 * floor($aWidth / 2) + 1;
     }
 
-    function HideEndLines($aHide = true)
+    public function HideEndLines($aHide = true)
     {
-        $this->iEndLines = !$aHide;
+        $this->iEndLines = ! $aHide;
     }
 
     // Gets called before any axis are stroked
-    function PreStrokeAdjust($graph)
+    public function PreStrokeAdjust($graph)
     {
         if ($this->center) {
-            $a=0.5;
-            $b=0.5;
+            $a = 0.5;
+            $b = 0.5;
             $this->numpoints++;
         } else {
-            $a=0;
-            $b=0;
+            $a = 0;
+            $b = 0;
         }
         $graph->xaxis->scale->ticks->SetXLabelOffset($a);
         $graph->SetTextScaleOff($b);
     }
 
     // Method description
-    function Stroke($img, $xscale, $yscale)
+    public function Stroke($img, $xscale, $yscale)
     {
-        $n=$this->numpoints;
+        $n = $this->numpoints;
         if ($this->center) {
             $n--;
         }
         if (isset($this->coords[1])) {
-            if (count($this->coords[1])!=$n) {
+            if (count($this->coords[1]) != $n) {
                 JpGraphError::RaiseL(2003, count($this->coords[1]), $n);
                 // ("Number of X and Y points are not equal. Number of X-points:".count($this->coords[1])." Number of Y-points:$numpoints");
             } else {
@@ -87,36 +87,36 @@ class StockPlot extends Plot
         }
 
         if ($exist_x) {
-            $xs=$this->coords[1][0];
+            $xs = $this->coords[1][0];
         } else {
-            $xs=0;
+            $xs = 0;
         }
 
         $ts = $this->iTupleSize;
         $this->csimareas = '';
-        for ($i=0; $i<$n; ++$i) {
+        for ($i = 0; $i < $n; ++$i) {
             //If value is NULL, then don't draw a bar at all
-            if ($this->coords[0][$i*$ts] === null) {
+            if ($this->coords[0][$i * $ts] === null) {
                 continue;
             }
 
             if ($exist_x) {
-                $x=$this->coords[1][$i];
+                $x = $this->coords[1][$i];
                 if ($x === null) {
                     continue;
                 }
             } else {
-                $x=$i;
+                $x = $i;
             }
             $xt = $xscale->Translate($x);
 
-            $neg = $this->coords[0][$i*$ts] > $this->coords[0][$i*$ts+1] ;
-            $yopen  = $yscale->Translate($this->coords[0][$i*$ts]);
-            $yclose = $yscale->Translate($this->coords[0][$i*$ts+1]);
-            $ymin   = $yscale->Translate($this->coords[0][$i*$ts+2]);
-            $ymax   = $yscale->Translate($this->coords[0][$i*$ts+3]);
+            $neg = $this->coords[0][$i * $ts] > $this->coords[0][$i * $ts + 1];
+            $yopen  = $yscale->Translate($this->coords[0][$i * $ts]);
+            $yclose = $yscale->Translate($this->coords[0][$i * $ts + 1]);
+            $ymin   = $yscale->Translate($this->coords[0][$i * $ts + 2]);
+            $ymax   = $yscale->Translate($this->coords[0][$i * $ts + 3]);
 
-            $dx = floor($this->iWidth/2);
+            $dx = floor($this->iWidth / 2);
             $xl = $xt - $dx;
             $xr = $xt + $dx;
 
@@ -136,11 +136,11 @@ class StockPlot extends Plot
             $img->Rectangle($xl, $yopen, $xr, $yclose);
 
             if ($yopen < $yclose) {
-                $ytop = $yopen ;
-                $ybottom = $yclose ;
+                $ytop = $yopen;
+                $ybottom = $yclose;
             } else {
-                $ytop = $yclose ;
-                $ybottom = $yopen ;
+                $ytop = $yclose;
+                $ybottom = $yopen;
             }
             $img->SetColor($this->color);
             $img->Line($xt, $ytop, $xt, $ymax);
@@ -156,48 +156,48 @@ class StockPlot extends Plot
             $this->ModBox($img, $xscale, $yscale, $i, $xl, $xr, $neg);
 
             // Setup image maps
-            if (!empty($this->csimtargets[$i])) {
-                $this->csimareas.= '<area shape="rect" coords="'.
-                round($xl).','.round($ytop).','.
-                round($xr).','.round($ybottom).'" ';
-                $this->csimareas .= ' href="'.$this->csimtargets[$i].'"';
-                if (!empty($this->csimalts[$i])) {
-                    $sval=$this->csimalts[$i];
+            if (! empty($this->csimtargets[$i])) {
+                $this->csimareas .= '<area shape="rect" coords="' .
+                round($xl) . ',' . round($ytop) . ',' .
+                round($xr) . ',' . round($ybottom) . '" ';
+                $this->csimareas .= ' href="' . $this->csimtargets[$i] . '"';
+                if (! empty($this->csimalts[$i])) {
+                    $sval = $this->csimalts[$i];
                     $this->csimareas .= " title=\"$sval\" alt=\"$sval\" ";
                 }
-                $this->csimareas.= "  />\n";
+                $this->csimareas .= "  />\n";
             }
         }
         return true;
     }
 
     // A hook for subclasses to modify the plot
-    function ModBox($img, $xscale, $yscale, $i, $xl, $xr, $neg)
+    public function ModBox($img, $xscale, $yscale, $i, $xl, $xr, $neg)
     {
     }
-} // Class
+}
 
 //===================================================
 // CLASS BoxPlot
 //===================================================
 class BoxPlot extends StockPlot
 {
-    private $iPColor='black';
-    private $iNColor='white';
+    private $iPColor = 'black';
+    private $iNColor = 'white';
 
-    function __construct($datay, $datax = false)
+    public function __construct($datay, $datax = false)
     {
-        $this->iTupleSize=5;
+        $this->iTupleSize = 5;
         parent::__construct($datay, $datax);
     }
 
-    function SetMedianColor($aPos, $aNeg)
+    public function SetMedianColor($aPos, $aNeg)
     {
         $this->iPColor = $aPos;
         $this->iNColor = $aNeg;
     }
 
-    function ModBox($img, $xscale, $yscale, $i, $xl, $xr, $neg)
+    public function ModBox($img, $xscale, $yscale, $i, $xl, $xr, $neg)
     {
         if ($neg) {
             $img->SetColor($this->iNColor);
@@ -205,7 +205,7 @@ class BoxPlot extends StockPlot
             $img->SetColor($this->iPColor);
         }
 
-        $y = $yscale->Translate($this->coords[0][$i*5+4]);
+        $y = $yscale->Translate($this->coords[0][$i * 5 + 4]);
         $img->Line($xl, $y, $xr, $y);
     }
 }

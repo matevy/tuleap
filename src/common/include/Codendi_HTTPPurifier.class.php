@@ -29,13 +29,13 @@ class Codendi_HTTPPurifier
     public static function instance()
     {
         static $__Codendi_HTTPPurifier_instance;
-        if (!$__Codendi_HTTPPurifier_instance) {
+        if (! $__Codendi_HTTPPurifier_instance) {
             $__Codendi_HTTPPurifier_instance = new Codendi_HTTPPurifier();
         }
         return $__Codendi_HTTPPurifier_instance;
     }
 
-    function purify($s)
+    public function purify($s)
     {
         $clean = preg_replace('/(\n|\r|\0).*/', '', $s);
         return $clean;

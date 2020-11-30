@@ -21,13 +21,13 @@
 namespace Tuleap\CrossTracker\Report\CSV;
 
 use PFUser;
-use Tracker_Artifact;
 use Tuleap\CrossTracker\Report\CSV\Format\CSVFormatterVisitor;
 use Tuleap\CrossTracker\Report\CSV\Format\DateValue;
 use Tuleap\CrossTracker\Report\CSV\Format\FormatterParameters;
 use Tuleap\CrossTracker\Report\CSV\Format\TextValue;
 use Tuleap\CrossTracker\Report\CSV\Format\UserValue;
 use Tuleap\CrossTracker\Report\SimilarField\SimilarFieldCollection;
+use Tuleap\Tracker\Artifact\Artifact;
 use UserManager;
 
 class CSVRepresentationBuilder
@@ -83,7 +83,7 @@ class CSVRepresentationBuilder
     /**
      * @return CSVRepresentation
      */
-    public function build(Tracker_Artifact $artifact, PFUser $user, SimilarFieldCollection $similar_fields)
+    public function build(Artifact $artifact, PFUser $user, SimilarFieldCollection $similar_fields)
     {
         $formatter_parameters                       = new FormatterParameters($user);
         $semantic_and_always_there_formatted_values = $this->formatSemanticsAndAlwaysThereFields(
@@ -111,11 +111,11 @@ class CSVRepresentationBuilder
      * @return mixed[]
      */
     private function formatSemanticsAndAlwaysThereFields(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         FormatterParameters $formatter_parameters
     ) {
         $tracker      = $artifact->getTracker();
-        $project_name = new TextValue($tracker->getProject()->getUnconvertedPublicName());
+        $project_name = new TextValue($tracker->getProject()->getPublicName());
         $formatted_project_name = $project_name->accept($this->visitor, $formatter_parameters);
 
         $tracker_name = new TextValue($tracker->getName());
@@ -135,7 +135,7 @@ class CSVRepresentationBuilder
         $last_update_date = new DateValue($artifact->getLastUpdateDate(), true);
         $formatted_last_update_date = $last_update_date->accept($this->visitor, $formatter_parameters);
 
-        $title = new TextValue($artifact->getTitle());
+        $title = new TextValue($artifact->getTitle() ?? '');
         $formatted_title = $title->accept($this->visitor, $formatter_parameters);
 
         $description = new TextValue((string) $artifact->getDescription());

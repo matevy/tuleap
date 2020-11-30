@@ -31,9 +31,9 @@ class Git_Ci
      *
      * @return Git_Ci_Dao
      */
-    function getDao()
+    public function getDao()
     {
-        if (!isset($this->dao)) {
+        if (! isset($this->dao)) {
             $this->_dao = new Git_Ci_Dao();
         }
         return $this->_dao;
@@ -44,7 +44,7 @@ class Git_Ci
      *
      * @return ProjectManager
      */
-    function getProjectManager()
+    public function getProjectManager()
     {
         return ProjectManager::instance();
     }
@@ -61,24 +61,24 @@ class Git_Ci
      *
      * @return Array
      */
-    function retrieveTriggers($params)
+    public function retrieveTriggers($params)
     {
-        if (isset($params['group_id']) && !empty($params['group_id'])) {
+        if (isset($params['group_id']) && ! empty($params['group_id'])) {
             $project = $this->getProjectManager()->getProject($params['group_id']);
             if ($project->usesService(GitPlugin::SERVICE_SHORTNAME)) {
                 $repositoryId = '';
-                $used         = array();
+                $used         = [];
                 $checked      = '';
-                if (isset($params['job_id']) && !empty($params['job_id'])) {
+                if (isset($params['job_id']) && ! empty($params['job_id'])) {
                     $res = $this->getDao()->retrieveTrigger($params['job_id']);
-                    if ($res && !$res->isError() && $res->rowCount() == 1) {
+                    if ($res && ! $res->isError() && $res->rowCount() == 1) {
                         $row          = $res->getRow();
                         $repositoryId = $row['repository_id'];
                         $checked      = 'checked="checked"';
                     }
                 } else {
                     $res = $this->getDao()->retrieveTriggers($params['group_id']);
-                    if ($res && !$res->isError() && $res->rowCount() > 0) {
+                    if ($res && ! $res->isError() && $res->rowCount() > 0) {
                         foreach ($res as $row) {
                             $used[$row['job_id']] = true;
                         }
@@ -87,31 +87,31 @@ class Git_Ci
 
                 $warning = "";
                 $intalled = false;
-                $parameters = array(
+                $parameters = [
                     'installed' => &$intalled
-                );
+                ];
 
                 $this->getEventManager()->processEvent('display_hudson_addition_info', $parameters);
-                if ($parameters['installed']) {
-                    $warning = '<div class="alert alert-warning"> '.
-                        dgettext('tuleap-git', 'Starting Tuleap 8.14, we recommend you to use polling jobs. Please see <a href="/doc/en/git.html?#jenkins-webhooks">Hudson Git Plugin</a>.').
+                if ($intalled) {
+                    $warning = '<div class="alert alert-warning"> ' .
+                        dgettext('tuleap-git', 'Starting Tuleap 8.14, we recommend you to use polling jobs. Please see <a href="/doc/en/user-guide/code-versioning/git.html?#jenkins-webhooks">Hudson Git Plugin</a>.') .
                         ' </div>';
                 }
 
                 $dao          = new GitDao();
                 $repositories = $dao->getProjectRepositoryList($params['group_id'], false, false);
                 $selectBox    = '<select id="hudson_use_plugin_git_trigger" name="hudson_use_plugin_git_trigger">';
-                $selectBox    .= '<option>'.$GLOBALS['Language']->getText('global', 'none').'</option>';
+                $selectBox    .= '<option>' . $GLOBALS['Language']->getText('global', 'none') . '</option>';
                 foreach ($repositories as $repository) {
                     $nameSpace = '';
-                    if (!empty($repository['repository_namespace'])) {
-                        $nameSpace = $repository['repository_namespace']."/";
+                    if (! empty($repository['repository_namespace'])) {
+                        $nameSpace = $repository['repository_namespace'] . "/";
                     }
-                    $selectBox .= '<option value="'.$repository['repository_id'].'" ';
+                    $selectBox .= '<option value="' . $repository['repository_id'] . '" ';
                     if ($repositoryId == $repository['repository_id']) {
                         $selectBox .= 'selected="selected"';
                     }
-                    $selectBox .= '>'.$nameSpace.$repository['repository_name'].'</option>';
+                    $selectBox .= '>' . $nameSpace . $repository['repository_name'] . '</option>';
                 }
                 $selectBox .= '</select>';
 
@@ -119,14 +119,14 @@ class Git_Ci
                                  <div id="hudson_use_plugin_git_trigger_checkbox">
                                      <label class="checkbox">
                                      <input name="hudson_use_plugin_git_trigger_checkbox" type="hidden" value="0" />
-                                     <input name="hudson_use_plugin_git_trigger_checkbox" onclick="toggle_checkbox()" type="checkbox" '.$checked.' value="1" />
+                                     <input name="hudson_use_plugin_git_trigger_checkbox" onclick="toggle_checkbox()" type="checkbox" ' . $checked . ' value="1" />
                                         Git
                                      </label>
                                  </div>
                                  <div id="hudson_use_plugin_git_trigger_form">
-                                     '.$warning.'
-                                     <label for="hudson_use_plugin_git_trigger">'.dgettext('tuleap-git', 'repository').': </label>
-                                     '.$selectBox.'
+                                     ' . $warning . '
+                                     <label for="hudson_use_plugin_git_trigger">' . dgettext('tuleap-git', 'repository') . ': </label>
+                                     ' . $selectBox . '
                                  </div>
                                  <script>
                                      function toggle_checkbox() {
@@ -135,12 +135,12 @@ class Git_Ci
                                      Element.toggle(\'hudson_use_plugin_git_trigger_form\', \'slide\', { duration: 0.3 })
                                  </script>
                              </p>';
-                $editForm = $warning.'<label for="hudson_use_plugin_git_trigger">'.dgettext('tuleap-git', 'Trigger a build after Git pushes in repository').': </label>'.$selectBox;
-                return array('service'       => GitPlugin::SERVICE_SHORTNAME,
+                $editForm = $warning . '<label for="hudson_use_plugin_git_trigger">' . dgettext('tuleap-git', 'Trigger a build after Git pushes in repository') . ': </label>' . $selectBox;
+                return ['service'       => GitPlugin::SERVICE_SHORTNAME,
                              'title'         => dgettext('tuleap-git', 'Git trigger'),
                              'used'          => $used,
                              'add_form'      => $addForm,
-                             'edit_form'     => $editForm);
+                             'edit_form'     => $editForm];
             }
         }
     }
@@ -153,10 +153,10 @@ class Git_Ci
      *
      * @return bool
      */
-    function saveTrigger($jobId, $repositoryId)
+    public function saveTrigger($jobId, $repositoryId)
     {
         $dar = $this->getDao()->checkRepository($jobId, $repositoryId);
-        if ($dar && !$dar->isError() && $dar->rowCount() > 0) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() > 0) {
             return $this->getDao()->saveTrigger($jobId, $repositoryId);
         } else {
             $GLOBALS['Response']->addFeedback('error', dgettext('tuleap-git', 'Git repository does not belong to the project'));
@@ -171,7 +171,7 @@ class Git_Ci
      *
      * @return bool
      */
-    function deleteTrigger($jobId)
+    public function deleteTrigger($jobId)
     {
         return $this->getDao()->deleteTrigger($jobId);
     }

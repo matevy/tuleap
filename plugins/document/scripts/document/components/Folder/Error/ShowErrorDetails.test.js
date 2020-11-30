@@ -18,7 +18,7 @@
  */
 
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import localVue from "../../../helpers/local-vue.js";
 import ShowErrorDetails from "./ShowErrorDetails.vue";
 
@@ -37,14 +37,14 @@ describe("ShowErrorDetails", () => {
             state = {
                 error: {
                     has_folder_loading_error: true,
-                    folder_loading_error
-                }
+                    folder_loading_error,
+                },
             };
             const store_options = {
                 state,
                 getters: {
-                    "error/has_any_loading_error": true
-                }
+                    "error/has_any_loading_error": true,
+                },
             };
 
             store = createStoreMock(store_options);
@@ -53,18 +53,19 @@ describe("ShowErrorDetails", () => {
                 return shallowMount(ShowErrorDetails, {
                     localVue,
                     propsData: { ...props },
-                    mocks: { $store: store }
+                    mocks: { $store: store },
                 });
             };
         });
         it(`Given route fails with an error with content and is_more_shown is true
             When we display the error
-            Then the original error message is displayed in a info`, () => {
+            Then the original error message is displayed in a info`, async () => {
             const wrapper = show_error_details_factory();
             expect(
                 wrapper.find("[data-test=error-details-show-more-button]").exists()
             ).toBeTruthy();
-            wrapper.find("[data-test=error-details-show-more-button]").trigger("click");
+            wrapper.get("[data-test=error-details-show-more-button]").trigger("click");
+            await wrapper.vm.$nextTick();
             expect(wrapper.find("[data-test=show-more-error-message]").exists()).toBeTruthy();
         });
 
@@ -80,10 +81,11 @@ describe("ShowErrorDetails", () => {
 
         it(`Given error concerns a folder and is_more_shown is true
             When we display the error
-            Then the message displayed is the folder one`, () => {
+            Then the message displayed is the folder one`, async () => {
             const wrapper = show_error_details_factory();
-            wrapper.find("[data-test=error-details-show-more-button]").trigger("click");
-            expect(wrapper.find("[data-test=show-more-error-message]").element.innerHTML).toBe(
+            wrapper.get("[data-test=error-details-show-more-button]").trigger("click");
+            await wrapper.vm.$nextTick();
+            expect(wrapper.get("[data-test=show-more-error-message]").element.innerHTML).toBe(
                 folder_loading_error
             );
         });
@@ -96,14 +98,14 @@ describe("ShowErrorDetails", () => {
             state = {
                 error: {
                     has_document_loading_error: true,
-                    document_loading_error: document_loading_error
-                }
+                    document_loading_error: document_loading_error,
+                },
             };
             const store_options = {
                 state,
                 getters: {
-                    "error/has_any_loading_error": true
-                }
+                    "error/has_any_loading_error": true,
+                },
             };
 
             const store = createStoreMock(store_options);
@@ -112,18 +114,19 @@ describe("ShowErrorDetails", () => {
                 return shallowMount(ShowErrorDetails, {
                     localVue,
                     propsData: { ...props },
-                    mocks: { $store: store }
+                    mocks: { $store: store },
                 });
             };
         });
 
         it(`Given error concerns an item and is_more_shown is true
         When we display the error
-        Then the message displayed is the item one`, () => {
+        Then the message displayed is the item one`, async () => {
             store.getters.has_any_loading_error = true;
             const wrapper = show_error_details_factory();
-            wrapper.find("[data-test=error-details-show-more-button]").trigger("click");
-            expect(wrapper.find("[data-test=show-more-error-message]").element.innerHTML).toBe(
+            wrapper.get("[data-test=error-details-show-more-button]").trigger("click");
+            await wrapper.vm.$nextTick();
+            expect(wrapper.get("[data-test=show-more-error-message]").element.innerHTML).toBe(
                 document_loading_error
             );
         });
@@ -136,14 +139,14 @@ describe("ShowErrorDetails", () => {
             state = {
                 error: {
                     has_document_lock_error: true,
-                    document_lock_error
-                }
+                    document_lock_error,
+                },
             };
             const store_options = {
                 state,
                 getters: {
-                    "error/has_any_loading_error": true
-                }
+                    "error/has_any_loading_error": true,
+                },
             };
 
             store = createStoreMock(store_options);
@@ -152,18 +155,19 @@ describe("ShowErrorDetails", () => {
                 return shallowMount(ShowErrorDetails, {
                     localVue,
                     propsData: { ...props },
-                    mocks: { $store: store }
+                    mocks: { $store: store },
                 });
             };
         });
         it(`Given route fails with an error with content and is_more_shown is true
             When we display the error
-            Then the original error message is displayed in a info`, () => {
+            Then the original error message is displayed in a info`, async () => {
             const wrapper = show_error_details_factory();
             expect(
                 wrapper.find("[data-test=error-details-show-more-button]").exists()
             ).toBeTruthy();
-            wrapper.find("[data-test=error-details-show-more-button]").trigger("click");
+            wrapper.get("[data-test=error-details-show-more-button]").trigger("click");
+            await wrapper.vm.$nextTick();
             expect(wrapper.find("[data-test=show-more-error-message]").exists()).toBeTruthy();
         });
 
@@ -179,10 +183,11 @@ describe("ShowErrorDetails", () => {
 
         it(`Given error concerns a lock and is_more_shown is true
             When we display the error
-            Then the message displayed is the folder one`, () => {
+            Then the message displayed is the folder one`, async () => {
             const wrapper = show_error_details_factory();
-            wrapper.find("[data-test=error-details-show-more-button]").trigger("click");
-            expect(wrapper.find("[data-test=show-more-error-message]").element.innerHTML).toBe(
+            wrapper.get("[data-test=error-details-show-more-button]").trigger("click");
+            await wrapper.vm.$nextTick();
+            expect(wrapper.get("[data-test=show-more-error-message]").element.innerHTML).toBe(
                 document_lock_error
             );
         });

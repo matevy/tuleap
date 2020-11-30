@@ -22,12 +22,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
 
 class Tracker_Artifact_Renderer_EditInPlaceRenderer
 {
 
-    /** @var Tracker_Artifact */
+    /** @var Artifact */
     private $artifact;
 
     /** @var MustacheRenderer */
@@ -36,7 +37,7 @@ class Tracker_Artifact_Renderer_EditInPlaceRenderer
     /** @var HiddenFieldsetsDetector */
     private $hidden_fieldsets_detector;
 
-    public function __construct(Tracker_Artifact $artifact, MustacheRenderer $renderer, HiddenFieldsetsDetector $hidden_fieldsets_detector)
+    public function __construct(Artifact $artifact, MustacheRenderer $renderer, HiddenFieldsetsDetector $hidden_fieldsets_detector)
     {
         $this->renderer                  = $renderer;
         $this->artifact                  = $artifact;
@@ -48,7 +49,7 @@ class Tracker_Artifact_Renderer_EditInPlaceRenderer
         $submitted_values = $this->getSubmittedValues($request);
 
         $presenter = new Tracker_Artifact_Presenter_EditArtifactInPlacePresenter(
-            $this->fetchFollowUps(),
+            $this->fetchFollowUps($current_user),
             $this->fetchArtifactLinks($current_user),
             $this->artifact->getTracker()->fetchFormElementsNoColumns($this->artifact, $submitted_values),
             $this->artifact,
@@ -69,13 +70,12 @@ class Tracker_Artifact_Renderer_EditInPlaceRenderer
     }
 
     /**
-     * @param PFUser $current_user
      * @return Tracker_Artifact_Presenter_ArtifactLinkPresenter[]
      */
     private function fetchArtifactLinks(PFUser $current_user)
     {
         $linked_artifacts = $this->artifact->getLinkedArtifacts($current_user);
-        $links = array();
+        $links = [];
 
         foreach ($linked_artifacts as $artifact) {
             $artifact_title = $artifact->getTitle();
@@ -92,22 +92,22 @@ class Tracker_Artifact_Renderer_EditInPlaceRenderer
         return $links;
     }
 
-    private function fetchFollowUps()
+    private function fetchFollowUps(PFUser $current_user)
     {
         $changesets = $this->getFollowupsContent($this->artifact);
-        $presenter  = new Tracker_Artifact_Presenter_FollowUpCommentsPresenter($changesets);
+        $presenter  = new Tracker_Artifact_Presenter_FollowUpCommentsPresenter($changesets, $current_user);
 
         return $this->renderer->renderToString('follow-ups', $presenter);
     }
 
-    private function getFollowupsContent(Tracker_Artifact $artifact)
+    private function getFollowupsContent(Artifact $artifact)
     {
         $followups_content = $artifact->getChangesets();
         array_shift($followups_content);
 
         $followups_content = array_merge($followups_content, $this->getPriorityHistory($artifact));
 
-        usort($followups_content, array($this, "compareFollowupsByDate"));
+        usort($followups_content, [$this, "compareFollowupsByDate"]);
 
         return array_reverse($followups_content);
     }
@@ -117,7 +117,7 @@ class Tracker_Artifact_Renderer_EditInPlaceRenderer
         return ($first_followup->getFollowUpDate() < $second_followup->getFollowUpDate()) ? -1 : 1;
     }
 
-    private function getPriorityHistory(Tracker_Artifact $artifact)
+    private function getPriorityHistory(Artifact $artifact)
     {
         return $this->getPriorityManager()->getArtifactPriorityHistory($artifact);
     }
@@ -164,7 +164,7 @@ class Tracker_Artifact_Renderer_EditInPlaceRenderer
 
     private function sendErrorsAsJson($exception_message)
     {
-        $feedback            = array();
+        $feedback            = [];
         $feedback['message'] = $exception_message;
 
         if ($GLOBALS['Response']->feedbackHasErrors()) {

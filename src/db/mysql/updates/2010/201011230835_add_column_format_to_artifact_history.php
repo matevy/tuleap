@@ -36,7 +36,7 @@ EOT;
     public function up()
     {
         // The default format is text corresponding to 0
-        $sql = 'ALTER TABLE artifact_history '.
+        $sql = 'ALTER TABLE artifact_history ' .
                ' ADD format tinyint NOT NULL default 0';
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
@@ -46,7 +46,7 @@ EOT;
 
     public function postUp()
     {
-        if (!$this->db->columnNameExists('artifact_history', 'format')) {
+        if (! $this->db->columnNameExists('artifact_history', 'format')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Column format in table artifact_history is missing');
         }
     }

@@ -22,7 +22,6 @@
 namespace Tuleap\Git\Permissions;
 
 use Tuleap\User\UserGroup\NameTranslator;
-use User_ForgeUGroup;
 
 class DefaultFineGrainedPermission
 {
@@ -76,7 +75,7 @@ class DefaultFineGrainedPermission
 
     public function getWriterNames()
     {
-        $ugroup_names = array();
+        $ugroup_names = [];
 
         foreach ($this->writers_ugroups as $ugroup) {
             $ugroup_names[] = NameTranslator::getUserGroupDisplayName($ugroup->getName());
@@ -87,7 +86,7 @@ class DefaultFineGrainedPermission
 
     public function getRewinderNames()
     {
-        $ugroup_names = array();
+        $ugroup_names = [];
 
         foreach ($this->rewinders_ugroups as $ugroup) {
             $ugroup_names[] = NameTranslator::getUserGroupDisplayName($ugroup->getName());
@@ -98,7 +97,7 @@ class DefaultFineGrainedPermission
 
     public function getPatternWithoutPrefix()
     {
-        $matches = array();
+        $matches = [];
         preg_match("/^refs\/(?:heads|tags)\/(?P<pattern>.*)$/", $this->pattern, $matches);
 
         if (isset($matches['pattern'])) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -35,7 +35,6 @@ class SVN_LogFactory
      * Builds a new SVN_Log object representing the SVN log of the given
      * project.
      *
-     * @param Project $project
      */
     public function __construct(Project $project)
     {
@@ -53,15 +52,15 @@ class SVN_LogFactory
     public function getRevisions($limit, PFUser $author)
     {
         $raw_revisions = $this->getRawRevisions($limit, $author);
-        $revisions     = array();
+        $revisions     = [];
 
         while ($raw_revision = db_fetch_array($raw_revisions)) {
             list($revision, $commit_id, $description, $date, $whoid) = $raw_revision;
 
-            $revisions[] = array('revision' => $revision,
+            $revisions[] = ['revision' => $revision,
                                  'author'   => $whoid,
                                  'date'     => $date,
-                                 'message'  => trim($description));
+                                 'message'  => trim($description)];
         }
 
         return $revisions;
@@ -77,11 +76,11 @@ class SVN_LogFactory
      */
     public function getCommiters(TimeInterval $interval)
     {
-        $stats = array();
+        $stats = [];
         $dao   = $this->getDao();
         $dar   = $dao->searchCommiters($this->project->getID(), $interval);
         foreach ($dar as $row) {
-            $stats[] = array('user_id' => $row['whoid'], 'commit_count' => $row['commit_count']);
+            $stats[] = ['user_id' => $row['whoid'], 'commit_count' => $row['commit_count']];
         }
         return $stats;
     }
@@ -90,11 +89,11 @@ class SVN_LogFactory
     {
         $where_forbidden = $this->getForbiddenPaths($user);
 
-        $stats = array();
+        $stats = [];
         $dao   = $this->getDao();
         $dar   = $dao->searchTopModifiedFiles($this->project->getID(), $interval, $limit, $where_forbidden);
         foreach ($dar as $row) {
-            $stats[] = array('path' => $row['path'], 'commit_count' => $row['commit_count']);
+            $stats[] = ['path' => $row['path'], 'commit_count' => $row['commit_count']];
         }
         return $stats;
     }
@@ -102,7 +101,6 @@ class SVN_LogFactory
     /**
      * Return SVN path the user is not allowed to see
      *
-     * @param PFUser $user
      *
      * @return string
      */
@@ -111,7 +109,7 @@ class SVN_LogFactory
         $forbidden = svn_utils_get_forbidden_paths($user->getName(), $this->project->getSVNRootPath());
         $where_forbidden = "";
         foreach ($forbidden as $no_access => $v) {
-            $where_forbidden .= " AND svn_dirs.dir not like '".db_es(substr($no_access, 1))."%'";
+            $where_forbidden .= " AND svn_dirs.dir not like '" . db_es(substr($no_access, 1)) . "%'";
         }
         return $where_forbidden;
     }
@@ -140,7 +138,7 @@ class SVN_LogFactory
             '',
             $author->getUserName(),
             '',
-            '',
+            [],
             0,
             false
         );

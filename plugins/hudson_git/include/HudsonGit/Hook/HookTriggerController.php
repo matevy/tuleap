@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,16 +20,18 @@
 
 namespace Tuleap\HudsonGit\Hook;
 
-use Logger;
-use GitRepository;
+use DateTimeImmutable;
 use Exception;
-use Tuleap\HudsonGit\Job\CannotCreateJobException;
-use Tuleap\HudsonGit\Job\Job;
-use Tuleap\HudsonGit\Job\JobManager;
+use GitRepository;
+use Psr\Log\LoggerInterface;
+use Tuleap\HudsonGit\Git\Administration\JenkinsServer;
+use Tuleap\HudsonGit\Git\Administration\JenkinsServerFactory;
+use Tuleap\HudsonGit\Log\CannotCreateLogException;
+use Tuleap\HudsonGit\Log\Log;
+use Tuleap\HudsonGit\Log\LogCreator;
 
 class HookTriggerController
 {
-
     /**
      * @var HookDao
      */
@@ -39,53 +41,145 @@ class HookTriggerController
      * @var JenkinsClient
      */
     private $jenkins_client;
-    /**
-    * @var JobManager
-    */
-    private $job_manager;
 
     /**
-     * @var Logger
+    * @var LogCreator
+    */
+    private $log_creator;
+
+    /**
+     * @var LoggerInterface
      */
     private $logger;
 
-    public function __construct(HookDao $dao, JenkinsClient $jenkins_client, Logger $logger, JobManager $job_manager)
-    {
-        $this->dao            = $dao;
-        $this->jenkins_client = $jenkins_client;
-        $this->logger         = $logger;
-        $this->job_manager    = $job_manager;
+    /**
+     * @var JenkinsServerFactory
+     */
+    private $jenkins_server_factory;
+
+    public function __construct(
+        HookDao $dao,
+        JenkinsClient $jenkins_client,
+        LoggerInterface $logger,
+        LogCreator $log_creator,
+        JenkinsServerFactory $jenkins_server_factory
+    ) {
+        $this->dao                    = $dao;
+        $this->jenkins_client         = $jenkins_client;
+        $this->logger                 = $logger;
+        $this->log_creator            = $log_creator;
+        $this->jenkins_server_factory = $jenkins_server_factory;
     }
 
-    public function trigger(GitRepository $repository, string $commit_reference) : void
+    public function trigger(GitRepository $repository, string $commit_reference, DateTimeImmutable $date_time): void
     {
-        $date_job = $_SERVER['REQUEST_TIME'];
+        $this->triggerRepositoryJenkinsServer($repository, $commit_reference, $date_time);
+        $this->triggerProjectJenkinsServers($repository, $commit_reference, $date_time);
+    }
+
+    private function triggerRepositoryJenkinsServer(GitRepository $repository, string $commit_reference, DateTimeImmutable $date_time): void
+    {
+        $date_job = $date_time->getTimestamp();
         $dar = $this->dao->searchById($repository->getId());
         foreach ($dar as $row) {
-            try {
-                $transports = $repository->getAccessURL();
-                foreach ($transports as $protocol => $url) {
+            $this->logger->debug('Trigger repository jenkins server: ' . $row['jenkins_server_url']);
+            $transports = $repository->getAccessURL();
+            $polling_urls = [];
+            foreach ($transports as $protocol => $url) {
+                try {
                     $response = $this->jenkins_client->pushGitNotifications($row['jenkins_server_url'], $url, $commit_reference);
 
-                    $this->logger->debug('repository #'.$repository->getId().' : '.$response->getBody());
+                    $this->logger->debug('repository #' . $repository->getId() . ' : ' . $response->getBody());
                     if (count($response->getJobPaths()) > 0) {
                         $this->logger->debug('Triggered ' . implode(',', $response->getJobPaths()));
-                        $this->addHudsongitJob($repository, implode(',', $response->getJobPaths()), $date_job);
+                        $polling_urls = array_merge($polling_urls, $response->getJobPaths());
                     }
+                } catch (Exception $exception) {
+                    $this->logger->error('repository #' . $repository->getId() . ' : ' . $exception->getMessage());
                 }
-            } catch (Exception $exception) {
-                $this->logger->error('repository #'.$repository->getId().' : '.$exception->getMessage());
             }
+
+            $status_code = null;
+            try {
+                $response = $this->jenkins_client->pushJenkinsTuleapPluginNotification($row['jenkins_server_url']);
+                $this->logger->debug('repository #' . $repository->getId() . ' : ' . $response->getBody());
+                $status_code = $response->getStatusCode();
+            } catch (UnableToLaunchBuildException $exception) {
+                $this->logger->error('repository #' . $repository->getId() . ' : ' . $exception->getMessage());
+            }
+
+            $this->addHudsonGitLog(
+                $repository,
+                implode(',', $polling_urls),
+                $status_code,
+                $date_job
+            );
         }
     }
 
-    private function addHudsongitJob(GitRepository $repository, $job_name, $date_job)
+    private function addHudsonGitLog(GitRepository $repository, string $job_name, ?int $status_code, int $date_job): void
     {
-        $job = new Job($repository, $date_job, $job_name);
+        $log = new Log($repository, $date_job, $job_name, $status_code);
         try {
-            $this->job_manager->create($job);
-        } catch (CannotCreateJobException $exception) {
-            $this->logger->error('repository #'.$repository->getId().' : '.$exception->getMessage());
+            $this->log_creator->createForRepository($log);
+        } catch (CannotCreateLogException $exception) {
+            $this->logger->error('repository #' . $repository->getId() . ' : ' . $exception->getMessage());
+        }
+    }
+
+    private function triggerProjectJenkinsServers(GitRepository $repository, string $commit_reference, DateTimeImmutable $date_time): void
+    {
+        $date_job = $date_time->getTimestamp();
+        $project  = $repository->getProject();
+        foreach ($this->jenkins_server_factory->getJenkinsServerOfProject($project) as $jenkins_server) {
+            $this->logger->debug('Trigger project jenkins server:' . $jenkins_server->getServerURL());
+            $transports = $repository->getAccessURL();
+            $polling_urls = [];
+            foreach ($transports as $protocol => $url) {
+                try {
+                    $response = $this->jenkins_client->pushGitNotifications($jenkins_server->getServerURL(), $url, $commit_reference);
+
+                    $this->logger->debug('repository #' . $repository->getId() . ' : ' . $response->getBody());
+                    if (count($response->getJobPaths()) > 0) {
+                        $this->logger->debug('Triggered ' . implode(',', $response->getJobPaths()));
+                        $polling_urls = array_merge($polling_urls, $response->getJobPaths());
+                    }
+                } catch (Exception $exception) {
+                    $this->logger->error('repository #' . $repository->getId() . ' : ' . $exception->getMessage());
+                }
+            }
+
+            $status_code = null;
+            try {
+                $response = $this->jenkins_client->pushJenkinsTuleapPluginNotification($jenkins_server->getServerURL());
+                $this->logger->debug('repository #' . $repository->getId() . ' : ' . $response->getBody());
+                $status_code = $response->getStatusCode();
+            } catch (UnableToLaunchBuildException $exception) {
+                $this->logger->error('repository #' . $repository->getId() . ' : ' . $exception->getMessage());
+            }
+
+            $this->addProjectJenkinsJobLog(
+                $jenkins_server,
+                $repository,
+                implode(',', $polling_urls),
+                $status_code,
+                $date_job
+            );
+        }
+    }
+
+    private function addProjectJenkinsJobLog(
+        JenkinsServer $jenkins_server,
+        GitRepository $repository,
+        string $job_name,
+        ?int $status_code,
+        $date_job
+    ): void {
+        $log = new Log($repository, $date_job, $job_name, $status_code);
+        try {
+            $this->log_creator->createForProject($jenkins_server, $log);
+        } catch (CannotCreateLogException $exception) {
+            $this->logger->error('repository #' . $repository->getId() . ' : ' . $exception->getMessage());
         }
     }
 }

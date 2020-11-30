@@ -62,17 +62,17 @@ class RestBase extends TestCase // phpcs:ignore PSR1.Classes.ClassDeclaration.Mi
     protected $deleted_tracker_id;
     protected $kanban_tracker_id;
 
-    protected $project_ids = array();
-    protected $tracker_ids = array();
-    protected $user_groups_ids = array();
+    protected $project_ids = [];
+    protected $tracker_ids = [];
+    protected $user_groups_ids = [];
     protected $user_ids = [];
 
     protected $tracker_representations = [];
 
-    protected $release_artifact_ids = array();
-    protected $epic_artifact_ids = array();
-    protected $story_artifact_ids = array();
-    protected $sprint_artifact_ids = array();
+    protected $release_artifact_ids = [];
+    protected $epic_artifact_ids = [];
+    protected $story_artifact_ids = [];
+    protected $sprint_artifact_ids = [];
 
     /**
      * @var Cache
@@ -117,30 +117,30 @@ class RestBase extends TestCase // phpcs:ignore PSR1.Classes.ClassDeclaration.Mi
         $this->initialized = true;
     }
 
-    public function setUp() : void
+    public function setUp(): void
     {
         parent::setUp();
         $this->initialize();
 
         $this->project_ids = $this->cache->getProjectIds();
-        if (!$this->project_ids) {
+        if (! $this->project_ids) {
             $this->initProjectIds();
         }
 
         $this->tracker_ids = $this->cache->getTrackerIds();
-        if (!$this->tracker_ids) {
+        if (! $this->tracker_ids) {
             $this->initTrackerIds();
         }
 
         $this->tracker_representations = $this->cache->getTrackerRepresentations();
 
         $this->user_ids = $this->cache->getUserIds();
-        if (!$this->user_ids) {
+        if (! $this->user_ids) {
             $this->initUserIds();
         }
 
         $this->user_groups_ids = $this->cache->getUserGroupIds();
-        if (!$this->user_groups_ids) {
+        if (! $this->user_groups_ids) {
             $this->initUserGroupsId();
         }
 
@@ -246,10 +246,10 @@ class RestBase extends TestCase // phpcs:ignore PSR1.Classes.ClassDeclaration.Mi
         $offset = 0;
         $limit  = 50;
         $query  = http_build_query(
-            array('limit' => $limit, 'offset' => $offset)
+            ['limit' => $limit, 'offset' => $offset]
         );
 
-        $tracker_ids            = array();
+        $tracker_ids            = [];
         $tracker_representation = [];
 
         do {
@@ -259,7 +259,7 @@ class RestBase extends TestCase // phpcs:ignore PSR1.Classes.ClassDeclaration.Mi
             );
 
             $trackers          = $response->json();
-            $number_of_tracker = (int)(string)$response->getHeader('X-Pagination-Size');
+            $number_of_tracker = (int) (string) $response->getHeader('X-Pagination-Size');
 
             $this->addTrackerIdFromRequestData($trackers, $tracker_ids);
             $this->addTrackerRepresentationFromRequestData($trackers, $tracker_representation);
@@ -357,9 +357,9 @@ class RestBase extends TestCase // phpcs:ignore PSR1.Classes.ClassDeclaration.Mi
     protected function getArtifacts($tracker_id): array
     {
         $artifacts = $this->cache->getArtifacts($tracker_id);
-        if (!$artifacts) {
+        if (! $artifacts) {
             $query = http_build_query(
-                array('order' => 'asc')
+                ['order' => 'asc']
             );
 
             $artifacts = $this->getResponseByName(
@@ -378,7 +378,7 @@ class RestBase extends TestCase // phpcs:ignore PSR1.Classes.ClassDeclaration.Mi
             return $this->user_groups_ids[$project_id];
         }
 
-        return array();
+        return [];
     }
 
     private function initUserGroupsId()
@@ -428,7 +428,7 @@ class RestBase extends TestCase // phpcs:ignore PSR1.Classes.ClassDeclaration.Mi
 
             $projects = $response->json();
 
-            $number_of_project = (int)(string)$response->getHeader('X-Pagination-Size');
+            $number_of_project = (int) (string) $response->getHeader('X-Pagination-Size');
 
             $this->addProjectIdFromRequestData($projects);
 

@@ -19,65 +19,95 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Project\Registration;
 
 use ForgeConfig;
+use ProjectManager;
 use Tuleap\Project\ProjectDescriptionUsageRetriever;
 use Tuleap\Project\Registration\Template\TemplatePresenter;
 
-/**
- * @psalm-immutable
- */
 class ProjectRegistrationPresenter
 {
     /**
      * @var string
+     * @psalm-readonly
      */
     public $tuleap_templates;
     /**
      * @var bool
-     */
-    public $has_templates;
-    /**
-     * @var bool
+     * @psalm-readonly
      */
     public $are_restricted_users_allowed;
     /**
      * @var string
+     * @psalm-readonly
      */
     public $project_default_visibility;
     /**
      * @var bool
+     * @psalm-readonly
      */
     public $projects_must_be_approved;
     /**
-     * string
+     * @var string
+     * @psalm-readonly
      */
     public $trove_categories;
     /**
      * @var string
+     * @psalm-readonly
      */
     public $field_list;
     /**
      * @var bool
+     * @psalm-readonly
      */
     public $is_description_mandatory;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
+    public $company_templates;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
+    public $company_name;
+    /**
+     * @var bool
+     * @psalm-readonly
+     */
+    public $are_anonymous_allowed;
+    /**
+     * @var bool
+     * @psalm-readonly
+     */
+    public $can_user_choose_privacy;
 
     public function __construct(
         string $project_default_visibility,
         array $trove_categories,
         array $field_list,
+        array $company_templates,
         TemplatePresenter ...$tuleap_templates
     ) {
-        $this->tuleap_templates             = json_encode($tuleap_templates);
-        $this->has_templates                = count($tuleap_templates) > 0;
-        $this->are_restricted_users_allowed = (bool) ForgeConfig::areRestrictedUsersAllowed();
-        $this->project_default_visibility   = $project_default_visibility;
-        $this->projects_must_be_approved    = (bool) ForgeConfig::get(\ProjectManager::CONFIG_PROJECT_APPROVAL, true);
-        $this->trove_categories             = json_encode($trove_categories, JSON_THROW_ON_ERROR);
-        $this->is_description_mandatory     = ProjectDescriptionUsageRetriever::isDescriptionMandatory();
-        $this->field_list                   = json_encode($field_list);
+        $this->tuleap_templates                      = json_encode($tuleap_templates);
+        $this->are_restricted_users_allowed          = (bool) ForgeConfig::areRestrictedUsersAllowed();
+        $this->project_default_visibility            = $project_default_visibility;
+        $this->projects_must_be_approved             = (bool) ForgeConfig::get(
+            ProjectManager::CONFIG_PROJECT_APPROVAL,
+            true
+        );
+        $this->trove_categories                      = json_encode($trove_categories, JSON_THROW_ON_ERROR);
+        $this->is_description_mandatory              = ProjectDescriptionUsageRetriever::isDescriptionMandatory();
+        $this->field_list                            = json_encode($field_list);
+        $this->company_templates                     = json_encode($company_templates);
+        $this->company_name                          = ForgeConfig::get('sys_org_name');
+        $this->are_anonymous_allowed                 = (bool) ForgeConfig::areAnonymousAllowed();
+        $this->can_user_choose_privacy               = (bool) ForgeConfig::get(
+            ProjectManager::SYS_USER_CAN_CHOOSE_PROJECT_PRIVACY
+        );
     }
 }

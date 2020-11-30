@@ -17,6 +17,7 @@
   - along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
   -->
 
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
     <div class="document-metadata">
         <div class="document-metadata-properties-margin">
@@ -27,8 +28,11 @@
                 v-bind:is-in-update-context="false"
             />
         </div>
-        <description-metadata v-model="currentlyUpdatedItem.description"/>
-        <folder-default-properties-for-create v-bind:currently-updated-item="currentlyUpdatedItem" v-bind:parent="parent"/>
+        <description-metadata v-model="currentlyUpdatedItem.description" />
+        <folder-default-properties-for-create
+            v-bind:currently-updated-item="currentlyUpdatedItem"
+            v-bind:parent="parent"
+        />
     </div>
 </template>
 
@@ -42,11 +46,11 @@ export default {
     components: {
         FolderDefaultPropertiesForCreate,
         DescriptionMetadata,
-        TitleMetadata
+        TitleMetadata,
     },
     props: {
         currentlyUpdatedItem: Object,
-        parent: Object
-    }
+        parent: Object,
+    },
 };
 </script>

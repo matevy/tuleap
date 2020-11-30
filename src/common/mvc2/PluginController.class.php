@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,8 +18,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once 'Controller.class.php';
-
 /**
  * Base class for plugin controllers
  *
@@ -32,22 +30,30 @@ abstract class MVC2_PluginController extends MVC2_Controller
 
     protected function getTemplatesDir()
     {
-        return ForgeConfig::get('codendi_dir') .'/plugins/'.$this->base_name.'/templates';
+        return ForgeConfig::get('codendi_dir') . '/plugins/' . $this->base_name . '/templates';
     }
 
-    protected function redirect($query_parts)
+    /**
+     * @psalm-return never-return
+     */
+    protected function redirect($query_parts): void
     {
         $redirect = http_build_query($query_parts);
-        $GLOBALS['Response']->redirect('/plugins/'.$this->base_name.'/?'.$redirect);
+        $layout = $GLOBALS['Response'];
+        assert($layout instanceof \Tuleap\Layout\BaseLayout);
+        $layout->redirect('/plugins/' . $this->base_name . '/?' . $redirect);
     }
 
-    protected function checkUserIsAdmin()
+    /**
+     * @throws Exception
+     */
+    protected function checkUserIsAdmin(): void
     {
         $project = $this->request->getProject();
         $user    = $this->request->getCurrentUser();
         if (! $user->isAdmin($project->getID()) && ! $user->isSuperUser()) {
             $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('global', 'perm_denied'));
-            $this->redirect(array('group_id' => $this->group_id));
+            $this->redirect(['group_id' => $this->group_id]);
             // the below is only run by tests (redirect should exit but is mocked)
             throw new Exception($GLOBALS['Language']->getText('global', 'perm_denied'));
         }

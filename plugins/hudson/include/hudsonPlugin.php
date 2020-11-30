@@ -38,7 +38,7 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
     {
         parent::__construct($id);
 
-        bindtextdomain('tuleap-hudson', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-hudson', __DIR__ . '/../site-content');
 
         $this->addHook('javascript_file', 'jsFile', false);
         $this->addHook('cssfile', 'cssFile', false);
@@ -66,7 +66,7 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
 
     public function getPluginInfo()
     {
-        if (!is_a($this->pluginInfo, 'hudsonPluginInfo')) {
+        if (! is_a($this->pluginInfo, 'hudsonPluginInfo')) {
             require_once('hudsonPluginInfo.class.php');
             $this->pluginInfo = new hudsonPluginInfo($this);
         }
@@ -78,7 +78,7 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
         return 'hudson';
     }
 
-    public function service_classnames(array &$params) : void // phpcs:ignore PSR1.Methods.CamelCapsMethodName
+    public function service_classnames(array &$params): void // phpcs:ignore PSR1.Methods.CamelCapsMethodName
     {
         $params['classnames'][$this->getServiceShortname()] = \Tuleap\Hudson\HudsonService::class;
     }
@@ -87,14 +87,11 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
     {
         // Only show the stylesheet if we're actually in the hudson pages.
         // This stops styles inadvertently clashing with the main site.
-        if ($this->canIncludeStylesheets() ||
+        if (
+            $this->canIncludeStylesheets() ||
             strpos($_SERVER['REQUEST_URI'], '/widgets/') === 0
         ) {
-            $asset = new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/hudson/themes',
-                '/assets/hudson/themes'
-            );
-            echo '<link rel="stylesheet" type="text/css" href="'. $asset->getFileURL('default-style.css') .'" />';
+            echo '<link rel="stylesheet" type="text/css" href="' . $this->getAssets()->getFileURL('default-style.css') . '" />';
         }
     }
 
@@ -103,10 +100,17 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
         // Only include the js files if we're actually in the IM pages.
         // This stops styles inadvertently clashing with the main site.
         if (strpos($_SERVER['REQUEST_URI'], $this->getPluginPath()) === 0) {
-            echo '<script type="text/javascript" src="/scripts/scriptaculous/scriptaculous.js"></script>'."\n";
-            echo '<script type="text/javascript" src="js/hudson_tab.js"></script>'."\n";
-            echo '<script type="text/javascript" src="js/form.js"></script>'."\n";
+            echo '<script type="text/javascript" src="/scripts/scriptaculous/scriptaculous.js"></script>' . "\n";
+            echo $this->getAssets()->getHTMLSnippet('hudson_tab.js');
         }
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/hudson',
+            '/assets/hudson'
+        );
     }
 
     /**
@@ -127,7 +131,7 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
 
     protected function getMinimalHudsonJobFactory()
     {
-        if (!$this->hudsonJobFactory) {
+        if (! $this->hudsonJobFactory) {
             $this->hudsonJobFactory = new MinimalHudsonJobFactory();
         }
         return $this->hudsonJobFactory;
@@ -218,7 +222,7 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
 
     public function uninstall()
     {
-        $this->removeOrphanWidgets(array(
+        $this->removeOrphanWidgets([
             'plugin_hudson_my_jobs',
             'plugin_hudson_my_joblastbuilds',
             'plugin_hudson_my_jobtestresults',
@@ -231,14 +235,14 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
             'plugin_hudson_project_jobtesttrend',
             'plugin_hudson_project_jobbuildhistory',
             'plugin_hudson_project_joblastartifacts'
-        ));
+        ]);
     }
 
     public function getAvailableReferenceNatures($params)
     {
-        $hudson_plugin_reference_natures = array(
-            'hudson_build'  => array('keyword' => 'build', 'label' => $GLOBALS['Language']->getText('plugin_hudson', 'reference_build_nature_key')),
-            'hudson_job' => array('keyword' => 'job', 'label' => $GLOBALS['Language']->getText('plugin_hudson', 'reference_job_nature_key')));
+        $hudson_plugin_reference_natures = [
+            'hudson_build'  => ['keyword' => 'build', 'label' => dgettext('tuleap-hudson', 'Jenkins Build')],
+            'hudson_job' => ['keyword' => 'job', 'label' => dgettext('tuleap-hudson', 'Jenkins Job')]];
         $params['natures'] = array_merge($params['natures'], $hudson_plugin_reference_natures);
     }
 
@@ -271,11 +275,11 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
                         HTTPFactoryBuilder::requestFactory()
                     );
                     $event->setOutput(
-                        '<strong>' . $GLOBALS['Language']->getText('plugin_hudson', 'build_time') . '</strong> ' . $html_purifier->purify($build->getBuildTime()) . '<br />'.
-                        '<strong>' . $GLOBALS['Language']->getText('plugin_hudson', 'status') . '</strong> ' . $html_purifier->purify($build->getResult())
+                        '<strong>' . dgettext('tuleap-hudson', 'Build performed on:') . '</strong> ' . $html_purifier->purify($build->getBuildTime()) . '<br />' .
+                        '<strong>' . dgettext('tuleap-hudson', 'Status:') . '</strong> ' . $html_purifier->purify($build->getResult())
                     );
                 } else {
-                    $event->setOutput('<span class="error">'.$GLOBALS['Language']->getText('plugin_hudson', 'error_object_not_found').'</span>');
+                    $event->setOutput('<span class="error">' . dgettext('tuleap-hudson', 'Error: Jenkins object not found.') . '</span>');
                 }
                 break;
             case 'hudson_job':
@@ -297,23 +301,23 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
                         $html .= '<table>';
                         $html .= ' <tr>';
                         $html .= '  <td colspan="2">';
-                        $html .= '   <img src="'.$job->getStatusIcon().'" width="10" height="10" /> '.$html_purifier->purify($job->getName()).':';
+                        $html .= '   <img src="' . $job->getStatusIcon() . '" width="10" height="10" /> ' . $html_purifier->purify($job->getName()) . ':';
                         $html .= '  </td>';
                         $html .= ' </tr>';
                         $html .= ' <tr>';
                         $html .= '  <td>';
                         $html .= '   <ul>';
                         if ($job->hasBuilds()) {
-                            $html .= ' <li>'.$GLOBALS['Language']->getText('plugin_hudson', 'last_build').' <a href="/plugins/hudson/?action=view_build&group_id='.$group_id.'&job_id='.$job_id.'&build_id='.$job->getLastBuildNumber().'"># '.$job->getLastBuildNumber().'</a></li>';
-                            $html .= ' <li>'.$GLOBALS['Language']->getText('plugin_hudson', 'last_build_success').' <a href="/plugins/hudson/?action=view_build&group_id='.$group_id.'&job_id='.$job_id.'&build_id='.$job->getLastSuccessfulBuildNumber().'"># '.$job->getLastSuccessfulBuildNumber().'</a></li>';
-                            $html .= ' <li>'.$GLOBALS['Language']->getText('plugin_hudson', 'last_build_failure').' <a href="/plugins/hudson/?action=view_build&group_id='.$group_id.'&job_id='.$job_id.'&build_id='.$job->getLastFailedBuildNumber().'"># '.$job->getLastFailedBuildNumber().'</a></li>';
+                            $html .= ' <li>' . dgettext('tuleap-hudson', 'Last Build:') . ' <a href="/plugins/hudson/?action=view_build&group_id=' . $group_id . '&job_id=' . $job_id . '&build_id=' . $job->getLastBuildNumber() . '"># ' . $job->getLastBuildNumber() . '</a></li>';
+                            $html .= ' <li>' . dgettext('tuleap-hudson', 'Last Success:') . ' <a href="/plugins/hudson/?action=view_build&group_id=' . $group_id . '&job_id=' . $job_id . '&build_id=' . $job->getLastSuccessfulBuildNumber() . '"># ' . $job->getLastSuccessfulBuildNumber() . '</a></li>';
+                            $html .= ' <li>' . dgettext('tuleap-hudson', 'Last Failure:') . ' <a href="/plugins/hudson/?action=view_build&group_id=' . $group_id . '&job_id=' . $job_id . '&build_id=' . $job->getLastFailedBuildNumber() . '"># ' . $job->getLastFailedBuildNumber() . '</a></li>';
                         } else {
-                            $html .= ' <li>'. $GLOBALS['Language']->getText('plugin_hudson', 'widget_build_not_found') . '</li>';
+                            $html .= ' <li>' . dgettext('tuleap-hudson', 'No build found for this job.') . '</li>';
                         }
                         $html .= '   </ul>';
                         $html .= '  </td>';
                         $html .= '  <td class="widget_lastbuilds_weather">';
-                        $html .= $GLOBALS['Language']->getText('plugin_hudson', 'weather_report').'<img src="'.$job->getWeatherReportIcon().'" align="middle" />';
+                        $html .= dgettext('tuleap-hudson', 'Weather Report:') . '<img src="' . $job->getWeatherReportIcon() . '" align="middle" />';
                         $html .= '  </td>';
                         $html .= ' </tr>';
                         $html .= '</table>';
@@ -321,7 +325,7 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
                     } catch (Exception $e) {
                     }
                 } else {
-                    $event->setOutput('<span class="error">'.$GLOBALS['Language']->getText('plugin_hudson', 'error_object_not_found').'</span>');
+                    $event->setOutput('<span class="error">' . dgettext('tuleap-hudson', 'Error: Jenkins object not found.') . '</span>');
                 }
                 break;
         }
@@ -385,7 +389,7 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
         }
     }
 
-    public function process() : void
+    public function process(): void
     {
         require_once('hudson.class.php');
         $controler = new hudson();
@@ -401,12 +405,12 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
      */
     public function statistics_collector($params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        if (!empty($params['formatter'])) {
+        if (! empty($params['formatter'])) {
             $formatter = $params['formatter'];
             $jobDao = new PluginHudsonJobDao(CodendiDataAccess::instance());
             $dar = $jobDao->countJobs($formatter->groupId);
             $count = 0;
-            if ($dar && !$dar->isError()) {
+            if ($dar && ! $dar->isError()) {
                     $row = $dar->getRow();
                 if ($row) {
                     $count = $row['count'];
@@ -414,8 +418,8 @@ class hudsonPlugin extends PluginWithLegacyInternalRouting //phpcs:ignore PSR1.C
             }
             $formatter->clearContent();
             $formatter->addEmptyLine();
-            $formatter->addLine(array($GLOBALS['Language']->getText('plugin_hudson', 'title')));
-            $formatter->addLine(array($GLOBALS['Language']->getText('plugin_hudson', 'job_count', array(date('Y-m-d'))), $count));
+            $formatter->addLine([dgettext('tuleap-hudson', 'Continuous Integration')]);
+            $formatter->addLine([sprintf(dgettext('tuleap-hudson', 'Number of jobs until %1$s'), date('Y-m-d')), $count]);
             echo $formatter->getCsvContent();
             $formatter->clearContent();
         }

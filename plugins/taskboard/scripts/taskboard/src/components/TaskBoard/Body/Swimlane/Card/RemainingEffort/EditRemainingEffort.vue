@@ -19,14 +19,15 @@
   -->
 
 <template>
-    <input type="text"
-           class="taskboard-card-remaining-effort-input"
-           v-bind:class="classes"
-           v-model="value"
-           v-on:keyup.enter="save"
-           pattern="[0-9]*(\.[0-9]+)?"
-           v-bind:aria-label="$gettext('New remaining effort')"
-    >
+    <input
+        type="text"
+        class="taskboard-card-remaining-effort-input"
+        v-bind:class="classes"
+        v-model="value"
+        v-on:keyup.enter="save"
+        pattern="[0-9]*(\.[0-9]+)?"
+        v-bind:aria-label="$gettext('New remaining effort')"
+    />
 </template>
 
 <script lang="ts">
@@ -54,6 +55,9 @@ export default class EditRemainingEffort extends Vue {
         new_remaining_effort: NewRemainingEffortPayload
     ) => Promise<void>;
 
+    @swimlane.Mutation
+    readonly removeRemainingEffortFromEditMode!: (card: Card) => void;
+
     value = "";
 
     get classes(): Array<string> {
@@ -71,8 +75,10 @@ export default class EditRemainingEffort extends Vue {
     mounted(): void {
         this.initValue();
 
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const input = this.$el as HTMLInputElement;
+        const input = this.$el;
+        if (!(input instanceof HTMLInputElement)) {
+            throw new Error("The component is not a HTML input");
+        }
         autoFocusAutoSelect(input);
 
         EventBus.$on(TaskboardEvent.CANCEL_CARD_EDITION, this.cancelButtonCallback);
@@ -103,14 +109,14 @@ export default class EditRemainingEffort extends Vue {
     }
 
     cancel(): void {
-        if (this.card.remaining_effort) {
-            this.card.remaining_effort.is_in_edit_mode = false;
-        }
+        this.removeRemainingEffortFromEditMode(this.card);
     }
 
     save(): void {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const input = this.$el as HTMLInputElement;
+        const input = this.$el;
+        if (!(input instanceof HTMLInputElement)) {
+            throw new Error("The component is not a HTML input");
+        }
         if (!input.checkValidity()) {
             // force :invalid pseudo-class
             input.blur();
@@ -119,6 +125,10 @@ export default class EditRemainingEffort extends Vue {
         }
 
         if (!this.card.remaining_effort) {
+            return;
+        }
+
+        if (this.card.remaining_effort.is_being_saved) {
             return;
         }
 

@@ -33,17 +33,25 @@ final class SymmetricCrypto
         throw new \RuntimeException('Do not instantiate this class, invoke the static methods directly');
     }
 
-    public static function encrypt(ConcealedString $plaintext, EncryptionKey $secret_key) : string
+    public static function encrypt(ConcealedString $plaintext, EncryptionKey $secret_key): string
     {
         $nonce = \random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
 
-        return $nonce . \sodium_crypto_secretbox($plaintext->getString(), $nonce, $secret_key->getRawKeyMaterial());
+        $raw_plaintext    = $plaintext->getString();
+        $raw_key_material = $secret_key->getRawKeyMaterial();
+
+        $encrypted_data = $nonce . \sodium_crypto_secretbox($raw_plaintext, $nonce, $raw_key_material);
+
+        \sodium_memzero($raw_plaintext);
+        \sodium_memzero($raw_key_material);
+
+        return $encrypted_data;
     }
 
     /**
      * @throws \Tuleap\Cryptography\Exception\InvalidCiphertextException
      */
-    public static function decrypt(string $ciphertext, EncryptionKey $secret_key) : ConcealedString
+    public static function decrypt(string $ciphertext, EncryptionKey $secret_key): ConcealedString
     {
         $nonce             = \mb_substr($ciphertext, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
         $ciphertext_length = \mb_strlen($ciphertext, '8bit');
@@ -52,10 +60,15 @@ final class SymmetricCrypto
         }
         $encrypted = \mb_substr($ciphertext, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, $ciphertext_length, '8bit');
 
-        $plaintext = \sodium_crypto_secretbox_open($encrypted, $nonce, $secret_key->getRawKeyMaterial());
-        if ($plaintext === false) {
+        $raw_plaintext = \sodium_crypto_secretbox_open($encrypted, $nonce, $secret_key->getRawKeyMaterial());
+        if ($raw_plaintext === false) {
             throw new InvalidCiphertextException();
         }
-        return new ConcealedString($plaintext);
+
+        $plaintext = new ConcealedString($raw_plaintext);
+
+        \sodium_memzero($raw_plaintext);
+
+        return $plaintext;
     }
 }

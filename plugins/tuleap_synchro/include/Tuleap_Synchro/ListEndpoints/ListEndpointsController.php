@@ -55,8 +55,6 @@ class ListEndpointsController implements DispatchableWithRequest, DispatchableWi
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout $layout
      * @param array $variables
      * @return void
      * @throws ForbiddenException
@@ -67,17 +65,14 @@ class ListEndpointsController implements DispatchableWithRequest, DispatchableWi
             throw new ForbiddenException();
         }
 
-        $include_assets = new IncludeAssets(__DIR__.'/../../../../../src/www/assets/tuleap_synchro/scripts', '/assets/tuleap_synchro/scripts');
+        $include_assets = new IncludeAssets(__DIR__ . '/../../../../../src/www/assets/tuleap_synchro', '/assets/tuleap_synchro');
         $layout->includeFooterJavascriptFile(
             $include_assets->getFileURL('tuleap_synchro.js')
         );
 
         $layout->addCssAsset(
             new CssAsset(
-                new IncludeAssets(
-                    __DIR__ . '/../../../../../src/www/assets/tuleap_synchro/themes',
-                    '/assets/tuleap_synchro/themes'
-                ),
+                $include_assets,
                 'tuleap-synchro'
             )
         );
@@ -86,7 +81,7 @@ class ListEndpointsController implements DispatchableWithRequest, DispatchableWi
 
         $this->admin_page_rendered->renderAPresenter(
             'tuleap_synchro',
-            __DIR__.'/../../../templates',
+            __DIR__ . '/../../../templates',
             'list_endpoints',
             $list_endpoints_presenter
         );

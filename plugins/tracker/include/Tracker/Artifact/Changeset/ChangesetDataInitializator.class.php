@@ -18,6 +18,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_Artifact_Changeset_ChangesetDataInitializator
 {
 
@@ -31,9 +33,9 @@ class Tracker_Artifact_Changeset_ChangesetDataInitializator
         $this->formelement_factory = $formelement_factory;
     }
 
-    public function process(Tracker_Artifact $artifact, array $fields_data)
+    public function process(Artifact $artifact, array $fields_data)
     {
-        $tracker_data = array();
+        $tracker_data = [];
 
         //only when a previous changeset exists
         if (! $artifact->getLastChangeset() instanceof Tracker_Artifact_Changeset_Null) {
@@ -57,8 +59,10 @@ class Tracker_Artifact_Changeset_ChangesetDataInitializator
             if ($field instanceof Tracker_FormElement_Field_SubmittedOn) {
                  $tracker_data[$field->getId()] = $artifact->getSubmittedOn();
             }
-            if ($field instanceof Tracker_FormElement_Field_Date &&
-                    ! array_key_exists($field->getId(), $tracker_data)) {
+            if (
+                $field instanceof Tracker_FormElement_Field_Date &&
+                    ! array_key_exists($field->getId(), $tracker_data)
+            ) {
                 //user doesn't have access to field
                 $tracker_data[$field->getId()] = $field->getValue($field->getId());
             }

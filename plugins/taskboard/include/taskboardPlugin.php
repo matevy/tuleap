@@ -20,17 +20,27 @@
 
 declare(strict_types=1);
 
-use Tuleap\AgileDashboard\REST\v1\AdditionalPanesForMilestoneEvent;
-use Tuleap\AgileDashboard\REST\v1\PaneInfoRepresentation;
+use Tuleap\AgileDashboard\Event\GetAdditionalScrumAdminSection;
+use Tuleap\AgileDashboard\Milestone\Pane\PaneInfoCollector;
+use Tuleap\AgileDashboard\Milestone\Pane\Planning\PlanningV2PaneInfo;
+use Tuleap\AgileDashboard\Planning\AllowedAdditionalPanesToDisplayCollector;
+use Tuleap\AgileDashboard\Planning\Presenters\AlternativeBoardLinkEvent;
+use Tuleap\AgileDashboard\Planning\Presenters\AlternativeBoardLinkPresenter;
+use Tuleap\BrowserDetection\DetectedBrowser;
+use Tuleap\Cardwall\Agiledashboard\CardwallPaneInfo;
+use Tuleap\Cardwall\CardwallIsAllowedEvent;
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Request\CollectRoutesEvent;
+use Tuleap\Taskboard\Admin\ScrumBoardTypeSelectorController;
 use Tuleap\Taskboard\AgileDashboard\MilestoneIsAllowedChecker;
 use Tuleap\Taskboard\AgileDashboard\TaskboardPane;
 use Tuleap\Taskboard\AgileDashboard\TaskboardPaneInfo;
 use Tuleap\Taskboard\AgileDashboard\TaskboardPaneInfoBuilder;
+use Tuleap\Taskboard\AgileDashboard\TaskboardUsage;
+use Tuleap\Taskboard\AgileDashboard\TaskboardUsageDao;
+use Tuleap\Taskboard\AgileDashboard\TaskboardUsageDuplicator;
 use Tuleap\Taskboard\Board\BoardPresenterBuilder;
 use Tuleap\Taskboard\Column\ColumnPresenterCollectionRetriever;
-use Tuleap\Taskboard\Column\FieldValuesToColumnMapping\TrackerMappingPresenterBuilder;
 use Tuleap\Taskboard\REST\ResourcesInjector;
 use Tuleap\Taskboard\Routing\MilestoneExtractor;
 use Tuleap\Taskboard\Tracker\TrackerPresenterCollectionBuilder;
@@ -69,10 +79,17 @@ class taskboardPlugin extends Plugin
     {
         $this->addHook(Event::REST_RESOURCES);
         $this->addHook(CollectRoutesEvent::NAME);
+        $this->addHook(GetAdditionalScrumAdminSection::NAME);
+        $this->addHook(Event::REGISTER_PROJECT_CREATION);
 
         if (defined('AGILEDASHBOARD_BASE_URL')) {
-            $this->addHook(AGILEDASHBOARD_EVENT_ADDITIONAL_PANES_ON_MILESTONE);
-            $this->addHook(AdditionalPanesForMilestoneEvent::NAME);
+            $this->addHook(PaneInfoCollector::NAME);
+            $this->addHook(AlternativeBoardLinkEvent::NAME);
+            $this->addHook(AllowedAdditionalPanesToDisplayCollector::NAME);
+        }
+
+        if (defined('CARDWALL_BASE_URL')) {
+            $this->addHook(CardwallIsAllowedEvent::NAME);
         }
 
         return parent::getHooksAndCallbacks();
@@ -107,12 +124,8 @@ class taskboardPlugin extends Plugin
             ),
             $agiledashboard_plugin->getIncludeAssets(),
             new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/taskboard/themes',
-                '/assets/taskboard/themes'
-            ),
-            new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/taskboard/scripts',
-                '/assets/taskboard/scripts'
+                __DIR__ . '/../../../src/www/assets/taskboard',
+                '/assets/taskboard'
             ),
             new VisitRecorder(new RecentlyVisitedDao())
         );
@@ -128,23 +141,33 @@ class taskboardPlugin extends Plugin
         );
     }
 
-    /** @see AGILEDASHBOARD_EVENT_ADDITIONAL_PANES_ON_MILESTONE */
-    public function agiledashboardEventAdditionalPanesOnMilestone(array $params): void
+    public function agiledashboardEventAdditionalPanesOnMilestone(PaneInfoCollector $collector): void
     {
-        $milestone = $params['milestone'];
-        assert($milestone instanceof Planning_Milestone);
+        if ($this->isIE11()) {
+            return;
+        }
 
-        $pane_info = $this->getPaneInfoForMilestone($milestone);
+        $pane_info = $this->getPaneInfoForMilestone($collector->getMilestone());
         if ($pane_info === null) {
             return;
         }
 
-        if (strpos($_SERVER['REQUEST_URI'], '/taskboard/') === 0) {
+        if ($collector->getActivePaneContext() && strpos($_SERVER['REQUEST_URI'], '/taskboard/') === 0) {
             $pane_info->setActive(true);
-            $params['active_pane'] = new TaskboardPane($pane_info);
+            $collector->setActivePaneBuilder(
+                static function () use ($pane_info): AgileDashboard_Pane {
+                    return new TaskboardPane($pane_info);
+                }
+            );
         }
 
-        $params['panes'][] = $pane_info;
+        if ($collector->has(CardwallPaneInfo::IDENTIFIER)) {
+            $collector->addPaneAfter(CardwallPaneInfo::IDENTIFIER, $pane_info);
+
+            return;
+        }
+
+        $collector->addPaneAfter(PlanningV2PaneInfo::IDENTIFIER, $pane_info);
     }
 
     private function getCardwallOnTopDao(): Cardwall_OnTop_Dao
@@ -152,32 +175,81 @@ class taskboardPlugin extends Plugin
         return new Cardwall_OnTop_Dao();
     }
 
-    public function additionalPanesForMilestoneEvent(AdditionalPanesForMilestoneEvent $event): void
-    {
-        $milestone = $event->getMilestone();
-
-        $pane = $this->getPaneInfoForMilestone($milestone);
-        if ($pane !== null) {
-            $representation = new PaneInfoRepresentation();
-            $representation->build($pane);
-
-            $event->add($representation);
-        }
-    }
-
-    public function getPaneInfoForMilestone(Planning_Milestone $milestone): ?TaskboardPaneInfo
+    private function getPaneInfoForMilestone(Planning_Milestone $milestone): ?TaskboardPaneInfo
     {
         $pane_builder = new TaskboardPaneInfoBuilder($this->getMilestoneIsAllowedChecker());
 
         return $pane_builder->getPaneForMilestone($milestone);
     }
 
-    public function getMilestoneIsAllowedChecker(): MilestoneIsAllowedChecker
+    private function getMilestoneIsAllowedChecker(): MilestoneIsAllowedChecker
     {
         return new MilestoneIsAllowedChecker(
             $this->getCardwallOnTopDao(),
+            $this->getTaskboardUsage(),
             PluginManager::instance(),
             $this
         );
+    }
+
+    private function getTaskboardUsage(): TaskboardUsage
+    {
+        return new TaskboardUsage(new TaskboardUsageDao());
+    }
+
+    public function cardwallIsAllowedEvent(CardwallIsAllowedEvent $event): void
+    {
+        if ($this->isIE11()) {
+            return;
+        }
+
+        if (! $this->getTaskboardUsage()->isCardwallAllowed($event->getProject())) {
+            $event->disallowCardwall();
+        }
+    }
+
+    public function alternativeBoardLinkEvent(AlternativeBoardLinkEvent $event): void
+    {
+        $pane = $this->getPaneInfoForMilestone($event->getMilestone());
+        if ($pane !== null) {
+            $event->setAlternativeBoardLink(
+                new AlternativeBoardLinkPresenter(
+                    $pane->getUri(),
+                    $pane->getIconName(),
+                    $pane->getTitle()
+                )
+            );
+        }
+    }
+
+    public function getAdditionalScrumAdminSection(GetAdditionalScrumAdminSection $event): void
+    {
+        $event->addAdditionalSectionController(
+            new ScrumBoardTypeSelectorController(
+                $event->getProject(),
+                new TaskboardUsageDao(),
+                \TemplateRendererFactory::build()->getRenderer(__DIR__ . "/../templates/Admin")
+            )
+        );
+    }
+
+    /** @see Event::REGISTER_PROJECT_CREATION */
+    public function registerProjectCreation(array $params): void
+    {
+        $project_id  = (int) $params['group_id'];
+        $template_id = (int) $params['template_id'];
+
+        $duplicator = new TaskboardUsageDuplicator(new TaskboardUsageDao());
+        $duplicator->duplicateUsage($project_id, $template_id);
+    }
+
+    public function allowedAdditionalPanesToDisplayCollector(AllowedAdditionalPanesToDisplayCollector $event): void
+    {
+        $event->add(TaskboardPaneInfo::NAME);
+    }
+
+    private function isIE11(): bool
+    {
+        return DetectedBrowser::detectFromTuleapHTTPRequest(HTTPRequest::instance())->isIE11();
     }
 }

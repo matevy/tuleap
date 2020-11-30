@@ -22,10 +22,8 @@
 namespace Tuleap\CreateTestEnv;
 
 use HTTPRequest;
-use TemplateRenderer;
 use Tuleap\Admin\AdminPageRenderer;
 use Tuleap\BotMattermost\Bot\BotFactory;
-use Tuleap\BotMattermost\Bot\BotDao;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithRequest;
 
@@ -49,7 +47,6 @@ class NotificationBotIndexController implements DispatchableWithRequest
         NotificationBotDao $notification_bot_dao,
         AdminPageRenderer $admin_page_renderer
     ) {
-
         $this->bot_factory          = $bot_factory;
         $this->notification_bot_dao = $notification_bot_dao;
         $this->admin_page_renderer  = $admin_page_renderer;
@@ -59,7 +56,7 @@ class NotificationBotIndexController implements DispatchableWithRequest
      * @psalm-suppress UndefinedDocblockClass
      * @throws \Tuleap\BotMattermost\Exception\BotNotFoundException
      */
-    public function process(HTTPRequest $request, BaseLayout $layout, array $variables) : void
+    public function process(HTTPRequest $request, BaseLayout $layout, array $variables): void
     {
         if (! $request->getCurrentUser()->isSuperUser()) {
             $layout->addFeedback(\Feedback::ERROR, dgettext('tuleap-create_test_env', 'You should be site administrator to access this page'));
@@ -72,7 +69,7 @@ class NotificationBotIndexController implements DispatchableWithRequest
 
         $this->admin_page_renderer->renderANoFramedPresenter(
             dgettext('tuleap-create_test_env', 'Create test environment'),
-            __DIR__.'/../../templates',
+            __DIR__ . '/../../templates',
             'notification-bot-tab',
             new NotificationBotPresenter($bots, $selected_bot_id)
         );

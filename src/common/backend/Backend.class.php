@@ -28,10 +28,10 @@ use Tuleap\Backend\FileExtensionFilterIterator;
 class Backend
 {
 
-    public const LOG_INFO    = "info";
-    public const LOG_WARNING = "warn";
-    public const LOG_ERROR   = "error";
-    public const LOG_DEBUG   = "debug";
+    public const LOG_INFO    = \Psr\Log\LogLevel::INFO;
+    public const LOG_WARNING = \Psr\Log\LogLevel::WARNING;
+    public const LOG_ERROR   = \Psr\Log\LogLevel::ERROR;
+    public const LOG_DEBUG   = \Psr\Log\LogLevel::DEBUG;
 
     public const SVN         = 'SVN';
     public const CVS         = 'CVS';
@@ -55,7 +55,6 @@ class Backend
      */
     protected function __construct()
     {
-
         /* Make sure umask is properly positioned for the
          entire session. Root has umask 022 by default
          causing all the mkdir xxx, 775 to actually
@@ -66,7 +65,7 @@ class Backend
         //umask(002);
     }
 
-    private static $backend_instances = array();
+    private static $backend_instances = [];
     /**
      * Return a Backend instance
      *
@@ -82,11 +81,11 @@ class Backend
      */
     public static function instance($type = self::BACKEND, $base = null, $setup = null)
     {
-        if (!isset(self::$backend_instances[$type])) {
+        if (! isset(self::$backend_instances[$type])) {
             $backend = null;
 
             //determine the base class of the plugin if it is not define at the call
-            if (!$base) {
+            if (! $base) {
                 $base = 'Backend';
                 if ($type !== self::BACKEND) {
                     //BackendSVN, BackendSystem, ...
@@ -97,31 +96,33 @@ class Backend
 
             //Ask to the whole world if someone wants to provide its own backend
             //for example plugin ldap will override BackendSVN
-            $params   = array(
+            $params   = [
                 'base'  => &$base,
                 'setup' => &$setup
-            );
+            ];
             $event    = Event::BACKEND_FACTORY_GET_PREFIX . strtolower($type);
             EventManager::instance()->processEvent($event, $params);
 
             //make sure that there is no problem between the keyboard and the chair
-            if (!class_exists($base)) {
+            if (! class_exists($base)) {
                 throw new RuntimeException("Class '$base' not found");
             }
             //Create a new instance of the wanted backend
             $backend = new $base();
 
             //check that all is ok
-            if (!is_a($backend, $wanted_base)) {
-                throw new Exception('Backend should inherit from '. $wanted_base .'. Received: "'. get_class($backend) .'"');
+            if (! is_a($backend, $wanted_base)) {
+                throw new Exception('Backend should inherit from ' . $wanted_base . '. Received: "' . get_class($backend) . '"');
             }
+
+            assert($backend instanceof Backend);
 
             //SetUp if needed
             if (is_array($setup)) {
                 if (method_exists($backend, 'setUp')) {
-                    call_user_func_array(array($backend, 'setUp'), $setup);
+                    call_user_func_array([$backend, 'setUp'], $setup);
                 } else {
-                    throw new Exception($base .' does not have setUp.');
+                    throw new Exception($base . ' does not have setUp.');
                 }
             }
 
@@ -132,6 +133,16 @@ class Backend
     }
 
     /**
+     * Helper for static analysis
+     */
+    public static function instanceSVN(): BackendSVN
+    {
+        $instance = self::instance(self::SVN);
+        assert($instance instanceof BackendSVN);
+        return $instance;
+    }
+
+    /**
      * Clear the cache of instances.
      * Main goal is for unit tests. Useless in prod.
      *
@@ -139,7 +150,7 @@ class Backend
      */
     public static function clearInstances()
     {
-        self::$backend_instances = array();
+        self::$backend_instances = [];
     }
 
     public static function setInstance($type, $instance)
@@ -270,11 +281,11 @@ class Backend
      */
     protected function getent($database, $entry = false)
     {
-        $cmd = 'getent '.escapeshellarg($database);
+        $cmd = 'getent ' . escapeshellarg($database);
         if ($entry !== false) {
-            $cmd .= ' '.escapeshellarg($entry);
+            $cmd .= ' ' . escapeshellarg($entry);
         }
-        $output      = array();
+        $output      = [];
         $returnValue = null;
         exec($cmd, $output, $returnValue);
         if ($returnValue === 0) {
@@ -333,13 +344,11 @@ class Backend
      *
      * @param string $message The error message that should be logged.
      * @param string $level   The level of the message "info", "warn", ...
-     *
-     * @return bool true on success or false on failure
      */
     public function log($message, $level = 'info')
     {
-        $logger = new BackendLogger();
-        return $logger->log($message, $level);
+        $logger = BackendLogger::getDefaultLogger();
+        $logger->log($level, $message);
     }
 
     /**
@@ -431,7 +440,7 @@ class Backend
     public function recurseDeleteInDir($mypath)
     {
         try {
-            $no_filter_file_extension = array();
+            $no_filter_file_extension = [];
             $iterator = $this->getRecurseDirectoryIterator($mypath, $no_filter_file_extension);
             foreach ($iterator as $filename => $file_information) {
                 if ($file_information->isDir()) {
@@ -472,13 +481,12 @@ class Backend
      */
     public function addBlock($filename, $command)
     {
-
-        if (!$handle = fopen($filename, 'a')) {
+        if (! $handle = fopen($filename, 'a')) {
             $this->log("Can't open file for writing: $filename", self::LOG_ERROR);
             return false;
         }
         fwrite($handle, $this->block_marker_start);
-        fwrite($handle, $command."\n");
+        fwrite($handle, $command . "\n");
         fwrite($handle, $this->block_marker_end);
         return fclose($handle);
     }
@@ -493,7 +501,7 @@ class Backend
     public function removeBlock($filename)
     {
         $file_array     = file($filename);
-        $new_file_array = array();
+        $new_file_array = [];
         $inblock        = false;
         while ($line = array_shift($file_array)) {
             if (strcmp($line, $this->block_marker_start) == 0) {
@@ -521,8 +529,7 @@ class Backend
      */
     public function writeArrayToFile($file_array, $filename)
     {
-
-        if (!$handle = fopen($filename, 'w')) {
+        if (! $handle = fopen($filename, 'w')) {
             $this->log("Can't open file for writing: $filename", self::LOG_ERROR);
             return false;
         }
@@ -572,18 +579,18 @@ class Backend
                     unlink($file_old);
                 }
 
-                if (!rename($file, $file_old)) {
+                if (! rename($file, $file_old)) {
                     $this->log("Can't move file $file to $file_old", self::LOG_ERROR);
                     return false;
                 }
-                if (!rename($file_new, $file)) {
+                if (! rename($file_new, $file)) {
                     $this->log("Can't move file $file_new to $file", self::LOG_ERROR);
                     return false;
                 }
             } // Else do nothing: the configuration has not changed
         } else {
             // No existing file
-            if (!rename($file_new, $file)) {
+            if (! rename($file_new, $file)) {
                 $this->log("Can't move file $file_new to $file (no existing file)", self::LOG_ERROR);
                 return false;
             }
@@ -621,7 +628,7 @@ class Backend
 
     private function exec($command)
     {
-        $output       = array();
+        $output       = [];
         $return_value = 1;
         exec("$command 2>&1", $output, $return_value);
         if ($return_value == 0) {
@@ -636,10 +643,10 @@ class Backend
      *
      * @param String $path
      *
-     * @return true if repository or file  or link already exists, false otherwise
+     * @return bool true if repository or file  or link already exists, false otherwise
      */
     public static function fileExists($path)
     {
-        return (is_dir($path)  || is_file($path) || is_link($path));
+        return (is_dir($path) || is_file($path) || is_link($path));
     }
 }

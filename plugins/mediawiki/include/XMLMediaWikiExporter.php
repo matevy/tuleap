@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,11 +18,11 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Tuleap\MediaWiki;
+namespace Tuleap\Mediawiki;
 
 use DirectoryIterator;
 use ForgeConfig;
-use Logger;
+use Psr\Log\LoggerInterface;
 use MediawikiLanguageManager;
 use MediawikiManager;
 use Project;
@@ -30,7 +30,7 @@ use ProjectUGroup;
 use SimpleXMLElement;
 use Tuleap\Project\XML\Export\ArchiveInterface;
 use UGroupManager;
-use Tuleap\Mediawiki\MediawikiDataDir;
+use XML_SimpleXMLCDATAFactory;
 
 class XMLMediaWikiExporter
 {
@@ -50,7 +50,7 @@ class XMLMediaWikiExporter
      */
     private $ugroup_manager;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
     /**
@@ -70,7 +70,7 @@ class XMLMediaWikiExporter
         Project $project,
         MediawikiManager $manager,
         UGroupManager $ugroup_manager,
-        Logger $logger,
+        LoggerInterface $logger,
         MediawikiMaintenanceWrapper $maintenance_wrapper,
         MediawikiLanguageManager $language_manager,
         MediawikiDataDir $mediawiki_data_dir
@@ -101,7 +101,7 @@ class XMLMediaWikiExporter
         $this->logger->info('Export mediawiki');
         $root_node = $xml_content->addChild('mediawiki');
         $root_node->addAttribute('pages-backup', 'wiki_pages.xml');
-        $root_node->addAttribute('language', $this->language_manager->getUsedLanguageForProject($this->project));
+        $root_node->addAttribute('language', $this->language_manager->getUsedLanguageForProject($this->project) ?? '');
         $root_node->addAttribute('files-folder-backup', 'files');
 
         $this->logger->info('Export mediawiki permissions');
@@ -156,13 +156,14 @@ class XMLMediaWikiExporter
 
     private function exportMediawikiPermissions(SimpleXMLElement $xml_content)
     {
+        $cdata = new XML_SimpleXMLCDATAFactory();
         $readers = $this->manager->getReadAccessControl($this->project);
         if ($readers) {
             $reader_node = $xml_content->addChild('read-access');
             foreach ($readers as $reader) {
                 $ugroup = $this->ugroup_manager->getUGroup($this->project, $reader);
                 if ($ugroup) {
-                    $reader_node->addChild('ugroup', $this->getLabelForUgroup($ugroup));
+                    $cdata->insert($reader_node, 'ugroup', $this->getLabelForUgroup($ugroup));
                 }
             }
         }
@@ -173,7 +174,7 @@ class XMLMediaWikiExporter
             foreach ($writers as $writer) {
                 $ugroup = $this->ugroup_manager->getUGroup($this->project, $writer);
                 if ($ugroup) {
-                    $writer_node->addChild('ugroup', $this->getLabelForUgroup($ugroup));
+                    $cdata->insert($writer_node, 'ugroup', $this->getLabelForUgroup($ugroup));
                 }
             }
         }

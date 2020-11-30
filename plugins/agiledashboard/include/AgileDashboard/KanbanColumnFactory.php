@@ -41,13 +41,12 @@ class AgileDashboard_KanbanColumnFactory
     }
 
     /**
-     * @param AgileDashboard_Kanban $kanban
      *
      * @return AgileDashboard_KanbanColumn[]
      */
     public function getAllKanbanColumnsForAKanban(AgileDashboard_Kanban $kanban, PFUser $user)
     {
-        $columns  = array();
+        $columns  = [];
         $semantic = $this->getSemanticStatus($kanban);
         if (! $semantic) {
             return $columns;
@@ -67,7 +66,6 @@ class AgileDashboard_KanbanColumnFactory
     }
 
     /**
-     * @param AgileDashboard_Kanban $kanban
      * @param int                   $column_id
      *
      * @return AgileDashboard_KanbanColumn

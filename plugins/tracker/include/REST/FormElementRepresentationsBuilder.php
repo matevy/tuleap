@@ -22,7 +22,6 @@ namespace Tuleap\Tracker\REST;
 
 use PFUser;
 use Tracker;
-use Tracker_Artifact;
 use Tracker_FormElement;
 use Tracker_FormElement_Container_Fieldset;
 use Tracker_FormElement_Field_Date;
@@ -32,8 +31,9 @@ use Tracker_FormElementFactory;
 use Tracker_REST_FormElement_FieldDateRepresentation;
 use Tracker_REST_FormElement_FieldOpenListRepresentation;
 use Tracker_REST_FormElementRepresentation;
-use Tuleap\Tracker\REST\FormElement\FieldFileRepresentation;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\FormElement\Container\Fieldset\HiddenFieldsetChecker;
+use Tuleap\Tracker\REST\FormElement\FieldFileRepresentation;
 use Tuleap\Tracker\REST\FormElement\PermissionsForGroupsBuilder;
 
 class FormElementRepresentationsBuilder
@@ -72,7 +72,7 @@ class FormElementRepresentationsBuilder
     /**
      * @return Tracker_REST_FormElementRepresentation[]
      */
-    public function buildRepresentationsInTrackerContext(Tracker $tracker, PFUser $user) : array
+    public function buildRepresentationsInTrackerContext(Tracker $tracker, PFUser $user): array
     {
         return $this->buildRepresentations($tracker, null, $user);
     }
@@ -80,7 +80,7 @@ class FormElementRepresentationsBuilder
     /**
      * @return Tracker_REST_FormElementRepresentation[]
      */
-    public function buildRepresentationsInArtifactContext(Tracker_Artifact $artifact, PFUser $user) : array
+    public function buildRepresentationsInArtifactContext(Artifact $artifact, PFUser $user): array
     {
         return $this->buildRepresentations($artifact->getTracker(), $artifact, $user);
     }
@@ -88,7 +88,7 @@ class FormElementRepresentationsBuilder
     /**
      * @return Tracker_REST_FormElementRepresentation[]
      */
-    private function buildRepresentations(Tracker $tracker, ?Tracker_Artifact $artifact, PFUser $user) : array
+    private function buildRepresentations(Tracker $tracker, ?Artifact $artifact, PFUser $user): array
     {
         $representation_collection = [];
         foreach ($this->form_element_factory->getAllUsedFormElementOfAnyTypesForTracker($tracker) as $form_element) {
@@ -97,36 +97,28 @@ class FormElementRepresentationsBuilder
             }
 
             if ($form_element instanceof Tracker_FormElement_Field_File) {
-                $form_element_representation = new FieldFileRepresentation();
-
-                $form_element_representation->build(
+                $form_element_representation = FieldFileRepresentation::build(
                     $form_element,
                     $this->form_element_factory->getType($form_element),
                     $this->getPermissionsForFormElement($form_element, $artifact, $user),
                     $this->permissions_for_groups_builder->getPermissionsForGroups($form_element, $artifact, $user)
                 );
             } elseif ($form_element instanceof Tracker_FormElement_Field_Date) {
-                $form_element_representation = new Tracker_REST_FormElement_FieldDateRepresentation();
-
-                $form_element_representation->build(
+                $form_element_representation = Tracker_REST_FormElement_FieldDateRepresentation::build(
                     $form_element,
                     $this->form_element_factory->getType($form_element),
                     $this->getPermissionsForFormElement($form_element, $artifact, $user),
                     $this->permissions_for_groups_builder->getPermissionsForGroups($form_element, $artifact, $user)
                 );
             } elseif ($form_element instanceof Tracker_FormElement_Field_OpenList) {
-                $form_element_representation = new Tracker_REST_FormElement_FieldOpenListRepresentation();
-
-                $form_element_representation->build(
+                $form_element_representation = Tracker_REST_FormElement_FieldOpenListRepresentation::build(
                     $form_element,
                     $this->form_element_factory->getType($form_element),
                     $this->getPermissionsForFormElement($form_element, $artifact, $user),
                     $this->permissions_for_groups_builder->getPermissionsForGroups($form_element, $artifact, $user)
                 );
             } elseif ($artifact !== null && $form_element instanceof Tracker_FormElement_Container_Fieldset) {
-                $form_element_representation = new ContainerFieldsetInArtifactContextRepresentation();
-
-                $form_element_representation->buildInArtifactContext(
+                $form_element_representation = ContainerFieldsetInArtifactContextRepresentation::buildContainerFieldset(
                     $form_element,
                     $this->form_element_factory->getType($form_element),
                     $this->getPermissionsForFormElement($form_element, $artifact, $user),
@@ -134,9 +126,7 @@ class FormElementRepresentationsBuilder
                     $this->hidden_fieldset_checker->mustFieldsetBeHidden($form_element, $artifact)
                 );
             } else {
-                $form_element_representation = new Tracker_REST_FormElementRepresentation();
-
-                $form_element_representation->build(
+                $form_element_representation = Tracker_REST_FormElementRepresentation::build(
                     $form_element,
                     $this->form_element_factory->getType($form_element),
                     $this->getPermissionsForFormElement($form_element, $artifact, $user),
@@ -152,9 +142,9 @@ class FormElementRepresentationsBuilder
 
     private function getPermissionsForFormElement(
         Tracker_FormElement $form_element,
-        ?Tracker_Artifact $artifact,
+        ?Artifact $artifact,
         PFUser $user
-    ) : array {
+    ): array {
         if ($artifact === null) {
             return $this->permissions_exporter->exportUserPermissionsForFieldWithoutWorkflowComputedPermissions(
                 $user,

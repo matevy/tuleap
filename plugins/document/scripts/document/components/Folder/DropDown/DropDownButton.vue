@@ -20,25 +20,27 @@
 
 <template>
     <div class="tlp-dropdown document-dropdown-menu-button">
-        <button class="tlp-button-primary"
-                v-bind:class="{
-                    'tlp-button-large': isInLargeMode,
-                    'tlp-button-small tlp-button-outline': isInQuickLookMode,
-                    'tlp-append tlp-dropdown-split-button-caret': isAppended
-                }"
-                ref="dropdownButton"
-                type="button"
-                data-test="document-drop-down-button"
+        <button
+            class="tlp-button-primary"
+            v-bind:class="{
+                'tlp-button-large': isInLargeMode,
+                'tlp-button-small tlp-button-outline': isInQuickLookMode,
+                'tlp-append tlp-dropdown-split-button-caret': isAppended,
+            }"
+            ref="dropdownButton"
+            type="button"
+            data-test="document-drop-down-button"
+            v-bind:aria-label="$gettext(`Open dropdown menu`)"
         >
-            <i class="fa fa-ellipsis-h" v-if="! isAppended"></i>
-            <i class="fa fa-caret-down" v-bind:class="{ 'tlp-button-icon-right': ! isAppended }"></i>
+            <i class="fa fa-ellipsis-h" v-if="!isAppended"></i>
+            <i class="fa fa-caret-down" v-bind:class="{ 'tlp-button-icon-right': !isAppended }"></i>
         </button>
         <slot></slot>
     </div>
 </template>
 
 <script>
-import { dropdown as createDropdown } from "tlp";
+import { createDropdown } from "tlp";
 import EventBus from "../../../helpers/event-bus.js";
 
 export default {
@@ -48,8 +50,8 @@ export default {
         isInQuickLookMode: Boolean,
         isAppended: {
             type: Boolean,
-            default: true
-        }
+            default: true,
+        },
     },
     data() {
         return { dropdown: null };
@@ -67,7 +69,7 @@ export default {
             if (this.dropdown && this.dropdown.is_shown) {
                 this.dropdown.hide();
             }
-        }
-    }
+        },
+    },
 };
 </script>

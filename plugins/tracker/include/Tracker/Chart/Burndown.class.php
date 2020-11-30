@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,6 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Chart\Chart;
 
 /**
  * I'm responsible of
@@ -31,31 +32,19 @@ class Tracker_Chart_Burndown
      */
     private $burndown_data;
 
-    private $start_date;
     private $duration = 10;
     protected $title = '';
     protected $description = '';
     protected $width = 640;
     protected $height = 480;
 
-    private $graph_data_ideal_burndown   = array();
-    private $graph_data_human_dates      = array();
-    private $graph_data_remaining_effort = array();
+    private $graph_data_ideal_burndown   = [];
+    private $graph_data_human_dates      = [];
+    private $graph_data_remaining_effort = [];
 
     public function __construct(GraphOnTrackersV5_Burndown_Data $burndown_data)
     {
         $this->burndown_data = $burndown_data;
-        $this->start_date    = $burndown_data->getTimePeriod()->getStartDate();
-    }
-
-    public function setStartDate($start_date)
-    {
-        $this->start_date = round($start_date);
-    }
-
-    public function setStartDateInDays($start_date)
-    {
-        $this->start_date = $start_date;
     }
 
     public function setDuration($duration)
@@ -105,7 +94,7 @@ class Tracker_Chart_Burndown
         $date           = new DateTime();
         $date->setTimestamp($this->burndown_data->getTimePeriod()->getStartDate());
 
-        $data                  = array();
+        $data                  = [];
         $last_remaining_effort = null;
 
         foreach ($remaining_effort as $day => $effort) {
@@ -122,18 +111,18 @@ class Tracker_Chart_Burndown
             if ($date->getTimestamp() <= time()) {
                 if (isset($remaining_effort[$date->format('Ymd')])) {
                     foreach ($remaining_effort[$date->format('Ymd')] as $artifact => $value) {
-                        if (isset($last_remaining_effort[$artifact])) {
+                        if ($last_remaining_effort !== null && isset($last_remaining_effort[$artifact])) {
                             unset($last_remaining_effort[$artifact]);
                         }
 
                         $last_remaining_effort[$artifact] = $value;
                     }
 
-                    $data[$date->format('D d')] = array(array_sum($last_remaining_effort));
+                    $data[$date->format('D d')] = [array_sum($last_remaining_effort ?? [])];
                 } else {
                     if ($last_remaining_effort) {
-                        $data[$date->format('D d')] = array(array_sum($last_remaining_effort));
-                        $last_remaining_effort[$date->format('Ymd')] = array(array_sum($last_remaining_effort));
+                        $data[$date->format('D d')] = [array_sum($last_remaining_effort)];
+                        $last_remaining_effort[$date->format('Ymd')] = [array_sum($last_remaining_effort)];
                     } else {
                         $data[$date->format('D d')] = null;
                     }

@@ -20,14 +20,9 @@
 
 namespace Tuleap\Project\Admin;
 
-use EventManager;
-use ForgeConfig;
-use Project;
-use ProjectManager;
 use TemplateSingleton;
 use UserManager;
 use UserHelper;
-use Tuleap\Layout\PaginationPresenter;
 
 class ProjectHistoryResultsPresenter
 {
@@ -42,7 +37,7 @@ class ProjectHistoryResultsPresenter
 
     private function getHistoryResultPresenter($history)
     {
-        $presenters = array();
+        $presenters = [];
 
         foreach ($history as $row) {
             $field = $row['field_name'];
@@ -52,6 +47,7 @@ class ProjectHistoryResultsPresenter
             // If msg_key cannot be found in the localized message
             // catalog then display the msg has is because this is very
             // likely a legacy message (pre-localization version)
+            $arr_args = '';
             if (strpos($field, " %% ") !== false) {
                 list($msg_key, $args) = explode(" %% ", $field);
                 if ($args) {
@@ -61,7 +57,7 @@ class ProjectHistoryResultsPresenter
                 $msg_key  = $field;
                 $arr_args = "";
             }
-            $msg = $GLOBALS['Language']->getText('project_admin_utils', $msg_key, $arr_args);
+            $msg = $GLOBALS['Language']->getOverridableText('project_admin_utils', $msg_key, $arr_args);
             if (strpos($msg, "*** Unkown msg") !== false) {
                 $msg = $field;
             }
@@ -69,16 +65,16 @@ class ProjectHistoryResultsPresenter
             $value = $this->getEventValue($row, $msg_key);
             $user  = UserManager::instance()->getUserByUserName($row['user_name']);
 
-            $presenters[] = array(
+            $presenters[] = [
                 'event' => $msg,
                 'value' => $value,
                 'date'  => format_date($GLOBALS['Language']->getText('system', 'datefmt'), $row['date']),
-                'user'  => array(
+                'user'  => [
                     'id'           => $user->getId(),
                     'display_name' => UserHelper::instance()->getDisplayNameFromUser($user),
                     'is_none'      => $user->isNone()
-                )
-            );
+                ]
+            ];
         }
 
         return $presenters;
@@ -88,7 +84,8 @@ class ProjectHistoryResultsPresenter
     {
         $val = $row['old_value'];
 
-        if (strstr($msg_key, "perm_granted_for_")
+        if (
+            strstr($msg_key, "perm_granted_for_")
             || strstr($msg_key, "perm_reset_for_")
             || strstr($msg_key, "membership_request_updated")
         ) {
@@ -96,9 +93,9 @@ class ProjectHistoryResultsPresenter
             $val = '';
             foreach ($ugroup_list as $ugroup) {
                 if ($val) {
-                    $val.=', ';
+                    $val .= ', ';
                 }
-                $val .= util_translate_name_ugroup($ugroup);
+                $val .= \Tuleap\User\UserGroup\NameTranslator::getUserGroupDisplayKey((string) $ugroup);
             }
         } elseif ($msg_key == "group_type") {
             $val = TemplateSingleton::instance()->getLabel($val);

@@ -18,12 +18,18 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Workflow\PostAction\ExternalPostActionSaveObjectEvent;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFields;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsFactory;
+use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsRetriever;
+use Tuleap\Tracker\Workflow\PostAction\GetExternalSubFactoriesEvent;
+use Tuleap\Tracker\Workflow\PostAction\GetExternalSubFactoryByNameEvent;
+use Tuleap\Tracker\Workflow\PostAction\GetPostActionShortNameFromXmlTagNameEvent;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsets;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsFactory;
+use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsRetriever;
 
 /**
  * Collection of subfactories to CRUD postactions. Uniq entry point from the transition point of view.
@@ -31,15 +37,24 @@ use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsFactory;
 // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 class Transition_PostActionFactory
 {
+    /**
+     * @var EventManager
+     */
+    private $event_manager;
 
-    private $shortnames_by_xml_tag_name = array(
+    public function __construct(EventManager $event_manager)
+    {
+        $this->event_manager = $event_manager;
+    }
+
+    private $shortnames_by_xml_tag_name = [
         Transition_PostAction_Field_Float::XML_TAG_NAME => Transition_PostAction_Field_Float::SHORT_NAME,
         Transition_PostAction_Field_Int::XML_TAG_NAME   => Transition_PostAction_Field_Int::SHORT_NAME,
         Transition_PostAction_Field_Date::XML_TAG_NAME  => Transition_PostAction_Field_Date::SHORT_NAME,
         Transition_PostAction_CIBuild::XML_TAG_NAME     => Transition_PostAction_CIBuild::SHORT_NAME,
         FrozenFields::XML_TAG_NAME                      => FrozenFields::SHORT_NAME,
         HiddenFieldsets::XML_TAG_NAME                   => HiddenFieldsets::SHORT_NAME
-    );
+    ];
 
     /** @var Transition_PostAction_FieldFactory */
     private $postaction_field_factory;
@@ -53,44 +68,17 @@ class Transition_PostActionFactory
     /** @var HiddenFieldsetsFactory */
     private $hidden_fieldsets_factory;
 
-    /**
-     * Get html code to let someone choose a post action for a transition
-     *
-     * @return string html
-     */
-    public function fetchPostActions()
+    public function warmUpCacheForWorkflow(Workflow $workflow): void
     {
-        $html  = '';
-        $html .= '<p>'.$GLOBALS['Language']->getText('workflow_admin', 'add_new_action');
-        $html .= '<select name="add_postaction">';
-        $html .= $this->getSubFactories()->fetchPostActions();
-        $html .= '</select>';
-        return $html;
-    }
-
-    /**
-     * Create a new post action for the transition
-     *
-     * @param Transition $transition           On wich transition we should add the post action
-     * @param string     $requested_postaction The type of post action
-     *
-     * @return void
-     */
-    public function addPostAction(Transition $transition, $requested_postaction)
-    {
-        $this->getSubFactory($requested_postaction)->addPostAction($transition, $requested_postaction);
+        $this->getSubFactories()->warmUpCacheForWorkflow($workflow);
     }
 
     /**
      * Load the post actions that belong to a transition
-     *
-     * @param Transition $transition The transition
-     *
-     * @return void
      */
-    public function loadPostActions(Transition $transition)
+    public function loadPostActions(Transition $transition): void
     {
-        return $this->getSubFactories()->loadPostActions($transition);
+        $this->getSubFactories()->loadPostActions($transition);
     }
 
     /**
@@ -108,8 +96,11 @@ class Transition_PostActionFactory
             $this->getFrozenFieldsFactory()->saveObject($post_action);
         } elseif ($post_action instanceof HiddenFieldsets) {
             $this->getHiddenFieldsetsFactory()->saveObject($post_action);
-        } else {
+        } elseif ($post_action instanceof Transition_PostAction_CIBuild) {
             $this->getCIBuildFactory()->saveObject($post_action);
+        } else {
+            $event = new ExternalPostActionSaveObjectEvent($post_action);
+            $this->event_manager->processEvent($event);
         }
     }
 
@@ -126,22 +117,11 @@ class Transition_PostActionFactory
     }
 
     /**
-     * Delete a workflow
-     *
-     * @param int $workflow_id the id of the workflow
-     *
-     */
-    public function deleteWorkflow($workflow_id)
-    {
-        return $this->getSubFactories()->deleteWorkflow($workflow_id);
-    }
-
-    /**
      * Duplicate postactions of a transition
      *
      * @param Transition $from_transition the template transition
      * @param int $to_transition_id the id of the transition
-     * @param Array $field_mapping the field mapping
+     * @param array $field_mapping the field mapping
      */
     public function duplicate(Transition $from_transition, $to_transition_id, array $field_mapping)
     {
@@ -159,7 +139,7 @@ class Transition_PostActionFactory
      */
     public function getInstanceFromXML($xml, &$xmlMapping, Transition $transition)
     {
-        $post_actions  = array();
+        $post_actions  = [];
         foreach ($xml->children() as $child) {
             $short_name = $this->deductPostActionShortNameFromXmlTagName($child->getName());
             $subfactory = $this->getSubFactory($short_name);
@@ -192,29 +172,41 @@ class Transition_PostActionFactory
         $this->hidden_fieldsets_factory = $hidden_fieldsets_factory;
     }
 
-    /** @return Transition_PostActionSubFactory */
+    /**
+     * @return Transition_PostActionSubFactory
+     * @throws Transition_PostAction_NotFoundException
+     */
     private function getSubFactory($post_action_short_name)
     {
         $field_factory = $this->getFieldFactory();
-        $factories     = array(
+        $factories     = [
             Transition_PostAction_Field_Float::SHORT_NAME => $field_factory,
             Transition_PostAction_Field_Int::SHORT_NAME   => $field_factory,
             Transition_PostAction_Field_Date::SHORT_NAME  => $field_factory,
             Transition_PostAction_CIBuild::SHORT_NAME     => $this->getCIBuildFactory(),
             FrozenFields::SHORT_NAME                      => $this->getFrozenFieldsFactory(),
             HiddenFieldsets::SHORT_NAME                   => $this->getHiddenFieldsetsFactory()
-        );
+        ];
 
         if (isset($factories[$post_action_short_name])) {
             return $factories[$post_action_short_name];
         }
+
+        $event = new GetExternalSubFactoryByNameEvent($post_action_short_name);
+        $this->event_manager->processEvent($event);
+
+        $factory = $event->getFactory();
+        if ($factory !== null) {
+            return $factory;
+        }
+
         throw new Transition_PostAction_NotFoundException('Invalid Post Action type');
     }
 
     /** @return Transition_PostAction_FieldFactory */
     private function getFieldFactory()
     {
-        if (!$this->postaction_field_factory) {
+        if (! $this->postaction_field_factory) {
             $this->postaction_field_factory = new Transition_PostAction_FieldFactory(
                 Tracker_FormElementFactory::instance(),
                 new Transition_PostAction_Field_DateDao(),
@@ -228,7 +220,7 @@ class Transition_PostActionFactory
     /** @return Transition_PostAction_CIBuildFactory */
     private function getCIBuildFactory()
     {
-        if (!$this->postaction_cibuild_factory) {
+        if (! $this->postaction_cibuild_factory) {
             $this->postaction_cibuild_factory = new Transition_PostAction_CIBuildFactory(
                 new Transition_PostAction_CIBuildDao()
             );
@@ -241,7 +233,7 @@ class Transition_PostActionFactory
         if (! $this->frozen_fields_factory) {
             $this->frozen_fields_factory = new FrozenFieldsFactory(
                 new FrozenFieldsDao(),
-                Tracker_FormElementFactory::instance()
+                FrozenFieldsRetriever::instance(),
             );
         }
         return $this->frozen_fields_factory;
@@ -252,7 +244,7 @@ class Transition_PostActionFactory
         if (! $this->hidden_fieldsets_factory) {
             $this->hidden_fieldsets_factory = new HiddenFieldsetsFactory(
                 new HiddenFieldsetsDao(),
-                Tracker_FormElementFactory::instance()
+                HiddenFieldsetsRetriever::instance(),
             );
         }
         return $this->hidden_fieldsets_factory;
@@ -268,6 +260,11 @@ class Transition_PostActionFactory
             $this->getHiddenFieldsetsFactory(),
         ];
 
+        $event = new GetExternalSubFactoriesEvent();
+        $this->event_manager->processEvent($event);
+
+        $sub_factories = array_merge($sub_factories, $event->getFactories());
+
         return new Transition_PostActionSubFactories($sub_factories);
     }
 
@@ -276,6 +273,13 @@ class Transition_PostActionFactory
     {
         if (isset($this->shortnames_by_xml_tag_name[$xml_tag_name])) {
             return $this->shortnames_by_xml_tag_name[$xml_tag_name];
+        }
+
+        $event = new GetPostActionShortNameFromXmlTagNameEvent($xml_tag_name);
+        $this->event_manager->processEvent($event);
+
+        if ($event->getPostActionShortName() !== '') {
+            return $event->getPostActionShortName();
         }
     }
 }

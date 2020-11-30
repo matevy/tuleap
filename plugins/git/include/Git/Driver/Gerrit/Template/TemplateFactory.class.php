@@ -39,13 +39,11 @@ class Git_Driver_Gerrit_Template_TemplateFactory
     /**
      * Get all templates of a project
      *
-     * @param Project
-     *
      * @return Git_Driver_Gerrit_Template_Template[]
      */
     public function getAllTemplatesOfProject(Project $project)
     {
-        $templates      = array();
+        $templates      = [];
         $templates_rows = $this->dao->getAllTemplatesOfProject($project->getId());
 
         foreach ($templates_rows as $row) {
@@ -80,7 +78,7 @@ class Git_Driver_Gerrit_Template_TemplateFactory
     public function getTemplatesAvailableForProject(Project $project)
     {
         if ($project->isError()) {
-            return array();
+            return [];
         }
 
         $templates = array_merge(
@@ -95,16 +93,15 @@ class Git_Driver_Gerrit_Template_TemplateFactory
      * Get All templates for projects higher in hierarchy. Does not include
      * templates for project itself.
      *
-     * @param Project $project
      * @return Git_Driver_Gerrit_Template_Template[]
      */
     public function getTemplatesAvailableForParentProjects(Project $project)
     {
         if ($project->isError()) {
-            return array();
+            return [];
         }
 
-        $templates       = array();
+        $templates       = [];
         $project_manager = ProjectManager::instance();
         $projects        = $project_manager->getAllParentsProjects($project->getId());
 
@@ -133,8 +130,8 @@ class Git_Driver_Gerrit_Template_TemplateFactory
     /**
      * Instatiate a Template from a SQL row
      *
-     * @param array
-     * @return Git_Driver_Gerrit_Template_Template[] | false -where the array is in DAR format
+     * @param array $row
+     * @return Git_Driver_Gerrit_Template_Template -where the array is in DAR format
      */
     private function instantiateTemplateFromRow(array $row)
     {
@@ -147,7 +144,6 @@ class Git_Driver_Gerrit_Template_TemplateFactory
     }
 
     /**
-     * @param Git_Driver_Gerrit_Template_Template $template
      * @return bool
      */
     public function updateTemplate(Git_Driver_Gerrit_Template_Template $template)

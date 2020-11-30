@@ -188,7 +188,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
             return TemplateFromProjectForCreation::fromSOAPServer($project_id, $requester, $this->projectManager);
         } catch (ProjectTemplateIDInvalidException $exception) {
             throw new SoapFault('3100', 'Invalid template id ' . $project_id);
-        } catch (ProjectTemplateNotActiveException|InsufficientPermissionToUseProjectAsTemplateException $ex) {
+        } catch (ProjectTemplateNotActiveException | InsufficientPermissionToUseProjectAsTemplateException $ex) {
             throw new SoapFault('3104', 'Project is not a template');
         }
     }
@@ -221,14 +221,14 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
      */
     private function formatDataAndCreateProject($shortName, $publicName, $privacy, TemplateFromProjectForCreation $template_for_project_creation)
     {
-        $data = array(
-            'project' => array(
+        $data = [
+            'project' => [
                 'form_short_description' => '',
                 'is_test'                => false,
                 'is_public'              => false,
-                'services'               => array(),
-            )
-        );
+                'services'               => [],
+            ]
+        ];
 
         if ($privacy === Project::ACCESS_PUBLIC) {
             $data['project']['is_public'] = true;
@@ -319,7 +319,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
         $this->getProjectIfUserIsAdmin($groupId, $sessionKey);
         if ($user = $this->userManager->getUserById($userId)) {
             try {
-                $ugroup = new ProjectUGroup(array('ugroup_id' => $ugroupId, 'group_id' => $groupId));
+                $ugroup = new ProjectUGroup(['ugroup_id' => $ugroupId, 'group_id' => $groupId]);
                 $ugroup->addUser($user);
             } catch (Exception $e) {
                 throw new SoapFault((string) $e->getCode(), $e->getMessage());
@@ -352,7 +352,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
         $this->getProjectIfUserIsAdmin($groupId, $sessionKey);
         if ($user = $this->userManager->getUserById($userId)) {
             try {
-                $ugroup = new ProjectUGroup(array('ugroup_id' => $ugroupId, 'group_id' => $groupId));
+                $ugroup = new ProjectUGroup(['ugroup_id' => $ugroupId, 'group_id' => $groupId]);
                 $ugroup->removeUser($user);
             } catch (Exception $e) {
                 throw new SoapFault((string) $e->getCode(), $e->getMessage());
@@ -373,20 +373,19 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
      *
      * @return UserInfo
      */
-    public function setProjectGenericUser($session_key, $group_id, $password)
+    public function setProjectGenericUser($session_key, $group_id, string $password)
     {
+        $concealed_password = new \Tuleap\Cryptography\ConcealedString($password);
+        sodium_memzero($password);
         if (! $this->isRequesterAdmin($session_key, $group_id)) {
             throw new SoapFault('3201', 'Permission denied: need to be project admin.');
         }
         $user = $this->generic_user_factory->fetch($group_id);
 
         if (! $user) {
-            $user = $this->generic_user_factory->create($group_id, $password);
-            if (! $user) {
-                throw new SoapFault('3105', "Generic User creation failure");
-            }
+            $user = $this->generic_user_factory->create($group_id, $concealed_password);
         } else {
-            $user->setPassword($password);
+            $user->setPassword($concealed_password);
             $this->generic_user_factory->update($user);
         }
 
@@ -403,7 +402,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
     /**
      *
      * @param String  $session_key  The project admin session hash
-     * @param int $groupId The Project id where the Generic user is
+     * @param int $group_id The Project id where the Generic user is
      */
     public function unsetGenericUser($session_key, $group_id)
     {
@@ -452,10 +451,9 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
      */
     public function getPlateformProjectDescriptionFields($sessionKey)
     {
-
         $this->continueSession($sessionKey);
         $project_desc_fields = $this->description_factory->getCustomDescriptions();
-        $soap_return = array();
+        $soap_return = [];
         if (empty($project_desc_fields)) {
                 throw new SoapFault('3107', "No custom project description fields");
         }
@@ -467,7 +465,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
 
     private function extractDescFieldSOAPDatas(Project_CustomDescription_CustomDescription $desc_field)
     {
-        $field_datas = array();
+        $field_datas = [];
         $field_datas['id']           = $desc_field->getId();
         $field_datas['name']         = $desc_field->getName();
         $field_datas['is_mandatory'] = $desc_field->isRequired();
@@ -556,7 +554,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
     public function getProjectServicesUsage($session_key, $group_id)
     {
         $project         = $this->getProjectIfUserIsAdmin($group_id, $session_key);
-        $soap_return     = array();
+        $soap_return     = [];
         $services_usages = $this->service_usage_factory->getAllServicesUsage($project);
 
         foreach ($services_usages as $services_usage) {
@@ -567,7 +565,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
 
     private function extractServicesUsageSOAPDatas(Project_Service_ServiceUsage $service_usage)
     {
-        $field_datas = array();
+        $field_datas = [];
         $field_datas['id']         = $service_usage->getId();
         $field_datas['short_name'] = $service_usage->getShortName();
         $field_datas['is_used']    = (int) $service_usage->isUsed();
@@ -629,7 +627,6 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
     /**
      * Return a user member of project
      *
-     * @param Project $project
      * @param String  $userLogin
      *
      * @return PFUser
@@ -637,7 +634,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
     private function getProjectMember(Project $project, $userLogin)
     {
         $user = $this->userManager->getUserByUserName($userLogin);
-        if (!$user) {
+        if (! $user) {
             throw new SoapFault('3202', "Invalid user login");
         }
         if ($user->isMember($project->getID())) {
@@ -657,7 +654,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
     private function getProjectIfUserIsAdmin($groupId, $sessionKey)
     {
         $project   = $this->projectManager->getProject($groupId);
-        if ($project && !$project->isError()) {
+        if ($project && ! $project->isError()) {
             if ($this->isRequesterAdmin($sessionKey, $project->getID())) {
                 return $project;
             }
@@ -683,7 +680,7 @@ class Project_SOAPServer // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNa
      */
     private function returnFeedbackToSoapFault($result)
     {
-        if (!$result) {
+        if (! $result) {
             $this->feedbackToSoapFault();
         }
         return $result;

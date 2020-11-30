@@ -26,7 +26,6 @@ use EventManager;
 use CSRFSynchronizerToken;
 use Response;
 use Codendi_Request;
-use TemplateRendererFactory;
 use Feedback;
 use Event;
 use Tuleap\Admin\AdminPageRenderer;
@@ -62,7 +61,7 @@ class MailGatewayConfigController
 
     public function index(CSRFSynchronizerToken $csrf, Response $response)
     {
-        $title = $GLOBALS['Language']->getText('plugin_tracker_config', 'title');
+        $title = dgettext('tuleap-tracker', 'Trackers');
 
         $this->admin_page_rendered->renderANoFramedPresenter(
             $title,
@@ -88,7 +87,7 @@ class MailGatewayConfigController
     {
         $emailgateway_mode = $request->get('emailgateway_mode');
         if ($emailgateway_mode && $this->config->setEmailgatewayMode($emailgateway_mode)) {
-            $response->addFeedback(Feedback::INFO, $GLOBALS['Language']->getText('plugin_tracker_config', 'successfully_updated'));
+            $response->addFeedback(Feedback::INFO, dgettext('tuleap-tracker', 'Successfully updated, the modification will be active in a few minutes.'));
         }
         $this->event_manager->processEvent(Event::UPDATE_ALIASES, null);
     }

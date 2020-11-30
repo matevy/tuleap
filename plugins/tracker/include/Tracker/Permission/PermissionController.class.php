@@ -66,13 +66,13 @@ class Tracker_Permission_PermissionController implements Tracker_Dispatchable_In
     private function save(Codendi_Request $request)
     {
         $permission_setter  = $this->getPermissionSetter();
-        $permission_request = new Tracker_Permission_PermissionRequest(array());
+        $permission_request = new Tracker_Permission_PermissionRequest([]);
         $permission_request->setFromRequest($request, $permission_setter->getAllGroupIds());
 
         $permission_manager = new Tracker_Permission_PermissionManager();
         $permission_manager->save($permission_request, $permission_setter);
 
-        $GLOBALS['Response']->redirect(TRACKER_BASE_URL . '/?tracker=' . $this->tracker->getId().'&func=admin-perms-tracker');
+        $GLOBALS['Response']->redirect(TRACKER_BASE_URL . '/?tracker=' . $this->tracker->getId() . '&func=admin-perms-tracker');
     }
 
     private function getPermissionSetter()

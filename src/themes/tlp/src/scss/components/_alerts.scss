@@ -1,0 +1,113 @@
+/**
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+%tlp-alert {
+    position: relative;
+    margin: 0 0 $tlp-medium-spacing;
+    padding: $tlp-medium-spacing $tlp-medium-spacing $tlp-medium-spacing 42px;
+    border-left: 5px solid transparent;
+    border-radius: 4px;
+    font-size: 1rem;
+    line-height: 1.5rem;
+
+    &:last-child {
+        margin: 0;
+    }
+
+    &::before {
+        display: inline-block;
+        position: absolute;
+        top: $tlp-medium-spacing + 1px;
+        left: $tlp-medium-spacing;
+        font-family: 'Font Awesome 5 Free';
+        font-size: 1.125rem;
+    }
+
+    code {
+        color: inherit;
+    }
+}
+
+.tlp-alert-info {
+    @extend %tlp-alert;
+
+    border-left-color: $tlp-ui-info;
+    background: desaturate(lighten(mix($tlp-ui-white, $tlp-ui-info, 25%), 23%), 15%);
+    color: darken($tlp-ui-info, 30%);
+
+    &::before {
+        content: '\f05a'; // fa-info-circle
+        font-weight: 900;
+    }
+
+    code {
+        background: transparentize($tlp-ui-info, .9);
+    }
+}
+
+.tlp-alert-success {
+    @extend %tlp-alert;
+
+    border-left-color: $tlp-ui-success;
+    background: desaturate(lighten(mix($tlp-ui-white, $tlp-ui-success, 25%), 26%), 15%);
+    color: darken($tlp-ui-success, 20%);
+
+    &::before {
+        content: '\f164'; // fa-thumbs-up
+        font-weight: 400;
+    }
+
+    code {
+        background: transparentize($tlp-ui-success, .9);
+    }
+}
+
+.tlp-alert-warning {
+    @extend %tlp-alert;
+
+    border-left-color: $tlp-ui-warning;
+    background: desaturate(lighten(mix($tlp-ui-white, $tlp-ui-warning, 20%), 23%), 15%);
+    color: saturate(darken($tlp-ui-warning, 30%), 10%);
+
+    &::before {
+        content: '\f071'; // fa-exclamation-triangle
+        font-weight: 900;
+    }
+
+    code {
+        background: transparentize($tlp-ui-warning, .9);
+    }
+}
+
+.tlp-alert-danger {
+    @extend %tlp-alert;
+
+    border-left-color: $tlp-ui-danger;
+    background: desaturate(lighten(mix($tlp-ui-white, $tlp-ui-danger, 25%), 23%), 15%);
+    color: darken($tlp-ui-danger, 15%);
+
+    &::before {
+        content: '\f06a'; // fa-exclamation-circle
+        font-weight: 900;
+    }
+
+    code {
+        background: transparentize($tlp-ui-danger, .9);
+    }
+}

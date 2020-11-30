@@ -11,9 +11,9 @@ rcs_id('$Id: BogoLogin.php,v 1.6 2005/08/06 13:21:37 rurban Exp $');
 class _BogoLoginPassUser extends _PassUser
 {
 
-    var $_authmethod = 'BogoLogin';
+    public $_authmethod = 'BogoLogin';
 
-    function userExists()
+    public function userExists()
     {
         if (isWikiWord($this->_userid)) {
             $this->_level = WIKIAUTH_BOGO;
@@ -27,7 +27,7 @@ class _BogoLoginPassUser extends _PassUser
     /** A BogoLoginUser requires no password at all
      *  But if there's one stored, we override it with the PersonalPagePassUser instead
      */
-    function checkPass($submitted_password)
+    public function checkPass($submitted_password)
     {
         if ($this->_prefs->get('passwd')) {
             if (isset($this->_prefs->_method) and $this->_prefs->_method == 'HomePage') {

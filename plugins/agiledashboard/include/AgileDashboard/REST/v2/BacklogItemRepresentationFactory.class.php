@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,17 +28,14 @@ class BacklogItemRepresentationFactory
 
     public function createBacklogItemRepresentation(AgileDashboard_Milestone_Backlog_IBacklogItem $backlog_item)
     {
-        $backlog_item_representation = new BacklogItemRepresentation();
-        $backlog_item_representation->build($backlog_item, $this->getBacklogItemCardFields($backlog_item));
-
-        return $backlog_item_representation;
+        return BacklogItemRepresentation::build($backlog_item, $this->getBacklogItemCardFields($backlog_item));
     }
 
     private function getBacklogItemCardFields($backlog_item)
     {
         $current_user         = UserManager::instance()->getCurrentUser();
         $card_fields_semantic = $this->getCardFieldsSemantic($backlog_item);
-        $card_fields          = array();
+        $card_fields          = [];
 
         foreach ($card_fields_semantic->getFields() as $field) {
             if ($field->userCanRead($current_user)) {
@@ -55,10 +52,10 @@ class BacklogItemRepresentationFactory
 
         EventManager::instance()->processEvent(
             AGILEDASHBOARD_EVENT_GET_CARD_FIELDS,
-            array(
+            [
                 'tracker'              => $backlog_item->getArtifact()->getTracker(),
                 'card_fields_semantic' => &$card_fields_semantic
-            )
+            ]
         );
 
         return $card_fields_semantic;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -63,7 +63,7 @@ class DiskUsagePieDisplayer
             $quota = $custom_quota;
         }
 
-        $allowed_quota = $quota * (1024*1024*1024);
+        $allowed_quota = $quota * (1024 * 1024 * 1024);
 
         if ($used_proportion > $allowed_quota) {
             $used_proportion = $allowed_quota;
@@ -84,8 +84,8 @@ class DiskUsagePieDisplayer
         $renderer  = TemplateRendererFactory::build()->getRenderer(STATISTICS_TEMPLATE_DIR);
 
         $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../../src/www/assets/statistics/scripts',
-            '/assets/statistics/scripts'
+            __DIR__ . '/../../../../src/www/assets/statistics',
+            '/assets/statistics'
         );
 
         $GLOBALS['HTML']->includeFooterJavascriptFile(

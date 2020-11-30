@@ -19,10 +19,10 @@
 
 <template>
     <div v-if="has_recursion_metadata" data-test="document-folder-default-properties-container">
-        <hr class="tlp-modal-separator">
+        <hr class="tlp-modal-separator" />
         <div class="document-modal-other-information-title-container">
             <div
-                v-if="! has_loaded_metadata"
+                v-if="!has_loaded_metadata"
                 class="document-modal-other-information-title-container-spinner"
                 data-test="document-folder-default-properties-spinner"
             >
@@ -32,10 +32,14 @@
         </div>
         <template v-if="has_loaded_metadata">
             <p v-translate data-test="document-folder-default-properties">
-                All the properties values that you define here will be proposed as default values for the items that will be created within this folder.
+                All the properties values that you define here will be proposed as default values
+                for the items that will be created within this folder.
             </p>
-            <status-metadata-with-custom-binding-for-folder-create  v-bind:currently-updated-item="currentlyUpdatedItem" v-bind:parent="parent"/>
-            <custom-metadata v-bind:item-metadata="currentlyUpdatedItem.metadata"/>
+            <status-metadata-with-custom-binding-for-folder-create
+                v-bind:currently-updated-item="currentlyUpdatedItem"
+                v-bind:parent="parent"
+            />
+            <custom-metadata v-bind:item-metadata="currentlyUpdatedItem.metadata" />
         </template>
     </div>
 </template>
@@ -50,7 +54,7 @@ export default {
     components: { CustomMetadata, StatusMetadataWithCustomBindingForFolderCreate },
     props: {
         currentlyUpdatedItem: Object,
-        parent: Object
+        parent: Object,
     },
     computed: {
         ...mapState(["is_item_status_metadata_used"]),
@@ -61,12 +65,12 @@ export default {
                 (this.currentlyUpdatedItem.metadata &&
                     this.currentlyUpdatedItem.metadata.length > 0)
             );
-        }
+        },
     },
     mounted() {
         if (!this.has_loaded_metadata) {
             this.$store.dispatch("metadata/loadProjectMetadata", [this.$store]);
         }
-    }
+    },
 };
 </script>

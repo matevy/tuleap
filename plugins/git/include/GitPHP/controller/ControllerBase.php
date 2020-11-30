@@ -47,7 +47,7 @@ abstract class ControllerBase
      *
      * @access protected
      */
-    protected $params = array();
+    protected $params = [];
 
     /**
      * headers
@@ -56,7 +56,7 @@ abstract class ControllerBase
      *
      * @access protected
      */
-    protected $headers = array();
+    protected $headers = [];
 
     /**
      * __construct
@@ -69,7 +69,7 @@ abstract class ControllerBase
      */
     public function __construct()
     {
-        $this->tpl = new \Smarty;
+        $this->tpl = new \Smarty();
         $this->tpl->plugins_dir[] = __DIR__ . '/../smartyplugins';
         $this->tpl->plugins_dir[] = __DIR__ . '/../../../vendor/smarty-gettext/smarty-gettext';
         $this->tpl->template_dir  = __DIR__ . '/../../../templates/gitphp/';
@@ -77,18 +77,18 @@ abstract class ControllerBase
         // Use a dedicated directory for smarty temporary files if needed.
         if (Config::GetInstance()->HasKey('smarty_tmp')) {
             $smarty_tmp = Config::GetInstance()->GetValue('smarty_tmp');
-            if (!is_dir($smarty_tmp)) {
+            if (! is_dir($smarty_tmp)) {
                 mkdir($smarty_tmp, 0755, true);
             }
 
-            $templates_c = $smarty_tmp.'/templates_c';
-            if (!is_dir($templates_c)) {
+            $templates_c = $smarty_tmp . '/templates_c';
+            if (! is_dir($templates_c)) {
                 mkdir($templates_c, 0755, true);
             }
             $this->tpl->compile_dir = $templates_c;
 
-            $cache = $smarty_tmp.'/cache';
-            if (!is_dir($cache)) {
+            $cache = $smarty_tmp . '/cache';
+            if (! is_dir($cache)) {
                 mkdir($cache, 0755, true);
             }
             $this->tpl->cache_dir = $cache;

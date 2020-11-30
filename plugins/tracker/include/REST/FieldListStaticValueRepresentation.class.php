@@ -22,7 +22,6 @@ namespace Tuleap\Tracker\REST;
 
 use Tracker_FormElement_Field_List_Value;
 use Tuleap\REST\JsonCast;
-use Project;
 
 class FieldListStaticValueRepresentation
 {
@@ -45,6 +44,6 @@ class FieldListStaticValueRepresentation
     {
         $this->id               = JsonCast::toInt($value->getId());
         $this->label            = $value->getLabel();
-        $this->is_hidden        = (bool)$value->isHidden();
+        $this->is_hidden        = (bool) $value->isHidden();
     }
 }

@@ -88,24 +88,23 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject
         return $this->retrieveFirstRow($sql);
     }
 
-    public function create($artifact_id, $submitted_by, $email, $submitted_on)
-    {
+    public function create(
+        $artifact_id,
+        $submitted_by,
+        $email,
+        $submitted_on
+    ) {
         $artifact_id  = $this->da->escapeInt($artifact_id);
         $submitted_by = $this->da->escapeInt($submitted_by);
-        if (!$submitted_by) {
+        if (! $submitted_by) {
             $submitted_by = 'NULL';
         }
         $submitted_on = $this->da->escapeInt($submitted_on);
         $email        = $email ? $this->da->quoteSmart($email) : 'NULL';
-        $sql = "INSERT INTO $this->table_name (artifact_id, submitted_by, submitted_on, email)
+        $sql = "INSERT INTO tracker_changeset (artifact_id, submitted_by, submitted_on, email)
                 VALUES ($artifact_id, $submitted_by, $submitted_on, $email)";
-        if ($changeset_id = $this->updateAndGetLastId($sql)) {
-            $uql = "UPDATE tracker_artifact
-                    SET last_changeset_id = $changeset_id
-                    WHERE id = $artifact_id";
-            $this->update($uql);
-        }
-        return $changeset_id;
+
+        return $this->updateAndGetLastId($sql);
     }
 
     public function delete($changeset_id)
@@ -135,8 +134,8 @@ class Tracker_Artifact_ChangesetDao extends DataAccessObject
         $sql        = "SELECT MAX(c.id) AS id, c.artifact_id FROM
                          tracker_changeset c
                          JOIN tracker_artifact a ON c.artifact_id = a.id
-                         WHERE DATE(FROM_UNIXTIME(c.submitted_on)) BETWEEN DATE(FROM_UNIXTIME(".$minDate.")) AND DATE(FROM_UNIXTIME(".$maxDate."))
-                           AND a.tracker_id = ".$trackerId."
+                         WHERE DATE(FROM_UNIXTIME(c.submitted_on)) BETWEEN DATE(FROM_UNIXTIME(" . $minDate . ")) AND DATE(FROM_UNIXTIME(" . $maxDate . "))
+                           AND a.tracker_id = " . $trackerId . "
                          GROUP BY c.artifact_id";
         return $this->retrieve($sql);
     }

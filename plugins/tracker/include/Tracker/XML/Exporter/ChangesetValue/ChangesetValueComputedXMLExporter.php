@@ -21,10 +21,10 @@
 namespace Tuleap\Tracker\XML\Exporter\ChangesetValue;
 
 use PFUser;
-use Tracker_XML_Exporter_ChangesetValue_ChangesetValueFloatXMLExporter;
 use SimpleXMLElement;
-use Tracker_Artifact;
 use Tracker_Artifact_ChangesetValue;
+use Tracker_XML_Exporter_ChangesetValue_ChangesetValueFloatXMLExporter;
+use Tuleap\Tracker\Artifact\Artifact;
 use XML_SimpleXMLCDATAFactory;
 
 class ChangesetValueComputedXMLExporter extends Tracker_XML_Exporter_ChangesetValue_ChangesetValueFloatXMLExporter
@@ -53,7 +53,7 @@ class ChangesetValueComputedXMLExporter extends Tracker_XML_Exporter_ChangesetVa
     public function export(
         SimpleXMLElement $artifact_xml,
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_Artifact_ChangesetValue $changeset_value
     ) {
         if ($this->isCurrentChangesetTheLastChangeset($artifact, $changeset_value)) {
@@ -63,9 +63,29 @@ class ChangesetValueComputedXMLExporter extends Tracker_XML_Exporter_ChangesetVa
         }
     }
 
+    private function isCurrentChangesetTheLastChangeset(
+        Artifact $artifact,
+        Tracker_Artifact_ChangesetValue $current_changeset_value
+    ) {
+        $field          = $current_changeset_value->getField();
+        $last_changeset = $artifact->getLastChangeset();
+
+        if (! $last_changeset) {
+            return false;
+        }
+
+        $last_changeset_value = $last_changeset->getValue($field);
+
+        if (! $last_changeset_value) {
+            return false;
+        }
+
+        return ($last_changeset_value->getId() === $current_changeset_value->getId());
+    }
+
     private function exportLastChangeset(
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_Artifact_ChangesetValue $changeset_value
     ) {
         if ($this->is_in_archive_context) {
@@ -90,12 +110,13 @@ class ChangesetValueComputedXMLExporter extends Tracker_XML_Exporter_ChangesetVa
 
     private function exportLastChangesetInArchiveContext(
         SimpleXMLElement $changeset_xml,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_Artifact_ChangesetValue $changeset_value
     ) {
         $number_of_changeset = count($artifact->getChangesets());
 
-        if ($number_of_changeset === 1 ||
+        if (
+            $number_of_changeset === 1 ||
             ($number_of_changeset > 1 && ! $changeset_value->isManualValue()) ||
             $this->previousChangesetIsNotInManualValue($artifact, $changeset_value, $number_of_changeset)
         ) {
@@ -105,7 +126,7 @@ class ChangesetValueComputedXMLExporter extends Tracker_XML_Exporter_ChangesetVa
     }
 
     private function previousChangesetIsNotInManualValue(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Tracker_Artifact_ChangesetValue $changeset_value,
         $number_of_changeset
     ) {
@@ -140,7 +161,7 @@ class ChangesetValueComputedXMLExporter extends Tracker_XML_Exporter_ChangesetVa
     /**
      * @return float
      */
-    private function getLastComputedValue(Tracker_Artifact $artifact, Tracker_Artifact_ChangesetValue $changeset_value)
+    private function getLastComputedValue(Artifact $artifact, Tracker_Artifact_ChangesetValue $changeset_value)
     {
         $computed_value = $changeset_value->getField()->getComputedValue(
             $this->current_user,

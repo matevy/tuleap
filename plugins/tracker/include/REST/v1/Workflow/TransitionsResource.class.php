@@ -20,7 +20,9 @@
 
 namespace Tuleap\Tracker\REST\v1\Workflow;
 
+use EventManager;
 use Luracast\Restler\RestException;
+use Psr\Log\LoggerInterface;
 use Tracker_RuleFactory;
 use TrackerFactory;
 use Transition_PostAction_CIBuildDao;
@@ -36,6 +38,7 @@ use Tuleap\REST\Header;
 use Tuleap\REST\I18NRestException;
 use Tuleap\REST\ProjectStatusVerificator;
 use Tuleap\REST\RESTLogger;
+use Tuleap\Tracker\REST\v1\Event\GetExternalPostActionJsonParserEvent;
 use Tuleap\Tracker\REST\v1\TrackerPermissionsChecker;
 use Tuleap\Tracker\REST\v1\Workflow\PostAction\PostActionNonEligibleForTrackerException;
 use Tuleap\Tracker\REST\v1\Workflow\PostAction\PostActionsRepresentationBuilder;
@@ -49,6 +52,7 @@ use Tuleap\Tracker\REST\v1\Workflow\PostAction\Update\SetDateValueJsonParser;
 use Tuleap\Tracker\REST\v1\Workflow\PostAction\Update\SetFloatValueJsonParser;
 use Tuleap\Tracker\REST\v1\Workflow\PostAction\Update\SetIntValueJsonParser;
 use Tuleap\Tracker\REST\WorkflowTransitionPOSTRepresentation;
+use Tuleap\Tracker\Workflow\Event\GetWorkflowExternalPostActionsValueUpdater;
 use Tuleap\Tracker\Workflow\PostAction\FrozenFields\FrozenFieldsDao;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDao;
 use Tuleap\Tracker\Workflow\PostAction\Update\Internal\CIBuildValueRepository;
@@ -182,7 +186,7 @@ class TransitionsResource extends AuthenticatedResource
         $this->sendAllowHeaderForTransition();
 
         $transition = $this->getTransitionFactory()->getTransition($id);
-        if (!$transition) {
+        if (! $transition) {
             throw new I18NRestException(404, dgettext('tuleap-tracker', 'Transition not found.'));
         }
 
@@ -223,7 +227,7 @@ class TransitionsResource extends AuthenticatedResource
         $this->sendAllowHeaderForTransition();
 
         $transition = $this->getTransitionFactory()->getTransition($id);
-        if (!$transition) {
+        if (! $transition) {
             throw new I18NRestException(404, dgettext('tuleap-tracker', 'Transition not found.'));
         }
 
@@ -254,6 +258,7 @@ class TransitionsResource extends AuthenticatedResource
      *
      * @url GET {id}
      * @status 200
+     * @oauth2-scope read:tracker
      *
      * @access protected
      *
@@ -298,6 +303,7 @@ class TransitionsResource extends AuthenticatedResource
      *
      * @url GET {id}/actions
      * @status 200
+     * @oauth2-scope read:tracker
      *
      * @access protected
      *
@@ -326,12 +332,17 @@ class TransitionsResource extends AuthenticatedResource
         try {
             $project = $transition->getWorkflow()->getTracker()->getProject();
         } catch (OrphanTransitionException $exception) {
-            $this->getRESTLogger()->error('Cannot return transition post actions', $exception);
+            $this->getRESTLogger()->error('Cannot return transition post actions', ['exception' => $exception]);
             throw new RestException(520);
         }
         ProjectStatusVerificator::build()->checkProjectStatusAllowsOnlySiteAdminToAccessIt($current_user, $project);
 
-        return (new PostActionsRepresentationBuilder($transition->getAllPostActions()))->build();
+        $post_actions_representation_builder = new PostActionsRepresentationBuilder(
+            EventManager::instance(),
+            $transition->getAllPostActions()
+        );
+
+        return $post_actions_representation_builder->build();
     }
 
     /**
@@ -413,7 +424,7 @@ class TransitionsResource extends AuthenticatedResource
                 ProjectStatusVerificator::build(),
                 $this->getPostActionCollectionJsonParser(),
                 $this->getPostActionCollectionUpdater(),
-                new TrackerChecker(\EventManager::instance()),
+                new TrackerChecker(EventManager::instance()),
                 $this->getTransactionExecutor(),
                 $this->getStateFactory(),
                 $this->getTransitionUpdater()
@@ -421,9 +432,10 @@ class TransitionsResource extends AuthenticatedResource
 
             $handler->handle($current_user, $transition, $post_actions_representation);
         } catch (OrphanTransitionException $exception) {
-            $this->getRESTLogger()->error('Cannot update transition post actions', $exception);
+            $this->getRESTLogger()->error('Cannot update transition post actions', ['exception' => $exception]);
             throw new RestException(520);
-        } catch (InvalidPostActionException |
+        } catch (
+            InvalidPostActionException |
                  UnknownPostActionIdsException |
                  IncompatibleWorkflowModeException |
                  PostActionNonEligibleForTrackerException $exception
@@ -466,24 +478,31 @@ class TransitionsResource extends AuthenticatedResource
         return new TransitionsPermissionsChecker(new TrackerPermissionsChecker(new \URLVerification()));
     }
 
-    /**
-     * @return RESTLogger
-     */
-    private function getRESTLogger()
+    private function getRESTLogger(): LoggerInterface
     {
-        return new RESTLogger();
+        return RESTLogger::getLogger();
     }
 
     private function getPostActionCollectionJsonParser(): PostActionCollectionJsonParser
     {
-        return new PostActionCollectionJsonParser(
+        $parsers = [
             new CIBuildJsonParser(),
             new SetDateValueJsonParser(),
             new SetIntValueJsonParser(),
             new SetFloatValueJsonParser(),
             new FrozenFieldsJsonParser(),
-            new HiddenFieldsetsJsonParser()
+            new HiddenFieldsetsJsonParser(),
+        ];
+
+        $event = new GetExternalPostActionJsonParserEvent();
+        EventManager::instance()->processEvent($event);
+
+        $parsers = array_merge(
+            $parsers,
+            $event->getParsers()
         );
+
+        return new PostActionCollectionJsonParser(...$parsers);
     }
 
     private function getTransactionExecutor(): DBTransactionExecutor
@@ -497,7 +516,10 @@ class TransitionsResource extends AuthenticatedResource
         $form_element_factory = \Tracker_FormElementFactory::instance();
         $transaction_executor = $this->getTransactionExecutor();
 
-        return new PostActionCollectionUpdater(
+        $event = new GetWorkflowExternalPostActionsValueUpdater();
+        EventManager::instance()->processEvent($event);
+
+        $value_updaters = [
             new CIBuildValueUpdater(
                 new CIBuildValueRepository(
                     $this->getCIBuildDao()
@@ -512,7 +534,7 @@ class TransitionsResource extends AuthenticatedResource
                 new SetDateValueValidator($field_ids_validator, $form_element_factory)
             ),
             new SetIntValueUpdater(
-                new SetintValueRepository(
+                new SetIntValueRepository(
                     $this->getFieldIntDao(),
                     $transaction_executor
                 ),
@@ -539,7 +561,14 @@ class TransitionsResource extends AuthenticatedResource
                     $form_element_factory
                 )
             )
+        ];
+
+        $value_updaters = array_merge(
+            $value_updaters,
+            $event->getValueUpdaters()
         );
+
+        return new PostActionCollectionUpdater(...$value_updaters);
     }
 
     private function getCIBuildDao(): Transition_PostAction_CIBuildDao
@@ -562,7 +591,7 @@ class TransitionsResource extends AuthenticatedResource
         return new Transition_PostAction_Field_FloatDao();
     }
 
-    private function getFrozenFieldsDao() : FrozenFieldsDao
+    private function getFrozenFieldsDao(): FrozenFieldsDao
     {
         return new FrozenFieldsDao();
     }
@@ -585,7 +614,7 @@ class TransitionsResource extends AuthenticatedResource
         return TransitionReplicatorBuilder::build();
     }
 
-    private function getStateFactory() : StateFactory
+    private function getStateFactory(): StateFactory
     {
         return new StateFactory(
             $this->getTransitionFactory(),
@@ -593,7 +622,7 @@ class TransitionsResource extends AuthenticatedResource
         );
     }
 
-    private function getTransitionUpdater() : TransitionUpdater
+    private function getTransitionUpdater(): TransitionUpdater
     {
         return new TransitionUpdater(
             $this->getConditionsUpdater(),

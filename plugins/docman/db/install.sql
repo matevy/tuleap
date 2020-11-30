@@ -8,8 +8,8 @@ CREATE TABLE plugin_docman_item (
   item_id INT(11) UNSIGNED NOT NULL,
   parent_id INT(11) UNSIGNED NULL,
   group_id INT(11) UNSIGNED NULL,
-  title TEXT NULL,
-  description TEXT NULL,
+  title TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
   create_date INT(11) UNSIGNED NULL,
   update_date INT(11) UNSIGNED NULL,
   delete_date INT(11) UNSIGNED NULL,
@@ -31,7 +31,7 @@ CREATE TABLE plugin_docman_item (
   FULLTEXT fltxt_title (title),
   FULLTEXT fltxt_description (description),
   FULLTEXT fltxt (title, description)
-) ENGINE=MyISAM;
+);
 
 DROP TABLE IF EXISTS plugin_docman_item_deleted;
 CREATE TABLE plugin_docman_item_deleted (
@@ -71,7 +71,7 @@ CREATE TABLE plugin_docman_version (
   PRIMARY KEY(id),
   KEY item_id (item_id),
   FULLTEXT fltxt (label, changelog, filename)
-) ENGINE=MyISAM;
+);
 
 DROP TABLE IF EXISTS plugin_docman_link_version;
 CREATE TABLE plugin_docman_link_version (
@@ -210,7 +210,7 @@ CREATE TABLE plugin_docman_metadata_value (
   FULLTEXT fltxt (valueText, valueString),
   FULLTEXT fltxt_txt (valueText),
   FULLTEXT fltxt_str (valueString)
-) ENGINE=MyISAM;
+);
 
 --
 -- Table structure for table 'plugin_docman_metadata_love'

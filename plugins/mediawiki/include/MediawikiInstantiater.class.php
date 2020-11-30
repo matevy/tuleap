@@ -26,7 +26,7 @@ class MediaWikiInstantiater
 
     public const MW_123_PATH = '/usr/share/mediawiki-tuleap-123';
 
-    /** @var BackendLogger */
+    /** @var \Psr\Log\LoggerInterface */
     private $logger;
 
     /** @var string */
@@ -63,13 +63,6 @@ class MediaWikiInstantiater
      */
     private $mleb_manager;
 
-    /**
-     * @param Project $project
-     * @param MediawikiManager $mediawiki_manager
-     * @param MediawikiLanguageManager $language_manager
-     * @param MediawikiVersionManager $version_manager
-     * @param MediawikiMLEBExtensionManager $mleb_manager
-     */
     public function __construct(
         Project $project,
         MediawikiManager $mediawiki_manager,
@@ -77,7 +70,7 @@ class MediaWikiInstantiater
         MediawikiVersionManager $version_manager,
         MediawikiMLEBExtensionManager $mleb_manager
     ) {
-        $this->logger              = new BackendLogger();
+        $this->logger              = BackendLogger::getDefaultLogger();
         $this->project             = $project;
         $this->project_name        = $project->getUnixName();
         $this->project_id          = $project->getID();
@@ -164,11 +157,11 @@ class MediaWikiInstantiater
         }
 
         if ($dir_exists && ! $db_name) {
-            throw new MediawikiInstantiaterException('Project dir ' . $this->project_name_dir . ' exists, but database '.$db_name.' cannot be found');
+            throw new MediawikiInstantiaterException('Project dir ' . $this->project_name_dir . ' exists, but database ' . $db_name . ' cannot be found');
         }
 
         if (! $dir_exists && $db_name) {
-            throw new MediawikiInstantiaterException('Project dir ' . $this->project_name_dir . ' does not exist, but database '.$db_name.' found');
+            throw new MediawikiInstantiaterException('Project dir ' . $this->project_name_dir . ' does not exist, but database ' . $db_name . ' found');
         }
 
         $this->ensureDatabaseIsCorrect($db_name);
@@ -215,37 +208,35 @@ class MediaWikiInstantiater
 
         $this->logger->info('Using database: ' . $database);
         $mediawiki_db_connection = \Tuleap\DB\DBFactory::getDBConnection($database);
-        try {
-            $this->logger->info('Updating mediawiki database.');
-            $table_file   = $mediawiki_path . '/maintenance/tables.sql';
-            if (! file_exists($table_file)) {
-                throw new Exception('Error: Couldn\'t find Mediawiki Database Creation File ' . $table_file);
+        $mediawiki_db_connection->getDB()->tryFlatTransaction(function () use ($mediawiki_db_connection, $database, $mediawiki_path) {
+            try {
+                $this->logger->info('Updating mediawiki database.');
+                $table_file   = $mediawiki_path . '/maintenance/tables.sql';
+                if (! file_exists($table_file)) {
+                    throw new Exception('Error: Couldn\'t find Mediawiki Database Creation File ' . $table_file);
+                }
+
+                $this->dao->startTransaction();
+
+                $this->logger->info('Creating tables from tables.sql');
+                $table_prefix = $this->dao->getTablePrefixForCreation($this->project);
+                $add_tables = $this->createTablesFromFile($mediawiki_db_connection->getDB(), $table_file, $table_prefix);
+                if (! $add_tables) {
+                    throw new Exception('Error: Mediawiki Database Creation Failed');
+                }
+
+                $this->logger->info('Updating list of mediawiki databases (' . $database . ')');
+                $update = $this->dao->addDatabase($database, $this->project_id);
+                if (! $update) {
+                    throw new Exception('Error: Mediawiki Database list update failed: ' . db_error());
+                }
+            } catch (Exception $e) {
+                $this->dao->rollBack();
+                $this->logger->error($e->getMessage());
             }
-
-            $mediawiki_db_connection->getDB()->beginTransaction();
-            $this->dao->startTransaction();
-
-            $this->logger->info('Creating tables from tables.sql');
-            $table_prefix = $this->dao->getTablePrefixForCreation($this->project);
-            $add_tables = $this->createTablesFromFile($mediawiki_db_connection->getDB(), $table_file, $table_prefix);
-            if (! $add_tables) {
-                throw new Exception('Error: Mediawiki Database Creation Failed');
-            }
-
-            $this->logger->info('Updating list of mediawiki databases (' . $database . ')');
-            $update = $this->dao->addDatabase($database, $this->project_id);
-            if (! $update) {
-                throw new Exception('Error: Mediawiki Database list update failed: ' . db_error());
-            }
-        } catch (Exception $e) {
-             $this->dao->rollBack();
-             $mediawiki_db_connection->getDB()->rollBack();
-
-            $this->logger->error($e->getMessage());
-        }
+        });
 
         $this->dao->commit();
-        $mediawiki_db_connection->getDB()->commit();
     }
 
     /**
@@ -288,7 +279,7 @@ class MediaWikiInstantiater
                 } else {
                     $dollarquote = true;
                 }
-            } elseif (!$dollarquote) {
+            } elseif (! $dollarquote) {
                 if (';' == $line[$sl] && ($sl < 2 || ';' != $line[$sl - 1])) {
                     $done = true;
                     $line = substr($line, 0, $sl);
@@ -326,7 +317,7 @@ class MediaWikiInstantiater
         $template         = ProjectManager::instance()->getProject($this->project->getTemplate());
         $mapper           = new MediawikiUserGroupsMapper($this->dao, new User_ForgeUserGroupPermissionsDao());
         $template_mapping = $mapper->getCurrentUserGroupMapping($template);
-        $new_mapping      = array();
+        $new_mapping      = [];
         foreach ($template_mapping as $mw_group => $tuleap_groups) {
             foreach ($tuleap_groups as $grp) {
                 if ($grp < ProjectUGroup::DYNAMIC_UPPER_BOUNDARY) {
@@ -357,7 +348,7 @@ class MediaWikiInstantiater
 
     private function getFormattedDefaultValues($group_id, array $mappings)
     {
-        $values = array();
+        $values = [];
 
         foreach ($mappings as $group_name => $mapping) {
             foreach ($mapping as $ugroup_id) {
@@ -380,7 +371,7 @@ class MediaWikiInstantiater
 
     private function getUgroupsForProjectFromMapping(array $original_ugroups, array $ugroup_mapping)
     {
-        $ugroups = array();
+        $ugroups = [];
 
         foreach ($original_ugroups as $upgroup) {
             if (isset($ugroup_mapping[$upgroup])) {

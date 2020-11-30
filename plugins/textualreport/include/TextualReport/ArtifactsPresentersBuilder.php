@@ -20,7 +20,6 @@
 
 namespace Tuleap\TextualReport;
 
-use PDOStatement;
 use PFUser;
 use Tracker_Artifact_ChangesetValue_Text;
 use Tracker_ArtifactFactory;
@@ -40,7 +39,6 @@ class ArtifactsPresentersBuilder
 
     /**
      * @param array  $ordered_artifact_rows
-     * @param PFUser $current_user
      * @param string $server_url
      * @param int    $hard_limit
      *
@@ -68,7 +66,7 @@ class ArtifactsPresentersBuilder
         return $artifacts;
     }
 
-    private function getPurifiedDescription(\Tracker_Artifact $artifact)
+    private function getPurifiedDescription(\Tuleap\Tracker\Artifact\Artifact $artifact)
     {
         $description_field = Tracker_Semantic_Description::load($artifact->getTracker())->getField();
         if (! $description_field) {
@@ -84,8 +82,8 @@ class ArtifactsPresentersBuilder
             return '';
         }
 
-        /** @var Tracker_Artifact_ChangesetValue_Text $changeset_value */
         $changeset_value = $last_changeset->getValue($description_field);
+        \assert($changeset_value instanceof Tracker_Artifact_ChangesetValue_Text);
         if (! $changeset_value) {
             return '';
         }

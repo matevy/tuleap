@@ -19,19 +19,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_View_Details.class.php');
-require_once('Docman_View_ItemDetailsSectionMove.class.php');
-
 class Docman_View_Move extends Docman_View_Details
 {
 
-    function _getTitle($params)
+    public function _getTitle($params)
     {
         $hp = Codendi_HTMLPurifier::instance();
-        return $GLOBALS['Language']->getText('plugin_docman', 'move', $hp->purify($params['item']->getTitle(), CODENDI_PURIFIER_CONVERT_HTML));
+        return sprintf(dgettext('tuleap-docman', 'Move %1$s'), $hp->purify($params['item']->getTitle(), CODENDI_PURIFIER_CONVERT_HTML));
     }
 
-    function _content($params, $view = null, $section = null)
+    public function _content($params, $view = null, $section = null)
     {
         $token = isset($params['token']) ? $params['token'] : null;
         parent::_content(
@@ -41,7 +38,7 @@ class Docman_View_Move extends Docman_View_Details
                 $params['default_url'],
                 $this->_controller,
                 array_merge(
-                    array('docman_icons' => $this->_getDocmanIcons($params)),
+                    ['docman_icons' => $this->_getDocmanIcons($params)],
                     $params
                 ),
                 $token

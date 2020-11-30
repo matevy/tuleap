@@ -41,7 +41,7 @@ abstract class GraphOnTrackersV5_Engine
         } else {
             $GLOBALS['Response']->addFeedback(
                 'info',
-                $GLOBALS['Language']->getText('plugin_graphontrackersv5_engine', 'no_datas', array($this->title))
+                sprintf(dgettext('tuleap-graphontrackersv5', 'No datas to display for graph %1$s'), $this->title)
             );
 
             return false;
@@ -100,9 +100,9 @@ abstract class GraphOnTrackersV5_Engine
      */
     public function toArray()
     {
-        return array(
+        return [
             'colors' => $this->toArrayColors(),
-        );
+        ];
     }
 
     protected function toArrayColors()
@@ -112,7 +112,7 @@ abstract class GraphOnTrackersV5_Engine
 
     private function getArrayColors()
     {
-        $colors = array();
+        $colors = [];
         foreach ($this->colors as $color) {
             $colors[] = $this->getColorOrNull($color);
         }

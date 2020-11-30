@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,12 @@
 namespace Tuleap\Tracker\REST\Artifact;
 
 use Tuleap\REST\JsonCast;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\REST\TrackerReference;
-use Tracker_Artifact;
 
+/**
+ * @psalm-immutable
+ */
 class ArtifactReference
 {
 
@@ -42,11 +45,11 @@ class ArtifactReference
     public $tracker;
 
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $artifact;
 
-    public function build(Tracker_Artifact $artifact, $format = '')
+    protected function __construct(Artifact $artifact, \Tracker $tracker, string $format = '')
     {
         $this->id  = JsonCast::toInt($artifact->getId());
         $this->uri = ArtifactRepresentation::ROUTE . '/' . $this->id;
@@ -55,10 +58,14 @@ class ArtifactReference
             $this->uri = $this->uri . "?values_format=$format";
         }
 
-        $this->tracker = new TrackerReference();
-        $this->tracker->build($artifact->getTracker());
+        $this->tracker = TrackerReference::build($tracker);
 
-        $this->artifact = $artifact;
+        $this->artifact = clone $artifact;
+    }
+
+    public static function build(Artifact $artifact, string $format = ''): ArtifactReference
+    {
+        return new self($artifact, $artifact->getTracker(), $format);
     }
 
     public function getArtifact()

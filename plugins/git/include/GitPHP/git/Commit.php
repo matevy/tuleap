@@ -45,7 +45,7 @@ class Commit extends GitObject
      *
      * @access protected
      */
-    protected $parents = array();
+    protected $parents = [];
 
     /**
      * tree
@@ -126,7 +126,7 @@ class Commit extends GitObject
      *
      * @access protected
      */
-    protected $comment = array();
+    protected $comment = [];
 
     /**
      * @var null|string
@@ -149,7 +149,7 @@ class Commit extends GitObject
      *
      * @access protected
      */
-    protected $blobPaths = array();
+    protected $blobPaths = [];
 
     /**
      * treePaths
@@ -158,7 +158,7 @@ class Commit extends GitObject
      *
      * @access protected
      */
-    protected $treePaths = array();
+    protected $treePaths = [];
 
     private $commit_paths = [];
 
@@ -233,7 +233,7 @@ class Commit extends GitObject
      */
     public function GetParent() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -257,7 +257,7 @@ class Commit extends GitObject
      */
     public function GetParents() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -278,7 +278,7 @@ class Commit extends GitObject
      */
     public function GetTree() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -299,7 +299,7 @@ class Commit extends GitObject
      */
     public function GetAuthor() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -316,7 +316,7 @@ class Commit extends GitObject
      */
     public function GetAuthorName() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -343,7 +343,7 @@ class Commit extends GitObject
      */
     public function GetAuthorEpoch() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -363,7 +363,7 @@ class Commit extends GitObject
         $epoch = $this->GetAuthorEpoch();
         $tz = $this->GetAuthorTimezone();
         if (preg_match('/^([+\-][0-9][0-9])([0-9][0-9])$/', $tz, $regs)) {
-            $local = $epoch + ((((int)$regs[1]) + ($regs[2]/60)) * 3600);
+            $local = $epoch + ((((int) $regs[1]) + ($regs[2] / 60)) * 3600);
             return $local;
         }
         return $epoch;
@@ -379,7 +379,7 @@ class Commit extends GitObject
      */
     public function GetAuthorTimezone() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -396,7 +396,7 @@ class Commit extends GitObject
      */
     public function GetCommitter() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -423,7 +423,7 @@ class Commit extends GitObject
      */
     public function GetCommitterName() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -440,7 +440,7 @@ class Commit extends GitObject
      */
     public function GetCommitterEpoch() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -460,7 +460,7 @@ class Commit extends GitObject
         $epoch = $this->GetCommitterEpoch();
         $tz = $this->GetCommitterTimezone();
         if (preg_match('/^([+\-][0-9][0-9])([0-9][0-9])$/', $tz, $regs)) {
-            $local = $epoch + ((((int)$regs[1]) + ($regs[2]/60)) * 3600);
+            $local = $epoch + ((((int) $regs[1]) + ($regs[2] / 60)) * 3600);
             return $local;
         }
         return $epoch;
@@ -476,7 +476,7 @@ class Commit extends GitObject
      */
     public function GetCommitterTimezone() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -494,12 +494,12 @@ class Commit extends GitObject
      */
     public function GetTitle($trim = 0) // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
-        if (($trim > 0) && (strlen($this->title) > $trim)) {
-            return substr($this->title, 0, $trim) . '…';
+        if (($trim > 0) && (mb_strlen($this->title) > $trim)) {
+            return mb_substr($this->title, 0, $trim) . '…';
         }
 
         return $this->title;
@@ -515,7 +515,7 @@ class Commit extends GitObject
      */
     public function GetComment() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -548,7 +548,7 @@ class Commit extends GitObject
             return $this->GetComment();
         }
 
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -597,11 +597,11 @@ class Commit extends GitObject
      */
     public function GetAge() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
-        if (!empty($this->committerEpoch)) {
+        if (! empty($this->committerEpoch)) {
             return time() - $this->committerEpoch;
         }
 
@@ -618,7 +618,7 @@ class Commit extends GitObject
      */
     public function IsMergeCommit() // @codingStandardsIgnoreLine
     {
-        if (!$this->dataRead) {
+        if (! $this->dataRead) {
             $this->ReadData();
         }
 
@@ -692,8 +692,8 @@ class Commit extends GitObject
                 if (empty($this->title) && (strlen($trimmed) > 0)) {
                     $this->title = $trimmed;
                 }
-                if (!empty($this->title)) {
-                    if ((strlen($line) > 0) || ($i < (count($lines)-1))) {
+                if (! empty($this->title)) {
+                    if ((strlen($line) > 0) || ($i < (count($lines) - 1))) {
                         $this->comment[] = $line;
                     }
                 }
@@ -711,7 +711,7 @@ class Commit extends GitObject
      */
     public function GetHeads() // @codingStandardsIgnoreLine
     {
-        $heads = array();
+        $heads = [];
 
         $projectRefs = $this->GetProject()->GetRefs('heads');
 
@@ -734,7 +734,7 @@ class Commit extends GitObject
      */
     public function GetTags() // @codingStandardsIgnoreLine
     {
-        $tags = array();
+        $tags = [];
 
         $projectRefs = $this->GetProject()->GetRefs('tags');
 
@@ -759,7 +759,7 @@ class Commit extends GitObject
      */
     public function GetContainingTag() // @codingStandardsIgnoreLine
     {
-        if (!$this->containingTagRead) {
+        if (! $this->containingTagRead) {
             $this->ReadContainingTag();
         }
 
@@ -778,7 +778,7 @@ class Commit extends GitObject
         $this->containingTagRead = true;
 
         $exe = new GitExe($this->GetProject());
-        $args = array();
+        $args = [];
         $args[] = '--tags';
         $args[] = escapeshellarg($this->hash);
         $revs   = explode("\n", $exe->Execute(GitExe::NAME_REV, $args));
@@ -821,7 +821,7 @@ class Commit extends GitObject
             return '';
         }
 
-        if (!$this->hashPathsRead) {
+        if (! $this->hashPathsRead) {
             $this->ReadHashPaths();
         }
 
@@ -862,7 +862,7 @@ class Commit extends GitObject
      */
     private function ReadHashPathsRaw($tree) // @codingStandardsIgnoreLine
     {
-        if (!$tree) {
+        if (! $tree) {
             return;
         }
 
@@ -901,11 +901,11 @@ class Commit extends GitObject
             return;
         }
 
-        if (!$this->hashPathsRead) {
+        if (! $this->hashPathsRead) {
             $this->ReadHashPaths();
         }
 
-        $results = array();
+        $results = [];
 
         foreach ($this->treePaths as $path => $hash) {
             if (preg_match('/' . $pattern . '/i', $path)) {
@@ -945,7 +945,7 @@ class Commit extends GitObject
 
         $exe = new GitExe($this->GetProject());
 
-        $args = array();
+        $args = [];
         $args[] = '-I';
         $args[] = '--full-name';
         $args[] = '--ignore-case';
@@ -956,19 +956,19 @@ class Commit extends GitObject
 
         $lines = explode("\n", $exe->Execute(GitExe::GREP, $args));
 
-        $results = array();
+        $results = [];
 
         foreach ($lines as $line) {
             if (preg_match('/^[^:]+:([^:]+):([0-9]+):(.+)$/', $line, $regs)) {
-                if (!isset($results[$regs[1]]['object'])) {
+                if (! isset($results[$regs[1]]['object'])) {
                     $hash = $this->PathToHash($regs[1]);
-                    if (!empty($hash)) {
+                    if (! empty($hash)) {
                         $obj = $this->GetProject()->GetBlob($hash);
                         $obj->SetCommit($this);
                         $results[$regs[1]]['object'] = $obj;
                     }
                 }
-                $results[$regs[1]]['lines'][(int)($regs[2])] = $regs[3];
+                $results[$regs[1]]['lines'][(int) ($regs[2])] = $regs[3];
             }
         }
 
@@ -998,7 +998,7 @@ class Commit extends GitObject
 
         /* Merge the results together */
         foreach ($nameresults as $path => $obj) {
-            if (!isset($grepresults[$path]['object'])) {
+            if (! isset($grepresults[$path]['object'])) {
                 $grepresults[$path]['object'] = $obj;
             }
         }
@@ -1021,7 +1021,7 @@ class Commit extends GitObject
             return;
         }
 
-        if ((!isset($this->parents)) || (count($this->parents) < 1)) {
+        if ((! isset($this->parents)) || (count($this->parents) < 1)) {
             return;
         }
 
@@ -1041,11 +1041,11 @@ class Commit extends GitObject
      */
     private function DereferenceParents() // @codingStandardsIgnoreLine
     {
-        if (!$this->parentsReferenced) {
+        if (! $this->parentsReferenced) {
             return;
         }
 
-        if ((!$this->parents) || (count($this->parents) < 1)) {
+        if ((! $this->parents) || (count($this->parents) < 1)) {
             return;
         }
 
@@ -1069,7 +1069,7 @@ class Commit extends GitObject
             return;
         }
 
-        if (!$this->tree) {
+        if (! $this->tree) {
             return;
         }
 
@@ -1087,7 +1087,7 @@ class Commit extends GitObject
      */
     private function DereferenceTree() // @codingStandardsIgnoreLine
     {
-        if (!$this->treeReferenced) {
+        if (! $this->treeReferenced) {
             return;
         }
 

@@ -52,10 +52,10 @@ class Docman_LockFactory
     *
     * @return DataAccessResult|false of lockinfos or false if there isn't any document locked inside the project.
     */
-    function getProjectLockInfos($groupId)
+    public function getProjectLockInfos($groupId)
     {
         $dar = $this->dao->searchLocksForProjectByGroupId($groupId);
-        if ($dar && !$dar->isError()) {
+        if ($dar && ! $dar->isError()) {
             return $dar;
         } else {
             return false;
@@ -69,10 +69,10 @@ class Docman_LockFactory
      *
      * @return Array
      */
-    function getLockInfoForItem($item)
+    public function getLockInfoForItem($item)
     {
         $dar = $this->dao->searchLockForItem($item->getId());
-        if ($dar && !$dar->isError() && $dar->rowCount() === 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() === 1) {
             return $dar->current();
         }
         return false;
@@ -86,7 +86,7 @@ class Docman_LockFactory
      *
      * @return bool
      */
-    function userIsLocker($item, $user)
+    public function userIsLocker($item, $user)
     {
         return $this->userIsLockerByItemId($item->getId(), $user);
     }
@@ -101,8 +101,10 @@ class Docman_LockFactory
      */
     public function userIsLockerByItemId($itemId, $user)
     {
-        if ($this->itemIsLockedByItemId($itemId) &&
-            $this->_cachedItem[$itemId]['user_id'] == $user->getId()) {
+        if (
+            $this->itemIsLockedByItemId($itemId) &&
+            $this->_cachedItem[$itemId]['user_id'] == $user->getId()
+        ) {
             return true;
         }
         return false;
@@ -115,7 +117,7 @@ class Docman_LockFactory
      *
      * @return bool
      */
-    function itemIsLocked($item)
+    public function itemIsLocked($item)
     {
         return $this->itemIsLockedByItemId($item->getId());
     }
@@ -123,11 +125,9 @@ class Docman_LockFactory
     /**
      * Return true if item is locked
      *
-     * @param Docman_Item $item Item to test
-     *
      * @return bool
      */
-    function itemIsLockedByItemId($itemId)
+    public function itemIsLockedByItemId($itemId)
     {
         $this->_cacheLocksForProject($itemId);
         if (isset($this->_cachedItem[$itemId])) {
@@ -148,10 +148,10 @@ class Docman_LockFactory
      *
      * @return void
      */
-    function _cacheLocksForProject($itemId)
+    public function _cacheLocksForProject($itemId)
     {
         if ($this->_cachedItem === null) {
-            $this->_cachedItem = array();
+            $this->_cachedItem = [];
             $dar               = $this->dao->searchLocksForProjectByItemId($itemId);
             foreach ($dar as $row) {
                 $this->_cachedItem[$row['item_id']] = $row;
@@ -166,7 +166,7 @@ class Docman_LockFactory
      *
      * @return DataAccessResult|false
      */
-    function retreiveLocksForItems(array $itemIds)
+    public function retreiveLocksForItems(array $itemIds)
     {
         $dar = $this->dao->searchLocksForItemIds($itemIds);
         if ($dar === false) {
@@ -204,8 +204,10 @@ class Docman_LockFactory
      */
     public function unlock($item, $user)
     {
-        $this->dao->delLock($item->getId());
-        $this->logUnlock($item, $user);
+        if ($this->itemIsLocked($item)) {
+            $this->dao->delLock($item->getId());
+            $this->logUnlock($item, $user);
+        }
     }
 
     /**

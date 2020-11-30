@@ -35,17 +35,17 @@ require_once("lib/PageList.php");
  */
 class WikiPlugin_FullTextSearch extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("FullTextSearch");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Search the content of all pages in this wiki.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -54,24 +54,23 @@ class WikiPlugin_FullTextSearch extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(), // paging and more.
-            array('s'        => false,
+            ['s'        => false,
                    'hilight'  => true,
                    'case_exact' => false,
                    'regex'    => 'auto',
                    'noheader' => false,
                    'exclude'  => false,   //comma-seperated list of glob
                    'limit'    => false,
-            'quiet'    => false)
+            'quiet'    => false]
         );  // be less verbose
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
-
         $args = $this->getArgs($argstr, $request);
         if (empty($args['s'])) {
             return '';
@@ -80,14 +79,14 @@ class WikiPlugin_FullTextSearch extends WikiPlugin
 
         $query = new TextSearchQuery($s, $case_exact, $regex);
         $pages = $dbi->fullSearch($query, $sortby, $limit, $exclude);
-        $lines = array();
+        $lines = [];
         $hilight_re = $hilight ? $query->getHighlightRegexp() : false;
         $count = 0;
         $found = 0;
 
         if ($quiet) { // see how easy it is with PageList...
             $list = new PageList(false, $exclude, $args);
-            while ($page = $pages->next() and (!$limit or ($count < $limit))) {
+            while ($page = $pages->next() and (! $limit or ($count < $limit))) {
                 $list->addPage($page);
             }
             return $list;
@@ -97,14 +96,14 @@ class WikiPlugin_FullTextSearch extends WikiPlugin
         // But the new column types must have a callback then. (showhits)
         // See e.g. WikiAdminSearchReplace for custom pagelist columns
         $list = HTML::dl();
-        if (!$limit or !is_int($limit)) {
+        if (! $limit or ! is_int($limit)) {
             $limit = 0;
         }
         // expand all page wildcards to a list of pages which should be ignored
         if ($exclude) {
             $exclude = explodePageList($exclude);
         }
-        while ($page = $pages->next() and (!$limit or ($count < $limit))) {
+        while ($page = $pages->next() and (! $limit or ($count < $limit))) {
             $name = $page->getName();
             if ($exclude and in_array($name, $exclude)) {
                 continue;
@@ -119,11 +118,11 @@ class WikiPlugin_FullTextSearch extends WikiPlugin
         if ($limit and $count >= $limit) { //todo: pager link to list of next matches
             $list->pushContent(HTML::dd(fmt("only %d pages displayed", $limit)));
         }
-        if (!$list->getContent()) {
+        if (! $list->getContent()) {
             $list->pushContent(HTML::dd(_("<no matches>")));
         }
 
-        if (!empty($pages->stoplisted)) {
+        if (! empty($pages->stoplisted)) {
             $list = HTML(
                 HTML::p(fmt(
                     _("Ignored stoplist words '%s'"),
@@ -141,32 +140,32 @@ class WikiPlugin_FullTextSearch extends WikiPlugin
         );
     }
 
-    function showhits($page, $hilight_re)
+    public function showhits($page, $hilight_re)
     {
         $current = $page->getCurrentRevision();
         $matches = preg_grep("/$hilight_re/i", $current->getContent());
-        $html = array();
+        $html = [];
         foreach ($matches as $line) {
             $line = $this->highlight_line($line, $hilight_re);
             $html[] = HTML::dd(HTML::small(
-                array('class' => 'search-context'),
+                ['class' => 'search-context'],
                 $line
             ));
         }
         return $html;
     }
 
-    function highlight_line($line, $hilight_re)
+    public function highlight_line($line, $hilight_re)
     {
         while (preg_match("/^(.*?)($hilight_re)/i", $line, $m)) {
             $line = substr($line, strlen($m[0]));
             $html[] = $m[1];    // prematch
-            $html[] = HTML::strong(array('class' => 'search-term'), $m[2]); // match
+            $html[] = HTML::strong(['class' => 'search-term'], $m[2]); // match
         }
         $html[] = $line;        // postmatch
         return $html;
     }
-};
+}
 
 // $Log: FullTextSearch.php,v $
 // Revision 1.26  2005/11/14 22:33:04  rurban

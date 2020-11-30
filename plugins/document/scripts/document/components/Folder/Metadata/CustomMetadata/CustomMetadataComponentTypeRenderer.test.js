@@ -27,7 +27,7 @@ describe("CustomMetadataComponentTypeRenderer", () => {
         factory = (props = {}) => {
             return shallowMount(CustomMetadataComponentTypeRenderer, {
                 localVue,
-                propsData: { ...props }
+                propsData: { ...props },
             });
         };
     });
@@ -36,44 +36,56 @@ describe("CustomMetadataComponentTypeRenderer", () => {
         Then it renders the corresponding component`, () => {
         const itemMetadata = {
             short_name: "string",
-            type: "string"
+            type: "string",
         };
         const wrapper = factory({ itemMetadata });
 
-        expect(wrapper.contains("[data-test=document-custom-metadata-text]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-string]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-single]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-multiple]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-date]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-text]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-string]").exists()).toBeTruthy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-single]").exists()
+        ).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-multiple]").exists()
+        ).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-date]").exists()).toBeFalsy();
     });
     it(`Given custom text metadata
         Then it renders the corresponding component`, () => {
         const itemMetadata = {
             short_name: "text",
-            type: "text"
+            type: "text",
         };
         const wrapper = factory({ itemMetadata });
 
-        expect(wrapper.contains("[data-test=document-custom-metadata-text]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-string]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-single]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-multiple]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-date]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-text]").exists()).toBeTruthy();
+        expect(wrapper.find("[data-test=document-custom-metadata-string]").exists()).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-single]").exists()
+        ).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-multiple]").exists()
+        ).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-date]").exists()).toBeFalsy();
     });
     it(`Given list with only one value metadata
         Then it renders the corresponding component`, () => {
         const itemMetadata = {
             short_name: "list",
             type: "list",
-            is_multiple_value_allowed: false
+            is_multiple_value_allowed: false,
         };
         const wrapper = factory({ itemMetadata });
 
-        expect(wrapper.contains("[data-test=document-custom-metadata-text]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-string]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-single]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-multiple]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-date]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-text]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-string]").exists()).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-single]").exists()
+        ).toBeTruthy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-multiple]").exists()
+        ).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-date]").exists()).toBeFalsy();
     });
 
     it(`Given a list with multiple value metadata
@@ -81,15 +93,19 @@ describe("CustomMetadataComponentTypeRenderer", () => {
         const itemMetadata = {
             short_name: "list",
             type: "list",
-            is_multiple_value_allowed: true
+            is_multiple_value_allowed: true,
         };
         const wrapper = factory({ itemMetadata });
 
-        expect(wrapper.contains("[data-test=document-custom-metadata-text]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-string]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-single]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-multiple]")).toBeTruthy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-date]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-text]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-string]").exists()).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-single]").exists()
+        ).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-multiple]").exists()
+        ).toBeTruthy();
+        expect(wrapper.find("[data-test=document-custom-metadata-date]").exists()).toBeFalsy();
     });
 
     it(`Given a date value metadata
@@ -98,14 +114,18 @@ describe("CustomMetadataComponentTypeRenderer", () => {
             short_name: "date",
             type: "date",
             is_multiple_value_allowed: false,
-            value: ""
+            value: "",
         };
         const wrapper = factory({ itemMetadata });
 
-        expect(wrapper.contains("[data-test=document-custom-metadata-text]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-string]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-single]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-list-multiple]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-custom-metadata-date]")).toBeTruthy();
+        expect(wrapper.find("[data-test=document-custom-metadata-text]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-string]").exists()).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-single]").exists()
+        ).toBeFalsy();
+        expect(
+            wrapper.find("[data-test=document-custom-metadata-list-multiple]").exists()
+        ).toBeFalsy();
+        expect(wrapper.find("[data-test=document-custom-metadata-date]").exists()).toBeTruthy();
     });
 });

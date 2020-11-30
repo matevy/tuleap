@@ -1,126 +1,37 @@
 {
     "name": "tracker",
-    "themes": {
-        "default": {
-            "files": [
-                "www/themes/default/css/style.scss",
-                "www/themes/default/css/ieStyle.scss",
-                "www/themes/default/css/print.scss"
-            ],
-            "watched_includes": [
-                "www/themes/default/css/**/_*.scss"
-            ],
-            "target_dir": "www/themes/default/css"
-        },
-        "FlamingParrot": {
-            "files": [
-                "www/themes/FlamingParrot/css/style.scss",
-                "www/themes/FlamingParrot/css/print.scss",
-                "www/themes/FlamingParrot/css/burndown-chart.scss",
-                "www/themes/FlamingParrot/css/colorpicker.scss"
-            ],
-            "includes": [
-                "../../src/www/themes/FlamingParrot/css/utils"
-            ],
-            "target_dir": "www/themes/FlamingParrot/assets",
-            "is_revisioned": true
-        },
-        "BurningParrot": {
-            "files": [
-                "www/themes/BurningParrot/css/burndown-chart.scss",
-                "www/themes/BurningParrot/css/style-blue.scss",
-                "www/themes/BurningParrot/css/style-blue-condensed.scss",
-                "www/themes/BurningParrot/css/style-green.scss",
-                "www/themes/BurningParrot/css/style-green-condensed.scss",
-                "www/themes/BurningParrot/css/style-grey.scss",
-                "www/themes/BurningParrot/css/style-grey-condensed.scss",
-                "www/themes/BurningParrot/css/style-orange.scss",
-                "www/themes/BurningParrot/css/style-orange-condensed.scss",
-                "www/themes/BurningParrot/css/style-purple.scss",
-                "www/themes/BurningParrot/css/style-purple-condensed.scss",
-                "www/themes/BurningParrot/css/style-red.scss",
-                "www/themes/BurningParrot/css/style-red-condensed.scss",
-                "www/themes/BurningParrot/css/workflow-blue.scss",
-                "www/themes/BurningParrot/css/workflow-blue-condensed.scss",
-                "www/themes/BurningParrot/css/workflow-green.scss",
-                "www/themes/BurningParrot/css/workflow-green-condensed.scss",
-                "www/themes/BurningParrot/css/workflow-grey.scss",
-                "www/themes/BurningParrot/css/workflow-grey-condensed.scss",
-                "www/themes/BurningParrot/css/workflow-orange.scss",
-                "www/themes/BurningParrot/css/workflow-orange-condensed.scss",
-                "www/themes/BurningParrot/css/workflow-purple.scss",
-                "www/themes/BurningParrot/css/workflow-purple-condensed.scss",
-                "www/themes/BurningParrot/css/workflow-red.scss",
-                "www/themes/BurningParrot/css/workflow-red-condensed.scss"
-            ],
-            "includes": [
-                "../../src/www/themes/common/tlp/src/scss"
-            ],
-            "watched_includes": [
-                "www/themes/BurningParrot/css/**/_*.scss"
-            ],
-            "target_dir": "www/themes/BurningParrot/assets",
-            "is_revisioned": true
-        }
-    },
-    "javascript": [
-        "www/scripts/TrackerReports.js",
-        "www/scripts/TrackerEmailCopyPaste.js",
-        "www/scripts/TrackerReportsSaveAsModal.js",
-        "www/scripts/TrackerBinds.js",
-        "www/scripts/ReorderColumns.js",
-        "www/scripts/TrackerTextboxLists.js",
-        "www/scripts/TrackerAdminFieldWorkflow.js",
-        "www/scripts/TrackerArtifact.js",
-        "www/scripts/TrackerArtifactEmailActions.js",
-        "www/scripts/TrackerArtifactLink.js",
-        "www/scripts/LoadTrackerArtifactLink.js",
-        "www/scripts/TrackerCreate.js",
-        "www/scripts/TrackerFormElementFieldPermissions.js",
-        "www/scripts/TrackerDateReminderForms.js",
-        "www/scripts/TrackerTriggers.js",
-        "www/scripts/SubmissionKeeper.js",
-        "www/scripts/TrackerFieldDependencies.js",
-        "www/scripts/TrackerRichTextEditor.js",
-        "www/scripts/artifactChildren.js",
-        "www/scripts/load-artifactChildren.js",
-        "www/scripts/modal-in-place.js",
-        "www/scripts/TrackerArtifactEditionSwitcher.js",
-        "www/scripts/FixAggregatesHeaderHeight.js",
-        "www/scripts/TrackerSettings.js",
-        "www/scripts/TrackerCollapseFieldset.js",
-        "www/scripts/CopyArtifact.js",
-        "www/scripts/tracker-report-nature-column.js",
-        "www/scripts/tracker-admin-notifications.js",
-        "www/scripts/tracker-admin-notifications-popover.js",
-        "www/scripts/tracker-webhooks.js"
-    ],
-    "components": [
-        "grammar/",
-        "www/scripts/"
-    ],
     "gettext-js": {
         "burndown-chart": {
-            "src": "www/scripts/burndown-chart/src",
-            "po": "www/scripts/burndown-chart/po"
+            "src": "scripts/burndown-chart/src",
+            "po": "scripts/burndown-chart/po"
+        }
+    },
+    "gettext-ts": {
+        "tracker-homepage": {
+            "src": "scripts/tracker-homepage/src",
+            "po": "scripts/tracker-homepage/po"
         }
     },
     "gettext-vue": {
         "colorpicker": {
-            "src": "www/scripts/colorpicker",
-            "po": "www/scripts/colorpicker/po"
+            "src": "scripts/colorpicker",
+            "po": "scripts/colorpicker/po"
         },
         "artifact-action-buttons": {
-            "src": "www/scripts/artifact-action-buttons",
-            "po": "www/scripts/artifact-action-buttons/po"
+            "src": "scripts/artifact-action-buttons",
+            "po": "scripts/artifact-action-buttons/po"
         },
         "permissions-per-group": {
-            "src": "www/scripts/permissions-per-group",
-            "po": "www/scripts/permissions-per-group/po"
+            "src": "scripts/permissions-per-group",
+            "po": "scripts/permissions-per-group/po"
         },
         "workflow-transitions": {
-            "src": "www/scripts/workflow-transitions",
-            "po": "www/scripts/workflow-transitions/po"
+            "src": "scripts/workflow-transitions",
+            "po": "scripts/workflow-transitions/po"
+        },
+        "tracker-creation": {
+            "src": "scripts/tracker-creation",
+            "po": "scripts/tracker-creation/po"
         }
     }
 }

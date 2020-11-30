@@ -1,0 +1,187 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Nicolas Terray <nicolas.terray@enalean.com>\n"
+"Language-Team: \n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.4\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "%{ countJenkinsServers } Jenkins server setup"
+msgid_plural "%{ countJenkinsServers } Jenkins servers setup"
+msgstr[0] "%{ countJenkinsServers } serveur Jenkins configuré"
+msgstr[1] "%{ countJenkinsServers } serveurs Jenkins configurés"
+
+msgid "%{ numberPullRequest } pull request"
+msgid_plural "%{ numberPullRequest } pull requests"
+msgstr[0] "%{ numberPullRequest } pull request"
+msgstr[1] "%{ numberPullRequest } pull requests"
+
+msgid "Add GitLab repository"
+msgstr "Ajouter un dépôt GitLab"
+
+msgid "Add project repository"
+msgstr "Ajouter un dépôt"
+
+msgid "Administration"
+msgstr "Administration"
+
+msgid "Allowed characters: a-zA-Z0-9/_.-"
+msgstr "Caractères autorisés : a-zA-Z0-9/_.-"
+
+msgid ""
+"Allowed characters: a-zA-Z0-9/_.- and max length is 255, no slashes at the\n"
+"                    beginning or the end, and repositories names must not "
+"finish with \".git\"."
+msgstr ""
+"Caractères autorisés : a-zA-Z0-9/_.-, la longueur maximale est de 255 "
+"caractères, pas de slashes au début ou à la fin, et le nom des repertoires "
+"ne doivent pas finir par \".git\"."
+
+msgid "An error occurred during your last action."
+msgstr "Une erreur est survenue lors de votre dernière action."
+
+msgid "An error occurred while creating the repository."
+msgstr "Une erreur est survenue lors de la création du dépôt."
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Cannot connect to GitLab server, please check your credentials."
+msgstr ""
+"Impossible de se connecter au serveur GitLab, veuillez vérifier vos "
+"identifiants de connexion."
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "Create a repository"
+msgstr "Créer un dépôt"
+
+msgid "Fetch GitLab repositories"
+msgstr "Récuperer les dépôts GitLab"
+
+msgid "Fork repositories"
+msgstr "Fork de dépôts Git"
+
+msgid "Forks:"
+msgstr "Forks :"
+
+msgid "Git plugin is not activated"
+msgstr "Le plugin Git est désactivé"
+
+msgid "Git repositories"
+msgstr "Dépôts Git"
+
+msgid ""
+"GitLab repository <strong>%{ label }</strong> has been successfully unlinked!"
+msgstr ""
+"L'intégration du dépot GitLab <strong>%{ label }</strong> a été supprimée avec "
+"succés !"
+
+msgid "GitLab server URL"
+msgstr "URL du serveur GitLab"
+
+msgid "GitLab user token"
+msgstr "Jeton de l'utilisateur GitLab"
+
+msgid "Go to repository administration"
+msgstr "Aller à l'administration du dépôt"
+
+msgid "Integrate the repository"
+msgstr "Intégrer le dépôt"
+
+msgid "Jenkins servers"
+msgstr "Serveurs Jenkins"
+
+msgid "New repository"
+msgstr "Nouveau dépôt"
+
+msgid "No repository is available with your GitLab account"
+msgstr "Aucun dépôt n'est disponible avec votre compte GitLab"
+
+msgid "No repository name matching your query has been found."
+msgstr "Aucun nom de dépôt ne correspond à votre recherche."
+
+msgid "Oops, an error occurred!"
+msgstr "Oups, une erreur s'est produite !"
+
+msgid "Project not found"
+msgstr "Projet non trouvé"
+
+msgid "Project repositories"
+msgstr "Dépôts du projet"
+
+msgid "Repository"
+msgstr "Dépôt"
+
+msgid "Repository list"
+msgstr "Liste des dépôts"
+
+msgid "Repository name"
+msgstr "Nom du dépôt"
+
+msgid ""
+"Repository name is not well formatted or is already used. Allowed "
+"characters: a-zA-Z0-9/_.- and max length is 255, no slashes at the beginning "
+"or the end, and repositories names must not finish with \".git\"."
+msgstr ""
+"Le nom du dépôt n'est pas correct ou est déjà utilisé. Caractères "
+"autorisés : a-zA-Z0-9/_.-, la longueur maximale est de 255 caractères, pas "
+"de slashes au début ou à la fin, les noms des repertoires ne doivent pas "
+"finir par \".git\"."
+
+msgid "Server url is invalid"
+msgstr "L'url du serveur est invalide"
+
+msgid "Sort repositories alphabetically"
+msgstr "Trier les dépôts par ordre alphabétique"
+
+msgid "Sort repositories by their last update date"
+msgstr "Trier les dépôts par leur date de dernière mise à jour"
+
+msgid "There are no repositories in this project"
+msgstr "Il n'y a aucun dépôt dans ce projet"
+
+msgid ""
+"Theses servers are triggered at each push in any repository of the project:"
+msgstr ""
+"Ces serveurs seront appelés lors de chaque push fait dans les dépôts du "
+"projet :"
+
+msgid "Unlink GitLab repository?"
+msgstr "Voulez-vous supprimer l'intégration du dépôt GitLab ?"
+
+msgid "Unlink the repository"
+msgstr "Supprimer l'intégration du dépôt"
+
+msgid "Updated %{ formatted_last_update_date }"
+msgstr "Mis à jour %{ formatted_last_update_date }"
+
+msgid "Users forks"
+msgstr "Forks des utilisateurs"
+
+msgid ""
+"Wow, wait a minute. You are about to unlink the GitLab repository <strong>"
+"%{ label }</strong>. Please confirm your action."
+msgstr ""
+"Hé, une petite minute. Vous allez supprimer l'intégration du dépot GitLab "
+"<strong>%{ label }</strong>. Merci de confirmer votre action."
+
+msgid ""
+"You don't have permission to create Git repositories as you are not Git "
+"administrator."
+msgstr ""
+"Vous n'avez pas la permission de créer de dépôts git comme vous n'êtes pas "
+"administrateur du service Git."
+
+msgid "You must provide a valid GitLab server and user API token"
+msgstr "Vous devez fournir un serveur GitLab et un jeton d'API valides"

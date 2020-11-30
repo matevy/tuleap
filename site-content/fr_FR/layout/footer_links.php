@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2012-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,9 +20,13 @@
 ?>
 <h3 class="footer-section-title">Contact</h3>
 <p class="footer-paragraph">
-    <a class="footer-link" href="/contact.php"><i class="fa fa-fw fa-envelope"></i> Contactez-nous</a>
+    <a class="footer-link" href="/contact.php"><i class="fas fa-fw fa-envelope" aria-hidden="true"></i> Contactez-nous</a>
     <br>
-    <a class="footer-link" href="https://twitter.com/TuleapOpenALM" target="_blank" rel="noreferrer"><i class="fa fa-fw fa-twitter"></i> @TuleapOpenALM</a>
+    <a class="footer-link" href="https://twitter.com/TuleapOpenALM" target="_blank" rel="noreferrer" title="Rejoignez Tuleap sur Twitter">
+        <i class="fab fa-fw fa-twitter" aria-hidden="true"></i> @TuleapOpenALM
+    </a>
     <br>
-    <a class="footer-link" href="https://www.linkedin.com/groups/Tuleap-Community-3962145" target="_blank" rel="noreferrer"><i class="fa fa-fw fa-linkedin"></i> Tuleap Community</a>
+    <a class="footer-link" href="https://www.linkedin.com/company/tuleap" target="_blank" rel="noreferrer" title="Rejoignez Tuleap sur LinkedIn">
+        <i class="fab fa-fw fa-linkedin-in" aria-hidden="true"></i> Rejoignez Tuleap
+    </a>
 </p>

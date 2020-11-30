@@ -24,17 +24,17 @@
 
 namespace Tuleap\SVN\Repository;
 
-use Logger;
+use Psr\Log\LoggerInterface;
 use Tuleap\SVN\Dao;
 
 class Destructor
 {
     /** @var Dao */
     private $dao;
-    /** @var  Logger */
+    /** @var  LoggerInterface */
     private $logger;
 
-    public function __construct(Dao $dao, Logger $logger)
+    public function __construct(Dao $dao, LoggerInterface $logger)
     {
         $this->dao    = $dao;
         $this->logger = $logger;
@@ -43,9 +43,9 @@ class Destructor
     public function delete(Repository $repository)
     {
         if (! $this->dao->delete($repository->getId())) {
-            $this->logger->error('Unable to delete repository:'. $repository->getName() .' from database');
+            $this->logger->error('Unable to delete repository:' . $repository->getName() . ' from database');
         } else {
-            $this->logger->error('Repository:'. $repository->getName() .' deleted from database with success');
+            $this->logger->error('Repository:' . $repository->getName() . ' deleted from database with success');
         }
     }
 }

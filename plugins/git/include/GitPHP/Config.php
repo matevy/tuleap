@@ -40,6 +40,7 @@ class Config
      *
      * @access protected
      * @static
+     * @var self|null
      */
     protected static $instance;
 
@@ -50,7 +51,7 @@ class Config
      *
      * @access protected
      */
-    protected $values = array();
+    protected $values = [];
 
     /**
      * configs
@@ -59,7 +60,7 @@ class Config
      *
      * @access protected
      */
-    protected $configs = array();
+    protected $configs = [];
 
     /**
      * GetInstance
@@ -72,7 +73,7 @@ class Config
      */
     public static function GetInstance() // @codingStandardsIgnoreLine
     {
-        if (!self::$instance) {
+        if (! self::$instance) {
             self::$instance = new Config();
         }
         return self::$instance;
@@ -89,11 +90,11 @@ class Config
      */
     public function LoadConfig($configFile) // @codingStandardsIgnoreLine
     {
-        if (!is_file($configFile)) {
+        if (! is_file($configFile)) {
             throw new MessageException('Could not load config file ' . $configFile, true, 500);
         }
 
-        if (!include($configFile)) {
+        if (! include($configFile)) {
             throw new MessageException('Could not read config file ' . $configFile, true, 500);
         }
 
@@ -113,8 +114,8 @@ class Config
      */
     public function ClearConfig() // @codingStandardsIgnoreLine
     {
-        $this->values = array();
-        $this->configs = array();
+        $this->values = [];
+        $this->configs = [];
     }
 
     /**

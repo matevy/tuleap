@@ -18,7 +18,7 @@
  */
 
 import { shallowMount } from "@vue/test-utils";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import CreateNewItemVersionButton from "./NewItemVersionButton.vue";
 
 import localVue from "../../../helpers/local-vue.js";
@@ -32,7 +32,7 @@ describe("CreateNewItemVersionButton", () => {
             return shallowMount(CreateNewItemVersionButton, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -46,11 +46,11 @@ describe("CreateNewItemVersionButton", () => {
                 id: 1,
                 title: "my item title",
                 type: "file",
-                user_can_write: true
-            }
+                user_can_write: true,
+            },
         });
 
-        wrapper.find("[data-test=document-new-item-version-button]").trigger("click");
+        wrapper.get("[data-test=document-new-item-version-button]").trigger("click");
 
         expect(event_bus_emit).toHaveBeenCalledWith(
             "show-create-new-item-version-modal",
@@ -67,11 +67,11 @@ describe("CreateNewItemVersionButton", () => {
                 id: 1,
                 title: "my item title",
                 type: "embedded",
-                user_can_write: true
-            }
+                user_can_write: true,
+            },
         });
 
-        wrapper.find("[data-test=document-new-item-version-button]").trigger("click");
+        wrapper.get("[data-test=document-new-item-version-button]").trigger("click");
 
         expect(event_bus_emit).toHaveBeenCalledWith(
             "show-create-new-item-version-modal",
@@ -89,11 +89,11 @@ describe("CreateNewItemVersionButton", () => {
                 title: "my item title",
                 type: "wiki",
                 user_can_write: true,
-                approval_table: null
-            }
+                approval_table: null,
+            },
         });
 
-        wrapper.find("[data-test=document-new-item-version-button]").trigger("click");
+        wrapper.get("[data-test=document-new-item-version-button]").trigger("click");
 
         expect(event_bus_emit).toHaveBeenCalledWith(
             "show-create-new-item-version-modal",
@@ -112,12 +112,12 @@ describe("CreateNewItemVersionButton", () => {
                 type: "wiki",
                 user_can_write: true,
                 approval_table: {
-                    approval_state: "not yet"
-                }
-            }
+                    approval_state: "not yet",
+                },
+            },
         });
 
-        wrapper.find("[data-test=document-new-item-version-button]").trigger("click");
+        wrapper.get("[data-test=document-new-item-version-button]").trigger("click");
 
         expect(event_bus_emit).not.toHaveBeenCalled();
     });
@@ -132,11 +132,11 @@ describe("CreateNewItemVersionButton", () => {
                 id: 1,
                 title: "my item title",
                 type: "empty",
-                user_can_write: true
-            }
+                user_can_write: true,
+            },
         });
 
-        wrapper.find("[data-test=document-new-item-version-button]").trigger("click");
+        wrapper.get("[data-test=document-new-item-version-button]").trigger("click");
 
         expect(event_bus_emit).toHaveBeenCalledWith(
             "show-create-new-item-version-modal",
@@ -151,12 +151,12 @@ describe("CreateNewItemVersionButton", () => {
             id: 1,
             title: "my item title",
             type: "link",
-            user_can_write: true
+            user_can_write: true,
         };
 
         const wrapper = create_new_item_version_button_factory({ item });
 
-        wrapper.find("[data-test=document-new-item-version-button]").trigger("click");
+        wrapper.get("[data-test=document-new-item-version-button]").trigger("click");
 
         expect(store.dispatch).toHaveBeenCalledWith("loadDocument", 1);
     });
@@ -168,11 +168,11 @@ describe("CreateNewItemVersionButton", () => {
                 id: 1,
                 title: "my item title",
                 type: "file",
-                user_can_write: false
-            }
+                user_can_write: false,
+            },
         });
 
-        expect(wrapper.contains("[data-test=document-new-item-version-button]")).toBeFalsy();
-        expect(wrapper.contains("[data-test=document-folder-update-button]")).toBeFalsy();
+        expect(wrapper.find("[data-test=document-new-item-version-button]").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test=document-folder-update-button]").exists()).toBeFalsy();
     });
 });

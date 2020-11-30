@@ -20,7 +20,7 @@
 
 namespace Tuleap\Configuration\Nginx;
 
-use Tuleap\Configuration\Logger\LoggerInterface;
+use Psr\Log\LoggerInterface;
 use Tuleap\Configuration\Logger\Wrapper;
 
 class TuleapWeb
@@ -57,35 +57,37 @@ class TuleapWeb
 
         $this->common->deployConfigurationChunks();
 
-        if (! file_exists($this->nginx_base_dir.'/conf.d/tuleap.conf')) {
+        if (! file_exists($this->nginx_base_dir . '/conf.d/tuleap.conf')) {
             $this->logger->info("Generate tuleap.conf");
             $this->common->replacePlaceHolderInto(
-                $this->tuleap_base_dir.'/src/etc/nginx/tuleap.conf.dist',
-                $this->nginx_base_dir.'/conf.d/tuleap.conf',
-                array(
+                $this->tuleap_base_dir . '/src/etc/nginx/tuleap.conf.dist',
+                $this->nginx_base_dir . '/conf.d/tuleap.conf',
+                [
                     '%ssl_certificate_key_path%',
                     '%ssl_certificate_path%',
                     '%sys_default_domain%',
-                ),
-                array(
+                ],
+                [
                     self::SSL_CERT_KEY_PATH,
                     self::SSL_CERT_CERT_PATH,
                     $this->server_name,
-                )
+                ]
             );
             $should_tls_certificate_be_generated = true;
 
             $this->logger->info('Generate default.d/redirect_tuleap.conf');
             $this->common->replacePlaceHolderInto(
-                $this->tuleap_base_dir.'/src/etc/nginx/default.d/redirect_tuleap.conf.dist',
-                $this->nginx_base_dir.'/default.d/redirect_tuleap.conf',
+                $this->tuleap_base_dir . '/src/etc/nginx/default.d/redirect_tuleap.conf.dist',
+                $this->nginx_base_dir . '/default.d/redirect_tuleap.conf',
                 ['%sys_default_domain%'],
                 [$this->server_name]
             );
         }
 
-        if (($this->for_development || $should_tls_certificate_be_generated)
-                && ! file_exists(self::SSL_CERT_CERT_PATH)) {
+        if (
+            ($this->for_development || $should_tls_certificate_be_generated)
+                && ! file_exists(self::SSL_CERT_CERT_PATH)
+        ) {
             $this->common->generateSSLCertificate(
                 $this->server_name,
                 self::SSL_CERT_CERT_PATH,

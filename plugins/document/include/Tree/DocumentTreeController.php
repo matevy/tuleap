@@ -18,18 +18,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Document\Tree;
 
 use CSRFSynchronizerToken;
-use ForgeConfig;
 use HTTPRequest;
 use Project;
 use TemplateRendererFactory;
+use Tuleap\date\RelativeDatesAssetsRetriever;
+use Tuleap\Document\Config\FileDownloadLimitsBuilder;
+use Tuleap\Document\Config\HistoryEnforcementSettingsBuilder;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Layout\CssAsset;
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Project\Flags\ProjectFlagsBuilder;
 use Tuleap\Request\DispatchableWithBurningParrot;
 use Tuleap\Request\DispatchableWithProject;
 use Tuleap\Request\DispatchableWithRequest;
@@ -45,11 +48,32 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
      * @var \DocmanPluginInfo
      */
     private $docman_plugin_info;
+    /**
+     * @var FileDownloadLimitsBuilder
+     */
+    private $file_download_limits_builder;
 
-    public function __construct(DocumentTreeProjectExtractor $project_extractor, \DocmanPluginInfo $docman_plugin_info)
-    {
-        $this->project_extractor  = $project_extractor;
-        $this->docman_plugin_info = $docman_plugin_info;
+    /**
+     * @var HistoryEnforcementSettingsBuilder
+     */
+    private $history_enforcement_settings_builder;
+    /**
+     * @var ProjectFlagsBuilder
+     */
+    private $project_flags_builder;
+
+    public function __construct(
+        DocumentTreeProjectExtractor $project_extractor,
+        \DocmanPluginInfo $docman_plugin_info,
+        FileDownloadLimitsBuilder $file_download_limits_builder,
+        HistoryEnforcementSettingsBuilder $history_enforcement_settings_builder,
+        ProjectFlagsBuilder $project_flags_builder
+    ) {
+        $this->project_extractor                    = $project_extractor;
+        $this->docman_plugin_info                   = $docman_plugin_info;
+        $this->file_download_limits_builder         = $file_download_limits_builder;
+        $this->history_enforcement_settings_builder = $history_enforcement_settings_builder;
+        $this->project_flags_builder                = $project_flags_builder;
     }
 
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
@@ -66,7 +90,7 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
 
         $this->includeCssFiles($layout);
         $this->includeHeaderAndNavigationBar($layout, $project);
-        $this->includeJavascriptFiles($layout);
+        $this->includeJavascriptFiles($layout, $request);
 
         $renderer = TemplateRendererFactory::build()->getRenderer(__DIR__ . "/../../templates");
         $renderer->renderToPage(
@@ -74,11 +98,14 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
             new DocumentTreePresenter(
                 $project,
                 $request->getCurrentUser(),
-                (bool)$this->docman_plugin_info->getPropertyValueForName('embedded_are_allowed'),
+                (bool) $this->docman_plugin_info->getPropertyValueForName('embedded_are_allowed'),
                 $is_item_status_used,
                 $is_obsolescence_date_used,
                 (bool) $this->docman_plugin_info->getPropertyValueForName('only_siteadmin_can_delete'),
-                new CSRFSynchronizerToken('plugin-document')
+                new CSRFSynchronizerToken('plugin-document'),
+                $this->file_download_limits_builder->build(),
+                $this->history_enforcement_settings_builder->build(),
+                $this->project_flags_builder->buildProjectFlags($project),
             )
         );
 
@@ -86,11 +113,11 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
     }
 
     /**
-     * @param array       $variables
+     * @param array $variables
      *
      * @throws NotFoundException
      */
-    public function getProject(array $variables) : Project
+    public function getProject(array $variables): Project
     {
         return $this->project_extractor->getProject($variables);
     }
@@ -98,34 +125,35 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
     private function isHardcodedMetadataUsed(Project $project, string $label): bool
     {
         $docman_setting_bo = new \Docman_SettingsBo($project->getID());
+
         return $docman_setting_bo->getMetadataUsage($label) === "1";
     }
 
-    private function includeJavascriptFiles(BaseLayout $layout) : void
+    private function getAssets(): IncludeAssets
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../../src/www/assets/document/scripts',
-            '/assets/document/scripts'
+        return new IncludeAssets(
+            __DIR__ . '/../../../../src/www/assets/document',
+            '/assets/document'
         );
-
-        $assets_path     = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-        $ckeditor_assets = new IncludeAssets($assets_path, '/assets');
-        $layout->includeFooterJavascriptFile($ckeditor_assets->getFileURL('ckeditor.js'));
-        $layout->includeFooterJavascriptFile($include_assets->getFileURL('document.js'));
     }
 
-    /**
-     * @param BaseLayout $layout
-     * @param            $project
-     */
+    private function includeJavascriptFiles(BaseLayout $layout, HTTPRequest $request): void
+    {
+        $core_assets = new IncludeAssets(__DIR__ . '/../../../../src/www/assets/core', '/assets/core');
+        $layout->includeFooterJavascriptFile($core_assets->getFileURL('ckeditor.js'));
+        $layout->includeFooterJavascriptFile($this->getAssets()->getFileURL('document.js'));
+        $layout->includeFooterJavascriptFile(RelativeDatesAssetsRetriever::retrieveAssetsUrl());
+    }
+
     private function includeHeaderAndNavigationBar(BaseLayout $layout, Project $project)
     {
         $layout->header(
             [
-                'title'        => dgettext('tuleap-document', "Document manager"),
-                'group'        => $project->getID(),
-                'toptab'       => 'docman',
-                'main_classes' => ['document-main']
+                'title'                          => dgettext('tuleap-document', "Document manager"),
+                'group'                          => $project->getID(),
+                'toptab'                         => 'docman',
+                'main_classes'                   => ['document-main'],
+                'without-project-in-breadcrumbs' => true,
             ]
         );
     }
@@ -134,10 +162,7 @@ class DocumentTreeController implements DispatchableWithRequest, DispatchableWit
     {
         $layout->addCssAsset(
             new CssAsset(
-                new IncludeAssets(
-                    __DIR__ . '/../../../../src/www/assets/document/themes',
-                    '/assets/document/themes'
-                ),
+                $this->getAssets(),
                 'style'
             )
         );

@@ -20,6 +20,9 @@
 const state = {
     user_id: null,
     project_id: null,
+    project_name: null,
+    project_public_name: null,
+    project_url: null,
     project_ugroups: null,
     is_loading_folder: true,
     is_user_administrator: false,
@@ -34,6 +37,8 @@ const state = {
     user_can_create_wiki: false,
     max_files_dragndrop: 1,
     max_size_upload: 1,
+    warning_threshold: 50,
+    max_archive_size: 2000,
     files_uploads_list: [],
     embedded_are_allowed: false,
     is_loading_currently_previewed_item: false,
@@ -42,7 +47,9 @@ const state = {
     is_obsolescence_date_metadata_used: false,
     show_post_deletion_notification: false,
     is_embedded_in_large_view: true,
-    toggle_quick_look: false
+    toggle_quick_look: false,
+    privacy: null,
+    project_flags: [],
 };
 
 export default state;

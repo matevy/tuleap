@@ -51,7 +51,7 @@ EOT;
      */
     public function up()
     {
-        $projects_table_mapping = array();
+        $projects_table_mapping = [];
         $sql                    = "SELECT * FROM plugin_mediawiki_database";
         $res                    = $this->queryDB($sql, 'An error occured while looking for all mediawiki databases');
 
@@ -96,7 +96,7 @@ EOT;
     {
         $res = $this->db->dbh->query($sql);
         if ($res === false) {
-            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message.implode(', ', $this->db->dbh->errorInfo()));
+            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message . implode(', ', $this->db->dbh->errorInfo()));
         }
 
         return $res;
@@ -106,7 +106,7 @@ EOT;
     {
         $res = $this->db->dbh->exec($sql);
         if ($res === false) {
-            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message.implode(', ', $this->db->dbh->errorInfo()));
+            throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete($message . implode(', ', $this->db->dbh->errorInfo()));
         }
 
         return $res;

@@ -30,8 +30,8 @@ use Tuleap\Git\History\Dao;
 use Tuleap\Git\RemoteServer\Gerrit\HttpUserValidator;
 
 $console    = new Log_ConsoleLogger();
-$logger     = new GitBackendLogger();
-$broker_log = new BrokerLogger(array($logger, $console));
+$logger     = \BackendLogger::getDefaultLogger(GitPlugin::LOG_IDENTIFIER);
+$broker_log = new BrokerLogger([$logger, $console]);
 
 $detector = new VersionDetector();
 if (! $detector->isGitolite3()) {
@@ -42,7 +42,6 @@ if (! $detector->isGitolite3()) {
 $broker_log->info("Starting parse gitolite3 logs.");
 $gitolite_parser = new Gitolite3LogParser(
     $broker_log,
-    new System_Command(),
     new HttpUserValidator(),
     new Dao(),
     new GitRepositoryFactory(new GitDao(), ProjectManager::instance()),

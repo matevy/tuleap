@@ -23,22 +23,17 @@ declare(strict_types=1);
 namespace Tuleap\Docman\Download;
 
 use Docman_File;
-use Docman_Item;
 use Docman_ItemFactory;
-use Logger;
-use LogicException;
+use Psr\Log\LoggerInterface;
 use PFUser;
-use Project;
-use ProjectManager;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Tuleap\Request\DispatchablePSR15Compatible;
-use Tuleap\Request\DispatchableWithProject;
 use Tuleap\Request\DispatchableWithRequestNoAuthz;
 use Tuleap\Request\NotFoundException;
 use Tuleap\REST\RESTCurrentUserMiddleware;
-use Zend\HttpHandlerRunner\Emitter\EmitterInterface;
+use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 
 final class DocmanFileDownloadController extends DispatchablePSR15Compatible implements DispatchableWithRequestNoAuthz
 {
@@ -51,7 +46,7 @@ final class DocmanFileDownloadController extends DispatchablePSR15Compatible imp
      */
     private $file_download_response_generator;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -59,7 +54,7 @@ final class DocmanFileDownloadController extends DispatchablePSR15Compatible imp
         EmitterInterface $emitter,
         Docman_ItemFactory $item_factory,
         DocmanFileDownloadResponseGenerator $file_download_response_generator,
-        Logger $logger,
+        LoggerInterface $logger,
         MiddlewareInterface ...$middleware_stack
     ) {
         parent::__construct(
@@ -71,7 +66,7 @@ final class DocmanFileDownloadController extends DispatchablePSR15Compatible imp
         $this->logger                           = $logger;
     }
 
-    public function handle(ServerRequestInterface $request) : ResponseInterface
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $item = $this->item_factory->getItemFromDb($request->getAttribute('file_id'));
 

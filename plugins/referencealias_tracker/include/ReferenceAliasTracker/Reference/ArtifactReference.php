@@ -23,7 +23,7 @@ namespace Tuleap\ReferenceAliasTracker\Reference;
 
 use Reference;
 use trackerPlugin;
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class ArtifactReference extends Reference
 {
@@ -35,7 +35,7 @@ class ArtifactReference extends Reference
     {
         $base_id     = 0;
         $description = '';
-        $url         = "/plugins/tracker/?aid=".urlencode($artifact_id);
+        $url         = "/plugins/tracker/?aid=" . urlencode($artifact_id);
         $visibility  = 'P';
         $is_used     = 1;
 
@@ -46,7 +46,7 @@ class ArtifactReference extends Reference
             $url,
             $visibility,
             trackerPlugin::SERVICE_SHORTNAME,
-            Tracker_Artifact::REFERENCE_NATURE,
+            Artifact::REFERENCE_NATURE,
             $is_used,
             $project_id
         );

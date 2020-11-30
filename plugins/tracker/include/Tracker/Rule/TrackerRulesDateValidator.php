@@ -40,7 +40,7 @@ class TrackerRulesDateValidator
         $this->form_element_factory = $form_element_factory;
     }
 
-    public function validateDateRules(array $value_field_list, array $rules) : bool
+    public function validateDateRules(array $value_field_list, array $rules): bool
     {
         foreach ($rules as $rule) {
             if (! $this->dateRuleApplyToSubmittedFields($rule, $value_field_list)) {
@@ -50,15 +50,7 @@ class TrackerRulesDateValidator
             if (! $this->validateDateRuleOnSubmittedFields($rule, $value_field_list)) {
                 $source_field = $this->getFieldById($rule->getSourceFieldId());
                 $target_field = $this->getFieldById($rule->getTargetFieldId());
-                $feedback = $GLOBALS['Language']->getText(
-                    'plugin_tracker_artifact',
-                    'rules_date_not_valid',
-                    [
-                        $source_field->getLabel() ,
-                        $rule->getComparator(),
-                        $target_field->getLabel()
-                    ]
-                );
+                $feedback = sprintf(dgettext('tuleap-tracker', 'Error on the date value : %1$s must be %2$s to %3$s.'), $source_field->getLabel(), $rule->getComparator(), $target_field->getLabel());
 
                 $GLOBALS['Response']->addFeedback('error', $feedback);
 
@@ -71,12 +63,12 @@ class TrackerRulesDateValidator
         return true;
     }
 
-    private function dateRuleApplyToSubmittedFields(Tracker_Rule_Date $rule, array $value_field_list) : bool
+    private function dateRuleApplyToSubmittedFields(Tracker_Rule_Date $rule, array $value_field_list): bool
     {
         $is_valid = true;
         if (! array_key_exists($rule->getSourceFieldId(), $value_field_list)) {
             $source_field = $this->getFieldById($rule->getSourceFieldId());
-            $feedback = $GLOBALS['Language']->getText('plugin_tracker_admin_import', 'missing_field_value') . $source_field->getLabel();
+            $feedback = dgettext('tuleap-tracker', 'Missing field in data:') . $source_field->getLabel();
 
             $GLOBALS['Response']->addUniqueFeedback(Feedback::ERROR, $feedback);
             $source_field->setHasErrors(true);
@@ -85,7 +77,7 @@ class TrackerRulesDateValidator
 
         if (! array_key_exists($rule->getTargetFieldId(), $value_field_list)) {
             $target_field = $this->getFieldById($rule->getTargetFieldId());
-            $feedback = $GLOBALS['Language']->getText('plugin_tracker_admin_import', 'missing_field_value') . $target_field->getLabel();
+            $feedback = dgettext('tuleap-tracker', 'Missing field in data:') . $target_field->getLabel();
             $GLOBALS['Response']->addUniqueFeedback(Feedback::ERROR, $feedback);
             $target_field->setHasErrors(true);
             $is_valid = false;
@@ -94,7 +86,7 @@ class TrackerRulesDateValidator
         return $is_valid;
     }
 
-    private function validateDateRuleOnSubmittedFields(Tracker_Rule_Date $rule, array $value_field_list) : bool
+    private function validateDateRuleOnSubmittedFields(Tracker_Rule_Date $rule, array $value_field_list): bool
     {
         $source_value = $value_field_list[$rule->getSourceFieldId()];
         $target_value = $value_field_list[$rule->getTargetFieldId()];
@@ -102,7 +94,7 @@ class TrackerRulesDateValidator
         return $rule->validate($source_value, $target_value);
     }
 
-    private function getFieldById($field_id) : Tracker_FormElement_Field
+    private function getFieldById($field_id): Tracker_FormElement_Field
     {
         return $this->form_element_factory->getFormElementById($field_id);
     }

@@ -23,24 +23,24 @@
 class Docman_FilterDao extends DataAccessObject
 {
 
-    function searchByReportId($id)
+    public function searchByReportId($id)
     {
         $sql = sprintf(
-            'SELECT *'.
-                       ' FROM plugin_docman_report_filter'.
-                       ' WHERE report_id = %d'.
+            'SELECT *' .
+                       ' FROM plugin_docman_report_filter' .
+                       ' WHERE report_id = %d' .
                        ' ORDER BY label ASC',
             $id
         );
         return $this->retrieve($sql);
     }
 
-    function createFilterList($reportId, $label, $love)
+    public function createFilterList($reportId, $label, $love)
     {
         $sql = sprintf(
-            'INSERT INTO plugin_docman_report_filter'.
-                       ' (report_id, label, value_love)'.
-                       ' VALUES'.
+            'INSERT INTO plugin_docman_report_filter' .
+                       ' (report_id, label, value_love)' .
+                       ' VALUES' .
                        ' (%d, %s, %d)',
             $reportId,
             $this->da->quoteSmart($label),
@@ -49,12 +49,12 @@ class Docman_FilterDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function createFilterText($reportId, $label, $string)
+    public function createFilterText($reportId, $label, $string)
     {
         $sql = sprintf(
-            'INSERT INTO plugin_docman_report_filter'.
-                       ' (report_id, label, value_string)'.
-                       ' VALUES'.
+            'INSERT INTO plugin_docman_report_filter' .
+                       ' (report_id, label, value_string)' .
+                       ' VALUES' .
                        ' (%d, %s, %s)',
             $reportId,
             $this->da->quoteSmart($label),
@@ -63,12 +63,12 @@ class Docman_FilterDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function createFilterDate($reportId, $label, $date, $op)
+    public function createFilterDate($reportId, $label, $date, $op)
     {
         $sql = sprintf(
-            'INSERT INTO plugin_docman_report_filter'.
-                       ' (report_id, label, value_date1, value_date_op)'.
-                       ' VALUES'.
+            'INSERT INTO plugin_docman_report_filter' .
+                       ' (report_id, label, value_date1, value_date_op)' .
+                       ' VALUES' .
                        ' (%d, %s, %s, %d)',
             $reportId,
             $this->da->quoteSmart($label),
@@ -78,12 +78,12 @@ class Docman_FilterDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function createFilterDateAdvanced($reportId, $label, $date1, $date2)
+    public function createFilterDateAdvanced($reportId, $label, $date1, $date2)
     {
         $sql = sprintf(
-            'INSERT INTO plugin_docman_report_filter'.
-                       ' (report_id, label, value_date1, value_date2)'.
-                       ' VALUES'.
+            'INSERT INTO plugin_docman_report_filter' .
+                       ' (report_id, label, value_date1, value_date2)' .
+                       ' VALUES' .
                        ' (%d, %s, %s, %s)',
             $reportId,
             $this->da->quoteSmart($label),
@@ -93,10 +93,10 @@ class Docman_FilterDao extends DataAccessObject
         return $this->update($sql);
     }
 
-    function truncateFilters($reportId)
+    public function truncateFilters($reportId)
     {
         $sql = sprintf(
-            'DELETE FROM plugin_docman_report_filter'.
+            'DELETE FROM plugin_docman_report_filter' .
                        ' WHERE report_id = %d',
             $reportId
         );

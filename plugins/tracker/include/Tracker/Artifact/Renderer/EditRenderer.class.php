@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2013 - 2018. All rights reserved.
+ * Copyright Enalean (c) 2013 - present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -22,10 +22,16 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\date\RelativeDatesAssetsRetriever;
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfig;
+use Tuleap\Tracker\Artifact\MailGateway\MailGatewayConfigDao;
+use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
+use Tuleap\Tracker\Artifact\Renderer\GetAdditionalJavascriptFilesForArtifactDisplay;
+use Tuleap\Tracker\Artifact\Renderer\ListPickerIncluder;
+use Tuleap\Tracker\Artifact\View\Nature;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureIsChildLinkRetriever;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\ParentOfArtifactCollection;
-use Tuleap\Tracker\Artifact\View\Nature;
-use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
 use Tuleap\Tracker\Workflow\PostAction\HiddenFieldsets\HiddenFieldsetsDetector;
 
 class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRenderer
@@ -42,11 +48,6 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
     public const EVENT_ADD_VIEW_IN_COLLECTION = 'tracker_artifact_editrenderer_add_view_in_collection';
 
     /**
-     * @var Tracker_FormElementFactory
-     */
-    private $formelement_factory;
-
-    /**
      * @var Tracker_IDisplayTrackerLayout
      */
     protected $layout;
@@ -58,21 +59,19 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
     private $hidden_fieldsets_detector;
 
     /**
-     * @var Tracker_Artifact[]
+     * @var Artifact[]
      */
     private $hierarchy;
 
     public function __construct(
         EventManager $event_manager,
-        Tracker_Artifact $artifact,
-        Tracker_FormElementFactory $formelement_factory,
+        Artifact $artifact,
         Tracker_IDisplayTrackerLayout $layout,
         NatureIsChildLinkRetriever $retriever,
         VisitRecorder $visit_recorder,
         HiddenFieldsetsDetector $hidden_fieldsets_detector
     ) {
         parent::__construct($artifact, $event_manager, $visit_recorder);
-        $this->formelement_factory       = $formelement_factory;
         $this->layout                    = $layout;
         $this->retriever                 = $retriever;
         $this->hidden_fieldsets_detector = $hidden_fieldsets_detector;
@@ -102,8 +101,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         if ($this->artifact->getTracker()->isProjectAllowedToUseNature()) {
             $parents = $this->retriever->getParentsHierarchy($this->artifact);
             if ($parents->isGraph()) {
-                $html .= "<div class='alert alert-warning'>".
-                $GLOBALS['Language']->getText('plugin_tracker_artifact_links_natures', 'error_multiple_parents')."</div>";
+                $html .= "<div class='alert alert-warning'>" .
+                dgettext('tuleap-tracker', 'The artifact has more than one parent. Cannot display rest of hierarchy.') . "</div>";
             }
             $html .= $this->fetchTitleIsGraph($parents);
         } else {
@@ -125,28 +124,61 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
 
     protected function displayHeader()
     {
-        $hp          = Codendi_HTMLPurifier::instance();
-        $title       = $hp->purify($this->tracker->getItemName(), CODENDI_PURIFIER_CONVERT_HTML)  .' #'. $this->artifact->getId();
-        $breadcrumbs = array(
-            array('title' => $title,
-                  'url'   => TRACKER_BASE_URL.'/?aid='. $this->artifact->getId())
+        $title = sprintf(
+            '%s - %s #%d',
+            mb_substr($this->artifact->getTitle() ?? '', 0, 64),
+            $this->tracker->getItemName(),
+            $this->artifact->getId()
         );
-        $toolbar = $this->tracker->getDefaultToolbar();
+        $breadcrumbs = [
+            ['title' => $this->artifact->getXRef(),
+                  'url'   => TRACKER_BASE_URL . '/?aid=' . $this->artifact->getId()]
+        ];
         $params = [
-            'body_class' => ['widgetable'],
+            'body_class' => ['widgetable', 'has-sidebar-with-pinned-header', 'tracker-artifact-view-body'],
             'open_graph' => new \Tuleap\OpenGraph\OpenGraphPresenter(
                 HTTPRequest::instance()->getServerUrl() . $this->artifact->getUri(),
                 $this->artifact->getTitle(),
                 $this->artifact->getDescription()
             )
         ];
-        $this->tracker->displayHeader($this->layout, $title, $breadcrumbs, $toolbar, $params);
+
+
+        $include_assets = new \Tuleap\Layout\IncludeAssets(
+            __DIR__ . '/../../../../../../src/www/assets/trackers',
+            '/assets/trackers'
+        );
+
+        $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL('text-follow-up.js'));
+        $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL('tracker-email-copy-paste-fp.js'));
+        $GLOBALS['HTML']->includeFooterJavascriptFile(RelativeDatesAssetsRetriever::retrieveAssetsUrl());
+        ListPickerIncluder::includeListPickerAssets();
+
+        $event = new GetAdditionalJavascriptFilesForArtifactDisplay();
+        $this->event_manager->dispatch($event);
+        foreach ($event->getFileURLs() as $file_url) {
+            $GLOBALS['HTML']->includeFooterJavascriptFile($file_url);
+        }
+        $this->tracker->displayHeader($this->layout, $title, $breadcrumbs, [], $params);
+
+
+        $status = new Tracker_ArtifactByEmailStatus(
+            new MailGatewayConfig(
+                new MailGatewayConfigDao()
+            )
+        );
+        if ($status->canUpdateArtifactInInsecureMode($this->tracker)) {
+            $renderer = TemplateRendererFactory::build()->getRenderer(__DIR__ . '/../../../../templates/artifact');
+            $renderer->renderToPage("reply-by-mail-modal-info", [
+                'email' => $this->artifact->getInsecureEmailAddress()
+            ]);
+        }
     }
 
     protected function fetchView(Codendi_Request $request, PFUser $user)
     {
         $view_collection = new Tracker_Artifact_View_ViewCollection();
-        $view_collection->add(new Tracker_Artifact_View_Edit($this->artifact, $request, $user, $this, $this->event_manager));
+        $view_collection->add(new Tracker_Artifact_View_Edit($this->artifact, $request, $user, $this));
 
         if ($this->artifact->getTracker()->isProjectAllowedToUseNature()) {
             $artifact_links = $this->retriever->getChildren($this->artifact);
@@ -161,12 +193,12 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
 
         EventManager::instance()->processEvent(
             self::EVENT_ADD_VIEW_IN_COLLECTION,
-            array(
+            [
                 'artifact'   => $this->artifact,
                 'collection' => $view_collection,
                 'request'    => $request,
                 'user'       => $user
-            )
+            ]
         );
 
         return $view_collection->fetchRequestedView($request);
@@ -199,7 +231,7 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         return $html;
     }
 
-    private function fetchMultipleParentsTitle(Tracker_Artifact $artifact, ParentOfArtifactCollection $hierarchy)
+    private function fetchMultipleParentsTitle(Artifact $artifact, ParentOfArtifactCollection $hierarchy)
     {
         $tab_level = 0;
         $html      = '';
@@ -231,14 +263,14 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
         return $html;
     }
 
-    private function fetchShowHideFieldSetsButton() : string
+    private function fetchShowHideFieldSetsButton(): string
     {
         if (! $this->hidden_fieldsets_detector->doesArtifactContainHiddenFieldsets($this->artifact)) {
             return '';
         }
 
         return '<div class="header-spacer"></div>
-            <div class="show-hide-fieldsets">'.dgettext('tuleap-tracker', 'Hidden fieldsets:').'
+            <div class="show-hide-fieldsets">' . dgettext('tuleap-tracker', 'Hidden fieldsets:') . '
                 <div class="btn-group" data-toggle="buttons-radio">
                     <button type="button" class="btn show-fieldsets"><i class="fa fa-eye"></i></button>
                     <button type="button" class="btn active hide-fieldsets"><i class="fa fa-eye-slash"></i></button>
@@ -256,8 +288,8 @@ class Tracker_Artifact_EditRenderer extends Tracker_Artifact_EditAbstractRendere
     }
 
     /**
-     * @param Tracker_Artifact[] $parents
-     * @param string             $padding_prefix
+     * @param Artifact[] $parents
+     * @param string     $padding_prefix
      *
      * @return string
      */

@@ -1,0 +1,334 @@
+@import 'steps';
+
+.current-test {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    margin: 0;
+    overflow: hidden;
+
+    > .tlp-pane-container {
+        overflow-y: auto;
+    }
+
+    &.passed > .tlp-pane-container {
+        > .current-test-header {
+            background: $tlp-ui-success;
+        }
+
+        > .current-test-latest-result {
+            background: linear-gradient(0deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .2)), $tlp-ui-success;
+        }
+
+        > .current-test-automated-message {
+            color: $tlp-ui-success;
+        }
+
+        .current-test-latest-result {
+            code {
+                color: $tlp-ui-success;
+            }
+        }
+    }
+
+    &.failed > .tlp-pane-container {
+        > .current-test-header {
+            background: $tlp-ui-danger;
+        }
+
+        > .current-test-latest-result {
+            background: linear-gradient(0deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .2)), $tlp-ui-danger;
+        }
+
+        > .current-test-automated-message {
+            color: $tlp-ui-danger;
+        }
+
+        .current-test-latest-result {
+            code {
+                color: $tlp-ui-danger;
+            }
+        }
+    }
+
+    &.blocked > .tlp-pane-container {
+        > .current-test-header {
+            background: $tlp-ui-info;
+        }
+
+        > .current-test-latest-result {
+            background: linear-gradient(0deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .2)), $tlp-ui-info;
+        }
+
+        > .current-test-automated-message {
+            color: $tlp-ui-info;
+        }
+
+        .current-test-latest-result {
+            code {
+                color: $tlp-ui-info;
+            }
+        }
+    }
+
+    &.notrun > .tlp-pane-container {
+        > .current-test-header {
+            background: $tlp-ui-dimmed;
+        }
+
+        > .current-test-latest-result {
+            background: linear-gradient(0deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .2)), $tlp-ui-dimmed;
+        }
+
+        > .current-test-automated-message {
+            color: $tlp-ui-dimmed;
+        }
+
+        .current-test-latest-result {
+            code {
+                color: $tlp-ui-dimmed;
+            }
+        }
+    }
+}
+
+.linked-issue-alert {
+    display: flex;
+}
+
+.linked-issue-alert-text {
+    flex: 1 1 auto;
+}
+
+.linked-issue-alert-close.tlp-button-outline {
+    border: 0;
+    box-shadow: unset;
+}
+
+.current-test-header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: baseline;
+    justify-content: space-between;
+    color: $tlp-ui-white;
+}
+
+.current-test-status {
+    margin: 0 $tlp-small-spacing 0 0;
+    font-size: 30px;
+}
+
+.current-test-header-title {
+    margin: 0;
+    color: $tlp-ui-white;
+    font-size: 24px;
+}
+
+.current-test-title-icon-auto {
+    position: relative;
+    top: 1px;
+    margin: 0 $tlp-small-spacing 0;
+}
+
+.current-test-requirement {
+    flex: 0 0 auto;
+    background: #f5f5f5;
+
+    .current-test-requirement-badge {
+        margin: 0 5px 0 0;
+    }
+
+    .current-test-requirement-arrow {
+        margin: 0 5px 0 0;
+        vertical-align: middle;
+    }
+}
+
+.current-test-header-who {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 28px;
+}
+
+.current-test-header-comment {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 10px 0 0;
+    font-size: 14px;
+    line-height: 22px;
+    word-break: break-word;
+
+    > button {
+        flex: 0 0 auto;
+        margin: 0 0 0 20px;
+    }
+
+    p {
+        font-size: inherit;
+    }
+}
+
+.current-test-header-actions {
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: space-between;
+    font-size: 20px;
+}
+
+.current-test-header-action {
+    margin: 0 0 0 $tlp-medium-spacing;
+    color: $tlp-ui-white;
+    cursor: pointer;
+}
+
+.current-test-latest-result {
+    display: flex;
+    flex: 0 0 auto;
+    background-blend-mode: overlay, normal;
+    mix-blend-mode: normal;
+    color: $tlp-ui-white;
+
+    a {
+        color: $tlp-ui-white;
+        text-decoration: underline;
+    }
+
+    code {
+        background: transparentize($tlp-ui-white, .2);
+    }
+}
+
+.current-test-latest-result-description {
+    flex: 1 1 auto;
+}
+
+.artifact-link-graph-dot {
+    fill: $tlp-ui-white;
+}
+
+.artifact-link-graph-path {
+    stroke: $tlp-ui-white;
+}
+
+.current-test-content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+
+    h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    p,
+    ul,
+    ol {
+        margin: 0 0 10px;
+        font-size: 14px;
+        line-height: 18px;
+    }
+}
+
+// stylelint-disable-next-line selector-no-qualifying-type
+execution-with-steps.current-test-content {
+    padding: 0 0 130px;
+}
+
+.current-test-footer-section {
+    border-top: 1px solid $tlp-ui-border-light;
+}
+
+.current-test-results-container {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+.current-test-comment {
+    // 240px = width of 4 buttons and their margin)
+    width: calc(100% - 240px);
+    min-height: 50px;
+    max-height: 200px;
+    padding: 8px 12px;
+    overflow: auto;
+    transition: border-color ease-out 150ms;
+    border: 1px solid $tlp-ui-border-normal;
+    border-radius: 3px;
+
+    &:focus,
+    &.cke_focus { // stylelint-disable-line selector-class-pattern
+        min-height: 64px; // magic value to display 2 line of text (padding + 2 line-height of <p>)
+        border-radius: 0 3px 3px;
+        border-color: $tlp-theme-color;
+    }
+
+    p {
+        margin: 0 0 5px;
+        font-size: 14px;
+        line-height: normal;
+    }
+
+    img {
+        height: auto !important;
+    }
+}
+
+.current-test-results {
+    display: flex;
+    justify-content: space-around;
+    margin: 0 0 0 $tlp-small-spacing;
+}
+
+.current-test-result {
+    flex: 0 0 auto;
+    width: 50px;
+    height: 50px;
+    margin: 0 0 0 $tlp-small-spacing;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 25px;
+
+    &.tlp-button-secondary {
+        border-color: $tlp-ui-dimmed;
+        background: $tlp-ui-dimmed;
+        color: $tlp-ui-white;
+    }
+}
+
+.linked-issues-dropdown-content-badge {
+    margin: 0 5px 0 0;
+}
+
+.tlp-alert-warning.current-test-should-be-reloaded-warning {
+    margin: $tlp-medium-spacing 0 0;
+
+    &::before {
+        top: 35%;
+    }
+}
+
+.current-test-should-be-reloaded-button {
+    margin: 0 0 0 $tlp-small-spacing;
+    vertical-align: baseline;
+}
+
+.current-test-description-empty-state {
+    color: $tlp-ui-dimmed;
+    font-style: italic;
+}
+
+.current-test-automated-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    margin: 75px 0 0;
+    opacity: .7;
+    font-size: 18px;
+    line-height: 28px;
+}
+
+.svg-robot {
+    margin: 0 0 $tlp-medium-spacing;
+}

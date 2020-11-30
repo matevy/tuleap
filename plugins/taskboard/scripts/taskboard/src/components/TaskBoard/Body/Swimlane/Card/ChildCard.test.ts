@@ -20,21 +20,21 @@
 import { shallowMount, Wrapper } from "@vue/test-utils";
 import ChildCard from "./ChildCard.vue";
 import { Card, User } from "../../../../../type";
-import { createStoreMock } from "../../../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import BaseCard from "./BaseCard.vue";
 
 function getWrapper(card: Card, are_closed_items_displayed: boolean): Wrapper<ChildCard> {
     return shallowMount(ChildCard, {
         propsData: {
-            card
+            card,
         },
         mocks: {
             $store: createStoreMock({
                 state: {
-                    are_closed_items_displayed
-                }
-            })
-        }
+                    are_closed_items_displayed,
+                },
+            }),
+        },
     });
 }
 
@@ -46,12 +46,12 @@ describe("ChildCard", () => {
             const card: Card = {
                 id: 43,
                 assignees: [] as User[],
-                is_open: false
+                is_open: false,
             } as Card;
 
             const wrapper = getWrapper(card, false);
 
-            expect(wrapper.isEmpty()).toBe(true);
+            expect(wrapper.html()).toEqual("");
         });
 
         it(`Given user wants to see closed items
@@ -60,13 +60,13 @@ describe("ChildCard", () => {
             const card: Card = {
                 id: 43,
                 assignees: [] as User[],
-                is_open: false
+                is_open: false,
             } as Card;
 
             const wrapper = getWrapper(card, true);
 
-            expect(wrapper.isEmpty()).toBe(false);
-            expect(wrapper.find(BaseCard).props("card")).toBe(card);
+            expect(wrapper.html()).not.toEqual("");
+            expect(wrapper.findComponent(BaseCard).props("card")).toBe(card);
         });
 
         it(`adds draggable attributes`, () => {
@@ -74,7 +74,7 @@ describe("ChildCard", () => {
                 id: 43,
                 tracker_id: 69,
                 assignees: [] as User[],
-                is_open: false
+                is_open: false,
             } as Card;
 
             const wrapper = getWrapper(card, true);
@@ -91,13 +91,13 @@ describe("ChildCard", () => {
                 id: 43,
                 assignees: [] as User[],
                 is_open: true,
-                is_in_edit_mode: false
+                is_in_edit_mode: false,
             } as Card;
 
             const wrapper = getWrapper(card, true);
 
             expect(wrapper.classes()).toContain("taskboard-draggable-item");
-            expect(wrapper.attributes("data-is-draggable")).toBe("true");
+            expect(wrapper.attributes("draggable")).toBe("true");
         });
 
         it("is not draggable when the card is in edit mode", () => {
@@ -105,13 +105,13 @@ describe("ChildCard", () => {
                 id: 43,
                 assignees: [] as User[],
                 is_open: true,
-                is_in_edit_mode: true
+                is_in_edit_mode: true,
             } as Card;
 
             const wrapper = getWrapper(card, true);
 
             expect(wrapper.classes()).not.toContain("taskboard-draggable-item");
-            expect(wrapper.attributes("data-is-draggable")).toBeFalsy();
+            expect(wrapper.attributes("draggable")).toBe("false");
         });
     });
 });

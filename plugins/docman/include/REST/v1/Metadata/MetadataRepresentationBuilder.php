@@ -19,7 +19,7 @@
  *
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\REST\v1\Metadata;
 
@@ -58,7 +58,7 @@ class MetadataRepresentationBuilder
      * @return ItemMetadataRepresentation[]
      * @throws UnknownMetadataException
      */
-    public function build(\Docman_Item $item) : array
+    public function build(\Docman_Item $item): array
     {
         $this->factory->appendItemMetadataList($item);
 
@@ -71,7 +71,7 @@ class MetadataRepresentationBuilder
 
             $metadata_representations[] = new ItemMetadataRepresentation(
                 $metadata->getName(),
-                $this->getMetadataType((int)$metadata->getType()),
+                $this->getMetadataType((int) $metadata->getType()),
                 $metadata->isMultipleValuesAllowed(),
                 $transformed_values['value'],
                 $transformed_values['post_processed_value'],
@@ -87,7 +87,7 @@ class MetadataRepresentationBuilder
     /**
      * @return array{value:string|null,post_processed_value:string|null,list_value:MetadataListValueRepresentation[]|null}
      */
-    private function getMetadataValues(\Docman_Metadata $metadata) : array
+    private function getMetadataValues(\Docman_Metadata $metadata): array
     {
         $metadata_type = (int) $metadata->getType();
         $value = $metadata->getValue();
@@ -128,9 +128,7 @@ class MetadataRepresentationBuilder
     }
 
     /**
-     * @param int $type
      *
-     * @return string
      * @throws UnknownMetadataException
      */
     private function getMetadataType(int $type): string

@@ -20,8 +20,6 @@
 
 namespace Tuleap\Statistics;
 
-use DateInterval;
-use DateTime;
 use ProjectManager;
 use Statistics_DiskUsageGraph;
 use Statistics_DiskUsageManager;
@@ -82,7 +80,7 @@ class DiskUsageServicesPresenterBuilder
         if ($project_id) {
             $project = $this->project_manager->getProject($project_id);
             if (! $project->isError()) {
-                $selected_project = $project->getUnconvertedPublicName().' ('.$project->getUnixName().')';
+                $selected_project = $project->getPublicName() . ' (' . $project->getUnixName() . ')';
             }
         } elseif ($selected_project) {
             $project = $this->project_manager->getProjectFromAutocompleter($selected_project);
@@ -133,7 +131,7 @@ class DiskUsageServicesPresenterBuilder
             $params['graph_type'] = 'graph_service';
         }
 
-        return $page.'?'.http_build_query($params);
+        return $page . '?' . http_build_query($params);
     }
 
     private function buildDataServices($project_id, DiskUsageServicesSearchFieldsPresenter $search_fields)
@@ -166,13 +164,13 @@ class DiskUsageServicesPresenterBuilder
             $color_rgb  = $this->usage_graph->applyColorModifierRGB($color);
             $color_rgba = $this->usage_graph->applyColorModifierRGBA($color);
 
-            $value = array_merge($value, array(
+            $value = array_merge($value, [
                 'color_rgb'  => $color_rgb,
                 'color_rgba' => $color_rgba,
                 'start_size' => $this->usage_output->sizeReadable($evolution_by_service[$value['key']]['start_size']),
                 'end_size'   => $this->usage_output->sizeReadable($evolution_by_service[$value['key']]['end_size']),
                 'evolution'  => $this->usage_output->sizeReadable($evolution_by_service[$value['key']]['evolution'])
-            ));
+            ]);
 
             $services[$key] = $value;
         }
@@ -181,28 +179,28 @@ class DiskUsageServicesPresenterBuilder
         $total_end_size   = $this->usage_output->sizeReadable($total_end_size);
         $total_evolution  = $this->usage_output->sizeReadable($total_evolution);
 
-        return array(
+        return [
             $services,
             $total_start_size,
             $total_end_size,
             $total_evolution
-        );
+        ];
     }
 
     private function getGroupByDateKeys()
     {
-        return array(
-            self::GROUP_BY_DAY_KEY   => $GLOBALS['Language']->getText('plugin_statistics', 'day'),
-            self::GROUP_BY_WEEK_KEY  => $GLOBALS['Language']->getText('plugin_statistics', 'week'),
-            self::GROUP_BY_MONTH_KEY => $GLOBALS['Language']->getText('plugin_statistics', 'month'),
-            self::GROUP_BY_YEAR_KEY  => $GLOBALS['Language']->getText('plugin_statistics', 'year')
-        );
+        return [
+            self::GROUP_BY_DAY_KEY   => dgettext('tuleap-statistics', 'Day'),
+            self::GROUP_BY_WEEK_KEY  => dgettext('tuleap-statistics', 'Week'),
+            self::GROUP_BY_MONTH_KEY => dgettext('tuleap-statistics', 'Month'),
+            self::GROUP_BY_YEAR_KEY  => dgettext('tuleap-statistics', 'Year')
+        ];
     }
 
     private function getGroupByDateValues($selected_group_by_date)
     {
         $options                     = $this->getGroupByDateKeys();
-        $group_by_date_with_selected = array();
+        $group_by_date_with_selected = [];
 
         if (! $selected_group_by_date) {
             $selected_group_by_date = self::GROUP_BY_WEEK_KEY;
@@ -211,11 +209,11 @@ class DiskUsageServicesPresenterBuilder
         foreach ($options as $key => $value) {
             $selected = $key === $selected_group_by_date;
 
-            $group_by_date_with_selected[] = array(
+            $group_by_date_with_selected[] = [
                 'key'         => $key,
                 'value'       => $value,
                 'is_selected' => $selected
-            );
+            ];
         }
 
         return $group_by_date_with_selected;
@@ -223,7 +221,7 @@ class DiskUsageServicesPresenterBuilder
 
     private function getSelectedServices(array $services)
     {
-        $selected_services = array();
+        $selected_services = [];
 
         foreach ($services as $service) {
             if ($service['is_selected']) {
@@ -236,10 +234,10 @@ class DiskUsageServicesPresenterBuilder
 
     public function getServiceValues($selected_services)
     {
-        $services_with_selected = array();
+        $services_with_selected = [];
 
         foreach ($this->usage_manager->getProjectServices() as $key => $value) {
-            $service = array('key' => $key, 'value' => $value);
+            $service = ['key' => $key, 'value' => $value];
 
             if (! $selected_services) {
                 $service['is_selected'] = true;

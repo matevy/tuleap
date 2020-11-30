@@ -1,6 +1,6 @@
 <?php
-/*
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+/**
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  * Copyright (c) Xerox, 2008. All Rights Reserved.
  *
  * Originally written by Nicolas Terray, 2008. Xerox Codendi Team.
@@ -21,18 +21,21 @@
  * along with Tuleap; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+use Tuleap\Chart\Chart;
+
 class GraphOnTrackersV5_Engine_Burndown extends GraphOnTrackersV5_Engine
 {
 
     public $duration;
     public $start_date;
 
-    function validData()
+    public function validData()
     {
         if ($this->duration && $this->duration > 1) {
             return true;
         } else {
-            echo " <p class='feedback_info'>".$GLOBALS['Language']->getText('plugin_graphontrackersv5_engine', 'no_datas', array($this->title))."</p>";
+            echo " <p class='feedback_info'>" . sprintf(dgettext('tuleap-graphontrackersv5', 'No datas to display for graph %1$s'), $this->title) . "</p>";
             return false;
         }
     }
@@ -47,7 +50,6 @@ class GraphOnTrackersV5_Engine_Burndown extends GraphOnTrackersV5_Engine
         $burndown->setDescription($this->description);
         $burndown->setWidth($this->width);
         $burndown->setHeight($this->height);
-        $burndown->setStartDate($this->start_date);
         $burndown->setDuration($this->duration);
 
         $this->graph = $burndown->buildGraph();

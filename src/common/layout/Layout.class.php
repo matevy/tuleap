@@ -24,6 +24,7 @@
  */
 
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Layout\ThemeVariation;
 
 /**
  *
@@ -33,10 +34,11 @@ use Tuleap\Layout\IncludeAssets;
  * @deprecated
  *
  */
-abstract class Layout extends Tuleap\Layout\BaseLayout
+abstract class Layout extends Tuleap\Layout\BaseLayout //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
     /**
      * Html purifier
+     * @var Codendi_HTMLPurifier
      */
     protected $purifier;
 
@@ -46,7 +48,7 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
     private $version;
 
     //Define all the icons for this theme
-    var $icons = array('Summary' => 'ic/anvil24.png',
+    public $icons = ['Summary' => 'ic/anvil24.png',
         'Homepage' => 'ic/home.png',
         'Forums' => 'ic/notes.png',
         'Bugs' => 'ic/bug.png',
@@ -59,21 +61,23 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         'CVS' => 'ic/convert.png',
         'Files' => 'ic/save.png',
         'Trackers' => 'ic/tracker20w.png'
-        );
+        ];
 
     public const INCLUDE_FAT_COMBINED = 'include_fat_combined';
 
     /**
      * Background for priorities
+     *
+     * @var array
      */
-    private $bgpri = array();
+    private $bgpri = [];
 
     /**
      * Store custom css added on the fly
      *
      * @var Array of path to CSS files
      */
-    protected $stylesheets = array();
+    protected $stylesheets = [];
 
     /**
      * Constuctor
@@ -86,8 +90,7 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
 
         $this->imgroot = $root . '/images/';
 
-        $this->feeds       = array();
-        $this->javascript  = array();
+        $this->javascript  = [];
 
         /*
             Set up the priority color array one time only
@@ -105,36 +108,36 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         $this->purifier = Codendi_HTMLPurifier::instance();
     }
 
-    function iframe($url, $html_options = array())
+    public function iframe($url, $html_options = [])
     {
         $url_purified = $this->purifier->purify($this->uri_sanitizer->sanitizeForHTMLAttribute($url));
 
-        $html = '<div class="iframe_showonly"><a href="'. $url_purified .'" title="'.$GLOBALS['Language']->getText('global', 'show_frame') .'">'.$GLOBALS['Language']->getText('global', 'show_frame').' '. $this->getImage('ic/plain-arrow-down.png') .'</a></div>';
-        $args = ' src="'. $url_purified .'" ';
+        $html = '<div class="iframe_showonly"><a href="' . $url_purified . '" title="' . $GLOBALS['Language']->getText('global', 'show_frame') . '">' . $GLOBALS['Language']->getText('global', 'show_frame') . ' ' . $this->getImage('ic/plain-arrow-down.png') . '</a></div>';
+        $args = ' src="' . $url_purified . '" ';
         foreach ($html_options as $key => $value) {
-            $args .= ' '. $key .'="'. $value .'" ';
+            $args .= ' ' . $key . '="' . $value . '" ';
         }
-        $html .= '<iframe '. $args .'></iframe>';
+        $html .= '<iframe ' . $args . '></iframe>';
         echo $html;
     }
 
-    function selectRank($id, $rank, $items, $html_options)
+    public function selectRank($id, $rank, $items, $html_options)
     {
         $html = '';
         $html .= '<select ';
         foreach ($html_options as $key => $value) {
-            $html .= $key .'="'. $value .'"';
+            $html .= $key . '="' . $value . '"';
         }
         $html .= '>';
-        $html .= '<option value="beginning">'. $GLOBALS['Language']->getText('global', 'at_the_beginning') .'</option>';
-        $html .= '<option value="end">'. $GLOBALS['Language']->getText('global', 'at_the_end') .'</option>';
-        list($options, $optgroups) = $this->selectRank_optgroup($id, $items);
+        $html .= '<option value="beginning">' . $GLOBALS['Language']->getText('global', 'at_the_beginning') . '</option>';
+        $html .= '<option value="end">' . $GLOBALS['Language']->getText('global', 'at_the_end') . '</option>';
+        [$options, $optgroups] = $this->selectRank_optgroup($id, $items);
         $html .= $options . $optgroups;
         $html .= '</select>';
         return $html;
     }
 
-    protected function selectRank_optgroup($id, $items, $prefix = '', $value_prefix = '')
+    protected function selectRank_optgroup($id, $items, $prefix = '', $value_prefix = '') // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $html      = '';
         $optgroups = '';
@@ -144,7 +147,7 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
             if ($item['id'] != $id) {
                 // need an optgroup ?
                 if (isset($item['subitems'])) {
-                    $optgroups .= '<optgroup label="'. $purifier->purify($prefix . $item['name']) .'">';
+                    $optgroups .= '<optgroup label="' . $purifier->purify($prefix . $item['name']) . '">';
 
                     $selected = '';
                     if (count($item['subitems'])) {
@@ -156,8 +159,17 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
                             $selected = 'selected="selected"';
                         }
                     }
-                    $optgroups .= '<option value="'. $purifier->purify($item['id']) . ':' . 'beginning' .'" '. $selected .'>'. 'At the beginning of '. $purifier->purify($prefix . $item['name']) .'</option>';
-                    list($o, $g) = $this->selectRank_optgroup($id, $item['subitems'], $prefix . $item['name'] .'::', $item['id'] . ':');
+                    $optgroups .= '<option value="' . $purifier->purify(
+                        $item['id']
+                    ) . ':' . 'beginning' . '" ' . $selected . '>' . 'At the beginning of ' . $purifier->purify(
+                        $prefix . $item['name']
+                    ) . '</option>';
+                    [$o, $g] = $this->selectRank_optgroup(
+                        $id,
+                        $item['subitems'],
+                        $prefix . $item['name'] . '::',
+                        $item['id'] . ':'
+                    );
                     $optgroups .= $o;
                     $optgroups .= '</optgroup>';
                     $optgroups .= $g;
@@ -165,19 +177,19 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
 
                 // The rank is the next one.
                 // TODO: use the next rank instead?
-                $value = $item['rank']+1;
+                $value = $item['rank'] + 1;
 
                 // select the element if the item is just after id
                 $selected = '';
                 if (isset($items[$i + 1]) && $items[$i + 1]['id'] == $id) {
                     $selected = 'selected="selected"';
                 }
-                $html .= '<option value="'. $purifier->purify($value_prefix . $value) .'" '. $selected .'>';
+                $html .= '<option value="' . $purifier->purify($value_prefix . $value) . '" ' . $selected . '>';
                 $html .= $GLOBALS['Language']->getText('global', 'after', $purifier->purify($prefix . $item['name']));
                 $html .= '</option>';
             }
         }
-        return array($html, $optgroups);
+        return [$html, $optgroups];
     }
 
     /**
@@ -194,9 +206,9 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      *
      * @return void
      */
-    function includeJavascriptFile($file)
+    public function includeJavascriptFile($file)
     {
-        $this->javascript[] = array('file' => $file);
+        $this->javascript[] = ['file' => $file];
         return $this;
     }
 
@@ -212,9 +224,9 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      *
      * @return void
      */
-    function includeJavascriptSnippet($snippet)
+    public function includeJavascriptSnippet($snippet)
     {
-        $this->javascript[] = array('snippet' => $snippet);
+        $this->javascript[] = ['snippet' => $snippet];
         return $this;
     }
 
@@ -233,79 +245,47 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
     public function addUserAutocompleteOn($element_id, $multiple = false)
     {
         $jsbool = $multiple ? "true" : "false";
-        $js = "new UserAutoCompleter('".$element_id."', '".util_get_dir_image_theme()."', ".$jsbool.");";
+        $js = "new UserAutoCompleter('" . $element_id . "', '" . util_get_dir_image_theme() . "', " . $jsbool . ");";
         $this->includeFooterJavascriptSnippet($js);
     }
 
-    function includeCalendarScripts()
+    public function includeCalendarScripts()
     {
-        $this->includeJavascriptSnippet("var useLanguage = '". substr($this->getUser()->getLocale(), 0, 2) ."';");
+        $this->includeJavascriptSnippet("var useLanguage = '" . Codendi_HTMLPurifier::instance()->purify(substr($this->getUser()->getLocale(), 0, 2), CODENDI_PURIFIER_JS_QUOTE) . "';");
         $this->includeJavascriptFile("/scripts/datepicker/datepicker.js");
         return $this;
     }
 
-    function addFeed($title, $href)
-    {
-        $this->feeds[] = array('title' => $title, 'href' => $href);
-    }
-
-    function _getFeedback()
+    public function _getFeedback()
     {
         $feedback = '';
         if (trim($GLOBALS['feedback']) !== '') {
-            $feedback = '<H3><span class="feedback">'.$GLOBALS['feedback'].'</span></H3>';
+            $feedback = '<H3><span class="feedback">' . $GLOBALS['feedback'] . '</span></H3>';
         }
         return $feedback;
     }
 
     public function displayStaticWidget(Widget_Static $widget)
     {
-        $owner_id            = null;
-        $owner_type          = null;
+        $purifier = Codendi_HTMLPurifier::instance();
 
-        $purifier   = Codendi_HTMLPurifier::instance();
-        $element_id = 'widget_'. $widget->id .'-'. $widget->getInstanceId();
+        echo '<div class="widget">';
 
-        echo '<div class="widget" id="'. $element_id .'">';
         echo '<div class="widget_titlebar">';
-        echo '<div class="widget_titlebar_title">'. $purifier->purify($widget->getTitle()) .'</div>';
-
-        if ($widget->hasRss()) {
-            echo '<div class="widget_titlebar_rss" title="'. $GLOBALS['Language']->getText('widget', 'rss_title') .'"><a href="'.$widget->getRssUrl($owner_id, $owner_type).'" class="fa fa-rss"></a></div>';
-        }
+        echo '<div class="widget_titlebar_title">' . $purifier->purify($widget->getTitle()) . '</div>';
         echo '</div>';
+
         echo '<div class="widget_content">';
-
-        if ($widget->isAjax()) {
-            echo '<div id="'. $element_id .'-ajax">';
-            echo '</div>';
-        } else {
-            echo $widget->getContent();
-        }
+        echo $widget->getContent();
         echo '</div>';
-        if ($widget->isAjax()) {
-            echo '<script type="text/javascript">'."
-            document.observe('dom:loaded', function () {
-                $('$element_id-ajax').update('<div style=\"text-align:center\">". $this->getImage('ic/spinner.gif') ."</div>');
-                new Ajax.Updater('$element_id-ajax',
-                                 '". $widget->getAjaxUrl($owner_id, $owner_type, null) ."',
-                                 {
-                                     onComplete: function() {
-                                        codendi.Tooltip.load('$element_id-ajax');
-                                        codendi.Toggler.init($('$element_id-ajax'));
-                                     }
-                                 }
-                );
-            });
-            </script>";
-        }
+
         echo '</div>';
     }
 
     public function getDropdownPanel($id, $content)
     {
         $html = '';
-        $html .= '<table id="'. $id .'" class="dropdown_panel"><tr><td>';
+        $html .= '<table id="' . $id . '" class="dropdown_panel"><tr><td>';
         $html .= $content;
         $html .= '</td></tr></table>';
         return $html;
@@ -317,14 +297,14 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      * @see Widget_Static
      * @deprecated You should consider using Widget_Static instead
      */
-    function box1_top($title, $echoout = 1, $bgcolor = '', $cols = 2)
+    public function box1_top($title, $echoout = 1, $bgcolor = '', $cols = 2) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
             $return = '<TABLE class="boxtable" cellspacing="1" cellpadding="5" width="100%" border="0">
                         <TR class="boxtitle" align="center">
-                                <TD colspan="'.$cols.'"><SPAN class=titlebar>'.$title.'</SPAN></TD>
+                                <TD colspan="' . $cols . '"><SPAN class=titlebar>' . $title . '</SPAN></TD>
                         </TR>
                         <TR class="boxitem">
-                                <TD colspan="'.$cols.'">';
+                                <TD colspan="' . $cols . '">';
         if ($echoout) {
                 print $return;
         } else {
@@ -338,17 +318,17 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      * @see Widget_Static
      * @deprecated You should consider using Widget_Static instead
      */
-    function box1_middle($title, $bgcolor = '', $cols = 2)
+    public function box1_middle($title, $bgcolor = '', $cols = 2) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
             return '
                                 </TD>
                         </TR>
 
                         <TR class="boxtitle">
-                                <TD colspan="'.$cols.'"><SPAN class=titlebar>'.$title.'</SPAN></TD>
+                                <TD colspan="' . $cols . '"><SPAN class=titlebar>' . $title . '</SPAN></TD>
                         </TR>
                         <TR class="boxitem">
-                                <TD colspan="'.$cols.'">';
+                                <TD colspan="' . $cols . '">';
     }
 
     /**
@@ -357,7 +337,7 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      * @see Widget_Static
      * @deprecated You should consider using Widget_Static instead
      */
-    function box1_bottom($echoout = 1)
+    public function box1_bottom($echoout = 1) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
             $return = '
                 </TD>
@@ -374,21 +354,21 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
     /**
      * This is a generic header method shared by header() and pv_header()
      */
-    private function generic_header($params)
+    private function generic_header($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        if (!$this->is_rendered_through_service && isset($GLOBALS['group_id']) && $GLOBALS['group_id']) {
-            $pm = ProjectManager::instance();
-            $project = $pm->getProject($GLOBALS['group_id']);
+        if (! $this->is_rendered_through_service && isset($GLOBALS['group_id']) && $GLOBALS['group_id']) {
             if (isset($params['toptab'])) {
                 $this->warning_for_services_which_configuration_is_not_inherited($GLOBALS['group_id'], $params['toptab']);
             }
         }
-        echo '<!DOCTYPE html>'."\n";
-        echo '<html lang="'. $GLOBALS['Language']->getText('conf', 'language_code') .'">
+        $hp = Codendi_HTMLPurifier::instance();
+        $title = ($params['title'] ? $params['title'] . ' - ' : '') . ForgeConfig::get('sys_name');
+        echo '<!DOCTYPE html>' . "\n";
+        echo '<html lang="' . $GLOBALS['Language']->getText('conf', 'language_code') . '">
                 <head>
                     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-                    <title>'. ($params['title'] ? $params['title'] . ' - ' : '') . $GLOBALS['sys_name'] .'</title>
-                    <link rel="SHORTCUT ICON" href="'. $this->imgroot . 'favicon.ico' .'">';
+                    <title>' . $hp->purify($title) . '</title>
+                    <link rel="SHORTCUT ICON" href="' . $this->imgroot . 'favicon.ico' . '">';
         echo $this->displayJavascriptElements($params);
         echo $this->displayStylesheetElements($params);
         echo $this->displaySyndicationElements();
@@ -416,22 +396,19 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         } else {
             $this->includeSubsetOfCombined();
         }
-        $assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-        $include_assets = new IncludeAssets($assets_path, '/assets');
 
-        echo $include_assets->getHTMLSnippet("ckeditor.js");
-        echo $include_assets->getHTMLSnippet("rich-text-editor.js");
+        echo $this->include_asset->getHTMLSnippet("ckeditor.js");
+        echo $this->include_asset->getHTMLSnippet("rich-text-editor.js");
+        echo $this->include_asset->getHTMLSnippet('keyboard-navigation.js');
+        echo $this->include_asset->getHTMLSnippet('switch-to-fp.js');
 
         //Javascript i18n
-        echo '<script type="text/javascript">'."\n";
+        echo '<script type="text/javascript">' . "\n";
         include $GLOBALS['Language']->getContent('scripts/locale');
         echo '
-        codendi.imgroot = \''. $this->imgroot .'\';
-        </script>'."\n";
+        codendi.imgroot = \'' . $this->imgroot . '\';
+        </script>' . "\n";
 
-        if (ForgeConfig::get('DEBUG_MODE') && (ForgeConfig::get('DEBUG_DISPLAY_FOR_ALL') || user_ismember(1, 'A'))) {
-            echo '<script type="text/javascript" src="/scripts/codendi/debug_reserved_names.js"></script>'."\n";
-        }
         $this->includeJavascriptPolyfills();
 
         $em = EventManager::instance();
@@ -439,18 +416,18 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
 
         foreach ($this->javascript as $js) {
             if (isset($js['file'])) {
-                echo '<script type="text/javascript" src="'. $js['file'] .'"></script>'."\n";
+                echo '<script type="text/javascript" src="' . $js['file'] . '"></script>' . "\n";
             } else {
                 if (isset($js['snippet'])) {
-                    echo '<script type="text/javascript">'."\n";
-                    echo '//<!--'."\n";
-                    echo $js['snippet']."\n";
-                    echo '//-->'."\n";
-                    echo '</script>'."\n";
+                    echo '<script type="text/javascript">' . "\n";
+                    echo '//<!--' . "\n";
+                    echo $js['snippet'] . "\n";
+                    echo '//-->' . "\n";
+                    echo '</script>' . "\n";
                 }
             }
         }
-        echo '<script type="text/javascript">'."\n";
+        echo '<script type="text/javascript">' . "\n";
         $em->processEvent(Event::JAVASCRIPT, null);
         echo '
         </script>';
@@ -469,20 +446,23 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      * @see includeFooterJavascriptFile
      * @see includeFooterJavascriptSnippet
      */
-    function displayFooterJavascriptElements()
+    public function displayFooterJavascriptElements()
     {
         foreach ($this->javascript_in_footer as $js) {
             if (isset($js['file'])) {
-                echo '<script type="text/javascript" src="'. $js['file'] .'"></script>'."\n";
+                echo '<script type="text/javascript" src="' . $js['file'] . '"></script>' . "\n";
             } else {
-                echo '<script type="text/javascript">'."\n";
-                echo '//<!--'."\n";
-                echo $js['snippet']."\n";
-                echo '//-->'."\n";
-                echo '</script>'."\n";
+                echo '<script type="text/javascript">' . "\n";
+                echo '//<!--' . "\n";
+                echo $js['snippet'] . "\n";
+                echo '//-->' . "\n";
+                echo '</script>' . "\n";
             }
         }
-        echo '<script type="text/javascript">'."\n";
+        foreach ($this->javascript_assets as $javascript_asset) {
+            echo sprintf('<script type="text/javascript" src="%s"></script>%s', $javascript_asset->getFileURL(), PHP_EOL);
+        }
+        echo '<script type="text/javascript">' . "\n";
         echo $this->getFooterSiteJs();
         echo '
         </script>';
@@ -510,7 +490,12 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
 
     public function getStylesheetTheme($css)
     {
-        return '/themes/'.$GLOBALS['sys_user_theme'].'/css/'.$css;
+        return '/themes/' . ForgeConfig::get('sys_user_theme') . '/css/' . $css;
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(__DIR__ . '/../../www/assets/core', '/assets/core');
     }
 
     /**
@@ -523,13 +508,21 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         // Stylesheet external files
         if (isset($params['stylesheet']) && is_array($params['stylesheet'])) {
             foreach ($params['stylesheet'] as $css) {
-                print '<link rel="stylesheet" type="text/css" href="'.$css.'" />';
+                print '<link rel="stylesheet" type="text/css" href="' . $css . '" />';
             }
         }
 
         // Display custom css
         foreach ($this->getAllStylesheets() as $css) {
-            echo '<link rel="stylesheet" type="text/css" href="'.$css.'" />';
+            echo '<link rel="stylesheet" type="text/css" href="' . $css . '" />';
+        }
+
+        $current_user    = UserManager::instance()->getCurrentUser();
+        $theme_variant   = new ThemeVariant();
+        $color           = ThemeVariantColor::buildFromVariant($theme_variant->getVariantForUser($current_user));
+        $theme_variation = new ThemeVariation($color, $current_user);
+        foreach ($this->css_assets->getDeduplicatedAssets() as $css_asset) {
+            echo '<link rel="stylesheet" type="text/css" href="' . $css_asset->getFileURL($theme_variation) . '" />';
         }
 
         // Plugins css
@@ -547,13 +540,14 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
 
     protected function displayCommonStylesheetElements($params)
     {
+        $core_assets = $this->getAssets();
         echo '<link rel="stylesheet" type="text/css" href="/themes/common/css/bootstrap-tuleap-22d39b3.min.css" />';
         echo '<link rel="stylesheet" type="text/css" href="/themes/common/css/bootstrap-tuleap-responsive-22d39b3.min.css" />';
         echo '<link rel="stylesheet" type="text/css" href="/themes/common/css/animate.min.css" />';
-        echo '<link rel="stylesheet" type="text/css" href="/themes/common/css/style.css" />';
-        echo '<link rel="stylesheet" type="text/css" href="/themes/common/css/print.css" media="print" />';
-        echo '<link rel="stylesheet" type="text/css" href="'. $this->getStylesheetTheme('style.css') .'" />';
-        echo '<link rel="stylesheet" type="text/css" href="'. $this->getStylesheetTheme('print.css') .'" media="print" />';
+        echo '<link rel="stylesheet" type="text/css" href="' . $core_assets->getFileURL('common-theme/style.css') . '" />';
+        echo '<link rel="stylesheet" type="text/css" href="' . $core_assets->getFileURL('common-theme/print.css') . '" media="print" />';
+        echo '<link rel="stylesheet" type="text/css" href="' . $this->getStylesheetTheme('style.css') . '" />';
+        echo '<link rel="stylesheet" type="text/css" href="' . $this->getStylesheetTheme('print.css') . '" media="print" />';
         echo '<link rel="stylesheet" type="text/css" href="/scripts/bootstrap/bootstrap-select/bootstrap-select.css" />';
         echo '<link rel="stylesheet" type="text/css" href="/scripts/select2/select2.css" />';
         echo '<link rel="stylesheet" type="text/css" href="/scripts/vendor/at/css/atwho.min.css" />';
@@ -569,11 +563,11 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
 
         //Basic feeds
         echo $this->getRssFeed(
-            $hp->purify($GLOBALS['sys_name']. ' - ' .$GLOBALS['Language']->getText('include_layout', 'latest_news_rss'), CODENDI_PURIFIER_CONVERT_HTML),
+            $hp->purify(ForgeConfig::get('sys_name') . ' - ' . $GLOBALS['Language']->getText('include_layout', 'latest_news_rss'), CODENDI_PURIFIER_CONVERT_HTML),
             '/export/rss_sfnews.php'
         );
         echo $this->getRssFeed(
-            $hp->purify($GLOBALS['sys_name']. ' - ' .$GLOBALS['Language']->getText('include_layout', 'newest_projects_rss'), CODENDI_PURIFIER_CONVERT_HTML),
+            $hp->purify(ForgeConfig::get('sys_name') . ' - ' . $GLOBALS['Language']->getText('include_layout', 'newest_projects_rss'), CODENDI_PURIFIER_CONVERT_HTML),
             '/export/rss_sfprojects.php'
         );
     }
@@ -583,9 +577,9 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      * @param string $href the href of the feed
      * @return string the <link> tag for the feed
      */
-    function getRssFeed($title, $href)
+    public function getRssFeed($title, $href)
     {
-        return '<link rel="alternate" title="'. $title .'" href="'. $href .'" type="application/rss+xml" />';
+        return '<link rel="alternate" title="' . $title . '" href="' . $href . '" type="application/rss+xml" />';
     }
 
     /**
@@ -599,16 +593,16 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      * @param string $maxlength the optional maxlength the input element, default is 10
      * @return string The calendar picker
      */
-    function getDatePicker($id, $name, $value, $size = 10, $maxlength = 10)
+    public function getDatePicker($id, $name, $value, $size = 10, $maxlength = 10)
     {
         $hp = Codendi_HTMLPurifier::instance();
         return '<span style="white-space:nowrap;"><input type="text"
                        class="highlight-days-67 format-y-m-d divider-dash no-transparency"
-                       id="'.  $hp->purify($id, CODENDI_PURIFIER_CONVERT_HTML)  .'"
-                       name="'. $hp->purify($name, CODENDI_PURIFIER_CONVERT_HTML) .'"
-                       size="'. $hp->purify($size, CODENDI_PURIFIER_CONVERT_HTML) .'"
-                       maxlength="'. $hp->purify($maxlength, CODENDI_PURIFIER_CONVERT_HTML) .'"
-                       value="'. $hp->purify($value, CODENDI_PURIFIER_CONVERT_HTML) .'"></span>';
+                       id="' .  $hp->purify($id, CODENDI_PURIFIER_CONVERT_HTML)  . '"
+                       name="' . $hp->purify($name, CODENDI_PURIFIER_CONVERT_HTML) . '"
+                       size="' . $hp->purify($size, CODENDI_PURIFIER_CONVERT_HTML) . '"
+                       maxlength="' . $hp->purify($maxlength, CODENDI_PURIFIER_CONVERT_HTML) . '"
+                       value="' . $hp->purify($value, CODENDI_PURIFIER_CONVERT_HTML) . '"></span>';
     }
 
     /**
@@ -617,7 +611,7 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
      *
      * @param string  $id the id of the input element
      * @param string  $name the name of the input element
-     * @param array   $critria_selector list of extra criterias to be listed in a prepended select
+     * @param array   $criteria_selector list of extra criterias to be listed in a prepended select
      * @param array   $classes extra css classes if needed
      * @param bool $is_time_displayed to know if the time need to be displayed
      *
@@ -653,15 +647,15 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         }
 
         $html .= '
-            <span class="'.$span_class.'">
-                <input name="'. $hp->purify($name, CODENDI_PURIFIER_CONVERT_HTML) .'"
-                       id="'. $hp->purify($id, CODENDI_PURIFIER_CONVERT_HTML) .'"
-                       data-format="'.$format.'"
+            <span class="' . $span_class . '">
+                <input name="' . $hp->purify($name, CODENDI_PURIFIER_CONVERT_HTML) . '"
+                       id="' . $hp->purify($id, CODENDI_PURIFIER_CONVERT_HTML) . '"
+                       data-format="' . $format . '"
                        type="text"
                        value="' . $hp->purify($value, CODENDI_PURIFIER_CONVERT_HTML) . '">
                 </input>
                 <span class="add-on add-on-calendar">
-                  <i class="fa fa-calendar" data-time-icon="fa-clock-o" data-date-icon="fa-calendar"></i>
+                  <i class="fas fa-calendar-alt" data-time-icon="fa-clock-o" data-date-icon="fa-calendar"></i>
                 </span>
             </span>
         </div>';
@@ -669,10 +663,10 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         return $html;
     }
 
-    function warning_for_services_which_configuration_is_not_inherited($group_id, $service_top_tab)
+    public function warning_for_services_which_configuration_is_not_inherited($group_id, $service_top_tab) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $pm = ProjectManager::instance();
-        $project=$pm->getProject($group_id);
+        $project = $pm->getProject($group_id);
         if ($project->isTemplate()) {
             switch ($service_top_tab) {
                 case 'admin':
@@ -692,9 +686,8 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         }
     }
 
-    function generic_footer($params)
+    public function generic_footer($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-
         global $Language;
 
         $version = $this->getVersion();
@@ -703,16 +696,12 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         include($Language->getContent('layout/footer'));
         echo '</footer>';
 
-        if (ForgeConfig::get('DEBUG_MODE') && (ForgeConfig::get('DEBUG_DISPLAY_FOR_ALL') || user_ismember(1, 'A'))) {
-            $this->showDebugInfo();
-        }
-
         echo $this->displayFooterJavascriptElements();
         echo '</body>';
         echo '</html>';
     }
 
-    function pv_header($params)
+    public function pv_header($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $this->generic_header($params);
         echo '
@@ -720,13 +709,18 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
 ';
         if (isset($params['pv']) && $params['pv'] < 2) {
             if (isset($params['title']) && $params['title']) {
-                echo '<h2>'.$params['title'].' - '.format_date($GLOBALS['Language']->getText('system', 'datefmt'), time()).'</h2>
+                $hp = Codendi_HTMLPurifier::instance();
+                $title = $params['title'] . ' - ' . format_date(
+                    $GLOBALS['Language']->getText('system', 'datefmt'),
+                    time()
+                );
+                echo '<h2>' . $hp->purify($title) . '</h2>
                 <hr />';
             }
         }
     }
 
-    function pv_footer($params)
+    public function pv_footer($params) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         echo $this->displayFooterJavascriptElements();
         echo "\n</body></html>";
@@ -735,9 +729,9 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
     /**
      * @return string
      */
-    protected function getClassnamesForBodyTag($params = array())
+    protected function getClassnamesForBodyTag($params = [])
     {
-        $body_class = isset($params['body_class']) ? $params['body_class'] : array();
+        $body_class = isset($params['body_class']) ? $params['body_class'] : [];
 
         if ($this->getUser()->useLabFeatures()) {
             $body_class[] = 'lab-mode';
@@ -749,20 +743,24 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
     /**
      * This method generates header for pages embbeded in overlay like LiteWindow
      */
-    public function overlay_header()
+    public function overlay_header() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
+        $current_user    = UserManager::instance()->getCurrentUser();
+        $theme_variant   = new ThemeVariant();
+        $color           = ThemeVariantColor::buildFromVariant($theme_variant->getVariantForUser($current_user));
+        $theme_color_variant = $color->getVariant();
+
         $this->includeCalendarScripts();
         echo '<!DOCTYPE html>
               <html>
               <head>
                  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />';
-        echo $this->displayJavascriptElements(array());
-        echo $this->displayStylesheetElements(array());
+        echo $this->displayJavascriptElements([]);
+        echo $this->displayStylesheetElements([]);
         echo $this->displaySyndicationElements();
-        echo '    </head>
-                     <body leftmargin="0" rightmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0">
-                       <div class="main_body_row">
-                           <div class="contenttable">';
+        echo '</head>';
+        echo '<body class="' . Codendi_HTMLPurifier::instance()->purify($theme_color_variant) . '" leftmargin="0" rightmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0">';
+        echo '<div class="main_body_row"><div class="contenttable">';
         echo $this->getNotificationPlaceholder();
     }
 
@@ -771,7 +769,7 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         return '<div id="notification-placeholder"></div>';
     }
 
-    function feedback($feedback)
+    public function feedback($feedback)
     {
         return '';
     }
@@ -779,18 +777,18 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
     /**
      * This method generates footer for pages embbeded in overlay like LiteWindow
      */
-    public function overlay_footer()
+    public function overlay_footer() // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         echo '         </div>
                      </div>
-                 '.$this->displayFooterJavascriptElements().'
+                 ' . $this->displayFooterJavascriptElements() . '
                  </body>
              </html>';
     }
 
-    function footer(array $params)
+    public function footer(array $params)
     {
-        if (!isset($params['showfeedback']) || $params['showfeedback']) {
+        if (! isset($params['showfeedback']) || $params['showfeedback']) {
             echo $this->_getFeedback();
         }
         ?>
@@ -813,167 +811,13 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
         $this->generic_footer($params);
     }
 
-    function menu_entry($link, $title)
-    {
-            print "\t".'<A class="menus" href="'.$link.'">'.$title.'</A> &nbsp;<img src="'.util_get_image_theme("point1.png").'" alt=" " width="7" height="7"><br>';
-    }
-
-    protected function getSearchEntries()
-    {
-        $em      = EventManager::instance();
-        $request = HTTPRequest::instance();
-
-        $type_of_search = $request->get('type_of_search');
-        $group_id       = $request->get('group_id');
-
-        $search_entries = array();
-        $hidden = array();
-
-        if ($group_id) {
-            $hidden[] = array(
-                'name'  => 'group_id',
-                'value' => $group_id
-            );
-
-            if ($request->exist('forum_id')) {
-                $search_entries[] = array(
-                    'value'    => 'forums',
-                    'label'    => $GLOBALS['Language']->getText('include_menu', 'this_forum'),
-                    'selected' => true,
-                );
-                $hidden[] = array(
-                    'name'  => 'forum_id',
-                    'value' => $this->purifier->purify($request->get('forum_id'))
-                );
-            }
-            if ($request->exist('atid')) {
-                $search_entries[] = array(
-                    'value'    => 'tracker',
-                    'label'    => $GLOBALS['Language']->getText('include_menu', 'this_tracker'),
-                    'selected' => true,
-                );
-                $hidden[] = array(
-                    'name'  => 'atid',
-                    'value' => $this->purifier->purify($request->get('atid'))
-                );
-            }
-            if (strpos($_SERVER['REQUEST_URI'], '/wiki/') === 0) {
-                $search_entries[] = array(
-                    'value'    => 'wiki',
-                    'label'    => $GLOBALS['Language']->getText('include_menu', 'this_wiki'),
-                    'selected' => true,
-                );
-            }
-        }
-
-        if (ForgeConfig::get('sys_use_trove')) {
-            $search_entries[] = array(
-                'value' => 'soft',
-                'label' => $GLOBALS['Language']->getText('include_menu', 'software_proj')
-            );
-        }
-
-        $search_entries[] = array(
-            'value' => 'people',
-            'label' => $GLOBALS['Language']->getText('include_menu', 'people')
-        );
-
-        $em->processEvent(
-            Event::LAYOUT_SEARCH_ENTRY,
-            array(
-                'type_of_search' => $type_of_search,
-                'search_entries' => &$search_entries,
-                'hidden_fields'  => &$hidden,
-            )
-        );
-
-        $search_entries = $this->forceSelectedOption($search_entries);
-        $selected_entry = $this->getSelectedOption($search_entries);
-
-        return array($search_entries, $selected_entry, $hidden);
-    }
-
-    private function forceSelectedOption(array $search_entries)
-    {
-        foreach ($search_entries as $key => $search_entry) {
-            if (! isset($search_entry['selected'])) {
-                $search_entries[$key]['selected'] = false;
-            }
-        }
-
-        return $search_entries;
-    }
-
-    private function getSelectedOption(array $search_entries)
-    {
-        $selected_option = $search_entries[0];
-
-        foreach ($search_entries as $key => $search_entry) {
-            if ($search_entry['selected']) {
-                return $search_entries[$key];
-            }
-        }
-
-        return $selected_option;
-    }
-
-    public function getSearchBox()
-    {
-        $request = HTTPRequest::instance();
-
-        $type_of_search = $request->get('type_of_search');
-        $words          = $request->get('words');
-
-        // if there is no search currently, set the default
-        $exact = 1;
-        if (isset($type_of_search)) {
-            $exact = 0;
-        }
-
-        list($search_entries, $selected_entry, $hidden_fields) = $this->getSearchEntries();
-
-        $output = '
-                <form action="/search/" method="post"><table style="text-align:left;float:right"><tr style="vertical-align:top;"><td>
-        ';
-        $output .= '<input type="hidden" name="number_of_page_results" value="'.Search_SearchPlugin::RESULTS_PER_QUERY.'">';
-        $output .= '<select style="font-size: x-small" name="type_of_search">';
-        foreach ($search_entries as $entry) {
-            $selected = '';
-            if (isset($entry['selected']) && $entry['selected'] == true) {
-                $selected = ' selected="selected"';
-            }
-            $output .= '<option value="'.$entry['value'].'"'.$selected.'>'.$entry['label'].'</option>';
-        }
-        $output .= '</select>';
-
-        foreach ($hidden_fields as $hidden) {
-            $output .= '<input type="hidden" name="'.$hidden['name'].'" value="'.$hidden['value'].'" />';
-        }
-
-        $output .= '<input style="font-size:0.8em" type="text" class="input-medium" size="22" name="words" value="' . $this->purifier->purify($words, CODENDI_PURIFIER_CONVERT_HTML) . '" /><br />';
-        $output .= '<input type="CHECKBOX" name="exact" value="1"' . ( $exact ? ' CHECKED' : ' UNCHECKED' ) . '><span style="font-size:0.8em">' . $GLOBALS['Language']->getText('include_menu', 'require_all_words') . '</span>';
-
-        $output .= '</td><td>';
-        $output .= '<input class="btn" style="font-size:0.8em" type="submit" name="Search" value="' . $GLOBALS['Language']->getText('searchbox', 'search') . '" />';
-        $output .= '</td></tr></table></form>';
-        return $output;
-    }
-
-    /**
-     * Echo the search box
-     */
-    function searchBox()
-    {
-        echo "\t<CENTER>\n".$this->getSearchBox()."\t</CENTER>\n";
-    }
-
     /**
      * Return the background color (classname) for priority
      *
      * @param $index the index (id) of the priority : 1
      * @return string 'priora'
      */
-    function getPriorityColor($index)
+    public function getPriorityColor($index)
     {
         if (isset($this->bgpri[$index])) {
             return $this->bgpri[$index];
@@ -1003,14 +847,14 @@ abstract class Layout extends Tuleap\Layout\BaseLayout
     public function appendJsonEncodedVariable($js_variable_name, $object)
     {
         $this->includeFooterJavascriptSnippet(
-            $js_variable_name.' = '.json_encode($object).';'
+            $js_variable_name . ' = ' . json_encode($object) . ';'
         );
     }
 
     protected function getVersion()
     {
         if ($this->version === null) {
-            $this->version = trim(file_get_contents($GLOBALS['codendi_dir'].'/VERSION'));
+            $this->version = trim(file_get_contents(ForgeConfig::get('codendi_dir') . '/VERSION'));
         }
         return $this->version;
     }

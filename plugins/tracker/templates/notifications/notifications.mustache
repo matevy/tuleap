@@ -26,7 +26,7 @@
                                         {{# users_to_be_notified }}
                                             <span class="tracker-notification-email-list-entry">
                                                 <div class="avatar tracker-notification-user-avatar">
-                                                    {{# has_avatar }}<img src="{{ avatar_url }}" />{{/ has_avatar }}
+                                                    <img src="{{ avatar_url }}" />
                                                 </div>
                                                 {{ label }}<span class="tracker-notification-email-list-separator">, </span>
                                             </span>
@@ -83,7 +83,7 @@
                             <td class="tracker-notification-edit">
                                 <div class="tracker-global-notifications-checkbox-cell-read">
                                     <a href="javascript:;" class="tracker-notification-edit-show tracker-notification-edit">
-                                        <i class="fa fa-pencil"></i>
+                                        <i class="fas fa-pencil-alt"></i>
                                         {{ edit }}
                                     </a>
                                     <a href="javascript:;"
@@ -94,7 +94,7 @@
                                        data-html="true"
                                        data-popover-id="tracker-notification-delete-{{ notification_id }}-popover"
                                     >
-                                        <i class="fa fa-trash-o"></i>
+                                        <i class="far fa-trash-alt"></i>
                                         {{ delete }}
                                     </a>
                                     <div id="tracker-notification-delete-{{ notification_id }}-popover"

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018 - 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -34,7 +34,6 @@ use Git_PermissionsDao;
 use Git_RemoteServer_Dao;
 use Git_RemoteServer_GerritServerFactory;
 use Git_SystemEventManager;
-use GitBackendLogger;
 use GitDao;
 use GitPermissionsManager;
 use GitRepositoryFactory;
@@ -51,6 +50,7 @@ use Tuleap\Git\Permissions\FineGrainedDao;
 use Tuleap\Git\Permissions\FineGrainedRetriever;
 use Tuleap\Git\Repository\View\DefaultCloneURLSelector;
 use Tuleap\Git\Repository\View\RepositoryHeaderPresenterBuilder;
+use Tuleap\Http\HttpClientFactory;
 use Tuleap\Layout\IncludeAssets;
 use UserManager;
 
@@ -62,7 +62,7 @@ class GitRepositoryHeaderDisplayerBuilder
         return new GitRepositoryHeaderDisplayer(
             $this->getHeaderRenderer($git_plugin),
             $this->getRepositoryHeaderPresenterBuilder($git_plugin, $selected_tab),
-            $this->getIncludeAssets($git_plugin),
+            $this->getIncludeAssets(),
             EventManager::instance()
         );
     }
@@ -148,7 +148,12 @@ class GitRepositoryHeaderDisplayerBuilder
 
     private function getGerritDriverFactory()
     {
-        return new Git_Driver_Gerrit_GerritDriverFactory(new GitBackendLogger());
+        return new Git_Driver_Gerrit_GerritDriverFactory(
+            new \Tuleap\Git\Driver\GerritHTTPClientFactory(HttpClientFactory::createClient()),
+            \Tuleap\Http\HTTPFactoryBuilder::requestFactory(),
+            \Tuleap\Http\HTTPFactoryBuilder::streamFactory(),
+            \BackendLogger::getDefaultLogger(\GitPlugin::LOG_IDENTIFIER),
+        );
     }
 
     private function getProjectCreatorStatus()
@@ -168,13 +173,12 @@ class GitRepositoryHeaderDisplayerBuilder
         );
     }
 
-    private function getIncludeAssets(Plugin $git_plugin)
+    private function getIncludeAssets(): IncludeAssets
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../www/assets',
-            $git_plugin->getPluginPath() . '/assets'
+        return new IncludeAssets(
+            __DIR__ . '/../../../../../src/www/assets/git',
+            '/assets/git'
         );
-        return $include_assets;
     }
 
     private function getMirrorDataMapper()

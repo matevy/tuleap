@@ -15,7 +15,7 @@
                         {{> csrf_token_input }}
                     {{/ restricted_resource_action_csrf }}
 
-                    <div class="tlp-form-element">
+                    <div class="tlp-form-element allowed-projects-all-form-switch">
                         <label class="tlp-label" for="allowed-projects-all-allowed">{{ resource_allowed_project_allow_all }}</label>
                         <div class="tlp-switch">
                             <input type="checkbox"
@@ -24,6 +24,7 @@
                                    class="tlp-switch-checkbox"
                                    name="all-allowed"
                                    value="1"
+                                   autocomplete="off"
                                    {{^ is_resource_restricted }}checked{{/ is_resource_restricted }}
                                    {{# can_be_unrestricited }}disabled{{/ can_be_unrestricited}}
                             >
@@ -51,7 +52,7 @@
                                 <select class="tlp-select" id="project-to-allow" name="project-to-allow" style="width: 100%" data-placeholder="{{ resource_allowed_project_list_allow_placeholder }}"></select>
                                 <button type="submit" name="allow-project" class="tlp-append tlp-button-primary"
                                         value="1">
-                                    <i class="fa fa-arrow-circle-o-right tlp-button-icon"></i> {{ resource_allowed_project_list_allow_project }}
+                                    <i class="far fa-arrow-alt-circle-right tlp-button-icon"></i> {{ resource_allowed_project_list_allow_project }}
                                 </button>
                             </div>
                             <div class="tlp-table-actions-spacer"></div>
@@ -91,7 +92,7 @@
                                             {{ getId }}
                                         </td>
                                         <td class="resource-restrictor-cell-project-name tlp-table-cell-filterable">
-                                            <a href="{{ url_project }}/{{ getUnixNameMixedCase }}">{{ getUnconvertedPublicName }}</a>
+                                            <a href="{{ url_project }}/{{ getUnixNameMixedCase }}">{{ getPublicName }}</a>
                                         </td>
                                     </tr>
                                 {{/ allowed_projects }}

@@ -108,10 +108,7 @@ class ReleaseResource extends AuthenticatedResource
 
         $this->checkUserCanReadRelease($release, $user);
 
-        $release_representation = new ReleaseRepresentation();
-        $release_representation->build($release, $this->retriever, $user, $this->uploaded_link_retriever, $this->permissions_for_groups_builder);
-
-        return $release_representation;
+        return new ReleaseRepresentation($release, $this->retriever, $user, $this->uploaded_link_retriever, $this->permissions_for_groups_builder);
     }
 
     /**
@@ -132,7 +129,6 @@ class ReleaseResource extends AuthenticatedResource
      */
     public function getFiles($id, $limit = self::DEFAULT_LIMIT, $offset = self::DEFAULT_OFFSET)
     {
-
         $release = $this->getRelease($id);
         $user    = $this->user_manager->getCurrentUser();
 
@@ -144,20 +140,16 @@ class ReleaseResource extends AuthenticatedResource
         $this->checkUserCanReadRelease($release, $user);
 
         $files_in_release = $release->getFiles();
-        $representations  = array();
+        $representations  = [];
         foreach (array_slice($files_in_release, $offset, $limit) as $file) {
-            $file_representation = new FileRepresentation();
-            $file_representation->build($file);
-            $representations[] = $file_representation;
+            $file_representation = new FileRepresentation($file);
+            $representations[]   = $file_representation;
         }
 
         $this->sendAllowOptionsForFiles();
         Header::sendPaginationHeaders($limit, $offset, count($files_in_release), self::MAX_LIMIT);
 
-        $collection = new CollectionOfFileRepresentation();
-        $collection->build($representations);
-
-        return $collection;
+        return new CollectionOfFileRepresentation($representations);
     }
 
     /**
@@ -185,7 +177,6 @@ class ReleaseResource extends AuthenticatedResource
      *
      * @url POST
      *
-     * @param ReleasePOSTRepresentation $body
      *
      * @return \Tuleap\FRS\REST\v1\ReleaseRepresentation
      * @status 201
@@ -219,13 +210,13 @@ class ReleaseResource extends AuthenticatedResource
             throw new RestException(409, "Release name '{$body->name}' already exists in this package");
         }
 
-        $release_array = array(
+        $release_array = [
             'package_id' => $body->package_id,
             'name'       => $body->name,
             'notes'      => $body->release_note,
             'changes'    => $body->changelog,
             'status_id'  => $this->getStatusIdFromLiteralStatus($body->status)
-        );
+        ];
 
         $id = $this->release_factory->create($release_array);
         if (! $id) {
@@ -236,10 +227,7 @@ class ReleaseResource extends AuthenticatedResource
         if (! $release) {
             throw new RestException(500, "Unable to retrieve the release from the DB. Please contact site administrators");
         }
-        $release_representation = new ReleaseRepresentation();
-        $release_representation->build($release, $this->retriever, $user, $this->uploaded_link_retriever, $this->permissions_for_groups_builder);
-
-        return $release_representation;
+        return new ReleaseRepresentation($release, $this->retriever, $user, $this->uploaded_link_retriever, $this->permissions_for_groups_builder);
     }
 
     /**
@@ -255,7 +243,6 @@ class ReleaseResource extends AuthenticatedResource
      * @url PATCH {id}
      *
      * @param int $id
-     * @param ReleasePATCHRepresentation $body
      *
      * @throws RestException 403
      */
@@ -352,7 +339,6 @@ class ReleaseResource extends AuthenticatedResource
 
     /**
      * @param $release
-     * @param ReleasePATCHRepresentation $body
      * @return array
      */
     private function getArrayForUpdateRelease($release, ReleasePATCHRepresentation $body)
@@ -360,9 +346,9 @@ class ReleaseResource extends AuthenticatedResource
         $release_id = (int) $release->getReleaseID();
         $package_id = (int) $release->getPackageID();
 
-        $release_array = array(
+        $release_array = [
             'release_id' => $release_id
-        );
+        ];
 
         if ($body->name) {
             $with_same_name_release_id = (int) $this->release_factory->getReleaseIdByName($body->name, $package_id);
@@ -396,12 +382,14 @@ class ReleaseResource extends AuthenticatedResource
             throw new RestException(403, "Access to package denied");
         }
 
-        if (! $this->release_factory->userCanRead(
-            $package->getGroupID(),
-            $package->getPackageID(),
-            $release->getReleaseID(),
-            $user->getId()
-        )) {
+        if (
+            ! $this->release_factory->userCanRead(
+                $package->getGroupID(),
+                $package->getPackageID(),
+                $release->getReleaseID(),
+                $user->getId()
+            )
+        ) {
             throw new RestException(403, "Access to release denied");
         }
 

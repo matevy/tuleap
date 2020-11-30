@@ -20,18 +20,19 @@
 namespace User\XML\Import;
 
 use PFUser;
+use Tuleap\Cryptography\ConcealedString;
 use UserManager;
-use Logger;
+use Psr\Log\LoggerInterface;
 use RandomNumberGenerator;
 
 class WillBeCreatedUser implements ReadyToBeImportedUser
 {
 
-    public static $ALLOWED_STATUSES = array(
+    public static $ALLOWED_STATUSES = [
         PFUser::STATUS_ACTIVE,
         PFUser::STATUS_RESTRICTED,
         PFUser::STATUS_SUSPENDED,
-    );
+    ];
 
     /** @var string */
     private $username;
@@ -87,18 +88,17 @@ class WillBeCreatedUser implements ReadyToBeImportedUser
         return $this->status;
     }
 
-    private function getPassword()
+    private function getPassword(): ConcealedString
     {
         if ($this->use_lame_password) {
-            return 'Correct Horse Battery Staple';
+            return new ConcealedString('Correct Horse Battery Staple');
         }
         $random_generator = new RandomNumberGenerator();
-        return $random_generator->getNumber();
+        return new ConcealedString($random_generator->getNumber());
     }
 
-    public function process(UserManager $user_manager, Logger $logger)
+    public function process(UserManager $user_manager, LoggerInterface $logger)
     {
-
         $fake_user = new PFUser();
         $fake_user->setUserName($this->username);
         $fake_user->setRealName($this->realname);
@@ -117,9 +117,9 @@ class WillBeCreatedUser implements ReadyToBeImportedUser
 
         $created_user = $user_manager->createAccount($fake_user);
         if ($created_user) {
-            $logger->info($this->username .' successfuly created ! It has id #'. $created_user->getId());
+            $logger->info($this->username . ' successfuly created ! It has id #' . $created_user->getId());
         } else {
-            throw new UserCannotBeCreatedException('An error occured while creating '. $this->username);
+            throw new UserCannotBeCreatedException('An error occured while creating ' . $this->username);
         }
     }
 
@@ -128,7 +128,7 @@ class WillBeCreatedUser implements ReadyToBeImportedUser
         $user = $user_manager->getUserByUserName($this->username);
 
         if (! $user) {
-            throw new UserNotFoundException('An error occured while retrieving previously created user '. $this->username);
+            throw new UserNotFoundException('An error occured while retrieving previously created user ' . $this->username);
         }
 
         return $user;

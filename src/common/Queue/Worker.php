@@ -21,7 +21,7 @@
 
 namespace Tuleap\Queue;
 
-use Logger;
+use Psr\Log\LoggerInterface;
 use BackendLogger;
 use TruncateLevelLogger;
 use BrokerLogger;
@@ -29,8 +29,8 @@ use Log_ConsoleLogger;
 use ForgeConfig;
 use Exception;
 use Tuleap\Queue\TaskWorker\TaskWorkerProcess;
+use Tuleap\Queue\TaskWorker\TaskWorkerTimedOutException;
 use Tuleap\System\DaemonLocker;
-use System_Command;
 
 class Worker
 {
@@ -41,11 +41,10 @@ class Worker
     public const DEFAULT_LOG_FILE_PATH = '/var/log/tuleap/worker_log';
 
     private $id = 0;
-    private $log_file;
     private $pid_file;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -56,14 +55,13 @@ class Worker
 
     public function __construct()
     {
-        $this->log_file = self::DEFAULT_LOG_FILE_PATH;
         $this->pid_file = self::DEFAULT_PID_FILE_PATH;
     }
 
     public function main()
     {
         try {
-            $options = getopt('vh', array('help', 'id:'));
+            $options = getopt('vh', ['help', 'id:']);
             $this->showHelp($options);
             $this->checkWhoIsRunning();
             $this->configureRunner($options);
@@ -88,9 +86,13 @@ class Worker
         $task_worker = new TaskWorkerProcess();
 
         $queue = (new QueueFactory($this->logger))->getPersistentQueue(self::EVENT_QUEUE_NAME, QueueFactory::REDIS);
-        $queue->listen($this->id, '*', function ($event) use ($task_worker) {
-            $this->logger->info('Got message: ' .$event);
-            $task_worker->run($event);
+        $queue->listen($this->id, '*', function (string $event) use ($task_worker): void {
+            $this->logger->info('Got message: ' . $event);
+            try {
+                $task_worker->run($event);
+            } catch (TaskWorkerTimedOutException $exception) {
+                $this->logger->error($exception->getMessage());
+            }
         });
         $this->logger->info('All message processed, exiting');
         $this->locker->cleanExit();
@@ -113,16 +115,16 @@ class Worker
         if (isset($options['v'])) {
             $this->setLogger(
                 new BrokerLogger(
-                    array(
+                    [
                         new Log_ConsoleLogger(),
-                        new BackendLogger($this->log_file),
-                    )
+                        BackendLogger::getDefaultLogger(basename(self::DEFAULT_LOG_FILE_PATH)),
+                    ]
                 )
             );
         } else {
             $this->setLogger(
                 new TruncateLevelLogger(
-                    new BackendLogger($this->log_file),
+                    BackendLogger::getDefaultLogger(basename(self::DEFAULT_LOG_FILE_PATH)),
                     ForgeConfig::get('sys_logger_level')
                 )
             );
@@ -139,7 +141,6 @@ DESCRIPTION
 
     Handle background jobs for Tuleap.
 
-    Logs are available in {$this->log_file}
     On start pid is registered in {$this->pid_file}
 
 OPTIONS
@@ -153,7 +154,7 @@ EOT;
         }
     }
 
-    private function setLogger(Logger $logger)
+    private function setLogger(LoggerInterface $logger)
     {
         $this->logger = $logger;
         $this->setErrorHandler();
@@ -189,7 +190,7 @@ EOT;
     {
         $user = posix_getpwuid(posix_geteuid());
         if ($user['name'] !== ForgeConfig::get('sys_http_user')) {
-            $this->cliError("This must be run by ".ForgeConfig::get('sys_http_user')."\n");
+            $this->cliError("This must be run by " . ForgeConfig::get('sys_http_user') . "\n");
         }
     }
 

@@ -32,17 +32,17 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
 {
     public const RENDERER_TYPE = 'plugin_graphontrackersv5';
 
-    var $report_id; //phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $chunksz;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $offset;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $advsrch;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $morder;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $prefs;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $group_id;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $atid;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $set;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $report_graphic_id;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
-    var $allowedForProject;//phpcs:ignore PSR2.Classes.PropertyDeclaration.VarUsed, PSR2.Classes.PropertyDeclaration.ScopeMissing
+    public $report_id;
+    public $chunksz;
+    public $offset;
+    public $advsrch;
+    public $morder;
+    public $prefs;
+    public $group_id;
+    public $atid;
+    public $set;
+    public $report_graphic_id;
+    public $allowedForProject;
 
     /**
      *
@@ -54,7 +54,7 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
         parent::__construct($id);
         $this->setScope(Plugin::SCOPE_PROJECT);
 
-        bindTextDomain('tuleap-graphontrackersv5', __DIR__. '/../site-content');
+        bindTextDomain('tuleap-graphontrackersv5', __DIR__ . '/../site-content');
 
         // Do not load the plugin if tracker is not installed & active
         if (defined('TRACKER_BASE_URL')) {
@@ -78,7 +78,7 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
             $this->addHook('javascript_file');
             $this->addHook(\Tuleap\Request\CollectRoutesEvent::NAME);
         }
-        $this->allowedForProject = array();
+        $this->allowedForProject = [];
     }
 
     /**
@@ -86,7 +86,7 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
      */
     public function getDependencies()
     {
-        return array('tracker');
+        return ['tracker'];
     }
 
 
@@ -119,7 +119,7 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
             }
             $f = GraphOnTrackersV5_ChartFactory::instance();
             if (isset($params['row']['charts']) && isset($params['row']['mapping'])) {
-                $charts = array();
+                $charts = [];
                 foreach ($params['row']['charts']->chart as $chart) {
                     $charts[] = $f->getInstanceFromXML($chart, $params['instance'], $params['row']['mapping'], $params['store_in_session']);
                 }
@@ -179,7 +179,7 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
      */
     public function tracker_report_renderer_types($params)//phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        $params['types'][self::RENDERER_TYPE] = $GLOBALS['Language']->getText('plugin_tracker_report', 'charts');
+        $params['types'][self::RENDERER_TYPE] = dgettext('tuleap-tracker', 'Chart(s)');
     }
 
      /**
@@ -209,7 +209,6 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
     /**
      * Search for an instance of a specific widget
      *
-     * @param \Tuleap\Widget\Event\GetWidget $get_widget_event
      */
     public function widgetInstance(\Tuleap\Widget\Event\GetWidget $get_widget_event)
     {
@@ -239,7 +238,7 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
 
     public function uninstall()
     {
-        $this->removeOrphanWidgets(array('my_plugin_graphontrackersv5_chart', 'project_plugin_graphontrackersv5_chart'));
+        $this->removeOrphanWidgets(['my_plugin_graphontrackersv5_chart', 'project_plugin_graphontrackersv5_chart']);
     }
 
 
@@ -248,7 +247,7 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
      */
     public function getPluginInfo()
     {
-        if (!is_a($this->pluginInfo, 'GraphOnTrackersV5PluginInfo')) {
+        if (! is_a($this->pluginInfo, 'GraphOnTrackersV5PluginInfo')) {
             require_once('GraphOnTrackersV5PluginInfo.class.php');
             $this->pluginInfo = new GraphOnTrackersV5PluginInfo($this);
         }
@@ -262,21 +261,17 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
     {
         $request = HTTPRequest::instance();
         $group_id = (int) $request->get('group_id');
-        if (!isset($this->allowedForProject[$group_id])) {
+        if (! isset($this->allowedForProject[$group_id])) {
             $pM = PluginManager::instance();
             $this->allowedForProject[$group_id] = $pM->isPluginAllowedForProject($this, $group_id);
         }
         return $this->allowedForProject[$group_id];
     }
 
-    public function cssFile()
+    public function cssFile(): void
     {
         if ($this->canIncludeStylesheets()) {
-            $include_assets = new IncludeAssets(
-                __DIR__ . '/../../../src/www/assets/graphontrackersv5/themes',
-                '/assets/graphontrackersv5/themes'
-            );
-            echo '<link rel="stylesheet" type="text/css" href="' . $include_assets->getFileURL('style.css') . '" />';
+            echo '<link rel="stylesheet" type="text/css" href="' . $this->getAssets()->getFileURL('style.css') . '" />';
         }
     }
 
@@ -293,37 +288,37 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
         require_once('data-access/GraphOnTrackersV5_Chart_Gantt.class.php');
         require_once('data-access/GraphOnTrackersV5_Chart_Burndown.class.php');
         require_once('data-access/GraphOnTrackersV5_Chart_CumulativeFlow.class.php');
-        $params['factories']['pie'] = array(
+        $params['factories']['pie'] = [
             'chart_type'      => 'pie',
             'chart_classname' => 'GraphOnTrackersV5_Chart_Pie',
-            'title'           => $GLOBALS['Language']->getText('plugin_graphontrackersv5_include_report', 'pie'),
-        );
-        $params['factories']['bar'] = array(
+            'title'           => dgettext('tuleap-graphontrackersv5', 'Pie'),
+        ];
+        $params['factories']['bar'] = [
             'chart_type'      => 'bar',
             'chart_classname' => 'GraphOnTrackersV5_Chart_Bar',
-            'title'           => $GLOBALS['Language']->getText('plugin_graphontrackersv5_include_report', 'bar'),
-        );
-        $params['factories']['gantt'] = array(
+            'title'           => dgettext('tuleap-graphontrackersv5', 'Bar'),
+        ];
+        $params['factories']['gantt'] = [
             'chart_type'      => 'gantt',
             'chart_classname' => 'GraphOnTrackersV5_Chart_Gantt',
-            'title'           => $GLOBALS['Language']->getText('plugin_graphontrackersv5_include_report', 'gantt'),
-        );
-        $params['factories']['burndown'] = array(
+            'title'           => dgettext('tuleap-graphontrackersv5', 'Gantt'),
+        ];
+        $params['factories']['burndown'] = [
             //The type of the chart
             'chart_type'      => 'burndown',
             //The classname of the chart. The class must be already declared.
             'chart_classname' => 'GraphOnTrackersV5_Chart_Burndown',
             //The title for the button 'Add a chart'
-            'title'           => $GLOBALS['Language']->getText('plugin_graphontrackersv5_scrum', 'add_title_burndown'),
-        );
-        $params['factories']['cumulative_flow'] = array(
+            'title'           => dgettext('tuleap-graphontrackersv5', 'Scrum BurnDown'),
+        ];
+        $params['factories']['cumulative_flow'] = [
             //The type of the chart
             'chart_type'      => 'cumulative_flow',
             //The classname of the chart. The class must be already declared.
             'chart_classname' => 'GraphOnTrackersV5_Chart_CumulativeFlow',
             //The title for the button 'Add a chart'
-            'title'           => $GLOBALS['Language']->getText('plugin_graphontrackersv5_include_report', 'cumulative_flow'),
-        );
+            'title'           => dgettext('tuleap-graphontrackersv5', 'Cumulative flow chart'),
+        ];
     }
 
     /**
@@ -333,22 +328,16 @@ class GraphOnTrackersV5Plugin extends Plugin //phpcs:ignore PSR1.Classes.ClassDe
     {
         $tracker_plugin = PluginManager::instance()->getPluginByName('tracker');
         if ($tracker_plugin->currentRequestIsForPlugin()) {
-            $include_assets = $this->getMinifiedAssets();
-
-            echo $include_assets->getHTMLSnippet($this->getName().'.js');
+            echo $this->getAssets()->getHTMLSnippet('graphontrackersv5.js');
         }
     }
 
-    /**
-     * @return IncludeAssets
-     */
-    private function getMinifiedAssets()
+    private function getAssets(): IncludeAssets
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../src/www/assets/graphontrackersv5/scripts',
-            '/assets/graphontrackersv5/scripts'
+        return new IncludeAssets(
+            __DIR__ . '/../../../src/www/assets/graphontrackersv5',
+            '/assets/graphontrackersv5'
         );
-        return $include_assets;
     }
 
     public function routeGetChart(): ChartDataController

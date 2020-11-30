@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,37 +18,47 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace Tuleap\SVN\Explorer;
 
-use Codendi_HTMLPurifier;
 use DateHelper;
-use Tuleap\SVN\Repository\Repository;
+use Tuleap\SVN\Repository\CoreRepository;
+use Tuleap\SVN\Repository\RepositoryWithLastCommitDate;
 
 class RepositoryPresenter
 {
     /**
-     * @var Repository
+     * @var RepositoryWithLastCommitDate
+     * @psalm-readonly
      */
     public $repository;
-    private $commit_date;
+    /**
+     * @var string
+     * @psalm-readonly
+     */
+    public $purified_commit_date = '-';
+    /**
+     * @var int
+     * @psalm-readonly
+     */
+    public $commit_date = 0;
+    /**
+     * @var bool
+     * @psalm-readonly
+     */
+    public $is_core = false;
 
-    public function __construct(Repository $repository, $commit_date)
+    public function __construct(RepositoryWithLastCommitDate $repository, \PFUser $user)
     {
-        $this->repository  = $repository;
-        $this->commit_date = $commit_date;
-    }
-
-    public function getPurifiedHumanReadableCommitDate()
-    {
-        $purifier = Codendi_HTMLPurifier::instance();
-
-        return $purifier->purify(
-            DateHelper::timeAgoInWords(
-                $this->commit_date,
-                false,
-                true
-            ),
-            CODENDI_PURIFIER_STRIP_HTML
-        );
+        $this->repository = $repository;
+        if ($repository->hasCommitActivity()) {
+            $this->commit_date = $repository->getLastCommitDate()->getTimestamp();
+            $this->purified_commit_date = DateHelper::relativeDateInlineContext(
+                $repository->getLastCommitDate()->getTimestamp(),
+                $user
+            );
+        }
+        $this->is_core = $repository->repository instanceof CoreRepository;
     }
 }

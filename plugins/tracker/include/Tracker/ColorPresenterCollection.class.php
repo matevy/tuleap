@@ -25,7 +25,7 @@ class Tracker_ColorPresenterCollection implements Iterator
 {
 
     /** @var array */
-    private $colors = array();
+    private $colors = [];
 
     public function __construct(Tracker $tracker)
     {
@@ -49,7 +49,7 @@ class Tracker_ColorPresenterCollection implements Iterator
 
     public function next()
     {
-        return next($this->colors);
+        next($this->colors);
     }
 
     public function rewind()

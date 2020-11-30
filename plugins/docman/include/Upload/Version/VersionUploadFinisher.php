@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2019-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Upload\Version;
 
@@ -46,7 +46,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
      */
     private $items_event_adder;
     /**
-     * @var \Logger
+     * @var \Psr\Log\LoggerInterface
      */
     private $logger;
     /**
@@ -103,7 +103,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
     private $approval_table_action_checker;
 
     public function __construct(
-        \Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         UploadPathAllocator $document_upload_path_allocator,
         \Docman_ItemFactory $docman_item_factory,
         \Docman_VersionFactory $version_factory,
@@ -143,7 +143,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
         $upload_id = $file_information->getID();
 
         $uploaded_document_path   = $this->document_upload_path_allocator->getPathForItemBeingUploaded($file_information);
-        $current_value_user_abort = (bool)ignore_user_abort(true);
+        $current_value_user_abort = (bool) ignore_user_abort(true);
         try {
             $this->createVersion($uploaded_document_path, $upload_id);
         } finally {
@@ -163,9 +163,6 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                     return;
                 }
 
-                /**
-                 * @var Docman_File|null $item
-                 */
                 $item = $this->docman_item_factory->getItemFromDb($upload_row['item_id']);
                 if ($item === null) {
                     $this->logger->info('Item #' . $upload_row['item_id'] . ' could not found in the DB to add a new version');
@@ -173,7 +170,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                 }
 
                 $next_version_id = (int) $this->version_factory->getNextVersionNumber($item);
-                $item_id         = (int)$item->getId();
+                $item_id         = (int) $item->getId();
 
                 /*
                  * Some tables of the docman plugin relies on the MyISAM engine so the DB transaction
@@ -192,7 +189,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                     throw new \RuntimeException('Could not copy uploaded file for item #' . $item->getId() . ' of upload #' . $upload_id);
                 }
 
-                $current_time             = (new \DateTimeImmutable)->getTimestamp();
+                $current_time             = (new \DateTimeImmutable())->getTimestamp();
                 $has_version_been_created = $this->version_factory->create(
                     [
                         'item_id'   => $item_id,
@@ -213,7 +210,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                     throw new \RuntimeException('Can not find user ID #' . $upload_row['user_id']);
                 }
 
-                if ((bool)$upload_row['is_file_locked']) {
+                if ((bool) $upload_row['is_file_locked']) {
                     $this->lock_factory->lock($item, $current_user);
                 } else {
                     $this->lock_factory->unlock($item, $current_user);
@@ -241,10 +238,12 @@ final class VersionUploadFinisher implements TusFinisherDataStore
                 }
 
                 $approval_table_action = $upload_row['approval_table_action'];
-                if ($this->approval_table_retriever->hasApprovalTable($item)
+                if (
+                    $this->approval_table_retriever->hasApprovalTable($item)
                     && $this->approval_table_action_checker->checkAvailableUpdateAction($approval_table_action)
                 ) {
                     $item_current_version = $this->version_factory->getCurrentVersionForItem($item);
+                    assert($item instanceof Docman_File);
                     $item->setCurrentVersion($item_current_version);
                     $this->approval_table_updater->updateApprovalTable($item, $current_user, $approval_table_action);
                 }
@@ -255,7 +254,7 @@ final class VersionUploadFinisher implements TusFinisherDataStore
         $this->logger->debug('New version from upload #' . $upload_id . ' has been created');
     }
 
-    private function getFiletype(string $filename, string $path) : string
+    private function getFiletype(string $filename, string $path): string
     {
         $mime_type = $this->docman_mime_type_detector->getRightOfficeType($filename);
         if ($mime_type !== null) {

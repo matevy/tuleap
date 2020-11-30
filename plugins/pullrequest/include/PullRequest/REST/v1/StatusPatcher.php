@@ -23,7 +23,7 @@ namespace Tuleap\PullRequest\REST\v1;
 use Git_Command_Exception;
 use GitRepository;
 use GitRepositoryFactory;
-use Logger;
+use Psr\Log\LoggerInterface;
 use Luracast\Restler\RestException;
 use PFUser;
 use Tuleap\Git\Permissions\AccessControlVerifier;
@@ -33,7 +33,6 @@ use Tuleap\PullRequest\Exception\PullRequestCannotBeAbandoned;
 use Tuleap\PullRequest\Exception\PullRequestCannotBeMerged;
 use Tuleap\PullRequest\PullRequest;
 use Tuleap\PullRequest\PullRequestCloser;
-use Tuleap\PullRequest\Timeline\TimelineEventCreator;
 use Tuleap\REST\ProjectAuthorization;
 use URLVerification;
 
@@ -55,7 +54,7 @@ class StatusPatcher
     private $pull_request_closer;
 
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -74,7 +73,7 @@ class StatusPatcher
         PullRequestPermissionChecker $pull_request_permission_checker,
         PullRequestCloser $pull_request_closer,
         URLVerification $url_verification,
-        Logger $logger
+        LoggerInterface $logger
     ) {
         $this->git_repository_factory          = $git_repository_factory;
         $this->access_control_verifier         = $access_control_verifier;
@@ -126,7 +125,7 @@ class StatusPatcher
             default:
                 throw new RestException(
                     400,
-                    'Cannot deal with provided status. Supported statuses are ' . PullRequestRepresentation::STATUS_MERGE . ', '. PullRequestRepresentation::STATUS_ABANDON
+                    'Cannot deal with provided status. Supported statuses are ' . PullRequestRepresentation::STATUS_MERGE . ', ' . PullRequestRepresentation::STATUS_ABANDON
                 );
         }
     }
@@ -158,7 +157,8 @@ class StatusPatcher
         ProjectAuthorization::userCanAccessProject($user, $repository_source->getProject(), $this->url_verification);
         ProjectAuthorization::userCanAccessProject($user, $repository_dest->getProject(), $this->url_verification);
 
-        if (! $this->access_control_verifier->canWrite($user, $repository_source, $source_reference) &&
+        if (
+            ! $this->access_control_verifier->canWrite($user, $repository_source, $source_reference) &&
             ! $this->access_control_verifier->canWrite($user, $repository_dest, $destination_reference)
         ) {
             throw new RestException(403, 'User is not able to WRITE in both source and destination git repositories');

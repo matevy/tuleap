@@ -1,5 +1,5 @@
 <!--
-  - Copyright (c) Enalean, 2018. All Rights Reserved.
+  - Copyright (c) Enalean, 2018-Present. All Rights Reserved.
   -
   - This file is a part of Tuleap.
   -
@@ -18,68 +18,101 @@
   -->
 
 <template>
-    <nav class="breadcrumb">
-        <div v-bind:class="get_breadcrumb_class">
-            <router-link v-bind:to="{ name: 'root_folder'}" class="breadcrumb-link" v-bind:title="document_tree_title">
-                <i class="breadcrumb-link-icon fa fa-folder-open"></i>
-                <translate>Documents</translate>
-            </router-link>
-            <nav class="breadcrumb-switch-menu" v-if="is_admin">
-                <span class="breadcrumb-dropdown-item">
-                    <a class="breadcrumb-dropdown-link"
-                       v-bind:href="document_administration_url"
-                       v-bind:title="document_administration_title"
-                       data-test="breadcrumb-administrator-link"
-                    >
-                        <i class="fa fa-cog fa-fw"></i> <translate>Administration</translate>
-                    </a>
-                </span>
-            </nav>
-        </div>
+    <div class="breadcrumb-container document-breadcrumb">
+        <breadcrumb-privacy
+            v-bind:project_flags="project_flags"
+            v-bind:privacy="privacy"
+            v-bind:project_public_name="project_public_name"
+        />
+        <nav class="breadcrumb">
+            <div class="breadcrumb-item breadcrumb-project">
+                <a v-bind:href="project_url" class="breadcrumb-link">
+                    {{ project_public_name }}
+                </a>
+            </div>
+            <div v-bind:class="get_breadcrumb_class">
+                <router-link
+                    v-bind:to="{ name: 'root_folder' }"
+                    class="breadcrumb-link"
+                    v-bind:title="document_tree_title"
+                >
+                    <i class="breadcrumb-link-icon far fa-folderpen"></i>
+                    <translate>Documents</translate>
+                </router-link>
+                <div class="breadcrumb-switch-menu-container">
+                    <nav class="breadcrumb-switch-menu" v-if="is_admin">
+                        <span class="breadcrumb-dropdown-item">
+                            <a
+                                class="breadcrumb-dropdown-link"
+                                v-bind:href="document_administration_url"
+                                v-bind:title="document_administration_title"
+                                data-test="breadcrumb-administrator-link"
+                            >
+                                <i class="fa fa-cog fa-fw"></i>
+                                <translate>Administration</translate>
+                            </a>
+                        </span>
+                    </nav>
+                </div>
+            </div>
 
-        <span class="breadcrumb-item breadcrumb-item-disabled" v-if="is_ellipsis_displayed" data-test="breadcrumb-ellipsis">
-            <span class="breadcrumb-link" v-bind:title="ellipsis_title">
-                ...
+            <span
+                class="breadcrumb-item breadcrumb-item-disabled"
+                v-if="is_ellipsis_displayed"
+                data-test="breadcrumb-ellipsis"
+            >
+                <span class="breadcrumb-link" v-bind:title="ellipsis_title">...</span>
             </span>
-        </span>
-        <document-breadcrumb-element v-for="parent in current_folder_ascendant_hierarchy_to_display"
-                                     v-bind:key="parent.id"
-                                     v-bind:item="parent"
-        />
-        <span class="breadcrumb-item" v-if="is_loading_ascendant_hierarchy" data-test="document-breadcrumb-skeleton">
-            <a class="breadcrumb-link" href="#">
-                <span class="tlp-skeleton-text"></span>
-            </a>
-        </span>
-        <document-breadcrumb-document v-if="is_current_document_displayed"
-                                      v-bind:current_document="currently_previewed_item"
-                                      v-bind:parent_folder="current_folder"
-                                      data-test="breadcrumb-current-document"
-        />
-    </nav>
+            <document-breadcrumb-element
+                v-for="parent in current_folder_ascendant_hierarchy_to_display"
+                v-bind:key="parent.id"
+                v-bind:item="parent"
+            />
+            <span
+                class="breadcrumb-item"
+                v-if="is_loading_ascendant_hierarchy"
+                data-test="document-breadcrumb-skeleton"
+            >
+                <a class="breadcrumb-link" href="#">
+                    <span class="tlp-skeleton-text"></span>
+                </a>
+            </span>
+            <document-breadcrumb-document
+                v-if="is_current_document_displayed"
+                v-bind:current_document="currently_previewed_item"
+                v-bind:parent_folder="current_folder"
+                data-test="breadcrumb-current-document"
+            />
+        </nav>
+    </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
 import DocumentBreadcrumbElement from "./DocumentBreadcrumbElement.vue";
 import DocumentBreadcrumbDocument from "./DocumentBreadcrumbDocument.vue";
+import BreadcrumbPrivacy from "@tuleap/core/scripts/vue-components/breadcrumb-privacy/dist/breadcrumb-privacy";
 
 export default {
     name: "DocumentBreadcrumb",
-    components: { DocumentBreadcrumbElement, DocumentBreadcrumbDocument },
+    components: { DocumentBreadcrumbElement, DocumentBreadcrumbDocument, BreadcrumbPrivacy },
     data() {
         return {
-            max_nb_to_display: 5
+            max_nb_to_display: 5,
         };
     },
     computed: {
         ...mapState([
             "project_id",
+            "project_url",
+            "project_public_name",
             "is_user_administrator",
             "current_folder_ascendant_hierarchy",
             "is_loading_ascendant_hierarchy",
             "currently_previewed_item",
-            "current_folder"
+            "current_folder",
+            "privacy",
+            "project_flags",
         ]),
         document_tree_title() {
             return this.$gettext("Project documentation");
@@ -112,12 +145,12 @@ export default {
         },
         current_folder_ascendant_hierarchy_to_display() {
             return this.current_folder_ascendant_hierarchy
-                .filter(parent => parent.parent_id !== 0)
+                .filter((parent) => parent.parent_id !== 0)
                 .slice(-this.max_nb_to_display);
         },
         is_current_document_displayed() {
             return this.currently_previewed_item !== null && this.current_folder !== null;
-        }
-    }
+        },
+    },
 };
 </script>

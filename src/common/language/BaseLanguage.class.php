@@ -31,20 +31,22 @@ class BaseLanguage
     public const DEFAULT_LANG = 'en_US';
 
     //array to hold the string values
-    var $text_array ;
+    public $text_array;
     public $lang;
     public $name;
     public $id;
     public $code;
-    var $file_array = array();
+    public $file_array = [];
 
     /**
      * Supported languages
+     * @var string[]
      */
     public $allLanguages;
 
     /**
      * Default languages
+     * @var string
      */
     public $defaultLanguage;
 
@@ -53,9 +55,9 @@ class BaseLanguage
      * @param $supported_languages string 'en_US,fr_FR'
      * @param $default_language string 'en_US'
      */
-    function __construct($supported_languages, $default_language)
+    public function __construct($supported_languages, $default_language)
     {
-        $this->allLanguages = array();
+        $this->allLanguages = [];
         $supported_languages = explode(',', $supported_languages);
         foreach ($supported_languages as $v) {
             if (trim($v) !== '') {
@@ -76,9 +78,9 @@ class BaseLanguage
     /**
      * "compile" string definitions for one language.
      */
-    function compileLanguage($lang)
+    public function compileLanguage($lang)
     {
-        $text_array = array();
+        $text_array = [];
         $this->loadAllLanguageFiles($lang, $text_array);
 
         $this->dumpLanguageFile($lang, $text_array);
@@ -93,7 +95,7 @@ class BaseLanguage
      * load the custom (site wide) defs in order to override the default one,
      * and so on.
      */
-    function loadAllLanguageFiles($lang, &$text_array)
+    public function loadAllLanguageFiles($lang, &$text_array)
     {
         // The order is important!
 
@@ -115,28 +117,28 @@ class BaseLanguage
     /**
      * Load tab files in /usr/share/codendi/site-content for given language
      */
-    function loadCoreSiteContent($lang, &$text_array)
+    public function loadCoreSiteContent($lang, &$text_array)
     {
-        $this->loadAllTabFiles($GLOBALS['sys_incdir'].'/'.$lang, $text_array);
+        $this->loadAllTabFiles(ForgeConfig::get('sys_incdir') . '/' . $lang, $text_array);
     }
 
     /**
      * Load tab files in /etc/codendi/site-content for given language
      */
-    function loadCustomSiteContent($lang, &$text_array)
+    public function loadCustomSiteContent($lang, &$text_array)
     {
-        $this->loadAllTabFiles($GLOBALS['sys_custom_incdir'].'/'.$lang, $text_array);
+        $this->loadAllTabFiles(ForgeConfig::get('sys_custom_incdir') . '/' . $lang, $text_array);
     }
 
     /**
      * Load all tab files in /usr/share/codendi/plugins/.../site-content for
      * given language
      */
-    function loadPluginsSiteContent($lang, &$text_array)
+    public function loadPluginsSiteContent($lang, &$text_array)
     {
         $directories = array_merge(
             array_map('trim', explode(',', ForgeConfig::get('sys_extra_plugin_path'))),
-            array(ForgeConfig::get('sys_pluginsroot'))
+            [ForgeConfig::get('sys_pluginsroot')]
         );
         foreach ($directories as $dir) {
             $this->_loadPluginsSiteContent($dir, $lang, $text_array);
@@ -147,26 +149,28 @@ class BaseLanguage
      * Load all tab files in /etc/codendi/plugins/.../site-content for
      * given language
      */
-    function loadPluginsCustomSiteContent($lang, &$text_array)
+    public function loadPluginsCustomSiteContent($lang, &$text_array)
     {
-        $this->_loadPluginsSiteContent($GLOBALS['sys_custompluginsroot'], $lang, $text_array);
+        $this->_loadPluginsSiteContent(ForgeConfig::get('sys_custompluginsroot'), $lang, $text_array);
     }
 
     /**
      * This method walk through all the plugins and load all .tab files for
      * each plugin found.
      */
-    function _loadPluginsSiteContent($basedir, $lang, &$text_array)
+    public function _loadPluginsSiteContent($basedir, $lang, &$text_array)
     {
         if (is_dir($basedir)) {
             $fd = opendir($basedir);
             while (false !== ($file = readdir($fd))) {
-                if (is_dir($basedir.'/'.$file)
-                   && $file != '.'
-                   && $file != '..'
-                   && $file != '.svn'
-                   && $file != 'CVS') {
-                    $location = $basedir.'/'.$file.'/site-content/'.$lang;
+                if (
+                    is_dir($basedir . '/' . $file)
+                    && $file != '.'
+                    && $file != '..'
+                    && $file != '.svn'
+                    && $file != 'CVS'
+                ) {
+                    $location = $basedir . '/' . $file . '/site-content/' . $lang;
                     if (is_dir($location)) {
                         $this->loadAllTabFiles($location, $text_array);
                     }
@@ -179,19 +183,21 @@ class BaseLanguage
     /**
      * Look for all ".tab" files in the given path recursively.
      */
-    function loadAllTabFiles($basedir, &$text_array)
+    public function loadAllTabFiles($basedir, &$text_array)
     {
         if (is_dir($basedir)) {
             $fd = opendir($basedir);
             while (false !== ($file = readdir($fd))) {
                 if (preg_match('/\.tab$/', $file)) {
-                    $this->parseLanguageFile($basedir.'/'.$file, $text_array);
-                } elseif (is_dir($basedir.'/'.$file)
+                    $this->parseLanguageFile($basedir . '/' . $file, $text_array);
+                } elseif (
+                    is_dir($basedir . '/' . $file)
                        && $file != '.'
                        && $file != '..'
                        && $file != '.svn'
-                       && $file != 'CVS') {
-                    $this->loadAllTabFiles($basedir.'/'.$file, $text_array);
+                       && $file != 'CVS'
+                ) {
+                    $this->loadAllTabFiles($basedir . '/' . $file, $text_array);
                 }
             }
             closedir($fd);
@@ -209,8 +215,8 @@ class BaseLanguage
             mkdir($this->getCacheDirectory(), 0755);
         }
 
-        $path = $this->getCacheDirectory().DIRECTORY_SEPARATOR.$lang.'.php';
-        $content = '<?php'.PHP_EOL.'return '.VarExporter::export($text_array).';';
+        $path = $this->getCacheDirectory() . DIRECTORY_SEPARATOR . $lang . '.php';
+        $content = '<?php' . PHP_EOL . 'return ' . VarExporter::export($text_array) . ';';
         try {
             FileWriter::writeFile($path, $content);
         } catch (ExceptionInterface $e) {
@@ -221,12 +227,14 @@ class BaseLanguage
     /**
      * Parse given .tab file and store the result into $text_array
      */
-    function parseLanguageFile($fname, &$text_array)
+    public function parseLanguageFile($fname, &$text_array)
     {
         $ary = @file($fname, 1);
-        for ($i=0; $i<sizeof($ary); $i++) {
-            if (substr($ary[$i], 0, 1) == '#' ||  //ignore comments...
-                strlen(trim($ary[$i])) == 0) {    //...or empty lines
+        for ($i = 0; $i < sizeof($ary); $i++) {
+            if (
+                substr($ary[$i], 0, 1) == '#' || //ignore comments...
+                strlen(trim($ary[$i])) == 0
+            ) {    //...or empty lines
                 continue;
             }
 
@@ -234,20 +242,20 @@ class BaseLanguage
             if (count($line) === 3) {
                 $text_array[$line[0]][$line[1]] = chop(str_replace('\n', "\n", ($line[2])));
             } else {
-                echo '* Error in '.$fname.' line '.$i.' string "'.trim($ary[$i]).'" (length: '.strlen(trim($ary[$i])).') : ';
-                if (!isset($line[0])) {
-                    echo "no index 0: empty line ? ";
-                } elseif (!isset($line[1])) {
-                    echo "no index 1: did you use tabs to separate elements ? ";
-                } elseif (!isset($line[2])) {
-                    echo "no index 2: keys present but string is missing ";
+                $error_str = '* Error in ' . $fname . ' line ' . $i . ' string "' . trim($ary[$i]) . '" (length: ' . strlen(trim($ary[$i])) . ') : ';
+                if (! isset($line[0])) {
+                    $error_str .= "no index 0: empty line ? ";
+                } elseif (! isset($line[1])) {
+                    $error_str .= "no index 1: did you use tabs to separate elements ? ";
+                } elseif (! isset($line[2])) {
+                    $error_str .= "no index 2: keys present but string is missing ";
                 }
-                echo "<br>".PHP_EOL;
+                throw new RuntimeException($error_str);
             }
         }
     }
 
-    function loadLanguage($lang)
+    public function loadLanguage($lang)
     {
         if ($this->lang !== $lang) {
             $this->lang = $lang;
@@ -266,7 +274,13 @@ class BaseLanguage
      */
     private function loadFromSerialized($lang)
     {
-        $filepath = $this->getCacheDirectory().DIRECTORY_SEPARATOR.$lang.'.php';
+        if (strpos($lang, DIRECTORY_SEPARATOR) !== false) {
+            throw new RuntimeException('$lang is not expected to contain a directory separator, got ' . $lang);
+        }
+        /**
+         * @psalm-taint-escape text
+         */
+        $filepath = $this->getCacheDirectory() . DIRECTORY_SEPARATOR . $lang . '.php';
         if (is_file($filepath)) {
             $this->text_array = require $filepath;
             return true;
@@ -279,7 +293,10 @@ class BaseLanguage
         $this->text_array = $this->compileLanguage($lang);
     }
 
-    function getText($pagename, $category, $args = "")
+    /**
+     * @psalm-taint-specialize
+     */
+    public function getText($pagename, $category, $args = "")
     {
         // If the language files were modified by an update, the compiled version might not have been generated,
         // and the message not present.
@@ -298,7 +315,7 @@ class BaseLanguage
                 $nb_args = count($args);
             }
             for ($i = 1; $i <= $nb_args + 1; $i++) {
-                $patterns[] = '/\$'.$i.'/';
+                $patterns[] = '/\$' . $i . '/';
             }
             $tstring = preg_replace($patterns, $args, $this->text_array[$pagename][$category]);
         } else {
@@ -307,7 +324,7 @@ class BaseLanguage
                     $tstring = preg_replace($pattern, '', $this->text_array[$pagename][$category]);
                     //$tstring = $this->text_array[$pagename][$category];
         }
-        if (!$tstring) {
+        if (! $tstring) {
             $tstring = "*** Unkown msg $pagename - $category ***";
         }
         return "$tstring";
@@ -333,19 +350,21 @@ class BaseLanguage
     // and is used either to include long piece of text that are inconvenient
     // to format on one line as the .tab file does or because there is some
     // PHP code that can be cutomized
-    function getContent($file, $lang_code = null, $plugin_name = null, $ext = '.txt')
+    public function getContent($file, $lang_code = null, $plugin_name = null, $ext = '.txt')
     {
-
         // Language for current user unless it is specified in the param list
-        if (!isset($lang_code)) {
+        if (! isset($lang_code) && preg_match('/^[A-Za-z]{2,4}_[A-Za-z]{2}$/', $this->lang) === 1) {
+            /**
+             * @psalm-taint-escape text
+             */
             $lang_code = $this->lang;
         }
 
         if (is_null($plugin_name)) {
             // Test first the custom directory
-            $custom_fn = $GLOBALS['sys_custom_incdir']."/".$lang_code."/".$file.$ext;
+            $custom_fn = ForgeConfig::get('sys_custom_incdir') . "/" . $lang_code . "/" . $file . $ext;
         } else {
-            $custom_fn = $GLOBALS['sys_custompluginsroot'].'/'.$plugin_name.'/site-content/'.$lang_code.'/'.$file.$ext ;
+            $custom_fn = ForgeConfig::get('sys_custompluginsroot') . '/' . $plugin_name . '/site-content/' . $lang_code . '/' . $file . $ext;
         }
         if (file_exists($custom_fn)) {
             // The custom file exists.
@@ -354,17 +373,17 @@ class BaseLanguage
             // Use the default file
             // Check first if exist
             if (is_null($plugin_name)) {
-                $fn = $GLOBALS['sys_incdir']."/".$lang_code."/".$file.$ext;
+                $fn = ForgeConfig::get('sys_incdir') . "/" . $lang_code . "/" . $file . $ext;
             } else {
-                $fn = $GLOBALS['sys_pluginsroot'].'/'.$plugin_name.'/site-content/'.$lang_code.'/'.$file.$ext;
+                $fn = ForgeConfig::get('sys_pluginsroot') . '/' . $plugin_name . '/site-content/' . $lang_code . '/' . $file . $ext;
             }
             if (file_exists($fn)) {
                 // The custom file exists.
                 return $fn;
             } else {
-                if ($lang_code == self::DEFAULT_LANG) {
+                if ($lang_code === self::DEFAULT_LANG) {
                     // return empty content to avoid include error
-                    return $GLOBALS['sys_incdir']."/".$lang_code."/others/empty.txt";
+                    return __DIR__ . '/../../../site-content/en_US/others/empty.txt';
                 } else {
                     // else try to find the file in the en_US directory
                     return $this->getContent($file, "en_US", $plugin_name, $ext);
@@ -374,14 +393,14 @@ class BaseLanguage
     }
 
     //result set handle for supported langauges
-    var $language_res;
+    public $language_res;
 
     /**
      * @return array pairs of language_code => Language
      */
     public function getLanguages()
     {
-        $ret = array();
+        $ret = [];
         foreach ($this->allLanguages as $lang) {
             $text_array = $this->compileLanguage($lang);
             $ret[$lang] = $text_array['system']['locale_label'];
@@ -389,18 +408,18 @@ class BaseLanguage
         return $ret;
     }
 
-    function getEncoding()
+    public function getEncoding()
     {
         return $this->text_array['conf']['content_encoding'];
     }
 
-    function getFont()
+    public function getFont()
     {
         return $this->text_array['conf']['default_font'];
     }
 
     /** Returns list of loaded language files (for debugging) */
-    function getLoadedLangageFiles()
+    public function getLoadedLangageFiles()
     {
         return array_keys($this->file_array);
     }
@@ -416,10 +435,10 @@ class BaseLanguage
      * @param $accept_language string "en-us,en;q=0.8,fr;q=0.5,fr-fr;q=0.3"
      * @return array ('en-us' => 1, 'en' => 0.8, 'fr' => 0.5, 'fr-fr' => 0.3) ordered by score
      */
-    function parseAcceptLanguage($accept_language)
+    public function parseAcceptLanguage($accept_language)
     {
-        $langs      = array();
-        $lang_parse = array();
+        $langs      = [];
+        $lang_parse = [];
 
         // break up string into pieces (languages and q factors)
         preg_match_all(
@@ -457,12 +476,12 @@ class BaseLanguage
      * @param $accept_language string "en-us,en;q=0.8,fr;q=0.5,fr-fr;q=0.3"
      * @return string en_US
      */
-    function getLanguageFromAcceptLanguage($accept_language)
+    public function getLanguageFromAcceptLanguage($accept_language)
     {
         $relevant_language = $this->defaultLanguage;
 
         //extract language abbr and country codes from Codendi languages
-        $provided_languages = array();
+        $provided_languages = [];
         foreach ($this->allLanguages as $lang) {
             list($l,$c) = explode('_', $lang);
             $provided_languages[strtolower($l)][strtolower($c)] = $lang;
@@ -496,24 +515,24 @@ class BaseLanguage
      * @param $language string 'en_US'
      * @return bool true if the $language is supported
      */
-    function isLanguageSupported($language)
+    public function isLanguageSupported($language)
     {
         return in_array($language, $this->allLanguages);
     }
 
     public function invalidateCache()
     {
-        foreach (glob($this->getCacheDirectory().DIRECTORY_SEPARATOR.'*.php') as $file) {
+        foreach (glob($this->getCacheDirectory() . DIRECTORY_SEPARATOR . '*.php') as $file) {
             unlink($file);
         }
-        foreach (glob($this->getCacheDirectory().DIRECTORY_SEPARATOR.'*.bin') as $file) {
+        foreach (glob($this->getCacheDirectory() . DIRECTORY_SEPARATOR . '*.bin') as $file) {
             unlink($file);
         }
     }
 
     public function getCacheDirectory()
     {
-        return ForgeConfig::getCacheDir().DIRECTORY_SEPARATOR.'lang';
+        return ForgeConfig::getCacheDir() . DIRECTORY_SEPARATOR . 'lang';
     }
 
     public function getOverridableText($pagename, $category, $args = "")

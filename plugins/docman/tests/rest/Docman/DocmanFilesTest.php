@@ -18,7 +18,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Docman\Test\rest\Docman;
 
@@ -186,7 +186,7 @@ class DocmanFilesTest extends DocmanTestExecutionHelper
     /**
      * @depends testGetRootId
      */
-    public function testUpdatePermissionsFileDocument(int $root_id) : void
+    public function testUpdatePermissionsFileDocument(int $root_id): void
     {
         $file_doc_id = $this->createANewFileAndGetItsId(
             $root_id,
@@ -377,7 +377,7 @@ class DocmanFilesTest extends DocmanTestExecutionHelper
         );
 
         $file = $response->json();
-        $this->assertEquals($file['lock_info'] ["locked_by"]["username"], DocmanDataBuilder::ADMIN_USER_NAME);
+        $this->assertEquals($file['lock_info']["locked_by"]["username"], DocmanDataBuilder::ADMIN_USER_NAME);
     }
 
     /**
@@ -1218,7 +1218,7 @@ class DocmanFilesTest extends DocmanTestExecutionHelper
             REST_TestDataBuilder::ADMIN_USER_NAME
         );
 
-        $this->assertEquals(array('OPTIONS', 'PATCH', 'DELETE'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(['OPTIONS', 'PATCH', 'DELETE'], $response->getHeader('Allow')->normalize()->toArray());
         $this->assertEquals(200, $response->getStatusCode());
     }
 
@@ -1229,7 +1229,7 @@ class DocmanFilesTest extends DocmanTestExecutionHelper
     {
         $response = $this->getResponse($this->client->options('docman_files/' . $id . '/lock'), REST_TestDataBuilder::ADMIN_USER_NAME);
 
-        $this->assertEquals(array('OPTIONS', 'POST', 'DELETE'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(['OPTIONS', 'POST', 'DELETE'], $response->getHeader('Allow')->normalize()->toArray());
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
@@ -1243,7 +1243,7 @@ class DocmanFilesTest extends DocmanTestExecutionHelper
             REST_TestDataBuilder::ADMIN_USER_NAME
         );
 
-        $this->assertEquals(array('OPTIONS', 'POST'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(['OPTIONS', 'POST'], $response->getHeader('Allow')->normalize()->toArray());
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
@@ -1257,7 +1257,7 @@ class DocmanFilesTest extends DocmanTestExecutionHelper
             REST_TestDataBuilder::ADMIN_USER_NAME
         );
 
-        $this->assertEquals(array('OPTIONS', 'PUT'), $response->getHeader('Allow')->normalize()->toArray());
+        $this->assertEquals(['OPTIONS', 'PUT'], $response->getHeader('Allow')->normalize()->toArray());
         $this->assertEquals($response->getStatusCode(), 200);
     }
 
@@ -1318,7 +1318,7 @@ class DocmanFilesTest extends DocmanTestExecutionHelper
         );
 
         $this->assertEquals(201, $created_file->getStatusCode());
-        $this->assertEmpty($created_file->json()['file_properties']['upload_href']);
+        $this->assertNull($created_file->json()['file_properties']);
 
         $file_item_response = $this->getResponseByName(
             DocmanDataBuilder::DOCMAN_REGULAR_USER_NAME,

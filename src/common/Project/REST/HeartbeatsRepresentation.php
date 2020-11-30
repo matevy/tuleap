@@ -20,9 +20,11 @@
 
 namespace Tuleap\Project\REST;
 
-use Tuleap\Project\HeartbeatsEntry;
 use Tuleap\Project\HeartbeatsEntryCollection;
 
+/**
+ * @psalm-immutable
+ */
 class HeartbeatsRepresentation
 {
     /**
@@ -35,16 +37,22 @@ class HeartbeatsRepresentation
      */
     public $are_there_activities_user_cannot_see;
 
-    public function build(HeartbeatsEntryCollection $heartbeats)
+    /**
+     * @param HeartbeatsEntryRepresentation[] $entries
+     */
+    private function __construct(array $entries, bool $are_there_activities_user_cannot_see)
     {
-        $this->entries = array();
-        foreach ($heartbeats->getLatestEntries() as $entry) {
-            $representation = new HeartbeatsEntryRepresentation();
-            $representation->build($entry);
+        $this->entries                              = $entries;
+        $this->are_there_activities_user_cannot_see = $are_there_activities_user_cannot_see;
+    }
 
-            $this->entries[] = $representation;
+    public static function build(HeartbeatsEntryCollection $heartbeats): self
+    {
+        $entries = [];
+        foreach ($heartbeats->getLatestEntries() as $entry) {
+            $entries[] = HeartbeatsEntryRepresentation::build($entry);
         }
 
-        $this->are_there_activities_user_cannot_see = $heartbeats->areThereActivitiesUserCannotSee();
+        return new self($entries, $heartbeats->areThereActivitiesUserCannotSee());
     }
 }

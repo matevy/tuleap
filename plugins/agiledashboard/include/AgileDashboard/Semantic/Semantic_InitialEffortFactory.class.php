@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2013  - 2018. All rights reserved.
+ * Copyright Enalean (c) 2013-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -30,6 +30,8 @@ class AgileDashboard_Semantic_InitialEffortFactory implements IBuildSemanticFrom
 
     /**
      * Hold an instance of the class
+     *
+     * @var self
      */
     protected static $instance;
 
@@ -40,9 +42,9 @@ class AgileDashboard_Semantic_InitialEffortFactory implements IBuildSemanticFrom
      */
     public static function instance()
     {
-        if (!isset(self::$instance)) {
+        if (! isset(self::$instance)) {
             $class_name = self::class;
-            self::$instance = new $class_name;
+            self::$instance = new $class_name();
         }
         return self::$instance;
     }
@@ -59,10 +61,10 @@ class AgileDashboard_Semantic_InitialEffortFactory implements IBuildSemanticFrom
     {
         $xml_field = $xml->field;
         $xml_field_attributes = $xml_field->attributes();
-        if (! isset($xml_mapping[(string)$xml_field_attributes['REF']])) {
+        if (! isset($xml_mapping[(string) $xml_field_attributes['REF']])) {
             return null;
         }
-        $field = $xml_mapping[(string)$xml_field_attributes['REF']];
+        $field = $xml_mapping[(string) $xml_field_attributes['REF']];
         return new AgileDashBoard_Semantic_InitialEffort($tracker, $field);
     }
 

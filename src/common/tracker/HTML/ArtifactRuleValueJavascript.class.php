@@ -35,19 +35,19 @@ class ArtifactRuleValueJavascript extends ArtifactRuleValueView
      *
      *  @param $artifact_rule object
      */
-    function __construct(&$rule)
+    public function __construct(&$rule)
     {
         parent::__construct($rule);
     }
 
-    function fetch()
+    public function fetch()
     {
-        $output  = '{id:'. (int)$this->rule->id .', ';
-        $output .= 'group_artifact_id:'. (int)$this->rule->group_artifact_id .', ';
-        $output .= 'source_field:'. (int)$this->rule->source_field .', ';
-        $output .= 'source_value:'. (int)$this->rule->source_value .', ';
-        $output .= 'target_field:'. (int)$this->rule->target_field .', ';
-        $output .= 'target_value:'. (int)$this->rule->target_value .'';
+        $output  = '{id:' . (int) $this->rule->id . ', ';
+        $output .= 'group_artifact_id:' . (int) $this->rule->group_artifact_id . ', ';
+        $output .= 'source_field:' . (int) $this->rule->source_field . ', ';
+        $output .= 'source_value:' . (int) $this->rule->source_value . ', ';
+        $output .= 'target_field:' . (int) $this->rule->target_field . ', ';
+        $output .= 'target_value:' . (int) $this->rule->target_value . '';
         $output .= '}';
         return $output;
     }

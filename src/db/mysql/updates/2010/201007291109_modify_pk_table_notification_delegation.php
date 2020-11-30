@@ -35,14 +35,14 @@ EOT;
 
     public function up()
     {
-        $sql = 'ALTER TABLE groups_notif_delegation '.
+        $sql = 'ALTER TABLE groups_notif_delegation ' .
                ' ADD PRIMARY KEY (group_id, ugroup_id)';
         $this->db->addPrimaryKey('groups_notif_delegation', '(group_id, ugroup_id)', $sql);
     }
 
     public function postUp()
     {
-        if (!$this->db->primaryKeyExists('groups_notif_delegation')) {
+        if (! $this->db->primaryKeyExists('groups_notif_delegation')) {
             throw new ForgeUpgrade_Bucket_Exception_UpgradeNotComplete('Primary key on groups_notif_delegation table is missing');
         }
     }

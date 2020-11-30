@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,32 +20,64 @@
 namespace Tuleap\AgileDashboard\REST\v2;
 
 use Tuleap\Tracker\REST\TrackerReference;
-use Tuleap\REST\v2\BacklogRepresentationBase;
 
-class BacklogRepresentation extends BacklogRepresentationBase
+/**
+ * @psalm-immutable
+ */
+class BacklogRepresentation
 {
-    public function build(
+    public const ROUTE = 'backlog_items';
+
+    /**
+     * @var BacklogItemRepresentation[]
+     */
+    public $content;
+
+    /**
+     *
+     * @var array
+     */
+    public $accept;
+
+    /**
+     * @var bool
+     */
+    public $has_user_priority_change_permission;
+
+    /**
+     * @param BacklogItemRepresentation[] $content
+     */
+    private function __construct(array $content, array $accept, bool $has_user_priority_change_permission)
+    {
+        $this->content                             = $content;
+        $this->accept                              = $accept;
+        $this->has_user_priority_change_permission = $has_user_priority_change_permission;
+    }
+
+    public static function build(
         array $backlog_items,
         array $accepted_trackers,
         array $parent_trackers,
-        $has_user_priority_change_permission
-    ) {
-        $this->content = $backlog_items;
-
-        $this->accept['trackers']        = $this->getTrackersRepresentation($accepted_trackers);
-        $this->accept['parent_trackers'] = $this->getTrackersRepresentation($parent_trackers);
-
-        $this->has_user_priority_change_permission = $has_user_priority_change_permission;
-
-        return $this;
+        bool $has_user_priority_change_permission
+    ): self {
+        return new self(
+            $backlog_items,
+            [
+                'trackers'        => self::getTrackersRepresentation($accepted_trackers),
+                'parent_trackers' => self::getTrackersRepresentation($parent_trackers)
+            ],
+            $has_user_priority_change_permission
+        );
     }
 
-    private function getTrackersRepresentation(array $trackers)
+    /**
+     * @return TrackerReference[]
+     */
+    private static function getTrackersRepresentation(array $trackers): array
     {
-        $trackers_representation = array();
+        $trackers_representation = [];
         foreach ($trackers as $tracker) {
-            $tracker_reference = new TrackerReference();
-            $tracker_reference->build($tracker);
+            $tracker_reference = TrackerReference::build($tracker);
             $trackers_representation[] = $tracker_reference;
         }
         return $trackers_representation;

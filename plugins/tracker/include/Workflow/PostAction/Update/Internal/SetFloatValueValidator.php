@@ -83,12 +83,12 @@ class SetFloatValueValidator
         }
     }
 
-    private function extractFloatFieldIds(\Tracker $tracker) : array
+    private function extractFloatFieldIds(\Tracker $tracker): array
     {
         $float_fields    = $this->form_element_factory->getUsedFormElementsByType($tracker, 'float');
         $float_field_ids = [];
-        /** @var \Tracker_FormElement_Field_Float $float_field */
         foreach ($float_fields as $float_field) {
+            \assert($float_field instanceof \Tracker_FormElement_Field_Float);
             $float_field_ids[] = (int) $float_field->getId();
         }
 

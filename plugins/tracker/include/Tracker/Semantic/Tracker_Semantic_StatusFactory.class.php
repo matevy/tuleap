@@ -25,6 +25,7 @@ class Tracker_Semantic_StatusFactory implements IBuildSemanticFromXML, IDuplicat
 {
     /**
      * Hold an instance of the class
+     * @var self|null
      */
     protected static $instance;
 
@@ -35,9 +36,9 @@ class Tracker_Semantic_StatusFactory implements IBuildSemanticFromXML, IDuplicat
      */
     public static function instance()
     {
-        if (!isset(self::$instance)) {
+        if (! isset(self::$instance)) {
             $c = self::class;
-            self::$instance = new $c;
+            self::$instance = new $c();
         }
         return self::$instance;
     }
@@ -51,18 +52,18 @@ class Tracker_Semantic_StatusFactory implements IBuildSemanticFromXML, IDuplicat
     {
         $xml_field = $xml->field;
         $xml_field_attributes = $xml_field->attributes();
-        if (! isset($xml_mapping[(string)$xml_field_attributes['REF']])) {
+        if (! isset($xml_mapping[(string) $xml_field_attributes['REF']])) {
             return null;
         }
-        $field = $xml_mapping[(string)$xml_field_attributes['REF']];
+        $field = $xml_mapping[(string) $xml_field_attributes['REF']];
         $xml_open_values = $xml->open_values;
-        $open_values = array();
+        $open_values = [];
         foreach ($xml_open_values->open_value as $xml_open_value) {
             $xml_open_value_attributes = $xml_open_value->attributes();
-            if (! $xml_mapping[(string)$xml_open_value_attributes['REF']]) {
+            if (! $xml_mapping[(string) $xml_open_value_attributes['REF']]) {
                 continue;
             }
-            $value_id = $xml_mapping[(string)$xml_open_value_attributes['REF']];
+            $value_id = $xml_mapping[(string) $xml_open_value_attributes['REF']];
             $open_values[] = $value_id;
         }
         return new Tracker_Semantic_Status($tracker, $field, $open_values);
@@ -91,7 +92,7 @@ class Tracker_Semantic_StatusFactory implements IBuildSemanticFromXML, IDuplicat
     {
         $dar = $this->getDao()->searchByTrackerId($from_tracker_id);
         $from_status_field_id = null;
-        $from_open_value_ids = array();
+        $from_open_value_ids = [];
         // walk the semantic status rows (one row per open value)
         // to retrieve semantics values of tracker FROM
         while ($row = $dar->getRow()) {
@@ -104,7 +105,7 @@ class Tracker_Semantic_StatusFactory implements IBuildSemanticFromXML, IDuplicat
 
         // walk the mapping array to get the corresponding status values for tracker TARGET
         $to_status_field_id = false;
-        $to_open_value_ids = array();
+        $to_open_value_ids = [];
         foreach ($field_mapping as $mapping) {
             if ($mapping['from'] == $from_status_field_id) {
                 // $mapping is the mapping for the status field

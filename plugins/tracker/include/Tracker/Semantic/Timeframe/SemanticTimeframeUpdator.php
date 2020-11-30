@@ -18,17 +18,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Tuleap\Tracker\Semantic\Timeframe;
 
 use Codendi_Request;
 use Exception;
 use Tracker;
-use Tuleap\Tracker\Semantic\Timeframe\Exceptions\FieldDoesNotBelongToTrackerException;
-use Tuleap\Tracker\Semantic\Timeframe\Exceptions\FieldDoesNotHaveTheRightTypeException;
-use Tuleap\Tracker\Semantic\Timeframe\Exceptions\FieldIdIsNotAnIntegerException;
-use Tuleap\Tracker\Semantic\Timeframe\Exceptions\FieldStartDateMissingException;
 
 class SemanticTimeframeUpdator
 {
@@ -61,7 +57,7 @@ class SemanticTimeframeUpdator
             }
 
             $result = $this->dao->save(
-                (int)$tracker->getId(),
+                (int) $tracker->getId(),
                 $start_date_field_id,
                 $duration_field_id,
                 $end_date_field_id
@@ -91,7 +87,7 @@ class SemanticTimeframeUpdator
             throw new Exception('Field id is not an integer');
         }
 
-        return (int)$field_id;
+        return (int) $field_id;
     }
 
     private function displayFeedbackSuccess(): void
@@ -110,7 +106,7 @@ class SemanticTimeframeUpdator
         );
     }
 
-    private function displayStartDateAndEndDateAreTheSameFieldFeedbackError() : void
+    private function displayStartDateAndEndDateAreTheSameFieldFeedbackError(): void
     {
         $GLOBALS['Response']->addFeedback(
             \Feedback::ERROR,
@@ -118,14 +114,14 @@ class SemanticTimeframeUpdator
         );
     }
 
-    private function startDateFieldIdIsCorrect(Tracker $tracker, int $start_date_field_id) : bool
+    private function startDateFieldIdIsCorrect(Tracker $tracker, int $start_date_field_id): bool
     {
         $start_date_field = $this->form_factory->getUsedDateFieldById($tracker, $start_date_field_id);
 
         return $start_date_field !== null;
     }
 
-    private function durationFieldIdIsCorrect(Tracker $tracker, int $duration_field_id) : bool
+    private function durationFieldIdIsCorrect(Tracker $tracker, int $duration_field_id): bool
     {
         $duration_field = $this->form_factory->getUsedFieldByIdAndType(
             $tracker,
@@ -136,7 +132,7 @@ class SemanticTimeframeUpdator
         return $duration_field !== null;
     }
 
-    private function endDateFieldIdIsCorrect(Tracker $tracker, int $end_date_field_id) : bool
+    private function endDateFieldIdIsCorrect(Tracker $tracker, int $end_date_field_id): bool
     {
         $end_date_field = $this->form_factory->getUsedDateFieldById($tracker, $end_date_field_id);
 
@@ -146,7 +142,7 @@ class SemanticTimeframeUpdator
     /**
      * @psalm-assert-if-true !null $start_date_field_id
      */
-    private function requestIsCorrect(Tracker $tracker, ?int $start_date_field_id, ?int $duration_field_id, ?int $end_date_field_id) : bool
+    private function requestIsCorrect(Tracker $tracker, ?int $start_date_field_id, ?int $duration_field_id, ?int $end_date_field_id): bool
     {
         if ($start_date_field_id === null || ! $this->startDateFieldIdIsCorrect($tracker, $start_date_field_id)) {
             return false;
@@ -172,7 +168,7 @@ class SemanticTimeframeUpdator
     /**
      * @throws TimeframeStartDateAndEndDateAreTheSameFieldException
      */
-    private function checkStartDateFieldIsDifferentOfEndDateField(?int $start_date_field_id, ?int $end_date_field_id) : void
+    private function checkStartDateFieldIsDifferentOfEndDateField(?int $start_date_field_id, ?int $end_date_field_id): void
     {
         if ($start_date_field_id === null || $end_date_field_id === null) {
             return;

@@ -45,18 +45,17 @@ class Planning_RequestValidator
      *
      * Existing planning update validation is not implemented yet.
      *
-     * @param Codendi_Request $request
      *
      * @return bool
      */
     public function isValid(Codendi_Request $request)
     {
-        $group_id            = (int)$request->get('group_id');
+        $group_id            = (int) $request->get('group_id');
         $planning_id         = $request->get('planning_id');
         $planning_parameters = $request->get('planning');
 
         if (! $planning_parameters) {
-            $planning_parameters = array();
+            $planning_parameters = [];
         }
 
         $planning_parameters = PlanningParameters::fromArray($planning_parameters);

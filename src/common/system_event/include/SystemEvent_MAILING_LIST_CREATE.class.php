@@ -40,23 +40,23 @@ class SystemEvent_MAILING_LIST_CREATE extends SystemEvent
     public function verbalizeParameters($with_link)
     {
         $txt = '';
-        $txt .= 'mailing list: #'. $this->getIdFromParam($this->parameters);
+        $txt .= 'mailing list: #' . $this->getIdFromParam($this->parameters);
         return $txt;
     }
 
     /**
      * Process stored event
      */
-    function process()
+    public function process()
     {
         // Check parameters
-        $group_list_id=$this->getIdFromParam($this->parameters);
+        $group_list_id = $this->getIdFromParam($this->parameters);
 
         if ($group_list_id == 0) {
             return $this->setErrorBadParam();
         }
 
-        if (!Backend::instance('MailingList')->createList($group_list_id)) {
+        if (! Backend::instance('MailingList')->createList($group_list_id)) {
             $this->error("Could not create mailing list $group_list_id");
             return false;
         }

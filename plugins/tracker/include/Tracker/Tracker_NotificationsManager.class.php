@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2017-2018. All rights reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  * Copyright (c) Xerox Corporation, Codendi Team, 2001-2009. All rights reserved
  *
  * This file is a part of Tuleap.
@@ -34,6 +34,7 @@ use Tuleap\Tracker\Notifications\UsersToNotifyDao;
 use Tuleap\User\InvalidEntryInAutocompleterCollection;
 use Tuleap\User\RequestFromAutocompleter;
 
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 class Tracker_NotificationsManager
 {
 
@@ -278,7 +279,7 @@ class Tracker_NotificationsManager
         echo '</form></fieldset>';
     }
 
-    protected function displayAdminNotifications_Toggle()
+    protected function displayAdminNotifications_Toggle() //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $renderer = $this->getNotificationsRenderer();
         $notifications_level = $this->tracker->getNotificationsLevel();
@@ -312,10 +313,10 @@ class Tracker_NotificationsManager
         );
     }
 
-    private function displayAdminNotifications_Global()
+    private function displayAdminNotifications_Global() //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
-        echo '<h3><a name="GlobalEmailNotification"></a>'.$GLOBALS['Language']->getText('plugin_tracker_include_type', 'global_mail_notif').' '.
-        help_button('tracker.html#e-mail-notification').'</h3>';
+        echo '<h3><a name="GlobalEmailNotification"></a>' . dgettext('tuleap-tracker', 'Global Email Notification') . ' ' .
+        help_button('trackers/administration/configuration/notifications.html#global-email-notification') . '</h3>';
 
         $notifs   = $this->getGlobalNotifications();
         $renderer = $this->getNotificationsRenderer();
@@ -327,7 +328,8 @@ class Tracker_NotificationsManager
                 $this->notification_list_builder->getNotificationsPresenter($notifs, $this->addresses_builder)
             )
         );
-        $GLOBALS['Response']->includeFooterJavascriptFile('/scripts/tuleap/user-and-ugroup-autocompleter.js');
+        $assets = new \Tuleap\Layout\IncludeAssets(__DIR__ . '/../../../../src/www/assets/trackers', '/assets/trackers');
+        $GLOBALS['Response']->includeFooterJavascriptFile($assets->getFileURL('tracker-admin.js'));
     }
 
     private function displayAdminNotificationUnsubcribers()
@@ -342,7 +344,7 @@ class Tracker_NotificationsManager
      */
     private function getNotificationsRenderer()
     {
-        return TemplateRendererFactory::build()->getRenderer(dirname(TRACKER_BASE_DIR).'/templates/notifications');
+        return TemplateRendererFactory::build()->getRenderer(dirname(TRACKER_BASE_DIR) . '/templates/notifications');
     }
 
     /**
@@ -350,7 +352,7 @@ class Tracker_NotificationsManager
      */
     public function getGlobalNotifications()
     {
-        $notifs = array();
+        $notifs = [];
         foreach ($this->getGlobalDao()->searchByTrackerId($this->tracker->id) as $row) {
             $notifs[$row['id']] = new Tracker_GlobalNotification(
                 $row['id'],
@@ -390,7 +392,7 @@ class Tracker_NotificationsManager
     private function notificationAddUsers($notification_id, RequestFromAutocompleter $autocompleter)
     {
         $users           = $autocompleter->getUsers();
-        $users_not_added = array();
+        $users_not_added = [];
         $user_ids        = [];
         foreach ($users as $user) {
             $user_ids[] = $user->getId();
@@ -419,7 +421,7 @@ class Tracker_NotificationsManager
     private function notificationAddUgroups($notification_id, RequestFromAutocompleter $autocompleter)
     {
         $ugroups           = $autocompleter->getUgroups();
-        $ugroups_not_added = array();
+        $ugroups_not_added = [];
         foreach ($ugroups as $ugroup) {
             if (! $this->ugroup_to_notify_dao->insert($notification_id, $ugroup->getId())) {
                 $ugroups_not_added[] = $ugroup->getTranslatedName();
@@ -457,12 +459,12 @@ class Tracker_NotificationsManager
      */
     public function getAllAddresses($update = false)
     {
-        $addresses = array();
+        $addresses = [];
         $notifs = $this->getGlobalNotifications();
         foreach ($notifs as $key => $nop) {
-            if (!$update || $notifs[$key]->isAllUpdates()) {
+            if (! $update || $notifs[$key]->isAllUpdates()) {
                 foreach (preg_split('/[,;]/', $notifs[$key]->getAddresses()) as $address) {
-                    $addresses[] = array('address' => $address, 'check_permissions' => $notifs[$key]->isCheckPermissions());
+                    $addresses[] = ['address' => $address, 'check_permissions' => $notifs[$key]->isCheckPermissions()];
                 }
             }
         }
@@ -515,7 +517,7 @@ class Tracker_NotificationsManager
     public static function isMailingList($email_address)
     {
         $r = preg_match_all('/\S+\@lists\.\S+/', $subject, $matches);
-        if (!empty($r)) {
+        if (! empty($r)) {
             return true;
         }
         return false;
@@ -652,9 +654,6 @@ class Tracker_NotificationsManager
         }
     }
 
-    /**
-     * @param HTTPRequest $request
-     */
     private function updateNotificationLevel(HTTPRequest $request)
     {
         if (! $this->notificationLevelMustBeUpdated($request)) {
@@ -691,7 +690,7 @@ class Tracker_NotificationsManager
 
     private function notificationLevelMustBeUpdated(HTTPRequest $request)
     {
-        return ((int)$this->tracker->getNotificationsLevel() !== (int)$request->get('notifications_level')) ||
+        return ((int) $this->tracker->getNotificationsLevel() !== (int) $request->get('notifications_level')) ||
             $request->exist('disable_notifications');
     }
 

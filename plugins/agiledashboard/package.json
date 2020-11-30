@@ -1,0 +1,37 @@
+{
+  "author": "Enalean Team",
+  "name": "@tuleap/plugin-agiledashboard",
+  "homepage": "https://www.tuleap.org",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "dependencies": {
+    "@tuleap/plugin-tracker": "file:../tracker",
+    "d3": "^6.2.0",
+    "d3-array": "^2.8.0",
+    "d3-axis": "^2.0.0",
+    "d3-scale": "^3.2.3",
+    "d3-selection": "^2.0.0",
+    "d3-shape": "^2.0.0",
+    "escape-string-regexp": "^2.0.0",
+    "he": "^1.2.0",
+    "lodash": "^4.17.19",
+    "moment": "^2.29.1",
+    "node-gettext": "^3.0.0",
+    "sprintf-js": "^1.1.2",
+    "striptags": "^3.1.1",
+    "vue": "^2.6.12",
+    "vue-gettext": "^2.1.10"
+  },
+  "devDependencies": {
+    "@types/node-gettext": "^3.0.1"
+  },
+  "config": {
+    "bin": "../../node_modules/.bin"
+  },
+  "scripts": {
+    "build": "rm -rf ../../src/www/assets/agiledashboard/ && $npm_package_config_bin/webpack --config webpack.prod.js",
+    "watch": "$npm_package_config_bin/webpack --config webpack.dev.js --watch",
+    "test": "BABEL_ENV=test $npm_package_config_bin/jest --config=../../tests/jest/jest.projects.config.js \"$(pwd)\"",
+    "postshrinkwrap": "php ../../tools/utils/scripts/clean-lockfile-from-local-tuleap-dep.php \"$(pwd)\""
+  }
+}

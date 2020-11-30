@@ -40,7 +40,6 @@ use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
 use Tuleap\Tracker\FormElement\Field\ListFields\Bind\BindDecoratorRetriever;
-use UserManager;
 
 class CardwallLegacyController implements DispatchableWithRequest
 {
@@ -58,8 +57,6 @@ class CardwallLegacyController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -84,7 +81,6 @@ class CardwallLegacyController implements DispatchableWithRequest
                     $single_card_builder = new Cardwall_SingleCardBuilder(
                         $this->config_factory,
                         new Cardwall_CardFields(
-                            UserManager::instance(),
                             Tracker_FormElementFactory::instance()
                         ),
                         Tracker_ArtifactFactory::instance(),

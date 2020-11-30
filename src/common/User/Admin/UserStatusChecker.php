@@ -23,14 +23,23 @@ namespace Tuleap\User\Admin;
 use ForgeAccess;
 use ForgeConfig;
 use PFUser;
-use UserDao;
 
 class UserStatusChecker
 {
     public function isRestrictedStatusAllowedForUser(PFUser $user)
     {
-        return $this->doesPlatformAllowRestricted()
-            || $user->isRestricted();
+        if ($user->isRestricted()) {
+            return true;
+        }
+
+        if ($user->isSuperUser()) {
+            return false;
+        }
+        if (! $this->doesPlatformAllowRestricted()) {
+            return false;
+        }
+
+        return true;
     }
 
     public function doesPlatformAllowRestricted()

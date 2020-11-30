@@ -31,14 +31,14 @@ class ForumML_FileStorage
 {
 
     // Root directory to host mails attachments
-    var $root;
+    public $root;
 
     /**
      * ForumML_FileStorage Constructor
      *
      * @param root: The ForumML attachments directory
      */
-    function __construct($root)
+    public function __construct($root)
     {
         $this->root = $root;
     }
@@ -54,7 +54,7 @@ class ForumML_FileStorage
      *
      * @return int size of attached file
      */
-    function store($filename, $content, $list, $date, $encod = "")
+    public function store($filename, $content, $list, $date, $encod = "")
     {
         $path = $this->_getPath($filename, $list, $date, "store");
         $ret = file_put_contents($path, $content);
@@ -97,7 +97,7 @@ class ForumML_FileStorage
      *
      * @return string path
      */
-    function _getPath($name, $list, $date, $type)
+    public function _getPath($name, $list, $date, $type)
     {
         $name = trim($name);
 
@@ -115,15 +115,15 @@ class ForumML_FileStorage
         }
 
         if ($type == "upload") {
-            $path_elements = array($this->root, $type);
+            $path_elements = [$this->root, $type];
         } elseif ($type == "store") {
-            $path_elements = array($this->root, $list, $date);
+            $path_elements = [$this->root, $list, $date];
         }
 
         $path = '';
         foreach ($path_elements as $elem) {
-            $path .= $elem .'/';
-            if (!is_dir($path)) {
+            $path .= $elem . '/';
+            if (! is_dir($path)) {
                 mkdir($path, 0755);
             }
         }
@@ -131,15 +131,15 @@ class ForumML_FileStorage
         // Ensure that same file doesn't exists yet
         $ext = '';
         $i   = 1;
-        while ($this->fileExists($path.$name.$ext)) {
-            $ext = '_'.$i;
+        while ($this->fileExists($path . $name . $ext)) {
+            $ext = '_' . $i;
             $i++;
         }
 
-        return $path.$name.$ext;
+        return $path . $name . $ext;
     }
 
-    function fileExists($path)
+    public function fileExists($path)
     {
         return is_file($path);
     }

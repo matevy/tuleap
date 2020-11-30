@@ -25,8 +25,8 @@ async function getWrapper(): Promise<Wrapper<LabelEditor>> {
     return shallowMount(LabelEditor, {
         localVue: await createTaskboardLocalVue(),
         propsData: {
-            value: "Lorem ipsum doloret"
-        }
+            value: "Lorem ipsum doloret",
+        },
     });
 }
 
@@ -40,14 +40,14 @@ describe("LabelEditor", () => {
     it("Saves the card if user hits enter", async () => {
         const wrapper = await getWrapper();
 
-        wrapper.find({ ref: "textarea" }).trigger("keydown.enter");
+        wrapper.findComponent({ ref: "textarea" }).trigger("keydown.enter");
         expect(wrapper.emitted("save")).toBeTruthy();
     });
 
     it("Does not save the card if user hits shift + enter", async () => {
         const wrapper = await getWrapper();
 
-        wrapper.find({ ref: "textarea" }).trigger("keydown.enter", { shiftKey: true });
+        wrapper.findComponent({ ref: "textarea" }).trigger("keydown.enter", { shiftKey: true });
         expect(wrapper.emitted("save")).toBeFalsy();
     });
 });

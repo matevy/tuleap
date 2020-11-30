@@ -21,14 +21,14 @@ import { shallowMount, Wrapper } from "@vue/test-utils";
 import SwimlaneHeader from "./SwimlaneHeader.vue";
 import { Swimlane } from "../../../../../type";
 import { createTaskboardLocalVue } from "../../../../../helpers/local-vue-for-test";
-import { createStoreMock } from "../../../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import { FullscreenState } from "../../../../../store/fullscreen/type";
 import { SwimlaneState } from "../../../../../store/swimlane/type";
 
 const swimlane: Swimlane = {
     card: {
-        color: "fiesta-red"
-    }
+        color: "fiesta-red",
+    },
 } as Swimlane;
 
 async function createWrapper(is_fullscreen: boolean): Promise<Wrapper<SwimlaneHeader>> {
@@ -38,16 +38,18 @@ async function createWrapper(is_fullscreen: boolean): Promise<Wrapper<SwimlaneHe
             $store: createStoreMock({
                 state: {
                     swimlane: {} as SwimlaneState,
-                    fullscreen: {} as FullscreenState
+                    fullscreen: {} as FullscreenState,
                 },
                 getters: {
-                    "fullscreen/fullscreen_class": is_fullscreen ? "taskboard-fullscreen" : ""
-                }
-            })
+                    "swimlane/taskboard_cell_swimlane_header_classes": is_fullscreen
+                        ? ["taskboard-fullscreen"]
+                        : [""],
+                },
+            }),
         },
         propsData: {
-            swimlane
-        }
+            swimlane,
+        },
     });
 }
 
@@ -56,22 +58,24 @@ describe("SwimlaneHeader", () => {
         const wrapper = await createWrapper(false);
 
         expect(
-            wrapper.contains(
-                ".fa-minus-square.taskboard-swimlane-toggle.tlp-swatch-fiesta-red[role=button]"
-            )
+            wrapper
+                .find(
+                    ".fa-minus-square.taskboard-swimlane-toggle.tlp-swatch-fiesta-red[role=button]"
+                )
+                .exists()
         ).toBe(true);
-        expect(wrapper.contains(".taskboard-fullscreen")).toBe(false);
+        expect(wrapper.find(".taskboard-fullscreen").exists()).toBe(false);
     });
 
     it("adds fullscreen class when taskboard is in fullscreen mode", async () => {
         const wrapper = await createWrapper(true);
-        expect(wrapper.contains(".taskboard-fullscreen")).toBe(true);
+        expect(wrapper.find(".taskboard-fullscreen").exists()).toBe(true);
     });
 
     it("collapse the swimlane when user click on the toggle icon", async () => {
         const wrapper = await createWrapper(false);
 
-        wrapper.find(".taskboard-swimlane-toggle").trigger("click");
+        wrapper.get(".taskboard-swimlane-toggle").trigger("click");
         expect(wrapper.vm.$store.dispatch).toHaveBeenCalledWith(
             "swimlane/collapseSwimlane",
             swimlane

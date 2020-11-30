@@ -48,48 +48,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 <body>
 <h1>Password Encryption Tool</h1>
 <?php
-/**
- * Seed the random number generator.
- *
- * better_srand() ensures the randomizer is seeded only once.
- *
- * How random do you want it? See:
- * http://www.php.net/manual/en/function.srand.php
- * http://www.php.net/manual/en/function.mt-srand.php
- */
-function better_srand($seed = '')
-{
-    static $wascalled = false;
-    if (!$wascalled) {
-        if ($seed === '') {
-            list($usec, $sec) = explode(" ", microtime());
-            if ($usec > 0.1) {
-                $seed = (double) $usec * $sec;
-            } else { // once in a while use the combined LCG entropy
-                $seed = (double) 1000000 * substr(uniqid("", true), 13);
-            }
-        }
-        if (function_exists('mt_srand')) {
-            mt_srand($seed); // mersenne twister
-        } else {
-            srand($seed);
-        }
-        $wascalled = true;
-    }
-}
 
 function rand_ascii($length = 1)
 {
-    better_srand();
     $s = "";
     for ($i = 1; $i <= $length; $i++) {
         // return only typeable 7 bit ascii, avoid quotes
-        if (function_exists('mt_rand')) {
-            // the usually bad glibc srand()
-            $s .= chr(mt_rand(40, 126));
-        } else {
-            $s .= chr(rand(40, 126));
-        }
+        $s .= chr(random_int(40, 126));
     }
     return $s;
 }
@@ -106,18 +71,9 @@ function random_good_password($minlength = 5, $maxlength = 8)
     $valid_chars = "!#%&+-.0123456789=@ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
     $start = ord($valid_chars);
     $end   = ord(substr($valid_chars, -1));
-    better_srand();
-    if (function_exists('mt_rand')) { // mersenne twister
-        $length = mt_rand($minlength, $maxlength);
-    } else { // the usually bad glibc rand()
-        $length = rand($minlength, $maxlength);
-    }
+    $length = random_int($minlength, $maxlength);
     while ($length > 0) {
-        if (function_exists('mt_rand')) {
-            $newchar = mt_rand($start, $end);
-        } else {
-            $newchar = rand($start, $end);
-        }
+        $newchar = random_int($start, $end);
         if (! strrpos($valid_chars, $newchar)) {
             continue; // skip holes
         }
@@ -132,15 +88,15 @@ function random_good_password($minlength = 5, $maxlength = 8)
   * We want to work with those old ones instead of the new superglobals,
   * for easier coding.
   */
-foreach (array('SERVER','GET','POST','ENV') as $k) {
-    if (!isset($GLOBALS['HTTP_'.$k.'_VARS']) and isset($GLOBALS['_'.$k])) {
-        $GLOBALS['HTTP_'.$k.'_VARS'] = $GLOBALS['_'.$k];
+foreach (['SERVER', 'GET', 'POST', 'ENV'] as $k) {
+    if (! isset($GLOBALS['HTTP_' . $k . '_VARS']) and isset($GLOBALS['_' . $k])) {
+        $GLOBALS['HTTP_' . $k . '_VARS'] = $GLOBALS['_' . $k];
     }
 }
 unset($k);
 
 $posted = $_POST;
-if (!empty($posted['create'])) {
+if (! empty($posted['create'])) {
     $new_password = random_good_password();
     echo "<p>The newly created random password is:<br />\n<br />&nbsp;&nbsp;&nbsp;\n<tt><strong>",
          htmlentities($new_password),"</strong></tt></p>\n";
@@ -148,8 +104,10 @@ if (!empty($posted['create'])) {
     $posted['password2'] = $new_password;
 }
 
-if (($posted['password'] != "")
-    && ($posted['password'] == $posted['password2'])) {
+if (
+    ($posted['password'] != "")
+    && ($posted['password'] == $posted['password2'])
+) {
     $password = $posted['password'];
     /**
      * http://www.php.net/manual/en/function.crypt.php

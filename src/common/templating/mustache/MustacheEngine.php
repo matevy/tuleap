@@ -22,24 +22,24 @@ namespace Tuleap\Templating\Mustache;
 
 use EventManager;
 use Tuleap\Glyph\GlyphFinder;
-use Tuleap\Templating\TemplateCache;
+use Tuleap\Templating\TemplateCacheInterface;
 
 class MustacheEngine extends \Mustache_Engine
 {
-    public function __construct(\Mustache_Loader $loader, TemplateCache $cache, $escape_callback = null)
+    public function __construct(\Mustache_Loader $loader, TemplateCacheInterface $cache, $escape_callback = null)
     {
         $gettext_helper = new GettextHelper(new GettextSectionContentTransformer());
         $glyph_helper   = new GlyphHelper(new GlyphFinder(EventManager::instance()));
 
         parent::__construct(
-            array(
+            [
                 'escape'           => $escape_callback,
                 'entity_flags'     => ENT_QUOTES,
                 'strict_callables' => true,
                 'strict_variables' => true,
                 'loader'           => $loader,
                 'cache'            => $cache->getPath(),
-                'helpers'          => array(
+                'helpers'          => [
                     GettextHelper::GETTEXT   => function ($text) use ($gettext_helper) {
                         return $gettext_helper->gettext($text);
                     },
@@ -55,8 +55,8 @@ class MustacheEngine extends \Mustache_Engine
                     GlyphHelper::GLYPH => function ($text) use ($glyph_helper) {
                         return $glyph_helper->glyph($text);
                     },
-                )
-            )
+                ]
+            ]
         );
     }
 }

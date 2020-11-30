@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2012. All Rights Reserved.
+ * Copyright (c) Enalean, 2012 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,14 +18,14 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
+
+//phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 class Workflow_Transition_ConditionsCollection implements ArrayAccess
 {
 
     /** @var array of Workflow_Transition_Condition */
-    private $conditions = array();
-
-    /** @var int */
-    private $current;
+    private $conditions = [];
 
     // {{{ ArrayAccess
     public function offsetSet($offset, $value)
@@ -84,27 +84,6 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess
     }
 
     /**
-     * @return string html permission form for the transition
-     */
-    public function fetch()
-    {
-        $html  = '';
-        $html .= '<ul class="workflow_conditions">';
-        foreach ($this->conditions as $condition) {
-            $content = $condition->fetch();
-            if (! $content) {
-                continue;
-            }
-
-            $html .= '<li class="workflow_conditions_'. $condition->identifier .'">';
-            $html .= $content;
-            $html .= '</li>';
-        }
-        $html .= '</ul>';
-        return $html;
-    }
-
-    /**
      * Export conditions to XML
      *
      * @param SimpleXMLElement &$root     the node to which the conditions is attached (passed by reference)
@@ -125,12 +104,12 @@ class Workflow_Transition_ConditionsCollection implements ArrayAccess
     /**
      * Validates all conditions in the collections
      *
-     * @return true if all conditions are satisfied
+     * @return bool true if all conditions are satisfied
      */
-    public function validate($fields_data, Tracker_Artifact $artifact, $comment_body)
+    public function validate($fields_data, Artifact $artifact, string $comment_body, PFUser $current_user): bool
     {
         foreach ($this->getConditions() as $condition) {
-            if (! $condition->validate($fields_data, $artifact, $comment_body)) {
+            if (! $condition->validate($fields_data, $artifact, $comment_body, $current_user)) {
                 return false;
             }
         }

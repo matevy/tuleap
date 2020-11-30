@@ -23,8 +23,6 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use Tuleap\Project\DescriptionFieldsFactory;
-use Tuleap\Project\DescriptionFieldsDao;
 
 class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
@@ -79,10 +77,6 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
      */
     private $serviceClassnames;
 
-    /*
-        basically just call the parent to set up everything
-                and set up services arrays
-    */
     public function __construct($param)
     {
         parent::__construct($param);
@@ -90,6 +84,11 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         //for right now, just point our prefs array at Group's data array
         //this will change later when we split the project_data table off from groups table
         $this->project_data_array = $this->data_array;
+    }
+
+    public static function buildForTest(): self
+    {
+        return new self(['group_id' => '101']);
     }
 
     private function cacheServiceClassnames()
@@ -101,11 +100,12 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         $this->serviceClassnames = [
             Service::FILE => ServiceFile::class,
             Service::SVN  => ServiceSVN::class,
+            Service::CVS  => \Tuleap\ConcurrentVersionsSystem\ServiceCVS::class,
         ];
 
         EventManager::instance()->processEvent(
             Event::SERVICE_CLASSNAMES,
-            array('classnames' => &$this->serviceClassnames)
+            ['classnames' => &$this->serviceClassnames]
         );
     }
 
@@ -120,7 +120,7 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         // Get Service data
         $allowed_services = ServiceManager::instance()->getListOfAllowedServicesForProject($this);
         if (count($allowed_services) < 1) {
-            $this->service_data_array = array();
+            $this->service_data_array = [];
         }
         $j = 1;
         foreach ($allowed_services as $service) {
@@ -170,9 +170,9 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
      *
      * @param string $short_name the short name of the service
      *
-     * @return string
+     * @psalm-return class-string
      */
-    public function getServiceClassName($short_name)
+    public function getServiceClassName($short_name): string
     {
         if (! $short_name) {
             return \Tuleap\Project\Service\ProjectDefinedService::class;
@@ -188,14 +188,7 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         return $classname;
     }
 
-    /**
-     * Return service corresponding to project
-     *
-     * @param String $service_name
-     *
-     * @return Service|null
-     */
-    public function getService($service_name)
+    public function getService(string $service_name): ?Service
     {
         $this->cacheServices();
         return $this->usesService($service_name) ? $this->services[$service_name] : null;
@@ -207,7 +200,7 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
      */
     public function getAllUsedServices()
     {
-        $used_services = array();
+        $used_services = [];
         foreach ($this->getServices() as $service) {
             if ($service->isUsed()) {
                 $used_services[] = $service->getShortName();
@@ -418,6 +411,9 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         return $this->project_data_array['svn_accessfile'];
     }
 
+    /**
+     * @psalm-mutation-free
+     */
     public function getAccess()
     {
         return $this->data_array['access'];
@@ -428,7 +424,10 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         return $this->data_array['truncated_emails'];
     }
 
-    public function isPublic()
+    /**
+     * @psalm-mutation-free
+     */
+    public function isPublic(): bool
     {
         $access = $this->data_array['access'];
         return $access !== Project::ACCESS_PRIVATE && $access !== Project::ACCESS_PRIVATE_WO_RESTRICTED;
@@ -462,8 +461,8 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
 
     public function getProjectsCreatedFrom()
     {
-        $sql = 'SELECT * FROM groups WHERE built_from_template = '. $this->getGroupId() ." AND status <> 'D'";
-        $subprojects = array();
+        $sql = 'SELECT * FROM groups WHERE built_from_template = ' . $this->getGroupId() . " AND status <> 'D'";
+        $subprojects = [];
         if ($res = db_query($sql)) {
             while ($data = db_fetch_array($res)) {
                 $subprojects[] = $data;
@@ -476,7 +475,7 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
     {
         $sql = 'SELECT group_desc_id, value FROM group_desc_value WHERE group_id=' . db_ei($this->getGroupId());
 
-        $descfieldsvalue = array();
+        $descfieldsvalue = [];
         if ($res = db_query($sql)) {
             while ($data = db_fetch_array($res)) {
                 $descfieldsvalue[] = $data;
@@ -484,37 +483,6 @@ class Project extends Group implements PFO_Project  // phpcs:ignore PSR1.Classes
         }
 
         return $descfieldsvalue;
-    }
-
-    public function displayProjectsDescFieldsValue()
-    {
-        $descfieldsvalue = $this->getProjectsDescFieldsValue();
-        $fields_factory  = new DescriptionFieldsFactory(new DescriptionFieldsDao());
-        $descfields      = $fields_factory->getAllDescriptionFields();
-
-        $hp = Codendi_HTMLPurifier::instance();
-
-        for ($i=0; $i<sizeof($descfields); $i++) {
-            $displayfieldname[$i]=$descfields[$i]['desc_name'];
-            $displayfieldvalue[$i]='';
-            for ($j=0; $j<sizeof($descfieldsvalue); $j++) {
-                if ($descfieldsvalue[$j]['group_desc_id']==$descfields[$i]['group_desc_id']) {
-                    $displayfieldvalue[$i]=$descfieldsvalue[$j]['value'];
-                }
-            }
-
-            $descname=$displayfieldname[$i];
-            if (preg_match('/(.*):(.*)/', $descname, $matches)) {
-                if ($GLOBALS['Language']->hasText($matches[1], $matches[2])) {
-                    $descname = $GLOBALS['Language']->getText($matches[1], $matches[2]);
-                }
-            }
-
-            echo "<h3>".$hp->purify($descname, CODENDI_PURIFIER_LIGHT, $this->getGroupId())."</h3>";
-            echo "<p>";
-            echo ($displayfieldvalue[$i] == '') ? $GLOBALS['Language']->getText('global', 'none') : $hp->purify($displayfieldvalue[$i], CODENDI_PURIFIER_LIGHT, $this->getGroupId())  ;
-            echo "</p>";
-        }
     }
 
     private function getUGroupManager()

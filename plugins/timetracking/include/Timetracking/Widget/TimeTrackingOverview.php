@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -117,30 +117,30 @@ class TimeTrackingOverview extends Widget
     {
         $content_id = $request->getValidated('content_id', 'uint', 0);
 
-        $title = $request->params[ "timetracking-overview-title" ];
+        $title = $request->params["timetracking-overview-title"];
         $this->checkTitleValidity($title);
 
         return $this->report_dao->setReportTitleById($title, $content_id);
     }
 
-    public function getJavascriptDependencies()
+    public function getJavascriptDependencies(): array
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../www/assets',
-            TIMETRACKING_BASE_URL . '/assets'
-        );
         return [
-            ['file' => $include_assets->getFileURL('timetracking-overview.js')]
+            ['file' => $this->getAssets()->getFileURL('timetracking-overview.js')]
         ];
     }
 
-    public function getStylesheetDependencies()
+    public function getStylesheetDependencies(): CssAssetCollection
     {
-        $include_assets = new IncludeAssets(
-            __DIR__ . '/../../../../../src/www/assets/timetracking/themes',
-            '/assets/timetracking/themes'
+        return new CssAssetCollection([new CssAsset($this->getAssets(), 'style-bp')]);
+    }
+
+    private function getAssets(): IncludeAssets
+    {
+        return new IncludeAssets(
+            __DIR__ . '/../../../../../src/www/assets/timetracking',
+            '/assets/timetracking'
         );
-        return new CssAssetCollection([new CssAsset($include_assets, 'style-bp')]);
     }
 
     public function getUserPreferences(int $widget_id)
@@ -158,7 +158,7 @@ class TimeTrackingOverview extends Widget
      */
     public function create(Codendi_Request $request)
     {
-        $title = $request->params[ "timetracking-overview-title" ];
+        $title = $request->params["timetracking-overview-title"];
         $this->checkTitleValidity($title);
 
         $content_id = $this->report_dao->create();

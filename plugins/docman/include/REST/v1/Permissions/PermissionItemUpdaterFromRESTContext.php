@@ -24,12 +24,7 @@ use Docman_Item;
 use Docman_PermissionsManager;
 use Luracast\Restler\RestException;
 use PFUser;
-use ProjectManager;
-use ProjectUGroup;
 use Tuleap\Docman\Permissions\PermissionItemUpdater;
-use Tuleap\Project\REST\UserGroupRepresentation;
-use Tuleap\Project\REST\UserGroupRetriever;
-use UGroupManager;
 
 final class PermissionItemUpdaterFromRESTContext
 {
@@ -63,7 +58,7 @@ final class PermissionItemUpdaterFromRESTContext
         Docman_Item $item,
         PFUser $user,
         DocmanItemPermissionsForGroupsSetRepresentation $representation
-    ) : void {
+    ): void {
         if (! $this->permissions_manager->userCanManage($user, $item->getId())) {
             throw new RestException(403);
         }
@@ -82,7 +77,7 @@ final class PermissionItemUpdaterFromRESTContext
         \Docman_Folder $folder,
         PFUser $user,
         DocmanFolderPermissionsForGroupsPUTRepresentation $representation
-    ) : void {
+    ): void {
         if (! $this->permissions_manager->userCanManage($user, $folder->getId())) {
             throw new RestException(403);
         }

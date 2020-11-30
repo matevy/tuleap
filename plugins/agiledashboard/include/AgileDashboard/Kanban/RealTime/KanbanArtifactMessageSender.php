@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -20,9 +20,9 @@
 
 namespace Tuleap\AgileDashboard\Kanban\RealTime;
 
-use BackendLogger;
 use PFUser;
-use Tracker_Artifact;
+use Psr\Log\LoggerInterface;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\RealTime\RealTimeArtifactMessageException;
 use Tuleap\Tracker\RealTime\RealTimeArtifactMessageSender;
 
@@ -41,31 +41,31 @@ class KanbanArtifactMessageSender
      */
     private $artifact_message_sender;
     /**
-     * @var BackendLogger
+     * @var LoggerInterface
      */
     private $backend_logger;
 
     public function __construct(
         RealTimeArtifactMessageSender $artifact_message_sender,
         KanbanArtifactMessageBuilder $kanban_artifact_message_builder,
-        BackendLogger $backend_logger
+        LoggerInterface $backend_logger
     ) {
         $this->artifact_message_sender         = $artifact_message_sender;
         $this->kanban_artifact_message_builder = $kanban_artifact_message_builder;
         $this->backend_logger                  = $backend_logger;
     }
 
-    public function sendMessageArtifactCreated(PFUser $user, Tracker_Artifact $artifact, $kanban_id)
+    public function sendMessageArtifactCreated(PFUser $user, Artifact $artifact, $kanban_id)
     {
         $this->sendMessageArtifact($user, $artifact, self::EVENT_NAME_ARTIFACT_CREATED, $kanban_id);
     }
 
-    public function sendMessageArtifactUpdated(PFUser $user, Tracker_Artifact $artifact, $kanban_id)
+    public function sendMessageArtifactUpdated(PFUser $user, Artifact $artifact, $kanban_id)
     {
         $this->sendMessageArtifact($user, $artifact, self::EVENT_NAME_ARTIFACT_UPDATED, $kanban_id);
     }
 
-    public function sendMessageArtifact(PFUser $user, Tracker_Artifact $artifact, $event_name, $kanban_id)
+    public function sendMessageArtifact(PFUser $user, Artifact $artifact, $event_name, $kanban_id)
     {
         $data = (array) $this->kanban_artifact_message_builder->buildArtifactUpdated($artifact);
 
@@ -78,7 +78,7 @@ class KanbanArtifactMessageSender
         );
     }
 
-    public function sendMessageArtifactMoved(PFUser $user, Tracker_Artifact $artifact, $kanban_id)
+    public function sendMessageArtifactMoved(PFUser $user, Artifact $artifact, $kanban_id)
     {
         try {
             $data = (array) $this->kanban_artifact_message_builder->buildArtifactMoved($artifact);

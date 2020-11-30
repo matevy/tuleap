@@ -22,11 +22,14 @@ declare(strict_types=1);
 
 namespace Tuleap\Taskboard\REST\v1;
 
-use Tracker_Artifact;
 use Tuleap\Cardwall\BackgroundColor\BackgroundColor;
 use Tuleap\REST\JsonCast;
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\User\REST\MinimalUserRepresentation;
 
+/**
+ * @psalm-immutable
+ */
 class CardRepresentation
 {
     /**
@@ -93,10 +96,47 @@ class CardRepresentation
 
     /**
      * @param MinimalUserRepresentation[] $assignees
-     * @psalm-param list<MinimalUserRepresentation>
+     * @psalm-param list<MinimalUserRepresentation> $assignees
      */
-    public function build(
-        Tracker_Artifact $artifact,
+    private function __construct(
+        Artifact $artifact,
+        string $artifact_title,
+        string $artifact_xref,
+        bool $artifact_is_open,
+        string $color,
+        bool $artifact_has_children,
+        BackgroundColor $background_color,
+        int $rank,
+        array $assignees,
+        ?MappedListValueRepresentation $mapped_list_value,
+        ?float $initial_effort,
+        ?RemainingEffortRepresentation $remaining_effort,
+        bool $is_collapsed
+    ) {
+        $this->id                = JsonCast::toInt($artifact->getId());
+        $this->tracker_id        = JsonCast::toInt($artifact->getTrackerId());
+        $this->label             = $artifact_title;
+        $this->xref              = $artifact_xref;
+        $this->rank              = $rank;
+        $this->color             = $color;
+        $this->artifact_html_uri = $artifact->getUri();
+        $this->background_color  = (string) $background_color->getBackgroundColorName();
+        $this->assignees         = $assignees;
+        $this->has_children      = $artifact_has_children;
+        $this->mapped_list_value = $mapped_list_value;
+        $this->initial_effort    = $initial_effort;
+        $this->remaining_effort  = $remaining_effort;
+        $this->is_open           = $artifact_is_open;
+        $this->is_collapsed      = $is_collapsed;
+    }
+
+    /**
+     * @param mixed|null $initial_effort
+     * @param MinimalUserRepresentation[] $assignees
+     * @psalm-param list<MinimalUserRepresentation> $assignees
+     */
+    public static function build(
+        Artifact $artifact,
         BackgroundColor $background_color,
         int $rank,
         array $assignees,
@@ -104,30 +144,28 @@ class CardRepresentation
         $initial_effort,
         ?RemainingEffortRepresentation $remaining_effort,
         bool $is_collapsed
-    ): void {
-        $this->id                = JsonCast::toInt($artifact->getId());
-        $this->tracker_id        = JsonCast::toInt($artifact->getTrackerId());
-        $this->label             = $artifact->getTitle();
-        $this->xref              = $artifact->getXRef();
-        $this->rank              = $rank;
-        $this->color             = $artifact->getTracker()->getColor()->getName();
-        $this->artifact_html_uri = $artifact->getUri();
-        $this->background_color  = (string) $background_color->getBackgroundColorName();
-        $this->assignees         = $assignees;
-        $this->has_children      = JsonCast::toBoolean($artifact->hasChildren());
-        $this->mapped_list_value = $mapped_list_value;
-        $this->initial_effort    = $this->formatNumeric($initial_effort);
-        $this->remaining_effort  = $remaining_effort;
-        $this->is_open           = $artifact->isOpen();
-        $this->is_collapsed      = $is_collapsed;
+    ): self {
+        return new self(
+            $artifact,
+            $artifact->getTitle() ?? '',
+            $artifact->getXRef(),
+            $artifact->isOpen(),
+            $artifact->getTracker()->getColor()->getName(),
+            JsonCast::toBoolean($artifact->hasChildren()),
+            $background_color,
+            $rank,
+            $assignees,
+            $mapped_list_value,
+            self::formatNumeric($initial_effort),
+            $remaining_effort,
+            $is_collapsed,
+        );
     }
 
     /**
-     * @param $potentially_a_string_number
-     *
-     * @return float | null
+     * @param mixed|null $potentially_a_string_number
      */
-    private function formatNumeric($potentially_a_string_number)
+    private static function formatNumeric($potentially_a_string_number): ?float
     {
         if (! is_numeric($potentially_a_string_number)) {
             return null;

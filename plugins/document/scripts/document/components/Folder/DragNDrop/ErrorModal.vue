@@ -18,18 +18,25 @@
   -->
 
 <template>
-    <div class="tlp-modal tlp-modal-danger"
-         role="dialog"
-         aria-labelledby="document-dragndrop-error-modal-title"
+    <div
+        class="tlp-modal tlp-modal-danger"
+        role="dialog"
+        aria-labelledby="document-dragndrop-error-modal-title"
     >
         <div class="tlp-modal-header">
             <h1 class="tlp-modal-title" id="document-dragndrop-error-modal-title">
-                <i class="fa fa-frown-o tlp-modal-title-icon"></i>
+                <i class="far fa-frown tlp-modal-title-icon"></i>
                 <slot name="modal-title">
                     <translate>Oops…</translate>
                 </slot>
             </h1>
-            <div class="tlp-modal-close" data-dismiss="modal" v-bind:aria-label="close">
+            <div
+                class="tlp-modal-close"
+                tabindex="0"
+                role="button"
+                data-dismiss="modal"
+                v-bind:aria-label="close"
+            >
                 &times;
             </div>
         </div>
@@ -37,10 +44,11 @@
             <slot></slot>
         </div>
         <div class="tlp-modal-footer tlp-modal-footer-large">
-            <button type="submit"
-                    class="tlp-button-danger tlp-modal-action"
-                    data-dismiss="modal"
-                    v-translate
+            <button
+                type="submit"
+                class="tlp-button-danger tlp-modal-action"
+                data-dismiss="modal"
+                v-translate
             >
                 Close
             </button>
@@ -49,16 +57,16 @@
 </template>
 
 <script>
-import { modal as createModal } from "tlp";
+import { createModal } from "tlp";
 
 export default {
     props: {
-        body_class: String
+        body_class: String,
     },
     computed: {
         close() {
             return this.$gettext("Close");
-        }
+        },
     },
     mounted() {
         const modal = createModal(this.$el);
@@ -66,6 +74,6 @@ export default {
             this.$emit("error-modal-hidden");
         });
         modal.show();
-    }
+    },
 };
 </script>

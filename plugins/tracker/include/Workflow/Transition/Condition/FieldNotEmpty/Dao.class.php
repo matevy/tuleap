@@ -40,7 +40,7 @@ class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject
     {
         $transition_id = $this->da->escapeInt($transition_id);
 
-        $fields = array();
+        $fields = [];
         foreach ($list_field_id as $field_id) {
             if ($field_id != 0) {
                 $field_id = $this->da->escapeInt($field_id);
@@ -89,13 +89,13 @@ class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject
     /**
      * Duplicate condition
      */
-    function duplicate($from_transition_id, $to_transition_id, $field_mapping)
+    public function duplicate($from_transition_id, $to_transition_id, $field_mapping)
     {
         $from_transition_id = $this->da->escapeInt($from_transition_id);
         $to_transition_id   = $this->da->escapeInt($to_transition_id);
 
-        $case           = array();
-        $from_field_ids = array();
+        $case           = [];
+        $from_field_ids = [];
         foreach ($field_mapping as $mapping) {
             $from = $this->da->escapeInt($mapping['from']);
             $to   = $this->da->escapeInt($mapping['to']);
@@ -105,7 +105,7 @@ class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject
         }
         if (count($case)) {
             $from_field_ids = implode(', ', $from_field_ids);
-            $new_field_id   = 'CASE field_id '. implode(' ', $case) .' END';
+            $new_field_id   = 'CASE field_id ' . implode(' ', $case) . ' END';
             $sql = "INSERT INTO tracker_workflow_transition_condition_field_notempty (transition_id, field_id)
                     SELECT $to_transition_id, $new_field_id
                     FROM tracker_workflow_transition_condition_field_notempty
@@ -115,11 +115,11 @@ class Workflow_Transition_Condition_FieldNotEmpty_Dao extends DataAccessObject
         }
     }
 
-    function addPermission($permission_type, $object_id, $ugroup_id)
+    public function addPermission($permission_type, $object_id, $ugroup_id)
     {
  // WAT ???
-        $sql=sprintf(
-            "INSERT INTO permissions (object_id, permission_type, ugroup_id)".
+        $sql = sprintf(
+            "INSERT INTO permissions (object_id, permission_type, ugroup_id)" .
                      " VALUES ('%s', '%s', '%s')",
             $object_id,
             $permission_type,

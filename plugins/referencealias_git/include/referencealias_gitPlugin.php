@@ -19,7 +19,7 @@
  */
 
 require_once __DIR__ . '/../../git/include/gitPlugin.php';
-require_once __DIR__.'/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once 'constants.php';
 
 use Tuleap\ReferenceAliasGit\Dao;
@@ -42,7 +42,7 @@ class referencealias_gitPlugin extends Plugin //phpcs:ignore
      */
     public function getDependencies()
     {
-        return array('git');
+        return ['git'];
     }
 
     /**
@@ -92,7 +92,6 @@ class referencealias_gitPlugin extends Plugin //phpcs:ignore
 
         return new ReferencesBuilder(
             $this->getCompatDao(),
-            $project_manager,
             new GitRepositoryFactory($this->getGitDao(), $project_manager)
         );
     }

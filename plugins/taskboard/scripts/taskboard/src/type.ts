@@ -63,6 +63,11 @@ export interface TitleField {
     readonly is_string_field: boolean;
 }
 
+export interface AssignedToField {
+    readonly id: number;
+    readonly is_multiple: boolean;
+}
+
 export interface AddInPlace {
     child_tracker_id: number;
     parent_artifact_link_field_id: number;
@@ -72,6 +77,7 @@ export interface Tracker {
     readonly id: number;
     readonly can_update_mapped_field: boolean;
     readonly title_field: TitleField | null;
+    readonly assigned_to_field: AssignedToField | null;
     readonly artifact_link_field: ArtifactLinkField | null;
     readonly add_in_place_tracker_id: AddInPlace | null;
     readonly add_in_place: AddInPlace | null;
@@ -98,10 +104,13 @@ export interface Card {
     is_just_saved: boolean;
 }
 
-export interface User {
-    id: number;
+export interface UserProperties {
     avatar_url: string;
     display_name: string;
+}
+
+export interface User extends UserProperties {
+    id: number;
 }
 
 export interface CardPosition {
@@ -112,11 +121,11 @@ export interface CardPosition {
 
 export enum Direction {
     BEFORE = "before",
-    AFTER = "after"
+    AFTER = "after",
 }
 
 export enum TaskboardEvent {
     CANCEL_CARD_EDITION = "cancel-card-edition",
     SAVE_CARD_EDITION = "save-card-edition",
-    ESC_KEY_PRESSED = "esc-key-pressed"
+    ESC_KEY_PRESSED = "esc-key-pressed",
 }

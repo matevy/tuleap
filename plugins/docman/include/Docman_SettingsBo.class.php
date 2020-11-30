@@ -20,15 +20,13 @@
  * along with Codendi. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once('Docman_SettingsDao.class.php');
-
 class Docman_SettingsBo
 {
-    var $row;
-    var $groupId;
-    var $dao;
+    public $row;
+    public $groupId;
+    public $dao;
 
-    function __construct($groupId)
+    public function __construct($groupId)
     {
         $this->groupId = $groupId;
         $this->row = null;
@@ -38,13 +36,13 @@ class Docman_SettingsBo
     public static function instance($groupId)
     {
         static $_plugin_docman_settings_bo_i;
-        if (!isset($_plugin_docman_settings_bo_i[$groupId])) {
+        if (! isset($_plugin_docman_settings_bo_i[$groupId])) {
             $_plugin_docman_settings_bo_i[$groupId] = new Docman_SettingsBo($groupId);
         }
         return $_plugin_docman_settings_bo_i[$groupId];
     }
 
-    function &getDao()
+    public function &getDao()
     {
         if ($this->dao === null) {
             $this->dao = new Docman_SettingsDao(CodendiDataAccess::instance());
@@ -52,18 +50,18 @@ class Docman_SettingsBo
         return $this->dao;
     }
 
-    function _cacheGroupSettings()
+    public function _cacheGroupSettings()
     {
         if ($this->row === null) {
             $dao = $this->getDao();
             $dar = $dao->searchByGroupId($this->groupId);
-            if ($dar && !$dar->isError() && $dar->valid()) {
+            if ($dar && ! $dar->isError() && $dar->valid()) {
                 $this->row = $dar->current();
             }
         }
     }
 
-    function getView()
+    public function getView()
     {
         $this->_cacheGroupSettings();
 
@@ -74,18 +72,18 @@ class Docman_SettingsBo
         }
     }
 
-    function getMetadataUsage($metadata)
+    public function getMetadataUsage($metadata)
     {
         $this->_cacheGroupSettings();
 
-        if (isset($this->row['use_'.$metadata])) {
-            return $this->row['use_'.$metadata];
+        if (isset($this->row['use_' . $metadata])) {
+            return $this->row['use_' . $metadata];
         } else {
             return false;
         }
     }
 
-    function settingsExist()
+    public function settingsExist()
     {
         $this->_cacheGroupSettings();
         if ($this->row === null) {
@@ -95,7 +93,7 @@ class Docman_SettingsBo
         }
     }
 
-    function updateView($view)
+    public function updateView($view)
     {
         $dao = $this->getDao();
         if ($this->settingsExist()) {
@@ -105,16 +103,16 @@ class Docman_SettingsBo
         }
     }
 
-    function updateMetadataUsage($label, $useIt)
+    public function updateMetadataUsage($label, $useIt)
     {
         $dao = $this->getDao();
-        if (!$this->settingsExist()) {
+        if (! $this->settingsExist()) {
             $dao->create($this->groupId, 'Tree');
         }
         return $dao->updateMetadataUsageForGroupId($this->groupId, $label, $useIt);
     }
 
-    function cloneMetadataSettings($targetGroupId)
+    public function cloneMetadataSettings($targetGroupId)
     {
         if ($this->settingsExist()) {
             $dao = $this->getDao();
@@ -137,7 +135,7 @@ class Docman_SettingsBo
      *
      * @access: public
      */
-    function exportMetadataUsage($dstGroupId)
+    public function exportMetadataUsage($dstGroupId)
     {
         $dstBo = Docman_SettingsBo::instance($dstGroupId);
         $dstBo->_importMetadataUsage($this, 'obsolescence_date');
@@ -147,10 +145,12 @@ class Docman_SettingsBo
      /**
       * @access: private
       */
-    function _importMetadataUsage($srcBo, $label)
+    public function _importMetadataUsage($srcBo, $label)
     {
-        if ($srcBo->getMetadataUsage($label) == true &&
-           $this->getMetadataUsage($label) != true) {
+        if (
+            $srcBo->getMetadataUsage($label) == true &&
+            $this->getMetadataUsage($label) != true
+        ) {
             $this->updateMetadataUsage($label, true);
         }
     }

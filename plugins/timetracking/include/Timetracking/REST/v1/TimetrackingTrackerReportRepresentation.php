@@ -1,8 +1,8 @@
 <?php
 /**
- * Copyright Enalean (c) 2019. All rights reserved.
+ * Copyright Enalean (c) 2019-Present. All rights reserved.
  *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
+ * Tuleap and Enalean names and logos are registered trademarks owned by
  * Enalean SAS. All other trademarks or names are properties of their respective
  * owners.
  *
@@ -30,6 +30,9 @@ use Tracker;
 use Tuleap\Project\REST\MinimalProjectRepresentation;
 use Tuleap\REST\JsonCast;
 
+/**
+ * @psalm-immutable
+ */
 class TimetrackingTrackerReportRepresentation
 {
     /**
@@ -57,16 +60,21 @@ class TimetrackingTrackerReportRepresentation
      */
     public $time_per_user;
 
-    public function build(Tracker $tracker, array $time_per_user) : void
+    private function __construct(Tracker $tracker, MinimalProjectRepresentation $project, array $time_per_user)
     {
-        $this->id    = JsonCast::toInt($tracker->getId());
-        $this->uri   = $tracker->getUri();
-        $this->label = $tracker->getName();
-
-        $project_reference = new MinimalProjectRepresentation();
-        $project_reference->buildMinimal($tracker->getProject());
-        $this->project = $project_reference;
-
+        $this->id            = JsonCast::toInt($tracker->getId());
+        $this->uri           = $tracker->getUri();
+        $this->label         = $tracker->getName();
+        $this->project       = $project;
         $this->time_per_user = $time_per_user;
+    }
+
+    public static function build(Tracker $tracker, array $time_per_user): self
+    {
+        return new self(
+            $tracker,
+            new MinimalProjectRepresentation($tracker->getProject()),
+            $time_per_user,
+        );
     }
 }

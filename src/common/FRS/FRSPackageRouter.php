@@ -71,7 +71,7 @@ class FRSPackageRouter
                 } catch (FRSDeletePackageNotYoursException $e) {
                     $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('file_admin_editpackages', 'p_not_yours'));
                 }
-                $GLOBALS['Response']->redirect('/file/?group_id='.$project->getGroupId());
+                $GLOBALS['Response']->redirect('/file/?group_id=' . $project->getGroupId());
                 break;
             case 'add':
                 $this->package_controller->displayCreationForm($project, $existing_packages);
@@ -88,7 +88,7 @@ class FRSPackageRouter
                 } catch (FRSPackageNameAlreadyExistsException $e) {
                     $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('file_admin_editpackages', 'p_name_exists'));
                     $GLOBALS['Response']->addFeedback('info', $GLOBALS['Language']->getText('file_admin_editpackages', 'update_canceled'));
-                    $GLOBALS['Response']->redirect('/file/?group_id='.$project->getGroupId());
+                    $GLOBALS['Response']->redirect('/file/?group_id=' . $project->getGroupId());
                 }
                 break;
             default:
@@ -108,7 +108,7 @@ class FRSPackageRouter
         $package    = $this->package_factory->getFRSPackageFromDb($package_id);
         if (! $package) {
             $GLOBALS['Response']->addFeedback('error', $GLOBALS['Language']->getText('file_admin_editpackages', 'p_not_exists'));
-            $GLOBALS['Response']->redirect('/file/?group_id='.$project->getGroupId());
+            $GLOBALS['Response']->redirect('/file/?group_id=' . $project->getGroupId());
         }
         if (! $this->permission_manager->isAdmin($project, $user)) {
             exit_permission_denied();
@@ -119,14 +119,14 @@ class FRSPackageRouter
 
     private function getExistingPackagesForProject(Project $project)
     {
-        $existing_packages = array();
+        $existing_packages = [];
         $packages = $this->package_factory->getFRSPackagesFromDb($project->getGroupId());
         foreach ($packages as $p => $nop) {
-            $existing_packages[] = array(
+            $existing_packages[] = [
                 'id'   => $packages[$p]->getPackageId(),
                 'name' => $packages[$p]->getName(),
                 'rank' => $packages[$p]->getRank(),
-            );
+            ];
         }
 
         return $existing_packages;

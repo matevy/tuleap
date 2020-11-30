@@ -26,7 +26,7 @@ use Docman_PermissionsManager;
 use IPermissionsManagerNG;
 use Project;
 use ProjectUGroup;
-use Tuleap\Project\REST\UserGroupRepresentation;
+use Tuleap\Project\REST\MinimalUserGroupRepresentation;
 use UGroupManager;
 
 class DocmanServicePermissionsForGroupsBuilder
@@ -46,7 +46,7 @@ class DocmanServicePermissionsForGroupsBuilder
         $this->ugroup_manager      = $ugroup_manager;
     }
 
-    public function getServicePermissionsForGroupRepresentation(Project $project) : DocmanServicePermissionsForGroupsRepresentation
+    public function getServicePermissionsForGroupRepresentation(Project $project): DocmanServicePermissionsForGroupsRepresentation
     {
         $project_id = $project->getID();
         $ugroup_ids = $this->permissions_manager->getAuthorizedUGroupIdsForProject(
@@ -63,7 +63,7 @@ class DocmanServicePermissionsForGroupsBuilder
             }
             $ugroup = $this->ugroup_manager->getUGroup($project, $ugroup_id);
             if ($ugroup !== null) {
-                $user_group_representations[] = (new UserGroupRepresentation())->build((int) $project_id, $ugroup);
+                $user_group_representations[] = new MinimalUserGroupRepresentation((int) $project->getID(), $ugroup);
             }
         }
 

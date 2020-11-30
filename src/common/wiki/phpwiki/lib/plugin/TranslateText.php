@@ -40,17 +40,17 @@ require_once("lib/plugin/_WikiTranslation.php");
 
 class WikiPlugin_TranslateText extends WikiPlugin__WikiTranslation
 {
-    function getName()
+    public function getName()
     {
         return _("TranslateText");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Define a translation for a specified text");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -59,28 +59,27 @@ class WikiPlugin_TranslateText extends WikiPlugin__WikiTranslation
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return
-            array( 'lang'      => false,
+        return [ 'lang'      => false,
                    'pagename'  => '[pagename]',
                    'translate' => false,
-                 );
+                 ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
-        if (!$lang) {
+        if (! $lang) {
             return $this->error(
-                _("This internal action page cannot viewed.")."\n".
+                _("This internal action page cannot viewed.") . "\n" .
                 _("You can only use it via the _WikiTranslation plugin.")
             );
         }
 
         $this->lang = $lang;
         //action=save
-        if (!empty($translate) and isset($translate['submit']) and $request->isPost()) {
+        if (! empty($translate) and isset($translate['submit']) and $request->isPost()) {
             $trans = $translate["content"];
             if (empty($trans) or $trans == $pagename) {
                 $header = HTML(
@@ -101,8 +100,8 @@ class WikiPlugin_TranslateText extends WikiPlugin__WikiTranslation
                     $meta = $current->_data;
                 } else {
                     $text = '';
-                    $meta = array('markup' => 2.0,
-                                  'author' => $user->getId());
+                    $meta = ['markup' => 2.0,
+                                  'author' => $user->getId()];
                 }
                 $text .= $user->getId() . " " . Iso8601DateTime() . "\n" .
                          "* " . sprintf(
@@ -111,7 +110,7 @@ class WikiPlugin_TranslateText extends WikiPlugin__WikiTranslation
                              $trans,
                              $lang
                          );
-                $text .= "\n  <verbatim>locale/po/$lang.po:\n  msgid \"".$pagename."\"\n  msgstr \"".$trans."\"\n  </verbatim>";
+                $text .= "\n  <verbatim>locale/po/$lang.po:\n  msgid \"" . $pagename . "\"\n  msgstr \"" . $trans . "\"\n  </verbatim>";
                 $meta['summary'] = sprintf(
                     _("Translate %s to %s in %s"),
                     substr($pagename, 0, 15),
@@ -144,30 +143,30 @@ class WikiPlugin_TranslateText extends WikiPlugin__WikiTranslation
             Button('submit:translate[cancel]', _("Cancel"), 'button')
         );
         return HTML::form(
-            array('action' => $request->getPostURL(),
-                                'method' => 'post'),
+            ['action' => $request->getPostURL(),
+                                'method' => 'post'],
             $header,
             HTML::textarea(
-                array('class' => 'wikiedit',
+                ['class' => 'wikiedit',
                                                'name' => 'translate[content]',
                                                'id'   => 'translate[content]',
                                                'rows' => 4,
                                                'cols' => $request->getPref('editWidth'),
-                                               'wrap' => 'virtual'),
+                                               'wrap' => 'virtual'],
                 $trans
             ),
             HiddenInputs(
                 $request->getArgs(),
                 false,
-                array('translate')
+                ['translate']
             ),
-            HiddenInputs(array('translate[action]' => $pagename,
+            HiddenInputs(['translate[action]' => $pagename,
                                              'require_authority_for_post' => WIKIAUTH_BOGO,
-                                             )),
+                                             ]),
             $buttons
         );
     }
-};
+}
 
 // $Log: TranslateText.php,v $
 // Revision 1.5  2004/07/08 20:30:07  rurban

@@ -22,12 +22,13 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Artifact;
 use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
 
 abstract class Tracker_Artifact_EditAbstractRenderer extends Tracker_Artifact_ArtifactRenderer
 {
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     protected $artifact;
     /**
@@ -35,15 +36,15 @@ abstract class Tracker_Artifact_EditAbstractRenderer extends Tracker_Artifact_Ar
      */
     private $visit_recorder;
 
-    public function __construct(Tracker_Artifact $artifact, EventManager $event_manager, VisitRecorder $visit_recorder)
+    public function __construct(Artifact $artifact, EventManager $event_manager, VisitRecorder $visit_recorder)
     {
         parent::__construct($artifact->getTracker(), $event_manager);
         $this->artifact = $artifact;
 
-        $this->redirect->query_parameters = array(
-            'aid'       => $this->artifact->getId(),
+        $this->redirect->query_parameters = [
+            'aid'       => (string) $this->artifact->getId(),
             'func'      => 'artifact-update',
-        );
+        ];
         $this->visit_recorder = $visit_recorder;
     }
 
@@ -58,14 +59,14 @@ abstract class Tracker_Artifact_EditAbstractRenderer extends Tracker_Artifact_Ar
         return $this->fetchArtifactInformations($this->artifact);
     }
 
-    private function fetchArtifactInformations(Tracker_Artifact $artifact)
+    private function fetchArtifactInformations(Artifact $artifact)
     {
         $html          = "";
         $html_purifier = Codendi_HTMLPurifier::instance();
         $artifact_id   = $html_purifier->purify($artifact->getId());
         $changeset_id  = $html_purifier->purify($artifact->getLastChangeset()->getId());
 
-        $html .= '<input type="hidden" id="artifact_informations" data-artifact-id="'.$artifact_id.'" data-changeset-id="'.$changeset_id.'">';
+        $html .= '<input type="hidden" id="artifact_informations" data-artifact-id="' . $artifact_id . '" data-changeset-id="' . $changeset_id . '" data-test="current-artifact-id" value="' . $artifact_id . '">';
 
         return $html;
     }

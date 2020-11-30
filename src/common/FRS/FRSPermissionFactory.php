@@ -34,14 +34,13 @@ class FRSPermissionFactory
     }
 
     /**
-     * @param Project $project
      * @param         $permission_type
      *
      * @return FRSPermission[]
      */
     public function getFrsUGroupsByPermission(Project $project, $permission_type)
     {
-        $admins = array();
+        $admins = [];
         $permissions = $this->permission_dao->searchPermissionsForProjectByType($project->getID(), $permission_type);
 
         foreach ($permissions as $permission) {
@@ -53,6 +52,6 @@ class FRSPermissionFactory
 
     private function instantiateFromRow(array $row)
     {
-        return new FRSPermission($row['project_id'], $row['permission_type'], $row['ugroup_id']);
+        return new FRSPermission($row['ugroup_id']);
     }
 }

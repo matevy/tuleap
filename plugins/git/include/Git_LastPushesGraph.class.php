@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013 - 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2013 - Present. All Rights Reserved.
  * Copyright (c) STMicroelectronics, 2012. All Rights Reserved.
  *
  * This file is a part of Tuleap.
@@ -19,6 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Chart\Chart;
 use Tuleap\Chart\ColorsForCharts;
 
 class Git_LastPushesGraph
@@ -36,7 +37,7 @@ class Git_LastPushesGraph
     /**
      * @var Array
      */
-    public $repoList   = array();
+    public $repoList   = [];
 
     /**
      * @var int
@@ -51,17 +52,17 @@ class Git_LastPushesGraph
     /**
      * @var Array
      */
-    protected $dates   = array();
+    protected $dates   = [];
 
     /**
      * @var Array
      */
-    protected $weekNum = array();
+    protected $weekNum = [];
 
     /**
      * @var Array
      */
-    protected $year    = array();
+    protected $year    = [];
 
     /**
      *
@@ -90,8 +91,8 @@ class Git_LastPushesGraph
         // Init some class properties according to 'weeks number' parameter
         $today              = $_SERVER['REQUEST_TIME'];
         $startPeriod        = strtotime("-$this->weeksNumber weeks");
-        $weekInSeconds      = self::WEEKS_IN_SECONDS ;
-        for ($i = $startPeriod+$weekInSeconds; $i < $today+$weekInSeconds; $i += $weekInSeconds) {
+        $weekInSeconds      = self::WEEKS_IN_SECONDS;
+        for ($i = $startPeriod + $weekInSeconds; $i < $today + $weekInSeconds; $i += $weekInSeconds) {
             $this->dates[]   = date('M d', $i);
             $this->weekNum[] = intval(date('W', $i));
             $this->year[]    = intval(date('Y', $i));
@@ -167,16 +168,16 @@ class Git_LastPushesGraph
         $colors   = array_slice($colors_for_charts->getChartColors(), 0, $nbRepo);
         $nbColors = count($colors);
         $i        = 0;
-        $bplot    = array();
+        $bplot    = [];
         foreach ($this->repoList as $repository) {
             $this->legend = null;
             $pushes = $this->getRepositoryPushesByWeek($repository);
             if ($this->displayChart) {
                 $b2plot = new BarPlot($pushes);
                 $color  = $colors[$i++ % $nbColors];
-                $b2plot->SetColor($color.':0.7');
+                $b2plot->SetColor($color . ':0.7');
                 $b2plot->setFillColor($color);
-                if (!empty($this->legend)) {
+                if (! empty($this->legend)) {
                     $b2plot->SetLegend($this->legend);
                 }
                 $bplot[] = $b2plot;
@@ -194,7 +195,7 @@ class Git_LastPushesGraph
      */
     private function getRepositoryPushesByWeek(GitRepository $repository)
     {
-        $pushes    = array();
+        $pushes    = [];
         $gitLogDao = new Git_LogDao();
         foreach ($this->weekNum as $key => $w) {
             $rows = $gitLogDao->getRepositoryPushesByWeek($repository->getId(), $w, $this->year[$key]);

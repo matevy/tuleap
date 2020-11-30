@@ -26,7 +26,7 @@ require_once('Collection.class.php');
 class LinkedList extends Collection
 {
 
-    function __construct($initial_array = '')
+    public function __construct($initial_array = '')
     {
         parent::__construct($initial_array);
     }
@@ -34,7 +34,7 @@ class LinkedList extends Collection
     /**
      * add the element add the end of the LinkedList
      */
-    function add($element)
+    public function add($element)
     {
         $this->elements[] = $element;
     }
@@ -42,9 +42,9 @@ class LinkedList extends Collection
     /**
      * Compares the specified object with this LinkedList for equality.
      * @param obj the reference object with which to compare.
-     * @return true if this object is the same as the obj argument; false otherwise.
+     * @return bool true if this object is the same as the obj argument; false otherwise.
      */
-    function equals($obj)
+    public function equals($obj)
     {
         if (is_a($obj, "Collection") && $this->size() === $obj->size()) {
             //We walk through the two LinkedList to see if both
@@ -55,14 +55,14 @@ class LinkedList extends Collection
             while ($it1->valid() && $is_identical) {
                 $val1 = $it1->current();
                 $val2 = $it2->current();
-                if (!(version_compare(phpversion(), '5', '>=') && is_object($val1))) {
+                if (! (version_compare(phpversion(), '5', '>=') && is_object($val1))) {
                     $temp = $val1;
-                    $val1 = uniqid('test');
+                    $val1 = 'test' . bin2hex(random_bytes(7));
                 }
                 if ($val1 !== $val2) {
                     $is_identical = false;
                 }
-                if (!(version_compare(phpversion(), '5', '>=') && is_object($val1))) {
+                if (! (version_compare(phpversion(), '5', '>=') && is_object($val1))) {
                     $val1 = $temp;
                 }
                 $it1->next();

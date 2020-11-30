@@ -20,10 +20,10 @@
 
 use FastRoute\RouteCollector;
 use Tuleap\Admin\AdminPageRenderer;
+use Tuleap\Admin\SiteAdministrationAddOption;
+use Tuleap\Admin\SiteAdministrationPluginOption;
 use Tuleap\BurningParrotCompatiblePageEvent;
-use Tuleap\Captcha\Administration\Controller;
 use Tuleap\Captcha\Administration\DisplayController;
-use Tuleap\Captcha\Administration\Router;
 use Tuleap\Captcha\Administration\UpdateController;
 use Tuleap\Captcha\Configuration;
 use Tuleap\Captcha\ConfigurationNotFoundException;
@@ -56,7 +56,7 @@ class captchaPlugin extends Plugin // @codingStandardsIgnoreLine
         $this->addHook(Event::CONTENT_SECURITY_POLICY_SCRIPT_WHITELIST, 'addExternalScriptToTheWhitelist');
         $this->addHook(Event::USER_REGISTER_ADDITIONAL_FIELD, 'addAdditionalFieldUserRegistration');
         $this->addHook(Event::BEFORE_USER_REGISTRATION, 'checkCaptchaBeforeSubmission');
-        $this->addHook('site_admin_option_hook', 'addSiteAdministrationOptionHook');
+        $this->addHook(SiteAdministrationAddOption::NAME);
         $this->addHook(BurningParrotCompatiblePageEvent::NAME);
         $this->addHook(CollectRoutesEvent::NAME);
     }
@@ -87,7 +87,7 @@ class captchaPlugin extends Plugin // @codingStandardsIgnoreLine
                 __DIR__ . '/../../../src/www/assets/captcha',
                 '/assets/captcha'
             );
-            echo '<link rel="stylesheet" type="text/css" href="'. $assets->getFileURL('style.css') . '" />';
+            echo '<link rel="stylesheet" type="text/css" href="' . $assets->getFileURL('style.css') . '" />';
         }
     }
 
@@ -117,8 +117,8 @@ class captchaPlugin extends Plugin // @codingStandardsIgnoreLine
 
     public function checkCaptchaBeforeSubmission(array $params)
     {
-        /** @var HTTPRequest $request */
         $request = $params['request'];
+        \assert($request instanceof HTTPRequest);
         if ($request->getCurrentUser()->isSuperUser()) {
             return;
         }
@@ -172,11 +172,10 @@ class captchaPlugin extends Plugin // @codingStandardsIgnoreLine
         return true;
     }
 
-    public function addSiteAdministrationOptionHook(array $params)
+    public function siteAdministrationAddOption(SiteAdministrationAddOption $site_administration_add_option): void
     {
-        $params['plugins'][] = array(
-            'label' => $this->getPluginInfo()->getPluginDescriptor()->getFullName(),
-            'href'  => CAPTCHA_BASE_URL . '/admin/'
+        $site_administration_add_option->addPluginOption(
+            SiteAdministrationPluginOption::build($this->getPluginInfo()->getPluginDescriptor()->getFullName(), CAPTCHA_BASE_URL . '/admin/')
         );
     }
 
@@ -187,7 +186,7 @@ class captchaPlugin extends Plugin // @codingStandardsIgnoreLine
         }
     }
 
-    public function routeGetAdmin() : DispatchableWithRequest
+    public function routeGetAdmin(): DispatchableWithRequest
     {
         try {
             $configuration = $this->getConfiguration();
@@ -200,7 +199,7 @@ class captchaPlugin extends Plugin // @codingStandardsIgnoreLine
         );
     }
 
-    public function routePostAdmin() : DispatchableWithRequest
+    public function routePostAdmin(): DispatchableWithRequest
     {
         return new UpdateController(
             new ConfigurationSaver(new DataAccessObject())

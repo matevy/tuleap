@@ -42,25 +42,25 @@ function group_get_object_by_name($groupname)
     return $pm->getProjectByUnixName($groupname);
 }
 
-class Group
+class Group //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
 
     //associative array of data from db
-    var $data_array;
+    public $data_array;
 
-    var $group_id;
+    public $group_id;
 
     //database result set handle
-    var $db_result;
+    public $db_result;
 
     //permissions data row from db
-    var $perm_data_array;
+    public $perm_data_array;
 
     //membership data row from db
-    var $members_data_array;
+    public $members_data_array;
 
     //whether the user is an admin/super user of this project
-    var $is_admin;
+    public $is_admin;
     /**
      * @var string
      */
@@ -70,28 +70,28 @@ class Group
      */
     private $error_state = false;
 
-    function __construct($param)
+    public function __construct($param)
     {
             //$param can be:
             // - a row from the groups table -> use it
             // - a group_id -> retrieve row from table
         if (is_array($param)) {
-            $this->group_id=$param['group_id'];
-            $this->data_array=$param;
+            $this->group_id = $param['group_id'];
+            $this->data_array = $param;
         } elseif (intval($param) > 0) {
-            $this->group_id=(int)$param; // TODO db_es()?
-            $this->db_result=db_query("SELECT * FROM groups WHERE group_id=".$this->group_id);
+            $this->group_id = (int) $param; // TODO db_es()?
+            $this->db_result = db_query("SELECT * FROM groups WHERE group_id=" . db_ei($this->group_id));
             if (db_numrows($this->db_result) < 1) {
              //function in class we extended
                 $this->setError($GLOBALS['Language']->getText('include_group', 'g_not_found'));
-                $this->data_array=array();
+                $this->data_array = [];
             } else {
              //set up an associative array for use by other functions
-                $this->data_array=db_fetch_array($this->db_result);
+                $this->data_array = db_fetch_array($this->db_result);
             }
         } else {
             $this->setError('');
-            $this->data_array=array();
+            $this->data_array = [];
         }
     }
 
@@ -101,7 +101,7 @@ class Group
 
         Generall should NOT be used - here for supporting deprecated group.php
     */
-    function getData()
+    public function getData()
     {
         return $this->db_result;
     }
@@ -110,7 +110,7 @@ class Group
     /*
         Simply return the group_id for this object
     */
-    function getGroupId()
+    public function getGroupId()
     {
         return $this->group_id;
     }
@@ -119,21 +119,23 @@ class Group
     /*
         Project, template, test, etc
     */
-    function getType()
+    public function getType()
     {
         return $this->data_array['type'];
     }
 
 
-    function getUnixBox()
+    public function getUnixBox()
     {
         return $this->data_array['unix_box'];
     }
 
-    /*
-        Statuses include H,A,D
-    */
-    function getStatus()
+    /**
+     * Statuses include H,A,D
+     *
+     * @psalm-mutation-free
+     */
+    public function getStatus()
     {
         return $this->data_array['status'];
     }
@@ -143,9 +145,9 @@ class Group
      *
      * @return bool
      */
-    function isProject()
+    public function isProject()
     {
-        $template = $this->_getTemplateSingleton();
+        $template = $this->getTemplateSingleton();
         return $template->isProject($this->data_array['type']);
     }
 
@@ -164,16 +166,25 @@ class Group
         return $this->getStatus() == 's' || $this->getStatus() == 'S';
     }
 
-    function getUnixName($tolower = true)
+    /**
+     * @psalm-mutation-free
+     */
+    public function getUnixName($tolower = true)
     {
         return $tolower ? $this->getUnixNameLowerCase() : $this->getUnixNameMixedCase();
     }
 
+    /**
+     * @psalm-mutation-free
+     */
     public function getUnixNameLowerCase()
     {
         return strtolower($this->getUnixNameMixedCase());
     }
 
+    /**
+     * @psalm-mutation-free
+     */
     public function getUnixNameMixedCase()
     {
         return $this->data_array['unix_group_name'];
@@ -181,40 +192,39 @@ class Group
 
     public function getUrl()
     {
-        return '/projects/'.urlencode($this->getUnixNameMixedCase());
+        return '/projects/' . urlencode($this->getUnixNameMixedCase());
     }
 
-    /** @deprecated */
+    /**
+     * @psalm-mutation-free
+     */
     public function getPublicName()
     {
         return $this->data_array['group_name'];
     }
 
-    public function getUnconvertedPublicName()
-    {
-        return util_unconvert_htmlspecialchars($this->data_array['group_name']);
-    }
-
     //short description as entered on the group admin page
-    function getDescription()
+    public function getDescription()
     {
         return $this->data_array['short_description'];
     }
 
 
     //date the group was registered
-    function getStartDate()
+    public function getStartDate()
     {
         return $this->data_array['register_time'];
     }
 
-    function getHTTPDomain()
+    public function getHTTPDomain()
     {
         return $this->data_array['http_domain'];
     }
 
     /**
      * @return int group_id | null.
+     *
+     * @psalm-mutation-free
      */
     public function getID()
     {
@@ -230,9 +240,9 @@ class Group
      *
      *    @return int GID.
      */
-    function getUnixGID()
+    public function getUnixGID()
     {
-        return $this->data_array['group_id']+$GLOBALS['unix_gid_add'];
+        return $this->data_array['group_id'] + ForgeConfig::get('unix_gid_add');
     }
 
     /**
@@ -240,21 +250,21 @@ class Group
      *
      *    @return int group_id.
      */
-    function getMembersId()
+    public function getMembersId()
     {
         if ($this->members_data_array) {
      //list of members already built
         } else {
-            $res=db_query("SELECT user_id FROM user_group WHERE group_id='". $this->getGroupId() ."'");
+            $res = db_query("SELECT user_id FROM user_group WHERE group_id='" . db_ei($this->getGroupId()) . "'");
             if ($res && db_numrows($res) > 0) {
-                    $mb_array = array();
+                    $mb_array = [];
                 while ($row = db_fetch_array($res)) {
                     $mb_array[] = $row[0];
                 }
                 $this->members_data_array = $mb_array;
             } else {
                     echo db_error();
-                    $this->members_data_array=array();
+                    $this->members_data_array = [];
             }
             db_free_result($res);
         }
@@ -265,9 +275,9 @@ class Group
     /**
      * getMembersUserNames - Return an array of user names of group members
      */
-    function getMembersUserNames(?ProjectManager $pm = null)
+    public function getMembersUserNames(?ProjectManager $pm = null)
     {
-        if (!$this->members_usernames_data_array) {
+        if (! $this->members_usernames_data_array) {
             if (is_null($pm)) {
                 $pm = ProjectManager::instance();
             }
@@ -287,7 +297,7 @@ class Group
     /*
         Simple test to see if the current user is a member of this project
     */
-    function userIsMember($field = 'user_id', $value = 0)
+    public function userIsMember($field = 'user_id', $value = 0)
     {
         if ($this->userIsAdmin()) {
      //admins are tested first so that super-users can return true
@@ -295,7 +305,7 @@ class Group
      //on their project
             return true;
         } else {
-            $arr=$this->getPermData();
+            $arr = $this->getPermData();
             if (array_key_exists($field, $arr) && ($arr[$field] > $value)) {
                     return true;
             } else {
@@ -347,23 +357,23 @@ class Group
     /*
         Return an associative array of permissions for this group/user
     */
-    function getPermData()
+    public function getPermData()
     {
         if ($this->perm_data_array) {
      //have already been through here and set up perms data
         } else {
             if (user_isloggedin()) {
                     $db_escaped_user_id = db_ei(UserManager::instance()->getCurrentUser()->getId());
-                    $res=db_query("SELECT * FROM user_group WHERE user_id='".$db_escaped_user_id."' and group_id='". $this->getGroupId() ."'");
+                    $res = db_query("SELECT * FROM user_group WHERE user_id='" . $db_escaped_user_id . "' and group_id='" . db_ei($this->getGroupId()) . "'");
                 if ($res && db_numrows($res) > 0) {
-                    $this->perm_data_array=db_fetch_array($res);
+                    $this->perm_data_array = db_fetch_array($res);
                 } else {
                     echo db_error();
-                    $this->perm_data_array=array();
+                    $this->perm_data_array = [];
                 }
                 db_free_result($res);
             } else {
-                    $this->perm_data_array=array();
+                    $this->perm_data_array = [];
             }
         }
         return $this->perm_data_array;
@@ -374,22 +384,24 @@ class Group
      * Return true, if this group is a template to create other groups
      *
      * @return bool
+     *
+     * @psalm-mutation-free
      */
-    function isTemplate()
+    public function isTemplate()
     {
-        return $this->_getTemplateSingleton()->isTemplate($this->data_array['type']);
+        return TemplateSingleton::isTemplate($this->data_array['type']);
     }
 
 
     /** return the template id from which this group was built */
-    function getTemplate()
+    public function getTemplate()
     {
         return $this->data_array['built_from_template'];
     }
 
-    function setType($type)
+    public function setType($type)
     {
-        db_query("UPDATE groups SET type='$type' WHERE group_id='".$this->group_id."'");
+        db_query("UPDATE groups SET type='$type' WHERE group_id='" . db_ei($this->group_id) . "'");
     }
 
     /**
@@ -397,7 +409,7 @@ class Group
      *
      * @return TemplateSingleton
      */
-    private function _getTemplateSingleton()
+    private function getTemplateSingleton()
     {
         return TemplateSingleton::instance();
     }

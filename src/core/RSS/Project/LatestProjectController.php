@@ -29,7 +29,7 @@ use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
-use Zend\Feed\Writer\Feed;
+use Laminas\Feed\Writer\Feed;
 
 class LatestProjectController implements DispatchableWithRequest
 {
@@ -56,8 +56,6 @@ class LatestProjectController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @throws NotFoundException
      * @throws ForbiddenException
@@ -76,7 +74,7 @@ class LatestProjectController implements DispatchableWithRequest
         foreach ($this->dao->getLast10NewProjects() as $row) {
             $project = $this->project_manager->getProject($row['group_id']);
             $entry = $feed->createEntry();
-            $entry->setTitle($this->html_purifier->purify($project->getUnconvertedPublicName()));
+            $entry->setTitle($this->html_purifier->purify($project->getPublicName()));
             $entry->setLink($project->getUrl());
             $entry->setDescription($this->html_purifier->purify($project->getDescription()));
             $feed->addEntry($entry);

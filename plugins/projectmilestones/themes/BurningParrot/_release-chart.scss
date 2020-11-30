@@ -1,0 +1,321 @@
+/**
+ * Copyright (c) Enalean, 2019 - present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.release-charts-row {
+    display: flex;
+    flex-direction: row;
+
+    @media screen and (max-width: 1800px) {
+        flex-wrap: wrap;
+    }
+}
+
+.release-chart-row-element {
+    margin: 0 0 $tlp-medium-spacing;
+
+    &:last-child {
+        margin: 0;
+    }
+}
+
+.release-chart-container {
+    position: relative;
+    padding-top: calc(45% + 20px);
+}
+
+.release-chart {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    .chart-curve-remaining-effort,
+    .chart-curve-total,
+    .chart-curve-progression {
+        stroke-width: 2px;
+    }
+
+    .chart-y-axis > .tick > text,
+    .chart-x-axis > .tick > text {
+        opacity: .8;
+        color: $tlp-ui-dimmed;
+    }
+}
+
+.release-line-scale,
+.release-chart .ideal-line > path {
+    stroke-width: 1px;
+    stroke: $tlp-ui-border-normal;
+    fill: transparent;
+}
+
+.release-chart-badge-container {
+    animation: shadow-pulse 2s infinite cubic-bezier(.65, .47, .76, 1);
+    fill: $remaining-effort-color;
+}
+
+.release-chart-badge-value {
+    fill: $tlp-ui-white;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.release-chart-end-icon {
+    align-self: center;
+    margin: 0 7px 0 0;
+    opacity: .9;
+    fill: $remaining-effort-color;
+    font-size: 15px;
+}
+
+@keyframes shadow-pulse {
+    from {
+        filter: drop-shadow(0 0 0 $remaining-effort-color);
+    }
+
+    to {
+        filter: drop-shadow(0 0 12px transparent);
+    }
+}
+
+.release-widget-pie-chart-ttm-slice > path {
+    stroke-width: 1.5px;
+    stroke: $tlp-ui-white;
+}
+
+.release-widget-pie-chart-ttm-slice-blocked {
+    > path {
+        fill: $blocked;
+    }
+
+    > text {
+        fill: $blocked;
+        text-shadow: $tlp-ui-white 1px 1px, $tlp-ui-white -1px 1px, $tlp-ui-white -1px -1px, $tlp-ui-white 1px -1px, $tlp-ui-white 2px 2px, $tlp-ui-white -2px 2px, $tlp-ui-white -2px -2px, $tlp-ui-white 2px -2px, $tlp-ui-white 3px 3px, $tlp-ui-white -3px 3px, $tlp-ui-white -3px -3px, $tlp-ui-white 3px -3px;
+    }
+}
+
+.release-widget-pie-chart-ttm-slice-notrun {
+    > path {
+        fill: $notrun;
+    }
+
+    > text {
+        fill: $notrun;
+        text-shadow: $tlp-ui-white 1px 1px, $tlp-ui-white -1px 1px, $tlp-ui-white -1px -1px, $tlp-ui-white 1px -1px, $tlp-ui-white 2px 2px, $tlp-ui-white -2px 2px, $tlp-ui-white -2px -2px, $tlp-ui-white 2px -2px, $tlp-ui-white 3px 3px, $tlp-ui-white -3px 3px, $tlp-ui-white -3px -3px, $tlp-ui-white 3px -3px;
+    }
+}
+
+.release-widget-pie-chart-ttm-slice-passed {
+    > path {
+        fill: $passed;
+    }
+
+    > text {
+        fill: $passed;
+        text-shadow: $tlp-ui-white 1px 1px, $tlp-ui-white -1px 1px, $tlp-ui-white -1px -1px, $tlp-ui-white 1px -1px, $tlp-ui-white 2px 2px, $tlp-ui-white -2px 2px, $tlp-ui-white -2px -2px, $tlp-ui-white 2px -2px, $tlp-ui-white 3px 3px, $tlp-ui-white -3px 3px, $tlp-ui-white -3px -3px, $tlp-ui-white 3px -3px;
+    }
+}
+
+.release-widget-pie-chart-ttm-slice-failed {
+    > path {
+        fill: $failed;
+    }
+
+    > text {
+        fill: $failed;
+        text-shadow: $tlp-ui-white 1px 1px, $tlp-ui-white -1px 1px, $tlp-ui-white -1px -1px, $tlp-ui-white 1px -1px, $tlp-ui-white 2px 2px, $tlp-ui-white -2px 2px, $tlp-ui-white -2px -2px, $tlp-ui-white 2px -2px, $tlp-ui-white 3px 3px, $tlp-ui-white -3px 3px, $tlp-ui-white -3px -3px, $tlp-ui-white 3px -3px;
+    }
+}
+
+.release-widget-pie-chart-ttm-slice-text {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.release-widget-pie-chart-ttm-legend {
+    padding: 0 0 0 $tlp-small-spacing;
+    color: $tlp-ui-dimmed;
+    font-size: 12px;
+    line-height: 20px;
+    cursor: default;
+}
+
+.release-widget-pie-chart-ttm,
+.release-widget-pie-chart-ttm-legend.release-widget-pie-chart-ttm-legend-notrun,
+.release-widget-pie-chart-ttm-legend.release-widget-pie-chart-ttm-legend-passed,
+.release-widget-pie-chart-ttm-legend.release-widget-pie-chart-ttm-legend-blocked,
+.release-widget-pie-chart-ttm-legend.release-widget-pie-chart-ttm-legend-failed {
+    display: flex;
+    align-items: center;
+    width: max-content;
+}
+
+.release-widget-pie-chart-ttm {
+    transform: translate(0, calc(-28px + #{$tlp-small-spacing}));
+}
+
+
+.release-widget-pie-chart-ttm-legend-color-span {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    margin: 0 5px 0 0;
+    transition: transform ease-out 75ms;
+    border-radius: 50%;
+    opacity: .8;
+
+    &.release-widget-pie-chart-ttm-legend-color-passed {
+        background-color: $passed;
+    }
+
+    &.release-widget-pie-chart-ttm-legend-color-blocked {
+        background-color: $blocked;
+    }
+
+    &.release-widget-pie-chart-ttm-legend-color-notrun {
+        background-color: $notrun;
+    }
+
+    &.release-widget-pie-chart-ttm-legend-color-failed {
+        background-color: $failed;
+    }
+}
+
+.release-widget-pie-chart-ttm-legend-selected {
+    font-weight: 600;
+
+    > .release-widget-pie-chart-ttm-legend-color-span {
+        transform: scale(1.2);
+    }
+}
+
+.release-ttm-section {
+    width: 100%;
+}
+
+.release-chart-displayer {
+    width: 220px + $tlp-small-spacing;
+    margin: 0;
+}
+
+.release-chart-displayer-burndown {
+    margin: 0 $tlp-medium-spacing $tlp-medium-spacing 0;
+}
+
+.project-milestones-display-description.project-milestones-display-burndown-chart.project-milestones-display-burnup-chart.project-milestones-display-ttm-chart {
+    .container-chart-burndown-burnup {
+        grid-column: 1 / span 2;
+        grid-row: 2;
+    }
+
+    .container-chart-ttm {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+    }
+
+    .release-charts-row {
+        flex-direction: row;
+    }
+}
+
+.project-milestones-display-burndown-chart.project-milestones-display-burnup-chart.project-milestones-display-ttm-chart .release-charts-row {
+    flex-direction: column;
+
+    @media screen and (max-width: 1800px) {
+        flex-direction: row;
+    }
+}
+
+.container-chart-burndown-burnup {
+    grid-row: 1;
+
+    @media screen and (max-width: 1800px) {
+        grid-column: 1 / span 2;
+        grid-row: 2;
+    }
+}
+
+.container-chart-burndown-burnup.only-one-chart {
+    grid-row: auto / 2;
+
+    @media screen and (max-width: 1800px) {
+        grid-row: 2;
+    }
+}
+
+.project-milestones-display-description .release-charts-row {
+    flex-direction: column;
+
+    @media screen and (max-width: 1800px) {
+        flex-direction: row;
+    }
+}
+
+.project-milestones-display-description .container-chart-ttm {
+    grid-column: 1 / span 2;
+    grid-row: 3;
+}
+
+.container-chart-ttm {
+    grid-row: 1;
+
+    @media screen and (max-width: 1800px) {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+    }
+}
+
+.two-columns-small-big > div:first-of-type,
+.two-columns-big-small > div:nth-of-type(2),
+.three-columns,
+.three-columns-big-small-small > div:nth-of-type(2),
+.three-columns-big-small-small > div:nth-of-type(3),
+.three-columns-small-big-small > div:first-of-type,
+.three-columns-small-big-small > div:nth-of-type(3),
+.three-columns-small-small-big > div:first-of-type,
+.three-columns-small-small-big > div:nth-of-type(2) {
+    .project-milestones-display-description .container-chart-burndown-burnup {
+        grid-column: 1 / span 2;
+        grid-row: 2;
+    }
+
+    .project-milestones-display-burndown-chart.project-milestones-display-burnup-chart .container-chart-burndown-burnup {
+        grid-row: 2;
+
+        .release-charts-row {
+            flex-direction: row;
+        }
+    }
+
+    .project-milestones-display-only-ttm .container-chart-ttm {
+        grid-column: auto;
+        grid-row: 1;
+    }
+
+    .project-milestones-display-description.project-milestones-display-only-ttm .container-chart-ttm {
+        grid-column: 1 / span 2;
+        grid-row: 2;
+    }
+
+    .container-chart-ttm {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+    }
+}

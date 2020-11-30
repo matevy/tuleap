@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,6 +21,8 @@
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use Tuleap\Admin\AdminPageRenderer;
+use Tuleap\Admin\SiteAdministrationAddOption;
+use Tuleap\Admin\SiteAdministrationPluginOption;
 use Tuleap\Authentication\SplitToken\SplitTokenVerificationStringHasher;
 use Tuleap\CLI\Events\GetWhitelistedKeys;
 use Tuleap\DB\DBFactory;
@@ -61,14 +63,24 @@ class gitlfsPlugin extends \Plugin // phpcs:ignore
 
     public const SERVICE_LABEL = "Git LFS";
 
+    /**
+     * Toggle site admin ability to configure `git_lfs_max_file_size`
+     *
+     * @tlp-config-key
+     */
     public const DISPLAY_CONFIG_KEY = 'git_lfs_display_config';
+    /**
+     * Max size for individual git lfs files (in bytes). Default 536870912 (512MiB).
+     *
+     * @tlp-config-key
+     */
     public const MAX_FILE_SIZE_KEY  = 'git_lfs_max_file_size';
 
     public function __construct($id)
     {
         parent::__construct($id);
         $this->setScope(self::SCOPE_PROJECT);
-        bindtextdomain('tuleap-gitlfs', __DIR__.'/../site-content');
+        bindtextdomain('tuleap-gitlfs', __DIR__ . '/../site-content');
     }
 
     public function getPluginInfo()
@@ -92,7 +104,7 @@ class gitlfsPlugin extends \Plugin // phpcs:ignore
         $this->addHook(\Tuleap\Git\PostInitGitRepositoryWithDataEvent::NAME);
         $this->addHook('codendi_daily_start', 'dailyCleanup');
         $this->addHook('project_is_deleted');
-        $this->addHook('site_admin_option_hook');
+        $this->addHook(SiteAdministrationAddOption::NAME);
         $this->addHook('plugin_statistics_disk_usage_collect_project');
         $this->addHook('plugin_statistics_disk_usage_service_label');
         $this->addHook('plugin_statistics_color');
@@ -403,7 +415,8 @@ class gitlfsPlugin extends \Plugin // phpcs:ignore
             $filesystem,
             $path_allocator
         );
-        $lfs_object_remover->removeDanglingObjects();
+
+        $lfs_object_remover->removeDanglingObjects(ForgeConfig::getInt('sys_file_deletion_delay'));
         $action_authorization_remover = new ActionAuthorizationRemover(
             new ActionAuthorizationDAO(),
             $filesystem,
@@ -414,13 +427,15 @@ class gitlfsPlugin extends \Plugin // phpcs:ignore
         $user_authorization_remover->deleteExpired($current_time);
     }
 
-    public function site_admin_option_hook($params) //phpcs:ignore
+    public function siteAdministrationAddOption(SiteAdministrationAddOption $site_administration_add_option): void
     {
         $config_should_be_displayed = \ForgeConfig::get(\gitlfsPlugin::DISPLAY_CONFIG_KEY, true);
         if ($config_should_be_displayed) {
-            $params['plugins'][] = array(
-                'label' => dgettext('tuleap-gitlfs', 'Git LFS'),
-                'href'  => '/plugins/git-lfs/config'
+            $site_administration_add_option->addPluginOption(
+                SiteAdministrationPluginOption::build(
+                    dgettext('tuleap-gitlfs', 'Git LFS'),
+                    '/plugins/git-lfs/config'
+                )
             );
         }
     }
@@ -446,7 +461,8 @@ class gitlfsPlugin extends \Plugin // phpcs:ignore
     {
         $detector = new Detector();
 
-        if (($event->getObjectSrc() !== null && $detector->isFileALFSFile($event->getObjectSrc())) ||
+        if (
+            ($event->getObjectSrc() !== null && $detector->isFileALFSFile($event->getObjectSrc())) ||
             $detector->isFileALFSFile($event->getObjectDest())
         ) {
             $event->setSpecialFormat('git-lfs');
@@ -456,8 +472,7 @@ class gitlfsPlugin extends \Plugin // phpcs:ignore
 
     public function getWhitelistedKeys(GetWhitelistedKeys $event)
     {
-        $event->addPluginsKeys(self::DISPLAY_CONFIG_KEY);
-        $event->addPluginsKeys(self::MAX_FILE_SIZE_KEY);
+        $event->addConfigClass(self::class);
     }
 
     public function statisticsRefreshDiskUsage(\Tuleap\Statistics\Events\StatisticsRefreshDiskUsage $event): void
@@ -478,7 +493,7 @@ class gitlfsPlugin extends \Plugin // phpcs:ignore
         );
     }
 
-    private function getUserRetriever(Logger $logger) : \Tuleap\GitLFS\HTTP\UserRetriever
+    private function getUserRetriever(\Psr\Log\LoggerInterface $logger): \Tuleap\GitLFS\HTTP\UserRetriever
     {
         return new \Tuleap\GitLFS\HTTP\UserRetriever(
             $this->getLFSAPIHTTPAuthorization(),

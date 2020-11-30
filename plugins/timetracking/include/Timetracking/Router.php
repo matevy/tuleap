@@ -25,13 +25,11 @@ use CSRFSynchronizerToken;
 use Feedback;
 use PFUser;
 use Tracker;
-use Tracker_Artifact;
 use Tracker_ArtifactFactory;
 use TrackerFactory;
 use Tuleap\Timetracking\Admin\AdminController;
-use Tuleap\Timetracking\Exceptions\TimeTrackingBadTimeFormatException;
 use Tuleap\Timetracking\Exceptions\TimeTrackingBadDateFormatException;
-use Tuleap\Timetracking\Exceptions\TimeTrackingExistingDateException;
+use Tuleap\Timetracking\Exceptions\TimeTrackingBadTimeFormatException;
 use Tuleap\Timetracking\Exceptions\TimeTrackingMissingTimeException;
 use Tuleap\Timetracking\Exceptions\TimeTrackingNotAllowedToAddException;
 use Tuleap\Timetracking\Exceptions\TimeTrackingNotAllowedToDeleteException;
@@ -39,6 +37,7 @@ use Tuleap\Timetracking\Exceptions\TimeTrackingNotAllowedToEditException;
 use Tuleap\Timetracking\Exceptions\TimeTrackingNotBelongToUserException;
 use Tuleap\Timetracking\Exceptions\TimeTrackingNoTimeException;
 use Tuleap\Timetracking\Time\TimeController;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class Router
 {
@@ -194,21 +193,21 @@ class Router
         }
     }
 
-    private function redirectToArtifactViewInTimetrackingPane(Tracker_Artifact $artifact)
+    private function redirectToArtifactViewInTimetrackingPane(Artifact $artifact)
     {
-        $url = TRACKER_BASE_URL . '/?' . http_build_query(array(
+        $url = TRACKER_BASE_URL . '/?' . http_build_query([
                 'aid'  => $artifact->getId(),
                 'view' => 'timetracking'
-            ));
+            ]);
 
         $GLOBALS['Response']->redirect($url);
     }
 
-    private function redirectToArtifactView(Tracker_Artifact $artifact)
+    private function redirectToArtifactView(Artifact $artifact)
     {
-        $url = TRACKER_BASE_URL . '/?' . http_build_query(array(
+        $url = TRACKER_BASE_URL . '/?' . http_build_query([
                 'aid'  => $artifact->getId()
-            ));
+            ]);
 
         $GLOBALS['Response']->redirect($url);
     }
@@ -233,7 +232,7 @@ class Router
     }
 
     /**
-     * @return Tracker_Artifact
+     * @return Artifact
      */
     private function getArtifactFromRequest(Codendi_Request $request, PFUser $user)
     {
@@ -254,23 +253,26 @@ class Router
             dgettext('tuleap-timetracking', "Access denied. You don't have permissions to perform this action.")
         );
 
-        $url = TRACKER_BASE_URL . '/?' . http_build_query(array(
+        $url = TRACKER_BASE_URL . '/?' . http_build_query([
                 'tracker' => $tracker_id
-        ));
+        ]);
 
         $GLOBALS['Response']->redirect($url);
     }
 
     private function redirectToTimetrackingAdminPage(Tracker $tracker)
     {
-        $url = TIMETRACKING_BASE_URL . '/?' . http_build_query(array(
+        $url = TIMETRACKING_BASE_URL . '/?' . http_build_query([
                 'tracker' => $tracker->getId(),
                 'action' => 'admin-timetracking'
-        ));
+        ]);
 
         $GLOBALS['Response']->redirect($url);
     }
 
+    /**
+     * @psalm-return never-return
+     */
     private function redirectToTuleapHomepage()
     {
         $GLOBALS['Response']->addFeedback(
@@ -279,12 +281,13 @@ class Router
         );
 
         $GLOBALS['Response']->redirect('/');
+        exit;
     }
 
     /**
      * @return CSRFSynchronizerToken
      */
-    private function getCSRFForArtifact(Tracker_Artifact $artifact)
+    private function getCSRFForArtifact(Artifact $artifact)
     {
         return new CSRFSynchronizerToken($artifact->getUri());
     }

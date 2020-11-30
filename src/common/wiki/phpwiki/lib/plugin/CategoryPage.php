@@ -40,17 +40,17 @@ require_once('lib/BlockParser.php');
  */
 class WikiPlugin_CategoryPage extends WikiPlugin
 {
-    function getName()
+    public function getName()
     {
         return _("CategoryPage");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Create a Wiki page.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -59,18 +59,18 @@ class WikiPlugin_CategoryPage extends WikiPlugin
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array(// Assume the categories are listed on the HomePage
+        return [// Assume the categories are listed on the HomePage
                      'exclude'              => false,
                      'pagename'             => '[pagename]',
                      'plural'               => false,
                      'singular'             => false,
                      'self_on_create'       => true,
-                     'showbuds'             => false);
+                     'showbuds'             => false];
     }
 
-    function run($dbi, $argstr, &$request)
+    public function run($dbi, $argstr, &$request)
     {
         $args = $this->getArgs($argstr, $request);
 
@@ -84,15 +84,15 @@ class WikiPlugin_CategoryPage extends WikiPlugin
         return new Template(
             'categorypage',
             $request,
-            array('EXCLUDE' => $args['exclude'],
+            ['EXCLUDE' => $args['exclude'],
                                   'PAGENAME' => $args['pagename'],
                                   'PLURAL' => $args['plural'],
                                   'SHOWBUDS' => $args['showbuds'],
                                   'SELF_ON_CREATE' => $args['self_on_create'],
-            'SINGULAR' => $args['singular'])
+            'SINGULAR' => $args['singular']]
         );
     }
-};
+}
 
 // Local Variables:
 // mode: php

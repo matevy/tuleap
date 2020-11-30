@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2015 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2015 - present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -18,11 +18,12 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Project\XML\Import\ExternalFieldsExtractor;
+use Tuleap\Tracker\Artifact\Artifact;
+
 class Tracker_Artifact_XMLExport
 {
-
-    public const ARTIFACTS_RNG_PATH = '/www/resources/artifacts.rng';
-    public const THRESHOLD          = 9000;
+    public const THRESHOLD = 9000;
 
     /**
      * @var Tracker_ArtifactFactory
@@ -42,16 +43,23 @@ class Tracker_Artifact_XMLExport
     /** @var UserXMLExporter */
     private $user_xml_exporter;
 
+    /**
+     * @var ExternalFieldsExtractor
+     */
+    private $external_fields_extractor;
+
     public function __construct(
         XML_RNGValidator $rng_validator,
         Tracker_ArtifactFactory $artifact_factory,
         $can_bypass_threshold,
-        UserXMLExporter $user_xml_exporter
+        UserXMLExporter $user_xml_exporter,
+        ExternalFieldsExtractor $external_fields_extractor
     ) {
-        $this->rng_validator        = $rng_validator;
-        $this->artifact_factory     = $artifact_factory;
-        $this->can_bypass_threshold = $can_bypass_threshold;
-        $this->user_xml_exporter    = $user_xml_exporter;
+        $this->rng_validator             = $rng_validator;
+        $this->artifact_factory          = $artifact_factory;
+        $this->can_bypass_threshold      = $can_bypass_threshold;
+        $this->user_xml_exporter         = $user_xml_exporter;
+        $this->external_fields_extractor = $external_fields_extractor;
     }
 
     public function export(
@@ -75,11 +83,14 @@ class Tracker_Artifact_XMLExport
 
         if ($nb_artifacts > self::THRESHOLD) {
             throw new Tracker_Artifact_XMLExportTooManyArtifactsException(
-                "Too many artifacts: $nb_artifacts (IT'S OVER ".self::THRESHOLD."!)"
+                "Too many artifacts: $nb_artifacts (IT'S OVER " . self::THRESHOLD . "!)"
             );
         }
     }
 
+    /**
+     * @param Artifact[] $artifacts
+     */
     private function exportBunchOfArtifacts(
         array $artifacts,
         SimpleXMLElement $xml_content,
@@ -97,9 +108,15 @@ class Tracker_Artifact_XMLExport
             );
         }
 
+        $partial_element = new SimpleXMLElement((string) $artifacts_node->asXML());
+
+        foreach ($partial_element->artifact as $artifact_xml) {
+            $this->external_fields_extractor->extractExternalFieldsFromArtifact($artifact_xml);
+        }
+
         $this->rng_validator->validate(
-            $artifacts_node,
-            realpath(dirname(TRACKER_BASE_DIR) . self::ARTIFACTS_RNG_PATH)
+            $partial_element,
+            realpath(__DIR__ . '/../../../resources/artifacts.rng')
         );
     }
 

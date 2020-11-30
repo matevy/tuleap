@@ -30,11 +30,11 @@ class WorkflowMenuTabPresenterBuilder
     public const TAB_CROSS_TRACKER_TRIGGERS = 'triggers';
     public const TAB_WEBHOOKS               = 'webhooks';
 
-    public function build(Tracker $tracker, $active_tab_name)
+    public function build(Tracker $tracker, $active_tab_name, array $used_services)
     {
         $tabs_menu = $this->buildTabsMenu($tracker);
         $tabs_menu[$active_tab_name]['is_active'] = true;
-        return new WorkflowMenuTabPresenter(array_values($tabs_menu), $tracker->getId());
+        return new WorkflowMenuTabPresenter(array_values($tabs_menu), $tracker->getId(), $used_services);
     }
 
     private function buildTabsMenu(Tracker $tracker)
@@ -65,14 +65,14 @@ class WorkflowMenuTabPresenterBuilder
 
     private function buildLegacyUrl($action, Tracker $tracker)
     {
-        return TRACKER_BASE_URL.'/?'.http_build_query([
-            'tracker' => (int)$tracker->getId(),
+        return TRACKER_BASE_URL . '/?' . http_build_query([
+            'tracker' => (int) $tracker->getId(),
             'func'    => $action
         ]);
     }
 
     private function buildFrontRouterUrl($tracker_path, Tracker $tracker)
     {
-        return TRACKER_BASE_URL.Workflow::BASE_PATH.'/'.urlencode($tracker->getId()).$tracker_path;
+        return TRACKER_BASE_URL . Workflow::BASE_PATH . '/' . urlencode($tracker->getId()) . $tracker_path;
     }
 }

@@ -30,7 +30,7 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     private $dao;
 
     /** @var string[] */
-    private $list_of_core_services = array(
+    private $list_of_core_services = [
         self::CUSTOM_SERVICE_SHORTNAME,
         Service::SUMMARY,
         Service::ADMIN,
@@ -43,9 +43,9 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         Service::SVN,
         Service::WIKI,
         Service::TRACKERV3,
-    );
+    ];
 
-    private $list_of_services_per_project = array();
+    private $list_of_services_per_project = [];
 
     /** @var ServiceManager */
     private static $instance;
@@ -66,7 +66,7 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
      */
     public static function instance()
     {
-        if (!isset(self::$instance)) {
+        if (! isset(self::$instance)) {
             $c = self::class;
             self::$instance = new $c(new ServiceDao(), ProjectManager::instance());
         }
@@ -76,9 +76,8 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     /**
      * Only for testing purpose
      *
-     * @param ServiceManager $service_manager
      */
-    public function setInstance(ServiceManager $service_manager)
+    public static function setInstance(ServiceManager $service_manager)
     {
         self::$instance = $service_manager;
     }
@@ -86,7 +85,7 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     /**
      * Only for testing purpose
      */
-    public function clearInstance()
+    public static function clearInstance()
     {
         self::$instance = null;
     }
@@ -97,7 +96,7 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     public function getListOfAllowedServicesForProject(Project $project)
     {
         if (! isset($this->list_of_services_per_project[$project->getID()])) {
-            $this->list_of_services_per_project[$project->getID()] = array();
+            $this->list_of_services_per_project[$project->getID()] = [];
             $allowed_services_dar = $this->dao->searchByProjectIdAndShortNames(
                 $project->getID(),
                 array_merge(
@@ -121,8 +120,8 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
 
     private function getListOfPluginBasedServices(Project $project)
     {
-        $services = array();
-        EventManager::instance()->processEvent(Event::SERVICES_ALLOWED_FOR_PROJECT, array('project' => $project, 'services' => &$services));
+        $services = [];
+        EventManager::instance()->processEvent(Event::SERVICES_ALLOWED_FOR_PROJECT, ['project' => $project, 'services' => &$services]);
         return $services;
     }
 
@@ -136,14 +135,6 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     public function isServiceAvailableAtSiteLevelByShortName($name)
     {
         return $this->dao->isServiceAvailableAtSiteLevelByShortName($name);
-    }
-
-    /**
-     * @return Service[]
-     */
-    public function getListOfServicesAvailableAtSiteLevel(): array
-    {
-        return $this->project_manager->getProject(Project::ADMIN_PROJECT_ID)->getActiveServices();
     }
 
     private function isServiceActiveInProject($project, $name)
@@ -172,11 +163,11 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
         $event_manager = EventManager::instance();
         $event_manager->processEvent(
             Event::SERVICE_IS_USED,
-            array(
+            [
                 'shortname' => $short_name,
-                'is_used'   => $is_used ? true:false,
+                'is_used'   => $is_used ? true : false,
                 'group_id'  => $project->getID(),
-            )
+            ]
         );
     }
 
@@ -212,10 +203,9 @@ class ServiceManager //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespa
     }
 
     /**
-     * @return Service
      * @throws ServiceNotAllowedForProjectException
      */
-    public function getService(int $id)
+    public function getService(int $id): Service
     {
         $row = $this->dao->searchById($id)->getRow();
         if (! $row) {

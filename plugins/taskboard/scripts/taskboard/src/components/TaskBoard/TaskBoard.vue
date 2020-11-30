@@ -20,22 +20,34 @@
 
 <template>
     <div class="taskboard">
-        <taskboard-button-bar/>
-        <task-board-header/>
-        <task-board-body/>
-        <error-modal v-if="has_modal_error"/>
+        <taskboard-button-bar />
+        <task-board-header />
+        <task-board-body />
+        <error-modal v-if="has_modal_error" />
     </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
 import { Component } from "vue-property-decorator";
-import { namespace, Getter, Mutation } from "vuex-class";
-import dragula, { Drake } from "dragula";
-import { Swimlane, ColumnDefinition, Card, TaskboardEvent } from "../../type";
-import { isContainer, canMove, invalid, checkCellAcceptsDrop } from "../../helpers/drag-drop";
+import { Getter, Mutation, namespace } from "vuex-class";
+import {
+    DragCallbackParameter,
+    DragDropCallbackParameter,
+    Drekkenov,
+    init,
+    PossibleDropCallbackParameter,
+    SuccessfulDropCallbackParameter,
+} from "../../helpers/drag-and-drop/drekkenov";
+import { Card, ColumnDefinition, Swimlane } from "../../type";
+import {
+    canMove,
+    checkCellAcceptsDrop,
+    isContainer,
+    isConsideredInDropzone,
+    invalid,
+} from "../../helpers/drag-drop";
 import { HandleDropPayload } from "../../store/swimlane/type";
-import EventBus from "../../helpers/event-bus";
 import TaskBoardHeader from "./Header/TaskBoardHeader.vue";
 import TaskBoardBody from "./Body/TaskBoardBody.vue";
 import TaskboardButtonBar from "./ButtonBar/TaskboardButtonBar.vue";
@@ -46,17 +58,17 @@ const column = namespace("column");
 const swimlane = namespace("swimlane");
 
 @Component({
-    components: { TaskBoardBody, TaskBoardHeader, TaskboardButtonBar, ErrorModal }
+    components: { TaskBoardBody, TaskBoardHeader, TaskboardButtonBar, ErrorModal },
 })
 export default class TaskBoard extends Vue {
     @error.State
     readonly has_modal_error!: boolean;
 
     @column.Mutation
-    readonly mouseEntersColumn!: (column: ColumnDefinition) => void;
+    readonly pointerEntersColumn!: (column: ColumnDefinition) => void;
 
     @column.Mutation
-    readonly mouseLeavesColumn!: (column: ColumnDefinition) => void;
+    readonly pointerLeavesColumn!: (column: ColumnDefinition) => void;
 
     @swimlane.Getter
     readonly cards_in_cell!: (
@@ -87,97 +99,68 @@ export default class TaskBoard extends Vue {
     @swimlane.Mutation
     readonly unsetDropZoneRejectingDrop!: () => void;
 
-    private drake!: Drake | undefined;
+    private drek!: Drekkenov | undefined;
 
     beforeDestroy(): void {
-        if (this.drake) {
-            this.drake.destroy();
+        if (this.drek) {
+            this.drek.destroy();
         }
-        EventBus.$off(TaskboardEvent.ESC_KEY_PRESSED, this.cancelDragOnEscape);
     }
 
     mounted(): void {
-        this.drake = dragula({
-            isContainer,
-            moves: canMove,
-            invalid,
-            revertOnSpill: true,
-            mirrorContainer: this.$el,
-            accepts: (
-                dropped_card?: Element,
-                target_cell?: Element,
-                source_cell?: Element
-            ): boolean =>
-                checkCellAcceptsDrop(this.$store, {
-                    dropped_card,
-                    target_cell,
-                    source_cell
-                })
+        this.drek = init({
+            mirror_container: this.$el,
+            isDropZone: isContainer,
+            isDraggable: canMove,
+            isInvalidDragHandle: invalid,
+            isConsideredInDropzone,
+            doesDropzoneAcceptDraggable: (context: PossibleDropCallbackParameter): boolean => {
+                return checkCellAcceptsDrop(this.$store, {
+                    dropped_card: context.dragged_element,
+                    source_cell: context.source_dropzone,
+                    target_cell: context.target_dropzone,
+                });
+            },
+            onDragStart: (context: DragCallbackParameter): void => {
+                this.setIdOfCardBeingDragged(context.dragged_element);
+            },
+            onDragEnter: (context: PossibleDropCallbackParameter): void => {
+                const { target_dropzone } = context;
+                target_dropzone.dataset.drekOver = "1";
+                const column = this.column_of_cell(target_dropzone);
+                if (!column) {
+                    return;
+                }
+                if (column.is_collapsed) {
+                    this.pointerEntersColumn(column);
+                }
+            },
+            onDragLeave: (context: DragDropCallbackParameter): void => {
+                const { target_dropzone } = context;
+                delete target_dropzone.dataset.drekOver;
+                const column = this.column_of_cell(target_dropzone);
+                if (!column) {
+                    return;
+                }
+                if (column.is_collapsed) {
+                    this.pointerLeavesColumn(column);
+                }
+            },
+            onDrop: (context: SuccessfulDropCallbackParameter): void => {
+                const sibling_card =
+                    context.next_sibling instanceof HTMLElement ? context.next_sibling : undefined;
+                this.handleDrop({
+                    dropped_card: context.dropped_element,
+                    target_cell: context.target_dropzone,
+                    source_cell: context.source_dropzone,
+                    sibling_card,
+                });
+            },
+            cleanupAfterDragCallback: (): void => {
+                this.resetIdOfCardBeingDragged();
+                this.unsetDropZoneRejectingDrop();
+            },
         });
-
-        this.drake.on(
-            "drop",
-            (
-                dropped_card: HTMLElement,
-                target_cell: HTMLElement,
-                source_cell: HTMLElement,
-                sibling_card?: HTMLElement
-            ) => this.handleDrop({ dropped_card, target_cell, source_cell, sibling_card })
-        );
-
-        this.drake.on("cancel", this.unsetDropZoneRejectingDrop);
-        this.drake.on("drag", this.setIdOfCardBeingDragged);
-        this.drake.on("dragend", this.resetIdOfCardBeingDragged);
-
-        EventBus.$on(TaskboardEvent.ESC_KEY_PRESSED, this.cancelDragOnEscape);
-
-        this.drake.on(
-            "over",
-            (element?: Element, target?: Element): void => {
-                if (
-                    !target ||
-                    !target.classList.contains("taskboard-cell-collapsed") ||
-                    !(target instanceof HTMLElement)
-                ) {
-                    return;
-                }
-
-                const column = this.column_of_cell(target);
-
-                if (!column) {
-                    return;
-                }
-
-                this.mouseEntersColumn(column);
-            }
-        );
-
-        this.drake.on(
-            "out",
-            (element?: Element, target?: Element): void => {
-                if (
-                    !target ||
-                    !target.classList.contains("taskboard-cell-collapsed") ||
-                    !(target instanceof HTMLElement)
-                ) {
-                    return;
-                }
-
-                const column = this.column_of_cell(target);
-
-                if (!column) {
-                    return;
-                }
-
-                this.mouseLeavesColumn(column);
-            }
-        );
-    }
-
-    cancelDragOnEscape(): void {
-        if (this.drake) {
-            this.drake.cancel(true);
-        }
     }
 }
 </script>

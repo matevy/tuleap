@@ -18,14 +18,12 @@
   -->
 
 <template>
-    <div class="tlp-form-element document-metadata-title"
-         v-bind:class="{'tlp-form-element-disabled': is_root_folder}"
-         data-test="document-new-item-title-form-element"
+    <div
+        class="tlp-form-element document-metadata-title"
+        v-bind:class="{ 'tlp-form-element-disabled': is_root_folder }"
+        data-test="document-new-item-title-form-element"
     >
-        <label
-            class="tlp-label"
-            for="document-new-item-title"
-        >
+        <label class="tlp-label" for="document-new-item-title">
             <translate>Title</translate>
             <i class="fa fa-asterisk"></i>
         </label>
@@ -41,7 +39,7 @@
             v-on:input="$emit('input', $event.target.value)"
             ref="input"
             data-test="document-new-item-title"
-        >
+        />
         <p class="tlp-text-danger" v-if="error_message.length > 0" data-test="title-error-message">
             {{ error_message }}
         </p>
@@ -54,7 +52,7 @@ import {
     doesDocumentAlreadyExistsAtUpdate,
     doesDocumentNameAlreadyExist,
     doesFolderNameAlreadyExist,
-    doesFolderAlreadyExistsAtUpdate
+    doesFolderAlreadyExistsAtUpdate,
 } from "../../../helpers/metadata-helpers/check-item-title.js";
 
 export default {
@@ -62,11 +60,11 @@ export default {
         value: String,
         parent: Object,
         isInUpdateContext: Boolean,
-        currentlyUpdatedItem: Object
+        currentlyUpdatedItem: Object,
     },
     data() {
         return {
-            error_message: ""
+            error_message: "",
         };
     },
     computed: {
@@ -76,14 +74,14 @@ export default {
         },
         is_root_folder() {
             return this.currentlyUpdatedItem.parent_id === 0;
-        }
+        },
     },
     watch: {
         value(text_value) {
             const error = this.checkTitleValidity(text_value);
             this.$refs.input.setCustomValidity(error);
             this.error_message = error;
-        }
+        },
     },
     mounted() {
         this.$refs.input.focus();
@@ -145,7 +143,7 @@ export default {
         },
         getErrorWhenFolderAlreadyExists() {
             return this.$gettext("A folder already exists with the same title.");
-        }
-    }
+        },
+    },
 };
 </script>

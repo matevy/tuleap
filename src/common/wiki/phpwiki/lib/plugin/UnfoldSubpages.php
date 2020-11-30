@@ -38,17 +38,17 @@ require_once("lib/plugin/IncludePage.php");
 
 class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
 {
-    function getName()
+    public function getName()
     {
         return _("UnfoldSubpages");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Includes the content of all SubPages of the current page.");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -57,11 +57,11 @@ class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return array_merge(
             PageList::supportedArgs(),
-            array(
+            [
                    'pagename' => '[pagename]', // default: current page
                    //'header'  => '',  // expandable string
                    'quiet'   => false, // print no header
@@ -80,15 +80,15 @@ class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
                    'section' => false,     // this named section per page only
                    'sectionhead' => false // when including a named
                                //  section show the heading
-            )
+            ]
         );
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         static $included_pages = false;
-        if (!$included_pages) {
-            $included_pages = array($basepage);
+        if (! $included_pages) {
+            $included_pages = [$basepage];
         }
 
         $args = $this->getArgs($argstr, $request);
@@ -99,7 +99,7 @@ class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
         //    $subpages = $subpages->applyFilters(array('sortby' => $sortby, 'limit' => $limit, 'exclude' => $exclude));
         //$subpages = explodePageList($pagename . SUBPAGE_SEPARATOR . '*', false,
         //                            $sortby, $limit, $exclude);
-        if (is_string($exclude) and !is_array($exclude)) {
+        if (is_string($exclude) and ! is_array($exclude)) {
             $exclude = PageList::explodePageList($exclude, false, false, $limit);
         }
         $content = HTML();
@@ -127,18 +127,20 @@ class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
                 $r = $page->getCurrentRevision();
                 $c = $r->getContent();   // array of lines
                 // follow redirects
-                if (preg_match(
-                    '/<'.'\?plugin\s+RedirectTo\s+page=(\w+)\s+\?'.'>/',
-                    implode("\n", $c),
-                    $m
-                )) {
+                if (
+                    preg_match(
+                        '/<' . '\?plugin\s+RedirectTo\s+page=(\w+)\s+\?' . '>/',
+                        implode("\n", $c),
+                        $m
+                    )
+                ) {
                     // trap recursive redirects
                     if (in_array($m[1], $included_pages)) {
-                        if (!$quiet) {
+                        if (! $quiet) {
                             $content->pushContent(
                                 HTML::p(sprintf(
                                     _("recursive inclusion of page %s ignored"),
-                                    $cpagename.' => '.$m[1]
+                                    $cpagename . ' => ' . $m[1]
                                 ))
                             );
                         }
@@ -172,8 +174,8 @@ class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
                 array_pop($included_pages);
                 if (! $smalltitle) {
                     $content->pushContent(HTML::p(
-                        array('class' => $quiet ?
-                                                        '' : 'transclusion-title'),
+                        ['class' => $quiet ?
+                                                        '' : 'transclusion-title'],
                         fmt(
                             "Included from %s:",
                             WikiLink($cpagename)
@@ -181,8 +183,8 @@ class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
                     ));
                 }
                 $content->pushContent(HTML(HTML::div(
-                    array('class' => $quiet ?
-                                                           '' : 'transclusion'),
+                    ['class' => $quiet ?
+                                                           '' : 'transclusion'],
                     false,
                     $ct
                 )));
@@ -193,7 +195,7 @@ class WikiPlugin_UnfoldSubpages extends WikiPlugin_IncludePage
         }
         return $content;
     }
-};
+}
 
 // $Log: UnfoldSubpages.php,v $
 // Revision 1.22  2007/06/03 21:58:51  rurban

@@ -148,14 +148,14 @@ class UGroupRouter
     public static function getUGroupUrl(ProjectUGroup $ugroup)
     {
         return '/project/admin/editugroup.php?' . http_build_query(
-            array(
+            [
                 'group_id'  => $ugroup->getProjectId(),
                 'ugroup_id' => $ugroup->getId()
-            )
+            ]
         );
     }
 
-    public static function getCSRFTokenSynchronizer() : CSRFSynchronizerToken
+    public static function getCSRFTokenSynchronizer(): CSRFSynchronizerToken
     {
         return new CSRFSynchronizerToken(self::CSRF_TOKEN);
     }

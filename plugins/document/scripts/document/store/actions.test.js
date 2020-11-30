@@ -17,14 +17,14 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { mockFetchError } from "../../../../../src/www/themes/common/tlp/mocks/tlp-fetch-mock-helper.js";
+import { mockFetchError } from "../../../../../src/themes/tlp/mocks/tlp-fetch-mock-helper.js";
 import {
     TYPE_EMBEDDED,
     TYPE_EMPTY,
     TYPE_FILE,
     TYPE_FOLDER,
     TYPE_LINK,
-    TYPE_WIKI
+    TYPE_WIKI,
 } from "../constants.js";
 import {
     addNewUploadFile,
@@ -54,7 +54,8 @@ import {
     unlockDocument,
     updateFolderMetadata,
     updateMetadata,
-    updatePermissions
+    updatePermissions,
+    getFolderProperties,
 } from "./actions.js";
 import * as load_ascendant_hierarchy from "./actions-helpers/load-ascendant-hierarchy.js";
 import * as load_folder_content from "./actions-helpers/load-folder-content.js";
@@ -72,8 +73,8 @@ describe("Store actions", () => {
             commit: jest.fn(),
             state: {
                 project_id,
-                current_folder_ascendant_hierarchy: []
-            }
+                current_folder_ascendant_hierarchy: [],
+            },
         };
     });
 
@@ -84,13 +85,13 @@ describe("Store actions", () => {
                 title: "Project Documentation",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             const service = {
-                root_item
+                root_item,
             };
 
             const loadFolderContent = jest.spyOn(load_folder_content, "loadFolderContent");
@@ -117,9 +118,9 @@ describe("Store actions", () => {
                 status: 403,
                 error_json: {
                     error: {
-                        message: "User can't access project"
-                    }
-                }
+                        message: "User can't access project",
+                    },
+                },
             });
 
             await loadRootFolder(context);
@@ -134,9 +135,9 @@ describe("Store actions", () => {
                 status: 404,
                 error_json: {
                     error: {
-                        message: error_message
-                    }
-                }
+                        message: error_message,
+                    },
+                },
             });
 
             await loadRootFolder(context);
@@ -154,9 +155,9 @@ describe("Store actions", () => {
                 status: 404,
                 error_json: {
                     error: {
-                        i18n_error_message: error_message
-                    }
-                }
+                        i18n_error_message: error_message,
+                    },
+                },
             });
 
             await loadRootFolder(context);
@@ -188,9 +189,9 @@ describe("Store actions", () => {
                 title: "Project Documentation",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             context.state.current_folder = current_folder;
@@ -217,9 +218,9 @@ describe("Store actions", () => {
                 title: "Project Documentation",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             getItem.mockReturnValue(Promise.resolve(folder_to_fetch));
@@ -246,9 +247,9 @@ describe("Store actions", () => {
                 title: "Project Documentation",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             const folder_to_fetch = {
@@ -256,9 +257,9 @@ describe("Store actions", () => {
                 title: "Project Documentation",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             getItem.mockReturnValue(Promise.resolve(folder_to_fetch));
@@ -284,17 +285,17 @@ describe("Store actions", () => {
                 id: 2,
                 title: "folder A",
                 owner: {
-                    id: 101
+                    id: 101,
                 },
-                last_update_date: "2018-08-07T16:42:49+02:00"
+                last_update_date: "2018-08-07T16:42:49+02:00",
             };
             const folder_b = {
                 id: 3,
                 title: "folder B",
                 owner: {
-                    id: 101
+                    id: 101,
                 },
-                last_update_date: "2018-08-07T16:42:49+02:00"
+                last_update_date: "2018-08-07T16:42:49+02:00",
             };
 
             context.state.current_folder_ascendant_hierarchy = [folder_a, folder_b];
@@ -312,17 +313,17 @@ describe("Store actions", () => {
                 id: 2,
                 title: "folder A",
                 owner: {
-                    id: 101
+                    id: 101,
                 },
-                last_update_date: "2018-08-07T16:42:49+02:00"
+                last_update_date: "2018-08-07T16:42:49+02:00",
             };
             const folder_b = {
                 id: 3,
                 title: "folder B",
                 owner: {
-                    id: 101
+                    id: 101,
                 },
-                last_update_date: "2018-08-07T16:42:49+02:00"
+                last_update_date: "2018-08-07T16:42:49+02:00",
             };
 
             context.state.current_folder_ascendant_hierarchy = [folder_a, folder_b];
@@ -340,17 +341,17 @@ describe("Store actions", () => {
                 id: 2,
                 title: "folder A",
                 owner: {
-                    id: 101
+                    id: 101,
                 },
-                last_update_date: "2018-08-07T16:42:49+02:00"
+                last_update_date: "2018-08-07T16:42:49+02:00",
             };
             const folder_b = {
                 id: 3,
                 title: "folder B",
                 owner: {
-                    id: 101
+                    id: 101,
                 },
-                last_update_date: "2018-08-07T16:42:49+02:00"
+                last_update_date: "2018-08-07T16:42:49+02:00",
             };
 
             context.state.current_folder_ascendant_hierarchy = [folder_a, folder_b];
@@ -382,8 +383,8 @@ describe("Store actions", () => {
             const context = {
                 state: {
                     user_id: 102,
-                    project_id: 110
-                }
+                    project_id: 110,
+                },
             };
 
             await setUserPreferenciesForFolder(context, [folder_id, should_be_closed]);
@@ -398,8 +399,8 @@ describe("Store actions", () => {
             const context = {
                 state: {
                     user_id: 102,
-                    project_id: 110
-                }
+                    project_id: 110,
+                },
             };
 
             await setUserPreferenciesForFolder(context, [folder_id, should_be_closed]);
@@ -414,8 +415,8 @@ describe("Store actions", () => {
             const context = {
                 state: {
                     user_id: 102,
-                    project_id: 110
-                }
+                    project_id: 110,
+                },
             };
 
             const addUserLegacyUIPreferency = jest
@@ -445,7 +446,7 @@ describe("Store actions", () => {
                 id: 66,
                 title: "whatever",
                 type: "empty",
-                obsolescence_date: null
+                obsolescence_date: null,
             };
             const parent = { id: 2, title: "my folder", type: "folder", is_expanded: true };
             const current_folder = parent;
@@ -479,9 +480,9 @@ describe("Store actions", () => {
                 status: 400,
                 error_json: {
                     error: {
-                        message: error_message
-                    }
-                }
+                        message: error_message,
+                    },
+                },
             });
             const parent = { id: 2, title: "my folder", type: "folder", is_expanded: true };
             const current_folder = parent;
@@ -525,7 +526,7 @@ describe("Store actions", () => {
             expect(context.commit).toHaveBeenCalledWith("addDocumentToFoldedFolder", [
                 collapsed_folder_of_created_item,
                 item,
-                false
+                false,
             ]);
             expect(context.commit).toHaveBeenCalledWith("addJustCreatedItemToFolderContent", item);
         });
@@ -556,7 +557,7 @@ describe("Store actions", () => {
                 title: "filename.txt",
                 description: "",
                 type: TYPE_FILE,
-                file_properties: { file: file_name_properties }
+                file_properties: { file: file_name_properties },
             };
 
             getItem.mockReturnValue(Promise.resolve(item));
@@ -574,7 +575,7 @@ describe("Store actions", () => {
                 is_uploading: true,
                 progress: 0,
                 uploader,
-                upload_error: null
+                upload_error: null,
             };
 
             await createNewItem(context, [item, folder_of_created_item, current_folder]);
@@ -587,7 +588,7 @@ describe("Store actions", () => {
             expect(context.commit).toHaveBeenCalledWith("addDocumentToFoldedFolder", [
                 folder_of_created_item,
                 expected_fake_item_with_uploader,
-                true
+                true,
             ]);
             expect(context.commit).toHaveBeenCalledWith(
                 "addFileInUploadsList",
@@ -607,7 +608,7 @@ describe("Store actions", () => {
                 title: "filename.txt",
                 description: "",
                 type: TYPE_FILE,
-                file_properties: { file: file_name_properties }
+                file_properties: { file: file_name_properties },
             };
 
             getItem.mockReturnValue(Promise.resolve(item));
@@ -625,7 +626,7 @@ describe("Store actions", () => {
                 is_uploading: true,
                 progress: 0,
                 uploader,
-                upload_error: null
+                upload_error: null,
             };
 
             await createNewItem(context, [item, collapsed_folder_of_created_item, current_folder]);
@@ -638,7 +639,7 @@ describe("Store actions", () => {
             expect(context.commit).toHaveBeenCalledWith("addDocumentToFoldedFolder", [
                 collapsed_folder_of_created_item,
                 expected_fake_item_with_uploader,
-                false
+                false,
             ]);
             expect(context.commit).toHaveBeenCalledWith(
                 "addFileInUploadsList",
@@ -662,7 +663,7 @@ describe("Store actions", () => {
                 title: "filename.txt",
                 description: "",
                 type: TYPE_FILE,
-                file_properties: { file: file_name_properties }
+                file_properties: { file: file_name_properties },
             };
 
             getItem.mockReturnValue(Promise.resolve(item));
@@ -680,7 +681,7 @@ describe("Store actions", () => {
                 is_uploading: true,
                 progress: 0,
                 uploader,
-                upload_error: null
+                upload_error: null,
             };
 
             await createNewItem(context, [item, extended_folder_of_created_item, current_folder]);
@@ -693,7 +694,7 @@ describe("Store actions", () => {
             expect(context.commit).toHaveBeenCalledWith("addDocumentToFoldedFolder", [
                 extended_folder_of_created_item,
                 expected_fake_item_with_uploader,
-                true
+                true,
             ]);
             expect(context.commit).toHaveBeenCalledWith(
                 "addFileInUploadsList",
@@ -730,7 +731,7 @@ describe("Store actions", () => {
                 is_uploading: true,
                 progress: 0,
                 uploader,
-                upload_error: null
+                upload_error: null,
             };
             expect(context.commit).toHaveBeenCalledWith(
                 "addJustCreatedItemToFolderContent",
@@ -760,7 +761,7 @@ describe("Store actions", () => {
                 is_uploading: true,
                 progress: 0,
                 uploader,
-                upload_error: null
+                upload_error: null,
             };
             expect(uploadFile).toHaveBeenCalledWith(
                 context,
@@ -815,8 +816,8 @@ describe("Store actions", () => {
         beforeEach(() => {
             item = {
                 uploader: {
-                    abort: jest.fn()
-                }
+                    abort: jest.fn(),
+                },
             };
         });
 
@@ -847,8 +848,8 @@ describe("Store actions", () => {
         beforeEach(() => {
             item = {
                 uploader: {
-                    abort: jest.fn()
-                }
+                    abort: jest.fn(),
+                },
             };
         });
 
@@ -876,8 +877,15 @@ describe("Store actions", () => {
 
             expect(uploadVersion).not.toHaveBeenCalled();
         });
-        it("upload a new version of file", async () => {
-            const item = { id: 45, lock_info: null };
+
+        it("uploads a new version of the file and releases the edition lock", async () => {
+            const item = {
+                id: 45,
+                lock_info: null,
+                title: "Electronic document management for dummies.pdf",
+            };
+            const NO_LOCK = false;
+
             context.state.folder_content = [{ id: 45 }];
             const dropped_file = { name: "filename.txt", size: 123, type: "text/plain" };
 
@@ -890,6 +898,14 @@ describe("Store actions", () => {
             await createNewFileVersion(context, [item, dropped_file]);
 
             expect(uploadVersion).toHaveBeenCalled();
+            expect(createNewVersion).toHaveBeenCalledWith(
+                item,
+                "Electronic document management for dummies.pdf",
+                "",
+                dropped_file,
+                NO_LOCK,
+                undefined
+            );
         });
     });
     describe("createNewFileVersionFromModal", () => {
@@ -920,7 +936,7 @@ describe("Store actions", () => {
                 updated_file,
                 version_title,
                 version_changelog,
-                is_version_locked
+                is_version_locked,
             ]);
 
             expect(createNewVersion).toHaveBeenCalled();
@@ -938,22 +954,16 @@ describe("Store actions", () => {
             const version_title = "My new version";
             const version_changelog = "Changed the version because...";
 
-            expect.assertions(3);
-            try {
-                await createNewFileVersionFromModal(context, [
-                    item,
-                    update_fail,
-                    version_title,
-                    version_changelog
-                ]);
-            } catch (e) {
-                expect(createNewVersion).toHaveBeenCalled();
-                expect(context.commit).toHaveBeenCalledWith(
-                    "error/setModalError",
-                    expect.anything()
-                );
-                expect(uploadVersion).not.toHaveBeenCalled();
-            }
+            const promise_create_new_file_version = createNewFileVersionFromModal(context, [
+                item,
+                update_fail,
+                version_title,
+                version_changelog,
+            ]);
+            await expect(promise_create_new_file_version).rejects.toBeDefined();
+            expect(createNewVersion).toHaveBeenCalled();
+            expect(context.commit).toHaveBeenCalledWith("error/setModalError", expect.anything());
+            expect(uploadVersion).not.toHaveBeenCalled();
         });
 
         it("throws an error when there is an error 400 with the version creation", async () => {
@@ -962,7 +972,7 @@ describe("Store actions", () => {
             const update_fail = {};
 
             mockFetchError(createNewVersion, {
-                status: 400
+                status: 400,
             });
 
             const version_title = "My new version";
@@ -972,7 +982,7 @@ describe("Store actions", () => {
                 item,
                 update_fail,
                 version_title,
-                version_changelog
+                version_changelog,
             ]);
 
             expect(createNewVersion).toHaveBeenCalled();
@@ -1007,7 +1017,7 @@ describe("Store actions", () => {
                 new_html_content,
                 version_title,
                 version_changelog,
-                is_version_locked
+                is_version_locked,
             ]);
 
             expect(postEmbeddedFile).toHaveBeenCalled();
@@ -1025,22 +1035,16 @@ describe("Store actions", () => {
                 throw new Error("nope");
             });
 
-            expect.assertions(2);
-            try {
-                await createNewEmbeddedFileVersionFromModal(context, [
-                    item,
-                    new_html_content,
-                    version_title,
-                    version_changelog,
-                    is_version_locked
-                ]);
-            } catch (e) {
-                expect(postEmbeddedFile).toHaveBeenCalled();
-                expect(context.commit).toHaveBeenCalledWith(
-                    "error/setModalError",
-                    expect.anything()
-                );
-            }
+            const promise_new_embedded_file = createNewEmbeddedFileVersionFromModal(context, [
+                item,
+                new_html_content,
+                version_title,
+                version_changelog,
+                is_version_locked,
+            ]);
+            await expect(promise_new_embedded_file).rejects.toBeDefined();
+            expect(postEmbeddedFile).toHaveBeenCalled();
+            expect(context.commit).toHaveBeenCalledWith("error/setModalError", expect.anything());
         });
     });
 
@@ -1065,7 +1069,7 @@ describe("Store actions", () => {
                 page_name,
                 version_title,
                 version_changelog,
-                is_version_locked
+                is_version_locked,
             ]);
 
             expect(postWiki).toHaveBeenCalled();
@@ -1083,22 +1087,16 @@ describe("Store actions", () => {
                 throw new Error("nope");
             });
 
-            expect.assertions(2);
-            try {
-                await createNewWikiVersionFromModal(context, [
-                    item,
-                    page_name,
-                    version_title,
-                    version_changelog,
-                    is_version_locked
-                ]);
-            } catch (e) {
-                expect(postWiki).toHaveBeenCalled();
-                expect(context.commit).toHaveBeenCalledWith(
-                    "error/setModalError",
-                    expect.anything()
-                );
-            }
+            const promise_create_new_wiki = createNewWikiVersionFromModal(context, [
+                item,
+                page_name,
+                version_title,
+                version_changelog,
+                is_version_locked,
+            ]);
+            await expect(promise_create_new_wiki).rejects.toBeDefined();
+            expect(postWiki).toHaveBeenCalled();
+            expect(context.commit).toHaveBeenCalledWith("error/setModalError", expect.anything());
         });
     });
 
@@ -1125,7 +1123,7 @@ describe("Store actions", () => {
                 new_link_url,
                 version_title,
                 version_changelog,
-                is_version_locked
+                is_version_locked,
             ]);
 
             expect(postLinkVersion).toHaveBeenCalled();
@@ -1143,22 +1141,16 @@ describe("Store actions", () => {
                 throw new Error("nope");
             });
 
-            expect.assertions(2);
-            try {
-                await createNewLinkVersionFromModal(context, [
-                    item,
-                    new_link_url,
-                    version_title,
-                    version_changelog,
-                    is_version_locked
-                ]);
-            } catch (e) {
-                expect(postLinkVersion).toHaveBeenCalled();
-                expect(context.commit).toHaveBeenCalledWith(
-                    "error/setModalError",
-                    expect.anything()
-                );
-            }
+            const promise_new_link_version = createNewLinkVersionFromModal(context, [
+                item,
+                new_link_url,
+                version_title,
+                version_changelog,
+                is_version_locked,
+            ]);
+            await expect(promise_new_link_version).rejects.toBeDefined();
+            expect(postLinkVersion).toHaveBeenCalled();
+            expect(context.commit).toHaveBeenCalledWith("error/setModalError", expect.anything());
         });
     });
 
@@ -1168,22 +1160,22 @@ describe("Store actions", () => {
         beforeEach(() => {
             folder = {
                 title: "My folder",
-                id: 123
+                id: 123,
             };
 
             item = {
                 parent_id: folder.id,
                 is_uploading_new_version: false,
                 uploader: {
-                    abort: jest.fn()
-                }
+                    abort: jest.fn(),
+                },
             };
 
             context = {
                 commit: jest.fn(),
                 state: {
-                    files_uploads_list: [item]
-                }
+                    files_uploads_list: [item],
+                },
             };
         });
 
@@ -1231,9 +1223,9 @@ describe("Store actions", () => {
                 title: "Project Documentation",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             const item = {
@@ -1241,9 +1233,9 @@ describe("Store actions", () => {
                 title: "My embedded file",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             context.state.current_folder = current_folder;
@@ -1260,22 +1252,17 @@ describe("Store actions", () => {
                 throw new Error("nope");
             });
 
-            expect.assertions(2);
-            try {
-                await loadDocumentWithAscendentHierarchy(context, 42);
-            } catch (e) {
-                expect(loadAscendantHierarchy).not.toHaveBeenCalled();
-
-                expect(context.commit).toHaveBeenCalledWith(
-                    "error/setItemLoadingError",
-                    "Internal server error"
-                );
-            }
+            await expect(loadDocumentWithAscendentHierarchy(context, 42)).rejects.toBeDefined();
+            expect(loadAscendantHierarchy).not.toHaveBeenCalled();
+            expect(context.commit).toHaveBeenCalledWith(
+                "error/setItemLoadingError",
+                "Internal server error"
+            );
         });
 
         it("throw error permission error if user does not have enough permissions", async () => {
             mockFetchError(getItem, {
-                status: 403
+                status: 403,
             });
 
             await loadDocumentWithAscendentHierarchy(context, 42);
@@ -1289,9 +1276,9 @@ describe("Store actions", () => {
                 status: 400,
                 error_json: {
                     error: {
-                        i18n_error_message: "My translated error"
-                    }
-                }
+                        i18n_error_message: "My translated error",
+                    },
+                },
             });
 
             await loadDocumentWithAscendentHierarchy(context, 42);
@@ -1306,7 +1293,7 @@ describe("Store actions", () => {
         it("throw internal server error if something bad happens", async () => {
             mockFetchError(getItem, {
                 status: 400,
-                response: {}
+                response: {},
             });
 
             await loadDocumentWithAscendentHierarchy(context, 42);
@@ -1326,15 +1313,15 @@ describe("Store actions", () => {
             item_to_delete = {
                 id: 123,
                 title: "My file",
-                type: TYPE_FILE
+                type: TYPE_FILE,
             };
 
             context = {
                 state: {
                     folder_content: [item_to_delete],
-                    currently_previewed_item: null
+                    currently_previewed_item: null,
                 },
-                commit: jest.fn()
+                commit: jest.fn(),
             };
         });
 
@@ -1342,7 +1329,7 @@ describe("Store actions", () => {
             const file_item = {
                 id: 111,
                 title: "My File",
-                type: TYPE_FILE
+                type: TYPE_FILE,
             };
 
             const deleteFile = jest
@@ -1361,7 +1348,7 @@ describe("Store actions", () => {
             const link_item = {
                 id: 222,
                 title: "My Link",
-                type: TYPE_LINK
+                type: TYPE_LINK,
             };
 
             jest.spyOn(rest_querier, "deleteLink").mockReturnValue(Promise.resolve());
@@ -1377,7 +1364,7 @@ describe("Store actions", () => {
             const embedded_file_item = {
                 id: 222,
                 title: "My embedded file",
-                type: TYPE_EMBEDDED
+                type: TYPE_EMBEDDED,
             };
 
             const deleteEmbeddedFile = jest
@@ -1396,7 +1383,7 @@ describe("Store actions", () => {
             const wiki_item = {
                 id: 222,
                 title: "My Wiki",
-                type: TYPE_WIKI
+                type: TYPE_WIKI,
             };
 
             const deleteWiki = jest
@@ -1417,7 +1404,7 @@ describe("Store actions", () => {
             const empty_doc_item = {
                 id: 222,
                 title: "My empty document",
-                type: TYPE_EMPTY
+                type: TYPE_EMPTY,
             };
 
             const deleteEmptyDocument = jest
@@ -1436,7 +1423,7 @@ describe("Store actions", () => {
             const folder_item = {
                 id: 222,
                 title: "My folder",
-                type: TYPE_FOLDER
+                type: TYPE_FOLDER,
             };
 
             const additional_options = { delete_associated_wiki_page: true };
@@ -1468,24 +1455,6 @@ describe("Store actions", () => {
             );
         });
 
-        it("resets currentlyPreviewedItem when it references the deleted item", async () => {
-            jest.spyOn(rest_querier, "deleteFile").mockReturnValue(Promise.resolve());
-
-            context.state.currently_previewed_item = item_to_delete;
-
-            await deleteItem(context, [item_to_delete]);
-
-            expect(context.commit).toHaveBeenCalledWith(
-                "removeItemFromFolderContent",
-                item_to_delete
-            );
-            expect(context.commit).toHaveBeenCalledWith("updateCurrentlyPreviewedItem", null);
-            expect(context.commit).toHaveBeenCalledWith(
-                "clipboard/emptyClipboardAfterItemDeletion",
-                item_to_delete
-            );
-        });
-
         it("display error if something wrong happens", async () => {
             const deleteFolder = jest
                 .spyOn(rest_querier, "deleteFolder")
@@ -1493,13 +1462,13 @@ describe("Store actions", () => {
             const folder_item = {
                 id: 222,
                 title: "My folder",
-                type: TYPE_FOLDER
+                type: TYPE_FOLDER,
             };
 
             context.state.currently_previewed_item = item_to_delete;
 
             mockFetchError(deleteFolder, {
-                status: 400
+                status: 400,
             });
 
             await deleteItem(context, [folder_item]);
@@ -1517,7 +1486,7 @@ describe("Store actions", () => {
             const folder_item = {
                 id: 222,
                 title: "My folder",
-                type: TYPE_FOLDER
+                type: TYPE_FOLDER,
             };
 
             context.state.currently_previewed_item = item_to_delete;
@@ -1526,9 +1495,9 @@ describe("Store actions", () => {
                 error_json: {
                     error: {
                         code: 404,
-                        i18n_error_message: "not found"
-                    }
-                }
+                        i18n_error_message: "not found",
+                    },
+                },
             });
 
             await deleteItem(context, [folder_item]);
@@ -1552,15 +1521,15 @@ describe("Store actions", () => {
             getParents = jest.spyOn(rest_querier, "getParents");
         });
 
-        it("it should return a collection of the items referencing the same wiki page", async () => {
+        it("should return a collection of the items referencing the same wiki page", async () => {
             const wiki_1 = {
                 item_name: "wiki 1",
-                item_id: 1
+                item_id: 1,
             };
 
             const wiki_2 = {
                 item_name: "wiki 2",
-                item_id: 2
+                item_id: 2,
             };
 
             getItemsReferencingSameWikiPage.mockReturnValue([wiki_1, wiki_2]);
@@ -1569,18 +1538,18 @@ describe("Store actions", () => {
                 .mockReturnValueOnce(
                     Promise.resolve([
                         {
-                            title: "Project documentation"
-                        }
+                            title: "Project documentation",
+                        },
                     ])
                 )
                 .mockReturnValueOnce(
                     Promise.resolve([
                         {
-                            title: "Project documentation"
+                            title: "Project documentation",
                         },
                         {
-                            title: "Folder 1"
-                        }
+                            title: "Folder 1",
+                        },
                     ])
                 );
 
@@ -1588,8 +1557,8 @@ describe("Store actions", () => {
                 title: "wiki 3",
                 wiki_properties: {
                     page_name: "A wiki page",
-                    page_id: 123
-                }
+                    page_id: 123,
+                },
             };
 
             const referencers = await getWikisReferencingSameWikiPage(context, target_wiki);
@@ -1597,24 +1566,24 @@ describe("Store actions", () => {
             expect(referencers).toEqual([
                 {
                     path: "/Project documentation/wiki 1",
-                    id: 1
+                    id: 1,
                 },
                 {
                     path: "/Project documentation/Folder 1/wiki 2",
-                    id: 2
-                }
+                    id: 2,
+                },
             ]);
         });
 
-        it("it should return null if there is a rest exception", async () => {
+        it("should return null if there is a rest exception", async () => {
             const wiki_1 = {
                 item_name: "wiki 1",
-                item_id: 1
+                item_id: 1,
             };
 
             const wiki_2 = {
                 item_name: "wiki 2",
-                item_id: 2
+                item_id: 2,
             };
 
             getItemsReferencingSameWikiPage.mockReturnValue([wiki_1, wiki_2]);
@@ -1624,8 +1593,8 @@ describe("Store actions", () => {
                 title: "wiki 3",
                 wiki_properties: {
                     page_name: "A wiki page",
-                    page_id: 123
-                }
+                    page_id: 123,
+                },
             };
 
             const referencers = await getWikisReferencingSameWikiPage(context, target_wiki);
@@ -1647,11 +1616,11 @@ describe("Store actions", () => {
             getItem = jest.spyOn(rest_querier, "getItem");
         });
 
-        it("it should lock a file and then update its information", async () => {
+        it("should lock a file and then update its information", async () => {
             const item_to_lock = {
                 id: 123,
                 title: "My file",
-                type: TYPE_FILE
+                type: TYPE_FILE,
             };
 
             getItem.mockReturnValue(
@@ -1660,8 +1629,8 @@ describe("Store actions", () => {
                     title: "My file",
                     type: TYPE_FILE,
                     lock_info: {
-                        user_id: 123
-                    }
+                        user_id: 123,
+                    },
                 })
             );
 
@@ -1669,24 +1638,24 @@ describe("Store actions", () => {
 
             expect(context.commit).toHaveBeenCalledWith("replaceLockInfoWithNewVersion", [
                 item_to_lock,
-                { user_id: 123 }
+                { user_id: 123 },
             ]);
         });
 
-        it("it should raise a translated exception when user can't lock a document", async () => {
+        it("should raise a translated exception when user can't lock a document", async () => {
             const item_to_lock = {
                 id: 123,
                 title: "My file",
-                type: TYPE_FILE
+                type: TYPE_FILE,
             };
 
             mockFetchError(postLockFile, {
                 status: 400,
                 error_json: {
                     error: {
-                        i18n_error_message: "Item is already locked"
-                    }
-                }
+                        i18n_error_message: "Item is already locked",
+                    },
+                },
             });
 
             await lockDocument(context, item_to_lock);
@@ -1697,33 +1666,29 @@ describe("Store actions", () => {
             );
         });
 
-        it("it should raise a generic error message when no information is given when user can't lock a document", async () => {
+        it("should raise a generic error message when no information is given when user can't lock a document", async () => {
             const item_to_lock = {
                 id: 123,
                 title: "My file",
-                type: TYPE_FILE
+                type: TYPE_FILE,
             };
 
             mockFetchError(postLockFile, {
-                status: 400
+                status: 400,
             });
 
-            expect.assertions(1);
-            try {
-                await lockDocument(context, item_to_lock);
-            } catch (e) {
-                expect(context.commit).toHaveBeenCalledWith(
-                    "error/setLockError",
-                    "Internal server error"
-                );
-            }
+            await expect(lockDocument(context, item_to_lock)).rejects.toBeDefined();
+            expect(context.commit).toHaveBeenCalledWith(
+                "error/setLockError",
+                "Internal server error"
+            );
         });
 
-        it("it should lock an embedded file and then update its information", async () => {
+        it("should lock an embedded file and then update its information", async () => {
             const item_to_lock = {
                 id: 123,
                 title: "My file",
-                type: TYPE_EMBEDDED
+                type: TYPE_EMBEDDED,
             };
 
             getItem.mockReturnValue(
@@ -1732,8 +1697,8 @@ describe("Store actions", () => {
                     title: "My embedded",
                     type: TYPE_EMBEDDED,
                     lock_info: {
-                        user_id: 123
-                    }
+                        user_id: 123,
+                    },
                 })
             );
 
@@ -1741,7 +1706,7 @@ describe("Store actions", () => {
 
             expect(context.commit).toHaveBeenCalledWith("replaceLockInfoWithNewVersion", [
                 item_to_lock,
-                { user_id: 123 }
+                { user_id: 123 },
             ]);
         });
     });
@@ -1757,11 +1722,11 @@ describe("Store actions", () => {
             getItem = jest.spyOn(rest_querier, "getItem");
         });
 
-        it("it should unlock a file and then update its information", async () => {
+        it("should unlock a file and then update its information", async () => {
             const item_to_lock = {
                 id: 123,
                 title: "My file",
-                type: TYPE_FILE
+                type: TYPE_FILE,
             };
 
             getItem.mockReturnValue(
@@ -1770,8 +1735,8 @@ describe("Store actions", () => {
                     title: "My file",
                     type: TYPE_FILE,
                     lock_info: {
-                        user_id: 123
-                    }
+                        user_id: 123,
+                    },
                 })
             );
 
@@ -1779,15 +1744,15 @@ describe("Store actions", () => {
 
             expect(context.commit).toHaveBeenCalledWith("replaceLockInfoWithNewVersion", [
                 item_to_lock,
-                { user_id: 123 }
+                { user_id: 123 },
             ]);
         });
 
-        it("it should unlock an embedded file and then update its information", async () => {
+        it("should unlock an embedded file and then update its information", async () => {
             const item_to_lock = {
                 id: 123,
                 title: "My file",
-                type: TYPE_EMBEDDED
+                type: TYPE_EMBEDDED,
             };
 
             getItem.mockReturnValue(
@@ -1796,8 +1761,8 @@ describe("Store actions", () => {
                     title: "My embedded",
                     type: TYPE_EMBEDDED,
                     lock_info: {
-                        user_id: 123
-                    }
+                        user_id: 123,
+                    },
                 })
             );
 
@@ -1805,7 +1770,7 @@ describe("Store actions", () => {
 
             expect(context.commit).toHaveBeenCalledWith("replaceLockInfoWithNewVersion", [
                 item_to_lock,
-                { user_id: 123 }
+                { user_id: 123 },
             ]);
         });
     });
@@ -1817,9 +1782,9 @@ describe("Store actions", () => {
             context = {
                 state: {
                     user_id: 102,
-                    project_id: 110
+                    project_id: 110,
                 },
-                commit: jest.fn()
+                commit: jest.fn(),
             };
 
             jest.spyOn(rest_querier, "removeUserPreferenceForEmbeddedDisplay").mockReturnValue(
@@ -1827,10 +1792,10 @@ describe("Store actions", () => {
             );
         });
 
-        it("it should store in user preferences the new mode and then update the store value", async () => {
+        it("should store in user preferences the new mode and then update the store value", async () => {
             const item = {
                 id: 123,
-                title: "My embedded"
+                title: "My embedded",
             };
 
             await displayEmbeddedInLargeMode(context, item);
@@ -1846,9 +1811,9 @@ describe("Store actions", () => {
             context = {
                 state: {
                     user_id: 102,
-                    project_id: 110
+                    project_id: 110,
                 },
-                commit: jest.fn()
+                commit: jest.fn(),
             };
 
             jest.spyOn(rest_querier, "setNarrowModeForEmbeddedDisplay").mockReturnValue(
@@ -1856,10 +1821,10 @@ describe("Store actions", () => {
             );
         });
 
-        it("it should store in user preferences the new mode and then update the store value", async () => {
+        it("should store in user preferences the new mode and then update the store value", async () => {
             const item = {
                 id: 123,
-                title: "My embedded"
+                title: "My embedded",
             };
 
             await displayEmbeddedInNarrowMode(context, item);
@@ -1874,14 +1839,14 @@ describe("Store actions", () => {
         beforeEach(() => {
             context = {
                 commit: jest.fn(),
-                dispatch: jest.fn()
+                dispatch: jest.fn(),
             };
 
             getItem = jest.spyOn(rest_querier, "getItem");
         });
 
-        describe("Given item is not the current folder - ", () => {
-            it("it should send null when obsolesence date is permanent", async () => {
+        describe("Given item is not the current folder -", () => {
+            it("should send null when obsolesence date is permanent", async () => {
                 jest.spyOn(rest_querier, "putFileMetadata").mockReturnValue(Promise.resolve());
 
                 const item = {
@@ -1890,10 +1855,10 @@ describe("Store actions", () => {
                     type: TYPE_FILE,
                     description: "n",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "none",
-                    obsolescence_date: ""
+                    obsolescence_date: "",
                 };
 
                 const item_to_update = {
@@ -1901,15 +1866,15 @@ describe("Store actions", () => {
                     title: "My new title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "draft",
                     obsolescence_date: null,
-                    metadata: []
+                    metadata: [],
                 };
 
                 const current_folder = {
-                    id: 456
+                    id: 456,
                 };
 
                 getItem.mockReturnValue(Promise.resolve(item_to_update));
@@ -1929,7 +1894,7 @@ describe("Store actions", () => {
                     item_to_update
                 );
             });
-            it("it should update file metadata", async () => {
+            it("should update file metadata", async () => {
                 jest.spyOn(rest_querier, "putFileMetadata").mockReturnValue(Promise.resolve());
 
                 const item = {
@@ -1938,10 +1903,10 @@ describe("Store actions", () => {
                     type: TYPE_FILE,
                     description: "n",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "none",
-                    obsolescence_date: null
+                    obsolescence_date: null,
                 };
 
                 const item_to_update = {
@@ -1949,15 +1914,15 @@ describe("Store actions", () => {
                     title: "My new title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "draft",
                     obsolescence_date: null,
-                    metadata: []
+                    metadata: [],
                 };
 
                 const current_folder = {
-                    id: 456
+                    id: 456,
                 };
 
                 getItem.mockReturnValue(Promise.resolve(item_to_update));
@@ -1977,7 +1942,7 @@ describe("Store actions", () => {
                     item_to_update
                 );
             });
-            it("it should update embedded file metadata", async () => {
+            it("should update embedded file metadata", async () => {
                 jest.spyOn(rest_querier, "putEmbeddedFileMetadata").mockReturnValue(
                     Promise.resolve()
                 );
@@ -1987,10 +1952,10 @@ describe("Store actions", () => {
                     type: TYPE_EMBEDDED,
                     description: "nop",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "none",
-                    obsolescence_date: null
+                    obsolescence_date: null,
                 };
 
                 const item_to_update = {
@@ -1998,15 +1963,15 @@ describe("Store actions", () => {
                     title: "My new embedded  title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "draft",
                     obsolescence_date: null,
-                    metadata: []
+                    metadata: [],
                 };
 
                 const current_folder = {
-                    id: 456
+                    id: 456,
                 };
 
                 getItem.mockReturnValue(Promise.resolve(item_to_update));
@@ -2026,7 +1991,7 @@ describe("Store actions", () => {
                     item_to_update
                 );
             });
-            it("it should update link document metadata", async () => {
+            it("should update link document metadata", async () => {
                 jest.spyOn(rest_querier, "putLinkMetadata").mockReturnValue(Promise.resolve());
                 const item = {
                     id: 123,
@@ -2034,10 +1999,10 @@ describe("Store actions", () => {
                     type: TYPE_LINK,
                     description: "ui",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "none",
-                    obsolescence_date: null
+                    obsolescence_date: null,
                 };
 
                 const item_to_update = {
@@ -2045,17 +2010,17 @@ describe("Store actions", () => {
                     title: "My new link title",
                     description: "My link description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "draft",
                     obsolescence_date: null,
-                    metadata: []
+                    metadata: [],
                 };
 
                 getItem.mockReturnValue(Promise.resolve(item_to_update));
 
                 const current_folder = {
-                    id: 456
+                    id: 456,
                 };
 
                 await updateMetadata(context, [item, item_to_update, current_folder]);
@@ -2074,7 +2039,7 @@ describe("Store actions", () => {
                 );
             });
 
-            it("it should update wiki document metadata", async () => {
+            it("should update wiki document metadata", async () => {
                 jest.spyOn(rest_querier, "putWikiMetadata").mockReturnValue(Promise.resolve());
                 const item = {
                     id: 123,
@@ -2082,10 +2047,10 @@ describe("Store actions", () => {
                     type: TYPE_WIKI,
                     description: "on",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "none",
-                    obsolescence_date: null
+                    obsolescence_date: null,
                 };
 
                 const item_to_update = {
@@ -2093,15 +2058,15 @@ describe("Store actions", () => {
                     title: "My new wiki title",
                     description: "My wiki description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "approved",
                     obsolescence_date: null,
-                    metadata: []
+                    metadata: [],
                 };
 
                 const current_folder = {
-                    id: 456
+                    id: 456,
                 };
 
                 getItem.mockReturnValue(Promise.resolve(item_to_update));
@@ -2121,7 +2086,7 @@ describe("Store actions", () => {
                     item_to_update
                 );
             });
-            it("it should update empty document metadata", async () => {
+            it("should update empty document metadata", async () => {
                 jest.spyOn(rest_querier, "putEmptyDocumentMetadata").mockReturnValue(
                     Promise.resolve()
                 );
@@ -2131,10 +2096,10 @@ describe("Store actions", () => {
                     type: TYPE_EMPTY,
                     description: "on",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "none",
-                    obsolescence_date: null
+                    obsolescence_date: null,
                 };
 
                 const item_to_update = {
@@ -2142,15 +2107,15 @@ describe("Store actions", () => {
                     title: "My new empty title",
                     description: "My empty description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "rejected",
                     obsolescence_date: null,
-                    metadata: []
+                    metadata: [],
                 };
 
                 const current_folder = {
-                    id: 456
+                    id: 456,
                 };
 
                 getItem.mockReturnValue(Promise.resolve(item_to_update));
@@ -2171,7 +2136,7 @@ describe("Store actions", () => {
                 );
             });
 
-            it("it should update folder metadata", async () => {
+            it("should update folder metadata", async () => {
                 jest.spyOn(rest_querier, "putEmptyDocumentMetadata").mockReturnValue(
                     Promise.resolve()
                 );
@@ -2181,8 +2146,8 @@ describe("Store actions", () => {
                     type: TYPE_FOLDER,
                     description: "on",
                     owner: {
-                        id: 102
-                    }
+                        id: 102,
+                    },
                 };
 
                 const item_to_update = {
@@ -2190,26 +2155,26 @@ describe("Store actions", () => {
                     title: "My new empty title",
                     description: "My empty description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     metadata: [
                         {
                             short_name: "status",
                             list_value: [
                                 {
-                                    id: 103
-                                }
-                            ]
-                        }
+                                    id: 103,
+                                },
+                            ],
+                        },
                     ],
                     status: {
                         value: "rejected",
-                        recursion: "none"
-                    }
+                        recursion: "none",
+                    },
                 };
 
                 const current_folder = {
-                    id: 456
+                    id: 456,
                 };
 
                 getItem.mockReturnValue(Promise.resolve(item_to_update));
@@ -2219,7 +2184,7 @@ describe("Store actions", () => {
                     item_to_update,
                     current_folder,
                     [],
-                    "none"
+                    "none",
                 ]);
 
                 expect(context.commit).toHaveBeenCalledWith(
@@ -2237,8 +2202,8 @@ describe("Store actions", () => {
             });
         });
 
-        describe("Given I'm updating current folder - ", () => {
-            it("it should update file metadata", async () => {
+        describe("Given I'm updating current folder -", () => {
+            it("should update file metadata", async () => {
                 jest.spyOn(rest_querier, "putFileMetadata").mockReturnValue(Promise.resolve());
 
                 const item = {
@@ -2247,10 +2212,10 @@ describe("Store actions", () => {
                     type: TYPE_FOLDER,
                     description: "n",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "none",
-                    obsolescence_date: null
+                    obsolescence_date: null,
                 };
 
                 const item_to_update = {
@@ -2258,15 +2223,15 @@ describe("Store actions", () => {
                     title: "My new title",
                     description: "My description",
                     owner: {
-                        id: 102
+                        id: 102,
                     },
                     status: "draft",
                     obsolescence_date: null,
-                    metadata: []
+                    metadata: [],
                 };
 
                 const current_folder = {
-                    id: 123
+                    id: 123,
                 };
 
                 getItem.mockReturnValue(Promise.resolve(item_to_update));
@@ -2283,7 +2248,7 @@ describe("Store actions", () => {
         const permissions = {
             can_read: [],
             can_write: [],
-            can_manage: []
+            can_manage: [],
         };
 
         let context;
@@ -2293,15 +2258,15 @@ describe("Store actions", () => {
                 commit: jest.fn(),
                 dispatch: jest.fn(),
                 state: {
-                    current_folder: { id: 999, type: TYPE_FOLDER }
-                }
+                    current_folder: { id: 999, type: TYPE_FOLDER },
+                },
             };
         });
 
-        const testPermissionsUpdateSuccess = async type => {
+        const testPermissionsUpdateSuccess = async (type) => {
             const item = {
                 id: 123,
-                type: type
+                type: type,
             };
 
             jest.spyOn(rest_querier, "getItem").mockReturnValue(Promise.resolve(item));
@@ -2464,7 +2429,7 @@ describe("Store actions", () => {
                 "putEmptyDocumentPermissions"
             );
             mockFetchError(putEmptyDocumentPermissions, {
-                status: 500
+                status: 500,
             });
             const handleErrorsModal = jest.spyOn(error_handler, "handleErrorsForModal");
 
@@ -2517,8 +2482,8 @@ describe("Store actions", () => {
             context = {
                 commit: jest.fn(),
                 state: {
-                    folder_content: [{ id: 100, type: TYPE_FILE }]
-                }
+                    folder_content: [{ id: 100, type: TYPE_FILE }],
+                },
             };
         });
 
@@ -2529,10 +2494,10 @@ describe("Store actions", () => {
                 type: TYPE_FILE,
                 description: "n",
                 owner: {
-                    id: 102
+                    id: 102,
                 },
                 status: "none",
-                obsolescence_date: null
+                obsolescence_date: null,
             };
 
             jest.spyOn(rest_querier, "getItem").mockReturnValue(Promise.resolve(item));
@@ -2544,20 +2509,8 @@ describe("Store actions", () => {
             expect(context.commit).toHaveBeenCalledWith("toggleQuickLook", true);
             expect(context.commit).toHaveBeenCalledWith("stopLoadingCurrentlyPreviewedItem");
         });
-
-        it("does not load item if it's already loaded in store", async () => {
-            await toggleQuickLook(context, 100);
-
-            expect(context.commit).not.toHaveBeenCalledWith("beginLoadingCurrentlyPreviewedItem");
-            expect(context.commit).toHaveBeenCalledWith("updateCurrentlyPreviewedItem", {
-                id: 100,
-                type: TYPE_FILE
-            });
-            expect(context.commit).toHaveBeenCalledWith("toggleQuickLook", true);
-            expect(context.commit).toHaveBeenCalledWith("stopLoadingCurrentlyPreviewedItem");
-        });
     });
-    describe("createNewVersionFromEmpty - ", () => {
+    describe("createNewVersionFromEmpty -", () => {
         let context,
             postNewLinkVersionFromEmpty,
             postNewEmbeddedFileVersionFromEmpty,
@@ -2567,8 +2520,8 @@ describe("Store actions", () => {
             context = {
                 commit: jest.fn(),
                 state: {
-                    folder_content: [{ id: 123, type: TYPE_EMPTY }]
-                }
+                    folder_content: [{ id: 123, type: TYPE_EMPTY }],
+                },
             };
 
             postNewLinkVersionFromEmpty = jest.spyOn(rest_querier, "postNewLinkVersionFromEmpty");
@@ -2583,17 +2536,17 @@ describe("Store actions", () => {
             const item_to_update = {
                 type: TYPE_EMPTY,
                 link_properties: {
-                    link_url: "https://example.test"
-                }
+                    link_url: "https://example.test",
+                },
             };
             const item = {
                 id: 123,
-                type: TYPE_EMPTY
+                type: TYPE_EMPTY,
             };
 
             const updated_item = {
                 id: 123,
-                type: TYPE_LINK
+                type: TYPE_LINK,
             };
             jest.spyOn(rest_querier, "getItem").mockReturnValue(Promise.resolve(updated_item));
             postNewLinkVersionFromEmpty.mockReturnValue(Promise.resolve());
@@ -2624,17 +2577,17 @@ describe("Store actions", () => {
             const item_to_update = {
                 type: TYPE_EMPTY,
                 embedded_properties: {
-                    content: "content"
-                }
+                    content: "content",
+                },
             };
             const item = {
                 id: 123,
-                type: TYPE_EMPTY
+                type: TYPE_EMPTY,
             };
 
             const updated_item = {
                 id: 123,
-                type: TYPE_EMBEDDED
+                type: TYPE_EMBEDDED,
             };
 
             jest.spyOn(rest_querier, "getItem").mockReturnValue(Promise.resolve(updated_item));
@@ -2665,17 +2618,17 @@ describe("Store actions", () => {
             const item_to_update = {
                 type: TYPE_EMPTY,
                 file_properties: {
-                    file: ""
-                }
+                    file: "",
+                },
             };
             const item = {
                 id: 123,
-                type: TYPE_EMPTY
+                type: TYPE_EMPTY,
             };
 
             const updated_item = {
                 id: 123,
-                type: TYPE_FILE
+                type: TYPE_FILE,
             };
             const uploadVersionFromEmpty = jest
                 .spyOn(upload_file, "uploadVersionFromEmpty")
@@ -2709,17 +2662,17 @@ describe("Store actions", () => {
             const item_to_update = {
                 type: TYPE_EMPTY,
                 link_properties: {
-                    link_url: "https://example.test"
-                }
+                    link_url: "https://example.test",
+                },
             };
             const item = {
                 id: 123,
-                type: TYPE_EMPTY
+                type: TYPE_EMPTY,
             };
 
             const updated_item = {
                 id: 123,
-                type: TYPE_LINK
+                type: TYPE_LINK,
             };
 
             const getItem = jest.spyOn(rest_querier, "getItem");
@@ -2727,27 +2680,24 @@ describe("Store actions", () => {
                 throw new Error("Failed to update");
             });
 
-            expect.assertions(6);
-            try {
-                await createNewVersionFromEmpty(context, [TYPE_LINK, item, item_to_update]);
-            } catch (e) {
-                expect(postNewLinkVersionFromEmpty).toHaveBeenCalled();
-                expect(handleErrorsForModal).toHaveBeenCalled();
-                expect(getItem).not.toHaveBeenCalled();
-                expect(context.commit).not.toHaveBeenCalledWith(
-                    "removeItemFromFolderContent",
-                    updated_item
-                );
-                expect(context.commit).not.toHaveBeenCalledWith(
-                    "addJustCreatedItemToFolderContent",
-                    updated_item
-                );
-
-                expect(context.commit).not.toHaveBeenCalledWith(
-                    "updateCurrentItemForQuickLokDisplay",
-                    updated_item
-                );
-            }
+            await expect(
+                createNewVersionFromEmpty(context, [TYPE_LINK, item, item_to_update])
+            ).rejects.toBeDefined();
+            expect(postNewLinkVersionFromEmpty).toHaveBeenCalled();
+            expect(handleErrorsForModal).toHaveBeenCalled();
+            expect(getItem).not.toHaveBeenCalled();
+            expect(context.commit).not.toHaveBeenCalledWith(
+                "removeItemFromFolderContent",
+                updated_item
+            );
+            expect(context.commit).not.toHaveBeenCalledWith(
+                "addJustCreatedItemToFolderContent",
+                updated_item
+            );
+            expect(context.commit).not.toHaveBeenCalledWith(
+                "updateCurrentItemForQuickLokDisplay",
+                updated_item
+            );
         });
     });
 
@@ -2760,9 +2710,9 @@ describe("Store actions", () => {
                 title: "Project Documentation",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             context.state.item = item;
@@ -2780,21 +2730,62 @@ describe("Store actions", () => {
                 title: "test",
                 owner: {
                     id: 101,
-                    display_name: "user (login)"
+                    display_name: "user (login)",
                 },
-                last_update_date: "2018-08-21T17:01:49+02:00"
+                last_update_date: "2018-08-21T17:01:49+02:00",
             };
 
             context.state.item = item;
 
             getItem = jest.spyOn(rest_querier, "getItem").mockReturnValue(Promise.reject("error"));
 
-            expect.assertions(1);
-            try {
-                await loadDocument(context, 3);
-            } catch (e) {
-                expect(getItem).toHaveBeenCalled();
-            }
+            await expect(loadDocument(context, 3)).rejects.toBeDefined();
+            expect(getItem).toHaveBeenCalled();
+        });
+    });
+
+    describe("getFolderProperties", () => {
+        it("Given a folder item, it's properties are fetched and returned", async () => {
+            const getItemWithSize = jest.spyOn(rest_querier, "getItemWithSize").mockReturnValue(
+                Promise.resolve({
+                    id: 3,
+                    title: "Project Documentation",
+                    folder_properties: {
+                        total_size: 102546950,
+                        nb_files: 27,
+                    },
+                })
+            );
+
+            const properties = await getFolderProperties(context, [
+                {
+                    id: 3,
+                    title: "Project Documentation",
+                },
+            ]);
+
+            expect(getItemWithSize).toHaveBeenCalled();
+            expect(properties).toEqual({
+                total_size: 102546950,
+                nb_files: 27,
+            });
+        });
+
+        it("Handles errors when it fails", async () => {
+            const getItemWithSize = jest
+                .spyOn(rest_querier, "getItemWithSize")
+                .mockReturnValue(Promise.reject("error"));
+
+            await expect(
+                getFolderProperties(context, [
+                    {
+                        id: 3,
+                        title: "Project Documentation",
+                    },
+                ])
+            ).rejects.toBeDefined();
+
+            expect(getItemWithSize).toHaveBeenCalled();
         });
     });
 });

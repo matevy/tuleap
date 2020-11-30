@@ -212,8 +212,8 @@ class Statistics_ServicesUsageDao extends DataAccessObject
 
     public function getGitRead()
     {
-        $start_date = new DateTime('@'.$this->start_date);
-        $end_date   = new DateTime('@'.$this->end_date);
+        $start_date = new DateTime('@' . $this->start_date);
+        $end_date   = new DateTime('@' . $this->end_date);
         $start_day  = $start_date->format('Ymd');
         $end_day    = $end_date->format('Ymd');
         $sql = "SELECT project_id AS group_id, SUM(git_read) AS result
@@ -385,7 +385,7 @@ class Statistics_ServicesUsageDao extends DataAccessObject
                     GROUP BY artifact_group_list.group_id";
             return $this->retrieve($sql);
         } else {
-            return array();
+            return [];
         }
     }
 
@@ -400,7 +400,7 @@ class Statistics_ServicesUsageDao extends DataAccessObject
                     GROUP BY artifact_group_list.group_id";
             return $this->retrieve($sql);
         } else {
-            return array();
+            return [];
         }
     }
 

@@ -27,7 +27,7 @@ use Docman_Item;
 
 final class DocmanViewURLBuilder
 {
-    public static function buildUrl(string $prefix, array $parameters, bool $convert_parameters_html_entities = true) : string
+    public static function buildUrl(string $prefix, array $parameters, bool $convert_parameters_html_entities = true): string
     {
         $url = '';
         if ($prefix) {
@@ -48,7 +48,7 @@ final class DocmanViewURLBuilder
         return $url;
     }
 
-    private static function buildPopupUrl(string $url, bool $injs = false) : string
+    private static function buildPopupUrl(string $url, bool $injs = false): string
     {
         if ($injs) {
             return "javascript:help_window(\\'$url\\')";
@@ -66,7 +66,7 @@ final class DocmanViewURLBuilder
         array $url_parameters,
         bool $injs = false,
         bool $popup = false
-    ) : string {
+    ): string {
         $item_specific_action_url = $item->accept(new ItemActionURLVisitor(), $url_parameters);
         if ($item_specific_action_url !== null) {
             return (string) $item_specific_action_url;
@@ -77,7 +77,7 @@ final class DocmanViewURLBuilder
             $prefix = $params['default_url'];
         }
         if ($popup && isset($params['pv']) && $params['pv'] !== false) {
-            $url = self::buildUrl($prefix, $url_parameters, !$injs);
+            $url = self::buildUrl($prefix, $url_parameters, ! $injs);
             return self::buildPopupUrl($url, $injs);
         }
         if (isset($params['pv']) && $params['pv'] !== false) {
@@ -86,6 +86,6 @@ final class DocmanViewURLBuilder
         if (isset($params['report']) && $params['report'] !== false) {
             $url_parameters['report'] = $params['report'];
         }
-        return self::buildUrl($prefix, $url_parameters, !$injs);
+        return self::buildUrl($prefix, $url_parameters, ! $injs);
     }
 }

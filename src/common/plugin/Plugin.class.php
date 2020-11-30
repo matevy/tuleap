@@ -19,22 +19,24 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use FastRoute\RouteCollector;
-use Tuleap\Layout\IncludeAssets;
+use Psr\Log\LoggerInterface;
 
 /**
  * Plugin
  */
-class Plugin implements PFO_Plugin
+class Plugin implements PFO_Plugin //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
 {
-    /** @var BackendLogger */
+    /** @var LoggerInterface */
     private $backend_logger;
 
-    var $id;
-    var $pluginInfo;
+    public $id;
+    public $pluginInfo;
     /** @var Map */
-    var $hooks;
-    protected $_scope;
+    public $hooks;
+    /**
+     * @var int
+     */
+    private $scope;
 
     /** @var bool */
     private $is_custom = false;
@@ -49,7 +51,6 @@ class Plugin implements PFO_Plugin
 
     public const SCOPE_SYSTEM  = 0;
     public const SCOPE_PROJECT = 1;
-    public const SCOPE_USER    = 2;
 
     /**
      * @var bool True if the plugin should be disabled for all projects on installation
@@ -61,14 +62,17 @@ class Plugin implements PFO_Plugin
     /**
      * @var array List of allowed projects
      */
-    protected $allowedForProject = array();
+    protected $allowedForProject = [];
 
+    /**
+     * @param int|null $id
+     */
     public function __construct($id = -1)
     {
         $this->id            = $id;
         $this->hooks         = new Map();
 
-        $this->_scope = Plugin::SCOPE_SYSTEM;
+        $this->scope = self::SCOPE_SYSTEM;
     }
 
     /**
@@ -82,7 +86,7 @@ class Plugin implements PFO_Plugin
 
     public function isAllowed($group_id)
     {
-        if (!isset($this->allowedForProject[$group_id])) {
+        if (! isset($this->allowedForProject[$group_id])) {
             $this->allowedForProject[$group_id] = PluginManager::instance()->isPluginAllowedForProject($this, $group_id);
         }
         return $this->allowedForProject[$group_id];
@@ -102,7 +106,7 @@ class Plugin implements PFO_Plugin
      * You just need to add $this->addHook(Event::SERVICES_ALLOWED_FOR_PROJECT)
      * to your plugin to automatically manage presence of service in projects
      */
-    public function services_allowed_for_project(array $params)
+    public function services_allowed_for_project(array $params) //phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
     {
         $this->addServiceForProject($params['project'], $params['services']);
     }
@@ -128,7 +132,7 @@ class Plugin implements PFO_Plugin
 
     public function getPluginInfo()
     {
-        if (!is_a($this->pluginInfo, 'PluginInfo')) {
+        if (! is_a($this->pluginInfo, 'PluginInfo')) {
             $this->pluginInfo = new PluginInfo($this);
         }
         return $this->pluginInfo;
@@ -149,9 +153,9 @@ class Plugin implements PFO_Plugin
     public function addHook($hook, $callback = null, $recallHook = false)
     {
         if ($this->hooks->containsKey($hook)) {
-            throw new RuntimeException('A plugin cannot listen to the same hook several time. Please check '.$hook);
+            throw new RuntimeException('A plugin cannot listen to the same hook several time. Please check ' . $hook);
         }
-        $value = array();
+        $value = [];
         $value['hook']       = $hook;
         $value['callback']   = $callback ?: $this->deduceCallbackFromHook($hook);
         $value['recallHook'] = $recallHook;
@@ -186,30 +190,33 @@ class Plugin implements PFO_Plugin
         return $hook;
     }
 
-    public function getScope()
+    public function getScope(): int
     {
-        return $this->_scope;
+        return $this->scope;
     }
 
-    public function setScope($s)
+    /**
+     * @psalm-param self::SCOPE_* $s
+     */
+    public function setScope(int $s): void
     {
-        $this->_scope = $s;
+        $this->scope = $s;
     }
 
     public function getPluginEtcRoot()
     {
-        return $GLOBALS['sys_custompluginsroot'] . '/' . $this->getName() .'/etc';
+        return ForgeConfig::get('sys_custompluginsroot') . '/' . $this->getName() . '/etc';
     }
 
     public function getEtcTemplatesPath()
     {
-        return $GLOBALS['sys_custompluginsroot'] . '/' . $this->getName() . '/templates';
+        return ForgeConfig::get('sys_custompluginsroot') . '/' . $this->getName() . '/templates';
     }
 
     public function _getPluginPath()
     {
         $trace = debug_backtrace();
-        trigger_error("Plugin->_getPluginPath() is deprecated. Please use Plugin->getPluginPath() instead in ". $trace[0]['file'] ." at line ". $trace[0]['line'], E_USER_WARNING);
+        trigger_error("Plugin->_getPluginPath() is deprecated. Please use Plugin->getPluginPath() instead in " . $trace[0]['file'] . " at line " . $trace[0]['line'], E_USER_WARNING);
         return $this->getPluginPath();
     }
 
@@ -223,42 +230,42 @@ class Plugin implements PFO_Plugin
     public function getPluginPath()
     {
         $pm = $this->_getPluginManager();
-        if (isset($GLOBALS['sys_pluginspath'])) {
-            $path = $GLOBALS['sys_pluginspath'];
+        if (ForgeConfig::get('sys_pluginspath')) {
+            $path = ForgeConfig::get('sys_pluginspath');
         } else {
-            $path="";
+            $path = "";
         }
         if ($pm->pluginIsCustom($this)) {
-            $path = $GLOBALS['sys_custompluginspath'];
+            $path = ForgeConfig::get('sys_custompluginspath');
         }
-        return $path .'/'. $this->getName();
+        return $path . '/' . $this->getName();
     }
 
     public function _getThemePath()
     {
         $trace = debug_backtrace();
-        trigger_error("Plugin->_getThemePath() is deprecated. Please use Plugin->getThemePath() instead in ". $trace[0]['file'] ." at line ". $trace[0]['line'], E_USER_WARNING);
+        trigger_error("Plugin->_getThemePath() is deprecated. Please use Plugin->getThemePath() instead in " . $trace[0]['file'] . " at line " . $trace[0]['line'], E_USER_WARNING);
         return $this->getThemePath();
     }
 
     public function getThemePath()
     {
-        if (!isset($GLOBALS['sys_user_theme'])) {
+        if (ForgeConfig::get('sys_user_theme') === false) {
             return null;
         }
 
         $pluginName = $this->getName();
 
-        $paths  = array($GLOBALS['sys_custompluginspath'], $GLOBALS['sys_pluginspath']);
-        $roots  = array($GLOBALS['sys_custompluginsroot'], $GLOBALS['sys_pluginsroot']);
-        $dir    = '/'. $pluginName .'/www/themes/';
-        $dirs   = array($dir.$GLOBALS['sys_user_theme'], $dir.'default');
-        $dir    = '/'. $pluginName .'/themes/';
-        $themes = array($dir.$GLOBALS['sys_user_theme'], $dir.'default');
+        $paths  = [ForgeConfig::get('sys_custompluginspath'), ForgeConfig::get('sys_pluginspath')];
+        $roots  = [ForgeConfig::get('sys_custompluginsroot'), ForgeConfig::get('sys_pluginsroot')];
+        $dir    = '/' . $pluginName . '/www/themes/';
+        $dirs   = [$dir . ForgeConfig::get('sys_user_theme'), $dir . 'default'];
+        $dir    = '/' . $pluginName . '/themes/';
+        $themes = [$dir . ForgeConfig::get('sys_user_theme'), $dir . 'default'];
         foreach ($dirs as $kd => $dir) {
             foreach ($roots as $kr => $root) {
-                if (is_dir($root.$dir) && $paths[$kr].$themes[$kd]) {
-                    return $paths[$kr].$themes[$kd];
+                if (is_dir($root . $dir) && $paths[$kr] . $themes[$kd]) {
+                    return $paths[$kr] . $themes[$kd];
                 }
             }
         }
@@ -274,14 +281,14 @@ class Plugin implements PFO_Plugin
      */
     public function getFilesystemPath()
     {
-        if (!$this->filesystem_path) {
+        if (! $this->filesystem_path) {
             $pm = $this->_getPluginManager();
             if ($pm->pluginIsCustom($this)) {
-                $path = $GLOBALS['sys_custompluginsroot'];
+                $path = ForgeConfig::get('sys_custompluginsroot');
             } else {
-                $path = $GLOBALS['sys_pluginsroot'];
+                $path = ForgeConfig::get('sys_pluginsroot');
             }
-            if ($path[strlen($path) -1 ] != '/') {
+            if ($path[strlen($path) - 1] != '/') {
                 $path .= '/';
             }
             $this->filesystem_path = $path . $this->getName();
@@ -356,7 +363,7 @@ class Plugin implements PFO_Plugin
      */
     public function getReadme()
     {
-        return $this->getFilesystemPath().'/README';
+        return $this->getFilesystemPath() . '/README';
     }
 
     /**
@@ -364,7 +371,7 @@ class Plugin implements PFO_Plugin
      */
     public function getDependencies()
     {
-        return array();
+        return [];
     }
 
     public function setIsCustom($is_custom)
@@ -387,24 +394,12 @@ class Plugin implements PFO_Plugin
         return '';
     }
 
-    /**
-     * @return BackendLogger
-     */
-    protected function getBackendLogger()
+    protected function getBackendLogger(): LoggerInterface
     {
         if (! $this->backend_logger) {
-            $this->backend_logger = new BackendLogger();
+            $this->backend_logger = BackendLogger::getDefaultLogger();
         }
         return $this->backend_logger;
-    }
-
-    protected function getMinifiedAssetHTML()
-    {
-        $include_assets = new IncludeAssets(
-            $this->getFilesystemPath() . '/www/assets',
-            $this->getPluginPath() . '/assets'
-        );
-        return $include_assets->getHTMLSnippet($this->getName().'.js');
     }
 
     public function currentRequestIsForPlugin()
@@ -424,7 +419,7 @@ class Plugin implements PFO_Plugin
         $dao->removeOrphanWidgetsByNames($names);
     }
 
-    protected function getRouteHandler(string $handler) : array
+    protected function getRouteHandler(string $handler): array
     {
         return [
             'plugin'  => $this->getName(),

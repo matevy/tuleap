@@ -26,13 +26,13 @@
 class ArtifactGlobalNotificationFactory
 {
 
-    function getGlobalNotificationsForTracker($tracker_id)
+    public function getGlobalNotificationsForTracker($tracker_id)
     {
-        $notifs = array();
+        $notifs = [];
         $dao = new ArtifactGlobalNotificationDao(CodendiDataAccess::instance());
         $dar = $dao->searchByTrackerId($tracker_id);
         if ($dar) {
-            $notifs = array();
+            $notifs = [];
             while ($dar->valid()) {
                 $row = $dar->current();
                 $notifs[$row['id']] = new ArtifactGlobalNotification($row);
@@ -42,22 +42,22 @@ class ArtifactGlobalNotificationFactory
         return $notifs;
     }
 
-    function addGlobalNotificationForTracker($tracker_id)
+    public function addGlobalNotificationForTracker($tracker_id)
     {
         $dao = new ArtifactGlobalNotificationDao(CodendiDataAccess::instance());
         return $dao->create($tracker_id, '', 0, 1);
     }
-    function removeGlobalNotificationForTracker($global_notification_id, $tracker_id)
+    public function removeGlobalNotificationForTracker($global_notification_id, $tracker_id)
     {
         $dao = new ArtifactGlobalNotificationDao(CodendiDataAccess::instance());
         return $dao->delete($global_notification_id, $tracker_id);
     }
-    function updateGlobalNotification($global_notification_id, $data)
+    public function updateGlobalNotification($global_notification_id, $data)
     {
         $dao = new ArtifactGlobalNotificationDao(CodendiDataAccess::instance());
         $feedback = '';
         $arr_email_address = preg_split('/[,;]/D', $data['addresses']);
-        if (!util_validateCCList($arr_email_address, $feedback, false)) {
+        if (! util_validateCCList($arr_email_address, $feedback, false)) {
             $GLOBALS['Response']->addFeedback('error', $feedback);
         } else {
             $data['addresses'] = util_cleanup_emails(implode(', ', $arr_email_address));
@@ -68,14 +68,14 @@ class ArtifactGlobalNotificationFactory
     /**
      * @param bool $update true if the action is an update one (update artifact, add comment, ...) false if it is a create action.
      */
-    function getAllAddresses($tracker_id, $update = false)
+    public function getAllAddresses($tracker_id, $update = false)
     {
-        $addresses = array();
+        $addresses = [];
         $notifs = $this->getGlobalNotificationsForTracker($tracker_id);
         foreach ($notifs as $key => $nop) {
-            if (!$update || $notifs[$key]->isAllUpdates()) {
+            if (! $update || $notifs[$key]->isAllUpdates()) {
                 foreach (preg_split('/[,;]/D', $notifs[$key]->getAddresses()) as $address) {
-                    $addresses[] = array('address' => $address, 'check_permissions' => $notifs[$key]->isCheckPermissions());
+                    $addresses[] = ['address' => $address, 'check_permissions' => $notifs[$key]->isCheckPermissions()];
                 }
             }
         }

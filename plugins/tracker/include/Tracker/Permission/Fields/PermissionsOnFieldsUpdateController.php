@@ -49,8 +49,6 @@ class PermissionsOnFieldsUpdateController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @return void
      * @throws ForbiddenException
@@ -77,20 +75,20 @@ class PermissionsOnFieldsUpdateController implements DispatchableWithRequest
                     );
                     $layout->addFeedback(\Feedback::INFO, $GLOBALS['Language']->getText('project_admin_userperms', 'perm_upd'));
                     if ($request->get('origin') === 'fields-by-group') {
-                        $layout->redirect(ByGroupController::getUrl($tracker).'?selected_id='.$request->get('selected_id'));
+                        $layout->redirect(ByGroupController::getUrl($tracker) . '?selected_id=' . $request->get('selected_id'));
                     } else {
-                        $layout->redirect(ByFieldController::getUrl($tracker).'?selected_id='.$request->get('selected_id'));
+                        $layout->redirect(ByFieldController::getUrl($tracker) . '?selected_id=' . $request->get('selected_id'));
                     }
                 }
             }
         } else {
-            $layout->addFeedback(\Feedback::ERROR, $GLOBALS['Language']->getText('plugin_tracker_admin', 'access_denied'));
+            $layout->addFeedback(\Feedback::ERROR, dgettext('tuleap-tracker', 'Access denied. You don\'t have permissions to perform this action.'));
             $layout->redirect(TRACKER_BASE_URL . '/?tracker=' . $tracker->getId());
         }
     }
 
     public static function getUrl(\Tracker $tracker)
     {
-        return TRACKER_BASE_URL.self::URL.'/'.$tracker->getId();
+        return TRACKER_BASE_URL . self::URL . '/' . $tracker->getId();
     }
 }

@@ -19,7 +19,7 @@
 
 import { shallowMount, Wrapper } from "@vue/test-utils";
 import { createTaskboardLocalVue } from "../../../../helpers/local-vue-for-test";
-import { createStoreMock } from "../../../../../../../../../src/www/scripts/vue-components/store-wrapper-jest";
+import { createStoreMock } from "../../../../../../../../../src/scripts/vue-components/store-wrapper-jest";
 import ExpandButton from "./ExpandButton.vue";
 import { ColumnDefinition } from "../../../../type";
 import { RootState } from "../../../../store/type";
@@ -30,11 +30,11 @@ async function getWrapper(column: ColumnDefinition): Promise<Wrapper<ExpandButto
         mocks: {
             $store: createStoreMock({
                 state: {
-                    column: {}
-                } as RootState
-            })
+                    column: {},
+                } as RootState,
+            }),
         },
-        propsData: { column }
+        propsData: { column },
     });
 }
 
@@ -50,7 +50,7 @@ describe("ExpandButton", () => {
         const column: ColumnDefinition = { label: "Done" } as ColumnDefinition;
         const wrapper = await getWrapper(column);
 
-        const button = wrapper.find("[data-test=button]");
+        const button = wrapper.get("[data-test=button]");
         expect(button.classes("fa-plus-square")).toBe(true);
         expect(button.attributes("role")).toBe("button");
         expect(button.attributes("tabindex")).toBe("0");
@@ -61,7 +61,7 @@ describe("ExpandButton", () => {
         const column: ColumnDefinition = { label: "Done" } as ColumnDefinition;
         const wrapper = await getWrapper(column);
 
-        const button = wrapper.find("[data-test=button]");
+        const button = wrapper.get("[data-test=button]");
         button.trigger("click");
         expect(wrapper.vm.$store.dispatch).toHaveBeenCalledWith("column/expandColumn", column);
     });

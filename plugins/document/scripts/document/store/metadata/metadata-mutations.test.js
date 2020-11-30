@@ -20,13 +20,13 @@
 import { saveProjectMetadata } from "./metadata-mutations.js";
 
 describe("Metadata mutations", () => {
-    it("It loads metadata and set the loaded information to true", () => {
+    it("loads metadata and set the loaded information to true", () => {
         const metadata_list = [
             {
                 short_name: "status",
                 name: "status",
-                list_value: [100]
-            }
+                list_value: [100],
+            },
         ];
 
         const state = { project_metadata_list: [], has_loaded_metadata: false };

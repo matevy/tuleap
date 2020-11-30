@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2014 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2014 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -23,6 +23,9 @@ namespace Tuleap\Tracker\REST\Artifact;
 use Tracker_Chart_Data_Burndown;
 use Tuleap\REST\JsonCast;
 
+/**
+ * @psalm-immutable
+ */
 class BurndownRepresentation
 {
     public const ROUTE = 'burndown';
@@ -45,7 +48,7 @@ class BurndownRepresentation
     /**
      * @var array {@type float}
      */
-    public $points = array();
+    public $points = [];
 
     /**
      * @var bool Is cache calcul asked
@@ -60,24 +63,31 @@ class BurndownRepresentation
     /**
      * @var array {@type BurndownPointRepresentation}
      */
-    public $points_with_date = array();
+    public $points_with_date = [];
 
-    public function build(Tracker_Chart_Data_Burndown $data_burndown)
+    public function __construct(Tracker_Chart_Data_Burndown $data_burndown)
     {
         $this->start_date           = JsonCast::toDate($data_burndown->getTimePeriod()->getStartDate());
         $this->duration             = JsonCast::toInt($data_burndown->getTimePeriod()->getDuration());
         $this->capacity             = JsonCast::toFloat($data_burndown->getCapacity());
-        $this->points               = array_map(
-            array('\Tuleap\REST\JsonCast', 'toFloat'),
-            $data_burndown->getRemainingEffortWithoutNullValues()
-        );
+        $this->points               = self::getPoints($data_burndown);
         $this->is_under_calculation = JsonCast::toBoolean($data_burndown->isUnderCalcul());
         foreach ($data_burndown->getRemainingEffortsAtDate() as $timestamp => $burndown_effort) {
-            $this->points_with_date [] = new BurndownPointRepresentation($burndown_effort, $timestamp);
+            $this->points_with_date[] = new BurndownPointRepresentation($burndown_effort, $timestamp);
         }
 
-        $this->opening_days = array(1, 2, 3, 4, 5);
+        $this->opening_days = [1, 2, 3, 4, 5];
+    }
 
-        return $this;
+    /**
+     * @return float[]
+     */
+    private static function getPoints(Tracker_Chart_Data_Burndown $data_burndown): array
+    {
+        $points = [];
+        foreach ($data_burndown->getRemainingEffortWithoutNullValues() as $remaining_effort) {
+            $points[] = JsonCast::toFloat($remaining_effort);
+        }
+        return $points;
     }
 }

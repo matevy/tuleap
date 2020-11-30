@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2018-2019. All Rights Reserved.
+ * Copyright (c) Enalean, 2018-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,9 +21,10 @@
 
 namespace Tuleap\Git\HTTP;
 
-use Logger;
+use Psr\Log\LoggerInterface;
 use PermissionsManager;
 use PFUser;
+use Tuleap\Cryptography\ConcealedString;
 use User_LoginManager;
 use Tuleap\Git\Gerrit\ReplicationHTTPUserAuthenticator;
 use UserDao;
@@ -31,7 +32,7 @@ use UserDao;
 class HTTPAccessControl
 {
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -51,6 +52,10 @@ class HTTPAccessControl
     private $replication_http_user_authenticator;
 
     /**
+     * @var HTTPUserAccessKeyAuthenticator
+     */
+    private $access_key_authenticator;
+    /**
      * @var PermissionsManager
      */
     private $permissions_manager;
@@ -58,21 +63,29 @@ class HTTPAccessControl
      * @var UserDao
      */
     private $user_dao;
+    /**
+     * @var GitHTTPAskBasicAuthenticationChallenge
+     */
+    private $ask_basic_authentication_challenge;
 
     public function __construct(
-        Logger $logger,
+        LoggerInterface $logger,
         \ForgeAccess $forge_access,
         User_LoginManager $login_manager,
         ReplicationHTTPUserAuthenticator $replication_http_user_authenticator,
+        HTTPUserAccessKeyAuthenticator $access_key_authenticator,
         PermissionsManager $permissions_manager,
-        UserDao $user_dao
+        UserDao $user_dao,
+        GitHTTPAskBasicAuthenticationChallenge $ask_basic_authentication_challenge
     ) {
         $this->logger                              = $logger;
         $this->forge_access                        = $forge_access;
         $this->login_manager                       = $login_manager;
         $this->replication_http_user_authenticator = $replication_http_user_authenticator;
+        $this->access_key_authenticator            = $access_key_authenticator;
         $this->permissions_manager                 = $permissions_manager;
         $this->user_dao                            = $user_dao;
+        $this->ask_basic_authentication_challenge  = $ask_basic_authentication_challenge;
     }
 
     /**
@@ -82,13 +95,13 @@ class HTTPAccessControl
     {
         $user = null;
         if ($this->needAuthentication($repository, $git_operation)) {
-            $this->logger->debug('Repository '.$repository->getFullName().' need authentication');
+            $this->logger->debug('Repository ' . $repository->getFullName() . ' need authentication');
             $user = $this->authenticate($repository);
         }
         return $user;
     }
 
-    private function needAuthentication(\GitRepository $repository, GitHTTPOperation $git_operation) : bool
+    private function needAuthentication(\GitRepository $repository, GitHTTPOperation $git_operation): bool
     {
         return $this->forge_access->doesPlatformRequireLogin() ||
             $git_operation->isWrite() ||
@@ -112,20 +125,21 @@ class HTTPAccessControl
         return false;
     }
 
-    private function basicAuthenticationChallenge()
+    /**
+     * @psalm-return never-return
+     */
+    private function basicAuthenticationChallenge(): void
     {
-        header('WWW-Authenticate: Basic realm="'.\ForgeConfig::get('sys_name').' git authentication"');
-        header('HTTP/1.0 401 Unauthorized');
-        exit;
+        $this->ask_basic_authentication_challenge->askBasicAuthenticationChallenge();
     }
 
     /**
-     * @param \GitRepository $repository
      * @return \PFO_User
      */
     private function authenticate(\GitRepository $repository)
     {
-        if (! isset($_SERVER['PHP_AUTH_USER']) ||
+        if (
+            ! isset($_SERVER['PHP_AUTH_USER']) ||
             $_SERVER['PHP_AUTH_USER'] == '' ||
             ! isset($_SERVER['PHP_AUTH_PW']) ||
             $_SERVER['PHP_AUTH_PW'] == ''
@@ -137,7 +151,7 @@ class HTTPAccessControl
             $user = $this->replication_http_user_authenticator->authenticate(
                 $repository,
                 $_SERVER['PHP_AUTH_USER'],
-                $_SERVER['PHP_AUTH_PW']
+                new ConcealedString($_SERVER['PHP_AUTH_PW'])
             );
 
             $this->logger->debug('LOGGED AS ' . $user->getUnixName());
@@ -149,7 +163,22 @@ class HTTPAccessControl
         }
 
         try {
-            $user = $this->login_manager->authenticate($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
+            $user = $this->access_key_authenticator->getUser(
+                $_SERVER['PHP_AUTH_USER'],
+                new ConcealedString($_SERVER['PHP_AUTH_PW']),
+                \HTTPRequest::instance()->getIPAddress()
+            );
+        } catch (HTTPUserAccessKeyMisusageException $ex) {
+            $this->logger->debug('LOGIN ERROR ' . $exception->getMessage());
+            $this->basicAuthenticationChallenge();
+        }
+        if ($user !== null) {
+            $this->logger->debug('LOGGED AS ' . $user->getUnixName());
+            return $user;
+        }
+
+        try {
+            $user = $this->login_manager->authenticate($_SERVER['PHP_AUTH_USER'], new ConcealedString($_SERVER['PHP_AUTH_PW']));
             $this->logger->debug('LOGGED AS ' . $user->getUnixName());
             $this->updateLastAccessDateForUser($user);
             return $user;

@@ -56,13 +56,12 @@ class TransitionCreator
     }
 
     /**
-     * @return Transition
      * @throws \DataAccessQueryException
      * @throws \Tuleap\Tracker\Workflow\PostAction\Update\Internal\InvalidPostActionException
      * @throws \Tuleap\Tracker\Workflow\PostAction\Update\Internal\UnknownPostActionIdsException
      * @throws \Tuleap\Tracker\Workflow\Transition\Condition\ConditionsUpdateException
      */
-    public function createTransitionInState(State $state, Workflow $workflow, TransitionCreationParameters $parameters) : Transition
+    public function createTransitionInState(State $state, Workflow $workflow, TransitionCreationParameters $parameters): Transition
     {
         $transition = $this->transition_factory->createAndSaveTransition($workflow, $parameters);
 

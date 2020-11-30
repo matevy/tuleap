@@ -37,7 +37,6 @@ use Project;
 use Tracker_ArtifactDao;
 use Tracker_ArtifactFactory;
 use Tracker_FormElementFactory;
-use TrackerFactory;
 use Tuleap\AgileDashboard\ExplicitBacklog\ArtifactsInExplicitBacklogDao;
 use Tuleap\AgileDashboard\Milestone\ParentTrackerRetriever;
 use Tuleap\AgileDashboard\MonoMilestone\MonoMilestoneBacklogItemDao;
@@ -104,15 +103,13 @@ class ProjectBacklogResource
             $this->planning_factory,
             Tracker_ArtifactFactory::instance(),
             $tracker_form_element_factory,
-            TrackerFactory::instance(),
             $status_counter,
             $this->planning_permissions_manager,
             new AgileDashboard_Milestone_MilestoneDao(),
             $scrum_mono_milestone_checker,
             new TimeframeBuilder(
-                $tracker_form_element_factory,
                 new SemanticTimeframeBuilder(new SemanticTimeframeDao(), $tracker_form_element_factory),
-                new \BackendLogger()
+                \BackendLogger::getDefaultLogger()
             ),
             new MilestoneBurndownFieldChecker($tracker_form_element_factory)
         );
@@ -135,7 +132,7 @@ class ProjectBacklogResource
                 $tracker_form_element_factory
             ),
             new ArtifactsInExplicitBacklogDao(),
-            new \Tracker_Artifact_PriorityDao
+            new \Tracker_Artifact_PriorityDao()
         );
 
         $this->parent_tracker_retriever = new ParentTrackerRetriever($this->planning_factory);
@@ -146,10 +143,6 @@ class ProjectBacklogResource
      */
     public function get(PFUser $user, Project $project, $limit, $offset)
     {
-        if (! $this->limitValueIsAcceptable($limit)) {
-             throw new RestException(406, 'Maximum value for limit exceeded');
-        }
-
         try {
             $top_milestone = $this->milestone_factory->getVirtualTopMilestone($user, $project);
         } catch (Planning_NoPlanningsException $exception) {
@@ -157,12 +150,12 @@ class ProjectBacklogResource
         }
 
         if ($limit == 0) {
-            $backlog_items = array();
+            $backlog_items = [];
         } else {
             $backlog_items = $this->getBacklogItems($user, $top_milestone);
         }
 
-        $backlog_item_representations        = array();
+        $backlog_item_representations        = [];
         $backlog_item_representation_factory = new BacklogItemRepresentationFactory();
 
         foreach ($backlog_items as $backlog_item) {
@@ -172,7 +165,6 @@ class ProjectBacklogResource
         $this->sendAllowHeaders();
         $this->sendPaginationHeaders($limit, $offset, count($backlog_items));
 
-        $backlog  = new BacklogRepresentation();
         $contents = array_slice($backlog_item_representations, $offset, $limit);
 
         $accepted_trackers                   = $this->getAcceptedTrackers($user, $project);
@@ -180,7 +172,7 @@ class ProjectBacklogResource
 
         $parent_trackers = $this->parent_tracker_retriever->getCreatableParentTrackers($top_milestone, $user, $accepted_trackers);
 
-        return $backlog->build($contents, $accepted_trackers, $parent_trackers, $has_user_priority_change_permission);
+        return BacklogRepresentation::build($contents, $accepted_trackers, $parent_trackers, $has_user_priority_change_permission);
     }
 
     private function hasUserPriorityChangePermission(PFUser $user, Project $project)
@@ -192,11 +184,6 @@ class ProjectBacklogResource
         }
 
         return false;
-    }
-
-    private function limitValueIsAcceptable($limit)
-    {
-        return $limit <= self::MAX_LIMIT;
     }
 
     public function options(PFUser $user, Project $project, $limit, $offset)
@@ -226,7 +213,7 @@ class ProjectBacklogResource
         try {
             $top_milestone = $this->milestone_factory->getVirtualTopMilestone($user, $project);
         } catch (\Planning_NoPlanningsException $e) {
-            return array();
+            return [];
         }
 
         return $top_milestone->getPlanning()->getBacklogTrackers();

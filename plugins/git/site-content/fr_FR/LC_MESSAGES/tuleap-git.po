@@ -108,6 +108,9 @@ msgstr "Accès à la configuration générale"
 msgid "Access control template successfully saved."
 msgstr "Modèle de permission sauvegardé."
 
+msgid "Access to Git repositories"
+msgstr "Accès aux dépôts Git"
+
 msgid "Action"
 msgstr "Action"
 
@@ -252,9 +255,6 @@ msgstr ""
 msgid "As personal fork"
 msgstr "En tant que fork personnel"
 
-msgid "Authentication type"
-msgstr "Type d'identification"
-
 msgid "Authorize"
 msgstr "Autoriser"
 
@@ -272,9 +272,6 @@ msgstr "Id du dépôt Git non valide"
 
 msgid "Bad request."
 msgstr "La requête n'est pas valide."
-
-msgid "Basic"
-msgstr "Basique"
 
 msgid "Branches"
 msgstr "Branches"
@@ -329,8 +326,8 @@ msgstr "Cloner depuis les miroirs SSH"
 msgid "Clone or download"
 msgstr "Cloner ou télécharger"
 
-msgid "Clone or download:"
-msgstr "Cloner ou télécharger :"
+msgid "Command sent to remote gerrit servers"
+msgstr "Commande transmise au(x) serveur(s) gerrit"
 
 msgid "Commits"
 msgstr "Commits"
@@ -414,9 +411,6 @@ msgstr "Description"
 
 msgid "Details"
 msgstr "Détails"
-
-msgid "Digest"
-msgstr "Digest"
 
 msgid "Disconnect"
 msgstr "Déconnexion"
@@ -606,6 +600,9 @@ msgstr "Push Git"
 msgid "Git repositories"
 msgstr "Dépôts Git"
 
+msgid "Git repository"
+msgstr "Dépôt Git"
+
 msgid "Git repository does not belong to the project"
 msgstr "Le dépôt Git n'appartient pas au projet"
 
@@ -669,10 +666,10 @@ msgstr "Fichier d'identité"
 
 msgid ""
 "In order to make sure I have the correct access on Gerrit, it can be "
-"necessary to update my group and project membership"
+"necessary to update my group and project membership."
 msgstr ""
 "Pour avoir les bons droits sur Gerrit, il est parfois nécessaire de mettre à "
-"jour les groupes et les projets auxquels j'appartiens"
+"jour les groupes et les projets auxquels j'appartiens."
 
 #, php-format
 msgid "Into project <b>%1$s</b>"
@@ -773,23 +770,8 @@ msgstr "Nombre maximum de jours dans le passé"
 msgid "Maximum number of push by repository"
 msgstr "Nombre maximum de push par dépôt"
 
-msgid "Migrate"
-msgstr "Migrer"
-
-msgid "Migrate from Gitolite to Tuleap SSH keys management"
-msgstr "Migrer la gestion de la gestion des clés SSH de Gitolite à Tuleap"
-
 msgid "Migrate repo to Gerrit"
 msgstr "Migrer repo vers Gerrit"
-
-msgid ""
-"Migrate to Tuleap SSH keys management allows faster keys deployment. Once "
-"the migration is done it is not possible to go back to the Gitolite "
-"management."
-msgstr ""
-"Migrer la gestion des clés SSH de Gitolite à Tuleap permet de deployer les "
-"clés des utilisateurs plus rapidement. Une fois la migration réalisée, il "
-"n'est plus possible de revenir à la gestion des clés SSH par Gitolite."
 
 #, php-format
 msgid "Migration of %1$s to gerrit error"
@@ -813,6 +795,9 @@ msgstr "Miroirs"
 msgid "Missing repository id or project id"
 msgstr ""
 "Impossible de supprimer le dépôt de la base de données, paramètres invalides"
+
+msgid "Month"
+msgstr "Mois"
 
 msgid ""
 "Must be unique. The name \"projects\" and the hostname defined in .gitolite."
@@ -912,13 +897,6 @@ msgstr ""
 "Les projets contenant un ou plusieurs dépôts utilisant ce miroir ont été "
 "automatiquements ajoutés à la liste des projets autorisés. A partir de "
 "maintenant, seuls les projets autorisés pourront utiliser ce miroir."
-
-msgid ""
-"Old keys need to be pushed manually. All new keys are automatically pushed "
-"to the following Gerrit servers:"
-msgstr ""
-"Vos anciennes clés ne sont pas poussées automatiquement. Toute nouvelle clé "
-"sera automatiquement poussée sur les serveurs suivants :"
 
 msgid "Only one replication SSH key is allowed by server"
 msgstr "Seulement une clé SSH pour la réplication est acceptée par serveur"
@@ -1025,6 +1003,9 @@ msgstr "Projet retiré avec succès"
 #, php-format
 msgid "Projects allowed to use %1$s"
 msgstr "Projets autorisés à utiliser %1$s"
+
+msgid "Projects and groups membership"
+msgstr "Appartenance aux groupes et projets"
 
 msgid "Projects authorized to go over object's size limit"
 msgstr "Projets autorisés à dépasser la taille maximale des objets"
@@ -1210,11 +1191,12 @@ msgstr "Une erreur est survenue pendant la mise à jour du status de ce miroir."
 
 msgid ""
 "Starting Tuleap 8.14, we recommend you to use polling jobs. Please see <a "
-"href=\"/doc/en/git.html?#jenkins-webhooks\">Hudson Git Plugin</a>."
+"href=\"/doc/en/user-guide/code-versioning/git.html?#jenkins-webhooks"
+"\">Hudson Git Plugin</a>."
 msgstr ""
 "Depuis Tuleap 8.14 nous vous recommandons d'utiliser les opérations de "
-"\"polling\". Merci de consulter <a href=\"/doc/fr/user-guide/git.html?"
-"#jenkins-webhooks\">Hudson Git</a>"
+"\"polling\". Merci de consulter <a href=\"/doc/fr/user-guide/code-versioning/"
+"git.html?#jenkins-webhooks\">Hudson Git</a>"
 
 msgid "Submit"
 msgstr "Valider"
@@ -1240,8 +1222,8 @@ msgstr "Tâche crée pour restorer le dépôt"
 msgid "Tags"
 msgstr "Étiquettes"
 
-msgid "Target URL:"
-msgstr "URL cible :"
+msgid "Target URL"
+msgstr "URL cible"
 
 msgid "Template created"
 msgstr "Modèle créé"
@@ -1308,13 +1290,6 @@ msgid ""
 msgstr ""
 "La migration de ce dépôt vers le serveur Gerrit est en cours, merci de "
 "patienter quelques minutes."
-
-msgid ""
-"The migration to Tuleap SSH keys management has been started and will be "
-"done in a few minutes"
-msgstr ""
-"La migration à la gestion des clés par Tuleap a été démarrée et sera "
-"terminée dans quelques instants"
 
 #, php-format
 msgid "The notification is already enabled for this email %1$s"
@@ -1522,8 +1497,20 @@ msgstr "Jeton pour les outils d'intégration continues"
 msgid "Too long description"
 msgstr "Description trop longue"
 
+msgid "Total number of git commits"
+msgstr "Nombre total des commits git"
+
+msgid "Total number of git pushes"
+msgstr "Nombre total des push git"
+
 msgid "Total number of git read access"
 msgstr "Nombre total des accès en lecture git"
+
+msgid "Total number of repositories"
+msgstr "Nombre total des dépôts git"
+
+msgid "Total number of users"
+msgstr "Nombre total des utilisateurs git"
 
 msgid "Trigger a build after Git pushes in repository"
 msgstr "Déclencher un build après un push Git dans le dépôt"
@@ -1537,6 +1524,9 @@ msgstr ""
 
 msgid "URL"
 msgstr "URL"
+
+msgid "URL have been copied"
+msgstr "L'URL a été copiée"
 
 msgid "Unable to create template"
 msgstr "Impossible de créer le modèle"
@@ -1764,18 +1754,19 @@ msgstr ""
 "elles sont gérés par un serveur Gerrit distant. Ces modifications affectent "
 "uniquement %1$s et <strong>NE SONT PAS propagées vers Gerrit</strong>."
 
+msgid ""
+"You can use the following button to force push your <a href=\"%s\">ssh keys</"
+"a> to following gerrit servers:"
+msgstr ""
+"Vous pouvez utiliser le bouton suivant pour forcer la synchronisation de vos "
+"<a href=\"%s\">clefs SSH</a> sur les serveurs gerrit suivants : "
+
 msgid "You don't have permissions to see user groups."
 msgstr "Vous n'avez pas la permission de voir les groupes utilisateur."
 
-msgid "You may need to log into Gerrit first"
-msgstr "Cela nécessite parfois une connexion à Gerrit au préalable"
-
-msgid ""
-"You should consider switching to Basic Auth (here and, of course in gerrit."
-"config). Recent version of gerrit no longer support Digest."
+msgid "You may need to log into Gerrit first."
 msgstr ""
-"Vous devriez passer à l'authentification Basic Auth (ici et sur gerrit dans "
-"gerrit.config). Les versions récentes de gerrit ne supportent plus Digest."
+"Vous aurez probablement besoin de vous connecter à Gerrit au préalable."
 
 #, php-format
 msgid ""

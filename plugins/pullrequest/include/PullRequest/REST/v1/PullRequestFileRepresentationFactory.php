@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2016-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2016-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -28,7 +28,7 @@ class PullRequestFileRepresentationFactory
 {
 
     /**
-     * @var GitExec;
+     * @var GitExec
      */
     private $executor;
 
@@ -65,7 +65,8 @@ class PullRequestFileRepresentationFactory
         $modified_files_iterator->attachIterator(new \ArrayIterator($modified_files_line_stat));
 
         foreach ($modified_files_iterator as list($name_status_line, $lines_stat_line)) {
-            if (preg_match('/(?P<status>[A-Z])\\t(?P<file_name>.+)/', $name_status_line, $name_status) !== 1 ||
+            if (
+                preg_match('/(?P<status>[A-Z])\\t(?P<file_name>.+)/', $name_status_line, $name_status) !== 1 ||
                 preg_match(
                     '/(?P<added_lines>(\d|-)+)\\t(?P<removed_lines>(\d|-)+)\\t(?P<file_name>.+)/',
                     $lines_stat_line,
@@ -82,8 +83,7 @@ class PullRequestFileRepresentationFactory
                 );
             }
 
-            $file_representation = new PullRequestFileRepresentation();
-            $file_representation->build(
+            $file_representation = new PullRequestFileRepresentation(
                 $name_status['file_name'],
                 $name_status['status'],
                 $lines_stat['added_lines'],

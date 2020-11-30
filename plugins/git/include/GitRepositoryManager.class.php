@@ -88,9 +88,7 @@ class GitRepositoryManager
     private $event_manager;
 
     /**
-     * @param GitRepositoryFactory $repository_factory
-     * @param Git_SystemEventManager   $git_system_event_manager
-     * @param backup_directory
+     * @param string $backup_directory
      */
     public function __construct(
         GitRepositoryFactory $repository_factory,
@@ -120,7 +118,6 @@ class GitRepositoryManager
     /**
      * Delete all project repositories (on project deletion).
      *
-     * @param Project $project
      */
     public function deleteProjectRepositories(Project $project)
     {
@@ -132,8 +129,6 @@ class GitRepositoryManager
     }
 
     /**
-     * @param GitRepository        $repository
-     * @param GitRepositoryCreator $creator
      *
      * @throws GitDaoException
      * @throws GitRepositoryAlreadyExistsException
@@ -141,7 +136,7 @@ class GitRepositoryManager
      */
     private function initRepository(GitRepository $repository, GitRepositoryCreator $creator)
     {
-        if (!$creator->isNameValid($repository->getName())) {
+        if (! $creator->isNameValid($repository->getName())) {
             throw new GitRepositoryNameIsInvalidException(
                 sprintf(dgettext('tuleap-git', 'Repository name is not well formatted. Allowed characters: %1$s and max length is %2$s, no slashes at the beginning or the end, it also must not finish with ".git".'), $creator->getAllowedCharsInNamePattern(), GitDao::REPO_NAME_MAX_LENGTH)
             );
@@ -154,8 +149,6 @@ class GitRepositoryManager
     }
 
     /**
-     * @param GitRepository        $repository
-     * @param GitRepositoryCreator $creator
      * @param array                $mirror_ids
      *
      * @throws GitDaoException
@@ -229,7 +222,7 @@ class GitRepositoryManager
         );
 
         $this->system_command->exec(
-            "chown -R gitolite:gitolite $tmp_git_import_folder_arg"
+            "chgrp -R gitolite $tmp_git_import_folder_arg"
         );
     }
 
@@ -261,7 +254,7 @@ class GitRepositoryManager
         $clone->setParent($repository);
         $clone->setNamespace($namespace);
         $clone->setId(null);
-        $path = PathJoinUtil::unixPathJoin(array($to_project->getUnixName(), $namespace, $repository->getName())).'.git';
+        $path = PathJoinUtil::unixPathJoin([$to_project->getUnixName(), $namespace, $repository->getName()]) . '.git';
         $clone->setPath($path);
         $clone->setScope($scope);
 
@@ -282,7 +275,7 @@ class GitRepositoryManager
                 'perm_granted_for_git_repository',
                 $this->history_value_formatter->formatValueForRepository($clone),
                 $to_project->getID(),
-                array($clone->getName())
+                [$clone->getName()]
             );
 
             $this->git_system_event_manager->queueRepositoryFork($repository, $clone);
@@ -302,7 +295,7 @@ class GitRepositoryManager
         $project_destination               = $forked_repository->getProject();
         $allowed_mirrors_forked_repository = $this->mirror_data_mapper->fetchAllForProject($project_destination);
 
-        $repository_mirrors_ids            = array();
+        $repository_mirrors_ids            = [];
         foreach ($base_repository_mirrors as $mirror) {
             if (in_array($mirror, $allowed_mirrors_forked_repository)) {
                 $repository_mirrors_ids[] = $mirror->id;
@@ -322,7 +315,6 @@ class GitRepositoryManager
     }
 
     /**
-     * @param GitRepository $repository
      *
      * @throws GitRepositoryAlreadyExistsException
      */
@@ -364,7 +356,7 @@ class GitRepositoryManager
             $ns_chunk = explode('/', $namespace);
             foreach ($ns_chunk as $chunk) {
                 //TODO use creator
-                if (!$repository->getBackend()->isNameValid($chunk)) {
+                if (! $repository->getBackend()->isNameValid($chunk)) {
                     throw new Exception(dgettext('tuleap-git', 'Invalid namespace, please only use alphanumeric characters.'));
                 }
             }
@@ -401,9 +393,8 @@ class GitRepositoryManager
      * @param Project $project
      * @param String  $name
      *
-     * @return bool
      */
-    public function isRepositoryNameAlreadyUsed(GitRepository $new_repository)
+    public function isRepositoryNameAlreadyUsed(GitRepository $new_repository): bool
     {
         $repositories = $this->repository_factory->getAllRepositories($new_repository->getProject());
         foreach ($repositories as $existing_repo) {
@@ -419,6 +410,8 @@ class GitRepositoryManager
                 return true;
             }
         }
+
+        return false;
     }
 
     private function nameIsSubPathOfExistingRepository($repository_path, $new_path)
@@ -448,27 +441,26 @@ class GitRepositoryManager
      *
      * Purge archived Gitolite repositories
      *
-     * @param Logger $logger
      *
      */
-    public function purgeArchivedRepositories(Logger $logger)
+    public function purgeArchivedRepositories(\Psr\Log\LoggerInterface $logger)
     {
-        if (!isset($GLOBALS['sys_file_deletion_delay'])) {
-            $logger->warn("Purge of archived Gitolite repositories is disabled: sys_file_deletion_delay is missing in local.inc file");
+        if (! ForgeConfig::exists('sys_file_deletion_delay')) {
+            $logger->warning("Purge of archived Gitolite repositories is disabled: sys_file_deletion_delay is missing in local.inc file");
             return;
         }
-        $retention_period      = intval($GLOBALS['sys_file_deletion_delay']);
+        $retention_period      = ForgeConfig::getInt('sys_file_deletion_delay');
         $archived_repositories = $this->repository_factory->getArchivedRepositoriesToPurge($retention_period);
         foreach ($archived_repositories as $repository) {
             try {
                 $backend = $repository->getBackend();
                 $backend->deletePermissions($repository);
                 if ($backend->archiveBeforePurge($repository)) {
-                    $logger->info('Archive of the Gitolite repository: '.$repository->getName().' done');
-                    $logger->info('Purge of archived Gitolite repository: '.$repository->getName());
+                    $logger->info('Archive of the Gitolite repository: ' . $repository->getName() . ' done');
+                    $logger->info('Purge of archived Gitolite repository: ' . $repository->getName());
                     $backend->deleteArchivedRepository($repository);
                 } else {
-                    $logger->warn('An error occured while archiving Gitolite repository: '.$repository->getName());
+                    $logger->warning('An error occured while archiving Gitolite repository: ' . $repository->getName());
                 }
             } catch (GitDriverErrorException $exception) {
                 $logger->error($exception->getMessage());
@@ -486,11 +478,11 @@ class GitRepositoryManager
      */
     public function getRepositoriesForRestoreByProjectId($project_id)
     {
-        $archived_repositories = array();
-        $retention_period      = intval($GLOBALS['sys_file_deletion_delay']);
+        $archived_repositories = [];
+        $retention_period      = ForgeConfig::getInt('sys_file_deletion_delay');
         $deleted_repositories  = $this->repository_factory->getDeletedRepositoriesByProjectId($project_id, $retention_period);
         foreach ($deleted_repositories as $repository) {
-            $archive = realpath($this->backup_directory.'/'.$repository->getBackupPath().".tar.gz");
+            $archive = realpath($this->backup_directory . '/' . $repository->getBackupPath() . ".tar.gz");
             if (file_exists($archive)) {
                 array_push($archived_repositories, $repository);
             }

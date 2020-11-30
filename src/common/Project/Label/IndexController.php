@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017 - 2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -29,6 +29,7 @@ use Tuleap\Label\CollectionOfLabelableDao;
 use Tuleap\Color\ColorPresenterFactory;
 use Tuleap\Layout\IncludeAssets;
 use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
+use Tuleap\Project\Admin\Navigation\NavigationPresenterBuilder;
 
 class IndexController
 {
@@ -40,10 +41,6 @@ class IndexController
      * @var LabelsManagementURLBuilder
      */
     private $url_builder;
-    /**
-     * @var IncludeAssets
-     */
-    private $assets;
     /**
      * @var ColorPresenterFactory
      */
@@ -57,13 +54,11 @@ class IndexController
         LabelsManagementURLBuilder $url_builder,
         LabelDao $dao,
         CollectionOfLabelableDao $labelable_daos,
-        IncludeAssets $assets,
         ColorPresenterFactory $color_factory
     ) {
         $this->url_builder    = $url_builder;
         $this->dao            = $dao;
         $this->labelable_daos = $labelable_daos;
-        $this->assets         = $assets;
         $this->color_factory  = $color_factory;
     }
 
@@ -120,17 +115,16 @@ class IndexController
 
     private function displayHeader($title, Project $project)
     {
-        $assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-        $include_assets = new IncludeAssets($assets_path, '/assets');
+        $include_assets = new IncludeAssets(__DIR__ . '/../../../www/assets/core', '/assets/core');
 
         $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL('project-admin.js'));
 
         $navigation_displayer = new HeaderNavigationDisplayer();
-        $navigation_displayer->displayBurningParrotNavigation($title, $project, 'labels');
+        $navigation_displayer->displayBurningParrotNavigation($title, $project, NavigationPresenterBuilder::OTHERS_ENTRY_SHORTNAME);
     }
 
     private function displayFooter()
     {
-        project_admin_footer(array());
+        project_admin_footer([]);
     }
 }

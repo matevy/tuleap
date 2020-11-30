@@ -23,21 +23,21 @@
 class Docman_View_SOAP_Search
 {
 
-    function display($params)
+    public function display($params)
     {
         $itemFactory = new Docman_ItemFactory($params['group_id']);
         $nbItemsFound = 0;
         $itemIterator = $itemFactory->getItemList(
             $params['item']->getId(),
             $nbItemsFound,
-            array('user' => $params['user'],
+            ['user' => $params['user'],
                                                         'ignore_collapse' => true,
                                                         'ignore_obsolete' => true,
                                                         'filter' => $params['filter'],
-            'getall' => true)
+            'getall' => true]
         );
 
-        $result = array();
+        $result = [];
         foreach ($itemIterator as $item) {
             $result[] = $item->toRow();
         }

@@ -19,7 +19,7 @@
 
 import { shallowMount } from "@vue/test-utils";
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import ClipboardContentInformation from "./ClipboardContentInformation.vue";
 import { CLIPBOARD_OPERATION_CUT, CLIPBOARD_OPERATION_COPY } from "../../../constants.js";
 
@@ -31,7 +31,7 @@ describe("ClipboardContentInformation", () => {
         content_information_factory = () => {
             return shallowMount(ClipboardContentInformation, {
                 localVue,
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -46,11 +46,11 @@ describe("ClipboardContentInformation", () => {
     });
 
     it(`Given there is an item in the clipboard
-        Then information is displayed`, () => {
+        Then information is displayed`, async () => {
         store.state.clipboard = {
             item_title: "My item",
             operation_type: CLIPBOARD_OPERATION_COPY,
-            pasting_in_progress: false
+            pasting_in_progress: false,
         };
 
         const wrapper = content_information_factory();
@@ -59,17 +59,20 @@ describe("ClipboardContentInformation", () => {
         expect(result_copy).toBeTruthy();
 
         store.state.clipboard.operation_type = CLIPBOARD_OPERATION_CUT;
+        await wrapper.vm.$nextTick();
         const result_cut = wrapper.html();
         expect(result_cut).toBeTruthy();
         expect(result_cut).not.toEqual(result_copy);
 
         store.state.clipboard.operation_type = CLIPBOARD_OPERATION_COPY;
         store.state.clipboard.pasting_in_progress = true;
+        await wrapper.vm.$nextTick();
         const result_copy_paste = wrapper.html();
         expect(result_copy_paste).toBeTruthy();
         expect(result_copy_paste).not.toEqual(result_copy);
 
         store.state.clipboard.operation_type = CLIPBOARD_OPERATION_CUT;
+        await wrapper.vm.$nextTick();
         const result_cut_paste = wrapper.html();
         expect(result_cut_paste).toBeTruthy();
         expect(result_cut_paste).not.toEqual(result_cut);

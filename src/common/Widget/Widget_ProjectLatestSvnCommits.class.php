@@ -24,7 +24,7 @@ require_once __DIR__ . '/../../www/svn/svn_utils.php';
 /**
 * Widget_ProjectLatestSvnCommits
 */
-class Widget_ProjectLatestSvnCommits extends Widget_ProjectLatestCommits
+class Widget_ProjectLatestSvnCommits extends Widget_ProjectLatestCommits // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 {
 
     public function __construct()
@@ -32,17 +32,22 @@ class Widget_ProjectLatestSvnCommits extends Widget_ProjectLatestCommits
         parent::__construct('projectlatestsvncommits', 'svn_get_revisions');
     }
 
-    function getTitle()
+    public function getTitle()
     {
         return $GLOBALS['Language']->getText('include_project_home', 'latest_svn_commit');
     }
-    function _getLinkToCommit($data)
+    public function _getLinkToCommit($data) // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
     {
-        return '/svn/?func=detailrevision&amp;group_id='.$this->group_id.'&amp;commit_id='.$data['commit_id'];
+        return '/svn/?func=detailrevision&amp;group_id=' . $this->group_id . '&amp;commit_id=' . $data['commit_id'];
     }
-    function _getLinkToMore()
+    public function _getLinkToMore() // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
     {
-        return '/svn/?func=browse&group_id='.$this->group_id;
+        return '/svn/?func=browse&group_id=' . $this->group_id;
+    }
+
+    public function getContent(): string
+    {
+        return _('This widget is deprecated, you should remove it.');
     }
 
     protected function canBeUsedByProject(Project $project)
@@ -50,18 +55,18 @@ class Widget_ProjectLatestSvnCommits extends Widget_ProjectLatestCommits
         return $project->usesSvn();
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return $GLOBALS['Language']->getText('widget_description_project_latest_svn_commits', 'description');
     }
 
-    function getLatestRevisions()
+    public function getLatestRevisions()
     {
         if (! $this->latest_revisions) {
             $pm = ProjectManager::instance();
             $project = $pm->getProject($this->group_id);
             if ($project && $this->canBeUsedByProject($project)) {
-                list($this->latest_revisions,) = svn_get_revisions($project, 0, 5, '', '', '', '', 0, false);
+                [$this->latest_revisions,] = svn_get_revisions($project, 0, 5, '', '', '', [], 0, false);
             }
         }
         return $this->latest_revisions;

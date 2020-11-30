@@ -32,7 +32,7 @@ class Cardwall_Swimline
     /**
      * @var array
      */
-    public $cells = array();
+    public $cells = [];
 
     /**
      * @var int
@@ -56,7 +56,7 @@ class Cardwall_Swimline
     }
 
     /**
-     * @return Tracker_CardPresenter
+     * @return Tracker_CardPresenter|null
      */
     public function getCardPresenter()
     {
@@ -74,12 +74,12 @@ class Cardwall_Swimline
 
     public function stack_cards_title()
     {
-        return $GLOBALS['Language']->getText('plugin_cardwall', 'cell_stack');
+        return dgettext('tuleap-cardwall', 'Stack cards');
     }
 
     public function expand_cards_title()
     {
-        return $GLOBALS['Language']->getText('plugin_cardwall', 'cell_unstack');
+        return dgettext('tuleap-cardwall', 'Expand cards');
     }
 
     public function getCells()

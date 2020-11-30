@@ -43,16 +43,6 @@ class TrackerRepresentationFactory
     private $permissions_retriever;
 
     /**
-     * @var \TrackerFactory
-     */
-    private $tracker_factory;
-
-    /**
-     * @var \Tracker_ArtifactFactory
-     */
-    private $artifact_factory;
-
-    /**
      * @var UserHelper
      */
     private $user_helper;
@@ -60,14 +50,10 @@ class TrackerRepresentationFactory
     public function __construct(
         TimeDao $time_dao,
         PermissionsRetriever $permissions_retriever,
-        \TrackerFactory $tracker_factory,
-        \Tracker_ArtifactFactory $artifact_factory,
         UserHelper $user_helper
     ) {
         $this->time_dao              = $time_dao;
         $this->permissions_retriever = $permissions_retriever;
-        $this->tracker_factory       = $tracker_factory;
-        $this->artifact_factory      = $artifact_factory;
         $this->user_helper           = $user_helper;
     }
 
@@ -76,7 +62,7 @@ class TrackerRepresentationFactory
         $authorized_trackers_ids = [];
         foreach ($trackers as $tracker) {
             if ($this->permissions_retriever->userCanSeeAggregatedTimesInTracker($user, $tracker)) {
-                $authorized_trackers_ids[] = (int)$tracker->getId();
+                $authorized_trackers_ids[] = (int) $tracker->getId();
             }
         }
 
@@ -95,8 +81,7 @@ class TrackerRepresentationFactory
         );
 
         foreach ($authorized_trackers_ids as $tracker_id) {
-            $tracker_representation = new TimetrackingTrackerReportRepresentation();
-            $tracker_representation->build($trackers[$tracker_id], $this->getTrackersRow($tracker_id, $trackers_rows));
+            $tracker_representation = TimetrackingTrackerReportRepresentation::build($trackers[$tracker_id], $this->getTrackersRow($tracker_id, $trackers_rows));
             $tracker_representations[] = $tracker_representation;
         }
 
@@ -107,11 +92,11 @@ class TrackerRepresentationFactory
     {
         $selected_rows = [];
         foreach ($trackers_rows as $tracker_row) {
-            if ($tracker_id === (int)$tracker_row['tracker_id']) {
+            if ($tracker_id === (int) $tracker_row['tracker_id']) {
                 $tracker_user_representation = TimetrackingTrackerUserRepresentation::build(
                     $tracker_row['full_name'],
-                    (int)$tracker_row['user_id'],
-                    (int)$tracker_row['minutes']
+                    (int) $tracker_row['user_id'],
+                    (int) $tracker_row['minutes']
                 );
                 $selected_rows[] = $tracker_user_representation;
             }

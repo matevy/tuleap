@@ -49,7 +49,7 @@ class Widget_MySystemEvent extends Widget
         $se = SystemEventManager::instance();
         $content = '';
         $content .= $se->fetchLastTenEventsStatusWidget();
-        $content .= '<div style="text-align:center"><a href="/admin/system_events/">[ '. $GLOBALS['Language']->getText('global', 'more') .' ]</a></div>';
+        $content .= '<div style="text-align:center"><a href="/admin/system_events/">[ ' . $GLOBALS['Language']->getText('global', 'more') . ' ]</a></div>';
         return $content;
     }
 
@@ -67,7 +67,7 @@ class Widget_MySystemEvent extends Widget
      * Get the description of the widget
      * @return string html
      */
-    function getDescription()
+    public function getDescription()
     {
         return $GLOBALS['Language']->getText('widget_description_my_system_event', 'description');
     }

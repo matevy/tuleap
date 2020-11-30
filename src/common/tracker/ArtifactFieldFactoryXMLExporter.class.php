@@ -21,13 +21,13 @@
 class ArtifactFieldFactoryXMLExporter
 {
     /** @var Array */
-    private $fields = array();
+    private $fields = [];
 
     public function __construct(ArtifactXMLExporterDao $dao, ArtifactXMLNodeHelper $node_helper)
     {
         $current_value_exporter = new ArtifactMultiListCurrentValueExporter($dao);
 
-        $this->fields = array(
+        $this->fields = [
             ArtifactAttachmentFieldXMLExporter::TV3_TYPE      => new ArtifactAttachmentFieldXMLExporter($node_helper, $dao),
             ArtifactCCFieldXMLExporter::TV3_TYPE              => new ArtifactCCFieldXMLExporter($node_helper),
             ArtifactStringFieldXMLExporter::TV3_TYPE          => new ArtifactStringFieldXMLExporter($node_helper),
@@ -39,7 +39,7 @@ class ArtifactFieldFactoryXMLExporter
             ArtifactUserListFieldXMLExporter::TV3_TYPE        => new ArtifactUserListFieldXMLExporter($node_helper, $dao),
             ArtifactStaticMultiListFieldXMLExporter::TV3_TYPE => new ArtifactStaticMultiListFieldXMLExporter($node_helper, $dao, $current_value_exporter),
             ArtifactUserMultiListFieldXMLExporter::TV3_TYPE   => new ArtifactUserMultiListFieldXMLExporter($node_helper, $current_value_exporter),
-        );
+        ];
     }
 
     public function appendValueByType(DOMElement $changeset_node, $tracker_id, $artifact_id, array $history_row)
@@ -82,7 +82,7 @@ class ArtifactFieldFactoryXMLExporter
             if ($this->isASelectBoxWhoseTypeChangedInThePast($display_type, $data_type, $value_function)) {
                 return ArtifactUserListFieldXMLExporter::TV3_TYPE;
             }
-            return $display_type.'_'.$data_type;
+            return $display_type . '_' . $data_type;
         } elseif (isset($this->fields[$field_name])) {
             return $field_name;
         }

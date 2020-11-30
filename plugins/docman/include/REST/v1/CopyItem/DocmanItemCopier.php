@@ -96,7 +96,7 @@ final class DocmanItemCopier
         Docman_Folder $destination_folder,
         PFUser $user,
         DocmanCopyItemRepresentation $representation
-    ) : CreatedItemRepresentation {
+    ): CreatedItemRepresentation {
         $item_to_copy_id = $representation->item_id;
         $item_to_copy    = $this->item_factory->getItemFromDb($item_to_copy_id);
         if ($item_to_copy === null || ! $this->permissions_manager->userCanAccess($user, $item_to_copy->getId())) {
@@ -145,9 +145,6 @@ final class DocmanItemCopier
 
         $this->event_manager->processEvent('send_notifications');
 
-        $representation = new CreatedItemRepresentation();
-        $representation->build($copied_item_id);
-
-        return $representation;
+        return CreatedItemRepresentation::build($copied_item_id);
     }
 }

@@ -3,14 +3,14 @@ msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
-"Last-Translator: Joris MASSON <joris.masson@enalean.com>\n"
+"Last-Translator: Nicolas Terray <nicolas.terray@enalean.com>\n"
 "Language-Team: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.2.4\n"
+"X-Generator: Poedit 2.4.1\n"
 
 #, php-format
 msgid ""
@@ -38,8 +38,16 @@ msgid "%s (opens in a new tab)"
 msgstr "%s (s'ouvre dans un nouvel onglet)"
 
 #, php-format
+msgid "%s - Account suspension"
+msgstr "%s - Suspension de compte"
+
+#, php-format
 msgid "%s - Account suspension notification"
 msgstr "%s - Notification de suspension de compte"
+
+#, php-format
+msgid "%s ago"
+msgstr "il y a %s"
 
 #, php-format
 msgid "%s full project listing"
@@ -48,6 +56,12 @@ msgstr "Liste complète des projets %s"
 #, php-format
 msgid "%s has multiple corresponding users."
 msgstr "%s a plusieurs utilisateurs associés."
+
+msgid "%s invited you to %s."
+msgstr "%s vous a invité sur %s."
+
+msgid "%s invited you to register to %s."
+msgstr "%s vous invite à vous enregistrer sur %s."
 
 #, php-format
 msgid "%s new projects"
@@ -61,6 +75,24 @@ msgstr "Annonces site %s"
 msgid "%s project news highlights"
 msgstr "Annonces phares des projets %s"
 
+msgid "%s with email %s created an account on %s."
+msgstr "%s avec l'email %s a créé un compte sur %s."
+
+msgid "(day/month/year)"
+msgstr "(jour/mois/année)"
+
+msgid "(month/day/year)"
+msgstr "(mois/jour/année)"
+
+msgid "-- None --"
+msgstr "-- Aucun --"
+
+msgid "5 days ago"
+msgstr "il y a 5 jours"
+
+msgid "A deleted project can not be restored."
+msgstr "Un projet détruit ne peut être restoré."
+
 msgid ""
 "A non available service cannot be enabled. To enable this service, switch it "
 "to available before."
@@ -70,30 +102,64 @@ msgstr ""
 
 #, php-format
 msgid ""
-"A personal API access key (%s) was recently added to your account %s.\n"
+"A personal access key (%s) with the %s scope was recently added to your "
+"account %s.\n"
 "\n"
 "Visit %s for more information."
-msgstr ""
-"Une clé personnelle d'accès à l'API (%s) a récemment été ajoutée à votre "
-"compte %s.\n"
+msgid_plural ""
+"A personal access key (%s) with the %s scopes was recently added to your "
+"account %s.\n"
+"\n"
+"Visit %s for more information."
+msgstr[0] ""
+"Une clé personnelle d'accès (%s) ayant la portée %s a récemment été ajoutée "
+"à votre compte %s.\n"
+"\n"
+"Visitez %s pour plus d'informations."
+msgstr[1] ""
+"Une clé personnelle d'accès (%s) ayant les portées %s a récemment été "
+"ajoutée à votre compte %s.\n"
 "\n"
 "Visitez %s pour plus d'informations."
 
-msgid "A personal API access key has been added to your account"
-msgstr "Une clé personnelle d'accès à l'API a été ajoutée à votre compte"
+msgid "A personal access key has been added to your account"
+msgstr "Une clé personnelle d'accès a été ajoutée à votre compte"
 
 msgid ""
-"A personal API access key will be automatically generated at the form "
-"submission.\n"
-"                The description is not required but it can help you to "
-"manage your access keys."
+"A personal access key will be automatically generated at the form "
+"submission. The description is not required but it can help you to manage "
+"your access keys."
 msgstr ""
-"Une nouvelle clé d'accès sera généré lors de soumission du formulaire.\n"
-"                La description n'est pas requise mais peut vous aider à "
-"gérer vos clés d'accès."
+"Une nouvelle clé d'accès sera généré lors de soumission du formulaire. La "
+"description n'est pas requise mais peut vous aider à gérer vos clés d'accès."
 
 msgid "A project cannot be its own parent."
 msgstr "Un projet ne peut être son propre parent."
+
+msgid ""
+"A service displayed in a iframe cannot be the first service of a project"
+msgstr ""
+"Un service affiché dans un contexte de navigation imbriqué ne peut pas être "
+"le premier service d'un projet"
+
+msgid "A template without any service enabled."
+msgstr "Un template sans aucun service activé."
+
+msgid ""
+"A token will be automatically generated at the form submission. The comment "
+"is not required but it can help you to manage your tokens."
+msgstr ""
+"Un nouveau jeton sera généré lors de la soumission du formulaire. La "
+"description n'est pas requise mais peut vous aider à gérer vos jetons."
+
+msgid "API"
+msgstr "API"
+
+msgid "Absolute date first"
+msgstr "Date absolue en premier"
+
+msgid "Absolute date only"
+msgstr "Date absolue seulement"
 
 msgid "Access"
 msgstr "Accès"
@@ -104,20 +170,35 @@ msgstr "Journal des accès"
 msgid "Access controls"
 msgstr "Droits d'accès"
 
+msgid "Access history"
+msgstr "Historique d'accès"
+
+msgid "Access key copied!"
+msgstr "Clé d'accès copiée !"
+
 msgid "Access key description"
 msgstr "Description de la clé d'accès"
 
 msgid "Access key expiration date"
 msgstr "Date d'expiration de la clé d'accès"
 
+msgid "Access key scopes"
+msgstr "Portées de la clé d'accès"
+
+msgid "Access key scopes are not well formed."
+msgstr "Les informations de portées de la clé d'accès ne sont pas correctes."
+
 msgid "Access keys have been successfully deleted."
 msgstr "Les clés d'accès ont été supprimées avec succès."
+
+msgid "Access to the REST API"
+msgstr "Accès à l'API REST"
 
 msgid "Accesses from less than %s might not be visible"
 msgstr "Les accès d'il y a moins de %s peuvent ne pas apparaître"
 
-msgid "Accessibility"
-msgstr "Accessibilité"
+msgid "Account"
+msgstr "Compte"
 
 #, php-format
 msgid ""
@@ -127,14 +208,29 @@ msgstr ""
 "Le compte %s est restreint et le project n'autorise pas les utilisateurs "
 "restreints. L'utilisateur n'a pas été ajouté."
 
+msgid "Account information"
+msgstr "Informations personnelles"
+
+msgid "Account must be active to change password"
+msgstr "Le compte doit être actif pour changer le mot de passe"
+
 msgid "Account status"
 msgstr "Statut du compte utilisateur"
+
+msgid "Action"
+msgstr "Action"
 
 msgid "Actions"
 msgstr "Actions"
 
 msgid "Activate synchronized project membership management"
 msgstr "Activer la gestion synchronisée de l'appartenance au projet"
+
+msgid "Add List"
+msgstr "Créer une liste"
+
+msgid "Add SSH key"
+msgstr "Ajouter une clef SSH"
 
 msgid "Add a new service"
 msgstr "Ajouter un nouveau service"
@@ -154,6 +250,9 @@ msgstr "Ajouter un lien"
 msgid "Add member"
 msgstr "Ajouter un membre"
 
+msgid "Add new key"
+msgstr "Ajouter une nouvelle clef"
+
 msgid "Add parent project"
 msgstr "Ajouter projet parent"
 
@@ -172,14 +271,17 @@ msgstr "Ajouter un utilisateur non membre du projet"
 msgid "Admin service cannot be disabled."
 msgstr "Le service admin ne peut pas être désactivé."
 
+msgid "Administration"
+msgstr "Administration"
+
 msgid "Administrator"
 msgstr "Administrateur"
 
 msgid "Administrators"
 msgstr "Administrateurs"
 
-msgid "Agile Dashboard"
-msgstr "Agile Dashboard"
+msgid "Agile Enterprise Planning - Full ALM"
+msgstr "Agile Enterprise Planning - ALM complet"
 
 msgid "All groups"
 msgstr "Tous les groupes"
@@ -187,22 +289,33 @@ msgstr "Tous les groupes"
 msgid "All members of %s will remain project members."
 msgstr "Tous les membres de %s resteront membres du projet."
 
+msgid "Allow for all projects"
+msgstr "Autoriser pour tous les projets"
+
 msgid "Allow restricted users to be added to the project"
 msgstr "Autoriser l'ajout d'utilisateurs restreints dans ce projet."
 
 msgid "Allow to write informations for users on your dashboards using Markdown"
 msgstr "Permet d'écrire des informations en markdown sur les dashboards"
 
+msgid "Allowing for all projects"
+msgstr "Autorisation pour tous les projets"
+
 msgid "Already used"
 msgstr "Déjà utilisé"
 
 msgid ""
-"An email has been sent to the new address. Follow the instructions in the "
-"email to complete the email change."
+"An email change was requested, please check your inbox to complete the "
+"change."
 msgstr ""
-"Un courrier électronique vient d'être envoyé à votre nouvelle adresse e-"
-"mail. Suivez les instructions fournies dans ce message pour confirmer "
-"définitivement le changement."
+"Un changement d'adresse de courriel a été demandé, vérifiez vos messages "
+"pour finaliser le changement."
+
+msgid "An error occurred during the SVN token deletion"
+msgstr "Une erreur est survenue lors de la suppression des jetons SVN"
+
+msgid "An error occurred during the SVN token generation."
+msgstr "Une erreur est survenue lors de la suppression des jetons SVN."
 
 msgid ""
 "An error occurred in form submission, a link is not valid. Please retry."
@@ -231,10 +344,18 @@ msgstr "Une erreur est survenue lors de l'édition du label."
 msgid "An error occurred while trying to remove the label."
 msgstr "Une erreur est survenue lors de la suppression du label."
 
+msgid "An error occurred while trying to send invitation"
+msgid_plural "An error occurred while trying to send invitations"
+msgstr[0] "Une erreur est survenue lors de l'envoi de l'invitation"
+msgstr[1] "Une erreur est survenue lors de l'envoi des invitations"
+
 msgid "An error occurred while trying to update permissions delegations."
 msgstr ""
 "Une erreur est survenue lors de la mise à jour des délégations de "
 "permissions."
+
+msgid "An error occurred while updating the settings."
+msgstr "Une erreur est survenue lors de sauvegarde de la configuration."
 
 msgid ""
 "An error occurred with your upload. Please try again or choose another image."
@@ -242,11 +363,11 @@ msgstr ""
 "Une erreur est survenue lors de votre téléversement. Merci d'essayer à "
 "nouveau ou de choisir une autre image."
 
+msgid "An error occurred, please retry"
+msgstr "Une erreur est survenue, veuillez réessayer"
+
 msgid "An issue occurred while retrieving the RSS feed"
 msgstr "Une erreur est survenue lors de la récupération du flux RSS"
-
-msgid "And more..."
-msgstr "Et plus ..."
 
 msgid "And one other users group you are not allowed to administrate."
 msgid_plural "And %d other users groups you are not allowed to administrate."
@@ -256,14 +377,33 @@ msgstr[1] "Et %d autres groupes que vous ne pouvez pas administrer."
 msgid "Anonymous user"
 msgstr "Utilisateur anonyme"
 
+msgid "Appearance & language"
+msgstr "Apparence et langue"
+
+msgid ""
+"As notified %s days ago and without any connection from you since, your user "
+"account is now suspended, in compliance with %s policies."
+msgstr ""
+"Comme notifié(e) il y a %s jours et sans aucune connexion de votre part "
+"depuis, votre compte est suspendu conformément aux règles de %s."
+
 msgid "Ask to join"
 msgstr "Demander à rejoindre"
 
 msgid "Ask to join this project"
 msgstr "Demander à rejoindre ce projet"
 
+msgid "Available?"
+msgstr "Disponible ?"
+
 msgid "Back"
 msgstr "Retour"
+
+msgid "Background"
+msgstr "Fond"
+
+msgid "Bad"
+msgstr "Mauvaise"
 
 msgid "Banner"
 msgstr "Bannière"
@@ -271,11 +411,20 @@ msgstr "Bannière"
 msgid "Best Regards."
 msgstr "Cordialement."
 
+msgid "Best regards,"
+msgstr "Cordialement."
+
 msgid "Beyond 3 columns, each column<br>will have the same size."
 msgstr "Au-delà de 3 colonnes, chaque colonne<br>aura la même taille."
 
 msgid "Block usage of passwords known as compromised"
 msgstr "Bloquer l'utilisation des mots de passe connus comme compromis"
+
+msgid "Blue"
+msgstr "Bleu"
+
+msgid "By %s"
+msgstr "Par %s"
 
 msgid "By default, its content is available to all authenticated users."
 msgstr "Par défaut, son contenu est accessible à tout utilisateur authentifié."
@@ -300,6 +449,12 @@ msgstr ""
 "En téléchargeant ce logiciel vous reconnaissez implicitement <a href=\"%s"
 "\"><b>avoir lu cette politique d'échange de code</b></a> et être en accord "
 "avec son contenu."
+
+msgid "CSV date format"
+msgstr "Format de date CSV"
+
+msgid "CSV separator"
+msgstr "Séparateur CSV"
 
 msgid "CVS"
 msgstr "CVS"
@@ -369,16 +524,18 @@ msgstr ""
 "Catégoriser votre projet permettra aux développeurs et utilisateurs de plus "
 "facilement le trouver et y participer."
 
+msgid "Change avatar"
+msgstr "Changer l'avatar"
+
 msgid "Change email address"
 msgstr "Changer l'adresse e-mail"
 
 msgid ""
-"Changing your email address will require confirmation from your new email "
-"address, so that we can ensure we have a good email address on file."
+"Check this option if you want to force the usage of this preference for all "
+"users."
 msgstr ""
-"Le changement d'adresse e-mail nécessite une confirmation depuis votre "
-"nouvelle adresse e-mail de façon à s'assurer que nous disposons d'une "
-"adresse valide."
+"Cochez cette option si vous souhaitez forcer l'utilisation de cette "
+"préférence pour tous les utilisateurs."
 
 msgid "Child projects"
 msgstr "Projets enfants"
@@ -392,11 +549,24 @@ msgstr "Effacer l'historique"
 msgid "Close"
 msgstr "Fermer"
 
+msgid ""
+"Collect stories, plan releases, monitor sprints with a ready-to-use Scrum "
+"area"
+msgstr ""
+"Collectez les stories, planifiez les releases, suivez les sprints avec un "
+"environnement Scrum prêt-à-l'emploi"
+
 msgid "Color"
 msgstr "Couleur"
 
 msgid "Comfortable"
-msgstr "Normale"
+msgstr "Confortable"
+
+msgid "Comma"
+msgstr "Virgule"
+
+msgid "Comment"
+msgstr "Commentaire"
 
 msgid "Compromised password"
 msgstr "Mot de passe compromis"
@@ -421,11 +591,20 @@ msgid ""
 "Congratulations, you don't have any customisations in your language files!"
 msgstr "Félicitations, vous n'avez pas personnalisé vos fichiers de langue !"
 
+msgid "Contact"
+msgstr "Contact"
+
 msgid "Contact (help menu)"
 msgstr "Contact (menu \"Aide\")"
 
 msgid "Content"
 msgstr "Contenu"
+
+msgid "Copy the SVN token"
+msgstr "Copier le jeton SVN"
+
+msgid "Copy the access key"
+msgstr "Copier la clé d'accès"
 
 #, php-format
 msgid "Copyright (c) %s, %s Team, 2001-%d. All Rights Reserved"
@@ -455,8 +634,20 @@ msgstr "Créer une nouvelle licence"
 msgid "Create user group"
 msgstr "Ajouter un groupe utilisateur"
 
+msgid "Current and new passwords are identical"
+msgstr "L'ancien et le nouveau mot de passe sont identiques"
+
+msgid "Current password"
+msgstr "Ancien mot de passe"
+
+msgid "Current password is incorrect"
+msgstr "L'ancien mot de passe est incorrect"
+
 msgid "Custom groups"
 msgstr "Groupes personnalisés"
+
+msgid "Custom release note link successfully updated."
+msgstr "Le lien vers la release note a été mis à jour avec succès."
 
 msgid "Customisation"
 msgstr "Personnalisation"
@@ -476,14 +667,14 @@ msgstr "Le tableau de bord a correctement été modifié."
 msgid "Dashboard name"
 msgstr "Nom du tableau de bord"
 
-msgid "Dashboard of the project"
-msgstr "Dashboard du projet"
-
 msgid "Data"
 msgstr "Données"
 
 msgid "Date"
 msgstr "Date"
+
+msgid "Dates display"
+msgstr "Affichage des dates"
 
 msgid "Day"
 msgstr "Jour"
@@ -491,11 +682,25 @@ msgstr "Jour"
 msgid "Dear   {{ tuleap_server_name}} user,"
 msgstr "Cher utilisateur {{tuleap_server_name}},"
 
+msgid "Dear %s user,"
+msgstr "Cher utilisateur %s,"
+
+msgid "Default dates display"
+msgstr "Affichage des dates relatives par défaut"
+
+msgid "Default format for trackers text fields"
+msgstr "Format par défaut pour les champs texte des trackers"
+
 msgid "Default license agreement"
 msgstr "Licence par défaut"
 
 msgid "Default project visibility"
 msgstr "Visibilité du projet par défaut"
+
+msgid "Default relative dates display preference saved successfully."
+msgstr ""
+"Préférence par défaut de l'affichage des dates relatives sauvegardée avec "
+"succès."
 
 msgid "Delete"
 msgstr "Supprimer"
@@ -513,6 +718,9 @@ msgstr "Supprimer le tableau de bord"
 msgid "Delete parent"
 msgstr "Supprimer le parent"
 
+msgid "Delete selected SSH keys"
+msgstr "Supprimer les clefs SSH sélectionnées"
+
 msgid "Delete service"
 msgstr "Supprimer le service"
 
@@ -528,8 +736,14 @@ msgstr "Description"
 msgid "Details"
 msgstr "Détails"
 
-msgid "Display density:"
-msgstr "Densité d'affichage :"
+msgid "Disallow for all projects"
+msgstr "Restreindre pour tous les projets"
+
+msgid "Disallowing for all projects"
+msgstr "Restriction pour tous les projets"
+
+msgid "Display density"
+msgstr "Densité d'affichage"
 
 msgid "Display platform statistics on home page."
 msgstr "Afficher les statistiques de la plateforme sur la page d'accueil."
@@ -543,16 +757,19 @@ msgstr "Affiche les 30 derniers éléments modifiés ou créés dans le projet."
 msgid "Do not reply to this mail."
 msgstr "Ne répondez pas à ce courriel."
 
-msgid "Documents"
-msgstr "Documents"
-
-msgid "Don't forget to use tab/shift+tab to navigate in dropdown"
-msgstr ""
-"N'oubliez pas d'utiliser tab/shift+tab pour naviguer dans les menus "
-"déroulants"
+msgid "Documentation"
+msgstr "Documentation"
 
 msgid "Download agreement"
 msgstr "Accord de téléchargement"
+
+msgid ""
+"Edge Legacy is not supported. Please upgrade to the latest version of Edge "
+"or use another modern alternative such as Firefox or Chrome."
+msgstr ""
+"Edge Legacy n'est pas supporté. Veuillez mettre à niveau vers la dernière "
+"version de Edge ou utiliser une alternative moderne tel que Firefox ou "
+"Chrome."
 
 msgid "Edit"
 msgstr "Éditer"
@@ -573,32 +790,59 @@ msgstr "Éditer les paramètres"
 msgid "Edit widget"
 msgstr "Éditer le widget"
 
+msgid "Edition & CSV"
+msgstr "Édition & CSV"
+
 msgid "Email"
 msgstr "E-mail"
 
-msgid "Email change complete"
-msgstr "Changement d'e-mail confirmé"
+#, php-format
+msgid "Email %s is not valid"
+msgstr "L'email %s n'est valide"
 
-msgid "Email change confirmation"
-msgstr "Confirmation de changement d'adresse e-mail"
+msgid "Email format preference successfully updated"
+msgstr "La préférence de format de courriel a été mise à jour"
 
-msgid "Email format invalid"
-msgstr "Le formal de l'e-mail n'est pas valide"
+msgid "Email was not updated"
+msgstr "L'adresse de courriel n'a pas été mise à jour"
 
 msgid "Emergency"
 msgstr "Urgent"
 
+msgid "Empty"
+msgstr "Vide"
+
 msgid "Empty group"
 msgstr "Groupe vide"
+
+msgid ""
+"Enable \"remember me\" so your session is kept open and you don't have to "
+"login too often."
+msgstr ""
+"Active l'option \"se souvenir de moi\" qui conserve votre session ouverte "
+"afin de limiter le besoin de vous identifier à nouveau."
 
 msgid "Enable accessibility mode"
 msgstr "Activer le mode d'accessiblilité"
 
+msgid "Enable lab mode"
+msgstr "Activer le mode experimental"
+
 msgid "Enabled?"
 msgstr "Activé ?"
 
-msgid "Escape from input/textarea, close dropdown or modal"
-msgstr "Sort d'un champ de texte, ferme les listes déroulantes et les modales"
+msgid "Enter comma separated list of emails"
+msgstr "Entrez une liste d'emails séparés par une virgule"
+
+msgid ""
+"Enter people to invite to %s. We will send an invitation email on your "
+"behalf."
+msgstr ""
+"Entrez les personnes à inviter sur %s. Nous leur enverrons un email "
+"d'invitation."
+
+msgid "Experimental"
+msgstr "Expérimental"
 
 msgid "Expiration date is not well formed."
 msgstr "La date d'expiration n'est pas au bon format."
@@ -633,20 +877,29 @@ msgstr "Filtrer par nom"
 msgid "Forbidden"
 msgstr "Interdit"
 
+msgid "Force usage?"
+msgstr "Forcer l'utilisation ?"
+
 msgid "Forums"
 msgstr "Forums"
 
 msgid "General"
 msgstr "Général"
 
+msgid "Generate an SVN token"
+msgstr "Générer un jeton SVN"
+
 msgid "Generate new key"
 msgstr "Générer une nouvelle clé"
+
+msgid "Generate new token"
+msgstr "Générer un nouveau jeton"
 
 msgid "Generated on"
 msgstr "Générée le"
 
-msgid "Git"
-msgstr "Git"
+msgid "Get help"
+msgstr "Rubriques d'aide"
 
 msgid "Global access"
 msgstr "Accès global"
@@ -657,11 +910,23 @@ msgstr "Permissions globales"
 msgid "Go to my home page"
 msgstr "Aller à ma page personnelle"
 
+msgid "Go to personal dashboard"
+msgstr "Aller au dashboard personnel"
+
 msgid "Go up"
 msgstr "Niveau supérieur"
 
+msgid "Good"
+msgstr "Bonne"
+
 msgid "Granted groups"
 msgstr "Groupes autorisés"
+
+msgid "Green"
+msgstr "Vert"
+
+msgid "Grey"
+msgstr "Gris"
 
 msgid "Group"
 msgstr "Groupes"
@@ -678,14 +943,43 @@ msgstr "Membres du groupe"
 msgid "Groups"
 msgstr "Groupes"
 
+msgid "HTML"
+msgstr "HTML"
+
+msgid "Header background"
+msgstr "Image de fond de l'entête"
+
 msgid "Heartbeat"
 msgstr "Activité"
+
+msgid "Hello,"
+msgstr "Bonjour,"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid ""
+"Here is your new SVN token. Please make sure you copy it, you won't be able "
+"to see it again!"
+msgstr ""
+"Voici votre nouveau jeton SVN. Assurez-vous de l'avoir copié, vous ne "
+"pourrez plus le voir de nouveau !"
+
+msgid ""
+"Here is your new access key. Please make sure to copy it, you won't be able "
+"to see it again!"
+msgstr ""
+"Voici votre nouvelle clé d'accès. Assurez-vous de l'avoir copiée, vous ne "
+"pourrez plus la voir de nouveau !"
 
 msgid "History"
 msgstr "Historique"
 
 msgid "Homepage"
 msgstr "Page d'accueil"
+
+msgid "How many invitations a user can send per day?"
+msgstr "Combien d'invitations un utilisateur peut-il envoyer par jour ?"
 
 msgid "I accept"
 msgstr "Je suis d'accord"
@@ -739,8 +1033,29 @@ msgstr "Hérité?"
 msgid "Initial layout creation"
 msgstr "Création de la structure initiale"
 
+msgid "Internal error: Could not update password"
+msgstr "Erreur interne : le mot de passe n'a pas été mis à jour"
+
 msgid "Internal server error"
 msgstr "Erreur interne du serveur"
+
+msgid ""
+"Internet Explorer in compatibility mode is not supported, you will encounter "
+"issues if you continue. Please upgrade to a modern, fully supported browser "
+"such as Firefox, Chrome or Edge."
+msgstr ""
+"Internet Explorer en mode de compatibilité n'est pas supporté, vous "
+"rencontrerez des problèmes si vous continuez. Veuillez utiliser un "
+"navigateur modern tel que tel que Firefox, Chrome ou Edge."
+
+msgid ""
+"Internet Explorer will be unsupported soon, some features are already not "
+"available to you. Please upgrade to a modern, fully supported browser such "
+"as Firefox, Chrome or Edge."
+msgstr ""
+"Internet Explorer ne sera bientôt plus supporté, des fonctionnalités ne vous "
+"sont déjà pas disponibles. Veuillez utiliser un navigateur moderne tel que "
+"Firefox, Chrome ou Edge."
 
 #, php-format
 msgid "Invalid group name: %s. Please use only alphanumerical characters."
@@ -751,15 +1066,72 @@ msgstr ""
 msgid "Invalid selection of categories"
 msgstr "La selection de catégories n'est pas valide"
 
+#, php-format
+msgid "Invitation complete!"
+msgstr "Invitation terminée !"
+
+msgid "Invitation could not be sent to:"
+msgstr "L'invitation n'a pas pu être envoyée à :"
+
+msgid "Invitation has been successfully sent to:"
+msgstr "L'invitation a été envoyée à :"
+
+#, php-format
+msgid "Invitation to log on to %s"
+msgstr "Invitation pour vous connecter sur %s"
+
+#, php-format
+msgid "Invitation to register to %s"
+msgstr "Invitation pour vous enregistrer sur %s"
+
+msgid "Invitations"
+msgstr "Invitations"
+
+msgid "Invitations are not enabled"
+msgstr "Les invitations ne sont pas activées"
+
+msgid "Invitations settings"
+msgstr "Configuration des invitations"
+
+msgid "Invitations settings successfully updated."
+msgstr "La configuration des invitations a été sauvegardée avec succès."
+
+msgid "Invite"
+msgstr "Inviter"
+
+msgid "Invite someone to join %s"
+msgstr "Inviter quelqu'un à rejoindre %s"
+
+msgid "Invited by"
+msgstr "Invitation envoyée par"
+
 msgid "Is default?"
 msgstr "Par défaut ?"
 
 msgid "Is used?"
 msgstr "Utilisé ?"
 
+msgid "Issue tracking"
+msgstr "Suivi des tickets"
+
 #, php-format
 msgid "JpGraph error for graph \"%s\": %s"
 msgstr "Erreur JpGraph pour le graphique \"%s\": %s"
+
+msgid "Kanban"
+msgstr "Kanban"
+
+msgid "Key"
+msgstr "Clef"
+
+msgid "Keyboard shortcuts"
+msgstr "Raccourcis clavier"
+
+msgid "Keys & Tokens"
+msgstr "Clefs et Tokens"
+
+msgid "Keys & tokens"
+msgstr "Clefs et jetons"
 
 msgid "Label"
 msgstr "Label"
@@ -779,11 +1151,23 @@ msgstr "Le label n'a pas été édité."
 msgid "Labels"
 msgstr "Labels"
 
+msgid "Language"
+msgstr "Langue"
+
+msgid "Last login failure"
+msgstr "Dernier échec de connexion"
+
+msgid "Last successful login"
+msgstr "Dernière connexion"
+
 msgid "Last used by"
 msgstr "Utilisée pour la dernière fois par"
 
 msgid "Last used on"
 msgstr "Utilisée pour la dernière fois le"
+
+msgid "Legacy default template"
+msgstr "Modèle par défaut (déprécié)"
 
 #, php-format
 msgid "License \"%s\" was successfully deleted"
@@ -810,20 +1194,20 @@ msgstr "Affiche la liste des membres du projet."
 msgid "Login"
 msgstr "Se connecter"
 
+msgid "Logout"
+msgstr "Se déconnecter"
+
+msgid "Low traffic, highly recommended."
+msgstr "Trafic faible, fortement recommandé."
+
+msgid "Low traffic."
+msgstr "Trafic faible."
+
 msgid "Mailing lists (Lists Service)"
 msgstr "Listes de diffusion (Service Listes)"
 
-msgid ""
-"Make sure you copy your new access key, you won't be able to see it again!"
-msgstr ""
-"Assurez-vous de copier votre nouvelle clé d'accès, vous ne pourrez plus la "
-"voir de nouveau !"
-
-msgid ""
-"Manage your project using epics and user stories in releases and sprints"
-msgstr ""
-"Gérez vos projets en utilisant des epics et des user stories dans des "
-"releases et des sprints"
+msgid "Manage help links"
+msgstr "Gestion des liens d'aide"
 
 msgid "Massmail to project members is disabled."
 msgstr "L'envoi de mails vers les membres du projet est désactivé."
@@ -843,9 +1227,6 @@ msgstr ""
 msgid "Meaningful description of the group"
 msgstr "Description du groupe"
 
-msgid "Mediawiki"
-msgstr "Mediawiki"
-
 msgid "Member"
 msgid_plural "Members"
 msgstr[0] "Membre"
@@ -862,6 +1243,9 @@ msgstr[1] "Membre de {{ nb_projects }} projets"
 msgid "Member removal"
 msgstr "Suppression de membre"
 
+msgid "Member since"
+msgstr "Membre depuis"
+
 msgid "Member since %s"
 msgstr "Membre depuis le %s"
 
@@ -871,8 +1255,17 @@ msgstr "Membres"
 msgid "Members of user groups"
 msgstr "Membre des groupes"
 
+msgid "Membership in user groups (read only)"
+msgstr "Appartenance aux groupes d'utilisateurs (lecture seule)"
+
 msgid "Membership management"
 msgstr "Gestion des membres"
+
+msgid "Message"
+msgstr "Message"
+
+msgid "Message from %s:"
+msgstr "Message de la part de %s :"
 
 msgid "Message sent to administrator should not be empty."
 msgstr "Le message envoyé à l'administrateur ne doit pas être vide."
@@ -889,8 +1282,15 @@ msgstr "Moderation"
 msgid "Month"
 msgstr "Mois"
 
-msgid "My personnal page"
-msgstr "Ma page personnelle"
+msgid "My Dashboard"
+msgstr "Mon tableau de bord"
+
+msgid "My comment so I won't forget the purpose of this token..."
+msgstr ""
+"Mon commentaire qui me permettra de ne pas oublier l'utilité de ce token..."
+
+msgid "My dashboard"
+msgstr "Mon tableau de bord"
 
 msgid "Name"
 msgstr "Nom"
@@ -900,9 +1300,6 @@ msgstr "Nom ou description"
 
 msgid "Name, type..."
 msgstr "Nom, type …"
-
-msgid "Navebar"
-msgstr "Barre de menu"
 
 msgid "Nb maximum of allowed values"
 msgstr "Nb maximum de valeurs autorisées"
@@ -916,11 +1313,30 @@ msgstr "Nb membres"
 msgid "Never"
 msgstr "Jamais"
 
-msgid "New email address:"
-msgstr "Nouvelle adresse e-mail"
+msgid "New"
+msgstr "Nouveau"
 
-msgid "New personal API access key"
-msgstr "Nouvelle clé personnelle d'accès à l'API"
+msgid "New avatar"
+msgstr "Nouvel avatar"
+
+msgid ""
+"New email was successfully saved. To complete the change, <strong>please "
+"click on the confirmation link</strong> you will receive by email (new "
+"address)."
+msgstr ""
+"La nouvelle adresse de courriel a été enregistrée. Pour finaliser le "
+"changement, <strong>cliquez sur le lien</strong> qui se trouvera dans le "
+"message de confirmation que vous allez recevoir (à la nouvelle adresse)."
+
+msgid "New password"
+msgstr "Nouveau mot de passe"
+
+msgid "New personal access key"
+msgstr "Nouvelle clé personnelle d'accès"
+
+#, php-format
+msgid "New project registered: %s"
+msgstr "Nouveau projet enregistré : %s"
 
 msgid "News"
 msgstr "Annonces"
@@ -931,8 +1347,11 @@ msgstr "Annonces que {{ user_group_name }} peuvent voir"
 msgid "No"
 msgstr "Non"
 
-msgid "No API access keys"
-msgstr "Aucune clé d'accès à l'API"
+msgid "No activity yet"
+msgstr "Pas encore d'activité"
+
+msgid "No background"
+msgstr "Pas d'image de fond"
 
 msgid "No children projects"
 msgstr "Aucun projet enfant"
@@ -952,11 +1371,11 @@ msgstr "Pas de licence à approuver"
 msgid "No matching labels"
 msgstr "Il n'y a aucun label correspondant"
 
-msgid "No project template found!"
-msgstr "Aucun patron de projet trouvé!"
-
 msgid "No project trove categories"
 msgstr "Aucune catégorie de projet"
+
+msgid "Nobody"
+msgstr "Personne"
 
 msgid "Non active projects cannot be used to be project template"
 msgstr "Les projets non actifs ne peuvent être utilisés comme modèle de projet"
@@ -970,29 +1389,32 @@ msgstr "Page non trouvée"
 msgid "Note"
 msgstr "Note"
 
+msgid "Nothing changed"
+msgstr "Rien n'a changé"
+
+msgid "Notifications"
+msgstr "Notifications"
+
+msgid "Ok, got it"
+msgstr "Ok, j'ai compris"
+
 msgid "Only project members can access its content."
 msgstr "Seuls les membres du projet peuvent accéder à son contenu."
 
 msgid "Ooops an error occured"
 msgstr "Ouuups une erreur est survenue"
 
-msgid "Open \"Help\" dropdown"
-msgstr "Affiche l'onglet \"Aide\""
+msgid "Open \"+ New\" dropdown"
+msgstr "Ouvre le menu déroulant \"+ Nouveau\""
 
-msgid "Open \"More\" dropdown"
-msgstr "Affiche l'onglet \"Plus\""
+msgid "Open this window"
+msgstr "Ouvre cette fenêtre"
 
-msgid "Open \"Projects\" dropdown"
-msgstr "Affiche l'onglet \"Projets\""
+msgid "Optional message…"
+msgstr "Message optionnel…"
 
-msgid "Open the account management dropdown (need to be connected)"
-msgstr "Affiche l'onglet de gestion du compte (si connecté)"
-
-msgid "Open/Close the shortcut window"
-msgstr "Ouvre/Ferme la fenêtre d'aide des raccourcis"
-
-msgid "Open/Collapse the sidebar"
-msgstr "Ouvre/Ferme la barre de service"
+msgid "Orange"
+msgstr "Orange"
 
 msgid "Original"
 msgstr "Original"
@@ -1017,6 +1439,15 @@ msgstr "Projet parent"
 
 msgid "Password policy"
 msgstr "Politique des mots de passe"
+
+msgid "Password robustness"
+msgstr "Robustesse du mot de passe"
+
+msgid "Password successfully updated"
+msgstr "Le mot de passe a été mis à jour avec succès"
+
+msgid "Passwords do not match"
+msgstr "Les deux mots de passe soumis sont différents"
 
 msgid "People in this group will be able to manage project members."
 msgstr ""
@@ -1046,11 +1477,28 @@ msgstr "Permissions pour les services dépréciés"
 msgid "Permissions per group"
 msgstr "Permissions par groupe"
 
-msgid "Personal API access keys"
-msgstr "Clés personnelles d'accès à l'API"
+msgid "Personal access keys"
+msgstr "Clés personnelles d'accès"
+
+msgid ""
+"Personalize your project by adding a background image in the header of "
+"dashboard and administration pages."
+msgstr ""
+"Personnalisez votre projet en ajoutant une image de fond dans l'entête des "
+"tableaux de bord et de l'administration."
 
 msgid "Platform administration"
 msgstr "Administration de la plateforme"
+
+msgid "Platform banner"
+msgstr "Bannière de plateforme"
+
+msgid "Platform banner configuration"
+msgstr "Administration de la bannière de la plateforme"
+
+msgid "Platform configuration forbid users to change password"
+msgstr ""
+"La configuration de la plateforme ne permet pas de changer de mot de passe"
 
 msgid "Platform statistics"
 msgstr "Statistiques de la plateforme"
@@ -1073,8 +1521,14 @@ msgstr ""
 "automatique. Les comptes inactifs sont considérés comme non utilisés et "
 "seront désactivés."
 
+msgid "Please categorize it."
+msgstr "Merci de le catégoriser."
+
 msgid "Please choose a valid text file"
 msgstr "Veuillez choisir un fichier texte valide"
+
+msgid "Please confirm your action."
+msgstr "Merci de confirmer votre action."
 
 msgid ""
 "Please make sure the users who will be imported are already registered and "
@@ -1092,11 +1546,33 @@ msgstr ""
 msgid "Please select a file to upload"
 msgstr "Veuillez sélectionner un fichier à téléverser"
 
+msgid ""
+"Please select a picture for your avatar. The uploaded image will be shrunk "
+"to 100×100 pixels."
+msgstr ""
+"Veuillez sélectionner une image pour votre avatar. L'image sera réduite à "
+"100×100 pixels."
+
+msgid "Please update your password first"
+msgstr "Merci de mettre à jour votre mot de passe d'abord"
+
 msgid "Please write something meaningful for the admin."
 msgstr "Veuillez soumettre un message pertinent afin d'aider l'administrateur."
 
 msgid "Please, enter a http:// or https:// link"
 msgstr "Veuillez utiliser un lien http:// ou https://"
+
+msgid "Preferences"
+msgstr "Préférences"
+
+msgid "Preview"
+msgstr "Aperçu"
+
+msgid "Preview:"
+msgstr "Aperçu :"
+
+msgid "Previous successful login"
+msgstr "Connexion précédente"
 
 msgid "Private"
 msgstr "Privé"
@@ -1104,11 +1580,17 @@ msgstr "Privé"
 msgid "Private incl. restricted"
 msgstr "Privé incl. les utilisateurs restreints"
 
+msgid "Private including restricted"
+msgstr "Privé incluant les utilisateurs restreints"
+
 msgid "Processors"
 msgstr "Processeurs"
 
 msgid "Project"
 msgstr "Projet"
+
+msgid "Project (read only)"
+msgstr "Projet (lecture seule)"
 
 msgid "Project Creation request is disabled"
 msgstr "La création de projects est désactivé"
@@ -1140,6 +1622,9 @@ msgid ""
 msgstr ""
 "Les administrateurs ne peuvent pas être retirés du projet. Vous devez "
 "d'abord les retirer du groupe Administrateurs du projet."
+
+msgid "Project background"
+msgstr "Image de fond du projet"
 
 msgid "Project banner"
 msgstr "Bannière du projet"
@@ -1225,7 +1710,7 @@ msgid "Project settings"
 msgstr "Configuration des projets"
 
 msgid "Project templates"
-msgstr "Patrons de projet"
+msgstr "Modèles de projet"
 
 msgid "Project trove categories"
 msgstr "Catégories de projet"
@@ -1239,14 +1724,11 @@ msgstr "Visibilité du projet"
 msgid "Project web pages (Home Page Service)"
 msgstr "Pages web de project (Service Site Web)"
 
-msgid "Project web site"
-msgstr "Site web du projet"
-
 msgid "Projects"
 msgstr "ProjetS"
 
 msgid "Projects created from this template"
-msgstr "Projets créés à partir de ce patron"
+msgstr "Projets créés à partir de ce modèle"
 
 msgid "Projects in category"
 msgstr "Projets dans la catégorie selectionnée"
@@ -1254,14 +1736,29 @@ msgstr "Projets dans la catégorie selectionnée"
 msgid "Projects visibility"
 msgstr "Visibilité des projets"
 
+msgid "Projects..."
+msgstr "Projets…"
+
+msgid "Provided release note URL is not well formed"
+msgstr "Le lien de la release note n'est pas au bon format."
+
 msgid "Public"
 msgstr "Publique"
 
 msgid "Public incl. restricted"
 msgstr "Publique, incluant les utilisateurs restreints"
 
+msgid "Public including restricted"
+msgstr "Publique, incluant les utilisateurs restreints"
+
 msgid "Public information"
 msgstr "Informations publiques"
+
+msgid "Purple"
+msgstr "Violet"
+
+msgid "REST"
+msgstr "REST"
 
 msgid "REST Read only administrator"
 msgstr "Administrateur lecture seule via REST"
@@ -1275,11 +1772,65 @@ msgstr "RSS"
 msgid "Rank"
 msgstr "Rang"
 
+msgid "Read only access to information about projects"
+msgstr "Accès en lecture seule aux informations concernant les projets"
+
+msgid "Read only access to your membership in user groups"
+msgstr "Accès en lecture seule à votre présence dans des groupes utilisateurs"
+
+msgid "Real Name"
+msgstr "Nom Complet"
+
+msgid "Real Name (login)"
+msgstr "Nom Complet (login)"
+
+msgid "Real name"
+msgstr "Nom complet"
+
+msgid "Real name successfully updated"
+msgstr "Le nom complet a été mis à jour avec succès"
+
+msgid "Real name was not updated"
+msgstr "Le nom complet n'a pas été mis à jour"
+
+msgid "Receive additional community mailing"
+msgstr ""
+"Recevoir du courrier électronique supplémentaire au sujet de la communauté"
+
+msgid "Receive emails about site updates, including security notices"
+msgstr ""
+"Recevoir du courrier électronique à propos des mises à jour du site mais "
+"également des informations relatives à la sécurité"
+
 msgid "Recently"
 msgstr "Récemment"
 
+msgid "Red"
+msgstr "Rouge"
+
 msgid "References"
 msgstr "Références"
+
+msgid "Registered users"
+msgstr "Utilisateurs enregistrés"
+
+msgid "Relative date first"
+msgstr "Date relative en premier"
+
+msgid "Relative date only"
+msgstr "Date relative seulement"
+
+msgid "Relative dates display"
+msgstr "Affichage des dates relatives"
+
+msgid "Release Note"
+msgstr "Information de mise à jour"
+
+msgid "Release note link"
+msgstr "Lien de la release note"
+
+msgid "Release note link configuration"
+msgstr "Configuration du lien de release note"
 
 msgid "Removal from projects"
 msgstr "Retrait de projets"
@@ -1302,6 +1853,9 @@ msgstr "Retirer du groupe"
 msgid "Remove group member"
 msgstr "Retirer un membre du groupe"
 
+msgid "Repeat new password"
+msgstr "Répétez le nouveau mot de passe"
+
 msgid "Restricted users are allowed in this project."
 msgstr "Les utilisateurs restreints sont autorisés dans ce projet."
 
@@ -1314,17 +1868,32 @@ msgstr "Les utilisateurs restreints peuvent créer des projets"
 msgid "Restricted users removal"
 msgstr "Suppression des utilisateurs restreints"
 
+msgid "Revoke selected SVN token"
+msgstr "Supprimer les jetons SVN sélectionnés"
+
 msgid "Revoke selected access keys"
 msgstr "Révoquer les clés d'accès sélectionnées"
 
 msgid "SOAP API"
 msgstr "API SOAP"
 
-msgid "SVN"
-msgstr "SVN"
+msgid "SSH key"
+msgstr "Clef SSH"
+
+msgid "SSH keys"
+msgstr "Clefs SSH"
 
 msgid "SVN Commits"
 msgstr "Commits SVN"
+
+msgid "SVN token copied!"
+msgstr "Jeton SVN copié !"
+
+msgid "SVN tokens"
+msgstr "Jetons SVN"
+
+msgid "SVN tokens have been successfully deleted"
+msgstr "Les clés d'accès ont été supprimées avec succès"
 
 msgid "Save"
 msgstr "Enregistrer"
@@ -1335,14 +1904,26 @@ msgstr "Sauvegarder les catégories"
 msgid "Save delegated permissions"
 msgstr "Sauvegarder les permissions déléguées"
 
+msgid "Save header background"
+msgstr "Sauvegarder l'image de fond"
+
 msgid "Save information"
 msgstr "Enregistrer les informations"
+
+msgid "Save new avatar"
+msgstr "Sauvegarder le nouvel avatar"
 
 msgid "Save settings"
 msgstr "Enregister"
 
+msgid "Save the link"
+msgstr "Enregister le lien"
+
 msgid "Scope"
 msgstr "Portée"
+
+msgid "Scopes"
+msgstr "Portées"
 
 msgid "Scrum"
 msgstr "Scrum"
@@ -1350,14 +1931,23 @@ msgstr "Scrum"
 msgid "Search"
 msgstr "Rechercher"
 
+msgid "Security"
+msgstr "Sécurité"
+
 msgid "See permissions"
 msgstr "Voir les permissions"
+
+msgid "Select"
+msgstr "Sélectionner"
+
+msgid "Semicolon"
+msgstr "Point virgule"
 
 msgid "Send an email when the project visibility changes"
 msgstr "Envoyer un email lorsque la visibilité d'un projet change"
 
-msgid "Send confirmation to new address"
-msgstr "Envoyer la confirmation"
+msgid "Send invitation"
+msgstr "Envoyer l'invitation"
 
 msgid "Service is not allowed in project."
 msgstr "Le service n'est pas autorisé dans le projet."
@@ -1374,6 +1964,9 @@ msgstr "Permissions des services"
 msgid "Services"
 msgstr "Services"
 
+msgid "Session"
+msgstr "Session"
+
 msgid "Set default"
 msgstr "Enregistrer la valeur par défaut"
 
@@ -1386,8 +1979,11 @@ msgstr "Description courte"
 msgid "Short description shouldn't exceed 255 characters."
 msgstr "La description courte ne doit pas dépasser 255 caractères."
 
-msgid "Shortcut list"
-msgstr "Liste des raccourcis"
+msgid "Shortcut"
+msgstr "Raccourci"
+
+msgid "Shortcuts"
+msgstr "Raccourcis"
 
 msgid ""
 "Should you still need this account, please connect once to "
@@ -1400,8 +1996,11 @@ msgstr ""
 "automatiquement. Par ailleurs, nous recommandons de profiter cette occasion "
 "pour mettre à jour votre mot de passe."
 
-msgid "Sidebar (project)"
-msgstr "Barre de service (projet)"
+msgid ""
+"Should you still need your account, please notify your %s contact for this "
+"project."
+msgstr ""
+"Si vous voulez garder votre compte, notifiez votre contact %s pour ce projet."
 
 msgid "Site content customisations"
 msgstr "Personnalisations du site content"
@@ -1418,28 +2017,69 @@ msgstr "Des catégories sont manquantes"
 msgid "Source code management"
 msgstr "Gestion de code source"
 
+msgid "Start a new project"
+msgstr "Démarrer un nouveau projet"
+
 msgid "Start by choosing a widget"
 msgstr "Commencez par choisir un widget"
 
 msgid "Start working"
-msgstr "Commencer le travail"
+msgstr "Commencez le travail"
 
 msgid "Status"
 msgstr "Statut"
 
+msgid ""
+"Streamline your workflow and focus on what's hot with an easy-to-use board"
+msgstr ""
+"Optimisez votre workflow et concentrez vous sur ce qui est important avec un "
+"tableau facile à utiliser"
+
 msgid "Style"
 msgstr "Style"
 
+msgid "Submitted CSV date format is not valid"
+msgstr "Le format de date CSV n'est pas valide"
+
+msgid "Submitted CSV separator is not valid"
+msgstr "Le séparateur CSV n'est pas valide"
+
+msgid "Submitted real name is too long, it must be less than 32 characters"
+msgstr "Le nom complet doit contenir au maximum 32 caractères"
+
+msgid "Submitted relative dates display is not valid."
+msgstr "Le format d'affichage des dates relatives n'est pas valide"
+
+msgid "Submitted text format is not valid"
+msgstr "Le formal de texte n'est pas valide"
+
+msgid "Submitted username display is not valid."
+msgstr "Le formal d'affichage des noms n'est pas valide"
+
+#, php-format
 msgid ""
-"Submitting the form below will mail a confirmation URL to the new email "
-"address. Visiting this link will complete the email change."
+"Subversion Core is deprecated, please <a href=\"/project/%d/admin/services"
+"\">install and activate `SVN` plugin.</a>"
 msgstr ""
-"La soumission de ce formulaire déclenchera l'envoi d'un e-mail à votre "
-"nouvelle adresse incluant un lien à visiter pour confirmer définitivement le "
-"changement."
+"Ce service est déprécié, merci <a href=\"/project/%d/admin/services"
+"\">d'installer et activer le plugin`SVN`.</a>"
+
+#, php-format
+msgid ""
+"Subversion Core is deprecated, please install and activate `SVN` plugin and "
+"<a href=\"/plugins/svn/%s/admin-migrate\">migrate your repository.</a>"
+msgstr ""
+"Ce service est déprécié, merci d'installer et activer le plugin`SVN` et de "
+"<a href=\"/plugins/svn/%s/admin-migrate\">migrer votre dépôt.</a>"
 
 msgid "Successfully updated."
 msgstr "Mis à jour avec succès."
+
+msgid "Switch to new tracker creation flow"
+msgstr "Basculer sur la nouvelle interface de création de projet"
+
+msgid "Switch to..."
+msgstr "Basculer vers..."
 
 msgid "Switching the project status back to \"pending\" is not possible."
 msgstr "Remettre le projet au statut \"en attente\" n'est pas possible."
@@ -1450,14 +2090,29 @@ msgstr "Gestion synchronisée de l'appartenance au projet"
 msgid "System groups"
 msgstr "Groupes système"
 
+msgid "Tab"
+msgstr "Tabulation"
+
 msgid "Template used by project"
-msgstr "Patron utilisé par ce projet"
+msgstr "Modèle utilisé par ce projet"
 
 msgid "Templates"
-msgstr "Patrons de projet"
+msgstr "Modèles de projet"
+
+msgid "Terms"
+msgstr "Conditions"
+
+msgid "Text"
+msgstr "Texte"
 
 msgid "That user does not exist."
 msgstr "Cet utilisateur n'existe pas"
+
+msgid "The %s team."
+msgstr "L'équipe %s."
+
+msgid "The chosen color is not allowed."
+msgstr "La couleur choisie n'est pas autorisée."
 
 #, php-format
 msgid "The dashboard \"%s\" already exists."
@@ -1470,6 +2125,10 @@ msgstr "Le tableau de bord \"%s\" n’existe pas."
 #, php-format
 msgid "The directory %s is not valid"
 msgstr "Le répertoire %s n'est valide"
+
+msgid "The display preference has been forced for each user successfully."
+msgstr ""
+"La préférence d'affichage a été forcée pour chaque utilisateur avec succès"
 
 #, php-format
 msgid "The entered value '%s' is invalid."
@@ -1496,6 +2155,9 @@ msgstr "L'identifiant du groupe utilisateur est requis"
 msgid "The group name is missing"
 msgstr "Le nom du groupe utilisateur est requis"
 
+msgid "The header background has been successfully changed"
+msgstr "L'image de fond a été modifiée avec succès"
+
 msgid ""
 "The key will expire at the end of the selected date. Keep it empty if you "
 "don't want that this key will expire."
@@ -1507,6 +2169,20 @@ msgid "The last project administrator cannot be removed."
 msgstr ""
 "Il n'est pas possible de supprimer le dernier administrateur du projet."
 
+msgid ""
+"The legacy default template. No more available soon. To be recreated as a "
+"\"Custom template\""
+msgstr ""
+"L'ancien modèle par défaut. Ne sera bientôt plus disponible. A recréer en "
+"tant que \"Modèle de projet personnalisé\""
+
+msgid ""
+"The list of projects that were previously whitelisted will be permanently "
+"lost."
+msgstr ""
+"La liste des projets qui étaient explicitement autorisés sera définitivement "
+"perdue."
+
 #, php-format
 msgid ""
 "The mail was not accepted for the delivery. Please contact the administrator "
@@ -1514,6 +2190,19 @@ msgid ""
 msgstr ""
 "L'e-mail n'a pas pu être envoyé. Veuillez contacter les administrateurs à "
 "l'adresse %s."
+
+#, php-format
+msgid "The maximum number of invitations per day is %s."
+msgstr "Le nombre maximal d'invitation par jour est de %s."
+
+msgid ""
+"The most complete project workspace to plan, build and ship quality "
+"products. Include Tuleap Test Management, Time Tracking and Cross-Tracker "
+"Search. Reach end-to-end traceability."
+msgstr ""
+"L'environnement le plus complet pour planifier, suivre et créer des produits "
+"de qualité. Inclus Tuleap Test Management, Time Tracking et Cross-Tracker "
+"Search. Pour une traçabilité de bout en bout."
 
 msgid "The name is missing for creating a dashboard."
 msgstr "Il manque le nom pour créer un tableau de bord."
@@ -1556,6 +2245,9 @@ msgstr ""
 "Ce service ne peut pas être ouvert à la fois dans un nouvel onglet et dans "
 "une iframe. Veuillez choisir l'un des deux."
 
+msgid "The submitted language is not supported."
+msgstr "La langue requise n'est pas supportée."
+
 msgid "The user will automatically be added as project member."
 msgstr "L'utilisateur sera ajouté automatiquement aux membres du projet."
 
@@ -1570,6 +2262,9 @@ msgstr "Le widget est désactivé dans les tableaux de bord de projet."
 
 msgid "The {{tuleap_server_name}} team."
 msgstr "L'équipe de {{tuleap_server_name}}."
+
+msgid "Theme color"
+msgstr "Couleur du thème"
 
 msgid "There are no items <br> you can see"
 msgstr "Il n'y a aucun élément <br> visible"
@@ -1638,6 +2333,9 @@ msgstr ""
 msgid "This group does not have any members yet."
 msgstr "Ce groupe n'a pas encore de membres."
 
+msgid "This is a preview"
+msgstr "Ceci est un aperçu"
+
 msgid "This is a private project."
 msgstr "Ce projet est privé."
 
@@ -1657,6 +2355,9 @@ msgstr ""
 "Ce texte de licence ne peut être supprimé car il est utilisé par les paquets "
 "suivants :"
 
+msgid "This mail has been automatically sent from %s application"
+msgstr "Cet e-mail a été envoyé automatiquement par l'application %s"
+
 msgid ""
 "This mail has been automatically sent from {{tuleap_server_name}} application"
 msgstr ""
@@ -1672,6 +2373,13 @@ msgstr ""
 "l'Agiledashboard et sur les rapports de type cardwall dans les outils de "
 "suivi. Ceci permet de mieux différencier les couleurs ainsi que leurs "
 "variantes."
+
+msgid ""
+"This page is deprecated and will be removed soon. You should switch to the "
+"new project creation flow."
+msgstr ""
+"Cette page est dépréciée et sera bientôt supprimée. Vous devriez utiliser la "
+"nouvelle interface de création de projet."
 
 msgid ""
 "This permission grants the right to manage platform administration users. "
@@ -1715,6 +2423,9 @@ msgstr "Cette icône de service n'est pas autorisée."
 msgid "This service is a system service, it cannot be deleted."
 msgstr "Ce service est un service système, il ne peut pas être supprimé."
 
+msgid "This user can't be restricted."
+msgstr "Cet utilisateur ne peut être restreint."
+
 msgid ""
 "This user has the global REST read only administration permission and should "
 "not browse the application."
@@ -1744,8 +2455,20 @@ msgstr[1] ""
 "Ce groupe est la source de %d autres groupes que vous ne pouvez pas "
 "administrer."
 
+msgid "This widget is deprecated, you should remove it."
+msgstr "Ce widget est déprécié, vous devriez le supprimer."
+
 msgid "This will remove this service from all projects."
 msgstr "Ceci supprimera ce service de tous les projets."
+
+msgid "Timezone"
+msgstr "Fuseau horaire"
+
+msgid "Timezone successfully updated"
+msgstr "Le fuseau horaire a été mis à jour avec succès"
+
+msgid "Timezone was not updated"
+msgstr "Le fuseau horaire n'a pas été mis à jour"
 
 msgid "Title"
 msgstr "Titre"
@@ -1768,11 +2491,23 @@ msgstr ""
 "et <a href=\"mailto:%s\"><b>contactez-nous</b></a> si vous avez besoin de "
 "clarifications ou si vous souhaitez expliquer les raisons de votre refus."
 
+msgid "To sign in (your username is %s):"
+msgstr "Pour vous connecter (votre nom d'utilisateur est %s) :"
+
+msgid "To sign up:"
+msgstr "Pour vous enregistrer :"
+
 msgid "Today"
 msgstr "Aujourd'hui"
 
-msgid "Tracker"
-msgstr "Suivi"
+msgid "Token comment"
+msgstr "Commentaire du jeton"
+
+msgid "Trace and Track all types of activities."
+msgstr "Suivez et gérez tous types d'activités."
+
+msgid "Tracker email format"
+msgstr "Format des notifications de l'outil de suivi"
 
 msgid "Trackers"
 msgstr "Outils de suivi"
@@ -1782,6 +2517,13 @@ msgstr "Import outils de suivi v3"
 
 msgid "Trove categories"
 msgstr "Catégories"
+
+msgid ""
+"Tuleap experimental features in preview mode for bleeding edge users. Only "
+"use it if you know what you are doing."
+msgstr ""
+"Fonctionnalités expérimentales de Tuleap en avant première pour les "
+"intrépides. N'activez ce mode que si vous savez ce que vous faites."
 
 msgid ""
 "Tuleap helps teams to deliver awesome applications, better, faster, and "
@@ -1799,6 +2541,9 @@ msgstr "Impossible de récupérer les dernières activités du projet"
 msgid "Unable to send email to user, please contact %s"
 msgstr "Impossible d'envoyer l'email à l'utilisateur, veuillez contacter %s"
 
+msgid "Unable to update user preferences"
+msgstr "La mise à jour des préférences utilisateur a échoué"
+
 msgid "Unauthorized action for anonymous"
 msgstr "Cette action n'est pas autorisée pour les anonymes"
 
@@ -1811,17 +2556,26 @@ msgstr "Jusqu'à 2 catégories peuvent être utilisées en tant que marqueur."
 msgid "Update"
 msgstr "Mettre à jour"
 
+msgid "Update List"
+msgstr "Modifier une liste"
+
 msgid "Update failed"
 msgstr "La mise à jour a échoué"
 
 msgid "Update label"
 msgstr "Mettre à jour le label"
 
+msgid "Update notifications settings"
+msgstr "Mettre à jour les paramètres de notification"
+
 msgid "Update of service label is not supported"
 msgstr "La mise à jour du label du service n'est pas supportée"
 
 msgid "Update of service name is not supported"
 msgstr "La mise à jour du nom du service n'est pas supportée"
+
+msgid "Update password"
+msgstr "Mettre à jour le mot de passe"
 
 msgid "Update successful"
 msgstr "Mis à jour avec succès"
@@ -1832,6 +2586,9 @@ msgstr "Téléverser un fichier texte"
 msgid "Use as project flag"
 msgstr "Utilisée en tant que marqueur de projet"
 
+msgid "Use default avatar"
+msgstr "Utiliser l'avatar par défaut"
+
 #, php-format
 msgid "User '%s' does not exist"
 msgstr "L'utilisateur '%s' n’existe pas"
@@ -1839,8 +2596,14 @@ msgstr "L'utilisateur '%s' n’existe pas"
 msgid "User added"
 msgstr "Utilisateur ajouté"
 
+msgid "User and date"
+msgstr "Utilisateur et date"
+
 msgid "User avatar"
 msgstr "Avatar de l'utilisateur"
+
+msgid "User cannot be found"
+msgstr "L'utilisateur n'a pas été trouvé"
 
 msgid "User does not exist"
 msgstr "L'utilisateur n’existe pas"
@@ -1868,8 +2631,17 @@ msgstr "L'utilisateur est déjà membre du projet"
 msgid "User name"
 msgstr "Nom d'utilisateur"
 
+msgid "User preferences successfully updated"
+msgstr "Les préférences utilisateur ont été mises à jour"
+
 msgid "User status"
 msgstr "Statut de l'utilisateur"
+
+msgid "Username"
+msgstr "Nom utilisateur"
+
+msgid "Username display"
+msgstr "Affichage des noms"
 
 msgid "Users"
 msgstr "Utilisateurs"
@@ -1883,8 +2655,10 @@ msgstr "Groupes d'utilisateurs"
 msgid "Users groups bound to this one"
 msgstr "Groupes liés à celui-ci"
 
-msgid "Verify accessiblity mode value"
-msgstr "Vérifiez la valeur du mode d'accessibilité"
+msgid "Users must be able to send at least one invitation by day."
+msgstr ""
+"Les utilisateurs doivent être en mesure d'envoyer au moins une invitation "
+"par jour."
 
 msgid "View members"
 msgstr "Voir les membres"
@@ -1906,9 +2680,12 @@ msgstr "Impossible de trouver comment éditer le widget requis."
 msgid "We cannot find any widgets."
 msgstr "Impossible de trouver des widgets."
 
-msgid "We will bother you later with the deprecation of IE < 11."
+msgid "We need at least one email to send an invitation"
+msgstr "Nous avons besoin d'au moins un email pour envoyer une invitation"
+
+msgid "We recommend the latest version of Firefox, Chrome, or Edge."
 msgstr ""
-"Nous vous importunerons plus tard à propos de la dépréciation de IE < 11."
+"Nous recommandons d'utiliser la dernière version de Firefox, Chrome, ou Edge."
 
 msgid "Webhooks"
 msgstr "Webhooks"
@@ -1924,9 +2701,6 @@ msgstr "Message de bienvenue et informations générales pour les utilisateurs"
 
 msgid "Welcome to your new project"
 msgstr "Bienvenue dans votre nouveau projet"
-
-msgid "Welcome, %s."
-msgstr "Bienvenue, %s"
 
 msgid "What is the purpose of your project?"
 msgstr "Quel est le but de ce projet?"
@@ -1950,8 +2724,20 @@ msgstr ""
 msgid "Widget has been successfully deleted."
 msgstr "Le widget a correctement été supprimé."
 
+msgid "Widget not found."
+msgstr "Widget non trouvé."
+
+msgid "Widget successfully disabled."
+msgstr "Le widget a été désactivé avec succès."
+
+msgid "Widget successfully enabled."
+msgstr "Le widget a été activé avec succès."
+
 msgid "Widgets"
 msgstr "Widgets"
+
+msgid "Widgets availability"
+msgstr "Disponibilité des widgets"
 
 msgid "Wiki"
 msgstr "Wiki"
@@ -1980,6 +2766,13 @@ msgstr "Année"
 msgid "Yesterday"
 msgstr "Hier"
 
+msgid ""
+"You are about to allow access to a resource for every projects on the "
+"platform."
+msgstr ""
+"Vous êtes sur le point d'autoriser l'accès à une ressource pour tous les "
+"projets de la plateforme."
+
 msgid "You are about to delete <b>%s</b> binding. Please, confirm your action."
 msgstr ""
 "Vous êtes sur le point de supprimer le lien <b>%s</b>. Merci de confirmer "
@@ -2006,6 +2799,13 @@ msgid ""
 msgstr ""
 "Vous êtes sur le point de supprimer le widget \"%s\". Cette action est "
 "irréversible. Merci de confirmer cette suppression."
+
+msgid ""
+"You are about to disallow access to a resource for every projects on the "
+"platform."
+msgstr ""
+"Vous êtes sur le point de restreindre l'accès à une ressource pour tous les "
+"projets de la plateforme."
 
 msgid ""
 "You are about to download software from this site. Software re-use and "
@@ -2055,6 +2855,18 @@ msgstr ""
 "Vous n'etes pas l'utilisateur à l'origine de la demande de changement d'e-"
 "mail"
 
+#, php-format
+msgid "You are trying to send %s invitations, but the maximum is %s per day."
+msgstr ""
+"Vous êtes en train d'envoyer %s invitations, mais le maximum est de %s par "
+"jour."
+
+#, php-format
+msgid "You are trying to send one invitation."
+msgid_plural "You are trying to send %s invitations."
+msgstr[0] "Vous essayez d'envoyer une invitation."
+msgstr[1] "Vous essayez d'envoyer %s invitations."
+
 msgid "You can choose up to %s category"
 msgid_plural "You can choose up to %s categories"
 msgstr[0] "Vous pouvez choisir au plus %s catégorie"
@@ -2074,6 +2886,18 @@ msgstr ""
 "Vous pouvez déléguer à ce groupe des permissions. Tous les membres de ce "
 "groupe  bénéficieront alors de ces permissions."
 
+msgid ""
+"You can edit the release note link. It will change this link on the Help "
+"Drop-down.\n"
+"                            This link is auto updated on each major upgrade. "
+"By default, the official Tuleap release note link is used."
+msgstr ""
+"Vous pouvez mettre à jour le lien de la release note. Il sera utilisé dans "
+"le bouton d'aide. \n"
+"                            Ce lien sera automatiquement mis à jour lors de "
+"chaque montée de version majeur de Tuleap. Par défault, le lien de la "
+"release note officielle de Tuleap est utilisé."
+
 msgid "You can import users into your project by specifying a text file."
 msgstr ""
 "Vous pouvez importer des utilisateurs dans votre projet en spécifiant un "
@@ -2082,22 +2906,39 @@ msgstr ""
 msgid "You can include empty lines in the import file."
 msgstr "Vous pouvez inclure des lignes vides dans le fichier d'import."
 
+msgid ""
+"You can no longer invite people to use %s you have reached the limit of %s "
+"invitations by day."
+msgstr ""
+"Vous ne pouvez plus inviter de nouvelles personnes sur %s, vous avez déjà "
+"atteints la limite de %s invitations par jour."
+
 msgid "You can not delete system user groups"
 msgstr "Vous ne pouvez pas supprimer un groupe utilisateurs système"
 
 msgid "You can only edit your own widgets."
 msgstr "Vous ne pouvez éditer que vos propres widgets."
 
+#, php-format
+msgid "You can only send one more invitation."
+msgid_plural "You can only send %s more invitations."
+msgstr[0] "Vous ne pouvez envoyer plus qu'une seule invitation."
+msgstr[1] "Vous pouvez encore envoyer %s invitations."
+
 msgid ""
-"You can use API access keys to access the REST API from scripts or command "
-"line.\n"
-"        However, these access keys are like password and should be guarded "
-"carefully."
+"You can use SVN tokens as a replacement for your password on projects "
+"selected by the administrator."
 msgstr ""
-"Vous pouvez utiliser les clés d'accès API pour accéder à l'API REST à partir "
-"de scripts ou de la ligne de commande.\n"
-"        Cependant ces clés sont similaires à des mots de passe et doivent "
-"être conservés précautionneusement."
+"Les jetons SVN sont utilisables en remplacement de votre mot de passe "
+"uniquement sur les projets définis par l'administrateur."
+
+msgid ""
+"You can use access keys to access resources from scripts or command line. "
+"However, these access keys are like password and should be guarded carefully."
+msgstr ""
+"Vous pouvez utiliser les clés d'accès pour accéder aux ressources à partir "
+"de scripts ou de la ligne de commande. Cependant ces clés sont similaires à "
+"des mots de passe et doivent être conservés précautionneusement."
 
 msgid "You can use markdown to format your text"
 msgstr "Vous pouvez utiliser du markdwon pour formater votre texte"
@@ -2125,6 +2966,19 @@ msgstr "Vous ne pouvez pas accéder à cette page."
 msgid "You cannot create an already expired access key."
 msgstr "Vous ne pouvez pas créer une clé déja expirée."
 
+msgid "You do not have permission to access the site administration."
+msgstr ""
+"Vous n'avez pas la permission d'accéder à l'administration de cette instance."
+
+msgid "You don't have any SSH keys yet."
+msgstr "Vous n'avez pas de clef SSH."
+
+msgid "You don't have any SVN tokens yet."
+msgstr "Vous n'avez pas de jetons SVN."
+
+msgid "You don't have any access keys yet."
+msgstr "Vous n'avez pas de clef d'accès."
+
 msgid "You don't have any dashboards."
 msgstr "Vous n'avez aucun tableau de bord."
 
@@ -2149,14 +3003,14 @@ msgid ""
 "You have requested a change of email address on %s.\n"
 "Please visit the following URL to complete the email change:\n"
 "\n"
-"%s\n"
+"%s%s\n"
 "\n"
 "-- The %s Team"
 msgstr ""
 "Vous avez demandé a changer votre adresse e-mail en %s.\n"
 "Merci de visiter le lien ci-dessous pour confirmer ce changement :\n"
 "\n"
-"%s\n"
+"%s%s\n"
 "\n"
 "-- L'équipe %s"
 
@@ -2171,12 +3025,24 @@ msgid "You must be a project admin to edit this widget."
 msgstr ""
 "Vous devez être administrateur du projet pour pouvoir éditer ce widget."
 
+msgid "You need to logout & login again for this to be taken into account"
+msgstr ""
+"Vous devez vous déconnecter et reconnecter pour que cette option soit prise "
+"en compte"
+
 msgid ""
 "You need to provide a simple file, containing in each line the email address "
 "or the username of the user."
 msgstr ""
 "Vous devez fournir un fichier simple, contenant pour chaque ligne l'adresse "
 "email ou le nom de l'utilisateur à importer."
+
+msgid ""
+"You receive this mail because you have not accessed the %s application since "
+"%s."
+msgstr ""
+"Vous recevez ce courriel car vous n'avez pas accédé à l'application %s "
+"depuis %s."
 
 msgid ""
 "You receive this mail because you have not accessed the "
@@ -2222,8 +3088,24 @@ msgstr "La variable <code>$sys_project_approval</code> est toujours présente"
 msgid "Your account has been created on %s"
 msgstr "Votre compte a été créé sur %s"
 
+#, php-format
 msgid ""
-"Your email change is complete. Your new email address is <strong>%s</strong>."
+"Your account has been suspended. If you have questions regarding your "
+"suspension, please email <a href=\"mailto:%s\">the site administrators</a>."
+msgstr ""
+"Votre compte utilisateur a été suspendu. Si vous avez des questions à ce "
+"sujet, veuillez envoyez un e-mail aux <a href=\"mailto:%s\">administrateurs "
+"du site</a>."
+
+msgid "Your avatar"
+msgstr "Votre avatar"
+
+msgid "Your browser is not supported."
+msgstr "Votre navigateur n'est pas supporté."
+
+#, php-format
+msgid ""
+"Your email change is complete. Your new email address is <strong>%s</strong>"
 msgstr ""
 "Votre changement d'adresse e-mail est confirmé. Votre nouvelle adresse e-"
 "mail est <strong>%s</strong>"
@@ -2237,18 +3119,31 @@ msgstr "Votre plateforme n'authorise pas les utilisateurs restreints"
 msgid "Your request is invalid"
 msgstr "Votre requête n'est pas valide"
 
+msgid "Your web browser is not supported"
+msgstr "Votre navigateur web n'est pas supporté"
+
+msgid "Your web browser will be unsupported soon"
+msgstr "Votre navigateur web ne sera bientôt plus pris en charge"
+
 #, php-format
 msgid "[%s] Email change confirmation"
 msgstr "[%s] Confirmation de changement d'e-mail"
 
-msgid "back to home page"
-msgstr "Retour à la page d'accueil"
-
 msgid "edit"
 msgstr "éditer"
 
+#, php-format
+msgid "in %s"
+msgstr "dans %s"
+
 msgid "last<br>month"
 msgstr "le mois<br>dernier"
+
+msgid "login"
+msgstr "login"
+
+msgid "login (Real Name)"
+msgstr "login (Nom Complet)"
 
 #, php-format
 msgid "parameter \"query\" syntax error: \"%s\" property not found"

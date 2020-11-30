@@ -19,6 +19,7 @@
  */
 
 use Tuleap\Project\DefaultProjectVisibilityRetriever;
+use Tuleap\Project\ProjectCreationNotifier;
 use Tuleap\Project\ProjectDescriptionUsageRetriever;
 use Tuleap\Project\Registration\ProjectRegistrationUserPermissionChecker;
 use Tuleap\Project\Registration\RegistrationForbiddenException;
@@ -56,6 +57,10 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
      * @var ProjectRegistrationUserPermissionChecker
      */
     private $permission_checker;
+    /**
+     * @var ProjectCreationNotifier
+     */
+    private $project_creation_notifier;
 
     public function __construct(
         Codendi_Request $request,
@@ -64,7 +69,8 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
         Project_CustomDescription_CustomDescriptionFactory $custom_description_factory,
         TroveCatFactory $trove_cat_factory,
         CSRFSynchronizerToken $csrf_token,
-        ProjectRegistrationUserPermissionChecker $permission_checker
+        ProjectRegistrationUserPermissionChecker $permission_checker,
+        ProjectCreationNotifier $project_creation_notifier
     ) {
         parent::__construct('project', $request);
         $this->project_manager              = $project_manager;
@@ -87,7 +93,8 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
         );
 
         $this->default_project_visibility_retriever = $default_project_visibility_retriever;
-        $this->permission_checker = $permission_checker;
+        $this->permission_checker                   = $permission_checker;
+        $this->project_creation_notifier            = $project_creation_notifier;
     }
 
     /**
@@ -96,13 +103,13 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
     public function index()
     {
         try {
-            $GLOBALS['HTML']->header(array('title'=> $GLOBALS['Language']->getText('register_index', 'project_registration')));
+            $GLOBALS['HTML']->header(['title' => $GLOBALS['Language']->getText('register_index', 'project_registration')]);
             $this->permission_checker->checkUserCreateAProject($this->request->getCurrentUser());
             $this->render('register', $this->presenter);
         } catch (RegistrationForbiddenException $exception) {
             $this->render('register-disabled', []);
         }
-        $GLOBALS['HTML']->footer(array());
+        $GLOBALS['HTML']->footer([]);
         exit;
     }
 
@@ -116,12 +123,12 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
             $this->csrf_token->check();
             $this->validate();
             $project = $this->doCreate();
-            $this->notifySiteAdmin($project);
+            $this->project_creation_notifier->notifySiteAdmin($project);
             $this->postCreate($project);
         } catch (RegistrationForbiddenException $exception) {
-            $GLOBALS['HTML']->header(array('title'=> $GLOBALS['Language']->getText('register_index', 'project_registration')));
+            $GLOBALS['HTML']->header(['title' => $GLOBALS['Language']->getText('register_index', 'project_registration')]);
             $this->render('register-disabled', []);
-            $GLOBALS['HTML']->footer(array());
+            $GLOBALS['HTML']->footer([]);
         }
     }
 
@@ -160,24 +167,11 @@ class Project_OneStepCreation_OneStepCreationController extends MVC2_Controller 
         }
     }
 
-    private function notifySiteAdmin(Project $project)
-    {
-        $subject = $GLOBALS['Language']->getText('register_project_one_step', 'complete_mail_subject', array($project->getPublicName()));
-        $presenter = new MailPresenterFactory();
-        $renderer  = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') .'/src/templates/mail/');
-        $mail = new TuleapRegisterMail($presenter, $renderer, "mail-project-register-admin");
-        $mail = $mail->getMailNotificationProject($subject, ForgeConfig::get('sys_noreply'), ForgeConfig::get('sys_email_admin'), $project);
-
-        if (! $mail->send()) {
-            $GLOBALS['Response']->addFeedback(Feedback::WARN, $GLOBALS['Language']->getText('global', 'mail_failed', array($GLOBALS['sys_email_admin'])));
-        }
-    }
-
     private function postCreate(Project $project)
     {
         $one_step_registration_factory = new Project_OneStepRegistration_OneStepRegistrationPresenterFactory($project);
-        $GLOBALS['HTML']->header(array('title'=> $GLOBALS['Language']->getText('register_confirmation', 'registration_complete')));
+        $GLOBALS['HTML']->header(['title' => $GLOBALS['Language']->getText('register_confirmation', 'registration_complete')]);
         $this->render('confirmation', $one_step_registration_factory->create());
-        $GLOBALS['HTML']->footer(array());
+        $GLOBALS['HTML']->footer([]);
     }
 }

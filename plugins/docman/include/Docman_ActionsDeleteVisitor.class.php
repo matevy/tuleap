@@ -24,8 +24,10 @@
 use Tuleap\Docman\DeleteFailedException;
 use Tuleap\Docman\DocumentDeletion\DocmanWikiDeletor;
 use Tuleap\Docman\Item\ItemVisitor;
-use Tuleap\PHPWiki\WikiPage;
 
+/**
+ * @implements ItemVisitor<bool>
+ */
 class Docman_ActionsDeleteVisitor implements ItemVisitor
 {
     protected $user;
@@ -41,12 +43,11 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
      *
      * Enter description here ...
      *
-     * @param Docman_Folder $item
      * @param               $params
      *
      * @throws DeleteFailedException
      */
-    public function visitFolder(Docman_Folder $item, $params = array())
+    public function visitFolder(Docman_Folder $item, $params = [])
     {
         //delete all sub items before
         $items = $item->getAllItems();
@@ -61,7 +62,7 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
             while ($it->valid()) {
                 $o = $it->current();
                 $params['parent'] = $item;
-                if (!$o->accept($this, $params)) {
+                if (! $o->accept($this, $params)) {
                     $one_item_has_not_been_deleted = true;
                 }
                 $it->next();
@@ -80,7 +81,7 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
     /**
      * @throws DeleteFailedException
      */
-    public function visitDocument($item, $params = array())
+    public function visitDocument($item, $params = [])
     {
         //Mark the document as deleted
         return $this->_deleteItem($item, $params);
@@ -113,7 +114,7 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
         ))->deleteWiki($wiki, $user, $should_propagate_deletion);
     }
 
-    public function visitLink(Docman_Link $item, $params = array())
+    public function visitLink(Docman_Link $item, $params = [])
     {
         return $this->visitDocument($item, $params);
     }
@@ -121,7 +122,7 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
     /**
      * @throws DeleteFailedException
      */
-    public function visitFile(Docman_File $item, $params = array())
+    public function visitFile(Docman_File $item, $params = [])
     {
         if ($this->getPermissionManager($item->getGroupId())->userCanDelete($params['user'], $item)) {
             if (isset($params['version']) && $params['version'] !== false) {
@@ -137,7 +138,7 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
     /**
      * @throws DeleteFailedException
      */
-    public function visitEmbeddedFile(Docman_EmbeddedFile $item, $params = array())
+    public function visitEmbeddedFile(Docman_EmbeddedFile $item, $params = [])
     {
         return $this->visitFile($item, $params);
     }
@@ -145,20 +146,20 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
     /**
      * @throws DeleteFailedException
      */
-    public function visitEmpty(Docman_Empty $item, $params = array())
+    public function visitEmpty(Docman_Empty $item, $params = [])
     {
         return $this->visitDocument($item, $params);
     }
 
     public function visitItem(Docman_Item $item, array $params = [])
     {
-        return null;
+        return false;
     }
 
     /**
      * @throws DeleteFailedException
      */
-    function _deleteItem($item, $params)
+    public function _deleteItem($item, $params)
     {
         if ($this->getPermissionManager($item->getGroupId())->userCanDelete($params['user'], $item)) {
             $dIF = $this->_getItemFactory();
@@ -172,13 +173,12 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
     /**
      * Delete a file (all versions of the file)
      *
-     * @param Docman_File $item
      * @param Array       $params
      *
      * @return bool
      * @throws DeleteFailedException
      */
-    function _deleteFile(Docman_File $item, $params)
+    public function _deleteFile(Docman_File $item, $params)
     {
         // Delete all versions before
         $version_factory = $this->_getVersionFactory();
@@ -197,62 +197,59 @@ class Docman_ActionsDeleteVisitor implements ItemVisitor
     /**
      * Delete a version of a file
      *
-     * @param Docman_File    $item
-     * @param Docman_Version $version
-     * @param PFUser           $user
      *
      * @return bool
      */
-    function _deleteVersion(Docman_File $item, Docman_Version $version, PFUser $user)
+    public function _deleteVersion(Docman_File $item, Docman_Version $version, PFUser $user)
     {
         // Proceed to deletion
         $version_factory = $this->_getVersionFactory();
         return $version_factory->deleteSpecificVersion($item, $version->getNumber());
     }
 
-    function _getEventManager()
+    public function _getEventManager()
     {
         return EventManager::instance();
     }
 
-    var $version_factory;
-    function _getVersionFactory()
+    public $version_factory;
+    public function _getVersionFactory()
     {
-        if (!$this->version_factory) {
+        if (! $this->version_factory) {
             $this->version_factory = new Docman_VersionFactory();
         }
         return $this->version_factory;
     }
 
-    var $item_factory;
-    function _getItemFactory()
+    public $item_factory;
+    public function _getItemFactory()
     {
-        if (!$this->item_factory) {
+        if (! $this->item_factory) {
             $this->item_factory = new Docman_ItemFactory();
         }
         return $this->item_factory;
     }
 
-    var $lock_factory;
-    function _getLockFactory()
+    public $lock_factory;
+    public function _getLockFactory()
     {
-        if (!$this->lock_factory) {
+        if (! $this->lock_factory) {
             $this->lock_factory = new \Docman_LockFactory(new \Docman_LockDao(), new \Docman_Log());
         }
         return $this->lock_factory;
     }
 
-    function _getFileStorage()
+    public function _getFileStorage()
     {
         return new Docman_FileStorage();
     }
 
-    function _getItemDao()
+    public function _getItemDao()
     {
         return new Docman_ItemDao(CodendiDataAccess::instance());
     }
 
-    function getPermissionManager($groupId)
+    public function getPermissionManager($groupId)
     {
         return Docman_PermissionsManager::instance($groupId);
     }

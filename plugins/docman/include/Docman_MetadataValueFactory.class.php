@@ -34,7 +34,7 @@ use Tuleap\Docman\Metadata\MetadataValueUpdator;
  */
 class Docman_MetadataValueFactory
 {
-    var $groupId;
+    public $groupId;
     /**
      * @var string
      */
@@ -47,7 +47,7 @@ class Docman_MetadataValueFactory
     /**
      * Constructor
      */
-    function __construct($groupId)
+    public function __construct($groupId)
     {
         $this->groupId = $groupId;
     }
@@ -55,10 +55,10 @@ class Docman_MetadataValueFactory
     /**
      * Return Docman_MetadataValueDao reference.
      */
-    function getDao()
+    public function getDao()
     {
         static $_plugin_docman_metadata_value_dao_instance;
-        if (!$_plugin_docman_metadata_value_dao_instance) {
+        if (! $_plugin_docman_metadata_value_dao_instance) {
             $_plugin_docman_metadata_value_dao_instance = new Docman_MetadataValueDao(CodendiDataAccess::instance());
         }
         return $_plugin_docman_metadata_value_dao_instance;
@@ -68,16 +68,16 @@ class Docman_MetadataValueFactory
      * Create and set-up a MetadataValue object.
      * @deprecated use MetadataValueObjectFactory::createNewMetadataValue
      */
-    function newMetadataValue($itemId, $fieldId, $type, $value)
+    public function newMetadataValue($itemId, $fieldId, $type, $value)
     {
-        return $this->getMetadataTypeObjectFactory()->createMetadataValueObjectWithCorrectValue((int)$itemId, (int)$fieldId, (int)$type, $value);
+        return $this->getMetadataTypeObjectFactory()->createMetadataValueObjectWithCorrectValue((int) $itemId, (int) $fieldId, (int) $type, $value);
     }
 
     /**
      * Insert new metadata value(s) in database.
      * @deprecated use MetadataValueCreator::storeMetadata
      */
-    function create(&$mdv)
+    public function create(&$mdv)
     {
         try {
             $store = new MetadataValueStore($this->getDao(), ReferenceManager::instance());
@@ -85,10 +85,7 @@ class Docman_MetadataValueFactory
             return true;
         } catch (MetadataDoesNotExistException $e) {
             $this->setError(
-                $GLOBALS['Language']->getText(
-                    'plugin_docman',
-                    'mdv_bo_errbadtype'
-                )
+                dgettext('tuleap-docman', 'Bad property type')
             );
         }
 
@@ -99,7 +96,7 @@ class Docman_MetadataValueFactory
      * Create new MetadataValue record.
      * @deprecated use MetadataValueCreator::createMetadataObject
      */
-    function createFromRow($id, $row)
+    public function createFromRow($id, $row)
     {
         $mdFactory = new Docman_MetadataFactory($this->groupId);
 
@@ -110,20 +107,13 @@ class Docman_MetadataValueFactory
                     $this->getMetadataCreator()->createMetadataObject($md, $id, $md_v);
                 } else {
                     $this->setError(
-                        $GLOBALS['Language']->getText(
-                            'plugin_docman',
-                            'mdv_bo_createunknown',
-                            [$md_name]
-                        )
+                        dgettext('tuleap-docman', 'Try to create an unknown property')
                     );
                 }
             }
         } catch (MetadataDoesNotExistException $e) {
             $this->setError(
-                $GLOBALS['Language']->getText(
-                    'plugin_docman',
-                    'mdv_bo_errbadtype'
-                )
+                dgettext('tuleap-docman', 'Bad property type')
             );
         }
     }
@@ -131,7 +121,7 @@ class Docman_MetadataValueFactory
     /**
      * Update an existing MetadataValue record.
      */
-    function updateFromRow($id, $row)
+    public function updateFromRow($id, $row)
     {
         $mdFactory = new Docman_MetadataFactory($this->groupId);
         $updator   = $this->getMetadataUpdator();
@@ -144,20 +134,13 @@ class Docman_MetadataValueFactory
                     $updator->updateMetadata($md, $id, $md_v);
                 } else {
                     $this->setError(
-                        $GLOBALS['Language']->getText(
-                            'plugin_docman',
-                            'mdv_bo_updateunknown',
-                            array($md_name)
-                        )
+                        sprintf(dgettext('tuleap-docman', 'Try to update an unknown property \'%1$s\''), $md_name)
                     );
                 }
             }
         } catch (MetadataDoesNotExistException $e) {
             $this->setError(
-                $GLOBALS['Language']->getText(
-                    'plugin_docman',
-                    'mdv_bo_errbadtype'
-                )
+                dgettext('tuleap-docman', 'Bad property type')
             );
         }
     }
@@ -166,14 +149,14 @@ class Docman_MetadataValueFactory
      * For each metadata in '$recurseArray', apply the metadata value of
      * '$srcItemId' item on items in '$itemIdArray'.
      */
-    function massUpdateFromRow($srcItemId, $recurseArray, $itemIdArray)
+    public function massUpdateFromRow($srcItemId, $recurseArray, $itemIdArray)
     {
         foreach ($recurseArray as $mdLabel) {
             $this->massUpdate($srcItemId, $mdLabel, $itemIdArray);
         }
     }
 
-    function massUpdate($srcItemId, $mdLabel, $itemIdArray)
+    public function massUpdate($srcItemId, $mdLabel, $itemIdArray)
     {
         $mdFactory = new Docman_MetadataFactory($this->groupId);
         if ($mdFactory->isRealMetadata($mdLabel)) {
@@ -191,7 +174,7 @@ class Docman_MetadataValueFactory
      * If an item is only assigned to the deleted value, it is automaticaly
      * defaulted to '100'
      */
-    function deleteLove($mdId, $loveId)
+    public function deleteLove($mdId, $loveId)
     {
         $dao = $this->getDao();
         $deleted = $dao->deleteLove($loveId);
@@ -204,7 +187,7 @@ class Docman_MetadataValueFactory
     /**
      * Ensure there is no item w/o a value for '$mdId' metadata
      */
-    function updateOrphansLoveItem($mdId)
+    public function updateOrphansLoveItem($mdId)
     {
         $dao = $this->getDao();
         return $dao->updateOrphansLoveItem($mdId);
@@ -213,12 +196,12 @@ class Docman_MetadataValueFactory
     /**
      * Return true if a value already exist for a given (itme, field).
      */
-    function exist($itemId, $fieldId)
+    public function exist($itemId, $fieldId)
     {
         $exist = false;
         $dao   = $this->getDao();
         $dar   = $dao->exist($itemId, $fieldId);
-        if ($dar && !$dar->isError() && $dar->rowCount() == 1) {
+        if ($dar && ! $dar->isError() && $dar->rowCount() == 1) {
             $row = $dar->current();
             if ($row['nb'] > 0) {
                 $exist = true;
@@ -272,9 +255,6 @@ class Docman_MetadataValueFactory
         return $this->error_state;
     }
 
-    /**
-     * @return \Tuleap\Docman\Metadata\MetadataValueCreator
-     */
     private function getMetadataCreator(): MetadataValueCreator
     {
         return new Tuleap\Docman\Metadata\MetadataValueCreator(
@@ -287,9 +267,6 @@ class Docman_MetadataValueFactory
         );
     }
 
-    /**
-     * @return \Tuleap\Docman\Metadata\MetadataValueUpdator
-     */
     private function getMetadataUpdator(): MetadataValueUpdator
     {
         return new Tuleap\Docman\Metadata\MetadataValueUpdator(
@@ -303,9 +280,6 @@ class Docman_MetadataValueFactory
         );
     }
 
-    /**
-     * @return MetadataValueObjectFactory
-     */
     private function getMetadataTypeObjectFactory(): MetadataValueObjectFactory
     {
         return new MetadataValueObjectFactory(new DocmanMetadataTypeValueFactory());

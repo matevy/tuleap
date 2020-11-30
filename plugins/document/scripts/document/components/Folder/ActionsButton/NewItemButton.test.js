@@ -20,18 +20,18 @@ import { shallowMount } from "@vue/test-utils";
 import NewItemButton from "./NewItemButton.vue";
 
 import localVue from "../../../helpers/local-vue.js";
-import { createStoreMock } from "../../../../../../../src/www/scripts/vue-components/store-wrapper-jest.js";
+import { createStoreMock } from "../../../../../../../src/scripts/vue-components/store-wrapper-jest.js";
 import EventBus from "../../../helpers/event-bus.js";
 
 describe("NewItemButton", () => {
     let factory;
     beforeEach(() => {
         const state = {
-            project_id: 101
+            project_id: 101,
         };
 
         const store_options = {
-            state
+            state,
         };
 
         const store = createStoreMock(store_options);
@@ -40,7 +40,7 @@ describe("NewItemButton", () => {
             return shallowMount(NewItemButton, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
             });
         };
     });
@@ -53,11 +53,11 @@ describe("NewItemButton", () => {
                 id: 1,
                 title: "my item title",
                 type: "file",
-                user_can_write: true
-            }
+                user_can_write: true,
+            },
         });
 
-        wrapper.find("[data-test=docman-new-item-button]").trigger("click");
+        wrapper.get("[data-test=docman-new-item-button]").trigger("click");
 
         expect(event_bus_emit).toHaveBeenCalledWith("show-new-document-modal", expect.any(Object));
     });

@@ -25,7 +25,6 @@ use TemplateRendererFactory;
 use Project;
 use Service;
 use ForgeConfig;
-use UGroupManager;
 use User_UGroup;
 use Feedback;
 use PFUser;
@@ -33,29 +32,24 @@ use User_ForgeUserGroupFactory;
 use ProjectUGroup;
 use ServiceFile;
 use TemplateRenderer;
-use UserManager;
 
 class PermissionController extends BaseFrsPresenter
 {
-    /** @var UGroupManager */
-    private $ugroup_manager;
     /** @var FRSPermissionFactory */
     private $permission_factory;
     /** @var FRSPermissionCreator */
     private $permission_creator;
     /** @var FRSPermissionManager */
     private $permission_manager;
-    /** @var UGr */
+    /** @var User_ForgeUserGroupFactory */
     private $ugroup_factory;
 
     public function __construct(
-        UGroupManager $ugroup_manager,
         FRSPermissionFactory $permission_factory,
         FRSPermissionCreator $permission_creator,
         FRSPermissionManager $permission_manager,
         User_ForgeUserGroupFactory $ugroup_factory
     ) {
-        $this->ugroup_manager     = $ugroup_manager;
         $this->permission_factory = $permission_factory;
         $this->ugroup_factory     = $ugroup_factory;
         $this->permission_creator = $permission_creator;
@@ -93,7 +87,7 @@ class PermissionController extends BaseFrsPresenter
 
     private function getFrsUGroupsByPermission(Project $project, $permission_type, array $project_ugroups)
     {
-        $options     = array();
+        $options     = [];
         $frs_ugroups = $this->permission_factory->getFrsUGroupsByPermission($project, $permission_type);
 
         foreach ($project_ugroups as $project_ugroup) {
@@ -101,11 +95,11 @@ class PermissionController extends BaseFrsPresenter
                 continue;
             }
 
-            $options[] = array(
+            $options[] = [
                 'id'       => $project_ugroup->getId(),
                 'name'     => $project_ugroup->getName(),
                 'selected' => $this->isUgroupSelected($frs_ugroups, $project_ugroup)
-            );
+            ];
         }
 
         return $options;
@@ -113,7 +107,7 @@ class PermissionController extends BaseFrsPresenter
 
     private function isUgroupHidden(User_UGroup $project_ugroup)
     {
-        return (int)$project_ugroup->getId() === ProjectUGroup::PROJECT_ADMIN;
+        return (int) $project_ugroup->getId() === ProjectUGroup::PROJECT_ADMIN;
     }
 
     private function isUgroupSelected(array $frs_ugroups, User_UGroup $project_ugroup)
@@ -159,7 +153,7 @@ class PermissionController extends BaseFrsPresenter
     /** @return TemplateRenderer */
     private function getRenderer()
     {
-        $template_dir = ForgeConfig::get('codendi_dir') .'/src/templates/frs';
+        $template_dir = ForgeConfig::get('codendi_dir') . '/src/templates/frs';
 
         return TemplateRendererFactory::build()->getRenderer($template_dir);
     }

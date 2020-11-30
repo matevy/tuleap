@@ -24,7 +24,7 @@ rcs_id('$Id: RecentChangesCached.php,v 1.4 2004/03/08 18:17:10 rurban Exp $');
 // +---------------------------------------------------------------------+
 // | WikiPluginCached.php                                                |
 // +---------------------------------------------------------------------+
-// | Copyright (C) 2002 Johannes Große (Johannes Gro&szlig;e)            |
+// | Copyright (C) 2002 Johannes GroÃŸe (Johannes Gro&szlig;e)            |
 // | You may copy this code freely under the conditions of the GPL       |
 // +---------------------------------------------------------------------+
 
@@ -42,22 +42,22 @@ require_once "lib/plugin/RecentChanges.php";
 class WikiPlugin_RecentChangesCached extends WikiPluginCached
 {
     /* --------- overwrite virtual or abstract methods ---------------- */
-    function getPluginType()
+    public function getPluginType()
     {
         return PLUGIN_CACHED_HTML;
     }
 
-    function getName()
+    public function getName()
     {
         return "RecentChangesCached";
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return 'Caches output of RecentChanges called with default arguments.';
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -66,24 +66,24 @@ class WikiPlugin_RecentChangesCached extends WikiPluginCached
         );
     }
 
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
         return WikiPlugin_RecentChanges::getDefaultArguments();
     }
 
-    function getExpire($dbi, $argarray, $request)
+    public function getExpire($dbi, $argarray, $request)
     {
         return '+900'; // 15 minutes
     }
 
-    function getHtml($dbi, $argarray, $request, $basepage)
+    public function getHtml($dbi, $argarray, $request, $basepage)
     {
-        $loader = new WikiPluginLoader;
+        $loader = new WikiPluginLoader();
         return $loader->expandPI('<?plugin RecentChanges '
             . WikiPluginCached::glueArgs($argarray)
                                  . ' ?>', $request, $this, $basepage);
     }
-} // WikiPlugin_TexToPng
+}
 
 // $Log: RecentChangesCached.php,v $
 // Revision 1.4  2004/03/08 18:17:10  rurban

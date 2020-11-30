@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2013-2018. All Rights Reserved.
+ * Copyright (c) Enalean, 2013-Present. All Rights Reserved.
  *
  * Tuleap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,12 +17,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Tuleap\Cryptography\ConcealedString;
+use Tuleap\User\AfterLocalLogin;
+use Tuleap\User\BeforeLogin;
 use Tuleap\User\PasswordVerifier;
+use Tuleap\User\UserAuthenticationSucceeded;
 
-class User_LoginManager
+class User_LoginManager // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 {
-    /** @var EventManager */
-    private $event_manager;
+    /** @var EventDispatcherInterface */
+    private $event_dispatcher;
 
     /** @var UserManager */
     private $user_manager;
@@ -36,13 +41,13 @@ class User_LoginManager
     private $password_handler;
 
     public function __construct(
-        EventManager $event_manager,
+        EventDispatcherInterface $event_dispatcher,
         UserManager $user_manager,
         PasswordVerifier $password_verifier,
         User_PasswordExpirationChecker $password_expiration_checker,
         PasswordHandler $password_handler
     ) {
-        $this->event_manager               = $event_manager;
+        $this->event_dispatcher            = $event_dispatcher;
         $this->user_manager                = $user_manager;
         $this->password_verifier           = $password_verifier;
         $this->password_expiration_checker = $password_expiration_checker;
@@ -52,7 +57,6 @@ class User_LoginManager
     /**
      * Set user as a current if they are valid
      *
-     * @param PFUser $user
      * @throws User_StatusDeletedException
      * @throws User_StatusSuspendedException
      * @throws User_StatusInvalidException
@@ -70,69 +74,50 @@ class User_LoginManager
     /**
      * Authenticate user but doesn't verify if they are valid
      *
-     * @param String $name
-     * @param String $password
-     * @return PFUser
      * @throws User_InvalidPasswordWithUserException
      * @throws User_InvalidPasswordException
-     * @throws User_PasswordExpiredException
      */
-    public function authenticate($name, $password)
+    public function authenticate(string $name, ConcealedString $password): PFUser
     {
-        $auth_success     = false;
-        $auth_user_id     = null;
-        $auth_user_status = null;
+        $beforeLogin = $this->event_dispatcher->dispatch(new BeforeLogin($name, $password));
+        assert($beforeLogin instanceof BeforeLogin);
+        $user = $beforeLogin->getUser();
 
-        $this->event_manager->processEvent(
-            Event::SESSION_BEFORE_LOGIN,
-            array(
-                'loginname'        => $name,
-                'passwd'           => $password,
-                'auth_success'     => &$auth_success,
-                'auth_user_id'     => &$auth_user_id,
-                'auth_user_status' => &$auth_user_status,
-            )
-        );
-
-        if ($auth_success) {
-            $user = $this->user_manager->getUserById($auth_user_id);
-        } else {
+        if ($user === null) {
             $user = $this->user_manager->getUserByUserName($name);
-            if (!is_null($user)) {
-                $auth_success = $this->authenticateFromDatabase($user, $password);
+            if (! $user) {
+                throw new User_InvalidPasswordException();
             }
+
+            $this->authenticateFromDatabase($user, $password);
         }
 
-        if (!$user) {
-            throw new User_InvalidPasswordException();
-        } elseif (!$auth_success) {
-            throw new User_InvalidPasswordWithUserException($user);
+        $auth_succeeded = $this->event_dispatcher->dispatch(new UserAuthenticationSucceeded($user));
+        assert($auth_succeeded instanceof UserAuthenticationSucceeded);
+        if (! $auth_succeeded->isLoginAllowed()) {
+            throw new User_InvalidPasswordWithUserException($user, $auth_succeeded->getFeedbackMessage());
         }
-
-        $this->event_manager->processEvent(new \Tuleap\User\UserAuthenticationSucceeded($user));
 
         return $user;
     }
 
-    private function authenticateFromDatabase(PFUser $user, $password)
+    /**
+     * @throws User_InvalidPasswordWithUserException
+     */
+    private function authenticateFromDatabase(PFUser $user, ConcealedString $password)
     {
-        $is_auth_valid          = false;
-
-        if ($this->password_verifier->verifyPassword($user, $password)) {
-            $user->setPassword($password);
-            $this->checkPasswordStorageConformity($user);
-
-            $is_auth_valid = true;
-            $this->event_manager->processEvent(
-                Event::SESSION_AFTER_LOGIN,
-                array(
-                    'user'                => $user,
-                    'allow_codendi_login' => &$is_auth_valid
-                )
-            );
+        if (! $this->password_verifier->verifyPassword($user, $password)) {
+            throw new User_InvalidPasswordWithUserException($user);
         }
 
-        return $is_auth_valid;
+        $user->setPassword($password);
+        $this->checkPasswordStorageConformity($user);
+
+        $afterLogin = $this->event_dispatcher->dispatch(new AfterLocalLogin($user));
+        assert($afterLogin instanceof AfterLocalLogin);
+        if (! $afterLogin->isIsLoginAllowed()) {
+            throw new User_InvalidPasswordWithUserException($user, $afterLogin->getFeedbackMessage());
+        }
     }
 
     private function checkPasswordStorageConformity(PFUser $user)
@@ -140,8 +125,10 @@ class User_LoginManager
         $hashed_password        = $user->getUserPw();
         $legacy_hashed_password = $user->getLegacyUserPw();
 
-        if ($this->isPasswordUpdatingNeeded($hashed_password) ||
-            $this->isLegacyPasswordRemovalNeeded($legacy_hashed_password)) {
+        if (
+            $this->isPasswordUpdatingNeeded($hashed_password) ||
+            $this->isLegacyPasswordRemovalNeeded($legacy_hashed_password)
+        ) {
             $this->user_manager->updateDb($user);
         }
     }
@@ -153,6 +140,6 @@ class User_LoginManager
 
     private function isLegacyPasswordRemovalNeeded($legacy_hashed_password)
     {
-        return !empty($legacy_hashed_password);
+        return ! empty($legacy_hashed_password);
     }
 }

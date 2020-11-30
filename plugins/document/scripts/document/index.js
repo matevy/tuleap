@@ -32,9 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
     Vue.use(VueDOMPurifyHTML);
     Vue.use(GetTextPlugin, {
         translations: {
-            fr: french_translations.messages
+            fr: french_translations.messages,
         },
-        silent: true
+        silent: true,
     });
 
     let user_locale = document.body.dataset.userLocale;
@@ -49,6 +49,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const project_id = Number.parseInt(vue_mount_point.dataset.projectId, 10);
     const project_name = vue_mount_point.dataset.projectName;
+    const project_public_name = vue_mount_point.dataset.projectPublicName;
+    const project_url = vue_mount_point.dataset.projectUrl;
     const user_is_admin = Boolean(vue_mount_point.dataset.userIsAdmin);
     const user_can_create_wiki = Boolean(vue_mount_point.dataset.userCanCreateWiki);
     const user_timezone = document.body.dataset.userTimezone;
@@ -56,14 +58,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const user_id = Number.parseInt(document.body.dataset.userId, 10);
     const max_files_dragndrop = Number.parseInt(vue_mount_point.dataset.maxFilesDragndrop, 10);
     const max_size_upload = Number.parseInt(vue_mount_point.dataset.maxSizeUpload, 10);
+    const warning_threshold = Number.parseInt(vue_mount_point.dataset.warningThreshold, 10);
+    const max_archive_size = Number.parseInt(vue_mount_point.dataset.maxArchiveSize, 10);
     const embedded_are_allowed = Boolean(vue_mount_point.dataset.embeddedAreAllowed);
     const is_deletion_allowed = Boolean(vue_mount_point.dataset.userCanDeleteItem);
     const is_item_status_metadata_used = Boolean(vue_mount_point.dataset.isItemStatusMetadataUsed);
     const is_obsolescence_date_metadata_used = Boolean(
         vue_mount_point.dataset.isObsolescenceDateMetadataUsed
     );
+    const is_changelog_proposed_after_dnd = Boolean(
+        vue_mount_point.dataset.isChangelogProposedAfterDnd
+    );
     const csrf_token_name = vue_mount_point.dataset.csrfTokenName;
     const csrf_token = vue_mount_point.dataset.csrfToken;
+    const relative_dates_display = vue_mount_point.dataset.relativeDatesDisplay;
+    const privacy = JSON.parse(vue_mount_point.dataset.privacy);
+    const project_flags = JSON.parse(vue_mount_point.dataset.projectFlags);
 
     moment.tz(user_timezone);
     moment.locale(user_locale);
@@ -78,17 +88,27 @@ document.addEventListener("DOMContentLoaded", () => {
         propsData: {
             user_id,
             project_id,
+            project_name,
+            project_public_name,
+            project_url,
             user_is_admin,
             user_can_create_wiki,
             date_time_format,
             max_files_dragndrop,
             max_size_upload,
+            warning_threshold,
+            max_archive_size,
             embedded_are_allowed,
             is_deletion_allowed,
             is_item_status_metadata_used,
             is_obsolescence_date_metadata_used,
+            is_changelog_proposed_after_dnd,
             csrf_token_name,
-            csrf_token
-        }
+            csrf_token,
+            user_locale,
+            relative_dates_display,
+            privacy,
+            project_flags,
+        },
     }).$mount(vue_mount_point);
 });

@@ -19,13 +19,21 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/
  */
 
+namespace Tuleap\Widget;
+
+use HTTPRequest;
+use Project;
+use ProjectManager;
+use Tuleap\date\RelativeDatesAssetsRetriever;
+use Widget;
+
 /**
  * Widget_ProjectLatestNews
  */
-class Widget_ProjectLatestNews extends Widget
+class Widget_ProjectLatestNews extends Widget //phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 {
 
-    var $content;
+    public $content;
 
     /**
      * Constructor of the class
@@ -49,7 +57,7 @@ class Widget_ProjectLatestNews extends Widget
      *
      * @return String
      */
-    function getTitle()
+    public function getTitle()
     {
         return $GLOBALS['Language']->getText('include_project_home', 'latest_news');
     }
@@ -59,7 +67,7 @@ class Widget_ProjectLatestNews extends Widget
      *
      * @return String
      */
-    function getContent()
+    public function getContent()
     {
         return $this->content;
     }
@@ -69,7 +77,7 @@ class Widget_ProjectLatestNews extends Widget
      *
      * @return bool
      */
-    function isAvailable()
+    public function isAvailable()
     {
         return $this->content ? true : false;
     }
@@ -91,7 +99,7 @@ class Widget_ProjectLatestNews extends Widget
      *
      * @return String
      */
-    function getDescription()
+    public function getDescription()
     {
         return $GLOBALS['Language']->getText('widget_description_project_latest_news', 'description');
     }
@@ -114,5 +122,12 @@ class Widget_ProjectLatestNews extends Widget
     private function getProjectManager()
     {
         return ProjectManager::instance();
+    }
+
+    public function getJavascriptDependencies(): array
+    {
+        return [
+            ['file' => RelativeDatesAssetsRetriever::retrieveAssetsUrl(), 'unique-name' => 'tlp-relative-dates']
+        ];
     }
 }

@@ -58,15 +58,14 @@ class MembersPresenterBuilder
         $can_be_updated = ! $ugroup->isBound();
         $this->event_manager->processEvent(
             Event::UGROUP_UPDATE_USERS_ALLOWED,
-            array('ugroup_id' => $ugroup->getId(), 'allowed' => &$can_be_updated)
+            ['ugroup_id' => $ugroup->getId(), 'allowed' => &$can_be_updated]
         );
 
         $members                              = $this->getFormattedUgroupMembers($ugroup);
         $is_dynamic_group                     = ! $ugroup->isStatic();
         $is_synchronized_with_project_members = $this->detector->isSynchronizedWithProjectMembers($ugroup->getProject());
 
-        return new
-        MembersPresenter(
+        return new MembersPresenter(
             $members,
             $can_be_updated,
             $is_dynamic_group,
@@ -76,7 +75,7 @@ class MembersPresenterBuilder
 
     private function getFormattedUgroupMembers(ProjectUGroup $ugroup)
     {
-        $ugroup_members = array();
+        $ugroup_members = [];
 
         $ugroup_members_updatable = new ProjectUGroupMemberUpdatable($ugroup);
         $this->event_manager->processEvent($ugroup_members_updatable);

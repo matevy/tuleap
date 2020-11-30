@@ -30,9 +30,6 @@ class Project_HierarchyManager
      */
     private $project_manager;
 
-    /**
-     * @param ProjectManager $project_manager
-     */
     public function __construct(ProjectManager $project_manager, ProjectHierarchyDao $dao)
     {
         $this->project_manager = $project_manager;
@@ -116,7 +113,7 @@ class Project_HierarchyManager
      */
     public function getChildProjects($project_id)
     {
-        $children = array();
+        $children = [];
         foreach ($this->getDao()->getChildProjects($project_id) as $child) {
             $children[] = $this->project_manager->getProjectFromDbRow($child);
         }
@@ -150,7 +147,7 @@ class Project_HierarchyManager
      */
     public function getAllParents($project_id)
     {
-        $parent_ids = array();
+        $parent_ids = [];
 
         while ($parent_project = $this->getParentProject($project_id)) {
             $parent_ids[] = $parent_project->getID();

@@ -24,7 +24,7 @@
 
 namespace Tuleap\Velocity;
 
-use Tracker_Artifact;
+use Tuleap\Tracker\Artifact\Artifact;
 
 class InvalidArtifactRepresentation
 {
@@ -43,10 +43,10 @@ class InvalidArtifactRepresentation
      */
     public $title;
 
-    public function build(Tracker_Artifact $artifact)
+    public function build(Artifact $artifact)
     {
         $this->xref     = $artifact->getXRef();
         $this->html_url = $artifact->getUri();
-        $this->title    = $artifact->getTitle();
+        $this->title    = $artifact->getTitle() ?? '';
     }
 }

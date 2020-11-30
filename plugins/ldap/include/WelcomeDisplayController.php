@@ -23,8 +23,11 @@ declare(strict_types=1);
 
 namespace Tuleap\LDAP;
 
+use Account_TimezoneSelectorPresenter;
+use ForgeConfig;
 use HTTPRequest;
 use LDAP_UserManager;
+use TemplateRendererFactory;
 use Tuleap\Layout\BaseLayout;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
@@ -58,8 +61,6 @@ class WelcomeDisplayController implements DispatchableWithRequest
     /**
      * Is able to process a request routed by FrontRouter
      *
-     * @param HTTPRequest $request
-     * @param BaseLayout  $layout
      * @param array       $variables
      * @return void
      * @throws ForbiddenException
@@ -67,7 +68,7 @@ class WelcomeDisplayController implements DispatchableWithRequest
      */
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables)
     {
-        assert($layout instanceof \FlamingParrot_Theme);
+        assert($layout instanceof \Layout);
 
         $currentUser = $request->getCurrentUser();
         $timezone = $request->get('timezone');
@@ -89,25 +90,29 @@ class WelcomeDisplayController implements DispatchableWithRequest
         $star = '<span class="highlight"><big>*</big></span>';
 
         if ($pv === 2) {
-            $layout->pv_header(array());
+            $layout->pv_header([]);
         } else {
-            $layout->header(array('title'=>$GLOBALS['Language']->getText('plugin_ldap', 'welcome_title', array($lr->getCommonName())),
-                                'registeration_process' => true));
+            $layout->header(
+                [
+                    'title' => sprintf(dgettext('tuleap-ldap', 'Welcome %1$s'), $this->html_purifier->purify($lr->getCommonName())),
+                    'registeration_process' => true
+                ]
+            );
         }
 
         print '<h2>';
-        print $GLOBALS['Language']->getText('plugin_ldap', 'welcome_title', array($lr->getCommonName()));
+        print sprintf(dgettext('tuleap-ldap', 'Welcome %1$s'), $this->html_purifier->purify($lr->getCommonName()));
         print '</h2>';
 
         print '<h3>';
-        print $GLOBALS['Language']->getText('plugin_ldap', 'welcome_first_login', array($GLOBALS['sys_name']));
+        print sprintf(dgettext('tuleap-ldap', 'First login to %1$s'), \ForgeConfig::get('sys_name'));
         print '</h3>';
 
-        print '<p>'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_fill_form', array($GLOBALS['sys_name'])).'</p>';
+        print '<p>' . dgettext('tuleap-ldap', 'Thank you to fill the following before accessing your data:') . '</p>';
 
         print '<fieldset>';
 
-        print '<legend>'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_preferences').'</legend>';
+        print '<legend>' . dgettext('tuleap-ldap', 'Account preferences') . '</legend>';
 
         $return_to = '';
         $vReturnTo = new Valid_String('return_to');
@@ -117,48 +122,59 @@ class WelcomeDisplayController implements DispatchableWithRequest
         }
 
         print '
-<form name="welcome" action="'.$this->base_url.'/welcome" method="post">
-<input type="hidden" name="return_to" value="'. $this->html_purifier->purify($return_to, CODENDI_PURIFIER_CONVERT_HTML) .'">
+<form name="welcome" action="' . $this->html_purifier->purify($this->base_url) . '/welcome" method="post">
+<input type="hidden" name="return_to" value="' . $this->html_purifier->purify($return_to, CODENDI_PURIFIER_CONVERT_HTML) . '">
 <input type="hidden" name="action" value="update_reg">
-<input type="hidden" name="pv" value="'.$pv.'">
+<input type="hidden" name="pv" value="' . $this->html_purifier->purify($pv) . '">
 
-<p>'.$star.' '.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_tz').':';
+<p>' . $star . ' ' . dgettext('tuleap-ldap', 'Timezone') . ':';
 
-        echo html_get_timezone_popup($timezone);
-
-        print '</p>
-<p><input type="checkbox" name="form_mail_site" value="1" checked />'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_siteupdate');
+        echo $this->getTimezonePopup($layout, $timezone);
 
         print '</p>
-<p><input type="checkbox" name="form_mail_va" value="1" />'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_communitymail').'</p>';
+<p><input type="checkbox" name="form_mail_site" value="1" checked />' . dgettext('tuleap-ldap', 'Receive Email about Site Updates <em>(Very low traffic and includes security notices. Highly Recommended.)</em>');
 
-        print '<p>'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_mandatory', array($star)).'</p>';
+        print '</p>
+<p><input type="checkbox" name="form_mail_va" value="1" />' . dgettext('tuleap-ldap', 'Receive additional community mailings. <em>(Low traffic.)</em>') . '</p>';
 
-        print '<p><input type="submit" name="update_reg" value="'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_btn_update').'"></p>';
+        print '<p>' . sprintf(dgettext('tuleap-ldap', 'Fields marked with %1$s are mandatory.'), $star) . '</p>';
+
+        print '<p><input type="submit" name="update_reg" value="' . dgettext('tuleap-ldap', 'Update my account') . '"></p>';
         print '</fieldset>';
 
         print '<fieldset>';
-        print '<legend>'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_your_data', array($GLOBALS['sys_org_name'])).'</legend>';
+        print '<legend>' . dgettext('tuleap-ldap', 'Account details') . '</legend>';
 
         print '<table>
 <tr>
-<td>'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_ldap_login').'</td>
-<td><strong>'.$ldap_name.'</strong></td>
+<td>' . dgettext('tuleap-ldap', 'User name:') . '</td>
+<td><strong>' . $this->html_purifier->purify($ldap_name) . '</strong></td>
 </tr>
 <tr>
-<td>'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_email').'</td>
-<td><strong>'.$currentUser->getEmail().'</strong></td>
+<td>' . dgettext('tuleap-ldap', 'Email Address:') . '</td>
+<td><strong>' . $this->html_purifier->purify($currentUser->getEmail()) . '</strong></td>
 </tr>
 <tr>
-<td>'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_codendi_login', array($GLOBALS['sys_name'])).'</td>
-<td>'.$currentUser->getUserName().'<br>
-'.$GLOBALS['Language']->getText('plugin_ldap', 'welcome_codendi_login_j', array($GLOBALS['sys_name'])).'
+<td>' . sprintf(dgettext('tuleap-ldap', '%1$s internal login:'), \ForgeConfig::get('sys_name')) . '</td>
+<td>' . $this->html_purifier->purify($currentUser->getUserName()) . '<br>
+' . dgettext('tuleap-ldap', '<em>Required for CVS, FTP and Subversion accesses</em>.') . '
 </td>
 </tr>
 </table>';
 
         print '</fieldset>';
 
-        ($pv === 2) ? $layout->pv_footer(array()) : $layout->footer(array());
+        ($pv === 2) ? $layout->pv_footer([]) : $layout->footer([]);
+    }
+
+    /**
+     * @param string|false $timezone
+     */
+    private function getTimezonePopup(BaseLayout $layout, $timezone): string
+    {
+        $layout->includeFooterJavascriptFile('/scripts/jstimezonedetect/jstz.min.js');
+        $layout->includeFooterJavascriptFile('/scripts/tuleap/timezone.js');
+        $renderer = TemplateRendererFactory::build()->getRenderer(ForgeConfig::get('codendi_dir') . '/src/templates/account/');
+        return $renderer->renderToString('timezone', new Account_TimezoneSelectorPresenter($timezone));
     }
 }

@@ -37,13 +37,13 @@ class HookDao extends DataAccessObject
     {
         $id = $this->da->escapeInt($id_repository);
 
-        $update = array();
-        $cols   = array();
-        $vals   = array();
+        $update = [];
+        $cols   = [];
+        $vals   = [];
         foreach ($hook_config as $tablename => $value) {
-            $update[] = "$tablename = " . $this->da->quoteSmart((bool)$value);
+            $update[] = "$tablename = " . $this->da->quoteSmart((bool) $value);
             $cols[]   = $tablename;
-            $vals[]   = $this->da->quoteSmart((bool)$value);
+            $vals[]   = $this->da->quoteSmart((bool) $value);
         }
 
         $sql = "INSERT INTO plugin_svn_hook_config";

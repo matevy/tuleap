@@ -25,29 +25,45 @@ namespace Tuleap\Project\Admin\ProjectUGroup\SynchronizedProjectMembership;
 use HTTPRequest;
 use Project;
 use Tuleap\Layout\BaseLayout;
+use Tuleap\Project\Admin\ProjectUGroup\UGroupRouter;
+use Tuleap\Project\Admin\Routing\ProjectAdministratorChecker;
 use Tuleap\Project\UGroups\SynchronizedProjectMembershipDao;
-use Tuleap\Request\DispatchableWithProject;
 use Tuleap\Request\DispatchableWithRequest;
 use Tuleap\Request\ForbiddenException;
 use Tuleap\Request\NotFoundException;
+use Tuleap\Request\ProjectRetriever;
 
-class ActivationController implements DispatchableWithRequest, DispatchableWithProject
+class ActivationController implements DispatchableWithRequest
 {
-    /** @var \ProjectManager */
-    private $project_manager;
+    /** @var ProjectRetriever */
+    private $project_retriever;
+    /** @var ProjectAdministratorChecker */
+    private $administrator_checker;
     /** @var SynchronizedProjectMembershipDao */
     private $dao;
     /** @var \CSRFSynchronizerToken */
     private $csrf;
 
     public function __construct(
-        \ProjectManager $project_manager,
+        ProjectRetriever $project_retriever,
+        ProjectAdministratorChecker $administrator_checker,
         SynchronizedProjectMembershipDao $dao,
         \CSRFSynchronizerToken $csrf
     ) {
-        $this->project_manager = $project_manager;
-        $this->dao             = $dao;
-        $this->csrf            = $csrf;
+        $this->project_retriever     = $project_retriever;
+        $this->administrator_checker = $administrator_checker;
+        $this->dao                   = $dao;
+        $this->csrf                  = $csrf;
+    }
+
+    public static function buildSelf(): self
+    {
+        return new self(
+            ProjectRetriever::buildSelf(),
+            new ProjectAdministratorChecker(),
+            new SynchronizedProjectMembershipDao(),
+            UGroupRouter::getCSRFTokenSynchronizer()
+        );
     }
 
     public static function getUrl(Project $project): string
@@ -66,24 +82,13 @@ class ActivationController implements DispatchableWithRequest, DispatchableWithP
     }
 
     /**
-     * @throws NotFoundException
-     */
-    public function getProject(array $variables): Project
-    {
-        $project = $this->project_manager->getProject($variables['id']);
-        if (! $project || $project->isError()) {
-            throw new NotFoundException();
-        }
-        return $project;
-    }
-
-    /**
      * @throws ForbiddenException
      * @throws NotFoundException
      */
     public function process(HTTPRequest $request, BaseLayout $layout, array $variables): void
     {
-        $project = $this->getProject($variables);
+        $project = $this->project_retriever->getProjectFromId($variables['id']);
+        $this->administrator_checker->checkUserIsProjectAdministrator($request->getCurrentUser(), $project);
         $this->csrf->check($this->getRedirectUrl($project));
 
         $activation = $request->get('activation') === 'on';

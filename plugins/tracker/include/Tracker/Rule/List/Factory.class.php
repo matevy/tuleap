@@ -32,10 +32,6 @@ class Tracker_Rule_List_Factory
      */
     protected $dao;
 
-    /**
-     *
-     * @param Tracker_Rule_List_Dao $dao
-     */
     public function __construct(Tracker_Rule_List_Dao $dao)
     {
         $this->dao = $dao;
@@ -62,7 +58,6 @@ class Tracker_Rule_List_Factory
 
     /**
      *
-     * @param Tracker_Rule_List $list_rule
      * @return bool
      */
     public function delete(Tracker_Rule_List $list_rule)
@@ -96,12 +91,12 @@ class Tracker_Rule_List_Factory
         $rules = $this->dao->searchByTrackerId($tracker_id);
 
         if (! $rules) {
-            return array();
+            return [];
         }
 
-        $rules_array = array();
+        $rules_array = [];
 
-        while ($rule = $rules->getRow()) {
+        foreach ($rules as $rule) {
             $list_rule = $this->populate(new Tracker_Rule_List(), $rule['tracker_id'], $rule['source_field_id'], $rule['target_field_id'], $rule['source_value_id'], $rule['target_value_id']);
             $rules_array[] = $list_rule;
         }
@@ -120,10 +115,10 @@ class Tracker_Rule_List_Factory
      */
     public function duplicate($from_tracker_id, $to_tracker_id, $field_mapping)
     {
-        $dar = $this->dao->searchByTrackerId($from_tracker_id);
+        $rows = $this->dao->searchByTrackerId($from_tracker_id);
 
         // Retrieve rules of tracker from
-        while ($row = $dar->getRow()) {
+        foreach ($rows as $row) {
             // if we already have the status field, just jump to open values
             $source_field_id = $row['source_field_id'];
             $target_field_id = $row['target_field_id'];
@@ -135,7 +130,7 @@ class Tracker_Rule_List_Factory
                     $duplicate_source_field_id = $mapping['to'];
 
                     $mapping_values = $mapping['values'];
-                    if ((int)$source_value_id === Tracker_FormElement_Field_List_Bind_StaticValue_None::VALUE_ID) {
+                    if ((int) $source_value_id === Tracker_FormElement_Field_List_Bind_StaticValue_None::VALUE_ID) {
                         $duplicate_source_value_id = $source_value_id;
                     } else {
                         $duplicate_source_value_id = $mapping_values[$source_value_id];
@@ -145,7 +140,7 @@ class Tracker_Rule_List_Factory
                     $duplicate_target_field_id = $mapping['to'];
 
                     $mapping_values = $mapping['values'];
-                    if ((int)$target_value_id === Tracker_FormElement_Field_List_Bind_StaticValue_None::VALUE_ID) {
+                    if ((int) $target_value_id === Tracker_FormElement_Field_List_Bind_StaticValue_None::VALUE_ID) {
                         $duplicate_target_value_id = $target_value_id;
                     } else {
                         $duplicate_target_value_id = $mapping_values[$target_value_id];
@@ -158,7 +153,6 @@ class Tracker_Rule_List_Factory
 
     /**
      *
-     * @param SimpleXMLElement $root
      * @param array $xmlMapping
      * @param Tracker_FormElementFactory $form_element_factory
      * @param int $tracker_id
@@ -173,7 +167,7 @@ class Tracker_Rule_List_Factory
             $target_field = $form_element_factory->getFormElementById($rule->getTargetFieldId());
             $bf = new Tracker_FormElement_Field_List_BindFactory();
             //TODO: handle sb/msb bind to users and remove condition
-            if ($bf->getType($source_field->getBind()) == 'static' &&  $bf->getType($target_field->getBind()) == 'static') {
+            if ($bf->getType($source_field->getBind()) == 'static' && $bf->getType($target_field->getBind()) == 'static') {
                 $child = $list_rules->addChild('rule');
                 $child->addChild('source_field')->addAttribute('REF', array_search($rule->source_field, $xmlMapping));
                 $child->addChild('target_field')->addAttribute('REF', array_search($rule->target_field, $xmlMapping));
@@ -194,7 +188,6 @@ class Tracker_Rule_List_Factory
 
     /**
      *
-     * @param Tracker_Rule_List $list_rule
      * @return int The ID of the tracker_Rule created
      */
     public function insert(Tracker_Rule_List $list_rule)
@@ -205,7 +198,6 @@ class Tracker_Rule_List_Factory
 
     /**
      *
-     * @param Tracker_Rule_List $list_rule
      * @param int $tracker_id
      * @param int $source_field_id
      * @param int $target_field_id
@@ -215,7 +207,6 @@ class Tracker_Rule_List_Factory
      */
     private function populate(Tracker_Rule_List $list_rule, $tracker_id, $source_field_id, $target_field_id, $source_value, $target_value)
     {
-
         $list_rule->setTrackerId($tracker_id)
                 ->setSourceFieldId($source_field_id)
                 ->setTargetFieldId($target_field_id)

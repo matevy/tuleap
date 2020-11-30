@@ -26,11 +26,33 @@ class ServiceDocman extends \Service
     {
         $GLOBALS['HTML']->includeCalendarScripts();
 
-        parent::displayHeader($title, [], $toolbar);
+        parent::displayHeader($title, [], $toolbar, ['body_class' => ['docman-body']]);
     }
 
     public function getIconName(): string
     {
         return 'fa-folder-open';
+    }
+
+    public function getInternationalizedName(): string
+    {
+        $label = $this->getLabel();
+
+        if ($label === 'plugin_docman:service_lbl_key') {
+            return dgettext('tuleap-docman', 'Documents');
+        }
+
+        return $label;
+    }
+
+    public function getInternationalizedDescription(): string
+    {
+        $description = $this->getDescription();
+
+        if ($description === 'plugin_docman:service_desc_key') {
+            return dgettext('tuleap-docman', 'Document manager');
+        }
+
+        return $description;
     }
 }

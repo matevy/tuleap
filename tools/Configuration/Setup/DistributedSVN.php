@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) Enalean, 2017. All Rights Reserved.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -21,8 +21,10 @@
 
 namespace Tuleap\Configuration\Setup;
 
+use Psr\Log\LoggerInterface;
 use Tuleap\Configuration;
 use Tuleap\Configuration\Apache\LogrotateDeployer;
+use TuleapCfg\Command\SiteDeploy\SiteDeployFPM;
 
 class DistributedSVN
 {
@@ -33,7 +35,7 @@ class DistributedSVN
     public const PID_ONE_SUPERVISORD = 'supervisord';
 
     /**
-     * @var Configuration\Logger\Console
+     * @var LoggerInterface
      */
     private $logger;
     private $tuleap_base_dir = '/usr/share/tuleap';
@@ -84,15 +86,15 @@ class DistributedSVN
         exit(1);
     }
 
-    public function backendSVN($pidOne = self::PID_ONE_SYSTEMD)
+    public function backendSVN()
     {
         $vars = $this->getVars();
 
-        $fpm           = new Configuration\FPM\BackendSVN($this->logger, $vars->getApplicationBaseDir(), $vars->getApplicationUser());
+        $fpm           = SiteDeployFPM::buildForPHP73($this->logger, $vars->getApplicationUser(), true);
         $nginx         = new Configuration\Nginx\BackendSVN($this->logger, $vars->getApplicationBaseDir(), '/etc/nginx', $vars->getServerName());
-        $apache_config = new Configuration\Apache\BackendSVN($this->logger, $vars->getApplicationUser(), $pidOne, new LogrotateDeployer($this->logger));
+        $apache_config = new Configuration\Apache\BackendSVN($this->logger, $vars->getApplicationUser(), new LogrotateDeployer($this->logger));
 
-        $fpm->configure();
+        $fpm->forceDeploy();
         $nginx->configure();
         $apache_config->configure();
     }

@@ -109,9 +109,11 @@ class RepositoryFineGrainedRepresentationBuilder
             $selected_ugroup_id
         );
 
-        if (count($filtered_branch_permissions) === 0
+        if (
+            count($filtered_branch_permissions) === 0
             && count($filtered_tag_permissions) === 0
-            && ! in_array($selected_ugroup_id, $permissions[Git::PERM_READ])) {
+            && ! in_array($selected_ugroup_id, $permissions[Git::PERM_READ])
+        ) {
             return;
         }
 
@@ -143,7 +145,6 @@ class RepositoryFineGrainedRepresentationBuilder
 
     /**
      * @param FineGrainedPermission[] $permissions
-     * @param Project $project
      * @param bool $is_tag
      * @return FineGrainedPermissionRepresentation[]
      */

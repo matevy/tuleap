@@ -28,17 +28,17 @@ include("lib/RssParser.php");
 class WikiPlugin_RssFeed extends WikiPlugin
 {
     // Five required functions in a WikiPlugin.
-    function getName()
+    public function getName()
     {
         return _("RssFeed");
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return _("Simple RSS Feed aggregator Plugin");
     }
 
-    function getVersion()
+    public function getVersion()
     {
         return preg_replace(
             "/[Revision: $]/",
@@ -48,48 +48,48 @@ class WikiPlugin_RssFeed extends WikiPlugin
     }
 
     // Establish default values for each of this plugin's arguments.
-    function getDefaultArguments()
+    public function getDefaultArguments()
     {
-        return array('feed'         => "",
+        return ['feed'         => "",
                      'description'     => "",
                      'url'         => "", //"http://phpwiki.org/RecentChanges?format=rss",
                      'maxitem'         => 0,
                      'debug'         => false,
-                     );
+                     ];
     }
 
-    function run($dbi, $argstr, &$request, $basepage)
+    public function run($dbi, $argstr, &$request, $basepage)
     {
         extract($this->getArgs($argstr, $request));
 
         $rss_parser = new RSSParser();
-        if (!empty($url)) {
+        if (! empty($url)) {
             $rss_parser->parse_url($url, $debug);
         }
 
-        if (!empty($rss_parser->channel['title'])) {
+        if (! empty($rss_parser->channel['title'])) {
             $feed = $rss_parser->channel['title'];
         }
-        if (!empty($rss_parser->channel['link'])) {
+        if (! empty($rss_parser->channel['link'])) {
             $url  = $rss_parser->channel['link'];
         }
-        if (!empty($rss_parser->channel['description'])) {
+        if (! empty($rss_parser->channel['description'])) {
             $description = $rss_parser->channel['description'];
         }
 
-        if (!empty($feed)) {
-            if (!empty($url)) {
+        if (! empty($feed)) {
+            if (! empty($url)) {
                 $titre = HTML::span(HTML::a(
-                    array('href'=>$rss_parser->channel['link']),
+                    ['href' => $rss_parser->channel['link']],
                     $rss_parser->channel['title']
                 ));
             } else {
                 $titre = HTML::span($rss_parser->channel['title']);
             }
-            $th = HTML::div(array('class'=> 'feed'), $titre);
-            if (!empty($description)) {
+            $th = HTML::div(['class' => 'feed'], $titre);
+            if (! empty($description)) {
                 $th->pushContent(HTML::p(
-                    array('class' => 'chandesc'),
+                    ['class' => 'chandesc'],
                     HTML::raw($description)
                 ));
             }
@@ -97,45 +97,45 @@ class WikiPlugin_RssFeed extends WikiPlugin
             $th = HTML();
         }
 
-        if (!empty($rss_parser->channel['date'])) {
-            $th->pushContent(HTML::raw("<!--".$rss_parser->channel['date']."-->"));
+        if (! empty($rss_parser->channel['date'])) {
+            $th->pushContent(HTML::raw("<!--" . $rss_parser->channel['date'] . "-->"));
         }
-        $html = HTML::div(array('class'=> 'rss'), $th);
+        $html = HTML::div(['class' => 'rss'], $th);
         if ($rss_parser->items) {
             // only maxitem's
             if ($maxitem > 0) {
                 $rss_parser->items = array_slice($rss_parser->items, 0, $maxitem);
             }
             foreach ($rss_parser->items as $item) {
-                $cell = HTML::div(array('class'=> 'rssitem'));
+                $cell = HTML::div(['class' => 'rssitem']);
                 if ($item['link'] and empty($item['title'])) {
                     $item['title'] = $item['link'];
                 }
                 $cell_title = HTML::div(
-                    array('class'=> 'itemname'),
+                    ['class' => 'itemname'],
                     HTML::a(
-                        array('href'=>$item['link']),
+                        ['href' => $item['link']],
                         HTML::raw($item['title'])
                     )
                 );
                 $cell->pushContent($cell_title);
-                if (!empty($item['description'])) {
+                if (! empty($item['description'])) {
                     $cell->pushContent(HTML::div(
-                        array('class'=> 'itemdesc'),
+                        ['class' => 'itemdesc'],
                         HTML::raw($item['description'])
                     ));
                 }
                 $html->pushContent($cell);
             }
         } else {
-            $html = HTML::div(array('class'=> 'rss'), HTML::em(_("no RSS items")));
+            $html = HTML::div(['class' => 'rss'], HTML::em(_("no RSS items")));
         }
         return $html;
     }
 
-    function box($args = false, $request = false, $basepage = false)
+    public function box($args = false, $request = false, $basepage = false)
     {
-        if (!$request) {
+        if (! $request) {
             $request = $GLOBALS['request'];
         }
         extract($args);
@@ -154,7 +154,7 @@ class WikiPlugin_RssFeed extends WikiPlugin
             $this->run($request->_dbi, $argstr, $request, $basepage)
         );
     }
-};
+}
 
 // $Log: RssFeed.php,v $
 // Revision 1.10  2005/04/10 10:24:58  rurban

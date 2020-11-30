@@ -19,39 +19,42 @@
  */
 
 use Tracker\Artifact\XMLArtifactSourcePlatformExtractor;
-use Tuleap\DB\DBFactory;
-use Tuleap\DB\DBTransactionExecutorWithConnection;
+use Tuleap\Project\XML\Import\ExternalFieldsExtractor;
+use Tuleap\Tracker\Artifact\Changeset\ArtifactChangesetSaver;
 use Tuleap\Tracker\Artifact\Changeset\FieldsToBeSavedInSpecificOrderRetriever;
+use Tuleap\Tracker\Artifact\Creation\TrackerArtifactCreator;
 use Tuleap\Tracker\Artifact\ExistingArtifactSourceIdFromTrackerExtractor;
 use Tuleap\Tracker\DAO\TrackerArtifactSourceIdDao;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NatureDao;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SourceOfAssociationCollectionBuilder;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SourceOfAssociationDetector;
 use Tuleap\Tracker\FormElement\Field\ArtifactLink\SubmittedValueConvertor;
-use Tuleap\Tracker\Artifact\RecentlyVisited\RecentlyVisitedDao;
-use Tuleap\Tracker\Artifact\RecentlyVisited\VisitRecorder;
 
-class Tracker_Artifact_XMLImportBuilder
+class Tracker_Artifact_XMLImportBuilder // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace,Squiz.Classes.ValidClassName.NotCamelCaps
 {
-
-    /**
-     * @return Tracker_Artifact_XMLImport
-     */
     public function build(
         User\XML\Import\IFindUserFromXMLReference $user_finder,
-        Logger $logger
-    ) {
-        $artifact_factory      = Tracker_ArtifactFactory::instance();
-        $formelement_factory   = Tracker_FormElementFactory::instance();
-        $fields_validator      = new Tracker_Artifact_Changeset_AtGivenDateFieldsValidator($formelement_factory);
-        $visit_recorder        = new VisitRecorder(new RecentlyVisitedDao());
+        \Psr\Log\LoggerInterface $logger
+    ): Tracker_Artifact_XMLImport {
+        $artifact_factory        = Tracker_ArtifactFactory::instance();
+        $formelement_factory     = Tracker_FormElementFactory::instance();
+        $artifact_link_usage_dao = new \Tuleap\Tracker\Admin\ArtifactLinksUsageDao();
+        $nature_dao              = new NatureDao();
+        $artifact_link_validator = new \Tuleap\Tracker\FormElement\ArtifactLinkValidator(
+            $artifact_factory,
+            new \Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature\NaturePresenterFactory(
+                $nature_dao,
+                $artifact_link_usage_dao,
+            ),
+            $artifact_link_usage_dao
+        );
+
+        $fields_validator      = new Tracker_Artifact_Changeset_AtGivenDateFieldsValidator($formelement_factory, $artifact_link_validator);
         $changeset_dao         = new Tracker_Artifact_ChangesetDao();
         $changeset_comment_dao = new Tracker_Artifact_Changeset_CommentDao();
         $send_notifications    = false;
 
-        $artifact_creator = new Tracker_ArtifactCreator(
-            $artifact_factory,
-            $fields_validator,
+        $artifact_creator = TrackerArtifactCreator::build(
             new Tracker_Artifact_Changeset_InitialChangesetAtGivenDateCreator(
                 $fields_validator,
                 new FieldsToBeSavedInSpecificOrderRetriever($formelement_factory),
@@ -59,11 +62,11 @@ class Tracker_Artifact_XMLImportBuilder
                 $artifact_factory,
                 EventManager::instance(),
                 new Tracker_Artifact_Changeset_ChangesetDataInitializator($formelement_factory),
-                $logger
+                $logger,
+                ArtifactChangesetSaver::build()
             ),
-            $visit_recorder,
-            $logger,
-            new DBTransactionExecutorWithConnection(DBFactory::getMainTuleapDBConnection()),
+            $fields_validator,
+            $logger
         );
 
         $new_changeset_creator = new Tracker_Artifact_Changeset_NewChangesetAtGivenDateCreator(
@@ -85,6 +88,7 @@ class Tracker_Artifact_XMLImportBuilder
             ),
             new Tracker_Artifact_Changeset_ChangesetDataInitializator($formelement_factory),
             new \Tuleap\DB\DBTransactionExecutorWithConnection(\Tuleap\DB\DBFactory::getMainTuleapDBConnection()),
+            ArtifactChangesetSaver::build()
         );
 
         $artifact_source_id_dao = new TrackerArtifactSourceIdDao();
@@ -99,10 +103,11 @@ class Tracker_Artifact_XMLImportBuilder
             $logger,
             $send_notifications,
             Tracker_ArtifactFactory::instance(),
-            new NatureDao(),
+            $nature_dao,
             new XMLArtifactSourcePlatformExtractor(new Valid_HTTPURI(), $logger),
             new ExistingArtifactSourceIdFromTrackerExtractor($artifact_source_id_dao),
-            $artifact_source_id_dao
+            $artifact_source_id_dao,
+            new ExternalFieldsExtractor(EventManager::instance())
         );
     }
 }

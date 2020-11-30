@@ -34,7 +34,6 @@ use Tuleap\Svn\ApacheConfGenerator;
 use Tuleap\SVN\Dao;
 use Tuleap\SVN\Repository\RepositoryManager;
 use Tuleap\SVN\SvnAdmin;
-use Tuleap\SVN\SvnLogger;
 
 class SystemEvent_SVN_RESTORE_REPOSITORY extends SystemEvent //phpcs:ignore
 {
@@ -59,7 +58,7 @@ class SystemEvent_SVN_RESTORE_REPOSITORY extends SystemEvent //phpcs:ignore
         $project    = $this->getProject($project_id);
         $repository = $this->getRepository($project, $repository_id);
 
-        if ((int)$repository->getProject()->getID() !== (int)$project_id) {
+        if ((int) $repository->getProject()->getID() !== (int) $project_id) {
             $this->error('Bad project id');
             return false;
         }
@@ -78,8 +77,8 @@ class SystemEvent_SVN_RESTORE_REPOSITORY extends SystemEvent //phpcs:ignore
         $project_id    = $this->getRequiredParameter(0);
         $repository_id = $this->getRequiredParameter(1);
 
-        return 'project: '. $this->verbalizeProjectId($project_id, $with_link) .
-        ', repository: '. $repository_id;
+        return 'project: ' . $this->verbalizeProjectId($project_id, $with_link) .
+        ', repository: ' . $repository_id;
     }
 
     protected function getRepository(Project $project, $repository_id)
@@ -100,12 +99,12 @@ class SystemEvent_SVN_RESTORE_REPOSITORY extends SystemEvent //phpcs:ignore
         return new RepositoryManager(
             new Dao(),
             ProjectManager::instance(),
-            new SvnAdmin(new System_Command(), new SvnLogger(), Backend::instance(Backend::SVN)),
-            new SvnLogger(),
+            new SvnAdmin(new System_Command(), \SvnPlugin::getLogger(), Backend::instance(Backend::SVN)),
+            \SvnPlugin::getLogger(),
             new System_Command(),
             new Destructor(
                 new Dao(),
-                new SvnLogger()
+                \SvnPlugin::getLogger()
             ),
             EventManager::instance(),
             Backend::instance(Backend::SVN),

@@ -20,16 +20,18 @@
 
 use Tuleap\Cardwall\AccentColor\AccentColor;
 use Tuleap\Cardwall\BackgroundColor\BackgroundColor;
+use Tuleap\Tracker\Artifact\Artifact;
 
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace, Squiz.Classes.ValidClassName.NotCamelCaps
 class Cardwall_CardPresenter implements Tracker_CardPresenter
 {
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $artifact;
 
     /**
-     * @var Tracker_Artifact
+     * @var Artifact
      */
     private $parent;
 
@@ -62,25 +64,25 @@ class Cardwall_CardPresenter implements Tracker_CardPresenter
 
     public function __construct(
         PFUser $user,
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         Cardwall_CardFields $card_fields,
         AccentColor $accent_color,
         Cardwall_UserPreferences_UserPreferencesDisplayUser $display_preferences,
         $swimline_id,
         array $allowed_children,
         BackgroundColor $background_color,
-        ?Tracker_Artifact $parent = null
+        ?Artifact $parent = null
     ) {
         $this->artifact                    = $artifact;
         $this->parent                      = $parent;
-        $this->details                     = $GLOBALS['Language']->getText('plugin_cardwall', 'details');
+        $this->details                     = dgettext('tuleap-cardwall', 'details');
         $this->card_fields                 = $card_fields;
         $this->accent_color                = $accent_color;
         $this->display_preferences         = $display_preferences;
         $this->allowed_children            = $allowed_children;
         $this->swimline_id                 = $swimline_id;
         $this->background_color            = $background_color;
-        $this->user_has_accessibility_mode = $user->getPreference(PFUser::ACCESSIBILITY_MODE);
+        $this->user_has_accessibility_mode = (bool) $user->getPreference(PFUser::ACCESSIBILITY_MODE);
     }
 
     /**
@@ -101,7 +103,7 @@ class Cardwall_CardPresenter implements Tracker_CardPresenter
 
     public function getFields()
     {
-        $diplayed_fields_presenter = array();
+        $diplayed_fields_presenter = [];
         $displayed_fields = $this->card_fields->getFields($this->getArtifact());
 
         foreach ($displayed_fields as $displayed_field) {
@@ -170,7 +172,7 @@ class Cardwall_CardPresenter implements Tracker_CardPresenter
      */
     public function getEditLabel()
     {
-        return $GLOBALS['Language']->getText('plugin_agiledashboard', 'edit_item');
+        return dgettext('tuleap-agiledashboard', 'Edit');
     }
 
     /**

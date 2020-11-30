@@ -84,7 +84,7 @@ class Service // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function __construct(Project $project, array $data)
     {
-        if (!$this->isAllowed($project)) {
+        if (! $this->isAllowed($project)) {
             throw new ServiceNotAllowedForProjectException();
         }
         $this->project = $project;
@@ -159,7 +159,7 @@ class Service // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function isAbsolute(string $url): bool
     {
-        $components = array();
+        $components = [];
         preg_match('`^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?`i', $url, $components);
         return (isset($components[1]) && $components[1]);
     }
@@ -169,7 +169,7 @@ class Service // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         return '';
     }
 
-    public function displayHeader(string $title, $breadcrumbs, array $toolbar, array $params = array()): void
+    public function displayHeader(string $title, $breadcrumbs, array $toolbar, array $params = []): void
     {
         \Tuleap\Project\ServiceInstrumentation::increment(strtolower($this->getShortName()));
 
@@ -177,21 +177,22 @@ class Service // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         $GLOBALS['HTML']->addBreadcrumbs($breadcrumbs);
 
         foreach ($toolbar as $t) {
-            $class = isset($t['class']) ? 'class="'. $t['class'] .'"' : '';
-            $item_title = isset($t['short_title']) ? $t['short_title'] :$t['title'];
-            $GLOBALS['HTML']->addToolbarItem('<a href="'. $t['url'] .'" '. $class .'>'. $item_title .'</a>');
+            $class = isset($t['class']) ? 'class="' . $t['class'] . '"' : '';
+            $item_title = isset($t['short_title']) ? $t['short_title'] : $t['title'];
+            $data_test = isset($t['data-test']) ? 'data-test="' . $t['data-test'] . '"' : '';
+            $GLOBALS['HTML']->addToolbarItem('<a href="' . $t['url'] . '" ' . $class . ' ' . $data_test . '>' . $item_title . '</a>');
         }
         $params['title']  = $title;
         $params['group']  = $this->project->group_id;
         $params['toptab'] = $this->getId();
 
         if (! isset($params['body_class'])) {
-            $params['body_class'] = array();
+            $params['body_class'] = [];
         }
-        $params['body_class'][] = 'service-'. $this->getShortName();
+        $params['body_class'][] = 'service-' . $this->getShortName();
 
-        if ($pv = (int)HTTPRequest::instance()->get('pv')) {
-            $params['pv'] = (int)$pv;
+        if ($pv = (int) HTTPRequest::instance()->get('pv')) {
+            $params['pv'] = (int) $pv;
         }
 
         $this->displayDuplicateInheritanceWarning();
@@ -204,18 +205,18 @@ class Service // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
      */
     public function displayDuplicateInheritanceWarning(): void
     {
-        if ($this->project->isTemplate() && !$this->isInheritedOnDuplicate()) {
+        if ($this->project->isTemplate() && ! $this->isInheritedOnDuplicate()) {
             $GLOBALS['HTML']->addFeedback('warning', $GLOBALS['Language']->getText('global', 'service_conf_not_inherited'));
         }
     }
 
     public function displayFooter(): void
     {
-        $params = array(
+        $params = [
             'group' => $this->project->group_id,
-        );
-        if ($pv = (int)HTTPRequest::instance()->get('pv')) {
-            $params['pv'] = (int)$pv;
+        ];
+        if ($pv = (int) HTTPRequest::instance()->get('pv')) {
+            $params['pv'] = (int) $pv;
         }
         site_project_footer($params);
     }
@@ -266,19 +267,19 @@ class Service // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
     private function getInternationalizedText($text, $key): string
     {
         if ($text === $key) {
-            return $GLOBALS['Language']->getText('project_admin_editservice', $key);
+            return $GLOBALS['Language']->getOverridableText('project_admin_editservice', $key);
         }
 
         if (preg_match('/(.*):(.*)/', $text, $matches)) {
             if ($GLOBALS['Language']->hasText($matches[1], $matches[2])) {
-                $text = $GLOBALS['Language']->getText($matches[1], $matches[2]);
+                $text = $GLOBALS['Language']->getOverridableText($matches[1], $matches[2]);
             }
         }
 
         return $text;
     }
 
-    public function getIcon() : string
+    public function getIcon(): string
     {
         $icon_name = $this->getIconName();
         if ($icon_name !== "") {
@@ -295,8 +296,8 @@ class Service // phpcs:ignore PSR1.Classes.ClassDeclaration.MissingNamespace
         return self::ICONS[$this->getShortName()] ?? "";
     }
 
-    private function getFontAwesomeIcon(string $icon) : string
+    private function getFontAwesomeIcon(string $icon): string
     {
-        return 'fa fa-fw '.$icon;
+        return 'fa fa-fw ' . $icon;
     }
 }

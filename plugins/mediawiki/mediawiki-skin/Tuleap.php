@@ -10,7 +10,7 @@
  * @ingroup Skins
  */
 
-if (!defined('MEDIAWIKI')) {
+if (! defined('MEDIAWIKI')) {
     die(-1);
 }
 
@@ -30,13 +30,15 @@ class SkinTuleap extends SkinTemplate
     public $template = 'TuleapTemplate';
     public $useHeadElement = true;
 
-    function setupTemplate($classname, $repository = false, $cache_dir = false)
+    public function setupTemplate($classname, $repository = false, $cache_dir = false)
     {
             $tc = new $classname();
 
-            $tc->params = array();
-        if (($tc->project = $project =
-                group_get_object_by_name($GLOBALS['fusionforgeproject']))) {
+            $tc->params = [];
+        if (
+            ($tc->project = $project =
+                group_get_object_by_name($GLOBALS['fusionforgeproject']))
+        ) {
                 $tc->params['group'] = $GLOBALS['group_id'] =
                     $project->getID();
                 $tc->params['toptab'] = 'plugin_mediawiki';
@@ -51,7 +53,7 @@ class SkinTuleap extends SkinTemplate
     /**
      * @param $out OutputPage
      */
-    function setupSkinUserCss(OutputPage $out)
+    public function setupSkinUserCss(OutputPage $out)
     {
             global $wgHandheldStyle;
             /* add Tuleap styles */
@@ -84,7 +86,7 @@ class SkinTuleap extends SkinTemplate
 class TuleapTemplate extends BaseTemplate
 {
 
-        var $project = false;
+        public $project = false;
 
     /**
      * Template filter callback for FusionForge skin.
@@ -94,7 +96,7 @@ class TuleapTemplate extends BaseTemplate
      *
      * @access private
      */
-    function execute()
+    public function execute()
     {
         global $wgHtml5;
      // Suppress warnings to prevent notices about missing indexes in $this->data
@@ -147,7 +149,7 @@ class TuleapTemplate extends BaseTemplate
         <?php
         $ul_shown = false;
         foreach ($this->getPersonalTools() as $key => $item) {
-            if (!$ul_shown) {
+            if (! $ul_shown) {
                 ?>
             <ul<?php $this->html('userlangattributes') ?>>
                 <?php
@@ -206,18 +208,18 @@ class TuleapTemplate extends BaseTemplate
         echo "</div></div>\n";
         $GLOBALS['HTML']->footer($this->params);
         wfRestoreWarnings();
-    } // end of execute() method
+    }
 
 
     protected function renderPortals($sidebar)
     {
-        if (!isset($sidebar['SEARCH'])) {
+        if (! isset($sidebar['SEARCH'])) {
             $sidebar['SEARCH'] = true;
         }
-        if (!isset($sidebar['TOOLBOX'])) {
+        if (! isset($sidebar['TOOLBOX'])) {
             $sidebar['TOOLBOX'] = true;
         }
-        if (!isset($sidebar['LANGUAGES'])) {
+        if (! isset($sidebar['LANGUAGES'])) {
             $sidebar['LANGUAGES'] = true;
         }
 
@@ -242,7 +244,7 @@ class TuleapTemplate extends BaseTemplate
      * Prints the cactions bar.
      * Shared between MonoBook and Modern
      */
-    function cactions()
+    public function cactions()
     {
         ?>
     <div id="p-cactions" class="portlet">
@@ -259,7 +261,7 @@ class TuleapTemplate extends BaseTemplate
     </div>
         <?php
     }
-    function toolbox()
+    public function toolbox()
     {
         ?>
     <div class="portlet" id="p-tb">
@@ -272,8 +274,8 @@ class TuleapTemplate extends BaseTemplate
 
             <?php
         }
-        wfRunHooks('MonoBookTemplateToolboxEnd', array( &$this ));
-        wfRunHooks('SkinTemplateToolboxEnd', array( &$this, true ));
+        wfRunHooks('MonoBookTemplateToolboxEnd', [&$this]);
+        wfRunHooks('SkinTemplateToolboxEnd', [&$this, true]);
         ?>
             </ul>
         </div>
@@ -281,7 +283,7 @@ class TuleapTemplate extends BaseTemplate
         <?php
     }
 
-    function languageBox()
+    public function languageBox()
     {
         if ($this->data['language_urls']) {
             ?>
@@ -300,9 +302,9 @@ class TuleapTemplate extends BaseTemplate
         }
     }
 
-    function customBox($bar, $cont)
+    public function customBox($bar, $cont)
     {
-        $portletAttribs = array( 'class' => 'generated-sidebar portlet', 'id' => Sanitizer::escapeId("p-$bar") );
+        $portletAttribs = ['class' => 'generated-sidebar portlet', 'id' => Sanitizer::escapeId("p-$bar")];
         $tooltip = Linker::titleAttrib("p-$bar");
         if ($tooltip !== false) {
             $portletAttribs['title'] = $tooltip;
@@ -329,4 +331,4 @@ class TuleapTemplate extends BaseTemplate
     </div>
         <?php
     }
-} // end of class
+}

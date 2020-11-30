@@ -19,6 +19,7 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Project\REST\MinimalUserGroupRepresentation;
 use Tuleap\Project\REST\UserGroupRepresentation;
 use Tuleap\Tracker\REST\Artifact\ArtifactFieldValuePermissionsOnArtifactFullRepresentation;
 use Tuleap\Tracker\REST\Artifact\ArtifactFieldValuePermissionsOnArtifactRepresentation;
@@ -65,7 +66,7 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
      */
     public function getUgroupNamesFromPerms()
     {
-        $ugroup_names = array();
+        $ugroup_names = [];
 
         foreach ($this->perms as $ugroup_id) {
             $ugroup_names[] = $this->getUgroupName($ugroup_id);
@@ -91,11 +92,11 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
             $this->field->getId(),
             $this->field->getLabel(),
             array_map(
-                array($this, 'getUserGroupRESTId'),
+                [$this, 'getUserGroupRESTId'],
                 $this->getPerms()
             ),
             array_map(
-                array($this, 'getUgroupRESTRepresentation'),
+                [$this, 'getUgroupRESTRepresentation'],
                 $this->getPerms()
             )
         );
@@ -117,7 +118,11 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
             Tracker_FormElementFactory::instance()->getType($this->field),
             $this->field->getLabel(),
             array_map(
-                array($this, 'getUgroupLabel'),
+                [$this, 'getUgroupLabel'],
+                $this->getPerms()
+            ),
+            array_map(
+                [$this, 'getUserGroupRESTId'],
                 $this->getPerms()
             )
         );
@@ -146,32 +151,32 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
         $changes = false;
         if ($previous !== $next) {
             $removed_elements = array_diff($previous, $next);
-            $removed_arr = array();
+            $removed_arr = [];
             foreach ($removed_elements as $removed_element) {
                 $removed_arr[] = $this->getUgroupLabel($removed_element);
             }
             $removed = $this->format(implode(', ', $removed_arr), $format);
             $added_elements = array_diff($next, $previous);
-            $added_arr = array();
+            $added_arr = [];
             foreach ($added_elements as $added_element) {
                 $added_arr[] = $this->getUgroupLabel($added_element);
             }
             $added   = $this->format(implode(', ', $added_arr), $format);
             if (empty($next)) {
-                $changes = ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'cleared');
+                $changes = ' ' . dgettext('tuleap-tracker', 'cleared');
             } elseif (empty($previous)) {
-                $changes = $GLOBALS['Language']->getText('plugin_tracker_artifact', 'set_to').' '. $added;
+                $changes = dgettext('tuleap-tracker', 'set to') . ' ' . $added;
             } elseif (count($previous) == 1 && count($next) == 1) {
-                $changes = ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'changed_from'). ' '.$removed .' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'to').' '.$added;
+                $changes = ' ' . dgettext('tuleap-tracker', 'changed from') . ' ' . $removed . ' ' . dgettext('tuleap-tracker', 'to') . ' ' . $added;
             } else {
                 if ($removed) {
-                    $changes = $removed .' '. $GLOBALS['Language']->getText('plugin_tracker_artifact', 'removed');
+                    $changes = $removed . ' ' . dgettext('tuleap-tracker', 'removed');
                 }
                 if ($added) {
                     if ($changes) {
                         $changes .= PHP_EOL;
                     }
-                    $changes .= $added .' '. $GLOBALS['Language']->getText('plugin_tracker_artifact', 'added');
+                    $changes .= $added . ' ' . dgettext('tuleap-tracker', 'added');
                 }
             }
         }
@@ -181,12 +186,12 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
     public function nodiff($format = 'html')
     {
         $next = $this->getPerms();
-        $added_arr = array();
+        $added_arr = [];
         foreach ($next as $element) {
                 $added_arr[] = $this->getUgroupLabel($element);
         }
         $added = $this->format(implode(', ', $added_arr), $format);
-        return ' '.$GLOBALS['Language']->getText('plugin_tracker_artifact', 'set_to').' '.$added;
+        return ' ' . dgettext('tuleap-tracker', 'set to') . ' ' . $added;
     }
 
     private function format($value, $format)
@@ -210,19 +215,13 @@ class Tracker_Artifact_ChangesetValue_PermissionsOnArtifact extends Tracker_Arti
 
     protected function getUgroupLabel($ugroup_id)
     {
-        return util_translate_name_ugroup($this->getUgroupName($ugroup_id));
+        return \Tuleap\User\UserGroup\NameTranslator::getUserGroupDisplayKey((string) $this->getUgroupName($ugroup_id));
     }
 
     protected function getUgroupRESTRepresentation($u_group_id)
     {
         $ugroup_manager = new UGroupManager($this->getDao());
         $u_group        = $ugroup_manager->getById($u_group_id);
-
-        $classname_with_namespace = 'Tuleap\Project\REST\UserGroupRepresentation';
-        $representation           = new $classname_with_namespace;
-
-        $representation->build($this->getField()->getTracker()->getProject()->getID(), $u_group);
-
-        return $representation;
+        return new MinimalUserGroupRepresentation($this->getField()->getTracker()->getProject()->getID(), $u_group);
     }
 }

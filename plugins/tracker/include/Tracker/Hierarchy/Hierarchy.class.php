@@ -27,7 +27,7 @@
 class Tracker_Hierarchy
 {
 
-    private $parents = array();
+    private $parents = [];
 
     /**
      * @param int $parent_id The id of the parent in the relatonship
@@ -35,7 +35,7 @@ class Tracker_Hierarchy
      */
     public function addRelationship($parent_id, $child_id)
     {
-        if (!array_key_exists($parent_id, $this->parents)) {
+        if (! array_key_exists($parent_id, $this->parents)) {
             $this->parents[$parent_id] = null;
         }
         $this->parents[$child_id] = $parent_id;
@@ -71,8 +71,8 @@ class Tracker_Hierarchy
     /**
      * Return True if given tracker is at the root of the Hierarchy
      *
-     * @param type $tracker_id
-     * @return type
+     * @param int $tracker_id
+     * @return bool
      */
     public function isRoot($tracker_id)
     {
@@ -88,7 +88,7 @@ class Tracker_Hierarchy
      *
      * @param int $tracker_id
      *
-     * @return int
+     * @return int|null
      */
     public function getParent($tracker_id)
     {
@@ -103,7 +103,7 @@ class Tracker_Hierarchy
      */
     public function getLevel($tracker_id)
     {
-        $callstack = array();
+        $callstack = [];
         return $this->getLevelRecursive($tracker_id, $callstack);
     }
 
@@ -161,7 +161,7 @@ class Tracker_Hierarchy
      */
     public function getLastLevelTrackerIds()
     {
-        $tracker_ids = array();
+        $tracker_ids = [];
 
         foreach (array_keys($this->parents) as $child_id) {
             if (! in_array($child_id, $this->parents)) {

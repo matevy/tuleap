@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CampaignEmptyState Displays empty state with new campaign creation button 1`] = `
+<div
+  class="empty-pane"
+>
+  <div
+    class="empty-pane-illustration"
+  >
+    <campaign-empty-state-svg-stub />
+  </div>
+   
+  <div
+    class="empty-pane-text"
+  >
+    <translate-stub
+      tag="span"
+    >
+      There is no test campaign yet.
+    </translate-stub>
+  </div>
+   
+  <button
+    class="tlp-button-primary tlp-button-outline tlp-button-large"
+    data-test="new-campaign"
+    type="button"
+  >
+    <i
+      class="fa fa-plus tlp-button-icon"
+    />
+     
+    <translate-stub
+      tag="span"
+    >
+      Create new campaign
+    </translate-stub>
+  </button>
+</div>
+`;

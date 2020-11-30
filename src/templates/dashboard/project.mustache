@@ -22,9 +22,9 @@
                         data-tlp-tooltip="{{ incl_restricted_label }}"
                     {{/ is_incl_restricted }}
                 >
-                    <i class="tlp-badge-icon fa
+                    <i class="tlp-badge-icon fas
                         {{# is_wide_open }}fa-tlp-unlock-plus-r{{/ is_wide_open }}
-                        {{# is_open }}fa-unlock{{/ is_open }}
+                        {{# is_open }}fa-lock-open{{/ is_open }}
                         {{# is_closed }}fa-lock{{/ is_closed }}
                         {{# is_closed_incl_restricted }}fa-tlp-lock-plus-r{{/ is_closed_incl_restricted }}"
                     ></i> {{ access }}
@@ -43,7 +43,13 @@
         {{/ has_trove_cat }}
         {{# should_display_a_warning_message_for_no_trove_cat }}
             <div class="dashboard-project-header-trovecat">
-                <span class="tlp-text-danger"><i class="fa fa-warning"></i> {{ warning_no_trove_cat }}</span>
+                <span class="tlp-text-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {{# gettext }}This project is not categorized yet.{{/ gettext }}
+                    <a href="{{ trove_url }}" class="dashboard-project-header-trovecat-link">
+                        {{# gettext }}Please categorize it.{{/gettext}}
+                    </a>
+                </span>
             </div>
         {{/ should_display_a_warning_message_for_no_trove_cat }}
     {{/ project_presenter }}

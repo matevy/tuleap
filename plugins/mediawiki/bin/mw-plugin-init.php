@@ -25,7 +25,7 @@
    mediawiki plugin.
   */
 
-require_once __DIR__.'/../../../src/www/include/pre.php';
+require_once __DIR__ . '/../../../src/www/include/pre.php';
 
 $echo_links = $argc >= 1;
 
@@ -34,12 +34,12 @@ $projects_path = forge_get_config('projects_path', 'mediawiki');
 $src_path = forge_get_config('src_path', 'mediawiki');
 
 // create directories
-if (!is_dir($projects_path)) {
+if (! is_dir($projects_path)) {
     echo "Creating $projects_path...\n";
     mkdir($projects_path, 0755, true);
 }
 
-if (!is_dir($master_path)) {
+if (! is_dir($master_path)) {
     echo "Creating $master_path...\n";
     mkdir($master_path, 0755, true);
 }
@@ -47,7 +47,7 @@ if (!is_dir($master_path)) {
 function mysymlink($from, $to)
 {
     global $echo_links;
-    if (!@symlink($from, $to)) {
+    if (! @symlink($from, $to)) {
         echo "Could not create symbolic link from $from to $to.\n";
     }
     if ($echo_links) {
@@ -58,10 +58,10 @@ function mysymlink($from, $to)
 
 // install links in master
 echo "Creating symlinks from $master_path to $src_path...\n";
-if (!($dh = opendir($src_path))) {
+if (! ($dh = opendir($src_path))) {
     echo "Could not open mediawiki source directory $src_path!\n";
 } else {
-    $ignore_file = array(
+    $ignore_file = [
     '.' => true,
     '..' => true,
     'config' => true,
@@ -69,9 +69,9 @@ if (!($dh = opendir($src_path))) {
     'images' => true,
     'tests' => true,
     't' => true,
-    );
+    ];
     while ($file = readdir($dh)) {
-        if (!isset($ignore_file[$file]) || !$ignore_file[$file]) {
+        if (! isset($ignore_file[$file]) || ! $ignore_file[$file]) {
             $from = "$src_path/$file";
             $to = "$master_path/$file";
             mysymlink($from, $to);
@@ -81,25 +81,25 @@ if (!($dh = opendir($src_path))) {
 }
 
 // link LocalSettings.php from forge_get_config('source_path')/plugins/mediawiki/etc/plugins/mediawiki/LocalSettings.php
-$from = forge_get_config('source_path')."/plugins/mediawiki/www/LocalSettings.php";
+$from = forge_get_config('source_path') . "/plugins/mediawiki/www/LocalSettings.php";
 $to = "$master_path/LocalSettings.php";
 mysymlink($from, $to);
 
 // create skin directory
 $todir = "$master_path/skins";
-if (!is_dir($todir)) {
+if (! is_dir($todir)) {
     mkdir($todir);
 }
 
 // link FusionForge skin file
-$fromdir = forge_get_config('source_path')."/plugins/mediawiki/mediawiki-skin";
+$fromdir = forge_get_config('source_path') . "/plugins/mediawiki/mediawiki-skin";
 $from = "$fromdir/FusionForge.php";
 $to = "$todir/FusionForge.php";
 mysymlink($from, $to);
 
 // create skin subdir
 $todir = "$todir/fusionforge";
-if (!is_dir($todir)) {
+if (! is_dir($todir)) {
     mkdir($todir);
 }
 
@@ -113,12 +113,12 @@ mysymlink($from, $to);
 $fromdir = "$src_path/skins/monobook";
 
 $dh = opendir($fromdir);
-$ignore_file = array(
+$ignore_file = [
     '.' => true,
     '..' => true,
-    );
+    ];
 while ($file = readdir($dh)) {
-    if (!isset($ignore_file[$file]) || !$ignore_file[$file]) {
+    if (! isset($ignore_file[$file]) || ! $ignore_file[$file]) {
         $from = "$fromdir/$file";
         $to = "$todir/$file";
         mysymlink($from, $to);

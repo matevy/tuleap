@@ -18,16 +18,16 @@
   -->
 
 <template>
-    <a v-on:click.prevent="showUpdateModal"
-       class="tlp-dropdown-menu-item"
-       role="menuitem"
-       data-test="document-dropdown-update-properties"
+    <button
+        v-on:click.prevent="showUpdateModal"
+        class="tlp-dropdown-menu-item"
+        type="button"
+        role="menuitem"
+        data-test="document-dropdown-update-properties"
     >
         <i class="fa fa-fw fa-list tlp-dropdown-menu-item-icon"></i>
-        <translate>
-            Update properties
-        </translate>
-    </a>
+        <translate>Update properties</translate>
+    </button>
 </template>
 
 <script>
@@ -35,14 +35,14 @@ import EventBus from "../../../helpers/event-bus.js";
 export default {
     name: "UpdateProperties",
     props: {
-        item: Object
+        item: Object,
     },
     methods: {
         showUpdateModal() {
             EventBus.$emit("show-update-item-metadata-modal", {
-                detail: { current_item: this.item }
+                detail: { current_item: this.item },
             });
-        }
-    }
+        },
+    },
 };
 </script>

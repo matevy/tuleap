@@ -21,7 +21,6 @@
 namespace Tuleap\GitLFS\Lock\Response;
 
 use Tuleap\GitLFS\Lock\Lock;
-use Tuleap\GitLFS\Lock\Request\LockListRequest;
 
 class LockResponseBuilder
 {
@@ -66,7 +65,7 @@ class LockResponseBuilder
 
     private function generateLocksRepresentations(Lock ...$locks): array
     {
-        $locks_representations = array();
+        $locks_representations = [];
 
         foreach ($locks as $lock) {
             $locks_representations[] = new LockResponseLockRepresentation($lock);

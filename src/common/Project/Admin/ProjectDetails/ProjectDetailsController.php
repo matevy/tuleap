@@ -1,10 +1,6 @@
 <?php
 /**
- * Copyright Enalean (c) 2017 - 2018. All rights reserved.
- *
- * Tuleap and Enalean names and logos are registrated trademarks owned by
- * Enalean SAS. All other trademarks or names are properties of their respective
- * owners.
+ * Copyright (c) Enalean, 2017-Present. All Rights Reserved.
  *
  * This file is a part of Tuleap.
  *
@@ -41,11 +37,11 @@ use ProjectHistoryDao;
 use ProjectManager;
 use Rule_ProjectFullName;
 use Tuleap\Layout\IncludeAssets;
+use Tuleap\Project\Admin\DescriptionFields\DescriptionFieldLabelBuilder;
 use Tuleap\Project\HierarchyDisplayer;
 use Tuleap\Project\Admin\Navigation\HeaderNavigationDisplayer;
 use Tuleap\Project\Admin\ProjectVisibilityPresenterBuilder;
 use Tuleap\Project\Admin\ProjectVisibilityUserConfigurationPermissions;
-use Tuleap\Project\Admin\ServicesUsingTruncatedMailRetriever;
 use Tuleap\Project\DescriptionFieldsFactory;
 use Tuleap\Project\ProjectDescriptionUsageRetriever;
 use Tuleap\Project\Registration\Template\TemplateFactory;
@@ -156,8 +152,8 @@ class ProjectDetailsController
         $parent_project_info               = $this->getParentProjectInfo($current_user, $project);
         $purified_project_children         = $this->buildProjectChildren($current_user, $project);
 
-        $project_trove_categories  = array();
-        $are_trove_categories_used = ($GLOBALS['sys_use_trove'] != 0);
+        $project_trove_categories  = [];
+        $are_trove_categories_used = (ForgeConfig::get('sys_use_trove') != 0);
         if ($are_trove_categories_used) {
             $project_trove_categories = $this->buildProjectTroveCategories($project);
         }
@@ -223,8 +219,7 @@ class ProjectDetailsController
 
     private function displayHeader($title, Project $project)
     {
-        $assets_path    = ForgeConfig::get('tuleap_dir') . '/src/www/assets';
-        $include_assets = new IncludeAssets($assets_path, '/assets');
+        $include_assets = new IncludeAssets(__DIR__ . '/../../../../www/assets/core', '/assets/core');
 
         $GLOBALS['HTML']->includeFooterJavascriptFile($include_assets->getFileURL('project-admin.js'));
 
@@ -243,7 +238,7 @@ class ProjectDetailsController
             return false;
         }
 
-        if (ProjectDescriptionUsageRetriever::isDescriptionMandatory()  && ! $form_shortdesc) {
+        if (ProjectDescriptionUsageRetriever::isDescriptionMandatory() && ! $form_shortdesc) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, _('Missing Information. PLEASE fill in all required information.'));
 
             return false;
@@ -251,7 +246,7 @@ class ProjectDetailsController
 
         $rule = new Rule_ProjectFullName();
 
-        if (!$rule->isValid($form_group_name)) {
+        if (! $rule->isValid($form_group_name)) {
             $GLOBALS['Response']->addFeedback(Feedback::ERROR, $rule->getErrorMessage());
 
             return false;
@@ -260,7 +255,7 @@ class ProjectDetailsController
         $description_fields = $this->description_fields_factory->getAllDescriptionFields();
 
         for ($i = 0; $i < sizeof($description_fields); $i++) {
-            $current_form = trim($request->get("form_".$description_fields[$i]["group_desc_id"]));
+            $current_form = trim($request->get("form_" . $description_fields[$i]["group_desc_id"]));
 
             if (($description_fields[$i]['desc_required'] == 1) && (! $current_form)) {
                 $GLOBALS['Response']->addFeedback(Feedback::ERROR, _('Missing Information. PLEASE fill in all required information.'));
@@ -283,7 +278,7 @@ class ProjectDetailsController
             $this->description_fields_factory->getAllDescriptionFields()
         );
 
-        $previous_values = array();
+        $previous_values = [];
 
         foreach ($description_fields as $description_field_id => $description_field) {
             $current_form = trim($request->get("form_" . $description_field_id));
@@ -343,16 +338,16 @@ class ProjectDetailsController
         );
 
         // Raise an event
-        $this->event_manager->processEvent('project_admin_edition', array(
+        $this->event_manager->processEvent('project_admin_edition', [
             'group_id' => $group_id
-        ));
+        ]);
 
         $GLOBALS['Response']->addFeedback(Feedback::INFO, _('Update successful'));
     }
 
     private function getDescriptionFieldsRepresentation()
     {
-        $description_fields_representations = array();
+        $description_fields_representations = [];
         $description_fields                 = $this->reindexRowsByDescriptionId(
             $this->description_fields_factory->getAllDescriptionFields()
         );
@@ -368,31 +363,21 @@ class ProjectDetailsController
                 $field_value = $description_fields_values[$description_field_id]['value'];
             }
 
-            $translated_field_description = $this->translateFieldProperty($description_field["desc_description"]);
+            $translated_field_description = DescriptionFieldLabelBuilder::getFieldTranslatedDescription($description_field["desc_description"]);
             $purified_field_description   = Codendi_HTMLPurifier::instance()->purify($translated_field_description, CODENDI_PURIFIER_LIGHT);
 
-            $description_fields_representations[] = array(
+            $description_fields_representations[] = [
                 'field_name'                 => "form_" . $description_field["group_desc_id"],
                 'field_value'                => $field_value,
-                'field_label'                => $this->translateFieldProperty($description_field["desc_name"]),
+                'field_label'                => DescriptionFieldLabelBuilder::getFieldTranslatedName($description_field["desc_name"]),
                 'field_description_required' => $description_field["desc_required"],
                 'is_field_line_typed'        => $description_field["desc_type"] === 'line',
                 'is_field_text_typed'        => $description_field["desc_type"] === 'text',
                 'purified_field_description' => $purified_field_description
-            );
+            ];
         }
 
         return $description_fields_representations;
-    }
-
-    private function translateFieldProperty($field_property)
-    {
-        if (preg_match('/(.*):(.*)/', $field_property, $matches)
-            && $GLOBALS['Language']->hasText($matches[1], $matches[2])) {
-            return $GLOBALS['Language']->getText($matches[1], $matches[2]);
-        }
-
-        return $field_property;
     }
 
     private function updateGroup(HTTPRequest $request)
@@ -414,13 +399,13 @@ class ProjectDetailsController
     {
         $parent = $this->project_manager->getParentProject($project->getID());
 
-        $parent_project_info = array();
+        $parent_project_info = [];
 
         if (! $parent) {
             return $parent_project_info;
         }
 
-        $parent_project_info['parent_name'] = $parent->getUnconvertedPublicName();
+        $parent_project_info['parent_name'] = $parent->getPublicName();
 
         if ($current_user->isMember($parent->getId(), 'A')) {
             $url = '?group_id=' . urlencode($parent->getID());
@@ -431,7 +416,7 @@ class ProjectDetailsController
         $parent_project_info['url']    = $url;
 
         $parent_project_info['is_active']    = $parent->isActive();
-        if (!  $parent->isActive()) {
+        if (! $parent->isActive()) {
             switch ($parent->getStatus()) {
                 case Project::STATUS_SUSPENDED:
                     $parent_project_info['status_label'] = $GLOBALS['Language']->getText('admin_projectlist', 'suspended');
@@ -452,7 +437,7 @@ class ProjectDetailsController
         $children = $this->project_manager->getChildProjects($project->getID());
 
         $purifier          = Codendi_HTMLPurifier::instance();
-        $children_projects = array();
+        $children_projects = [];
 
         foreach ($children as $child) {
             if ($current_user->isMember($child->getId(), 'A')) {
@@ -462,7 +447,7 @@ class ProjectDetailsController
             }
 
             $purified_url  = $purifier->purify($url);
-            $purified_name = $purifier->purify($child->getUnconvertedPublicName());
+            $purified_name = $purifier->purify($child->getPublicName());
             $children_projects[] = '<a href="' . $purified_url . '">' . $purified_name . '</a>';
         }
 
@@ -471,7 +456,7 @@ class ProjectDetailsController
 
     private function reindexRowsByDescriptionId($rows)
     {
-        $result = array();
+        $result = [];
         foreach ($rows as $row) {
             $result[$row['group_desc_id']] = $row;
         }
@@ -506,9 +491,9 @@ class ProjectDetailsController
 
     private function buildProjectTroveCategories(Project $project)
     {
-        $project_trove_categories = array();
+        $project_trove_categories = [];
         foreach ($this->trove_cat_link_dao->searchTroveCatForProject($project->getID()) as $row_trovecat) {
-            $project_trove_categories[] = array('trove_category_full_path' => $row_trovecat['fullpath']);
+            $project_trove_categories[] = ['trove_category_full_path' => $row_trovecat['fullpath']];
         }
 
         return $project_trove_categories;
@@ -516,12 +501,12 @@ class ProjectDetailsController
 
     private function getProjectsCreatedFromTemplate(Project $project)
     {
-        $projects = array();
+        $projects = [];
         foreach ($project->getProjectsCreatedFrom() as $subproject) {
-            $projects[] = array(
+            $projects[] = [
                 'unix_group_name' => $subproject['unix_group_name'],
-                'group_name'      => util_unconvert_htmlspecialchars($subproject['group_name'])
-            );
+                'group_name'      => $subproject['group_name']
+            ];
         }
         return $projects;
     }

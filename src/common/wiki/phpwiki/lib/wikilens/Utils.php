@@ -37,8 +37,8 @@ function addPageTextData($user, $dbi, $new_data, $START_DELIM, $DELIM)
         $meta = $current->_data;
     } else {
         $text = '';
-        $meta = array('markup' => 2.0,
-                      'author' => $user->getId());
+        $meta = ['markup' => 2.0,
+                      'author' => $user->getId()];
     }
 
     // add new data to the appropriate line
@@ -60,7 +60,7 @@ function addPageTextData($user, $dbi, $new_data, $START_DELIM, $DELIM)
 
 function getMembers($groupName, $dbi, $START_DELIM = false)
 {
-    if (!$START_DELIM) {
+    if (! $START_DELIM) {
         $START_DELIM = _("Members:");
     }
     return getPageTextData($groupName, $dbi, $START_DELIM);
@@ -80,13 +80,13 @@ function getPageTextData($fromUser, $dbi, $START_DELIM)
     $p = -1;
     for ($i = 0; $i < count($pageArray); $i++) {
         if ($pageArray[$i] != "") {
-            if (!((strpos($pageArray[$i], $START_DELIM)) === false)) {
+            if (! ((strpos($pageArray[$i], $START_DELIM)) === false)) {
                 $p = $i;
                 break;
             }
         }
     }
-    $retArray = array();
+    $retArray = [];
     if ($p >= 0) {
         $singles = $pageArray[$p];
         $singles = substr($singles, strpos($singles, $START_DELIM) + strlen($START_DELIM));

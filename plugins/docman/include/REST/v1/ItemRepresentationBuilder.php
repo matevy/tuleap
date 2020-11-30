@@ -28,6 +28,7 @@ use Tuleap\Docman\ApprovalTable\ApprovalTableRetriever;
 use Tuleap\Docman\ApprovalTable\ApprovalTableStateMapper;
 use Tuleap\Docman\REST\v1\EmbeddedFiles\IEmbeddedFilePropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Files\FilePropertiesRepresentation;
+use Tuleap\Docman\REST\v1\Folders\FolderPropertiesRepresentation;
 use Tuleap\Docman\REST\v1\Metadata\MetadataRepresentationBuilder;
 use Tuleap\Docman\REST\v1\Metadata\UnknownMetadataException;
 use Tuleap\Docman\REST\v1\Permissions\DocmanItemPermissionsForGroupsBuilder;
@@ -103,10 +104,9 @@ class ItemRepresentationBuilder
     }
 
     /**
-     * @return ItemRepresentation|null
      * @throws UnknownMetadataException
      */
-    public function buildRootId(Project $project, \PFUser $current_user) : ?ItemRepresentation
+    public function buildRootId(Project $project, \PFUser $current_user): ?ItemRepresentation
     {
         $result = $this->dao->searchRootItemForGroupId($project->getID());
 
@@ -137,21 +137,20 @@ class ItemRepresentationBuilder
         ?FilePropertiesRepresentation $file_properties = null,
         ?IEmbeddedFilePropertiesRepresentation $embedded_file_properties = null,
         ?LinkPropertiesRepresentation $link_properties = null,
-        ?WikiPropertiesRepresentation $wiki_properties = null
+        ?WikiPropertiesRepresentation $wiki_properties = null,
+        ?FolderPropertiesRepresentation $folder_properties = null
     ) {
         $owner                = $this->user_manager->getUserById($item->getOwnerId());
-        $owner_representation = new MinimalUserRepresentation();
-        $owner_representation->build($owner);
+        $owner_representation = MinimalUserRepresentation::build($owner);
 
         $is_expanded = false;
         if ($type === ItemRepresentation::TYPE_FOLDER) {
-            $preference  = $current_user->getPreference("plugin_docman_hide_". $item->getGroupId() . "_" . $item->getId());
+            $preference  = $current_user->getPreference("plugin_docman_hide_" . $item->getGroupId() . "_" . $item->getId());
             $is_expanded = $preference !== false;
         }
 
         $user_can_write      = $this->permissions_manager->userCanWrite($current_user, $item->getId());
         $can_user_manage     = $this->permissions_manager->userCanManage($current_user, $item->getId());
-        $item_representation = new ItemRepresentation();
 
         $lock_info                 = $this->getLockInformation($item);
         $approval_table            = $this->getApprovalTable($item);
@@ -160,7 +159,7 @@ class ItemRepresentationBuilder
 
         $metadata_representations = $this->metadata_representation_builder->build($item);
 
-        $item_representation->build(
+        return ItemRepresentation::build(
             $item,
             $this->purifier,
             $owner_representation,
@@ -177,21 +176,20 @@ class ItemRepresentationBuilder
             $file_properties,
             $embedded_file_properties,
             $link_properties,
-            $wiki_properties
+            $wiki_properties,
+            $folder_properties
         );
-
-        return $item_representation;
     }
 
-    private function getLockInformation(\Docman_Item $item) : ?ItemLockInfoRepresentation
+    private function getLockInformation(\Docman_Item $item): ?ItemLockInfoRepresentation
     {
         $lock_infos = $this->lock_factory->getLockInfoForItem($item);
 
-        if (!$lock_infos) {
+        if (! $lock_infos) {
             return null;
         }
 
-        $lock_owner = $this->getMinimalUserRepresentation((int)$lock_infos['user_id']);
+        $lock_owner = $this->getMinimalUserRepresentation((int) $lock_infos['user_id']);
 
         return new ItemLockInfoRepresentation(
             $lock_owner,
@@ -199,7 +197,7 @@ class ItemRepresentationBuilder
         );
     }
 
-    private function getApprovalTable(\Docman_Item $item) : ?ItemApprovalTableRepresentation
+    private function getApprovalTable(\Docman_Item $item): ?ItemApprovalTableRepresentation
     {
         $approval_table = $this->approval_table_retriever->retrieveByItem($item);
         if (! $approval_table) {
@@ -215,9 +213,9 @@ class ItemRepresentationBuilder
         );
     }
 
-    private function getMinimalUserRepresentation(int $user_id) : MinimalUserRepresentation
+    private function getMinimalUserRepresentation(int $user_id): MinimalUserRepresentation
     {
-        return (new MinimalUserRepresentation())->build(
+        return MinimalUserRepresentation::build(
             $this->user_manager->getUserById($user_id)
         );
     }

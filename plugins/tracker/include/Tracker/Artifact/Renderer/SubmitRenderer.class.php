@@ -22,6 +22,8 @@
  * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use Tuleap\Tracker\Artifact\Renderer\ListPickerIncluder;
+
 class Tracker_Artifact_SubmitRenderer extends Tracker_Artifact_SubmitAbstractRenderer
 {
 
@@ -39,31 +41,33 @@ class Tracker_Artifact_SubmitRenderer extends Tracker_Artifact_SubmitAbstractRen
     protected function fetchFormContent(Codendi_Request $request, PFUser $current_user)
     {
         return $this->fetchArtifactForm(
-            $this->fetchNewArtifactForm($request, $current_user)
+            $this->fetchNewArtifactForm($request)
         );
     }
 
     protected function displayHeader()
     {
-        $breadcrumbs = array(
-            array(
-                'title' => 'New artifact',
+        $breadcrumbs = [
+            [
+                'title' => sprintf(dgettext('tuleap-tracker', 'New %s'), $this->tracker->getItemName()),
                 'url'   => $this->tracker->getSubmitUrl(),
-            ),
-        );
+            ],
+        ];
 
         $this->tracker->displayHeader(
             $this->layout,
             $this->tracker->name,
             $breadcrumbs,
-            $this->tracker->getDefaultToolbar(),
-            array('body_class' => array('widgetable'))
+            [],
+            ['body_class' => ['widgetable']]
         );
+
+        ListPickerIncluder::includeListPickerAssets();
 
         echo $this->fetchSubmitInstructions();
     }
 
-    private function fetchNewArtifactForm(Codendi_Request $request, PFUser $current_user)
+    private function fetchNewArtifactForm(Codendi_Request $request)
     {
         $html = '';
 
@@ -72,11 +76,12 @@ class Tracker_Artifact_SubmitRenderer extends Tracker_Artifact_SubmitAbstractRen
         $html .= '<div class="artifact-submit-button">';
         $html .= '<input type="hidden" id="submit-type" />';
         $html .= '<div class="btn-group dropup">';
-        $html .= '<button class="btn btn-large btn-primary" type="submit">'. $GLOBALS['Language']->getText('global', 'btn_submit') .'</button>';
-        $html .= '<button class="btn btn-large btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>';
+        $html .= '<button class="btn btn-large btn-primary" data-test="artifact-submit-button" type="submit">'
+            . $GLOBALS['Language']->getText('global', 'btn_submit') . '</button>';
+        $html .= '<button class="btn btn-large btn-primary dropdown-toggle" data-toggle="dropdown" data-test="artifact-submit-options"><span class="caret"></span></button>';
         $html .= '<ul class="dropdown-menu">';
-        $html .= '<li><input type="submit" name="submit_and_continue" class="btn btn-link" value="'.$GLOBALS['Language']->getText('global', 'btn_submit_and_continue').'" /></li>';
-        $html .= '<li><input type="submit" name="submit_and_stay" class="btn btn-link" value="'.$GLOBALS['Language']->getText('global', 'btn_submit_and_stay').'" /></li>';
+        $html .= '<li><input type="submit" name="submit_and_continue" class="btn btn-link" value="' . $GLOBALS['Language']->getText('global', 'btn_submit_and_continue') . '" /></li>';
+        $html .= '<li><input type="submit" name="submit_and_stay" class="btn btn-link" value="' . $GLOBALS['Language']->getText('global', 'btn_submit_and_stay') . '" data-test="artifact-submit-and-stay" /></li>';
         $html .= '</ul>';
         $html .= '</div>';
         $html .= '</div>';

@@ -1,0 +1,40 @@
+$footer-white: #e5e8e9;
+
+.footer {
+    display: flex;
+    justify-content: center;
+    padding: 15px 0;
+    background: $tlp-theme-sidebar-background-color;
+    color: transparentize($footer-white, .4);
+}
+
+.footer-section {
+    width: 20%;
+    margin: 0 2.5%;
+}
+
+.footer-section-title {
+    margin: 0 0 10px;
+    color: $footer-white;
+    font-size: 18px;
+    line-height: 24px;
+    text-transform: none;
+}
+
+.footer-paragraph {
+    font-size: 13px;
+    line-height: 20px;
+
+    > a {
+        color: $footer-white;
+        text-decoration: none;
+
+        &:hover {
+            color: $tlp-theme-color;
+        }
+    }
+}
+
+.footer-link {
+    line-height: 25px;
+}

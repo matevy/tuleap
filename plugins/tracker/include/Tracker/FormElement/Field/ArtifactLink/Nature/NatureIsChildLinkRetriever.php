@@ -24,15 +24,15 @@
 
 namespace Tuleap\Tracker\FormElement\Field\ArtifactLink\Nature;
 
-use Tracker_Artifact;
 use Tracker_ArtifactFactory;
-use Tracker_FormElement_Field_Value_ArtifactLinkDao;
+use Tuleap\Tracker\Artifact\Artifact;
+use Tuleap\Tracker\FormElement\Field\ArtifactLink\ArtifactLinkFieldValueDao;
 
 class NatureIsChildLinkRetriever
 {
 
     /**
-     * @var Tracker_FormElement_Field_Value_ArtifactLinkDao
+     * @var ArtifactLinkFieldValueDao
      */
     private $artifact_link_dao;
 
@@ -43,23 +43,23 @@ class NatureIsChildLinkRetriever
 
     public function __construct(
         Tracker_ArtifactFactory $artifact_factory,
-        Tracker_FormElement_Field_Value_ArtifactLinkDao $artifact_link_dao
+        ArtifactLinkFieldValueDao $artifact_link_dao
     ) {
         $this->factory           = $artifact_factory;
         $this->artifact_link_dao = $artifact_link_dao;
     }
 
     /** @return ParentOfArtifactCollection */
-    public function getParentsHierarchy(Tracker_Artifact $artifact)
+    public function getParentsHierarchy(Artifact $artifact)
     {
         $collection = new ParentOfArtifactCollection();
-        $this->addParentsOfArtifactToCollection($artifact, $collection, array());
+        $this->addParentsOfArtifactToCollection($artifact, $collection, []);
 
         return $collection;
     }
 
     private function addParentsOfArtifactToCollection(
-        Tracker_Artifact $artifact,
+        Artifact $artifact,
         ParentOfArtifactCollection $collection,
         array $already_seen_artifacts
     ) {
@@ -80,18 +80,18 @@ class NatureIsChildLinkRetriever
         }
     }
 
-    /** @return Tracker_Artifact[] */
-    public function getChildren(Tracker_Artifact $artifact)
+    /** @return Artifact[] */
+    public function getChildren(Artifact $artifact)
     {
         return $this->factory->getIsChildLinkedArtifactsById($artifact);
     }
 
     /**
-     * @return Tracker_Artifact[]
+     * @return Artifact[]
      */
-    public function getDirectParents(Tracker_Artifact $artifact)
+    public function getDirectParents(Artifact $artifact)
     {
-        $parents = array();
+        $parents = [];
         foreach ($this->artifact_link_dao->searchIsChildReverseLinksById($artifact->getId()) as $row) {
             $parents[] = $this->factory->getArtifactById($row['artifact_id']);
         }

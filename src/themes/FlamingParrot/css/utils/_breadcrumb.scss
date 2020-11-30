@@ -1,0 +1,301 @@
+/**
+ * Copyright (c) Enalean, 2017 - Present. All Rights Reserved.
+ *
+ * This file is a part of Tuleap.
+ *
+ * Tuleap is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Tuleap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Tuleap. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+$step-transition-duration: 75ms;
+
+$step-background: $white;
+$step-color: $sidebar-background;
+$step-active-color: $main;
+$step-active-background: transparentize($main, .9);
+
+$switch-menu-background: $white;
+$switch-menu-item-color: $main;
+$switch-menu-item-hover-background: transparentize($main, .93);
+$switch-menu-item-hover-color: $main;
+
+.breadcrumb-container {
+    display: flex;
+    align-items: center;
+    padding: $tlp-medium-spacing;
+    background: $main-background;
+}
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    font-weight: 600;
+}
+
+.breadcrumb-item {
+    display: inline-flex;
+    position: relative;
+    align-items: center;
+    margin: 0 8px 0 0;
+    line-height: 1rem;
+
+    &:last-child {
+        margin: 0;
+    }
+
+    &:not(:last-child)::after {
+        content: '\f054'; // fa-chevron-right
+        position: relative;
+        top: 1px;
+        right: -4px;
+        font-family: 'Font Awesome 5 Free';
+        font-size: .55rem;
+    }
+
+    &:not(.breadcrumb-item-disabled):hover > .breadcrumb-link {
+        background: $step-active-background;
+        color: $step-active-color;
+    }
+}
+
+.breadcrumb-link {
+    position: relative;
+    padding: 4px 6px;
+    border-radius: 4px;
+    color: $step-color;
+    font-size: .875rem;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+.breadcrumb-link-icon {
+    display: none;
+    margin: 0 5px 0 0;
+}
+
+.breadcrumb-switchable {
+    > .breadcrumb-link {
+        padding: 4px 20px 4px 6px;
+
+        &::after {
+            content: '\f0d7'; // fa-caret-down
+            position: absolute;
+            z-index: 1;
+            right: 8px;
+            transition: color $step-transition-duration;
+            opacity: .5;
+            font-family: 'Font Awesome 5 Free';
+            font-size: .625rem;
+        }
+    }
+
+    &:hover {
+        > .breadcrumb-switch-menu-container {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        > .breadcrumb-link::after {
+            color: $step-active-color;
+        }
+    }
+}
+
+.breadcrumb-switch-menu-container {
+    position: absolute;
+    z-index: 1000;
+    top: 24px;
+    left: 0;
+    min-width: 100%;
+    max-width: 350px;
+    padding: 6px 0 0;
+    transform: translateY(-10px);
+    transition: opacity $step-transition-duration,
+        transform $step-transition-duration;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.breadcrumb-switch-menu {
+    border-radius: 4px;
+    background: $switch-menu-background;
+    box-shadow: 0 0 0 1px transparentize($sidebar-background, .97), 0 6px 12px -5px transparentize($sidebar-background, .85);
+}
+
+.breadcrumb-dropdown-item {
+    &:hover > .breadcrumb-dropdown-link {
+        background: $switch-menu-item-hover-background;
+        color: $switch-menu-item-hover-color;
+    }
+
+    &:nth-child(2) > .breadcrumb-dropdown-link {
+        border-radius: 4px 4px 0 0;
+    }
+
+    &:last-child > .breadcrumb-dropdown-link {
+        border-radius: 0 0 4px 4px;
+    }
+
+    &:nth-child(2):last-child > .breadcrumb-dropdown-link {
+        border-radius: 4px;
+    }
+}
+
+.breadcrumb-dropdown-link {
+    display: block;
+    padding: $tlp-small-spacing $tlp-medium-spacing;
+    overflow: hidden;
+    color: $switch-menu-item-color;
+    font-size: .8125rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+.breadcrumb-dropdown-separator {
+    display: block;
+    margin: 10px 0;
+    border-top: 1px solid $light-grey;
+
+    &:first-child {
+        display: none;
+    }
+}
+
+.breadcrumb-dropdown-section-title {
+    margin: 10px 0 0;
+    padding: 20px 20px 10px;
+    border-top: 1px solid $light-grey;
+    color: #747474;
+    font-size: .65rem;
+    font-weight: 600;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+
+    &:first-child {
+        margin: 0;
+        padding: 10px 20px;
+        border-top: 0;
+    }
+}
+
+.breadcrumb-privacy-icon-container {
+    position: relative;
+}
+
+.breadcrumb-project-privacy-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: $white;
+    font-size: .7rem;
+    cursor: help;
+
+    &.fa-lock,
+    &.fa-tlp-lock-plus-r {
+        background: $main;
+    }
+
+    &.fa-lock-open,
+    &.fa-tlp-unlock-plus-r {
+        background: transparentize($sidebar-background, .9);
+        color: transparentize($sidebar-background, .2);
+    }
+}
+
+.breadcrumb-project-privacy-icon-with-flags {
+    display: flex;
+    align-items: center;
+    margin: 0 $tlp-small-spacing 0 0;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: help;
+
+    &[data-privacy-icon='fa-lock'],
+    &[data-privacy-icon='fa-tlp-lock-plus-r'] {
+        background: transparentize($main, .9);
+        color: darken($main, 3%);
+
+        > .fas {
+            color: darken($main, 3%);
+        }
+    }
+
+    &[data-privacy-icon='fa-lock-open'],
+    &[data-privacy-icon='fa-tlp-unlock-plus-r'] {
+        background: transparentize($sidebar-background, .9);
+        color: transparentize($sidebar-background, .2);
+
+        > .fas {
+            color: transparentize($sidebar-background, .2);
+        }
+    }
+
+    > .breadcrumb-project-privacy-icon {
+        width: auto;
+        height: auto;
+        margin: 0 8px 0 6px;
+        background: none;
+        font-size: .875rem;
+    }
+
+    > .tuleap-svg-project-shield {
+        display: none;
+    }
+}
+
+&:not(.sidebar-collapsed) {
+    #breadcrumb-project-privacy-icon,
+    .breadcrumb-project-privacy-icon-with-flags,
+    .breadcrumb-project-privacy-icon,
+    .breadcrumb-with-only-one-item,
+    .breadcrumb-project {
+        display: none;
+    }
+}
+
+.current-project-nav-flag-labels {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.current-project-nav-flag-label {
+    max-width: 150px;
+    overflow: hidden;
+    font-size: .6rem;
+    font-weight: 600;
+    letter-spacing: .2px;
+    line-height: .625rem;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}

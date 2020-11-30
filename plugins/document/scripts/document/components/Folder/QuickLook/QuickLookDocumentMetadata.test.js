@@ -34,7 +34,10 @@ describe("QuickLookDocumentMetadata", () => {
             return shallowMount(QuickLookDocumentMetadata, {
                 localVue,
                 propsData: { ...props },
-                mocks: { $store: store }
+                mocks: { $store: store },
+                stubs: {
+                    "tlp-relative-date": true,
+                },
             });
         };
 
@@ -48,19 +51,19 @@ describe("QuickLookDocumentMetadata", () => {
             title: "file",
             type: TYPE_FILE,
             owner: {
-                id: 102
+                id: 102,
             },
             metadata: [
                 { title: "custom", short_name: "custom metadata" },
-                { title: "other", short_name: "other metadata" }
+                { title: "other", short_name: "other metadata" },
             ],
-            creation_date: "2019-06-25T16:56:22+04:00"
+            creation_date: "2019-06-25T16:56:22+04:00",
         };
 
         const wrapper = metadata_factory({ item });
 
-        expect(wrapper.contains("[data-test='additional-metadata-left-list']")).toBeTruthy();
-        expect(wrapper.contains("[data-test='additional-metadata-right-list']")).toBeTruthy();
+        expect(wrapper.find("[data-test='additional-metadata-left-list']").exists()).toBeTruthy();
+        expect(wrapper.find("[data-test='additional-metadata-right-list']").exists()).toBeTruthy();
     });
 
     it(`Given document has hardocded metadata
@@ -70,16 +73,16 @@ describe("QuickLookDocumentMetadata", () => {
             title: "file",
             type: TYPE_FILE,
             owner: {
-                id: 102
+                id: 102,
             },
             metadata: [{ title: "title document", short_name: "title" }],
-            creation_date: "2019-06-25T16:56:22+04:00"
+            creation_date: "2019-06-25T16:56:22+04:00",
         };
 
         const wrapper = metadata_factory({ item });
 
-        expect(wrapper.contains("[data-test='additional-metadata-left-list']")).toBeFalsy();
-        expect(wrapper.contains("[data-test='additional-metadata-right-list']")).toBeFalsy();
+        expect(wrapper.find("[data-test='additional-metadata-left-list']").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test='additional-metadata-right-list']").exists()).toBeFalsy();
     });
 
     it(`Given folder,
@@ -89,15 +92,15 @@ describe("QuickLookDocumentMetadata", () => {
             title: "folder",
             type: TYPE_FOLDER,
             owner: {
-                id: 102
+                id: 102,
             },
             approval_table: null,
-            metadata: [{ title: "title document", short_name: "title" }]
+            metadata: [{ title: "title document", short_name: "title" }],
         };
 
         const wrapper = metadata_factory({ item });
-        expect(wrapper.contains("[data-test='additional-metadata-left-list']")).toBeFalsy();
-        expect(wrapper.contains("[data-test='additional-metadata-right-list']")).toBeFalsy();
+        expect(wrapper.find("[data-test='additional-metadata-left-list']").exists()).toBeFalsy();
+        expect(wrapper.find("[data-test='additional-metadata-right-list']").exists()).toBeFalsy();
     });
 
     it(`Given item is a file
@@ -107,17 +110,17 @@ describe("QuickLookDocumentMetadata", () => {
             title: "file",
             type: TYPE_FILE,
             owner: {
-                id: 102
+                id: 102,
             },
             file_properties: {
-                file_size: 123456
+                file_size: 123456,
             },
             creation_date: "2019-06-25T16:56:22+04:00",
-            metadata: []
+            metadata: [],
         };
 
         const wrapper = metadata_factory({ item });
-        expect(wrapper.contains("[data-test='docman-file-size']")).toBeTruthy();
+        expect(wrapper.find("[data-test='docman-file-size']").exists()).toBeTruthy();
     });
 
     it(`Given item has an approval table,
@@ -127,18 +130,18 @@ describe("QuickLookDocumentMetadata", () => {
             title: "file",
             type: TYPE_FILE,
             owner: {
-                id: 102
+                id: 102,
             },
             approval_table: {
-                approval_state: "Approved"
+                approval_state: "Approved",
             },
             creation_date: "2019-06-25T16:56:22+04:00",
-            metadata: []
+            metadata: [],
         };
 
         const wrapper = metadata_factory({ item });
         expect(
-            wrapper.contains("[data-test='docman-item-approval-table-status-badge']")
+            wrapper.find("[data-test='docman-item-approval-table-status-badge']").exists()
         ).toBeTruthy();
     });
 
@@ -149,16 +152,16 @@ describe("QuickLookDocumentMetadata", () => {
             title: "file",
             type: TYPE_FILE,
             owner: {
-                id: 102
+                id: 102,
             },
             approval_table: null,
             creation_date: "2019-06-25T16:56:22+04:00",
-            metadata: []
+            metadata: [],
         };
 
         const wrapper = metadata_factory({ item });
         expect(
-            wrapper.contains("[data-test='docman-item-approval-table-status-badge']")
+            wrapper.find("[data-test='docman-item-approval-table-status-badge']").exists()
         ).toBeFalsy();
     });
 });

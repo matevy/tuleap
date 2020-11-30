@@ -6,9 +6,9 @@
 >
     <div class="tlp-modal-header">
         <h1 class="tlp-modal-title">
-            <i class="fa fa-pencil tlp-modal-title-icon"></i> {{ edit_title }}
+            <i class="fas fa-pencil-alt tlp-modal-title-icon"></i> {{ edit_title }}
         </h1>
-        <div class="tlp-modal-close" data-dismiss="modal" aria-label="Close">
+        <div class="tlp-modal-close" tabindex="0" role="button" data-dismiss="modal" aria-label="Close">
             &times;
         </div>
     </div>
@@ -91,34 +91,6 @@
             />
         </div>
 
-
-        {{# is_digest }}
-            <p class="tlp-text-warning">
-                {{# dgettext }} tuleap-git | You should consider switching to Basic Auth (here and, of course in gerrit.config). Recent version of gerrit no longer support Digest.{{/ dgettext }}
-            </p>
-
-            <div class="tlp-form-element">
-                <label class="tlp-label">{{ gerrit_label_auth_type }}</label>
-                <label class="tlp-label tlp-radio">
-                    <input type="radio"
-                           name="auth_type"
-                           value="Digest"
-                        {{ auth_type_digest_checked }}
-                    />
-                    {{ digest }}
-                </label>
-                <label class="tlp-label tlp-radio">
-                    <input type="radio"
-                           name="auth_type"
-                           value="Basic"
-                        {{ auth_type_basic_checked }}
-                    />
-                    {{ basic }}
-                </label>
-            </div>
-        {{/ is_digest }}
-
-
         <div class="tlp-form-element">
             <label class="tlp-label" for="http-password-required-{{ id }}">{{ gerrit_label_http_password_edit }}</label>
             <input type="password"
@@ -162,7 +134,7 @@
             {{ btn_cancel }}
         </button>
         <button type="submit" class="tlp-button-primary tlp-modal-action">
-            <i class="fa fa-pencil tlp-button-icon"></i> {{ btn_edit }}
+            <i class="fas fa-pencil-alt tlp-button-icon"></i> {{ btn_edit }}
         </button>
     </div>
 </form>

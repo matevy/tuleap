@@ -31,13 +31,9 @@ class PlanningV2PaneInfo extends PaneInfo
     /** @var Tracker */
     private $submilestone_tracker;
 
-    /** @var string */
-    private $theme_path;
-
-    public function __construct(Planning_Milestone $milestone, $theme_path, Tracker $submilestone_tracker)
+    public function __construct(Planning_Milestone $milestone, Tracker $submilestone_tracker)
     {
         parent::__construct($milestone);
-        $this->theme_path           = $theme_path;
         $this->submilestone_tracker = $submilestone_tracker;
     }
 
@@ -48,11 +44,7 @@ class PlanningV2PaneInfo extends PaneInfo
 
     public function getTitle()
     {
-        return $GLOBALS['Language']->getText(
-            'plugin_agiledashboard',
-            'milestone_planning_pane_title',
-            $this->submilestone_tracker->getName()
-        );
+        return sprintf(dgettext('tuleap-agiledashboard', '%1$s Planning'), $this->submilestone_tracker->getName());
     }
 
     public function getIconName()
