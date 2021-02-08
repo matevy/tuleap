@@ -472,14 +472,14 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
      *
      * @return void
      */
-    public function updateComment($body, $user, $comment_format, $timestamp)
+    public function updateComment($body, $user, $comment_format, $timestamp, $comment_use_permissions)
     {
-        if ($this->updateCommentWithoutNotification($body, $user, $comment_format, $timestamp)) {
+        if ($this->updateCommentWithoutNotification($body, $user, $comment_format, $timestamp, $comment_use_permissions)) {
             $this->executePostCreationActions();
         }
     }
 
-    public function updateCommentWithoutNotification($body, $user, $comment_format, $timestamp)
+    public function updateCommentWithoutNotification($body, $user, $comment_format, $timestamp, $comment_use_permissions)
     {
         if ($this->userCanEdit($user)) {
             $commentUpdated = $this->getCommentDao()->createNewVersion(
@@ -488,7 +488,8 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
                 $user->getId(),
                 $timestamp,
                 $this->getComment()->id,
-                $comment_format
+                $comment_format,
+                $comment_use_permissions
             );
 
             unset($this->latest_comment);
@@ -534,7 +535,8 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
     public function getComment()
     {
         if (isset($this->latest_comment)) {
-            return $this->latest_comment;
+            if ($this->latest_comment->userCanView(null))
+                return $this->latest_comment;
         }
 
         if ($row = $this->getCommentDao()->searchLastVersion($this->id)->getRow()) {
@@ -547,10 +549,18 @@ class Tracker_Artifact_Changeset extends Tracker_Artifact_Followup_Item
                 $row['submitted_on'],
                 $row['body'],
                 $row['body_format'],
-                $row['parent_id']
+                $row['parent_id'],
+                $row['use_comment_permissions']
             );
         }
-        return $this->latest_comment;
+        if (isset($this->latest_comment)) {
+            if ($this->latest_comment->userCanView(null))
+                return $this->latest_comment;
+        }
+        else
+        {
+            return $this->latest_comment;
+        }
     }
 
     /**

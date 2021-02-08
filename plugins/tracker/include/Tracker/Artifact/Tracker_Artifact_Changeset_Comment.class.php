@@ -92,6 +92,7 @@ class Tracker_Artifact_Changeset_Comment
      * @param string                     $body               The comment (aka follow-up comment)
      * @param string                     $bodyFormat         The comment type (text or html follow-up comment)
      * @param int                        $parent_id          The id of the parent (if comment has been modified)
+     * @param int                        $use_comment_permissions          The 1 if this comment uses permissions
      */
     public function __construct(
         $id,
@@ -102,7 +103,8 @@ class Tracker_Artifact_Changeset_Comment
         $submitted_on,
         $body,
         $bodyFormat,
-        $parent_id
+        $parent_id,
+        $use_comment_permissions
     ) {
         $this->id                 = $id;
         $this->changeset          = $changeset;
@@ -113,7 +115,53 @@ class Tracker_Artifact_Changeset_Comment
         $this->body               = $body;
         $this->bodyFormat         = $bodyFormat;
         $this->parent_id          = $parent_id;
+        $this->use_comment_permissions = $use_comment_permissions;
     }
+
+
+    /**
+     * Say if a user can view a comment
+     *
+     * @param PFUser $user The user. If null, the current logged in user will be used.
+     *
+     * @return bool true if the user can view
+     */
+    public function userCanView(?PFUser $user = null)
+    {
+        if ($this->use_comment_permissions)
+        {
+            if (!$user) {
+                $user = $this->changeset->getUserManager()->getCurrentUser();
+            }
+
+            // tracker admin and original submitter (minus anonymous) can view a comment
+            if ( $this->changeset->artifact->getTracker()->userIsAdmin($user) || ((int)$this->submitted_by && $user->getId() == $this->submitted_by) )
+                return true;
+
+            // check if this user has rights to view commet
+            $can_user_view = false;
+            $key = array_search('comment_file_permissions', array_column($this->changeset->artifact->getTracker()->getFormElementFields(), 'name'));
+            if (! empty($key)) {
+
+                $form_element = $this->changeset->artifact->getTracker()->getFormElementFields()[$key];
+                foreach ($form_element->getFormElementDataForCreation(0)['permissions'] as $ugroup_id => $permission)
+                {
+                    if ( in_array( Tracker_FormElement::PERMISSION_READ, $permission) || in_array( Tracker_FormElement::PERMISSION_UPDATE, $permission) ) {
+                        if ($user->isMemberOfUGroup($ugroup_id, $this->changeset->artifact->getTracker()->getGroupId())) {
+                            $can_user_view = true;
+                        }
+                    }
+                }
+            }
+
+            return $can_user_view;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
 
     /**
      * @return string the cleaned body to be included in a text/plain context
@@ -181,6 +229,29 @@ class Tracker_Artifact_Changeset_Comment
                 id="tracker_artifact_followup_comment_body_format_' . $this->changeset->getId() . '"
                 name="tracker_artifact_followup_comment_body_format_' . $this->changeset->getId() . '"
                 value="' . $considered_body_format . '" />';
+
+            // check if this user has rights to change artifact permissions field and if this field even is enabled for this tracker
+            $can_user_change_permissions = false;
+            $key = array_search('comment_file_permissions', array_column($this->changeset->artifact->getTracker()->getFormElementFields(), 'name'));
+            if (! empty($key)) {
+
+                $form_element = $this->changeset->artifact->getTracker()->getFormElementFields()[$key];
+                foreach ($form_element->getFormElementDataForCreation(0)['permissions'] as $ugroup_id => $permission)
+                {
+                    if ( in_array( Tracker_FormElement::PERMISSION_UPDATE, $permission) ) {
+                        if ($current_user->isMemberOfUGroup($ugroup_id, $this->changeset->artifact->getTracker()->getGroupId())) {
+                            $can_user_change_permissions = true;
+                        }
+                    }
+                }
+
+                if ( $can_user_change_permissions ) {
+                    $html        .= '<input type="hidden"
+                        id="tracker_artifact_followup_comment_use_permissions_' . $this->changeset->getId() . '"
+                        name="tracker_artifact_followup_comment_use_permissions_' . $this->changeset->getId() . '"
+                        value="' .  $this->use_comment_permissions. '" />';
+                }
+            }
             $html        .= '<div class="tracker_artifact_followup_comment_body">';
             if ($this->parent_id && ! trim($this->body)) {
                 $html .= '<em>' . dgettext('tuleap-tracker', 'Comment has been cleared') . '</em>';

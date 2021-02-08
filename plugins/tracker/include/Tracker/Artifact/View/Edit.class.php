@@ -242,6 +242,32 @@ class Tracker_Artifact_View_Edit extends Tracker_Artifact_View_View
                 )
             );
 
+            // check if this user has rights to change artifact permissions field and if this field even is enabled for this tracker
+            if ($tracker != null) {
+                $can_user_change_permissions = false;
+                $current_user = $this->user;
+                $key = array_search('comment_file_permissions', array_column($tracker->getFormElementFields(), 'name'));
+                if (! empty($key)) {
+
+                    $form_element = $tracker ->getFormElementFields()[$key];
+                    foreach ($form_element->getFormElementDataForCreation(0)['permissions'] as $ugroup_id => $permission)
+                    {
+                        if ( in_array( Tracker_FormElement::PERMISSION_UPDATE, $permission) ) {
+                            if ($current_user->isMemberOfUGroup($ugroup_id, $tracker->getGroupId())) {
+                                $can_user_change_permissions = true;
+                            }
+                        }
+                    }
+
+                    if ( $can_user_change_permissions ) {
+                        $html .= '<input type="hidden"
+                            id="tracker_followup_comment_use_permissions_new"
+                            name="artifact_followup_comment_use_permissions_new"
+                            value="1" />';
+                    }
+                }
+            }
+
             $html .= $rich_textarea_provider->getTextarea(
                 $tracker,
                 $this->artifact,

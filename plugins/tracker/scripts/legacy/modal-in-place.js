@@ -60,6 +60,8 @@ tuleap.textarea = tuleap.textarea || {};
             var html_id = element.id,
                 id = html_id.match(/_(\d+)$/),
                 htmlFormat = false,
+                allow_permissions_set = false,
+                use_permissions = false,
                 name;
 
             if (id) {
@@ -68,6 +70,12 @@ tuleap.textarea = tuleap.textarea || {};
 
                 if (Element.readAttribute("artifact[" + id + "]_body_format", "value") == "html") {
                     htmlFormat = true;
+                }
+                if (Element.readAttribute("artifact[" + id + "]_allow_permissions_set", "value") == "1") {
+                    allow_permissions_set = true;
+                }
+                if (Element.readAttribute("artifact[" + id + "]_use_permissons", "value") == "1") {
+                    use_permissions = true;
                 }
 
                 new tuleap.textarea.RTE(element, {
@@ -78,6 +86,8 @@ tuleap.textarea = tuleap.textarea || {};
                     htmlFormat: htmlFormat,
                     no_resize: true,
                     resize_enabled: false,
+                    allow_permissions_set: allow_permissions_set,
+                    use_permissions: use_permissions,
                 });
             }
         },

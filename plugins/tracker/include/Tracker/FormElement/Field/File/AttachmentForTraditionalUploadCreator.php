@@ -59,6 +59,12 @@ class AttachmentForTraditionalUploadCreator implements AttachmentCreator
         if (isset($submitted_value_info['submitted_by'])) {
             $submitted_by = $submitted_value_info['submitted_by'];
         }
+        $use_file_permissions = 0;
+        if (isset($submitted_value_info['use_file_permissions'])) {
+            if ($submitted_value_info['use_file_permissions'] == '1') {
+                $use_file_permissions = 1;
+            }
+        }
         $attachment = new Tracker_FileInfo(
             0,
             $field,
@@ -66,7 +72,8 @@ class AttachmentForTraditionalUploadCreator implements AttachmentCreator
             trim($submitted_value_info['description']),
             $submitted_value_info['name'],
             $submitted_value_info['size'],
-            $submitted_value_info['type']
+            $submitted_value_info['type'],
+            $use_file_permissions
         );
 
         if (! $this->save($attachment)) {

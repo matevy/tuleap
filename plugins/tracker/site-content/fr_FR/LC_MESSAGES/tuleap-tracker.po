@@ -421,6 +421,9 @@ msgstr "Ajouter un nouveau commentaire..."
 msgid "Add a new file:"
 msgstr "Ajouter un nouveau fichier :"
 
+msgid "Use file permissions"
+msgstr "Permissions sur fichier"
+
 msgid "Add a new rule"
 msgstr "Ajouter une nouvelle règle"
 

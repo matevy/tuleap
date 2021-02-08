@@ -267,6 +267,35 @@ class Tracker_FormElement_Field_File extends Tracker_FormElement_Field
         $html .= '</label>';
         $html .= ' <input type="text" id="tracker_field_' . $this->id . '" name="artifact[' . $this->id . '][][description]" />';
         $html .= '</p>';
+
+        // check if this user has rights to change artifact permissions field and if this field even is enabled for this tracker
+        $tracker = $this->getTracker();
+        if ($tracker != null) {
+            $can_user_change_permissions = false;
+            $current_user = UserManager::instance()->getCurrentUser();
+            $key = array_search('comment_file_permissions', array_column($tracker->getFormElementFields(), 'name'));
+            if (! empty($key)) {
+
+                $form_element = $tracker ->getFormElementFields()[$key];
+                foreach ($form_element->getFormElementDataForCreation(0)['permissions'] as $ugroup_id => $permission)
+                {
+                    if ( in_array( Tracker_FormElement::PERMISSION_UPDATE, $permission) ) {
+                        if ($current_user->isMemberOfUGroup($ugroup_id, $tracker->getGroupId())) {
+                            $can_user_change_permissions = true;
+                        }
+                    }
+                }
+
+                if ( $can_user_change_permissions ) {
+                    $html .= '<p>';
+                    $html .= ' <input type="checkbox" id="tracker_field_' . $this->id . '" name="artifact[' . $this->id . '][][use_file_permissions]" value="1"/>';
+                    $html .= dgettext('tuleap-tracker', 'Use file permissions');
+                    $html .= '</p>';
+                }
+            }
+
+        }
+
         $html .= '</div>';
         $html .= '</div>';
         if (isset($submitted_values[$this->id])) {
@@ -804,6 +833,24 @@ class Tracker_FormElement_Field_File extends Tracker_FormElement_Field
             $fields_data[$this->getId()] = [];
         }
         $files_infos = $this->getSubmittedInfoFromFILES();
+
+        /* merge two form values submitted by client into one array */
+        if (isset($fields_data[$this->getId()])) {
+            $rearrange = false;
+            $nb = count($fields_data[$this->getId()]);
+            $info_keys = array_keys($fields_data[$this->getId()]);
+            for ($i = 0; $i < $nb; ++$i) {
+                if (array_key_exists('use_file_permissions',$fields_data[$this->getId()][$info_keys[$i]])) {
+                    $fields_data[$this->getId()][$info_keys[$i-1]] = array_merge($fields_data[$this->getId()][$info_keys[$i-1]], $fields_data[$this->getId()][$info_keys[$i]]);
+                    unset($fields_data[$this->getId()][$info_keys[$i]]);
+                    $rearrange = true;
+                }
+            }
+            if ($rearrange) {
+                $fields_data[$this->getId()] = array_values($fields_data[$this->getId()]);
+            }
+        }
+
         if (isset($files_infos['name'][$this->getId()])) {
             $info_keys = array_keys($files_infos); //name, type, error, ...
             $nb = count($files_infos['name'][$this->getId()]);

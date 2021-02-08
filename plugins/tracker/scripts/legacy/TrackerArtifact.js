@@ -167,12 +167,16 @@ document.observe("dom:loaded", function () {
             id: html_id,
             name: name,
             htmlFormat: is_html,
+            allow_permissions_set: false,
+            use_permissions: false,
         });
     });
 
     function getTextAreaValueAndHtmlFormat(comment_panel, id) {
         var content;
         var htmlFormat;
+        var allow_permissions_set;
+        var use_permissions;
 
         if ($("tracker_artifact_followup_comment_body_format_" + id).value == "html") {
             content = comment_panel.down(".tracker_artifact_followup_comment_body").innerHTML;
@@ -182,7 +186,18 @@ document.observe("dom:loaded", function () {
             htmlFormat = false;
         }
 
-        return { value: content, htmlFormat: htmlFormat };
+        var obj_tracker_artifact_followup_comment_use_permissions = $("tracker_artifact_followup_comment_use_permissions_" + id);
+        if ( obj_tracker_artifact_followup_comment_use_permissions != null ) {
+            allow_permissions_set = true;
+            if (obj_tracker_artifact_followup_comment_use_permissions.value == "1") {
+                use_permissions = true;
+            } else {
+                use_permissions = false;
+            }
+        } else {
+            allow_permissions_set = false;
+        }
+        return { value: content, htmlFormat: htmlFormat, allow_permissions_set: allow_permissions_set, use_permissions: use_permissions };
     }
 
     $$(".tracker_artifact_followup_comment_controls_edit button").each(function (edit) {
@@ -200,6 +215,8 @@ document.observe("dom:loaded", function () {
                         class: "user-mention",
                     });
                     var htmlFormat = false;
+                    var allow_permissions_set = false;
+                    var use_permissions = false;
 
                     if (comment_panel.empty()) {
                         textarea.value = "";
@@ -207,6 +224,8 @@ document.observe("dom:loaded", function () {
                         data = getTextAreaValueAndHtmlFormat(comment_panel, id);
                         textarea.value = data.value;
                         htmlFormat = data.htmlFormat;
+                        allow_permissions_set = data.allow_permissions_set;
+                        use_permissions = data.use_permissions;
                     }
 
                     var rteSpan = new Element("span", { style: "text-align: left;" }).update(
@@ -224,6 +243,8 @@ document.observe("dom:loaded", function () {
                         name: name,
                         htmlFormat: htmlFormat,
                         full_width: true,
+                        allow_permissions_set: allow_permissions_set,
+                        use_permissions: use_permissions,
                     });
 
                     var nb_rows_displayed = 5;
@@ -252,6 +273,17 @@ document.observe("dom:loaded", function () {
                                 content = $("tracker_followup_comment_edit_" + id).getValue();
                             }
                             var format = $("rte_format_selectbox" + id).value;
+                            var permissions;
+                            var obj_rte_use_permissions_checkbox = $("rte_use_permissions_checkbox" + id);
+                            if ( obj_rte_use_permissions_checkbox != null ) {
+                                if ( $("rte_use_permissions_checkbox" + id).checked ) {
+                                    permissions = 1;
+                                } else {
+                                    permissions = 0;
+                                }
+                            } else {
+                                permissions = 0;
+                            }
                             //eslint-disable-next-line @typescript-eslint/no-unused-vars
                             var req = new Ajax.Request(location.href, {
                                 parameters: {
@@ -259,6 +291,7 @@ document.observe("dom:loaded", function () {
                                     changeset_id: id,
                                     content: content,
                                     comment_format: format,
+                                    comment_use_permissions: permissions,
                                 },
                                 onSuccess: function (transport) {
                                     if (CKEDITOR.instances["tracker_followup_comment_edit_" + id]) {
@@ -317,6 +350,9 @@ document.observe("dom:loaded", function () {
                 //clear the cloned input
                 new_attachment.select("input").each(function (input) {
                     input.value = "";
+                    // reenable value to 1, otherwise server will not get correct indication if option was selected
+                    if ( input.name.includes("use_file_permissions") )
+                        input.value = "1";
                 });
 
                 //Add the remove button

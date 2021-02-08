@@ -30,12 +30,47 @@ class Tracker_Artifact_ChangesetValue_File extends Tracker_Artifact_ChangesetVal
     /**
      * @var array of Tracker_FileInfo
      */
-    protected $files;
+    protected $files = array();
 
     public function __construct($id, Tracker_Artifact_Changeset $changeset, $field, $has_changed, $files)
     {
         parent::__construct($id, $changeset, $field, $has_changed);
-        $this->files = $files;
+        foreach ($files as $file_info) {
+            if ($file_info->getUseFilePermissions())
+            {
+                $user = $changeset->getUserManager()->getCurrentUser();
+
+                // tracker admin and original submitter (minus anonymous) can view a comment
+                if ($this->changeset->artifact->getTracker()->userIsAdmin($user) || ((int)$file_info->getSubmittedBy() && $user->getId() == $file_info->getSubmittedBy()))
+                {
+                    $this->files[] = $file_info;
+                } else {
+                    // check if this user has rights to view commet
+                    $can_user_view = false;
+                    $key = array_search('comment_file_permissions', array_column($this->changeset->artifact->getTracker()->getFormElementFields(), 'name'));
+                    if (! empty($key)) {
+
+                        $form_element = $this->changeset->artifact->getTracker()->getFormElementFields()[$key];
+                        foreach ($form_element->getFormElementDataForCreation(0)['permissions'] as $ugroup_id => $permission)
+                        {
+                            if ( in_array( Tracker_FormElement::PERMISSION_READ, $permission) || in_array( Tracker_FormElement::PERMISSION_UPDATE, $permission) ) {
+                                if ($user->isMemberOfUGroup($ugroup_id, $this->changeset->artifact->getTracker()->getGroupId())) {
+                                    $can_user_view = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if ($can_user_view) {
+                        $this->files[] = $file_info;
+                    }
+                }
+            }
+            else
+            {
+                $this->files[] = $file_info;
+            }
+        }
     }
 
     /**

@@ -65,6 +65,9 @@
         <element name="description">
           <data type="string" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
         </element>
+        <element name="use_file_permissions">
+          <data type="string" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
+        </element>
       </element>
     </zeroOrMore>
   </define>
@@ -81,6 +84,9 @@
     </element>
     <element name="submitted_on">
       <ref name="date_content"/>
+    </element>
+    <element name="use_comment_permissions">
+      <data type="string"/>
     </element>
     <element name="body">
       <ref name="text_content"/>

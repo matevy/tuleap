@@ -606,9 +606,11 @@ class Tracker_Artifact_XMLImport
     ): void {
         $initial_comment_body   = '';
         $initial_comment_format = Tracker_Artifact_Changeset_Comment::TEXT_COMMENT;
+        $initial_comment_use_comment_permissions = false;
         if (isset($xml_changeset->comments) && count($xml_changeset->comments->comment) > 0) {
             $initial_comment_body   = (string) $xml_changeset->comments->comment[0]->body;
             $initial_comment_format = (string) $xml_changeset->comments->comment[0]->body['format'];
+            $initial_comment_use_comment_permissions = $this->getUseCommentPermissions($xml_changeset);
         }
 
         $submitted_by = $this->getSubmittedBy($xml_changeset);
@@ -621,7 +623,8 @@ class Tracker_Artifact_XMLImport
             $this->send_notifications,
             $initial_comment_format,
             $url_mapping,
-            $tracker_xml_import_config
+            $tracker_xml_import_config,
+            $initial_comment_use_comment_permissions
         );
         if ($changeset) {
             if ((string) $xml_changeset['id']) {
@@ -673,6 +676,28 @@ class Tracker_Artifact_XMLImport
     }
 
     /**
+     * @param SimpleXMLElement $xml_changeset
+     * @return int
+     * @throws Tracker_Artifact_Exception_XMLImportException
+     */
+    private function getUseCommentPermissions(SimpleXMLElement $xml_changeset)
+    {
+       if ((string)$xml_changeset->comments->comment[0]->use_comment_permissions === "1")
+       {
+               return true;
+       }
+       else
+       {
+               return false;
+       }
+    }
+
+
+
+    /**
+     * @param Tracker $tracker
+     * @param SimpleXMLElement $xml_artifact
+     * @return Tracker_Artifact|null
      * @throws Tracker_Artifact_Exception_XMLImportException
      */
     public function importArtifactWithAllDataFromXMLContent(

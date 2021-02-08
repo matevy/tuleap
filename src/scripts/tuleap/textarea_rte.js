@@ -28,11 +28,22 @@ import "../codendi/RichTextEditor.js";
 tuleap.textarea.RTE = Class.create(window.codendi.RTE, {
     initialize: function ($super, element, options) {
         options = Object.extend({ toolbar: "tuleap" }, options || {});
-        this.options = Object.extend({ htmlFormat: false, id: 0 }, options || {});
+        this.options = Object.extend({ htmlFormat: false, allow_permissions_set: false, use_permissions: false, id: 0 }, options || {});
         $super(element, options);
         // This div contains comment format selection buttons
         var div = Builder.node("div");
         var select_container = Builder.node("div", { class: "rte_format" });
+        if (this.options.allow_permissions_set) {
+            var checkbox = Builder.node("input", {
+                id: "rte_use_permissions_checkbox" + this.options.id,
+                name: "comment_use_permissions" + this.options.id,
+                class: "input-small",
+                type: "checkbox",
+                value: "1"
+            });
+            select_container.appendChild(checkbox);
+            select_container.appendChild(document.createTextNode("Use comment permissions"));
+        }
         select_container.appendChild(document.createTextNode("Format : "));
         div.appendChild(select_container);
 
@@ -93,6 +104,14 @@ tuleap.textarea.RTE = Class.create(window.codendi.RTE, {
             selectbox.selectedIndex = 0;
             html_option.selected = false;
             text_option.selected = true;
+        }
+
+        if (this.options.allow_permissions_set) {
+            if (this.options.use_permissions == true) {
+                checkbox.checked = 1;
+            } else {
+                checkbox.checked = 0;
+            }
         }
 
         if ($("comment_format_html" + this.options.id).selected == true) {
